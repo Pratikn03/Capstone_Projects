@@ -100,7 +100,7 @@ source .venv/bin/activate   # macOS/Linux
 pip install -r requirements.txt
 ```
 
-### 2) Run the data pipeline (placeholder)
+### 2) Run the data pipeline
 ```bash
 python -m gridpulse.data_pipeline.download_opsd --out data/raw
 python -m gridpulse.data_pipeline.validate_schema --in data/raw --report reports/data_quality_report.md
@@ -154,9 +154,9 @@ streamlit run services/dashboard/app.py
 ### 6) Monitor + Optimize (API)
 ```bash
 curl http://localhost:8000/monitor
-curl -X POST http://localhost:8000/optimize \\
-  -H 'Content-Type: application/json' \\
-  -d '{\"forecast_load_mw\":[8000,8200],\"forecast_renewables_mw\":[3200,3100]}'
+curl -X POST http://localhost:8000/optimize \
+  -H 'Content-Type: application/json' \
+  -d '{"forecast_load_mw":[8000,8200],"forecast_renewables_mw":[3200,3100]}'
 ```
 
 ---
@@ -180,28 +180,6 @@ MIT (edit if your program requires otherwise).
 
 ---
 
-## Week-1 / Week-2 One-Command Runs
-
-After creating env + installing requirements:
-
-```bash
-bash scripts/run_week1.sh
-bash scripts/run_week2.sh
-```
-
-Week-1 outputs:
-- `data/processed/features.parquet`
-- `data/processed/splits/*.parquet`
-- `artifacts/backtests/week1_baseline_*.json`
-- `reports/data_quality_report.md`
-
-Week-2 outputs:
-- `artifacts/models/*.pkl`, `artifacts/models/lstm_*.pt`, `artifacts/models/tcn_*.pt`
-- `reports/ml_vs_dl_comparison.md`
-- `reports/week2_metrics.json`
-
----
-
 ## Notebooks
 - `notebooks/01_eda.ipynb` — dataset inspection
 - `notebooks/02_baselines.ipynb` — baseline evaluation
@@ -210,3 +188,4 @@ Week-2 outputs:
 - `notebooks/05_inference_intervals.ipynb` — 24h forecasts with intervals
 - `notebooks/06_error_analysis.ipynb` — residual analysis
 - `notebooks/07_production_run.ipynb` — production runbook
+- `notebooks/08_weather_features.ipynb` — optional weather features
