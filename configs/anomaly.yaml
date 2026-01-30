@@ -1,0 +1,8 @@
+residual_rules:
+  z_threshold: 3.0
+  window: 168
+
+isolation_forest:
+  enabled: true
+  contamination: 0.01
+  random_state: 42

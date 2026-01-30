@@ -1,0 +1,19 @@
+target: "load_mw"
+
+features:
+  - "hour"
+  - "dayofweek"
+  - "month"
+  - "is_weekend"
+  - "is_morning_peak"
+  - "is_evening_peak"
+  - "load_mw_lag_24"
+  - "load_mw_lag_168"
+  - "load_mw_roll_mean_24"
+  - "load_mw_roll_std_24"
+
+model_params:
+  n_estimators: 500
+  learning_rate: 0.05
+  max_depth: 7
+  random_state: 42

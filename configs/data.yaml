@@ -1,0 +1,30 @@
+dataset:
+  name: opsd_germany
+  timezone: Europe/Berlin
+  target_columns:
+    load: load_mw
+    wind: wind_mw
+    solar: solar_mw
+features:
+  lags: [1, 24, 168]
+  rolling_windows: [24, 168]
+split:
+  train_ratio: 0.7
+  val_ratio: 0.15
+  test_ratio: 0.15
+weather:
+  enabled: false
+  source: open_meteo_archive
+  lat: 52.52
+  lon: 13.405
+  start: 2017-01-01
+  end: 2020-12-31
+  hourly: [temperature_2m, relative_humidity_2m, precipitation, cloud_cover, wind_speed_10m]
+  file: data/raw/weather_berlin_hourly.csv
+storage:
+  features_parquet: data/processed/features.parquet
+  sql:
+    enabled: false
+    engine: duckdb
+    path: data/processed/gridpulse.duckdb
+    table: features

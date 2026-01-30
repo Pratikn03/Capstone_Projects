@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.DS_Store
+
+# Project Data & Artifacts
+data/
+artifacts/
+.env
+.vscode/

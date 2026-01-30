@@ -1,0 +1,11 @@
+data_drift:
+  test: ks
+  p_value_threshold: 0.01
+
+model_drift:
+  metric: mape
+  degradation_threshold: 0.15
+
+retraining:
+  cadence_days: 30
+  min_new_data_days: 14
