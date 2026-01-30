@@ -2,89 +2,321 @@ from __future__ import annotations
 
 import argparse
 import json
-import yaml
-import joblib
-import pandas as pd
-import numpy as np
 from pathlib import Path
-from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-from gridpulse.forecasting.ml_gbm import train_gbm
+import numpy as np
+import pandas as pd
+import yaml
 
-def evaluate(model, X, y, split_name="val"):
-    """Calculate MSE, RMSE, MAE for a given split."""
-    preds = model.predict(X)
-    mse = mean_squared_error(y, preds)
-    mae = mean_absolute_error(y, preds)
-    rmse = np.sqrt(mse)
-    
-    print(f"[{split_name.upper()}] RMSE: {rmse:.2f} | MAE: {mae:.2f}")
-    return {
-        f"{split_name}_mse": float(mse),
-        f"{split_name}_mae": float(mae),
-        f"{split_name}_rmse": float(rmse)
-    }
+from gridpulse.utils.metrics import rmse, mape
+from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm
+from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
+from gridpulse.forecasting.dl_lstm import LSTMForecaster
+from gridpulse.forecasting.dl_tcn import TCNForecaster
+
+import torch
+from torch.utils.data import DataLoader
+
+TARGETS = ["load_mw", "wind_mw", "solar_mw"]
+
+
+def make_xy(df: pd.DataFrame, target: str):
+    drop = {"timestamp", *TARGETS}
+    feat_cols = [c for c in df.columns if c not in drop]
+    X = df[feat_cols].to_numpy()
+    y = df[target].to_numpy()
+    return X, y, feat_cols
+
+
+def residual_quantiles(y_true: np.ndarray, y_pred: np.ndarray, quantiles: list[float]) -> dict[str, float]:
+    resid = np.asarray(y_true) - np.asarray(y_pred)
+    return {str(q): float(np.quantile(resid, q)) for q in quantiles}
+
+
+def fit_sequence_model(model, train_dl, val_dl, epochs: int, lr: float, horizon: int, device: str):
+    opt = torch.optim.Adam(model.parameters(), lr=lr)
+    loss_fn = torch.nn.MSELoss()
+    best_val = float("inf")
+    best_state = None
+
+    for ep in range(1, epochs + 1):
+        model.train()
+        tr_losses = []
+        for xb, yb in train_dl:
+            xb = xb.to(device)
+            yb = yb.to(device)
+            pred_seq = model(xb)
+            pred_hz = pred_seq[:, -horizon:]
+            loss = loss_fn(pred_hz, yb)
+            opt.zero_grad()
+            loss.backward()
+            opt.step()
+            tr_losses.append(loss.item())
+
+        model.eval()
+        val_losses = []
+        with torch.no_grad():
+            for xb, yb in val_dl:
+                xb = xb.to(device)
+                yb = yb.to(device)
+                pred_seq = model(xb)
+                pred_hz = pred_seq[:, -horizon:]
+                val_losses.append(loss_fn(pred_hz, yb).item())
+
+        val_loss = float(np.mean(val_losses)) if val_losses else float("inf")
+        if val_loss < best_val:
+            best_val = val_loss
+            best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+        print(f"Epoch {ep}/{epochs} train_mse={np.mean(tr_losses):.4f} val_mse={val_loss:.4f}")
+
+    if best_state is not None:
+        model.load_state_dict(best_state)
+    return model
+
+
+def train_lstm_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cpu"):
+    lookback = int(cfg.get("lookback", 168))
+    horizon = int(cfg.get("horizon", 24))
+    batch_size = int(cfg.get("batch_size", 256))
+    epochs = int(cfg.get("epochs", 8))
+    hidden_size = int(cfg.get("hidden_size", 128))
+    num_layers = int(cfg.get("num_layers", 2))
+    dropout = float(cfg.get("dropout", 0.1))
+    lr = float(cfg.get("lr", 1e-3))
+
+    scfg = SeqConfig(lookback=lookback, horizon=horizon)
+    train_ds = TimeSeriesWindowDataset(X_train, y_train, scfg)
+    val_ds = TimeSeriesWindowDataset(X_val, y_val, scfg)
+    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=False)
+    val_dl = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
+
+    model = LSTMForecaster(
+        n_features=X_train.shape[1],
+        hidden_size=hidden_size,
+        num_layers=num_layers,
+        dropout=dropout,
+        horizon=horizon,
+    ).to(device)
+    model = fit_sequence_model(model, train_dl, val_dl, epochs=epochs, lr=lr, horizon=horizon, device=device)
+    return model
+
+
+def train_tcn_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cpu"):
+    lookback = int(cfg.get("lookback", 168))
+    horizon = int(cfg.get("horizon", 24))
+    batch_size = int(cfg.get("batch_size", 256))
+    epochs = int(cfg.get("epochs", 8))
+    num_channels = cfg.get("num_channels", [32, 32, 32])
+    kernel_size = int(cfg.get("kernel_size", 3))
+    dropout = float(cfg.get("dropout", 0.1))
+    lr = float(cfg.get("lr", 1e-3))
+
+    scfg = SeqConfig(lookback=lookback, horizon=horizon)
+    train_ds = TimeSeriesWindowDataset(X_train, y_train, scfg)
+    val_ds = TimeSeriesWindowDataset(X_val, y_val, scfg)
+    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=False)
+    val_dl = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
+
+    model = TCNForecaster(
+        n_features=X_train.shape[1],
+        num_channels=list(num_channels),
+        kernel_size=kernel_size,
+        dropout=dropout,
+    ).to(device)
+    model = fit_sequence_model(model, train_dl, val_dl, epochs=epochs, lr=lr, horizon=horizon, device=device)
+    return model
+
+
+def collect_seq_preds(model, X: np.ndarray, y: np.ndarray, lookback: int, horizon: int, device: str, batch_size: int):
+    ds = TimeSeriesWindowDataset(X, y, SeqConfig(lookback=lookback, horizon=horizon))
+    if len(ds) == 0:
+        return None, None
+    dl = DataLoader(ds, batch_size=batch_size, shuffle=False)
+    preds = []
+    trues = []
+    model.eval()
+    with torch.no_grad():
+        for xb, yb in dl:
+            xb = xb.to(device)
+            pred_seq = model(xb).cpu().numpy()
+            pred_hz = pred_seq[:, -horizon:]
+            preds.append(pred_hz.reshape(-1))
+            trues.append(yb.numpy().reshape(-1))
+    return np.concatenate(trues), np.concatenate(preds)
+
+
+def evaluate_seq_model(model, X, y, lookback, horizon, device, batch_size):
+    y_true, y_pred = collect_seq_preds(model, X, y, lookback, horizon, device, batch_size)
+    if y_true is None:
+        return {"rmse": None, "mape": None, "note": "insufficient window"}
+    return {"rmse": rmse(y_true, y_pred), "mape": mape(y_true, y_pred)}
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Train Forecasting Model (GBM)")
-    parser.add_argument("--config", default="configs/train_forecast.yaml", help="Path to config")
-    parser.add_argument("--train-path", default="data/processed/splits/train.parquet")
-    parser.add_argument("--val-path", default="data/processed/splits/val.parquet")
-    parser.add_argument("--out-dir", default="artifacts/models", help="Directory to save model")
-    args = parser.parse_args()
+    p = argparse.ArgumentParser()
+    p.add_argument("--config", default="configs/train_forecast.yaml")
+    args = p.parse_args()
 
-    # 1. Load Config
-    config_path = Path(args.config)
-    if not config_path.exists():
-        raise FileNotFoundError(f"Config not found: {config_path}")
-    
-    with open(config_path, "r") as f:
-        cfg = yaml.safe_load(f)
-    
-    target = cfg.get("target", "load_mw")
-    features = cfg.get("features", [])
-    model_params = cfg.get("model_params", {})
+    cfg = yaml.safe_load(Path(args.config).read_text(encoding="utf-8"))
+    features_path = Path(cfg["data"]["processed_path"])
+    if not features_path.exists():
+        raise FileNotFoundError(f"Missing {features_path}. Run build_features first.")
 
-    print(f"Target: {target}")
-    print(f"Features ({len(features)}): {features}")
+    df = pd.read_parquet(features_path).sort_values("timestamp")
+    n = len(df)
+    train_df = df.iloc[: int(n * 0.7)]
+    val_df = df.iloc[int(n * 0.7): int(n * 0.85)]
+    test_df = df.iloc[int(n * 0.85):]
 
-    # 2. Load Data
-    print("Loading data...")
-    train_df = pd.read_parquet(args.train_path)
-    val_df = pd.read_parquet(args.val_path)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    quantiles = cfg["task"].get("quantiles", [0.1, 0.5, 0.9])
+    targets = cfg["task"].get("targets", ["load_mw"])
+    horizon = int(cfg["task"]["horizon_hours"])
+    lookback_default = int(cfg["task"].get("lookback_hours", 168))
 
-    # Check features exist
-    missing = [f for f in features if f not in train_df.columns]
-    if missing:
-        raise ValueError(f"Missing features in training data: {missing}")
+    art_dir = Path(cfg["artifacts"]["out_dir"])
+    art_dir.mkdir(parents=True, exist_ok=True)
+    rep_dir = Path(cfg["reports"]["out_dir"])
+    rep_dir.mkdir(parents=True, exist_ok=True)
 
-    X_train = train_df[features]
-    y_train = train_df[target]
-    X_val = val_df[features]
-    y_val = val_df[target]
+    report = {
+        "device": device,
+        "quantiles": quantiles,
+        "targets": {},
+    }
 
-    # 3. Train
-    print(f"Training model with params: {model_params}...")
-    model_type, model = train_gbm(X_train, y_train, params=model_params)
-    print(f"Trained using backend: {model_type}")
+    for target in targets:
+        X_train, y_train, feat_cols = make_xy(train_df, target)
+        X_val, y_val, _ = make_xy(val_df, target)
+        X_test, y_test, _ = make_xy(test_df, target)
 
-    # 4. Evaluate
-    metrics = {}
-    metrics.update(evaluate(model, X_train, y_train, "train"))
-    metrics.update(evaluate(model, X_val, y_val, "val"))
+        target_res = {"n_features": len(feat_cols)}
 
-    # 5. Save
-    out_dir = Path(args.out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    
-    model_path = out_dir / f"{target}_gbm.pkl"
-    joblib.dump(model, model_path)
-    print(f"Saved model to {model_path}")
+        # ---- GBM ----
+        gbm_cfg = cfg["models"].get("baseline_gbm", {})
+        if gbm_cfg.get("enabled", True):
+            gbm_params = gbm_cfg.get("params", {})
+            model_kind, gbm = train_gbm(X_train, y_train, gbm_params)
+            gbm_pred_test = predict_gbm(gbm, X_test)
+            gbm_pred_val = predict_gbm(gbm, X_val)
+            gbm_metrics = {
+                "rmse": rmse(y_test, gbm_pred_test),
+                "mape": mape(y_test, gbm_pred_test),
+                "model": f"gbm_{model_kind}",
+            }
+            gbm_q = residual_quantiles(y_val, gbm_pred_val, quantiles)
 
-    metrics_path = out_dir / f"{target}_metrics.json"
-    with open(metrics_path, "w") as f:
-        json.dump(metrics, f, indent=2)
-    print(f"Saved metrics to {metrics_path}")
+            import pickle
+            with open(art_dir / f"{gbm_metrics['model']}_{target}.pkl", "wb") as f:
+                pickle.dump({
+                    "model_type": "gbm",
+                    "model": gbm,
+                    "feature_cols": feat_cols,
+                    "target": target,
+                    "quantiles": quantiles,
+                    "residual_quantiles": gbm_q,
+                }, f)
+
+            target_res["gbm"] = {**gbm_metrics, "residual_quantiles": gbm_q}
+
+        # ---- LSTM ----
+        lstm_cfg = cfg["models"].get("dl_lstm", {})
+        if lstm_cfg.get("enabled", True):
+            params = lstm_cfg.get("params", {})
+            model = train_lstm_model(X_train, y_train, X_val, y_val, {
+                "lookback": lookback_default,
+                "horizon": horizon,
+                **params,
+            }, device=device)
+            batch_size = int(params.get("batch_size", 256))
+            lstm_metrics = evaluate_seq_model(model, X_test, y_test, lookback_default, horizon, device, batch_size)
+            y_true_val, y_pred_val = collect_seq_preds(model, X_val, y_val, lookback_default, horizon, device, batch_size)
+            lstm_q = residual_quantiles(y_true_val, y_pred_val, quantiles) if y_true_val is not None else {}
+
+            torch.save({
+                "model_type": "lstm",
+                "state_dict": model.state_dict(),
+                "feature_cols": feat_cols,
+                "target": target,
+                "lookback": lookback_default,
+                "horizon": horizon,
+                "model_params": {
+                    "hidden_size": int(params.get("hidden_size", 128)),
+                    "num_layers": int(params.get("num_layers", 2)),
+                    "dropout": float(params.get("dropout", 0.1)),
+                    "horizon": int(horizon),
+                },
+                "quantiles": quantiles,
+                "residual_quantiles": lstm_q,
+            }, art_dir / f"lstm_{target}.pt")
+
+            target_res["lstm"] = {**lstm_metrics, "residual_quantiles": lstm_q}
+
+        # ---- TCN ----
+        tcn_cfg = cfg["models"].get("dl_tcn", {})
+        if tcn_cfg.get("enabled", False):
+            params = tcn_cfg.get("params", {})
+            model = train_tcn_model(X_train, y_train, X_val, y_val, {
+                "lookback": lookback_default,
+                "horizon": horizon,
+                **params,
+            }, device=device)
+            batch_size = int(params.get("batch_size", 256))
+            tcn_metrics = evaluate_seq_model(model, X_test, y_test, lookback_default, horizon, device, batch_size)
+            y_true_val, y_pred_val = collect_seq_preds(model, X_val, y_val, lookback_default, horizon, device, batch_size)
+            tcn_q = residual_quantiles(y_true_val, y_pred_val, quantiles) if y_true_val is not None else {}
+
+            torch.save({
+                "model_type": "tcn",
+                "state_dict": model.state_dict(),
+                "feature_cols": feat_cols,
+                "target": target,
+                "lookback": lookback_default,
+                "horizon": horizon,
+                "model_params": {
+                    "num_channels": list(params.get("num_channels", [32, 32, 32])),
+                    "kernel_size": int(params.get("kernel_size", 3)),
+                    "dropout": float(params.get("dropout", 0.1)),
+                },
+                "quantiles": quantiles,
+                "residual_quantiles": tcn_q,
+            }, art_dir / f"tcn_{target}.pt")
+
+            target_res["tcn"] = {**tcn_metrics, "residual_quantiles": tcn_q}
+
+        report["targets"][target] = target_res
+
+    lines = ["# ML vs DL Comparison\n\n"]
+    lines.append("## Setup\n")
+    lines.append(f"- Targets: **{', '.join(targets)}**\n")
+    lines.append(f"- Device: **{device}**\n")
+    lines.append(f"- Quantiles: **{quantiles}**\n\n")
+
+    for target, res in report["targets"].items():
+        lines.append(f"## Target: {target}\n\n")
+        lines.append("| Model | RMSE | MAPE |\n")
+        lines.append("|---|---:|---:|\n")
+        if "gbm" in res:
+            m = res["gbm"]
+            lines.append(f"| {m.get('model', 'gbm')} | {m['rmse']:.3f} | {m['mape']:.3f} |\n")
+        if "lstm" in res:
+            m = res["lstm"]
+            if m["rmse"] is None:
+                lines.append("| lstm | pending | pending |\n")
+            else:
+                lines.append(f"| lstm | {m['rmse']:.3f} | {m['mape']:.3f} |\n")
+        if "tcn" in res:
+            m = res["tcn"]
+            if m["rmse"] is None:
+                lines.append("| tcn | pending | pending |\n")
+            else:
+                lines.append(f"| tcn | {m['rmse']:.3f} | {m['mape']:.3f} |\n")
+        lines.append("\n")
+
+    (rep_dir / "ml_vs_dl_comparison.md").write_text("".join(lines), encoding="utf-8")
+    (rep_dir / "week2_metrics.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    print("Saved report to reports/ and models to artifacts/models")
+
 
 if __name__ == "__main__":
     main()

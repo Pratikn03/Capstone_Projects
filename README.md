@@ -59,7 +59,7 @@ flowchart TD
 ### Layer 5: MLOps & Production Engineering
 * **Objective**: Ensure the system is reliable, reproducible, and deployable.
 * **Components**:
-  * **API**: A FastAPI microservice exposing endpoints for `/predict`, `/optimize`, and `/health`.
+  * **API**: A FastAPI microservice exposing endpoints for `/forecast`, `/anomaly`, `/optimize`, and `/monitor`.
   * **Monitoring**: Tracking Data Drift (is the input changing?) and Model Drift (is accuracy degrading?) using statistical tests (KS-test).
   * **Containerization**: Dockerized environment for consistent deployment.
 
@@ -114,9 +114,24 @@ python -m gridpulse.data_pipeline.download_weather --out data/raw --start 2017-0
 python -m gridpulse.data_pipeline.build_features --in data/raw --out data/processed --weather data/raw/weather_berlin_hourly.csv --sql-out data/processed/gridpulse.duckdb --sql-engine duckdb
 ```
 
-### 3) Train baseline forecasting model (placeholder)
+### 3) Train forecasting models (GBM + LSTM + TCN)
 ```bash
 python -m gridpulse.forecasting.train --config configs/train_forecast.yaml
+```
+
+Forecast config (model bundle paths):
+- `configs/forecast.yaml`
+
+Optional: generate 24h forecasts with intervals
+```bash
+python - <<'PY'
+import pandas as pd
+from gridpulse.forecasting.predict import load_model_bundle, predict_next_24h
+
+df = pd.read_parquet("data/processed/features.parquet")
+bundle = load_model_bundle("artifacts/models/lstm_load_mw.pt")
+print(predict_next_24h(df, bundle))
+PY
 ```
 
 ### 4) Start API
@@ -129,6 +144,14 @@ uvicorn services.api.main:app --reload --port 8000
 streamlit run services/dashboard/app.py
 ```
 
+### 6) Monitor + Optimize (API)
+```bash
+curl http://localhost:8000/monitor
+curl -X POST http://localhost:8000/optimize \\
+  -H 'Content-Type: application/json' \\
+  -d '{\"forecast_load_mw\":[8000,8200],\"forecast_renewables_mw\":[3200,3100]}'
+```
+
 ---
 
 ## Repo Layout
@@ -137,6 +160,7 @@ streamlit run services/dashboard/app.py
 - `services/api/` — FastAPI service
 - `services/dashboard/` — Streamlit app
 - `configs/` — YAML configs (data/train/anomaly/optimization/monitoring)
+- `notebooks/` — Jupyter notebooks for EDA and prototyping
 - `data/` — raw/interim/processed datasets (ignored in git)
 - `artifacts/` — models, backtests, dispatch plans (ignored in git)
 - `reports/` — written deliverables (Markdown)
@@ -165,6 +189,16 @@ Week-1 outputs:
 - `reports/data_quality_report.md`
 
 Week-2 outputs:
-- `artifacts/models/*.pkl` and `artifacts/models/lstm_load.pt`
+- `artifacts/models/*.pkl`, `artifacts/models/lstm_*.pt`, `artifacts/models/tcn_*.pt`
 - `reports/ml_vs_dl_comparison.md`
 - `reports/week2_metrics.json`
+
+---
+
+## Notebooks
+- `notebooks/01_eda.ipynb` — dataset inspection
+- `notebooks/02_baselines.ipynb` — baseline evaluation
+- `notebooks/03_feature_pipeline.ipynb` — run data pipeline
+- `notebooks/04_train_models.ipynb` — baselines + GBM/LSTM/TCN
+- `notebooks/05_inference_intervals.ipynb` — 24h forecasts with intervals
+- `notebooks/06_error_analysis.ipynb` — residual analysis

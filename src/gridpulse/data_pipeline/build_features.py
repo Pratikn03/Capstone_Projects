@@ -113,6 +113,10 @@ def main():
         wx = load_weather(Path(args.weather))
         # merge weather on timestamp, keep all energy rows
         df = df.merge(wx, on="timestamp", how="left")
+        wx_cols = [c for c in df.columns if c.startswith("wx_")]
+        for col in wx_cols:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+            df[col] = df[col].interpolate(limit=6)
 
     df = add_lags_rolls(df, cols=["load_mw", "wind_mw", "solar_mw"])
 

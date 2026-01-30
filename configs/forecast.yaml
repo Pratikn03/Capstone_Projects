@@ -1,0 +1,7 @@
+data:
+  features_path: data/processed/features.parquet
+models:
+  load_mw: artifacts/models/lstm_load_mw.pt
+  wind_mw: artifacts/models/lstm_wind_mw.pt
+  solar_mw: artifacts/models/lstm_solar_mw.pt
+fallback_order: [lstm, tcn, gbm]

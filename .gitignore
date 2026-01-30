@@ -9,3 +9,4 @@ data/
 artifacts/
 .env
 .vscode/
+.ipynb_checkpoints

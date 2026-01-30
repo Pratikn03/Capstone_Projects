@@ -3,6 +3,14 @@ set -euo pipefail
 
 python -m gridpulse.data_pipeline.download_opsd --out data/raw
 
+# auto-detect OPSD CSV if already downloaded in nested folder
+if [[ ! -f data/raw/time_series_60min_singleindex.csv ]]; then
+  FOUND="$(ls data/raw/opsd-time_series-*/time_series_60min_singleindex.csv 2>/dev/null | head -n 1 || true)"
+  if [[ -n "${FOUND}" ]]; then
+    cp "${FOUND}" data/raw/time_series_60min_singleindex.csv
+  fi
+fi
+
 WEATHER_ARG=""
 if [[ "${DOWNLOAD_WEATHER:-0}" == "1" ]]; then
   python -m gridpulse.data_pipeline.download_weather --out data/raw --start 2017-01-01 --end 2020-12-31

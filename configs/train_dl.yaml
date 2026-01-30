@@ -1,0 +1,24 @@
+target: "load_mw"
+
+# Features to include in the input vector
+features:
+  - "load_mw"
+  - "wind_mw"
+  - "solar_mw"
+  - "hour"
+  - "dayofweek"
+  - "is_weekend"
+  - "season"
+
+training:
+  lookback: 168   # 1 week history
+  horizon: 24     # 24 hour forecast
+  batch_size: 64
+  epochs: 20
+  learning_rate: 0.001
+  patience: 5     # Early stopping
+
+model:
+  hidden_size: 64
+  num_layers: 2
+  dropout: 0.1

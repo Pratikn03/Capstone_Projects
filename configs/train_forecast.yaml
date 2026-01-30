@@ -1,19 +1,41 @@
-target: "load_mw"
+task:
+  horizon_hours: 24
+  lookback_hours: 168
+  quantiles: [0.1, 0.5, 0.9]
+  targets: [load_mw, wind_mw, solar_mw]
 
-features:
-  - "hour"
-  - "dayofweek"
-  - "month"
-  - "is_weekend"
-  - "is_morning_peak"
-  - "is_evening_peak"
-  - "load_mw_lag_24"
-  - "load_mw_lag_168"
-  - "load_mw_roll_mean_24"
-  - "load_mw_roll_std_24"
+data:
+  processed_path: data/processed/features.parquet
+  timestamp_col: timestamp
 
-model_params:
-  n_estimators: 500
-  learning_rate: 0.05
-  max_depth: 7
-  random_state: 42
+models:
+  baseline_gbm:
+    kind: lightgbm
+    enabled: true
+    params:
+      n_estimators: 500
+      learning_rate: 0.05
+      max_depth: -1
+  dl_lstm:
+    kind: lstm
+    enabled: true
+    params:
+      hidden_size: 128
+      num_layers: 2
+      dropout: 0.1
+      epochs: 10
+      batch_size: 256
+  dl_tcn:
+    kind: tcn
+    enabled: true
+    params:
+      num_channels: [32, 32, 32]
+      kernel_size: 3
+      dropout: 0.1
+      epochs: 10
+      batch_size: 256
+
+artifacts:
+  out_dir: artifacts/models
+reports:
+  out_dir: reports

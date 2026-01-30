@@ -1,20 +1,43 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+import yaml
 from fastapi import APIRouter
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
+
+from gridpulse.optimizer import optimize_dispatch
 
 router = APIRouter()
 
+
 class OptimizeRequest(BaseModel):
-    forecast_load_mw: float
-    forecast_renewables_mw: float
+    forecast_load_mw: Union[float, List[float]]
+    forecast_renewables_mw: Union[float, List[float]]
+    config: Optional[Dict[str, Any]] = None
+
 
 class OptimizeResponse(BaseModel):
     dispatch_plan: Dict[str, Any]
     expected_cost_usd: Optional[float] = None
     carbon_kg: Optional[float] = None
 
+
+def _load_cfg() -> dict:
+    # Prefer optimization.yaml, fallback to optimize.yaml
+    for path in [Path("configs/optimization.yaml"), Path("configs/optimize.yaml")]:
+        if path.exists():
+            return yaml.safe_load(path.read_text(encoding="utf-8"))
+    return {}
+
+
 @router.post("", response_model=OptimizeResponse)
 def optimize(req: OptimizeRequest):
-    # TODO: call optimizer engine
-    plan = {"renewables": req.forecast_renewables_mw, "grid": max(0.0, req.forecast_load_mw - req.forecast_renewables_mw), "battery": 0.0}
-    return OptimizeResponse(dispatch_plan=plan)
+    cfg = req.config or _load_cfg()
+    result = optimize_dispatch(req.forecast_load_mw, req.forecast_renewables_mw, cfg)
+    return OptimizeResponse(
+        dispatch_plan=result,
+        expected_cost_usd=result.get("expected_cost_usd"),
+        carbon_kg=result.get("carbon_kg"),
+    )

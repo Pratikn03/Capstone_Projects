@@ -3,7 +3,14 @@ import torch
 import torch.nn as nn
 
 class LSTMForecaster(nn.Module):
-    def __init__(self, n_features: int, hidden_size: int = 128, num_layers: int = 2, dropout: float = 0.1):
+    def __init__(
+        self, 
+        n_features: int, 
+        hidden_size: int = 128, 
+        num_layers: int = 2, 
+        dropout: float = 0.1,
+        horizon: int = 24
+    ):
         super().__init__()
         self.lstm = nn.LSTM(
             input_size=n_features,
@@ -12,11 +19,13 @@ class LSTMForecaster(nn.Module):
             dropout=dropout if num_layers > 1 else 0.0,
             batch_first=True,
         )
-        self.head = nn.Linear(hidden_size, 1)
+        # Project last hidden state to the full horizon
+        self.head = nn.Linear(hidden_size, horizon)
 
     def forward(self, x):
         # x: (B, T, F)
         out, _ = self.lstm(x)
-        # predict per-timestep, then map to scalar
-        y = self.head(out)  # (B, T, 1)
-        return y.squeeze(-1)  # (B, T)
+        # Take the output of the last time step
+        last_step = out[:, -1, :]  # (B, H)
+        y = self.head(last_step)   # (B, Horizon)
+        return y

@@ -1,0 +1,15 @@
+battery:
+  capacity_mwh: 10.0
+  max_power_mw: 2.0
+  efficiency: 0.95
+  min_soc_mwh: 0.5
+  initial_soc_mwh: 5.0
+
+grid:
+  max_import_mw: 50.0
+  price_per_mwh: 50.0       # Base energy cost
+  carbon_cost_per_mwh: 20.0 # Carbon tax proxy
+
+penalties:
+  curtailment_per_mw: 500.0 # High penalty to discourage wasting renewable energy
+  unmet_load_per_mw: 10000.0 # Very high penalty (should not happen if grid is available)

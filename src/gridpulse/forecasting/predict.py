@@ -1,12 +1,108 @@
 from __future__ import annotations
 
-def predict_next_24h(features_df, model_bundle):
-    """Return a structured output dict ready for API/dashboard."""
-    # TODO: implement quantile forecasts + intervals
+from pathlib import Path
+from typing import Dict, Any
+
+import numpy as np
+import pandas as pd
+import torch
+
+from gridpulse.forecasting.dl_lstm import LSTMForecaster
+from gridpulse.forecasting.dl_tcn import TCNForecaster
+
+
+def load_model_bundle(path: str | Path) -> Dict[str, Any]:
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(path)
+    if path.suffix == ".pkl":
+        import pickle
+        with open(path, "rb") as f:
+            bundle = pickle.load(f)
+    elif path.suffix == ".pt":
+        bundle = torch.load(path, map_location="cpu")
+    else:
+        raise ValueError(f"Unsupported model format: {path.suffix}")
+    bundle["_path"] = str(path)
+    return bundle
+
+
+def _build_torch_model(bundle: Dict[str, Any]):
+    model_type = bundle.get("model_type")
+    feat_cols = bundle.get("feature_cols", [])
+    params = bundle.get("model_params", {})
+    if model_type == "lstm":
+        model = LSTMForecaster(
+            n_features=len(feat_cols),
+            hidden_size=int(params.get("hidden_size", 128)),
+            num_layers=int(params.get("num_layers", 2)),
+            dropout=float(params.get("dropout", 0.1)),
+            horizon=int(bundle.get("horizon", params.get("horizon", 24))),
+        )
+    elif model_type == "tcn":
+        model = TCNForecaster(
+            n_features=len(feat_cols),
+            num_channels=list(params.get("num_channels", [32, 32, 32])),
+            kernel_size=int(params.get("kernel_size", 3)),
+            dropout=float(params.get("dropout", 0.1)),
+        )
+    else:
+        raise ValueError(f"Unknown torch model_type: {model_type}")
+
+    model.load_state_dict(bundle["state_dict"])
+    model.eval()
+    return model
+
+
+def predict_next_24h(features_df: pd.DataFrame, model_bundle: Dict[str, Any], horizon: int | None = None) -> Dict[str, Any]:
+    df = features_df.sort_values("timestamp").reset_index(drop=True)
+    feat_cols = model_bundle.get("feature_cols", [])
+    if not feat_cols:
+        raise ValueError("model_bundle missing feature_cols")
+    missing = [c for c in feat_cols if c not in df.columns]
+    if missing:
+        raise ValueError(f"features_df missing columns: {missing[:5]}" + (" ..." if len(missing) > 5 else ""))
+
+    model_type = model_bundle.get("model_type")
+    horizon = int(horizon or model_bundle.get("horizon", 24))
+
+    last_ts = pd.to_datetime(df["timestamp"].iloc[-1], utc=True, errors="coerce")
+    if pd.isna(last_ts):
+        raise ValueError("Invalid timestamp in features_df")
+    timestamps = pd.date_range(last_ts + pd.Timedelta(hours=1), periods=horizon, freq="H", tz=last_ts.tz)
+
+    if model_type == "gbm":
+        X = df[feat_cols].to_numpy()
+        if len(X) < horizon:
+            raise ValueError("Not enough rows in features_df for GBM horizon")
+        pred = model_bundle["model"].predict(X[-horizon:])
+    elif model_type in {"lstm", "tcn"}:
+        lookback = int(model_bundle.get("lookback", 168))
+        X = df[feat_cols].to_numpy()
+        if len(X) < lookback:
+            raise ValueError("Not enough rows in features_df for sequence lookback")
+        model = _build_torch_model(model_bundle)
+        with torch.no_grad():
+            xb = torch.from_numpy(X[-lookback:].astype(np.float32)).unsqueeze(0)
+            pred_seq = model(xb).numpy()[0]
+            pred = pred_seq[-horizon:]
+    else:
+        raise ValueError(f"Unknown model_type: {model_type}")
+
+    quantiles = model_bundle.get("residual_quantiles", {})
+    quantile_preds = {str(q): (pred + float(delta)).tolist() for q, delta in quantiles.items()}
+
     return {
-        "timestamp": None,
-        "forecast_load_mw": None,
-        "forecast_wind_mw": None,
-        "forecast_solar_mw": None,
-        "confidence": None,
+        "target": model_bundle.get("target"),
+        "model": model_type,
+        "timestamp": [t.isoformat() for t in timestamps],
+        "forecast": pred.tolist(),
+        "quantiles": quantile_preds,
     }
+
+
+def predict_multi_target(features_df: pd.DataFrame, bundles: Dict[str, Dict[str, Any]], horizon: int | None = None) -> Dict[str, Any]:
+    out = {}
+    for target, bundle in bundles.items():
+        out[target] = predict_next_24h(features_df, bundle, horizon=horizon)
+    return out
