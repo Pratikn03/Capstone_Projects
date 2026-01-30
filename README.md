@@ -108,6 +108,13 @@ python -m gridpulse.data_pipeline.build_features --in data/raw --out data/proces
 python -m gridpulse.data_pipeline.split_time_series --in data/processed/features.parquet --out data/processed/splits
 ```
 
+Makefile shortcuts:
+```bash
+make pipeline
+make train
+make production
+```
+
 Optional weather ingestion + SQL storage:
 ```bash
 python -m gridpulse.data_pipeline.download_weather --out data/raw --start 2017-01-01 --end 2020-12-31
@@ -202,3 +209,4 @@ Week-2 outputs:
 - `notebooks/04_train_models.ipynb` — baselines + GBM/LSTM/TCN
 - `notebooks/05_inference_intervals.ipynb` — 24h forecasts with intervals
 - `notebooks/06_error_analysis.ipynb` — residual analysis
+- `notebooks/07_production_run.ipynb` — production runbook

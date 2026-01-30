@@ -69,7 +69,7 @@ def predict_next_24h(features_df: pd.DataFrame, model_bundle: Dict[str, Any], ho
     last_ts = pd.to_datetime(df["timestamp"].iloc[-1], utc=True, errors="coerce")
     if pd.isna(last_ts):
         raise ValueError("Invalid timestamp in features_df")
-    timestamps = pd.date_range(last_ts + pd.Timedelta(hours=1), periods=horizon, freq="H", tz=last_ts.tz)
+    timestamps = pd.date_range(last_ts + pd.Timedelta(hours=1), periods=horizon, freq="h", tz=last_ts.tz)
 
     if model_type == "gbm":
         X = df[feat_cols].to_numpy()

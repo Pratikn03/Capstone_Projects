@@ -37,7 +37,7 @@ def main():
 
     dup_ts = int(df["utc_timestamp"].duplicated().sum())
 
-    full_idx = pd.date_range(df["utc_timestamp"].min(), df["utc_timestamp"].max(), freq="H", tz="UTC")
+    full_idx = pd.date_range(df["utc_timestamp"].min(), df["utc_timestamp"].max(), freq="h", tz="UTC")
     df_idx = df.set_index("utc_timestamp")
     missing_ts = int(len(full_idx.difference(df_idx.index)))
 

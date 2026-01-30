@@ -99,7 +99,7 @@ def main():
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
     # continuous hourly index
-    full_idx = pd.date_range(df["timestamp"].min(), df["timestamp"].max(), freq="H", tz="UTC")
+    full_idx = pd.date_range(df["timestamp"].min(), df["timestamp"].max(), freq="h", tz="UTC")
     df = df.set_index("timestamp").reindex(full_idx).rename_axis("timestamp").reset_index()
 
     # interpolate short gaps

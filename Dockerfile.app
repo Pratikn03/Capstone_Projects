@@ -1,13 +1,18 @@
-FROM python:3.11-slim
+FROM python:3.9-slim
 
 WORKDIR /app
-COPY requirements.txt /app/
+
+# Install dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY src /app/src
-COPY services /app/services
-COPY configs /app/configs
+# Copy source code and configs
+COPY src/ src/
+COPY services/ services/
+COPY configs/ configs/
 
+# Set python path
 ENV PYTHONPATH=/app/src
-EXPOSE 8501
-CMD ["streamlit", "run", "services/dashboard/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+
+# Run Streamlit
+CMD ["streamlit", "run", "services/dashboard/app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
