@@ -34,3 +34,19 @@ def walk_forward_horizon_metrics(y_true: np.ndarray, y_pred: np.ndarray, horizon
         per_step[str(h + 1)] = metrics  # 1-indexed horizon step
 
     return {"per_horizon": per_step, "horizon": horizon}
+
+
+def multi_horizon_metrics(y_true: np.ndarray, y_pred: np.ndarray, horizons: list[int], target: str) -> dict:
+    """Compute walk-forward metrics for multiple horizons and summarize mean per metric."""
+    out = {}
+    for h in horizons:
+        per = walk_forward_horizon_metrics(y_true, y_pred, horizon=h, target=target)
+        per_h = per.get("per_horizon", {})
+        summary = {}
+        if per_h:
+            metric_keys = list(next(iter(per_h.values())).keys())
+            for k in metric_keys:
+                vals = [v.get(k) for v in per_h.values() if v.get(k) is not None]
+                summary[k] = float(np.mean(vals)) if vals else None
+        out[str(h)] = {"summary": summary, "per_horizon": per_h}
+    return {"horizons": horizons, "results": out}
