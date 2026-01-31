@@ -68,6 +68,10 @@ python -m gridpulse.data_pipeline.validate_schema --in data/raw --report reports
 python -m gridpulse.data_pipeline.build_features --in data/raw --out data/processed
 python -m gridpulse.data_pipeline.split_time_series --in data/processed/features.parquet --out data/processed/splits
 ```
+Or run the full pipeline with caching:
+```bash
+python -m gridpulse.pipeline.run --all
+```
 
 Optional weather ingestion + SQL storage:
 ```bash
@@ -89,11 +93,13 @@ Training outputs include RMSE, MAE, MAPE, sMAPE, and daylight‑MAPE for solar. 
 - **Deterministic training:** seeds are applied to Python, NumPy, and PyTorch.
 - **Exact steps:** use `notebooks/13_runbook_end_to_end.ipynb` for a full end‑to‑end run.
 - **Version locks:** `requirements.lock.txt` captures installed versions.
+- **Pipeline cache:** `.cache/pipeline.json` tracks hashes to skip unchanged steps.
 
 ## Reports
 - `reports/formal_evaluation_report.md` — 1‑page evaluation summary with plots.
 - `reports/model_cards/` — per‑target model cards.
 - `reports/multi_horizon_backtest.json` — multi‑horizon backtest results.
+- `scripts/build_reports.py` — regenerate reports/figures after training.
 
 ### 4) Start API
 ```bash

@@ -10,3 +10,4 @@ artifacts/
 .env
 .vscode/
 .ipynb_checkpoints
+.cache/
