@@ -1573,7 +1573,7 @@
               "mae": 1169.2944046918562,
               "mape": 229715.8552285876,
               "smape": 0.16862702586273906,
-              "daylight_mape": NaN
+              "daylight_mape": null
             },
             "per_horizon": {
               "1": {
@@ -1609,35 +1609,35 @@
                 "mae": 0.0,
                 "mape": 0.0,
                 "smape": 0.0,
-                "daylight_mape": NaN
+                "daylight_mape": null
               },
               "6": {
                 "rmse": 0.0,
                 "mae": 0.0,
                 "mape": 0.0,
                 "smape": 0.0,
-                "daylight_mape": NaN
+                "daylight_mape": null
               },
               "7": {
                 "rmse": 0.0,
                 "mae": 0.0,
                 "mape": 0.0,
                 "smape": 0.0,
-                "daylight_mape": NaN
+                "daylight_mape": null
               },
               "8": {
                 "rmse": 0.0,
                 "mae": 0.0,
                 "mape": 0.0,
                 "smape": 0.0,
-                "daylight_mape": NaN
+                "daylight_mape": null
               },
               "9": {
                 "rmse": 0.0,
                 "mae": 0.0,
                 "mape": 0.0,
                 "smape": 0.0,
-                "daylight_mape": NaN
+                "daylight_mape": null
               },
               "10": {
                 "rmse": 0.4264014327112209,
@@ -1961,7 +1961,7 @@
               "mae": 151.97606753369942,
               "mape": 71548667.6242205,
               "smape": 0.8698144881436679,
-              "daylight_mape": NaN
+              "daylight_mape": null
             },
             "per_horizon": {
               "1": {
@@ -1997,35 +1997,35 @@
                 "mae": 1.8095741576909339,
                 "mape": 180957415.76909336,
                 "smape": 1.9999999872562357,
-                "daylight_mape": NaN
+                "daylight_mape": null
               },
               "6": {
                 "rmse": 1.9211919257046948,
                 "mae": 1.8095741576909339,
                 "mape": 180957415.76909336,
                 "smape": 1.9999999872562357,
-                "daylight_mape": NaN
+                "daylight_mape": null
               },
               "7": {
                 "rmse": 1.9258171137061082,
                 "mae": 1.8132909019270729,
                 "mape": 181329090.19270727,
                 "smape": 1.9999999872700076,
-                "daylight_mape": NaN
+                "daylight_mape": null
               },
               "8": {
                 "rmse": 1.9276621891234746,
                 "mae": 1.8168344045553264,
                 "mape": 181683440.45553264,
                 "smape": 1.9999999873271166,
-                "daylight_mape": NaN
+                "daylight_mape": null
               },
               "9": {
                 "rmse": 1.9276621891234746,
                 "mae": 1.8168344045553264,
                 "mape": 181683440.45553264,
                 "smape": 1.9999999873271166,
-                "daylight_mape": NaN
+                "daylight_mape": null
               },
               "10": {
                 "rmse": 1.8322593031834822,
