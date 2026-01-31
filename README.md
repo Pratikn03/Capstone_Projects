@@ -5,6 +5,11 @@
 
 GridPulse is an end‑to‑end energy intelligence platform for modern electrical grids. It ingests power‑system and weather data, forecasts load and renewables, detects anomalies, and optimizes dispatch under cost and carbon objectives. The system includes MLOps monitoring and a Streamlit operator dashboard.
 
+## Results Snapshot
+The latest model comparison (mean across targets) is visualized below.
+
+![Model Comparison](reports/figures/model_comparison.png)
+
 ## Architecture
 
 ```mermaid
@@ -36,6 +41,10 @@ flowchart TD
 - **API:** FastAPI, Uvicorn
 - **UI:** Streamlit
 - **Ops:** Docker, Git
+
+## Data Sources
+- **Power system data:** Open Power System Data (OPSD) — Germany load/wind/solar time‑series.
+- **Weather data (optional):** Open‑Meteo for Berlin hourly features.
 
 ## Quickstart
 
@@ -86,6 +95,11 @@ uvicorn services.api.main:app --reload --port 8000
 streamlit run services/dashboard/app.py
 ```
 
+### 5b) Start API + dashboard together (optional)
+```bash
+./scripts/run_all.sh
+```
+
 ### 6) Monitor + Optimize (API)
 ```bash
 curl http://localhost:8000/monitor
@@ -118,6 +132,11 @@ curl -X POST http://localhost:8000/optimize \
 - `data/` — raw/interim/processed datasets (git‑ignored)
 - `artifacts/` — models and backtests (git‑ignored)
 - `reports/` — reports (git‑ignored)
+
+## Configs
+- `configs/train_forecast.yaml` — training configuration (seed, models, horizons).
+- `configs/forecast.yaml` — inference model bundle paths.
+- `configs/optimization.yaml` — dispatch cost/carbon/battery constraints.
 
 ## License
 MIT (edit if your program requires otherwise).
