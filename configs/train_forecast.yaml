@@ -43,3 +43,17 @@ reports:
 backtest:
   enabled: true
   out_path: reports/walk_forward_report.json
+
+tuning:
+  enabled: true
+  engine: optuna
+  n_trials: 50
+  metric: val_loss
+  direction: minimize
+  params:
+    baseline_gbm:
+      n_estimators: {type: int, low: 100, high: 1000}
+      learning_rate: {type: float, low: 0.01, high: 0.3, log: true}
+    dl_lstm:
+      hidden_size: {type: categorical, choices: [64, 128, 256]}
+      dropout: {type: float, low: 0.0, high: 0.5}

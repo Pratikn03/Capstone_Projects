@@ -1,3 +1,8 @@
+paths:
+  root: .
+  data: ${paths.root}/data
+  processed: ${paths.data}/processed
+
 dataset:
   name: opsd_germany
   timezone: Europe/Berlin
@@ -22,9 +27,9 @@ weather:
   hourly: [temperature_2m, relative_humidity_2m, precipitation, cloud_cover, wind_speed_10m]
   file: data/raw/weather_berlin_hourly.csv
 storage:
-  features_parquet: data/processed/features.parquet
+  features_parquet: ${paths.processed}/features.parquet
   sql:
     enabled: false
     engine: duckdb
-    path: data/processed/gridpulse.duckdb
+    path: ${paths.processed}/gridpulse.duckdb
     table: features
