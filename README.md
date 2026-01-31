@@ -1,95 +1,38 @@
 # GridPulse: Autonomous Energy Intelligence & Optimization Platform
 
-## 1. Executive Summary
-GridPulse is an end-to-end AI system designed to manage the complexities of modern electrical grids. Unlike traditional systems that only forecast demand, GridPulse is a decision-support platform. It ingests real-time energy and weather data, forecasts future load and renewable generation using Deep Learning, detects system anomalies, and optimizes energy dispatch to minimize costs and carbon emissions. This project demonstrates a complete MLOps lifecycle, moving from raw data to actionable intelligence.
+GridPulse is an end‑to‑end energy intelligence platform for modern electrical grids. It ingests power‑system and weather data, forecasts load and renewables, detects anomalies, and optimizes dispatch under cost and carbon objectives. The system includes MLOps monitoring and a Streamlit operator dashboard.
 
-## 2. Problem Statement
-The integration of renewable energy (wind, solar) into the power grid introduces significant volatility. Traditional "static" grid management cannot cope with the intermittency of renewables or sudden shifts in demand.
-
-* **The Challenge**: Grid operators need to know not just what will happen (forecasting), but what to do about it (optimization) while ensuring system stability (anomaly detection).
-* **The Solution**: An autonomous system that predicts supply/demand imbalances and calculates the optimal mix of battery storage, renewable usage, and grid power.
-
-## 3. System Architecture (The 6 Layers)
-This project is architected in six distinct technical layers, ensuring a modular and scalable design.
+## Architecture
 
 ```mermaid
 flowchart TD
-  A[OPSD + Weather Inputs] --> B[Data Ingestion & Validation]
-  B --> C[Feature Store (Time-Aware)]
-  C --> D[Forecasting Engine: GBM + LSTM/TCN]
-  D --> E[Residual + IsolationForest Anomaly Detection]
-  D --> F[Optimization Engine (LP): Cost + Carbon]
-  E --> G[API: /forecast /anomaly /optimize /monitor]
+  A["OPSD and Weather Inputs"] --> B["Data Ingestion and Validation"]
+  B --> C["Feature Store - Time Aware"]
+  C --> D["Forecasting Engine - GBM and LSTM/TCN"]
+  D --> E["Residual and IsolationForest Anomaly Detection"]
+  D --> F["Optimization Engine (LP) - Cost and Carbon"]
+  E --> G["API - forecast, anomaly, optimize, monitor"]
   F --> G
-  G --> H[Streamlit Operator Dashboard]
-  C --> I[Monitoring: Data Drift + Model Drift]
+  G --> H["Streamlit Operator Dashboard"]
+  C --> I["Monitoring - Data Drift and Model Drift"]
   D --> I
-  I --> J[Retraining Rules + Model Promotion]
+  I --> J["Retraining Rules and Model Promotion"]
 ```
 
-### Layer 1: Data Engineering & Ingestion Pipeline
-* **Objective**: Create a robust pipeline to handle raw time-series data.
-* **Data Source**: Open Power System Data (OPSD) – specifically time-series data for Germany (Load, Wind, Solar).
-* **Key Processes**:
-  * **ETL**: Automated extraction of CSV data, handling missing timestamps, and timezone normalization.
-  * **Feature Engineering**: Creation of temporal features (hour-of-day, day-of-week), lag features (t-1, t-24), and rolling window statistics (moving averages).
-  * **Storage**: Processed data stored in a structured format (Parquet/SQL) ready for modeling.
+## Core Capabilities
+- **Forecasting:** Gradient boosting and deep learning (LSTM/TCN) with 24‑hour horizons and intervals.
+- **Anomaly Detection:** Residual z‑scores + Isolation Forest.
+- **Optimization:** Linear programming dispatch with battery and grid constraints.
+- **MLOps:** Drift monitoring and retraining signals.
+- **Product:** Streamlit dashboard for operators.
 
-### Layer 2: The Forecasting Engine (The "Brain")
-* **Objective**: Predict energy demand (Load) and supply (Wind/Solar) for the next 24 hours.
-* **Methodology (Comparative Analysis)**:
-  * **Model A (Machine Learning)**: XGBoost/LightGBM (Gradient Boosting) using lag-based features. Acts as the strong baseline.
-  * **Model B (Deep Learning)**: LSTM (Long Short-Term Memory) or TCN (Temporal Convolutional Network) in PyTorch. Captures complex non-linear temporal dependencies.
-* **Output**: Probabilistic forecasts with confidence intervals (e.g., "Load will be 50MW ± 2MW").
-
-### Layer 3: Anomaly Detection System (The "Safety Valve")
-* **Objective**: Identify irregular grid behavior or sensor failures in real-time.
-* **Methodology**:
-  * **Residual Analysis**: Monitoring the error between Forecast and Actual. If the error exceeds a dynamic threshold (e.g., >3 standard deviations), an alert is triggered.
-  * **Algorithm**: Isolation Forest to detect multivariate anomalies (e.g., high load but low temperature, which is physically unlikely).
-* **Action**: Flags data points as "Unreliable" to prevent bad decision-making.
-
-### Layer 4: Optimization & Decision Engine
-* **Objective**: Translate forecasts into actionable dispatch commands.
-* **Logic**: A Linear Programming (or heuristic) solver.
-* **Objective Function**: Minimize(Cost + Carbon Penalty).
-* **Constraints**: Battery capacity limits, maximum grid draw.
-* **Output**: A Dispatch Plan (e.g., "Charge battery from 10 AM-2 PM (Solar peak), Discharge 6 PM-9 PM (Load peak)").
-
-### Layer 5: MLOps & Production Engineering
-* **Objective**: Ensure the system is reliable, reproducible, and deployable.
-* **Components**:
-  * **API**: A FastAPI microservice exposing endpoints for `/forecast`, `/anomaly`, `/optimize`, and `/monitor`.
-  * **Monitoring**: Tracking Data Drift (is the input changing?) and Model Drift (is accuracy degrading?) using statistical tests (KS-test).
-  * **Containerization**: Dockerized environment for consistent deployment.
-
-### Layer 6: User Interface (The Product)
-* **Objective**: A dashboard for grid operators to visualize system state.
-* **Technology**: Streamlit.
-* **Visuals**:
-  * Interactive time-series plots of Forecast vs. Actual.
-  * "Traffic Light" status for Grid Health (Green/Yellow/Red).
-  * Cost savings metrics generated by the Optimization Engine.
-
-## 4. Technology Stack
-* **Languages**: Python 3.9+
-* **Data Processing**: Pandas, NumPy, Scikit-learn
-* **Deep Learning**: PyTorch
-* **Modeling**: XGBoost, Statsmodels
-* **API/Backend**: FastAPI, Uvicorn
-* **Dashboard**: Streamlit
-* **DevOps**: Docker, Git
-
-## 5. Expected Outcomes & Deliverables
-* **Codebase**: A clean, structured GitHub repository following PEP-8 standards.
-* **Model Report**: A comparative study (PDF/Markdown) showing whether Deep Learning outperformed XGBoost, utilizing metrics like RMSE and MAPE.
-* **Demo**: A live Streamlit dashboard demonstrating real-time forecasting and optimization.
-* **Documentation**: Comprehensive README.md and architecture diagrams.
-
-## 6. Why This is a Master-Level Capstone
-This project transcends simple "prediction" by integrating optimization research and ML engineering. It addresses a critical global problem (energy transition) and demonstrates proficiency across the full data science hierarchy of needs: from collecting data to deploying intelligent decision systems.
-
----
+## Technology Stack
+- **Python 3.9+**
+- **Data:** Pandas, NumPy, Scikit‑learn, PyArrow
+- **Forecasting:** LightGBM/XGBoost, PyTorch
+- **API:** FastAPI, Uvicorn
+- **UI:** Streamlit
+- **Ops:** Docker, Git
 
 ## Quickstart
 
@@ -108,37 +51,17 @@ python -m gridpulse.data_pipeline.build_features --in data/raw --out data/proces
 python -m gridpulse.data_pipeline.split_time_series --in data/processed/features.parquet --out data/processed/splits
 ```
 
-Makefile shortcuts:
-```bash
-make pipeline
-make train
-make production
-```
-
 Optional weather ingestion + SQL storage:
 ```bash
 python -m gridpulse.data_pipeline.download_weather --out data/raw --start 2017-01-01 --end 2020-12-31
-python -m gridpulse.data_pipeline.build_features --in data/raw --out data/processed --weather data/raw/weather_berlin_hourly.csv --sql-out data/processed/gridpulse.duckdb --sql-engine duckdb
+python -m gridpulse.data_pipeline.build_features --in data/raw --out data/processed \
+  --weather data/raw/weather_berlin_hourly.csv \
+  --sql-out data/processed/gridpulse.duckdb --sql-engine duckdb
 ```
 
 ### 3) Train forecasting models (GBM + LSTM + TCN)
 ```bash
 python -m gridpulse.forecasting.train --config configs/train_forecast.yaml
-```
-
-Forecast config (model bundle paths):
-- `configs/forecast.yaml`
-
-Optional: generate 24h forecasts with intervals
-```bash
-python - <<'PY'
-import pandas as pd
-from gridpulse.forecasting.predict import load_model_bundle, predict_next_24h
-
-df = pd.read_parquet("data/processed/features.parquet")
-bundle = load_model_bundle("artifacts/models/lstm_load_mw.pt")
-print(predict_next_24h(df, bundle))
-PY
 ```
 
 ### 4) Start API
@@ -159,33 +82,25 @@ curl -X POST http://localhost:8000/optimize \
   -d '{"forecast_load_mw":[8000,8200],"forecast_renewables_mw":[3200,3100]}'
 ```
 
----
-
-## Repo Layout
-
-- `src/gridpulse/` — core library (data pipeline, forecasting, anomaly, optimizer, monitoring)
-- `services/api/` — FastAPI service
-- `services/dashboard/` — Streamlit app
-- `configs/` — YAML configs (data/train/anomaly/optimization/monitoring)
-- `notebooks/` — Jupyter notebooks for EDA and prototyping
-- `data/` — raw/interim/processed datasets (ignored in git)
-- `artifacts/` — models, backtests, dispatch plans (ignored in git)
-- `reports/` — written deliverables (Markdown)
-
----
-
-## License
-MIT (edit if your program requires otherwise).
-
-
----
-
 ## Notebooks
 - `notebooks/01_eda.ipynb` — dataset inspection
 - `notebooks/02_baselines.ipynb` — baseline evaluation
-- `notebooks/03_feature_pipeline.ipynb` — run data pipeline
-- `notebooks/04_train_models.ipynb` — baselines + GBM/LSTM/TCN
-- `notebooks/05_inference_intervals.ipynb` — 24h forecasts with intervals
+- `notebooks/03_feature_pipeline.ipynb` — data pipeline
+- `notebooks/04_train_models.ipynb` — GBM/LSTM/TCN training
+- `notebooks/05_inference_intervals.ipynb` — forecast + intervals
 - `notebooks/06_error_analysis.ipynb` — residual analysis
-- `notebooks/07_production_run.ipynb` — production runbook
+- `notebooks/07_production_run.ipynb` — end‑to‑end runbook
 - `notebooks/08_weather_features.ipynb` — optional weather features
+
+## Repo Layout
+- `src/gridpulse/` — core library (data pipeline, forecasting, anomaly, optimizer, monitoring)
+- `services/api/` — FastAPI service
+- `services/dashboard/` — Streamlit app
+- `configs/` — YAML configs
+- `notebooks/` — EDA and training notebooks
+- `data/` — raw/interim/processed datasets (git‑ignored)
+- `artifacts/` — models and backtests (git‑ignored)
+- `reports/` — reports (git‑ignored)
+
+## License
+MIT (edit if your program requires otherwise).
