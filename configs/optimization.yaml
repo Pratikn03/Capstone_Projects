@@ -1,14 +1,22 @@
+objective:
+  cost_weight: 1.0
+  carbon_weight: 0.5
+
 battery:
-  capacity_mwh: 10.0
-  max_power_mw: 2.0
-  efficiency: 0.95
-  min_soc_mwh: 0.5
-  initial_soc_mwh: 5.0
+  capacity_mwh: 1000.0
+  max_power_mw: 200.0
+  efficiency: 0.92
+  min_soc_mwh: 50.0
+  initial_soc_mwh: 500.0
 
 grid:
-  max_import_mw: 50.0
-  price_per_mwh: 50.0       # Base energy cost
+  max_import_mw: 10000.0
+  price_per_mwh: 70.0       # Base energy cost
   carbon_cost_per_mwh: 20.0 # Carbon tax proxy
+  carbon_kg_per_mwh: 400.0  # Emissions intensity
+
+renewables:
+  carbon_kg_per_mwh: 20.0
 
 penalties:
   curtailment_per_mw: 500.0 # High penalty to discourage wasting renewable energy

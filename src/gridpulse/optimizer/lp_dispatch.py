@@ -140,6 +140,7 @@ def optimize_dispatch(forecast_load, forecast_renewables, config: dict) -> Dict[
 
     expected_cost = float(np.sum(grid_plan) * price + np.sum(curtail) * curtail_pen + np.sum(unmet) * unmet_pen)
     carbon = float(np.sum(grid_plan) * carbon_kg)
+    carbon_cost = float(np.sum(grid_plan) * carbon_cost)
 
     return {
         "grid_mw": grid_plan.tolist(),
@@ -151,5 +152,6 @@ def optimize_dispatch(forecast_load, forecast_renewables, config: dict) -> Dict[
         "soc_mwh": soc.tolist(),
         "expected_cost_usd": expected_cost,
         "carbon_kg": carbon,
+        "carbon_cost_usd": carbon_cost,
         "status": res.message,
     }
