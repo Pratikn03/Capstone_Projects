@@ -10,6 +10,11 @@ The latest model comparison (mean across targets) is visualized below.
 
 ![Model Comparison](reports/figures/model_comparison.png)
 
+## Demo
+Short preview of the forecasting inputs (sample run):
+
+![GridPulse Demo](reports/figures/demo.gif)
+
 ## Architecture
 
 ```mermaid
@@ -84,6 +89,11 @@ Training outputs include RMSE, MAE, MAPE, sMAPE, and daylight‑MAPE for solar. 
 - **Deterministic training:** seeds are applied to Python, NumPy, and PyTorch.
 - **Exact steps:** use `notebooks/13_runbook_end_to_end.ipynb` for a full end‑to‑end run.
 - **Version locks:** `requirements.lock.txt` captures installed versions.
+
+## Reports
+- `reports/formal_evaluation_report.md` — 1‑page evaluation summary with plots.
+- `reports/model_cards/` — per‑target model cards.
+- `reports/multi_horizon_backtest.json` — multi‑horizon backtest results.
 
 ### 4) Start API
 ```bash
