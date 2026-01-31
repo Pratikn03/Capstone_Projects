@@ -9,6 +9,7 @@ import torch
 
 from gridpulse.forecasting.dl_lstm import LSTMForecaster
 from gridpulse.forecasting.dl_tcn import TCNForecaster
+from gridpulse.utils.scaler import StandardScaler
 
 
 def load_model_bundle(path: str | Path) -> Dict[str, Any]:
@@ -54,6 +55,18 @@ def _build_torch_model(bundle: Dict[str, Any]):
     return model
 
 
+def _maybe_scale_X(X: np.ndarray, bundle: Dict[str, Any]) -> np.ndarray:
+    scaler = StandardScaler.from_dict(bundle.get("x_scaler"))
+    return scaler.transform(X) if scaler is not None else X
+
+
+def _maybe_inverse_y(y: np.ndarray, bundle: Dict[str, Any]) -> np.ndarray:
+    scaler = StandardScaler.from_dict(bundle.get("y_scaler"))
+    if scaler is None:
+        return y
+    return scaler.inverse_transform(y.reshape(-1, 1)).reshape(-1)
+
+
 def predict_next_24h(features_df: pd.DataFrame, model_bundle: Dict[str, Any], horizon: int | None = None) -> Dict[str, Any]:
     df = features_df.sort_values("timestamp").reset_index(drop=True)
     feat_cols = model_bundle.get("feature_cols", [])
@@ -81,11 +94,13 @@ def predict_next_24h(features_df: pd.DataFrame, model_bundle: Dict[str, Any], ho
         X = df[feat_cols].to_numpy()
         if len(X) < lookback:
             raise ValueError("Not enough rows in features_df for sequence lookback")
+        X = _maybe_scale_X(X, model_bundle)
         model = _build_torch_model(model_bundle)
         with torch.no_grad():
             xb = torch.from_numpy(X[-lookback:].astype(np.float32)).unsqueeze(0)
             pred_seq = model(xb).numpy()[0]
             pred = pred_seq[-horizon:]
+        pred = _maybe_inverse_y(pred, model_bundle)
     else:
         raise ValueError(f"Unknown model_type: {model_type}")
 

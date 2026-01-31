@@ -10,6 +10,7 @@ import yaml
 
 from gridpulse.utils.metrics import rmse, mape, mae, smape, daylight_mape
 from gridpulse.utils.seed import set_seed
+from gridpulse.utils.scaler import StandardScaler
 from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm
 from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
 from gridpulse.forecasting.dl_lstm import LSTMForecaster
@@ -158,10 +159,13 @@ def collect_seq_preds(model, X: np.ndarray, y: np.ndarray, lookback: int, horizo
     return np.concatenate(trues), np.concatenate(preds)
 
 
-def evaluate_seq_model(model, X, y, lookback, horizon, device, batch_size, target: str):
+def evaluate_seq_model(model, X, y, lookback, horizon, device, batch_size, target: str, y_scaler: StandardScaler | None = None):
     y_true, y_pred = collect_seq_preds(model, X, y, lookback, horizon, device, batch_size)
     if y_true is None:
         return {"rmse": None, "mae": None, "mape": None, "smape": None, "note": "insufficient window"}
+    if y_scaler is not None:
+        y_true = y_scaler.inverse_transform(y_true.reshape(-1, 1)).reshape(-1)
+        y_pred = y_scaler.inverse_transform(y_pred.reshape(-1, 1)).reshape(-1)
     return compute_metrics(y_true, y_pred, target)
 
 
@@ -245,15 +249,28 @@ def main():
         lstm_cfg = cfg["models"].get("dl_lstm", {})
         if lstm_cfg.get("enabled", True):
             params = lstm_cfg.get("params", {})
-            model = train_lstm_model(X_train, y_train, X_val, y_val, {
+            x_scaler = StandardScaler.fit(X_train)
+            y_scaler = StandardScaler.fit(y_train.reshape(-1, 1))
+            X_train_s = x_scaler.transform(X_train)
+            X_val_s = x_scaler.transform(X_val)
+            X_test_s = x_scaler.transform(X_test)
+            y_train_s = y_scaler.transform(y_train.reshape(-1, 1)).reshape(-1)
+            y_val_s = y_scaler.transform(y_val.reshape(-1, 1)).reshape(-1)
+            y_test_s = y_scaler.transform(y_test.reshape(-1, 1)).reshape(-1)
+
+            model = train_lstm_model(X_train_s, y_train_s, X_val_s, y_val_s, {
                 "lookback": lookback_default,
                 "horizon": horizon,
                 **params,
             }, device=device)
             batch_size = int(params.get("batch_size", 256))
-            lstm_metrics = evaluate_seq_model(model, X_test, y_test, lookback_default, horizon, device, batch_size, target)
-            y_true_val, y_pred_val = collect_seq_preds(model, X_val, y_val, lookback_default, horizon, device, batch_size)
-            lstm_q = residual_quantiles(y_true_val, y_pred_val, quantiles) if y_true_val is not None else {}
+            y_true_val_s, y_pred_val_s = collect_seq_preds(model, X_val_s, y_val_s, lookback_default, horizon, device, batch_size)
+            if y_true_val_s is not None:
+                y_true_val = y_scaler.inverse_transform(y_true_val_s.reshape(-1, 1)).reshape(-1)
+                y_pred_val = y_scaler.inverse_transform(y_pred_val_s.reshape(-1, 1)).reshape(-1)
+                lstm_q = residual_quantiles(y_true_val, y_pred_val, quantiles)
+            else:
+                lstm_q = {}
 
             torch.save({
                 "model_type": "lstm",
@@ -270,11 +287,17 @@ def main():
                 },
                 "quantiles": quantiles,
                 "residual_quantiles": lstm_q,
+                "x_scaler": x_scaler.to_dict(),
+                "y_scaler": y_scaler.to_dict(),
             }, art_dir / f"lstm_{target}.pt")
 
-            if lstm_metrics.get("rmse") is not None:
-                y_true_test, y_pred_test = collect_seq_preds(model, X_test, y_test, lookback_default, horizon, device, batch_size)
-                lstm_metrics = {**compute_metrics(y_true_test, y_pred_test, target)}
+            y_true_test_s, y_pred_test_s = collect_seq_preds(model, X_test_s, y_test_s, lookback_default, horizon, device, batch_size)
+            if y_true_test_s is not None:
+                y_true_test = y_scaler.inverse_transform(y_true_test_s.reshape(-1, 1)).reshape(-1)
+                y_pred_test = y_scaler.inverse_transform(y_pred_test_s.reshape(-1, 1)).reshape(-1)
+                lstm_metrics = compute_metrics(y_true_test, y_pred_test, target)
+            else:
+                lstm_metrics = {"rmse": None, "mae": None, "mape": None, "smape": None}
             target_res["lstm"] = {**lstm_metrics, "residual_quantiles": lstm_q}
             if backtest_enabled and lstm_metrics.get("rmse") is not None:
                 backtest_payload["targets"].setdefault(target, {})
@@ -286,15 +309,28 @@ def main():
         tcn_cfg = cfg["models"].get("dl_tcn", {})
         if tcn_cfg.get("enabled", False):
             params = tcn_cfg.get("params", {})
-            model = train_tcn_model(X_train, y_train, X_val, y_val, {
+            x_scaler = StandardScaler.fit(X_train)
+            y_scaler = StandardScaler.fit(y_train.reshape(-1, 1))
+            X_train_s = x_scaler.transform(X_train)
+            X_val_s = x_scaler.transform(X_val)
+            X_test_s = x_scaler.transform(X_test)
+            y_train_s = y_scaler.transform(y_train.reshape(-1, 1)).reshape(-1)
+            y_val_s = y_scaler.transform(y_val.reshape(-1, 1)).reshape(-1)
+            y_test_s = y_scaler.transform(y_test.reshape(-1, 1)).reshape(-1)
+
+            model = train_tcn_model(X_train_s, y_train_s, X_val_s, y_val_s, {
                 "lookback": lookback_default,
                 "horizon": horizon,
                 **params,
             }, device=device)
             batch_size = int(params.get("batch_size", 256))
-            tcn_metrics = evaluate_seq_model(model, X_test, y_test, lookback_default, horizon, device, batch_size, target)
-            y_true_val, y_pred_val = collect_seq_preds(model, X_val, y_val, lookback_default, horizon, device, batch_size)
-            tcn_q = residual_quantiles(y_true_val, y_pred_val, quantiles) if y_true_val is not None else {}
+            y_true_val_s, y_pred_val_s = collect_seq_preds(model, X_val_s, y_val_s, lookback_default, horizon, device, batch_size)
+            if y_true_val_s is not None:
+                y_true_val = y_scaler.inverse_transform(y_true_val_s.reshape(-1, 1)).reshape(-1)
+                y_pred_val = y_scaler.inverse_transform(y_pred_val_s.reshape(-1, 1)).reshape(-1)
+                tcn_q = residual_quantiles(y_true_val, y_pred_val, quantiles)
+            else:
+                tcn_q = {}
 
             torch.save({
                 "model_type": "tcn",
@@ -310,11 +346,17 @@ def main():
                 },
                 "quantiles": quantiles,
                 "residual_quantiles": tcn_q,
+                "x_scaler": x_scaler.to_dict(),
+                "y_scaler": y_scaler.to_dict(),
             }, art_dir / f"tcn_{target}.pt")
 
-            if tcn_metrics.get("rmse") is not None:
-                y_true_test, y_pred_test = collect_seq_preds(model, X_test, y_test, lookback_default, horizon, device, batch_size)
-                tcn_metrics = {**compute_metrics(y_true_test, y_pred_test, target)}
+            y_true_test_s, y_pred_test_s = collect_seq_preds(model, X_test_s, y_test_s, lookback_default, horizon, device, batch_size)
+            if y_true_test_s is not None:
+                y_true_test = y_scaler.inverse_transform(y_true_test_s.reshape(-1, 1)).reshape(-1)
+                y_pred_test = y_scaler.inverse_transform(y_pred_test_s.reshape(-1, 1)).reshape(-1)
+                tcn_metrics = compute_metrics(y_true_test, y_pred_test, target)
+            else:
+                tcn_metrics = {"rmse": None, "mae": None, "mape": None, "smape": None}
             target_res["tcn"] = {**tcn_metrics, "residual_quantiles": tcn_q}
             if backtest_enabled and tcn_metrics.get("rmse") is not None:
                 backtest_payload["targets"].setdefault(target, {})
