@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -52,6 +53,8 @@ def fit_sequence_model(model, train_dl, val_dl, epochs: int, lr: float, horizon:
     loss_fn = torch.nn.MSELoss()
     best_val = float("inf")
     best_state = None
+    patience = 3
+    wait = 0
 
     for ep in range(1, epochs + 1):
         model.train()
@@ -81,7 +84,13 @@ def fit_sequence_model(model, train_dl, val_dl, epochs: int, lr: float, horizon:
         if val_loss < best_val:
             best_val = val_loss
             best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+            wait = 0
+        else:
+            wait += 1
         print(f"Epoch {ep}/{epochs} train_mse={np.mean(tr_losses):.4f} val_mse={val_loss:.4f}")
+        if wait >= patience:
+            print(f"Early stopping at epoch {ep} (best_val={best_val:.4f})")
+            break
 
     if best_state is not None:
         model.load_state_dict(best_state)
@@ -175,6 +184,11 @@ def main():
     args = p.parse_args()
 
     cfg = yaml.safe_load(Path(args.config).read_text(encoding="utf-8"))
+    warnings.filterwarnings(
+        "ignore",
+        message="X does not have valid feature names, but LGBMRegressor was fitted with feature names",
+        category=UserWarning,
+    )
     set_seed(int(cfg.get("seed", 42)))
     features_path = Path(cfg["data"]["processed_path"])
     if not features_path.exists():
