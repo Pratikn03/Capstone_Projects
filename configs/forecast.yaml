@@ -4,4 +4,5 @@ models:
   load_mw: artifacts/models/lstm_load_mw.pt
   wind_mw: artifacts/models/lstm_wind_mw.pt
   solar_mw: artifacts/models/lstm_solar_mw.pt
+  price_eur_mwh: artifacts/models/lstm_price_eur_mwh.pt
 fallback_order: [lstm, tcn, gbm]

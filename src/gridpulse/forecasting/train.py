@@ -9,6 +9,7 @@ import pandas as pd
 import yaml
 
 from gridpulse.utils.metrics import rmse, mape, mae, smape, daylight_mape
+from gridpulse.utils.seed import set_seed
 from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm
 from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
 from gridpulse.forecasting.dl_lstm import LSTMForecaster
@@ -170,6 +171,7 @@ def main():
     args = p.parse_args()
 
     cfg = yaml.safe_load(Path(args.config).read_text(encoding="utf-8"))
+    set_seed(int(cfg.get("seed", 42)))
     features_path = Path(cfg["data"]["processed_path"])
     if not features_path.exists():
         raise FileNotFoundError(f"Missing {features_path}. Run build_features first.")
@@ -210,7 +212,8 @@ def main():
         # ---- GBM ----
         gbm_cfg = cfg["models"].get("baseline_gbm", {})
         if gbm_cfg.get("enabled", True):
-            gbm_params = gbm_cfg.get("params", {})
+            gbm_params = dict(gbm_cfg.get("params", {}))
+            gbm_params.setdefault("random_state", int(cfg.get("seed", 42)))
             model_kind, gbm = train_gbm(X_train, y_train, gbm_params)
             gbm_pred_test = predict_gbm(gbm, X_test)
             gbm_pred_val = predict_gbm(gbm, X_val)

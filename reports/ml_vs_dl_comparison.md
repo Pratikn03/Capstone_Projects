@@ -29,3 +29,6 @@
 | lstm | 10155.833 | 6234659840.000 |
 | tcn | 2949.849 | 34253938688.000 |
 
+## Model Comparison Chart (mean across targets)
+
+![Model Comparison](figures/model_comparison.png)
