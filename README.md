@@ -15,6 +15,8 @@ Short preview of the forecasting inputs (sample run):
 
 ![GridPulse Demo](reports/figures/demo.gif)
 
+![Dashboard Snapshot](reports/figures/dashboard_snapshot.png)
+
 ## Architecture
 
 ```mermaid
