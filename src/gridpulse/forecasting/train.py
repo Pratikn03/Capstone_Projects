@@ -8,11 +8,12 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from gridpulse.utils.metrics import rmse, mape
+from gridpulse.utils.metrics import rmse, mape, mae, smape, daylight_mape
 from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm
 from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
 from gridpulse.forecasting.dl_lstm import LSTMForecaster
 from gridpulse.forecasting.dl_tcn import TCNForecaster
+from gridpulse.forecasting.backtest import walk_forward_horizon_metrics
 
 import torch
 from torch.utils.data import DataLoader
@@ -31,6 +32,17 @@ def make_xy(df: pd.DataFrame, target: str):
 def residual_quantiles(y_true: np.ndarray, y_pred: np.ndarray, quantiles: list[float]) -> dict[str, float]:
     resid = np.asarray(y_true) - np.asarray(y_pred)
     return {str(q): float(np.quantile(resid, q)) for q in quantiles}
+
+def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, target: str) -> dict:
+    out = {
+        "rmse": rmse(y_true, y_pred),
+        "mae": mae(y_true, y_pred),
+        "mape": mape(y_true, y_pred),
+        "smape": smape(y_true, y_pred),
+    }
+    if target == "solar_mw":
+        out["daylight_mape"] = daylight_mape(y_true, y_pred)
+    return out
 
 
 def fit_sequence_model(model, train_dl, val_dl, epochs: int, lr: float, horizon: int, device: str):
@@ -184,6 +196,9 @@ def main():
         "quantiles": quantiles,
         "targets": {},
     }
+    backtest_cfg = cfg.get("backtest", {})
+    backtest_enabled = bool(backtest_cfg.get("enabled", False))
+    backtest_payload = {"targets": {}} if backtest_enabled else None
 
     for target in targets:
         X_train, y_train, feat_cols = make_xy(train_df, target)
@@ -200,8 +215,7 @@ def main():
             gbm_pred_test = predict_gbm(gbm, X_test)
             gbm_pred_val = predict_gbm(gbm, X_val)
             gbm_metrics = {
-                "rmse": rmse(y_test, gbm_pred_test),
-                "mape": mape(y_test, gbm_pred_test),
+                **compute_metrics(y_test, gbm_pred_test, target),
                 "model": f"gbm_{model_kind}",
             }
             gbm_q = residual_quantiles(y_val, gbm_pred_val, quantiles)
@@ -218,6 +232,11 @@ def main():
                 }, f)
 
             target_res["gbm"] = {**gbm_metrics, "residual_quantiles": gbm_q}
+            if backtest_enabled:
+                backtest_payload["targets"].setdefault(target, {})
+                backtest_payload["targets"][target]["gbm"] = walk_forward_horizon_metrics(
+                    y_test, gbm_pred_test, horizon, target
+                )
 
         # ---- LSTM ----
         lstm_cfg = cfg["models"].get("dl_lstm", {})
@@ -250,7 +269,15 @@ def main():
                 "residual_quantiles": lstm_q,
             }, art_dir / f"lstm_{target}.pt")
 
+            if lstm_metrics.get("rmse") is not None:
+                y_true_test, y_pred_test = collect_seq_preds(model, X_test, y_test, lookback_default, horizon, device, batch_size)
+                lstm_metrics = {**compute_metrics(y_true_test, y_pred_test, target)}
             target_res["lstm"] = {**lstm_metrics, "residual_quantiles": lstm_q}
+            if backtest_enabled and lstm_metrics.get("rmse") is not None:
+                backtest_payload["targets"].setdefault(target, {})
+                backtest_payload["targets"][target]["lstm"] = walk_forward_horizon_metrics(
+                    y_true_test, y_pred_test, horizon, target
+                )
 
         # ---- TCN ----
         tcn_cfg = cfg["models"].get("dl_tcn", {})
@@ -282,7 +309,15 @@ def main():
                 "residual_quantiles": tcn_q,
             }, art_dir / f"tcn_{target}.pt")
 
+            if tcn_metrics.get("rmse") is not None:
+                y_true_test, y_pred_test = collect_seq_preds(model, X_test, y_test, lookback_default, horizon, device, batch_size)
+                tcn_metrics = {**compute_metrics(y_true_test, y_pred_test, target)}
             target_res["tcn"] = {**tcn_metrics, "residual_quantiles": tcn_q}
+            if backtest_enabled and tcn_metrics.get("rmse") is not None:
+                backtest_payload["targets"].setdefault(target, {})
+                backtest_payload["targets"][target]["tcn"] = walk_forward_horizon_metrics(
+                    y_true_test, y_pred_test, horizon, target
+                )
 
         report["targets"][target] = target_res
 
@@ -315,6 +350,11 @@ def main():
 
     (rep_dir / "ml_vs_dl_comparison.md").write_text("".join(lines), encoding="utf-8")
     (rep_dir / "week2_metrics.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    if backtest_enabled and backtest_payload is not None:
+        out_path = Path(backtest_cfg.get("out_path", rep_dir / "walk_forward_report.json"))
+        out_path = Path(out_path)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(backtest_payload, indent=2), encoding="utf-8")
     print("Saved report to reports/ and models to artifacts/models")
 
 

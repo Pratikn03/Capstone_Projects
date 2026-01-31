@@ -66,6 +66,8 @@ python -m gridpulse.data_pipeline.build_features --in data/raw --out data/proces
 python -m gridpulse.forecasting.train --config configs/train_forecast.yaml
 ```
 
+Training outputs include RMSE, MAE, MAPE, sMAPE, and daylight‑MAPE for solar. A walk‑forward report is optionally generated at `reports/walk_forward_report.json`.
+
 ### 4) Start API
 ```bash
 uvicorn services.api.main:app --reload --port 8000

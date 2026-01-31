@@ -39,3 +39,7 @@ artifacts:
   out_dir: artifacts/models
 reports:
   out_dir: reports
+
+backtest:
+  enabled: true
+  out_path: reports/walk_forward_report.json
