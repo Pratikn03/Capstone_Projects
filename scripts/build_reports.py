@@ -8,6 +8,8 @@ import math
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import torch
+from torch.utils.data import DataLoader
 
 repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
@@ -16,12 +18,105 @@ if str(repo_root / "src") not in sys.path:
 from gridpulse.forecasting.baselines import persistence_24h
 from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm
 from gridpulse.forecasting.backtest import multi_horizon_metrics
+from gridpulse.forecasting.predict import load_model_bundle
+from gridpulse.forecasting.dl_lstm import LSTMForecaster
+from gridpulse.forecasting.dl_tcn import TCNForecaster
+from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
 from gridpulse.optimizer.lp_dispatch import optimize_dispatch
 from gridpulse.monitoring.retraining import load_monitoring_config, compute_data_drift
+from gridpulse.utils.metrics import rmse, mae, mape, smape, daylight_mape
 
 
 def ensure_dir(path: Path):
     path.mkdir(parents=True, exist_ok=True)
+
+
+def _safe_float(val):
+    try:
+        if val is None:
+            return None
+        if isinstance(val, float) and (math.isnan(val) or math.isinf(val)):
+            return None
+        return float(val)
+    except Exception:
+        return None
+
+
+def _sanitize(obj):
+    if isinstance(obj, dict):
+        return {k: _sanitize(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize(v) for v in obj]
+    if isinstance(obj, float):
+        return _safe_float(obj)
+    return obj
+
+
+def _compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, target: str) -> dict:
+    out = {
+        "rmse": rmse(y_true, y_pred),
+        "mae": mae(y_true, y_pred),
+        "mape": mape(y_true, y_pred),
+        "smape": smape(y_true, y_pred),
+    }
+    if target == "solar_mw":
+        out["daylight_mape"] = daylight_mape(y_true, y_pred)
+    return out
+
+
+def _build_torch_model(bundle: dict):
+    model_type = bundle.get("model_type")
+    feat_cols = bundle.get("feature_cols", [])
+    params = bundle.get("model_params", {})
+    horizon = int(bundle.get("horizon", params.get("horizon", 24)))
+    if model_type == "lstm":
+        model = LSTMForecaster(
+            n_features=len(feat_cols),
+            hidden_size=int(params.get("hidden_size", 128)),
+            num_layers=int(params.get("num_layers", 2)),
+            dropout=float(params.get("dropout", 0.1)),
+            horizon=horizon,
+        )
+    elif model_type == "tcn":
+        model = TCNForecaster(
+            n_features=len(feat_cols),
+            num_channels=list(params.get("num_channels", [32, 32, 32])),
+            kernel_size=int(params.get("kernel_size", 3)),
+            dropout=float(params.get("dropout", 0.1)),
+        )
+    else:
+        raise ValueError(f"Unknown torch model_type: {model_type}")
+
+    model.load_state_dict(bundle["state_dict"])
+    model.eval()
+    return model
+
+
+def _eval_seq_model(bundle: dict, df: pd.DataFrame) -> dict | None:
+    feat_cols = bundle.get("feature_cols", [])
+    target = bundle.get("target")
+    lookback = int(bundle.get("lookback", 168))
+    horizon = int(bundle.get("horizon", 24))
+    if not feat_cols or target is None:
+        return None
+    X = df[feat_cols].to_numpy()
+    y = df[target].to_numpy()
+    ds = TimeSeriesWindowDataset(X, y, SeqConfig(lookback=lookback, horizon=horizon))
+    if len(ds) == 0:
+        return None
+    dl = DataLoader(ds, batch_size=256, shuffle=False)
+    model = _build_torch_model(bundle)
+    preds = []
+    trues = []
+    with torch.no_grad():
+        for xb, yb in dl:
+            pred_seq = model(xb).numpy()
+            pred_hz = pred_seq[:, -horizon:]
+            preds.append(pred_hz.reshape(-1))
+            trues.append(yb.numpy().reshape(-1))
+    y_true = np.concatenate(trues)
+    y_pred = np.concatenate(preds)
+    return _compute_metrics(y_true, y_pred, target)
 
 
 def load_split_data(repo_root: Path):
@@ -70,7 +165,7 @@ def build_multi_horizon(repo_root: Path):
         result["targets"][target] = {"persistence": baseline, "gbm": gbm}
 
     out_path = repo_root / "reports" / "multi_horizon_backtest.json"
-    out_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+    out_path.write_text(json.dumps(_sanitize(result), indent=2), encoding="utf-8")
     return result
 
 
@@ -104,7 +199,7 @@ def plot_multi_horizon(repo_root: Path, report: dict):
     plt.tight_layout()
 
     out_path = fig_dir / "multi_horizon_backtest.png"
-    fig.savefig(out_path, dpi=180, bbox_inches="tight")
+    fig.savefig(out_path, dpi=300, bbox_inches="tight")
     return out_path
 
 
@@ -121,7 +216,7 @@ def make_sample_figures(repo_root: Path):
         recent.plot(x="timestamp", y="wind_mw", ax=ax[1], color="#2ca02c", title="Wind (last 7 days)")
         recent.plot(x="timestamp", y="solar_mw", ax=ax[2], color="#ff7f0e", title="Solar (last 7 days)")
         plt.tight_layout()
-        fig.savefig(fig_dir / "forecast_sample.png", dpi=180, bbox_inches="tight")
+        fig.savefig(fig_dir / "forecast_sample.png", dpi=300, bbox_inches="tight")
 
     # Optimization sample
     cfg_path = repo_root / "configs" / "optimization.yaml"
@@ -142,7 +237,7 @@ def make_sample_figures(repo_root: Path):
     df[["grid_mw", "battery_charge_mw", "battery_discharge_mw"]].plot(ax=ax[0], title="Dispatch (sample)")
     df[["soc_mwh"]].plot(ax=ax[1], title="Battery SOC (sample)")
     plt.tight_layout()
-    fig.savefig(fig_dir / "dispatch_sample.png", dpi=180, bbox_inches="tight")
+    fig.savefig(fig_dir / "dispatch_sample.png", dpi=300, bbox_inches="tight")
 
     # Drift sample
     train_df, test_df = load_split_data(repo_root)
@@ -161,7 +256,7 @@ def make_sample_figures(repo_root: Path):
         ax.tick_params(axis="x", rotation=45)
         ax.legend()
         plt.tight_layout()
-        fig.savefig(fig_dir / "drift_sample.png", dpi=180, bbox_inches="tight")
+        fig.savefig(fig_dir / "drift_sample.png", dpi=300, bbox_inches="tight")
 
 
 def make_demo_gif(repo_root: Path):
@@ -199,11 +294,58 @@ def make_demo_gif(repo_root: Path):
     return out_path
 
 
-def build_model_cards(repo_root: Path):
+def refresh_metrics_from_models(repo_root: Path) -> dict:
     report_path = repo_root / "reports" / "week2_metrics.json"
-    if not report_path.exists():
-        return None
-    metrics = json.loads(report_path.read_text(encoding="utf-8"))
+    if report_path.exists():
+        metrics = json.loads(report_path.read_text(encoding="utf-8"))
+    else:
+        metrics = {"targets": {}}
+
+    train_df, test_df = load_split_data(repo_root)
+    if test_df is None:
+        return metrics
+
+    targets = ["load_mw", "wind_mw", "solar_mw"]
+    for target in targets:
+        metrics.setdefault("targets", {}).setdefault(target, {})
+
+        # GBM
+        gbm_path = None
+        for p in (repo_root / "artifacts" / "models").glob(f"gbm_*_{target}.pkl"):
+            gbm_path = p
+            break
+        if gbm_path and gbm_path.exists():
+            bundle = load_model_bundle(gbm_path)
+            feat_cols = bundle.get("feature_cols", [])
+            if feat_cols:
+                X = test_df[feat_cols].to_numpy()
+                y = test_df[target].to_numpy()
+                pred = bundle["model"].predict(X)
+                m = _compute_metrics(y, pred, target)
+                m["model"] = gbm_path.stem.replace(f"_{target}", "")
+                metrics["targets"][target]["gbm"] = {
+                    **metrics["targets"][target].get("gbm", {}),
+                    **m,
+                }
+
+        # LSTM / TCN
+        for kind in ["lstm", "tcn"]:
+            path = repo_root / "artifacts" / "models" / f"{kind}_{target}.pt"
+            if path.exists():
+                bundle = load_model_bundle(path)
+                m = _eval_seq_model(bundle, test_df)
+                if m:
+                    metrics["targets"][target][kind] = {
+                        **metrics["targets"][target].get(kind, {}),
+                        **m,
+                    }
+
+    report_path.write_text(json.dumps(_sanitize(metrics), indent=2), encoding="utf-8")
+    return metrics
+
+
+def build_model_cards(repo_root: Path):
+    metrics = refresh_metrics_from_models(repo_root)
     targets = metrics.get("targets", {})
 
     cards_dir = repo_root / "reports" / "model_cards"
@@ -214,14 +356,23 @@ def build_model_cards(repo_root: Path):
         lines.append("## Overview\n")
         lines.append("Forecasting model trained on OPSD Germany time‑series.\n")
         lines.append("\n## Metrics (test split)\n")
-        lines.append("| Model | RMSE | MAE | sMAPE | MAPE | Daylight‑MAPE |\n")
-        lines.append("|---|---:|---:|---:|---:|---:|\n")
+        if target == "solar_mw":
+            lines.append("| Model | RMSE | MAE | sMAPE | MAPE | Daylight‑MAPE |\n")
+            lines.append("|---|---:|---:|---:|---:|---:|\n")
+        else:
+            lines.append("| Model | RMSE | MAE | sMAPE | MAPE |\n")
+            lines.append("|---|---:|---:|---:|---:|\n")
         for model, vals in data.items():
             if model == "n_features":
                 continue
-            lines.append(
-                f"| {model} | {vals.get('rmse', 'n/a')} | {vals.get('mae', 'n/a')} | {vals.get('smape', 'n/a')} | {vals.get('mape', 'n/a')} | {vals.get('daylight_mape', 'n/a')} |\n"
-            )
+            if target == "solar_mw":
+                lines.append(
+                    f"| {model} | {vals.get('rmse', 'n/a')} | {vals.get('mae', 'n/a')} | {vals.get('smape', 'n/a')} | {vals.get('mape', 'n/a')} | {vals.get('daylight_mape', 'n/a')} |\n"
+                )
+            else:
+                lines.append(
+                    f"| {model} | {vals.get('rmse', 'n/a')} | {vals.get('mae', 'n/a')} | {vals.get('smape', 'n/a')} | {vals.get('mape', 'n/a')} |\n"
+                )
         lines.append("\n## Intended Use\n")
         lines.append("Day‑ahead forecasting for grid planning and dispatch optimization.\n")
         lines.append("\n## Limitations\n")
@@ -231,8 +382,7 @@ def build_model_cards(repo_root: Path):
 
 
 def build_formal_report(repo_root: Path, multi_horizon_plot: Path | None):
-    report_path = repo_root / "reports" / "week2_metrics.json"
-    metrics = json.loads(report_path.read_text(encoding="utf-8")) if report_path.exists() else {}
+    metrics = refresh_metrics_from_models(repo_root)
     targets = metrics.get("targets", {})
 
     lines = []
@@ -244,14 +394,23 @@ def build_formal_report(repo_root: Path, multi_horizon_plot: Path | None):
         lines.append("## Model Metrics (Test Split)\n")
         for target, data in targets.items():
             lines.append(f"### {target}\n")
-            lines.append("| Model | RMSE | MAE | sMAPE | MAPE | Daylight‑MAPE |\n")
-            lines.append("|---|---:|---:|---:|---:|---:|\n")
+            if target == "solar_mw":
+                lines.append("| Model | RMSE | MAE | sMAPE | MAPE | Daylight‑MAPE |\n")
+                lines.append("|---|---:|---:|---:|---:|---:|\n")
+            else:
+                lines.append("| Model | RMSE | MAE | sMAPE | MAPE |\n")
+                lines.append("|---|---:|---:|---:|---:|\n")
             for model, vals in data.items():
                 if model == "n_features":
                     continue
-                lines.append(
-                    f"| {model} | {vals.get('rmse', 'n/a')} | {vals.get('mae', 'n/a')} | {vals.get('smape', 'n/a')} | {vals.get('mape', 'n/a')} | {vals.get('daylight_mape', 'n/a')} |\n"
-                )
+                if target == "solar_mw":
+                    lines.append(
+                        f"| {model} | {vals.get('rmse', 'n/a')} | {vals.get('mae', 'n/a')} | {vals.get('smape', 'n/a')} | {vals.get('mape', 'n/a')} | {vals.get('daylight_mape', 'n/a')} |\n"
+                    )
+                else:
+                    lines.append(
+                        f"| {model} | {vals.get('rmse', 'n/a')} | {vals.get('mae', 'n/a')} | {vals.get('smape', 'n/a')} | {vals.get('mape', 'n/a')} |\n"
+                    )
             lines.append("\n")
 
     if multi_horizon_plot:

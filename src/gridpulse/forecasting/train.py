@@ -158,11 +158,11 @@ def collect_seq_preds(model, X: np.ndarray, y: np.ndarray, lookback: int, horizo
     return np.concatenate(trues), np.concatenate(preds)
 
 
-def evaluate_seq_model(model, X, y, lookback, horizon, device, batch_size):
+def evaluate_seq_model(model, X, y, lookback, horizon, device, batch_size, target: str):
     y_true, y_pred = collect_seq_preds(model, X, y, lookback, horizon, device, batch_size)
     if y_true is None:
-        return {"rmse": None, "mape": None, "note": "insufficient window"}
-    return {"rmse": rmse(y_true, y_pred), "mape": mape(y_true, y_pred)}
+        return {"rmse": None, "mae": None, "mape": None, "smape": None, "note": "insufficient window"}
+    return compute_metrics(y_true, y_pred, target)
 
 
 def main():
@@ -251,7 +251,7 @@ def main():
                 **params,
             }, device=device)
             batch_size = int(params.get("batch_size", 256))
-            lstm_metrics = evaluate_seq_model(model, X_test, y_test, lookback_default, horizon, device, batch_size)
+            lstm_metrics = evaluate_seq_model(model, X_test, y_test, lookback_default, horizon, device, batch_size, target)
             y_true_val, y_pred_val = collect_seq_preds(model, X_val, y_val, lookback_default, horizon, device, batch_size)
             lstm_q = residual_quantiles(y_true_val, y_pred_val, quantiles) if y_true_val is not None else {}
 
@@ -292,7 +292,7 @@ def main():
                 **params,
             }, device=device)
             batch_size = int(params.get("batch_size", 256))
-            tcn_metrics = evaluate_seq_model(model, X_test, y_test, lookback_default, horizon, device, batch_size)
+            tcn_metrics = evaluate_seq_model(model, X_test, y_test, lookback_default, horizon, device, batch_size, target)
             y_true_val, y_pred_val = collect_seq_preds(model, X_val, y_val, lookback_default, horizon, device, batch_size)
             tcn_q = residual_quantiles(y_true_val, y_pred_val, quantiles) if y_true_val is not None else {}
 
