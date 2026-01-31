@@ -1,6 +1,6 @@
 # Data Quality Report
 
-Input file: `data/raw/time_series_60min_singleindex.csv`
+Input file: `/Users/pratik_n/Downloads/gridpulse/data/raw/time_series_60min_singleindex.csv`
 
 ## Coverage
 - Start: **2014-12-31 23:00:00+00:00**
