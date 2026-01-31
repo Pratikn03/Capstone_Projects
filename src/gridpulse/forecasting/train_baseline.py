@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from gridpulse.utils.metrics import rmse, mape
+from gridpulse.utils.seed import set_seed
 from gridpulse.forecasting.baselines import persistence_24h, moving_average
 from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm
 
@@ -26,6 +27,7 @@ def main():
     p.add_argument("--out-dir", default="artifacts/backtests")
     p.add_argument("--target", default="load_mw", choices=TARGETS)
     args = p.parse_args()
+    set_seed(42)
 
     features_path = Path(args.features)
     splits_dir = Path(args.splits)
@@ -69,7 +71,11 @@ def main():
     X_val, y_val, _ = make_xy(val_df, args.target)
     X_test, y_test, _ = make_xy(test_df, args.target)
 
-    model_kind, model = train_gbm(X_train, y_train, params={"n_estimators": 500, "learning_rate": 0.05})
+    model_kind, model = train_gbm(
+        X_train,
+        y_train,
+        params={"n_estimators": 500, "learning_rate": 0.05, "random_state": 42},
+    )
     pred_test = predict_gbm(model, X_test)
 
     gbm_metrics = {

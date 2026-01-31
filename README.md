@@ -1,6 +1,7 @@
 # GridPulse: Autonomous Energy Intelligence & Optimization Platform
 
 ![CI](https://github.com/Pratikn03/Capstone_Projects/actions/workflows/ci.yml/badge.svg)
+![Reproducible](https://img.shields.io/badge/reproducible-yes-success)
 
 GridPulse is an end‑to‑end energy intelligence platform for modern electrical grids. It ingests power‑system and weather data, forecasts load and renewables, detects anomalies, and optimizes dispatch under cost and carbon objectives. The system includes MLOps monitoring and a Streamlit operator dashboard.
 
@@ -44,6 +45,7 @@ python -m venv .venv
 source .venv/bin/activate   # macOS/Linux
 pip install -r requirements.txt
 ```
+Exact versions are captured in `requirements.lock.txt` after installation.
 
 ### 2) Run the data pipeline
 ```bash
@@ -67,6 +69,12 @@ python -m gridpulse.forecasting.train --config configs/train_forecast.yaml
 ```
 
 Training outputs include RMSE, MAE, MAPE, sMAPE, and daylight‑MAPE for solar. A walk‑forward report is optionally generated at `reports/walk_forward_report.json`.
+
+## Reproducibility
+- **Fixed seed:** `configs/train_forecast.yaml` includes `seed: 42` (override as needed).
+- **Deterministic training:** seeds are applied to Python, NumPy, and PyTorch.
+- **Exact steps:** use `notebooks/13_runbook_end_to_end.ipynb` for a full end‑to‑end run.
+- **Version locks:** `requirements.lock.txt` captures installed versions.
 
 ### 4) Start API
 ```bash
@@ -96,6 +104,10 @@ curl -X POST http://localhost:8000/optimize \
 - `notebooks/07_production_run.ipynb` — end‑to‑end runbook
 - `notebooks/08_weather_features.ipynb` — optional weather features
 - `notebooks/09_walk_forward_report.ipynb` — backtest visualization
+- `notebooks/10_optimization_engine.ipynb` — optimization + dispatch plots
+- `notebooks/11_monitoring_drift.ipynb` — drift checks + retraining decision
+- `notebooks/12_api_dashboard_smoke_test.ipynb` — API health + endpoint checks
+- `notebooks/13_runbook_end_to_end.ipynb` — full pipeline runbook
 
 ## Repo Layout
 - `src/gridpulse/` — core library (data pipeline, forecasting, anomaly, optimizer, monitoring)

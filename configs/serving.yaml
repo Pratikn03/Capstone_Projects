@@ -1,0 +1,25 @@
+server:
+  name: gridpulse_api
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  timeout_keep_alive: 30
+
+endpoints:
+  forecast:
+    route: "/api/v1/forecast"
+    method: POST
+    model_version: "latest" # or specific version hash
+  optimize:
+    route: "/api/v1/optimize"
+    method: POST
+    timeout: 60 # Optimization can take longer
+
+monitoring:
+  prometheus_metrics: true
+  health_check: "/health"
+  rate_limit: "100/minute"
+
+security:
+  auth_enabled: true
+  algorithm: "HS256"

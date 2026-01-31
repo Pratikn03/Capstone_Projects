@@ -5,6 +5,7 @@ features:
   - "load_mw"
   - "wind_mw"
   - "solar_mw"
+  - "price_eur_mwh"
   - "hour"
   - "dayofweek"
   - "is_weekend"

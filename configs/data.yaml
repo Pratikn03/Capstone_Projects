@@ -10,6 +10,7 @@ dataset:
     load: load_mw
     wind: wind_mw
     solar: solar_mw
+    price: price_eur_mwh
 features:
   lags: [1, 24, 168]
   rolling_windows: [24, 168]
