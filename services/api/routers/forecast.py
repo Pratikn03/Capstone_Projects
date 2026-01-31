@@ -69,7 +69,7 @@ def get_forecast(
             generated_at=pd.Timestamp.utcnow().isoformat(),
             horizon_hours=horizon,
             forecasts={},
-            meta={"note": f"Missing features file: {features_path}"},
+            meta={"note": f"Missing features file: {features_path}. Run the data pipeline first."},
         )
 
     df = pd.read_parquet(features_path)
@@ -86,6 +86,8 @@ def get_forecast(
         results[tgt] = predict_next_24h(df, bundle, horizon=horizon)
 
     meta = {"missing_targets": missing} if missing else {}
+    if missing and not results:
+        meta["note"] = "No trained model bundles found. Train models and update configs/forecast.yaml."
     return ForecastResponse(
         generated_at=pd.Timestamp.utcnow().isoformat(),
         horizon_hours=horizon,
