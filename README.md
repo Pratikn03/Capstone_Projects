@@ -95,6 +95,7 @@ curl -X POST http://localhost:8000/optimize \
 - `notebooks/06_error_analysis.ipynb` — residual analysis
 - `notebooks/07_production_run.ipynb` — end‑to‑end runbook
 - `notebooks/08_weather_features.ipynb` — optional weather features
+- `notebooks/09_walk_forward_report.ipynb` — backtest visualization
 
 ## Repo Layout
 - `src/gridpulse/` — core library (data pipeline, forecasting, anomaly, optimizer, monitoring)
