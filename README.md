@@ -94,6 +94,7 @@ Training outputs include RMSE, MAE, MAPE, sMAPE, and daylight‑MAPE for solar. 
 - **Exact steps:** use `notebooks/13_runbook_end_to_end.ipynb` for a full end‑to‑end run.
 - **Version locks:** `requirements.lock.txt` captures installed versions.
 - **Pipeline cache:** `.cache/pipeline.json` tracks hashes to skip unchanged steps.
+- **Scaled training:** LSTM/TCN training applies feature + target scaling for stability; scalers are stored in model bundles and used at inference time.
 
 ## Reports
 - `reports/formal_evaluation_report.md` — 1‑page evaluation summary with plots.

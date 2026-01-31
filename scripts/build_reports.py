@@ -10,6 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import DataLoader
+import warnings
 
 repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
@@ -480,6 +481,11 @@ def build_formal_report(repo_root: Path, multi_horizon_plot: Path | None, metric
 
 
 def main():
+    warnings.filterwarnings(
+        "ignore",
+        message="X does not have valid feature names, but LGBMRegressor was fitted with feature names",
+        category=UserWarning,
+    )
     repo_root = Path(__file__).resolve().parents[1]
     multi = build_multi_horizon(repo_root)
     plot_path = plot_multi_horizon(repo_root, multi) if multi else None
