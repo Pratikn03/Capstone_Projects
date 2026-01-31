@@ -22,6 +22,7 @@ from gridpulse.forecasting.predict import load_model_bundle
 from gridpulse.forecasting.dl_lstm import LSTMForecaster
 from gridpulse.forecasting.dl_tcn import TCNForecaster
 from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
+from gridpulse.utils.scaler import StandardScaler
 from gridpulse.optimizer.lp_dispatch import optimize_dispatch
 from gridpulse.monitoring.retraining import load_monitoring_config, compute_data_drift
 from gridpulse.utils.metrics import rmse, mae, mape, smape, daylight_mape
@@ -101,6 +102,12 @@ def _eval_seq_model(bundle: dict, df: pd.DataFrame) -> dict | None:
         return None
     X = df[feat_cols].to_numpy()
     y = df[target].to_numpy()
+    x_scaler = StandardScaler.from_dict(bundle.get("x_scaler"))
+    y_scaler = StandardScaler.from_dict(bundle.get("y_scaler"))
+    if x_scaler is not None:
+        X = x_scaler.transform(X)
+    if y_scaler is not None:
+        y = y_scaler.transform(y.reshape(-1, 1)).reshape(-1)
     ds = TimeSeriesWindowDataset(X, y, SeqConfig(lookback=lookback, horizon=horizon))
     if len(ds) == 0:
         return None
@@ -116,6 +123,9 @@ def _eval_seq_model(bundle: dict, df: pd.DataFrame) -> dict | None:
             trues.append(yb.numpy().reshape(-1))
     y_true = np.concatenate(trues)
     y_pred = np.concatenate(preds)
+    if y_scaler is not None:
+        y_true = y_scaler.inverse_transform(y_true.reshape(-1, 1)).reshape(-1)
+        y_pred = y_scaler.inverse_transform(y_pred.reshape(-1, 1)).reshape(-1)
     return _compute_metrics(y_true, y_pred, target)
 
 
@@ -294,6 +304,51 @@ def make_demo_gif(repo_root: Path):
     return out_path
 
 
+def plot_model_comparison(repo_root: Path, metrics: dict):
+    fig_dir = repo_root / "reports" / "figures"
+    ensure_dir(fig_dir)
+
+    targets = metrics.get("targets", {})
+    if not targets:
+        return None
+
+    model_names = set()
+    for _, data in targets.items():
+        for model in data.keys():
+            if model != "n_features":
+                model_names.add(model)
+    models = sorted(model_names)
+    if not models:
+        return None
+
+    metric_keys = ["rmse", "mae", "smape"]
+    means = {m: {} for m in models}
+    for m in models:
+        for k in metric_keys:
+            vals = []
+            for _, data in targets.items():
+                v = data.get(m, {}).get(k)
+                if v is not None:
+                    vals.append(v)
+            means[m][k] = float(np.mean(vals)) if vals else None
+
+    fig, ax = plt.subplots(1, 3, figsize=(12, 3.5))
+    for i, metric in enumerate(metric_keys):
+        vals = [means[m][metric] if means[m][metric] is not None else float("nan") for m in models]
+        ax[i].bar(models, vals, color=["#1f77b4", "#ff7f0e", "#2ca02c"][: len(models)])
+        ax[i].set_title(metric.upper())
+        ax[i].tick_params(axis="x", rotation=25)
+        ax[i].set_ylabel("mean across targets")
+        for j, v in enumerate(vals):
+            if not np.isnan(v):
+                ax[i].text(j, v, f"{v:.2f}", ha="center", va="bottom", fontsize=8)
+    plt.tight_layout()
+
+    out_path = fig_dir / "model_comparison.png"
+    fig.savefig(out_path, dpi=300, bbox_inches="tight")
+    return out_path
+
+
 def refresh_metrics_from_models(repo_root: Path) -> dict:
     report_path = repo_root / "reports" / "week2_metrics.json"
     if report_path.exists():
@@ -318,7 +373,7 @@ def refresh_metrics_from_models(repo_root: Path) -> dict:
             bundle = load_model_bundle(gbm_path)
             feat_cols = bundle.get("feature_cols", [])
             if feat_cols:
-                X = test_df[feat_cols].to_numpy()
+                X = test_df[feat_cols]
                 y = test_df[target].to_numpy()
                 pred = bundle["model"].predict(X)
                 m = _compute_metrics(y, pred, target)
@@ -344,8 +399,8 @@ def refresh_metrics_from_models(repo_root: Path) -> dict:
     return metrics
 
 
-def build_model_cards(repo_root: Path):
-    metrics = refresh_metrics_from_models(repo_root)
+def build_model_cards(repo_root: Path, metrics: dict | None = None):
+    metrics = metrics or refresh_metrics_from_models(repo_root)
     targets = metrics.get("targets", {})
 
     cards_dir = repo_root / "reports" / "model_cards"
@@ -381,8 +436,8 @@ def build_model_cards(repo_root: Path):
         (cards_dir / f"{target}.md").write_text("".join(lines), encoding="utf-8")
 
 
-def build_formal_report(repo_root: Path, multi_horizon_plot: Path | None):
-    metrics = refresh_metrics_from_models(repo_root)
+def build_formal_report(repo_root: Path, multi_horizon_plot: Path | None, metrics: dict | None = None):
+    metrics = metrics or refresh_metrics_from_models(repo_root)
     targets = metrics.get("targets", {})
 
     lines = []
@@ -431,8 +486,10 @@ def main():
 
     make_sample_figures(repo_root)
     make_demo_gif(repo_root)
-    build_model_cards(repo_root)
-    build_formal_report(repo_root, plot_path)
+    metrics = refresh_metrics_from_models(repo_root)
+    plot_model_comparison(repo_root, metrics)
+    build_model_cards(repo_root, metrics)
+    build_formal_report(repo_root, plot_path, metrics)
 
     print("Reports and figures generated.")
 
