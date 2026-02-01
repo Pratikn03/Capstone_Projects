@@ -52,6 +52,7 @@ flowchart TD
 ## Data Sources
 - **Power system data:** Open Power System Data (OPSD) — Germany load/wind/solar time‑series.
 - **Weather data (optional):** Open‑Meteo for Berlin hourly features.
+- **USA dataset (optional):** EIA Form 930 (hourly balancing‑authority demand + generation).
 
 ## Quickstart
 
@@ -86,6 +87,11 @@ python -m gridpulse.data_pipeline.build_features --in data/raw --out data/proces
 ### 3) Train forecasting models (GBM + LSTM + TCN)
 ```bash
 python -m gridpulse.forecasting.train --config configs/train_forecast.yaml
+```
+
+### Optional: Train both OPSD + USA EIA930
+```bash
+python scripts/train_multi_dataset.py --ba MISO
 ```
 
 Training outputs include RMSE, MAE, MAPE, sMAPE, and daylight‑MAPE for solar. A walk‑forward report is optionally generated at `reports/walk_forward_report.json`.
