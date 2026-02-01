@@ -94,6 +94,15 @@ python -m gridpulse.forecasting.train --config configs/train_forecast.yaml
 python scripts/train_multi_dataset.py --ba MISO
 ```
 
+### Optional: Generate reports for EIA930
+```bash
+python scripts/build_reports.py \
+  --features data/processed/us_eia930/features.parquet \
+  --splits data/processed/us_eia930/splits \
+  --models-dir artifacts/models_eia930 \
+  --reports-dir reports/eia930
+```
+
 Training outputs include RMSE, MAE, MAPE, sMAPE, and daylight‑MAPE for solar. A walk‑forward report is optionally generated at `reports/walk_forward_report.json`.
 
 ## Reproducibility
@@ -108,7 +117,7 @@ Training outputs include RMSE, MAE, MAPE, sMAPE, and daylight‑MAPE for solar. 
 - `reports/formal_evaluation_report.md` — 1‑page evaluation summary with plots.
 - `reports/model_cards/` — per‑target model cards.
 - `reports/multi_horizon_backtest.json` — multi‑horizon backtest results.
-- `scripts/build_reports.py` — regenerate reports/figures after training.
+- `scripts/build_reports.py` — regenerate reports/figures after training (supports dataset-specific paths).
 
 ### 4) Start API
 ```bash
