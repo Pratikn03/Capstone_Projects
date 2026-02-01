@@ -1,0 +1,73 @@
+task:
+  horizon_hours: 24
+  lookback_hours: 168
+  quantiles: [0.1, 0.5, 0.9]
+  targets: [load_mw, wind_mw, solar_mw, price_eur_mwh]
+
+seed: 42
+
+data:
+  processed_path: data/processed/us_eia930/features.parquet
+  timestamp_col: timestamp
+
+models:
+  baseline_gbm:
+    kind: lightgbm
+    enabled: true
+    params:
+      n_estimators: 500
+      learning_rate: 0.05
+      max_depth: -1
+  dl_lstm:
+    kind: lstm
+    enabled: true
+    params:
+      hidden_size: 128
+      num_layers: 2
+      dropout: 0.1
+      epochs: 10
+      batch_size: 256
+  dl_tcn:
+    kind: tcn
+    enabled: true
+    params:
+      num_channels: [32, 32, 32]
+      kernel_size: 3
+      dropout: 0.1
+      epochs: 10
+      batch_size: 256
+
+artifacts:
+  out_dir: artifacts/models
+reports:
+  out_dir: reports
+
+backtest:
+  enabled: true
+  out_path: reports/walk_forward_report.json
+
+tuning:
+  enabled: true
+  engine: optuna
+  n_trials: 50
+  metric: val_loss
+  direction: minimize
+  params:
+    baseline_gbm:
+      n_estimators: {type: int, low: 100, high: 1000}
+      learning_rate: {type: float, low: 0.01, high: 0.3, log: true}
+    dl_lstm:
+      hidden_size: {type: categorical, choices: [64, 128, 256]}
+      dropout: {type: float, low: 0.0, high: 0.5}
+
+tracking:
+  enabled: true
+  tool: mlflow # or wandb
+  experiment_name: gridpulse_forecast
+  log_models: true
+  log_system_metrics: true
+
+distributed:
+  enabled: false
+  backend: nccl # Options: nccl, gloo, mpi
+  nproc_per_node: 1 # Set >1 for multi-GPU training
