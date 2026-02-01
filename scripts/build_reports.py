@@ -1,16 +1,18 @@
 from __future__ import annotations
 
+import argparse
 import json
-import sys
-from pathlib import Path
 import math
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+import warnings
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import DataLoader
-import warnings
 
 repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
@@ -23,10 +25,19 @@ from gridpulse.forecasting.predict import load_model_bundle
 from gridpulse.forecasting.dl_lstm import LSTMForecaster
 from gridpulse.forecasting.dl_tcn import TCNForecaster
 from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
-from gridpulse.utils.scaler import StandardScaler
 from gridpulse.optimizer.lp_dispatch import optimize_dispatch
 from gridpulse.monitoring.retraining import load_monitoring_config, compute_data_drift
 from gridpulse.utils.metrics import rmse, mae, mape, smape, daylight_mape
+from gridpulse.utils.scaler import StandardScaler
+
+
+@dataclass
+class ReportContext:
+    repo_root: Path
+    features_path: Path
+    splits_dir: Path
+    models_dir: Path
+    reports_dir: Path
 
 
 def ensure_dir(path: Path):
@@ -109,6 +120,7 @@ def _eval_seq_model(bundle: dict, df: pd.DataFrame) -> dict | None:
         X = x_scaler.transform(X)
     if y_scaler is not None:
         y = y_scaler.transform(y.reshape(-1, 1)).reshape(-1)
+
     ds = TimeSeriesWindowDataset(X, y, SeqConfig(lookback=lookback, horizon=horizon))
     if len(ds) == 0:
         return None
@@ -130,15 +142,13 @@ def _eval_seq_model(bundle: dict, df: pd.DataFrame) -> dict | None:
     return _compute_metrics(y_true, y_pred, target)
 
 
-def load_split_data(repo_root: Path):
-    splits_dir = repo_root / "data" / "processed" / "splits"
-    features_path = repo_root / "data" / "processed" / "features.parquet"
-    if (splits_dir / "test.parquet").exists():
-        test_df = pd.read_parquet(splits_dir / "test.parquet")
-        train_df = pd.read_parquet(splits_dir / "train.parquet")
+def load_split_data(ctx: ReportContext):
+    if (ctx.splits_dir / "test.parquet").exists():
+        test_df = pd.read_parquet(ctx.splits_dir / "test.parquet")
+        train_df = pd.read_parquet(ctx.splits_dir / "train.parquet")
         return train_df, test_df
-    if features_path.exists():
-        df = pd.read_parquet(features_path).sort_values("timestamp")
+    if ctx.features_path.exists():
+        df = pd.read_parquet(ctx.features_path).sort_values("timestamp")
         n = len(df)
         train_df = df.iloc[: int(n * 0.7)]
         test_df = df.iloc[int(n * 0.85):]
@@ -146,8 +156,8 @@ def load_split_data(repo_root: Path):
     return None, None
 
 
-def build_multi_horizon(repo_root: Path):
-    train_df, test_df = load_split_data(repo_root)
+def build_multi_horizon(ctx: ReportContext):
+    train_df, test_df = load_split_data(ctx)
     if train_df is None or test_df is None:
         return None
 
@@ -157,15 +167,12 @@ def build_multi_horizon(repo_root: Path):
     result = {"horizons": horizons, "targets": {}}
     for target in targets:
         y_true = test_df[target].to_numpy()
-        # baseline persistence
         y_pred = persistence_24h(test_df, target)
         mask = np.isfinite(y_true) & np.isfinite(y_pred)
         y_true = y_true[mask]
         y_pred = y_pred[mask]
         baseline = multi_horizon_metrics(y_true, y_pred, horizons, target)
 
-        # gbm if available; else train a quick gbm for report
-        gbm_pred = None
         X_train = train_df[[c for c in train_df.columns if c not in {"timestamp", "load_mw", "wind_mw", "solar_mw"}]].to_numpy()
         y_train = train_df[target].to_numpy()
         X_test = test_df[[c for c in test_df.columns if c not in {"timestamp", "load_mw", "wind_mw", "solar_mw"}]].to_numpy()
@@ -175,16 +182,16 @@ def build_multi_horizon(repo_root: Path):
 
         result["targets"][target] = {"persistence": baseline, "gbm": gbm}
 
-    out_path = repo_root / "reports" / "multi_horizon_backtest.json"
+    out_path = ctx.reports_dir / "multi_horizon_backtest.json"
+    ensure_dir(ctx.reports_dir)
     out_path.write_text(json.dumps(_sanitize(result), indent=2), encoding="utf-8")
     return result
 
 
-def plot_multi_horizon(repo_root: Path, report: dict):
-    fig_dir = repo_root / "reports" / "figures"
+def plot_multi_horizon(ctx: ReportContext, report: dict):
+    fig_dir = ctx.reports_dir / "figures"
     ensure_dir(fig_dir)
 
-    # Plot for load_mw
     target = "load_mw"
     data = report["targets"].get(target, {})
     horizons = report.get("horizons", [])
@@ -214,13 +221,12 @@ def plot_multi_horizon(repo_root: Path, report: dict):
     return out_path
 
 
-def make_sample_figures(repo_root: Path):
-    fig_dir = repo_root / "reports" / "figures"
+def make_sample_figures(ctx: ReportContext):
+    fig_dir = ctx.reports_dir / "figures"
     ensure_dir(fig_dir)
 
-    features_path = repo_root / "data" / "processed" / "features.parquet"
-    if features_path.exists():
-        df = pd.read_parquet(features_path).sort_values("timestamp")
+    if ctx.features_path.exists():
+        df = pd.read_parquet(ctx.features_path).sort_values("timestamp")
         recent = df.tail(7 * 24)
         fig, ax = plt.subplots(3, 1, figsize=(12, 6), sharex=True)
         recent.plot(x="timestamp", y="load_mw", ax=ax[0], color="#1f77b4", title="Load (last 7 days)")
@@ -229,8 +235,7 @@ def make_sample_figures(repo_root: Path):
         plt.tight_layout()
         fig.savefig(fig_dir / "forecast_sample.png", dpi=300, bbox_inches="tight")
 
-    # Optimization sample
-    cfg_path = repo_root / "configs" / "optimization.yaml"
+    cfg_path = ctx.repo_root / "configs" / "optimization.yaml"
     cfg = {}
     if cfg_path.exists():
         import yaml
@@ -250,8 +255,7 @@ def make_sample_figures(repo_root: Path):
     plt.tight_layout()
     fig.savefig(fig_dir / "dispatch_sample.png", dpi=300, bbox_inches="tight")
 
-    # Drift sample
-    train_df, test_df = load_split_data(repo_root)
+    train_df, test_df = load_split_data(ctx)
     if train_df is not None and test_df is not None:
         current_df = test_df.tail(7 * 24)
         feature_cols = [c for c in train_df.columns if c not in {"timestamp", "load_mw", "wind_mw", "solar_mw"}]
@@ -270,16 +274,15 @@ def make_sample_figures(repo_root: Path):
         fig.savefig(fig_dir / "drift_sample.png", dpi=300, bbox_inches="tight")
 
 
-def make_demo_gif(repo_root: Path):
+def make_demo_gif(ctx: ReportContext):
     from matplotlib.animation import FuncAnimation, PillowWriter
 
-    fig_dir = repo_root / "reports" / "figures"
+    fig_dir = ctx.reports_dir / "figures"
     ensure_dir(fig_dir)
-    features_path = repo_root / "data" / "processed" / "features.parquet"
-    if not features_path.exists():
+    if not ctx.features_path.exists():
         return None
 
-    df = pd.read_parquet(features_path).sort_values("timestamp")
+    df = pd.read_parquet(ctx.features_path).sort_values("timestamp")
     df = df.tail(72)
 
     fig, ax = plt.subplots(figsize=(6, 3))
@@ -305,8 +308,8 @@ def make_demo_gif(repo_root: Path):
     return out_path
 
 
-def plot_model_comparison(repo_root: Path, metrics: dict):
-    fig_dir = repo_root / "reports" / "figures"
+def plot_model_comparison(ctx: ReportContext, metrics: dict):
+    fig_dir = ctx.reports_dir / "figures"
     ensure_dir(fig_dir)
 
     targets = metrics.get("targets", {})
@@ -350,14 +353,14 @@ def plot_model_comparison(repo_root: Path, metrics: dict):
     return out_path
 
 
-def refresh_metrics_from_models(repo_root: Path) -> dict:
-    report_path = repo_root / "reports" / "week2_metrics.json"
+def refresh_metrics_from_models(ctx: ReportContext) -> dict:
+    report_path = ctx.reports_dir / "week2_metrics.json"
     if report_path.exists():
         metrics = json.loads(report_path.read_text(encoding="utf-8"))
     else:
         metrics = {"targets": {}}
 
-    train_df, test_df = load_split_data(repo_root)
+    train_df, test_df = load_split_data(ctx)
     if test_df is None:
         return metrics
 
@@ -365,9 +368,8 @@ def refresh_metrics_from_models(repo_root: Path) -> dict:
     for target in targets:
         metrics.setdefault("targets", {}).setdefault(target, {})
 
-        # GBM
         gbm_path = None
-        for p in (repo_root / "artifacts" / "models").glob(f"gbm_*_{target}.pkl"):
+        for p in ctx.models_dir.glob(f"gbm_*_{target}.pkl"):
             gbm_path = p
             break
         if gbm_path and gbm_path.exists():
@@ -384,9 +386,8 @@ def refresh_metrics_from_models(repo_root: Path) -> dict:
                     **m,
                 }
 
-        # LSTM / TCN
         for kind in ["lstm", "tcn"]:
-            path = repo_root / "artifacts" / "models" / f"{kind}_{target}.pt"
+            path = ctx.models_dir / f"{kind}_{target}.pt"
             if path.exists():
                 bundle = load_model_bundle(path)
                 m = _eval_seq_model(bundle, test_df)
@@ -400,11 +401,11 @@ def refresh_metrics_from_models(repo_root: Path) -> dict:
     return metrics
 
 
-def build_model_cards(repo_root: Path, metrics: dict | None = None):
-    metrics = metrics or refresh_metrics_from_models(repo_root)
+def build_model_cards(ctx: ReportContext, metrics: dict | None = None):
+    metrics = metrics or refresh_metrics_from_models(ctx)
     targets = metrics.get("targets", {})
 
-    cards_dir = repo_root / "reports" / "model_cards"
+    cards_dir = ctx.reports_dir / "model_cards"
     ensure_dir(cards_dir)
 
     for target, data in targets.items():
@@ -437,8 +438,8 @@ def build_model_cards(repo_root: Path, metrics: dict | None = None):
         (cards_dir / f"{target}.md").write_text("".join(lines), encoding="utf-8")
 
 
-def build_formal_report(repo_root: Path, multi_horizon_plot: Path | None, metrics: dict | None = None):
-    metrics = metrics or refresh_metrics_from_models(repo_root)
+def build_formal_report(ctx: ReportContext, multi_horizon_plot: Path | None, metrics: dict | None = None):
+    metrics = metrics or refresh_metrics_from_models(ctx)
     targets = metrics.get("targets", {})
 
     lines = []
@@ -476,26 +477,42 @@ def build_formal_report(repo_root: Path, multi_horizon_plot: Path | None, metric
     lines.append("## Conclusions\n")
     lines.append("GBM provides a strong baseline on the OPSD data, while sequence models capture temporal structure for longer horizons. Optimization outputs are cost‑ and carbon‑aware and suitable for operator decision support.\n")
 
-    out_path = repo_root / "reports" / "formal_evaluation_report.md"
+    out_path = ctx.reports_dir / "formal_evaluation_report.md"
+    ensure_dir(ctx.reports_dir)
     out_path.write_text("".join(lines), encoding="utf-8")
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--features", default="data/processed/features.parquet")
+    parser.add_argument("--splits", default="data/processed/splits")
+    parser.add_argument("--models-dir", default="artifacts/models")
+    parser.add_argument("--reports-dir", default="reports")
+    args = parser.parse_args()
+
     warnings.filterwarnings(
         "ignore",
         message="X does not have valid feature names, but LGBMRegressor was fitted with feature names",
         category=UserWarning,
     )
-    repo_root = Path(__file__).resolve().parents[1]
-    multi = build_multi_horizon(repo_root)
-    plot_path = plot_multi_horizon(repo_root, multi) if multi else None
 
-    make_sample_figures(repo_root)
-    make_demo_gif(repo_root)
-    metrics = refresh_metrics_from_models(repo_root)
-    plot_model_comparison(repo_root, metrics)
-    build_model_cards(repo_root, metrics)
-    build_formal_report(repo_root, plot_path, metrics)
+    ctx = ReportContext(
+        repo_root=repo_root,
+        features_path=repo_root / args.features,
+        splits_dir=repo_root / args.splits,
+        models_dir=repo_root / args.models_dir,
+        reports_dir=repo_root / args.reports_dir,
+    )
+
+    multi = build_multi_horizon(ctx)
+    plot_path = plot_multi_horizon(ctx, multi) if multi else None
+
+    make_sample_figures(ctx)
+    make_demo_gif(ctx)
+    metrics = refresh_metrics_from_models(ctx)
+    plot_model_comparison(ctx, metrics)
+    build_model_cards(ctx, metrics)
+    build_formal_report(ctx, plot_path, metrics)
 
     print("Reports and figures generated.")
 
