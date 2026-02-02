@@ -183,9 +183,9 @@
       500.0,
       500.0
     ],
-    "expected_cost_usd": 9044150000.0,
-    "carbon_kg": 96000000.0,
-    "carbon_cost_usd": 4800000.0,
+    "expected_cost_usd": 9040750000.0,
+    "carbon_kg": 101287750.7586025,
+    "carbon_cost_usd": 5064387.537930125,
     "policy": "grid_only"
   },
   "naive": {
@@ -371,9 +371,9 @@
       50.0,
       50.0
     ],
-    "expected_cost_usd": 9040780430.081114,
-    "carbon_kg": 96000000.0,
-    "carbon_cost_usd": 4800000.0,
+    "expected_cost_usd": 9037380430.081114,
+    "carbon_kg": 101287750.7586025,
+    "carbon_cost_usd": 5064387.537930125,
     "policy": "naive_battery"
   },
   "optimized": {
@@ -560,28 +560,28 @@
       50.0
     ],
     "peak_mw": 10000.0,
-    "expected_cost_usd": 9040010000.0,
-    "carbon_kg": 96000000.0,
-    "carbon_cost_usd": 4800000.0,
+    "expected_cost_usd": 9036610000.0,
+    "carbon_kg": 101287750.7586025,
+    "carbon_cost_usd": 5064387.537930124,
     "status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)"
   },
   "impact_vs_baseline": {
-    "baseline_cost_usd": 9044150000.0,
-    "optimized_cost_usd": 9040010000.0,
+    "baseline_cost_usd": 9040750000.0,
+    "optimized_cost_usd": 9036610000.0,
     "cost_savings_usd": 4140000.0,
-    "cost_savings_pct": 0.04577544600653461,
-    "baseline_carbon_kg": 96000000.0,
-    "optimized_carbon_kg": 96000000.0,
+    "cost_savings_pct": 0.04579266100710671,
+    "baseline_carbon_kg": 101287750.7586025,
+    "optimized_carbon_kg": 101287750.7586025,
     "carbon_reduction_kg": 0.0,
     "carbon_reduction_pct": 0.0
   },
   "impact_vs_naive": {
-    "baseline_cost_usd": 9040780430.081114,
-    "optimized_cost_usd": 9040010000.0,
+    "baseline_cost_usd": 9037380430.081114,
+    "optimized_cost_usd": 9036610000.0,
     "cost_savings_usd": 770430.0811138153,
-    "cost_savings_pct": 0.00852172096283178,
-    "baseline_carbon_kg": 96000000.0,
-    "optimized_carbon_kg": 96000000.0,
+    "cost_savings_pct": 0.00852492696389567,
+    "baseline_carbon_kg": 101287750.7586025,
+    "optimized_carbon_kg": 101287750.7586025,
     "carbon_reduction_kg": 0.0,
     "carbon_reduction_pct": 0.0
   }
