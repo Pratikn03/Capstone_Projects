@@ -21,11 +21,8 @@ from gridpulse.forecasting.backtest import walk_forward_horizon_metrics
 import torch
 from torch.utils.data import DataLoader
 
-TARGETS = ["load_mw", "wind_mw", "solar_mw"]
-
-
-def make_xy(df: pd.DataFrame, target: str):
-    drop = {"timestamp", *TARGETS}
+def make_xy(df: pd.DataFrame, target: str, targets: list[str]):
+    drop = {"timestamp", *targets}
     feat_cols = [c for c in df.columns if c not in drop]
     X = df[feat_cols].to_numpy()
     y = df[target].to_numpy()
@@ -202,7 +199,13 @@ def main():
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     quantiles = cfg["task"].get("quantiles", [0.1, 0.5, 0.9])
-    targets = cfg["task"].get("targets", ["load_mw"])
+    requested_targets = cfg["task"].get("targets", ["load_mw"])
+    targets = [t for t in requested_targets if t in df.columns]
+    missing_targets = [t for t in requested_targets if t not in df.columns]
+    if missing_targets:
+        print(f"Warning: missing targets in data and will be skipped: {missing_targets}")
+    if not targets:
+        raise ValueError(f"No valid targets found in data. Available columns: {list(df.columns)}")
     horizon = int(cfg["task"]["horizon_hours"])
     lookback_default = int(cfg["task"].get("lookback_hours", 168))
 
@@ -221,9 +224,9 @@ def main():
     backtest_payload = {"targets": {}} if backtest_enabled else None
 
     for target in targets:
-        X_train, y_train, feat_cols = make_xy(train_df, target)
-        X_val, y_val, _ = make_xy(val_df, target)
-        X_test, y_test, _ = make_xy(test_df, target)
+        X_train, y_train, feat_cols = make_xy(train_df, target, targets)
+        X_val, y_val, _ = make_xy(val_df, target, targets)
+        X_test, y_test, _ = make_xy(test_df, target, targets)
 
         target_res = {"n_features": len(feat_cols)}
 

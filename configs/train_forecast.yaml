@@ -18,6 +18,7 @@ models:
       n_estimators: 500
       learning_rate: 0.05
       max_depth: -1
+      verbosity: -1
   dl_lstm:
     kind: lstm
     enabled: true
