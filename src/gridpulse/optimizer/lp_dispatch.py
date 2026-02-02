@@ -66,11 +66,12 @@ def optimize_dispatch(
 
     curtail_pen = float(penalties.get("curtailment_per_mw", 500.0))
     unmet_pen = float(penalties.get("unmet_load_per_mw", 10000.0))
+    peak_pen = float(penalties.get("peak_per_mw", penalties.get("peak_penalty_per_mw", 0.0)))
 
     cost_weight = float(objective.get("cost_weight", 1.0))
     carbon_weight = float(objective.get("carbon_weight", 0.0))
 
-    # Decision vars order: grid, charge, discharge, curtail, unmet, soc
+    # Decision vars order: grid, charge, discharge, curtail, unmet, soc, peak
     n = H
     idx_grid = slice(0, n)
     idx_charge = slice(n, 2 * n)
@@ -78,7 +79,8 @@ def optimize_dispatch(
     idx_curtail = slice(3 * n, 4 * n)
     idx_unmet = slice(4 * n, 5 * n)
     idx_soc = slice(5 * n, 6 * n)
-    n_vars = 6 * n
+    idx_peak = 6 * n
+    n_vars = 6 * n + 1
 
     c = np.zeros(n_vars)
     carbon_cost_per_kg = (carbon_cost / carbon_kg) if carbon_kg > 0 else 0.0
@@ -86,6 +88,7 @@ def optimize_dispatch(
     c[idx_grid] = cost_weight * price + carbon_weight * carbon_cost_series
     c[idx_curtail] = curtail_pen
     c[idx_unmet] = unmet_pen
+    c[idx_peak] = peak_pen
 
     # Equality constraints: load balance and SOC dynamics
     A_eq = []
@@ -121,6 +124,18 @@ def optimize_dispatch(
     A_eq = np.vstack(A_eq)
     b_eq = np.asarray(b_eq)
 
+    # Inequality constraints: grid_t <= peak
+    A_ub = []
+    b_ub = []
+    for t in range(H):
+        row = np.zeros(n_vars)
+        row[idx_grid.start + t] = 1.0
+        row[idx_peak] = -1.0
+        A_ub.append(row)
+        b_ub.append(0.0)
+    A_ub = np.vstack(A_ub)
+    b_ub = np.asarray(b_ub)
+
     # Bounds
     bounds = []
     for t in range(H):  # grid
@@ -135,8 +150,9 @@ def optimize_dispatch(
         bounds.append((0.0, None))
     for t in range(H):  # soc
         bounds.append((min_soc, capacity))
+    bounds.append((0.0, max_import))
 
-    res = linprog(c, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method="highs")
+    res = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method="highs")
     if not res.success:
         grid_plan = np.maximum(0.0, load - ren)
         return {
@@ -147,6 +163,7 @@ def optimize_dispatch(
             "curtailment_mw": np.maximum(0.0, ren - load).tolist(),
             "unmet_load_mw": [0.0] * H,
             "soc_mwh": [soc0] * H,
+            "peak_mw": float(np.max(grid_plan)) if len(grid_plan) else None,
             "expected_cost_usd": float(np.sum(grid_plan) * price),
             "carbon_kg": float(np.sum(grid_plan * carbon_series)),
             "note": f"linprog failed: {res.message}",
@@ -159,6 +176,7 @@ def optimize_dispatch(
     curtail = x[idx_curtail]
     unmet = x[idx_unmet]
     soc = x[idx_soc]
+    peak = float(x[idx_peak])
     renewables_used = ren - curtail
 
     expected_cost = float(np.sum(grid_plan * price) + np.sum(curtail) * curtail_pen + np.sum(unmet) * unmet_pen)
@@ -173,6 +191,7 @@ def optimize_dispatch(
         "curtailment_mw": curtail.tolist(),
         "unmet_load_mw": unmet.tolist(),
         "soc_mwh": soc.tolist(),
+        "peak_mw": peak,
         "expected_cost_usd": expected_cost,
         "carbon_kg": carbon,
         "carbon_cost_usd": carbon_cost,
