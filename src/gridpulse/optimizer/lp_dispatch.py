@@ -15,7 +15,13 @@ def _as_array(x) -> np.ndarray:
     return arr
 
 
-def optimize_dispatch(forecast_load, forecast_renewables, config: dict, forecast_price=None) -> Dict[str, Any]:
+def optimize_dispatch(
+    forecast_load,
+    forecast_renewables,
+    config: dict,
+    forecast_price=None,
+    forecast_carbon_kg=None,
+) -> Dict[str, Any]:
     load = _as_array(forecast_load)
     ren = _as_array(forecast_renewables)
     if ren.size == 1 and load.size > 1:
@@ -51,6 +57,12 @@ def optimize_dispatch(forecast_load, forecast_renewables, config: dict, forecast
 
     carbon_cost = float(grid.get("carbon_cost_per_mwh", 0.0))
     carbon_kg = float(grid.get("carbon_kg_per_mwh", 0.0))
+    if forecast_carbon_kg is not None:
+        carbon_series = _as_array(forecast_carbon_kg)
+        if carbon_series.size == 1 and H > 1:
+            carbon_series = np.full(H, float(carbon_series[0]))
+    else:
+        carbon_series = np.full(H, carbon_kg)
 
     curtail_pen = float(penalties.get("curtailment_per_mw", 500.0))
     unmet_pen = float(penalties.get("unmet_load_per_mw", 10000.0))
@@ -69,7 +81,9 @@ def optimize_dispatch(forecast_load, forecast_renewables, config: dict, forecast
     n_vars = 6 * n
 
     c = np.zeros(n_vars)
-    c[idx_grid] = cost_weight * price + carbon_weight * carbon_cost
+    carbon_cost_per_kg = (carbon_cost / carbon_kg) if carbon_kg > 0 else 0.0
+    carbon_cost_series = carbon_series * carbon_cost_per_kg
+    c[idx_grid] = cost_weight * price + carbon_weight * carbon_cost_series
     c[idx_curtail] = curtail_pen
     c[idx_unmet] = unmet_pen
 
@@ -134,7 +148,7 @@ def optimize_dispatch(forecast_load, forecast_renewables, config: dict, forecast
             "unmet_load_mw": [0.0] * H,
             "soc_mwh": [soc0] * H,
             "expected_cost_usd": float(np.sum(grid_plan) * price),
-            "carbon_kg": float(np.sum(grid_plan) * carbon_kg),
+            "carbon_kg": float(np.sum(grid_plan * carbon_series)),
             "note": f"linprog failed: {res.message}",
         }
 
@@ -148,8 +162,8 @@ def optimize_dispatch(forecast_load, forecast_renewables, config: dict, forecast
     renewables_used = ren - curtail
 
     expected_cost = float(np.sum(grid_plan * price) + np.sum(curtail) * curtail_pen + np.sum(unmet) * unmet_pen)
-    carbon = float(np.sum(grid_plan) * carbon_kg)
-    carbon_cost = float(np.sum(grid_plan) * carbon_cost)
+    carbon = float(np.sum(grid_plan * carbon_series))
+    carbon_cost = float(np.sum(grid_plan * carbon_cost_series))
 
     return {
         "grid_mw": grid_plan.tolist(),
