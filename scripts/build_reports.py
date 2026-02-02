@@ -488,8 +488,8 @@ def build_impact_report(ctx: ReportContext):
     renew = _clean_series(wind) + _clean_series(solar)
 
     cfg = _load_optimization_config(ctx)
-    baseline = grid_only_dispatch(load, renew, cfg)
-    naive = naive_battery_dispatch(load, renew, cfg)
+    baseline = grid_only_dispatch(load, renew, cfg, price_series=price)
+    naive = naive_battery_dispatch(load, renew, cfg, price_series=price)
     optimized = optimize_dispatch(load, renew, cfg, forecast_price=price)
 
     impact = impact_summary(baseline, optimized)
