@@ -10,6 +10,8 @@ REQUIRED_COLS = [
     "DE_load_actual_entsoe_transparency",
     "DE_wind_generation_actual",
     "DE_solar_generation_actual",
+]
+OPTIONAL_COLS = [
     "DE_price_day_ahead",
 ]
 
@@ -27,11 +29,12 @@ def main():
     if not csv_path.exists():
         raise FileNotFoundError(f"Missing {csv_path}. Run download_opsd or place file manually.")
 
-    df = pd.read_csv(csv_path, usecols=lambda c: c in REQUIRED_COLS)
+    df = pd.read_csv(csv_path, usecols=lambda c: c in REQUIRED_COLS + OPTIONAL_COLS)
 
     missing_cols = [c for c in REQUIRED_COLS if c not in df.columns]
     if missing_cols:
         raise ValueError(f"Missing required columns: {missing_cols}")
+    missing_optional = [c for c in OPTIONAL_COLS if c not in df.columns]
 
     df["utc_timestamp"] = pd.to_datetime(df["utc_timestamp"], utc=True, errors="coerce")
     df = df.sort_values("utc_timestamp").reset_index(drop=True)
@@ -56,7 +59,10 @@ def main():
     md.append(f"- End: **{df['utc_timestamp'].max()}**\n")
     md.append(f"- Rows: **{len(df)}**\n")
     md.append(f"- Duplicate timestamps: **{dup_ts}**\n")
-    md.append(f"- Missing hourly timestamps (vs full hourly index): **{missing_ts}**\n\n")
+    md.append(f"- Missing hourly timestamps (vs full hourly index): **{missing_ts}**\n")
+    if missing_optional:
+        md.append(f"- Missing optional columns: **{missing_optional}**\n")
+    md.append("\n")
 
     md.append("## Missingness (fraction)\n")
     md.append("```text\n")

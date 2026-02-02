@@ -12,6 +12,8 @@ REQUIRED_COLS = [
     "DE_load_actual_entsoe_transparency",
     "DE_wind_generation_actual",
     "DE_solar_generation_actual",
+]
+OPTIONAL_COLS = [
     "DE_price_day_ahead",
 ]
 
@@ -84,20 +86,25 @@ def main():
     if not csv_path.exists():
         raise FileNotFoundError(f"Missing {csv_path}. Run download_opsd or place file manually.")
 
-    df = pd.read_csv(csv_path, usecols=lambda c: c in REQUIRED_COLS)
+    df = pd.read_csv(csv_path, usecols=lambda c: c in REQUIRED_COLS + OPTIONAL_COLS)
 
-    df = df.rename(columns={
+    rename = {
         "utc_timestamp": "timestamp",
         "DE_load_actual_entsoe_transparency": "load_mw",
         "DE_wind_generation_actual": "wind_mw",
         "DE_solar_generation_actual": "solar_mw",
-        "DE_price_day_ahead": "price_eur_mwh",
-    })
+    }
+    if "DE_price_day_ahead" in df.columns:
+        rename["DE_price_day_ahead"] = "price_eur_mwh"
+    df = df.rename(columns=rename)
 
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
     df = df.sort_values("timestamp").reset_index(drop=True)
 
-    for col in ["load_mw", "wind_mw", "solar_mw", "price_eur_mwh"]:
+    numeric_cols = ["load_mw", "wind_mw", "solar_mw"]
+    if "price_eur_mwh" in df.columns:
+        numeric_cols.append("price_eur_mwh")
+    for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
     # continuous hourly index
@@ -105,7 +112,7 @@ def main():
     df = df.set_index("timestamp").reindex(full_idx).rename_axis("timestamp").reset_index()
 
     # interpolate short gaps
-    for col in ["load_mw", "wind_mw", "solar_mw", "price_eur_mwh"]:
+    for col in numeric_cols:
         df[col] = df[col].interpolate(limit=6)
 
     df = add_time_features(df)
@@ -120,7 +127,7 @@ def main():
             df[col] = pd.to_numeric(df[col], errors="coerce")
             df[col] = df[col].interpolate(limit=6)
 
-    df = add_lags_rolls(df, cols=["load_mw", "wind_mw", "solar_mw", "price_eur_mwh"])
+    df = add_lags_rolls(df, cols=numeric_cols)
 
     # drop NaNs caused by lags/rolls
     df = df.dropna().reset_index(drop=True)

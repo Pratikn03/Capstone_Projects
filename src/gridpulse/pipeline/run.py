@@ -5,6 +5,7 @@ import hashlib
 import json
 import logging
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -14,7 +15,8 @@ from typing import Iterable
 
 
 def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
+    # run.py -> src/gridpulse/pipeline/run.py, so repo root is parents[3]
+    return Path(__file__).resolve().parents[3]
 
 
 def _hash_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
@@ -64,6 +66,25 @@ def _git_commit(repo_root: Path) -> str | None:
         return out.decode("utf-8").strip()
     except Exception:
         return None
+
+
+def _pip_freeze(repo_root: Path, run_dir: Path, log: logging.Logger) -> None:
+    try:
+        out = subprocess.check_output([sys.executable, "-m", "pip", "freeze"], cwd=repo_root)
+        (run_dir / "pip_freeze.txt").write_bytes(out)
+        log.info("Saved pip freeze to %s", run_dir / "pip_freeze.txt")
+    except Exception as exc:
+        log.warning("pip freeze failed: %s", exc)
+
+
+def _snapshot_configs(repo_root: Path, run_dir: Path) -> None:
+    cfg_dir = repo_root / "configs"
+    if not cfg_dir.exists():
+        return
+    out_dir = run_dir / "configs"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for fp in cfg_dir.glob("*.yaml"):
+        shutil.copy2(fp, out_dir / fp.name)
 
 
 def _run(cmd: list[str], log: logging.Logger) -> None:
@@ -191,11 +212,15 @@ def main() -> None:
 
     # snapshot outputs
     _snapshot_artifacts(repo_root, run_dir, log)
+    _snapshot_configs(repo_root, run_dir)
+    _pip_freeze(repo_root, run_dir, log)
 
     manifest = {
         "run_id": run_id,
         "timestamp_utc": datetime.utcnow().isoformat(),
         "git_commit": _git_commit(repo_root),
+        "python_version": sys.version.split()[0],
+        "platform": platform.platform(),
         "raw_hash": cache.get("raw_hash"),
         "data_cfg_hash": cache.get("data_cfg_hash"),
         "features_hash": cache.get("features_hash"),
