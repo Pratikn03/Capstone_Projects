@@ -484,13 +484,19 @@ def build_impact_report(ctx: ReportContext):
     load = _clean_series(window["load_mw"].to_numpy())
     wind = window["wind_mw"].to_numpy() if "wind_mw" in window.columns else np.zeros_like(load)
     solar = window["solar_mw"].to_numpy() if "solar_mw" in window.columns else np.zeros_like(load)
-    price = window["price_eur_mwh"].to_numpy() if "price_eur_mwh" in window.columns else None
+    if "price_eur_mwh" in window.columns:
+        price = window["price_eur_mwh"].to_numpy()
+    elif "price_usd_mwh" in window.columns:
+        price = window["price_usd_mwh"].to_numpy()
+    else:
+        price = None
+    carbon = window["carbon_kg_per_mwh"].to_numpy() if "carbon_kg_per_mwh" in window.columns else None
     renew = _clean_series(wind) + _clean_series(solar)
 
     cfg = _load_optimization_config(ctx)
-    baseline = grid_only_dispatch(load, renew, cfg, price_series=price)
-    naive = naive_battery_dispatch(load, renew, cfg, price_series=price)
-    optimized = optimize_dispatch(load, renew, cfg, forecast_price=price)
+    baseline = grid_only_dispatch(load, renew, cfg, price_series=price, carbon_series=carbon)
+    naive = naive_battery_dispatch(load, renew, cfg, price_series=price, carbon_series=carbon)
+    optimized = optimize_dispatch(load, renew, cfg, forecast_price=price, forecast_carbon_kg=carbon)
 
     impact = impact_summary(baseline, optimized)
     impact_naive = impact_summary(naive, optimized)

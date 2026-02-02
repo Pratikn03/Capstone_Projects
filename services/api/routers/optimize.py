@@ -16,6 +16,7 @@ class OptimizeRequest(BaseModel):
     forecast_load_mw: Union[float, List[float]]
     forecast_renewables_mw: Union[float, List[float]]
     forecast_price_eur_mwh: Optional[Union[float, List[float]]] = None
+    forecast_carbon_kg_per_mwh: Optional[Union[float, List[float]]] = None
     config: Optional[Dict[str, Any]] = None
 
 
@@ -40,7 +41,8 @@ def optimize(req: OptimizeRequest):
         req.forecast_load_mw, 
         req.forecast_renewables_mw, 
         cfg, 
-        forecast_price=req.forecast_price_eur_mwh
+        forecast_price=req.forecast_price_eur_mwh,
+        forecast_carbon_kg=req.forecast_carbon_kg_per_mwh,
     )
     return OptimizeResponse(
         dispatch_plan=result,

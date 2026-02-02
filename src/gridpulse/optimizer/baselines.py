@@ -43,7 +43,13 @@ def _load_cfg(cfg: dict) -> dict:
     }
 
 
-def grid_only_dispatch(forecast_load, forecast_renewables, cfg: dict, price_series=None) -> Dict[str, Any]:
+def grid_only_dispatch(
+    forecast_load,
+    forecast_renewables,
+    cfg: dict,
+    price_series=None,
+    carbon_series=None,
+) -> Dict[str, Any]:
     load = _as_array(forecast_load)
     ren = _as_array(forecast_renewables)
     if ren.size == 1 and load.size > 1:
@@ -66,8 +72,16 @@ def grid_only_dispatch(forecast_load, forecast_renewables, cfg: dict, price_seri
         expected_cost = float(np.sum(grid * price) + np.sum(curtail) * cfg["penalties"]["curtail"] + np.sum(unmet) * cfg["penalties"]["unmet"])
     else:
         expected_cost = float(np.sum(grid) * cfg["grid"]["price"] + np.sum(curtail) * cfg["penalties"]["curtail"] + np.sum(unmet) * cfg["penalties"]["unmet"])
-    carbon_kg = float(np.sum(grid) * cfg["grid"]["carbon_kg"])
-    carbon_cost = float(np.sum(grid) * cfg["grid"]["carbon_cost"])
+    if carbon_series is not None:
+        carbon = _as_array(carbon_series)
+        if carbon.size == 1 and H > 1:
+            carbon = np.full(H, float(carbon[0]))
+        carbon_kg = float(np.sum(grid * carbon))
+        cost_per_kg = (cfg["grid"]["carbon_cost"] / cfg["grid"]["carbon_kg"]) if cfg["grid"]["carbon_kg"] > 0 else 0.0
+        carbon_cost = float(carbon_kg * cost_per_kg)
+    else:
+        carbon_kg = float(np.sum(grid) * cfg["grid"]["carbon_kg"])
+        carbon_cost = float(np.sum(grid) * cfg["grid"]["carbon_cost"])
 
     return {
         "grid_mw": grid.tolist(),
@@ -84,7 +98,13 @@ def grid_only_dispatch(forecast_load, forecast_renewables, cfg: dict, price_seri
     }
 
 
-def naive_battery_dispatch(forecast_load, forecast_renewables, cfg: dict, price_series=None) -> Dict[str, Any]:
+def naive_battery_dispatch(
+    forecast_load,
+    forecast_renewables,
+    cfg: dict,
+    price_series=None,
+    carbon_series=None,
+) -> Dict[str, Any]:
     """Simple policy: charge at night (00–05), discharge at evening peak (17–21)."""
     load = _as_array(forecast_load)
     ren = _as_array(forecast_renewables)
@@ -137,8 +157,16 @@ def naive_battery_dispatch(forecast_load, forecast_renewables, cfg: dict, price_
         expected_cost = float(np.sum(grid * price) + np.sum(curtail) * cfg["penalties"]["curtail"] + np.sum(unmet) * cfg["penalties"]["unmet"])
     else:
         expected_cost = float(np.sum(grid) * cfg["grid"]["price"] + np.sum(curtail) * cfg["penalties"]["curtail"] + np.sum(unmet) * cfg["penalties"]["unmet"])
-    carbon_kg = float(np.sum(grid) * cfg["grid"]["carbon_kg"])
-    carbon_cost = float(np.sum(grid) * cfg["grid"]["carbon_cost"])
+    if carbon_series is not None:
+        carbon = _as_array(carbon_series)
+        if carbon.size == 1 and H > 1:
+            carbon = np.full(H, float(carbon[0]))
+        carbon_kg = float(np.sum(grid * carbon))
+        cost_per_kg = (cfg["grid"]["carbon_cost"] / cfg["grid"]["carbon_kg"]) if cfg["grid"]["carbon_kg"] > 0 else 0.0
+        carbon_cost = float(carbon_kg * cost_per_kg)
+    else:
+        carbon_kg = float(np.sum(grid) * cfg["grid"]["carbon_kg"])
+        carbon_cost = float(np.sum(grid) * cfg["grid"]["carbon_cost"])
 
     return {
         "grid_mw": grid.tolist(),
