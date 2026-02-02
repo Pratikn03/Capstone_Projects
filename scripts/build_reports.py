@@ -495,6 +495,12 @@ def build_impact_report(ctx: ReportContext):
     impact = impact_summary(baseline, optimized)
     impact_naive = impact_summary(naive, optimized)
 
+    baseline_peak = float(np.max(baseline["grid_mw"])) if baseline.get("grid_mw") else None
+    optimized_peak = float(np.max(optimized["grid_mw"])) if optimized.get("grid_mw") else None
+    peak_shaving_pct = None
+    if baseline_peak and baseline_peak > 0 and optimized_peak is not None:
+        peak_shaving_pct = (baseline_peak - optimized_peak) / baseline_peak * 100.0
+
     fig_dir = ctx.reports_dir / "figures"
     ensure_dir(fig_dir)
     fig, ax = plt.subplots(3, 1, figsize=(12, 7), sharex=True)
@@ -517,6 +523,41 @@ def build_impact_report(ctx: ReportContext):
     plt.tight_layout()
     fig_path = fig_dir / "dispatch_compare.png"
     fig.savefig(fig_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+    # Impact summary CSV + savings plot
+    summary = {
+        "baseline_cost_usd": impact.get("baseline_cost_usd"),
+        "gridpulse_cost_usd": impact.get("optimized_cost_usd"),
+        "cost_savings_pct": impact.get("cost_savings_pct"),
+        "baseline_carbon_kg": impact.get("baseline_carbon_kg"),
+        "gridpulse_carbon_kg": impact.get("optimized_carbon_kg"),
+        "carbon_reduction_pct": impact.get("carbon_reduction_pct"),
+        "baseline_peak_mw": baseline_peak,
+        "gridpulse_peak_mw": optimized_peak,
+        "peak_shaving_pct": peak_shaving_pct,
+    }
+    impact_csv = ctx.reports_dir / "impact_summary.csv"
+    pd.DataFrame([summary]).to_csv(impact_csv, index=False)
+
+    labels = ["Cost Savings %", "Carbon Reduction %", "Peak Shaving %"]
+    values = [
+        summary.get("cost_savings_pct"),
+        summary.get("carbon_reduction_pct"),
+        summary.get("peak_shaving_pct"),
+    ]
+    fig2, ax2 = plt.subplots(figsize=(6, 3.5))
+    ax2.bar(labels, [v if v is not None else 0.0 for v in values], color=["#1f77b4", "#2ca02c", "#ff7f0e"])
+    ax2.set_ylabel("% improvement")
+    ax2.set_title("Impact Savings vs Baseline")
+    for i, v in enumerate(values):
+        if v is not None:
+            ax2.text(i, v, f"{v:.2f}%", ha="center", va="bottom", fontsize=8)
+    plt.xticks(rotation=15, ha="right")
+    plt.tight_layout()
+    impact_plot = fig_dir / "impact_savings.png"
+    fig2.savefig(impact_plot, dpi=300, bbox_inches="tight")
+    plt.close(fig2)
 
     # Generate Arbitrage Plot if price data exists
     arb_plot_path = None
@@ -601,6 +642,8 @@ def build_impact_report(ctx: ReportContext):
     return {
         "report_path": out_path,
         "figure_path": fig_path,
+        "summary_csv": impact_csv,
+        "savings_plot": impact_plot,
     }
 
 
