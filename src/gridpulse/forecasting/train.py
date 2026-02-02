@@ -178,6 +178,9 @@ def evaluate_seq_model(model, X, y, lookback, horizon, device, batch_size, targe
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--config", default="configs/train_forecast.yaml")
+    p.add_argument("--targets", default=None, help="Comma-separated targets to train (override config)")
+    p.add_argument("--models", default=None, help="Comma-separated models to train: gbm,lstm,tcn")
+    p.add_argument("--skip-existing", action="store_true", help="Skip training if model artifact already exists")
     args = p.parse_args()
 
     cfg = yaml.safe_load(Path(args.config).read_text(encoding="utf-8"))
@@ -200,6 +203,8 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     quantiles = cfg["task"].get("quantiles", [0.1, 0.5, 0.9])
     requested_targets = cfg["task"].get("targets", ["load_mw"])
+    if args.targets:
+        requested_targets = [t.strip() for t in args.targets.split(",") if t.strip()]
     targets = [t for t in requested_targets if t in df.columns]
     missing_targets = [t for t in requested_targets if t not in df.columns]
     if missing_targets:
@@ -223,6 +228,13 @@ def main():
     backtest_enabled = bool(backtest_cfg.get("enabled", False))
     backtest_payload = {"targets": {}} if backtest_enabled else None
 
+    model_filter = None
+    if args.models:
+        model_filter = {m.strip().lower() for m in args.models.split(",") if m.strip()}
+
+    def has_gbm_artifact(target_name: str) -> bool:
+        return any(art_dir.glob(f"gbm_*_{target_name}.pkl"))
+
     for target in targets:
         X_train, y_train, feat_cols = make_xy(train_df, target, targets)
         X_val, y_val, _ = make_xy(val_df, target, targets)
@@ -232,154 +244,163 @@ def main():
 
         # ---- GBM ----
         gbm_cfg = cfg["models"].get("baseline_gbm", {})
-        if gbm_cfg.get("enabled", True):
-            gbm_params = dict(gbm_cfg.get("params", {}))
-            gbm_params.setdefault("random_state", int(cfg.get("seed", 42)))
-            model_kind, gbm = train_gbm(X_train, y_train, gbm_params)
-            gbm_pred_test = predict_gbm(gbm, X_test)
-            gbm_pred_val = predict_gbm(gbm, X_val)
-            gbm_metrics = {
-                **compute_metrics(y_test, gbm_pred_test, target),
-                "model": f"gbm_{model_kind}",
-            }
-            gbm_q = residual_quantiles(y_val, gbm_pred_val, quantiles)
+        if gbm_cfg.get("enabled", True) and (model_filter is None or "gbm" in model_filter):
+            if args.skip_existing and has_gbm_artifact(target):
+                print(f"Skipping GBM for {target} (artifact exists)")
+            else:
+                gbm_params = dict(gbm_cfg.get("params", {}))
+                gbm_params.setdefault("random_state", int(cfg.get("seed", 42)))
+                model_kind, gbm = train_gbm(X_train, y_train, gbm_params)
+                gbm_pred_test = predict_gbm(gbm, X_test)
+                gbm_pred_val = predict_gbm(gbm, X_val)
+                gbm_metrics = {
+                    **compute_metrics(y_test, gbm_pred_test, target),
+                    "model": f"gbm_{model_kind}",
+                }
+                gbm_q = residual_quantiles(y_val, gbm_pred_val, quantiles)
 
-            import pickle
-            with open(art_dir / f"{gbm_metrics['model']}_{target}.pkl", "wb") as f:
-                pickle.dump({
-                    "model_type": "gbm",
-                    "model": gbm,
-                    "feature_cols": feat_cols,
-                    "target": target,
-                    "quantiles": quantiles,
-                    "residual_quantiles": gbm_q,
-                }, f)
+                import pickle
+                with open(art_dir / f"{gbm_metrics['model']}_{target}.pkl", "wb") as f:
+                    pickle.dump({
+                        "model_type": "gbm",
+                        "model": gbm,
+                        "feature_cols": feat_cols,
+                        "target": target,
+                        "quantiles": quantiles,
+                        "residual_quantiles": gbm_q,
+                    }, f)
 
-            target_res["gbm"] = {**gbm_metrics, "residual_quantiles": gbm_q}
-            if backtest_enabled:
-                backtest_payload["targets"].setdefault(target, {})
-                backtest_payload["targets"][target]["gbm"] = walk_forward_horizon_metrics(
-                    y_test, gbm_pred_test, horizon, target
-                )
+                target_res["gbm"] = {**gbm_metrics, "residual_quantiles": gbm_q}
+                if backtest_enabled:
+                    backtest_payload["targets"].setdefault(target, {})
+                    backtest_payload["targets"][target]["gbm"] = walk_forward_horizon_metrics(
+                        y_test, gbm_pred_test, horizon, target
+                    )
 
         # ---- LSTM ----
         lstm_cfg = cfg["models"].get("dl_lstm", {})
-        if lstm_cfg.get("enabled", True):
-            params = lstm_cfg.get("params", {})
-            x_scaler = StandardScaler.fit(X_train)
-            y_scaler = StandardScaler.fit(y_train.reshape(-1, 1))
-            X_train_s = x_scaler.transform(X_train)
-            X_val_s = x_scaler.transform(X_val)
-            X_test_s = x_scaler.transform(X_test)
-            y_train_s = y_scaler.transform(y_train.reshape(-1, 1)).reshape(-1)
-            y_val_s = y_scaler.transform(y_val.reshape(-1, 1)).reshape(-1)
-            y_test_s = y_scaler.transform(y_test.reshape(-1, 1)).reshape(-1)
-
-            model = train_lstm_model(X_train_s, y_train_s, X_val_s, y_val_s, {
-                "lookback": lookback_default,
-                "horizon": horizon,
-                **params,
-            }, device=device)
-            batch_size = int(params.get("batch_size", 256))
-            y_true_val_s, y_pred_val_s = collect_seq_preds(model, X_val_s, y_val_s, lookback_default, horizon, device, batch_size)
-            if y_true_val_s is not None:
-                y_true_val = y_scaler.inverse_transform(y_true_val_s.reshape(-1, 1)).reshape(-1)
-                y_pred_val = y_scaler.inverse_transform(y_pred_val_s.reshape(-1, 1)).reshape(-1)
-                lstm_q = residual_quantiles(y_true_val, y_pred_val, quantiles)
+        if lstm_cfg.get("enabled", True) and (model_filter is None or "lstm" in model_filter):
+            if args.skip_existing and (art_dir / f"lstm_{target}.pt").exists():
+                print(f"Skipping LSTM for {target} (artifact exists)")
             else:
-                lstm_q = {}
+                params = lstm_cfg.get("params", {})
+                x_scaler = StandardScaler.fit(X_train)
+                y_scaler = StandardScaler.fit(y_train.reshape(-1, 1))
+                X_train_s = x_scaler.transform(X_train)
+                X_val_s = x_scaler.transform(X_val)
+                X_test_s = x_scaler.transform(X_test)
+                y_train_s = y_scaler.transform(y_train.reshape(-1, 1)).reshape(-1)
+                y_val_s = y_scaler.transform(y_val.reshape(-1, 1)).reshape(-1)
+                y_test_s = y_scaler.transform(y_test.reshape(-1, 1)).reshape(-1)
 
-            torch.save({
-                "model_type": "lstm",
-                "state_dict": model.state_dict(),
-                "feature_cols": feat_cols,
-                "target": target,
-                "lookback": lookback_default,
-                "horizon": horizon,
-                "model_params": {
-                    "hidden_size": int(params.get("hidden_size", 128)),
-                    "num_layers": int(params.get("num_layers", 2)),
-                    "dropout": float(params.get("dropout", 0.1)),
-                    "horizon": int(horizon),
-                },
-                "quantiles": quantiles,
-                "residual_quantiles": lstm_q,
-                "x_scaler": x_scaler.to_dict(),
-                "y_scaler": y_scaler.to_dict(),
-            }, art_dir / f"lstm_{target}.pt")
+                model = train_lstm_model(X_train_s, y_train_s, X_val_s, y_val_s, {
+                    "lookback": lookback_default,
+                    "horizon": horizon,
+                    **params,
+                }, device=device)
+                batch_size = int(params.get("batch_size", 256))
+                y_true_val_s, y_pred_val_s = collect_seq_preds(model, X_val_s, y_val_s, lookback_default, horizon, device, batch_size)
+                if y_true_val_s is not None:
+                    y_true_val = y_scaler.inverse_transform(y_true_val_s.reshape(-1, 1)).reshape(-1)
+                    y_pred_val = y_scaler.inverse_transform(y_pred_val_s.reshape(-1, 1)).reshape(-1)
+                    lstm_q = residual_quantiles(y_true_val, y_pred_val, quantiles)
+                else:
+                    lstm_q = {}
 
-            y_true_test_s, y_pred_test_s = collect_seq_preds(model, X_test_s, y_test_s, lookback_default, horizon, device, batch_size)
-            if y_true_test_s is not None:
-                y_true_test = y_scaler.inverse_transform(y_true_test_s.reshape(-1, 1)).reshape(-1)
-                y_pred_test = y_scaler.inverse_transform(y_pred_test_s.reshape(-1, 1)).reshape(-1)
-                lstm_metrics = compute_metrics(y_true_test, y_pred_test, target)
-            else:
-                lstm_metrics = {"rmse": None, "mae": None, "mape": None, "smape": None}
-            target_res["lstm"] = {**lstm_metrics, "residual_quantiles": lstm_q}
-            if backtest_enabled and lstm_metrics.get("rmse") is not None:
-                backtest_payload["targets"].setdefault(target, {})
-                backtest_payload["targets"][target]["lstm"] = walk_forward_horizon_metrics(
-                    y_true_test, y_pred_test, horizon, target
-                )
+                torch.save({
+                    "model_type": "lstm",
+                    "state_dict": model.state_dict(),
+                    "feature_cols": feat_cols,
+                    "target": target,
+                    "lookback": lookback_default,
+                    "horizon": horizon,
+                    "model_params": {
+                        "hidden_size": int(params.get("hidden_size", 128)),
+                        "num_layers": int(params.get("num_layers", 2)),
+                        "dropout": float(params.get("dropout", 0.1)),
+                        "horizon": int(horizon),
+                    },
+                    "quantiles": quantiles,
+                    "residual_quantiles": lstm_q,
+                    "x_scaler": x_scaler.to_dict(),
+                    "y_scaler": y_scaler.to_dict(),
+                }, art_dir / f"lstm_{target}.pt")
+
+                y_true_test_s, y_pred_test_s = collect_seq_preds(model, X_test_s, y_test_s, lookback_default, horizon, device, batch_size)
+                if y_true_test_s is not None:
+                    y_true_test = y_scaler.inverse_transform(y_true_test_s.reshape(-1, 1)).reshape(-1)
+                    y_pred_test = y_scaler.inverse_transform(y_pred_test_s.reshape(-1, 1)).reshape(-1)
+                    lstm_metrics = compute_metrics(y_true_test, y_pred_test, target)
+                else:
+                    lstm_metrics = {"rmse": None, "mae": None, "mape": None, "smape": None}
+                target_res["lstm"] = {**lstm_metrics, "residual_quantiles": lstm_q}
+                if backtest_enabled and lstm_metrics.get("rmse") is not None:
+                    backtest_payload["targets"].setdefault(target, {})
+                    backtest_payload["targets"][target]["lstm"] = walk_forward_horizon_metrics(
+                        y_true_test, y_pred_test, horizon, target
+                    )
 
         # ---- TCN ----
         tcn_cfg = cfg["models"].get("dl_tcn", {})
-        if tcn_cfg.get("enabled", False):
-            params = tcn_cfg.get("params", {})
-            x_scaler = StandardScaler.fit(X_train)
-            y_scaler = StandardScaler.fit(y_train.reshape(-1, 1))
-            X_train_s = x_scaler.transform(X_train)
-            X_val_s = x_scaler.transform(X_val)
-            X_test_s = x_scaler.transform(X_test)
-            y_train_s = y_scaler.transform(y_train.reshape(-1, 1)).reshape(-1)
-            y_val_s = y_scaler.transform(y_val.reshape(-1, 1)).reshape(-1)
-            y_test_s = y_scaler.transform(y_test.reshape(-1, 1)).reshape(-1)
-
-            model = train_tcn_model(X_train_s, y_train_s, X_val_s, y_val_s, {
-                "lookback": lookback_default,
-                "horizon": horizon,
-                **params,
-            }, device=device)
-            batch_size = int(params.get("batch_size", 256))
-            y_true_val_s, y_pred_val_s = collect_seq_preds(model, X_val_s, y_val_s, lookback_default, horizon, device, batch_size)
-            if y_true_val_s is not None:
-                y_true_val = y_scaler.inverse_transform(y_true_val_s.reshape(-1, 1)).reshape(-1)
-                y_pred_val = y_scaler.inverse_transform(y_pred_val_s.reshape(-1, 1)).reshape(-1)
-                tcn_q = residual_quantiles(y_true_val, y_pred_val, quantiles)
+        if tcn_cfg.get("enabled", False) and (model_filter is None or "tcn" in model_filter):
+            if args.skip_existing and (art_dir / f"tcn_{target}.pt").exists():
+                print(f"Skipping TCN for {target} (artifact exists)")
             else:
-                tcn_q = {}
+                params = tcn_cfg.get("params", {})
+                x_scaler = StandardScaler.fit(X_train)
+                y_scaler = StandardScaler.fit(y_train.reshape(-1, 1))
+                X_train_s = x_scaler.transform(X_train)
+                X_val_s = x_scaler.transform(X_val)
+                X_test_s = x_scaler.transform(X_test)
+                y_train_s = y_scaler.transform(y_train.reshape(-1, 1)).reshape(-1)
+                y_val_s = y_scaler.transform(y_val.reshape(-1, 1)).reshape(-1)
+                y_test_s = y_scaler.transform(y_test.reshape(-1, 1)).reshape(-1)
 
-            torch.save({
-                "model_type": "tcn",
-                "state_dict": model.state_dict(),
-                "feature_cols": feat_cols,
-                "target": target,
-                "lookback": lookback_default,
-                "horizon": horizon,
-                "model_params": {
-                    "num_channels": list(params.get("num_channels", [32, 32, 32])),
-                    "kernel_size": int(params.get("kernel_size", 3)),
-                    "dropout": float(params.get("dropout", 0.1)),
-                },
-                "quantiles": quantiles,
-                "residual_quantiles": tcn_q,
-                "x_scaler": x_scaler.to_dict(),
-                "y_scaler": y_scaler.to_dict(),
-            }, art_dir / f"tcn_{target}.pt")
+                model = train_tcn_model(X_train_s, y_train_s, X_val_s, y_val_s, {
+                    "lookback": lookback_default,
+                    "horizon": horizon,
+                    **params,
+                }, device=device)
+                batch_size = int(params.get("batch_size", 256))
+                y_true_val_s, y_pred_val_s = collect_seq_preds(model, X_val_s, y_val_s, lookback_default, horizon, device, batch_size)
+                if y_true_val_s is not None:
+                    y_true_val = y_scaler.inverse_transform(y_true_val_s.reshape(-1, 1)).reshape(-1)
+                    y_pred_val = y_scaler.inverse_transform(y_pred_val_s.reshape(-1, 1)).reshape(-1)
+                    tcn_q = residual_quantiles(y_true_val, y_pred_val, quantiles)
+                else:
+                    tcn_q = {}
 
-            y_true_test_s, y_pred_test_s = collect_seq_preds(model, X_test_s, y_test_s, lookback_default, horizon, device, batch_size)
-            if y_true_test_s is not None:
-                y_true_test = y_scaler.inverse_transform(y_true_test_s.reshape(-1, 1)).reshape(-1)
-                y_pred_test = y_scaler.inverse_transform(y_pred_test_s.reshape(-1, 1)).reshape(-1)
-                tcn_metrics = compute_metrics(y_true_test, y_pred_test, target)
-            else:
-                tcn_metrics = {"rmse": None, "mae": None, "mape": None, "smape": None}
-            target_res["tcn"] = {**tcn_metrics, "residual_quantiles": tcn_q}
-            if backtest_enabled and tcn_metrics.get("rmse") is not None:
-                backtest_payload["targets"].setdefault(target, {})
-                backtest_payload["targets"][target]["tcn"] = walk_forward_horizon_metrics(
-                    y_true_test, y_pred_test, horizon, target
-                )
+                torch.save({
+                    "model_type": "tcn",
+                    "state_dict": model.state_dict(),
+                    "feature_cols": feat_cols,
+                    "target": target,
+                    "lookback": lookback_default,
+                    "horizon": horizon,
+                    "model_params": {
+                        "num_channels": list(params.get("num_channels", [32, 32, 32])),
+                        "kernel_size": int(params.get("kernel_size", 3)),
+                        "dropout": float(params.get("dropout", 0.1)),
+                    },
+                    "quantiles": quantiles,
+                    "residual_quantiles": tcn_q,
+                    "x_scaler": x_scaler.to_dict(),
+                    "y_scaler": y_scaler.to_dict(),
+                }, art_dir / f"tcn_{target}.pt")
+
+                y_true_test_s, y_pred_test_s = collect_seq_preds(model, X_test_s, y_test_s, lookback_default, horizon, device, batch_size)
+                if y_true_test_s is not None:
+                    y_true_test = y_scaler.inverse_transform(y_true_test_s.reshape(-1, 1)).reshape(-1)
+                    y_pred_test = y_scaler.inverse_transform(y_pred_test_s.reshape(-1, 1)).reshape(-1)
+                    tcn_metrics = compute_metrics(y_true_test, y_pred_test, target)
+                else:
+                    tcn_metrics = {"rmse": None, "mae": None, "mape": None, "smape": None}
+                target_res["tcn"] = {**tcn_metrics, "residual_quantiles": tcn_q}
+                if backtest_enabled and tcn_metrics.get("rmse") is not None:
+                    backtest_payload["targets"].setdefault(target, {})
+                    backtest_payload["targets"][target]["tcn"] = walk_forward_horizon_metrics(
+                        y_true_test, y_pred_test, horizon, target
+                    )
 
         report["targets"][target] = target_res
 
