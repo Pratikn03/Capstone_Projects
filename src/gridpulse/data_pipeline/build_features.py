@@ -33,6 +33,7 @@ def add_price_carbon_features(
     out = df.copy()
 
     if price_col not in out.columns:
+        # Proxy price when market prices are missing (time-of-day + seasonality).
         price = (
             base_price
             + 10.0 * out["is_morning_peak"]
@@ -42,8 +43,10 @@ def add_price_carbon_features(
         )
         out[price_col] = price.clip(lower=10.0)
     else:
+        # Clean and interpolate provided prices.
         out[price_col] = pd.to_numeric(out[price_col], errors="coerce").interpolate(limit=6)
 
+    # Carbon intensity proxy uses renewable share + peak heuristics.
     load = out["load_mw"].clip(lower=1.0)
     ren = out["wind_mw"] + out["solar_mw"]
     ren_share = (ren / load).clip(0.0, 1.0)
@@ -54,6 +57,7 @@ def add_price_carbon_features(
 def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
     ts = df["timestamp"]
     out = df.copy()
+    # Calendar features capture daily/weekly/seasonal patterns.
     out["hour"] = ts.dt.hour
     out["dayofweek"] = ts.dt.dayofweek
     out["month"] = ts.dt.month
@@ -66,6 +70,7 @@ def add_domain_features(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     # ramps
     for c in ["load_mw", "wind_mw", "solar_mw"]:
+        # Short/long ramps highlight operational changes.
         out[f"{c}_delta_1h"] = out[c].diff(1)
         out[f"{c}_delta_24h"] = out[c].diff(24)
     # peak-ish flags (Germany typical evening peak)
@@ -78,8 +83,10 @@ def add_lags_rolls(df: pd.DataFrame, cols: list[str], lags=(1, 24, 168), rolls=(
     out = df.copy()
     for c in cols:
         for l in lags:
+            # Lag features preserve autocorrelation.
             out[f"{c}_lag_{l}"] = out[c].shift(l)
         for w in rolls:
+            # Rolling stats summarize trend and volatility.
             out[f"{c}_roll_mean_{w}"] = out[c].shift(1).rolling(w).mean()
             out[f"{c}_roll_std_{w}"] = out[c].shift(1).rolling(w).std()
     return out
@@ -122,6 +129,7 @@ def main():
 
     df = pd.read_csv(csv_path, usecols=lambda c: c in REQUIRED_COLS + OPTIONAL_COLS)
 
+    # Normalize column names to model-friendly labels.
     rename = {
         "utc_timestamp": "timestamp",
         "DE_load_actual_entsoe_transparency": "load_mw",
@@ -135,17 +143,18 @@ def main():
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
     df = df.sort_values("timestamp").reset_index(drop=True)
 
+    # Coerce numeric columns and keep price if present.
     numeric_cols = ["load_mw", "wind_mw", "solar_mw"]
     if "price_eur_mwh" in df.columns:
         numeric_cols.append("price_eur_mwh")
     for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    # continuous hourly index
+    # Enforce continuous hourly index for stable lag/roll features.
     full_idx = pd.date_range(df["timestamp"].min(), df["timestamp"].max(), freq="h", tz="UTC")
     df = df.set_index("timestamp").reindex(full_idx).rename_axis("timestamp").reset_index()
 
-    # interpolate short gaps
+    # Interpolate short gaps to avoid feature discontinuities.
     for col in numeric_cols:
         df[col] = df[col].interpolate(limit=6)
 
@@ -169,7 +178,7 @@ def main():
         lag_cols.append("carbon_kg_per_mwh")
     df = add_lags_rolls(df, cols=lag_cols)
 
-    # drop NaNs caused by lags/rolls
+    # Drop rows where lag/roll windows are incomplete.
     df = df.dropna().reset_index(drop=True)
 
     out_path = out_dir / "features.parquet"

@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader
 
 repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
+    # Ensure local package imports resolve when running this script standalone.
     sys.path.insert(0, str(repo_root / "src"))
 
 from gridpulse.forecasting.baselines import persistence_24h
@@ -65,11 +66,13 @@ def _sanitize(obj):
     if isinstance(obj, list):
         return [_sanitize(v) for v in obj]
     if isinstance(obj, float):
+        # Strip NaN/Inf so JSON/CSV stay stable across runs.
         return _safe_float(obj)
     return obj
 
 
 def _compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, target: str) -> dict:
+    # Core evaluation metrics used in markdown reports and plots.
     out = {
         "rmse": rmse(y_true, y_pred),
         "mae": mae(y_true, y_pred),
@@ -77,6 +80,7 @@ def _compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, target: str) -> dic
         "smape": smape(y_true, y_pred),
     }
     if target == "solar_mw":
+        # Daylight‑only MAPE avoids near‑zero instability at night.
         out["daylight_mape"] = daylight_mape(y_true, y_pred)
     return out
 
@@ -84,6 +88,7 @@ def _compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, target: str) -> dic
 def _clean_series(arr: np.ndarray) -> np.ndarray:
     arr = np.asarray(arr, dtype=float)
     if not np.isfinite(arr).all():
+        # Fill bad values with a robust mean so optimizers don’t explode.
         mean = np.nanmean(arr)
         if not np.isfinite(mean):
             mean = 0.0
@@ -95,6 +100,7 @@ def _load_optimization_config(ctx: ReportContext) -> dict:
     cfg_path = ctx.repo_root / "configs" / "optimization.yaml"
     if cfg_path.exists():
         import yaml
+        # Allow report generation to respect the same dispatch constraints as training.
         return yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
     return {}
 
@@ -122,6 +128,7 @@ def _build_torch_model(bundle: dict):
     else:
         raise ValueError(f"Unknown torch model_type: {model_type}")
 
+    # Restore trained weights into the exact architecture used at training time.
     model.load_state_dict(bundle["state_dict"])
     model.eval()
     return model
@@ -134,6 +141,7 @@ def _eval_seq_model(bundle: dict, df: pd.DataFrame) -> dict | None:
     horizon = int(bundle.get("horizon", 24))
     if not feat_cols or target is None:
         return None
+    # Use the same scalers saved in the bundle (prevents train/test mismatch).
     X = df[feat_cols].to_numpy()
     y = df[target].to_numpy()
     x_scaler = StandardScaler.from_dict(bundle.get("x_scaler"))
@@ -153,12 +161,14 @@ def _eval_seq_model(bundle: dict, df: pd.DataFrame) -> dict | None:
     with torch.no_grad():
         for xb, yb in dl:
             pred_seq = model(xb).numpy()
+            # Use the full horizon window for evaluation.
             pred_hz = pred_seq[:, -horizon:]
             preds.append(pred_hz.reshape(-1))
             trues.append(yb.numpy().reshape(-1))
     y_true = np.concatenate(trues)
     y_pred = np.concatenate(preds)
     if y_scaler is not None:
+        # Inverse‑transform back to real units for metrics.
         y_true = y_scaler.inverse_transform(y_true.reshape(-1, 1)).reshape(-1)
         y_pred = y_scaler.inverse_transform(y_pred.reshape(-1, 1)).reshape(-1)
     return _compute_metrics(y_true, y_pred, target)
@@ -170,6 +180,7 @@ def load_split_data(ctx: ReportContext):
         train_df = pd.read_parquet(ctx.splits_dir / "train.parquet")
         return train_df, test_df
     if ctx.features_path.exists():
+        # Fallback to time‑based split if explicit splits are missing.
         df = pd.read_parquet(ctx.features_path).sort_values("timestamp")
         n = len(df)
         train_df = df.iloc[: int(n * 0.7)]
@@ -195,6 +206,7 @@ def build_multi_horizon(ctx: ReportContext):
         y_pred = y_pred[mask]
         baseline = multi_horizon_metrics(y_true, y_pred, horizons, target)
 
+        # Quick GBM baseline for reference at multiple horizons.
         X_train = train_df[[c for c in train_df.columns if c not in {"timestamp", "load_mw", "wind_mw", "solar_mw"}]].to_numpy()
         y_train = train_df[target].to_numpy()
         X_test = test_df[[c for c in test_df.columns if c not in {"timestamp", "load_mw", "wind_mw", "solar_mw"}]].to_numpy()
@@ -248,6 +260,7 @@ def make_sample_figures(ctx: ReportContext):
     ensure_dir(fig_dir)
 
     if ctx.features_path.exists():
+        # Snapshot time‑series for quick visual sanity check.
         df = pd.read_parquet(ctx.features_path).sort_values("timestamp")
         recent = df.tail(7 * 24)
         fig, ax = plt.subplots(3, 1, figsize=(12, 6), sharex=True)
@@ -261,6 +274,7 @@ def make_sample_figures(ctx: ReportContext):
     cfg = {}
     if cfg_path.exists():
         import yaml
+        # Sample dispatch uses the same config as production optimization.
         cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
     load = np.full(24, 8000.0)
     renew = np.full(24, 3200.0)
@@ -279,6 +293,7 @@ def make_sample_figures(ctx: ReportContext):
 
     train_df, test_df = load_split_data(ctx)
     if train_df is not None and test_df is not None:
+        # Plot drift diagnostics on a short window to keep the figure compact.
         current_df = test_df.tail(7 * 24)
         feature_cols = [c for c in train_df.columns if c not in {"timestamp", "load_mw", "wind_mw", "solar_mw"}]
         cfg = load_monitoring_config()
@@ -304,6 +319,7 @@ def make_demo_gif(ctx: ReportContext):
     if not ctx.features_path.exists():
         return None
 
+    # Small animated preview for the README (lightweight, no model required).
     df = pd.read_parquet(ctx.features_path).sort_values("timestamp")
     df = df.tail(72)
 
@@ -411,6 +427,7 @@ def refresh_metrics_from_models(ctx: ReportContext) -> dict:
         for kind in ["lstm", "tcn"]:
             path = ctx.models_dir / f"{kind}_{target}.pt"
             if path.exists():
+                # Evaluate sequence models with the same scaling as training.
                 bundle = load_model_bundle(path)
                 m = _eval_seq_model(bundle, test_df)
                 if m:
@@ -433,7 +450,7 @@ def plot_arbitrage_dispatch(ctx: ReportContext, hours: np.ndarray, price_curve: 
 
     fig, ax1 = plt.subplots(figsize=(12, 6))
 
-    # Plot Market Price (The "Signal")
+    # Plot Market Price (signal) and grid load (action) on dual axes.
     color = 'tab:red'
     ax1.set_xlabel('Hour of Day', fontsize=12, fontweight='bold')
     ax1.set_ylabel('Electricity Price ($/MWh)', color=color, fontsize=12, fontweight='bold')
@@ -441,18 +458,18 @@ def plot_arbitrage_dispatch(ctx: ReportContext, hours: np.ndarray, price_curve: 
     ax1.tick_params(axis='y', labelcolor=color)
     ax1.grid(True, alpha=0.3)
 
-    # Create a second y-axis for Power (The "Action")
+    # Second axis for grid/battery power.
     ax2 = ax1.twinx()
     color = 'tab:blue'
     ax2.set_ylabel('Power (MW)', color=color, fontsize=12, fontweight='bold')
 
-    # Plot 1: Baseline Load (The "Before")
+    # Baseline grid import without optimization.
     ax2.plot(hours, grid_load, color='gray', alpha=0.4, linewidth=2, label='Baseline Grid Load')
 
-    # Plot 2: Optimized Load (The "After")
+    # Optimized grid import from LP dispatch.
     ax2.plot(hours, optimized_load, color=color, linewidth=3, label='GridPulse Optimized Load')
 
-    # Highlight the "Arbitrage" (The Level-4 Magic)
+    # Highlight arbitrage windows (charge at low price, discharge at high price).
     # Green area = Charging (Money saved later)
     ax2.fill_between(hours, grid_load, optimized_load, 
                      where=(np.array(battery_flow) < 0), color='green', alpha=0.3, label='Charging (Low Price)')
@@ -460,7 +477,7 @@ def plot_arbitrage_dispatch(ctx: ReportContext, hours: np.ndarray, price_curve: 
     ax2.fill_between(hours, grid_load, optimized_load, 
                      where=(np.array(battery_flow) > 0), color='orange', alpha=0.5, label='Discharging (High Price)')
 
-    # --- 3. POLISH ---
+    # Presentation polish for README‑ready output.
     plt.title('GridPulse Decision Logic: Arbitrage Optimization', fontsize=16, fontweight='bold', pad=20)
     lines_1, labels_1 = ax1.get_legend_handles_labels()
     lines_2, labels_2 = ax2.get_legend_handles_labels()
@@ -482,6 +499,7 @@ def build_impact_report(ctx: ReportContext):
     if len(test_df) < horizon:
         return None
 
+    # Use a single 24h slice from the test split to compare policies.
     window = test_df.tail(horizon)
     load = _clean_series(window["load_mw"].to_numpy())
     wind = window["wind_mw"].to_numpy() if "wind_mw" in window.columns else np.zeros_like(load)
@@ -491,11 +509,13 @@ def build_impact_report(ctx: ReportContext):
     elif "price_usd_mwh" in window.columns:
         price = window["price_usd_mwh"].to_numpy()
     else:
+        # If no price signal is available, cost savings will be near zero.
         price = None
     carbon = window["carbon_kg_per_mwh"].to_numpy() if "carbon_kg_per_mwh" in window.columns else None
     renew = _clean_series(wind) + _clean_series(solar)
 
     cfg = _load_optimization_config(ctx)
+    # Policy trio: baseline, naive battery, optimized LP.
     baseline = grid_only_dispatch(load, renew, cfg, price_series=price, carbon_series=carbon)
     naive = naive_battery_dispatch(load, renew, cfg, price_series=price, carbon_series=carbon)
     optimized = optimize_dispatch(load, renew, cfg, forecast_price=price, forecast_carbon_kg=carbon)
@@ -507,6 +527,7 @@ def build_impact_report(ctx: ReportContext):
     optimized_peak = float(np.max(optimized["grid_mw"])) if optimized.get("grid_mw") else None
     peak_shaving_pct = None
     if baseline_peak and baseline_peak > 0 and optimized_peak is not None:
+        # Peak shaving measured as reduction vs baseline peak.
         peak_shaving_pct = (baseline_peak - optimized_peak) / baseline_peak * 100.0
 
     fig_dir = ctx.reports_dir / "figures"
@@ -533,7 +554,7 @@ def build_impact_report(ctx: ReportContext):
     fig.savefig(fig_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
 
-    # Impact summary CSV + savings plot
+    # Impact summary CSV + savings plot for README automation.
     summary = {
         "baseline_cost_usd": impact.get("baseline_cost_usd"),
         "gridpulse_cost_usd": impact.get("optimized_cost_usd"),
@@ -567,7 +588,7 @@ def build_impact_report(ctx: ReportContext):
     fig2.savefig(impact_plot, dpi=300, bbox_inches="tight")
     plt.close(fig2)
 
-    # Generate Arbitrage Plot if price data exists
+    # Generate arbitrage visualization only if price data exists.
     arb_plot_path = None
     if price is not None:
         # battery_flow: discharge (pos) - charge (pos) -> net flow (pos=discharge, neg=charge)
@@ -725,6 +746,7 @@ def build_formal_report(ctx: ReportContext, multi_horizon_plot: Path | None, met
             lines.append("\n")
 
     if multi_horizon_plot:
+        # Reference the generated plot by path for markdown rendering.
         lines.append("## Multi‑Horizon Backtest (Load)\n")
         lines.append(f"![]({multi_horizon_plot.as_posix()})\n\n")
 
@@ -744,6 +766,7 @@ def main():
     parser.add_argument("--reports-dir", default="reports")
     args = parser.parse_args()
 
+    # Silence known LightGBM feature‑name warning for cleaner logs.
     warnings.filterwarnings(
         "ignore",
         message="X does not have valid feature names, but LGBMRegressor was fitted with feature names",
@@ -758,6 +781,7 @@ def main():
         reports_dir=repo_root / args.reports_dir,
     )
 
+    # End‑to‑end report generation (figures + markdown + JSON summaries).
     multi = build_multi_horizon(ctx)
     plot_path = plot_multi_horizon(ctx, multi) if multi else None
 

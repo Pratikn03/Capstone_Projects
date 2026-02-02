@@ -25,6 +25,7 @@ def optimize_dispatch(
 ) -> Dict[str, Any]:
     load = _as_array(forecast_load)
     ren = _as_array(forecast_renewables)
+    # Align renewable series to load horizon (supports scalar inputs).
     if ren.size == 1 and load.size > 1:
         ren = np.full_like(load, float(ren[0]))
     if load.shape != ren.shape:
@@ -48,6 +49,7 @@ def optimize_dispatch(
 
     max_import = float(grid.get("max_import_mw", grid.get("max_draw_mw", 50.0)))
     
+    # Use time-varying price if provided; otherwise fallback to config constant.
     if forecast_price is not None:
         price = _as_array(forecast_price)
         if price.size == 1 and H > 1:
@@ -58,6 +60,7 @@ def optimize_dispatch(
 
     carbon_cost = float(grid.get("carbon_cost_per_mwh", 0.0))
     carbon_kg = float(grid.get("carbon_kg_per_mwh", 0.0))
+    # Allow time-varying carbon intensity to drive carbon-aware dispatch.
     if forecast_carbon_kg is not None:
         carbon_series = _as_array(forecast_carbon_kg)
         if carbon_series.size == 1 and H > 1:
@@ -84,8 +87,10 @@ def optimize_dispatch(
     n_vars = 6 * n + 1
 
     c = np.zeros(n_vars)
+    # Convert carbon cost per MWh into $/kg and scale by time-varying carbon intensity.
     carbon_cost_per_kg = (carbon_cost / carbon_kg) if carbon_kg > 0 else 0.0
     carbon_cost_series = carbon_series * carbon_cost_per_kg
+    # Objective: weighted energy cost + weighted carbon cost + peak penalty.
     c[idx_grid] = cost_weight * price + carbon_weight * carbon_cost_series
     c[idx_curtail] = curtail_pen
     c[idx_unmet] = unmet_pen
@@ -111,11 +116,13 @@ def optimize_dispatch(
         row = np.zeros(n_vars)
         row[idx_soc.start + t] = 1.0
         if t == 0:
+            # Initial SOC sets the starting state; charge/discharge affect SOC immediately.
             row[idx_charge.start + t] = -efficiency
             row[idx_discharge.start + t] = 1.0 / efficiency
             A_eq.append(row)
             b_eq.append(soc0)
         else:
+            # SOC[t] = SOC[t-1] + charge*eff - discharge/eff
             row[idx_soc.start + t - 1] = -1.0
             row[idx_charge.start + t] = -efficiency
             row[idx_discharge.start + t] = 1.0 / efficiency
@@ -151,10 +158,12 @@ def optimize_dispatch(
         bounds.append((0.0, None))
     for t in range(H):  # soc
         bounds.append((min_soc, capacity))
+    # Peak bound ties max import; acts as optimization variable.
     bounds.append((0.0, max_import))
 
     res = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method="highs")
     if not res.success:
+        # Fallback: if LP fails, serve a safe grid-only plan.
         grid_plan = np.maximum(0.0, load - ren)
         return {
             "grid_mw": grid_plan.tolist(),
@@ -180,6 +189,7 @@ def optimize_dispatch(
     peak = float(x[idx_peak])
     renewables_used = ren - curtail
 
+    # Final objective terms for reporting.
     expected_cost = float(np.sum(grid_plan * price) + np.sum(curtail) * curtail_pen + np.sum(unmet) * unmet_pen)
     carbon = float(np.sum(grid_plan * carbon_series))
     carbon_cost = float(np.sum(grid_plan * carbon_cost_series))

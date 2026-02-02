@@ -18,14 +18,17 @@ from gridpulse.data_pipeline.build_features import (
 
 def _iter_balance_files(raw_dir: Path) -> list[Path]:
     # Key: normalize inputs and build time-aware features
+    # Prefer unpacked balance CSVs when available.
     return sorted(raw_dir.glob("eia930-*-balance.csv"))
 
 
 def _iter_zip_files(raw_dir: Path) -> list[Path]:
+    # Supports bulk ZIP downloads from EIA-930.
     return sorted(raw_dir.glob("eia930-*.zip"))
 
 
 def _read_balance_csv(path: Path, usecols: list[str], chunksize: int = 200_000):
+    # Stream large files in chunks to keep memory bounded.
     if path.suffix == ".zip":
         with zipfile.ZipFile(path) as zf:
             # find balance file in zip
@@ -41,6 +44,7 @@ def _read_balance_csv(path: Path, usecols: list[str], chunksize: int = 200_000):
 
 
 def _choose_col(df: pd.DataFrame, candidates: list[str]) -> str | None:
+    # Select the first column name that exists in the file.
     for c in candidates:
         if c in df.columns:
             return c
@@ -70,6 +74,7 @@ def _normalize(df: pd.DataFrame) -> pd.DataFrame:
         "Net Generation (MW) from Solar with Integrated Battery Storage",
     ])
 
+    # Standardized output schema used across datasets.
     out = pd.DataFrame({
         "timestamp": pd.to_datetime(df["UTC Time at End of Hour"], utc=True, errors="coerce"),
         "load_mw": pd.to_numeric(df[demand_col], errors="coerce"),
@@ -120,6 +125,7 @@ def build_eia930_features(raw_dir: Path, out_dir: Path, ba: str, start: str | No
     for f in files:
         for chunk in _read_balance_csv(f, usecols=usecols):
             if ba:
+                # Filter by balancing authority (e.g., MISO, PJM).
                 chunk = chunk[chunk["Balancing Authority"] == ba]
             if chunk.empty:
                 continue
@@ -134,7 +140,7 @@ def build_eia930_features(raw_dir: Path, out_dir: Path, ba: str, start: str | No
     if end:
         df = df[df["timestamp"] <= pd.to_datetime(end, utc=True)]
 
-    # continuous hourly index and interpolate short gaps
+    # Enforce continuous hourly index and interpolate short gaps.
     full_idx = pd.date_range(df["timestamp"].min(), df["timestamp"].max(), freq="h", tz="UTC")
     df = df.set_index("timestamp").reindex(full_idx).rename_axis("timestamp").reset_index()
 
@@ -142,6 +148,7 @@ def build_eia930_features(raw_dir: Path, out_dir: Path, ba: str, start: str | No
         df[col] = pd.to_numeric(df[col], errors="coerce")
         df[col] = df[col].interpolate(limit=6)
 
+    # Feature engineering mirrors OPSD pipeline for comparability.
     df = add_time_features(df)
     df = add_domain_features(df)
     df = add_price_carbon_features(df, price_col="price_usd_mwh", base_price=45.0)
@@ -151,6 +158,7 @@ def build_eia930_features(raw_dir: Path, out_dir: Path, ba: str, start: str | No
     if "carbon_kg_per_mwh" in df.columns:
         lag_cols.append("carbon_kg_per_mwh")
     df = add_lags_rolls(df, cols=lag_cols)
+    # Drop rows where lag/roll windows are incomplete.
     df = df.dropna().reset_index(drop=True)
 
     out_path = out_dir / "features.parquet"
