@@ -15,7 +15,7 @@ def _as_array(x) -> np.ndarray:
     return arr
 
 
-def optimize_dispatch(forecast_load, forecast_renewables, config: dict) -> Dict[str, Any]:
+def optimize_dispatch(forecast_load, forecast_renewables, config: dict, forecast_price=None) -> Dict[str, Any]:
     load = _as_array(forecast_load)
     ren = _as_array(forecast_renewables)
     if ren.size == 1 and load.size > 1:
@@ -40,7 +40,15 @@ def optimize_dispatch(forecast_load, forecast_renewables, config: dict) -> Dict[
     soc0 = float(battery.get("initial_soc_mwh", capacity / 2))
 
     max_import = float(grid.get("max_import_mw", grid.get("max_draw_mw", 50.0)))
-    price = float(grid.get("price_per_mwh", grid.get("price_usd_per_mwh", 50.0)))
+    
+    if forecast_price is not None:
+        price = _as_array(forecast_price)
+        if price.size == 1 and H > 1:
+            price = np.full(H, float(price[0]))
+    else:
+        price = float(grid.get("price_per_mwh", grid.get("price_usd_per_mwh", 50.0)))
+        price = np.full(H, price)
+
     carbon_cost = float(grid.get("carbon_cost_per_mwh", 0.0))
     carbon_kg = float(grid.get("carbon_kg_per_mwh", 0.0))
 
@@ -74,6 +82,7 @@ def optimize_dispatch(forecast_load, forecast_renewables, config: dict) -> Dict[
         row = np.zeros(n_vars)
         row[idx_grid.start + t] = 1.0
         row[idx_discharge.start + t] = 1.0
+        row[idx_charge.start + t] = -1.0
         row[idx_curtail.start + t] = -1.0
         row[idx_unmet.start + t] = 1.0
         A_eq.append(row)
@@ -138,7 +147,7 @@ def optimize_dispatch(forecast_load, forecast_renewables, config: dict) -> Dict[
     soc = x[idx_soc]
     renewables_used = ren - curtail
 
-    expected_cost = float(np.sum(grid_plan) * price + np.sum(curtail) * curtail_pen + np.sum(unmet) * unmet_pen)
+    expected_cost = float(np.sum(grid_plan * price) + np.sum(curtail) * curtail_pen + np.sum(unmet) * unmet_pen)
     carbon = float(np.sum(grid_plan) * carbon_kg)
     carbon_cost = float(np.sum(grid_plan) * carbon_cost)
 

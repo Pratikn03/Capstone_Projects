@@ -12,6 +12,7 @@ REQUIRED_COLS = [
     "DE_load_actual_entsoe_transparency",
     "DE_wind_generation_actual",
     "DE_solar_generation_actual",
+    "DE_price_day_ahead",
 ]
 
 def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -90,12 +91,13 @@ def main():
         "DE_load_actual_entsoe_transparency": "load_mw",
         "DE_wind_generation_actual": "wind_mw",
         "DE_solar_generation_actual": "solar_mw",
+        "DE_price_day_ahead": "price_eur_mwh",
     })
 
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
     df = df.sort_values("timestamp").reset_index(drop=True)
 
-    for col in ["load_mw", "wind_mw", "solar_mw"]:
+    for col in ["load_mw", "wind_mw", "solar_mw", "price_eur_mwh"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
     # continuous hourly index
@@ -103,7 +105,7 @@ def main():
     df = df.set_index("timestamp").reindex(full_idx).rename_axis("timestamp").reset_index()
 
     # interpolate short gaps
-    for col in ["load_mw", "wind_mw", "solar_mw"]:
+    for col in ["load_mw", "wind_mw", "solar_mw", "price_eur_mwh"]:
         df[col] = df[col].interpolate(limit=6)
 
     df = add_time_features(df)
@@ -118,7 +120,7 @@ def main():
             df[col] = pd.to_numeric(df[col], errors="coerce")
             df[col] = df[col].interpolate(limit=6)
 
-    df = add_lags_rolls(df, cols=["load_mw", "wind_mw", "solar_mw"])
+    df = add_lags_rolls(df, cols=["load_mw", "wind_mw", "solar_mw", "price_eur_mwh"])
 
     # drop NaNs caused by lags/rolls
     df = df.dropna().reset_index(drop=True)
