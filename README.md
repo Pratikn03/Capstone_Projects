@@ -10,6 +10,12 @@ The latest model comparison (mean across targets) is visualized below.
 
 ![Model Comparison](reports/figures/model_comparison.png)
 
+## Impact Evaluation (Level‑4)
+GridPulse compares optimized dispatch against a grid‑only baseline (and a naive battery policy) to quantify cost and carbon impact.
+
+- Report: `reports/impact_comparison.md`
+- Figure: `reports/figures/dispatch_compare.png`
+
 ## Demo
 Short preview of the forecasting inputs (sample run):
 
@@ -117,6 +123,7 @@ Training outputs include RMSE, MAE, MAPE, sMAPE, and daylight‑MAPE for solar. 
 - `reports/formal_evaluation_report.md` — 1‑page evaluation summary with plots.
 - `reports/model_cards/` — per‑target model cards.
 - `reports/multi_horizon_backtest.json` — multi‑horizon backtest results.
+- `reports/impact_comparison.md` — baseline vs optimized dispatch impact (cost + carbon).
 - `scripts/build_reports.py` — regenerate reports/figures after training (supports dataset-specific paths).
 
 ### 4) Start API
