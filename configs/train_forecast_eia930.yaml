@@ -39,13 +39,13 @@ models:
       batch_size: 256
 
 artifacts:
-  out_dir: artifacts/models
+  out_dir: artifacts/models_eia930
 reports:
-  out_dir: reports
+  out_dir: reports/eia930
 
 backtest:
   enabled: true
-  out_path: reports/walk_forward_report.json
+  out_path: reports/eia930/walk_forward_report.json
 
 tuning:
   enabled: true
