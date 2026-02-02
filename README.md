@@ -74,6 +74,13 @@ flowchart TD
 - **Weather data (optional):** Open‑Meteo for Berlin hourly features.
 - **USA dataset (optional):** EIA Form 930 (hourly balancing‑authority demand + generation).
 
+## Data & Licensing
+This repo does **not** store raw datasets. See `DATA.md` for:
+- dataset inventory (OPSD, EIA‑930, optional weather),
+- expected file locations,
+- licensing/attribution notes,
+- reproducible download/processing steps.
+
 ## Quickstart
 
 ### 1) Create environment
