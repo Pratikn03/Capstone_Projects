@@ -12,6 +12,7 @@ class SeqConfig:
 
 class TimeSeriesWindowDataset(Dataset):
     def __init__(self, X: np.ndarray, y: np.ndarray, cfg: SeqConfig):
+        # Key: prepare features/targets and train or evaluate models
         self.X = X.astype(np.float32)
         self.y = y.astype(np.float32)
         self.cfg = cfg

@@ -5,6 +5,7 @@ from typing import Dict, Any
 
 
 def impact_summary(baseline: Dict[str, Any], optimized: Dict[str, Any]) -> Dict[str, Any]:
+    # Key: formulate dispatch objective/constraints and compute plans
     base_cost = float(baseline.get("expected_cost_usd", 0.0))
     opt_cost = float(optimized.get("expected_cost_usd", 0.0))
     base_carbon = float(baseline.get("carbon_kg", 0.0))

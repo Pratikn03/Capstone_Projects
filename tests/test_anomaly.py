@@ -5,6 +5,7 @@ from gridpulse.anomaly.detect import detect_anomalies
 
 
 def test_detect_anomalies_basic():
+    # Key: test setup and assertions
     actual = np.array([10.0, 12.0, 9.0, 50.0])
     forecast = np.array([10.5, 11.5, 9.2, 10.0])
     features = np.array([[1, 2], [1, 2], [1, 2], [9, 9]])

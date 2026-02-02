@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 
 def write_sql(df: pd.DataFrame, path: Path, table: str = "features", engine: str = "duckdb") -> None:
+    # Key: normalize inputs and build time-aware features
     path.parent.mkdir(parents=True, exist_ok=True)
     if engine == "duckdb":
         try:

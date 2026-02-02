@@ -6,6 +6,7 @@ from pathlib import Path
 
 
 def fmt_pct(val: str | None) -> str:
+    # Key: CLI/reporting helper
     if val is None or val == "":
         return "TBD"
     try:

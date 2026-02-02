@@ -3,6 +3,7 @@ from __future__ import annotations
 from sklearn.ensemble import IsolationForest
 
 def fit_iforest(X, contamination: float = 0.01, random_state: int = 42):
+    # Key: flag anomalies from residuals or isolation forest signals
     model = IsolationForest(contamination=contamination, random_state=random_state)
     model.fit(X)
     return model

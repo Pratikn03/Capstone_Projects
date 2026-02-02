@@ -20,6 +20,7 @@ OPTIONAL_COLS = [
 
 
 def add_price_carbon_features(
+    # Key: normalize inputs and build time-aware features
     df: pd.DataFrame,
     price_col: str = "price_eur_mwh",
     base_price: float = 50.0,

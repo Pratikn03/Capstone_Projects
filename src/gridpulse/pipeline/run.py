@@ -16,6 +16,7 @@ from typing import Iterable
 
 
 def _repo_root() -> Path:
+    # Key: orchestrate end-to-end pipeline steps
     # run.py -> src/gridpulse/pipeline/run.py, so repo root is parents[3]
     return Path(__file__).resolve().parents[3]
 

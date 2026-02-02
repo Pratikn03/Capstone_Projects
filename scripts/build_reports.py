@@ -44,6 +44,7 @@ class ReportContext:
 
 
 def ensure_dir(path: Path):
+    # Key: CLI/reporting helper
     path.mkdir(parents=True, exist_ok=True)
 
 

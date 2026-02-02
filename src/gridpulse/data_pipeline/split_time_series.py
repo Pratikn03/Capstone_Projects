@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 
 def time_split(df: pd.DataFrame, train_ratio: float = 0.7, val_ratio: float = 0.15):
+    # Key: normalize inputs and build time-aware features
     """Time-ordered split: train earliest, then val, then test."""
     n = len(df)
     n_train = int(n * train_ratio)

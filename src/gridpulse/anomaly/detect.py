@@ -12,6 +12,7 @@ from gridpulse.anomaly.isolation_forest import fit_iforest, predict_iforest
 
 
 def _load_config(cfg_path: str | Path | None) -> dict:
+    # Key: flag anomalies from residuals or isolation forest signals
     if cfg_path is None:
         cfg_path = Path("configs/anomaly.yaml")
     cfg_path = Path(cfg_path)

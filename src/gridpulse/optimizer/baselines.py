@@ -6,6 +6,7 @@ import numpy as np
 
 
 def _as_array(x) -> np.ndarray:
+    # Key: formulate dispatch objective/constraints and compute plans
     if isinstance(x, (list, tuple, np.ndarray)):
         return np.asarray(x, dtype=float)
     return np.asarray([x], dtype=float)

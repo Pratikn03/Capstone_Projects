@@ -18,6 +18,7 @@ DEFAULT_VERSION = "2020-10-06"
 DEFAULT_FILE = "time_series_60min_singleindex.csv"
 
 def download(url: str, out_path: Path, chunk: int = 1024 * 1024) -> None:
+    # Key: normalize inputs and build time-aware features
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with requests.get(url, stream=True, timeout=120) as r:
         r.raise_for_status()

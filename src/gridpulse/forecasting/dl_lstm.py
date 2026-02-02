@@ -5,6 +5,7 @@ import torch.nn as nn
 
 class LSTMForecaster(nn.Module):
     def __init__(
+        # Key: prepare features/targets and train or evaluate models
         self, 
         n_features: int, 
         hidden_size: int = 128, 

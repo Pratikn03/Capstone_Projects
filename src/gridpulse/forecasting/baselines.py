@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 def persistence_24h(df: pd.DataFrame, target: str = "load_mw") -> np.ndarray:
+    # Key: prepare features/targets and train or evaluate models
     """Predict next step using value from 24 hours ago (assumes hourly data)."""
     return df[target].shift(24).to_numpy()
 

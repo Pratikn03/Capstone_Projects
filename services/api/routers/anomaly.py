@@ -29,6 +29,7 @@ class AnomalyResponse(BaseModel):
 
 @router.post("", response_model=AnomalyResponse)
 def post_anomalies(req: AnomalyRequest):
+    # Key: API endpoint handler
     out = detect_anomalies(req.actual, req.forecast, req.features)
     return AnomalyResponse(
         residual_z=list(out["residual_z"]),

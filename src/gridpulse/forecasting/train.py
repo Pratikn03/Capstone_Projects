@@ -23,6 +23,7 @@ import torch
 from torch.utils.data import DataLoader
 
 def make_xy(df: pd.DataFrame, target: str, targets: list[str]):
+    # Key: prepare features/targets and train or evaluate models
     drop = {"timestamp", *targets}
     feat_cols = [c for c in df.columns if c not in drop]
     X = df[feat_cols].to_numpy()

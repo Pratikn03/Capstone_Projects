@@ -18,6 +18,7 @@ DEFAULT_FEATURES = [
 ]
 
 def main():
+    # Key: flag anomalies from residuals or isolation forest signals
     parser = argparse.ArgumentParser(description="Train Isolation Forest for Anomaly Detection")
     parser.add_argument("--train-data", type=str, default="data/processed/splits/train.parquet", help="Path to training data parquet")
     parser.add_argument("--config", type=str, default="configs/anomaly.yaml", help="Path to configuration YAML")

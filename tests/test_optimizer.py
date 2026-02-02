@@ -5,6 +5,7 @@ from gridpulse.optimizer import optimize_dispatch
 
 
 def test_optimize_dispatch_shapes():
+    # Key: test setup and assertions
     load = [10.0, 12.0, 9.0]
     ren = [3.0, 4.0, 2.0]
     cfg = {

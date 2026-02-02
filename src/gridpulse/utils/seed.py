@@ -9,6 +9,7 @@ import numpy as np
 
 
 def set_seed(seed: int = 42) -> int:
+    # Key: shared utilities used across the pipeline
     """Set deterministic seeds for python, numpy, and torch (if available)."""
     os.environ["PYTHONHASHSEED"] = str(seed)
     random.seed(seed)

@@ -11,4 +11,5 @@ app.include_router(monitor.router, prefix="/monitor", tags=["monitor"])
 
 @app.get("/health")
 def health():
+    # Key: FastAPI application setup
     return {"status": "ok"}

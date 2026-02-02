@@ -8,6 +8,7 @@ import plotly.express as px
 st.set_page_config(page_title="GridPulse Dashboard", layout="wide")
 
 def fetch_json(method: str, url: str, **kwargs):
+    # Key: Streamlit UI layout and API calls
     try:
         r = requests.request(method, url, timeout=60, **kwargs)
         r.raise_for_status()

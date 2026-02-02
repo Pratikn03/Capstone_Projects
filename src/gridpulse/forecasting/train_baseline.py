@@ -16,6 +16,7 @@ from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm
 TARGETS = ["load_mw", "wind_mw", "solar_mw"]
 
 def make_xy(df: pd.DataFrame, target: str, drop_cols=("timestamp",)) -> tuple[np.ndarray, np.ndarray, list[str]]:
+    # Key: prepare features/targets and train or evaluate models
     cols = [c for c in df.columns if c not in drop_cols and c not in TARGETS]
     X = df[cols].to_numpy()
     y = df[target].to_numpy()

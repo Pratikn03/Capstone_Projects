@@ -17,6 +17,7 @@ OPTIONAL_COLS = [
 ]
 
 def main():
+    # Key: normalize inputs and build time-aware features
     p = argparse.ArgumentParser()
     p.add_argument("--in", dest="in_dir", required=True, help="Input directory (data/raw)")
     p.add_argument("--report", default="reports/data_quality_report.md", help="Markdown report output")

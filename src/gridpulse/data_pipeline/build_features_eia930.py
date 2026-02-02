@@ -17,6 +17,7 @@ from gridpulse.data_pipeline.build_features import (
 
 
 def _iter_balance_files(raw_dir: Path) -> list[Path]:
+    # Key: normalize inputs and build time-aware features
     return sorted(raw_dir.glob("eia930-*-balance.csv"))
 
 
