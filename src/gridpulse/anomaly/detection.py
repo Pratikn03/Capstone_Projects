@@ -17,6 +17,7 @@ class MultivariateAnomalyDetector:
     or high solar generation at night) by learning the joint distribution of features.
     """
     def __init__(self, contamination: float = 0.01, n_estimators: int = 100, random_state: int = 42):
+        # Key: flag anomalies from residuals or isolation forest signals
         self.model = IsolationForest(
             n_estimators=n_estimators,
             contamination=contamination,

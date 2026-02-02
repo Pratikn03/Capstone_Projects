@@ -23,6 +23,7 @@ router = APIRouter()
 
 
 def _load_week2_metrics() -> dict | None:
+    # Key: API endpoint handler
     path = Path("reports/week2_metrics.json")
     if not path.exists():
         return None

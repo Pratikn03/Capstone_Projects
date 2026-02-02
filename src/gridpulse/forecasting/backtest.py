@@ -7,6 +7,7 @@ from gridpulse.utils.metrics import rmse, mae, mape, smape, daylight_mape
 
 
 def walk_forward_horizon_metrics(y_true: np.ndarray, y_pred: np.ndarray, horizon: int, target: str) -> dict:
+    # Key: prepare features/targets and train or evaluate models
     """
     Compute per-horizon step metrics for walk-forward style evaluation.
     y_true and y_pred are 1D arrays aligned in time.

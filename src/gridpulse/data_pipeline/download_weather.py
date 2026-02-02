@@ -23,6 +23,7 @@ DEFAULT_HOURLY = [
 ]
 
 def _parse_date(d: str) -> date:
+    # Key: normalize inputs and build time-aware features
     return datetime.strptime(d, "%Y-%m-%d").date()
 
 def _chunks(start: date, end: date, chunk_days: int) -> Iterable[tuple[date, date]]:

@@ -23,6 +23,7 @@ class RetrainingDecision:
 
 
 def load_monitoring_config(path: str | Path = "configs/monitoring.yaml") -> dict:
+    # Key: compute drift metrics and retraining signals
     cfg_path = Path(path)
     if not cfg_path.exists():
         return {

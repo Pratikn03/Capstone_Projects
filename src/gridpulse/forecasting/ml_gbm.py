@@ -8,6 +8,7 @@ from typing import Tuple, Any, Dict
 import numpy as np
 
 def _try_lightgbm():
+    # Key: prepare features/targets and train or evaluate models
     try:
         import lightgbm as lgb
         return lgb

@@ -14,6 +14,7 @@ from gridpulse.utils.scaler import StandardScaler
 
 
 def load_model_bundle(path: str | Path) -> Dict[str, Any]:
+    # Key: prepare features/targets and train or evaluate models
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(path)

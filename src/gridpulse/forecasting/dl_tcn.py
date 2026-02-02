@@ -7,6 +7,7 @@ from torch.nn.utils import weight_norm
 
 class _Chomp1d(nn.Module):
     def __init__(self, chomp_size: int):
+        # Key: prepare features/targets and train or evaluate models
         super().__init__()
         self.chomp_size = chomp_size
 

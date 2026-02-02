@@ -28,6 +28,7 @@ class OptimizeResponse(BaseModel):
 
 
 def _load_cfg() -> dict:
+    # Key: API endpoint handler
     # Prefer optimization.yaml, fallback to optimize.yaml
     for path in [Path("configs/optimization.yaml"), Path("configs/optimize.yaml")]:
         if path.exists():

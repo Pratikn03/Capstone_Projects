@@ -7,6 +7,7 @@ from pathlib import Path
 
 
 def run(cmd: list[str]):
+    # Key: CLI/reporting helper
     print("Running:", " ".join(cmd))
     subprocess.run(cmd, check=True)
 

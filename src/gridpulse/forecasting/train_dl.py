@@ -20,6 +20,7 @@ from gridpulse.forecasting.dl_lstm import LSTMForecaster
 from gridpulse.forecasting.datasets import TimeSeriesWindowDataset, SeqConfig
 
 def train_epoch(model, loader, optimizer, criterion, device):
+    # Key: prepare features/targets and train or evaluate models
     model.train()
     total_loss = 0.0
     for X_batch, y_batch in loader:

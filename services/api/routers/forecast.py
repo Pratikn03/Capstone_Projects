@@ -16,6 +16,7 @@ router = APIRouter()
 
 
 def _load_cfg(path: str | Path = "configs/forecast.yaml") -> dict:
+    # Key: API endpoint handler
     cfg_path = Path(path)
     if not cfg_path.exists():
         return {

@@ -12,6 +12,7 @@ class StandardScaler:
 
     @classmethod
     def fit(cls, X: np.ndarray) -> "StandardScaler":
+        # Key: shared utilities used across the pipeline
         mean = np.mean(X, axis=0)
         std = np.std(X, axis=0)
         std = np.where(std < 1e-12, 1.0, std)

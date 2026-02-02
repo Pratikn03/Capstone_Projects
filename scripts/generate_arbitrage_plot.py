@@ -7,6 +7,7 @@ import numpy as np
 from pathlib import Path
 
 def main():
+    # Key: CLI/reporting helper
     # --- 1. MOCK DATA (As requested) ---
     # Create a 24-hour timeline
     hours = np.arange(24)

@@ -2,6 +2,7 @@
 import logging
 
 def get_logger(name: str) -> logging.Logger:
+    # Key: shared utilities used across the pipeline
     logger = logging.getLogger(name)
     if not logger.handlers:
         handler = logging.StreamHandler()

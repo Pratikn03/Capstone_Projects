@@ -7,6 +7,7 @@ from gridpulse.forecasting.predict import predict_next_24h
 
 class DummyModel:
     def predict(self, X):
+        # Key: test setup and assertions
         return np.zeros(len(X))
 
 

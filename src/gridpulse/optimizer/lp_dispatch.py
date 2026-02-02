@@ -8,6 +8,7 @@ from scipy.optimize import linprog
 
 
 def _as_array(x) -> np.ndarray:
+    # Key: formulate dispatch objective/constraints and compute plans
     if isinstance(x, (list, tuple, np.ndarray)):
         arr = np.asarray(x, dtype=float)
     else:
