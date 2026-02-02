@@ -1,3 +1,4 @@
+"""Tests for test anomaly."""
 import numpy as np
 
 from gridpulse.anomaly.detect import detect_anomalies

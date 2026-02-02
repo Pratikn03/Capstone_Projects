@@ -1,3 +1,4 @@
+"""Script: train multi dataset."""
 from __future__ import annotations
 
 import argparse

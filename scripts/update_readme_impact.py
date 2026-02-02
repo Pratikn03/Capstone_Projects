@@ -1,3 +1,4 @@
+"""Script: update readme impact."""
 from __future__ import annotations
 
 import csv

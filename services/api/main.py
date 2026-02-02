@@ -1,3 +1,4 @@
+"""FastAPI application entrypoint."""
 from fastapi import FastAPI
 from services.api.routers import forecast, anomaly, optimize, monitor
 

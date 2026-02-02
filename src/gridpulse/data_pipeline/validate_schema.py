@@ -1,3 +1,4 @@
+"""Data pipeline: validate schema."""
 from __future__ import annotations
 
 import argparse

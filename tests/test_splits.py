@@ -1,3 +1,4 @@
+"""Tests for test splits."""
 import pandas as pd
 from gridpulse.data_pipeline.split_time_series import time_split
 

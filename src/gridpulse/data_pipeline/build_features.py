@@ -1,3 +1,4 @@
+"""Data pipeline: build features."""
 from __future__ import annotations
 
 import argparse
