@@ -19,16 +19,16 @@ GridPulse compares optimized dispatch against a grid‑only baseline (and a naiv
 - Savings Plot: `reports/figures/impact_savings.png`
 
 ### Impact Table (auto‑updated after benchmark)
-This table is intentionally **TBD** until you run the impact benchmark. Update it with:
+This table is populated from `reports/impact_summary.csv`. Update it after each benchmark with:
 ```bash
 python scripts/update_readme_impact.py
 ```
 
 | Metric | Value |
 |---|---:|
-| Cost savings | TBD |
-| Carbon reduction | TBD |
-| Peak shaving | TBD |
+| Cost savings | 0.05% |
+| Carbon reduction | 0.00% |
+| Peak shaving | 0.00% |
 
 ## Demo
 Short preview of the forecasting inputs (sample run):
