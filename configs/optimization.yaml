@@ -1,6 +1,6 @@
 objective:
   cost_weight: 1.0
-  carbon_weight: 0.5
+  carbon_weight: 1.0
 
 battery:
   capacity_mwh: 1000.0
@@ -21,3 +21,4 @@ renewables:
 penalties:
   curtailment_per_mw: 500.0 # High penalty to discourage wasting renewable energy
   unmet_load_per_mw: 10000.0 # Very high penalty (should not happen if grid is available)
+  peak_per_mw: 5.0 # Penalize peak grid import to encourage peak shaving
