@@ -15,6 +15,20 @@ GridPulse compares optimized dispatch against a grid‑only baseline (and a naiv
 
 - Report: `reports/impact_comparison.md`
 - Figure: `reports/figures/dispatch_compare.png`
+- Summary CSV: `reports/impact_summary.csv`
+- Savings Plot: `reports/figures/impact_savings.png`
+
+### Provisional Impact Table (auto‑updated)
+This table is intentionally **TBD** until you run the impact benchmark. Update it with:
+```bash
+python scripts/update_readme_impact.py
+```
+
+| Metric | Value |
+|---|---:|
+| Cost savings | TBD |
+| Carbon reduction | TBD |
+| Peak shaving | TBD |
 
 ## Demo
 Short preview of the forecasting inputs (sample run):
@@ -124,6 +138,7 @@ Training outputs include RMSE, MAE, MAPE, sMAPE, and daylight‑MAPE for solar. 
 - `reports/model_cards/` — per‑target model cards.
 - `reports/multi_horizon_backtest.json` — multi‑horizon backtest results.
 - `reports/impact_comparison.md` — baseline vs optimized dispatch impact (cost + carbon).
+- `reports/impact_summary.csv` — summary metrics for README (auto‑updated).
 - `scripts/build_reports.py` — regenerate reports/figures after training (supports dataset-specific paths).
 
 ### 4) Start API
