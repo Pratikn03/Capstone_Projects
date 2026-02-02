@@ -7,7 +7,12 @@ import zipfile
 
 import pandas as pd
 
-from gridpulse.data_pipeline.build_features import add_time_features, add_domain_features, add_lags_rolls
+from gridpulse.data_pipeline.build_features import (
+    add_time_features,
+    add_domain_features,
+    add_lags_rolls,
+    add_price_carbon_features,
+)
 
 
 def _iter_balance_files(raw_dir: Path) -> list[Path]:
@@ -137,7 +142,13 @@ def build_eia930_features(raw_dir: Path, out_dir: Path, ba: str, start: str | No
 
     df = add_time_features(df)
     df = add_domain_features(df)
-    df = add_lags_rolls(df, cols=["load_mw", "wind_mw", "solar_mw"])
+    df = add_price_carbon_features(df, price_col="price_usd_mwh", base_price=45.0)
+    lag_cols = ["load_mw", "wind_mw", "solar_mw"]
+    if "price_usd_mwh" in df.columns:
+        lag_cols.append("price_usd_mwh")
+    if "carbon_kg_per_mwh" in df.columns:
+        lag_cols.append("carbon_kg_per_mwh")
+    df = add_lags_rolls(df, cols=lag_cols)
     df = df.dropna().reset_index(drop=True)
 
     out_path = out_dir / "features.parquet"

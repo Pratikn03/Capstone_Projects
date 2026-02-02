@@ -17,6 +17,38 @@ OPTIONAL_COLS = [
     "DE_price_day_ahead",
 ]
 
+
+def add_price_carbon_features(
+    df: pd.DataFrame,
+    price_col: str = "price_eur_mwh",
+    base_price: float = 50.0,
+) -> pd.DataFrame:
+    """Create or sanitize price + carbon-intensity features.
+
+    Price is time-of-day + seasonal proxy if not present. Carbon intensity
+    varies with renewable share and peak periods to enable carbon-aware dispatch.
+    """
+    out = df.copy()
+
+    if price_col not in out.columns:
+        price = (
+            base_price
+            + 10.0 * out["is_morning_peak"]
+            + 20.0 * out["is_evening_peak"]
+            + 5.0 * (out["season"] == 3).astype(int)
+            - 5.0 * out["is_weekend"]
+        )
+        out[price_col] = price.clip(lower=10.0)
+    else:
+        out[price_col] = pd.to_numeric(out[price_col], errors="coerce").interpolate(limit=6)
+
+    load = out["load_mw"].clip(lower=1.0)
+    ren = out["wind_mw"] + out["solar_mw"]
+    ren_share = (ren / load).clip(0.0, 1.0)
+    carbon = 450.0 - 200.0 * ren_share + 30.0 * out["is_evening_peak"] - 10.0 * out["is_weekend"]
+    out["carbon_kg_per_mwh"] = carbon.clip(lower=50.0)
+    return out
+
 def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
     ts = df["timestamp"]
     out = df.copy()
@@ -117,6 +149,7 @@ def main():
 
     df = add_time_features(df)
     df = add_domain_features(df)
+    df = add_price_carbon_features(df, price_col="price_eur_mwh", base_price=50.0)
 
     if args.weather:
         wx = load_weather(Path(args.weather))
@@ -127,7 +160,12 @@ def main():
             df[col] = pd.to_numeric(df[col], errors="coerce")
             df[col] = df[col].interpolate(limit=6)
 
-    df = add_lags_rolls(df, cols=numeric_cols)
+    lag_cols = list(numeric_cols)
+    if "price_eur_mwh" in df.columns and "price_eur_mwh" not in lag_cols:
+        lag_cols.append("price_eur_mwh")
+    if "carbon_kg_per_mwh" in df.columns:
+        lag_cols.append("carbon_kg_per_mwh")
+    df = add_lags_rolls(df, cols=lag_cols)
 
     # drop NaNs caused by lags/rolls
     df = df.dropna().reset_index(drop=True)
