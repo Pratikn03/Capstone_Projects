@@ -24,6 +24,7 @@ from torch.utils.data import DataLoader
 
 def make_xy(df: pd.DataFrame, target: str, targets: list[str]):
     # Key: prepare features/targets and train or evaluate models
+    # Drop all targets from features to prevent leakage.
     drop = {"timestamp", *targets}
     feat_cols = [c for c in df.columns if c not in drop]
     X = df[feat_cols].to_numpy()
@@ -43,6 +44,7 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, target: str) -> dict
         "smape": smape(y_true, y_pred),
     }
     if target == "solar_mw":
+        # Solar MAPE explodes at night; use daylight-only MAPE.
         out["daylight_mape"] = daylight_mape(y_true, y_pred)
     return out
 
@@ -61,6 +63,7 @@ def fit_sequence_model(model, train_dl, val_dl, epochs: int, lr: float, horizon:
         for xb, yb in train_dl:
             xb = xb.to(device)
             yb = yb.to(device)
+            # Model outputs a full sequence; evaluate only forecast horizon.
             pred_seq = model(xb)
             pred_hz = pred_seq[:, -horizon:]
             loss = loss_fn(pred_hz, yb)
@@ -80,6 +83,7 @@ def fit_sequence_model(model, train_dl, val_dl, epochs: int, lr: float, horizon:
                 val_losses.append(loss_fn(pred_hz, yb).item())
 
         val_loss = float(np.mean(val_losses)) if val_losses else float("inf")
+        # Early stopping on validation loss for stability.
         if val_loss < best_val:
             best_val = val_loss
             best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
@@ -107,6 +111,7 @@ def train_lstm_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "c
     lr = float(cfg.get("lr", 1e-3))
 
     scfg = SeqConfig(lookback=lookback, horizon=horizon)
+    # Window the time series into (lookback -> horizon) pairs.
     train_ds = TimeSeriesWindowDataset(X_train, y_train, scfg)
     val_ds = TimeSeriesWindowDataset(X_val, y_val, scfg)
     train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=False)
@@ -134,6 +139,7 @@ def train_tcn_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cp
     lr = float(cfg.get("lr", 1e-3))
 
     scfg = SeqConfig(lookback=lookback, horizon=horizon)
+    # Same windowing logic as LSTM for fair comparison.
     train_ds = TimeSeriesWindowDataset(X_train, y_train, scfg)
     val_ds = TimeSeriesWindowDataset(X_val, y_val, scfg)
     train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=False)
@@ -185,6 +191,7 @@ def main():
     p.add_argument("--skip-existing", action="store_true", help="Skip training if model artifact already exists")
     args = p.parse_args()
 
+    # Config-driven training keeps runs reproducible across datasets.
     cfg = yaml.safe_load(Path(args.config).read_text(encoding="utf-8"))
     warnings.filterwarnings(
         "ignore",
@@ -196,6 +203,7 @@ def main():
     if not features_path.exists():
         raise FileNotFoundError(f"Missing {features_path}. Run build_features first.")
 
+    # Time-ordered split to prevent leakage.
     df = pd.read_parquet(features_path).sort_values("timestamp")
     n = len(df)
     train_df = df.iloc[: int(n * 0.7)]
@@ -230,6 +238,7 @@ def main():
     backtest_enabled = bool(backtest_cfg.get("enabled", False))
     backtest_payload = {"targets": {}} if backtest_enabled else None
 
+    # Optional model/target filters to avoid retraining everything.
     model_filter = None
     if args.models:
         model_filter = {m.strip().lower() for m in args.models.split(",") if m.strip()}
@@ -244,7 +253,7 @@ def main():
 
         target_res = {"n_features": len(feat_cols)}
 
-        # ---- GBM ----
+        # ---- GBM (strong tabular baseline) ----
         gbm_cfg = cfg["models"].get("baseline_gbm", {})
         if gbm_cfg.get("enabled", True) and (model_filter is None or "gbm" in model_filter):
             if args.skip_existing and has_gbm_artifact(target):
@@ -279,13 +288,14 @@ def main():
                         y_test, gbm_pred_test, horizon, target
                     )
 
-        # ---- LSTM ----
+        # ---- LSTM (sequence model) ----
         lstm_cfg = cfg["models"].get("dl_lstm", {})
         if lstm_cfg.get("enabled", True) and (model_filter is None or "lstm" in model_filter):
             if args.skip_existing and (art_dir / f"lstm_{target}.pt").exists():
                 print(f"Skipping LSTM for {target} (artifact exists)")
             else:
                 params = lstm_cfg.get("params", {})
+                # Scale features/targets for DL stability; store scalers with the model.
                 x_scaler = StandardScaler.fit(X_train)
                 y_scaler = StandardScaler.fit(y_train.reshape(-1, 1))
                 X_train_s = x_scaler.transform(X_train)
@@ -342,13 +352,14 @@ def main():
                         y_true_test, y_pred_test, horizon, target
                     )
 
-        # ---- TCN ----
+        # ---- TCN (convolutional sequence model) ----
         tcn_cfg = cfg["models"].get("dl_tcn", {})
         if tcn_cfg.get("enabled", False) and (model_filter is None or "tcn" in model_filter):
             if args.skip_existing and (art_dir / f"tcn_{target}.pt").exists():
                 print(f"Skipping TCN for {target} (artifact exists)")
             else:
                 params = tcn_cfg.get("params", {})
+                # Same scaling strategy as LSTM for comparability.
                 x_scaler = StandardScaler.fit(X_train)
                 y_scaler = StandardScaler.fit(y_train.reshape(-1, 1))
                 X_train_s = x_scaler.transform(X_train)
@@ -406,6 +417,7 @@ def main():
 
         report["targets"][target] = target_res
 
+    # Write human-readable comparison report and machine-readable metrics.
     lines = ["# ML vs DL Comparison\n\n"]
     lines.append("## Setup\n")
     lines.append(f"- Targets: **{', '.join(targets)}**\n")
