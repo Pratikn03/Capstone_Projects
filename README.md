@@ -26,9 +26,9 @@ python scripts/update_readme_impact.py
 
 | Metric | Value |
 |---|---:|
-| Cost savings | TBD |
-| Carbon reduction | TBD |
-| Peak shaving | TBD |
+| Cost savings | 0.05% |
+| Carbon reduction | 0.00% |
+| Peak shaving | 0.00% |
 
 ## Demo
 Short preview of the forecasting inputs (sample run):
