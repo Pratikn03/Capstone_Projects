@@ -30,6 +30,9 @@ python scripts/update_readme_impact.py
 | Carbon reduction | 0.00% |
 | Peak shaving | 0.00% |
 
+**Figure 1: GridPulse arbitrage decision vs grid‑only baseline.**
+![Arbitrage Optimization](reports/figures/arbitrage_optimization_demo.png)
+
 ## Demo
 Short preview of the forecasting inputs (sample run):
 
