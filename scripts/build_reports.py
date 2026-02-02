@@ -26,6 +26,8 @@ from gridpulse.forecasting.dl_lstm import LSTMForecaster
 from gridpulse.forecasting.dl_tcn import TCNForecaster
 from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
 from gridpulse.optimizer.lp_dispatch import optimize_dispatch
+from gridpulse.optimizer.baselines import grid_only_dispatch, naive_battery_dispatch
+from gridpulse.optimizer.impact import impact_summary
 from gridpulse.monitoring.retraining import load_monitoring_config, compute_data_drift
 from gridpulse.utils.metrics import rmse, mae, mape, smape, daylight_mape
 from gridpulse.utils.scaler import StandardScaler
@@ -75,6 +77,24 @@ def _compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, target: str) -> dic
     if target == "solar_mw":
         out["daylight_mape"] = daylight_mape(y_true, y_pred)
     return out
+
+
+def _clean_series(arr: np.ndarray) -> np.ndarray:
+    arr = np.asarray(arr, dtype=float)
+    if not np.isfinite(arr).all():
+        mean = np.nanmean(arr)
+        if not np.isfinite(mean):
+            mean = 0.0
+        arr = np.where(np.isfinite(arr), arr, mean)
+    return arr
+
+
+def _load_optimization_config(ctx: ReportContext) -> dict:
+    cfg_path = ctx.repo_root / "configs" / "optimization.yaml"
+    if cfg_path.exists():
+        import yaml
+        return yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+    return {}
 
 
 def _build_torch_model(bundle: dict):
@@ -401,6 +421,189 @@ def refresh_metrics_from_models(ctx: ReportContext) -> dict:
     return metrics
 
 
+def plot_arbitrage_dispatch(ctx: ReportContext, hours: np.ndarray, price_curve: np.ndarray, grid_load: np.ndarray, optimized_load: np.ndarray, battery_flow: np.ndarray):
+    """
+    Generates the Level-4 Arbitrage Optimization plot.
+    battery_flow: positive = discharge, negative = charge
+    """
+    fig_dir = ctx.reports_dir / "figures"
+    ensure_dir(fig_dir)
+
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+
+    # Plot Market Price (The "Signal")
+    color = 'tab:red'
+    ax1.set_xlabel('Hour of Day', fontsize=12, fontweight='bold')
+    ax1.set_ylabel('Electricity Price ($/MWh)', color=color, fontsize=12, fontweight='bold')
+    ax1.plot(hours, price_curve, color=color, linestyle='--', linewidth=2, label='Market Price', alpha=0.6)
+    ax1.tick_params(axis='y', labelcolor=color)
+    ax1.grid(True, alpha=0.3)
+
+    # Create a second y-axis for Power (The "Action")
+    ax2 = ax1.twinx()
+    color = 'tab:blue'
+    ax2.set_ylabel('Power (MW)', color=color, fontsize=12, fontweight='bold')
+
+    # Plot 1: Baseline Load (The "Before")
+    ax2.plot(hours, grid_load, color='gray', alpha=0.4, linewidth=2, label='Baseline Grid Load')
+
+    # Plot 2: Optimized Load (The "After")
+    ax2.plot(hours, optimized_load, color=color, linewidth=3, label='GridPulse Optimized Load')
+
+    # Highlight the "Arbitrage" (The Level-4 Magic)
+    # Green area = Charging (Money saved later)
+    ax2.fill_between(hours, grid_load, optimized_load, 
+                     where=(np.array(battery_flow) < 0), color='green', alpha=0.3, label='Charging (Low Price)')
+    # Orange area = Discharging (Cost Avoided)
+    ax2.fill_between(hours, grid_load, optimized_load, 
+                     where=(np.array(battery_flow) > 0), color='orange', alpha=0.5, label='Discharging (High Price)')
+
+    # --- 3. POLISH ---
+    plt.title('GridPulse Decision Logic: Arbitrage Optimization', fontsize=16, fontweight='bold', pad=20)
+    lines_1, labels_1 = ax1.get_legend_handles_labels()
+    lines_2, labels_2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc='upper left', frameon=True, shadow=True)
+
+    plt.tight_layout()
+    out_path = fig_dir / "arbitrage_optimization.png"
+    fig.savefig(out_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    return out_path
+
+
+def build_impact_report(ctx: ReportContext):
+    train_df, test_df = load_split_data(ctx)
+    if test_df is None or test_df.empty:
+        return None
+
+    horizon = 24
+    if len(test_df) < horizon:
+        return None
+
+    window = test_df.tail(horizon)
+    load = _clean_series(window["load_mw"].to_numpy())
+    wind = window["wind_mw"].to_numpy() if "wind_mw" in window.columns else np.zeros_like(load)
+    solar = window["solar_mw"].to_numpy() if "solar_mw" in window.columns else np.zeros_like(load)
+    price = window["price_eur_mwh"].to_numpy() if "price_eur_mwh" in window.columns else None
+    renew = _clean_series(wind) + _clean_series(solar)
+
+    cfg = _load_optimization_config(ctx)
+    baseline = grid_only_dispatch(load, renew, cfg)
+    naive = naive_battery_dispatch(load, renew, cfg)
+    optimized = optimize_dispatch(load, renew, cfg, forecast_price=price)
+
+    impact = impact_summary(baseline, optimized)
+    impact_naive = impact_summary(naive, optimized)
+
+    fig_dir = ctx.reports_dir / "figures"
+    ensure_dir(fig_dir)
+    fig, ax = plt.subplots(3, 1, figsize=(12, 7), sharex=True)
+    ax[0].plot(baseline["grid_mw"], label="baseline grid", color="#1f77b4")
+    ax[0].plot(optimized["grid_mw"], label="optimized grid", color="#ff7f0e")
+    ax[0].plot(naive["grid_mw"], label="naive grid", color="#2ca02c")
+    ax[0].set_title("Grid Import (MW)")
+    ax[0].legend()
+
+    ax[1].plot(optimized["battery_charge_mw"], label="charge", color="#1f77b4")
+    ax[1].plot(optimized["battery_discharge_mw"], label="discharge", color="#ff7f0e")
+    ax[1].set_title("Optimized Battery Flow (MW)")
+    ax[1].legend()
+
+    ax[2].plot(baseline["soc_mwh"], label="baseline SOC", color="#1f77b4", linestyle="--")
+    ax[2].plot(optimized["soc_mwh"], label="optimized SOC", color="#ff7f0e")
+    ax[2].set_title("State of Charge (MWh)")
+    ax[2].legend()
+
+    plt.tight_layout()
+    fig_path = fig_dir / "dispatch_compare.png"
+    fig.savefig(fig_path, dpi=300, bbox_inches="tight")
+
+    # Generate Arbitrage Plot if price data exists
+    arb_plot_path = None
+    if price is not None:
+        # battery_flow: discharge (pos) - charge (pos) -> net flow (pos=discharge, neg=charge)
+        battery_flow = np.array(optimized["battery_discharge_mw"]) - np.array(optimized["battery_charge_mw"])
+        # optimized_load (grid import) is roughly load - renewables - battery_flow (simplified for viz)
+        # But we can just use the grid_mw from the plan
+        grid_load_baseline = np.maximum(0, load - renew) # Simple baseline
+        grid_load_optimized = np.array(optimized["grid_mw"])
+        
+        arb_plot_path = plot_arbitrage_dispatch(ctx, np.arange(horizon), price, grid_load_baseline, grid_load_optimized, battery_flow)
+
+
+    def _fmt(val, digits=2):
+        if val is None:
+            return "n/a"
+        return f"{val:,.{digits}f}"
+
+    def _fmt_pct(val, digits=2):
+        if val is None:
+            return "n/a"
+        return f"{val:.{digits}f}%"
+
+    lines = []
+    lines.append("# Impact Evaluation — Baseline vs GridPulse\n\n")
+    lines.append("This report compares dispatch outcomes for the same 24‑hour forecast window (last 24 hours of the test split).\n\n")
+    lines.append(f"- Horizon: {horizon} hours\n")
+    lines.append("- Forecast source: test split (proxy for day‑ahead forecast)\n")
+    lines.append("- Config: `configs/optimization.yaml`\n\n")
+
+    lines.append("## Policy Comparison\n")
+    lines.append("| Policy | Cost (USD) | Carbon (kg) | Carbon Cost (USD) |\n")
+    lines.append("|---|---:|---:|---:|\n")
+    for name, plan in [
+        ("Grid‑only baseline", baseline),
+        ("Naive battery", naive),
+        ("GridPulse (LP optimized)", optimized),
+    ]:
+        lines.append(
+            f"| {name} | {_fmt(plan.get('expected_cost_usd'))} | {_fmt(plan.get('carbon_kg'))} | {_fmt(plan.get('carbon_cost_usd'))} |\n"
+        )
+    lines.append("\n")
+
+    lines.append("## Savings vs Baseline (GridPulse vs Grid‑only)\n")
+    lines.append(f"- Cost savings: {_fmt(impact.get('cost_savings_usd'))} ({_fmt_pct(impact.get('cost_savings_pct'))})\n")
+    lines.append(f"- Carbon reduction: {_fmt(impact.get('carbon_reduction_kg'))} kg ({_fmt_pct(impact.get('carbon_reduction_pct'))})\n\n")
+
+    lines.append("## Savings vs Naive Battery (GridPulse vs Naive)\n")
+    lines.append(f"- Cost savings: {_fmt(impact_naive.get('cost_savings_usd'))} ({_fmt_pct(impact_naive.get('cost_savings_pct'))})\n")
+    lines.append(f"- Carbon reduction: {_fmt(impact_naive.get('carbon_reduction_kg'))} kg ({_fmt_pct(impact_naive.get('carbon_reduction_pct'))})\n\n")
+
+    lines.append("## Dispatch Comparison\n")
+    lines.append("![](figures/dispatch_compare.png)\n")
+
+    if arb_plot_path:
+        lines.append("\n## Arbitrage Logic (Level-4)\n")
+        lines.append("![](figures/arbitrage_optimization.png)\n")
+
+    out_path = ctx.reports_dir / "impact_comparison.md"
+    ensure_dir(ctx.reports_dir)
+    out_path.write_text("".join(lines), encoding="utf-8")
+
+    json_path = ctx.reports_dir / "impact_comparison.json"
+    json_path.write_text(
+        json.dumps(
+            _sanitize(
+                {
+                    "horizon": horizon,
+                    "baseline": baseline,
+                    "naive": naive,
+                    "optimized": optimized,
+                    "impact_vs_baseline": impact,
+                    "impact_vs_naive": impact_naive,
+                }
+            ),
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    return {
+        "report_path": out_path,
+        "figure_path": fig_path,
+    }
+
+
 def build_model_cards(ctx: ReportContext, metrics: dict | None = None):
     metrics = metrics or refresh_metrics_from_models(ctx)
     targets = metrics.get("targets", {})
@@ -513,6 +716,7 @@ def main():
     plot_model_comparison(ctx, metrics)
     build_model_cards(ctx, metrics)
     build_formal_report(ctx, plot_path, metrics)
+    build_impact_report(ctx)
 
     print("Reports and figures generated.")
 
