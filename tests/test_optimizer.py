@@ -1,3 +1,4 @@
+"""Tests for test optimizer."""
 import numpy as np
 
 from gridpulse.optimizer import optimize_dispatch

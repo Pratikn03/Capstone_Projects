@@ -1,3 +1,4 @@
+"""Anomaly detection: isolation forest."""
 from __future__ import annotations
 from sklearn.ensemble import IsolationForest
 

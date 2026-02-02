@@ -1,3 +1,4 @@
+"""Data pipeline: split time series."""
 from __future__ import annotations
 
 import argparse

@@ -1,3 +1,4 @@
+"""Monitoring: model drift."""
 from __future__ import annotations
 
 def metric_drift(current_metric: float, baseline_metric: float, degradation_threshold: float = 0.15):

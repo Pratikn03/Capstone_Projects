@@ -1,3 +1,4 @@
+"""Model registry: promote."""
 from __future__ import annotations
 import argparse
 from .model_store import promote
