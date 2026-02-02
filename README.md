@@ -77,7 +77,7 @@ Values are from `reports/eia930/impact_summary.csv`.
 
 ## Demo
 
-![GridPulse Demo](reports/figures/demo.gif)
+![GridPulse Demo](reports/figures/demo.png)
 
 ![Dashboard Snapshot](reports/figures/dashboard_snapshot.png)
 
