@@ -92,6 +92,7 @@ def _snapshot_artifacts(repo_root: Path, run_dir: Path, log: logging.Logger) -> 
         repo_root / "reports" / "walk_forward_report.json",
         repo_root / "reports" / "impact_comparison.md",
         repo_root / "reports" / "impact_comparison.json",
+        repo_root / "reports" / "impact_summary.csv",
     ]
     for fp in report_files:
         if fp.exists():
