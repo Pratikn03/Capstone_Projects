@@ -64,7 +64,7 @@ Values are from `reports/eia930/impact_summary.csv`.
 
 **Arbitrage visualization**
 
-![Arbitrage Optimization](reports/figures/arbitrage_optimization_demo.png)
+![Arbitrage Optimization](reports/figures/arbitrage_optimization.png)
 
 ## Results snapshot
 **OPSD (Germany) model comparison**
