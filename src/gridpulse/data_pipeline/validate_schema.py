@@ -10,6 +10,7 @@ REQUIRED_COLS = [
     "DE_load_actual_entsoe_transparency",
     "DE_wind_generation_actual",
     "DE_solar_generation_actual",
+    "DE_price_day_ahead",
 ]
 
 def main():

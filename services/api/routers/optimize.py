@@ -15,6 +15,7 @@ router = APIRouter()
 class OptimizeRequest(BaseModel):
     forecast_load_mw: Union[float, List[float]]
     forecast_renewables_mw: Union[float, List[float]]
+    forecast_price_eur_mwh: Optional[Union[float, List[float]]] = None
     config: Optional[Dict[str, Any]] = None
 
 
@@ -22,7 +23,6 @@ class OptimizeResponse(BaseModel):
     dispatch_plan: Dict[str, Any]
     expected_cost_usd: Optional[float] = None
     carbon_kg: Optional[float] = None
-    carbon_cost_usd: Optional[float] = None
 
 
 def _load_cfg() -> dict:
@@ -36,10 +36,14 @@ def _load_cfg() -> dict:
 @router.post("", response_model=OptimizeResponse)
 def optimize(req: OptimizeRequest):
     cfg = req.config or _load_cfg()
-    result = optimize_dispatch(req.forecast_load_mw, req.forecast_renewables_mw, cfg)
+    result = optimize_dispatch(
+        req.forecast_load_mw, 
+        req.forecast_renewables_mw, 
+        cfg, 
+        forecast_price=req.forecast_price_eur_mwh
+    )
     return OptimizeResponse(
         dispatch_plan=result,
         expected_cost_usd=result.get("expected_cost_usd"),
         carbon_kg=result.get("carbon_kg"),
-        carbon_cost_usd=result.get("carbon_cost_usd"),
     )
