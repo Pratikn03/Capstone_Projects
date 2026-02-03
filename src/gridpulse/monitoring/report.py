@@ -10,3 +10,4 @@ def write_monitoring_report(payload: dict, out_path: str = "reports/monitoring_r
         "# Monitoring Report\n\n```json\n" + json.dumps(payload, indent=2) + "\n```\n",
         encoding="utf-8",
     )
+ 
