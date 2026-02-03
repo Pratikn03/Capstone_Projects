@@ -1,11 +1,11 @@
-"""Tests for test optimizer."""
+"""Tests for optimization dispatch outputs."""
 import numpy as np
 
 from gridpulse.optimizer import optimize_dispatch
 
 
 def test_optimize_dispatch_shapes():
-    # Key: test setup and assertions
+    # Arrange a tiny 3-hour scenario to validate output structure.
     load = [10.0, 12.0, 9.0]
     ren = [3.0, 4.0, 2.0]
     cfg = {
@@ -21,13 +21,15 @@ def test_optimize_dispatch_shapes():
         "objective": {"cost_weight": 1.0, "carbon_weight": 0.0},
     }
 
+    # Act: run the optimizer on the short horizon.
     out = optimize_dispatch(load, ren, cfg)
+    # Assert: each output series matches the horizon length.
     assert len(out["grid_mw"]) == 3
     assert len(out["battery_charge_mw"]) == 3
     assert len(out["battery_discharge_mw"]) == 3
     assert len(out["soc_mwh"]) == 3
 
-    # Non-negative checks
+    # Basic feasibility checks (no negative grid or battery flows).
     assert np.all(np.asarray(out["grid_mw"]) >= 0.0)
     assert np.all(np.asarray(out["battery_charge_mw"]) >= 0.0)
     assert np.all(np.asarray(out["battery_discharge_mw"]) >= 0.0)

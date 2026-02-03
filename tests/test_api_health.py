@@ -1,4 +1,6 @@
-"""Tests for test api health."""
+"""Minimal health-check tests for the API layer."""
+
+
 def test_placeholder():
-    # Key: test setup and assertions
+    # Placeholder smoke test to keep CI wiring active until live API tests land.
     assert True
