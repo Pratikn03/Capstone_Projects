@@ -1,6 +1,6 @@
 # Data Quality Report
 
-Input file: `/Users/pratik_n/Downloads/gridpulse/data/raw/time_series_60min_singleindex.csv`
+Input file: `data/raw/time_series_60min_singleindex.csv`
 
 ## Coverage
 - Start: **2014-12-31 23:00:00+00:00**
@@ -8,6 +8,7 @@ Input file: `/Users/pratik_n/Downloads/gridpulse/data/raw/time_series_60min_sing
 - Rows: **50401**
 - Duplicate timestamps: **0**
 - Missing hourly timestamps (vs full hourly index): **0**
+- Missing optional columns: **['DE_price_day_ahead']**
 
 ## Missingness (fraction)
 ```text

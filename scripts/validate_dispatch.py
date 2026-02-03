@@ -4,9 +4,16 @@ from __future__ import annotations
 from pathlib import Path
 import json
 import math
+import sys
 
 import numpy as np
 import pandas as pd
+
+repo_root = Path(__file__).resolve().parents[1]
+if str(repo_root) not in sys.path:
+    sys.path.insert(0, str(repo_root))
+if str(repo_root / "src") not in sys.path:
+    sys.path.insert(0, str(repo_root / "src"))
 
 from gridpulse.optimizer.lp_dispatch import optimize_dispatch
 

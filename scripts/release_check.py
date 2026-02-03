@@ -2,14 +2,16 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 
-def _run(cmd: list[str], label: str) -> None:
+def _run(cmd: list[str], label: str, env: dict | None = None) -> None:
     print(f"[release_check] {label}: {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd, check=True, env=env)
 
 
 def _require(path: Path, msg: str) -> None:
@@ -35,7 +37,16 @@ def main() -> None:
     _run([sys.executable, "scripts/check_api_health.py"], "api health")
     _run([sys.executable, "scripts/validate_dispatch.py"], "dispatch validation")
     _run([sys.executable, "scripts/run_monitoring.py"], "monitoring report")
-    _run([sys.executable, "scripts/build_reports.py"], "reports")
+    tmp_dir = Path(tempfile.gettempdir())
+    mpl_dir = tmp_dir / "mplconfig"
+    xdg_dir = tmp_dir / "xdg_cache"
+    mpl_dir.mkdir(parents=True, exist_ok=True)
+    xdg_dir.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env.setdefault("MPLBACKEND", "Agg")
+    env.setdefault("MPLCONFIGDIR", str(mpl_dir))
+    env.setdefault("XDG_CACHE_HOME", str(xdg_dir))
+    _run([sys.executable, "scripts/build_reports.py"], "reports", env=env)
 
     print("[release_check] OK")
 

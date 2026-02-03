@@ -9,13 +9,6 @@
   "targets": {
     "load_mw": {
       "persistence": {
-        "horizons": [
-          1,
-          3,
-          6,
-          12,
-          24
-        ],
         "results": {
           "1": {
             "summary": {
@@ -346,13 +339,6 @@
         }
       },
       "gbm": {
-        "horizons": [
-          1,
-          3,
-          6,
-          12,
-          24
-        ],
         "results": {
           "1": {
             "summary": {
@@ -685,13 +671,6 @@
     },
     "wind_mw": {
       "persistence": {
-        "horizons": [
-          1,
-          3,
-          6,
-          12,
-          24
-        ],
         "results": {
           "1": {
             "summary": {
@@ -1022,13 +1001,6 @@
         }
       },
       "gbm": {
-        "horizons": [
-          1,
-          3,
-          6,
-          12,
-          24
-        ],
         "results": {
           "1": {
             "summary": {
@@ -1361,13 +1333,6 @@
     },
     "solar_mw": {
       "persistence": {
-        "horizons": [
-          1,
-          3,
-          6,
-          12,
-          24
-        ],
         "results": {
           "1": {
             "summary": {
@@ -1749,13 +1714,6 @@
         }
       },
       "gbm": {
-        "horizons": [
-          1,
-          3,
-          6,
-          12,
-          24
-        ],
         "results": {
           "1": {
             "summary": {
