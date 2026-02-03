@@ -174,6 +174,18 @@ uvicorn services.api.main:app --reload --port 8000
 streamlit run services/dashboard/app.py
 ```
 
+### Makefile shortcuts
+```bash
+make setup
+make data
+make train
+make reports
+make monitor
+make api
+make dashboard
+make release_check
+```
+
 ## Reproducibility
 - **Fixed seed** in training config.
 - **Deterministic runs** (Python/NumPy/PyTorch seeds applied).
@@ -184,6 +196,39 @@ streamlit run services/dashboard/app.py
 One‑command run:
 ```bash
 ./scripts/repro_run.sh
+```
+
+## Production readiness checklist
+✅ **Reproducibility**
+- [ ] Fresh install works from README
+- [ ] Fixed seeds, config files used
+
+✅ **Correctness**
+- [ ] Leakage‑safe time split verified
+- [ ] Metrics stable (solar uses sMAPE/daylight MAPE)
+- [ ] Optimization constraints validated (`reports/dispatch_validation.md`)
+
+✅ **Reliability**
+- [ ] API health check passes (`scripts/check_api_health.py`)
+- [ ] Errors handled gracefully
+
+✅ **Observability**
+- [ ] Data drift report produced (`reports/monitoring_report.md`)
+- [ ] Model drift report produced (in monitoring payload)
+- [ ] Run artifacts saved
+
+✅ **Product**
+- [ ] Streamlit dashboard demo works
+- [ ] Screenshots/video included
+
+✅ **Documentation**
+- [ ] README Quickstart
+- [ ] DATA.md for datasets
+- [ ] Architecture diagram
+
+Release gate (runs tests + monitoring + reports):
+```bash
+make release_check
 ```
 
 ## Reports and notebooks
