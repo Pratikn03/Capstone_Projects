@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 import yaml
 from fastapi import APIRouter, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from gridpulse.forecasting.predict import load_model_bundle, predict_next_24h
 
@@ -56,7 +56,7 @@ class ForecastResponse(BaseModel):
     generated_at: str
     horizon_hours: int
     forecasts: Dict[str, Any]
-    meta: Dict[str, Any] = {}
+    meta: Dict[str, Any] = Field(default_factory=dict)
 
 
 @router.get("", response_model=ForecastResponse)

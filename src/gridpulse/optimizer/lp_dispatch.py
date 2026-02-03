@@ -165,17 +165,19 @@ def optimize_dispatch(
     if not res.success:
         # Fallback: if LP fails, serve a safe grid-only plan.
         grid_plan = np.maximum(0.0, load - ren)
+        curtail = np.maximum(0.0, ren - load)
         return {
             "grid_mw": grid_plan.tolist(),
             "battery_charge_mw": [0.0] * H,
             "battery_discharge_mw": [0.0] * H,
             "renewables_used_mw": np.minimum(ren, load).tolist(),
-            "curtailment_mw": np.maximum(0.0, ren - load).tolist(),
+            "curtailment_mw": curtail.tolist(),
             "unmet_load_mw": [0.0] * H,
             "soc_mwh": [soc0] * H,
             "peak_mw": float(np.max(grid_plan)) if len(grid_plan) else None,
-            "expected_cost_usd": float(np.sum(grid_plan) * price),
+            "expected_cost_usd": float(np.sum(grid_plan * price) + np.sum(curtail) * curtail_pen),
             "carbon_kg": float(np.sum(grid_plan * carbon_series)),
+            "carbon_cost_usd": float(np.sum(grid_plan * carbon_cost_series)),
             "note": f"linprog failed: {res.message}",
         }
 
