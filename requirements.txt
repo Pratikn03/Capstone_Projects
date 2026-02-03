@@ -15,5 +15,6 @@ torch>=2.1
 pydantic>=2.5
 scipy>=1.10
 requests>=2.31
+httpx>=0.25
 nbformat>=5.9
 duckdb>=0.10
