@@ -25,6 +25,7 @@ class OptimizeResponse(BaseModel):
     dispatch_plan: Dict[str, Any]
     expected_cost_usd: Optional[float] = None
     carbon_kg: Optional[float] = None
+    carbon_cost_usd: Optional[float] = None
 
 
 def _load_cfg() -> dict:
@@ -50,4 +51,5 @@ def optimize(req: OptimizeRequest):
         dispatch_plan=result,
         expected_cost_usd=result.get("expected_cost_usd"),
         carbon_kg=result.get("carbon_kg"),
+        carbon_cost_usd=result.get("carbon_cost_usd"),
     )

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import List, Optional
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -25,6 +26,7 @@ class AnomalyResponse(BaseModel):
     iforest: List[bool]
     combined: List[bool]
     z_scores: List[float]
+    note: Optional[str] = None
 
 
 @router.post("", response_model=AnomalyResponse)
@@ -43,6 +45,14 @@ def post_anomalies(req: AnomalyRequest):
 def get_anomalies():
     # Use last 7 days of data with a persistence baseline to compute residuals
     features_path = "data/processed/features.parquet"
+    if not Path(features_path).exists():
+        return AnomalyResponse(
+            residual_z=[],
+            iforest=[],
+            combined=[],
+            z_scores=[],
+            note=f"Missing features file: {features_path}. Run the data pipeline first.",
+        )
     df = pd.read_parquet(features_path)
     df = df.sort_values("timestamp")
     window = df.tail(7 * 24)
