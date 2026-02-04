@@ -1,4 +1,4 @@
-"""Forecasting: train."""
+"""Forecasting: train models and write evaluation reports."""
 from __future__ import annotations
 
 import argparse
@@ -24,6 +24,7 @@ from torch.utils.data import DataLoader
 
 
 def _try_optuna():
+    """Import Optuna if available (used for optional tuning)."""
     try:
         import optuna  # type: ignore
 
@@ -33,6 +34,7 @@ def _try_optuna():
 
 
 def _try_lightgbm():
+    """Import LightGBM if available (needed for quantile GBM and tuning)."""
     try:
         import lightgbm as lgb  # type: ignore
 
@@ -42,6 +44,7 @@ def _try_lightgbm():
 
 
 def _sample_param(trial, spec: dict):
+    """Sample one hyperparameter from an Optuna trial spec."""
     kind = spec.get("type")
     if kind == "int":
         return trial.suggest_int(spec["name"], int(spec["low"]), int(spec["high"]))
@@ -61,6 +64,7 @@ def tune_gbm_params(
     tuning_cfg: dict,
     seed: int,
 ):
+    """Tune GBM hyperparameters on the validation split."""
     optuna = _try_optuna()
     lgb = _try_lightgbm()
     if optuna is None or lgb is None:
@@ -97,7 +101,7 @@ def tune_gbm_params(
     return {**base_params, **best}
 
 def make_xy(df: pd.DataFrame, target: str, targets: list[str]):
-    # Key: prepare features/targets and train or evaluate models
+    """Split a dataframe into features (X) and a single target (y)."""
     # Drop all targets from features to prevent leakage.
     drop = {"timestamp", *targets}
     feat_cols = [c for c in df.columns if c not in drop]
@@ -107,10 +111,12 @@ def make_xy(df: pd.DataFrame, target: str, targets: list[str]):
 
 
 def residual_quantiles(y_true: np.ndarray, y_pred: np.ndarray, quantiles: list[float]) -> dict[str, float]:
+    """Compute residual quantiles for simple prediction intervals."""
     resid = np.asarray(y_true) - np.asarray(y_pred)
     return {str(q): float(np.quantile(resid, q)) for q in quantiles}
 
 def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, target: str) -> dict:
+    """Compute standard regression metrics (plus daylight MAPE for solar)."""
     out = {
         "rmse": rmse(y_true, y_pred),
         "mae": mae(y_true, y_pred),
@@ -124,6 +130,7 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, target: str) -> dict
 
 
 def fit_sequence_model(model, train_dl, val_dl, epochs: int, lr: float, horizon: int, device: str):
+    """Generic training loop with early stopping for sequence models."""
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     loss_fn = torch.nn.MSELoss()
     best_val = float("inf")
@@ -175,6 +182,7 @@ def fit_sequence_model(model, train_dl, val_dl, epochs: int, lr: float, horizon:
 
 
 def train_lstm_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cpu"):
+    """Train an LSTM sequence model."""
     lookback = int(cfg.get("lookback", 168))
     horizon = int(cfg.get("horizon", 24))
     batch_size = int(cfg.get("batch_size", 256))
@@ -203,6 +211,7 @@ def train_lstm_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "c
 
 
 def train_tcn_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cpu"):
+    """Train a TCN sequence model."""
     lookback = int(cfg.get("lookback", 168))
     horizon = int(cfg.get("horizon", 24))
     batch_size = int(cfg.get("batch_size", 256))
@@ -230,6 +239,7 @@ def train_tcn_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cp
 
 
 def collect_seq_preds(model, X: np.ndarray, y: np.ndarray, lookback: int, horizon: int, device: str, batch_size: int):
+    """Collect sequential predictions for evaluation."""
     ds = TimeSeriesWindowDataset(X, y, SeqConfig(lookback=lookback, horizon=horizon))
     if len(ds) == 0:
         return None, None
@@ -248,6 +258,7 @@ def collect_seq_preds(model, X: np.ndarray, y: np.ndarray, lookback: int, horizo
 
 
 def evaluate_seq_model(model, X, y, lookback, horizon, device, batch_size, target: str, y_scaler: StandardScaler | None = None):
+    """Evaluate a sequence model and return metrics on original scale."""
     y_true, y_pred = collect_seq_preds(model, X, y, lookback, horizon, device, batch_size)
     if y_true is None:
         return {"rmse": None, "mae": None, "mape": None, "smape": None, "note": "insufficient window"}
@@ -258,6 +269,7 @@ def evaluate_seq_model(model, X, y, lookback, horizon, device, batch_size, targe
 
 
 def main():
+    """CLI entrypoint to train GBM/LSTM/TCN models and write reports."""
     p = argparse.ArgumentParser()
     p.add_argument("--config", default="configs/train_forecast.yaml")
     p.add_argument("--targets", default=None, help="Comma-separated targets to train (override config)")
@@ -273,6 +285,7 @@ def main():
         category=UserWarning,
     )
     set_seed(int(cfg.get("seed", 42)))
+    # Load prepared features (Parquet) for training.
     features_path = Path(cfg["data"]["processed_path"])
     if not features_path.exists():
         raise FileNotFoundError(f"Missing {features_path}. Run build_features first.")
@@ -284,6 +297,7 @@ def main():
     val_df = df.iloc[int(n * 0.7): int(n * 0.85)]
     test_df = df.iloc[int(n * 0.85):]
 
+    # Choose GPU if available, otherwise CPU.
     device = "cuda" if torch.cuda.is_available() else "cpu"
     quantiles = cfg["task"].get("quantiles", [0.1, 0.5, 0.9])
     requested_targets = cfg["task"].get("targets", ["load_mw"])
@@ -323,6 +337,7 @@ def main():
         return any(art_dir.glob(f"gbm_*_{target_name}.pkl"))
 
     for target in targets:
+        # 1) Build feature/target matrices for the current target.
         X_train, y_train, feat_cols = make_xy(train_df, target, targets)
         X_val, y_val, _ = make_xy(val_df, target, targets)
         X_test, y_test, _ = make_xy(test_df, target, targets)

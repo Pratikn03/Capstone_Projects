@@ -8,7 +8,7 @@ from typing import Tuple, Any, Dict
 import numpy as np
 
 def _try_lightgbm():
-    # Key: prepare features/targets and train or evaluate models
+    """Import LightGBM if available (preferred GBM backend)."""
     try:
         import lightgbm as lgb
         return lgb
@@ -16,6 +16,7 @@ def _try_lightgbm():
         return None
 
 def _try_xgboost():
+    """Import XGBoost if available (secondary GBM backend)."""
     try:
         import xgboost as xgb
         return xgb
@@ -23,6 +24,7 @@ def _try_xgboost():
         return None
 
 def train_gbm(X_train, y_train, params: Dict[str, Any] | None = None) -> Tuple[str, Any]:
+    """Train a gradient boosting model with the best available backend."""
     params = params or {}
     lgb = _try_lightgbm()
     if lgb is not None:
@@ -36,11 +38,12 @@ def train_gbm(X_train, y_train, params: Dict[str, Any] | None = None) -> Tuple[s
         model.fit(X_train, y_train)
         return "xgboost", model
 
-    # ultimate fallback: sklearn
+    # Ultimate fallback: sklearn if no GBM libs are installed.
     from sklearn.ensemble import HistGradientBoostingRegressor
     model = HistGradientBoostingRegressor()
     model.fit(X_train, y_train)
     return "sklearn_hgbrt", model
 
 def predict_gbm(model, X) -> np.ndarray:
+    """Predict using a trained GBM model."""
     return model.predict(X)

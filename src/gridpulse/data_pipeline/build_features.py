@@ -1,4 +1,4 @@
-"""Data pipeline: build features."""
+"""Data pipeline: build model-ready features from raw energy data."""
 from __future__ import annotations
 
 import argparse
@@ -8,12 +8,14 @@ import pandas as pd
 
 from gridpulse.data_pipeline.storage import write_sql
 
+# Minimal OPSD columns required for core targets.
 REQUIRED_COLS = [
     "utc_timestamp",
     "DE_load_actual_entsoe_transparency",
     "DE_wind_generation_actual",
     "DE_solar_generation_actual",
 ]
+# Optional columns that improve optimization realism.
 OPTIONAL_COLS = [
     "DE_price_day_ahead",
     "DE_LU_price_day_ahead",
@@ -21,7 +23,6 @@ OPTIONAL_COLS = [
 
 
 def add_price_carbon_features(
-    # Key: normalize inputs and build time-aware features
     df: pd.DataFrame,
     price_col: str = "price_eur_mwh",
     base_price: float = 50.0,
@@ -31,6 +32,7 @@ def add_price_carbon_features(
     Price is time-of-day + seasonal proxy if not present. Carbon intensity
     varies with renewable share and peak periods to enable carbon-aware dispatch.
     """
+    # Work on a copy to avoid mutating caller data.
     out = df.copy()
 
     if price_col not in out.columns:
@@ -63,7 +65,9 @@ def add_price_carbon_features(
         )
     return out
 
+
 def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Add calendar-based features derived from timestamps."""
     ts = df["timestamp"]
     out = df.copy()
     # Calendar features capture daily/weekly/seasonal patterns.
@@ -75,7 +79,9 @@ def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
     out["season"] = ((out["month"] % 12 + 3) // 3).astype(int)
     return out
 
+
 def add_domain_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Add energy-domain features like ramps and peak flags."""
     out = df.copy()
     # ramps
     for c in ["load_mw", "wind_mw", "solar_mw"]:
@@ -94,11 +100,13 @@ def add_holiday_features(
     country: str = "DE",
     holiday_file: Path | None = None,
 ) -> pd.DataFrame:
+    """Add holiday, pre-holiday, and post-holiday flags."""
     out = df.copy()
     dates = pd.to_datetime(out["timestamp"], utc=True, errors="coerce").dt.date
     holiday_dates: set = set()
 
     if holiday_file and holiday_file.exists():
+        # Prefer a user-provided holiday calendar for deterministic runs.
         hdf = pd.read_csv(holiday_file)
         col = "date"
         if col not in hdf.columns:
@@ -112,6 +120,7 @@ def add_holiday_features(
         if col is not None:
             holiday_dates = set(pd.to_datetime(hdf[col], errors="coerce").dt.date.dropna().unique())
     else:
+        # Fallback to python-holidays if available.
         try:
             import holidays  # type: ignore
 
@@ -133,7 +142,9 @@ def add_holiday_features(
         out["is_post_holiday"] = 0
     return out
 
+
 def add_lags_rolls(df: pd.DataFrame, cols: list[str], lags=(1, 24, 168), rolls=(24, 168)) -> pd.DataFrame:
+    """Add lagged values and rolling summary stats for each column."""
     out = df.copy()
     for c in cols:
         for l in lags:
@@ -145,7 +156,9 @@ def add_lags_rolls(df: pd.DataFrame, cols: list[str], lags=(1, 24, 168), rolls=(
             out[f"{c}_roll_std_{w}"] = out[c].shift(1).rolling(w).std()
     return out
 
+
 def load_weather(path: Path) -> pd.DataFrame:
+    """Load a weather file (CSV/Parquet) with a timestamp column."""
     if not path.exists():
         raise FileNotFoundError(f"Weather file not found: {path}")
     if path.suffix == ".parquet":
@@ -165,6 +178,7 @@ def load_weather(path: Path) -> pd.DataFrame:
 
 
 def load_signals(path: Path) -> pd.DataFrame:
+    """Load price/carbon signals, normalize columns, and keep known fields."""
     if not path.exists():
         raise FileNotFoundError(f"Signals file not found: {path}")
     if path.suffix == ".parquet":
@@ -211,7 +225,9 @@ def load_signals(path: Path) -> pd.DataFrame:
     df = df[keep_cols]
     return df
 
+
 def main():
+    """CLI entrypoint to build model features from raw inputs."""
     p = argparse.ArgumentParser()
     p.add_argument("--in", dest="in_dir", required=True, help="Input directory (data/raw)")
     p.add_argument("--out", dest="out_dir", default="data/processed", help="Output directory")
@@ -228,13 +244,14 @@ def main():
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # 1) Load raw OPSD time series.
     csv_path = in_dir / "time_series_60min_singleindex.csv"
     if not csv_path.exists():
         raise FileNotFoundError(f"Missing {csv_path}. Run download_opsd or place file manually.")
 
     df = pd.read_csv(csv_path, usecols=lambda c: c in REQUIRED_COLS + OPTIONAL_COLS)
 
-    # Normalize column names to model-friendly labels.
+    # 2) Normalize column names to model-friendly labels.
     rename = {
         "utc_timestamp": "timestamp",
         "DE_load_actual_entsoe_transparency": "load_mw",
@@ -248,24 +265,26 @@ def main():
         rename["DE_price_day_ahead"] = "price_eur_mwh"
     df = df.rename(columns=rename)
 
+    # 3) Parse timestamps and ensure stable ordering.
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
     df = df.sort_values("timestamp").reset_index(drop=True)
 
-    # Coerce numeric columns and keep price if present.
+    # 4) Coerce numeric columns and keep price if present.
     numeric_cols = ["load_mw", "wind_mw", "solar_mw"]
     if "price_eur_mwh" in df.columns:
         numeric_cols.append("price_eur_mwh")
     for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    # Enforce continuous hourly index for stable lag/roll features.
+    # 5) Enforce continuous hourly index for stable lag/roll features.
     full_idx = pd.date_range(df["timestamp"].min(), df["timestamp"].max(), freq="h", tz="UTC")
     df = df.set_index("timestamp").reindex(full_idx).rename_axis("timestamp").reset_index()
 
-    # Interpolate short gaps to avoid feature discontinuities.
+    # 6) Interpolate short gaps to avoid feature discontinuities.
     for col in numeric_cols:
         df[col] = df[col].interpolate(limit=6)
 
+    # 7) Merge optional signals (price/carbon).
     if args.signals:
         signals = load_signals(Path(args.signals))
         df = df.merge(signals, on="timestamp", how="left", suffixes=("", "_sig"))
@@ -278,12 +297,13 @@ def main():
                     df[col] = df[sig_col]
                 df.drop(columns=[sig_col], inplace=True)
 
-    # Ensure any merged signals are treated as numeric.
+    # 8) Ensure any merged signals are treated as numeric.
     for col in ("price_eur_mwh", "price_usd_mwh", "carbon_kg_per_mwh", "moer_kg_per_mwh"):
         if col in df.columns and col not in numeric_cols:
             numeric_cols.append(col)
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
+    # 9) Base time and domain features, plus optional holiday flags.
     df = add_time_features(df)
     df = add_domain_features(df)
     df = add_holiday_features(df, country=args.holiday_country, holiday_file=Path(args.holidays) if args.holidays else None)
@@ -292,6 +312,7 @@ def main():
         price_col = "price_usd_mwh"
     df = add_price_carbon_features(df, price_col=price_col, base_price=50.0)
 
+    # 10) Merge optional weather signals.
     if args.weather:
         wx = load_weather(Path(args.weather))
         # merge weather on timestamp, keep all energy rows
@@ -301,6 +322,7 @@ def main():
             df[col] = pd.to_numeric(df[col], errors="coerce")
             df[col] = df[col].interpolate(limit=6)
 
+    # 11) Build lag and rolling statistics for numeric inputs.
     lag_cols = list(numeric_cols)
     for price_col in ("price_eur_mwh", "price_usd_mwh"):
         if price_col in df.columns and price_col not in lag_cols:
@@ -314,15 +336,17 @@ def main():
             lag_cols.append(col)
     df = add_lags_rolls(df, cols=lag_cols)
 
-    # Drop rows where lag/roll windows are incomplete.
+    # 12) Drop rows where lag/roll windows are incomplete.
     df = df.dropna().reset_index(drop=True)
 
+    # 13) Persist features to disk (Parquet is fast + compact).
     out_path = out_dir / "features.parquet"
     df.to_parquet(out_path, index=False)
 
     print(f"Saved: {out_path}")
     print("Rows:", len(df), "| Columns:", df.shape[1])
 
+    # 14) Optional SQL export for downstream tools.
     if args.sql_out:
         sql_path = Path(args.sql_out)
         write_sql(df, sql_path, table=args.sql_table, engine=args.sql_engine)

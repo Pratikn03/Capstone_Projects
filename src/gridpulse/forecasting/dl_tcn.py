@@ -7,7 +7,7 @@ from torch.nn.utils import weight_norm
 
 class _Chomp1d(nn.Module):
     def __init__(self, chomp_size: int):
-        # Key: prepare features/targets and train or evaluate models
+        """Trim padding on the right to keep causal convolutions."""
         super().__init__()
         self.chomp_size = chomp_size
 
@@ -18,6 +18,7 @@ class _Chomp1d(nn.Module):
 
 class _TemporalBlock(nn.Module):
     def __init__(self, in_ch: int, out_ch: int, kernel_size: int, dilation: int, dropout: float):
+        """A residual TCN block with dilated convolutions."""
         super().__init__()
         padding = (kernel_size - 1) * dilation
         self.conv1 = weight_norm(nn.Conv1d(in_ch, out_ch, kernel_size, padding=padding, dilation=dilation))
@@ -35,12 +36,14 @@ class _TemporalBlock(nn.Module):
         self.final_relu = nn.ReLU()
 
     def forward(self, x):
+        """Forward pass with residual connection."""
         out = self.net(x)
         res = x if self.downsample is None else self.downsample(x)
         return self.final_relu(out + res)
 
 class _TemporalConvNet(nn.Module):
     def __init__(self, num_inputs: int, num_channels: list[int], kernel_size: int = 3, dropout: float = 0.1):
+        """Stack multiple temporal blocks with increasing dilation."""
         super().__init__()
         layers = []
         for i, out_ch in enumerate(num_channels):
@@ -50,10 +53,12 @@ class _TemporalConvNet(nn.Module):
         self.network = nn.Sequential(*layers)
 
     def forward(self, x):
+        """Forward pass through the stacked temporal blocks."""
         return self.network(x)
 
 class TCNForecaster(nn.Module):
     def __init__(self, n_features: int, num_channels: list[int], kernel_size: int = 3, dropout: float = 0.1):
+        """TCN that outputs a full horizon sequence (same length as input)."""
         super().__init__()
         if not num_channels:
             raise ValueError("num_channels must be a non-empty list")
@@ -61,6 +66,7 @@ class TCNForecaster(nn.Module):
         self.head = nn.Conv1d(num_channels[-1], 1, kernel_size=1)
 
     def forward(self, x):
+        """Forward pass: (batch, time, features) -> (batch, time)."""
         # x: (B, T, F) -> (B, F, T)
         x = x.transpose(1, 2)
         y = self.tcn(x)

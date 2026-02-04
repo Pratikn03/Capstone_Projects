@@ -1,4 +1,4 @@
-"""Data pipeline: build features eia930."""
+"""Data pipeline: build features for EIA‑930 (US balancing authorities)."""
 from __future__ import annotations
 
 import argparse
@@ -17,17 +17,18 @@ from gridpulse.data_pipeline.build_features import (
 
 
 def _iter_balance_files(raw_dir: Path) -> list[Path]:
-    # Key: normalize inputs and build time-aware features
+    """Return unpacked balance CSVs if present."""
     # Prefer unpacked balance CSVs when available.
     return sorted(raw_dir.glob("eia930-*-balance.csv"))
 
 
 def _iter_zip_files(raw_dir: Path) -> list[Path]:
-    # Supports bulk ZIP downloads from EIA-930.
+    """Return ZIP archives when raw data is downloaded in bulk."""
     return sorted(raw_dir.glob("eia930-*.zip"))
 
 
 def _read_balance_csv(path: Path, usecols: list[str], chunksize: int = 200_000):
+    """Yield chunks from a balance CSV (handles zipped or plain files)."""
     # Stream large files in chunks to keep memory bounded.
     if path.suffix == ".zip":
         with zipfile.ZipFile(path) as zf:
@@ -44,7 +45,7 @@ def _read_balance_csv(path: Path, usecols: list[str], chunksize: int = 200_000):
 
 
 def _choose_col(df: pd.DataFrame, candidates: list[str]) -> str | None:
-    # Select the first column name that exists in the file.
+    """Select the first candidate column present in the file."""
     for c in candidates:
         if c in df.columns:
             return c
@@ -52,7 +53,8 @@ def _choose_col(df: pd.DataFrame, candidates: list[str]) -> str | None:
 
 
 def _normalize(df: pd.DataFrame) -> pd.DataFrame:
-    # choose demand column (Adjusted preferred)
+    """Normalize raw EIA‑930 rows into the standard schema."""
+    # Choose demand column (Adjusted preferred).
     demand_col = _choose_col(df, ["Demand (MW) (Adjusted)", "Demand (MW)"])
     if demand_col is None:
         raise ValueError("Demand column not found")
@@ -97,6 +99,7 @@ def _normalize(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_eia930_features(raw_dir: Path, out_dir: Path, ba: str, start: str | None, end: str | None):
+    """Build model-ready features from EIA‑930 data."""
     out_dir.mkdir(parents=True, exist_ok=True)
 
     usecols = [
@@ -115,13 +118,14 @@ def build_eia930_features(raw_dir: Path, out_dir: Path, ba: str, start: str | No
     ]
 
     frames = []
-    # prefer zip files if present
+    # Prefer ZIP files when present to support bulk downloads.
     files = _iter_zip_files(raw_dir)
     if not files:
         files = _iter_balance_files(raw_dir)
     if not files:
         raise FileNotFoundError(f"No EIA930 files found in {raw_dir}")
 
+    # Stream each file and filter down to the selected balancing authority.
     for f in files:
         for chunk in _read_balance_csv(f, usecols=usecols):
             if ba:
@@ -168,6 +172,7 @@ def build_eia930_features(raw_dir: Path, out_dir: Path, ba: str, start: str | No
 
 
 def main():
+    """CLI entrypoint for EIA‑930 feature generation."""
     p = argparse.ArgumentParser()
     p.add_argument("--in", dest="in_dir", required=True, help="Input directory (data/raw/us_eia930)")
     p.add_argument("--out", dest="out_dir", default="data/processed/us_eia930", help="Output directory")

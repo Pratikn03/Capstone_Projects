@@ -1,2 +1,4 @@
-"""Forecasting:   init  ."""
-# Key: prepare features/targets and train or evaluate models
+"""Forecasting package.
+
+Contains model training, prediction, baselines, and evaluation utilities.
+"""

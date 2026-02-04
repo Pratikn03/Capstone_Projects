@@ -19,7 +19,7 @@ DEFAULT_VERSION = "2020-10-06"
 DEFAULT_FILE = "time_series_60min_singleindex.csv"
 
 def download(url: str, out_path: Path, chunk: int = 1024 * 1024, *, retries: int = 3, backoff: float = 0.5) -> None:
-    # Key: normalize inputs and build time-aware features
+    """Download a file with streaming + retries."""
     log = get_logger("gridpulse.download_opsd")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     session = get_session(retries=retries, backoff=backoff)
@@ -45,6 +45,7 @@ def download(url: str, out_path: Path, chunk: int = 1024 * 1024, *, retries: int
     log.info("Saved: %s", out_path)
 
 def main():
+    """CLI entrypoint for OPSD downloader."""
     p = argparse.ArgumentParser()
     p.add_argument("--out", default="data/raw", help="Output directory")
     p.add_argument("--version", default=DEFAULT_VERSION, help="OPSD release folder (e.g. 2020-10-06)")
