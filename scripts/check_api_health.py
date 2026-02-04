@@ -21,7 +21,11 @@ def main() -> None:
     resp.raise_for_status()
     data = resp.json()
     assert data.get("status") == "ok", f"Unexpected health payload: {data}"
-    print("API health OK")
+    ready = client.get("/ready")
+    ready.raise_for_status()
+    ready_payload = ready.json()
+    assert ready_payload.get("status") == "ok", f"Unexpected readiness payload: {ready_payload}"
+    print("API health/ready OK")
 
 
 if __name__ == "__main__":
