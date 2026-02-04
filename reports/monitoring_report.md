@@ -264,10 +264,10 @@
   },
   "model_drift": {
     "current": {
-      "rmse": 210.0583597847119,
-      "mape": 0.0025260273299586872
+      "rmse": 211.62248914194316,
+      "mape": 0.0025661292774295593
     },
-    "baseline_mape": 0.0025260273299586872,
+    "baseline_mape": 0.0025661292774295593,
     "decision": {
       "drift": false,
       "ratio": 0.0
@@ -278,7 +278,7 @@
     "reasons": [
       "data_drift"
     ],
-    "last_trained_days_ago": 1
+    "last_trained_days_ago": 0
   }
 }
 ```

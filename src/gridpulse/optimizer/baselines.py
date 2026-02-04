@@ -45,6 +45,45 @@ def _load_cfg(cfg: dict) -> dict:
     }
 
 
+def _compute_costs(
+    grid: np.ndarray,
+    curtail: np.ndarray,
+    unmet: np.ndarray,
+    cfg: dict,
+    price_series=None,
+    carbon_series=None,
+) -> tuple[float, float, float]:
+    H = len(grid)
+    if price_series is not None:
+        price = _as_array(price_series)
+        if price.size == 1 and H > 1:
+            price = np.full(H, float(price[0]))
+        expected_cost = float(
+            np.sum(grid * price)
+            + np.sum(curtail) * cfg["penalties"]["curtail"]
+            + np.sum(unmet) * cfg["penalties"]["unmet"]
+        )
+    else:
+        expected_cost = float(
+            np.sum(grid) * cfg["grid"]["price"]
+            + np.sum(curtail) * cfg["penalties"]["curtail"]
+            + np.sum(unmet) * cfg["penalties"]["unmet"]
+        )
+
+    if carbon_series is not None:
+        carbon = _as_array(carbon_series)
+        if carbon.size == 1 and H > 1:
+            carbon = np.full(H, float(carbon[0]))
+        carbon_kg = float(np.sum(grid * carbon))
+        cost_per_kg = (cfg["grid"]["carbon_cost"] / cfg["grid"]["carbon_kg"]) if cfg["grid"]["carbon_kg"] > 0 else 0.0
+        carbon_cost = float(carbon_kg * cost_per_kg)
+    else:
+        carbon_kg = float(np.sum(grid) * cfg["grid"]["carbon_kg"])
+        carbon_cost = float(np.sum(grid) * cfg["grid"]["carbon_cost"])
+
+    return expected_cost, carbon_kg, carbon_cost
+
+
 def grid_only_dispatch(
     forecast_load,
     forecast_renewables,
@@ -67,23 +106,14 @@ def grid_only_dispatch(
     unmet = np.clip(deficit - grid, 0.0, None)
     curtail = np.clip(ren - load, 0.0, None)
 
-    if price_series is not None:
-        price = _as_array(price_series)
-        if price.size == 1 and H > 1:
-            price = np.full(H, float(price[0]))
-        expected_cost = float(np.sum(grid * price) + np.sum(curtail) * cfg["penalties"]["curtail"] + np.sum(unmet) * cfg["penalties"]["unmet"])
-    else:
-        expected_cost = float(np.sum(grid) * cfg["grid"]["price"] + np.sum(curtail) * cfg["penalties"]["curtail"] + np.sum(unmet) * cfg["penalties"]["unmet"])
-    if carbon_series is not None:
-        carbon = _as_array(carbon_series)
-        if carbon.size == 1 and H > 1:
-            carbon = np.full(H, float(carbon[0]))
-        carbon_kg = float(np.sum(grid * carbon))
-        cost_per_kg = (cfg["grid"]["carbon_cost"] / cfg["grid"]["carbon_kg"]) if cfg["grid"]["carbon_kg"] > 0 else 0.0
-        carbon_cost = float(carbon_kg * cost_per_kg)
-    else:
-        carbon_kg = float(np.sum(grid) * cfg["grid"]["carbon_kg"])
-        carbon_cost = float(np.sum(grid) * cfg["grid"]["carbon_cost"])
+    expected_cost, carbon_kg, carbon_cost = _compute_costs(
+        grid,
+        curtail,
+        unmet,
+        cfg,
+        price_series=price_series,
+        carbon_series=carbon_series,
+    )
 
     return {
         "grid_mw": grid.tolist(),
@@ -152,23 +182,14 @@ def naive_battery_dispatch(
         soc = min(max(soc, cfg["battery"]["min_soc"]), cfg["battery"]["capacity"])
         soc_series.append(soc)
 
-    if price_series is not None:
-        price = _as_array(price_series)
-        if price.size == 1 and H > 1:
-            price = np.full(H, float(price[0]))
-        expected_cost = float(np.sum(grid * price) + np.sum(curtail) * cfg["penalties"]["curtail"] + np.sum(unmet) * cfg["penalties"]["unmet"])
-    else:
-        expected_cost = float(np.sum(grid) * cfg["grid"]["price"] + np.sum(curtail) * cfg["penalties"]["curtail"] + np.sum(unmet) * cfg["penalties"]["unmet"])
-    if carbon_series is not None:
-        carbon = _as_array(carbon_series)
-        if carbon.size == 1 and H > 1:
-            carbon = np.full(H, float(carbon[0]))
-        carbon_kg = float(np.sum(grid * carbon))
-        cost_per_kg = (cfg["grid"]["carbon_cost"] / cfg["grid"]["carbon_kg"]) if cfg["grid"]["carbon_kg"] > 0 else 0.0
-        carbon_cost = float(carbon_kg * cost_per_kg)
-    else:
-        carbon_kg = float(np.sum(grid) * cfg["grid"]["carbon_kg"])
-        carbon_cost = float(np.sum(grid) * cfg["grid"]["carbon_cost"])
+    expected_cost, carbon_kg, carbon_cost = _compute_costs(
+        grid,
+        curtail,
+        unmet,
+        cfg,
+        price_series=price_series,
+        carbon_series=carbon_series,
+    )
 
     return {
         "grid_mw": grid.tolist(),
@@ -182,4 +203,173 @@ def naive_battery_dispatch(
         "carbon_kg": carbon_kg,
         "carbon_cost_usd": carbon_cost,
         "policy": "naive_battery",
+    }
+
+
+def peak_shaving_dispatch(
+    forecast_load,
+    forecast_renewables,
+    cfg: dict,
+    price_series=None,
+    carbon_series=None,
+    target_quantile: float = 0.8,
+) -> Dict[str, Any]:
+    """Heuristic peak‑shaving policy: cap net load near a target quantile."""
+    load = _as_array(forecast_load)
+    ren = _as_array(forecast_renewables)
+    if ren.size == 1 and load.size > 1:
+        ren = np.full_like(load, float(ren[0]))
+    if load.shape != ren.shape:
+        raise ValueError("forecast_load and forecast_renewables must have the same length")
+
+    cfg = _load_cfg(cfg)
+    H = len(load)
+    net = load - ren
+    # Use a robust cap based on the net‑load distribution.
+    target_cap = float(np.quantile(net, target_quantile)) if H else 0.0
+    target_cap = min(target_cap, cfg["grid"]["max_import"])
+
+    soc = cfg["battery"]["soc0"]
+    grid = np.zeros(H)
+    charge = np.zeros(H)
+    discharge = np.zeros(H)
+    curtail = np.zeros(H)
+    unmet = np.zeros(H)
+    soc_series = []
+
+    for t in range(H):
+        net_t = net[t]
+        # Discharge to keep net load under the cap.
+        if net_t > target_cap:
+            need = net_t - target_cap
+            d = min(need, cfg["battery"]["max_discharge"], soc - cfg["battery"]["min_soc"])
+            if d > 0:
+                discharge[t] = d
+                soc -= d / cfg["battery"]["eff"]
+        # Charge when comfortably below cap.
+        elif net_t < target_cap - cfg["battery"]["max_charge"] * 0.5:
+            c = min(cfg["battery"]["max_charge"], cfg["battery"]["capacity"] - soc)
+            if c > 0:
+                charge[t] = c
+                soc += c * cfg["battery"]["eff"]
+
+        net_adj = net_t - discharge[t] + charge[t]
+        if net_adj > 0:
+            grid[t] = min(net_adj, cfg["grid"]["max_import"])
+            unmet[t] = max(0.0, net_adj - grid[t])
+        else:
+            curtail[t] = max(0.0, -net_adj)
+
+        soc = min(max(soc, cfg["battery"]["min_soc"]), cfg["battery"]["capacity"])
+        soc_series.append(soc)
+
+    expected_cost, carbon_kg, carbon_cost = _compute_costs(
+        grid,
+        curtail,
+        unmet,
+        cfg,
+        price_series=price_series,
+        carbon_series=carbon_series,
+    )
+
+    return {
+        "grid_mw": grid.tolist(),
+        "battery_charge_mw": charge.tolist(),
+        "battery_discharge_mw": discharge.tolist(),
+        "renewables_used_mw": (ren - curtail).tolist(),
+        "curtailment_mw": curtail.tolist(),
+        "unmet_load_mw": unmet.tolist(),
+        "soc_mwh": soc_series,
+        "expected_cost_usd": expected_cost,
+        "carbon_kg": carbon_kg,
+        "carbon_cost_usd": carbon_cost,
+        "policy": "peak_shaving",
+        "target_cap_mw": target_cap,
+    }
+
+
+def greedy_price_dispatch(
+    forecast_load,
+    forecast_renewables,
+    cfg: dict,
+    price_series=None,
+    carbon_series=None,
+    low_quantile: float = 0.3,
+    high_quantile: float = 0.7,
+) -> Dict[str, Any]:
+    """Greedy price‑based dispatch: charge on cheap hours, discharge on expensive hours."""
+    load = _as_array(forecast_load)
+    ren = _as_array(forecast_renewables)
+    if ren.size == 1 and load.size > 1:
+        ren = np.full_like(load, float(ren[0]))
+    if load.shape != ren.shape:
+        raise ValueError("forecast_load and forecast_renewables must have the same length")
+
+    cfg = _load_cfg(cfg)
+    H = len(load)
+    soc = cfg["battery"]["soc0"]
+
+    grid = np.zeros(H)
+    charge = np.zeros(H)
+    discharge = np.zeros(H)
+    curtail = np.zeros(H)
+    unmet = np.zeros(H)
+    soc_series = []
+
+    if price_series is None:
+        # Fall back to naive policy if no price signal is available.
+        return naive_battery_dispatch(load, ren, cfg, price_series=price_series, carbon_series=carbon_series)
+
+    price = _as_array(price_series)
+    if price.size == 1 and H > 1:
+        price = np.full(H, float(price[0]))
+    low = float(np.quantile(price, low_quantile)) if H else float(price[0])
+    high = float(np.quantile(price, high_quantile)) if H else float(price[0])
+
+    for t in range(H):
+        net_t = load[t] - ren[t]
+        if price[t] <= low:
+            c = min(cfg["battery"]["max_charge"], cfg["battery"]["capacity"] - soc)
+            if c > 0:
+                charge[t] = c
+                soc += c * cfg["battery"]["eff"]
+        elif price[t] >= high:
+            d = min(cfg["battery"]["max_discharge"], soc - cfg["battery"]["min_soc"])
+            if d > 0:
+                discharge[t] = d
+                soc -= d / cfg["battery"]["eff"]
+
+        net_adj = net_t - discharge[t] + charge[t]
+        if net_adj > 0:
+            grid[t] = min(net_adj, cfg["grid"]["max_import"])
+            unmet[t] = max(0.0, net_adj - grid[t])
+        else:
+            curtail[t] = max(0.0, -net_adj)
+
+        soc = min(max(soc, cfg["battery"]["min_soc"]), cfg["battery"]["capacity"])
+        soc_series.append(soc)
+
+    expected_cost, carbon_kg, carbon_cost = _compute_costs(
+        grid,
+        curtail,
+        unmet,
+        cfg,
+        price_series=price_series,
+        carbon_series=carbon_series,
+    )
+
+    return {
+        "grid_mw": grid.tolist(),
+        "battery_charge_mw": charge.tolist(),
+        "battery_discharge_mw": discharge.tolist(),
+        "renewables_used_mw": (ren - curtail).tolist(),
+        "curtailment_mw": curtail.tolist(),
+        "unmet_load_mw": unmet.tolist(),
+        "soc_mwh": soc_series,
+        "expected_cost_usd": expected_cost,
+        "carbon_kg": carbon_kg,
+        "carbon_cost_usd": carbon_cost,
+        "policy": "price_greedy",
+        "low_price": low,
+        "high_price": high,
     }

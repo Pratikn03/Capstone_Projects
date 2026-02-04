@@ -38,6 +38,7 @@ def optimize_dispatch(
     grid = cfg.get("grid", {})
     penalties = cfg.get("penalties", {})
     objective = cfg.get("objective", {})
+    carbon_cfg = cfg.get("carbon", {})
 
     capacity = float(battery.get("capacity_mwh", 10.0))
     max_power = float(battery.get("max_power_mw", battery.get("max_charge_mw", 2.0)))
@@ -141,6 +142,31 @@ def optimize_dispatch(
         row[idx_peak] = -1.0
         A_ub.append(row)
         b_ub.append(0.0)
+
+    # Optional carbon budget constraint: sum(grid_t * carbon_t) <= budget_kg
+    budget_kg = carbon_cfg.get("budget_kg")
+    budget_pct = carbon_cfg.get("budget_reduction_pct")
+    if budget_pct is None:
+        budget_pct = carbon_cfg.get("budget_pct")
+    if budget_pct is not None:
+        try:
+            budget_pct = float(budget_pct)
+        except (TypeError, ValueError):
+            budget_pct = None
+    if budget_kg is not None:
+        try:
+            budget_kg = float(budget_kg)
+        except (TypeError, ValueError):
+            budget_kg = None
+    if budget_kg is None and budget_pct is not None:
+        baseline_grid = np.clip(load - ren, 0.0, max_import)
+        baseline_carbon = float(np.sum(baseline_grid * carbon_series))
+        budget_kg = baseline_carbon * (1.0 - budget_pct)
+    if budget_kg is not None:
+        row = np.zeros(n_vars)
+        row[idx_grid] = carbon_series
+        A_ub.append(row)
+        b_ub.append(budget_kg)
     A_ub = np.vstack(A_ub)
     b_ub = np.asarray(b_ub)
 
@@ -178,6 +204,7 @@ def optimize_dispatch(
             "expected_cost_usd": float(np.sum(grid_plan * price) + np.sum(curtail) * curtail_pen),
             "carbon_kg": float(np.sum(grid_plan * carbon_series)),
             "carbon_cost_usd": float(np.sum(grid_plan * carbon_cost_series)),
+            "carbon_budget_kg": float(budget_kg) if budget_kg is not None else None,
             "note": f"linprog failed: {res.message}",
         }
 
@@ -208,5 +235,6 @@ def optimize_dispatch(
         "expected_cost_usd": expected_cost,
         "carbon_kg": carbon,
         "carbon_cost_usd": carbon_cost,
+        "carbon_budget_kg": float(budget_kg) if budget_kg is not None else None,
         "status": res.message,
     }

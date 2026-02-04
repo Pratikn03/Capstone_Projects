@@ -16,6 +16,7 @@ REQUIRED_COLS = [
 ]
 OPTIONAL_COLS = [
     "DE_price_day_ahead",
+    "DE_LU_price_day_ahead",
 ]
 
 
@@ -51,7 +52,15 @@ def add_price_carbon_features(
     ren = out["wind_mw"] + out["solar_mw"]
     ren_share = (ren / load).clip(0.0, 1.0)
     carbon = 450.0 - 200.0 * ren_share + 30.0 * out["is_evening_peak"] - 10.0 * out["is_weekend"]
-    out["carbon_kg_per_mwh"] = carbon.clip(lower=50.0)
+    if "carbon_kg_per_mwh" not in out.columns:
+        out["carbon_kg_per_mwh"] = carbon.clip(lower=50.0)
+    else:
+        out["carbon_kg_per_mwh"] = (
+            pd.to_numeric(out["carbon_kg_per_mwh"], errors="coerce")
+            .interpolate(limit=6)
+            .fillna(carbon)
+            .clip(lower=50.0)
+        )
     return out
 
 def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -109,11 +118,60 @@ def load_weather(path: Path) -> pd.DataFrame:
     df = df.sort_values("timestamp").drop_duplicates(subset=["timestamp"])
     return df
 
+
+def load_signals(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        raise FileNotFoundError(f"Signals file not found: {path}")
+    if path.suffix == ".parquet":
+        df = pd.read_parquet(path)
+    else:
+        df = pd.read_csv(path)
+
+    if "timestamp" not in df.columns:
+        if "time" in df.columns:
+            df = df.rename(columns={"time": "timestamp"})
+        else:
+            raise ValueError(f"Signals file missing timestamp column: {path}")
+
+    df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
+    df = df.sort_values("timestamp").drop_duplicates(subset=["timestamp"])
+
+    rename = {}
+    if "price" in df.columns and "price_eur_mwh" not in df.columns:
+        rename["price"] = "price_eur_mwh"
+    if "carbon_intensity" in df.columns and "carbon_kg_per_mwh" not in df.columns:
+        rename["carbon_intensity"] = "carbon_kg_per_mwh"
+    if "co2_moer" in df.columns and "moer_kg_per_mwh" not in df.columns:
+        rename["co2_moer"] = "moer_kg_per_mwh"
+    if rename:
+        df = df.rename(columns=rename)
+    if "carbon_gco2_kwh" in df.columns and "carbon_kg_per_mwh" not in df.columns:
+        # gCO2/kWh is numerically equivalent to kg/MWh.
+        df["carbon_kg_per_mwh"] = pd.to_numeric(df["carbon_gco2_kwh"], errors="coerce")
+    if "moer_lbs_per_mwh" in df.columns and "moer_kg_per_mwh" not in df.columns:
+        df["moer_kg_per_mwh"] = pd.to_numeric(df["moer_lbs_per_mwh"], errors="coerce") * 0.453592
+
+    keep_cols = [
+        c
+        for c in df.columns
+        if c
+        in {
+            "timestamp",
+            "price_eur_mwh",
+            "price_usd_mwh",
+            "carbon_kg_per_mwh",
+            "moer_kg_per_mwh",
+        }
+    ]
+    df = df[keep_cols]
+    return df
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--in", dest="in_dir", required=True, help="Input directory (data/raw)")
     p.add_argument("--out", dest="out_dir", default="data/processed", help="Output directory")
     p.add_argument("--weather", default=None, help="Optional weather file (csv/parquet) to merge on timestamp")
+    p.add_argument("--signals", default=None, help="Optional price/carbon signals file (csv/parquet) to merge on timestamp")
     p.add_argument("--sql-out", default=None, help="Optional SQL DB path to write features table")
     p.add_argument("--sql-engine", choices=["duckdb", "sqlite"], default="duckdb")
     p.add_argument("--sql-table", default="features")
@@ -136,7 +194,10 @@ def main():
         "DE_wind_generation_actual": "wind_mw",
         "DE_solar_generation_actual": "solar_mw",
     }
-    if "DE_price_day_ahead" in df.columns:
+    # Prefer DE_LU day-ahead price when available (common in OPSD exports).
+    if "DE_LU_price_day_ahead" in df.columns:
+        rename["DE_LU_price_day_ahead"] = "price_eur_mwh"
+    elif "DE_price_day_ahead" in df.columns:
         rename["DE_price_day_ahead"] = "price_eur_mwh"
     df = df.rename(columns=rename)
 
@@ -158,9 +219,30 @@ def main():
     for col in numeric_cols:
         df[col] = df[col].interpolate(limit=6)
 
+    if args.signals:
+        signals = load_signals(Path(args.signals))
+        df = df.merge(signals, on="timestamp", how="left", suffixes=("", "_sig"))
+        for col in ("price_eur_mwh", "price_usd_mwh", "carbon_kg_per_mwh"):
+            sig_col = f"{col}_sig"
+            if sig_col in df.columns:
+                if col in df.columns:
+                    df[col] = df[sig_col].combine_first(df[col])
+                else:
+                    df[col] = df[sig_col]
+                df.drop(columns=[sig_col], inplace=True)
+
+    # Ensure any merged signals are treated as numeric.
+    for col in ("price_eur_mwh", "price_usd_mwh", "carbon_kg_per_mwh", "moer_kg_per_mwh"):
+        if col in df.columns and col not in numeric_cols:
+            numeric_cols.append(col)
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+
     df = add_time_features(df)
     df = add_domain_features(df)
-    df = add_price_carbon_features(df, price_col="price_eur_mwh", base_price=50.0)
+    price_col = "price_eur_mwh"
+    if price_col not in df.columns and "price_usd_mwh" in df.columns:
+        price_col = "price_usd_mwh"
+    df = add_price_carbon_features(df, price_col=price_col, base_price=50.0)
 
     if args.weather:
         wx = load_weather(Path(args.weather))
@@ -172,8 +254,9 @@ def main():
             df[col] = df[col].interpolate(limit=6)
 
     lag_cols = list(numeric_cols)
-    if "price_eur_mwh" in df.columns and "price_eur_mwh" not in lag_cols:
-        lag_cols.append("price_eur_mwh")
+    for price_col in ("price_eur_mwh", "price_usd_mwh"):
+        if price_col in df.columns and price_col not in lag_cols:
+            lag_cols.append(price_col)
     if "carbon_kg_per_mwh" in df.columns:
         lag_cols.append("carbon_kg_per_mwh")
     df = add_lags_rolls(df, cols=lag_cols)

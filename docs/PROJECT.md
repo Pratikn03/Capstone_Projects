@@ -342,8 +342,3 @@ GridPulse is a complete, decision‑grade energy intelligence system. It goes be
 
 The project is structured to be **competition‑ready**, **hire‑ready**, and **publishable**, with clear documentation, reproducible scripts, and a professional product interface. Most importantly, it does not over‑claim results — it provides a rigorous path to generating verified impact metrics.
 
-If you want, I can tailor this into:
-- a 1‑page executive summary  
-- a formal capstone report PDF  
-- a pitch‑deck version  
-- an IEEE‑style abstract

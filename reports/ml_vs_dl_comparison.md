@@ -1,7 +1,7 @@
 # ML vs DL Comparison
 
 ## Setup
-- Targets: **load_mw, wind_mw, solar_mw**
+- Targets: **load_mw, wind_mw, solar_mw, price_eur_mwh**
 - Device: **cpu**
 - Quantiles: **[0.1, 0.5, 0.9]**
 
@@ -9,26 +9,31 @@
 
 | Model | RMSE | MAPE |
 |---|---:|---:|
-| gbm_lightgbm | 210.058 | 0.003 |
-| lstm | 53976.906 | 0.997 |
-| tcn | 6643.542 | 0.107 |
+| gbm_lightgbm | 311.765 | 0.004 |
+| lstm | 3150.873 | 0.052 |
+| tcn | 3252.646 | 0.050 |
 
 ## Target: wind_mw
 
 | Model | RMSE | MAPE |
 |---|---:|---:|
-| gbm_lightgbm | 457.336 | 0.009 |
-| lstm | 18422.062 | 0.974 |
-| tcn | 8307.022 | 0.872 |
+| gbm_lightgbm | 254.695 | 0.036 |
+| lstm | 5546.509 | 0.839 |
+| tcn | 6785.419 | 1.125 |
 
 ## Target: solar_mw
 
 | Model | RMSE | MAPE |
 |---|---:|---:|
-| gbm_lightgbm | 442.729 | 42096950.320 |
-| lstm | 10155.833 | 6234659840.000 |
-| tcn | 2949.849 | 34253938688.000 |
+| gbm_lightgbm | 276.266 | 88836234.167 |
+| lstm | 3033.816 | 3734611.901 |
+| tcn | 2446.106 | 2609031.895 |
 
-## Model Comparison Chart (mean across targets)
+## Target: price_eur_mwh
 
-![Model Comparison](figures/model_comparison.png)
+| Model | RMSE | MAPE |
+|---|---:|---:|
+| gbm_lightgbm | 4.918 | 1.519 |
+| lstm | 11.711 | 4.981 |
+| tcn | 11.872 | 5.612 |
+

@@ -15,28 +15,34 @@ models:
     kind: lightgbm
     enabled: true
     params:
-      n_estimators: 500
+      n_estimators: 300
       learning_rate: 0.05
-      max_depth: -1
+      max_depth: 8
+      num_leaves: 64
+      min_child_samples: 50
+      subsample: 0.8
+      colsample_bytree: 0.8
+      reg_alpha: 0.1
+      reg_lambda: 1.0
       verbosity: -1
   dl_lstm:
     kind: lstm
     enabled: true
     params:
-      hidden_size: 128
-      num_layers: 2
-      dropout: 0.1
-      epochs: 10
-      batch_size: 256
+      hidden_size: 64
+      num_layers: 1
+      dropout: 0.3
+      epochs: 8
+      batch_size: 512
   dl_tcn:
     kind: tcn
     enabled: true
     params:
-      num_channels: [32, 32, 32]
+      num_channels: [32, 32]
       kernel_size: 3
-      dropout: 0.1
-      epochs: 10
-      batch_size: 256
+      dropout: 0.3
+      epochs: 8
+      batch_size: 512
 
 artifacts:
   out_dir: artifacts/models
