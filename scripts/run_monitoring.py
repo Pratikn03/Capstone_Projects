@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+import argparse
 import json
+import os
 import sys
 
 import pandas as pd
@@ -14,6 +16,8 @@ if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
 from gridpulse.monitoring.report import write_monitoring_report
+from gridpulse.monitoring.alerts import send_webhook
+from gridpulse.utils.logging import setup_logging
 from gridpulse.monitoring.retraining import (
     load_monitoring_config,
     compute_data_drift,
@@ -39,6 +43,16 @@ def _load_split() -> tuple[pd.DataFrame | None, pd.DataFrame | None]:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--alert-webhook", default=None, help="Override GRIDPULSE_ALERT_WEBHOOK for alerts")
+    parser.add_argument("--disable-alerts", action="store_true", help="Disable alerting even if webhook is set")
+    args = parser.parse_args()
+
+    setup_logging()
+    if args.alert_webhook:
+        os.environ["GRIDPULSE_ALERT_WEBHOOK"] = args.alert_webhook
+    if args.disable_alerts:
+        os.environ.pop("GRIDPULSE_ALERT_WEBHOOK", None)
     cfg = load_monitoring_config()
     train_df, test_df = _load_split()
     payload: dict = {"data_drift": None, "model_drift": None, "retraining": None}
@@ -46,6 +60,7 @@ def main() -> None:
     if train_df is None or test_df is None or train_df.empty or test_df.empty:
         payload["note"] = "Missing splits/features; monitoring skipped."
         write_monitoring_report(payload)
+        _write_summary(payload)
         print("Monitoring report written (no data).")
         return
 
@@ -88,7 +103,30 @@ def main() -> None:
     }
 
     write_monitoring_report(payload)
+    _write_summary(payload)
+    _maybe_alert(payload)
     print("Monitoring report written.")
+
+
+def _write_summary(payload: dict, out_path: str = "reports/monitoring_summary.json") -> None:
+    Path(out_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(out_path).write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def _maybe_alert(payload: dict) -> None:
+    webhook = os.getenv("GRIDPULSE_ALERT_WEBHOOK")
+    if not webhook:
+        return
+    data_drift = payload.get("data_drift", {}) or {}
+    model_drift = payload.get("model_drift", {}) or {}
+    retraining = payload.get("retraining", {}) or {}
+
+    should_alert = bool(data_drift.get("drift")) or bool(model_drift.get("decision", {}).get("drift")) or bool(
+        retraining.get("retrain")
+    )
+    if not should_alert:
+        return
+    send_webhook(webhook, payload)
 
 
 if __name__ == "__main__":
