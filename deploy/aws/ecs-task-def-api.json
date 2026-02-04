@@ -1,0 +1,40 @@
+{
+  "family": "gridpulse-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/<TASK_EXEC_ROLE>",
+  "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/<TASK_ROLE>",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "<ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/<ECR_REPO_API>:latest",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 8000, "protocol": "tcp" }
+      ],
+      "environment": [
+        { "name": "GRIDPULSE_LOG_LEVEL", "value": "INFO" },
+        { "name": "GRIDPULSE_LOG_FORMAT", "value": "json" },
+        { "name": "GRIDPULSE_FEATURES_PATH", "value": "data/processed/features.parquet" },
+        { "name": "GRIDPULSE_MODELS_DIR", "value": "artifacts/models" }
+      ],
+      "secrets": [
+        { "name": "ELECTRICITYMAPS_TOKEN", "valueFrom": "<SECRET_ARN>:ELECTRICITYMAPS_TOKEN::" },
+        { "name": "WATTTIME_USERNAME", "valueFrom": "<SECRET_ARN>:WATTTIME_USERNAME::" },
+        { "name": "WATTTIME_PASSWORD", "valueFrom": "<SECRET_ARN>:WATTTIME_PASSWORD::" },
+        { "name": "GRIDPULSE_ALERT_WEBHOOK", "valueFrom": "<SECRET_ARN>:GRIDPULSE_ALERT_WEBHOOK::" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "<LOG_GROUP>",
+          "awslogs-region": "<AWS_REGION>",
+          "awslogs-stream-prefix": "gridpulse-api"
+        }
+      }
+    }
+  ]
+}
+

@@ -1,0 +1,83 @@
+name: Deploy (ECS Fargate)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-api:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and push API image
+        run: |
+          docker build -f docker/Dockerfile.api -t ${{ secrets.ECR_REPOSITORY_API }}:${{ github.sha }} .
+          docker tag ${{ secrets.ECR_REPOSITORY_API }}:${{ github.sha }} ${{ secrets.ECR_REPOSITORY_API }}:latest
+          docker push ${{ secrets.ECR_REPOSITORY_API }}:${{ github.sha }}
+          docker push ${{ secrets.ECR_REPOSITORY_API }}:latest
+      - name: Render task definition (API)
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: deploy/aws/ecs-task-def-api.json
+          container-name: api
+          image: ${{ secrets.ECR_REPOSITORY_API }}:${{ github.sha }}
+      - name: Deploy API service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          cluster: ${{ secrets.ECS_CLUSTER }}
+          service: ${{ secrets.ECS_SERVICE_API }}
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          wait-for-service-stability: true
+
+  deploy-dashboard:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and push dashboard image
+        run: |
+          docker build -f docker/Dockerfile.app -t ${{ secrets.ECR_REPOSITORY_DASHBOARD }}:${{ github.sha }} .
+          docker tag ${{ secrets.ECR_REPOSITORY_DASHBOARD }}:${{ github.sha }} ${{ secrets.ECR_REPOSITORY_DASHBOARD }}:latest
+          docker push ${{ secrets.ECR_REPOSITORY_DASHBOARD }}:${{ github.sha }}
+          docker push ${{ secrets.ECR_REPOSITORY_DASHBOARD }}:latest
+      - name: Render task definition (Dashboard)
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: deploy/aws/ecs-task-def-dashboard.json
+          container-name: dashboard
+          image: ${{ secrets.ECR_REPOSITORY_DASHBOARD }}:${{ github.sha }}
+      - name: Deploy dashboard service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          cluster: ${{ secrets.ECS_CLUSTER }}
+          service: ${{ secrets.ECS_SERVICE_DASHBOARD }}
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          wait-for-service-stability: true

@@ -1,0 +1,36 @@
+{
+  "family": "gridpulse-refresh",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/<TASK_EXEC_ROLE>",
+  "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/<TASK_ROLE>",
+  "containerDefinitions": [
+    {
+      "name": "refresh",
+      "image": "<ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/<ECR_REPO_API>:latest",
+      "essential": true,
+      "command": ["python", "-m", "gridpulse.pipeline.run", "--steps", "data,reports", "--force"],
+      "environment": [
+        { "name": "GRIDPULSE_LOG_LEVEL", "value": "INFO" },
+        { "name": "GRIDPULSE_LOG_FORMAT", "value": "json" }
+      ],
+      "secrets": [
+        { "name": "ELECTRICITYMAPS_TOKEN", "valueFrom": "<SECRET_ARN>:ELECTRICITYMAPS_TOKEN::" },
+        { "name": "WATTTIME_USERNAME", "valueFrom": "<SECRET_ARN>:WATTTIME_USERNAME::" },
+        { "name": "WATTTIME_PASSWORD", "valueFrom": "<SECRET_ARN>:WATTTIME_PASSWORD::" },
+        { "name": "GRIDPULSE_ALERT_WEBHOOK", "valueFrom": "<SECRET_ARN>:GRIDPULSE_ALERT_WEBHOOK::" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "<LOG_GROUP>",
+          "awslogs-region": "<AWS_REGION>",
+          "awslogs-stream-prefix": "gridpulse-refresh"
+        }
+      }
+    }
+  ]
+}
+
