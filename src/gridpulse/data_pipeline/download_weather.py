@@ -11,7 +11,8 @@ from pathlib import Path
 from typing import Iterable, List
 
 import pandas as pd
-import requests
+from gridpulse.utils.logging import get_logger
+from gridpulse.utils.net import get_session
 
 DEFAULT_BASE_URL = "https://archive-api.open-meteo.com/v1/archive"
 DEFAULT_HOURLY = [
@@ -33,7 +34,17 @@ def _chunks(start: date, end: date, chunk_days: int) -> Iterable[tuple[date, dat
         yield cur, chunk_end
         cur = chunk_end + timedelta(days=1)
 
-def _fetch_chunk(base_url: str, lat: float, lon: float, start: date, end: date, hourly: List[str], tz: str) -> pd.DataFrame:
+def _fetch_chunk(
+    session,
+    base_url: str,
+    lat: float,
+    lon: float,
+    start: date,
+    end: date,
+    hourly: List[str],
+    tz: str,
+    log,
+) -> pd.DataFrame:
     params = {
         "latitude": lat,
         "longitude": lon,
@@ -42,9 +53,13 @@ def _fetch_chunk(base_url: str, lat: float, lon: float, start: date, end: date, 
         "hourly": ",".join(hourly),
         "timezone": tz,
     }
-    r = requests.get(base_url, params=params, timeout=120)
-    r.raise_for_status()
-    payload = r.json()
+    try:
+        r = session.get(base_url, params=params, timeout=120)
+        r.raise_for_status()
+        payload = r.json()
+    except Exception as exc:
+        log.error("Failed to fetch weather chunk %s to %s", start, end, exc_info=exc)
+        raise
     hourly_payload = payload.get("hourly", {})
     times = hourly_payload.get("time", [])
     if not times:
@@ -67,6 +82,8 @@ def main():
     p.add_argument("--hourly", default=",".join(DEFAULT_HOURLY), help="Comma-separated hourly variables")
     p.add_argument("--timezone", default="UTC", help="Timezone for API response")
     p.add_argument("--chunk-days", type=int, default=365, help="Chunk size to avoid huge requests")
+    p.add_argument("--retries", type=int, default=3, help="HTTP retry attempts")
+    p.add_argument("--backoff", type=float, default=0.5, help="Retry backoff factor (seconds)")
     p.add_argument("--base-url", default=DEFAULT_BASE_URL, help="Archive API base URL")
     p.add_argument("--format", choices=["csv", "parquet"], default="csv")
     p.add_argument("--filename", default="weather_berlin_hourly", help="Base filename (no extension)")
@@ -79,10 +96,13 @@ def main():
     end = _parse_date(args.end)
     hourly = [v.strip() for v in args.hourly.split(",") if v.strip()]
 
+    log = get_logger("gridpulse.download_weather")
+    session = get_session(retries=args.retries, backoff=args.backoff)
+
     frames = []
     for s, e in _chunks(start, end, args.chunk_days):
-        print(f"Fetching {s} to {e} ...")
-        df = _fetch_chunk(args.base_url, args.lat, args.lon, s, e, hourly, args.timezone)
+        log.info("Fetching %s to %s ...", s, e)
+        df = _fetch_chunk(session, args.base_url, args.lat, args.lon, s, e, hourly, args.timezone, log)
         if not df.empty:
             frames.append(df)
 
@@ -112,7 +132,7 @@ Columns are prefixed with `wx_` and timestamps are UTC.
         encoding="utf-8",
     )
 
-    print(f"Saved: {out_path}")
+    log.info("Saved: %s", out_path)
 
 if __name__ == "__main__":
     main()
