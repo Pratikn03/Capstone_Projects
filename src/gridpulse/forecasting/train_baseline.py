@@ -1,4 +1,4 @@
-"""Forecasting: train baseline."""
+"""Forecasting: train baseline models for quick comparisons."""
 from __future__ import annotations
 
 import argparse
@@ -16,13 +16,14 @@ from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm
 TARGETS = ["load_mw", "wind_mw", "solar_mw"]
 
 def make_xy(df: pd.DataFrame, target: str, drop_cols=("timestamp",)) -> tuple[np.ndarray, np.ndarray, list[str]]:
-    # Key: prepare features/targets and train or evaluate models
+    """Split into features (X) and target (y) while avoiding leakage."""
     cols = [c for c in df.columns if c not in drop_cols and c not in TARGETS]
     X = df[cols].to_numpy()
     y = df[target].to_numpy()
     return X, y, cols
 
 def main():
+    """CLI entrypoint for baseline training + evaluation."""
     p = argparse.ArgumentParser()
     p.add_argument("--features", default="data/processed/features.parquet")
     p.add_argument("--splits", default="data/processed/splits")
@@ -36,6 +37,7 @@ def main():
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Prefer explicit splits; fall back to a simple time split.
     if (splits_dir / "train.parquet").exists():
         train_df = pd.read_parquet(splits_dir / "train.parquet")
         val_df = pd.read_parquet(splits_dir / "val.parquet")
@@ -58,7 +60,7 @@ def main():
             "n": int(mask.sum()),
         }
 
-    # persistence and moving average evaluated on test window
+    # Persistence and moving average evaluated on the test window.
     y_test = test_df[args.target].to_numpy()
     pers = persistence_24h(test_df, args.target)
     ma = moving_average(test_df, args.target, 24)
@@ -68,7 +70,7 @@ def main():
         eval_baseline("moving_average_24h", y_test, ma),
     ]
 
-    # GBM model
+    # GBM model trained on features.
     X_train, y_train, feat_cols = make_xy(train_df, args.target)
     X_val, y_val, _ = make_xy(val_df, args.target)
     X_test, y_test, _ = make_xy(test_df, args.target)

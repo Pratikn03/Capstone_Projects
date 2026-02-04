@@ -1,11 +1,10 @@
-"""Forecasting: dl lstm."""
+"""Forecasting: LSTM sequence model."""
 from __future__ import annotations
 import torch
 import torch.nn as nn
 
 class LSTMForecaster(nn.Module):
     def __init__(
-        # Key: prepare features/targets and train or evaluate models
         self, 
         n_features: int, 
         hidden_size: int = 128, 
@@ -13,7 +12,9 @@ class LSTMForecaster(nn.Module):
         dropout: float = 0.1,
         horizon: int = 24
     ):
+        """LSTM that predicts the next `horizon` steps from a lookback window."""
         super().__init__()
+        # Recurrent backbone encodes temporal patterns.
         self.lstm = nn.LSTM(
             input_size=n_features,
             hidden_size=hidden_size,
@@ -21,10 +22,11 @@ class LSTMForecaster(nn.Module):
             dropout=dropout if num_layers > 1 else 0.0,
             batch_first=True,
         )
-        # Project last hidden state to the full horizon
+        # Project the last hidden state into a multi-step forecast.
         self.head = nn.Linear(hidden_size, horizon)
 
     def forward(self, x):
+        """Forward pass: (batch, time, features) -> (batch, horizon)."""
         # x: (B, T, F)
         out, _ = self.lstm(x)
         # Take the output of the last time step

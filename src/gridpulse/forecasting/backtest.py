@@ -6,16 +6,14 @@ from gridpulse.utils.metrics import rmse, mae, mape, smape, daylight_mape
 
 
 def walk_forward_horizon_metrics(y_true: np.ndarray, y_pred: np.ndarray, horizon: int, target: str) -> dict:
-    """
-    Compute per-horizon step metrics for walk-forward style evaluation.
-    y_true and y_pred are 1D arrays aligned in time.
-    """
+    """Compute per-step metrics for a walk-forward forecast horizon."""
     y_true = np.asarray(y_true)
     y_pred = np.asarray(y_pred)
     n = min(len(y_true), len(y_pred))
     y_true = y_true[:n]
     y_pred = y_pred[:n]
 
+    # For each step in the horizon, evaluate that step across the series.
     per_step = {}
     for h in range(horizon):
         idx = np.arange(h, n, horizon)
@@ -37,6 +35,7 @@ def walk_forward_horizon_metrics(y_true: np.ndarray, y_pred: np.ndarray, horizon
 
 
 def _mean_metric(per_step: dict, key: str) -> float | None:
+    """Compute the mean metric across all horizon steps."""
     vals = [m.get(key) for m in per_step.values() if m.get(key) is not None]
     if not vals:
         return None
@@ -44,10 +43,7 @@ def _mean_metric(per_step: dict, key: str) -> float | None:
 
 
 def multi_horizon_metrics(y_true: np.ndarray, y_pred: np.ndarray, horizons: list[int], target: str) -> dict:
-    """
-    Compute aggregate metrics across multiple horizons.
-    Expects y_true/y_pred to be 1D arrays aligned in time.
-    """
+    """Compute aggregate metrics across multiple horizon lengths."""
     y_true = np.asarray(y_true)
     y_pred = np.asarray(y_pred)
     n = min(len(y_true), len(y_pred))

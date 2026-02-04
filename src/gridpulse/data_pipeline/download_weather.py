@@ -31,10 +31,11 @@ DEFAULT_HOURLY = [
 ]
 
 def _parse_date(d: str) -> date:
-    # Key: normalize inputs and build time-aware features
+    """Parse a YYYY-MM-DD string into a date."""
     return datetime.strptime(d, "%Y-%m-%d").date()
 
 def _chunks(start: date, end: date, chunk_days: int) -> Iterable[tuple[date, date]]:
+    """Yield (start, end) date windows to keep API requests small."""
     cur = start
     while cur <= end:
         chunk_end = min(cur + timedelta(days=chunk_days - 1), end)
@@ -52,6 +53,7 @@ def _fetch_chunk(
     tz: str,
     log,
 ) -> pd.DataFrame:
+    """Fetch a single chunk of weather data and normalize columns."""
     params = {
         "latitude": lat,
         "longitude": lon,
@@ -80,6 +82,7 @@ def _fetch_chunk(
     return df
 
 def main():
+    """CLI entrypoint for weather downloader."""
     p = argparse.ArgumentParser()
     p.add_argument("--out", default="data/raw", help="Output directory")
     p.add_argument("--lat", type=float, default=52.52, help="Latitude (default: Berlin)")

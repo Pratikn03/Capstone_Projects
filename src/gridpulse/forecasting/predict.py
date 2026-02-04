@@ -1,4 +1,4 @@
-"""Forecasting: predict."""
+"""Forecasting: prediction helpers for trained model bundles."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,7 +14,7 @@ from gridpulse.utils.scaler import StandardScaler
 
 
 def load_model_bundle(path: str | Path) -> Dict[str, Any]:
-    # Key: prepare features/targets and train or evaluate models
+    """Load a serialized model bundle (GBM pickle or Torch checkpoint)."""
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(path)
@@ -31,6 +31,7 @@ def load_model_bundle(path: str | Path) -> Dict[str, Any]:
 
 
 def _build_torch_model(bundle: Dict[str, Any]):
+    """Instantiate a Torch model from a saved bundle."""
     model_type = bundle.get("model_type")
     feat_cols = bundle.get("feature_cols", [])
     params = bundle.get("model_params", {})
@@ -58,11 +59,13 @@ def _build_torch_model(bundle: Dict[str, Any]):
 
 
 def _maybe_scale_X(X: np.ndarray, bundle: Dict[str, Any]) -> np.ndarray:
+    """Apply the saved feature scaler when present."""
     scaler = StandardScaler.from_dict(bundle.get("x_scaler"))
     return scaler.transform(X) if scaler is not None else X
 
 
 def _maybe_inverse_y(y: np.ndarray, bundle: Dict[str, Any]) -> np.ndarray:
+    """Undo target scaling when a scaler is present."""
     scaler = StandardScaler.from_dict(bundle.get("y_scaler"))
     if scaler is None:
         return y
@@ -70,6 +73,7 @@ def _maybe_inverse_y(y: np.ndarray, bundle: Dict[str, Any]) -> np.ndarray:
 
 
 def predict_next_24h(features_df: pd.DataFrame, model_bundle: Dict[str, Any], horizon: int | None = None) -> Dict[str, Any]:
+    """Generate the next-horizon forecast and (optional) quantiles."""
     df = features_df.sort_values("timestamp").reset_index(drop=True)
     feat_cols = model_bundle.get("feature_cols", [])
     if not feat_cols:
@@ -106,6 +110,7 @@ def predict_next_24h(features_df: pd.DataFrame, model_bundle: Dict[str, Any], ho
     else:
         raise ValueError(f"Unknown model_type: {model_type}")
 
+    # Prefer explicit quantile models when available; otherwise use residual offsets.
     quantile_preds: dict[str, list[float]] = {}
     quantile_models = model_bundle.get("quantile_models")
     if quantile_models:

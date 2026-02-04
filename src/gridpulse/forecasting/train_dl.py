@@ -1,4 +1,4 @@
-"""Forecasting: train dl."""
+"""Forecasting: standalone LSTM trainer (legacy script)."""
 from __future__ import annotations
 
 import argparse
@@ -20,7 +20,7 @@ from gridpulse.forecasting.dl_lstm import LSTMForecaster
 from gridpulse.forecasting.datasets import TimeSeriesWindowDataset, SeqConfig
 
 def train_epoch(model, loader, optimizer, criterion, device):
-    # Key: prepare features/targets and train or evaluate models
+    """Run one training epoch for the LSTM."""
     model.train()
     total_loss = 0.0
     for X_batch, y_batch in loader:
@@ -36,6 +36,7 @@ def train_epoch(model, loader, optimizer, criterion, device):
     return total_loss / len(loader.dataset)
 
 def validate(model, loader, criterion, device):
+    """Evaluate on the validation set."""
     model.eval()
     total_loss = 0.0
     with torch.no_grad():
@@ -47,6 +48,7 @@ def validate(model, loader, criterion, device):
     return total_loss / len(loader.dataset)
 
 def main():
+    """CLI entrypoint for the legacy LSTM trainer."""
     parser = argparse.ArgumentParser(description="Train LSTM Forecaster")
     parser.add_argument("--config", default="configs/train_dl.yaml")
     parser.add_argument("--train-path", default="data/processed/splits/train.parquet")
@@ -54,7 +56,7 @@ def main():
     parser.add_argument("--out-dir", default="artifacts/models")
     args = parser.parse_args()
 
-    # 1. Load Config
+    # 1) Load config.
     with open(args.config) as f:
         cfg = yaml.safe_load(f)
     
@@ -70,17 +72,15 @@ def main():
 
     print(f"Training LSTM on {device}. Target: {target_col}")
 
-    # 2. Load Data
+    # 2) Load data splits.
     train_df = pd.read_parquet(args.train_path)
     val_df = pd.read_parquet(args.val_path)
 
-    # 3. Leakage-Free Scaling
-    # Fit scaler ONLY on training data
+    # 3) Leakage-free scaling: fit scaler ONLY on training data.
     print("Scaling data (fit on train only)...")
     scaler = StandardScaler()
     
-    # We scale all input features. 
-    # Note: If target is in features, it gets scaled too.
+    # We scale all input features. If target is in features, it gets scaled too.
     X_train_raw = train_df[feature_cols].values
     X_val_raw = val_df[feature_cols].values
 
@@ -96,7 +96,7 @@ def main():
     y_train_scaled = X_train_scaled[:, target_idx]
     y_val_scaled = X_val_scaled[:, target_idx]
 
-    # 4. Create Datasets
+    # 4) Create sequence datasets.
     seq_cfg = SeqConfig(lookback=lookback, horizon=horizon)
     
     train_ds = TimeSeriesWindowDataset(X_train_scaled, y_train_scaled, seq_cfg)
@@ -105,7 +105,7 @@ def main():
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
 
-    # 5. Initialize Model
+    # 5) Initialize model.
     model = LSTMForecaster(
         n_features=len(feature_cols),
         hidden_size=model_cfg.get("hidden_size", 64),
@@ -117,7 +117,7 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=train_cfg.get("learning_rate", 1e-3))
     criterion = nn.MSELoss()
 
-    # 6. Training Loop
+    # 6) Training loop with early stopping.
     best_val_loss = float("inf")
     patience = train_cfg.get("patience", 5)
     patience_counter = 0
@@ -143,7 +143,7 @@ def main():
                 print("Early stopping triggered.")
                 break
 
-    # 7. Save Artifacts
+    # 7) Save artifacts.
     scaler_path = out_dir / "lstm_scaler.pkl"
     joblib.dump(scaler, scaler_path)
     print(f"Saved model to {model_path}")

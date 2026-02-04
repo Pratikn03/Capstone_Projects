@@ -1,4 +1,4 @@
-"""Data pipeline: split time series."""
+"""Data pipeline: split time series into train/val/test."""
 from __future__ import annotations
 
 import argparse
@@ -6,7 +6,6 @@ from pathlib import Path
 import pandas as pd
 
 def time_split(df: pd.DataFrame, train_ratio: float = 0.7, val_ratio: float = 0.15):
-    # Key: normalize inputs and build time-aware features
     """Time-ordered split: train earliest, then val, then test."""
     n = len(df)
     n_train = int(n * train_ratio)
@@ -17,6 +16,7 @@ def time_split(df: pd.DataFrame, train_ratio: float = 0.7, val_ratio: float = 0.
     return train, val, test
 
 def main():
+    """CLI entrypoint to split a time series parquet into train/val/test."""
     p = argparse.ArgumentParser()
     p.add_argument("--in", dest="in_path", required=True, help="Input parquet (data/processed/features.parquet)")
     p.add_argument("--out", dest="out_dir", default="data/processed/splits", help="Output directory")
@@ -29,18 +29,21 @@ def main():
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Load features and enforce time ordering.
     df = pd.read_parquet(in_path)
     if args.timestamp_col not in df.columns:
         raise ValueError(f"timestamp column '{args.timestamp_col}' not found in {in_path}")
     df[args.timestamp_col] = pd.to_datetime(df[args.timestamp_col], utc=True, errors="coerce")
     df = df.sort_values(args.timestamp_col).reset_index(drop=True)
 
+    # Perform a pure time split to avoid leakage.
     train, val, test = time_split(df, args.train_ratio, args.val_ratio)
 
     train.to_parquet(out_dir / "train.parquet", index=False)
     val.to_parquet(out_dir / "val.parquet", index=False)
     test.to_parquet(out_dir / "test.parquet", index=False)
 
+    # Write a small human-readable summary for reproducibility.
     (out_dir / "SPLIT_SUMMARY.md").write_text(
         f"""# Time Split Summary
 
