@@ -1,0 +1,11 @@
+[Unit]
+Description=GridPulse Scheduled Retraining
+After=network.target
+
+[Service]
+Type=oneshot
+User=gridpulse
+WorkingDirectory=/opt/gridpulse
+EnvironmentFile=/etc/gridpulse/gridpulse.env
+ExecStart=/opt/gridpulse/.venv/bin/python scripts/retrain_if_needed.py --refresh
+

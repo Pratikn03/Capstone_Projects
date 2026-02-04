@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gridpulse-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gridpulse-dashboard
+  template:
+    metadata:
+      labels:
+        app: gridpulse-dashboard
+    spec:
+      containers:
+        - name: dashboard
+          image: gridpulse-dashboard:latest
+          ports:
+            - containerPort: 8501
+          envFrom:
+            - configMapRef:
+                name: gridpulse-config
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8501
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8501
+            initialDelaySeconds: 30
+            periodSeconds: 60
+

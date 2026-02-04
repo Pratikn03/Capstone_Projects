@@ -7,6 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src /app/src
 COPY services /app/services
 COPY configs /app/configs
+COPY scripts /app/scripts
 
 ENV PYTHONPATH=/app/src
 EXPOSE 8501

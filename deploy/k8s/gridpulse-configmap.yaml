@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gridpulse-config
+data:
+  GRIDPULSE_LOG_LEVEL: "INFO"
+  GRIDPULSE_LOG_FORMAT: "text"
+  GRIDPULSE_FEATURES_PATH: "data/processed/features.parquet"
+  GRIDPULSE_MODELS_DIR: "artifacts/models"
+
