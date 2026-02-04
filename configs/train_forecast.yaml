@@ -25,6 +25,18 @@ models:
       reg_alpha: 0.05
       reg_lambda: 0.5
       verbosity: -1
+  quantile_gbm:
+    kind: lightgbm
+    enabled: true
+    params:
+      n_estimators: 400
+      learning_rate: 0.05
+      max_depth: 8
+      num_leaves: 64
+      min_child_samples: 20
+      subsample: 0.9
+      colsample_bytree: 0.9
+      verbosity: -1
   dl_lstm:
     kind: lstm
     enabled: true

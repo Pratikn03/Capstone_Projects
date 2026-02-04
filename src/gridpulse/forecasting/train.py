@@ -356,6 +356,22 @@ def main():
                 }
                 gbm_q = residual_quantiles(y_val, gbm_pred_val, quantiles)
 
+                # Optional: train quantile GBM models for calibrated intervals.
+                quantile_models = {}
+                quant_cfg = cfg["models"].get("quantile_gbm", {})
+                if quant_cfg.get("enabled", False):
+                    lgb = _try_lightgbm()
+                    if lgb is None:
+                        print("Quantile GBM enabled but LightGBM not available; skipping quantile models.")
+                    else:
+                        q_params_base = dict(quant_cfg.get("params", {}))
+                        for q in quantiles:
+                            params = {**q_params_base, "objective": "quantile", "alpha": float(q)}
+                            params.setdefault("random_state", int(cfg.get("seed", 42)))
+                            q_model = lgb.LGBMRegressor(**params)
+                            q_model.fit(X_train, y_train)
+                            quantile_models[str(q)] = q_model
+
                 import pickle
                 with open(art_dir / f"{gbm_metrics['model']}_{target}.pkl", "wb") as f:
                     pickle.dump({
@@ -365,10 +381,16 @@ def main():
                         "target": target,
                         "quantiles": quantiles,
                         "residual_quantiles": gbm_q,
+                        "quantile_models": quantile_models if quantile_models else None,
                         "tuned_params": gbm_params if tuning_enabled else None,
                     }, f)
 
-                target_res["gbm"] = {**gbm_metrics, "residual_quantiles": gbm_q, "tuned_params": gbm_params if tuning_enabled else None}
+                target_res["gbm"] = {
+                    **gbm_metrics,
+                    "residual_quantiles": gbm_q,
+                    "tuned_params": gbm_params if tuning_enabled else None,
+                    "quantile_models": list(quantile_models.keys()) if quantile_models else None,
+                }
                 if backtest_enabled:
                     backtest_payload["targets"].setdefault(target, {})
                     backtest_payload["targets"][target]["gbm"] = walk_forward_horizon_metrics(

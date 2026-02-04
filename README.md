@@ -36,8 +36,8 @@ Metrics from the latest local run (`reports/impact_summary.csv`):
 
 | Metric | Value |
 |---|---:|
-| Cost savings | 2.99% |
-| Carbon reduction | 0.37% |
+| Cost savings | 2.89% |
+| Carbon reduction | 0.58% |
 | Peak shaving | 7.09% |
 
 ### Submission Bundle
