@@ -8,6 +8,7 @@ from typing import Any
 
 
 def _sha256(path: Path, chunk_size: int = 1024 * 1024) -> str:
+    """Compute a SHA‑256 hash for a file."""
     import hashlib
 
     h = hashlib.sha256()
@@ -26,6 +27,7 @@ def register_models(
     *,
     run_id: str | None = None,
 ) -> dict[str, Any]:
+    """Record model artifact metadata into a local registry file."""
     models_dir = Path(models_dir)
     registry_path = Path(registry_path)
     registry_path.parent.mkdir(parents=True, exist_ok=True)
@@ -64,4 +66,3 @@ def register_models(
     payload = {"latest": snapshot, "history": history}
     registry_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return payload
-

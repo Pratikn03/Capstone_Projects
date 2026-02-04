@@ -1,4 +1,4 @@
-"""Monitoring: retraining."""
+"""Monitoring: retraining decisions and drift checks."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -23,7 +23,7 @@ class RetrainingDecision:
 
 
 def load_monitoring_config(path: str | Path = "configs/monitoring.yaml") -> dict:
-    # Key: compute drift metrics and retraining signals
+    """Load monitoring configuration with sensible defaults."""
     cfg_path = Path(path)
     if not cfg_path.exists():
         return {
@@ -35,6 +35,7 @@ def load_monitoring_config(path: str | Path = "configs/monitoring.yaml") -> dict
 
 
 def days_since(path: Path) -> int | None:
+    """Return days since a file was modified (or None if missing)."""
     if not path.exists():
         return None
     mtime = datetime.fromtimestamp(path.stat().st_mtime)
@@ -42,6 +43,7 @@ def days_since(path: Path) -> int | None:
 
 
 def compute_data_drift(reference_df: pd.DataFrame, current_df: pd.DataFrame, feature_cols: List[str], p_value_threshold: float) -> Dict[str, Any]:
+    """Run KS drift tests per feature and summarize whether any drifted."""
     drifted = {}
     for col in feature_cols:
         ref = reference_df[col].dropna().to_numpy()
@@ -55,6 +57,7 @@ def compute_data_drift(reference_df: pd.DataFrame, current_df: pd.DataFrame, fea
 
 
 def compute_model_metrics_gbm(bundle: dict, df: pd.DataFrame, target: str) -> Dict[str, float]:
+    """Compute simple metrics for a GBM bundle on a given dataframe."""
     feat_cols = bundle.get("feature_cols", [])
     if not feat_cols:
         raise ValueError("Model bundle missing feature_cols")
@@ -65,12 +68,14 @@ def compute_model_metrics_gbm(bundle: dict, df: pd.DataFrame, target: str) -> Di
 
 
 def evaluate_model_drift(baseline_metric: float | None, current_metric: float | None, threshold: float) -> Dict[str, Any]:
+    """Decide if model performance degraded beyond a threshold."""
     if baseline_metric is None or current_metric is None:
         return {"drift": False, "ratio": None, "note": "missing metrics"}
     return metric_drift(current_metric, baseline_metric, degradation_threshold=threshold)
 
 
 def retraining_decision(cfg: dict, data_drift: bool, model_drift: bool, last_trained_path: Path | None) -> RetrainingDecision:
+    """Combine drift checks and cadence rules into a retrain decision."""
     retrain_cfg = cfg.get("retraining", {})
     cadence_days = int(retrain_cfg.get("cadence_days", 30))
     last_days = days_since(last_trained_path) if last_trained_path else None

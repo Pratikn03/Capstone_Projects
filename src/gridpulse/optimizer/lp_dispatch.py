@@ -8,7 +8,7 @@ from scipy.optimize import linprog
 
 
 def _as_array(x) -> np.ndarray:
-    # Key: formulate dispatch objective/constraints and compute plans
+    """Convert scalars/lists to a float NumPy array."""
     if isinstance(x, (list, tuple, np.ndarray)):
         arr = np.asarray(x, dtype=float)
     else:
@@ -23,6 +23,7 @@ def optimize_dispatch(
     forecast_price=None,
     forecast_carbon_kg=None,
 ) -> Dict[str, Any]:
+    """Solve a linear dispatch problem with battery + grid constraints."""
     load = _as_array(forecast_load)
     ren = _as_array(forecast_renewables)
     # Align renewable series to load horizon (supports scalar inputs).
@@ -33,6 +34,7 @@ def optimize_dispatch(
 
     H = len(load)
 
+    # Pull config sections with defaults.
     cfg = config or {}
     battery = cfg.get("battery", {})
     grid = cfg.get("grid", {})
@@ -97,11 +99,11 @@ def optimize_dispatch(
     c[idx_unmet] = unmet_pen
     c[idx_peak] = peak_pen
 
-    # Equality constraints: load balance and SOC dynamics
+    # Equality constraints: load balance and SOC dynamics.
     A_eq = []
     b_eq = []
 
-    # load balance: grid + discharge - curtail + unmet = load - renewables
+    # Load balance: grid + discharge - charge - curtail + unmet = load - renewables.
     for t in range(H):
         row = np.zeros(n_vars)
         row[idx_grid.start + t] = 1.0
@@ -112,7 +114,7 @@ def optimize_dispatch(
         A_eq.append(row)
         b_eq.append(load[t] - ren[t])
 
-    # SOC dynamics
+    # SOC dynamics.
     for t in range(H):
         row = np.zeros(n_vars)
         row[idx_soc.start + t] = 1.0
@@ -133,7 +135,7 @@ def optimize_dispatch(
     A_eq = np.vstack(A_eq)
     b_eq = np.asarray(b_eq)
 
-    # Inequality constraints: grid_t <= peak
+    # Inequality constraints: grid_t <= peak.
     A_ub = []
     b_ub = []
     for t in range(H):
@@ -143,7 +145,7 @@ def optimize_dispatch(
         A_ub.append(row)
         b_ub.append(0.0)
 
-    # Optional carbon budget constraint: sum(grid_t * carbon_t) <= budget_kg
+    # Optional carbon budget constraint: sum(grid_t * carbon_t) <= budget_kg.
     budget_kg = carbon_cfg.get("budget_kg")
     budget_pct = carbon_cfg.get("budget_reduction_pct")
     if budget_pct is None:
@@ -170,7 +172,7 @@ def optimize_dispatch(
     A_ub = np.vstack(A_ub)
     b_ub = np.asarray(b_ub)
 
-    # Bounds
+    # Bounds for each decision variable.
     bounds = []
     for t in range(H):  # grid
         bounds.append((0.0, max_import))
