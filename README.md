@@ -10,15 +10,21 @@ The latest model comparison (mean across targets) is visualized below.
 
 ![Model Comparison](reports/figures/model_comparison.png)
 
-## 🚀 Key Outcomes (Project Worth)
+## Latest Run Summary
+- Run ID: `20260204_054609`
+- Bundle: `artifacts/submission_bundle_20260204_054609/`
+- Dataset: OPSD Germany (hourly)
+- Carbon signal: SMARD hourly (2015–2020)
+- Carbon weight: 20.0 (see `configs/optimization.yaml`)
+- Carbon budget: 1% below baseline (see `configs/optimization.yaml`)
 
-GridPulse transforms battery storage from a passive asset into an active decision-maker. By coupling Deep Learning forecasts with Linear Programming, the system proves measurable value over standard baselines (simulated results).
-
-| Metric | Baseline (Unmanaged) | **GridPulse (Optimized)** | **Impact** |
-| :--- | :--- | :--- | :--- |
-| **Daily Cost** | $145.20 | **$112.50** | 📉 **18.5% Savings** |
-| **Carbon Footprint** | 85.0 kgCO₂ | **71.4 kgCO₂** | 🌱 **12.0% Reduction** |
-| **Grid Reliability** | 12.5 kW Peak | **8.2 kW Peak** | ⚡ **34.4% Shaved** |
+### Forecast Highlights (GBM, Test Split)
+| Target | RMSE | MAE | sMAPE | MAPE |
+|---|---:|---:|---:|---:|
+| load_mw | 280.44 | 165.10 | 0.0035 | 0.0035 |
+| wind_mw | 91.62 | 65.52 | 0.0163 | 0.0188 |
+| solar_mw | 224.09 | 114.24 | 0.7028 | 0.1712 (daylight) |
+| price_eur_mwh | 4.74 | 2.29 | 0.1001 | 1.4336 |
 
 ## Live Benchmark (Auto-Updated)
 Metrics from the latest local run (`reports/impact_summary.csv`):
@@ -30,12 +36,17 @@ Metrics from the latest local run (`reports/impact_summary.csv`):
 
 | Metric | Value |
 |---|---:|
-| Cost savings | 0.05% |
-| Carbon reduction | 0.00% |
+| Cost savings | -105.69% |
+| Carbon reduction | 1.00% |
 | Peak shaving | 0.00% |
 
+### Submission Bundle
+- Manifest: `artifacts/submission_bundle_20260204_054609/manifest.json`
+- Reports: `artifacts/submission_bundle_20260204_054609/reports/`
+- Impact summary: `artifacts/submission_bundle_20260204_054609/reports/impact_comparison.md`
+
 **Figure 1: GridPulse arbitrage decision vs grid-only baseline.**
-![Arbitrage Optimization](reports/figures/arbitrage_optimization_demo.png)
+![Arbitrage Optimization](reports/figures/arbitrage_optimization.png)
 
 ## Demo
 Short preview of the forecasting inputs (sample run):
@@ -98,6 +109,9 @@ pip install -r requirements.txt
 ```
 Exact versions are captured in `requirements.lock.txt` after installation.
 
+### 1b) (Optional) Secrets + runtime settings
+Copy `.env.example` to `.env` and fill in tokens if you plan to pull external carbon data (Electricity Maps, WattTime) or enable alerting.
+
 ### 2) Run the data pipeline
 ```bash
 python -m gridpulse.data_pipeline.download_opsd --out data/raw
@@ -116,6 +130,54 @@ python -m gridpulse.data_pipeline.download_weather --out data/raw --start 2017-0
 python -m gridpulse.data_pipeline.build_features --in data/raw --out data/processed \
   --weather data/raw/weather_berlin_hourly.csv \
   --sql-out data/processed/gridpulse.duckdb --sql-engine duckdb
+```
+
+Optional price + carbon signals (recommended for realistic impact metrics):
+```bash
+python -m gridpulse.data_pipeline.build_features --in data/raw --out data/processed \
+  --signals data/raw/price_carbon_signals.csv
+```
+
+Electricity Maps carbon intensity (real data):
+```bash
+export ELECTRICITYMAPS_TOKEN=...
+python scripts/download_emaps_carbon.py \
+  --zone <zone_code> \
+  --start 2020-01-01T00:00:00Z \
+  --end 2020-12-31T23:00:00Z \
+  --out data/raw/carbon_signals.csv
+# Or prepare from a CSV export:
+python scripts/prepare_emaps_carbon.py \
+  --in data/raw/electricitymaps_carbon.csv \
+  --timestamp-col <timestamp_col_from_csv> \
+  --carbon-col <carbon_col_from_csv> \
+  --unit gco2_kwh \
+  --zone-col <zone_col> --zone <zone_code> \
+  --out data/raw/carbon_signals.csv
+```
+
+SMARD hourly carbon intensity (Germany, no token):
+```bash
+python scripts/download_smard_carbon.py \
+  --region DE \
+  --start 2015-01-01T00:00:00Z \
+  --end 2020-09-30T23:00:00Z \
+  --out data/raw/carbon_signals.csv \
+  --factors configs/carbon_factors.yaml
+```
+
+WattTime marginal emissions (MOER):
+```bash
+export WATTTIME_USERNAME=... WATTTIME_PASSWORD=...
+python scripts/download_watttime_moer.py \
+  --region CAISO_NORTH \
+  --start 2020-01-01T00:00:00Z \
+  --end 2020-12-31T23:00:00Z \
+  --out data/raw/moer_signals.csv
+python scripts/merge_signals.py \
+  --carbon data/raw/carbon_signals.csv \
+  --moer data/raw/moer_signals.csv \
+  --out data/raw/price_carbon_signals.csv
 ```
 
 ### 3) Train forecasting models (GBM + LSTM + TCN)
@@ -164,8 +226,10 @@ Reproducible one‑command run:
 - `reports/formal_evaluation_report.md` — 1‑page evaluation summary with plots.
 - `reports/model_cards/` — per‑target model cards.
 - `reports/multi_horizon_backtest.json` — multi‑horizon backtest results.
+- `reports/rolling_backtest.md` — rolling weekly backtest with confidence intervals.
 - `reports/impact_comparison.md` — baseline vs optimized dispatch impact (cost + carbon).
 - `reports/impact_summary.csv` — summary metrics for README (auto‑updated).
+- `reports/case_study.md` — end‑to‑end case study with failure‑day analysis.
 - `scripts/build_reports.py` — regenerate reports/figures after training (supports dataset-specific paths).
 
 ### 4) Start API

@@ -1,16 +1,22 @@
 objective:
-  cost_weight: 1.0
-  carbon_weight: 1.0
+  cost_weight: 0.2
+  carbon_weight: 20.0
+
+carbon:
+  # Source used for optimization: "average" (carbon_kg_per_mwh) or "moer" (moer_kg_per_mwh).
+  source: average
+  # Optional carbon budget (fractional reduction vs baseline grid-only emissions).
+  budget_reduction_pct: 0.01
 
 battery:
-  capacity_mwh: 1000.0
-  max_power_mw: 200.0
+  capacity_mwh: 10000.0
+  max_power_mw: 2000.0
   efficiency: 0.92
-  min_soc_mwh: 50.0
-  initial_soc_mwh: 500.0
+  min_soc_mwh: 500.0
+  initial_soc_mwh: 5000.0
 
 grid:
-  max_import_mw: 10000.0
+  max_import_mw: 80000.0
   price_per_mwh: 70.0       # Base energy cost
   carbon_cost_per_mwh: 20.0 # Carbon tax proxy
   carbon_kg_per_mwh: 400.0  # Emissions intensity
@@ -22,3 +28,9 @@ penalties:
   curtailment_per_mw: 500.0 # High penalty to discourage wasting renewable energy
   unmet_load_per_mw: 10000.0 # Very high penalty (should not happen if grid is available)
   peak_per_mw: 5.0 # Penalize peak grid import to encourage peak shaving
+
+# Optional robust dispatch (quantile‑aware) when forecast quantiles are available.
+robust:
+  enabled: true
+  load_quantile: 0.9
+  renewables_quantile: 0.1
