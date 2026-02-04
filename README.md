@@ -72,6 +72,23 @@ flowchart TD
   I --> J["Retraining Rules and Model Promotion"]
 ```
 
+![Architecture Diagram](reports/figures/architecture.png)
+
+SVG version for reports: `reports/figures/architecture.svg`
+
+**Detailed Flow**
+1. **Ingest**: OPSD load/wind/solar, optional weather, and carbon signals land in `data/raw` via `gridpulse.data_pipeline.download_*`.
+2. **Validate**: `validate_schema` enforces column presence, timestamps, and missing‑value checks with a human‑readable report at `reports/data_quality_report.md`.
+3. **Feature Store**: `build_features` joins signals, weather, holidays, lags, and calendar features into `data/processed/features.parquet`.
+4. **Splits**: `split_time_series` writes train/val/test indices to `data/processed/splits` for reproducible backtests.
+5. **Forecasting**: `gridpulse.forecasting.train` fits GBM + LSTM/TCN models and saves bundles to `artifacts/models_*` with scalers and metrics.
+6. **Anomalies**: residual z‑scores + IsolationForest flag unusual behavior for monitoring and report context.
+7. **Optimization**: `gridpulse.optimizer` solves LP dispatch with cost + carbon weights, battery constraints, and peak penalties.
+8. **Reporting**: `scripts/build_reports.py` produces impact comparisons, figures, and summary CSVs in `reports/`.
+9. **Serving**: `services/api` exposes forecast/optimize endpoints; `services/dashboard` renders operator views.
+10. **Monitoring**: `gridpulse.monitoring` tracks drift, alert thresholds, and retraining triggers.
+11. **Run Snapshot**: each pipeline run writes `artifacts/runs/<run_id>/manifest.json` plus config copies and `pip_freeze.txt`.
+
 ## Core Capabilities
 - **Forecasting:** Gradient boosting and deep learning (LSTM/TCN) with 24‑hour horizons and intervals.
 - **Anomaly Detection:** Residual z‑scores + Isolation Forest.
