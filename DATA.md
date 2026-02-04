@@ -22,6 +22,19 @@ This repository **does not include raw datasets**. You are responsible for downl
 ### C) Weather (Optional)
 - **Provider:** Open‑Meteo (Berlin hourly)
 - **Usage:** optional feature enrichment
+ - **Download:**
+   ```bash
+   python -m gridpulse.data_pipeline.download_weather --out data/raw --start 2015-01-01 --end 2020-09-30
+   ```
+   The default hourly list includes temperature, humidity, precipitation, cloud cover, wind speed/gusts, pressure, radiation, and snow depth.
+
+### C2) Holidays (Optional)
+- **Provider:** `python-holidays` package (offline calendar)
+- **Usage:** adds `is_holiday`, `is_pre_holiday`, `is_post_holiday` features
+- **Generate:**
+  ```bash
+  python scripts/generate_holidays.py --country DE --start-year 2015 --end-year 2020 --out data/raw/holidays_de.csv
+  ```
 
 ### D) Price + Carbon Signals (Recommended)
 - **What:** optional time‑aligned price and carbon intensity series for more realistic optimization.

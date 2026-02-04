@@ -17,10 +17,17 @@ from gridpulse.utils.net import get_session
 DEFAULT_BASE_URL = "https://archive-api.open-meteo.com/v1/archive"
 DEFAULT_HOURLY = [
     "temperature_2m",
+    "dew_point_2m",
     "relative_humidity_2m",
     "precipitation",
     "cloud_cover",
     "wind_speed_10m",
+    "wind_gusts_10m",
+    "surface_pressure",
+    "shortwave_radiation",
+    "direct_radiation",
+    "diffuse_radiation",
+    "snow_depth",
 ]
 
 def _parse_date(d: str) -> date:

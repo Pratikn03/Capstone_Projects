@@ -25,8 +25,12 @@ weather:
   lon: 13.405
   start: 2015-01-01
   end: 2020-09-30
-  hourly: [temperature_2m, relative_humidity_2m, precipitation, cloud_cover, wind_speed_10m]
+  hourly: [temperature_2m, dew_point_2m, relative_humidity_2m, precipitation, cloud_cover, wind_speed_10m, wind_gusts_10m, surface_pressure, shortwave_radiation, direct_radiation, diffuse_radiation, snow_depth]
   file: data/raw/weather_berlin_hourly.csv
+holidays:
+  enabled: true
+  country: DE
+  file: data/raw/holidays_de.csv
 signals:
   enabled: true
   file: data/raw/carbon_signals.csv

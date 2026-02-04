@@ -106,6 +106,13 @@ class WeatherConfig:
     path: Path | None
 
 
+@dataclass
+class HolidaysConfig:
+    enabled: bool
+    path: Path | None
+    country: str
+
+
 def _load_signal_config(cfg_path: Path, repo_root: Path, log: logging.Logger) -> SignalConfig:
     if not cfg_path.exists():
         return SignalConfig(False, None)
@@ -144,6 +151,27 @@ def _load_weather_config(cfg_path: Path, repo_root: Path, log: logging.Logger) -
         return WeatherConfig(True, None)
     path = (repo_root / weather_path).resolve() if not Path(weather_path).is_absolute() else Path(weather_path)
     return WeatherConfig(True, path)
+
+
+def _load_holidays_config(cfg_path: Path, repo_root: Path, log: logging.Logger) -> HolidaysConfig:
+    if not cfg_path.exists():
+        return HolidaysConfig(False, None, "DE")
+    try:
+        payload = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+    except Exception as exc:
+        log.warning("Failed to parse %s: %s", cfg_path, exc)
+        return HolidaysConfig(False, None, "DE")
+    holidays_cfg = payload.get("holidays", {}) if isinstance(payload, dict) else {}
+    enabled = bool(holidays_cfg.get("enabled", False))
+    if not enabled:
+        return HolidaysConfig(False, None, str(holidays_cfg.get("country", "DE")))
+    holiday_path = holidays_cfg.get("file")
+    country = str(holidays_cfg.get("country", "DE"))
+    if not holiday_path:
+        log.warning("holidays.enabled is true but holidays.file is missing in %s", cfg_path)
+        return HolidaysConfig(True, None, country)
+    path = (repo_root / holiday_path).resolve() if not Path(holiday_path).is_absolute() else Path(holiday_path)
+    return HolidaysConfig(True, path, country)
 
 
 def _run(cmd: list[str], log: logging.Logger) -> None:
@@ -222,6 +250,7 @@ def main() -> None:
     train_cfg = repo_root / "configs" / "train_forecast.yaml"
     signal_cfg = _load_signal_config(data_cfg, repo_root, log)
     weather_cfg = _load_weather_config(data_cfg, repo_root, log)
+    holidays_cfg = _load_holidays_config(data_cfg, repo_root, log)
 
     raw_hash = _hash_paths([raw_csv], repo_root) if raw_csv.exists() else None
     data_cfg_hash = _hash_paths([data_cfg], repo_root) if data_cfg.exists() else None
@@ -264,6 +293,12 @@ def main() -> None:
                     build_cmd += ["--weather", str(weather_cfg.path)]
                 else:
                     log.warning("Weather enabled but file missing; proceeding without weather.")
+            if holidays_cfg.enabled:
+                if holidays_cfg.path and holidays_cfg.path.exists():
+                    build_cmd += ["--holidays", str(holidays_cfg.path)]
+                else:
+                    log.warning("Holidays enabled but file missing; proceeding without holidays.")
+                build_cmd += ["--holiday-country", holidays_cfg.country]
             _run(build_cmd, log)
             _run([sys.executable, "-m", "gridpulse.data_pipeline.split_time_series", "--in", "data/processed/features.parquet", "--out", "data/processed/splits"], log)
 

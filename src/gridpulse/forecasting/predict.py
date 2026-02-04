@@ -106,8 +106,15 @@ def predict_next_24h(features_df: pd.DataFrame, model_bundle: Dict[str, Any], ho
     else:
         raise ValueError(f"Unknown model_type: {model_type}")
 
-    quantiles = model_bundle.get("residual_quantiles", {})
-    quantile_preds = {str(q): (pred + float(delta)).tolist() for q, delta in quantiles.items()}
+    quantile_preds: dict[str, list[float]] = {}
+    quantile_models = model_bundle.get("quantile_models")
+    if quantile_models:
+        for q, q_model in quantile_models.items():
+            q_pred = q_model.predict(X[-horizon:])
+            quantile_preds[str(q)] = q_pred.tolist()
+    else:
+        quantiles = model_bundle.get("residual_quantiles", {})
+        quantile_preds = {str(q): (pred + float(delta)).tolist() for q, delta in quantiles.items()}
 
     return {
         "target": model_bundle.get("target"),

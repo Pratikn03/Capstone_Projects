@@ -88,6 +88,51 @@ def add_domain_features(df: pd.DataFrame) -> pd.DataFrame:
     out["is_daylight"] = (out["solar_mw"] > 0).astype(int)
     return out
 
+
+def add_holiday_features(
+    df: pd.DataFrame,
+    country: str = "DE",
+    holiday_file: Path | None = None,
+) -> pd.DataFrame:
+    out = df.copy()
+    dates = pd.to_datetime(out["timestamp"], utc=True, errors="coerce").dt.date
+    holiday_dates: set = set()
+
+    if holiday_file and holiday_file.exists():
+        hdf = pd.read_csv(holiday_file)
+        col = "date"
+        if col not in hdf.columns:
+            # fallback to timestamp column
+            if "timestamp" in hdf.columns:
+                col = "timestamp"
+            elif "time" in hdf.columns:
+                col = "time"
+            else:
+                col = None
+        if col is not None:
+            holiday_dates = set(pd.to_datetime(hdf[col], errors="coerce").dt.date.dropna().unique())
+    else:
+        try:
+            import holidays  # type: ignore
+
+            years = range(out["timestamp"].dt.year.min(), out["timestamp"].dt.year.max() + 1)
+            holiday_dates = set(holidays.country_holidays(country, years=years).keys())
+        except Exception:
+            holiday_dates = set()
+
+    out["is_holiday"] = dates.isin(holiday_dates).astype(int) if holiday_dates else 0
+    # Adjacent days are often behaviorally similar.
+    if holiday_dates:
+        dates_ts = pd.to_datetime(dates)
+        next_dates = (dates_ts + pd.Timedelta(days=1)).dt.date
+        prev_dates = (dates_ts - pd.Timedelta(days=1)).dt.date
+        out["is_pre_holiday"] = next_dates.isin(holiday_dates).astype(int)
+        out["is_post_holiday"] = prev_dates.isin(holiday_dates).astype(int)
+    else:
+        out["is_pre_holiday"] = 0
+        out["is_post_holiday"] = 0
+    return out
+
 def add_lags_rolls(df: pd.DataFrame, cols: list[str], lags=(1, 24, 168), rolls=(24, 168)) -> pd.DataFrame:
     out = df.copy()
     for c in cols:
@@ -172,6 +217,8 @@ def main():
     p.add_argument("--out", dest="out_dir", default="data/processed", help="Output directory")
     p.add_argument("--weather", default=None, help="Optional weather file (csv/parquet) to merge on timestamp")
     p.add_argument("--signals", default=None, help="Optional price/carbon signals file (csv/parquet) to merge on timestamp")
+    p.add_argument("--holidays", default=None, help="Optional holidays file (csv) with date column")
+    p.add_argument("--holiday-country", default="DE", help="Holiday country code (default: DE)")
     p.add_argument("--sql-out", default=None, help="Optional SQL DB path to write features table")
     p.add_argument("--sql-engine", choices=["duckdb", "sqlite"], default="duckdb")
     p.add_argument("--sql-table", default="features")
@@ -239,6 +286,7 @@ def main():
 
     df = add_time_features(df)
     df = add_domain_features(df)
+    df = add_holiday_features(df, country=args.holiday_country, holiday_file=Path(args.holidays) if args.holidays else None)
     price_col = "price_eur_mwh"
     if price_col not in df.columns and "price_usd_mwh" in df.columns:
         price_col = "price_usd_mwh"
@@ -259,6 +307,11 @@ def main():
             lag_cols.append(price_col)
     if "carbon_kg_per_mwh" in df.columns:
         lag_cols.append("carbon_kg_per_mwh")
+    # Add weather lags if present.
+    wx_cols = [c for c in df.columns if c.startswith("wx_")]
+    for col in wx_cols:
+        if col not in lag_cols:
+            lag_cols.append(col)
     df = add_lags_rolls(df, cols=lag_cols)
 
     # Drop rows where lag/roll windows are incomplete.

@@ -1,6 +1,6 @@
 objective:
   cost_weight: 1.0
-  carbon_weight: 0.8
+  carbon_weight: 1.2
 
 carbon:
   # Source used for optimization: "average" (carbon_kg_per_mwh) or "moer" (moer_kg_per_mwh).

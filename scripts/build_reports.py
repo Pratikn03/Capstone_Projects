@@ -881,7 +881,7 @@ def build_impact_report(ctx: ReportContext):
 
 def build_rolling_backtest(
     ctx: ReportContext,
-    target: str = "load_mw",
+    targets: list[str] | None = None,
     window_days: int = 7,
     stride_days: int = 7,
 ) -> dict | None:
@@ -889,89 +889,101 @@ def build_rolling_backtest(
     if test_df is None or test_df.empty:
         return None
 
+    if targets is None:
+        targets = ["load_mw", "wind_mw", "solar_mw"]
+
     df = test_df.sort_values("timestamp").reset_index(drop=True)
-    y_true = df[target].to_numpy()
     window = window_days * 24
     stride = stride_days * 24
     if len(df) < window:
         return None
 
-    # Baseline: persistence.
-    persistence = persistence_24h(df, target)
-
-    # GBM predictions if available.
-    gbm_pred = None
-    gbm_path = None
-    for p in ctx.models_dir.glob(f"gbm_*_{target}.pkl"):
-        gbm_path = p
-        break
-    if gbm_path and gbm_path.exists():
-        bundle = load_model_bundle(gbm_path)
-        feat_cols = bundle.get("feature_cols", [])
-        if feat_cols:
-            X = df[feat_cols].to_numpy()
-            gbm_pred = bundle["model"].predict(X)
-
-    models = {"persistence": persistence}
-    if gbm_pred is not None:
-        models["gbm"] = gbm_pred
-
-    results: dict[str, dict] = {}
-    for name, preds in models.items():
-        per_window = []
-        for start in range(0, len(df) - window + 1, stride):
-            end = start + window
-            yt = y_true[start:end]
-            yp = np.asarray(preds[start:end], dtype=float)
-            mask = np.isfinite(yt) & np.isfinite(yp)
-            if mask.sum() < window * 0.5:
-                continue
-            yt = yt[mask]
-            yp = yp[mask]
-            per_window.append(
-                {
-                    "rmse": rmse(yt, yp),
-                    "mae": mae(yt, yp),
-                    "mape": mape(yt, yp),
-                    "smape": smape(yt, yp),
-                }
-            )
-
-        if not per_window:
-            continue
-        arr = pd.DataFrame(per_window)
-        summary = {}
-        for metric in ["rmse", "mae", "mape", "smape"]:
-            mean = float(arr[metric].mean())
-            std = float(arr[metric].std(ddof=1)) if len(arr) > 1 else 0.0
-            ci95 = 1.96 * std / np.sqrt(len(arr)) if len(arr) > 1 else 0.0
-            summary[metric] = {"mean": mean, "std": std, "ci95": ci95}
-        results[name] = {"n_windows": len(arr), "summary": summary, "per_window": per_window}
-
     out = {
-        "target": target,
         "window_days": window_days,
         "stride_days": stride_days,
-        "results": results,
+        "targets": {},
     }
-    out_path = ctx.reports_dir / "rolling_backtest.json"
-    ensure_dir(ctx.reports_dir)
-    out_path.write_text(json.dumps(_sanitize(out), indent=2), encoding="utf-8")
 
     md_lines = [
         "# Rolling Backtest Summary\n\n",
-        f"- Target: {target}\n",
         f"- Window: {window_days} days\n",
         f"- Stride: {stride_days} days\n\n",
-        "## Metrics (mean ± 95% CI)\n",
-        "| Model | RMSE | MAE | MAPE | sMAPE |\n",
-        "|---|---:|---:|---:|---:|\n",
     ]
-    for name, res in results.items():
-        s = res["summary"]
-        md_lines.append(
-            f"| {name} | {s['rmse']['mean']:.2f} ± {s['rmse']['ci95']:.2f} | {s['mae']['mean']:.2f} ± {s['mae']['ci95']:.2f} | {s['mape']['mean']:.4f} ± {s['mape']['ci95']:.4f} | {s['smape']['mean']:.4f} ± {s['smape']['ci95']:.4f} |\n"
-        )
+
+    for target in targets:
+        if target not in df.columns:
+            continue
+        y_true = df[target].to_numpy()
+
+        # Baseline: persistence.
+        persistence = persistence_24h(df, target)
+
+        # GBM predictions if available.
+        gbm_pred = None
+        gbm_path = None
+        for p in ctx.models_dir.glob(f"gbm_*_{target}.pkl"):
+            gbm_path = p
+            break
+        if gbm_path and gbm_path.exists():
+            bundle = load_model_bundle(gbm_path)
+            feat_cols = bundle.get("feature_cols", [])
+            if feat_cols:
+                X = df[feat_cols].to_numpy()
+                gbm_pred = bundle["model"].predict(X)
+
+        models = {"persistence": persistence}
+        if gbm_pred is not None:
+            models["gbm"] = gbm_pred
+
+        results: dict[str, dict] = {}
+        for name, preds in models.items():
+            per_window = []
+            for start in range(0, len(df) - window + 1, stride):
+                end = start + window
+                yt = y_true[start:end]
+                yp = np.asarray(preds[start:end], dtype=float)
+                mask = np.isfinite(yt) & np.isfinite(yp)
+                if mask.sum() < window * 0.5:
+                    continue
+                yt = yt[mask]
+                yp = yp[mask]
+                per_window.append(
+                    {
+                        "rmse": rmse(yt, yp),
+                        "mae": mae(yt, yp),
+                        "mape": mape(yt, yp),
+                        "smape": smape(yt, yp),
+                    }
+                )
+
+            if not per_window:
+                continue
+            arr = pd.DataFrame(per_window)
+            summary = {}
+            for metric in ["rmse", "mae", "mape", "smape"]:
+                mean = float(arr[metric].mean())
+                std = float(arr[metric].std(ddof=1)) if len(arr) > 1 else 0.0
+                ci95 = 1.96 * std / np.sqrt(len(arr)) if len(arr) > 1 else 0.0
+                summary[metric] = {"mean": mean, "std": std, "ci95": ci95}
+            results[name] = {"n_windows": len(arr), "summary": summary, "per_window": per_window}
+
+        if not results:
+            continue
+
+        out["targets"][target] = {"results": results}
+        md_lines.append(f"## Target: {target}\n")
+        md_lines.append("| Model | RMSE | MAE | MAPE | sMAPE |\n")
+        md_lines.append("|---|---:|---:|---:|---:|\n")
+        for name, res in results.items():
+            s = res["summary"]
+            md_lines.append(
+                f"| {name} | {s['rmse']['mean']:.2f} ± {s['rmse']['ci95']:.2f} | {s['mae']['mean']:.2f} ± {s['mae']['ci95']:.2f} | {s['mape']['mean']:.4f} ± {s['mape']['ci95']:.4f} | {s['smape']['mean']:.4f} ± {s['smape']['ci95']:.4f} |\n"
+            )
+        md_lines.append("\n")
+
+    out_path = ctx.reports_dir / "rolling_backtest.json"
+    ensure_dir(ctx.reports_dir)
+    out_path.write_text(json.dumps(_sanitize(out), indent=2), encoding="utf-8")
 
     md_path = ctx.reports_dir / "rolling_backtest.md"
     md_path.write_text("".join(md_lines), encoding="utf-8")
