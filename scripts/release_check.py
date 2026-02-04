@@ -28,6 +28,8 @@ def main() -> None:
         _run([sys.executable, "-m", "gridpulse.pipeline.run", "--all"], "data pipeline")
         _run([sys.executable, "-m", "gridpulse.forecasting.train", "--config", "configs/train_forecast.yaml"], "train")
 
+    _run([sys.executable, "scripts/validate_configs.py"], "config validation")
+
     # Hard requirements: processed data + splits exist.
     _require(Path("data/processed/features.parquet"), "Missing features.parquet. Run `make data`.")
     _require(Path("data/processed/splits/train.parquet"), "Missing train split. Run `make data`.")
@@ -37,6 +39,7 @@ def main() -> None:
     _run([sys.executable, "scripts/check_api_health.py"], "api health")
     _run([sys.executable, "scripts/validate_dispatch.py"], "dispatch validation")
     _run([sys.executable, "scripts/run_monitoring.py"], "monitoring report")
+    _run([sys.executable, "scripts/register_models.py"], "model registry")
     tmp_dir = Path(tempfile.gettempdir())
     mpl_dir = tmp_dir / "mplconfig"
     xdg_dir = tmp_dir / "xdg_cache"
