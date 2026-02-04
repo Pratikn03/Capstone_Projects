@@ -10,10 +10,15 @@ import platform
 import shutil
 import subprocess
 import sys
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable
 
+import yaml
+
+from gridpulse.utils.logging import setup_logging
+from gridpulse.utils.registry import register_models
 
 def _repo_root() -> Path:
     # Key: orchestrate end-to-end pipeline steps
@@ -89,6 +94,32 @@ def _snapshot_configs(repo_root: Path, run_dir: Path) -> None:
         shutil.copy2(fp, out_dir / fp.name)
 
 
+@dataclass
+class SignalConfig:
+    enabled: bool
+    path: Path | None
+
+
+def _load_signal_config(cfg_path: Path, repo_root: Path, log: logging.Logger) -> SignalConfig:
+    if not cfg_path.exists():
+        return SignalConfig(False, None)
+    try:
+        payload = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+    except Exception as exc:
+        log.warning("Failed to parse %s: %s", cfg_path, exc)
+        return SignalConfig(False, None)
+    signals_cfg = payload.get("signals", {}) if isinstance(payload, dict) else {}
+    enabled = bool(signals_cfg.get("enabled", False))
+    if not enabled:
+        return SignalConfig(False, None)
+    signal_path = signals_cfg.get("file")
+    if not signal_path:
+        log.warning("signals.enabled is true but signals.file is missing in %s", cfg_path)
+        return SignalConfig(True, None)
+    path = (repo_root / signal_path).resolve() if not Path(signal_path).is_absolute() else Path(signal_path)
+    return SignalConfig(True, path)
+
+
 def _run(cmd: list[str], log: logging.Logger) -> None:
     log.info("Running: %s", " ".join(cmd))
     subprocess.run(cmd, check=True)
@@ -154,18 +185,8 @@ def main() -> None:
     run_dir = repo_root / "artifacts" / "runs" / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
 
+    setup_logging(file_path=str(run_dir / "pipeline.log"))
     log = logging.getLogger("gridpulse.pipeline")
-    log.setLevel(logging.INFO)
-    log.handlers = []
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.INFO)
-    fh = logging.FileHandler(run_dir / "pipeline.log")
-    fh.setLevel(logging.INFO)
-    fmt = logging.Formatter("[%(asctime)s] %(levelname)s - %(message)s")
-    ch.setFormatter(fmt)
-    fh.setFormatter(fmt)
-    log.addHandler(ch)
-    log.addHandler(fh)
 
     cache_path = repo_root / ".cache" / "pipeline.json"
     cache = _load_cache(cache_path)
@@ -173,25 +194,50 @@ def main() -> None:
     raw_csv = repo_root / "data" / "raw" / "time_series_60min_singleindex.csv"
     data_cfg = repo_root / "configs" / "data.yaml"
     train_cfg = repo_root / "configs" / "train_forecast.yaml"
+    signal_cfg = _load_signal_config(data_cfg, repo_root, log)
 
     raw_hash = _hash_paths([raw_csv], repo_root) if raw_csv.exists() else None
     data_cfg_hash = _hash_paths([data_cfg], repo_root) if data_cfg.exists() else None
     train_cfg_hash = _hash_paths([train_cfg], repo_root) if train_cfg.exists() else None
+    signals_hash = (
+        _hash_paths([signal_cfg.path], repo_root) if signal_cfg.enabled and signal_cfg.path and signal_cfg.path.exists() else None
+    )
 
     features_path = repo_root / "data" / "processed" / "features.parquet"
 
     if "data" in steps:
         if not raw_csv.exists():
             raise FileNotFoundError(f"Missing raw CSV: {raw_csv}")
-        if not args.force and cache.get("raw_hash") == raw_hash and cache.get("data_cfg_hash") == data_cfg_hash and features_path.exists():
+        if (
+            not args.force
+            and cache.get("raw_hash") == raw_hash
+            and cache.get("data_cfg_hash") == data_cfg_hash
+            and cache.get("signals_hash") == signals_hash
+            and features_path.exists()
+        ):
             log.info("Data step skipped (cache hit)")
         else:
             _run([sys.executable, "-m", "gridpulse.data_pipeline.validate_schema", "--in", "data/raw", "--report", "reports/data_quality_report.md"], log)
-            _run([sys.executable, "-m", "gridpulse.data_pipeline.build_features", "--in", "data/raw", "--out", "data/processed"], log)
+            build_cmd = [
+                sys.executable,
+                "-m",
+                "gridpulse.data_pipeline.build_features",
+                "--in",
+                "data/raw",
+                "--out",
+                "data/processed",
+            ]
+            if signal_cfg.enabled:
+                if signal_cfg.path and signal_cfg.path.exists():
+                    build_cmd += ["--signals", str(signal_cfg.path)]
+                else:
+                    log.warning("Signals enabled but file missing; proceeding without signals.")
+            _run(build_cmd, log)
             _run([sys.executable, "-m", "gridpulse.data_pipeline.split_time_series", "--in", "data/processed/features.parquet", "--out", "data/processed/splits"], log)
 
         cache["raw_hash"] = raw_hash
         cache["data_cfg_hash"] = data_cfg_hash
+        cache["signals_hash"] = signals_hash
         if features_path.exists():
             cache["features_hash"] = _hash_paths([features_path], repo_root)
 
@@ -203,6 +249,7 @@ def main() -> None:
             log.info("Train step skipped (cache hit)")
         else:
             _run([sys.executable, "-m", "gridpulse.forecasting.train", "--config", "configs/train_forecast.yaml"], log)
+            register_models(repo_root / "artifacts" / "models", repo_root / "artifacts" / "registry" / "models.json", run_id=run_id)
         cache["train_hash"] = train_hash
 
     if "reports" in steps:
@@ -228,6 +275,7 @@ def main() -> None:
         "features_hash": cache.get("features_hash"),
         "train_hash": cache.get("train_hash"),
         "reports_hash": cache.get("reports_hash"),
+        "signals_hash": cache.get("signals_hash"),
         "steps": steps,
     }
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
