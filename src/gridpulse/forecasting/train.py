@@ -22,6 +22,80 @@ from gridpulse.forecasting.backtest import walk_forward_horizon_metrics
 import torch
 from torch.utils.data import DataLoader
 
+
+def _try_optuna():
+    try:
+        import optuna  # type: ignore
+
+        return optuna
+    except Exception:
+        return None
+
+
+def _try_lightgbm():
+    try:
+        import lightgbm as lgb  # type: ignore
+
+        return lgb
+    except Exception:
+        return None
+
+
+def _sample_param(trial, spec: dict):
+    kind = spec.get("type")
+    if kind == "int":
+        return trial.suggest_int(spec["name"], int(spec["low"]), int(spec["high"]))
+    if kind == "float":
+        return trial.suggest_float(spec["name"], float(spec["low"]), float(spec["high"]), log=bool(spec.get("log", False)))
+    if kind == "categorical":
+        return trial.suggest_categorical(spec["name"], spec.get("choices", []))
+    return None
+
+
+def tune_gbm_params(
+    X_train,
+    y_train,
+    X_val,
+    y_val,
+    base_params: dict,
+    tuning_cfg: dict,
+    seed: int,
+):
+    optuna = _try_optuna()
+    lgb = _try_lightgbm()
+    if optuna is None or lgb is None:
+        print("Optuna or LightGBM not available; skipping tuning.")
+        return base_params
+
+    params_cfg = tuning_cfg.get("params", {}).get("baseline_gbm", {})
+    n_trials = int(tuning_cfg.get("n_trials", 20))
+    metric = tuning_cfg.get("metric", "val_loss")
+
+    # Normalize params spec to include name for sampling.
+    param_specs = []
+    for name, spec in params_cfg.items():
+        if isinstance(spec, dict):
+            spec = {**spec, "name": name}
+            param_specs.append(spec)
+
+    def objective(trial):
+        trial_params = {}
+        for spec in param_specs:
+            trial_params[spec["name"]] = _sample_param(trial, spec)
+
+        params = {**base_params, **trial_params, "random_state": seed}
+        model = lgb.LGBMRegressor(**params)
+        model.fit(X_train, y_train)
+        pred = model.predict(X_val)
+        if metric == "mape":
+            return float(mape(y_val, pred))
+        return float(rmse(y_val, pred))
+
+    study = optuna.create_study(direction="minimize")
+    study.optimize(objective, n_trials=n_trials, show_progress_bar=False)
+    best = study.best_params
+    return {**base_params, **best}
+
 def make_xy(df: pd.DataFrame, target: str, targets: list[str]):
     # Key: prepare features/targets and train or evaluate models
     # Drop all targets from features to prevent leakage.
@@ -237,6 +311,8 @@ def main():
     backtest_cfg = cfg.get("backtest", {})
     backtest_enabled = bool(backtest_cfg.get("enabled", False))
     backtest_payload = {"targets": {}} if backtest_enabled else None
+    tuning_cfg = cfg.get("tuning", {}) or {}
+    tuning_enabled = bool(tuning_cfg.get("enabled", False))
 
     # Optional model/target filters to avoid retraining everything.
     model_filter = None
@@ -261,6 +337,16 @@ def main():
             else:
                 gbm_params = dict(gbm_cfg.get("params", {}))
                 gbm_params.setdefault("random_state", int(cfg.get("seed", 42)))
+                if tuning_enabled:
+                    gbm_params = tune_gbm_params(
+                        X_train,
+                        y_train,
+                        X_val,
+                        y_val,
+                        gbm_params,
+                        tuning_cfg,
+                        int(cfg.get("seed", 42)),
+                    )
                 model_kind, gbm = train_gbm(X_train, y_train, gbm_params)
                 gbm_pred_test = predict_gbm(gbm, X_test)
                 gbm_pred_val = predict_gbm(gbm, X_val)
@@ -279,9 +365,10 @@ def main():
                         "target": target,
                         "quantiles": quantiles,
                         "residual_quantiles": gbm_q,
+                        "tuned_params": gbm_params if tuning_enabled else None,
                     }, f)
 
-                target_res["gbm"] = {**gbm_metrics, "residual_quantiles": gbm_q}
+                target_res["gbm"] = {**gbm_metrics, "residual_quantiles": gbm_q, "tuned_params": gbm_params if tuning_enabled else None}
                 if backtest_enabled:
                     backtest_payload["targets"].setdefault(target, {})
                     backtest_payload["targets"][target]["gbm"] = walk_forward_horizon_metrics(

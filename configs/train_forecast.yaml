@@ -15,34 +15,34 @@ models:
     kind: lightgbm
     enabled: true
     params:
-      n_estimators: 300
+      n_estimators: 600
       learning_rate: 0.05
-      max_depth: 8
-      num_leaves: 64
-      min_child_samples: 50
-      subsample: 0.8
-      colsample_bytree: 0.8
-      reg_alpha: 0.1
-      reg_lambda: 1.0
+      max_depth: 10
+      num_leaves: 128
+      min_child_samples: 20
+      subsample: 0.9
+      colsample_bytree: 0.9
+      reg_alpha: 0.05
+      reg_lambda: 0.5
       verbosity: -1
   dl_lstm:
     kind: lstm
     enabled: true
     params:
-      hidden_size: 64
-      num_layers: 1
-      dropout: 0.3
-      epochs: 8
-      batch_size: 512
+      hidden_size: 128
+      num_layers: 2
+      dropout: 0.2
+      epochs: 20
+      batch_size: 256
   dl_tcn:
     kind: tcn
     enabled: true
     params:
-      num_channels: [32, 32]
+      num_channels: [64, 64, 64]
       kernel_size: 3
-      dropout: 0.3
-      epochs: 8
-      batch_size: 512
+      dropout: 0.2
+      epochs: 20
+      batch_size: 256
 
 artifacts:
   out_dir: artifacts/models
@@ -56,7 +56,7 @@ backtest:
 tuning:
   enabled: true
   engine: optuna
-  n_trials: 50
+  n_trials: 20
   metric: val_loss
   direction: minimize
   params:

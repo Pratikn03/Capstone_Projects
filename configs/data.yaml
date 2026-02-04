@@ -19,12 +19,12 @@ split:
   val_ratio: 0.15
   test_ratio: 0.15
 weather:
-  enabled: false
+  enabled: true
   source: open_meteo_archive
   lat: 52.52
   lon: 13.405
-  start: 2017-01-01
-  end: 2020-12-31
+  start: 2015-01-01
+  end: 2020-09-30
   hourly: [temperature_2m, relative_humidity_2m, precipitation, cloud_cover, wind_speed_10m]
   file: data/raw/weather_berlin_hourly.csv
 signals:
