@@ -1,2 +1,4 @@
-"""Monitoring:   init  ."""
-# Key: compute drift metrics and retraining signals
+"""Monitoring package.
+
+Contains drift detection, retraining decisions, and alert/report helpers.
+"""

@@ -1,4 +1,4 @@
-"""Utilities: logging."""
+"""Utilities: structured logging setup."""
 from __future__ import annotations
 
 import json
@@ -10,6 +10,7 @@ from typing import Optional
 
 
 class JsonFormatter(logging.Formatter):
+    """Format log records as compact JSON."""
     def format(self, record: logging.LogRecord) -> str:
         payload = {
             "ts": datetime.utcfromtimestamp(record.created).isoformat() + "Z",
@@ -31,6 +32,7 @@ def setup_logging(
     stream: Optional[object] = None,
     file_path: Optional[str] = None,
 ) -> None:
+    """Configure root logging with optional JSON output."""
     level_name = (log_level or os.getenv("GRIDPULSE_LOG_LEVEL", "INFO")).upper()
     level = getattr(logging, level_name, logging.INFO)
     fmt = (log_format or os.getenv("GRIDPULSE_LOG_FORMAT", "text")).lower()
@@ -59,6 +61,6 @@ def setup_logging(
 
 
 def get_logger(name: str) -> logging.Logger:
-    # Key: shared utilities used across the pipeline
+    """Return a logger after ensuring global logging is configured."""
     setup_logging()
     return logging.getLogger(name)

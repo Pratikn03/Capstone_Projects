@@ -1,4 +1,4 @@
-"""Optimization: baselines."""
+"""Optimization baselines for dispatch comparisons."""
 from __future__ import annotations
 
 from typing import Dict, Any
@@ -6,13 +6,14 @@ import numpy as np
 
 
 def _as_array(x) -> np.ndarray:
-    # Key: formulate dispatch objective/constraints and compute plans
+    """Convert scalars/lists to a float NumPy array."""
     if isinstance(x, (list, tuple, np.ndarray)):
         return np.asarray(x, dtype=float)
     return np.asarray([x], dtype=float)
 
 
 def _load_cfg(cfg: dict) -> dict:
+    """Normalize config values and apply defaults."""
     cfg = cfg or {}
     battery = cfg.get("battery", {})
     grid = cfg.get("grid", {})
@@ -53,6 +54,7 @@ def _compute_costs(
     price_series=None,
     carbon_series=None,
 ) -> tuple[float, float, float]:
+    """Compute cost, carbon mass, and carbon cost for a dispatch plan."""
     H = len(grid)
     if price_series is not None:
         price = _as_array(price_series)
@@ -91,6 +93,7 @@ def grid_only_dispatch(
     price_series=None,
     carbon_series=None,
 ) -> Dict[str, Any]:
+    """Baseline: meet net load using grid only (no battery)."""
     load = _as_array(forecast_load)
     ren = _as_array(forecast_renewables)
     if ren.size == 1 and load.size > 1:
@@ -101,6 +104,7 @@ def grid_only_dispatch(
     cfg = _load_cfg(cfg)
     H = len(load)
 
+    # Net deficit drives grid import; surplus becomes curtailment.
     deficit = load - ren
     grid = np.clip(deficit, 0.0, cfg["grid"]["max_import"])
     unmet = np.clip(deficit - grid, 0.0, None)
@@ -171,7 +175,7 @@ def naive_battery_dispatch(
             discharge[t] = d
             soc -= d / cfg["battery"]["eff"]
 
-        # recompute net with battery
+        # Recompute net with battery applied.
         net = load[t] - ren[t] - discharge[t] + charge[t]
         if net > 0:
             grid[t] = min(net, cfg["grid"]["max_import"])

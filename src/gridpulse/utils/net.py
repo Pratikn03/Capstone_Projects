@@ -14,6 +14,7 @@ def get_session(
     backoff: float = 0.5,
     status_forcelist: Iterable[int] = (429, 500, 502, 503, 504),
 ) -> requests.Session:
+    """Create a requests.Session configured with retry/backoff."""
     retry_cfg = Retry(
         total=retries,
         connect=retries,
@@ -40,6 +41,7 @@ def request_json(
     timeout: int | float = 60,
     log: logging.Logger | None = None,
 ) -> dict:
+    """GET JSON from a URL with error handling."""
     logger = log or logging.getLogger(__name__)
     try:
         resp = session.get(url, params=params, headers=headers, timeout=timeout)
@@ -52,4 +54,3 @@ def request_json(
     except ValueError as exc:
         logger.error("Invalid JSON response from %s", url, exc_info=exc)
         raise
-

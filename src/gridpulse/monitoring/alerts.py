@@ -8,6 +8,7 @@ from gridpulse.utils.net import get_session
 
 
 def send_webhook(url: str, payload: Mapping[str, object], retries: int = 3, backoff: float = 0.5) -> None:
+    """Send a JSON payload to a webhook endpoint with retries."""
     log = logging.getLogger(__name__)
     session = get_session(retries=retries, backoff=backoff)
     try:
@@ -17,4 +18,3 @@ def send_webhook(url: str, payload: Mapping[str, object], retries: int = 3, back
     except Exception as exc:
         log.error("Alert webhook failed for %s", url, exc_info=exc)
         raise
-
