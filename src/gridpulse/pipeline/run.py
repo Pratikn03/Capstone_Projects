@@ -100,6 +100,12 @@ class SignalConfig:
     path: Path | None
 
 
+@dataclass
+class WeatherConfig:
+    enabled: bool
+    path: Path | None
+
+
 def _load_signal_config(cfg_path: Path, repo_root: Path, log: logging.Logger) -> SignalConfig:
     if not cfg_path.exists():
         return SignalConfig(False, None)
@@ -118,6 +124,26 @@ def _load_signal_config(cfg_path: Path, repo_root: Path, log: logging.Logger) ->
         return SignalConfig(True, None)
     path = (repo_root / signal_path).resolve() if not Path(signal_path).is_absolute() else Path(signal_path)
     return SignalConfig(True, path)
+
+
+def _load_weather_config(cfg_path: Path, repo_root: Path, log: logging.Logger) -> WeatherConfig:
+    if not cfg_path.exists():
+        return WeatherConfig(False, None)
+    try:
+        payload = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+    except Exception as exc:
+        log.warning("Failed to parse %s: %s", cfg_path, exc)
+        return WeatherConfig(False, None)
+    weather_cfg = payload.get("weather", {}) if isinstance(payload, dict) else {}
+    enabled = bool(weather_cfg.get("enabled", False))
+    if not enabled:
+        return WeatherConfig(False, None)
+    weather_path = weather_cfg.get("file")
+    if not weather_path:
+        log.warning("weather.enabled is true but weather.file is missing in %s", cfg_path)
+        return WeatherConfig(True, None)
+    path = (repo_root / weather_path).resolve() if not Path(weather_path).is_absolute() else Path(weather_path)
+    return WeatherConfig(True, path)
 
 
 def _run(cmd: list[str], log: logging.Logger) -> None:
@@ -195,6 +221,7 @@ def main() -> None:
     data_cfg = repo_root / "configs" / "data.yaml"
     train_cfg = repo_root / "configs" / "train_forecast.yaml"
     signal_cfg = _load_signal_config(data_cfg, repo_root, log)
+    weather_cfg = _load_weather_config(data_cfg, repo_root, log)
 
     raw_hash = _hash_paths([raw_csv], repo_root) if raw_csv.exists() else None
     data_cfg_hash = _hash_paths([data_cfg], repo_root) if data_cfg.exists() else None
@@ -232,6 +259,11 @@ def main() -> None:
                     build_cmd += ["--signals", str(signal_cfg.path)]
                 else:
                     log.warning("Signals enabled but file missing; proceeding without signals.")
+            if weather_cfg.enabled:
+                if weather_cfg.path and weather_cfg.path.exists():
+                    build_cmd += ["--weather", str(weather_cfg.path)]
+                else:
+                    log.warning("Weather enabled but file missing; proceeding without weather.")
             _run(build_cmd, log)
             _run([sys.executable, "-m", "gridpulse.data_pipeline.split_time_series", "--in", "data/processed/features.parquet", "--out", "data/processed/splits"], log)
 
