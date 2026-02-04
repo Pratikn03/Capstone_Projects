@@ -1,0 +1,21 @@
+{
+  "Name": "gridpulse-weekly-refresh",
+  "ScheduleExpression": "cron(0 3 ? * SUN *)",
+  "State": "ENABLED",
+  "Target": {
+    "Arn": "arn:aws:ecs:<AWS_REGION>:<ACCOUNT_ID>:cluster/<ECS_CLUSTER>",
+    "RoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/<EVENTBRIDGE_ROLE>",
+    "EcsParameters": {
+      "TaskDefinitionArn": "arn:aws:ecs:<AWS_REGION>:<ACCOUNT_ID>:task-definition/gridpulse-refresh",
+      "LaunchType": "FARGATE",
+      "TaskCount": 1,
+      "NetworkConfiguration": {
+        "awsvpcConfiguration": {
+          "AssignPublicIp": "ENABLED",
+          "Subnets": ["<SUBNET_ID>"],
+          "SecurityGroups": ["<SECURITY_GROUP_ID>"]
+        }
+      }
+    }
+  }
+}
