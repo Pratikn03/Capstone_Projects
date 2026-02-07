@@ -34,3 +34,10 @@ robust:
   enabled: false
   load_quantile: 0.9
   renewables_quantile: 0.1
+
+risk:
+  enabled: true
+  mode: "worst_case_interval"
+  load_bound: "upper"
+  renew_bound: "lower"
+  reserve_soc_mwh: 0.0

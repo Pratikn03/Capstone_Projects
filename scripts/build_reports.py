@@ -29,6 +29,7 @@ from gridpulse.forecasting.dl_lstm import LSTMForecaster
 from gridpulse.forecasting.dl_tcn import TCNForecaster
 from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
 from gridpulse.optimizer.lp_dispatch import optimize_dispatch
+from gridpulse.forecasting.uncertainty.conformal import load_conformal
 from gridpulse.optimizer.baselines import (
     grid_only_dispatch,
     naive_battery_dispatch,
@@ -62,6 +63,27 @@ def _load_forecast_cfg(ctx: ReportContext) -> dict:
     if cfg_path.exists():
         return yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
     return {"models": {}, "fallback_order": ["lstm", "tcn", "gbm"]}
+
+
+def _load_uncertainty_cfg(ctx: ReportContext) -> dict:
+    cfg_path = ctx.repo_root / "configs" / "uncertainty.yaml"
+    if cfg_path.exists():
+        return yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+    return {"enabled": False}
+
+
+def _conformal_bounds(target: str, yhat: np.ndarray, ctx: ReportContext, cfg: dict) -> dict | None:
+    if not cfg.get("enabled", False):
+        return None
+    artifacts_dir = Path(cfg.get("artifacts_dir", "artifacts/uncertainty"))
+    path = artifacts_dir / f"{target}_conformal.json"
+    if not path.exists():
+        return None
+    ci = load_conformal(path)
+    if ci.q_h is not None and len(ci.q_h) != len(yhat):
+        return None
+    lower, upper = ci.predict_interval(np.asarray(yhat, dtype=float))
+    return {"lower": lower, "upper": upper}
 
 
 def _resolve_model_path(target: str, cfg: dict, models_dir: Path) -> Path | None:
@@ -671,17 +693,46 @@ def build_impact_report(ctx: ReportContext):
     # Oracle upper bound: perfect-forecast dispatch using actuals.
     oracle = optimize_dispatch(load, renew, cfg, forecast_price=price, forecast_carbon_kg=carbon_for_opt)
 
-    # Robust (uncertainty-aware) dispatch using quantile forecasts.
-    robust = None
-    robust_cfg = cfg.get("robust", {})
-    if forecast_available and robust_cfg.get("enabled", False):
-        load_q = float(robust_cfg.get("load_quantile", 0.9))
-        ren_q = float(robust_cfg.get("renewables_quantile", 0.1))
-        load_hi = _get_quantile(load_pred, load_q, f_load)
-        wind_lo = _get_quantile(wind_pred, ren_q, f_wind)
-        solar_lo = _get_quantile(solar_pred, ren_q, f_solar)
-        ren_lo = wind_lo + solar_lo
-        robust = optimize_dispatch(load_hi, ren_lo, cfg, forecast_price=price, forecast_carbon_kg=carbon_for_opt)
+    # Risk-aware dispatch using conformal bounds (fallback to quantiles if needed).
+    risk_plan = None
+    risk_cfg = cfg.get("risk", {})
+    unc_cfg = _load_uncertainty_cfg(ctx)
+    if forecast_available and risk_cfg.get("enabled", False):
+        load_bounds = _conformal_bounds("load_mw", f_load, ctx, unc_cfg)
+        wind_bounds = _conformal_bounds("wind_mw", f_wind, ctx, unc_cfg)
+        solar_bounds = _conformal_bounds("solar_mw", f_solar, ctx, unc_cfg)
+
+        if load_bounds is None:
+            load_bounds = {
+                "lower": _get_quantile(load_pred, 0.1, f_load),
+                "upper": _get_quantile(load_pred, 0.9, f_load),
+            }
+        if wind_bounds is None:
+            wind_bounds = {
+                "lower": _get_quantile(wind_pred, 0.1, f_wind),
+                "upper": _get_quantile(wind_pred, 0.9, f_wind),
+            }
+        if solar_bounds is None:
+            solar_bounds = {
+                "lower": _get_quantile(solar_pred, 0.1, f_solar),
+                "upper": _get_quantile(solar_pred, 0.9, f_solar),
+            }
+
+        renew_bounds = {
+            "lower": np.asarray(wind_bounds["lower"], dtype=float)
+            + np.asarray(solar_bounds["lower"], dtype=float),
+            "upper": np.asarray(wind_bounds["upper"], dtype=float)
+            + np.asarray(solar_bounds["upper"], dtype=float),
+        }
+        risk_plan = optimize_dispatch(
+            f_load,
+            f_renew,
+            cfg,
+            forecast_price=price,
+            forecast_carbon_kg=carbon_for_opt,
+            load_interval=load_bounds,
+            renewables_interval=renew_bounds,
+        )
 
     impact = impact_summary(baseline, optimized)
     impact_naive = impact_summary(naive, optimized)
@@ -814,8 +865,8 @@ def build_impact_report(ctx: ReportContext):
     if price is not None:
         policies.append(("Price‑greedy (MPC‑style)", greedy))
     policies.append(("GridPulse (forecast‑optimized)", optimized))
-    if robust is not None:
-        policies.append(("Robust (quantile‑aware)", robust))
+    if risk_plan is not None:
+        policies.append(("Risk‑aware (interval)", risk_plan))
     policies.append(("Oracle upper bound (perfect forecast)", oracle))
     for name, plan in policies:
         lines.append(
@@ -862,7 +913,7 @@ def build_impact_report(ctx: ReportContext):
         "peak_shaving": peak,
         "greedy_price": greedy if price is not None else None,
         "optimized_forecast": optimized,
-        "robust": robust,
+        "risk": risk_plan,
         "oracle": oracle,
         "impact_vs_baseline": impact,
         "impact_vs_naive": impact_naive,

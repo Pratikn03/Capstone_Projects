@@ -13,11 +13,18 @@ from gridpulse.optimizer import optimize_dispatch
 router = APIRouter()
 
 
+class IntervalBounds(BaseModel):
+    lower: Optional[Union[float, List[float]]] = None
+    upper: Optional[Union[float, List[float]]] = None
+
+
 class OptimizeRequest(BaseModel):
     forecast_load_mw: Union[float, List[float]]
     forecast_renewables_mw: Union[float, List[float]]
     forecast_price_eur_mwh: Optional[Union[float, List[float]]] = None
     forecast_carbon_kg_per_mwh: Optional[Union[float, List[float]]] = None
+    load_interval: Optional[IntervalBounds] = None
+    renewables_interval: Optional[IntervalBounds] = None
     config: Optional[Dict[str, Any]] = None
 
 
@@ -40,12 +47,16 @@ def _load_cfg() -> dict:
 @router.post("", response_model=OptimizeResponse)
 def optimize(req: OptimizeRequest):
     cfg = req.config or _load_cfg()
+    load_interval = req.load_interval.model_dump() if req.load_interval else None
+    renewables_interval = req.renewables_interval.model_dump() if req.renewables_interval else None
     result = optimize_dispatch(
         req.forecast_load_mw, 
         req.forecast_renewables_mw, 
         cfg, 
         forecast_price=req.forecast_price_eur_mwh,
         forecast_carbon_kg=req.forecast_carbon_kg_per_mwh,
+        load_interval=load_interval,
+        renewables_interval=renewables_interval,
     )
     return OptimizeResponse(
         dispatch_plan=result,
