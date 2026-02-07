@@ -1,0 +1,12 @@
+enabled: true
+
+conformal:
+  alpha: 0.10                 # 90% intervals
+  horizon_wise: true          # separate q for each horizon step
+  rolling: true               # rolling calibration
+  rolling_window: 720         # e.g., last 30 days of hourly residuals
+  eps: 1e-6
+
+# Which split to use for calibration:
+# Usually "val" is fine, but best practice is a dedicated "calibration" split after train.
+calibration_split: "val"
