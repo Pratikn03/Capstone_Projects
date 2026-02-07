@@ -1,0 +1,13 @@
+model_file,size_mb,modified
+gbm_lightgbm_load_mw.pkl,10.71,Sat Feb  7 13:37:49 2026
+gbm_lightgbm_price_eur_mwh.pkl,10.69,Wed Feb  4 02:20:11 2026
+gbm_lightgbm_solar_mw.pkl,8.38,Sat Feb  7 13:45:34 2026
+gbm_lightgbm_wind_mw.pkl,9.93,Sat Feb  7 13:42:54 2026
+lstm_load_mw.pt,1.01,Sat Feb  7 13:39:13 2026
+lstm_price_eur_mwh.pt,1.01,Wed Feb  4 02:21:40 2026
+lstm_solar_mw.pt,1.01,Sat Feb  7 13:47:16 2026
+lstm_wind_mw.pt,1.01,Sat Feb  7 13:43:51 2026
+tcn_load_mw.pt,0.36,Sat Feb  7 13:42:35 2026
+tcn_price_eur_mwh.pt,0.36,Wed Feb  4 02:23:15 2026
+tcn_solar_mw.pt,0.36,Wed Feb  4 02:17:14 2026
+tcn_wind_mw.pt,0.36,Sat Feb  7 13:45:16 2026

@@ -5986,7 +5986,7 @@
     "carbon_budget_kg": null,
     "status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)"
   },
-  "robust": null,
+  "risk": null,
   "oracle": {
     "grid_mw": [
       31325.0,

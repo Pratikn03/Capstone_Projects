@@ -1,2 +1,2 @@
-baseline_cost_usd,gridpulse_cost_usd,cost_savings_pct,baseline_carbon_kg,gridpulse_carbon_kg,carbon_reduction_pct,baseline_peak_mw,gridpulse_peak_mw,peak_shaving_pct,oracle_cost_usd,oracle_gap_pct,carbon_source
-154773462.72,150305710.8910397,2.8866394473856865,1461641243.2827778,1453149137.0265312,0.5809979908047541,52165.0,48466.0,7.090961372567814,150305710.8910397,0.0,average
+baseline_cost_usd,optimized_cost_usd,cost_savings_usd,cost_savings_pct,baseline_carbon_kg,optimized_carbon_kg,carbon_reduction_kg,carbon_reduction_pct
+313922207.57,309682581.7290926,4239625.840907395,1.3505339025631125,2735349208.128285,2731872749.441111,3476458.6871738434,0.12709377935523913
