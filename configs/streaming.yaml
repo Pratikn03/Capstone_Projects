@@ -15,3 +15,8 @@ checkpoint:
 
 validation:
   strict: true
+  cadence_seconds: 3600
+  cadence_tolerance_seconds: 120
+  min_mw: 0.0
+  max_mw: 200000.0
+  max_delta_mw: 50000.0

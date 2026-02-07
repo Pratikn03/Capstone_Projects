@@ -202,6 +202,11 @@ python scripts/merge_signals.py \
 python -m gridpulse.forecasting.train --config configs/train_forecast.yaml
 ```
 
+### Full training + figures (one command)
+```bash
+./scripts/train_full.sh
+```
+
 ### Optional: Train both OPSD + USA EIA930
 ```bash
 python scripts/train_multi_dataset.py --ba MISO

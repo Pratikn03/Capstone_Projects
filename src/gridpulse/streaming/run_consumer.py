@@ -3,16 +3,16 @@ import argparse
 
 import yaml
 
-from .consumer import ConsumerConfig, StorageConfig, AppConfig, StreamingIngestConsumer
+from .consumer import ConsumerConfig, StorageConfig, AppConfig, StreamingIngestConsumer, ValidationConfig
 
 
 def load_config(path: str) -> AppConfig:
     cfg = yaml.safe_load(open(path, "r", encoding="utf-8"))
     kafka = ConsumerConfig(**cfg["kafka"])
     storage = StorageConfig(**cfg["storage"])
-    strict = cfg.get("validation", {}).get("strict", True)
+    validation = ValidationConfig(**(cfg.get("validation", {}) or {}))
     ckpt = cfg.get("checkpoint", {}).get("path", "artifacts/checkpoints/streaming_checkpoint.json")
-    return AppConfig(kafka=kafka, storage=storage, checkpoint_path=ckpt, strict_validation=strict)
+    return AppConfig(kafka=kafka, storage=storage, checkpoint_path=ckpt, validation=validation)
 
 
 def main() -> None:

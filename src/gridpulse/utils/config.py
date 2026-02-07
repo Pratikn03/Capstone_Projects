@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Type
+from typing import Any, Optional, Type
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
@@ -11,14 +11,14 @@ from pydantic import BaseModel, ConfigDict, Field
 class SignalsConfig(BaseModel):
     """Signals config in data.yaml (price/carbon files)."""
     enabled: bool = False
-    file: str | None = None
+    file: Optional[str] = None
 
     model_config = ConfigDict(extra="allow")
 
 
 class DataConfig(BaseModel):
     """Top-level data config schema."""
-    signals: SignalsConfig | None = None
+    signals: Optional[SignalsConfig] = None
 
     model_config = ConfigDict(extra="allow")
 
@@ -34,8 +34,8 @@ class ObjectiveConfig(BaseModel):
 class CarbonConfig(BaseModel):
     """Carbon signal options for optimization."""
     source: str = "average"
-    budget_reduction_pct: float | None = None
-    budget_kg: float | None = None
+    budget_reduction_pct: Optional[float] = None
+    budget_kg: Optional[float] = None
 
     model_config = ConfigDict(extra="allow")
 
@@ -119,12 +119,80 @@ class ForecastConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
+class UncertaintyConformalConfig(BaseModel):
+    alpha: float = 0.10
+    horizon_wise: bool = True
+    rolling: bool = True
+    rolling_window: int = 720
+    eps: float = 1e-6
+
+    model_config = ConfigDict(extra="allow")
+
+
+class UncertaintyConfig(BaseModel):
+    enabled: bool = True
+    target: str = "load_mw"
+    calibration_split: str = "val"
+    artifacts_dir: str = "artifacts/uncertainty"
+    calibration_npz: str = "artifacts/backtests/calibration.npz"
+    test_npz: str = "artifacts/backtests/test.npz"
+    conformal: UncertaintyConformalConfig = Field(default_factory=UncertaintyConformalConfig)
+
+    model_config = ConfigDict(extra="allow")
+
+
+class StreamingKafkaConfig(BaseModel):
+    bootstrap_servers: str = "localhost:9092"
+    topic: str = "gridpulse.opsd.v1"
+    group_id: str = "gridpulse-consumer"
+    auto_offset_reset: str = "earliest"
+
+    model_config = ConfigDict(extra="allow")
+
+
+class StreamingStorageConfig(BaseModel):
+    mode: str = "duckdb"
+    duckdb_path: str = "data/interim/streaming.duckdb"
+    table_name: str = "telemetry_opsd"
+    parquet_dir: str = "data/interim/streaming_parquet"
+
+    model_config = ConfigDict(extra="allow")
+
+
+class StreamingCheckpointConfig(BaseModel):
+    path: str = "artifacts/checkpoints/streaming_checkpoint.json"
+
+    model_config = ConfigDict(extra="allow")
+
+
+class StreamingValidationConfig(BaseModel):
+    strict: bool = True
+    cadence_seconds: int = 3600
+    cadence_tolerance_seconds: int = 120
+    min_mw: float = 0.0
+    max_mw: float = 200000.0
+    max_delta_mw: Optional[float] = None
+
+    model_config = ConfigDict(extra="allow")
+
+
+class StreamingConfig(BaseModel):
+    kafka: StreamingKafkaConfig = Field(default_factory=StreamingKafkaConfig)
+    storage: StreamingStorageConfig = Field(default_factory=StreamingStorageConfig)
+    checkpoint: StreamingCheckpointConfig = Field(default_factory=StreamingCheckpointConfig)
+    validation: StreamingValidationConfig = Field(default_factory=StreamingValidationConfig)
+
+    model_config = ConfigDict(extra="allow")
+
+
 CONFIG_MODELS: dict[str, Type[BaseModel]] = {
     "data.yaml": DataConfig,
     "optimization.yaml": OptimizationConfig,
     "train_forecast.yaml": TrainForecastConfig,
     "monitoring.yaml": MonitoringConfig,
     "forecast.yaml": ForecastConfig,
+    "uncertainty.yaml": UncertaintyConfig,
+    "streaming.yaml": StreamingConfig,
 }
 
 
