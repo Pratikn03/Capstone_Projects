@@ -23,3 +23,14 @@ monitoring:
 security:
   auth_enabled: true
   algorithm: "HS256"
+  # Set GRIDPULSE_API_KEYS to JSON or a YAML file path in production.
+  api_keys: {}
+
+safety:
+  bms:
+    capacity_mwh: 10.0
+    max_power_mw: 5.0
+    min_soc_pct: 0.05
+    max_soc_pct: 0.95
+  watchdog:
+    timeout_seconds: 30
