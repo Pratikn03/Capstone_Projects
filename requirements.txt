@@ -19,3 +19,4 @@ httpx>=0.25
 holidays>=0.40
 nbformat>=5.9
 duckdb>=0.10
+kafka-python>=2.0.2

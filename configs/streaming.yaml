@@ -1,0 +1,17 @@
+kafka:
+  bootstrap_servers: "localhost:9092"
+  topic: "gridpulse.opsd.v1"
+  group_id: "gridpulse-consumer"
+  auto_offset_reset: "earliest"
+
+storage:
+  mode: "duckdb"            # duckdb|parquet
+  duckdb_path: "data/interim/streaming.duckdb"
+  table_name: "telemetry_opsd"
+  parquet_dir: "data/interim/streaming_parquet"
+
+checkpoint:
+  path: "artifacts/checkpoints/streaming_checkpoint.json"
+
+validation:
+  strict: true
