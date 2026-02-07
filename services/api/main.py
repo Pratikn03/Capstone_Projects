@@ -8,6 +8,7 @@ from gridpulse.utils.logging import setup_logging
 from services.api.config import get_bms_config, get_watchdog_timeout
 from services.api.health import readiness_check
 from services.api.routers import forecast, anomaly, optimize, monitor
+from services.api.routers.forecast_intervals import router as intervals_router
 from services.api.security import get_api_key, verify_scope
 
 setup_logging()
@@ -35,6 +36,7 @@ async def shutdown_event():
 
 
 app.include_router(forecast.router, prefix="/forecast", tags=["forecast"])
+app.include_router(intervals_router, prefix="/forecast", tags=["forecast"])
 app.include_router(anomaly.router, prefix="/anomaly", tags=["anomaly"])
 app.include_router(optimize.router, prefix="/optimize", tags=["optimize"])
 app.include_router(monitor.router, prefix="/monitor", tags=["monitor"])
