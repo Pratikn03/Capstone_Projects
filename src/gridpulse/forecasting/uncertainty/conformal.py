@@ -8,10 +8,14 @@ Supports:
 
 This is model-agnostic: works with GBM/LSTM/TCN as long as you provide y_true and y_pred arrays.
 """
+from __future__ import annotations
+
 from collections import deque
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from pathlib import Path
+from typing import Any, Optional, Tuple
 
+import json
 import numpy as np
 
 
@@ -119,3 +123,44 @@ class ConformalInterval:
         lo, hi = self.predict_interval(y_pred)
         y_true = np.asarray(y_true)
         return float(np.mean((y_true >= lo) & (y_true <= hi)))
+
+    def mean_width(self, y_pred: np.ndarray) -> float:
+        lo, hi = self.predict_interval(y_pred)
+        return float(np.mean(hi - lo))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "config": {
+                "alpha": self.cfg.alpha,
+                "horizon_wise": self.cfg.horizon_wise,
+                "rolling": self.cfg.rolling,
+                "rolling_window": self.cfg.rolling_window,
+                "eps": self.cfg.eps,
+            },
+            "q_global": self.q_global,
+            "q_h": self.q_h.tolist() if self.q_h is not None else None,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> "ConformalInterval":
+        cfg = ConformalConfig(**payload.get("config", {}))
+        inst = cls(cfg)
+        if payload.get("q_global") is not None:
+            inst.q_global = float(payload["q_global"])
+        if payload.get("q_h") is not None:
+            inst.q_h = np.asarray(payload["q_h"], dtype=float)
+        return inst
+
+
+def save_conformal(path: str | Path, interval: ConformalInterval, meta: Optional[dict[str, Any]] = None) -> None:
+    payload = interval.to_dict()
+    if meta:
+        payload["meta"] = meta
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def load_conformal(path: str | Path) -> ConformalInterval:
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    return ConformalInterval.from_dict(payload)

@@ -23,6 +23,18 @@ def load_serving_config(path: str | Path | None = None) -> dict:
     return _load_yaml(cfg_path)
 
 
+@lru_cache(maxsize=1)
+def load_uncertainty_config(path: str | Path | None = None) -> dict:
+    cfg_path = Path(path or os.getenv("GRIDPULSE_UNCERTAINTY_CONFIG", "configs/uncertainty.yaml"))
+    return _load_yaml(cfg_path)
+
+
+def get_conformal_path(target: str, cfg: Optional[dict] = None) -> Path:
+    cfg = cfg or load_uncertainty_config()
+    artifacts_dir = Path(cfg.get("artifacts_dir", "artifacts/uncertainty"))
+    return artifacts_dir / f"{target}_conformal.json"
+
+
 def _read_float_env(name: str, default: float) -> float:
     raw = os.getenv(name)
     if raw is None:

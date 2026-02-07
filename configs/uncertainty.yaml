@@ -10,3 +10,8 @@ conformal:
 # Which split to use for calibration:
 # Usually "val" is fine, but best practice is a dedicated "calibration" split after train.
 calibration_split: "val"
+
+target: "load_mw"
+artifacts_dir: "artifacts/uncertainty"
+calibration_npz: "artifacts/backtests/calibration.npz"
+test_npz: "artifacts/backtests/test.npz"
