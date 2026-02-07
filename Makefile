@@ -33,9 +33,9 @@ monitor:
 	python scripts/run_monitoring.py
 
 release_check:
-	python scripts/release_check.py
+	bash scripts/release_check.sh
 
 release_check_full:
-	python scripts/release_check.py --full
+	bash scripts/release_check.sh --full
 
 production: pipeline train

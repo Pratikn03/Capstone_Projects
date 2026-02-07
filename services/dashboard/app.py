@@ -16,6 +16,42 @@ def fetch_json(method: str, url: str, **kwargs):
     except Exception as e:
         return None, str(e)
 
+def fetch_intervals(api_base: str, target: str, horizon: int):
+    payload, err = fetch_json(
+        "GET",
+        f"{api_base}/forecast/with-intervals",
+        params={"target": target, "horizon": horizon},
+    )
+    if err or not payload:
+        return None, None, None, err or "Interval forecast unavailable"
+    yhat = payload.get("yhat")
+    lower = payload.get("pi90_lower")
+    upper = payload.get("pi90_upper")
+    if not yhat:
+        return None, None, None, "Interval forecast missing yhat"
+    return yhat, lower, upper, None
+
+
+def interval_dict(lower, upper):
+    if lower is None or upper is None:
+        return None
+    if len(lower) != len(upper):
+        return None
+    return {"lower": lower, "upper": upper}
+
+
+def quantile_interval(forecast_entry, lower_q="0.1", upper_q="0.9"):
+    quantiles = forecast_entry.get("quantiles", {}) if forecast_entry else {}
+    return interval_dict(quantiles.get(lower_q), quantiles.get(upper_q))
+
+
+def sum_intervals(lower_a, upper_a, lower_b, upper_b):
+    if lower_a is None or upper_a is None or lower_b is None or upper_b is None:
+        return None, None
+    if len(lower_a) != len(lower_b) or len(upper_a) != len(upper_b):
+        return None, None
+    return [a + b for a, b in zip(lower_a, lower_b)], [a + b for a, b in zip(upper_a, upper_b)]
+
 
 def schedule_refresh(minutes: int) -> None:
     if minutes <= 0:
@@ -60,11 +96,39 @@ def build_kpis(api_base: str, horizon: int = 24):
     if not (load and wind and solar):
         return None, None, None, None, None, "Forecasts missing: train models or update configs/forecast.yaml"
 
+    load_int = quantile_interval(fcasts.get("load_mw", {}))
+    wind_int = quantile_interval(fcasts.get("wind_mw", {}))
+    solar_int = quantile_interval(fcasts.get("solar_mw", {}))
+    load_yhat, load_lower, load_upper, err = fetch_intervals(api_base, "load_mw", horizon)
+    if not err:
+        load = load_yhat
+        load_int = interval_dict(load_lower, load_upper) or load_int
+    wind_yhat, wind_lower, wind_upper, err = fetch_intervals(api_base, "wind_mw", horizon)
+    if not err:
+        wind = wind_yhat
+        wind_int = interval_dict(wind_lower, wind_upper) or wind_int
+    solar_yhat, solar_lower, solar_upper, err = fetch_intervals(api_base, "solar_mw", horizon)
+    if not err:
+        solar = solar_yhat
+        solar_int = interval_dict(solar_lower, solar_upper) or solar_int
+
     renew = [w + s for w, s in zip(wind, solar)]
+    renew_lower, renew_upper = sum_intervals(
+        wind_int["lower"] if wind_int else None,
+        wind_int["upper"] if wind_int else None,
+        solar_int["lower"] if solar_int else None,
+        solar_int["upper"] if solar_int else None,
+    )
+    renew_int = interval_dict(renew_lower, renew_upper)
+    opt_payload = {"forecast_load_mw": load, "forecast_renewables_mw": renew}
+    if load_int:
+        opt_payload["load_interval"] = load_int
+    if renew_int:
+        opt_payload["renewables_interval"] = renew_int
     optimize, err = fetch_json(
         "POST",
         f"{api_base}/optimize",
-        json={"forecast_load_mw": load, "forecast_renewables_mw": renew},
+        json=opt_payload,
     )
     if err or not optimize:
         return None, None, None, None, None, err or "Optimization failed"
@@ -124,7 +188,7 @@ tabs = st.tabs(["Forecast", "Optimization", "Monitoring"])
 with tabs[0]:
     st.subheader("Forecast")
     if st.button("Fetch Forecast"):
-        payload, err = fetch_json("GET", f"{api_base}/forecast")
+        payload, err = fetch_json("GET", f"{api_base}/forecast", params={"horizon": 24})
         if err:
             st.error(err)
         else:
@@ -132,12 +196,20 @@ with tabs[0]:
             forecasts = payload.get("forecasts", {})
             if "load_mw" in forecasts:
                 f = forecasts["load_mw"]
+                horizon = len(f.get("forecast", [])) or 24
                 df = pd.DataFrame({
                     "timestamp": f["timestamp"],
                     "p50": f["forecast"],
                 })
                 for q, vals in f.get("quantiles", {}).items():
                     df[f"q{q}"] = vals
+                yhat, lower, upper, int_err = fetch_intervals(api_base, "load_mw", horizon)
+                if not int_err:
+                    if yhat:
+                        df["p50"] = yhat
+                    if lower and upper and len(lower) == len(df) and len(upper) == len(df):
+                        df["pi90_lower"] = lower
+                        df["pi90_upper"] = upper
                 df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
                 fig = px.line(df, x="timestamp", y=[c for c in df.columns if c != "timestamp"], title="Load Forecast (24h)")
                 st.plotly_chart(fig, use_container_width=True)
@@ -147,17 +219,75 @@ with tabs[1]:
     horizon = st.number_input("Horizon (hours)", value=1, min_value=1, max_value=168)
     load = st.number_input("Forecast Load (MW)", value=8000.0)
     ren = st.number_input("Forecast Renewables (MW)", value=3200.0)
+    use_api_intervals = st.checkbox("Use API forecast intervals", value=True)
     if st.button("Optimize Dispatch"):
-        payload, err = fetch_json(
-            "POST",
-            f"{api_base}/optimize",
-            json={"forecast_load_mw": [load] * int(horizon), "forecast_renewables_mw": [ren] * int(horizon)},
-        )
+        horizon = int(horizon)
+        load_series = [load] * horizon
+        ren_series = [ren] * horizon
+        load_interval = None
+        renew_interval = None
+        if use_api_intervals:
+            wind_series = None
+            solar_series = None
+            wind_interval = None
+            solar_interval = None
+            load_yhat, load_lower, load_upper, load_err = fetch_intervals(api_base, "load_mw", horizon)
+            if not load_err:
+                load_series = load_yhat
+                load_interval = interval_dict(load_lower, load_upper)
+            wind_yhat, wind_lower, wind_upper, wind_err = fetch_intervals(api_base, "wind_mw", horizon)
+            if not wind_err:
+                wind_series = wind_yhat
+                wind_interval = interval_dict(wind_lower, wind_upper)
+            solar_yhat, solar_lower, solar_upper, solar_err = fetch_intervals(api_base, "solar_mw", horizon)
+            if not solar_err:
+                solar_series = solar_yhat
+                solar_interval = interval_dict(solar_lower, solar_upper)
+
+            if wind_series and solar_series:
+                ren_series = [w + s for w, s in zip(wind_series, solar_series)]
+
+            needs_fallback = load_err or wind_err or solar_err or load_interval is None or wind_interval is None or solar_interval is None
+            if needs_fallback:
+                fallback, fb_err = fetch_json("GET", f"{api_base}/forecast", params={"horizon": horizon})
+                if fb_err or not fallback:
+                    st.warning("Interval forecasts unavailable; using manual inputs.")
+                else:
+                    fcasts = fallback.get("forecasts", {})
+                    if load_err:
+                        load_series = fcasts.get("load_mw", {}).get("forecast", load_series)
+                    if load_interval is None:
+                        load_interval = quantile_interval(fcasts.get("load_mw", {})) or load_interval
+                    if wind_err:
+                        wind_series = fcasts.get("wind_mw", {}).get("forecast", wind_series)
+                    if wind_interval is None:
+                        wind_interval = quantile_interval(fcasts.get("wind_mw", {})) or wind_interval
+                    if solar_err:
+                        solar_series = fcasts.get("solar_mw", {}).get("forecast", solar_series)
+                    if solar_interval is None:
+                        solar_interval = quantile_interval(fcasts.get("solar_mw", {})) or solar_interval
+                    if wind_series and solar_series:
+                        ren_series = [w + s for w, s in zip(wind_series, solar_series)]
+
+            if wind_interval and solar_interval:
+                renew_lower, renew_upper = sum_intervals(
+                    wind_interval["lower"],
+                    wind_interval["upper"],
+                    solar_interval["lower"],
+                    solar_interval["upper"],
+                )
+                renew_interval = interval_dict(renew_lower, renew_upper)
+
+        opt_payload = {"forecast_load_mw": load_series, "forecast_renewables_mw": ren_series}
+        if load_interval:
+            opt_payload["load_interval"] = load_interval
+        if renew_interval:
+            opt_payload["renewables_interval"] = renew_interval
+        payload, err = fetch_json("POST", f"{api_base}/optimize", json=opt_payload)
         if err:
             st.error(err)
         else:
             st.json(payload)
-            horizon = int(horizon)
             total_cost = payload.get("expected_cost_usd")
             per_hour = (total_cost / horizon) if (total_cost is not None and horizon) else None
             kpi_row(

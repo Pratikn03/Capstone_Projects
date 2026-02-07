@@ -1,7 +1,9 @@
 """Streaming consumer for Kafka/Redpanda ingestion."""
+from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 import duckdb
@@ -28,17 +30,30 @@ class StorageConfig:
 
 
 @dataclass
+class ValidationConfig:
+    strict: bool = True
+    cadence_seconds: int = 3600
+    cadence_tolerance_seconds: int = 120
+    min_mw: float = 0.0
+    max_mw: float = 200000.0
+    max_delta_mw: float | None = None
+
+
+@dataclass
 class AppConfig:
     kafka: ConsumerConfig
     storage: StorageConfig
     checkpoint_path: str
-    strict_validation: bool = True
+    validation: ValidationConfig
 
 
 class StreamingIngestConsumer:
     def __init__(self, cfg: AppConfig):
         self.cfg = cfg
         self.ckpt = load_checkpoint(cfg.checkpoint_path)
+        self._last_ts: Optional[datetime] = None
+        self._last_values: Dict[str, float] = {}
+        self.validation = cfg.validation
         self.consumer = KafkaConsumer(
             cfg.kafka.topic,
             bootstrap_servers=cfg.kafka.bootstrap_servers,
@@ -67,11 +82,59 @@ class StreamingIngestConsumer:
     def _validate(self, event_dict: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         try:
             evt = OPSDTelemetryEvent(**event_dict)
-            return evt.model_dump()
+            normalized = evt.model_dump()
+            self._check_event(normalized)
+            return normalized
         except Exception:
-            if self.cfg.strict_validation:
+            if self.cfg.validation.strict:
                 raise
             return None
+
+    def _parse_ts(self, value: str) -> Optional[datetime]:
+        if not value:
+            return None
+        try:
+            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+
+    def _check_event(self, event_dict: Dict[str, Any]) -> None:
+        ts = self._parse_ts(event_dict.get("utc_timestamp"))
+        if ts is None:
+            raise ValueError("Invalid utc_timestamp; expected ISO-8601 string.")
+
+        if self._last_ts is not None and self.validation.cadence_seconds > 0:
+            delta = (ts - self._last_ts).total_seconds()
+            tol = self.validation.cadence_tolerance_seconds
+            if abs(delta - self.validation.cadence_seconds) > tol:
+                raise ValueError(
+                    f"Cadence violation: delta={delta}s expected ~{self.validation.cadence_seconds}s"
+                )
+
+        # Basic unit/outlier sanity checks in MW.
+        for key in [
+            "DE_load_actual_entsoe_transparency",
+            "DE_wind_generation_actual",
+            "DE_solar_generation_actual",
+        ]:
+            val = event_dict.get(key)
+            if val is None:
+                continue
+            if val < self.validation.min_mw or val > self.validation.max_mw:
+                raise ValueError(f"{key} out of bounds: {val}")
+            if self.validation.max_delta_mw is not None and key in self._last_values:
+                if abs(val - self._last_values[key]) > self.validation.max_delta_mw:
+                    raise ValueError(f"{key} jump too large: {val} vs {self._last_values[key]}")
+
+        self._last_ts = ts
+        for key in [
+            "DE_load_actual_entsoe_transparency",
+            "DE_wind_generation_actual",
+            "DE_solar_generation_actual",
+        ]:
+            val = event_dict.get(key)
+            if val is not None:
+                self._last_values[key] = float(val)
 
     def _write(self, event_dict: Dict[str, Any]) -> None:
         norm = self._validate(event_dict)
