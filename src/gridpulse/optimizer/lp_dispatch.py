@@ -6,6 +6,7 @@ from typing import Any, Dict
 import numpy as np
 from scipy.optimize import linprog
 
+from gridpulse.optimizer.risk import RiskConfig, apply_interval_bounds
 
 def _as_array(x) -> np.ndarray:
     """Convert scalars/lists to a float NumPy array."""
@@ -16,12 +17,36 @@ def _as_array(x) -> np.ndarray:
     return arr
 
 
+def _broadcast_interval(arr: np.ndarray | None, horizon: int, label: str) -> np.ndarray | None:
+    if arr is None:
+        return None
+    if arr.size == 1 and horizon > 1:
+        return np.full(horizon, float(arr[0]))
+    if arr.size != horizon:
+        raise ValueError(f"{label} interval length {arr.size} does not match horizon {horizon}")
+    return arr
+
+
+def _parse_interval(interval: dict | None, horizon: int, label: str) -> tuple[np.ndarray | None, np.ndarray | None]:
+    if interval is None:
+        return None, None
+    if not isinstance(interval, dict):
+        raise ValueError(f"{label}_interval must be a dict with lower/upper arrays")
+    lower = interval.get("lower", interval.get("lo"))
+    upper = interval.get("upper", interval.get("hi"))
+    lower_arr = _broadcast_interval(_as_array(lower), horizon, f"{label} lower") if lower is not None else None
+    upper_arr = _broadcast_interval(_as_array(upper), horizon, f"{label} upper") if upper is not None else None
+    return lower_arr, upper_arr
+
+
 def optimize_dispatch(
     forecast_load,
     forecast_renewables,
     config: dict,
     forecast_price=None,
     forecast_carbon_kg=None,
+    load_interval: dict | None = None,
+    renewables_interval: dict | None = None,
 ) -> Dict[str, Any]:
     """Solve a linear dispatch problem with battery + grid constraints."""
     load = _as_array(forecast_load)
@@ -33,6 +58,8 @@ def optimize_dispatch(
         raise ValueError("forecast_load and forecast_renewables must have the same length")
 
     H = len(load)
+    load_lo, load_hi = _parse_interval(load_interval, H, "load")
+    renew_lo, renew_hi = _parse_interval(renewables_interval, H, "renewables")
 
     # Pull config sections with defaults.
     cfg = config or {}
@@ -41,6 +68,7 @@ def optimize_dispatch(
     penalties = cfg.get("penalties", {})
     objective = cfg.get("objective", {})
     carbon_cfg = cfg.get("carbon", {})
+    risk_cfg = cfg.get("risk", {}) if isinstance(cfg, dict) else {}
 
     capacity = float(battery.get("capacity_mwh", 10.0))
     max_power = float(battery.get("max_power_mw", battery.get("max_charge_mw", 2.0)))
@@ -49,6 +77,26 @@ def optimize_dispatch(
     efficiency = float(battery.get("efficiency", 0.95))
     min_soc = float(battery.get("min_soc_mwh", 0.0))
     soc0 = float(battery.get("initial_soc_mwh", capacity / 2))
+
+    risk = RiskConfig(
+        enabled=bool(risk_cfg.get("enabled", False)),
+        mode=str(risk_cfg.get("mode", "worst_case_interval")),
+        load_bound=str(risk_cfg.get("load_bound", "upper")),
+        renew_bound=str(risk_cfg.get("renew_bound", "lower")),
+        reserve_soc_mwh=float(risk_cfg.get("reserve_soc_mwh", 0.0) or 0.0),
+    )
+    if risk.enabled and risk.mode == "worst_case_interval":
+        load, ren = apply_interval_bounds(
+            load,
+            ren,
+            load_lo=load_lo,
+            load_hi=load_hi,
+            renew_lo=renew_lo,
+            renew_hi=renew_hi,
+            cfg=risk,
+        )
+    if risk.enabled and risk.reserve_soc_mwh > 0.0:
+        min_soc = max(min_soc, min(risk.reserve_soc_mwh, capacity))
 
     max_import = float(grid.get("max_import_mw", grid.get("max_draw_mw", 50.0)))
     
