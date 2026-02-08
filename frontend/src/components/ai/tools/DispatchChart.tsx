@@ -5,7 +5,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 interface DispatchData {
   timestamp: string;
@@ -61,6 +61,28 @@ export function DispatchChart({
   const [mode, setMode] = useState<'optimized' | 'baseline'>(allowBaseline ? defaultMode : 'optimized');
   const chartData = mode === 'baseline' && baseline ? baseline : optimized;
   const peakLoad = Math.max(...chartData.map((d) => d.load_mw));
+  const baselineMatches = useMemo(() => {
+    if (!allowBaseline || !baseline || baseline.length !== optimized.length) return false;
+    const keys: Array<keyof DispatchData> = [
+      'load_mw',
+      'generation_solar',
+      'generation_wind',
+      'generation_gas',
+      'battery_dispatch',
+    ];
+    const epsilon = 1e-3;
+    for (let i = 0; i < baseline.length; i += 1) {
+      const basePoint = baseline[i];
+      const optPoint = optimized[i];
+      if (basePoint.timestamp !== optPoint.timestamp) return false;
+      for (const key of keys) {
+        const baseValue = basePoint[key] ?? 0;
+        const optValue = optPoint[key] ?? 0;
+        if (Math.abs(baseValue - optValue) > epsilon) return false;
+      }
+    }
+    return true;
+  }, [allowBaseline, baseline, optimized]);
 
   return (
     <motion.div
@@ -88,6 +110,11 @@ export function DispatchChart({
                 </button>
               ))}
             </div>
+          )}
+          {baselineMatches && (
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/5 text-slate-300 border border-white/10">
+              Same plan
+            </span>
           )}
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-energy-primary/10 text-energy-primary border border-energy-primary/20">
             {mode === 'optimized' ? 'Live Telemetry' : 'Baseline Mode'}
