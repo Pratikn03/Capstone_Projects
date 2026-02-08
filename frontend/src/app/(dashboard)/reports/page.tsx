@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Panel } from '@/components/ui/Panel';
 import { KPICard } from '@/components/ui/KPICard';
 import { FileText, Download, TrendingUp, BarChart3, Leaf, Zap } from 'lucide-react';
 import { useReportsData } from '@/lib/api/reports-client';
+import { useRegion } from '@/components/ui/RegionContext';
 
 const fallbackReportsList = [
   {
@@ -53,7 +54,12 @@ const fallbackReportsList = [
 
 export default function ReportsPage() {
   const { metrics, metricsBacktest, metricsSource, impact, reports, regions, meta } = useReportsData();
-  const [dataset, setDataset] = useState<'ALL' | 'DE' | 'US'>('ALL');
+  const { region } = useRegion();
+  const [dataset, setDataset] = useState<'ALL' | 'DE' | 'US'>(region);
+
+  useEffect(() => {
+    setDataset(region);
+  }, [region]);
   const regionData = dataset === 'ALL' ? null : regions[dataset];
   const list =
     regionData?.reports?.length

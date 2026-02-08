@@ -2,18 +2,15 @@
 
 import { Globe, Clock, Bell, User, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
-
-interface TopBarProps {
-  region: string;
-  onRegionChange?: (region: string) => void;
-}
+import { useRegion } from './RegionContext';
 
 const regions = [
   { id: 'DE', label: 'Germany (OPSD)', flag: '🇩🇪' },
   { id: 'US', label: 'USA (EIA-930)', flag: '🇺🇸' },
-];
+] as const;
 
-export function TopBar({ region, onRegionChange }: TopBarProps) {
+export function TopBar() {
+  const { region, setRegion } = useRegion();
   const [showRegions, setShowRegions] = useState(false);
   const currentRegion = regions.find((r) => r.id === region) || regions[0];
 
@@ -42,7 +39,7 @@ export function TopBar({ region, onRegionChange }: TopBarProps) {
                 <button
                   key={r.id}
                   onClick={() => {
-                    onRegionChange?.(r.id);
+                    setRegion(r.id);
                     setShowRegions(false);
                   }}
                   className={`w-full text-left px-4 py-2 text-sm hover:bg-white/10 transition-colors ${

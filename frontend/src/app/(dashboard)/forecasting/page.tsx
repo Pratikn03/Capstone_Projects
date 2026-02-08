@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ForecastChart } from '@/components/ai/tools/ForecastChart';
 import { Panel } from '@/components/ui/Panel';
+import { useRegion } from '@/components/ui/RegionContext';
 import { mockForecastWithPI } from '@/lib/api/mock-data';
 import { useReportsData } from '@/lib/api/reports-client';
 
@@ -14,11 +15,12 @@ const targets = [
 
 export default function ForecastingPage() {
   const [selectedTarget, setSelectedTarget] = useState<string>('load_mw');
-  const [selectedRegion, setSelectedRegion] = useState<string>('DE');
-  const { metrics } = useReportsData();
+  const { region, setRegion } = useRegion();
+  const { metrics, regions } = useReportsData();
+  const metricsActive = regions[region]?.metrics?.length ? regions[region].metrics : metrics;
   const data = mockForecastWithPI(selectedTarget, 48);
   const formatMaybe = (value: number | undefined, digits: number) => (value === undefined ? 'N/A' : value.toFixed(digits));
-  const selectedMetrics = metrics.filter((m) => m.target === selectedTarget);
+  const selectedMetrics = metricsActive.filter((m) => m.target === selectedTarget);
   const bestMetric = selectedMetrics.length
     ? selectedMetrics.reduce((a, b) => (a.rmse < b.rmse ? a : b))
     : null;
@@ -54,9 +56,9 @@ export default function ForecastingPage() {
             ].map((r) => (
               <button
                 key={r.id}
-                onClick={() => setSelectedRegion(r.id)}
+                onClick={() => setRegion(r.id as 'DE' | 'US')}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                  selectedRegion === r.id
+                  region === r.id
                     ? 'bg-energy-info/20 text-energy-info'
                     : 'text-slate-500 hover:text-slate-300'
                 }`}
@@ -71,7 +73,7 @@ export default function ForecastingPage() {
       <ForecastChart
         data={data}
         target={selectedTarget}
-        zoneId={selectedRegion}
+        zoneId={region}
         metrics={bestMetric ? { rmse: bestMetric.rmse, coverage_90: bestMetric.coverage_90 } : undefined}
       />
 
@@ -90,11 +92,11 @@ export default function ForecastingPage() {
               </tr>
             </thead>
             <tbody>
-              {metrics
+              {metricsActive
                 .filter((m) => m.target === selectedTarget)
                 .map((m, i) => {
                   const isBest = m.rmse === Math.min(
-                    ...metrics.filter((x) => x.target === selectedTarget).map((x) => x.rmse)
+                    ...metricsActive.filter((x) => x.target === selectedTarget).map((x) => x.rmse)
                   );
                   return (
                     <tr key={i} className={`border-b border-white/5 ${isBest ? 'bg-energy-primary/5' : ''}`}>
