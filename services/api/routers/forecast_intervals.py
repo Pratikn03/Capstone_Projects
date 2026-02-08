@@ -51,10 +51,13 @@ def forecast_with_intervals(
         raise HTTPException(status_code=404, detail=f"Missing conformal artifact: {conformal_path}")
 
     ci = load_conformal(conformal_path)
-    if ci.q_h is not None and len(ci.q_h) != horizon:
+    if ci.q_h is not None and len(ci.q_h) != horizon and ci.q_global is None:
         raise HTTPException(
             status_code=400,
-            detail=f"Conformal horizon {len(ci.q_h)} does not match request horizon {horizon}.",
+            detail=(
+                f"Conformal intervals calibrated for horizon {len(ci.q_h)} and no global fallback is available. "
+                f"Use horizon={len(ci.q_h)} or recalibrate to the requested horizon."
+            ),
         )
     lower, upper = ci.predict_interval(np.asarray(yhat, dtype=float))
     return ForecastResponse(

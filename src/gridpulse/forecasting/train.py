@@ -51,6 +51,27 @@ def _load_uncertainty_cfg(path: str = "configs/uncertainty.yaml") -> dict:
     return yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {"enabled": False}
 
 
+def _parse_uncertainty_targets(cfg: dict, default_targets: list[str]) -> list[str]:
+    targets = cfg.get("targets")
+    if targets:
+        if isinstance(targets, str):
+            if targets.strip().lower() == "all":
+                return default_targets
+            return [t.strip() for t in targets.split(",") if t.strip()]
+        if isinstance(targets, list):
+            return [str(t).strip() for t in targets if str(t).strip()]
+    target = cfg.get("target", "load_mw")
+    return [str(target).strip()]
+
+
+def _format_uncertainty_path(template: str, target: str, suffix: str, multi: bool) -> Path:
+    if "{target}" in template:
+        return Path(template.format(target=target))
+    if multi:
+        return Path(f"artifacts/backtests/{target}_{suffix}.npz")
+    return Path(template)
+
+
 def _reshape_horizon(y_true: np.ndarray, y_pred: np.ndarray, horizon: int) -> tuple[np.ndarray, np.ndarray] | None:
     y_true = np.asarray(y_true)
     y_pred = np.asarray(y_pred)
@@ -168,13 +189,12 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, target: str) -> dict
 
 
 def fit_sequence_model(model, train_dl, val_dl, epochs: int, lr: float, horizon: int, device: str):
-    """Generic training loop with early stopping for sequence models."""
+    """Training loop for sequence models — runs all epochs, keeps best checkpoint."""
     opt = torch.optim.Adam(model.parameters(), lr=lr)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=epochs, eta_min=lr * 0.01)
     loss_fn = torch.nn.MSELoss()
     best_val = float("inf")
     best_state = None
-    patience = 3
-    wait = 0
 
     for ep in range(1, epochs + 1):
         model.train()
@@ -188,8 +208,11 @@ def fit_sequence_model(model, train_dl, val_dl, epochs: int, lr: float, horizon:
             loss = loss_fn(pred_hz, yb)
             opt.zero_grad()
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             opt.step()
             tr_losses.append(loss.item())
+
+        scheduler.step()
 
         model.eval()
         val_losses = []
@@ -202,20 +225,15 @@ def fit_sequence_model(model, train_dl, val_dl, epochs: int, lr: float, horizon:
                 val_losses.append(loss_fn(pred_hz, yb).item())
 
         val_loss = float(np.mean(val_losses)) if val_losses else float("inf")
-        # Early stopping on validation loss for stability.
         if val_loss < best_val:
             best_val = val_loss
             best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
-            wait = 0
-        else:
-            wait += 1
-        print(f"Epoch {ep}/{epochs} train_mse={np.mean(tr_losses):.4f} val_mse={val_loss:.4f}")
-        if wait >= patience:
-            print(f"Early stopping at epoch {ep} (best_val={best_val:.4f})")
-            break
+        cur_lr = scheduler.get_last_lr()[0]
+        print(f"Epoch {ep}/{epochs} train_mse={np.mean(tr_losses):.4f} val_mse={val_loss:.4f} lr={cur_lr:.6f} best={best_val:.4f}")
 
     if best_state is not None:
         model.load_state_dict(best_state)
+    print(f"Training complete — best val_mse={best_val:.4f}")
     return model
 
 
@@ -367,8 +385,8 @@ def main():
     tuning_enabled = bool(tuning_cfg.get("enabled", False))
     uncertainty_cfg = _load_uncertainty_cfg()
     uncertainty_enabled = bool(uncertainty_cfg.get("enabled", False))
-    uncertainty_target = str(uncertainty_cfg.get("target", "load_mw"))
-    conformal_payload = None
+    uncertainty_targets = _parse_uncertainty_targets(uncertainty_cfg, targets)
+    conformal_payloads: dict[str, dict] = {}
 
     # Optional model/target filters to avoid retraining everything.
     model_filter = None
@@ -411,7 +429,7 @@ def main():
                     **compute_metrics(y_test, gbm_pred_test, target),
                     "model": f"gbm_{model_kind}",
                 }
-                if uncertainty_enabled and target == uncertainty_target and conformal_payload is None:
+                if uncertainty_enabled and target in uncertainty_targets and target not in conformal_payloads:
                     cal_split = str(uncertainty_cfg.get("calibration_split", "val")).lower()
                     if cal_split == "test":
                         cal = _reshape_horizon(y_test, gbm_pred_test, horizon)
@@ -420,7 +438,7 @@ def main():
                         cal = _reshape_horizon(y_val, gbm_pred_val, horizon)
                         test = _reshape_horizon(y_test, gbm_pred_test, horizon)
                     if cal is not None and test is not None:
-                        conformal_payload = {
+                        conformal_payloads[target] = {
                             "target": target,
                             "model": f"gbm_{model_kind}",
                             "y_true_cal": cal[0],
@@ -600,32 +618,36 @@ def main():
 
         report["targets"][target] = target_res
 
-    if uncertainty_enabled and conformal_payload is not None:
-        cal_path = Path(uncertainty_cfg.get("calibration_npz", "artifacts/backtests/calibration.npz"))
-        test_path = Path(uncertainty_cfg.get("test_npz", "artifacts/backtests/test.npz"))
-        cal_path.parent.mkdir(parents=True, exist_ok=True)
-        test_path.parent.mkdir(parents=True, exist_ok=True)
-        np.savez(cal_path, y_true=conformal_payload["y_true_cal"], y_pred=conformal_payload["y_pred_cal"])
-        np.savez(test_path, y_true=conformal_payload["y_true_test"], y_pred=conformal_payload["y_pred_test"])
-
+    if uncertainty_enabled and conformal_payloads:
+        multi = len(conformal_payloads) > 1
+        cal_template = str(uncertainty_cfg.get("calibration_npz", "artifacts/backtests/calibration.npz"))
+        test_template = str(uncertainty_cfg.get("test_npz", "artifacts/backtests/test.npz"))
         conf_cfg = ConformalConfig(**(uncertainty_cfg.get("conformal", {}) or {}))
-        ci = ConformalInterval(conf_cfg)
-        ci.fit_calibration(conformal_payload["y_true_cal"], conformal_payload["y_pred_cal"])
-        coverage = ci.coverage(conformal_payload["y_true_test"], conformal_payload["y_pred_test"])
-        width = ci.mean_width(conformal_payload["y_pred_test"])
         artifacts_dir = Path(uncertainty_cfg.get("artifacts_dir", "artifacts/uncertainty"))
-        conformal_path = artifacts_dir / f"{conformal_payload['target']}_conformal.json"
-        meta = {
-            "target": conformal_payload["target"],
-            "model": conformal_payload["model"],
-            "horizon": horizon,
-            "calibration_rows": int(conformal_payload["y_true_cal"].shape[0]),
-            "test_rows": int(conformal_payload["y_true_test"].shape[0]),
-            "test_coverage": float(coverage),
-            "test_mean_width": float(width),
-        }
-        save_conformal(conformal_path, ci, meta=meta)
-        print(f"Saved conformal artifacts to {cal_path}, {test_path}, {conformal_path}")
+        for target, payload in conformal_payloads.items():
+            cal_path = _format_uncertainty_path(cal_template, target, "calibration", multi)
+            test_path = _format_uncertainty_path(test_template, target, "test", multi)
+            cal_path.parent.mkdir(parents=True, exist_ok=True)
+            test_path.parent.mkdir(parents=True, exist_ok=True)
+            np.savez(cal_path, y_true=payload["y_true_cal"], y_pred=payload["y_pred_cal"])
+            np.savez(test_path, y_true=payload["y_true_test"], y_pred=payload["y_pred_test"])
+
+            ci = ConformalInterval(conf_cfg)
+            ci.fit_calibration(payload["y_true_cal"], payload["y_pred_cal"])
+            coverage = ci.coverage(payload["y_true_test"], payload["y_pred_test"])
+            width = ci.mean_width(payload["y_pred_test"])
+            conformal_path = artifacts_dir / f"{payload['target']}_conformal.json"
+            meta = {
+                "target": payload["target"],
+                "model": payload["model"],
+                "horizon": horizon,
+                "calibration_rows": int(payload["y_true_cal"].shape[0]),
+                "test_rows": int(payload["y_true_test"].shape[0]),
+                "test_coverage": float(coverage),
+                "test_mean_width": float(width),
+            }
+            save_conformal(conformal_path, ci, meta=meta)
+            print(f"Saved conformal artifacts to {cal_path}, {test_path}, {conformal_path}")
 
     # Write human-readable comparison report and machine-readable metrics.
     lines = ["# ML vs DL Comparison\n\n"]
