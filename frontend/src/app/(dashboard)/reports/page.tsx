@@ -111,6 +111,8 @@ export default function ReportsPage() {
   const metricsLabel =
     metricsSourceActive === 'week2_metrics'
       ? 'Training metrics (week2_metrics.json)'
+      : metricsSourceActive === 'publication_table'
+      ? 'Publication metrics (table3_forecast_metrics_us.csv)'
       : metricsSourceActive === 'forecast_point_metrics'
       ? 'Backtest metrics (forecast_point_metrics.csv)'
       : 'Demo metrics';
