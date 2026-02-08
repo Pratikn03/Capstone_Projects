@@ -11,7 +11,6 @@ import { AnomalyTimeline } from '@/components/charts/AnomalyTimeline';
 import { AnomalyList } from '@/components/charts/AnomalyList';
 import { MLOpsMonitor } from '@/components/charts/MLOpsMonitor';
 import {
-  mockDispatchForecast,
   mockBatterySchedule,
   mockForecastWithPI,
   mockAnomalies,
@@ -19,12 +18,13 @@ import {
   mockDriftData,
   mockParetoFrontier,
 } from '@/lib/api/mock-data';
+import { useDispatchCompare } from '@/lib/api/dispatch-client';
 import { useReportsData } from '@/lib/api/reports-client';
 import { formatCurrency, formatMW, formatPercent } from '@/lib/utils';
 
 export default function DashboardPage() {
   // Load mock data (in production, these would be RSC data fetches)
-  const dispatch = mockDispatchForecast('DE', 24);
+  const dispatch = useDispatchCompare('DE', 24);
   const battery = mockBatterySchedule('DE');
   const forecastLoad = mockForecastWithPI('load_mw', 48);
   const anomalies = mockAnomalies();
@@ -93,7 +93,12 @@ export default function DashboardPage() {
         <ForecastChart data={forecastLoad} target="load_mw" zoneId="DE" />
 
         {/* Panel 2: Generation Dispatch (Baseline vs Optimized) */}
-        <DispatchChart data={dispatch.data} title="24h Dispatch — Germany (OPSD)" />
+        <DispatchChart
+          optimized={dispatch.optimized}
+          baseline={dispatch.baseline}
+          title="24h Dispatch — Germany (OPSD)"
+          showBaseline
+        />
       </div>
 
       {/* ─── Row 2: Battery SOC + Cost-Carbon Tradeoff ─── */}
