@@ -15,9 +15,8 @@ training:
   lookback: 168   # 1 week history
   horizon: 24     # 24 hour forecast
   batch_size: 64
-  epochs: 20
+  epochs: 50
   learning_rate: 0.001
-  patience: 5     # Early stopping
 
 model:
   hidden_size: 64

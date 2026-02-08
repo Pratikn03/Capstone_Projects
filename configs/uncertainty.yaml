@@ -11,7 +11,7 @@ conformal:
 # Usually "val" is fine, but best practice is a dedicated "calibration" split after train.
 calibration_split: "val"
 
-target: "load_mw"
+targets: ["load_mw", "wind_mw", "solar_mw"]
 artifacts_dir: "artifacts/uncertainty"
-calibration_npz: "artifacts/backtests/calibration.npz"
-test_npz: "artifacts/backtests/test.npz"
+calibration_npz: "artifacts/backtests/{target}_calibration.npz"
+test_npz: "artifacts/backtests/{target}_test.npz"
