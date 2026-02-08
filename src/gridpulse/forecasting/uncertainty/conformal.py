@@ -53,6 +53,7 @@ class ConformalInterval:
 
         if self.cfg.horizon_wise:
             self.q_h = np.quantile(resid, 1.0 - self.cfg.alpha, axis=0)
+            self.q_global = float(np.quantile(resid.flatten(), 1.0 - self.cfg.alpha))
             if self.cfg.rolling:
                 self._resid_buffers = [
                     deque(resid[:, h].tolist(), maxlen=self.cfg.rolling_window) for h in range(horizon)
@@ -90,6 +91,9 @@ class ConformalInterval:
             self.q_h = np.array([
                 np.quantile(np.array(buf), 1.0 - self.cfg.alpha) for buf in self._resid_buffers
             ])
+            all_vals = np.concatenate([np.array(buf) for buf in self._resid_buffers if len(buf) > 0])
+            if all_vals.size:
+                self.q_global = float(np.quantile(all_vals, 1.0 - self.cfg.alpha))
         else:
             self.q_global = float(np.quantile(np.array(self._resid_buffers[0]), 1.0 - self.cfg.alpha))
 
@@ -97,7 +101,8 @@ class ConformalInterval:
         """Return lower/upper arrays with the same shape as y_pred."""
         y_pred = np.asarray(y_pred)
         if y_pred.ndim == 1:
-            y_pred2 = y_pred.reshape(-1, 1)
+            # Treat 1D input as a single horizon vector.
+            y_pred2 = y_pred.reshape(1, -1)
         else:
             y_pred2 = y_pred
 
@@ -106,7 +111,14 @@ class ConformalInterval:
         if self.cfg.horizon_wise:
             if self.q_h is None:
                 raise RuntimeError("ConformalInterval not calibrated. Call fit_calibration() first.")
-            q = self.q_h.reshape(1, horizon)
+            if len(self.q_h) == horizon:
+                q = self.q_h.reshape(1, horizon)
+            elif self.q_global is not None:
+                q = np.full((1, horizon), self.q_global)
+            else:
+                raise RuntimeError(
+                    f"Conformal horizon {len(self.q_h)} does not match request horizon {horizon}."
+                )
         else:
             if self.q_global is None:
                 raise RuntimeError("ConformalInterval not calibrated. Call fit_calibration() first.")

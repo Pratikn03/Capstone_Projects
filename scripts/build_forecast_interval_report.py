@@ -23,6 +23,7 @@ def _load_npz(path: Path) -> tuple[np.ndarray, np.ndarray]:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/uncertainty.yaml")
+    ap.add_argument("--target", default=None)
     ap.add_argument("--cal", default=None)
     ap.add_argument("--test", default=None)
     ap.add_argument("--alpha", type=float, default=None)
@@ -31,8 +32,18 @@ def main() -> None:
 
     cfg_path = Path(args.config)
     cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) if cfg_path.exists() else {}
-    cal_path = Path(args.cal or cfg.get("calibration_npz", "artifacts/backtests/calibration.npz"))
-    test_path = Path(args.test or cfg.get("test_npz", "artifacts/backtests/test.npz"))
+    target = args.target
+    if target is None:
+        targets_cfg = cfg.get("targets")
+        if isinstance(targets_cfg, list) and targets_cfg:
+            target = str(targets_cfg[0])
+        else:
+            target = str(cfg.get("target", "load_mw"))
+
+    cal_template = args.cal or cfg.get("calibration_npz", "artifacts/backtests/calibration.npz")
+    test_template = args.test or cfg.get("test_npz", "artifacts/backtests/test.npz")
+    cal_path = Path(cal_template.format(target=target)) if "{target}" in str(cal_template) else Path(cal_template)
+    test_path = Path(test_template.format(target=target)) if "{target}" in str(test_template) else Path(test_template)
     alpha = args.alpha
     if alpha is None:
         alpha = float(cfg.get("conformal", {}).get("alpha", 0.10))
@@ -53,6 +64,7 @@ def main() -> None:
 
     lines = [
         "# Forecast Interval Report (Conformal Prediction)\n",
+        f"- target: {target}\n",
         f"- alpha: {alpha} (target coverage {1 - alpha:.0%})\n",
         f"- Test coverage (PICP): **{coverage:.3f}**\n",
         f"- Mean interval width (MPIW): **{width:.3f}**\n",

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Optional, Type
+from typing import Any, List, Optional, Type
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
@@ -132,6 +132,7 @@ class UncertaintyConformalConfig(BaseModel):
 class UncertaintyConfig(BaseModel):
     enabled: bool = True
     target: str = "load_mw"
+    targets: Optional[List[str]] = None
     calibration_split: str = "val"
     artifacts_dir: str = "artifacts/uncertainty"
     calibration_npz: str = "artifacts/backtests/calibration.npz"

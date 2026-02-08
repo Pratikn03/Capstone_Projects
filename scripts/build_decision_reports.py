@@ -48,16 +48,28 @@ def _resolve_model_path(target: str, cfg: dict, models_dir: Path) -> Path | None
     return None
 
 
-def _forecast(df: pd.DataFrame, target: str, horizon: int, cfg: dict, models_dir: Path) -> list[float] | None:
+def _forecast(df: pd.DataFrame, target: str, horizon: int, cfg: dict, models_dir: Path) -> dict | None:
     model_path = _resolve_model_path(target, cfg, models_dir)
     if not model_path:
         return None
     bundle = load_model_bundle(model_path)
     try:
-        pred = predict_next_24h(df, bundle, horizon=horizon)
+        return predict_next_24h(df, bundle, horizon=horizon)
     except Exception:
         return None
-    return pred.get("forecast")
+
+
+def _bounds_from_quantiles(pred: dict | None, fallback: np.ndarray) -> dict:
+    if pred:
+        quantiles = pred.get("quantiles", {}) or {}
+        lower = quantiles.get("0.1")
+        upper = quantiles.get("0.9")
+        if lower is not None and upper is not None:
+            lower_arr = np.asarray(lower, dtype=float)
+            upper_arr = np.asarray(upper, dtype=float)
+            if len(lower_arr) == len(fallback) and len(upper_arr) == len(fallback):
+                return {"lower": lower_arr, "upper": upper_arr}
+    return {"lower": fallback, "upper": fallback}
 
 
 def _conformal_bounds(target: str, yhat: np.ndarray, cfg: dict) -> dict | None:
@@ -147,18 +159,18 @@ def main() -> None:
     renew = wind + solar
 
     models_dir = Path("artifacts/models")
-    f_load = _forecast(context_df, "load_mw", horizon, forecast_cfg, models_dir) or load.tolist()
-    f_wind = _forecast(context_df, "wind_mw", horizon, forecast_cfg, models_dir) or wind.tolist()
-    f_solar = _forecast(context_df, "solar_mw", horizon, forecast_cfg, models_dir) or solar.tolist()
+    load_pred = _forecast(context_df, "load_mw", horizon, forecast_cfg, models_dir)
+    wind_pred = _forecast(context_df, "wind_mw", horizon, forecast_cfg, models_dir)
+    solar_pred = _forecast(context_df, "solar_mw", horizon, forecast_cfg, models_dir)
 
-    f_load = np.asarray(f_load, dtype=float)
-    f_wind = np.asarray(f_wind, dtype=float)
-    f_solar = np.asarray(f_solar, dtype=float)
+    f_load = np.asarray(load_pred.get("forecast") if load_pred else load, dtype=float)
+    f_wind = np.asarray(wind_pred.get("forecast") if wind_pred else wind, dtype=float)
+    f_solar = np.asarray(solar_pred.get("forecast") if solar_pred else solar, dtype=float)
     f_renew = f_wind + f_solar
 
-    load_bounds = _conformal_bounds("load_mw", f_load, unc_cfg)
-    wind_bounds = _conformal_bounds("wind_mw", f_wind, unc_cfg)
-    solar_bounds = _conformal_bounds("solar_mw", f_solar, unc_cfg)
+    load_bounds = _conformal_bounds("load_mw", f_load, unc_cfg) or _bounds_from_quantiles(load_pred, f_load)
+    wind_bounds = _conformal_bounds("wind_mw", f_wind, unc_cfg) or _bounds_from_quantiles(wind_pred, f_wind)
+    solar_bounds = _conformal_bounds("solar_mw", f_solar, unc_cfg) or _bounds_from_quantiles(solar_pred, f_solar)
 
     renew_bounds = None
     if wind_bounds and solar_bounds:

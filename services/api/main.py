@@ -1,4 +1,6 @@
 """FastAPI application entrypoint."""
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException, Security
 from pydantic import BaseModel
 
@@ -12,7 +14,16 @@ from services.api.routers.forecast_intervals import router as intervals_router
 from services.api.security import get_api_key, verify_scope
 
 setup_logging()
-app = FastAPI(title="GridPulse API", version="0.1.0")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    watchdog.start()
+    yield
+    watchdog.stop()
+
+
+app = FastAPI(title="GridPulse API", version="0.1.0", lifespan=lifespan)
 
 # Initialize Systems
 bms_cfg = get_bms_config()
@@ -23,16 +34,6 @@ bms = SafetyLayer(
     max_soc_pct=bms_cfg["max_soc_pct"],
 )
 watchdog = SystemWatchdog(timeout_seconds=get_watchdog_timeout())
-
-
-@app.on_event("startup")
-async def startup_event():
-    watchdog.start()
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    watchdog.stop()
 
 
 app.include_router(forecast.router, prefix="/forecast", tags=["forecast"])
