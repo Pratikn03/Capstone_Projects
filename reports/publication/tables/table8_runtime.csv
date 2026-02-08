@@ -1,0 +1,3 @@
+Dataset,Train_rows,Test_rows,N_models,Total_model_MB
+DE,12163,2608,12,47.85
+US,64667,13858,9,4.35

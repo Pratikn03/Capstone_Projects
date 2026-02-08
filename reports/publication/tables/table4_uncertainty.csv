@@ -1,0 +1,7 @@
+Dataset,Target,Alpha,PICP,MPIW,N_test
+DE,load_mw,0.1,0.9327,742.6494,1739
+DE,wind_mw,0.1,0.8942,350.7705,1739
+DE,solar_mw,0.1,0.87,622.6662,1739
+US,load_mw,0.1,0.9012,439.0084,9239
+US,wind_mw,0.1,0.7969,35590.4,9239
+US,solar_mw,0.1,0.6987,11332.4,9239
