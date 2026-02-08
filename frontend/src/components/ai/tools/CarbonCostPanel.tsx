@@ -6,10 +6,19 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 import type { ParetoPoint } from '@/lib/api/mock-data';
+import { formatCurrency, formatMW, formatPercent } from '@/lib/utils';
 
 interface CarbonCostPanelProps {
   data: ParetoPoint[];
   zoneId: string;
+  summary?: {
+    cost_savings_pct?: number | null;
+    cost_savings_usd?: number | null;
+    carbon_reduction_pct?: number | null;
+    carbon_reduction_kg?: number | null;
+    peak_shaving_pct?: number | null;
+    peak_shaving_mw?: number | null;
+  };
 }
 
 function CustomTooltip({ active, payload }: any) {
@@ -38,7 +47,14 @@ function CustomTooltip({ active, payload }: any) {
   );
 }
 
-export function CarbonCostPanel({ data, zoneId }: CarbonCostPanelProps) {
+export function CarbonCostPanel({ data, zoneId, summary }: CarbonCostPanelProps) {
+  const costSavingsPct = summary?.cost_savings_pct ?? 17.4;
+  const costSavingsUsd = summary?.cost_savings_usd ?? null;
+  const carbonReductionPct = summary?.carbon_reduction_pct ?? 32.6;
+  const carbonTons = summary?.carbon_reduction_kg ? summary.carbon_reduction_kg / 1000 : 47.8;
+  const peakShavingPct = summary?.peak_shaving_pct ?? 19.5;
+  const peakShavingMw = summary?.peak_shaving_mw ?? 5000;
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.97 }}
@@ -59,19 +75,21 @@ export function CarbonCostPanel({ data, zoneId }: CarbonCostPanelProps) {
       {/* KPI row */}
       <div className="grid grid-cols-3 gap-4 px-5 pt-4">
         <div className="text-center p-3 rounded-lg bg-white/3">
-          <div className="text-lg font-bold text-energy-primary stat-value">17.4%</div>
+          <div className="text-lg font-bold text-energy-primary stat-value">{formatPercent(costSavingsPct)}</div>
           <div className="text-[10px] text-slate-500 mt-0.5">Cost Savings</div>
-          <div className="text-xs text-slate-400 font-mono">€23,500</div>
+          <div className="text-xs text-slate-400 font-mono">
+            {costSavingsUsd !== null ? formatCurrency(costSavingsUsd, 'USD') : '€23,500'}
+          </div>
         </div>
         <div className="text-center p-3 rounded-lg bg-white/3">
-          <div className="text-lg font-bold text-energy-primary stat-value">32.6%</div>
+          <div className="text-lg font-bold text-energy-primary stat-value">{formatPercent(carbonReductionPct)}</div>
           <div className="text-[10px] text-slate-500 mt-0.5">Carbon Reduction</div>
-          <div className="text-xs text-slate-400 font-mono">47.8 tCO₂</div>
+          <div className="text-xs text-slate-400 font-mono">{carbonTons.toFixed(1)} tCO₂</div>
         </div>
         <div className="text-center p-3 rounded-lg bg-white/3">
-          <div className="text-lg font-bold text-energy-info stat-value">19.5%</div>
+          <div className="text-lg font-bold text-energy-info stat-value">{formatPercent(peakShavingPct)}</div>
           <div className="text-[10px] text-slate-500 mt-0.5">Peak Shaving</div>
-          <div className="text-xs text-slate-400 font-mono">5,000 MW</div>
+          <div className="text-xs text-slate-400 font-mono">{formatMW(peakShavingMw)}</div>
         </div>
       </div>
 
