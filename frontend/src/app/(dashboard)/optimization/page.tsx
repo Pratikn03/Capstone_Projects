@@ -27,7 +27,7 @@ export default function OptimizationPage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <DispatchChart data={dispatch.data} title="Optimized Dispatch — Germany" />
+        <DispatchChart optimized={dispatch.data} title="Optimized Dispatch — Germany" />
         <CarbonCostPanel data={pareto} zoneId="DE" />
       </div>
 

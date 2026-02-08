@@ -28,7 +28,7 @@ export function ZoneDetail({ zoneId }: ZoneDetailProps) {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <ForecastChart data={forecast} target="load_mw" zoneId={zoneId.toUpperCase()} />
-        <DispatchChart data={dispatch.data} title={`Dispatch — ${zone.name}`} />
+        <DispatchChart optimized={dispatch.data} title={`Dispatch — ${zone.name}`} />
       </div>
 
       <BatterySOCChart schedule={battery.schedule} metrics={battery.metrics} />
