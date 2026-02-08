@@ -21,35 +21,42 @@ import {
 import { useDispatchCompare } from '@/lib/api/dispatch-client';
 import { useReportsData } from '@/lib/api/reports-client';
 import { formatCurrency, formatMW, formatPercent } from '@/lib/utils';
+import { useRegion } from '@/components/ui/RegionContext';
 
 export default function DashboardPage() {
   // Load mock data (in production, these would be RSC data fetches)
-  const dispatch = useDispatchCompare('DE', 24);
-  const battery = mockBatterySchedule('DE');
+  const { region } = useRegion();
+  const dispatch = useDispatchCompare(region, 24);
+  const battery = mockBatterySchedule(region);
   const forecastLoad = mockForecastWithPI('load_mw', 48);
   const anomalies = mockAnomalies();
   const anomalyZScores = mockAnomalyZScores(72);
   const driftData = mockDriftData(30);
   const pareto = mockParetoFrontier();
-  const { metrics, impact, robustness } = useReportsData();
+  const { metrics, impact, robustness, regions } = useReportsData();
+  const regionBundle = regions[region];
+  const metricsActive = regionBundle?.metrics?.length ? regionBundle.metrics : metrics;
+  const impactActive = regionBundle?.impact ?? impact;
+  const robustnessActive = regionBundle?.robustness ?? robustness;
 
-  const loadMetrics = metrics.filter((m) => m.target === 'load_mw');
+  const loadMetrics = metricsActive.filter((m) => m.target === 'load_mw');
   const bestLoadMetric = loadMetrics.length
     ? loadMetrics.reduce((a, b) => (a.rmse < b.rmse ? a : b))
     : null;
   const bestRMSE = bestLoadMetric ? bestLoadMetric.rmse : null;
-  const costSavingsPct = impact?.cost_savings_pct ?? 17.4;
-  const costSavingsUsd = impact?.cost_savings_usd ?? null;
-  const carbonReductionPct = impact?.carbon_reduction_pct ?? 32.6;
+  const costSavingsPct = impactActive?.cost_savings_pct ?? 17.4;
+  const costSavingsUsd = impactActive?.cost_savings_usd ?? null;
+  const carbonReductionPct = impactActive?.carbon_reduction_pct ?? 32.6;
   const carbonTons =
-    impact?.carbon_reduction_kg !== null && impact?.carbon_reduction_kg !== undefined
-      ? impact.carbon_reduction_kg / 1000
+    impactActive?.carbon_reduction_kg !== null && impactActive?.carbon_reduction_kg !== undefined
+      ? impactActive.carbon_reduction_kg / 1000
       : null;
-  const peakShavingPct = impact?.peak_shaving_pct ?? 19.5;
-  const peakShavingMw = impact?.peak_shaving_mw ?? 5000;
-  const p95Regret = robustness?.p95_regret ?? null;
-  const infeasibleRate = robustness?.infeasible_rate ?? null;
-  const robustnessPct = robustness?.perturbation_pct ?? null;
+  const peakShavingPct = impactActive?.peak_shaving_pct ?? 19.5;
+  const peakShavingMw = impactActive?.peak_shaving_mw ?? 5000;
+  const regionLabel = region === 'US' ? 'USA (EIA-930)' : 'Germany (OPSD)';
+  const p95Regret = robustnessActive?.p95_regret ?? null;
+  const infeasibleRate = robustnessActive?.infeasible_rate ?? null;
+  const robustnessPct = robustnessActive?.perturbation_pct ?? null;
   const formatMaybePercent = (value: number | null | undefined) =>
     value === null || value === undefined ? 'N/A' : formatPercent(value);
   const formatMaybeCurrency = (value: number | null | undefined) =>
@@ -103,7 +110,7 @@ export default function DashboardPage() {
         <ForecastChart
           data={forecastLoad}
           target="load_mw"
-          zoneId="DE"
+          zoneId={region}
           metrics={bestLoadMetric ? { rmse: bestLoadMetric.rmse, coverage_90: bestLoadMetric.coverage_90 } : undefined}
         />
 
@@ -111,7 +118,7 @@ export default function DashboardPage() {
         <DispatchChart
           optimized={dispatch.optimized}
           baseline={dispatch.baseline}
-          title="24h Dispatch — Germany (OPSD)"
+          title={`24h Dispatch — ${regionLabel}`}
           showBaseline
         />
       </div>
@@ -122,7 +129,7 @@ export default function DashboardPage() {
         <BatterySOCChart schedule={battery.schedule} metrics={battery.metrics} />
 
         {/* Panel 4: Cost-Carbon Pareto */}
-        <CarbonCostPanel data={pareto} zoneId="DE" summary={impact ?? undefined} />
+        <CarbonCostPanel data={pareto} zoneId={region} summary={impactActive ?? undefined} />
       </div>
 
       {/* ─── Row 3: Impact & Robustness ─── */}

@@ -4,6 +4,7 @@ import { DispatchChart } from '@/components/ai/tools/DispatchChart';
 import { BatterySOCChart } from '@/components/ai/tools/BatterySOCChart';
 import { CarbonCostPanel } from '@/components/ai/tools/CarbonCostPanel';
 import { Panel } from '@/components/ui/Panel';
+import { useRegion } from '@/components/ui/RegionContext';
 import {
   mockDispatchForecast,
   mockBatterySchedule,
@@ -11,9 +12,11 @@ import {
 } from '@/lib/api/mock-data';
 
 export default function OptimizationPage() {
-  const dispatch = mockDispatchForecast('DE', 24);
-  const battery = mockBatterySchedule('DE');
+  const { region } = useRegion();
+  const dispatch = mockDispatchForecast(region, 24);
+  const battery = mockBatterySchedule(region);
   const pareto = mockParetoFrontier();
+  const regionLabel = region === 'US' ? 'USA' : 'Germany';
 
   return (
     <div className="p-6 space-y-6">
@@ -27,8 +30,8 @@ export default function OptimizationPage() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <DispatchChart optimized={dispatch.data} title="Optimized Dispatch — Germany" />
-        <CarbonCostPanel data={pareto} zoneId="DE" />
+        <DispatchChart optimized={dispatch.data} title={`Optimized Dispatch — ${regionLabel}`} />
+        <CarbonCostPanel data={pareto} zoneId={region} />
       </div>
 
       <BatterySOCChart schedule={battery.schedule} metrics={battery.metrics} />
