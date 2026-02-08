@@ -9,6 +9,6 @@ COPY services /app/services
 COPY configs /app/configs
 COPY scripts /app/scripts
 
-ENV PYTHONPATH=/app/src
+ENV PYTHONPATH=/app/src:/app
 EXPOSE 8501
 CMD ["streamlit", "run", "services/dashboard/app.py", "--server.port=8501", "--server.address=0.0.0.0"]

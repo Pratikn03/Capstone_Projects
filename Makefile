@@ -1,19 +1,26 @@
-.PHONY: setup lint test api dashboard pipeline data train production reports monitor release_check release_check_full
+.PHONY: setup lint test api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full
 
 setup:
 	python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+	cd frontend && npm install
 
 lint:
-	python -m compileall src
+	python -m compileall src services scripts
 
 test:
 	pytest -q
 
 api:
-	uvicorn services.api.main:app --reload --port 8000
+	PYTHONPATH=. uvicorn services.api.main:app --reload --port 8000
 
 dashboard:
 	streamlit run services/dashboard/app.py
+
+frontend:
+	cd frontend && npm run dev
+
+frontend-build:
+	cd frontend && npm run build
 
 pipeline:
 	python -m gridpulse.pipeline.run --all
