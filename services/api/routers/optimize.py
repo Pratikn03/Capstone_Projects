@@ -9,6 +9,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from gridpulse.optimizer import optimize_dispatch
+from gridpulse.optimizer.baselines import grid_only_dispatch
 
 router = APIRouter()
 
@@ -57,6 +58,24 @@ def optimize(req: OptimizeRequest):
         forecast_carbon_kg=req.forecast_carbon_kg_per_mwh,
         load_interval=load_interval,
         renewables_interval=renewables_interval,
+    )
+    return OptimizeResponse(
+        dispatch_plan=result,
+        expected_cost_usd=result.get("expected_cost_usd"),
+        carbon_kg=result.get("carbon_kg"),
+        carbon_cost_usd=result.get("carbon_cost_usd"),
+    )
+
+
+@router.post("/baseline", response_model=OptimizeResponse)
+def optimize_baseline(req: OptimizeRequest):
+    cfg = req.config or _load_cfg()
+    result = grid_only_dispatch(
+        req.forecast_load_mw,
+        req.forecast_renewables_mw,
+        cfg,
+        price_series=req.forecast_price_eur_mwh,
+        carbon_series=req.forecast_carbon_kg_per_mwh,
     )
     return OptimizeResponse(
         dispatch_plan=result,
