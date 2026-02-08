@@ -19,13 +19,51 @@ export type ImpactSummary = {
   peak_shaving_mw: number | null;
 };
 
+export type RobustnessSummary = {
+  perturbation_pct: number;
+  infeasible_rate: number | null;
+  mean_regret: number | null;
+  p95_regret: number | null;
+};
+
 export type ReportsApiResponse = {
   reports: ReportFile[];
   metrics: ForecastMetrics[];
+  metrics_backtest?: ForecastMetrics[];
   impact: ImpactSummary | null;
+  robustness: RobustnessSummary | null;
+  regions?: Record<string, RegionReports>;
   meta: {
     source: 'reports' | 'missing';
     last_updated?: string;
+    metrics_source?: 'week2_metrics' | 'forecast_point_metrics' | 'missing';
+    warnings?: string[];
+  };
+};
+
+export type TrainingStatus = {
+  features_path: string | null;
+  features_exists: boolean;
+  targets_expected: string[];
+  targets_trained: string[];
+  targets_missing: string[];
+  models_dir: string | null;
+  missing_models: Array<{ target: string; missing: string[] }>;
+};
+
+export type RegionReports = {
+  id: string;
+  label: string;
+  reports: ReportFile[];
+  metrics: ForecastMetrics[];
+  metrics_backtest?: ForecastMetrics[];
+  impact: ImpactSummary | null;
+  robustness: RobustnessSummary | null;
+  training_status: TrainingStatus | null;
+  meta: {
+    source: 'reports' | 'missing';
+    last_updated?: string;
+    metrics_source?: 'week2_metrics' | 'forecast_point_metrics' | 'missing';
     warnings?: string[];
   };
 };

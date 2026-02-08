@@ -42,8 +42,12 @@ export function useReportsData() {
   return {
     reports: data?.reports ?? [],
     metrics: data?.metrics?.length ? data.metrics : mockForecastMetrics(),
+    metricsBacktest: data?.metrics_backtest ?? [],
     impact: data?.impact ?? null,
+    robustness: data?.robustness ?? null,
+    regions: data?.regions ?? {},
     meta: data?.meta ?? { source: 'missing' as const },
+    metricsSource: data?.meta?.metrics_source ?? 'missing',
     loading,
     error,
   };
