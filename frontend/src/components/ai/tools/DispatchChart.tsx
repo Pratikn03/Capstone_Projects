@@ -5,6 +5,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 
 interface DispatchData {
   timestamp: string;
@@ -18,9 +19,11 @@ interface DispatchData {
 }
 
 interface DispatchChartProps {
-  data: DispatchData[];
+  optimized: DispatchData[];
+  baseline?: DispatchData[];
   title: string;
   showBaseline?: boolean;
+  defaultMode?: 'optimized' | 'baseline';
 }
 
 function formatTime(ts: string) {
@@ -47,8 +50,17 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export function DispatchChart({ data, title, showBaseline = false }: DispatchChartProps) {
-  const peakLoad = Math.max(...data.map((d) => d.load_mw));
+export function DispatchChart({
+  optimized,
+  baseline,
+  title,
+  showBaseline = false,
+  defaultMode = 'optimized',
+}: DispatchChartProps) {
+  const allowBaseline = Boolean(baseline && baseline.length) && showBaseline;
+  const [mode, setMode] = useState<'optimized' | 'baseline'>(allowBaseline ? defaultMode : 'optimized');
+  const chartData = mode === 'baseline' && baseline ? baseline : optimized;
+  const peakLoad = Math.max(...chartData.map((d) => d.load_mw));
 
   return (
     <motion.div
@@ -60,8 +72,25 @@ export function DispatchChart({ data, title, showBaseline = false }: DispatchCha
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/6">
         <h3 className="text-sm font-semibold text-white">{title}</h3>
         <div className="flex items-center gap-2">
+          {allowBaseline && (
+            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-white/5">
+              {(['optimized', 'baseline'] as const).map((view) => (
+                <button
+                  key={view}
+                  onClick={() => setMode(view)}
+                  className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all ${
+                    mode === view
+                      ? 'bg-energy-primary/20 text-energy-primary'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  {view === 'optimized' ? 'GridPulse Optimized' : 'Baseline'}
+                </button>
+              ))}
+            </div>
+          )}
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-energy-primary/10 text-energy-primary border border-energy-primary/20">
-            Live Telemetry
+            {mode === 'optimized' ? 'Live Telemetry' : 'Baseline Mode'}
           </span>
           <span className="text-[10px] text-slate-500">
             Peak: {peakLoad.toLocaleString()} MW
@@ -71,7 +100,7 @@ export function DispatchChart({ data, title, showBaseline = false }: DispatchCha
 
       <div className="px-5 py-4 h-[320px]">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
             <defs>
               <linearGradient id="gradSolar" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#fbbf24" stopOpacity={0.6} />
@@ -116,6 +145,12 @@ export function DispatchChart({ data, title, showBaseline = false }: DispatchCha
             <ReferenceLine y={peakLoad * 1.05} stroke="#ef444480" strokeDasharray="4 4" label="" />
           </AreaChart>
         </ResponsiveContainer>
+      </div>
+
+      <div className="px-5 pb-3 text-[11px] text-slate-500">
+        {mode === 'optimized'
+          ? 'Optimization shifts charging to solar peaks and discharges during evening ramps to reduce thermal output.'
+          : 'Baseline dispatch meets net load without battery support or carbon-aware scheduling.'}
       </div>
     </motion.div>
   );
