@@ -14,6 +14,8 @@ import type {
   TrainingStatus,
 } from '@/lib/api/report-types';
 
+type MetricsSource = 'week2_metrics' | 'forecast_point_metrics' | 'publication_table' | 'missing';
+
 const MODEL_LABELS: Record<string, string> = {
   gbm: 'GBM (LightGBM)',
   lstm: 'LSTM',
@@ -103,6 +105,12 @@ function toNumber(value: string | undefined): number | null {
   if (!value) return null;
   const num = Number(value);
   return Number.isFinite(num) ? num : null;
+}
+
+function normalizeModelKey(value: string | undefined): string | null {
+  if (!value) return null;
+  const normalized = value.trim().toLowerCase();
+  return normalized.length ? normalized : null;
 }
 
 function parseCsv(raw: string): Array<Record<string, string>> {
@@ -200,6 +208,26 @@ export async function loadReportList(
   return results
     .sort((a, b) => b._mtimeMs - a._mtimeMs)
     .map(({ _mtimeMs, ...rest }) => rest);
+}
+
+function mergeReportLists(primary: ReportFile[], extra: ReportFile[]): ReportFile[] {
+  const map = new Map(primary.map((report) => [report.path, report]));
+  for (const report of extra) {
+    if (!map.has(report.path)) {
+      map.set(report.path, report);
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => {
+    const dateDiff = b.date.localeCompare(a.date);
+    if (dateDiff !== 0) return dateDiff;
+    return a.path.localeCompare(b.path);
+  });
+}
+
+function latestDate(dates: Array<string | undefined>): string | undefined {
+  const valid = dates.filter((date): date is string => Boolean(date));
+  if (!valid.length) return undefined;
+  return valid.sort().at(-1);
 }
 
 export async function loadForecastMetrics(reportsDir = resolveReportsDir()): Promise<ForecastMetrics[]> {
@@ -320,6 +348,47 @@ export async function loadTrainingMetrics(reportsDir = resolveReportsDir()): Pro
   return metrics;
 }
 
+export async function loadPublicationMetrics(metricsPath: string): Promise<ForecastMetrics[]> {
+  if (!(await fileExists(metricsPath))) {
+    return [];
+  }
+
+  const raw = await fs.readFile(metricsPath, 'utf-8');
+  const rows = parseCsv(raw);
+  const metrics: ForecastMetrics[] = [];
+
+  for (const row of rows) {
+    if (!ALLOWED_TARGETS.has(row.target)) continue;
+    const modelKey = normalizeModelKey(row.model);
+    if (!modelKey) continue;
+    const rmse = toNumber(row.rmse);
+    const mae = toNumber(row.mae);
+    if (rmse === null || mae === null) continue;
+    const rawMape =
+      row.target === 'solar_mw' && row.daylight_mape ? row.daylight_mape : row.mape;
+    const mapeValue = toNumber(rawMape);
+    metrics.push({
+      target: row.target,
+      model: MODEL_LABELS[modelKey] ?? row.model,
+      rmse,
+      mae,
+      mape: mapeValue !== null ? mapeValue * 100 : undefined,
+    });
+  }
+
+  const targetOrder = ['load_mw', 'wind_mw', 'solar_mw'];
+  const modelOrder = ['GBM (LightGBM)', 'LSTM', 'TCN', 'Persistence'];
+  metrics.sort((a, b) => {
+    const targetDiff = targetOrder.indexOf(a.target) - targetOrder.indexOf(b.target);
+    if (targetDiff !== 0) return targetDiff;
+    const modelDiff = modelOrder.indexOf(a.model) - modelOrder.indexOf(b.model);
+    if (modelDiff !== 0) return modelDiff;
+    return a.model.localeCompare(b.model);
+  });
+
+  return metrics;
+}
+
 function parseTargetsFromConfig(raw: string): string[] {
   const match = raw.match(/targets:\s*\[([^\]]+)\]/);
   if (!match) return [];
@@ -421,7 +490,7 @@ async function loadTrainingStatus(
 async function loadMetricsBundle(reportsDir: string): Promise<{
   metrics: ForecastMetrics[];
   metricsBacktest: ForecastMetrics[];
-  metricsSource: 'week2_metrics' | 'forecast_point_metrics' | 'missing';
+  metricsSource: MetricsSource;
 }> {
   const metricsBacktest = await loadForecastMetrics(reportsDir);
   const training = await loadTrainingMetrics(reportsDir);
@@ -446,10 +515,11 @@ async function loadRegionBundle(params: {
   let reports: ReportFile[] = [];
   let metrics: ForecastMetrics[] = [];
   let metricsBacktest: ForecastMetrics[] = [];
-  let metricsSource: 'week2_metrics' | 'forecast_point_metrics' | 'missing' = 'missing';
+  let metricsSource: MetricsSource = 'missing';
   let impact: ImpactSummary | null = null;
   let robustness: RobustnessSummary | null = null;
   let trainingStatus: TrainingStatus | null = null;
+  let trainingMetrics: ForecastMetrics[] = [];
 
   try {
     reports = await loadReportList(params.reportsDir, { rootDir: params.rootDir, ignoreDirs: params.ignoreDirs });
@@ -460,6 +530,7 @@ async function loadRegionBundle(params: {
   try {
     const bundle = await loadMetricsBundle(params.reportsDir);
     metrics = bundle.metrics;
+    trainingMetrics = bundle.metrics;
     metricsBacktest = bundle.metricsBacktest;
     metricsSource = bundle.metricsSource;
   } catch (err) {
@@ -479,7 +550,7 @@ async function loadRegionBundle(params: {
   }
 
   try {
-    trainingStatus = await loadTrainingStatus(params.configPath, params.reportsDir, metrics);
+    trainingStatus = await loadTrainingStatus(params.configPath, params.reportsDir, trainingMetrics);
   } catch (err) {
     warnings.push(`Failed to read training status: ${String(err)}`);
   }
@@ -622,6 +693,26 @@ export async function loadReportsOverview(): Promise<ReportsApiResponse> {
     rootDir: reportsDir,
     configPath: path.join(REPO_ROOT, 'configs', 'train_forecast_eia930.yaml'),
   });
+
+  const publicationTablesDir = path.join(reportsDir, 'publication', 'tables');
+  const publicationReports = await loadReportList(publicationTablesDir, { rootDir: reportsDir });
+  const usPublicationReports = publicationReports.filter((report) =>
+    report.path.toLowerCase().includes('_us')
+  );
+  if (usPublicationReports.length) {
+    usBundle.reports = mergeReportLists(usBundle.reports, usPublicationReports);
+    usBundle.meta.last_updated = latestDate([
+      usBundle.meta.last_updated,
+      ...usPublicationReports.map((report) => report.date),
+    ]) ?? usBundle.meta.last_updated;
+  }
+
+  const usPublicationMetricsPath = path.join(publicationTablesDir, 'table3_forecast_metrics_us.csv');
+  const usPublicationMetrics = await loadPublicationMetrics(usPublicationMetricsPath);
+  if (usPublicationMetrics.length) {
+    usBundle.metrics = usPublicationMetrics;
+    usBundle.meta.metrics_source = 'publication_table';
+  }
 
   const regions: Record<string, RegionReports> = {
     DE: deBundle,

@@ -36,7 +36,7 @@ export type ReportsApiResponse = {
   meta: {
     source: 'reports' | 'missing';
     last_updated?: string;
-    metrics_source?: 'week2_metrics' | 'forecast_point_metrics' | 'missing';
+    metrics_source?: 'week2_metrics' | 'forecast_point_metrics' | 'publication_table' | 'missing';
     warnings?: string[];
   };
 };
@@ -63,7 +63,7 @@ export type RegionReports = {
   meta: {
     source: 'reports' | 'missing';
     last_updated?: string;
-    metrics_source?: 'week2_metrics' | 'forecast_point_metrics' | 'missing';
+    metrics_source?: 'week2_metrics' | 'forecast_point_metrics' | 'publication_table' | 'missing';
     warnings?: string[];
   };
 };
