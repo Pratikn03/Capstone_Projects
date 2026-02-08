@@ -12,6 +12,10 @@ interface ForecastChartProps {
   data: ForecastWithPI[];
   target: string;
   zoneId: string;
+  metrics?: {
+    rmse?: number;
+    coverage_90?: number;
+  };
 }
 
 const targetNames: Record<string, string> = {
@@ -49,10 +53,13 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export function ForecastChart({ data, target, zoneId }: ForecastChartProps) {
+export function ForecastChart({ data, target, zoneId, metrics }: ForecastChartProps) {
   const [showModel, setShowModel] = useState<'GBM' | 'LSTM' | 'TCN'>('GBM');
   const color = targetColors[target] || '#10b981';
   const name = targetNames[target] || target;
+  const horizonHours = data.length;
+  const coverage = metrics?.coverage_90;
+  const rmse = metrics?.rmse;
 
   return (
     <motion.div
@@ -69,6 +76,7 @@ export function ForecastChart({ data, target, zoneId }: ForecastChartProps) {
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-energy-info/10 text-energy-info border border-energy-info/20">
             90% PI
           </span>
+          <span className="text-[10px] text-slate-500">Horizon: {horizonHours}h</span>
         </div>
 
         {/* Model toggle */}
@@ -150,9 +158,19 @@ export function ForecastChart({ data, target, zoneId }: ForecastChartProps) {
 
       {/* Coverage badge */}
       <div className="px-5 pb-3 flex items-center gap-3 text-xs text-slate-500">
-        <span>PICP: <span className="text-energy-primary font-mono">93.2%</span></span>
+        <span>
+          PICP:{' '}
+          <span className="text-energy-primary font-mono">
+            {coverage === undefined ? 'N/A' : `${coverage.toFixed(1)}%`}
+          </span>
+        </span>
         <span>•</span>
-        <span>RMSE: <span className="text-white font-mono">348 MW</span></span>
+        <span>
+          RMSE:{' '}
+          <span className="text-white font-mono">
+            {rmse === undefined ? 'N/A' : `${rmse.toFixed(0)} MW`}
+          </span>
+        </span>
         <span>•</span>
         <span>Coverage verified with conformal prediction</span>
       </div>

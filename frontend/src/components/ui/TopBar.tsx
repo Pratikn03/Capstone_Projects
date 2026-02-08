@@ -60,6 +60,9 @@ export function TopBar({ region, onRegionChange }: TopBarProps) {
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-energy-primary-dim border border-energy-primary/20 text-xs text-energy-primary">
           Model: GBM
         </div>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-xs text-slate-300">
+          Horizon: 24h
+        </div>
       </div>
 
       {/* Right: Time + Notifications + Profile */}

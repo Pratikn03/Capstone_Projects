@@ -31,10 +31,13 @@ export default function DashboardPage() {
   const anomalyZScores = mockAnomalyZScores(72);
   const driftData = mockDriftData(30);
   const pareto = mockParetoFrontier();
-  const { metrics, impact } = useReportsData();
+  const { metrics, impact, robustness } = useReportsData();
 
   const loadMetrics = metrics.filter((m) => m.target === 'load_mw');
-  const bestRMSE = loadMetrics.length ? Math.min(...loadMetrics.map((m) => m.rmse)) : null;
+  const bestLoadMetric = loadMetrics.length
+    ? loadMetrics.reduce((a, b) => (a.rmse < b.rmse ? a : b))
+    : null;
+  const bestRMSE = bestLoadMetric ? bestLoadMetric.rmse : null;
   const costSavingsPct = impact?.cost_savings_pct ?? 17.4;
   const costSavingsUsd = impact?.cost_savings_usd ?? null;
   const carbonReductionPct = impact?.carbon_reduction_pct ?? 32.6;
@@ -44,6 +47,13 @@ export default function DashboardPage() {
       : null;
   const peakShavingPct = impact?.peak_shaving_pct ?? 19.5;
   const peakShavingMw = impact?.peak_shaving_mw ?? 5000;
+  const p95Regret = robustness?.p95_regret ?? null;
+  const infeasibleRate = robustness?.infeasible_rate ?? null;
+  const robustnessPct = robustness?.perturbation_pct ?? null;
+  const formatMaybePercent = (value: number | null | undefined) =>
+    value === null || value === undefined ? 'N/A' : formatPercent(value);
+  const formatMaybeCurrency = (value: number | null | undefined) =>
+    value === null || value === undefined ? 'N/A' : formatCurrency(value, 'USD');
 
   return (
     <div className="p-6 space-y-6">
@@ -90,7 +100,12 @@ export default function DashboardPage() {
       {/* ─── Row 1: Forecast + Dispatch ─── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Panel 1: Probabilistic Forecast with PI */}
-        <ForecastChart data={forecastLoad} target="load_mw" zoneId="DE" />
+        <ForecastChart
+          data={forecastLoad}
+          target="load_mw"
+          zoneId="DE"
+          metrics={bestLoadMetric ? { rmse: bestLoadMetric.rmse, coverage_90: bestLoadMetric.coverage_90 } : undefined}
+        />
 
         {/* Panel 2: Generation Dispatch (Baseline vs Optimized) */}
         <DispatchChart
@@ -107,10 +122,48 @@ export default function DashboardPage() {
         <BatterySOCChart schedule={battery.schedule} metrics={battery.metrics} />
 
         {/* Panel 4: Cost-Carbon Pareto */}
-        <CarbonCostPanel data={pareto} zoneId="DE" />
+        <CarbonCostPanel data={pareto} zoneId="DE" summary={impact ?? undefined} />
       </div>
 
-      {/* ─── Row 3: Anomalies + MLOps ─── */}
+      {/* ─── Row 3: Impact & Robustness ─── */}
+      <Panel
+        title="Impact & Robustness"
+        subtitle="Stress-tested dispatch performance"
+        badge={robustnessPct !== null ? `±${robustnessPct}%` : 'Robustness'}
+        badgeColor="info"
+      >
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-3 rounded-lg bg-white/3">
+            <div className="text-[10px] uppercase tracking-wider text-slate-500">Cost Savings</div>
+            <div className="text-lg font-semibold text-energy-primary">{formatMaybePercent(costSavingsPct)}</div>
+            <div className="text-xs text-slate-500 font-mono">{costSavingsUsd !== null ? formatCurrency(costSavingsUsd, 'USD') : 'N/A'}</div>
+          </div>
+          <div className="p-3 rounded-lg bg-white/3">
+            <div className="text-[10px] uppercase tracking-wider text-slate-500">Carbon Reduction</div>
+            <div className="text-lg font-semibold text-energy-primary">{formatMaybePercent(carbonReductionPct)}</div>
+            <div className="text-xs text-slate-500 font-mono">
+              {carbonTons !== null ? `${carbonTons.toFixed(1)} tCO₂` : 'N/A'}
+            </div>
+          </div>
+          <div className="p-3 rounded-lg bg-white/3">
+            <div className="text-[10px] uppercase tracking-wider text-slate-500">P95 Regret</div>
+            <div className="text-lg font-semibold text-white">{formatMaybeCurrency(p95Regret)}</div>
+            <div className="text-xs text-slate-500">Worst-case cost gap</div>
+          </div>
+          <div className="p-3 rounded-lg bg-white/3">
+            <div className="text-[10px] uppercase tracking-wider text-slate-500">Infeasible Rate</div>
+            <div className="text-lg font-semibold text-white">
+              {infeasibleRate === null ? 'N/A' : `${(infeasibleRate * 100).toFixed(1)}%`}
+            </div>
+            <div className="text-xs text-slate-500">Across stress trials</div>
+          </div>
+        </div>
+        <div className="mt-3 text-[11px] text-slate-500">
+          Robustness computed from perturbation trials on load and renewables; regret is measured vs oracle dispatch.
+        </div>
+      </Panel>
+
+      {/* ─── Row 4: Anomalies + MLOps ─── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Panel 5: Anomaly Detection Timeline */}
         <div className="space-y-4">

@@ -18,6 +18,10 @@ export default function ForecastingPage() {
   const { metrics } = useReportsData();
   const data = mockForecastWithPI(selectedTarget, 48);
   const formatMaybe = (value: number | undefined, digits: number) => (value === undefined ? 'N/A' : value.toFixed(digits));
+  const selectedMetrics = metrics.filter((m) => m.target === selectedTarget);
+  const bestMetric = selectedMetrics.length
+    ? selectedMetrics.reduce((a, b) => (a.rmse < b.rmse ? a : b))
+    : null;
 
   return (
     <div className="p-6 space-y-6">
@@ -64,7 +68,12 @@ export default function ForecastingPage() {
         </div>
       </div>
 
-      <ForecastChart data={data} target={selectedTarget} zoneId={selectedRegion} />
+      <ForecastChart
+        data={data}
+        target={selectedTarget}
+        zoneId={selectedRegion}
+        metrics={bestMetric ? { rmse: bestMetric.rmse, coverage_90: bestMetric.coverage_90 } : undefined}
+      />
 
       {/* Metrics table */}
       <Panel title="Model Comparison" subtitle="All models for selected target" badge="Conformal PI" badgeColor="info">
