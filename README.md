@@ -352,6 +352,10 @@ curl -X POST http://localhost:8000/optimize \
   -H 'Content-Type: application/json' \
   -d '{"forecast_load_mw":[8000,8200],"forecast_renewables_mw":[3200,3100]}'
 ```
+Interval forecasts (conformal) default to a 24‑hour horizon. If you request a different horizon, the API falls back to a global interval (single quantile for all steps); recalibrate for horizon‑wise intervals.
+```bash
+curl "http://localhost:8000/forecast/with-intervals?target=load_mw&horizon=24"
+```
 
 ## Notebooks
 - `notebooks/01_eda.ipynb` — dataset inspection

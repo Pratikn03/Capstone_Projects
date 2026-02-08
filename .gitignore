@@ -6,10 +6,19 @@ __pycache__/
 .venv/
 .DS_Store
 
+# IDE
+.idea/
+.vscode/
+
 # Project Data & Artifacts
 data/
 artifacts/
 .env
-.vscode/
 .ipynb_checkpoints
 .cache/
+
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+.next/
+node_modules/
