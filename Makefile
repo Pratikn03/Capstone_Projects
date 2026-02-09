@@ -1,4 +1,4 @@
-.PHONY: setup lint test api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full
+.PHONY: setup lint test api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis
 
 setup:
 	python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
@@ -10,17 +10,27 @@ lint:
 test:
 	pytest -q
 
+# Training verification
+verify-training:
+	python scripts/verify_training_outputs.py --verbose
+
+# Run CV evaluation (time-series cross-validation)
+cv-eval:
+	python -m gridpulse.forecasting.train --config configs/train_forecast.yaml --enable-cv
+
 api:
 	PYTHONPATH=. uvicorn services.api.main:app --reload --port 8000
 
-dashboard:
-	streamlit run services/dashboard/app.py
+dashboard: frontend
 
 frontend:
 	cd frontend && npm run dev
 
 frontend-build:
 	cd frontend && npm run build
+
+extract-data:
+	python scripts/extract_dashboard_data.py
 
 pipeline:
 	python -m gridpulse.pipeline.run --all
@@ -36,6 +46,18 @@ train:
 reports:
 	python scripts/build_reports.py
 
+reports-us:
+	python scripts/build_reports.py --features data/processed/us_eia930/features.parquet --splits data/processed/us_eia930/splits --models-dir artifacts/models_eia930 --reports-dir reports/eia930
+
+train-us:
+	python -m gridpulse.forecasting.train --config configs/train_forecast_eia930.yaml
+
+shap-importance:
+	python scripts/shap_importance.py
+
+stat-tests:
+	python scripts/statistical_tests.py
+
 monitor:
 	python scripts/run_monitoring.py
 
@@ -45,4 +67,29 @@ release_check:
 release_check_full:
 	bash scripts/release_check.sh --full
 
-production: pipeline train
+production: pipeline train extract-data
+
+# ============================================================
+# Advanced Features
+# ============================================================
+
+# Run ablation study (4 scenarios: Full, No Uncertainty, No Carbon, Forecast Only)
+ablations:
+	python scripts/run_ablations.py --data data/processed/splits/test.parquet --output reports/ablations --n-runs 5 -v
+
+# Build publication-quality LaTeX tables
+stats-tables:
+	python scripts/build_stats_tables.py --ablation-dir reports/ablations --output-dir reports/tables
+
+# Verify novelty outputs (ablations, stats, figures)
+verify-novelty:
+	python scripts/verify_novelty_outputs.py --verbose
+
+# Run robustness analysis with noise perturbations
+robustness-analysis:
+	python scripts/run_ablations.py --data data/processed/splits/test.parquet --output reports/robustness --n-runs 10 --noise 0.15 -v
+
+# Complete novelty workflow (ablations + tables + verification)
+novelty-full: ablations stats-tables verify-novelty
+	@echo "✅ Advanced features workflow complete"
+

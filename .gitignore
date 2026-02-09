@@ -10,15 +10,31 @@ __pycache__/
 .idea/
 .vscode/
 
-# Project Data & Artifacts
+# Project Data & Artifacts (large files)
 data/
 artifacts/
 .env
 .ipynb_checkpoints
 .cache/
 
+# Secrets & credentials
+*.pem
+*.key
+secrets/
+credentials/
+
 # Frontend (Next.js)
 frontend/node_modules/
 frontend/.next/
 .next/
 node_modules/
+
+# Build outputs
+dist/
+build/
+*.egg
+*.whl
+
+# Logs
+*.log
+logs/

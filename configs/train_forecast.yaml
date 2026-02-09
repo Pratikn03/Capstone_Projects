@@ -6,6 +6,10 @@ task:
 
 seed: 42
 
+# Advanced training options (enable via CLI flags):
+# --enable-cv: 5-fold time-series cross-validation
+# --use-pipeline: sklearn Pipeline for GBM (leakage-safe preprocessing)
+
 data:
   processed_path: data/processed/features.parquet
   timestamp_col: timestamp

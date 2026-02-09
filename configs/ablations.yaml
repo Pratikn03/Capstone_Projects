@@ -1,0 +1,72 @@
+# Ablation Study Configuration
+# Systematic evaluation of system components
+
+# Number of independent runs for statistical robustness
+n_runs: 5
+
+# Forecast noise level (standard deviation as fraction of mean)
+forecast_noise: 0.10  # 10% noise
+
+# Noise levels for perturbation analysis
+perturbation_noise_levels:
+  - 0.00  # Perfect forecasts
+  - 0.05  # 5% noise
+  - 0.10  # 10% noise
+  - 0.15  # 15% noise
+  - 0.20  # 20% noise
+  - 0.25  # 25% noise
+  - 0.30  # 30% noise
+
+# Monte Carlo samples per noise level
+perturbation_n_samples: 10
+
+# Ablation scenarios
+scenarios:
+  full_system:
+    description: "Full system with all components"
+    use_uncertainty: true
+    use_carbon_penalty: true
+    use_optimization: true
+  
+  no_uncertainty:
+    description: "Point forecasts only (no prediction intervals)"
+    use_uncertainty: false
+    use_carbon_penalty: true
+    use_optimization: true
+  
+  no_carbon:
+    description: "Cost-only optimization (no carbon penalty)"
+    use_uncertainty: true
+    use_carbon_penalty: false
+    use_optimization: true
+  
+  forecast_only:
+    description: "Forecasts without dispatch optimization"
+    use_uncertainty: false
+    use_carbon_penalty: false
+    use_optimization: false
+
+# Statistical testing
+statistical_tests:
+  bootstrap_n_samples: 10000  # Bootstrap iterations
+  confidence_level: 0.95  # 95% CI
+  paired_test: "wilcoxon"  # or "ttest"
+  alpha: 0.05  # Significance level
+
+# Cross-region comparison
+regions:
+  - name: "Germany (OPSD)"
+    test_data: "data/processed/splits/de_opsd_test.parquet"
+    country_code: "DE"
+  - name: "USA (EIA-930)"
+    test_data: "data/processed/splits/us_eia930_test.parquet"
+    country_code: "US"
+
+# Output settings
+output:
+  save_csv: true
+  save_json: true
+  save_latex: true
+  save_figures: true
+  figure_dpi: 300
+  figure_format: "png"

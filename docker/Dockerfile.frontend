@@ -11,6 +11,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY frontend/ .
+COPY data/dashboard/ ./data/dashboard/
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
@@ -25,6 +26,7 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=appuser:appuser /app/.next/standalone ./
 COPY --from=builder --chown=appuser:appuser /app/.next/static ./.next/static
+COPY --from=builder --chown=appuser:appuser /app/data/dashboard ./data/dashboard
 
 USER appuser
 EXPOSE 3000

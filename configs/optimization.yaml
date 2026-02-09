@@ -41,3 +41,78 @@ risk:
   load_bound: "upper"
   renew_bound: "lower"
   reserve_soc_mwh: 0.0
+
+# Advanced Robust Dispatch with Conformal Prediction
+# New uncertainty-aware optimization framework
+robust_dispatch:
+  # Conformal prediction settings
+  conformal:
+    alpha: 0.10  # Coverage level (90% prediction intervals)
+    calibration_method: "cqr"  # Conformalized Quantile Regression
+    # Alternative: alpha: 0.05 for 95% intervals
+  
+  # Dispatch mode
+  dispatch:
+    mode: "conservative"  # How to handle uncertainty
+    # Options:
+    #   - "point": Use point forecasts (standard dispatch)
+    #   - "lower": Use lower bound (pessimistic)
+    #   - "upper": Use upper bound (optimistic)
+    #   - "conservative": Worst-case (load upper, renewables lower)
+    
+    safety_margin: 0.0  # Additional safety buffer (fraction, e.g., 0.05 = 5%)
+  
+  # Battery constraints (alternative to main battery config for robust dispatch)
+  battery:
+    capacity_mwh: 100.0  # Battery capacity
+    max_charge_rate_mw: 50.0  # Maximum charge rate
+    max_discharge_rate_mw: 50.0  # Maximum discharge rate
+    efficiency: 0.95  # Round-trip efficiency
+    initial_soc: 0.5  # Initial state of charge (fraction)
+    min_soc: 0.1  # Minimum SOC
+    max_soc: 0.9  # Maximum SOC
+  
+  # Cost parameters
+  costs:
+    grid_import_per_mwh: 100.0  # $/MWh for grid import
+    grid_export_per_mwh: 80.0  # $/MWh for grid export
+    carbon_penalty_per_mwh: 50.0  # $/MWh for carbon emissions
+    battery_degradation_per_mwh: 5.0  # $/MWh for battery wear
+  
+  # Optimization solver
+  solver:
+    method: "SLSQP"  # Sequential Least Squares Programming
+    max_iter: 1000
+    ftol: 1e-6  # Function tolerance
+    verbose: false
+  
+  # Robustness analysis
+  robustness:
+    enable_perturbation_analysis: true
+    noise_levels: [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30]
+    n_monte_carlo_samples: 10
+    compute_regret: true  # Compare to oracle (perfect foresight)
+  
+  # Multi-region settings
+  regions:
+    # Germany (OPSD)
+    de:
+      battery:
+        capacity_mwh: 100.0
+        max_charge_rate_mw: 50.0
+        max_discharge_rate_mw: 50.0
+      costs:
+        grid_import_per_mwh: 120.0  # Higher European prices
+        grid_export_per_mwh: 90.0
+        carbon_penalty_per_mwh: 60.0  # Stricter EU carbon policy
+    
+    # USA (EIA-930)
+    us:
+      battery:
+        capacity_mwh: 100.0
+        max_charge_rate_mw: 50.0
+        max_discharge_rate_mw: 50.0
+      costs:
+        grid_import_per_mwh: 90.0  # Lower US prices
+        grid_export_per_mwh: 70.0
+        carbon_penalty_per_mwh: 40.0

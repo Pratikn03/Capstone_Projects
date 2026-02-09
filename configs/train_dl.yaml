@@ -1,15 +1,39 @@
 target: "load_mw"
 
-# Features to include in the input vector
+# Features to include in the input vector.
+# Use price_col to pick the right price feature per country:
+#   DE → price_eur_mwh   US → price_usd_mwh
+# The training script should resolve "price_col" to whichever column
+# exists in the parquet (fallback order below).
+price_col_priority:
+  - "price_eur_mwh"
+  - "price_usd_mwh"
+
 features:
   - "load_mw"
   - "wind_mw"
   - "solar_mw"
-  - "price_eur_mwh"
   - "hour"
   - "dayofweek"
   - "is_weekend"
   - "season"
+  - "is_holiday"
+  - "is_morning_peak"
+  - "is_evening_peak"
+  - "carbon_kg_per_mwh"
+
+# Country-specific feature overrides (merged at runtime)
+features_de:
+  - "price_eur_mwh"
+  - "wx_temperature_2m"
+  - "wx_wind_speed_10m"
+  - "wx_cloud_cover"
+
+features_us:
+  - "price_usd_mwh"
+  - "wx_temperature_2m"
+  - "wx_wind_speed_10m"
+  - "wx_cloud_cover"
 
 training:
   lookback: 168   # 1 week history
