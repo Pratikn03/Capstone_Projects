@@ -66,7 +66,7 @@ export type BatterySchedule = z.infer<typeof BatteryScheduleSchema>;
 export const AnomalySchema = z.object({
   id: z.string(),
   timestamp: z.string(),
-  type: z.enum(['load_spike', 'solar_drop', 'wind_ramp', 'frequency_deviation', 'battery_fault', 'sensor_fault']),
+  type: z.enum(['load_spike', 'load_drop', 'solar_drop', 'solar_surge', 'wind_ramp', 'wind_drop', 'frequency_deviation', 'battery_fault', 'sensor_fault']),
   severity: z.enum(['low', 'medium', 'high', 'critical']),
   status: z.enum(['active', 'investigating', 'resolved']),
   zone_id: z.string(),

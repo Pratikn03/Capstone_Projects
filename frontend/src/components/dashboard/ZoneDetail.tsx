@@ -6,20 +6,23 @@ import { ForecastChart } from '@/components/ai/tools/ForecastChart';
 import { GridStatusCard } from '@/components/ai/tools/GridStatus';
 import {
   mockDispatchForecast,
-  mockBatterySchedule,
   mockForecastWithPI,
   mockZoneSummaries,
 } from '@/lib/api/mock-data';
+import { useDatasetData } from '@/lib/api/dataset-client';
 
 interface ZoneDetailProps {
   zoneId: string;
 }
 
 export function ZoneDetail({ zoneId }: ZoneDetailProps) {
+  const dataset = useDatasetData(zoneId.toUpperCase() as 'DE' | 'US');
   const zone = mockZoneSummaries().find((z) => z.zone_id === zoneId.toUpperCase())
     || mockZoneSummaries()[0];
   const dispatch = mockDispatchForecast(zoneId, 24);
-  const battery = mockBatterySchedule(zoneId);
+  
+  // Use real extracted data
+  const battery = dataset.battery;
   const forecast = mockForecastWithPI('load_mw', 48);
 
   return (
@@ -31,7 +34,10 @@ export function ZoneDetail({ zoneId }: ZoneDetailProps) {
         <DispatchChart optimized={dispatch.data} title={`Dispatch — ${zone.name}`} />
       </div>
 
-      <BatterySOCChart schedule={battery.schedule} metrics={battery.metrics} />
+      <BatterySOCChart 
+        schedule={battery?.schedule ?? []} 
+        metrics={battery?.metrics ?? { cost_savings_eur: 0, carbon_reduction_kg: 0, peak_shaving_pct: 0, avg_efficiency: 92 }} 
+      />
     </div>
   );
 }

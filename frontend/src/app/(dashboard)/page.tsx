@@ -11,28 +11,33 @@ import { AnomalyTimeline } from '@/components/charts/AnomalyTimeline';
 import { AnomalyList } from '@/components/charts/AnomalyList';
 import { MLOpsMonitor } from '@/components/charts/MLOpsMonitor';
 import {
-  mockBatterySchedule,
-  mockAnomalies,
-  mockAnomalyZScores,
   mockDriftData,
-  mockParetoFrontier,
 } from '@/lib/api/mock-data';
 import { useDispatchCompare } from '@/lib/api/dispatch-client';
 import { useReportsData } from '@/lib/api/reports-client';
-import { useDatasetData } from '@/lib/api/dataset-client';
+import { useDatasetData, type DriftPoint } from '@/lib/api/dataset-client';
 import { formatCurrency, formatMW, formatPercent } from '@/lib/utils';
 import { useRegion } from '@/components/ui/RegionContext';
 
 export default function DashboardPage() {
   const { region } = useRegion();
   const dispatch = useDispatchCompare(region, 24);
-  const battery = mockBatterySchedule(region);
-  const anomalies = mockAnomalies();
-  const anomalyZScores = mockAnomalyZScores(72);
-  const driftData = mockDriftData(30);
-  const pareto = mockParetoFrontier();
   const { metrics, impact, robustness, regions } = useReportsData();
   const dataset = useDatasetData(region as 'DE' | 'US');
+
+  // Use real data from extracted JSON files
+  const battery = dataset.battery;
+  const anomalies = dataset.anomalies;
+  const anomalyZScores = dataset.zscores.map((z) => ({
+    timestamp: z.timestamp,
+    z_score: z.z_score,
+    is_anomaly: z.is_anomaly,
+    residual_mw: z.residual_mw,
+  }));
+  const pareto = dataset.pareto;
+
+  // Use real monitoring data, fallback to mock
+  const driftData: DriftPoint[] = dataset.monitoring?.drift_timeline ?? mockDriftData(30);
 
   const regionBundle = regions[region];
   const metricsActive = regionBundle?.metrics?.length ? regionBundle.metrics : metrics;
@@ -161,8 +166,11 @@ export default function DashboardPage() {
 
       {/* ─── Row 2: Battery SOC + Cost-Carbon Tradeoff ─── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <BatterySOCChart schedule={battery.schedule} metrics={battery.metrics} />
-        <CarbonCostPanel data={pareto} zoneId={region} summary={impactActive ?? undefined} />
+        <BatterySOCChart 
+          schedule={battery?.schedule ?? []} 
+          metrics={battery?.metrics ?? { cost_savings_eur: 0, carbon_reduction_kg: 0, peak_shaving_pct: 0, avg_efficiency: 92 }} 
+        />
+        <CarbonCostPanel data={pareto.length ? pareto : undefined} zoneId={region} summary={impactActive ?? undefined} />
       </div>
 
       {/* ─── Row 3: Impact & Robustness ─── */}
