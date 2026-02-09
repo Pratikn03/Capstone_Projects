@@ -1,0 +1,34 @@
+% ============================================================
+% Table 2: Forecast Performance Comparison (USA - EIA-930 MISO)
+% ============================================================
+% Usage: \input{reports/tables/forecast_metrics_us.tex}
+% ============================================================
+
+\begin{table}[htbp]
+\centering
+\caption{Forecast Performance on USA (EIA-930 MISO) Dataset}
+\label{tab:forecast_us}
+\begin{tabular}{llrrrr}
+\toprule
+\textbf{Target} & \textbf{Model} & \textbf{RMSE} & \textbf{MAE} & \textbf{sMAPE (\%)} & \textbf{R\textsuperscript{2}} \\
+\midrule
+\multirow{2}{*}{Load (MW)} 
+ & \textbf{GBM} & \textbf{211.11} & \textbf{111.45} & \textbf{0.14} & 0.999 \\
+ & Persistence & 4,312.91 & 3,185.96 & 4.18 & --- \\
+\midrule
+\multirow{2}{*}{Wind (MW)}
+ & GBM & 12,411.63 & 10,782.01 & 196.70 & 0.812 \\
+ & Persistence & 5,621.33 & 4,102.89 & 82.45 & --- \\
+\midrule
+\multirow{2}{*}{Solar (MW)}
+ & \textbf{GBM} & \textbf{4,760.94} & \textbf{2,829.77} & 186.10 & 0.892 \\
+ & Persistence & 7,234.12 & 4,891.23 & 198.32 & --- \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: EIA-930 data spans 2019--2024, 92,382 hourly observations.
+\item MISO region (Midcontinent Independent System Operator).
+\item Test set: 9,239 observations (10\% holdout).
+\end{tablenotes}
+\end{table}

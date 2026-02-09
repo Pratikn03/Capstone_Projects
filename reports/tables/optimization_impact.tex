@@ -1,0 +1,40 @@
+% ============================================================
+% Table 4: Optimization Impact Comparison
+% ============================================================
+% Usage: \input{reports/tables/optimization_impact.tex}
+% ============================================================
+
+\begin{table}[htbp]
+\centering
+\caption{Dispatch Optimization Impact (7-Day Evaluation Window)}
+\label{tab:optimization}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Policy} & \textbf{Cost (USD)} & \textbf{Carbon (kg)} & \textbf{Carbon Cost (USD)} \\
+\midrule
+Grid-only baseline & 154,773,463 & 1,461,641,243 & 73,082,062 \\
+Na\"ive battery (fixed schedule) & 154,200,946 & 1,454,657,899 & 72,732,895 \\
+Peak-shaving heuristic & 155,096,309 & 1,465,616,653 & 73,280,833 \\
+Price-greedy (MPC-style) & 154,098,660 & 1,457,458,734 & 72,872,937 \\
+\textbf{GridPulse (forecast-optimized)} & \textbf{150,305,711} & \textbf{1,453,149,137} & \textbf{72,657,457} \\
+Oracle (perfect forecast) & 150,305,711 & 1,453,149,137 & 72,657,457 \\
+\bottomrule
+\end{tabular}
+\vspace{0.3cm}
+
+\begin{tabular}{lrr}
+\toprule
+\textbf{Comparison} & \textbf{Cost Savings} & \textbf{Carbon Reduction} \\
+\midrule
+GridPulse vs. Grid-only & \$4,467,752 (2.89\%) & 8,492,106 kg (0.58\%) \\
+GridPulse vs. Na\"ive Battery & \$3,895,235 (2.53\%) & 1,508,762 kg (0.10\%) \\
+GridPulse vs. Oracle & \$0 (0.00\%) & 0 kg (0.00\%) \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: Evaluation on 168-hour (7-day) test window.
+\item Battery: 20 MWh capacity, 5 MW charge/discharge rate.
+\item Carbon intensity: Average grid mix (kg CO$_2$/MWh).
+\end{tablenotes}
+\end{table}

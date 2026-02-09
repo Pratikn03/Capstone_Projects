@@ -1,0 +1,37 @@
+% ============================================================
+% Table 9: Runtime Benchmarks
+% ============================================================
+% Usage: \input{reports/tables/runtime_benchmarks.tex}
+% ============================================================
+
+\begin{table}[htbp]
+\centering
+\caption{Runtime Performance Benchmarks}
+\label{tab:runtime}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Component} & \textbf{Time} & \textbf{Unit} & \textbf{Configuration} \\
+\midrule
+\multicolumn{4}{l}{\textit{Training}} \\
+\quad GBM (per target) & 0.4 & seconds & 10k samples, 100 trees \\
+\quad LSTM (per target) & 45 & seconds & 50 epochs, 1k samples \\
+\quad Full pipeline & 180 & seconds & 4 targets, all models \\
+\midrule
+\multicolumn{4}{l}{\textit{Inference}} \\
+\quad GBM forecast & 0.3 & ms & 24-hour horizon \\
+\quad LSTM forecast & 2.1 & ms & 168-step sequence \\
+\quad LP dispatch & 1.2 & ms & 48 variables, HiGHS \\
+\quad End-to-end & $<$5 & seconds & Forecast + dispatch \\
+\midrule
+\multicolumn{4}{l}{\textit{API Latency (p99)}} \\
+\quad /forecast & 15 & ms & Cold start \\
+\quad /dispatch & 8 & ms & Pre-loaded model \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Hardware: Apple M-series, 10-core CPU, 16 GB RAM.
+\item Solver: HiGHS (open-source LP/MIP).
+\item API: FastAPI + Uvicorn, single worker.
+\end{tablenotes}
+\end{table}
