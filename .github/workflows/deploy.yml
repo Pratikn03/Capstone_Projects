@@ -1,9 +1,15 @@
 name: Deploy (ECS Fargate)
 
+# NOTE: This workflow requires AWS secrets to be configured.
+# It only runs on manual trigger (workflow_dispatch).
+# Secrets needed: AWS_ROLE_ARN, AWS_REGION, ECR_REPOSITORY_API, 
+#                 ECR_REPOSITORY_APP, ECS_CLUSTER, ECS_SERVICE_API, ECS_SERVICE_APP
+
 on:
   workflow_dispatch:
-  push:
-    branches: ["main"]
+  # Disabled auto-deploy on push - uncomment when AWS secrets are configured:
+  # push:
+  #   branches: ["main"]
 
 permissions:
   id-token: write
