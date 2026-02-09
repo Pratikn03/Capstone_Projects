@@ -1,4 +1,39 @@
-"""Linear-programming dispatch optimizer using scipy.optimize.linprog."""
+"""
+Optimizer: Linear Programming Battery Dispatch Optimization.
+
+This module implements the core dispatch optimization algorithm using
+linear programming (LP). The optimizer determines when to charge/discharge
+a battery to minimize cost and carbon emissions.
+
+Mathematical Formulation:
+    Decision Variables:
+        - charge[t]: MW to charge at time t
+        - discharge[t]: MW to discharge at time t
+        - grid[t]: MW imported from grid at time t
+        
+    Objective (minimize):
+        sum_t [ price[t] * grid[t] + carbon_weight * carbon[t] * grid[t] ]
+        
+    Constraints:
+        - Power balance: load[t] = renewables[t] + discharge[t] - charge[t] + grid[t]
+        - SoC dynamics: soc[t+1] = soc[t] + efficiency * charge[t] - discharge[t]
+        - SoC bounds: min_soc <= soc[t] <= capacity
+        - Power bounds: 0 <= charge[t] <= max_power, 0 <= discharge[t] <= max_power
+
+Why Linear Programming?
+    - Global optimum guaranteed (convex problem)
+    - Fast solve times (milliseconds for 168-hour horizon)
+    - Easy to add constraints (grid limits, carbon budgets)
+    - Interpretable dual variables for sensitivity analysis
+
+Usage:
+    >>> from gridpulse.optimizer.lp_dispatch import optimize_dispatch
+    >>> result = optimize_dispatch(
+    ...     forecast_load=[100, 120, 90],
+    ...     forecast_renewables=[30, 50, 20],
+    ...     config={'battery': {'capacity_mwh': 10}}
+    ... )
+"""
 from __future__ import annotations
 
 from typing import Any, Dict
@@ -8,8 +43,18 @@ from scipy.optimize import linprog
 
 from gridpulse.optimizer.risk import RiskConfig, apply_interval_bounds
 
+
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
+
 def _as_array(x) -> np.ndarray:
-    """Convert scalars/lists to a float NumPy array."""
+    """
+    Convert input to a 1D float NumPy array.
+    
+    This helper standardizes various input types (scalars, lists, arrays)
+    into a consistent format for the optimizer.
+    """
     if isinstance(x, (list, tuple, np.ndarray)):
         arr = np.asarray(x, dtype=float)
     else:
