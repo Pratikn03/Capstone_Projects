@@ -1,4 +1,4 @@
-.PHONY: setup lint test api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis
+.PHONY: setup lint test api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all
 
 setup:
 	python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
@@ -68,6 +68,39 @@ release_check_full:
 	bash scripts/release_check.sh --full
 
 production: pipeline train extract-data
+
+# ============================================================
+# Unified Dataset Training (Recommended)
+# ============================================================
+
+# Train a specific dataset: make train-dataset DATASET=DE (or US)
+train-dataset:
+ifndef DATASET
+	$(error DATASET is not set. Usage: make train-dataset DATASET=DE)
+endif
+	python scripts/train_dataset.py --dataset $(DATASET)
+
+# Train all registered datasets
+train-all:
+	python scripts/train_dataset.py --all
+
+# Train with hyperparameter tuning: make train-tune DATASET=DE
+train-tune:
+ifndef DATASET
+	$(error DATASET is not set. Usage: make train-tune DATASET=DE)
+endif
+	python scripts/train_dataset.py --dataset $(DATASET) --tune
+
+# Generate reports only (no training): make reports-dataset DATASET=US
+reports-dataset:
+ifndef DATASET
+	$(error DATASET is not set. Usage: make reports-dataset DATASET=DE)
+endif
+	python scripts/train_dataset.py --dataset $(DATASET) --reports-only
+
+# List available datasets
+list-datasets:
+	python scripts/train_dataset.py --list
 
 # ============================================================
 # Advanced Features
