@@ -1,6 +1,6 @@
 # GridPulse Frontend
 
-AI-driven energy management dashboard built with **Next.js 15**, **React 19**, **Vercel AI SDK**, and **Recharts**.
+Smart energy management dashboard built with **Next.js 15**, **React 19**, **Vercel AI SDK**, and **Recharts**.
 
 ## Architecture
 
@@ -19,8 +19,8 @@ src/
 │   └── layout.tsx           # Root layout with AI provider
 ├── components/
 │   ├── ai/                  # Generative UI components
-│   │   ├── Copilot.tsx      # Floating AI chat
-│   │   └── tools/           # Charts streamed by AI
+│   │   ├── ChatAssistant.tsx # Floating query assistant
+│   │   └── tools/           # Charts streamed by assistant
 │   │       ├── DispatchChart.tsx
 │   │       ├── ForecastChart.tsx
 │   │       ├── BatterySOCChart.tsx
@@ -52,7 +52,7 @@ src/
 | 4 | **Cost–Carbon Tradeoff** | Pareto frontier from multi-objective dispatch optimization |
 | 5 | **Anomaly Timeline** | Forecast residual z-scores with Isolation Forest detection |
 | 6 | **MLOps Monitor** | Data drift (KS), model drift (rolling RMSE), retraining signals |
-| 7 | **AI Copilot** | Floating chat generating charts via natural language |
+| 7 | **Query Assistant** | Floating chat for natural language queries |
 
 ## Quick Start
 

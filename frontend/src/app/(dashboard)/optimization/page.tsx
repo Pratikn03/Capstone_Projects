@@ -5,18 +5,42 @@ import { BatterySOCChart } from '@/components/ai/tools/BatterySOCChart';
 import { CarbonCostPanel } from '@/components/ai/tools/CarbonCostPanel';
 import { Panel } from '@/components/ui/Panel';
 import { useRegion } from '@/components/ui/RegionContext';
+import { useDatasetData } from '@/lib/api/dataset-client';
+import { useReportsData } from '@/lib/api/reports-client';
+import { formatCurrency } from '@/lib/utils';
 import {
-  mockDispatchForecast,
   mockBatterySchedule,
   mockParetoFrontier,
 } from '@/lib/api/mock-data';
 
 export default function OptimizationPage() {
   const { region } = useRegion();
-  const dispatch = mockDispatchForecast(region, 24);
+  const dataset = useDatasetData(region as 'DE' | 'US');
+  const { impact: reportsImpact, regions } = useReportsData();
   const battery = mockBatterySchedule(region);
   const pareto = mockParetoFrontier();
   const regionLabel = region === 'US' ? 'USA' : 'Germany';
+
+  const realImpact = dataset.impact;
+  const regionImpact = regions[region]?.impact;
+
+  // Use real dispatch data from dataset
+  const dispatchData = dataset.dispatch.length
+    ? dataset.dispatch.map((d) => ({
+        timestamp: d.timestamp,
+        load_mw: d.load_mw,
+        generation_solar: d.generation_solar,
+        generation_wind: d.generation_wind,
+        generation_gas: d.generation_gas,
+        battery_dispatch: 0,
+        price_eur_mwh: d.price_eur_mwh ?? undefined,
+      }))
+    : [];
+
+  const costSavingsPct = realImpact?.cost_savings_pct ?? regionImpact?.cost_savings_pct ?? null;
+  const baselineCost = realImpact?.baseline_cost_usd ?? null;
+  const gridpulseCost = realImpact?.gridpulse_cost_usd ?? null;
+  const costSaved = baselineCost !== null && gridpulseCost !== null ? baselineCost - gridpulseCost : null;
 
   return (
     <div className="p-6 space-y-6">
@@ -26,11 +50,23 @@ export default function OptimizationPage() {
           <span>Solver: Pyomo + GLPK</span>
           <span>•</span>
           <span>Battery: 20 GWh / 5 GW</span>
+          {realImpact && (
+            <>
+              <span>•</span>
+              <span className="text-energy-primary">
+                Savings: {costSavingsPct !== null ? `${costSavingsPct.toFixed(2)}%` : 'N/A'}
+                {costSaved !== null ? ` (${formatCurrency(costSaved, 'USD')})` : ''}
+              </span>
+            </>
+          )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <DispatchChart optimized={dispatch.data} title={`Optimized Dispatch — ${regionLabel}`} />
+        <DispatchChart
+          optimized={dispatchData}
+          title={`Optimized Dispatch — ${regionLabel}`}
+        />
         <CarbonCostPanel data={pareto} zoneId={region} />
       </div>
 
@@ -55,6 +91,33 @@ export default function OptimizationPage() {
           ))}
         </div>
       </Panel>
+
+      {/* Cost Impact Summary */}
+      {realImpact && (
+        <Panel title="Cost Impact Summary" subtitle={`${regionLabel} — real pipeline results`}>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+            <div className="px-3 py-2.5 rounded-lg bg-white/3">
+              <div className="text-slate-500 mb-1">Baseline Cost</div>
+              <div className="text-white font-mono font-medium">
+                {baselineCost !== null ? formatCurrency(baselineCost, 'USD') : 'N/A'}
+              </div>
+            </div>
+            <div className="px-3 py-2.5 rounded-lg bg-white/3">
+              <div className="text-slate-500 mb-1">GridPulse Cost</div>
+              <div className="text-energy-primary font-mono font-medium">
+                {gridpulseCost !== null ? formatCurrency(gridpulseCost, 'USD') : 'N/A'}
+              </div>
+            </div>
+            <div className="px-3 py-2.5 rounded-lg bg-white/3">
+              <div className="text-slate-500 mb-1">Net Savings</div>
+              <div className="text-energy-primary font-mono font-medium">
+                {costSaved !== null ? formatCurrency(costSaved, 'USD') : 'N/A'}
+                {costSavingsPct !== null ? ` (${costSavingsPct.toFixed(2)}%)` : ''}
+              </div>
+            </div>
+          </div>
+        </Panel>
+      )}
     </div>
   );
 }

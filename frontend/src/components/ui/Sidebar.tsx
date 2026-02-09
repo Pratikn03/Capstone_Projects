@@ -10,6 +10,7 @@ import {
   Leaf,
   Activity,
   FileText,
+  Database,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -25,6 +26,7 @@ const navItems = [
   { href: '/carbon', label: 'Carbon', icon: Leaf },
   { href: '/monitoring', label: 'Monitoring', icon: Activity },
   { href: '/reports', label: 'Reports', icon: FileText },
+  { href: '/data', label: 'Data Explorer', icon: Database },
 ];
 
 const bottomItems = [

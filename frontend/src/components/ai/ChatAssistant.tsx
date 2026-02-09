@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from 'ai/react';
 import { SendIcon, BotIcon, XIcon, Sparkles, ChevronDown } from 'lucide-react';
 
-export function Copilot() {
+export function ChatAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -70,8 +70,8 @@ export function Copilot() {
                   <BotIcon className="w-4 h-4 text-energy-primary" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white">AI Copilot</h3>
-                  <span className="text-[10px] text-slate-500">Intent-driven grid control</span>
+                  <h3 className="text-sm font-semibold text-white">Query Assistant</h3>
+                  <span className="text-[10px] text-slate-500">Natural language grid control</span>
                 </div>
               </div>
               <button onClick={() => setIsOpen(false)} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
