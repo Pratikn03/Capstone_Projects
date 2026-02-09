@@ -309,9 +309,14 @@ gridpulse/
 | `make api` | Start FastAPI on :8000 |
 | `make frontend` | Start Next.js on :3000 |
 | `make extract-data` | Extract dashboard JSON from parquets |
-| `make train` | Train all DE models |
+| `make train` | Train all DE models (legacy) |
+| `make train-dataset DATASET=DE` | **Train any dataset (DE, US)** |
+| `make train-all` | **Train all registered datasets** |
+| `make list-datasets` | Show available datasets |
 | `make reports` | Generate reports & figures |
 | `make production` | Full pipeline → train → extract |
+
+See [docs/ADDING_DATASETS.md](docs/ADDING_DATASETS.md) for adding new datasets.
 
 ---
 

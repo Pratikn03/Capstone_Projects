@@ -1,0 +1,122 @@
+# Dataset Configuration Template
+# Copy this file and customize for your dataset
+# Add entry to scripts/train_dataset.py DATASET_REGISTRY
+
+# ==============================================================================
+# METADATA
+# ==============================================================================
+dataset:
+  name: "NEW_DATASET"                    # Short identifier (e.g., ERCOT, PJM)
+  description: "Description of dataset"
+  source: "Data source URL or reference"
+  frequency: "hourly"                    # hourly, 15min, daily
+  timezone: "US/Central"
+
+# ==============================================================================
+# DATA PATHS
+# ==============================================================================
+data:
+  raw_path: "data/raw/new_dataset"
+  processed_path: "data/processed/new_dataset"
+  features_file: "features.parquet"
+  splits_dir: "splits"
+
+# ==============================================================================
+# TARGET VARIABLES
+# ==============================================================================
+targets:
+  - load_mw         # Electricity demand
+  - solar_mw        # Solar generation (optional)
+  - wind_mw         # Wind generation (optional)
+  # - price_usd_mwh # Price forecasting (optional)
+
+# ==============================================================================
+# FEATURE ENGINEERING
+# ==============================================================================
+features:
+  # Lag features (previous timesteps)
+  lags:
+    - 1    # t-1
+    - 24   # t-24 (same hour yesterday)
+    - 168  # t-168 (same hour last week)
+  
+  # Rolling window statistics
+  rolling_windows:
+    - 6    # 6-hour rolling mean/std
+    - 24   # 24-hour rolling mean/std
+  
+  # Calendar features
+  calendar:
+    - hour
+    - dayofweek
+    - month
+    - is_weekend
+    - is_holiday
+  
+  # Weather features (if available)
+  weather:
+    - temperature
+    - cloud_cover
+    - wind_speed
+
+# ==============================================================================
+# MODEL CONFIGURATION (same as base config)
+# ==============================================================================
+model:
+  # LightGBM parameters
+  gbm:
+    n_estimators: 1200
+    max_depth: 8
+    learning_rate: 0.05
+    num_leaves: 128
+    min_child_samples: 20
+    subsample: 0.8
+    colsample_bytree: 0.8
+    reg_alpha: 0.1
+    reg_lambda: 1.0
+  
+  # Deep learning parameters (optional)
+  lstm:
+    hidden_size: 128
+    num_layers: 2
+    dropout: 0.2
+    seq_len: 168
+    epochs: 100
+    lr: 0.001
+  
+  tcn:
+    num_channels: [64, 64, 64]
+    kernel_size: 3
+    dropout: 0.2
+    seq_len: 168
+    epochs: 100
+    lr: 0.001
+
+# ==============================================================================
+# TRAINING SETTINGS
+# ==============================================================================
+training:
+  seed: 42
+  test_ratio: 0.1
+  val_ratio: 0.1
+  horizon: 24                # Forecast horizon (hours)
+  n_trials: 30               # Optuna hyperparameter tuning trials
+
+# ==============================================================================
+# OUTPUT PATHS
+# ==============================================================================
+output:
+  models_dir: "artifacts/models_new_dataset"
+  scalers_dir: "artifacts/scalers"
+  reports_dir: "reports/new_dataset"
+  backtests_dir: "artifacts/backtests"
+
+# ==============================================================================
+# UNCERTAINTY QUANTIFICATION
+# ==============================================================================
+uncertainty:
+  enabled: true
+  alpha: 0.10                # 90% prediction interval
+  horizon_wise: true         # Separate quantile per horizon
+  rolling: true              # Rolling calibration
+  rolling_window: 720
