@@ -70,41 +70,68 @@ GridPulse is a production-grade energy intelligence platform that forecasts load
 ## Architecture
 
 ```mermaid
-flowchart TD
-  subgraph Data Sources
-    A1["OPSD Germany\n(load, wind, solar, price)"]
-    A2["EIA-930 USA\n(MISO demand + generation)"]
-    A3["Open-Meteo Weather\n(Berlin & Chicago)"]
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#1a1b26',
+    'primaryTextColor': '#c0caf5',
+    'primaryBorderColor': '#7aa2f7',
+    'lineColor': '#7aa2f7',
+    'secondaryColor': '#24283b',
+    'tertiaryColor': '#1a1b26',
+    'fontFamily': 'Inter, system-ui, sans-serif',
+    'fontSize': '14px'
+  }
+}}%%
+
+flowchart TB
+  subgraph sources["🗄️ DATA SOURCES"]
+    direction LR
+    A1["🇩🇪 OPSD Germany<br/>Load · Wind · Solar · Price"]
+    A2["🇺🇸 EIA-930 USA<br/>MISO Demand · Generation"]
+    A3["🌤️ Open-Meteo<br/>Berlin · Chicago Weather"]
   end
 
-  subgraph Pipeline
-    B["Data Ingestion & Validation"]
-    C["Feature Engineering\n(lags, calendar, weather, holidays)"]
-    D["Time-Series Splits\n(train / val / test)"]
+  subgraph pipeline["⚙️ DATA PIPELINE"]
+    direction TB
+    B["📥 Ingestion & Validation"]
+    C["🔧 Feature Engineering<br/>Lags · Calendar · Weather"]
+    D["📊 Time-Series Splits<br/>Train · Val · Test"]
+    B --> C --> D
   end
 
-  subgraph ML Engine
-    E["GBM (LightGBM)\n12 DE + 9 US models"]
-    F["Deep Learning\nLSTM + TCN per target"]
-    G["Conformal Prediction\n90% intervals"]
+  subgraph ml["🤖 ML ENGINE"]
+    direction TB
+    E["🌳 LightGBM<br/>21 Ensemble Models"]
+    F["🧠 Deep Learning<br/>LSTM · TCN"]
+    G["📏 Conformal Prediction<br/>90% Coverage Intervals"]
+    E & F --> G
   end
 
-  subgraph Operations
-    H["Anomaly Detection\n(residual z-score + IsolationForest)"]
-    I["LP Dispatch Optimizer\n(cost + carbon + battery)"]
-    J["MLOps Monitoring\n(drift, retraining triggers)"]
+  subgraph ops["🔄 OPERATIONS"]
+    direction TB
+    H["🚨 Anomaly Detection<br/>Z-Score · IsolationForest"]
+    I["⚡ LP Optimizer<br/>Cost · Carbon · Battery"]
+    J["📈 MLOps Monitor<br/>Drift · Retraining"]
   end
 
-  subgraph Serving
-    K["FastAPI\n/forecast · /optimize · /monitor"]
-    L["Next.js 15 Dashboard\n8 pages · region toggle"]
+  subgraph serve["🚀 SERVING"]
+    direction TB
+    K["🔌 FastAPI Backend<br/>/forecast · /optimize · /monitor"]
+    L["💻 Next.js 15 Dashboard<br/>8 Pages · Region Toggle"]
+    K --> L
   end
 
-  A1 & A2 & A3 --> B --> C --> D
-  D --> E & F
-  E & F --> G
-  G --> H & I
-  H & I & J --> K --> L
+  sources --> pipeline
+  pipeline --> ml
+  ml --> ops
+  ops --> serve
+
+  style sources fill:#1e3a5f,stroke:#7aa2f7,stroke-width:2px,color:#c0caf5
+  style pipeline fill:#1e3a5f,stroke:#9ece6a,stroke-width:2px,color:#c0caf5
+  style ml fill:#1e3a5f,stroke:#bb9af7,stroke-width:2px,color:#c0caf5
+  style ops fill:#1e3a5f,stroke:#f7768e,stroke-width:2px,color:#c0caf5
+  style serve fill:#1e3a5f,stroke:#7dcfff,stroke-width:2px,color:#c0caf5
 ```
 
 ---
