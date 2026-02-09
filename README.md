@@ -14,28 +14,56 @@ GridPulse is a production-grade energy intelligence platform that forecasts load
 
 ### Germany (OPSD) — 17,377 hourly observations × 98 features
 
-| Model | Target | RMSE (MW) | MAE (MW) | R² |
-|---|---|---:|---:|---:|
-| **GBM** | load_mw | 270.3 | 168.5 | 0.998 |
-| **GBM** | wind_mw | 47.3 | 29.8 | 0.999 |
-| **GBM** | solar_mw | 24.7 | 12.2 | 0.999 |
-| **GBM** | price_eur_mwh | 3.1 | 1.9 | 0.999 |
-| LSTM | load_mw | 4,975.2 | 3,633.8 | — |
-| TCN | load_mw | 6,157.1 | 5,172.1 | — |
+| Model | Target | RMSE (MW) | MAE (MW) | R² | 90% Coverage |
+|---|---|---:|---:|---:|---:|
+| **GBM** | load_mw | 271.2 | 161.1 | 0.9991 | 95.2% |
+| **GBM** | wind_mw | 127.1 | 87.3 | 0.9997 | 92.4% |
+| **GBM** | solar_mw | 269.6 | 129.5 | 0.9991 | 89.4% |
+| LSTM | load_mw | 2,356.0 | 1,732.1 | 0.931 | — |
+| TCN | load_mw | 3,394.2 | 2,613.5 | 0.857 | — |
 
 **Impact:** 2.89% cost savings · 0.58% carbon reduction · 7.09% peak shaving
 
 ### USA (EIA-930 / MISO) — 13,638 hourly observations × 118 features
 
-| Model | Target | RMSE (MW) | MAE (MW) | R² |
-|---|---|---:|---:|---:|
-| **GBM** | load_mw | 145.4 | 88.7 | 0.999 |
-| **GBM** | wind_mw | 52.9 | 31.2 | 0.999 |
-| **GBM** | solar_mw | 24.3 | 10.6 | 0.999 |
-| LSTM | load_mw | 2,471.0 | — | — |
-| TCN | load_mw | 3,105.8 | — | — |
+| Model | Target | RMSE (MW) | MAE (MW) | R² | 90% Coverage |
+|---|---|---:|---:|---:|---:|
+| **GBM** | load_mw | 139.8 | 104.2 | 0.9997 | 87.4% |
+| **GBM** | wind_mw | 239.6 | 109.4 | 0.9986 | 80.5% |
+| **GBM** | solar_mw | 212.9 | 76.2 | 0.9961 | 90.5% |
+| LSTM | load_mw | 3,684.7 | — | 0.762 | — |
+| TCN | load_mw | 4,235.4 | — | 0.685 | — |
 
-**Impact:** 0.03% cost savings (no real price signal)
+**Impact:** 0.43% cost savings · Battery dispatch optimization
+
+### Conformal Prediction Coverage (90% Nominal)
+
+| Dataset | Target | PICP (%) | MPIW (MW) | N_test |
+|---|---|---:|---:|---:|
+| Germany | Load | **95.2** | 742.7 | 1,739 |
+| Germany | Wind | 92.4 | 350.8 | 1,739 |
+| Germany | Solar | 89.4 | 622.7 | 1,739 |
+| USA | Load | **87.4** | 415.6 | 1,364 |
+| USA | Wind | 80.5 | 299.8 | 1,364 |
+| USA | Solar | **90.5** | 421.4 | 1,364 |
+
+> PICP = Prediction Interval Coverage Probability · MPIW = Mean Prediction Interval Width
+
+### Statistical Significance (Diebold-Mariano Test)
+
+| Model 1 | Model 2 | DM Stat | p-value | Result |
+|---|---|---:|---:|---|
+| GBM | LSTM | -9.42 | <0.001 | GBM significantly better*** |
+| GBM | TCN | -7.46 | <0.001 | GBM significantly better*** |
+| GBM | Persistence | -12.31 | <0.001 | GBM significantly better*** |
+
+### Ablation Study
+
+| Configuration | Mean Cost | Regret (%) | Note |
+|---|---:|---:|---|
+| **Full System** | €428.2M | — | Baseline |
+| No Uncertainty | €428.2M | 0.0% | Point forecasts only |
+| No Carbon Weight | €377.8M | -11.8% | Cost-only optimization |
 
 ---
 
