@@ -76,8 +76,8 @@ export function DispatchChart({
       const optPoint = optimized[i];
       if (basePoint.timestamp !== optPoint.timestamp) return false;
       for (const key of keys) {
-        const baseValue = basePoint[key] ?? 0;
-        const optValue = optPoint[key] ?? 0;
+        const baseValue = (basePoint as unknown as Record<string, number | undefined>)[key] ?? 0;
+        const optValue = (optPoint as unknown as Record<string, number | undefined>)[key] ?? 0;
         if (Math.abs(baseValue - optValue) > epsilon) return false;
       }
     }

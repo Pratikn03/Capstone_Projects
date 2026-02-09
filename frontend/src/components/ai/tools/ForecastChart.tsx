@@ -6,10 +6,10 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import type { ForecastWithPI } from '@/lib/api/mock-data';
+import { mockForecastWithPI, type ForecastWithPI } from '@/lib/api/mock-data';
 
 interface ForecastChartProps {
-  data: ForecastWithPI[];
+  data?: ForecastWithPI[];
   target: string;
   zoneId: string;
   metrics?: {
@@ -53,8 +53,9 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export function ForecastChart({ data, target, zoneId, metrics }: ForecastChartProps) {
+export function ForecastChart({ data: dataProp, target, zoneId, metrics }: ForecastChartProps) {
   const [showModel, setShowModel] = useState<'GBM' | 'LSTM' | 'TCN'>('GBM');
+  const data = dataProp?.length ? dataProp : mockForecastWithPI(target, 48);
   const color = targetColors[target] || '#10b981';
   const name = targetNames[target] || target;
   const horizonHours = data.length;

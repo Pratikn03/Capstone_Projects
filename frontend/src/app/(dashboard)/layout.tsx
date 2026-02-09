@@ -2,7 +2,7 @@
 
 import { Sidebar } from '@/components/ui/Sidebar';
 import { TopBar } from '@/components/ui/TopBar';
-import { Copilot } from '@/components/ai/Copilot';
+import { ChatAssistant } from '@/components/ai/ChatAssistant';
 import { RegionProvider } from '@/components/ui/RegionContext';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -16,7 +16,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {children}
           </main>
         </div>
-        <Copilot />
+        <ChatAssistant />
       </div>
     </RegionProvider>
   );
