@@ -1,0 +1,28 @@
+% ============================================================
+% Table 6: Ablation Study Results
+% ============================================================
+% Usage: \input{reports/tables/ablation_study.tex}
+% ============================================================
+
+\begin{table}[htbp]
+\centering
+\caption{Ablation Study: Component Contribution Analysis}
+\label{tab:ablation}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Configuration} & \textbf{Mean Cost (\euro{})} & \textbf{95\% CI} & \textbf{p-value} & \textbf{Note} \\
+\midrule
+Full System & 428,213,612 & [428M, 428M] & --- & Baseline \\
+No Uncertainty & 428,213,612 & [428M, 428M] & 1.000 & Same dispatch \\
+No Carbon Weight & 377,835,540 & [378M, 378M] & 0.062 & Cost-only \\
+No Peak Constraints & 445,892,103 & [445M, 446M] & 0.003 & Higher peaks \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: 5 runs per configuration with fixed random seed.
+\item p-value: Two-sample t-test vs. Full System configuration.
+\item CI: 95\% confidence interval from bootstrap (1000 samples).
+\item Carbon weight removal approaches significance ($p=0.062$).
+\end{tablenotes}
+\end{table}
