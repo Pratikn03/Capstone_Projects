@@ -1,12 +1,55 @@
-"""Data pipeline: split time series into train/val/test."""
+"""
+Data Pipeline: Time Series Train/Validation/Test Splitting.
+
+This module implements temporal splitting of time series data, which is
+CRITICAL for avoiding data leakage in forecasting tasks.
+
+Why Time-Based Splitting Matters:
+    Unlike i.i.d. data where random splits are fine, time series data
+    has temporal dependencies. Using future data to predict the past
+    (look-ahead bias) leads to overly optimistic performance estimates.
+    
+    Our approach:
+    - Train: Earliest 70% of data (learn patterns)
+    - Validation: Next 15% (tune hyperparameters, early stopping)
+    - Test: Final 15% (held-out evaluation, never seen during training)
+
+Usage:
+    python -m gridpulse.data_pipeline.split_time_series \
+        --in data/processed/features.parquet \
+        --out data/processed/splits
+
+Outputs:
+    - train.parquet: Training data
+    - val.parquet: Validation data  
+    - test.parquet: Test data
+    - SPLIT_SUMMARY.md: Human-readable split documentation
+"""
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
 import pandas as pd
 
+
 def time_split(df: pd.DataFrame, train_ratio: float = 0.7, val_ratio: float = 0.15):
-    """Time-ordered split: train earliest, then val, then test."""
+    """
+    Split a DataFrame into train/val/test sets respecting temporal order.
+    
+    The splits are contiguous in time: train comes first, then val, then test.
+    This prevents look-ahead bias and ensures realistic evaluation.
+    
+    Args:
+        df: DataFrame sorted by time (oldest first)
+        train_ratio: Fraction of data for training (default: 0.7 = 70%)
+        val_ratio: Fraction of data for validation (default: 0.15 = 15%)
+        
+    Returns:
+        Tuple of (train_df, val_df, test_df)
+        
+    Note:
+        test_ratio is implicitly 1 - train_ratio - val_ratio
+    """
     n = len(df)
     n_train = int(n * train_ratio)
     n_val = int(n * val_ratio)

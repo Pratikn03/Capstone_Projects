@@ -1,10 +1,38 @@
-"""Data pipeline: validate OPSD schema and basic data quality."""
+"""
+Data Pipeline: Schema Validation and Data Quality Checks.
+
+This module validates raw OPSD (Open Power System Data) exports before
+they enter the feature engineering pipeline. Validation includes:
+
+1. **Schema validation**: Required columns exist (load, wind, solar)
+2. **Temporal coverage**: Check for gaps and duplicates in the time index
+3. **Missing value analysis**: Compute missingness rates per column
+4. **Sanity checks**: Detect impossible values (negative generation)
+
+The validation report is written as Markdown for human review and can be
+integrated into CI/CD pipelines as a quality gate.
+
+Usage:
+    python -m gridpulse.data_pipeline.validate_schema \
+        --in data/raw \
+        --report reports/data_quality_report.md
+
+See Also:
+    - build_features.py: Next step in the pipeline
+    - DATA.md: Documentation of expected input formats
+"""
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
 
 import pandas as pd
+
+# ============================================================================
+# SCHEMA DEFINITION
+# These columns must exist in the raw OPSD export for the pipeline to work.
+# We focus on German data (DE_*) as our primary market.
+# ============================================================================
 
 # Minimal columns required for the core targets.
 REQUIRED_COLS = [
