@@ -1,5 +1,5 @@
 [Unit]
-Description=GridPulse Dashboard
+Description=GridPulse Frontend (Next.js)
 After=network.target
 
 [Service]
@@ -7,10 +7,11 @@ Type=simple
 User=gridpulse
 WorkingDirectory=/opt/gridpulse
 EnvironmentFile=/etc/gridpulse/gridpulse.env
-ExecStart=/opt/gridpulse/.venv/bin/streamlit run services/dashboard/app.py --server.port 8501 --server.address 0.0.0.0
+Environment=PORT=3000
+Environment=HOSTNAME=0.0.0.0
+ExecStart=/usr/bin/npm --prefix /opt/gridpulse/frontend run start
 Restart=on-failure
 RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
-

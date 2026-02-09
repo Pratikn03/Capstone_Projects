@@ -33,10 +33,11 @@ GridPulse is a decision-grade energy intelligence system: predictions feed an op
 
 7) **Product layer**
    - FastAPI endpoints
-   - Streamlit operator dashboard
+   - Next.js operator dashboard
 
 ## Key artifacts
 - `configs/` for training and optimization
 - `reports/` and `reports/eia930/` for figures and impact summaries
-- `services/` for API and dashboard
+- `services/` for API
+- `frontend/` for the Next.js dashboard
 - `notebooks/` for runbooks and analysis

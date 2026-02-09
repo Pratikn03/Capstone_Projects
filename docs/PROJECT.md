@@ -4,7 +4,7 @@
 ## 1) Executive Summary  
 GridPulse is an end‑to‑end energy intelligence platform built to address a core weakness in modern grid operations: **forecasting alone does not create actionable decisions**. As renewable penetration grows, grid variability increases and operators must continuously choose how to balance demand, renewables, and storage under both **cost** and **carbon** constraints. GridPulse combines **time‑series forecasting**, **anomaly detection**, and **optimization** into a single pipeline that converts raw data into **dispatch plans** for battery energy storage systems (BESS).
 
-Unlike traditional “predict‑only” pipelines, GridPulse closes the loop. It ingests power system data (and optional weather data), produces short‑horizon probabilistic forecasts, detects anomalous conditions, and **optimizes grid/battery actions** using linear programming. The platform also provides monitoring, retraining hooks, and a Streamlit operator dashboard. The end result is a system that is not just technically sophisticated, but operationally meaningful: predictions → decisions → measurable outcomes.
+Unlike traditional “predict‑only” pipelines, GridPulse closes the loop. It ingests power system data (and optional weather data), produces short‑horizon probabilistic forecasts, detects anomalous conditions, and **optimizes grid/battery actions** using linear programming. The platform also provides monitoring, retraining hooks, and a Next.js operator dashboard. The end result is a system that is not just technically sophisticated, but operationally meaningful: predictions → decisions → measurable outcomes.
 
 GridPulse is designed as a modular, production‑ready architecture. It includes reproducible data pipelines, configurable model training, evaluation reports, and an API layer suitable for integration with real‑world operator tooling. The project demonstrates full‑stack applied ML engineering: from raw data to a decision product.
 
@@ -110,7 +110,7 @@ GridPulse is built as a **Level‑4 decision system**: predictions → decisions
               ↓
 [ Product Layer ]
   - API (forecast / optimize / monitor)
-  - Streamlit operator dashboard
+  - Next.js operator dashboard
 ```
 
 This architecture is explicitly designed to show that the model is not just “accurate,” but **decision‑effective**.
@@ -255,7 +255,7 @@ FastAPI endpoints include:
 - `/health`
 
 ### Dashboard  
-Streamlit operator dashboard provides:
+Next.js operator dashboard provides:
 
 - Forecast plots  
 - KPI tiles (cost/carbon/anomaly)  
@@ -341,4 +341,3 @@ These are optional and not required for the project’s current goals.
 GridPulse is a complete, decision‑grade energy intelligence system. It goes beyond forecasting to produce **feasible, measurable, and auditable dispatch actions**. It demonstrates end‑to‑end ML engineering skills: data pipelines, model training, evaluation, optimization, monitoring, and product delivery.
 
 The project is structured to be **competition‑ready**, **hire‑ready**, and **publishable**, with clear documentation, reproducible scripts, and a professional product interface. Most importantly, it does not over‑claim results — it provides a rigorous path to generating verified impact metrics.
-

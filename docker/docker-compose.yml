@@ -22,26 +22,6 @@ services:
       retries: 3
     restart: unless-stopped
 
-  dashboard:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.app
-    ports:
-      - "8501:8501"
-    depends_on:
-      api:
-        condition: service_healthy
-    env_file:
-      - ../.env
-    environment:
-      - GRIDPULSE_LOG_FORMAT=${GRIDPULSE_LOG_FORMAT:-text}
-      - GRIDPULSE_LOG_LEVEL=${GRIDPULSE_LOG_LEVEL:-INFO}
-    volumes:
-      - ../data:/app/data
-      - ../artifacts:/app/artifacts
-      - ../reports:/app/reports
-    restart: unless-stopped
-
   frontend:
     build:
       context: ..

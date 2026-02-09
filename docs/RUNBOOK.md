@@ -56,5 +56,5 @@ python scripts/update_readme_impact.py
 ## 6) Run API + dashboard
 ```bash
 uvicorn services.api.main:app --reload --port 8000
-streamlit run services/dashboard/app.py
+cd frontend && npm run dev
 ```
