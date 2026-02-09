@@ -124,7 +124,7 @@ def paired_test(
         "test": test,
         "statistic": float(stat),
         "p_value": float(p_value),
-        "significant": p_value < 0.05,
+        "significant": bool(p_value < 0.05),
         "effect_size": float(mean_diff),
         "effect_size_pct": float(effect_pct),
         "n_pairs": len(baseline),

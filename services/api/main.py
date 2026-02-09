@@ -1,4 +1,41 @@
-"""FastAPI application entrypoint."""
+"""
+FastAPI Application Entrypoint for GridPulse API Service.
+
+This module defines the main FastAPI application that serves the GridPulse
+energy forecasting and battery optimization platform. It provides:
+
+- **Forecasting endpoints**: Load, solar, wind, price predictions
+- **Anomaly detection**: Real-time outlier identification  
+- **Battery optimization**: Dispatch scheduling with safety constraints
+- **Monitoring**: Model drift and data quality metrics
+
+Architecture:
+    The API is organized using FastAPI routers for modularity:
+    
+    /forecast/*     - Forecast generation and intervals
+    /anomaly/*      - Anomaly detection endpoints
+    /optimize/*     - Battery dispatch optimization
+    /monitor/*      - Monitoring and drift metrics
+    
+Safety Systems:
+    - BMS (Battery Management System): Validates all dispatch commands
+    - Watchdog: Monitors system health and triggers alerts
+    
+Running the Server:
+    # Development
+    uvicorn services.api.main:app --reload --port 8000
+    
+    # Production
+    gunicorn services.api.main:app -w 4 -k uvicorn.workers.UvicornWorker
+
+Environment Variables:
+    GRIDPULSE_API_KEY: API authentication key (required)
+    GRIDPULSE_LOG_LEVEL: Logging verbosity (default: INFO)
+    
+See Also:
+    - services/api/README.md: Full API documentation
+    - configs/serving.yaml: Service configuration
+"""
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Security
@@ -13,19 +50,46 @@ from services.api.routers import forecast, anomaly, optimize, monitor
 from services.api.routers.forecast_intervals import router as intervals_router
 from services.api.security import get_api_key, verify_scope
 
+# Initialize structured logging before anything else
 setup_logging()
 
 
+# ============================================================================
+# APPLICATION LIFECYCLE
+# ============================================================================
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    FastAPI lifespan context manager for startup/shutdown events.
+    
+    Startup:
+        - Starts the system watchdog for health monitoring
+        
+    Shutdown:
+        - Gracefully stops the watchdog
+        - Ensures clean resource cleanup
+    """
+    # Startup: Begin health monitoring
     watchdog.start()
     yield
+    # Shutdown: Clean up resources
     watchdog.stop()
 
 
-app = FastAPI(title="GridPulse API", version="0.1.0", lifespan=lifespan)
+# ============================================================================
+# APPLICATION INITIALIZATION  
+# ============================================================================
 
-# Initialize Systems
+app = FastAPI(
+    title="GridPulse API",
+    version="0.1.0",
+    description="Energy forecasting and battery dispatch optimization API",
+    lifespan=lifespan
+)
+
+# Initialize Battery Management System (BMS) with safety limits
+# These limits prevent physical damage to the battery
 bms_cfg = get_bms_config()
 bms = SafetyLayer(
     capacity_mwh=bms_cfg["capacity_mwh"],
