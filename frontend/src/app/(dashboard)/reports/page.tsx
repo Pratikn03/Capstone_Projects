@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Panel } from '@/components/ui/Panel';
 import { KPICard } from '@/components/ui/KPICard';
+import { ArchitectureDiagram } from '@/components/charts/ArchitectureDiagram';
 import { FileText, Download, TrendingUp, BarChart3, Leaf, Zap } from 'lucide-react';
 import { useReportsData } from '@/lib/api/reports-client';
 import { useRegion } from '@/components/ui/RegionContext';
@@ -355,6 +356,11 @@ export default function ReportsPage() {
           </div>
         </Panel>
       )}
+
+      {/* System Architecture */}
+      <Panel title="Architecture" subtitle="End-to-end ML pipeline">
+        <ArchitectureDiagram />
+      </Panel>
 
       {/* Footer */}
       <div className="text-center text-[11px] text-slate-600 py-4">

@@ -1,6 +1,7 @@
 'use client';
 
 import { MLOpsMonitor } from '@/components/charts/MLOpsMonitor';
+import { ArchitectureDiagram } from '@/components/charts/ArchitectureDiagram';
 import { Panel } from '@/components/ui/Panel';
 import { mockDriftData } from '@/lib/api/mock-data';
 import { useReportsData } from '@/lib/api/reports-client';
@@ -100,6 +101,11 @@ export default function MonitoringPage() {
           </div>
         </Panel>
       )}
+
+      {/* System Architecture */}
+      <Panel title="System Architecture" subtitle="End-to-end ML pipeline">
+        <ArchitectureDiagram />
+      </Panel>
     </div>
   );
 }
