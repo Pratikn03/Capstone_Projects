@@ -1,0 +1,46 @@
+% ============================================================
+% Table 10: Dataset Summary
+% ============================================================
+% Usage: \input{reports/tables/dataset_summary.tex}
+% ============================================================
+
+\begin{table}[htbp]
+\centering
+\caption{Dataset Characteristics}
+\label{tab:datasets}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Attribute} & \textbf{Germany (OPSD)} & \textbf{USA (EIA-930)} \\
+\midrule
+\multicolumn{3}{l}{\textit{General}} \\
+\quad Source & Open Power System Data & EIA Grid Monitor \\
+\quad Region & Germany (national) & MISO (Midwest US) \\
+\quad Period & 2015--2017 & 2019--2024 \\
+\quad Resolution & Hourly & Hourly \\
+\quad Observations & 17,377 & 92,382 \\
+\midrule
+\multicolumn{3}{l}{\textit{Targets}} \\
+\quad Load (MW) & \checkmark & \checkmark \\
+\quad Wind (MW) & \checkmark & \checkmark \\
+\quad Solar (MW) & \checkmark & \checkmark \\
+\quad Price (\euro{}/MWh) & \checkmark & --- \\
+\midrule
+\multicolumn{3}{l}{\textit{Features}} \\
+\quad Lag features (1--168h) & 18 & 18 \\
+\quad Rolling statistics & 12 & 12 \\
+\quad Calendar features & 8 & 8 \\
+\quad Weather features & 4 & 4 \\
+\quad Total features & 93 & 93 \\
+\midrule
+\multicolumn{3}{l}{\textit{Split}} \\
+\quad Train & 80\% & 80\% \\
+\quad Validation & --- & 10\% \\
+\quad Test & 20\% & 10\% \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item OPSD: \url{https://open-power-system-data.org/}
+\item EIA-930: \url{https://www.eia.gov/electricity/gridmonitor/}
+\end{tablenotes}
+\end{table}

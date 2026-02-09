@@ -1,0 +1,43 @@
+% ============================================================
+% Table 8: SHAP Feature Importance (Top 5 per Target)
+% ============================================================
+% Usage: \input{reports/tables/shap_importance.tex}
+% ============================================================
+
+\begin{table}[htbp]
+\centering
+\caption{Top-5 Features by SHAP Importance}
+\label{tab:shap}
+\begin{tabular}{clr}
+\toprule
+\textbf{Target} & \textbf{Feature} & \textbf{Mean |SHAP|} \\
+\midrule
+\multirow{5}{*}{Load}
+ & load\_mw\_lag\_1 & 7,061.89 \\
+ & load\_mw\_delta\_1h & 1,563.17 \\
+ & load\_mw\_lag\_24 & 500.26 \\
+ & load\_mw\_lag\_168 & 359.89 \\
+ & load\_mw\_delta\_24h & 274.82 \\
+\midrule
+\multirow{5}{*}{Wind}
+ & wind\_mw\_lag\_1 & 5,223.89 \\
+ & wind\_mw\_delta\_1h & 683.55 \\
+ & wind\_mw\_delta\_24h & 205.68 \\
+ & wind\_mw\_lag\_24 & 128.54 \\
+ & wind\_mw\_roll\_mean\_24 & 97.32 \\
+\midrule
+\multirow{5}{*}{Solar}
+ & solar\_mw\_lag\_1 & 4,131.02 \\
+ & solar\_mw\_lag\_24 & 3,697.98 \\
+ & solar\_mw\_delta\_1h & 875.96 \\
+ & solar\_mw\_delta\_24h & 259.27 \\
+ & hour & 128.91 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: SHAP (SHapley Additive exPlanations) values [Lundberg 2017].
+\item Mean absolute SHAP value computed on test set.
+\item Lag features dominate, consistent with autoregressive structure.
+\end{tablenotes}
+\end{table}

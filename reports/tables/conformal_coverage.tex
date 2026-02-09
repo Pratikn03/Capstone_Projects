@@ -1,0 +1,33 @@
+% ============================================================
+% Table 3: Conformal Prediction Coverage Results
+% ============================================================
+% Usage: \input{reports/tables/conformal_coverage.tex}
+% ============================================================
+
+\begin{table}[htbp]
+\centering
+\caption{Conformal Prediction Coverage (90\% Nominal)}
+\label{tab:conformal}
+\begin{tabular}{llccc}
+\toprule
+\textbf{Dataset} & \textbf{Target} & \textbf{PICP (\%)} & \textbf{MPIW (MW)} & \textbf{N\textsubscript{test}} \\
+\midrule
+\multirow{3}{*}{Germany (OPSD)}
+ & Load & \textbf{92.4} & 742.65 & 1,739 \\
+ & Wind & 89.4 & 350.77 & 1,739 \\
+ & Solar & 87.0 & 622.67 & 1,739 \\
+\midrule
+\multirow{3}{*}{USA (EIA-930)}
+ & Load & \textbf{90.1} & 439.01 & 9,239 \\
+ & Wind & 79.7 & 35,590 & 9,239 \\
+ & Solar & 69.9 & 11,332 & 9,239 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: PICP = Prediction Interval Coverage Probability (target: 90\%).
+\item MPIW = Mean Prediction Interval Width.
+\item Split conformal prediction with 500-sample calibration set.
+\item \textbf{Bold} indicates near-nominal coverage ($\geq$90\%).
+\end{tablenotes}
+\end{table}

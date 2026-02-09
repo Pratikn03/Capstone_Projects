@@ -1,0 +1,28 @@
+% ============================================================
+% Table 5: Statistical Significance Tests (Diebold-Mariano)
+% ============================================================
+% Usage: \input{reports/tables/significance_tests.tex}
+% ============================================================
+
+\begin{table}[htbp]
+\centering
+\caption{Diebold-Mariano Test Results for Load Forecasting}
+\label{tab:dm_tests}
+\begin{tabular}{llrrll}
+\toprule
+\textbf{Model 1} & \textbf{Model 2} & \textbf{DM Stat} & \textbf{p-value} & \textbf{Result} & \textbf{Better} \\
+\midrule
+GBM & LSTM & $-9.42$ & $<0.001$ & Significant*** & GBM \\
+GBM & TCN & $-7.46$ & $<0.001$ & Significant*** & GBM \\
+LSTM & TCN & $-14.95$ & $<0.001$ & Significant*** & LSTM \\
+GBM & Persistence & $-12.31$ & $<0.001$ & Significant*** & GBM \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: Two-sided Diebold-Mariano test for equal predictive accuracy.
+\item Null hypothesis: Equal forecast accuracy (squared error loss).
+\item ***: $p < 0.01$, **: $p < 0.05$, *: $p < 0.10$.
+\item Negative DM statistic indicates Model 1 has lower error.
+\end{tablenotes}
+\end{table}

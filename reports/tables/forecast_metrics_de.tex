@@ -1,0 +1,37 @@
+% ============================================================
+% Table 1: Forecast Performance Comparison (Germany - OPSD)
+% ============================================================
+% Usage: \input{reports/tables/forecast_metrics_de.tex}
+% ============================================================
+
+\begin{table}[htbp]
+\centering
+\caption{Forecast Performance on Germany (OPSD) Dataset}
+\label{tab:forecast_de}
+\begin{tabular}{llrrrr}
+\toprule
+\textbf{Target} & \textbf{Model} & \textbf{RMSE} & \textbf{MAE} & \textbf{sMAPE (\%)} & \textbf{R\textsuperscript{2}} \\
+\midrule
+\multirow{4}{*}{Load (MW)} 
+ & \textbf{GBM} & \textbf{271.17} & \textbf{161.08} & \textbf{0.34} & \textbf{0.999} \\
+ & LSTM & 2,355.97 & 1,732.08 & 3.36 & 0.931 \\
+ & TCN & 3,394.19 & 2,613.50 & 5.35 & 0.857 \\
+ & Persistence & 6,010.56 & 3,901.68 & 7.83 & --- \\
+\midrule
+\multirow{3}{*}{Wind (MW)}
+ & \textbf{GBM} & \textbf{127.08} & \textbf{87.33} & \textbf{1.98} & 0.998 \\
+ & LSTM & 6,025.14 & 4,304.79 & 52.05 & --- \\
+ & Persistence & 7,780.10 & 5,496.82 & 63.68 & --- \\
+\midrule
+\multirow{3}{*}{Solar (MW)}
+ & \textbf{GBM} & \textbf{269.55} & \textbf{129.54} & 70.42 & 0.996 \\
+ & LSTM & 2,536.11 & 1,536.00 & 96.58 & --- \\
+ & Persistence & 2,427.47 & 1,254.86 & 14.26 & --- \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: Best results in \textbf{bold}. Persistence baseline uses 24-hour lag.
+\item RMSE/MAE in MW. Test set: 1,739 observations (20\% holdout).
+\end{tablenotes}
+\end{table}
