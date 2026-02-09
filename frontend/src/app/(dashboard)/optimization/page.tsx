@@ -8,17 +8,15 @@ import { useRegion } from '@/components/ui/RegionContext';
 import { useDatasetData } from '@/lib/api/dataset-client';
 import { useReportsData } from '@/lib/api/reports-client';
 import { formatCurrency } from '@/lib/utils';
-import {
-  mockBatterySchedule,
-  mockParetoFrontier,
-} from '@/lib/api/mock-data';
 
 export default function OptimizationPage() {
   const { region } = useRegion();
   const dataset = useDatasetData(region as 'DE' | 'US');
   const { impact: reportsImpact, regions } = useReportsData();
-  const battery = mockBatterySchedule(region);
-  const pareto = mockParetoFrontier();
+  
+  // Use real extracted data
+  const battery = dataset.battery;
+  const pareto = dataset.pareto;
   const regionLabel = region === 'US' ? 'USA' : 'Germany';
 
   const realImpact = dataset.impact;
@@ -67,10 +65,13 @@ export default function OptimizationPage() {
           optimized={dispatchData}
           title={`Optimized Dispatch — ${regionLabel}`}
         />
-        <CarbonCostPanel data={pareto} zoneId={region} />
+        <CarbonCostPanel data={pareto.length ? pareto : undefined} zoneId={region} />
       </div>
 
-      <BatterySOCChart schedule={battery.schedule} metrics={battery.metrics} />
+      <BatterySOCChart 
+        schedule={battery?.schedule ?? []} 
+        metrics={battery?.metrics ?? { cost_savings_eur: 0, carbon_reduction_kg: 0, peak_shaving_pct: 0, avg_efficiency: 92 }} 
+      />
 
       <Panel title="Optimization Parameters" subtitle="Current Configuration">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">

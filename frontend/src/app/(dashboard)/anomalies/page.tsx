@@ -5,13 +5,19 @@ import { AnomalyList } from '@/components/charts/AnomalyList';
 import { Panel } from '@/components/ui/Panel';
 import { useRegion } from '@/components/ui/RegionContext';
 import { useDatasetData } from '@/lib/api/dataset-client';
-import { mockAnomalies, mockAnomalyZScores } from '@/lib/api/mock-data';
 
 export default function AnomaliesPage() {
   const { region } = useRegion();
   const dataset = useDatasetData(region as 'DE' | 'US');
-  const anomalies = mockAnomalies();
-  const zScores = mockAnomalyZScores(72);
+  
+  // Use real extracted data
+  const anomalies = dataset.anomalies;
+  const zScores = dataset.zscores.map((z) => ({
+    timestamp: z.timestamp,
+    z_score: z.z_score,
+    is_anomaly: z.is_anomaly,
+    residual_mw: z.residual_mw,
+  }));
   const regionLabel = region === 'US' ? 'USA' : 'Germany';
 
   return (

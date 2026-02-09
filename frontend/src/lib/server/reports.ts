@@ -267,6 +267,7 @@ export async function loadForecastMetrics(reportsDir = resolveReportsDir()): Pro
     const rawMape = row.target === 'solar_mw' && row.daylight_mape ? row.daylight_mape : row.mape;
     const mapeValue = toNumber(rawMape);
     const mape = mapeValue !== null ? mapeValue * 100 : undefined;
+    const r2Value = toNumber(row.r2);
 
     metrics.push({
       target: row.target,
@@ -274,6 +275,7 @@ export async function loadForecastMetrics(reportsDir = resolveReportsDir()): Pro
       rmse,
       mae,
       mape,
+      r2: r2Value !== null ? r2Value : undefined,
       coverage_90: coverageMap.get(row.target),
     });
   }
@@ -326,12 +328,14 @@ export async function loadTrainingMetrics(reportsDir = resolveReportsDir()): Pro
       const rawMape =
         target === 'solar_mw' && model.daylight_mape !== undefined ? model.daylight_mape : model.mape;
       const mapeValue = toNumber(rawMape);
+      const r2Value = toNumber(model.r2);
       metrics.push({
         target,
         model: MODEL_LABELS[modelKey] ?? modelKey,
         rmse,
         mae,
         mape: mapeValue !== null ? mapeValue * 100 : undefined,
+        r2: r2Value !== null ? r2Value : undefined,
         coverage_90: coverageMap.get(target),
       });
     }
@@ -367,12 +371,14 @@ export async function loadPublicationMetrics(metricsPath: string): Promise<Forec
     const rawMape =
       row.target === 'solar_mw' && row.daylight_mape ? row.daylight_mape : row.mape;
     const mapeValue = toNumber(rawMape);
+    const r2Value = toNumber(row.r2);
     metrics.push({
       target: row.target,
       model: MODEL_LABELS[modelKey] ?? row.model,
       rmse,
       mae,
       mape: mapeValue !== null ? mapeValue * 100 : undefined,
+      r2: r2Value !== null ? r2Value : undefined,
     });
   }
 
@@ -710,7 +716,19 @@ export async function loadReportsOverview(): Promise<ReportsApiResponse> {
   const usPublicationMetricsPath = path.join(publicationTablesDir, 'table3_forecast_metrics_us.csv');
   const usPublicationMetrics = await loadPublicationMetrics(usPublicationMetricsPath);
   if (usPublicationMetrics.length) {
-    usBundle.metrics = usPublicationMetrics;
+    // Merge R² and coverage_90 from training metrics into publication metrics
+    const originalMetrics = usBundle.metrics;
+    const mergedMetrics = usPublicationMetrics.map((pubMetric) => {
+      const original = originalMetrics.find(
+        (m) => m.target === pubMetric.target && m.model === pubMetric.model
+      );
+      return {
+        ...pubMetric,
+        r2: pubMetric.r2 ?? original?.r2,
+        coverage_90: pubMetric.coverage_90 ?? original?.coverage_90,
+      };
+    });
+    usBundle.metrics = mergedMetrics;
     usBundle.meta.metrics_source = 'publication_table';
   }
 

@@ -3,7 +3,6 @@
 import { CarbonCostPanel } from '@/components/ai/tools/CarbonCostPanel';
 import { KPICard } from '@/components/ui/KPICard';
 import { Leaf, TrendingDown, Factory } from 'lucide-react';
-import { mockParetoFrontier } from '@/lib/api/mock-data';
 import { useReportsData } from '@/lib/api/reports-client';
 import { useDatasetData } from '@/lib/api/dataset-client';
 import { useRegion } from '@/components/ui/RegionContext';
@@ -11,10 +10,12 @@ import { Panel } from '@/components/ui/Panel';
 import { formatCurrency } from '@/lib/utils';
 
 export default function CarbonPage() {
-  const pareto = mockParetoFrontier();
   const { region, setRegion } = useRegion();
   const { impact: reportsImpact, regions } = useReportsData();
   const dataset = useDatasetData(region as 'DE' | 'US');
+  
+  // Use real extracted data
+  const pareto = dataset.pareto;
   const realImpact = dataset.impact;
   const regionImpact = regions[region]?.impact;
 
@@ -79,7 +80,7 @@ export default function CarbonPage() {
         />
       </div>
 
-      <CarbonCostPanel data={pareto} zoneId={region} />
+      <CarbonCostPanel data={pareto.length ? pareto : undefined} zoneId={region} />
 
       {/* Carbon breakdown */}
       {realImpact && (

@@ -118,6 +118,85 @@ export type ImpactData = {
   peak_shaving_pct: number | null;
 };
 
+export type DriftPoint = {
+  date: string;
+  ks_statistic: number;
+  rolling_rmse: number;
+  threshold: number;
+  is_drift: boolean;
+};
+
+export type DriftedFeature = {
+  column: string;
+  ks_stat: number;
+  p_value: number;
+};
+
+export type MonitoringData = {
+  region: string;
+  generated_at: string;
+  summary: {
+    data_drift_detected: boolean;
+    model_drift_detected: boolean;
+    retraining_needed: boolean;
+    retraining_reasons: string[];
+    last_trained_days_ago: number;
+    current_rmse: number | null;
+    current_mape: number | null;
+  };
+  drifted_features: DriftedFeature[];
+  drift_timeline: DriftPoint[];
+  total_features_with_drift: number;
+  total_features_monitored: number;
+};
+
+export type Anomaly = {
+  id: string;
+  timestamp: string;
+  type: 'load_spike' | 'load_drop' | 'solar_drop' | 'solar_surge' | 'wind_ramp' | 'wind_drop' | 'frequency_deviation' | 'battery_fault' | 'sensor_fault';
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  status: 'active' | 'investigating' | 'resolved';
+  zone_id: string;
+  description: string;
+  value?: number;
+  threshold?: number;
+};
+
+export type AnomalyZScore = {
+  timestamp: string;
+  target: string;
+  z_score: number;
+  is_anomaly: boolean;
+  residual_mw: number;
+};
+
+export type BatterySchedulePoint = {
+  timestamp: string;
+  soc_percent: number;
+  power_mw: number;
+  capacity_mwh: number;
+  cycles_today: number;
+};
+
+export type BatterySchedule = {
+  zone_id: string;
+  schedule: BatterySchedulePoint[];
+  metrics: {
+    cost_savings_eur: number;
+    carbon_reduction_kg: number;
+    peak_shaving_pct: number;
+    avg_efficiency: number;
+  };
+};
+
+export type ParetoPoint = {
+  carbon_weight: number;
+  total_cost_eur: number;
+  total_carbon_kg: number;
+  cost_savings_pct: number;
+  carbon_reduction_pct: number;
+};
+
 export type DashboardManifest = {
   generated_at: string;
   regions: Record<string, { id: string; label: string; stats: DatasetStats; timeseries_hours: number }>;
@@ -132,6 +211,11 @@ export type RegionDashboardData = {
   metrics: ModelMetric[];
   impact: ImpactData | null;
   registry: ModelRegistryEntry[];
+  monitoring: MonitoringData | null;
+  anomalies: Anomaly[];
+  zscores: AnomalyZScore[];
+  battery: BatterySchedule | null;
+  pareto: ParetoPoint[];
 };
 
 // ─── Path resolution ───
@@ -167,7 +251,7 @@ export async function loadRegionData(region: 'DE' | 'US'): Promise<RegionDashboa
   const dir = resolveDashboardDir();
   const prefix = region.toLowerCase();
 
-  const [stats, timeseries, forecast, dispatch, profiles, metrics, impact, registry] =
+  const [stats, timeseries, forecast, dispatch, profiles, metrics, impact, registry, monitoring, anomalies, zscores, battery, pareto] =
     await Promise.all([
       readJsonFile<DatasetStats>(path.join(dir, `${prefix}_stats.json`)),
       readJsonFile<TimeseriesPoint[]>(path.join(dir, `${prefix}_timeseries.json`)),
@@ -177,6 +261,11 @@ export async function loadRegionData(region: 'DE' | 'US'): Promise<RegionDashboa
       readJsonFile<ModelMetric[]>(path.join(dir, `${prefix}_metrics.json`)),
       readJsonFile<ImpactData>(path.join(dir, `${prefix}_impact.json`)),
       readJsonFile<ModelRegistryEntry[]>(path.join(dir, `${prefix}_registry.json`)),
+      readJsonFile<MonitoringData>(path.join(dir, `${prefix}_monitoring.json`)),
+      readJsonFile<Anomaly[]>(path.join(dir, `${prefix}_anomalies.json`)),
+      readJsonFile<AnomalyZScore[]>(path.join(dir, `${prefix}_zscores.json`)),
+      readJsonFile<BatterySchedule>(path.join(dir, `${prefix}_battery.json`)),
+      readJsonFile<ParetoPoint[]>(path.join(dir, `${prefix}_pareto.json`)),
     ]);
 
   return {
@@ -188,6 +277,11 @@ export async function loadRegionData(region: 'DE' | 'US'): Promise<RegionDashboa
     metrics: metrics ?? [],
     impact: impact ?? null,
     registry: registry ?? [],
+    monitoring: monitoring ?? null,
+    anomalies: anomalies ?? [],
+    zscores: zscores ?? [],
+    battery: battery ?? null,
+    pareto: pareto ?? [],
   };
 }
 

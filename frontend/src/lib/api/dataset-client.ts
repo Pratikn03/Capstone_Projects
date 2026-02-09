@@ -10,9 +10,15 @@ import type {
   ModelMetric,
   ImpactData,
   ModelRegistryEntry,
+  MonitoringData,
+  DriftPoint,
+  Anomaly,
+  AnomalyZScore,
+  BatterySchedule,
+  ParetoPoint,
 } from '@/lib/server/dataset';
 
-export type { DatasetStats, TimeseriesPoint, ForecastPoint, DispatchPoint, HourlyProfile, ModelMetric, ImpactData, ModelRegistryEntry };
+export type { DatasetStats, TimeseriesPoint, ForecastPoint, DispatchPoint, HourlyProfile, ModelMetric, ImpactData, ModelRegistryEntry, MonitoringData, DriftPoint, Anomaly, AnomalyZScore, BatterySchedule, ParetoPoint };
 
 const EMPTY: RegionDashboardData = {
   stats: null,
@@ -23,6 +29,11 @@ const EMPTY: RegionDashboardData = {
   metrics: [],
   impact: null,
   registry: [],
+  monitoring: null,
+  anomalies: [],
+  zscores: [],
+  battery: null,
+  pareto: [],
 };
 
 export function useDatasetData(region: 'DE' | 'US') {

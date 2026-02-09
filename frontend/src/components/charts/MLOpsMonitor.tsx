@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
-import type { DriftPoint } from '@/lib/api/mock-data';
+import type { DriftPoint } from '@/lib/api/dataset-client';
 
 interface MLOpsMonitorProps {
   data: DriftPoint[];

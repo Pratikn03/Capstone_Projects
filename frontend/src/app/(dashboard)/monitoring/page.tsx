@@ -5,15 +5,18 @@ import { Panel } from '@/components/ui/Panel';
 import { mockDriftData } from '@/lib/api/mock-data';
 import { useReportsData } from '@/lib/api/reports-client';
 import { useRegion } from '@/components/ui/RegionContext';
-import { useDatasetData } from '@/lib/api/dataset-client';
+import { useDatasetData, type DriftPoint } from '@/lib/api/dataset-client';
 
 export default function MonitoringPage() {
   const { region } = useRegion();
-  const drift = mockDriftData(30);
   const dataset = useDatasetData(region as 'DE' | 'US');
   const { metrics: reportsMetrics, regions } = useReportsData();
   const formatMaybe = (value: number | undefined, digits: number) => (value === undefined ? 'N/A' : value.toFixed(digits));
   const regionLabel = region === 'US' ? 'USA' : 'Germany';
+
+  // Use real monitoring data from extracted JSON, fallback to mock
+  const realMonitoring = dataset.monitoring;
+  const drift: DriftPoint[] = realMonitoring?.drift_timeline ?? mockDriftData(30);
 
   // Prefer real dataset metrics, then reports metrics
   const realMetrics = dataset.metrics.length ? dataset.metrics : [];

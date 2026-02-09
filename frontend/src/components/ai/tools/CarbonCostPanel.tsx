@@ -9,7 +9,7 @@ import type { ParetoPoint } from '@/lib/api/mock-data';
 import { formatCurrency, formatMW, formatPercent } from '@/lib/utils';
 
 interface CarbonCostPanelProps {
-  data: ParetoPoint[];
+  data?: ParetoPoint[];
   zoneId: string;
   summary?: {
     cost_savings_pct?: number | null;
@@ -95,32 +95,38 @@ export function CarbonCostPanel({ data, zoneId, summary }: CarbonCostPanelProps)
 
       {/* Pareto chart */}
       <div className="px-5 py-4 h-[260px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-            <XAxis
-              dataKey="total_carbon_kg"
-              stroke="#64748b"
-              tick={{ fontSize: 10 }}
-              tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}t`}
-              label={{ value: 'Carbon (tCO₂)', position: 'insideBottom', offset: -5, fill: '#64748b', fontSize: 10 }}
-            />
-            <YAxis
-              dataKey="total_cost_eur"
-              stroke="#64748b"
-              tick={{ fontSize: 10 }}
-              tickFormatter={(v: number) => `€${(v / 1000).toFixed(0)}k`}
-              label={{ value: 'Cost (€)', angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 10 }}
-            />
-            <Tooltip content={<CustomTooltip />} />
+        {data && data.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+              <XAxis
+                dataKey="total_carbon_kg"
+                stroke="#64748b"
+                tick={{ fontSize: 10 }}
+                tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}t`}
+                label={{ value: 'Carbon (tCO₂)', position: 'insideBottom', offset: -5, fill: '#64748b', fontSize: 10 }}
+              />
+              <YAxis
+                dataKey="total_cost_eur"
+                stroke="#64748b"
+                tick={{ fontSize: 10 }}
+                tickFormatter={(v: number) => `€${(v / 1000).toFixed(0)}k`}
+                label={{ value: 'Cost (€)', angle: -90, position: 'insideLeft', fill: '#64748b', fontSize: 10 }}
+              />
+              <Tooltip content={<CustomTooltip />} />
 
-            <Line
-              type="monotone" dataKey="total_cost_eur"
-              stroke="#10b981" strokeWidth={2} dot={{ r: 5, fill: '#10b981', stroke: '#0f172a', strokeWidth: 2 }}
-              name="Pareto Front"
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+              <Line
+                type="monotone" dataKey="total_cost_eur"
+                stroke="#10b981" strokeWidth={2} dot={{ r: 5, fill: '#10b981', stroke: '#0f172a', strokeWidth: 2 }}
+                name="Pareto Front"
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-full flex items-center justify-center text-slate-500 text-xs">
+            No Pareto data available
+          </div>
+        )}
       </div>
     </motion.div>
   );
