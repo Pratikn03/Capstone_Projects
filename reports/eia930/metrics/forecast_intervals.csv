@@ -1,0 +1,4 @@
+target,alpha,picp,mpiw,n_test
+load_mw,0.1,0.8739,415.6027,1364
+wind_mw,0.1,0.805,299.8105,1364
+solar_mw,0.1,0.9047,421.3931,1364
