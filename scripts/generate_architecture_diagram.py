@@ -71,7 +71,7 @@ def main() -> None:
     _add_box(ax, nodes["optimization"], "Optimization\nLP dispatch\nbaselines")
     _add_box(ax, nodes["anomaly"], "Anomaly Detection\nresidual + isolation")
     _add_box(ax, nodes["api"], "API\nFastAPI")
-    _add_box(ax, nodes["dashboard"], "Dashboard\nStreamlit")
+    _add_box(ax, nodes["dashboard"], "Dashboard\nNext.js")
     _add_box(ax, nodes["monitoring"], "Monitoring\ndata/model drift\nalerts")
     _add_box(ax, nodes["retrain"], "Retraining\nretrain_if_needed")
     _add_box(ax, nodes["artifacts"], "Reports & Artifacts\nreports/\nartifacts/")
@@ -105,4 +105,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

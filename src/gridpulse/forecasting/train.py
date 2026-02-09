@@ -10,14 +10,16 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from gridpulse.utils.metrics import rmse, mape, mae, smape, daylight_mape
+from gridpulse.utils.metrics import rmse, mape, mae, smape, daylight_mape, r2_score
 from gridpulse.utils.seed import set_seed
 from gridpulse.utils.scaler import StandardScaler
-from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm
+from gridpulse.utils.manifest import create_run_manifest, print_manifest_summary
+from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm, extract_base_model
 from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
 from gridpulse.forecasting.dl_lstm import LSTMForecaster
 from gridpulse.forecasting.dl_tcn import TCNForecaster
 from gridpulse.forecasting.backtest import walk_forward_horizon_metrics
+from gridpulse.forecasting.evaluate import time_series_cv_score
 from gridpulse.forecasting.uncertainty.conformal import ConformalConfig, ConformalInterval, save_conformal
 
 import torch
@@ -181,9 +183,11 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, target: str) -> dict
         "mae": mae(y_true, y_pred),
         "mape": mape(y_true, y_pred),
         "smape": smape(y_true, y_pred),
+        "r2": r2_score(y_true, y_pred),
     }
-    if target == "solar_mw":
-        # Solar MAPE explodes at night; use daylight-only MAPE.
+    if target in ("solar_mw", "wind_mw"):
+        # Solar & wind have near-zero values that inflate MAPE to billions.
+        # Daylight MAPE (non-zero only) is the usable metric.
         out["daylight_mape"] = daylight_mape(y_true, y_pred)
     return out
 
@@ -331,6 +335,8 @@ def main():
     p.add_argument("--targets", default=None, help="Comma-separated targets to train (override config)")
     p.add_argument("--models", default=None, help="Comma-separated models to train: gbm,lstm,tcn")
     p.add_argument("--skip-existing", action="store_true", help="Skip training if model artifact already exists")
+    p.add_argument("--enable-cv", action="store_true", help="Enable time-series cross-validation (5-fold)")
+    p.add_argument("--use-pipeline", action="store_true", help="Use sklearn Pipeline for GBM (leakage-safe preprocessing)")
     args = p.parse_args()
 
     # Config-driven training keeps runs reproducible across datasets.
@@ -340,7 +346,26 @@ def main():
         message="X does not have valid feature names, but LGBMRegressor was fitted with feature names",
         category=UserWarning,
     )
-    set_seed(int(cfg.get("seed", 42)))
+    
+    seed = int(cfg.get("seed", 42))
+    set_seed(seed)
+    
+    # Create run manifest for reproducibility
+    art_dir = Path(cfg["artifacts"]["out_dir"])
+    art_dir.mkdir(parents=True, exist_ok=True)
+    
+    print("Creating run manifest for reproducibility...")
+    manifest = create_run_manifest(
+        config_path=args.config,
+        output_dir=art_dir,
+        extra_metadata={
+            "enable_cv": args.enable_cv,
+            "use_pipeline": args.use_pipeline,
+            "seed": seed,
+        },
+    )
+    print_manifest_summary(manifest)
+    
     # Load prepared features (Parquet) for training.
     features_path = Path(cfg["data"]["processed_path"])
     if not features_path.exists():
@@ -368,8 +393,6 @@ def main():
     horizon = int(cfg["task"]["horizon_hours"])
     lookback_default = int(cfg["task"].get("lookback_hours", 168))
 
-    art_dir = Path(cfg["artifacts"]["out_dir"])
-    art_dir.mkdir(parents=True, exist_ok=True)
     rep_dir = Path(cfg["reports"]["out_dir"])
     rep_dir.mkdir(parents=True, exist_ok=True)
 
@@ -377,6 +400,7 @@ def main():
         "device": device,
         "quantiles": quantiles,
         "targets": {},
+        "manifest_id": manifest.get("run_id"),
     }
     backtest_cfg = cfg.get("backtest", {})
     backtest_enabled = bool(backtest_cfg.get("enabled", False))
@@ -422,13 +446,47 @@ def main():
                         tuning_cfg,
                         int(cfg.get("seed", 42)),
                     )
-                model_kind, gbm = train_gbm(X_train, y_train, gbm_params)
+                
+                # Train with optional sklearn Pipeline for leakage-safe preprocessing
+                model_kind, gbm = train_gbm(
+                    X_train, 
+                    y_train, 
+                    gbm_params, 
+                    use_pipeline=args.use_pipeline,
+                    preprocessing="standard" if args.use_pipeline else None,
+                )
+                
                 gbm_pred_test = predict_gbm(gbm, X_test)
                 gbm_pred_val = predict_gbm(gbm, X_val)
                 gbm_metrics = {
                     **compute_metrics(y_test, gbm_pred_test, target),
                     "model": f"gbm_{model_kind}",
                 }
+                
+                # Optional: time-series cross-validation
+                if args.enable_cv:
+                    print(f"Running 5-fold CV for GBM on {target}...")
+                    # CV on combined train+val for robust evaluation
+                    X_trainval = np.vstack([X_train, X_val])
+                    y_trainval = np.concatenate([y_train, y_val])
+                    
+                    cv_results = time_series_cv_score(
+                        X=X_trainval,
+                        y=y_trainval,
+                        train_fn=lambda X, y: train_gbm(
+                            X, y, gbm_params, use_pipeline=args.use_pipeline, preprocessing="standard" if args.use_pipeline else None
+                        )[1],
+                        predict_fn=predict_gbm,
+                        n_splits=5,
+                        target=target,
+                    )
+                    
+                    # Save CV results
+                    cv_path = rep_dir / f"{target}_gbm_cv_results.json"
+                    cv_path.write_text(json.dumps(cv_results, indent=2), encoding="utf-8")
+                    print(f"  CV RMSE: {cv_results['aggregated']['rmse_mean']:.2f} ± {cv_results['aggregated']['rmse_std']:.2f}")
+                    gbm_metrics["cv_results"] = cv_results["aggregated"]
+                
                 if uncertainty_enabled and target in uncertainty_targets and target not in conformal_payloads:
                     cal_split = str(uncertainty_cfg.get("calibration_split", "val")).lower()
                     if cal_split == "test":
@@ -624,6 +682,8 @@ def main():
         test_template = str(uncertainty_cfg.get("test_npz", "artifacts/backtests/test.npz"))
         conf_cfg = ConformalConfig(**(uncertainty_cfg.get("conformal", {}) or {}))
         artifacts_dir = Path(uncertainty_cfg.get("artifacts_dir", "artifacts/uncertainty"))
+        
+        print("\nConformal Prediction Intervals:")
         for target, payload in conformal_payloads.items():
             cal_path = _format_uncertainty_path(cal_template, target, "calibration", multi)
             test_path = _format_uncertainty_path(test_template, target, "test", multi)
@@ -634,8 +694,14 @@ def main():
 
             ci = ConformalInterval(conf_cfg)
             ci.fit_calibration(payload["y_true_cal"], payload["y_pred_cal"])
-            coverage = ci.coverage(payload["y_true_test"], payload["y_pred_test"])
-            width = ci.mean_width(payload["y_pred_test"])
+            
+            # Enhanced: per-horizon PICP + MPIW metrics
+            interval_metrics = ci.evaluate_intervals(
+                payload["y_true_test"], 
+                payload["y_pred_test"],
+                per_horizon=True
+            )
+            
             conformal_path = artifacts_dir / f"{payload['target']}_conformal.json"
             meta = {
                 "target": payload["target"],
@@ -643,9 +709,13 @@ def main():
                 "horizon": horizon,
                 "calibration_rows": int(payload["y_true_cal"].shape[0]),
                 "test_rows": int(payload["y_true_test"].shape[0]),
-                "test_coverage": float(coverage),
-                "test_mean_width": float(width),
+                "global_coverage": interval_metrics["global_coverage"],
+                "global_mean_width": interval_metrics["global_mean_width"],
+                "per_horizon_picp": interval_metrics.get("per_horizon_picp", {}),
+                "per_horizon_mpiw": interval_metrics.get("per_horizon_mpiw", {}),
             }
+            
+            print(f"  {target}: Coverage={interval_metrics['global_coverage']:.3f}, Width={interval_metrics['global_mean_width']:.2f}")
             save_conformal(conformal_path, ci, meta=meta)
             print(f"Saved conformal artifacts to {cal_path}, {test_path}, {conformal_path}")
 

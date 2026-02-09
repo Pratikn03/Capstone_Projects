@@ -140,6 +140,87 @@ class ConformalInterval:
         lo, hi = self.predict_interval(y_pred)
         return float(np.mean(hi - lo))
 
+    def per_horizon_coverage(self, y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
+        """
+        Compute PICP (Prediction Interval Coverage Probability) per horizon step.
+        
+        Returns:
+            Dictionary mapping horizon step ("h1", "h2", ...) to coverage probability
+        """
+        y_true = np.asarray(y_true)
+        y_pred = np.asarray(y_pred)
+        lo, hi = self.predict_interval(y_pred)
+        
+        if y_true.ndim == 1:
+            y_true = y_true.reshape(-1, 1)
+            y_pred = y_pred.reshape(-1, 1)
+            lo = lo.reshape(-1, 1)
+            hi = hi.reshape(-1, 1)
+        
+        _, horizon = y_true.shape
+        coverage_per_h = {}
+        
+        for h in range(horizon):
+            yt = y_true[:, h]
+            yt_lo = lo[:, h]
+            yt_hi = hi[:, h]
+            coverage = np.mean((yt >= yt_lo) & (yt <= yt_hi))
+            coverage_per_h[f"h{h+1}"] = float(coverage)
+        
+        return coverage_per_h
+
+    def per_horizon_width(self, y_pred: np.ndarray) -> dict[str, float]:
+        """
+        Compute MPIW (Mean Prediction Interval Width) per horizon step.
+        
+        Returns:
+            Dictionary mapping horizon step ("h1", "h2", ...) to mean interval width
+        """
+        y_pred = np.asarray(y_pred)
+        lo, hi = self.predict_interval(y_pred)
+        
+        if y_pred.ndim == 1:
+            y_pred = y_pred.reshape(-1, 1)
+            lo = lo.reshape(-1, 1)
+            hi = hi.reshape(-1, 1)
+        
+        _, horizon = y_pred.shape
+        width_per_h = {}
+        
+        for h in range(horizon):
+            width = np.mean(hi[:, h] - lo[:, h])
+            width_per_h[f"h{h+1}"] = float(width)
+        
+        return width_per_h
+
+    def evaluate_intervals(
+        self, 
+        y_true: np.ndarray, 
+        y_pred: np.ndarray,
+        per_horizon: bool = True
+    ) -> dict[str, Any]:
+        """
+        Comprehensive interval evaluation: global + per-horizon PICP/MPIW.
+        
+        Args:
+            y_true: True values (n_samples, horizon) or (n_samples,)
+            y_pred: Predicted values (same shape as y_true)
+            per_horizon: Whether to compute per-horizon metrics
+        
+        Returns:
+            Dictionary with global and per-horizon coverage/width metrics
+        """
+        results = {
+            "global_coverage": self.coverage(y_true, y_pred),
+            "global_mean_width": self.mean_width(y_pred),
+        }
+        
+        if per_horizon:
+            results["per_horizon_picp"] = self.per_horizon_coverage(y_true, y_pred)
+            results["per_horizon_mpiw"] = self.per_horizon_width(y_pred)
+        
+        return results
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "config": {

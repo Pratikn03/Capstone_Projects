@@ -39,7 +39,7 @@ from gridpulse.optimizer.baselines import (
 from gridpulse.anomaly.detect import detect_anomalies
 from gridpulse.optimizer.impact import impact_summary
 from gridpulse.monitoring.retraining import load_monitoring_config, compute_data_drift
-from gridpulse.utils.metrics import rmse, mae, mape, smape, daylight_mape
+from gridpulse.utils.metrics import rmse, mae, mape, smape, daylight_mape, r2_score
 from gridpulse.utils.scaler import StandardScaler
 from gridpulse.forecasting.baselines import moving_average
 
@@ -157,9 +157,10 @@ def _compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, target: str) -> dic
         "mae": mae(y_true, y_pred),
         "mape": mape(y_true, y_pred),
         "smape": smape(y_true, y_pred),
+        "r2": r2_score(y_true, y_pred),
     }
-    if target == "solar_mw":
-        # Daylight‑only MAPE avoids near‑zero instability at night.
+    if target in ("solar_mw", "wind_mw"):
+        # Daylight‑only MAPE avoids near‑zero instability.
         out["daylight_mape"] = daylight_mape(y_true, y_pred)
     return out
 
