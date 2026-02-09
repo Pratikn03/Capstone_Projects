@@ -1,0 +1,10 @@
+target,model_1,model_2,dm_statistic,p_value,conclusion,better_model
+load_mw,gbm,lstm,-10.7389,0.0,significant (p<0.01),gbm
+load_mw,gbm,tcn,-17.5172,0.0,significant (p<0.01),gbm
+load_mw,lstm,tcn,-10.6249,0.0,significant (p<0.01),lstm
+wind_mw,gbm,lstm,-13.2606,0.0,significant (p<0.01),gbm
+wind_mw,gbm,tcn,-20.5359,0.0,significant (p<0.01),gbm
+wind_mw,lstm,tcn,-2.9001,0.003731,significant (p<0.01),lstm
+solar_mw,gbm,lstm,-14.2373,0.0,significant (p<0.01),gbm
+solar_mw,gbm,tcn,-8.1719,0.0,significant (p<0.01),gbm
+solar_mw,lstm,tcn,9.9616,0.0,significant (p<0.01),tcn
