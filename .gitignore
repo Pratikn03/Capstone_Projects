@@ -4,11 +4,16 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 .venv/
+venv/
+env/
 .DS_Store
 
-# IDE
+# IDE (DO NOT COMMIT)
 .idea/
 .vscode/
+*.swp
+*.swo
+*~
 
 # Project Data & Artifacts (large files)
 data/
@@ -16,6 +21,12 @@ artifacts/
 .env
 .ipynb_checkpoints
 .cache/
+
+# Working documents (not for public)
+paper/FLAGSHIP_IMPLEMENTATION_PLAN.md
+*_IMPLEMENTATION_PLAN.md
+*_NOTES.md
+SCRATCH*.md
 
 # Secrets & credentials
 *.pem
@@ -38,3 +49,4 @@ build/
 # Logs
 *.log
 logs/
+/tmp/
