@@ -1,4 +1,54 @@
-"""Forecasting: train models and write evaluation reports."""
+"""
+Forecasting: Model Training Pipeline.
+
+This is the main training orchestration module for GridPulse forecasting models.
+It handles the complete training workflow:
+
+1. **Data Loading**: Load preprocessed features from parquet files
+2. **Model Training**: Train LightGBM (fast) and optional deep learning models
+3. **Hyperparameter Tuning**: Optuna-based hyperparameter optimization (optional)
+4. **Evaluation**: Compute metrics on validation and test sets
+5. **Artifact Persistence**: Save models, scalers, and evaluation reports
+6. **Uncertainty Quantification**: Conformal prediction intervals (optional)
+
+Supported Models:
+    - LightGBM: Gradient boosting (fast, accurate, handles missing data)
+    - LSTM: Long Short-Term Memory (captures long-range dependencies)
+    - TCN: Temporal Convolutional Network (parallel training, no vanishing gradients)
+
+Training Modes:
+    - Quick: LightGBM only with default hyperparameters (~2 minutes)
+    - Full: All models with hyperparameter tuning (~30 minutes)
+    - Deep Learning: LSTM/TCN with early stopping (~15 minutes)
+
+Usage:
+    # Train with default config
+    python -m gridpulse.forecasting.train --config configs/train_forecast.yaml
+    
+    # Train US EIA-930 data
+    python -m gridpulse.forecasting.train --config configs/train_forecast_eia930.yaml
+    
+    # Train with Optuna tuning
+    python -m gridpulse.forecasting.train --config configs/train_forecast.yaml --tune
+
+Configuration:
+    See configs/train_forecast.yaml for full configuration options including:
+    - Target variables (load_mw, solar_mw, wind_mw, price_eur_mwh)
+    - Lag features and rolling windows
+    - Model hyperparameters
+    - Evaluation settings
+
+Outputs:
+    - artifacts/models/*.pkl: Trained model files
+    - artifacts/scalers/*.pkl: Feature scalers
+    - reports/*.md: Evaluation reports
+    - artifacts/backtests/*.npz: Backtest results for uncertainty quantification
+
+See Also:
+    - configs/train_forecast.yaml: Configuration reference
+    - forecasting/ml_gbm.py: GBM model implementation
+    - forecasting/dl_lstm.py: LSTM model implementation
+"""
 from __future__ import annotations
 
 import argparse
@@ -26,11 +76,19 @@ import torch
 from torch.utils.data import DataLoader
 
 
+# ============================================================================
+# OPTIONAL IMPORTS (graceful degradation if not installed)
+# ============================================================================
+
 def _try_optuna():
-    """Import Optuna if available (used for optional tuning)."""
+    """
+    Import Optuna for hyperparameter optimization.
+    
+    Optuna is optional - if not installed, tuning will be skipped
+    and default hyperparameters will be used.
+    """
     try:
         import optuna  # type: ignore
-
         return optuna
     except Exception:
         return None
@@ -192,13 +250,48 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, target: str) -> dict
     return out
 
 
-def fit_sequence_model(model, train_dl, val_dl, epochs: int, lr: float, horizon: int, device: str):
-    """Training loop for sequence models — runs all epochs, keeps best checkpoint."""
-    opt = torch.optim.Adam(model.parameters(), lr=lr)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=epochs, eta_min=lr * 0.01)
+def fit_sequence_model(
+    model, 
+    train_dl, 
+    val_dl, 
+    epochs: int, 
+    lr: float, 
+    horizon: int, 
+    device: str,
+    weight_decay: float = 1e-5,
+    patience: int = 15,
+    warmup_epochs: int = 5,
+    grad_clip: float = 1.0,
+):
+    """Training loop for sequence models with early stopping and warmup.
+    
+    Args:
+        model: PyTorch model
+        train_dl: Training DataLoader
+        val_dl: Validation DataLoader
+        epochs: Maximum number of epochs
+        lr: Learning rate
+        horizon: Forecast horizon
+        device: Device to train on
+        weight_decay: AdamW weight decay
+        patience: Early stopping patience
+        warmup_epochs: Number of warmup epochs
+        grad_clip: Gradient clipping max norm
+    """
+    opt = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+    
+    # Cosine annealing with warmup
+    def warmup_cosine_schedule(epoch):
+        if epoch < warmup_epochs:
+            return (epoch + 1) / warmup_epochs
+        progress = (epoch - warmup_epochs) / max(1, epochs - warmup_epochs)
+        return 0.5 * (1 + np.cos(np.pi * progress))
+    
+    scheduler = torch.optim.lr_scheduler.LambdaLR(opt, warmup_cosine_schedule)
     loss_fn = torch.nn.MSELoss()
     best_val = float("inf")
     best_state = None
+    no_improve_count = 0
 
     for ep in range(1, epochs + 1):
         model.train()
@@ -212,7 +305,7 @@ def fit_sequence_model(model, train_dl, val_dl, epochs: int, lr: float, horizon:
             loss = loss_fn(pred_hz, yb)
             opt.zero_grad()
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=grad_clip)
             opt.step()
             tr_losses.append(loss.item())
 
@@ -229,11 +322,22 @@ def fit_sequence_model(model, train_dl, val_dl, epochs: int, lr: float, horizon:
                 val_losses.append(loss_fn(pred_hz, yb).item())
 
         val_loss = float(np.mean(val_losses)) if val_losses else float("inf")
-        if val_loss < best_val:
+        
+        # Early stopping check
+        if val_loss < best_val - 0.0001:  # min_delta
             best_val = val_loss
             best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+            no_improve_count = 0
+        else:
+            no_improve_count += 1
+            
         cur_lr = scheduler.get_last_lr()[0]
-        print(f"Epoch {ep}/{epochs} train_mse={np.mean(tr_losses):.4f} val_mse={val_loss:.4f} lr={cur_lr:.6f} best={best_val:.4f}")
+        print(f"Epoch {ep}/{epochs} train_mse={np.mean(tr_losses):.4f} val_mse={val_loss:.4f} lr={cur_lr:.6f} best={best_val:.4f} patience={no_improve_count}/{patience}")
+        
+        # Early stopping
+        if no_improve_count >= patience:
+            print(f"Early stopping at epoch {ep} — no improvement for {patience} epochs")
+            break
 
     if best_state is not None:
         model.load_state_dict(best_state)
@@ -242,15 +346,22 @@ def fit_sequence_model(model, train_dl, val_dl, epochs: int, lr: float, horizon:
 
 
 def train_lstm_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cpu"):
-    """Train an LSTM sequence model."""
+    """Train an LSTM sequence model with advanced settings."""
     lookback = int(cfg.get("lookback", 168))
     horizon = int(cfg.get("horizon", 24))
-    batch_size = int(cfg.get("batch_size", 256))
-    epochs = int(cfg.get("epochs", 8))
-    hidden_size = int(cfg.get("hidden_size", 128))
-    num_layers = int(cfg.get("num_layers", 2))
-    dropout = float(cfg.get("dropout", 0.1))
-    lr = float(cfg.get("lr", 1e-3))
+    batch_size = int(cfg.get("batch_size", 128))
+    epochs = int(cfg.get("epochs", 100))
+    hidden_size = int(cfg.get("hidden_size", 256))
+    num_layers = int(cfg.get("num_layers", 3))
+    dropout = float(cfg.get("dropout", 0.3))
+    lr = float(cfg.get("learning_rate", cfg.get("lr", 1e-3)))
+    weight_decay = float(cfg.get("weight_decay", 1e-5))
+    grad_clip = float(cfg.get("gradient_clip", 1.0))
+    
+    # Early stopping config
+    es_cfg = cfg.get("early_stopping", {})
+    patience = int(es_cfg.get("patience", 15)) if isinstance(es_cfg, dict) else 15
+    warmup_epochs = int(cfg.get("warmup_epochs", 5))
 
     scfg = SeqConfig(lookback=lookback, horizon=horizon)
     # Window the time series into (lookback -> horizon) pairs.
@@ -266,20 +377,32 @@ def train_lstm_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "c
         dropout=dropout,
         horizon=horizon,
     ).to(device)
-    model = fit_sequence_model(model, train_dl, val_dl, epochs=epochs, lr=lr, horizon=horizon, device=device)
+    model = fit_sequence_model(
+        model, train_dl, val_dl, 
+        epochs=epochs, lr=lr, horizon=horizon, device=device,
+        weight_decay=weight_decay, patience=patience, 
+        warmup_epochs=warmup_epochs, grad_clip=grad_clip,
+    )
     return model
 
 
 def train_tcn_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cpu"):
-    """Train a TCN sequence model."""
+    """Train a TCN sequence model with advanced settings."""
     lookback = int(cfg.get("lookback", 168))
     horizon = int(cfg.get("horizon", 24))
-    batch_size = int(cfg.get("batch_size", 256))
-    epochs = int(cfg.get("epochs", 8))
-    num_channels = cfg.get("num_channels", [32, 32, 32])
-    kernel_size = int(cfg.get("kernel_size", 3))
-    dropout = float(cfg.get("dropout", 0.1))
-    lr = float(cfg.get("lr", 1e-3))
+    batch_size = int(cfg.get("batch_size", 128))
+    epochs = int(cfg.get("epochs", 100))
+    num_channels = cfg.get("num_channels", [128, 128, 128, 64])
+    kernel_size = int(cfg.get("kernel_size", 5))
+    dropout = float(cfg.get("dropout", 0.3))
+    lr = float(cfg.get("learning_rate", cfg.get("lr", 1e-3)))
+    weight_decay = float(cfg.get("weight_decay", 1e-5))
+    grad_clip = float(cfg.get("gradient_clip", 1.0))
+    
+    # Early stopping config
+    es_cfg = cfg.get("early_stopping", {})
+    patience = int(es_cfg.get("patience", 15)) if isinstance(es_cfg, dict) else 15
+    warmup_epochs = int(cfg.get("warmup_epochs", 5))
 
     scfg = SeqConfig(lookback=lookback, horizon=horizon)
     # Same windowing logic as LSTM for fair comparison.
@@ -294,7 +417,12 @@ def train_tcn_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cp
         kernel_size=kernel_size,
         dropout=dropout,
     ).to(device)
-    model = fit_sequence_model(model, train_dl, val_dl, epochs=epochs, lr=lr, horizon=horizon, device=device)
+    model = fit_sequence_model(
+        model, train_dl, val_dl, 
+        epochs=epochs, lr=lr, horizon=horizon, device=device,
+        weight_decay=weight_decay, patience=patience, 
+        warmup_epochs=warmup_epochs, grad_clip=grad_clip,
+    )
     return model
 
 
