@@ -45,6 +45,10 @@ class BatteryConfig(BaseModel):
     capacity_mwh: float = 10.0
     max_power_mw: float = 2.0
     efficiency: float = 0.9
+    efficiency_regime_a: Optional[float] = None
+    efficiency_regime_b: Optional[float] = None
+    efficiency_soc_split: float = 0.80
+    degradation_cost_per_mwh: float = 10.0
     min_soc_mwh: float = 0.0
     initial_soc_mwh: float = 0.0
 
