@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any, Literal, Optional, Tuple
 
 import json
 import numpy as np
@@ -26,6 +26,132 @@ class ConformalConfig:
     rolling: bool = True
     rolling_window: int = 720
     eps: float = 1e-6
+
+
+class AdaptiveConformal:
+    """Fully Adaptive Conformal Inference (FACI) with online alpha updates."""
+
+    def __init__(
+        self,
+        alpha: float = 0.10,
+        gamma: float = 0.05,
+        mode: Literal["global", "horizon_wise"] = "global",
+        alpha_min: float = 0.01,
+        alpha_max: float = 0.99,
+        eps: float = 1e-6,
+    ) -> None:
+        if mode not in {"global", "horizon_wise"}:
+            raise ValueError("mode must be one of: 'global', 'horizon_wise'")
+        if gamma < 0:
+            raise ValueError("gamma must be >= 0")
+        if eps <= 0:
+            raise ValueError("eps must be > 0")
+        if alpha_min >= alpha_max:
+            raise ValueError("alpha_min must be < alpha_max")
+        if alpha < alpha_min or alpha > alpha_max:
+            raise ValueError("alpha must be within [alpha_min, alpha_max]")
+
+        self.alpha = float(alpha)
+        self.gamma = float(gamma)
+        self.mode = mode
+        self.alpha_min = float(alpha_min)
+        self.alpha_max = float(alpha_max)
+        self.eps = float(eps)
+
+        self.alpha_t: float | np.ndarray = float(alpha)
+        self._alpha0_h: Optional[np.ndarray] = None
+
+    def _normalize_inputs(
+        self,
+        y_true: np.ndarray | list[float] | float,
+        y_pred_interval: tuple[np.ndarray | list[float] | float, np.ndarray | list[float] | float],
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        if not isinstance(y_pred_interval, (tuple, list)) or len(y_pred_interval) != 2:
+            raise ValueError("y_pred_interval must be a tuple/list of (lower, upper)")
+
+        lower, upper = y_pred_interval
+
+        y_true_arr = np.asarray(y_true, dtype=float)
+        lower_arr = np.asarray(lower, dtype=float)
+        upper_arr = np.asarray(upper, dtype=float)
+
+        try:
+            y_true_b, lower_b, upper_b = np.broadcast_arrays(y_true_arr, lower_arr, upper_arr)
+        except ValueError as exc:
+            raise ValueError("y_true and interval bounds must be broadcast-compatible") from exc
+
+        if np.any(lower_b > upper_b):
+            raise ValueError("Interval lower bound must be <= upper bound for all elements")
+
+        return y_true_b, lower_b, upper_b
+
+    def _step_alpha(self, outside: np.ndarray) -> None:
+        if self.mode == "global":
+            outside_any = bool(np.any(outside))
+            next_alpha = float(self.alpha_t) + (self.gamma if outside_any else -self.gamma)
+            self.alpha_t = float(np.clip(next_alpha, self.alpha_min, self.alpha_max))
+            return
+
+        if outside.ndim == 0:
+            misses = np.asarray([bool(outside)], dtype=bool)
+        elif outside.ndim == 1:
+            misses = outside.astype(bool)
+        else:
+            axes = tuple(range(outside.ndim - 1))
+            misses = np.any(outside, axis=axes)
+
+        horizon = int(misses.shape[-1]) if misses.ndim > 0 else 1
+
+        if isinstance(self.alpha_t, np.ndarray):
+            if self.alpha_t.shape != misses.shape:
+                if self.alpha_t.size == 1:
+                    self.alpha_t = np.full(misses.shape, float(self.alpha_t.reshape(-1)[0]), dtype=float)
+                else:
+                    raise ValueError("AdaptiveConformal horizon size changed after initialization")
+        else:
+            self.alpha_t = np.full(horizon, float(self.alpha_t), dtype=float)
+
+        if self._alpha0_h is None:
+            self._alpha0_h = np.full_like(self.alpha_t, self.alpha, dtype=float)
+        elif self._alpha0_h.shape != self.alpha_t.shape:
+            raise ValueError("AdaptiveConformal baseline alpha shape does not match current horizon")
+
+        step = np.where(misses, self.gamma, -self.gamma)
+        self.alpha_t = np.clip(self.alpha_t + step, self.alpha_min, self.alpha_max)
+
+    def update(
+        self,
+        y_true: np.ndarray | list[float] | float,
+        y_pred_interval: tuple[np.ndarray | list[float] | float, np.ndarray | list[float] | float],
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Update adaptive alpha and return interval widths for the next step."""
+        y_true_b, lower_b, upper_b = self._normalize_inputs(y_true, y_pred_interval)
+
+        # Boundary points are treated as inside intervals.
+        outside = (y_true_b < lower_b) | (y_true_b > upper_b)
+        self._step_alpha(outside)
+
+        midpoint = 0.5 * (lower_b + upper_b)
+        half_width = np.maximum(0.5 * (upper_b - lower_b), self.eps)
+
+        if self.mode == "global":
+            alpha_ref = max(self.alpha, self.eps)
+            scale = float(self.alpha_t) / alpha_ref
+            lower_new = midpoint - half_width * scale
+            upper_new = midpoint + half_width * scale
+            return np.asarray(lower_new, dtype=float), np.asarray(upper_new, dtype=float)
+
+        if not isinstance(self.alpha_t, np.ndarray) or self._alpha0_h is None:
+            raise RuntimeError("AdaptiveConformal internal alpha state was not initialized")
+
+        scale_vec = self.alpha_t / np.maximum(self._alpha0_h, self.eps)
+        if midpoint.ndim == 0:
+            scale = float(scale_vec.reshape(-1)[0])
+        else:
+            scale = scale_vec.reshape((1,) * (midpoint.ndim - 1) + scale_vec.shape)
+        lower_new = midpoint - half_width * scale
+        upper_new = midpoint + half_width * scale
+        return np.asarray(lower_new, dtype=float), np.asarray(upper_new, dtype=float)
 
 
 class ConformalInterval:
