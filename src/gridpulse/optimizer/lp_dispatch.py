@@ -1,8 +1,8 @@
 """
-Optimizer: Linear Programming Battery Dispatch Optimization.
+Optimizer: Mixed-Integer Linear Battery Dispatch Optimization.
 
 This module implements the core dispatch optimization algorithm using
-linear programming (LP). The optimizer determines when to charge/discharge
+mixed-integer linear programming (MILP). The optimizer determines when to charge/discharge
 a battery to minimize cost and carbon emissions.
 
 Mathematical Formulation:
@@ -12,19 +12,22 @@ Mathematical Formulation:
         - grid[t]: MW imported from grid at time t
         
     Objective (minimize):
-        sum_t [ price[t] * grid[t] + carbon_weight * carbon[t] * grid[t] ]
+        sum_t [
+            price[t] * grid[t]
+            + carbon_weight * carbon[t] * grid[t]
+            + degradation_cost_per_mwh * (charge[t] + discharge[t])
+        ]
         
     Constraints:
         - Power balance: load[t] = renewables[t] + discharge[t] - charge[t] + grid[t]
-        - SoC dynamics: soc[t+1] = soc[t] + efficiency * charge[t] - discharge[t]
+        - SoC dynamics: soc[t] = soc[t-1] + eta_regime(t) * charge[t] - discharge[t] / eta_regime(t)
         - SoC bounds: min_soc <= soc[t] <= capacity
         - Power bounds: 0 <= charge[t] <= max_power, 0 <= discharge[t] <= max_power
 
-Why Linear Programming?
-    - Global optimum guaranteed (convex problem)
-    - Fast solve times (milliseconds for 168-hour horizon)
-    - Easy to add constraints (grid limits, carbon budgets)
-    - Interpretable dual variables for sensitivity analysis
+Why MILP?
+    - Preserves linear structure while modeling piecewise battery efficiency
+    - Supports physics-informed regime gating with binary variables
+    - Still solvable quickly for hourly planning horizons
 
 Usage:
     >>> from gridpulse.optimizer.lp_dispatch import optimize_dispatch
@@ -39,7 +42,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 import numpy as np
-from scipy.optimize import linprog
+from scipy.optimize import Bounds, LinearConstraint, milp
 
 from gridpulse.optimizer.risk import RiskConfig, apply_interval_bounds
 
@@ -93,7 +96,7 @@ def optimize_dispatch(
     load_interval: dict | None = None,
     renewables_interval: dict | None = None,
 ) -> Dict[str, Any]:
-    """Solve a linear dispatch problem with battery + grid constraints."""
+    """Solve a mixed-integer dispatch problem with battery + grid constraints."""
     load = _as_array(forecast_load)
     ren = _as_array(forecast_renewables)
     # Align renewable series to load horizon (supports scalar inputs).
@@ -119,9 +122,21 @@ def optimize_dispatch(
     max_power = float(battery.get("max_power_mw", battery.get("max_charge_mw", 2.0)))
     max_discharge = float(battery.get("max_discharge_mw", max_power))
     max_charge = float(battery.get("max_charge_mw", max_power))
-    efficiency = float(battery.get("efficiency", 0.95))
+    efficiency_legacy = float(battery.get("efficiency", 0.95))
+    eta_a = float(battery.get("efficiency_regime_a", efficiency_legacy if "efficiency" in battery else 0.98))
+    eta_b = float(battery.get("efficiency_regime_b", efficiency_legacy if "efficiency" in battery else 0.90))
+    soc_split_frac = float(battery.get("efficiency_soc_split", 0.80))
+    degradation_cost_per_mwh = float(battery.get("degradation_cost_per_mwh", 10.0))
     min_soc = float(battery.get("min_soc_mwh", 0.0))
     soc0 = float(battery.get("initial_soc_mwh", capacity / 2))
+    soc_split = soc_split_frac * capacity
+
+    if not (0.0 < eta_a <= 1.0 and 0.0 < eta_b <= 1.0):
+        raise ValueError("battery efficiency_regime_a and efficiency_regime_b must be in (0, 1]")
+    if not (0.0 <= soc_split_frac <= 1.0):
+        raise ValueError("battery efficiency_soc_split must be between 0 and 1")
+    if degradation_cost_per_mwh < 0.0:
+        raise ValueError("battery degradation_cost_per_mwh must be >= 0")
 
     risk = RiskConfig(
         enabled=bool(risk_cfg.get("enabled", False)),
@@ -171,7 +186,9 @@ def optimize_dispatch(
     cost_weight = float(objective.get("cost_weight", 1.0))
     carbon_weight = float(objective.get("carbon_weight", 0.0))
 
-    # Decision vars order: grid, charge, discharge, curtail, unmet, soc, peak
+    # Decision vars order:
+    # grid, charge, discharge, curtail, unmet, soc,
+    # charge_a, charge_b, discharge_a, discharge_b, z_b(binary), peak
     n = H
     idx_grid = slice(0, n)
     idx_charge = slice(n, 2 * n)
@@ -179,8 +196,13 @@ def optimize_dispatch(
     idx_curtail = slice(3 * n, 4 * n)
     idx_unmet = slice(4 * n, 5 * n)
     idx_soc = slice(5 * n, 6 * n)
-    idx_peak = 6 * n
-    n_vars = 6 * n + 1
+    idx_charge_a = slice(6 * n, 7 * n)
+    idx_charge_b = slice(7 * n, 8 * n)
+    idx_discharge_a = slice(8 * n, 9 * n)
+    idx_discharge_b = slice(9 * n, 10 * n)
+    idx_z_b = slice(10 * n, 11 * n)
+    idx_peak = 11 * n
+    n_vars = 11 * n + 1
 
     c = np.zeros(n_vars)
     # Convert carbon cost per MWh into $/kg and scale by time-varying carbon intensity.
@@ -188,6 +210,8 @@ def optimize_dispatch(
     carbon_cost_series = carbon_series * carbon_cost_per_kg
     # Objective: weighted energy cost + weighted carbon cost + peak penalty.
     c[idx_grid] = cost_weight * price + carbon_weight * carbon_cost_series
+    c[idx_charge] = degradation_cost_per_mwh
+    c[idx_discharge] = degradation_cost_per_mwh
     c[idx_curtail] = curtail_pen
     c[idx_unmet] = unmet_pen
     c[idx_peak] = peak_pen
@@ -207,23 +231,40 @@ def optimize_dispatch(
         A_eq.append(row)
         b_eq.append(load[t] - ren[t])
 
-    # SOC dynamics.
+    # SOC dynamics with piecewise efficiency.
+    # Regime is determined by start-of-step SoC:
+    # - Regime A: SoC <= split, efficiency eta_a
+    # - Regime B: SoC > split, efficiency eta_b
     for t in range(H):
         row = np.zeros(n_vars)
         row[idx_soc.start + t] = 1.0
+        row[idx_charge_a.start + t] = -eta_a
+        row[idx_charge_b.start + t] = -eta_b
+        row[idx_discharge_a.start + t] = 1.0 / eta_a
+        row[idx_discharge_b.start + t] = 1.0 / eta_b
         if t == 0:
-            # Initial SOC sets the starting state; charge/discharge affect SOC immediately.
-            row[idx_charge.start + t] = -efficiency
-            row[idx_discharge.start + t] = 1.0 / efficiency
             A_eq.append(row)
             b_eq.append(soc0)
         else:
-            # SOC[t] = SOC[t-1] + charge*eff - discharge/eff
             row[idx_soc.start + t - 1] = -1.0
-            row[idx_charge.start + t] = -efficiency
-            row[idx_discharge.start + t] = 1.0 / efficiency
             A_eq.append(row)
             b_eq.append(0.0)
+
+    # Split-flow consistency.
+    for t in range(H):
+        row_c = np.zeros(n_vars)
+        row_c[idx_charge.start + t] = 1.0
+        row_c[idx_charge_a.start + t] = -1.0
+        row_c[idx_charge_b.start + t] = -1.0
+        A_eq.append(row_c)
+        b_eq.append(0.0)
+
+        row_d = np.zeros(n_vars)
+        row_d[idx_discharge.start + t] = 1.0
+        row_d[idx_discharge_a.start + t] = -1.0
+        row_d[idx_discharge_b.start + t] = -1.0
+        A_eq.append(row_d)
+        b_eq.append(0.0)
 
     A_eq = np.vstack(A_eq)
     b_eq = np.asarray(b_eq)
@@ -237,6 +278,63 @@ def optimize_dispatch(
         row[idx_peak] = -1.0
         A_ub.append(row)
         b_ub.append(0.0)
+
+    # Regime linking and start-of-step SoC gating.
+    m_soc = capacity
+    eps_reg = 1e-6
+    for t in range(H):
+        # charge_a <= max_charge * (1 - z_b)
+        row = np.zeros(n_vars)
+        row[idx_charge_a.start + t] = 1.0
+        row[idx_z_b.start + t] = max_charge
+        A_ub.append(row)
+        b_ub.append(max_charge)
+
+        # charge_b <= max_charge * z_b
+        row = np.zeros(n_vars)
+        row[idx_charge_b.start + t] = 1.0
+        row[idx_z_b.start + t] = -max_charge
+        A_ub.append(row)
+        b_ub.append(0.0)
+
+        # discharge_a <= max_discharge * (1 - z_b)
+        row = np.zeros(n_vars)
+        row[idx_discharge_a.start + t] = 1.0
+        row[idx_z_b.start + t] = max_discharge
+        A_ub.append(row)
+        b_ub.append(max_discharge)
+
+        # discharge_b <= max_discharge * z_b
+        row = np.zeros(n_vars)
+        row[idx_discharge_b.start + t] = 1.0
+        row[idx_z_b.start + t] = -max_discharge
+        A_ub.append(row)
+        b_ub.append(0.0)
+
+        # Start-of-step SoC <= soc_split + M_soc * z_b
+        row = np.zeros(n_vars)
+        if t == 0:
+            row[idx_z_b.start + t] = -m_soc
+            A_ub.append(row)
+            b_ub.append(soc_split - soc0)
+        else:
+            row[idx_soc.start + t - 1] = 1.0
+            row[idx_z_b.start + t] = -m_soc
+            A_ub.append(row)
+            b_ub.append(soc_split)
+
+        # Start-of-step SoC >= soc_split + eps - M_soc*(1-z_b)
+        # <=> -soc_start + M_soc*z_b <= M_soc - soc_split - eps
+        row = np.zeros(n_vars)
+        if t == 0:
+            row[idx_z_b.start + t] = m_soc
+            A_ub.append(row)
+            b_ub.append(m_soc - soc_split - eps_reg + soc0)
+        else:
+            row[idx_soc.start + t - 1] = -1.0
+            row[idx_z_b.start + t] = m_soc
+            A_ub.append(row)
+            b_ub.append(m_soc - soc_split - eps_reg)
 
     # Optional carbon budget constraint: sum(grid_t * carbon_t) <= budget_kg.
     budget_kg = carbon_cfg.get("budget_kg")
@@ -279,12 +377,34 @@ def optimize_dispatch(
         bounds.append((0.0, None))
     for t in range(H):  # soc
         bounds.append((min_soc, capacity))
+    for t in range(H):  # charge_a
+        bounds.append((0.0, max_charge))
+    for t in range(H):  # charge_b
+        bounds.append((0.0, max_charge))
+    for t in range(H):  # discharge_a
+        bounds.append((0.0, max_discharge))
+    for t in range(H):  # discharge_b
+        bounds.append((0.0, max_discharge))
+    for t in range(H):  # z_b (binary)
+        bounds.append((0.0, 1.0))
     # Peak bound ties max import; acts as optimization variable.
     bounds.append((0.0, max_import))
 
-    res = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method="highs")
-    if not res.success:
-        # Fallback: if LP fails, serve a safe grid-only plan.
+    lb = np.asarray([b[0] if b[0] is not None else -np.inf for b in bounds], dtype=float)
+    ub = np.asarray([b[1] if b[1] is not None else np.inf for b in bounds], dtype=float)
+    var_bounds = Bounds(lb, ub)
+
+    constraints = [
+        LinearConstraint(A_eq, b_eq, b_eq),
+        LinearConstraint(A_ub, -np.inf, b_ub),
+    ]
+
+    integrality = np.zeros(n_vars, dtype=int)
+    integrality[idx_z_b] = 1
+
+    res = milp(c=c, constraints=constraints, bounds=var_bounds, integrality=integrality)
+    if not res.success or res.x is None:
+        # Fallback: if MILP fails, serve a safe grid-only plan.
         grid_plan = np.maximum(0.0, load - ren)
         curtail = np.maximum(0.0, ren - load)
         return {
@@ -297,10 +417,11 @@ def optimize_dispatch(
             "soc_mwh": [soc0] * H,
             "peak_mw": float(np.max(grid_plan)) if len(grid_plan) else None,
             "expected_cost_usd": float(np.sum(grid_plan * price) + np.sum(curtail) * curtail_pen),
+            "battery_degradation_cost_usd": 0.0,
             "carbon_kg": float(np.sum(grid_plan * carbon_series)),
             "carbon_cost_usd": float(np.sum(grid_plan * carbon_cost_series)),
             "carbon_budget_kg": float(budget_kg) if budget_kg is not None else None,
-            "note": f"linprog failed: {res.message}",
+            "note": f"milp failed: {res.message}",
         }
 
     x = res.x
@@ -314,7 +435,13 @@ def optimize_dispatch(
     renewables_used = ren - curtail
 
     # Final objective terms for reporting.
-    expected_cost = float(np.sum(grid_plan * price) + np.sum(curtail) * curtail_pen + np.sum(unmet) * unmet_pen)
+    degradation_cost = float(degradation_cost_per_mwh * np.sum(charge + discharge))
+    expected_cost = float(
+        np.sum(grid_plan * price)
+        + np.sum(curtail) * curtail_pen
+        + np.sum(unmet) * unmet_pen
+        + degradation_cost
+    )
     carbon = float(np.sum(grid_plan * carbon_series))
     carbon_cost = float(np.sum(grid_plan * carbon_cost_series))
 
@@ -328,6 +455,7 @@ def optimize_dispatch(
         "soc_mwh": soc.tolist(),
         "peak_mw": peak,
         "expected_cost_usd": expected_cost,
+        "battery_degradation_cost_usd": degradation_cost,
         "carbon_kg": carbon,
         "carbon_cost_usd": carbon_cost,
         "carbon_budget_kg": float(budget_kg) if budget_kg is not None else None,
