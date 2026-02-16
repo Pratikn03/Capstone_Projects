@@ -24,56 +24,58 @@ GridPulse novelty features go beyond standard forecasting to provide:
 
 **Motivation**: Point forecasts are insufficient for critical decisions. We need:
 - Prediction intervals to capture forecast uncertainty
-- Conservative dispatch strategies that prepare for worst-case scenarios
-- Ex-post evaluation to validate robustness
+- Hard-feasible schedules that remain valid under interval scenarios
+- A mathematically explicit min-max objective instead of heuristic conservative rules
 
 **Key Components**:
 
 #### `RobustDispatchConfig`
 Configuration dataclass with:
-- `conformal_alpha`: Coverage level (0.10 = 90% PI, 0.05 = 95% PI)
-- `safety_margin`: Additional buffer (e.g., 0.05 = 5% extra margin)
-- `mode`: Dispatch strategy
-  - `"point"`: Standard (use point forecasts)
-  - `"lower"`: Pessimistic (use lower bounds)
-  - `"upper"`: Optimistic (use upper bounds)
-  - `"conservative"`: Worst-case (load upper, renewables lower)
-- Battery constraints: capacity, charge/discharge rates, efficiency, SOC limits
-- Costs: grid import/export, carbon penalty, battery degradation
+- Battery constraints: capacity, charge/discharge rates, charge/discharge efficiencies, SOC limits
+- Grid constraints: max import
+- Costs: grid import energy price and battery degradation throughput cost
+- Solver: `appsi_highs` (HiGHS via Pyomo)
 
 #### `optimize_robust_dispatch()`
-Solves dispatch optimization with uncertainty:
+Solves robust dispatch optimization with interval load uncertainty:
 ```python
 result = optimize_robust_dispatch(
-    load_forecast=load_mw,
+    load_lower_bound=load_lower,
+    load_upper_bound=load_upper,
     renewables_forecast=renewable_mw,
-    load_lower=load_lower,
-    load_upper=load_upper,
-    renewables_lower=renew_lower,
-    renewables_upper=renew_upper,
+    price=price_eur_mwh,
     config=config
 )
-# Returns: battery_charge, battery_discharge, grid_import, grid_export, total_cost, feasible
+# Returns: battery_charge_mw, battery_discharge_mw, scenario-specific grid imports,
+#          scenario-specific SOC trajectories, worst_case_cost, total_cost, feasible
 ```
 
 #### `evaluate_dispatch_robustness()`
 Ex-post evaluation vs true data:
 ```python
 eval_result = evaluate_dispatch_robustness(
-    dispatch_plan=dispatch_result,
-    true_load=actual_load_mw,
-    true_renewables=actual_renewable_mw,
+    load_true=actual_load_mw,
+    renewables_true=actual_renewable_mw,
+    load_lower_bound=load_lower,
+    load_upper_bound=load_upper,
+    renewables_forecast=renewable_forecast_mw,
+    dispatch_solution=dispatch_result,
+    price=price_eur_mwh,
     config=config
 )
-# Returns: realized_cost, regret (vs oracle), constraint_violations
+# Returns: realized_cost, oracle_cost, regret, violation_rate
 ```
 
 #### `run_perturbation_analysis()`
 Monte Carlo robustness testing:
 ```python
 perturbation_results = run_perturbation_analysis(
-    load_forecast=load_mw,
+    load_lower_bound=load_lower,
+    load_upper_bound=load_upper,
     renewables_forecast=renewable_mw,
+    load_true=actual_load_mw,
+    renewables_true=actual_renewable_mw,
+    price=price_eur_mwh,
     config=config,
     noise_levels=[0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30],
     n_samples=10
@@ -81,22 +83,42 @@ perturbation_results = run_perturbation_analysis(
 # Returns: mean_regret, std_regret, infeasible_rate per noise level
 ```
 
+### DRO Formulation (Pyomo)
+
+For each time step `t` and scenarios `s in {lower, upper}`:
+- First-stage decisions: `P_ch[t], P_dis[t]`
+- Scenario decisions: `G[s,t]` (grid import), `SoC[s,t]`
+- Epigraph variable: `z`
+
+Objective:
+- Minimize `z + degradation_cost * sum_t (P_ch[t] + P_dis[t])`
+
+Subject to:
+- `P_dis[t] - P_ch[t] + G[s,t] >= load[s,t] - renewables[t]`
+- `G[s,t] <= max_grid_import`
+- `SoC` dynamics and bounds for both scenarios
+- `z >= sum_t price[t] * G[s,t]` for each scenario
+
 ### Configuration: `configs/optimization.yaml`
 
 ```yaml
 robust_dispatch:
-  conformal:
-    alpha: 0.10  # 90% prediction intervals
-  dispatch:
-    mode: "conservative"
-    safety_margin: 0.0
   battery:
     capacity_mwh: 100.0
     max_charge_rate_mw: 50.0
-    efficiency: 0.95
+    max_discharge_rate_mw: 50.0
+    charge_efficiency: 0.95
+    discharge_efficiency: 0.95
+    initial_soc_mwh: 50.0
+    min_soc_mwh: 10.0
+    max_soc_mwh: 90.0
+  grid:
+    max_import_mw: 500.0
   costs:
     grid_import_per_mwh: 100.0
-    carbon_penalty_per_mwh: 50.0
+    battery_degradation_per_mwh: 5.0
+  solver:
+    name: appsi_highs
   robustness:
     noise_levels: [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30]
 ```
@@ -107,7 +129,7 @@ robust_dispatch:
 
 ### Script: `scripts/run_ablations.py`
 
-**Motivation**: Prove that uncertainty-aware dispatch, carbon penalty, and optimization all contribute to better outcomes.
+**Motivation**: Prove that uncertainty-aware dispatch and optimization components contribute to better outcomes.
 
 **Four Scenarios**:
 1. **Full System**: uncertainty=True, carbon=True, optimization=True

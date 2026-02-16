@@ -116,18 +116,17 @@ def run_ablation_scenario(
     """
     # Configure dispatch
     config = RobustDispatchConfig()
-    
     if not enable_carbon:
-        config.carbon_penalty = 0.0
-    
+        # Legacy ablation toggle: map old carbon-off path to no degradation penalty.
+        config.degradation_cost_per_mwh = 0.0
+
     if not enable_uncertainty:
-        # Use point forecasts only
-        config.mode = "point"
-        load_lower = load_upper = None
-        wind_lower = wind_upper = None
-        solar_lower = solar_upper = None
+        # No uncertainty scenario: collapse interval to point forecast.
+        load_lower = load_forecast
+        load_upper = load_forecast
     else:
-        config.mode = "conservative"  # Use uncertainty-aware dispatch
+        load_lower = load_forecast if load_lower is None else load_lower
+        load_upper = load_forecast if load_upper is None else load_upper
     
     if not enable_optimization:
         # Forecast-only: just measure forecast error
@@ -147,34 +146,43 @@ def run_ablation_scenario(
             "forecast_error_solar": solar_rmse,
         }
     
+    renewables_forecast = np.asarray(wind_forecast, dtype=float) + np.asarray(solar_forecast, dtype=float)
+    renewables_true = np.asarray(wind_true, dtype=float) + np.asarray(solar_true, dtype=float)
+
     # Run dispatch optimization
     solution = optimize_robust_dispatch(
-        load_forecast, wind_forecast, solar_forecast,
-        load_lower, load_upper,
-        wind_lower, wind_upper,
-        solar_lower, solar_upper,
+        load_lower_bound=load_lower,
+        load_upper_bound=load_upper,
+        renewables_forecast=renewables_forecast,
         config=config,
         verbose=verbose,
     )
-    
+
     # Evaluate against true data
     eval_metrics = evaluate_dispatch_robustness(
-        load_true, wind_true, solar_true,
-        load_forecast, wind_forecast, solar_forecast,
-        solution, config
+        load_true=load_true,
+        renewables_true=renewables_true,
+        load_lower_bound=load_lower,
+        load_upper_bound=load_upper,
+        renewables_forecast=renewables_forecast,
+        dispatch_solution=solution,
+        config=config,
     )
-    
+
+    wind_rmse = float(np.sqrt(np.mean((wind_true - wind_forecast) ** 2)))
+    solar_rmse = float(np.sqrt(np.mean((solar_true - solar_forecast) ** 2)))
+
     return {
         "scenario": scenario_name,
         "total_cost": eval_metrics["realized_cost"],
         "oracle_cost": eval_metrics["oracle_cost"],
         "regret": eval_metrics["regret"],
         "regret_pct": eval_metrics["regret_pct"],
-        "carbon_emissions": solution["carbon_emissions"],
+        "carbon_emissions": None,
         "infeasible_rate": eval_metrics["violation_rate"],
         "forecast_error_load": eval_metrics["forecast_error_load"],
-        "forecast_error_wind": eval_metrics["forecast_error_wind"],
-        "forecast_error_solar": eval_metrics["forecast_error_solar"],
+        "forecast_error_wind": wind_rmse,
+        "forecast_error_solar": solar_rmse,
     }
 
 
