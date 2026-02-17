@@ -1,8 +1,8 @@
 data:
   features_path: data/processed/features.parquet
 models:
-  load_mw: artifacts/models/lstm_load_mw.pt
-  wind_mw: artifacts/models/lstm_wind_mw.pt
-  solar_mw: artifacts/models/lstm_solar_mw.pt
-  price_eur_mwh: artifacts/models/lstm_price_eur_mwh.pt
-fallback_order: [lstm, tcn, gbm]
+  load_mw: artifacts/models/gbm_lightgbm_load_mw.pkl
+  wind_mw: artifacts/models/gbm_lightgbm_wind_mw.pkl
+  solar_mw: artifacts/models/gbm_lightgbm_solar_mw.pkl
+  price_eur_mwh: artifacts/models/gbm_lightgbm_price_eur_mwh.pkl
+fallback_order: [gbm, lstm, tcn]

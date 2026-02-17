@@ -20,7 +20,7 @@ battery:
   initial_soc_mwh: 10000.0
 
 grid:
-  max_import_mw: 80000.0
+  max_import_mw: 100000.0
   price_per_mwh: 70.0       # Base energy cost
   carbon_cost_per_mwh: 20.0 # Carbon tax proxy
   carbon_kg_per_mwh: 400.0  # Emissions intensity

@@ -1,0 +1,7 @@
+data:
+  features_path: data/processed/us_eia930/features.parquet
+models:
+  load_mw: artifacts/models_eia930/gbm_lightgbm_load_mw.pkl
+  wind_mw: artifacts/models_eia930/gbm_lightgbm_wind_mw.pkl
+  solar_mw: artifacts/models_eia930/gbm_lightgbm_solar_mw.pkl
+fallback_order: [gbm, lstm, tcn]
