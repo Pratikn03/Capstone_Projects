@@ -9,31 +9,23 @@
 
 | Model | RMSE | MAPE |
 |---|---:|---:|
-| gbm_lightgbm | 270.297 | 0.003 |
-| lstm | 2356.004 | 0.034 |
-| tcn | 3394.782 | 0.052 |
+| gbm_lightgbm | 264.368 | 0.004 |
 
 ## Target: wind_mw
 
 | Model | RMSE | MAPE |
 |---|---:|---:|
-| gbm_lightgbm | 127.100 | 0.023 |
-| lstm | 6025.591 | 0.855 |
-| tcn | 7170.804 | 1.051 |
+| gbm_lightgbm | 313.573 | 0.037 |
 
 ## Target: solar_mw
 
 | Model | RMSE | MAPE |
 |---|---:|---:|
-| gbm_lightgbm | 269.477 | 107763526.155 |
-| lstm | 2536.569 | 1052534.297 |
-| tcn | 3006.648 | 2912918.574 |
+| gbm_lightgbm | 254.469 | 35273207.491 |
 
 ## Target: price_eur_mwh
 
 | Model | RMSE | MAPE |
 |---|---:|---:|
-| gbm_lightgbm | 4.904 | 1.206 |
-| lstm | 10.819 | 3.996 |
-| tcn | 14.395 | 3.711 |
+| gbm_lightgbm | 4.982 | 1.304 |
 
