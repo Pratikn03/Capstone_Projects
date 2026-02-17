@@ -1,0 +1,106 @@
+# Alert rules for GridPulse
+groups:
+  - name: gridpulse_alerts
+    rules:
+      # API Health Alerts
+      - alert: APIDown
+        expr: up{job="gridpulse-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "GridPulse API is down"
+          description: "The GridPulse API has been unreachable for more than 1 minute."
+
+      - alert: HighAPILatency
+        expr: histogram_quantile(0.95, rate(gridpulse_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency detected"
+          description: "95th percentile latency is above 2 seconds for 5 minutes."
+
+      - alert: HighErrorRate
+        expr: rate(gridpulse_request_errors_total[5m]) / rate(gridpulse_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5% for the last 5 minutes."
+
+      # Forecasting Alerts
+      - alert: ForecastDrift
+        expr: gridpulse_forecast_drift_score > 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Forecast model drift detected"
+          description: "Model drift score exceeds threshold, consider retraining."
+
+      - alert: HighForecastError
+        expr: gridpulse_forecast_mape > 0.1
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High forecast error"
+          description: "MAPE exceeds 10% for the last 30 minutes."
+
+      # Optimization Alerts
+      - alert: OptimizationInfeasible
+        expr: increase(gridpulse_optimization_infeasible_total[1h]) > 5
+        labels:
+          severity: warning
+        annotations:
+          summary: "Multiple optimization infeasibilities"
+          description: "More than 5 infeasible optimizations in the last hour."
+
+      - alert: BatterySOCCritical
+        expr: gridpulse_battery_soc_mwh < 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Battery SOC critically low"
+          description: "Battery state of charge is below 10 MWh."
+
+      # Streaming/Kafka Alerts
+      - alert: KafkaConsumerLag
+        expr: gridpulse_kafka_consumer_lag > 1000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Kafka consumer lag"
+          description: "Consumer lag exceeds 1000 messages."
+
+      - alert: StreamingProcessingDelay
+        expr: gridpulse_streaming_processing_delay_seconds > 60
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Streaming processing delay"
+          description: "Event processing is delayed by more than 60 seconds."
+
+      # System Alerts
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes / 1024 / 1024 > 2048
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Process memory usage exceeds 2GB."
+
+      - alert: WatchdogTimeout
+        expr: gridpulse_watchdog_last_beat_seconds > 60
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Watchdog timeout"
+          description: "No heartbeat received in the last 60 seconds."
