@@ -335,6 +335,125 @@ def _build_base_load_intervals(
     return lower, upper
 
 
+def _resolve_calibration_npz_path(
+    repo_root: Path,
+    uncertainty_cfg: dict[str, Any],
+    uncertainty_artifacts_dir: Path,
+    target: str = "load_mw",
+) -> Path | None:
+    """Resolve calibration NPZ path used to learn FACI scale bounds."""
+    template = str(
+        uncertainty_cfg.get("calibration_npz", "artifacts/backtests/{target}_calibration.npz")
+    )
+    candidates: list[Path] = []
+
+    try:
+        templated = Path(template.format(target=target))
+    except Exception:
+        templated = Path(template)
+    if not templated.is_absolute():
+        templated = repo_root / templated
+    candidates.append(templated)
+
+    # Dataset-specific fallback if uncertainty artifacts point to eia930.
+    if "eia930" in str(uncertainty_artifacts_dir).lower():
+        candidates.append(repo_root / "artifacts" / "backtests_eia930" / f"{target}_calibration.npz")
+
+    # Final fallback to default location.
+    candidates.append(repo_root / "artifacts" / "backtests" / f"{target}_calibration.npz")
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _estimate_faci_scale_bounds(
+    repo_root: Path,
+    uncertainty_cfg: dict[str, Any],
+    uncertainty_artifacts_dir: Path,
+    target: str,
+    eps: float,
+    log: logging.Logger,
+) -> tuple[float, float] | None:
+    """
+    Learn interval-width scale bounds from calibration residuals.
+
+    This is deliberately data-driven:
+    - Uses historical calibration (y_true, y_pred) + conformal interval widths.
+    - Computes required scale = |error| / half_width for each calibration point.
+    - Uses quantiles of that empirical scale distribution as soft bounds.
+    """
+    import numpy as np
+
+    faci_cfg = uncertainty_cfg.get("faci", {}) if isinstance(uncertainty_cfg, dict) else {}
+    if not bool(faci_cfg.get("learn_scale_bounds", True)):
+        return None
+
+    q_low = float(faci_cfg.get("scale_lower_quantile", 0.10))
+    q_high = float(faci_cfg.get("scale_upper_quantile", 0.90))
+    min_samples = int(faci_cfg.get("min_scale_samples", 50))
+    if not (0.0 <= q_low < q_high <= 1.0):
+        log.warning("Invalid FACI scale quantiles (%s, %s); skipping learned bounds.", q_low, q_high)
+        return None
+
+    calibration_npz = _resolve_calibration_npz_path(
+        repo_root=repo_root,
+        uncertainty_cfg=uncertainty_cfg,
+        uncertainty_artifacts_dir=uncertainty_artifacts_dir,
+        target=target,
+    )
+    if calibration_npz is None:
+        return None
+
+    conformal_path = uncertainty_artifacts_dir / f"{target}_conformal.json"
+    if not conformal_path.exists():
+        return None
+
+    try:
+        from gridpulse.forecasting.uncertainty import load_conformal
+
+        with np.load(calibration_npz) as data:
+            y_true = np.asarray(data["y_true"], dtype=float).reshape(-1)
+            y_pred = np.asarray(data["y_pred"], dtype=float).reshape(-1)
+
+        if y_true.size == 0 or y_pred.size == 0:
+            return None
+        n = min(y_true.size, y_pred.size)
+        y_true = y_true[:n]
+        y_pred = y_pred[:n]
+
+        ci = load_conformal(conformal_path)
+        lo, hi = ci.predict_interval(y_pred)
+        lo_arr = np.asarray(lo, dtype=float).reshape(-1)[:n]
+        hi_arr = np.asarray(hi, dtype=float).reshape(-1)[:n]
+
+        half_width = np.maximum(0.5 * (hi_arr - lo_arr), max(float(eps), 1e-9))
+        required_half_width = np.abs(y_true - y_pred)
+        scales = required_half_width / half_width
+        scales = scales[np.isfinite(scales)]
+
+        if scales.size < min_samples:
+            return None
+
+        lower = float(np.quantile(scales, q_low))
+        upper = float(np.quantile(scales, q_high))
+        lower = max(lower, max(float(eps), 1e-9))
+        upper = max(upper, lower + max(float(eps), 1e-9))
+
+        log.info(
+            "Learned FACI scale bounds from %s (%d samples): [%.4f, %.4f]",
+            calibration_npz,
+            int(scales.size),
+            lower,
+            upper,
+        )
+        return (lower, upper)
+    except Exception as exc:
+        log.warning("Failed to learn FACI scale bounds; continuing without bounds: %s", exc)
+        return None
+
+
 def _apply_faci_online(
     load_true,
     base_lower,
@@ -342,6 +461,9 @@ def _apply_faci_online(
     alpha: float,
     gamma: float,
     eps: float,
+    scale_bounds: tuple[float, float] | None = None,
+    history_quantiles: tuple[float, float] = (0.05, 0.95),
+    history_warmup: int = 8,
 ) -> tuple[Any, Any]:
     import numpy as np
 
@@ -358,6 +480,15 @@ def _apply_faci_online(
         raise ValueError("FACI interval arrays must match load_true horizon")
     if np.any(base_lower_arr > base_upper_arr):
         raise ValueError("base_lower must be <= base_upper")
+    q_low, q_high = history_quantiles
+    if not (0.0 <= q_low < q_high <= 1.0):
+        raise ValueError("history_quantiles must satisfy 0 <= low < high <= 1")
+    if history_warmup < 0:
+        raise ValueError("history_warmup must be >= 0")
+    if scale_bounds is not None:
+        lb, ub = scale_bounds
+        if lb <= 0 or ub <= 0 or lb >= ub:
+            raise ValueError("scale_bounds must satisfy 0 < lower < upper")
 
     dyn_lower = base_lower_arr.copy()
     dyn_upper = base_upper_arr.copy()
@@ -371,6 +502,7 @@ def _apply_faci_online(
         eps=float(eps),
     )
     eps_safe = max(float(eps), 1e-9)
+    observed_scales: list[float] = []
 
     for t in range(1, horizon):
         prev_lo = float(dyn_lower[t - 1])
@@ -388,7 +520,31 @@ def _apply_faci_online(
         upd_hi_val = float(np.asarray(upd_hi, dtype=float).reshape(-1)[0])
         upd_width = max(upd_hi_val - upd_lo_val, eps_safe)
 
-        scale = upd_width / prev_width
+        raw_scale = upd_width / prev_width
+
+        # Bound scale using learned historical statistics. This avoids "hard caps"
+        # and keeps adaptation tied to empirical residual behavior.
+        lower_bound = None
+        upper_bound = None
+        if scale_bounds is not None:
+            lower_bound, upper_bound = float(scale_bounds[0]), float(scale_bounds[1])
+        if history_warmup > 0 and len(observed_scales) >= history_warmup:
+            hist = np.asarray(observed_scales, dtype=float)
+            hist_low = float(np.quantile(hist, q_low))
+            hist_high = float(np.quantile(hist, q_high))
+            lower_bound = hist_low if lower_bound is None else max(lower_bound, hist_low)
+            upper_bound = hist_high if upper_bound is None else min(upper_bound, hist_high)
+
+        # Always respect any available upper/lower limits.
+        # If intersections collapse (upper < lower), collapse to a single point
+        # instead of silently dropping one of the bounds.
+        lower = -np.inf if lower_bound is None else float(lower_bound)
+        upper = np.inf if upper_bound is None else float(upper_bound)
+        if upper < lower:
+            upper = lower
+        scale = float(np.clip(raw_scale, lower, upper))
+        observed_scales.append(scale)
+
         mid = 0.5 * (base_lower_arr[t] + base_upper_arr[t])
         half_width = max(0.5 * (base_upper_arr[t] - base_lower_arr[t]), eps_safe)
         dyn_lower[t] = mid - half_width * scale
@@ -409,7 +565,14 @@ def _build_robust_dispatch_config(opt_cfg: dict[str, Any]):
     max_power = float(battery.get("max_power_mw", 50.0))
     max_charge = float(battery.get("max_charge_mw", max_power))
     max_discharge = float(battery.get("max_discharge_mw", max_power))
-    efficiency = float(battery.get("efficiency", battery.get("efficiency_regime_a", 0.95)))
+    # Prefer regime-A efficiency when available so robust and deterministic
+    # optimizers share the Phase-3 battery physics baseline.
+    efficiency = float(
+        battery.get(
+            "efficiency_regime_a",
+            battery.get("efficiency", 0.95),
+        )
+    )
     min_soc = float(battery.get("min_soc_mwh", 0.0))
     initial_soc = float(battery.get("initial_soc_mwh", capacity / 2.0))
     max_soc = float(battery.get("max_soc_mwh", capacity))
@@ -429,6 +592,7 @@ def _build_robust_dispatch_config(opt_cfg: dict[str, Any]):
         max_grid_import_mw=max_import,
         default_price_per_mwh=default_price,
         degradation_cost_per_mwh=degradation,
+        risk_weight_worst_case=float(opt_cfg.get("robust", {}).get("risk_weight_worst_case", 1.0)),
         time_step_hours=1.0,
         solver_name="appsi_highs",
     )
@@ -525,9 +689,21 @@ def _run_research_step(
     robust_cfg = _build_robust_dispatch_config(deterministic_config)
 
     conformal_cfg = uncertainty_cfg.get("conformal", {}) if isinstance(uncertainty_cfg, dict) else {}
+    faci_cfg = uncertainty_cfg.get("faci", {}) if isinstance(uncertainty_cfg, dict) else {}
     alpha = float(conformal_cfg.get("alpha", 0.10))
     eps = float(conformal_cfg.get("eps", 1e-6))
+    history_q_low = float(faci_cfg.get("history_lower_quantile", 0.05))
+    history_q_high = float(faci_cfg.get("history_upper_quantile", 0.95))
+    history_warmup = int(faci_cfg.get("history_warmup", 8))
     artifacts_dir = uncertainty_artifacts_dir
+    learned_scale_bounds = _estimate_faci_scale_bounds(
+        repo_root=repo_root,
+        uncertainty_cfg=uncertainty_cfg,
+        uncertainty_artifacts_dir=artifacts_dir,
+        target="load_mw",
+        eps=eps,
+        log=log,
+    )
 
     unmet_penalty = 10000.0
     now_utc = datetime.utcnow().isoformat()
@@ -566,6 +742,9 @@ def _run_research_step(
             alpha=alpha,
             gamma=research_gamma,
             eps=eps,
+            scale_bounds=learned_scale_bounds,
+            history_quantiles=(history_q_low, history_q_high),
+            history_warmup=history_warmup,
         )
 
         if "price_eur_mwh" in window_df.columns:
@@ -656,6 +835,12 @@ def _run_research_step(
                 "solver_status": str(robust_solution.get("solver_status", "")),
                 "mean_dynamic_interval_width": float(np.mean(dyn_upper - dyn_lower)),
                 "mean_base_interval_width": float(np.mean(base_upper - base_lower)),
+                "faci_scale_bound_lower": (
+                    float(learned_scale_bounds[0]) if learned_scale_bounds is not None else np.nan
+                ),
+                "faci_scale_bound_upper": (
+                    float(learned_scale_bounds[1]) if learned_scale_bounds is not None else np.nan
+                ),
                 "unmet_load_penalty_per_mwh": float(unmet_penalty),
             }
         )
@@ -674,6 +859,8 @@ def _run_research_step(
         "robust_total_cost",
         "mean_dynamic_interval_width",
         "mean_base_interval_width",
+        "faci_scale_bound_lower",
+        "faci_scale_bound_upper",
     ]
     summary_row: dict[str, Any] = {
         "run_id": run_id,
@@ -684,6 +871,12 @@ def _run_research_step(
         "window_end": None,
         "robust_feasible": bool(new_df["robust_feasible"].all()),
         "solver_status": "summary",
+        "faci_scale_bound_lower": (
+            float(learned_scale_bounds[0]) if learned_scale_bounds is not None else np.nan
+        ),
+        "faci_scale_bound_upper": (
+            float(learned_scale_bounds[1]) if learned_scale_bounds is not None else np.nan
+        ),
         "unmet_load_penalty_per_mwh": float(unmet_penalty),
     }
     for col in summary_numeric_cols:
@@ -711,6 +904,8 @@ def _run_research_step(
         "solver_status",
         "mean_dynamic_interval_width",
         "mean_base_interval_width",
+        "faci_scale_bound_lower",
+        "faci_scale_bound_upper",
         "unmet_load_penalty_per_mwh",
     ]
     new_df = new_df[column_order]

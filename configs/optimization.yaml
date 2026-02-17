@@ -16,8 +16,6 @@ battery:
   efficiency_regime_b: 0.90  # SoC in (80%, 100%]
   efficiency_soc_split: 0.80
   degradation_cost_per_mwh: 10.0  # Cycle-aging penalty ($/MWh throughput)
-  min_soc_mwh: 1000.0
-  initial_soc_mwh: 10000.0
 
 grid:
   max_import_mw: 100000.0
@@ -35,9 +33,15 @@ penalties:
 
 # Optional robust dispatch (quantile‑aware) when forecast quantiles are available.
 robust:
+  # Legacy quantile-aware robust controls (used by older paths).
   enabled: false
   load_quantile: 0.9
   renewables_quantile: 0.1
+  # DRO objective blend used by Phase 1/5 robust dispatch:
+  # 1.0 = pure worst-case; lower values blend average-scenario cost.
+  risk_weight_worst_case: 0.35
+  min_soc_mwh: 1000.0
+  initial_soc_mwh: 10000.0
 
 risk:
   enabled: true

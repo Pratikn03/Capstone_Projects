@@ -19,7 +19,7 @@ cv-eval:
 	python -m gridpulse.forecasting.train --config configs/train_forecast.yaml --enable-cv
 
 api:
-	PYTHONPATH=. uvicorn services.api.main:app --reload --port 8000
+	PYTHONPATH=src python3 -m uvicorn services.api.main:app --reload --port 8000
 
 dashboard: frontend
 
@@ -125,4 +125,3 @@ robustness-analysis:
 # Complete novelty workflow (ablations + tables + verification)
 novelty-full: ablations stats-tables verify-novelty
 	@echo "✅ Advanced features workflow complete"
-
