@@ -119,7 +119,7 @@ def _extract_schedule(
 
 def _deterministic_operational_params(
     deterministic_config: dict[str, Any] | None,
-) -> tuple[float, float, float]:
+) -> tuple[float, float, float, float, float, float]:
     cfg = deterministic_config or {}
     grid_cfg = cfg.get("grid", {}) if isinstance(cfg, dict) else {}
     battery_cfg = cfg.get("battery", {}) if isinstance(cfg, dict) else {}
@@ -127,14 +127,55 @@ def _deterministic_operational_params(
     max_grid_import = float(grid_cfg.get("max_import_mw", grid_cfg.get("max_draw_mw", 50.0)))
     degradation_cost = float(battery_cfg.get("degradation_cost_per_mwh", 10.0))
     time_step_hours = 1.0
-    return max_grid_import, degradation_cost, time_step_hours
+    capacity = float(battery_cfg.get("capacity_mwh", 100.0))
+    initial_soc = float(battery_cfg.get("initial_soc_mwh", 0.5 * capacity))
+    charge_eff = float(battery_cfg.get("efficiency_regime_a", battery_cfg.get("efficiency", 0.95)))
+    discharge_eff = float(battery_cfg.get("efficiency_regime_a", battery_cfg.get("efficiency", 0.95)))
+    return max_grid_import, degradation_cost, time_step_hours, initial_soc, charge_eff, discharge_eff
 
 
-def _robust_operational_params(robust_config: Any) -> tuple[float, float, float]:
+def _robust_operational_params(robust_config: Any) -> tuple[float, float, float, float, float, float]:
     max_grid_import = float(getattr(robust_config, "max_grid_import_mw"))
     degradation_cost = float(getattr(robust_config, "degradation_cost_per_mwh"))
     time_step_hours = float(getattr(robust_config, "time_step_hours", 1.0))
-    return max_grid_import, degradation_cost, time_step_hours
+    initial_soc = float(getattr(robust_config, "battery_initial_soc_mwh", 50.0))
+    charge_eff = float(getattr(robust_config, "battery_charge_efficiency", 0.95))
+    discharge_eff = float(getattr(robust_config, "battery_discharge_efficiency", 0.95))
+    return max_grid_import, degradation_cost, time_step_hours, initial_soc, charge_eff, discharge_eff
+
+
+def _resolve_terminal_soc_policy(
+    deterministic_config: dict[str, Any] | None,
+) -> tuple[float | None, float]:
+    cfg = deterministic_config or {}
+    if not isinstance(cfg, dict):
+        return None, 0.0
+
+    research_cfg = cfg.get("research_operational", {})
+    if not isinstance(research_cfg, dict):
+        return None, 0.0
+    terminal_cfg = research_cfg.get("terminal_soc", {})
+    if not isinstance(terminal_cfg, dict):
+        return None, 0.0
+    if not bool(terminal_cfg.get("enabled", False)):
+        return None, 0.0
+
+    penalty = float(terminal_cfg.get("penalty_per_mwh_shortfall", 0.0))
+    if penalty <= 0:
+        return None, 0.0
+
+    battery_cfg = cfg.get("battery", {}) if isinstance(cfg.get("battery", {}), dict) else {}
+    capacity = float(battery_cfg.get("capacity_mwh", 100.0))
+    max_soc = float(battery_cfg.get("max_soc_mwh", capacity))
+    target_from_config = terminal_cfg.get("resolved_target_mwh")
+    if target_from_config is not None:
+        target = float(target_from_config)
+    else:
+        target_frac = float(terminal_cfg.get("target_soc_fraction", 0.15))
+        target_abs = float(terminal_cfg.get("target_soc_mwh", 0.0))
+        target = max(target_abs, max(0.0, target_frac) * max(0.0, capacity))
+    target = min(max_soc, max(0.0, target))
+    return target, penalty
 
 
 def _default_price(
@@ -163,6 +204,11 @@ def _evaluate_realized_cost(
     degradation_cost_per_mwh: float,
     unmet_load_penalty_per_mwh: float,
     time_step_hours: float,
+    initial_soc_mwh: float | None = None,
+    charge_efficiency: float = 1.0,
+    discharge_efficiency: float = 1.0,
+    terminal_soc_target_mwh: float | None = None,
+    terminal_soc_penalty_per_mwh: float = 0.0,
 ) -> dict[str, float]:
     required_import = load_true - renewables_true - discharge + charge
     grid_import = np.clip(required_import, a_min=0.0, a_max=max_grid_import)
@@ -177,13 +223,31 @@ def _evaluate_realized_cost(
     unmet_penalty_cost = float(
         unmet_load_penalty_per_mwh * np.sum(unmet) * time_step_hours
     )
-    total_cost = float(grid_cost + degradation_cost + unmet_penalty_cost)
+    terminal_penalty_cost = 0.0
+    if (
+        initial_soc_mwh is not None
+        and terminal_soc_target_mwh is not None
+        and terminal_soc_penalty_per_mwh > 0
+    ):
+        eta_ch = max(float(charge_efficiency), 1e-9)
+        eta_dis = max(float(discharge_efficiency), 1e-9)
+        soc = float(initial_soc_mwh)
+        for ch, dis in zip(charge, discharge):
+            soc += (
+                eta_ch * max(float(ch), 0.0)
+                - (max(float(dis), 0.0) / eta_dis)
+            ) * time_step_hours
+        shortfall = max(float(terminal_soc_target_mwh) - soc, 0.0)
+        terminal_penalty_cost = float(terminal_soc_penalty_per_mwh * shortfall)
+
+    total_cost = float(grid_cost + degradation_cost + unmet_penalty_cost + terminal_penalty_cost)
 
     return {
         "total_cost": total_cost,
         "grid_cost": grid_cost,
         "degradation_cost": degradation_cost,
         "unmet_penalty_cost": unmet_penalty_cost,
+        "terminal_penalty_cost": terminal_penalty_cost,
     }
 
 
@@ -332,7 +396,14 @@ def calculate_evpi(
 
         actual_charge, actual_discharge = _extract_schedule(actual_solution, horizon, "actual_solution")
         perfect_charge, perfect_discharge = _extract_schedule(perfect_solution, horizon, "perfect_solution")
-        max_grid_import, degradation_cost, time_step_hours = _robust_operational_params(robust_cfg)
+        (
+            max_grid_import,
+            degradation_cost,
+            time_step_hours,
+            initial_soc,
+            charge_eff,
+            discharge_eff,
+        ) = _robust_operational_params(robust_cfg)
     else:
         actual_solution = _solve_deterministic_dispatch(
             load_forecast=load_forecast_arr,
@@ -349,7 +420,16 @@ def calculate_evpi(
 
         actual_charge, actual_discharge = _extract_schedule(actual_solution, horizon, "actual_solution")
         perfect_charge, perfect_discharge = _extract_schedule(perfect_solution, horizon, "perfect_solution")
-        max_grid_import, degradation_cost, time_step_hours = _deterministic_operational_params(deterministic_config)
+        (
+            max_grid_import,
+            degradation_cost,
+            time_step_hours,
+            initial_soc,
+            charge_eff,
+            discharge_eff,
+        ) = _deterministic_operational_params(deterministic_config)
+
+    terminal_target_soc_mwh, terminal_shortfall_penalty = _resolve_terminal_soc_policy(deterministic_config)
 
     actual_eval = _evaluate_realized_cost(
         load_true=load_true_arr,
@@ -361,6 +441,11 @@ def calculate_evpi(
         degradation_cost_per_mwh=degradation_cost,
         unmet_load_penalty_per_mwh=unmet_load_penalty_per_mwh,
         time_step_hours=time_step_hours,
+        initial_soc_mwh=initial_soc,
+        charge_efficiency=charge_eff,
+        discharge_efficiency=discharge_eff,
+        terminal_soc_target_mwh=terminal_target_soc_mwh,
+        terminal_soc_penalty_per_mwh=terminal_shortfall_penalty,
     )
     perfect_eval = _evaluate_realized_cost(
         load_true=load_true_arr,
@@ -372,6 +457,11 @@ def calculate_evpi(
         degradation_cost_per_mwh=degradation_cost,
         unmet_load_penalty_per_mwh=unmet_load_penalty_per_mwh,
         time_step_hours=time_step_hours,
+        initial_soc_mwh=initial_soc,
+        charge_efficiency=charge_eff,
+        discharge_efficiency=discharge_eff,
+        terminal_soc_target_mwh=terminal_target_soc_mwh,
+        terminal_soc_penalty_per_mwh=terminal_shortfall_penalty,
     )
 
     actual_realized_cost = float(actual_eval["total_cost"])
@@ -460,8 +550,23 @@ def calculate_vss(
     det_charge, det_discharge = _extract_schedule(det_solution, horizon, "deterministic_solution")
     robust_charge, robust_discharge = _extract_schedule(robust_solution, horizon, "robust_solution")
 
-    det_max_grid, det_degradation, det_time_step = _deterministic_operational_params(deterministic_config)
-    rob_max_grid, rob_degradation, rob_time_step = _robust_operational_params(robust_cfg)
+    (
+        det_max_grid,
+        det_degradation,
+        det_time_step,
+        det_initial_soc,
+        det_charge_eff,
+        det_discharge_eff,
+    ) = _deterministic_operational_params(deterministic_config)
+    (
+        rob_max_grid,
+        rob_degradation,
+        rob_time_step,
+        rob_initial_soc,
+        rob_charge_eff,
+        rob_discharge_eff,
+    ) = _robust_operational_params(robust_cfg)
+    terminal_target_soc_mwh, terminal_shortfall_penalty = _resolve_terminal_soc_policy(deterministic_config)
 
     det_eval = _evaluate_realized_cost(
         load_true=load_true_arr,
@@ -473,6 +578,11 @@ def calculate_vss(
         degradation_cost_per_mwh=det_degradation,
         unmet_load_penalty_per_mwh=unmet_load_penalty_per_mwh,
         time_step_hours=det_time_step,
+        initial_soc_mwh=det_initial_soc,
+        charge_efficiency=det_charge_eff,
+        discharge_efficiency=det_discharge_eff,
+        terminal_soc_target_mwh=terminal_target_soc_mwh,
+        terminal_soc_penalty_per_mwh=terminal_shortfall_penalty,
     )
     robust_eval = _evaluate_realized_cost(
         load_true=load_true_arr,
@@ -484,6 +594,11 @@ def calculate_vss(
         degradation_cost_per_mwh=rob_degradation,
         unmet_load_penalty_per_mwh=unmet_load_penalty_per_mwh,
         time_step_hours=rob_time_step,
+        initial_soc_mwh=rob_initial_soc,
+        charge_efficiency=rob_charge_eff,
+        discharge_efficiency=rob_discharge_eff,
+        terminal_soc_target_mwh=terminal_target_soc_mwh,
+        terminal_soc_penalty_per_mwh=terminal_shortfall_penalty,
     )
 
     deterministic_realized_cost = float(det_eval["total_cost"])

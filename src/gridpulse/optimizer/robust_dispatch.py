@@ -26,6 +26,7 @@ class RobustDispatchConfig:
     max_grid_import_mw: float = 500.0
     default_price_per_mwh: float = 60.0
     degradation_cost_per_mwh: float = 5.0
+    risk_weight_worst_case: float = 1.0
 
     time_step_hours: float = 1.0
     solver_name: str = "appsi_highs"
@@ -79,6 +80,8 @@ def _validate_config(cfg: RobustDispatchConfig) -> None:
         raise ValueError("default_price_per_mwh must be >= 0")
     if cfg.degradation_cost_per_mwh < 0:
         raise ValueError("degradation_cost_per_mwh must be >= 0")
+    if not (0.0 <= cfg.risk_weight_worst_case <= 1.0):
+        raise ValueError("risk_weight_worst_case must be in [0, 1]")
     if cfg.time_step_hours <= 0:
         raise ValueError("time_step_hours must be > 0")
 
@@ -222,9 +225,16 @@ def optimize_robust_dispatch(
 
     model.worst_case_epigraph = pyo.Constraint(model.S, rule=worst_case_epigraph_rule)
 
+    avg_scenario_grid_cost = 0.5 * sum(
+        sum(prices[t] * model.G[s, t] * cfg.time_step_hours for t in model.T) for s in model.S
+    )
     throughput = sum((model.P_ch[t] + model.P_dis[t]) * cfg.time_step_hours for t in model.T)
     model.obj = pyo.Objective(
-        expr=model.z + cfg.degradation_cost_per_mwh * throughput,
+        expr=(
+            cfg.risk_weight_worst_case * model.z
+            + (1.0 - cfg.risk_weight_worst_case) * avg_scenario_grid_cost
+            + cfg.degradation_cost_per_mwh * throughput
+        ),
         sense=pyo.minimize,
     )
 
@@ -274,6 +284,7 @@ def optimize_robust_dispatch(
         "total_cost": total_cost,
         "scenario_cost_lower": scenario_cost_lower,
         "scenario_cost_upper": scenario_cost_upper,
+        "risk_weight_worst_case": cfg.risk_weight_worst_case,
         "feasible": True,
         "solver_status": status_str,
         "binding_scenario": binding_scenario,

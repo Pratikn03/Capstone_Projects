@@ -598,6 +598,245 @@ def _build_robust_dispatch_config(opt_cfg: dict[str, Any]):
     )
 
 
+def _merge_nested_dict(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    merged: dict[str, Any] = dict(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            nested = dict(merged[key])
+            nested.update(value)
+            merged[key] = nested
+        else:
+            merged[key] = value
+    return merged
+
+
+def _resolve_research_operational_config(
+    cfg: dict[str, Any],
+    dataset_key: str,
+) -> dict[str, Any]:
+    research_op = cfg.get("research_operational", {}) if isinstance(cfg, dict) else {}
+    if not isinstance(research_op, dict):
+        return {}
+
+    merged = {k: v for k, v in research_op.items() if k != "datasets"}
+    datasets = research_op.get("datasets", {})
+    if isinstance(datasets, dict):
+        dataset_override = datasets.get(dataset_key, {})
+        if isinstance(dataset_override, dict):
+            merged = _merge_nested_dict(merged, dataset_override)
+    return merged
+
+
+def _apply_operational_load_stress(
+    load_lower_bound,
+    load_upper_bound,
+    context_df,
+    research_operational_cfg: dict[str, Any],
+) -> tuple[np.ndarray, np.ndarray, dict[str, float | bool]]:
+    """
+    Expand interval tails from empirical uncertainty and recent net-load volatility.
+
+    This is intentionally data-driven:
+    - Uses interval-width quantiles from FACI output.
+    - Uses context net-load ramp quantiles to capture anomaly behavior.
+    """
+    import numpy as np
+
+    lower = np.asarray(load_lower_bound, dtype=float).reshape(-1)
+    upper = np.asarray(load_upper_bound, dtype=float).reshape(-1)
+    if lower.size != upper.size:
+        raise ValueError("load_lower_bound and load_upper_bound must have identical length")
+
+    stress_cfg = (
+        research_operational_cfg.get("stress", {})
+        if isinstance(research_operational_cfg, dict)
+        else {}
+    )
+    if not bool(stress_cfg.get("enabled", False)):
+        return lower, upper, {
+            "applied": False,
+            "load_stress_additive_mw": 0.0,
+            "stress_interval_multiplier": 1.0,
+        }
+
+    eps_safe = 1e-9
+    width = np.maximum(upper - lower, eps_safe)
+    width_q = min(max(float(stress_cfg.get("width_quantile", 0.75)), 0.0), 1.0)
+    width_ref = float(np.quantile(width, width_q)) if width.size else 0.0
+
+    vol_ref = 0.0
+    if {"load_mw", "wind_mw", "solar_mw"}.issubset(set(context_df.columns)):
+        net_load = (
+            context_df["load_mw"].to_numpy(dtype=float)
+            - context_df["wind_mw"].to_numpy(dtype=float)
+            - context_df["solar_mw"].to_numpy(dtype=float)
+        )
+        if net_load.size >= 3:
+            ramp = np.abs(np.diff(net_load))
+            vol_q = min(max(float(stress_cfg.get("volatility_quantile", 0.90)), 0.0), 1.0)
+            vol_ref = float(np.quantile(ramp, vol_q))
+
+    # Blend interval and realized-volatility scales to avoid overreacting to
+    # either source in isolation.
+    base_scale = width_ref if vol_ref <= 0 else 0.5 * (width_ref + vol_ref)
+    stress_scale = max(0.0, float(stress_cfg.get("stress_scale", 0.75)))
+    additive = max(float(stress_cfg.get("min_additive_mw", 0.0)), stress_scale * base_scale)
+    max_additive = float(stress_cfg.get("max_additive_mw", 0.0))
+    if max_additive > 0:
+        additive = min(additive, max_additive)
+
+    lower_relax = min(max(float(stress_cfg.get("lower_relax_fraction", 0.15)), 0.0), 1.0)
+    step_min = max(0.0, float(stress_cfg.get("step_scale_min", 0.85)))
+    step_max = max(step_min, float(stress_cfg.get("step_scale_max", 1.25)))
+    step_scale = np.clip(width / max(width_ref, eps_safe), step_min, step_max)
+
+    stressed_upper = upper + additive * step_scale
+    stressed_lower = np.maximum(0.0, lower - lower_relax * additive * step_scale)
+    stressed_upper = np.maximum(stressed_upper, stressed_lower)
+
+    # Cap interval widening to keep stress scenarios realistic and avoid
+    # pathological over-conservatism.
+    max_rel_expansion = max(0.0, float(stress_cfg.get("max_relative_expansion", 0.60)))
+    base_width = np.maximum(upper - lower, eps_safe)
+    capped_width = np.minimum(stressed_upper - stressed_lower, base_width * (1.0 + max_rel_expansion))
+    mid = 0.5 * (stressed_upper + stressed_lower)
+    stressed_lower = np.maximum(0.0, mid - 0.5 * capped_width)
+    stressed_upper = np.maximum(stressed_lower, mid + 0.5 * capped_width)
+
+    stress_interval_multiplier = float(np.mean((stressed_upper - stressed_lower) / width))
+    return stressed_lower, stressed_upper, {
+        "applied": True,
+        "load_stress_additive_mw": float(additive),
+        "stress_interval_multiplier": stress_interval_multiplier,
+    }
+
+
+def _build_window_operational_config(
+    base_config: dict[str, Any],
+    context_df,
+    load_lower_bound,
+    load_upper_bound,
+    renewables_forecast,
+    dataset_key: str,
+    log: logging.Logger,
+) -> dict[str, Any]:
+    """
+    Build a per-window optimization config where uncertainty has operational impact.
+
+    This keeps the logic data-driven:
+    - Grid cap is tightened from historical net-load quantiles (plus small headroom),
+      bounded by the global cap and a feasibility floor from forecast net-load.
+    - Battery reserve floor is applied as a minimum SoC fraction of capacity.
+    """
+    import copy
+    import numpy as np
+
+    cfg = copy.deepcopy(base_config if isinstance(base_config, dict) else {})
+    battery = cfg.setdefault("battery", {})
+    grid = cfg.setdefault("grid", {})
+    research_op = _resolve_research_operational_config(cfg, dataset_key)
+    load_lower_arr = np.asarray(load_lower_bound, dtype=float).reshape(-1)
+    load_upper_arr = np.asarray(load_upper_bound, dtype=float).reshape(-1)
+    if load_lower_arr.size != load_upper_arr.size:
+        raise ValueError("load_lower_bound and load_upper_bound must align for operational config")
+
+    reserve_cfg = research_op.get("reserve_soc", {}) if isinstance(research_op, dict) else {}
+    if bool(reserve_cfg.get("enabled", True)):
+        capacity = float(battery.get("capacity_mwh", 100.0))
+        reserve_frac = float(reserve_cfg.get("min_soc_fraction", 0.05))
+        reserve_abs = float(reserve_cfg.get("min_soc_mwh", 0.0))
+        reserve_mwh = max(reserve_abs, max(0.0, reserve_frac) * max(0.0, capacity))
+        battery["min_soc_mwh"] = max(float(battery.get("min_soc_mwh", 0.0)), reserve_mwh)
+        if "initial_soc_mwh" in battery:
+            battery["initial_soc_mwh"] = max(float(battery["initial_soc_mwh"]), float(battery["min_soc_mwh"]))
+
+    terminal_cfg = research_op.get("terminal_soc", {}) if isinstance(research_op, dict) else {}
+    if bool(terminal_cfg.get("enabled", True)):
+        capacity = float(battery.get("capacity_mwh", 100.0))
+        max_soc = float(battery.get("max_soc_mwh", capacity))
+        target_frac = float(terminal_cfg.get("target_soc_fraction", 0.15))
+        target_abs = float(terminal_cfg.get("target_soc_mwh", 0.0))
+        target_base = max(target_abs, max(0.0, target_frac) * max(0.0, capacity))
+
+        width = np.maximum(load_upper_arr - load_lower_arr, 0.0)
+        width_q = min(max(float(terminal_cfg.get("uncertainty_quantile", 0.90)), 0.0), 1.0)
+        width_ref = float(np.quantile(width, width_q)) if width.size else 0.0
+        uncertainty_to_soc = max(0.0, float(terminal_cfg.get("uncertainty_to_soc_mwh_per_mw", 0.0)))
+        uncertainty_buffer = uncertainty_to_soc * width_ref
+        resolved_terminal_target = min(max_soc, target_base + uncertainty_buffer)
+
+        # Optional hard enforcement through min SoC floor; by default terminal risk is soft (metric-time).
+        if bool(terminal_cfg.get("enforce_as_min_soc", False)):
+            battery["min_soc_mwh"] = max(float(battery.get("min_soc_mwh", 0.0)), resolved_terminal_target)
+            if "initial_soc_mwh" in battery:
+                battery["initial_soc_mwh"] = max(
+                    float(battery["initial_soc_mwh"]),
+                    float(battery["min_soc_mwh"]),
+                )
+
+        cfg.setdefault("research_operational", {})
+        if not isinstance(cfg["research_operational"], dict):
+            cfg["research_operational"] = {}
+        cfg["research_operational"].setdefault("terminal_soc", {})
+        if isinstance(cfg["research_operational"]["terminal_soc"], dict):
+            cfg["research_operational"]["terminal_soc"]["resolved_target_mwh"] = float(resolved_terminal_target)
+
+    cap_cfg = research_op.get("grid_cap", {}) if isinstance(research_op, dict) else {}
+    if bool(cap_cfg.get("enabled", True)):
+        q_hist = float(cap_cfg.get("net_load_quantile", 0.95))
+        q_hist = min(max(q_hist, 0.0), 1.0)
+        q_forecast = float(cap_cfg.get("forecast_feasibility_quantile", 0.90))
+        q_forecast = min(max(q_forecast, 0.0), 1.0)
+        headroom = max(0.0, float(cap_cfg.get("headroom_mw", 500.0)))
+        feasibility_margin = max(0.0, float(cap_cfg.get("feasibility_margin_mw", 500.0)))
+        min_cap = max(0.0, float(cap_cfg.get("min_cap_mw", 1000.0)))
+        tightness = max(0.0, float(cap_cfg.get("tightness_factor", 1.0)))
+        min_feasibility_ratio = min(max(float(cap_cfg.get("min_feasibility_ratio", 0.98)), 0.0), 1.0)
+
+        static_cap = float(grid.get("max_import_mw", grid.get("max_draw_mw", 500.0)))
+        if static_cap <= 0:
+            static_cap = float("inf")
+
+        if {"load_mw", "wind_mw", "solar_mw"}.issubset(set(context_df.columns)):
+            hist_net = (
+                context_df["load_mw"].to_numpy(dtype=float)
+                - context_df["wind_mw"].to_numpy(dtype=float)
+                - context_df["solar_mw"].to_numpy(dtype=float)
+            )
+            hist_net = np.maximum(hist_net, 0.0)
+            cap_hist = float(np.quantile(hist_net, q_hist)) + headroom if hist_net.size else static_cap
+        else:
+            cap_hist = static_cap
+
+        width = np.maximum(load_upper_arr - load_lower_arr, 0.0)
+        width_q = min(max(float(cap_cfg.get("uncertainty_width_quantile", 0.90)), 0.0), 1.0)
+        width_ref = float(np.quantile(width, width_q)) if width.size else 0.0
+        uncertainty_headroom_factor = max(0.0, float(cap_cfg.get("uncertainty_headroom_factor", 0.0)))
+        uncertainty_headroom = uncertainty_headroom_factor * width_ref
+
+        forecast_net = np.maximum(load_upper_arr - np.asarray(renewables_forecast, dtype=float), 0.0)
+        cap_feasible = (
+            float(np.quantile(forecast_net, q_forecast)) + feasibility_margin + uncertainty_headroom
+            if forecast_net.size
+            else 0.0
+        )
+
+        adaptive_cap = max(min_cap, cap_hist, cap_feasible) * tightness
+        adaptive_cap = max(adaptive_cap, min_cap, cap_feasible * min_feasibility_ratio)
+        adaptive_cap = min(adaptive_cap, static_cap)
+        grid["max_import_mw"] = float(adaptive_cap)
+        log.debug(
+            "Applied adaptive grid cap %.2f MW (hist=%.2f, feasible=%.2f, static=%.2f, tightness=%.3f)",
+            adaptive_cap,
+            cap_hist,
+            cap_feasible,
+            static_cap,
+            tightness,
+        )
+
+    return cfg
+
+
 def _optimize_robust_dispatch(*args, **kwargs):
     from gridpulse.optimizer.robust_dispatch import optimize_robust_dispatch
 
@@ -659,6 +898,7 @@ def _run_research_step(
     deterministic_config: dict[str, Any],
     forecast_cfg: dict[str, Any],
     uncertainty_cfg: dict[str, Any],
+    dataset_key: str = "de",
 ) -> dict[str, Any]:
     import numpy as np
     import pandas as pd
@@ -685,8 +925,6 @@ def _run_research_step(
             f"Not enough rows in test split ({len(df)}) for horizon {research_horizon} "
             f"with step {research_window_step}"
         )
-
-    robust_cfg = _build_robust_dispatch_config(deterministic_config)
 
     conformal_cfg = uncertainty_cfg.get("conformal", {}) if isinstance(uncertainty_cfg, dict) else {}
     faci_cfg = uncertainty_cfg.get("faci", {}) if isinstance(uncertainty_cfg, dict) else {}
@@ -746,6 +984,41 @@ def _run_research_step(
             history_quantiles=(history_q_low, history_q_high),
             history_warmup=history_warmup,
         )
+        research_op_cfg = _resolve_research_operational_config(deterministic_config, dataset_key)
+        stressed_lower, stressed_upper, stress_meta = _apply_operational_load_stress(
+            load_lower_bound=dyn_lower,
+            load_upper_bound=dyn_upper,
+            context_df=context_df,
+            research_operational_cfg=research_op_cfg,
+        )
+
+        window_config = _build_window_operational_config(
+            base_config=deterministic_config,
+            context_df=context_df,
+            load_lower_bound=stressed_lower,
+            load_upper_bound=stressed_upper,
+            renewables_forecast=renewables_forecast,
+            dataset_key=dataset_key,
+            log=log,
+        )
+        robust_cfg = _build_robust_dispatch_config(window_config)
+        window_grid_cfg = window_config.get("grid", {}) if isinstance(window_config, dict) else {}
+        window_battery_cfg = window_config.get("battery", {}) if isinstance(window_config, dict) else {}
+        window_research_cfg = (
+            window_config.get("research_operational", {})
+            if isinstance(window_config, dict)
+            else {}
+        )
+        window_terminal_cfg = (
+            window_research_cfg.get("terminal_soc", {})
+            if isinstance(window_research_cfg, dict)
+            else {}
+        )
+        operational_grid_cap = float(
+            window_grid_cfg.get("max_import_mw", window_grid_cfg.get("max_draw_mw", np.nan))
+        )
+        reserve_soc_mwh = float(window_battery_cfg.get("min_soc_mwh", 0.0))
+        terminal_soc_target_mwh = float(window_terminal_cfg.get("resolved_target_mwh", np.nan))
 
         if "price_eur_mwh" in window_df.columns:
             price = window_df["price_eur_mwh"].to_numpy(dtype=float)
@@ -762,8 +1035,8 @@ def _run_research_step(
             price = np.maximum(price, 0.0)
 
         robust_solution = _optimize_robust_dispatch(
-            load_lower_bound=dyn_lower,
-            load_upper_bound=dyn_upper,
+            load_lower_bound=stressed_lower,
+            load_upper_bound=stressed_upper,
             renewables_forecast=renewables_forecast,
             price=price,
             config=robust_cfg,
@@ -779,10 +1052,10 @@ def _run_research_step(
             renewables_true=renewables_true,
             load_forecast=load_forecast,
             renewables_forecast=renewables_forecast,
-            load_lower_bound=dyn_lower,
-            load_upper_bound=dyn_upper,
+            load_lower_bound=stressed_lower,
+            load_upper_bound=stressed_upper,
             price=price,
-            deterministic_config=deterministic_config,
+            deterministic_config=window_config,
             robust_config=robust_cfg,
             unmet_load_penalty_per_mwh=unmet_penalty,
         )
@@ -791,10 +1064,10 @@ def _run_research_step(
             renewables_true=renewables_true,
             load_forecast=load_forecast,
             renewables_forecast=renewables_forecast,
-            load_lower_bound=dyn_lower,
-            load_upper_bound=dyn_upper,
+            load_lower_bound=stressed_lower,
+            load_upper_bound=stressed_upper,
             price=price,
-            deterministic_config=deterministic_config,
+            deterministic_config=window_config,
             robust_config=robust_cfg,
             unmet_load_penalty_per_mwh=unmet_penalty,
             actual_model="robust",
@@ -804,10 +1077,10 @@ def _run_research_step(
             renewables_true=renewables_true,
             load_forecast=load_forecast,
             renewables_forecast=renewables_forecast,
-            load_lower_bound=dyn_lower,
-            load_upper_bound=dyn_upper,
+            load_lower_bound=stressed_lower,
+            load_upper_bound=stressed_upper,
             price=price,
-            deterministic_config=deterministic_config,
+            deterministic_config=window_config,
             robust_config=robust_cfg,
             unmet_load_penalty_per_mwh=unmet_penalty,
             actual_model="deterministic",
@@ -835,6 +1108,12 @@ def _run_research_step(
                 "solver_status": str(robust_solution.get("solver_status", "")),
                 "mean_dynamic_interval_width": float(np.mean(dyn_upper - dyn_lower)),
                 "mean_base_interval_width": float(np.mean(base_upper - base_lower)),
+                "mean_stressed_interval_width": float(np.mean(stressed_upper - stressed_lower)),
+                "operational_grid_cap_mw": operational_grid_cap,
+                "reserve_soc_mwh": reserve_soc_mwh,
+                "terminal_soc_target_mwh": terminal_soc_target_mwh,
+                "load_stress_additive_mw": float(stress_meta.get("load_stress_additive_mw", 0.0)),
+                "stress_interval_multiplier": float(stress_meta.get("stress_interval_multiplier", 1.0)),
                 "faci_scale_bound_lower": (
                     float(learned_scale_bounds[0]) if learned_scale_bounds is not None else np.nan
                 ),
@@ -859,6 +1138,12 @@ def _run_research_step(
         "robust_total_cost",
         "mean_dynamic_interval_width",
         "mean_base_interval_width",
+        "mean_stressed_interval_width",
+        "operational_grid_cap_mw",
+        "reserve_soc_mwh",
+        "terminal_soc_target_mwh",
+        "load_stress_additive_mw",
+        "stress_interval_multiplier",
         "faci_scale_bound_lower",
         "faci_scale_bound_upper",
     ]
@@ -871,6 +1156,13 @@ def _run_research_step(
         "window_end": None,
         "robust_feasible": bool(new_df["robust_feasible"].all()),
         "solver_status": "summary",
+        "operational_grid_cap_mw": float(pd.to_numeric(new_df["operational_grid_cap_mw"], errors="coerce").mean()),
+        "reserve_soc_mwh": float(pd.to_numeric(new_df["reserve_soc_mwh"], errors="coerce").mean()),
+        "terminal_soc_target_mwh": float(pd.to_numeric(new_df["terminal_soc_target_mwh"], errors="coerce").mean()),
+        "load_stress_additive_mw": float(pd.to_numeric(new_df["load_stress_additive_mw"], errors="coerce").mean()),
+        "stress_interval_multiplier": float(
+            pd.to_numeric(new_df["stress_interval_multiplier"], errors="coerce").mean()
+        ),
         "faci_scale_bound_lower": (
             float(learned_scale_bounds[0]) if learned_scale_bounds is not None else np.nan
         ),
@@ -904,6 +1196,12 @@ def _run_research_step(
         "solver_status",
         "mean_dynamic_interval_width",
         "mean_base_interval_width",
+        "mean_stressed_interval_width",
+        "operational_grid_cap_mw",
+        "reserve_soc_mwh",
+        "terminal_soc_target_mwh",
+        "load_stress_additive_mw",
+        "stress_interval_multiplier",
         "faci_scale_bound_lower",
         "faci_scale_bound_upper",
         "unmet_load_penalty_per_mwh",
@@ -1142,6 +1440,7 @@ def main() -> None:
                     deterministic_config=deterministic_cfg,
                     forecast_cfg=forecast_cfg,
                     uncertainty_cfg=uncertainty_cfg,
+                    dataset_key=dataset,
                 )
             cache[cache_key] = research_hash
 
