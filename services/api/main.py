@@ -38,7 +38,7 @@ See Also:
 """
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Security
+from fastapi import FastAPI, HTTPException, Security, Response
 from pydantic import BaseModel
 
 from gridpulse.safety.bms import SafetyLayer, SafetyViolation
@@ -49,6 +49,14 @@ from services.api.health import readiness_check
 from services.api.routers import forecast, anomaly, optimize, monitor
 from services.api.routers.forecast_intervals import router as intervals_router
 from services.api.security import get_api_key, verify_scope
+
+# Prometheus metrics integration
+try:
+    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+    from gridpulse.monitoring.prometheus_metrics import REQUESTS_TOTAL
+    PROMETHEUS_AVAILABLE = True
+except ImportError:
+    PROMETHEUS_AVAILABLE = False
 
 # Initialize structured logging before anything else
 setup_logging()
@@ -122,6 +130,32 @@ def health():
 @app.get("/ready")
 def ready():
     return readiness_check()
+
+
+@app.get("/metrics")
+def metrics():
+    """
+    Prometheus metrics endpoint.
+    
+    Exposes application metrics in Prometheus text format for scraping.
+    Includes:
+    - Request counts and latencies
+    - Forecast model performance
+    - Optimization cost savings
+    - Battery state of charge
+    - Kafka consumer lag (streaming)
+    - Drift detection alerts
+    """
+    if not PROMETHEUS_AVAILABLE:
+        raise HTTPException(
+            status_code=501,
+            detail="Prometheus metrics not available. Install prometheus-client."
+        )
+    
+    return Response(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST
+    )
 
 
 @app.get("/system/health")

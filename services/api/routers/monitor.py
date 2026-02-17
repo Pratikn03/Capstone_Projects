@@ -30,6 +30,42 @@ def _load_week2_metrics() -> dict | None:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _to_builtin(value: Any) -> Any:
+    if pd.isna(value):
+        return None
+    if hasattr(value, "item"):
+        try:
+            return value.item()
+        except Exception:
+            return value
+    return value
+
+
+def _load_latest_research_summary(path: Path) -> dict | None:
+    if not path.exists():
+        return None
+    df = pd.read_csv(path)
+    if df.empty:
+        return None
+    if "row_type" in df.columns:
+        summary = df[df["row_type"].astype(str).isin(["run_summary", "summary_mean"])]
+        row = summary.iloc[-1] if not summary.empty else df.iloc[-1]
+    else:
+        row = df.iloc[-1]
+    payload = {k: _to_builtin(v) for k, v in row.to_dict().items()}
+    payload["source_csv"] = str(path)
+    return payload
+
+
+def _load_frozen_metrics_snapshot(path: Path = Path("reports/frozen_metrics_snapshot.json")) -> dict | None:
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+
+
 @router.get("")
 def monitor() -> Dict[str, Any]:
     cfg = load_monitoring_config()
@@ -97,3 +133,19 @@ def monitor() -> Dict[str, Any]:
 
     write_monitoring_report(payload, out_path="reports/monitoring_report.md")
     return payload
+
+
+@router.get("/research-metrics")
+def research_metrics() -> Dict[str, Any]:
+    de = _load_latest_research_summary(Path("reports/research_metrics_de.csv"))
+    us = _load_latest_research_summary(Path("reports/research_metrics_us.csv"))
+    frozen = _load_frozen_metrics_snapshot()
+
+    return {
+        "available": bool(de or us or frozen),
+        "datasets": {
+            "de": de,
+            "us": us,
+        },
+        "frozen_metrics_snapshot": frozen,
+    }

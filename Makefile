@@ -1,4 +1,4 @@
-.PHONY: setup lint test api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all
+.PHONY: setup lint test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability
 
 setup:
 	python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
@@ -9,6 +9,18 @@ lint:
 
 test:
 	pytest -q
+
+# Test with coverage (minimum 80%)
+test-cov:
+	pytest --cov=gridpulse --cov-report=html --cov-report=term-missing --cov-fail-under=80
+
+# Quick tests (exclude slow markers)
+test-quick:
+	pytest -q -m "not slow and not integration"
+
+# Integration tests only
+test-integration:
+	pytest -q -m "integration"
 
 # Training verification
 verify-training:
@@ -125,3 +137,83 @@ robustness-analysis:
 # Complete novelty workflow (ablations + tables + verification)
 novelty-full: ablations stats-tables verify-novelty
 	@echo "✅ Advanced features workflow complete"
+
+# ============================================================
+# Load Testing (98/100 Enhancement)
+# ============================================================
+
+# Run k6 load tests (requires k6 installed: brew install k6)
+k6-load:
+	@which k6 > /dev/null || (echo "k6 not installed. Install with: brew install k6" && exit 1)
+	k6 run tests/load/k6_load_test.js
+
+# Run k6 with custom VUs and duration
+k6-stress:
+	@which k6 > /dev/null || (echo "k6 not installed. Install with: brew install k6" && exit 1)
+	k6 run --vus 200 --duration 5m tests/load/k6_load_test.js
+
+# Run locust load tests (web UI at http://localhost:8089)
+locust-load:
+	locust -f tests/load/locustfile.py --host=http://localhost:8000
+
+# Run locust headless (CI mode)
+locust-ci:
+	locust -f tests/load/locustfile.py --host=http://localhost:8000 --headless -u 50 -r 10 --run-time 2m
+
+# ============================================================
+# Observability Stack (95/100 Enhancement)
+# ============================================================
+
+# Start full observability stack (Prometheus + Grafana + Alertmanager)
+observability:
+	docker compose -f docker/docker-compose.full.yml up -d prometheus grafana alertmanager node-exporter cadvisor
+
+# Start complete production stack (API + DB + Kafka + Observability)
+stack-up:
+	docker compose -f docker/docker-compose.full.yml up -d
+
+# Stop full stack
+stack-down:
+	docker compose -f docker/docker-compose.full.yml down
+
+# View logs from full stack
+stack-logs:
+	docker compose -f docker/docker-compose.full.yml logs -f
+
+# View observability dashboards
+grafana:
+	@echo "Opening Grafana at http://localhost:3001 (admin/gridpulse)"
+	open http://localhost:3001 || xdg-open http://localhost:3001 || echo "Visit: http://localhost:3001"
+
+# View Prometheus targets
+prometheus:
+	@echo "Opening Prometheus at http://localhost:9090"
+	open http://localhost:9090 || xdg-open http://localhost:9090 || echo "Visit: http://localhost:9090"
+
+# Run streaming worker (requires Kafka running)
+streaming-worker:
+	PYTHONPATH=src python -m gridpulse.streaming.worker
+
+# ============================================================
+# Advanced Baselines (93/100 Enhancement)
+# ============================================================
+
+# Train all advanced baselines (Prophet, N-BEATS, AutoML)
+train-baselines:
+	PYTHONPATH=src python -c "from gridpulse.forecasting.advanced_baselines import train_all_baselines; train_all_baselines('data/processed/features.parquet')"
+
+# Evaluate baselines against production models
+eval-baselines:
+	PYTHONPATH=src python -c "from gridpulse.forecasting.advanced_baselines import evaluate_baselines; print(evaluate_baselines('data/processed/splits/test.parquet').to_markdown())"
+
+# ============================================================
+# Production Release Workflow
+# ============================================================
+
+# Full CI check (coverage + lint + integration)
+ci: lint test-cov test-integration
+	@echo "✅ CI checks passed"
+
+# Pre-release validation
+pre-release: ci release_check
+	@echo "✅ Pre-release validation complete"

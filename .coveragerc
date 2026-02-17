@@ -1,0 +1,94 @@
+# Coverage.py configuration for GridPulse
+# https://coverage.readthedocs.io/en/latest/config.html
+
+[run]
+# Measure branch coverage
+branch = True
+
+# Source packages to measure
+source = 
+    gridpulse
+    services
+
+# Directories to omit from measurement
+omit = 
+    */tests/*
+    */__pycache__/*
+    */migrations/*
+    */.venv/*
+    */venv/*
+    setup.py
+    conftest.py
+
+# Parallel mode for pytest-xdist
+parallel = True
+
+# Store coverage data in reports directory
+data_file = reports/.coverage
+
+[paths]
+# Map paths for combined coverage from different environments
+source =
+    src/gridpulse
+    */site-packages/gridpulse
+
+[report]
+# Minimum coverage percentage for success
+fail_under = 80
+
+# Show missing lines
+show_missing = True
+
+# Exclude lines from coverage
+exclude_lines =
+    # Standard exclusions
+    pragma: no cover
+    
+    # Debug-only code
+    def __repr__
+    if self\.debug
+    
+    # Type checking
+    if TYPE_CHECKING:
+    if typing\.TYPE_CHECKING:
+    
+    # Abstract methods
+    @abstractmethod
+    @abc\.abstractmethod
+    
+    # Defensive assertions
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Impossible to reach
+    if 0:
+    if False:
+    
+    # Platform-specific code
+    if sys\.platform
+    
+    # Main block
+    if __name__ == .__main__.:
+
+# Ignore missing source files
+ignore_errors = True
+
+# Show contexts in HTML report
+show_contexts = True
+
+# Precision for percentages
+precision = 2
+
+[html]
+# Output directory for HTML report
+directory = reports/coverage
+
+# Title for HTML report
+title = GridPulse Coverage Report
+
+# Show coverage contexts
+show_contexts = True
+
+[xml]
+# Output file for XML report (for CI tools)
+output = reports/coverage.xml
