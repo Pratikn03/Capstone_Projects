@@ -50,6 +50,58 @@ risk:
   renew_bound: "lower"
   reserve_soc_mwh: 0.0
 
+# Research-step operational controls that make uncertainty actionable.
+research_operational:
+  grid_cap:
+    enabled: true
+    net_load_quantile: 0.92
+    forecast_feasibility_quantile: 0.90
+    headroom_mw: 250.0
+    feasibility_margin_mw: 300.0
+    min_cap_mw: 500.0
+    tightness_factor: 0.98
+    min_feasibility_ratio: 0.98
+    uncertainty_width_quantile: 0.90
+    uncertainty_headroom_factor: 0.25
+  reserve_soc:
+    enabled: true
+    min_soc_fraction: 0.06
+    min_soc_mwh: 0.0
+  terminal_soc:
+    enabled: true
+    target_soc_fraction: 0.15
+    target_soc_mwh: 0.0
+    uncertainty_quantile: 0.90
+    uncertainty_to_soc_mwh_per_mw: 0.02
+    enforce_as_min_soc: false
+    penalty_per_mwh_shortfall: 200.0
+  stress:
+    enabled: true
+    width_quantile: 0.75
+    volatility_quantile: 0.90
+    stress_scale: 0.35
+    min_additive_mw: 0.0
+    max_additive_mw: 0.0
+    lower_relax_fraction: 0.10
+    step_scale_min: 0.85
+    step_scale_max: 1.25
+    max_relative_expansion: 0.60
+  datasets:
+    us:
+      grid_cap:
+        tightness_factor: 0.94
+        uncertainty_headroom_factor: 0.45
+      reserve_soc:
+        min_soc_fraction: 0.10
+      terminal_soc:
+        target_soc_fraction: 0.22
+        uncertainty_to_soc_mwh_per_mw: 0.04
+      stress:
+        stress_scale: 0.55
+        lower_relax_fraction: 0.20
+        step_scale_max: 1.35
+        max_relative_expansion: 0.90
+
 # Advanced Robust Dispatch with Conformal Prediction
 # New uncertainty-aware optimization framework
 robust_dispatch:

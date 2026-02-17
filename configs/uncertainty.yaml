@@ -7,6 +7,16 @@ conformal:
   rolling_window: 720         # e.g., last 30 days of hourly residuals
   eps: 1e-6
 
+# FACI interval expansion controls (data-driven, no fixed hardcoded cap)
+faci:
+  learn_scale_bounds: true
+  scale_lower_quantile: 0.10
+  scale_upper_quantile: 0.90
+  min_scale_samples: 50
+  history_lower_quantile: 0.05
+  history_upper_quantile: 0.95
+  history_warmup: 8
+
 # Which split to use for calibration:
 # Usually "val" is fine, but best practice is a dedicated "calibration" split after train.
 calibration_split: "val"

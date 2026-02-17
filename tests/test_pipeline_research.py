@@ -260,6 +260,206 @@ def test_faci_online_builder_uses_past_observations_only() -> None:
     assert not np.isclose(dyn_hi_a[2] - dyn_lo_a[2], dyn_hi_b[2] - dyn_lo_b[2])
 
 
+def test_faci_online_respects_learned_scale_bounds() -> None:
+    base_lower = np.array([90.0, 90.0, 90.0], dtype=float)
+    base_upper = np.array([110.0, 110.0, 110.0], dtype=float)
+    load_true = np.array([300.0, 100.0, 100.0], dtype=float)
+
+    dyn_lo_unbounded, dyn_hi_unbounded = pr._apply_faci_online(
+        load_true, base_lower, base_upper, 0.10, 0.05, 1e-6
+    )
+    dyn_lo_bounded, dyn_hi_bounded = pr._apply_faci_online(
+        load_true,
+        base_lower,
+        base_upper,
+        0.10,
+        0.05,
+        1e-6,
+        scale_bounds=(0.9, 1.1),
+    )
+
+    width_unbounded = float(dyn_hi_unbounded[1] - dyn_lo_unbounded[1])
+    width_bounded = float(dyn_hi_bounded[1] - dyn_lo_bounded[1])
+    assert width_bounded <= width_unbounded
+    assert np.isclose(width_bounded, 22.0, atol=1e-6)
+
+
+def test_estimate_faci_scale_bounds_from_calibration_data(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path
+    (repo / "artifacts" / "backtests").mkdir(parents=True, exist_ok=True)
+    (repo / "artifacts" / "uncertainty").mkdir(parents=True, exist_ok=True)
+
+    y_pred = np.linspace(100.0, 200.0, 200)
+    y_true = y_pred + np.linspace(-8.0, 8.0, 200)
+    np.savez(
+        repo / "artifacts" / "backtests" / "load_mw_calibration.npz",
+        y_true=y_true,
+        y_pred=y_pred,
+    )
+    (repo / "artifacts" / "uncertainty" / "load_mw_conformal.json").write_text("{}", encoding="utf-8")
+
+    class _FakeConformal:
+        def predict_interval(self, y):
+            arr = np.asarray(y, dtype=float)
+            return arr - 10.0, arr + 10.0
+
+    monkeypatch.setattr(
+        "gridpulse.forecasting.uncertainty.load_conformal",
+        lambda path: _FakeConformal(),
+    )
+
+    uncertainty_cfg = {
+        "faci": {
+            "learn_scale_bounds": True,
+            "scale_lower_quantile": 0.10,
+            "scale_upper_quantile": 0.90,
+            "min_scale_samples": 50,
+        },
+        "calibration_npz": "artifacts/backtests/{target}_calibration.npz",
+    }
+
+    bounds = pr._estimate_faci_scale_bounds(
+        repo_root=repo,
+        uncertainty_cfg=uncertainty_cfg,
+        uncertainty_artifacts_dir=repo / "artifacts" / "uncertainty",
+        target="load_mw",
+        eps=1e-6,
+        log=logging.getLogger("test_faci_bounds"),
+    )
+
+    assert bounds is not None
+    low, high = bounds
+    assert 0.0 < low < high
+    assert high < 1.0
+
+
+def test_faci_online_keeps_upper_cap_when_history_bounds_conflict() -> None:
+    # Build a long sequence so history-aware clipping is active.
+    horizon = 16
+    base_lower = np.full(horizon, 90.0, dtype=float)
+    base_upper = np.full(horizon, 110.0, dtype=float)
+
+    # Repeated misses create strong pressure to widen intervals.
+    load_true = np.full(horizon, 400.0, dtype=float)
+
+    dyn_lo, dyn_hi = pr._apply_faci_online(
+        load_true=load_true,
+        base_lower=base_lower,
+        base_upper=base_upper,
+        alpha=0.10,
+        gamma=0.05,
+        eps=1e-6,
+        scale_bounds=(0.9, 1.0),  # explicit no-expansion envelope
+        history_quantiles=(0.95, 0.99),  # can conflict with learned bound intersection
+        history_warmup=4,
+    )
+
+    # With upper cap=1.0, dynamic width should never exceed base width.
+    base_width = base_upper - base_lower
+    dyn_width = dyn_hi - dyn_lo
+    assert np.all(dyn_width <= base_width + 1e-9)
+
+
+def test_apply_operational_load_stress_expands_bounds_when_enabled() -> None:
+    lower = np.array([90.0, 92.0, 91.0], dtype=float)
+    upper = np.array([110.0, 112.0, 113.0], dtype=float)
+    context_df = pd.DataFrame(
+        {
+            "load_mw": [100.0, 120.0, 115.0, 140.0, 130.0],
+            "wind_mw": [20.0, 18.0, 19.0, 17.0, 16.0],
+            "solar_mw": [10.0, 11.0, 12.0, 9.0, 8.0],
+        }
+    )
+    cfg = {
+        "stress": {
+            "enabled": True,
+            "width_quantile": 0.75,
+            "volatility_quantile": 0.90,
+            "stress_scale": 0.8,
+            "lower_relax_fraction": 0.1,
+            "step_scale_min": 0.75,
+            "step_scale_max": 1.5,
+        }
+    }
+
+    stressed_lower, stressed_upper, meta = pr._apply_operational_load_stress(
+        load_lower_bound=lower,
+        load_upper_bound=upper,
+        context_df=context_df,
+        research_operational_cfg=cfg,
+    )
+
+    assert bool(meta["applied"])
+    assert np.all(stressed_upper >= upper)
+    assert np.mean(stressed_upper - stressed_lower) > np.mean(upper - lower)
+
+
+def test_build_window_operational_config_applies_dataset_overrides() -> None:
+    base_config = {
+        "battery": {
+            "capacity_mwh": 100.0,
+            "max_soc_mwh": 100.0,
+            "min_soc_mwh": 5.0,
+            "initial_soc_mwh": 50.0,
+        },
+        "grid": {"max_import_mw": 1000.0},
+        "research_operational": {
+            "reserve_soc": {"enabled": True, "min_soc_fraction": 0.05},
+            "terminal_soc": {
+                "enabled": True,
+                "target_soc_fraction": 0.10,
+                "uncertainty_quantile": 0.90,
+                "uncertainty_to_soc_mwh_per_mw": 0.02,
+                "enforce_as_min_soc": False,
+                "penalty_per_mwh_shortfall": 200.0,
+            },
+            "grid_cap": {
+                "enabled": True,
+                "net_load_quantile": 0.90,
+                "forecast_feasibility_quantile": 0.90,
+                "headroom_mw": 10.0,
+                "feasibility_margin_mw": 10.0,
+                "min_cap_mw": 50.0,
+                "tightness_factor": 1.0,
+            },
+            "datasets": {
+                "us": {
+                    "reserve_soc": {"min_soc_fraction": 0.20},
+                    "terminal_soc": {"target_soc_fraction": 0.25},
+                }
+            },
+        },
+    }
+    context_df = pd.DataFrame(
+        {
+            "load_mw": [100.0, 110.0, 120.0, 130.0],
+            "wind_mw": [20.0, 20.0, 20.0, 20.0],
+            "solar_mw": [10.0, 10.0, 10.0, 10.0],
+        }
+    )
+    load_lower = np.array([95.0, 100.0, 105.0, 110.0], dtype=float)
+    load_upper = np.array([120.0, 125.0, 130.0, 135.0], dtype=float)
+    renewables = np.array([30.0, 30.0, 30.0, 30.0], dtype=float)
+
+    cfg = pr._build_window_operational_config(
+        base_config=base_config,
+        context_df=context_df,
+        load_lower_bound=load_lower,
+        load_upper_bound=load_upper,
+        renewables_forecast=renewables,
+        dataset_key="us",
+        log=logging.getLogger("test_operational_cfg"),
+    )
+
+    assert cfg["battery"]["min_soc_mwh"] >= 20.0
+    term_target = cfg["research_operational"]["terminal_soc"]["resolved_target_mwh"]
+    assert term_target >= 25.0
+    assert cfg["grid"]["max_import_mw"] <= 1000.0
+
+
 def test_research_step_writes_and_appends_csv(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     repo = _create_minimal_repo(tmp_path, with_models=True, n_rows=16)
     _patch_lightweight_research_dependencies(monkeypatch)

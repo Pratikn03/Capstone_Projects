@@ -217,6 +217,67 @@ def test_invalid_bounds_raise() -> None:
         )
 
 
+def test_terminal_soc_penalty_affects_vss_when_enabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_det(
+        load_forecast: np.ndarray,
+        renewables_forecast: np.ndarray,
+        deterministic_config: dict,
+        price: np.ndarray,
+    ) -> dict:
+        return {"battery_charge_mw": [0.0], "battery_discharge_mw": [10.0]}
+
+    def fake_rob(
+        load_lower_bound: np.ndarray,
+        load_upper_bound: np.ndarray,
+        renewables_forecast: np.ndarray,
+        price: np.ndarray,
+        robust_config: DummyRobustConfig,
+    ) -> dict:
+        return {"battery_charge_mw": [10.0], "battery_discharge_mw": [0.0]}
+
+    monkeypatch.setattr(rg, "_solve_deterministic_dispatch", fake_det)
+    monkeypatch.setattr(rg, "_solve_robust_dispatch", fake_rob)
+
+    deterministic_config = {
+        "grid": {"max_import_mw": 100.0},
+        "battery": {
+            "capacity_mwh": 100.0,
+            "initial_soc_mwh": 50.0,
+            "efficiency": 1.0,
+            "degradation_cost_per_mwh": 0.0,
+        },
+        "research_operational": {
+            "terminal_soc": {
+                "enabled": True,
+                "target_soc_mwh": 60.0,
+                "penalty_per_mwh_shortfall": 50.0,
+            }
+        },
+    }
+
+    robust_config = DummyRobustConfig(degradation_cost_per_mwh=0.0)
+    robust_config.battery_initial_soc_mwh = 50.0
+    robust_config.battery_charge_efficiency = 1.0
+    robust_config.battery_discharge_efficiency = 1.0
+
+    out = rg.calculate_vss(
+        load_true=[0.0],
+        renewables_true=[0.0],
+        load_forecast=[0.0],
+        renewables_forecast=[0.0],
+        load_lower_bound=[0.0],
+        load_upper_bound=[0.0],
+        price=[0.0],
+        deterministic_config=deterministic_config,
+        robust_config=robust_config,
+        unmet_load_penalty_per_mwh=0.0,
+    )
+
+    assert out["deterministic_realized_cost"] == pytest.approx(1000.0)
+    assert out["robust_realized_cost"] == pytest.approx(0.0)
+    assert out["vss"] == pytest.approx(1000.0)
+
+
 def test_generate_stochastic_metrics_report_writes_csv_with_summary_row(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path,
