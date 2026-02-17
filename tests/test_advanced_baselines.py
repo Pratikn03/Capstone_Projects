@@ -23,7 +23,7 @@ def sample_timeseries_data():
     dates = pd.date_range(
         start="2023-01-01",
         periods=n_samples,
-        freq="H"
+        freq="h"
     )
     
     # Create realistic load pattern with seasonality
@@ -62,33 +62,42 @@ class TestProphetBaseline:
     def test_prophet_baseline_creation(self, sample_timeseries_data):
         """Test Prophet baseline can be created and trained."""
         try:
-            from gridpulse.forecasting.advanced_baselines import ProphetBaseline
+            from gridpulse.forecasting.advanced_baselines import ProphetBaseline, ProphetConfig
         except ImportError:
             pytest.skip("advanced_baselines module not available")
         
-        model = ProphetBaseline(
-            target_col="load_mw",
-            seasonality_mode="multiplicative"
+        config = ProphetConfig(
+            target="load_mw",
+            yearly_seasonality=True,
+            daily_seasonality=True
         )
+        model = ProphetBaseline(config)
         assert model is not None
-        assert model.target_col == "load_mw"
+        assert model.config.target == "load_mw"
     
     def test_prophet_baseline_fit_predict(self, sample_timeseries_data):
         """Test Prophet baseline can fit and predict."""
         try:
-            from gridpulse.forecasting.advanced_baselines import ProphetBaseline
+            from gridpulse.forecasting.advanced_baselines import ProphetBaseline, ProphetConfig
         except ImportError:
             pytest.skip("advanced_baselines module not available")
         
         train, test = sample_timeseries_data[:400], sample_timeseries_data[400:]
         
-        model = ProphetBaseline(target_col="load_mw")
-        model.fit(train)
+        config = ProphetConfig(target="load_mw")
+        model = ProphetBaseline(config)
         
-        predictions = model.predict(test)
+        # Prophet requires specific column names
+        train_prophet = train.rename(columns={"utc_timestamp": "ds", "load_mw": "y"})
+        test_prophet = test.rename(columns={"utc_timestamp": "ds", "load_mw": "y"})
         
-        assert len(predictions) == len(test)
-        assert not np.any(np.isnan(predictions))
+        try:
+            model.fit(train_prophet)
+            predictions = model.predict(test_prophet)
+            assert len(predictions) == len(test)
+            assert not np.any(np.isnan(predictions))
+        except ImportError:
+            pytest.skip("Prophet not installed")
 
 
 class TestNBEATSBaseline:
@@ -107,17 +116,18 @@ class TestNBEATSBaseline:
     def test_nbeats_baseline_creation(self, sample_timeseries_data):
         """Test N-BEATS baseline can be created."""
         try:
-            from gridpulse.forecasting.advanced_baselines import NBEATSBaseline
+            from gridpulse.forecasting.advanced_baselines import NBEATSBaseline, NBEATSConfig
         except ImportError:
             pytest.skip("advanced_baselines module not available")
         
-        model = NBEATSBaseline(
-            target_col="load_mw",
+        config = NBEATSConfig(
+            target="load_mw",
             input_chunk_length=24,
             output_chunk_length=12,
         )
+        model = NBEATSBaseline(config)
         assert model is not None
-        assert model.target_col == "load_mw"
+        assert model.config.target == "load_mw"
 
 
 class TestAutoMLBaseline:
@@ -134,16 +144,17 @@ class TestAutoMLBaseline:
     def test_automl_baseline_creation(self, sample_timeseries_data):
         """Test AutoML baseline can be created."""
         try:
-            from gridpulse.forecasting.advanced_baselines import AutoMLBaseline
+            from gridpulse.forecasting.advanced_baselines import AutoMLBaseline, AutoMLConfig
         except ImportError:
             pytest.skip("advanced_baselines module not available")
         
-        model = AutoMLBaseline(
-            target_col="load_mw",
+        config = AutoMLConfig(
+            target="load_mw",
             time_budget=60,  # 1 minute for testing
         )
+        model = AutoMLBaseline(config)
         assert model is not None
-        assert model.target_col == "load_mw"
+        assert model.config.target == "load_mw"
 
 
 class TestEnsembleBaseline:
@@ -155,16 +166,15 @@ class TestEnsembleBaseline:
             from gridpulse.forecasting.advanced_baselines import (
                 EnsembleBaseline,
                 ProphetBaseline,
+                ProphetConfig,
             )
         except ImportError:
             pytest.skip("advanced_baselines module not available")
         
-        prophet = ProphetBaseline(target_col="load_mw")
-        ensemble = EnsembleBaseline(
-            models=[prophet],
-            weights=[1.0],
-            target_col="load_mw",
-        )
+        prophet_config = ProphetConfig(target="load_mw")
+        prophet = ProphetBaseline(prophet_config)
+        
+        ensemble = EnsembleBaseline(models=[prophet], weights=[1.0])
         assert ensemble is not None
 
 
