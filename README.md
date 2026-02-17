@@ -22,7 +22,7 @@ GridPulse is a production-grade energy intelligence platform that forecasts load
 | LSTM | load_mw | 2,356.0 | 1,732.1 | 0.931 | — |
 | TCN | load_mw | 3,394.2 | 2,613.5 | 0.857 | — |
 
-**Impact (Frozen Run `20260216_202050`):** 6.88% cost savings · 0.12% carbon reduction · 5.78% peak shaving
+**Impact (Frozen Run `20260217_165756`):** 7.11% cost savings · 0.30% carbon reduction · 6.13% peak shaving
 
 ### USA (EIA-930 / MISO) — 13,638 hourly observations × 118 features
 
@@ -34,7 +34,7 @@ GridPulse is a production-grade energy intelligence platform that forecasts load
 | LSTM | load_mw | 3,684.7 | — | 0.762 | — |
 | TCN | load_mw | 4,235.4 | — | 0.685 | — |
 
-**Impact (Frozen Run `20260216_202050`):** 0.11% cost savings · 0.13% carbon reduction · 0.00% peak shaving
+**Impact (Frozen Run `20260217_165756`):** 0.11% cost savings · 0.13% carbon reduction · 0.00% peak shaving
 
 ### Conformal Prediction Coverage (90% Nominal)
 
@@ -65,14 +65,14 @@ GridPulse is a production-grade energy intelligence platform that forecasts load
 | No Uncertainty | €428.2M | 0.0% | Point forecasts only |
 | No Carbon Weight | €377.8M | -11.8% | Cost-only optimization |
 
-### Stochastic Metrics (Frozen Run `20260216_202050`)
+### Stochastic Metrics (Frozen Run `20260217_165756`)
 
 | Dataset | EVPI (Robust) | EVPI (Deterministic) | VSS |
 |---|---:|---:|---:|
-| Germany | 0.0 | -38.28 | -34,515.97 |
-| USA | 0.0 | 0.0 | -28,928.57 |
+| Germany | 2.32 | -30.40 | 2,708.61 |
+| USA | 0.00 | 0.00 | 0.00 |
 
-`VSS < 0` indicates robust policy does not yet consistently dominate deterministic realized cost in the frozen run.
+In this frozen run, robust is positive on DE and neutral on US (`VSS = 0.00`).
 
 ---
 
