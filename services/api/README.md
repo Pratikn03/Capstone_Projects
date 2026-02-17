@@ -44,8 +44,9 @@ gunicorn services.api.main:app -w 4 -k uvicorn.workers.UvicornWorker
 | `/forecast/predict` | POST | Generate forecasts |
 | `/forecast/intervals` | POST | Prediction intervals |
 | `/anomaly/detect` | POST | Detect anomalies |
-| `/optimize/dispatch` | POST | Optimize battery dispatch |
-| `/monitor/drift` | GET | Model drift metrics |
+| `/optimize` | POST | Optimize battery dispatch (`optimization_mode=robust|deterministic`, default robust) |
+| `/monitor` | GET | Model drift metrics and retraining decision |
+| `/monitor/research-metrics` | GET | Latest DE/US EVPI-VSS research summaries + frozen snapshot |
 
 ## Authentication
 
