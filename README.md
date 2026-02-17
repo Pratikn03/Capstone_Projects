@@ -22,7 +22,7 @@ GridPulse is a production-grade energy intelligence platform that forecasts load
 | LSTM | load_mw | 2,356.0 | 1,732.1 | 0.931 | — |
 | TCN | load_mw | 3,394.2 | 2,613.5 | 0.857 | — |
 
-**Impact:** 2.89% cost savings · 0.58% carbon reduction · 7.09% peak shaving
+**Impact (Frozen Run `20260216_202050`):** 6.88% cost savings · 0.12% carbon reduction · 5.78% peak shaving
 
 ### USA (EIA-930 / MISO) — 13,638 hourly observations × 118 features
 
@@ -34,7 +34,7 @@ GridPulse is a production-grade energy intelligence platform that forecasts load
 | LSTM | load_mw | 3,684.7 | — | 0.762 | — |
 | TCN | load_mw | 4,235.4 | — | 0.685 | — |
 
-**Impact:** 0.43% cost savings · Battery dispatch optimization
+**Impact (Frozen Run `20260216_202050`):** 0.11% cost savings · 0.13% carbon reduction · 0.00% peak shaving
 
 ### Conformal Prediction Coverage (90% Nominal)
 
@@ -64,6 +64,15 @@ GridPulse is a production-grade energy intelligence platform that forecasts load
 | **Full System** | €428.2M | — | Baseline |
 | No Uncertainty | €428.2M | 0.0% | Point forecasts only |
 | No Carbon Weight | €377.8M | -11.8% | Cost-only optimization |
+
+### Stochastic Metrics (Frozen Run `20260216_202050`)
+
+| Dataset | EVPI (Robust) | EVPI (Deterministic) | VSS |
+|---|---:|---:|---:|
+| Germany | 0.0 | -38.28 | -34,515.97 |
+| USA | 0.0 | 0.0 | -28,928.57 |
+
+`VSS < 0` indicates robust policy does not yet consistently dominate deterministic realized cost in the frozen run.
 
 ---
 
@@ -163,7 +172,7 @@ All pages support a **DE / US region toggle** in the top bar.
 | **API** | FastAPI 0.110+, Uvicorn, Pydantic v2 |
 | **Frontend** | Next.js 15.3, React 19, TypeScript 5.8, Tailwind v4, Recharts, Framer Motion |
 | **Ops** | Docker, GitHub Actions CI/CD, DuckDB |
-| **Optimization** | Pyomo + GLPK (LP dispatch) |
+| **Optimization** | SciPy MILP (physics-informed deterministic) + Pyomo/HiGHS DRO (robust dispatch) |
 
 ---
 
@@ -321,7 +330,7 @@ gridpulse/
 │   ├── data_pipeline/      #   ingest, validate, features, splits
 │   ├── forecasting/        #   GBM, LSTM, TCN training & inference
 │   ├── anomaly/            #   residual z-scores + IsolationForest
-│   ├── optimizer/          #   LP dispatch (Pyomo + GLPK)
+│   ├── optimizer/          #   deterministic MILP + robust DRO dispatch
 │   └── monitoring/         #   drift detection, retraining triggers
 ├── services/api/           # FastAPI service (forecast, optimize, monitor)
 ├── frontend/               # Next.js 15 dashboard (8 pages)
