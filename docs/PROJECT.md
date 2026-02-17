@@ -301,7 +301,7 @@ GridPulse is intentionally **honest about claims**:
 - Impact metrics are only meaningful when price/carbon signals exist.  
 - Forecasting performance varies by dataset and target.  
 - LSTM/TCN models require careful scaling and tuning.  
-- The current optimization is linear and does not model market bidding.
+- Robust dispatch is implemented, but current frozen-run stochastic metrics (EVPI/VSS) show remaining realized-value gaps.
 
 These limitations are documented to maintain credibility.
 
@@ -329,7 +329,7 @@ Potential extensions include:
 - Dynamic pricing integration  
 - Regional carbon intensity streams  
 - Multi‑node grid topology  
-- Dispatch under uncertainty (stochastic LP)  
+- Improved robust objective calibration to move VSS toward positive values across DE/US  
 - Reinforcement learning (optional, advanced)
 
 These are optional and not required for the project’s current goals.

@@ -10,11 +10,11 @@ This document describes the advanced features that transform GridPulse from a fo
 
 GridPulse novelty features go beyond standard forecasting to provide:
 
-1. **Uncertainty-Aware Dispatch**: Conformal prediction intervals for robust decision-making
+1. **Uncertainty-Aware Dispatch**: Conformal + FACI adaptive intervals for robust decision-making
 2. **Ablation Studies**: Scientific proof that each component adds value
 3. **Statistical Rigor**: Bootstrap CI, paired tests, effect size analysis
 4. **Publication Outputs**: LaTeX tables, 300 DPI figures, reproducible results
-5. **Robustness Analysis**: Perturbation testing and regret computation
+5. **Stochastic Decision Metrics**: EVPI/VSS and realized-cost diagnostics for robust vs deterministic policies
 
 ---
 
@@ -102,26 +102,38 @@ Subject to:
 ### Configuration: `configs/optimization.yaml`
 
 ```yaml
-robust_dispatch:
-  battery:
-    capacity_mwh: 100.0
-    max_charge_rate_mw: 50.0
-    max_discharge_rate_mw: 50.0
-    charge_efficiency: 0.95
-    discharge_efficiency: 0.95
-    initial_soc_mwh: 50.0
-    min_soc_mwh: 10.0
-    max_soc_mwh: 90.0
-  grid:
-    max_import_mw: 500.0
-  costs:
-    grid_import_per_mwh: 100.0
-    battery_degradation_per_mwh: 5.0
-  solver:
-    name: appsi_highs
-  robustness:
-    noise_levels: [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30]
+battery:
+  capacity_mwh: 100.0
+  max_charge_mw: 50.0
+  max_discharge_mw: 50.0
+  efficiency_regime_a: 0.98
+  efficiency_regime_b: 0.90
+  efficiency_soc_split: 0.80
+  degradation_cost_per_mwh: 10.0
+  initial_soc_mwh: 50.0
+  min_soc_mwh: 10.0
+  max_soc_mwh: 90.0
+grid:
+  max_import_mw: 100000.0
+  price_per_mwh: 60.0
+risk:
+  enabled: true
+  mode: worst_case_interval
+  load_bound: upper
+  renew_bound: lower
 ```
+
+### Adaptive Conformal + Research Metrics Integration
+
+`src/gridpulse/pipeline/run.py` integrates:
+- GBM point forecasts (`load_mw`, `wind_mw`, `solar_mw`)
+- FACI updates via `AdaptiveConformal.update()`
+- Robust dispatch using dynamic load intervals
+- Stochastic metrics from `calculate_evpi()` and `calculate_vss()`
+
+Outputs are dataset-scoped and append-only:
+- `reports/research_metrics_de.csv`
+- `reports/research_metrics_us.csv`
 
 ---
 
@@ -510,7 +522,7 @@ reports/
 
 1. **Conservative Dispatch Reduces Regret**: Using worst-case intervals (load upper, renewables lower) minimizes cost under uncertainty
 
-2. **Uncertainty Quantification Adds Value**: Ablation studies show 10-20% cost reduction vs point forecasts alone
+2. **Uncertainty Quantification Adds Value**: Adaptive intervals improve operational safety; realized economic value is region-dependent and should be read from frozen DE/US research snapshots
 
 3. **Carbon Penalty Matters**: No-Carbon scenario has higher emissions but lower short-term cost (trade-off analysis)
 
