@@ -48,6 +48,7 @@ class DatasetConfig:
     config_file: str                    # Path to training config YAML
     features_path: str                  # Path to features.parquet
     splits_path: str                    # Path to splits directory
+    models_dir: str                     # Path to model artifacts directory
     reports_dir: str                    # Path to reports output
     
     # Feature pipeline settings
@@ -68,6 +69,7 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         config_file="configs/train_forecast.yaml",
         features_path="data/processed/features.parquet",
         splits_path="data/processed/splits",
+        models_dir="artifacts/models",
         reports_dir="reports",
         raw_data_path="data/raw",
         feature_module="gridpulse.data_pipeline.build_features",
@@ -78,6 +80,7 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         config_file="configs/train_forecast_eia930.yaml",
         features_path="data/processed/us_eia930/features.parquet",
         splits_path="data/processed/us_eia930/splits",
+        models_dir="artifacts/models_eia930",
         reports_dir="reports/eia930",
         raw_data_path="data/raw/us_eia930",
         feature_module="gridpulse.data_pipeline.build_features_eia930",
@@ -213,7 +216,10 @@ def generate_reports(cfg: DatasetConfig) -> bool:
     """
     cmd = [
         "python", "scripts/build_reports.py",
-        "--config", cfg.config_file,
+        "--features", cfg.features_path,
+        "--splits", cfg.splits_path,
+        "--models-dir", cfg.models_dir,
+        "--reports-dir", cfg.reports_dir,
     ]
     
     return run_command(cmd, f"Generating reports for {cfg.display_name}")

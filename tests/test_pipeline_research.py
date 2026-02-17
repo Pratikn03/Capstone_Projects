@@ -1,4 +1,4 @@
-"""Tests for research-step integration in pipeline.run."""
+"""Tests for dataset-aware research integration in pipeline.run."""
 from __future__ import annotations
 
 import json
@@ -21,10 +21,11 @@ def _write_yaml(path: Path, payload: dict) -> None:
 def _create_minimal_repo(tmp_path: Path, *, with_models: bool = True, n_rows: int = 16) -> Path:
     repo = tmp_path
     (repo / "data" / "raw").mkdir(parents=True, exist_ok=True)
-    (repo / "data" / "processed").mkdir(parents=True, exist_ok=True)
     (repo / "data" / "processed" / "splits").mkdir(parents=True, exist_ok=True)
+    (repo / "data" / "processed" / "us_eia930" / "splits").mkdir(parents=True, exist_ok=True)
     (repo / "reports").mkdir(parents=True, exist_ok=True)
     (repo / "artifacts" / "models").mkdir(parents=True, exist_ok=True)
+    (repo / "artifacts" / "models_eia930").mkdir(parents=True, exist_ok=True)
     (repo / "artifacts" / "runs").mkdir(parents=True, exist_ok=True)
     (repo / "configs").mkdir(parents=True, exist_ok=True)
 
@@ -35,7 +36,7 @@ def _create_minimal_repo(tmp_path: Path, *, with_models: bool = True, n_rows: in
 
     pd.DataFrame({"x": [1.0]}).to_parquet(repo / "data" / "processed" / "features.parquet")
 
-    test_df = pd.DataFrame(
+    de_df = pd.DataFrame(
         {
             "timestamp": pd.date_range("2024-01-01", periods=n_rows, freq="h", tz="UTC"),
             "load_mw": np.linspace(100.0, 120.0, n_rows),
@@ -44,7 +45,18 @@ def _create_minimal_repo(tmp_path: Path, *, with_models: bool = True, n_rows: in
             "price_eur_mwh": np.full(n_rows, 50.0),
         }
     )
-    test_df.to_parquet(repo / "data" / "processed" / "splits" / "test.parquet")
+    de_df.to_parquet(repo / "data" / "processed" / "splits" / "test.parquet")
+
+    us_df = pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2024-02-01", periods=n_rows, freq="h", tz="UTC"),
+            "load_mw": np.linspace(200.0, 240.0, n_rows),
+            "wind_mw": np.full(n_rows, 30.0),
+            "solar_mw": np.full(n_rows, 20.0),
+            "price_usd_mwh": np.full(n_rows, 60.0),
+        }
+    )
+    us_df.to_parquet(repo / "data" / "processed" / "us_eia930" / "splits" / "test.parquet")
 
     _write_yaml(repo / "configs" / "data.yaml", {})
     _write_yaml(repo / "configs" / "train_forecast.yaml", {"task": {"horizon_hours": 4}})
@@ -55,6 +67,17 @@ def _create_minimal_repo(tmp_path: Path, *, with_models: bool = True, n_rows: in
                 "load_mw": "artifacts/models/gbm_lightgbm_load_mw.pkl",
                 "wind_mw": "artifacts/models/gbm_lightgbm_wind_mw.pkl",
                 "solar_mw": "artifacts/models/gbm_lightgbm_solar_mw.pkl",
+            },
+            "fallback_order": ["gbm"],
+        },
+    )
+    _write_yaml(
+        repo / "configs" / "forecast_eia930.yaml",
+        {
+            "models": {
+                "load_mw": "artifacts/models_eia930/gbm_lightgbm_load_mw.pkl",
+                "wind_mw": "artifacts/models_eia930/gbm_lightgbm_wind_mw.pkl",
+                "solar_mw": "artifacts/models_eia930/gbm_lightgbm_solar_mw.pkl",
             },
             "fallback_order": ["gbm"],
         },
@@ -88,6 +111,7 @@ def _create_minimal_repo(tmp_path: Path, *, with_models: bool = True, n_rows: in
     if with_models:
         for target in ("load_mw", "wind_mw", "solar_mw"):
             (repo / "artifacts" / "models" / f"gbm_lightgbm_{target}.pkl").write_bytes(b"dummy")
+            (repo / "artifacts" / "models_eia930" / f"gbm_lightgbm_{target}.pkl").write_bytes(b"dummy")
 
     return repo
 
@@ -166,7 +190,7 @@ def test_run_defaults_include_research_step(monkeypatch: pytest.MonkeyPatch, tmp
         return {
             "rows_written": 2,
             "window_rows": 1,
-            "output_csv": str(repo / "reports" / "research_metrics.csv"),
+            "output_csv": str(kwargs["output_csv"]),
         }
 
     monkeypatch.setattr(pr, "_run_research_step", fake_research)
@@ -174,9 +198,32 @@ def test_run_defaults_include_research_step(monkeypatch: pytest.MonkeyPatch, tmp
 
     pr.main()
 
-    assert calls["research"] == 1
+    assert calls["research"] == 2
     manifest = json.loads((repo / "artifacts" / "runs" / "run-default" / "manifest.json").read_text(encoding="utf-8"))
     assert "research" in manifest["steps"]
+    assert set(manifest["research_outputs"].keys()) == {"de", "us"}
+
+
+def test_research_dataset_flag_allows_de_only(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    repo = _create_minimal_repo(tmp_path, with_models=True, n_rows=16)
+    _patch_main_side_effects(monkeypatch)
+    monkeypatch.setattr(pr, "_repo_root", lambda: repo)
+
+    outputs = []
+
+    def fake_research(**kwargs):
+        outputs.append(Path(kwargs["output_csv"]).name)
+        return {"rows_written": 1, "window_rows": 1, "output_csv": str(kwargs["output_csv"])}
+
+    monkeypatch.setattr(pr, "_run_research_step", fake_research)
+    monkeypatch.setattr(
+        pr.sys,
+        "argv",
+        ["prog", "--steps", "research", "--research-datasets", "de", "--run-id", "run-de-only"],
+    )
+
+    pr.main()
+    assert outputs == ["research_metrics_de.csv"]
 
 
 def test_research_step_requires_gbm_models_and_fails_hard(
@@ -186,7 +233,11 @@ def test_research_step_requires_gbm_models_and_fails_hard(
     repo = _create_minimal_repo(tmp_path, with_models=False, n_rows=16)
     _patch_main_side_effects(monkeypatch)
     monkeypatch.setattr(pr, "_repo_root", lambda: repo)
-    monkeypatch.setattr(pr.sys, "argv", ["prog", "--steps", "research", "--run-id", "run-no-models"])
+    monkeypatch.setattr(
+        pr.sys,
+        "argv",
+        ["prog", "--steps", "research", "--research-datasets", "de", "--run-id", "run-no-models"],
+    )
 
     with pytest.raises(FileNotFoundError):
         pr.main()
@@ -218,6 +269,7 @@ def test_research_step_writes_and_appends_csv(monkeypatch: pytest.MonkeyPatch, t
     uncertainty_cfg = pr._load_yaml(repo / "configs" / "uncertainty.yaml")
     logger = logging.getLogger("test_research_append")
 
+    csv_path = repo / "reports" / "research_metrics_de.csv"
     first = pr._run_research_step(
         repo_root=repo,
         run_id="run-1",
@@ -225,11 +277,14 @@ def test_research_step_writes_and_appends_csv(monkeypatch: pytest.MonkeyPatch, t
         research_horizon=4,
         research_window_step=4,
         research_gamma=0.05,
+        split_path=repo / "data" / "processed" / "splits" / "test.parquet",
+        models_dir=repo / "artifacts" / "models",
+        output_csv=csv_path,
+        uncertainty_artifacts_dir=repo / "artifacts" / "uncertainty",
         deterministic_config=deterministic_cfg,
         forecast_cfg=forecast_cfg,
         uncertainty_cfg=uncertainty_cfg,
     )
-    csv_path = repo / "reports" / "research_metrics.csv"
     assert csv_path.exists()
     first_rows = len(pd.read_csv(csv_path))
     assert first_rows == first["rows_written"]
@@ -241,6 +296,10 @@ def test_research_step_writes_and_appends_csv(monkeypatch: pytest.MonkeyPatch, t
         research_horizon=4,
         research_window_step=4,
         research_gamma=0.05,
+        split_path=repo / "data" / "processed" / "splits" / "test.parquet",
+        models_dir=repo / "artifacts" / "models",
+        output_csv=csv_path,
+        uncertainty_artifacts_dir=repo / "artifacts" / "uncertainty",
         deterministic_config=deterministic_cfg,
         forecast_cfg=forecast_cfg,
         uncertainty_cfg=uncertainty_cfg,
@@ -260,6 +319,7 @@ def test_research_row_schema_contains_evpi_vss_fields(
     forecast_cfg = pr._load_yaml(repo / "configs" / "forecast.yaml")
     uncertainty_cfg = pr._load_yaml(repo / "configs" / "uncertainty.yaml")
 
+    csv_path = repo / "reports" / "research_metrics_de.csv"
     pr._run_research_step(
         repo_root=repo,
         run_id="schema-run",
@@ -267,11 +327,15 @@ def test_research_row_schema_contains_evpi_vss_fields(
         research_horizon=4,
         research_window_step=4,
         research_gamma=0.05,
+        split_path=repo / "data" / "processed" / "splits" / "test.parquet",
+        models_dir=repo / "artifacts" / "models",
+        output_csv=csv_path,
+        uncertainty_artifacts_dir=repo / "artifacts" / "uncertainty",
         deterministic_config=deterministic_cfg,
         forecast_cfg=forecast_cfg,
         uncertainty_cfg=uncertainty_cfg,
     )
-    df = pd.read_csv(repo / "reports" / "research_metrics.csv")
+    df = pd.read_csv(csv_path)
     required = {
         "row_type",
         "evpi",
@@ -340,6 +404,10 @@ def test_research_step_calls_regret_metrics(monkeypatch: pytest.MonkeyPatch, tmp
         research_horizon=4,
         research_window_step=4,
         research_gamma=0.05,
+        split_path=repo / "data" / "processed" / "splits" / "test.parquet",
+        models_dir=repo / "artifacts" / "models",
+        output_csv=repo / "reports" / "research_metrics_de.csv",
+        uncertainty_artifacts_dir=repo / "artifacts" / "uncertainty",
         deterministic_config=deterministic_cfg,
         forecast_cfg=forecast_cfg,
         uncertainty_cfg=uncertainty_cfg,
@@ -351,10 +419,11 @@ def test_research_step_calls_regret_metrics(monkeypatch: pytest.MonkeyPatch, tmp
 
 def test_research_cache_skip(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     repo = _create_minimal_repo(tmp_path, with_models=True, n_rows=16)
-    (repo / "reports" / "research_metrics.csv").write_text("row_type\nwindow\n", encoding="utf-8")
+    (repo / "reports" / "research_metrics_de.csv").write_text("row_type\nwindow\n", encoding="utf-8")
+    (repo / "reports" / "research_metrics_us.csv").write_text("row_type\nwindow\n", encoding="utf-8")
     (repo / ".cache").mkdir(parents=True, exist_ok=True)
     (repo / ".cache" / "pipeline.json").write_text(
-        json.dumps({"research_hash": "same-hash"}, indent=2),
+        json.dumps({"research_hash_de": "same-hash", "research_hash_us": "same-hash"}, indent=2),
         encoding="utf-8",
     )
 
@@ -366,15 +435,22 @@ def test_research_cache_skip(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
 
     def fake_research(**kwargs):
         called["research"] += 1
-        return {
-            "rows_written": 99,
-            "window_rows": 99,
-            "output_csv": str(repo / "reports" / "research_metrics.csv"),
-        }
+        return {"rows_written": 99, "window_rows": 99, "output_csv": str(kwargs["output_csv"])}
 
     monkeypatch.setattr(pr, "_run_research_step", fake_research)
     monkeypatch.setattr(pr.sys, "argv", ["prog", "--steps", "research", "--run-id", "skip-run"])
 
     pr.main()
-
     assert called["research"] == 0
+
+
+def test_resolve_gbm_model_path_rejects_non_gbm_explicit(tmp_path: Path) -> None:
+    repo = tmp_path
+    models_dir = repo / "artifacts" / "models"
+    models_dir.mkdir(parents=True, exist_ok=True)
+    bad_model = models_dir / "lstm_load_mw.pt"
+    bad_model.write_bytes(b"x")
+
+    forecast_cfg = {"models": {"load_mw": str(bad_model)}}
+    with pytest.raises(RuntimeError):
+        pr._resolve_gbm_model_path("load_mw", forecast_cfg, models_dir)

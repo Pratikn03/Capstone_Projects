@@ -113,6 +113,16 @@ class HolidaysConfig:
     country: str
 
 
+@dataclass(frozen=True)
+class ResearchDatasetSpec:
+    key: str
+    split_path: Path
+    models_dir: Path
+    forecast_cfg_path: Path
+    output_csv: Path
+    uncertainty_artifacts_dir: Path
+
+
 def _load_signal_config(cfg_path: Path, repo_root: Path, log: logging.Logger) -> SignalConfig:
     if not cfg_path.exists():
         return SignalConfig(False, None)
@@ -202,6 +212,8 @@ def _snapshot_artifacts(repo_root: Path, run_dir: Path, log: logging.Logger) -> 
         repo_root / "reports" / "impact_comparison.json",
         repo_root / "reports" / "impact_summary.csv",
         repo_root / "reports" / "research_metrics.csv",
+        repo_root / "reports" / "research_metrics_de.csv",
+        repo_root / "reports" / "research_metrics_us.csv",
     ]
     for fp in report_files:
         if fp.exists():
@@ -241,6 +253,11 @@ def _resolve_gbm_model_path(target: str, forecast_cfg: dict[str, Any], models_di
             # models_dir is expected at <repo_root>/artifacts/models.
             repo_root = models_dir.parent.parent
             candidate = repo_root / candidate
+        is_gbm_named = candidate.suffix.lower() == ".pkl" and "gbm" in candidate.stem.lower()
+        if not is_gbm_named:
+            raise RuntimeError(
+                f"Configured model for {target} must be a GBM pickle (*.pkl with gbm in name): {candidate}"
+            )
         if candidate.exists():
             return candidate
         raise FileNotFoundError(f"Missing configured GBM model for {target}: {candidate}")
@@ -435,6 +452,35 @@ def _calculate_evpi(*args, **kwargs):
     return calculate_evpi(*args, **kwargs)
 
 
+def _build_research_dataset_specs(
+    repo_root: Path,
+    uncertainty_cfg: dict[str, Any],
+) -> dict[str, ResearchDatasetSpec]:
+    artifacts_dir_cfg = uncertainty_cfg.get("artifacts_dir", "artifacts/uncertainty")
+    base_uncertainty_dir = Path(str(artifacts_dir_cfg))
+    if not base_uncertainty_dir.is_absolute():
+        base_uncertainty_dir = repo_root / base_uncertainty_dir
+
+    return {
+        "de": ResearchDatasetSpec(
+            key="de",
+            split_path=repo_root / "data" / "processed" / "splits" / "test.parquet",
+            models_dir=repo_root / "artifacts" / "models",
+            forecast_cfg_path=repo_root / "configs" / "forecast.yaml",
+            output_csv=repo_root / "reports" / "research_metrics_de.csv",
+            uncertainty_artifacts_dir=base_uncertainty_dir,
+        ),
+        "us": ResearchDatasetSpec(
+            key="us",
+            split_path=repo_root / "data" / "processed" / "us_eia930" / "splits" / "test.parquet",
+            models_dir=repo_root / "artifacts" / "models_eia930",
+            forecast_cfg_path=repo_root / "configs" / "forecast_eia930.yaml",
+            output_csv=repo_root / "reports" / "research_metrics_us.csv",
+            uncertainty_artifacts_dir=base_uncertainty_dir / "eia930",
+        ),
+    }
+
+
 def _run_research_step(
     repo_root: Path,
     run_id: str,
@@ -442,6 +488,10 @@ def _run_research_step(
     research_horizon: int,
     research_window_step: int,
     research_gamma: float,
+    split_path: Path,
+    models_dir: Path,
+    output_csv: Path,
+    uncertainty_artifacts_dir: Path,
     deterministic_config: dict[str, Any],
     forecast_cfg: dict[str, Any],
     uncertainty_cfg: dict[str, Any],
@@ -456,7 +506,6 @@ def _run_research_step(
     if research_gamma < 0:
         raise ValueError("research_gamma must be >= 0")
 
-    split_path = repo_root / "data" / "processed" / "splits" / "test.parquet"
     if not split_path.exists():
         raise FileNotFoundError(f"Missing research split: {split_path}")
 
@@ -473,16 +522,12 @@ def _run_research_step(
             f"with step {research_window_step}"
         )
 
-    models_dir = repo_root / "artifacts" / "models"
     robust_cfg = _build_robust_dispatch_config(deterministic_config)
 
     conformal_cfg = uncertainty_cfg.get("conformal", {}) if isinstance(uncertainty_cfg, dict) else {}
     alpha = float(conformal_cfg.get("alpha", 0.10))
     eps = float(conformal_cfg.get("eps", 1e-6))
-    artifacts_dir_cfg = uncertainty_cfg.get("artifacts_dir", "artifacts/uncertainty")
-    artifacts_dir = Path(str(artifacts_dir_cfg))
-    if not artifacts_dir.is_absolute():
-        artifacts_dir = repo_root / artifacts_dir
+    artifacts_dir = uncertainty_artifacts_dir
 
     unmet_penalty = 10000.0
     now_utc = datetime.utcnow().isoformat()
@@ -529,6 +574,13 @@ def _run_research_step(
             price = window_df["price_usd_mwh"].to_numpy(dtype=float)
         else:
             price = None
+        if price is not None:
+            if np.any(price < 0):
+                log.warning(
+                    "Negative price values detected in %s; clipping to 0.0 for robust optimization.",
+                    split_path,
+                )
+            price = np.maximum(price, 0.0)
 
         robust_solution = _optimize_robust_dispatch(
             load_lower_bound=dyn_lower,
@@ -663,7 +715,6 @@ def _run_research_step(
     ]
     new_df = new_df[column_order]
 
-    output_csv = repo_root / "reports" / "research_metrics.csv"
     output_csv.parent.mkdir(parents=True, exist_ok=True)
     if output_csv.exists():
         existing = pd.read_csv(output_csv)
@@ -715,6 +766,11 @@ def main() -> None:
         default=0.05,
         help="AdaptiveConformal FACI step size",
     )
+    parser.add_argument(
+        "--research-datasets",
+        default="de,us",
+        help="Comma-separated research datasets to process: de,us",
+    )
     args = parser.parse_args()
 
     repo_root = _repo_root()
@@ -737,11 +793,8 @@ def main() -> None:
     raw_csv = repo_root / "data" / "raw" / "time_series_60min_singleindex.csv"
     data_cfg = repo_root / "configs" / "data.yaml"
     train_cfg = repo_root / "configs" / "train_forecast.yaml"
-    forecast_cfg_path = repo_root / "configs" / "forecast.yaml"
     uncertainty_cfg_path = repo_root / "configs" / "uncertainty.yaml"
     optimization_cfg_path = repo_root / "configs" / "optimization.yaml"
-    research_split_path = repo_root / "data" / "processed" / "splits" / "test.parquet"
-    research_csv_path = repo_root / "reports" / "research_metrics.csv"
     signal_cfg = _load_signal_config(data_cfg, repo_root, log)
     weather_cfg = _load_weather_config(data_cfg, repo_root, log)
     holidays_cfg = _load_holidays_config(data_cfg, repo_root, log)
@@ -754,11 +807,7 @@ def main() -> None:
     )
 
     features_path = repo_root / "data" / "processed" / "features.parquet"
-    research_result: dict[str, Any] = {
-        "rows_written": 0,
-        "window_rows": 0,
-        "output_csv": str(research_csv_path),
-    }
+    research_results: dict[str, dict[str, Any]] = {}
 
     if "data" in steps:
         if not raw_csv.exists():
@@ -826,12 +875,16 @@ def main() -> None:
         cache["reports_hash"] = cache.get("train_hash")
 
     if "research" in steps:
-        if not research_split_path.exists():
-            raise FileNotFoundError(f"Missing research split: {research_split_path}")
-
-        forecast_cfg = _load_yaml(forecast_cfg_path)
         uncertainty_cfg = _load_yaml(uncertainty_cfg_path)
         deterministic_cfg = _load_yaml(optimization_cfg_path)
+        dataset_specs = _build_research_dataset_specs(repo_root, uncertainty_cfg)
+
+        research_datasets = [d.strip().lower() for d in str(args.research_datasets).split(",") if d.strip()]
+        if not research_datasets:
+            raise ValueError("research_datasets must include at least one of: de,us")
+        invalid = [d for d in research_datasets if d not in dataset_specs]
+        if invalid:
+            raise ValueError(f"Unsupported research_datasets: {invalid}. Allowed values: {sorted(dataset_specs)}")
 
         task_cfg = _load_yaml(train_cfg).get("task", {})
         default_horizon = int(task_cfg.get("horizon_hours", 24)) if isinstance(task_cfg, dict) else 24
@@ -842,49 +895,75 @@ def main() -> None:
         if research_window_step <= 0:
             raise ValueError("research_window_step must be > 0")
 
-        models_dir = repo_root / "artifacts" / "models"
-        load_model = _resolve_gbm_model_path("load_mw", forecast_cfg, models_dir)
-        wind_model = _resolve_gbm_model_path("wind_mw", forecast_cfg, models_dir)
-        solar_model = _resolve_gbm_model_path("solar_mw", forecast_cfg, models_dir)
+        for dataset in research_datasets:
+            spec = dataset_specs[dataset]
+            if not spec.split_path.exists():
+                raise FileNotFoundError(f"Missing research split for {dataset}: {spec.split_path}")
+            if not spec.forecast_cfg_path.exists():
+                raise FileNotFoundError(f"Missing forecast config for {dataset}: {spec.forecast_cfg_path}")
 
-        research_hash = _hash_paths(
-            [
-                research_split_path,
-                forecast_cfg_path,
-                uncertainty_cfg_path,
-                optimization_cfg_path,
-                load_model,
-                wind_model,
-                solar_model,
-            ],
-            repo_root,
-        )
+            forecast_cfg = _load_yaml(spec.forecast_cfg_path)
+            load_model = _resolve_gbm_model_path("load_mw", forecast_cfg, spec.models_dir)
+            wind_model = _resolve_gbm_model_path("wind_mw", forecast_cfg, spec.models_dir)
+            solar_model = _resolve_gbm_model_path("solar_mw", forecast_cfg, spec.models_dir)
 
-        if (
-            not args.force
-            and cache.get("research_hash") == research_hash
-            and research_csv_path.exists()
-        ):
-            log.info("Research step skipped (cache hit)")
-        else:
-            research_result = _run_research_step(
-                repo_root=repo_root,
-                run_id=run_id,
-                log=log,
-                research_horizon=research_horizon,
-                research_window_step=research_window_step,
-                research_gamma=float(args.research_gamma),
-                deterministic_config=deterministic_cfg,
-                forecast_cfg=forecast_cfg,
-                uncertainty_cfg=uncertainty_cfg,
+            research_hash = _hash_paths(
+                [
+                    spec.split_path,
+                    spec.forecast_cfg_path,
+                    uncertainty_cfg_path,
+                    optimization_cfg_path,
+                    load_model,
+                    wind_model,
+                    solar_model,
+                ],
+                repo_root,
             )
-        cache["research_hash"] = research_hash
+
+            cache_key = f"research_hash_{dataset}"
+            if (
+                not args.force
+                and cache.get(cache_key) == research_hash
+                and spec.output_csv.exists()
+            ):
+                log.info("Research step for %s skipped (cache hit)", dataset)
+                research_results[dataset] = {
+                    "rows_written": 0,
+                    "window_rows": 0,
+                    "output_csv": str(spec.output_csv),
+                }
+            else:
+                research_results[dataset] = _run_research_step(
+                    repo_root=repo_root,
+                    run_id=run_id,
+                    log=log,
+                    research_horizon=research_horizon,
+                    research_window_step=research_window_step,
+                    research_gamma=float(args.research_gamma),
+                    split_path=spec.split_path,
+                    models_dir=spec.models_dir,
+                    output_csv=spec.output_csv,
+                    uncertainty_artifacts_dir=spec.uncertainty_artifacts_dir,
+                    deterministic_config=deterministic_cfg,
+                    forecast_cfg=forecast_cfg,
+                    uncertainty_cfg=uncertainty_cfg,
+                )
+            cache[cache_key] = research_hash
+
+        cache["research_hash"] = "|".join(
+            f"{dataset}:{cache.get(f'research_hash_{dataset}', '')}" for dataset in research_datasets
+        )
         cache["research_last_run_id"] = run_id
 
     # snapshot outputs
     _snapshot_artifacts(repo_root, run_dir, log)
     _snapshot_configs(repo_root, run_dir)
     _pip_freeze(repo_root, run_dir, log)
+
+    research_rows_written_total = int(
+        sum(int(result.get("rows_written", 0)) for result in research_results.values())
+    )
+    research_outputs = {dataset: result.get("output_csv") for dataset, result in research_results.items()}
 
     manifest = {
         "run_id": run_id,
@@ -898,9 +977,14 @@ def main() -> None:
         "train_hash": cache.get("train_hash"),
         "reports_hash": cache.get("reports_hash"),
         "research_hash": cache.get("research_hash"),
+        "research_hash_de": cache.get("research_hash_de"),
+        "research_hash_us": cache.get("research_hash_us"),
         "signals_hash": cache.get("signals_hash"),
-        "research_rows_written": research_result.get("rows_written"),
-        "research_output_csv": research_result.get("output_csv"),
+        "research_rows_written": research_rows_written_total,
+        "research_rows_written_de": int(research_results.get("de", {}).get("rows_written", 0)),
+        "research_rows_written_us": int(research_results.get("us", {}).get("rows_written", 0)),
+        "research_output_csv": next(iter(research_outputs.values()), None),
+        "research_outputs": research_outputs,
         "steps": steps,
     }
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
