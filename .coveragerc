@@ -86,9 +86,6 @@ directory = reports/coverage
 # Title for HTML report
 title = GridPulse Coverage Report
 
-# Show coverage contexts
-show_contexts = True
-
 [xml]
 # Output file for XML report (for CI tools)
 output = reports/coverage.xml

@@ -1,0 +1,5 @@
+scenario,mean_cost,std_cost,median_cost,ci_lower,ci_upper,mean_regret_pct,mean_infeasible_rate
+Full System,377838540.0,0.0,377838540.0,377838540.0,377838540.0,,1.0
+No Uncertainty,377838540.0,0.0,377838540.0,377838540.0,377838540.0,,1.0
+No Carbon,377838540.0,0.0,377838540.0,377838540.0,377838540.0,,1.0
+Forecast Only,,,,,,,

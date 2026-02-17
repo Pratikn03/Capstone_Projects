@@ -8,19 +8,19 @@ lint:
 	python -m compileall src services scripts
 
 test:
-	pytest -q
+	pytest -q --no-cov
 
 # Test with coverage (minimum 80%)
 test-cov:
-	pytest --cov=gridpulse --cov-report=html --cov-report=term-missing --cov-fail-under=80
+	pytest
 
 # Quick tests (exclude slow markers)
 test-quick:
-	pytest -q -m "not slow and not integration"
+	pytest -q -m "not slow and not integration" --no-cov
 
 # Integration tests only
 test-integration:
-	pytest -q -m "integration"
+	pytest -q -m "integration" --no-cov
 
 # Training verification
 verify-training:
@@ -200,11 +200,11 @@ streaming-worker:
 
 # Train all advanced baselines (Prophet, N-BEATS, AutoML)
 train-baselines:
-	PYTHONPATH=src python -c "from gridpulse.forecasting.advanced_baselines import train_all_baselines; train_all_baselines('data/processed/features.parquet')"
+	PYTHONPATH=src python3 -c "from gridpulse.forecasting.advanced_baselines import train_all_baselines; train_all_baselines('data/processed/features.parquet')"
 
 # Evaluate baselines against production models
 eval-baselines:
-	PYTHONPATH=src python -c "from gridpulse.forecasting.advanced_baselines import evaluate_baselines; print(evaluate_baselines('data/processed/splits/test.parquet').to_markdown())"
+	PYTHONPATH=src python3 -c "from gridpulse.forecasting.advanced_baselines import evaluate_baselines; print(evaluate_baselines('data/processed/splits/test.parquet').to_markdown())"
 
 # ============================================================
 # Production Release Workflow

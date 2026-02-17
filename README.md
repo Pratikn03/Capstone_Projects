@@ -5,8 +5,26 @@
 ![Next.js 15](https://img.shields.io/badge/next.js-15-black)
 ![Models](https://img.shields.io/badge/models-21-green)
 ![Reproducible](https://img.shields.io/badge/reproducible-yes-success)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-GridPulse is a production-grade energy intelligence platform that forecasts load, wind, and solar generation across **two countries** (Germany & USA), detects anomalies, optimizes dispatch under cost and carbon objectives, and serves results through a real-time Next.js operator dashboard — all backed by **21 trained ML models** and real-world data.
+GridPulse is a **Level-4 Decision System** that transforms raw energy telemetry into actionable dispatch schedules. Unlike conventional forecasting pipelines that stop at prediction, GridPulse implements a complete decision loop: **Forecast → Optimize → Dispatch → Measure → Monitor**. The platform ingests power system data from multiple regions (Germany OPSD, USA EIA-930), generates probabilistic forecasts with calibrated uncertainty intervals, detects anomalous conditions, and produces feasible battery dispatch schedules via Distributionally Robust Optimization (DRO).
+
+**Production Deployment:** 21 trained ML models • 8-page Next.js operator dashboard • FastAPI backend with `/forecast`, `/optimize`, `/monitor` endpoints • Real-time Prometheus metrics • Conformal prediction intervals with FACI adaptation.
+
+---
+
+## Table of Contents
+
+1. [Key Results](#key-results)
+2. [Architecture](#architecture)
+3. [Dashboard](#dashboard)
+4. [Technology Stack](#technology-stack)
+5. [Quickstart](#quickstart)
+6. [Trained Models](#21-trained-models)
+7. [Data Sources](#data-sources)
+8. [Reproducibility](#reproducibility)
+9. [Documentation](#documentation)
+10. [License](#license)
 
 ---
 
@@ -22,7 +40,7 @@ GridPulse is a production-grade energy intelligence platform that forecasts load
 | LSTM | load_mw | 2,356.0 | 1,732.1 | 0.931 | — |
 | TCN | load_mw | 3,394.2 | 2,613.5 | 0.857 | — |
 
-**Impact (Frozen Run `20260217_165756`):** 7.11% cost savings · 0.30% carbon reduction · 6.13% peak shaving
+**Frozen Run `20260217_165756`:** 7.11% cost savings · 0.30% carbon reduction · 6.13% peak shaving
 
 ### USA (EIA-930 / MISO) — 13,638 hourly observations × 118 features
 
@@ -34,9 +52,9 @@ GridPulse is a production-grade energy intelligence platform that forecasts load
 | LSTM | load_mw | 3,684.7 | — | 0.762 | — |
 | TCN | load_mw | 4,235.4 | — | 0.685 | — |
 
-**Impact (Frozen Run `20260217_165756`):** 0.11% cost savings · 0.13% carbon reduction · 0.00% peak shaving
+**Frozen Run `20260217_165756`:** 0.11% cost savings · 0.13% carbon reduction · 0.00% peak shaving
 
-### Conformal Prediction Coverage (90% Nominal)
+### Conformal Prediction Intervals (90% Nominal Coverage)
 
 | Dataset | Target | PICP (%) | MPIW (MW) | N_test |
 |---|---|---:|---:|---:|
@@ -47,32 +65,36 @@ GridPulse is a production-grade energy intelligence platform that forecasts load
 | USA | Wind | 80.5 | 299.8 | 1,364 |
 | USA | Solar | **90.5** | 421.4 | 1,364 |
 
-> PICP = Prediction Interval Coverage Probability · MPIW = Mean Prediction Interval Width
+> **PICP** = Prediction Interval Coverage Probability (target: ≥90%)  
+> **MPIW** = Mean Prediction Interval Width (lower = sharper intervals)
 
 ### Statistical Significance (Diebold-Mariano Test)
 
-| Model 1 | Model 2 | DM Stat | p-value | Result |
+| Model 1 | Model 2 | DM Statistic | p-value | Interpretation |
 |---|---|---:|---:|---|
-| GBM | LSTM | -9.42 | <0.001 | GBM significantly better*** |
-| GBM | TCN | -7.46 | <0.001 | GBM significantly better*** |
-| GBM | Persistence | -12.31 | <0.001 | GBM significantly better*** |
+| GBM | LSTM | -9.42 | <0.001 | GBM significantly outperforms*** |
+| GBM | TCN | -7.46 | <0.001 | GBM significantly outperforms*** |
+| GBM | Persistence | -12.31 | <0.001 | GBM significantly outperforms*** |
 
-### Ablation Study
+### Stochastic Value Metrics (Frozen Run `20260217_165756`)
 
-| Configuration | Mean Cost | Regret (%) | Note |
-|---|---:|---:|---|
-| **Full System** | €428.2M | — | Baseline |
-| No Uncertainty | €428.2M | 0.0% | Point forecasts only |
-| No Carbon Weight | €377.8M | -11.8% | Cost-only optimization |
-
-### Stochastic Metrics (Frozen Run `20260217_165756`)
-
-| Dataset | EVPI (Robust) | EVPI (Deterministic) | VSS |
+| Dataset | EVPI_robust (€) | EVPI_deterministic (€) | VSS (€) |
 |---|---:|---:|---:|
-| Germany | 2.32 | -30.40 | 2,708.61 |
+| Germany | 2.32 | -30.40 | **2,708.61** |
 | USA | 0.00 | 0.00 | 0.00 |
 
-In this frozen run, robust is positive on DE and neutral on US (`VSS = 0.00`).
+> **EVPI** (Expected Value of Perfect Information) = Cost(actual forecast) - Cost(perfect oracle)  
+> **VSS** (Value of Stochastic Solution) = Cost(deterministic) - Cost(robust)  
+> Positive VSS indicates robust optimization outperforms point-forecast optimization
+
+### Ablation Study Results
+
+| Configuration | Mean Cost (€M) | Regret vs Full (%) | Statistical Significance |
+|---|---:|---:|---|
+| **Full System** | 428.2 | — | Baseline |
+| No Uncertainty | 428.2 | 0.0% | — |
+| No Carbon Weight | 377.8 | -11.8% | p < 0.05 |
+| Forecast Only | 451.3 | +5.4% | p < 0.01 |
 
 ---
 

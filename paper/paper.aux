@@ -1,0 +1,257 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Motivation}{1}{subsection.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Contributions}{1}{subsection.1.2}\protected@file@percent }
+\citation{hong2016probabilistic,hyndman2021forecasting,cleveland1990stl}
+\citation{ke2017lightgbm,hong2016gefc}
+\citation{grinsztajn2022tree}
+\citation{hochreiter1997long}
+\citation{bai2018empirical}
+\citation{vaswani2017attention}
+\citation{sweeney2020future}
+\citation{lorenz2009irradiance}
+\citation{xu2018optimal}
+\citation{bertsimas2004robust}
+\citation{krishnamurthy2018energy}
+\citation{garcia2015optimal}
+\citation{vazquez2019reinforcement}
+\citation{rhodes2014experimental}
+\citation{vovk2005algorithmic}
+\citation{romano2019conformal}
+\citation{barber2023conformal}
+\citation{chernozhukov2021distributional}
+\citation{zaffran2022adaptive}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Load and Renewable Energy Forecasting}{2}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Battery Storage Optimization}{2}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Conformal Prediction for Uncertainty Quantification}{2}{subsection.2.3}\protected@file@percent }
+\citation{siler2012marginal}
+\citation{epa2023egrid}
+\citation{radovanovic2022carbon}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Carbon-Aware Computing and Grid Emissions}{3}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Methodology}{3}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Data Sources and Preprocessing}{3}{subsection.3.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Dataset Characteristics}}{3}{table.caption.1}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{tab:datasets}{{1}{3}{Dataset Characteristics}{table.caption.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Forecasting Models}{4}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.1}Gradient Boosting Machine (GBM)}{4}{subsubsection.3.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.2}LSTM Network}{4}{subsubsection.3.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.3}Temporal Convolutional Network (TCN)}{4}{subsubsection.3.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Uncertainty Quantification}{4}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Dispatch Optimization}{4}{subsection.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.1}Decision Variables}{4}{subsubsection.3.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.2}Objective Function}{5}{subsubsection.3.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.3}Constraints}{5}{subsubsection.3.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.4}Solution Method}{5}{subsubsection.3.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Experimental Setup}{6}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Evaluation Protocol}{6}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Metrics}{6}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Baselines}{6}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Results}{6}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Forecasting Performance}{6}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.1.1}Germany (OPSD)}{6}{subsubsection.5.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.1.2}United States (EIA-930 MISO)}{6}{subsubsection.5.1.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Forecast Performance on Germany (OPSD) Dataset}}{7}{table.caption.2}\protected@file@percent }
+\newlabel{tab:forecast_de}{{2}{7}{Forecast Performance on Germany (OPSD) Dataset}{table.caption.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Forecast Performance on USA (EIA-930 MISO) Dataset}}{7}{table.caption.3}\protected@file@percent }
+\newlabel{tab:forecast_us}{{3}{7}{Forecast Performance on USA (EIA-930 MISO) Dataset}{table.caption.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Conformal Prediction Coverage (90\% Nominal)}}{7}{table.caption.4}\protected@file@percent }
+\newlabel{tab:conformal}{{4}{7}{Conformal Prediction Coverage (90\% Nominal)}{table.caption.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Uncertainty Quantification}{8}{subsection.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Optimization Impact}{8}{subsection.5.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Dispatch Optimization Impact (7-Day Evaluation Window)}}{8}{table.caption.5}\protected@file@percent }
+\newlabel{tab:optimization}{{5}{8}{Dispatch Optimization Impact (7-Day Evaluation Window)}{table.caption.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Robustness Analysis}{8}{subsection.5.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Dispatch Robustness to Forecast Errors}}{8}{table.caption.6}\protected@file@percent }
+\newlabel{tab:robustness}{{6}{8}{Dispatch Robustness to Forecast Errors}{table.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}Ablation Study}{8}{subsection.5.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.5.1}Feature Ablation}{8}{subsubsection.5.5.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Ablation Study: Component Contribution Analysis}}{9}{table.caption.7}\protected@file@percent }
+\newlabel{tab:ablation}{{7}{9}{Ablation Study: Component Contribution Analysis}{table.caption.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Feature Ablation Results}}{9}{table.caption.8}\protected@file@percent }
+\newlabel{tab:8}{{8}{9}{Feature Ablation Results}{table.caption.8}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.5.2}Horizon Ablation}{9}{subsubsection.5.5.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Multi-Horizon Performance (Load Forecasting, Germany)}}{9}{table.caption.9}\protected@file@percent }
+\newlabel{tab:9}{{9}{9}{Multi-Horizon Performance (Load Forecasting, Germany)}{table.caption.9}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.5.3}Training Data Size Ablation}{9}{subsubsection.5.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.5.4}Optimization Component Ablation}{9}{subsubsection.5.5.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Training Data Size Ablation (Load Forecasting, Germany)}}{10}{table.caption.10}\protected@file@percent }
+\newlabel{tab:10}{{10}{10}{Training Data Size Ablation (Load Forecasting, Germany)}{table.caption.10}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Optimization Ablation Study (5 runs each, Germany)}}{10}{table.caption.11}\protected@file@percent }
+\newlabel{tab:11}{{11}{10}{Optimization Ablation Study (5 runs each, Germany)}{table.caption.11}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.5.5}Model Architecture Ablation}{10}{subsubsection.5.5.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces LSTM Architecture Ablation}}{10}{table.caption.12}\protected@file@percent }
+\newlabel{tab:12}{{12}{10}{LSTM Architecture Ablation}{table.caption.12}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}System Architecture}{10}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Training Pipeline}{10}{subsection.6.1}\protected@file@percent }
+\citation{grinsztajn2022tree}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Inference Pipeline}{11}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Deployment}{11}{subsection.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Discussion}{11}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Model Selection: Why GBM Dominates}{11}{subsection.7.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Model Selection Guidelines}}{11}{table.caption.13}\protected@file@percent }
+\newlabel{tab:model_selection}{{13}{11}{Model Selection Guidelines}{table.caption.13}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Temporal Error Analysis}{12}{subsection.7.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Temporal Error Analysis by Time Regime}}{12}{table.caption.14}\protected@file@percent }
+\newlabel{tab:temporal_error}{{14}{12}{Temporal Error Analysis by Time Regime}{table.caption.14}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Uncertainty Quantification Value}{12}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Carbon-Cost Tradeoff Analysis}{12}{subsection.7.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces Cost-Carbon Tradeoff (Pareto Frontier)}}{12}{table.caption.15}\protected@file@percent }
+\newlabel{tab:pareto_tradeoff}{{15}{12}{Cost-Carbon Tradeoff (Pareto Frontier)}{table.caption.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.5}Production Deployment Lessons}{12}{subsection.7.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Edge Cases Encountered in Production Simulation}}{13}{table.caption.16}\protected@file@percent }
+\newlabel{tab:edge_cases}{{16}{13}{Edge Cases Encountered in Production Simulation}{table.caption.16}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Limitations}{13}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Data Limitations}{13}{subsection.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Modeling Limitations}{13}{subsection.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Evaluation Limitations}{14}{subsection.8.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}Broader Impact}{14}{section.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1}Positive Societal Implications}{14}{subsection.9.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2}Potential Negative Consequences}{14}{subsection.9.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3}Environmental Footprint of ML}{15}{subsection.9.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.4}Data Privacy}{15}{subsection.9.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.5}Regulatory Compliance}{15}{subsection.9.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10}Future Work}{15}{section.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1}Short-Term Extensions}{15}{subsection.10.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2}Medium-Term Research (1--2 years)}{15}{subsection.10.2}\protected@file@percent }
+\bibstyle{plainnat}
+\bibcite{hong2016probabilistic}{{1}{2016}{{Hong and Fan}}{{}}}
+\bibcite{ke2017lightgbm}{{2}{2017}{{Ke et~al.}}{{}}}
+\bibcite{hochreiter1997long}{{3}{1997}{{Hochreiter and Schmidhuber}}{{}}}
+\bibcite{xu2018optimal}{{4}{2018}{{Xu et~al.}}{{}}}
+\bibcite{bertsimas2004robust}{{5}{2004}{{Bertsimas and Sim}}{{}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.3}Long-Term Vision (2--5 years)}{16}{subsection.10.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {11}Conclusion}{16}{section.11}\protected@file@percent }
+\bibcite{vazquez2019reinforcement}{{6}{2019}{{Vazquez-Canteli and Nagy}}{{}}}
+\bibcite{vovk2005algorithmic}{{7}{2005}{{Vovk et~al.}}{{}}}
+\bibcite{grinsztajn2022tree}{{8}{2022}{{Grinsztajn et~al.}}{{}}}
+\bibcite{hyndman2021forecasting}{{9}{2021}{{Hyndman and Athanasopoulos}}{{}}}
+\bibcite{cleveland1990stl}{{10}{1990}{{Cleveland et~al.}}{{}}}
+\bibcite{hong2016gefc}{{11}{2016}{{Hong et~al.}}{{}}}
+\bibcite{bai2018empirical}{{12}{2018}{{Bai et~al.}}{{}}}
+\bibcite{vaswani2017attention}{{13}{2017}{{Vaswani et~al.}}{{}}}
+\bibcite{sweeney2020future}{{14}{2020}{{Sweeney et~al.}}{{}}}
+\bibcite{lorenz2009irradiance}{{15}{2009}{{Lorenz et~al.}}{{}}}
+\bibcite{krishnamurthy2018energy}{{16}{2018}{{Krishnamurthy et~al.}}{{}}}
+\bibcite{garcia2015optimal}{{17}{2015}{{Garcia-Torres and Bordons}}{{}}}
+\bibcite{rhodes2014experimental}{{18}{2014}{{Rhodes et~al.}}{{}}}
+\bibcite{romano2019conformal}{{19}{2019}{{Romano et~al.}}{{}}}
+\bibcite{barber2023conformal}{{20}{2023}{{Barber et~al.}}{{}}}
+\bibcite{chernozhukov2021distributional}{{21}{2021}{{Chernozhukov et~al.}}{{}}}
+\bibcite{zaffran2022adaptive}{{22}{2022}{{Zaffran et~al.}}{{}}}
+\bibcite{siler2012marginal}{{23}{2012}{{Siler-Evans et~al.}}{{}}}
+\bibcite{epa2023egrid}{{24}{2023}{{US EPA}}{{}}}
+\bibcite{radovanovic2022carbon}{{25}{2022}{{Radovanovic et~al.}}{{}}}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Reproducibility}{18}{appendix.A}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {B}Publication Figures}{18}{appendix.B}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {17}{\ignorespaces Runtime Performance Benchmarks}}{19}{table.caption.18}\protected@file@percent }
+\newlabel{tab:runtime}{{17}{19}{Runtime Performance Benchmarks}{table.caption.18}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {C}LaTeX Tables}{19}{appendix.C}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {18}{\ignorespaces LaTeX Tables Available in \texttt  {reports/tables}}}{19}{table.caption.19}\protected@file@percent }
+\newlabel{tab:latex_tables}{{18}{19}{LaTeX Tables Available in \texttt {reports/tables}}{table.caption.19}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {D}Code Availability}{20}{appendix.D}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {E}Extended Cross-Validation Results}{20}{appendix.E}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {E.1}Ten-Fold Time Series Cross-Validation (Germany)}{20}{subsection.E.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {19}{\ignorespaces 10-Fold CV Results - Load Forecasting (Germany)}}{20}{table.caption.20}\protected@file@percent }
+\newlabel{tab:e1}{{19}{20}{10-Fold CV Results - Load Forecasting (Germany)}{table.caption.20}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {20}{\ignorespaces Multi-Seed Results (5 seeds, Load Forecasting, Germany)}}{21}{table.caption.21}\protected@file@percent }
+\newlabel{tab:e2}{{20}{21}{Multi-Seed Results (5 seeds, Load Forecasting, Germany)}{table.caption.21}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {21}{\ignorespaces Diebold-Mariano Forecast Comparison Tests}}{21}{table.caption.22}\protected@file@percent }
+\newlabel{tab:f1}{{21}{21}{Diebold-Mariano Forecast Comparison Tests}{table.caption.22}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {E.2}Multi-Seed Experiment Results}{21}{subsection.E.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {F}Statistical Significance Testing}{21}{appendix.F}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {F.1}Diebold-Mariano Test Results}{21}{subsection.F.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {F.2}Paired t-Test for Cost Savings}{21}{subsection.F.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {22}{\ignorespaces Paired t-Test Results for Weekly Cost Savings}}{21}{table.caption.23}\protected@file@percent }
+\newlabel{tab:f2}{{22}{21}{Paired t-Test Results for Weekly Cost Savings}{table.caption.23}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {F.3}Bootstrap Confidence Intervals}{21}{subsection.F.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {G}Hyperparameter Sensitivity Analysis}{21}{appendix.G}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.1}LightGBM Sensitivity}{21}{subsection.G.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {23}{\ignorespaces 10,000-sample Bootstrap Confidence Intervals}}{22}{table.caption.24}\protected@file@percent }
+\newlabel{tab:f3}{{23}{22}{10,000-sample Bootstrap Confidence Intervals}{table.caption.24}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {24}{\ignorespaces LightGBM Hyperparameter Sensitivity (Optuna 50 trials)}}{22}{table.caption.25}\protected@file@percent }
+\newlabel{tab:g1}{{24}{22}{LightGBM Hyperparameter Sensitivity (Optuna 50 trials)}{table.caption.25}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {25}{\ignorespaces LSTM Hyperparameter Sensitivity}}{22}{table.caption.26}\protected@file@percent }
+\newlabel{tab:g2}{{25}{22}{LSTM Hyperparameter Sensitivity}{table.caption.26}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {26}{\ignorespaces MILP Optimization Parameter Sensitivity}}{22}{table.caption.27}\protected@file@percent }
+\newlabel{tab:g3}{{26}{22}{MILP Optimization Parameter Sensitivity}{table.caption.27}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.2}LSTM Sensitivity}{23}{subsection.G.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {G.3}Optimization Parameters}{23}{subsection.G.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {H}Computational Resources}{23}{appendix.H}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {H.1}Training Time Breakdown}{23}{subsection.H.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {27}{\ignorespaces Training Time and Resource Usage}}{23}{table.caption.28}\protected@file@percent }
+\newlabel{tab:h1}{{27}{23}{Training Time and Resource Usage}{table.caption.28}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {H.2}Inference Latency}{23}{subsection.H.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {28}{\ignorespaces Inference Latency Benchmarks (1000 requests)}}{23}{table.caption.29}\protected@file@percent }
+\newlabel{tab:h2}{{28}{23}{Inference Latency Benchmarks (1000 requests)}{table.caption.29}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Regional Comparison (Germany vs USA)}{23}{appendix.I}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.1}Forecasting Performance by Region}{23}{subsection.I.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.2}Optimization Impact by Region}{23}{subsection.I.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.3}Transfer Learning Results}{23}{subsection.I.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {29}{\ignorespaces Regional Forecasting Performance Comparison}}{24}{table.caption.30}\protected@file@percent }
+\newlabel{tab:i1}{{29}{24}{Regional Forecasting Performance Comparison}{table.caption.30}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {30}{\ignorespaces Regional Optimization Impact Comparison}}{24}{table.caption.31}\protected@file@percent }
+\newlabel{tab:i2}{{30}{24}{Regional Optimization Impact Comparison}{table.caption.31}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {31}{\ignorespaces Transfer Learning Performance}}{24}{table.caption.32}\protected@file@percent }
+\newlabel{tab:i3}{{31}{24}{Transfer Learning Performance}{table.caption.32}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {32}{\ignorespaces Monthly Load Forecasting Performance (Germany)}}{25}{table.caption.33}\protected@file@percent }
+\newlabel{tab:j1}{{32}{25}{Monthly Load Forecasting Performance (Germany)}{table.caption.33}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {J}Seasonal Performance Analysis}{25}{appendix.J}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.1}Monthly Performance Breakdown (Germany, Load)}{25}{subsection.J.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.2}Day-of-Week Performance (Germany, Load)}{25}{subsection.J.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {33}{\ignorespaces Day-of-Week Load Forecasting Performance}}{25}{table.caption.34}\protected@file@percent }
+\newlabel{tab:j2}{{33}{25}{Day-of-Week Load Forecasting Performance}{table.caption.34}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.3}Hour-of-Day Performance (Germany, Load)}{25}{subsection.J.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {K}Error Distribution Analysis}{25}{appendix.K}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.1}Error Percentiles (Germany, GBM)}{25}{subsection.K.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.2}Error Normality Tests}{25}{subsection.K.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {34}{\ignorespaces Intraday Load Forecasting Performance}}{26}{table.caption.35}\protected@file@percent }
+\newlabel{tab:j3}{{34}{26}{Intraday Load Forecasting Performance}{table.caption.35}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {35}{\ignorespaces Forecast Error Percentiles (Actual - Predicted)}}{26}{table.caption.36}\protected@file@percent }
+\newlabel{tab:k1}{{35}{26}{Forecast Error Percentiles (Actual - Predicted)}{table.caption.36}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.3}Autocorrelation of Residuals}{26}{subsection.K.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {L}SHAP Feature Importance Analysis}{26}{appendix.L}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.1}Top 20 Features by SHAP Value (Load Forecasting, Germany)}{26}{subsection.L.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.2}Feature Importance Comparison Across Targets}{26}{subsection.L.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {36}{\ignorespaces Error Distribution Normality Tests}}{26}{table.caption.37}\protected@file@percent }
+\newlabel{tab:k2}{{36}{26}{Error Distribution Normality Tests}{table.caption.37}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {37}{\ignorespaces Residual Autocorrelation Analysis}}{27}{table.caption.38}\protected@file@percent }
+\newlabel{tab:k3}{{37}{27}{Residual Autocorrelation Analysis}{table.caption.38}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {38}{\ignorespaces SHAP Feature Importance Rankings (Load)}}{27}{table.caption.39}\protected@file@percent }
+\newlabel{tab:l1}{{38}{27}{SHAP Feature Importance Rankings (Load)}{table.caption.39}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {39}{\ignorespaces Feature Category Importance by Target}}{27}{table.caption.40}\protected@file@percent }
+\newlabel{tab:l2}{{39}{27}{Feature Category Importance by Target}{table.caption.40}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {40}{\ignorespaces Conformal Prediction Coverage by Nominal Level}}{27}{table.caption.41}\protected@file@percent }
+\newlabel{tab:m1}{{40}{27}{Conformal Prediction Coverage by Nominal Level}{table.caption.41}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {41}{\ignorespaces 90\% Interval Coverage by Forecast Horizon}}{28}{table.caption.42}\protected@file@percent }
+\newlabel{tab:m2}{{41}{28}{90\% Interval Coverage by Forecast Horizon}{table.caption.42}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {42}{\ignorespaces Conformal Prediction Method Comparison}}{28}{table.caption.43}\protected@file@percent }
+\newlabel{tab:m3}{{42}{28}{Conformal Prediction Method Comparison}{table.caption.43}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {M}Conformal Prediction Detailed Results}{28}{appendix.M}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.1}Coverage by Nominal Level}{28}{subsection.M.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.2}Coverage by Forecast Horizon}{28}{subsection.M.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.3}Adaptive Conformal Performance}{28}{subsection.M.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {N}Supplementary Figures}{28}{appendix.N}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.1}Figure Inventory}{28}{subsection.N.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.2}Figure Descriptions}{28}{subsection.N.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {O}Detailed Model Architectures}{28}{appendix.O}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {O.1}LightGBM Final Configuration}{28}{subsection.O.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {43}{\ignorespaces Supplementary Figure Inventory}}{29}{table.caption.44}\protected@file@percent }
+\newlabel{tab:n1}{{43}{29}{Supplementary Figure Inventory}{table.caption.44}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {O.2}LSTM Architecture}{29}{subsection.O.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {O.3}TCN Architecture}{30}{subsection.O.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {P}Reproducibility Checklist}{30}{appendix.P}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {P.1}ML Reproducibility Checklist}{30}{subsection.P.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {P.2}Data Sheet}{30}{subsection.P.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {P.3}Model Card}{30}{subsection.P.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {44}{\ignorespaces NeurIPS ML Reproducibility Checklist}}{31}{table.caption.45}\protected@file@percent }
+\newlabel{tab:p1}{{44}{31}{NeurIPS ML Reproducibility Checklist}{table.caption.45}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {45}{\ignorespaces Dataset Information Sheet}}{31}{table.caption.46}\protected@file@percent }
+\newlabel{tab:p2}{{45}{31}{Dataset Information Sheet}{table.caption.46}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {46}{\ignorespaces Model Card Summary}}{31}{table.caption.47}\protected@file@percent }
+\newlabel{tab:p3}{{46}{31}{Model Card Summary}{table.caption.47}{}}
+\gdef \@abspage@last{31}

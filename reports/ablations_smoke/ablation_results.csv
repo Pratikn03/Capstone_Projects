@@ -1,0 +1,5 @@
+scenario,total_cost,oracle_cost,regret,regret_pct,carbon_emissions,infeasible_rate,forecast_error_load,forecast_error_wind,forecast_error_solar,run,description
+Full System,377838540.0,,,,,1.0,425.350583455495,195.10027314346505,312.4923894739076,0,All features enabled
+No Uncertainty,377838540.0,,,,,1.0,425.350583455495,195.10027314346505,312.4923894739076,0,Point forecasts only
+No Carbon,377838540.0,,,,,1.0,425.350583455495,195.10027314346505,312.4923894739076,0,Cost-only optimization
+Forecast Only,,,,,,,425.350583455495,195.10027314346505,312.4923894739076,0,No dispatch optimization

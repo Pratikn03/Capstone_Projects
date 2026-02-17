@@ -14,23 +14,23 @@ This report compares dispatch outcomes for the same 7‑day forecast window (sel
 | Naive battery | 154,200,945.64 | 1,454,657,899.03 | 72,732,894.95 |
 | Peak‑shaving heuristic | 155,096,309.40 | 1,465,616,652.67 | 73,280,832.63 |
 | Price‑greedy (MPC‑style) | 154,098,659.76 | 1,457,458,733.64 | 72,872,936.68 |
-| GridPulse (forecast‑optimized) | 144,129,302.89 | 1,459,870,646.53 | 72,993,532.33 |
-| Risk‑aware (interval) | 148,233,859.52 | 1,506,396,539.25 | 75,319,826.96 |
+| GridPulse (forecast‑optimized) | 143,776,429.88 | 1,457,205,025.31 | 72,860,251.27 |
+| Risk‑aware (interval) | 145,680,826.66 | 1,484,593,261.15 | 74,229,663.06 |
 | Oracle upper bound (perfect forecast) | 152,331,496.60 | 1,451,467,789.95 | 72,573,389.50 |
 
 ## Savings vs Baseline (GridPulse vs Grid‑only)
-- Cost savings: 10,644,159.83 (6.88%)
-- Carbon reduction: 1,770,596.75 kg (0.12%)
+- Cost savings: 10,997,032.84 (7.11%)
+- Carbon reduction: 4,436,217.97 kg (0.30%)
 
 - Carbon source used for optimization: average
 
 ## Savings vs Naive Battery (GridPulse vs Naive)
-- Cost savings: 10,071,642.75 (6.53%)
-- Carbon reduction: -5,212,747.50 kg (-0.36%)
+- Cost savings: 10,424,515.76 (6.76%)
+- Carbon reduction: -2,547,126.28 kg (-0.18%)
 
 ## Oracle Gap (GridPulse vs Perfect‑Forecast Upper Bound)
 - Oracle cost: 152,331,496.60
-- Gap vs oracle: -8,202,193.71
+- Gap vs oracle: -8,555,066.72
 
 ## Dispatch Comparison
 ![](figures/dispatch_compare.png)
