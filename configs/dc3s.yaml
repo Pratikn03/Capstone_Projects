@@ -1,0 +1,26 @@
+dc3s:
+  alpha0: 0.10
+  alpha_min: 0.02
+  k_quality: 0.8
+  k_drift: 0.6
+  infl_max: 3.0
+  cooldown_smoothing: 0.0
+  expected_cadence_s: 3600
+  reliability:
+    lambda_delay: 0.002
+    spike_beta: 0.25
+    ooo_gamma: 0.35
+    min_w: 0.05
+  drift:
+    detector: page_hinkley
+    ph_delta: 0.01
+    ph_lambda: 5.0
+    warmup_steps: 48
+    cooldown_steps: 24
+  shield:
+    mode: projection
+    reserve_soc_pct_drift: 0.08
+  audit:
+    duckdb_path: data/audit/dc3s_audit.duckdb
+    table_name: dispatch_certificates
+    state_table_name: dc3s_online_state
