@@ -1,0 +1,24 @@
+iot:
+  api:
+    base_url: "http://localhost:8000"
+    timeout_s: 10
+    api_key_env: "GRIDPULSE_IOT_API_KEY"
+    api_key: ""
+  gateway:
+    base_url: "http://localhost:9001"
+    telemetry_path: "/telemetry/latest"
+    command_path: "/command/apply"
+    timeout_s: 5
+    retries: 2
+    auth_header: ""
+    auth_token_env: "GRIDPULSE_GATEWAY_TOKEN"
+    auth_token: ""
+  defaults:
+    device_id: "edge-device-001"
+    zone_id: "DE"
+    mode: "shadow"
+    iterations: 24
+    poll_interval_s: 5
+    controller: "deterministic"
+    horizon: 24
+    queue_ttl_seconds: 30
