@@ -27,6 +27,7 @@ from gridpulse.dc3s.shield import repair_action
 from gridpulse.dc3s.state import DC3SStateStore
 from gridpulse.forecasting.predict import predict_next_24h
 from gridpulse.forecasting.uncertainty.conformal import load_conformal
+from gridpulse.iot.store import IoTLoopStore
 from gridpulse.optimizer import optimize_dispatch
 from gridpulse.optimizer.robust_dispatch import optimize_robust_dispatch
 from gridpulse.safety.bms import SafetyLayer, SafetyViolation
@@ -46,6 +47,8 @@ class DC3SStepRequest(BaseModel):
     last_pred_load_mw: Optional[float] = None
     horizon: int = Field(default=24, ge=1, le=168)
     controller: Literal["deterministic", "robust", "heuristic"] = "deterministic"
+    enqueue_iot: bool = False
+    queue_ttl_seconds: int = Field(default=30, ge=0, le=86400)
     include_certificate: bool = True
 
 
@@ -67,6 +70,8 @@ class DC3SStepResponse(BaseModel):
     uncertainty: UncertaintyPayload
     certificate_id: str
     command_id: str
+    queued: bool = False
+    queue_status: Literal["queued", "skipped", "failed"] = "skipped"
     certificate: Optional[Dict[str, Any]] = None
 
 
@@ -378,6 +383,29 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
             dispatch_plan=dispatch_plan,
         )
         store_certificate(certificate, duckdb_path=audit_path, table_name=audit_table)
+        queued = False
+        queue_status: Literal["queued", "skipped", "failed"] = "skipped"
+        if req.enqueue_iot:
+            queue_store = IoTLoopStore()
+            try:
+                queue_store.enqueue_command(
+                    device_id=req.device_id,
+                    zone_id=req.zone_id,
+                    command_id=command_id,
+                    certificate_id=command_id,
+                    command={
+                        "safe_action": safe_action,
+                        "proposed_action": proposed_action,
+                    },
+                    ttl_seconds=int(req.queue_ttl_seconds),
+                )
+            except Exception as exc:
+                queue_status = "failed"
+                raise HTTPException(status_code=500, detail=f"IoT queue enqueue failed: {exc}") from exc
+            finally:
+                queue_store.close()
+            queued = True
+            queue_status = "queued"
 
         state_store.upsert(
             zone_id=req.zone_id,
@@ -405,6 +433,8 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
             ),
             certificate_id=command_id,
             command_id=command_id,
+            queued=queued,
+            queue_status=queue_status,
             certificate=certificate if req.include_certificate else None,
         )
     finally:
