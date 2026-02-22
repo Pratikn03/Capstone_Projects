@@ -386,6 +386,76 @@ gridpulse/
 
 ---
 
+## CPSBench-IoT and Closed-Loop IoT Reproduction
+
+### Benchmark Harness
+
+```bash
+make cpsbench
+```
+
+Generates:
+
+- `reports/publication/dc3s_main_table.csv`
+- `reports/publication/dc3s_fault_breakdown.csv`
+- `reports/publication/calibration_plot.png`
+- `reports/publication/violation_vs_cost_curve.png`
+- `reports/publication/dc3s_run_summary.json`
+
+Determinism controls:
+
+- fixed scenario seeds,
+- deterministic row ordering,
+- stable CSV float formatting.
+
+### Closed-Loop IoT Simulation
+
+```bash
+export GRIDPULSE_API_KEYS='{"iot-sim-key":["read","write"]}'
+make iot-sim
+```
+
+Runs in-process loop:
+
+`/iot/telemetry -> /dc3s/step(enqueue_iot=true) -> /iot/command/next -> apply -> /iot/ack`
+
+and prints:
+
+- safety violations,
+- interventions,
+- certificate completeness rate.
+- queue timeout/hold behavior is enforced (30s default TTL).
+
+### Real-Device Shadow Runtime (HTTP Gateway)
+
+```bash
+export GRIDPULSE_IOT_API_KEY='<gridpulse_rw_key>'
+python iot/edge_agent/run_agent.py --config configs/iot.yaml --mode shadow --iterations 24
+```
+
+Notes:
+
+- `/iot/*` endpoints are scope-protected via `X-GridPulse-Key`.
+- Shadow mode sends `acked` with `payload.shadow_mode=true` and `payload.applied=false`.
+- If command ACK timeout occurs, `/iot/command/next` returns `status=hold`; clear via:
+
+```bash
+curl -X POST http://localhost:8000/iot/control/reset-hold \
+  -H 'Content-Type: application/json' \
+  -H 'X-GridPulse-Key: <gridpulse_rw_key>' \
+  -d '{"device_id":"edge-device-001","reason":"operator_clearance"}'
+```
+
+### Single-Step DC3S Demo
+
+```bash
+make dc3s-demo
+```
+
+Executes one `/dc3s/step` call and verifies `/dc3s/audit/{command_id}` retrieval.
+
+---
+
 ## Makefile Targets
 
 | Target | Description |
@@ -400,6 +470,9 @@ gridpulse/
 | `make train-all` | **Train all registered datasets** |
 | `make list-datasets` | Show available datasets |
 | `make reports` | Generate reports & figures |
+| `make cpsbench` | Run CPSBench-IoT suite and write publication artifacts |
+| `make iot-sim` | Run in-process IoT closed-loop validation loop |
+| `make dc3s-demo` | Run one DC3S step and verify audit retrieval |
 | `make production` | Full pipeline → train → extract |
 
 See [docs/ADDING_DATASETS.md](docs/ADDING_DATASETS.md) for adding new datasets.
