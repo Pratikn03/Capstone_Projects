@@ -69,7 +69,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
       - name: Build and push dashboard image
         run: |
-          docker build -f docker/Dockerfile.app -t ${{ secrets.ECR_REPOSITORY_DASHBOARD }}:${{ github.sha }} .
+          docker build -f docker/Dockerfile.frontend -t ${{ secrets.ECR_REPOSITORY_DASHBOARD }}:${{ github.sha }} .
           docker tag ${{ secrets.ECR_REPOSITORY_DASHBOARD }}:${{ github.sha }} ${{ secrets.ECR_REPOSITORY_DASHBOARD }}:latest
           docker push ${{ secrets.ECR_REPOSITORY_DASHBOARD }}:${{ github.sha }}
           docker push ${{ secrets.ECR_REPOSITORY_DASHBOARD }}:latest
