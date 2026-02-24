@@ -1,11 +1,13 @@
-.PHONY: setup lint test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability
+.PHONY: setup lint test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated
+
+PYTHON ?= $(if $(wildcard .venv/bin/python3),.venv/bin/python3,python3)
 
 setup:
-	python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+	$(PYTHON) -m venv .venv && . .venv/bin/activate && .venv/bin/pip install -r requirements.txt
 	cd frontend && npm install
 
 lint:
-	python -m compileall src services scripts
+	PYTHONPYCACHEPREFIX=/tmp/gridpulse_pycache $(PYTHON) -m compileall src services scripts
 
 test:
 	pytest -q --no-cov
@@ -24,14 +26,14 @@ test-integration:
 
 # Training verification
 verify-training:
-	python scripts/verify_training_outputs.py --verbose
+	$(PYTHON) scripts/verify_training_outputs.py --verbose
 
 # Run CV evaluation (time-series cross-validation)
 cv-eval:
-	python -m gridpulse.forecasting.train --config configs/train_forecast.yaml --enable-cv
+	$(PYTHON) -m gridpulse.forecasting.train --config configs/train_forecast.yaml --enable-cv
 
 api:
-	PYTHONPATH=src python3 -m uvicorn services.api.main:app --reload --port 8000
+	PYTHONPATH=src $(PYTHON) -m uvicorn services.api.main:app --reload --port 8000
 
 dashboard: frontend
 
@@ -42,36 +44,36 @@ frontend-build:
 	cd frontend && npm run build
 
 extract-data:
-	python scripts/extract_dashboard_data.py
+	$(PYTHON) scripts/extract_dashboard_data.py
 
 pipeline:
-	python -m gridpulse.pipeline.run --all
+	$(PYTHON) -m gridpulse.pipeline.run --all
 
 data: pipeline
 
 train:
-	python -m gridpulse.forecasting.train_baseline --features data/processed/features.parquet --splits data/processed/splits --target load_mw
-	python -m gridpulse.forecasting.train_baseline --features data/processed/features.parquet --splits data/processed/splits --target wind_mw
-	python -m gridpulse.forecasting.train_baseline --features data/processed/features.parquet --splits data/processed/splits --target solar_mw
-	python -m gridpulse.forecasting.train --config configs/train_forecast.yaml
+	$(PYTHON) -m gridpulse.forecasting.train_baseline --features data/processed/features.parquet --splits data/processed/splits --target load_mw
+	$(PYTHON) -m gridpulse.forecasting.train_baseline --features data/processed/features.parquet --splits data/processed/splits --target wind_mw
+	$(PYTHON) -m gridpulse.forecasting.train_baseline --features data/processed/features.parquet --splits data/processed/splits --target solar_mw
+	$(PYTHON) -m gridpulse.forecasting.train --config configs/train_forecast.yaml
 
 reports:
-	python scripts/build_reports.py
+	$(PYTHON) scripts/build_reports.py
 
 reports-us:
-	python scripts/build_reports.py --features data/processed/us_eia930/features.parquet --splits data/processed/us_eia930/splits --models-dir artifacts/models_eia930 --reports-dir reports/eia930
+	$(PYTHON) scripts/build_reports.py --features data/processed/us_eia930/features.parquet --splits data/processed/us_eia930/splits --models-dir artifacts/models_eia930 --reports-dir reports/eia930
 
 train-us:
-	python -m gridpulse.forecasting.train --config configs/train_forecast_eia930.yaml
+	$(PYTHON) -m gridpulse.forecasting.train --config configs/train_forecast_eia930.yaml
 
 shap-importance:
-	python scripts/shap_importance.py
+	$(PYTHON) scripts/shap_importance.py
 
 stat-tests:
-	python scripts/statistical_tests.py
+	$(PYTHON) scripts/statistical_tests.py
 
 monitor:
-	python scripts/run_monitoring.py
+	$(PYTHON) scripts/run_monitoring.py
 
 release_check:
 	bash scripts/release_check.sh
@@ -90,29 +92,29 @@ train-dataset:
 ifndef DATASET
 	$(error DATASET is not set. Usage: make train-dataset DATASET=DE)
 endif
-	python scripts/train_dataset.py --dataset $(DATASET)
+	$(PYTHON) scripts/train_dataset.py --dataset $(DATASET)
 
 # Train all registered datasets
 train-all:
-	python scripts/train_dataset.py --all
+	$(PYTHON) scripts/train_dataset.py --all
 
 # Train with hyperparameter tuning: make train-tune DATASET=DE
 train-tune:
 ifndef DATASET
 	$(error DATASET is not set. Usage: make train-tune DATASET=DE)
 endif
-	python scripts/train_dataset.py --dataset $(DATASET) --tune
+	$(PYTHON) scripts/train_dataset.py --dataset $(DATASET) --tune
 
 # Generate reports only (no training): make reports-dataset DATASET=US
 reports-dataset:
 ifndef DATASET
 	$(error DATASET is not set. Usage: make reports-dataset DATASET=DE)
 endif
-	python scripts/train_dataset.py --dataset $(DATASET) --reports-only
+	$(PYTHON) scripts/train_dataset.py --dataset $(DATASET) --reports-only
 
 # List available datasets
 list-datasets:
-	python scripts/train_dataset.py --list
+	$(PYTHON) scripts/train_dataset.py --list
 
 # ============================================================
 # Advanced Features
@@ -120,19 +122,19 @@ list-datasets:
 
 # Run ablation study (4 scenarios: Full, No Uncertainty, No Carbon, Forecast Only)
 ablations:
-	python scripts/run_ablations.py --data data/processed/splits/test.parquet --output reports/ablations --n-runs 5 -v
+	$(PYTHON) scripts/run_ablations.py --data data/processed/splits/test.parquet --output reports/ablations --n-runs 5 -v
 
 # Build publication-quality LaTeX tables
 stats-tables:
-	python scripts/build_stats_tables.py --ablation-dir reports/ablations --output-dir reports/tables
+	$(PYTHON) scripts/build_stats_tables.py --ablation-dir reports/ablations --output-dir reports/tables
 
 # Verify novelty outputs (ablations, stats, figures)
 verify-novelty:
-	python scripts/verify_novelty_outputs.py --verbose
+	$(PYTHON) scripts/verify_novelty_outputs.py --verbose
 
 # Run robustness analysis with noise perturbations
 robustness-analysis:
-	python scripts/run_ablations.py --data data/processed/splits/test.parquet --output reports/robustness --n-runs 10 --noise 0.15 -v
+	$(PYTHON) scripts/run_ablations.py --data data/processed/splits/test.parquet --output reports/robustness --n-runs 10 --noise 0.15 -v
 
 # Complete novelty workflow (ablations + tables + verification)
 novelty-full: ablations stats-tables verify-novelty
@@ -192,7 +194,7 @@ prometheus:
 
 # Run streaming worker (requires Kafka running)
 streaming-worker:
-	PYTHONPATH=src python -m gridpulse.streaming.worker
+	PYTHONPATH=src $(PYTHON) -m gridpulse.streaming.worker
 
 # ============================================================
 # Advanced Baselines (93/100 Enhancement)
@@ -200,15 +202,52 @@ streaming-worker:
 
 # Train all advanced baselines (Prophet, N-BEATS, AutoML)
 train-baselines:
-	PYTHONPATH=src python3 -c "from gridpulse.forecasting.advanced_baselines import train_all_baselines; train_all_baselines('data/processed/features.parquet')"
+	PYTHONPATH=src $(PYTHON) -c "from gridpulse.forecasting.advanced_baselines import train_all_baselines; train_all_baselines('data/processed/features.parquet')"
 
 # Evaluate baselines against production models
 eval-baselines:
-	PYTHONPATH=src python3 -c "from gridpulse.forecasting.advanced_baselines import evaluate_baselines; print(evaluate_baselines('data/processed/splits/test.parquet').to_markdown())"
+	PYTHONPATH=src $(PYTHON) -c "from gridpulse.forecasting.advanced_baselines import evaluate_baselines; print(evaluate_baselines('data/processed/splits/test.parquet').to_markdown())"
 
 # ============================================================
 # Production Release Workflow
 # ============================================================
+
+# CPSBench-IoT + closed-loop IoT validation
+cpsbench:
+	.venv/bin/python3 scripts/run_cpsbench.py
+
+dc3s-demo:
+	.venv/bin/python3 scripts/run_dc3s_demo.py
+
+iot-sim:
+	.venv/bin/python3 iot/simulator/run_closed_loop.py
+
+refresh-data:
+	$(PYTHON) scripts/refresh_data_delta.py --dataset ALL --apply
+
+na-audit:
+	$(PYTHON) scripts/audit_na_tables.py --config configs/publish_audit.yaml
+
+leakage-audit:
+	$(PYTHON) scripts/audit_leakage.py --config configs/publish_audit.yaml
+
+code-health-audit:
+	$(PYTHON) scripts/audit_code_health.py --config configs/publish_audit.yaml
+
+backfill-dc3s:
+	$(PYTHON) scripts/backfill_dc3s_typed_columns.py
+
+git-delta-audit:
+	$(PYTHON) scripts/audit_git_delta.py --baseline-ref origin/main --out-dir reports/publish --scope-config configs/publish_audit.yaml
+
+figure-inventory-audit:
+	$(PYTHON) scripts/audit_figure_inventory.py --out-dir reports/publish --manifest paper/metrics_manifest.json
+
+publish-audit:
+	$(PYTHON) scripts/final_publish_audit.py --config configs/publish_audit.yaml
+
+publish-audit-isolated:
+	bash scripts/run_publish_audit_isolated.sh --config configs/publish_audit.yaml --run-hooks --baseline-ref origin/main --max-runtime-hours 6 --iot-steps 72
 
 # Full CI check (coverage + lint + integration)
 ci: lint test-cov test-integration

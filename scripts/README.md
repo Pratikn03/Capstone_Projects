@@ -9,9 +9,10 @@ Command-line scripts for training, evaluation, deployment, and maintenance tasks
 |--------|---------|
 | `train_multi_dataset.py` | Train models on DE/US datasets |
 | `run_ablations.py` | Run feature ablation studies |
-| `register_models.py` | Register models in MLflow registry |
+| `register_models.py` | Register models + conformal artifacts in local registry JSON |
 | `promote_model.py` | Promote model to production |
 | `retrain_if_needed.py` | Conditional retraining based on drift |
+| `train_dataset.py` | Unified dataset training with standard/aggressive profiles |
 
 ### Evaluation & Reports
 | Script | Purpose |
@@ -37,6 +38,15 @@ Command-line scripts for training, evaluation, deployment, and maintenance tasks
 |--------|---------|
 | `build_release_bundle.py` | Create deployment bundle |
 | `release_check.py` | Pre-release quality gates |
+| `final_publish_audit.py` | Full publish orchestrator with GO/NO-GO decision |
+| `audit_na_tables.py` | Strict NA-quality audit for parquet/csv/duckdb |
+| `audit_leakage.py` | Temporal/feature leakage audit |
+| `audit_code_health.py` | Static code-health audit (complexity/except patterns) |
+| `audit_git_delta.py` | GitHub old-vs-new delta audit against baseline ref |
+| `audit_figure_inventory.py` | Figure/publication inventory + freshness + hash audit |
+| `refresh_data_delta.py` | Hybrid delta refresh and dedup checks |
+| `backfill_dc3s_typed_columns.py` | Backfill typed DC3S audit columns from payload JSON |
+| `run_publish_audit_isolated.sh` | Run full publish audit in isolated `/tmp` workspace clone |
 | `check_api_health.py` | API health verification |
 | `validate_configs.py` | Configuration validation |
 | `validate_dispatch.py` | Dispatch plan validation |
