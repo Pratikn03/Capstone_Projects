@@ -72,6 +72,11 @@ class DC3SStepResponse(BaseModel):
     command_id: str
     queued: bool = False
     queue_status: Literal["queued", "skipped", "failed"] = "skipped"
+    intervened: bool = False
+    intervention_reason: Optional[str] = None
+    reliability_w: float
+    drift_flag: bool
+    inflation: float
     certificate: Optional[Dict[str, Any]] = None
 
 
@@ -184,6 +189,17 @@ def _load_features_df(forecast_cfg: Dict[str, Any]) -> pd.DataFrame:
     if not features_path.exists():
         raise HTTPException(status_code=404, detail=f"Missing features file: {features_path}")
     return pd.read_parquet(features_path)
+
+
+def _derive_intervention_reason(repair_meta: Dict[str, Any], intervened: bool) -> str | None:
+    if not intervened:
+        return None
+    robust_meta = repair_meta.get("robust_meta")
+    if isinstance(robust_meta, dict):
+        reason = robust_meta.get("reason")
+        if isinstance(reason, str) and reason:
+            return reason
+    return "projection_clip"
 
 
 @router.post("/step", response_model=DC3SStepResponse)
@@ -346,6 +362,11 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
             constraints=constraints,
             cfg=dc3s_cfg,
         )
+        intervened = bool(repair_meta.get("repaired", False))
+        intervention_reason = _derive_intervention_reason(repair_meta, intervened)
+        reliability_w = float(w_t)
+        drift_flag = bool(drift_info.get("drift", False))
+        inflation = float(uncertainty_meta.get("inflation", 1.0))
 
         try:
             bms.validate_dispatch(
@@ -381,6 +402,11 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
             config_hash=config_hash,
             prev_hash=state_row.get("last_prev_hash"),
             dispatch_plan=dispatch_plan,
+            intervened=intervened,
+            intervention_reason=intervention_reason,
+            reliability_w=reliability_w,
+            drift_flag=drift_flag,
+            inflation=inflation,
         )
         store_certificate(certificate, duckdb_path=audit_path, table_name=audit_table)
         queued = False
@@ -435,6 +461,11 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
             command_id=command_id,
             queued=queued,
             queue_status=queue_status,
+            intervened=intervened,
+            intervention_reason=intervention_reason,
+            reliability_w=reliability_w,
+            drift_flag=drift_flag,
+            inflation=inflation,
             certificate=certificate if req.include_certificate else None,
         )
     finally:

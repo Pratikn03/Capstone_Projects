@@ -10,6 +10,7 @@ import pandas as pd
 from fastapi import APIRouter
 
 from gridpulse.forecasting.predict import load_model_bundle
+from gridpulse.monitoring.dc3s_health import compute_dc3s_health, load_dc3s_audit_config, load_dc3s_health_config
 from gridpulse.monitoring.retraining import (
     load_monitoring_config,
     compute_data_drift,
@@ -27,7 +28,23 @@ def _load_week2_metrics() -> dict | None:
     path = Path("reports/week2_metrics.json")
     if not path.exists():
         return None
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+
+
+def _load_registry_latest(path: Path = Path("artifacts/registry/models.json")) -> dict | None:
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    latest = payload.get("latest")
+    return latest if isinstance(latest, dict) else None
 
 
 def _to_builtin(value: Any) -> Any:
@@ -66,15 +83,45 @@ def _load_frozen_metrics_snapshot(path: Path = Path("reports/frozen_metrics_snap
         return None
 
 
+def _compute_dc3s_health_block(update_state: bool = False) -> Dict[str, Any] | None:
+    cfg = load_dc3s_health_config()
+    if not bool(cfg.get("enabled", True)):
+        return None
+    audit_cfg = load_dc3s_audit_config()
+    return compute_dc3s_health(
+        window_hours=int(cfg.get("lookback_hours", 24)),
+        min_commands=int(cfg.get("min_commands", 50)),
+        thresholds=cfg,
+        duckdb_path=str(audit_cfg.get("duckdb_path", "data/audit/dc3s_audit.duckdb")),
+        table_name=str(audit_cfg.get("table_name", "dispatch_certificates")),
+        sustained_windows=int(cfg.get("sustained_windows", 3)),
+        state_path="reports/monitoring_state.json",
+        update_state=update_state,
+    )
+
+
 @router.get("")
 def monitor() -> Dict[str, Any]:
     cfg = load_monitoring_config()
+    dc3s_health = _compute_dc3s_health_block(update_state=False)
 
     features_path = Path("data/processed/features.parquet")
     train_path = Path("data/processed/splits/train.parquet")
 
     if not features_path.exists() or not train_path.exists():
-        return {"drift": False, "note": "missing processed data or splits"}
+        decision = retraining_decision(cfg, False, False, None, dc3s_health=dc3s_health)
+        payload = {
+            "drift": False,
+            "note": "missing processed data or splits",
+            "dc3s_health": dc3s_health,
+            "retraining": {
+                "retrain": decision.retrain,
+                "reasons": decision.reasons,
+                "last_trained_days_ago": decision.last_trained_days_ago,
+            },
+        }
+        write_monitoring_report(payload, out_path="reports/monitoring_report.md")
+        return payload
 
     df = pd.read_parquet(features_path).sort_values("timestamp")
     train_df = pd.read_parquet(train_path)
@@ -119,11 +166,13 @@ def monitor() -> Dict[str, Any]:
         data_drift.get("drift", False),
         model_drift.get("drift", False),
         last_trained_path=Path("reports/week2_metrics.json") if Path("reports/week2_metrics.json").exists() else None,
+        dc3s_health=dc3s_health,
     )
 
     payload = {
         "data_drift": data_drift,
         "model_drift": model_drift,
+        "dc3s_health": dc3s_health,
         "retraining": {
             "retrain": decision.retrain,
             "reasons": decision.reasons,
@@ -133,6 +182,12 @@ def monitor() -> Dict[str, Any]:
 
     write_monitoring_report(payload, out_path="reports/monitoring_report.md")
     return payload
+
+
+@router.get("/dc3s")
+def monitor_dc3s() -> Dict[str, Any]:
+    block = _compute_dc3s_health_block(update_state=False)
+    return block or {"enabled": False}
 
 
 @router.get("/research-metrics")
@@ -148,4 +203,37 @@ def research_metrics() -> Dict[str, Any]:
             "us": us,
         },
         "frozen_metrics_snapshot": frozen,
+    }
+
+
+@router.get("/model-info")
+def model_info() -> Dict[str, Any]:
+    metrics = _load_week2_metrics()
+    registry_latest = _load_registry_latest()
+
+    notes: list[str] = []
+    if metrics is None:
+        notes.append("Missing or invalid reports/week2_metrics.json")
+    if registry_latest is None:
+        notes.append("Missing or invalid artifacts/registry/models.json latest block")
+
+    return {
+        "available": bool(metrics or registry_latest),
+        "metrics_source": "reports/week2_metrics.json" if metrics else None,
+        "registry_source": "artifacts/registry/models.json" if registry_latest else None,
+        "generated_at": (
+            registry_latest.get("generated_at")
+            if registry_latest and registry_latest.get("generated_at")
+            else (metrics.get("generated_at") if metrics else None)
+        ),
+        "device": metrics.get("device") if metrics else None,
+        "quantiles": metrics.get("quantiles") if metrics else None,
+        "targets": metrics.get("targets") if metrics else None,
+        "registry": {
+            "run_id": registry_latest.get("run_id") if registry_latest else None,
+            "models_dir": registry_latest.get("models_dir") if registry_latest else None,
+            "model_count": len(registry_latest.get("models", [])) if registry_latest else 0,
+            "models": registry_latest.get("models", []) if registry_latest else [],
+        },
+        "notes": notes,
     }
