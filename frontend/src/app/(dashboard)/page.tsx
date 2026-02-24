@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { BarChart3, Zap, Leaf, TrendingDown, Activity, Database } from 'lucide-react';
 import { KPICard } from '@/components/ui/KPICard';
 import { Panel } from '@/components/ui/Panel';
@@ -10,10 +11,12 @@ import { CarbonCostPanel } from '@/components/ai/tools/CarbonCostPanel';
 import { AnomalyTimeline } from '@/components/charts/AnomalyTimeline';
 import { AnomalyList } from '@/components/charts/AnomalyList';
 import { MLOpsMonitor } from '@/components/charts/MLOpsMonitor';
+import { DC3SLiveCard } from '@/components/dashboard/DC3SLiveCard';
 import {
   mockDriftData,
 } from '@/lib/api/mock-data';
 import { useDispatchCompare } from '@/lib/api/dispatch-client';
+import { useDc3sLive } from '@/lib/api/dc3s-client';
 import { useReportsData } from '@/lib/api/reports-client';
 import { useDatasetData, type DriftPoint } from '@/lib/api/dataset-client';
 import { formatCurrency, formatMW, formatPercent } from '@/lib/utils';
@@ -21,7 +24,9 @@ import { useRegion } from '@/components/ui/RegionContext';
 
 export default function DashboardPage() {
   const { region } = useRegion();
+  const [dc3sRefreshSeconds, setDc3sRefreshSeconds] = useState(15);
   const dispatch = useDispatchCompare(region, 24);
+  const dc3s = useDc3sLive(region as 'DE' | 'US', 24, dc3sRefreshSeconds);
   const { metrics, impact, robustness, regions } = useReportsData();
   const dataset = useDatasetData(region as 'DE' | 'US');
 
@@ -96,7 +101,7 @@ export default function DashboardPage() {
             {realStats.date_range.start?.slice(0, 10)} → {realStats.date_range.end?.slice(0, 10)}
           </span>
           <span>•</span>
-          <span>{realMetrics.length} models trained</span>
+          <span>{realMetrics.length} model-target evaluations</span>
         </div>
       )}
 
@@ -172,6 +177,22 @@ export default function DashboardPage() {
         />
         <CarbonCostPanel data={pareto.length ? pareto : undefined} zoneId={region} summary={impactActive ?? undefined} />
       </div>
+
+      {/* ─── Row 2.5: Live DC3S Shield ─── */}
+      <DC3SLiveCard
+        region={region as 'DE' | 'US'}
+        data={dc3s.data}
+        loading={dc3s.loading}
+        error={dc3s.error}
+        onRefresh={dc3s.refresh}
+        autoRefreshSeconds={dc3sRefreshSeconds}
+        onAutoRefreshSecondsChange={setDc3sRefreshSeconds}
+        auditHref={
+          dc3s.data.command_id
+            ? `/api/dc3s/audit/${encodeURIComponent(dc3s.data.command_id)}`
+            : null
+        }
+      />
 
       {/* ─── Row 3: Impact & Robustness ─── */}
       <Panel
