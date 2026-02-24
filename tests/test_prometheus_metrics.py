@@ -76,13 +76,13 @@ class TestPrometheusMetrics:
             FORECAST_DURATION.labels(
                 model="lightgbm",
                 target="load_mw",
-                horizon="24h"
+                region="DE"
             ).observe(0.5)
             
             FORECAST_DURATION.labels(
                 model="lightgbm",
                 target="load_mw",
-                horizon="24h"
+                region="DE"
             ).observe(0.7)
             
             # Just verify no errors occurred
