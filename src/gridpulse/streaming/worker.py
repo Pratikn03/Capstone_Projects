@@ -148,6 +148,9 @@ class StreamingWorker:
         try:
             # Parse and validate
             event = OPSDTelemetryEvent(**message)
+            if self._consumer is None:
+                raise RuntimeError("Streaming consumer is not initialized.")
+            self._consumer.write_event(event.model_dump())
             
             # Calculate processing delay
             try:

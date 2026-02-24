@@ -150,11 +150,29 @@ class StreamingIngestConsumer:
             # Parquet write can be added later: append partitioned parquet by date/hour.
             pass
 
+    def write_event(self, event_dict: Dict[str, Any]) -> None:
+        """Persist one event after schema/rules validation."""
+        self._write(event_dict)
+
+    def close(self) -> None:
+        """Close underlying Kafka and storage connections."""
+        try:
+            self.consumer.close()
+        except Exception:
+            pass
+
+        con = getattr(self, "con", None)
+        if con is not None:
+            try:
+                con.close()
+            except Exception:
+                pass
+
     def run_forever(self, max_messages: Optional[int] = None) -> None:
         count = 0
         for msg in self.consumer:
             event_dict = msg.value
-            self._write(event_dict)
+            self.write_event(event_dict)
 
             count += 1
             if count % 200 == 0:
