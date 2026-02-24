@@ -30,6 +30,17 @@ def load_monitoring_config(path: str | Path = "configs/monitoring.yaml") -> dict
             "data_drift": {"p_value_threshold": 0.01},
             "model_drift": {"metric": "mape", "degradation_threshold": 0.15},
             "retraining": {"cadence_days": 30, "min_new_data_days": 14},
+            "dc3s_health": {
+                "enabled": True,
+                "lookback_hours": 24,
+                "min_commands": 50,
+                "intervention_rate_threshold": 0.30,
+                "low_reliability_w_threshold": 0.60,
+                "low_reliability_rate_threshold": 0.25,
+                "drift_flag_rate_threshold": 0.10,
+                "inflation_p95_threshold": 2.0,
+                "sustained_windows": 3,
+            },
         }
     return yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
 
@@ -61,7 +72,12 @@ def compute_model_metrics_gbm(bundle: dict, df: pd.DataFrame, target: str) -> Di
     feat_cols = bundle.get("feature_cols", [])
     if not feat_cols:
         raise ValueError("Model bundle missing feature_cols")
-    X = df[feat_cols].to_numpy()
+    # Keep monitoring robust across schema evolution by aligning missing columns.
+    aligned = df.copy()
+    for col in feat_cols:
+        if col not in aligned.columns:
+            aligned[col] = np.nan
+    X = aligned[feat_cols].to_numpy()
     y = df[target].to_numpy()
     pred = bundle["model"].predict(X)
     return {"rmse": rmse(y, pred), "mape": mape(y, pred)}
@@ -74,7 +90,13 @@ def evaluate_model_drift(baseline_metric: float | None, current_metric: float | 
     return metric_drift(current_metric, baseline_metric, degradation_threshold=threshold)
 
 
-def retraining_decision(cfg: dict, data_drift: bool, model_drift: bool, last_trained_path: Path | None) -> RetrainingDecision:
+def retraining_decision(
+    cfg: dict,
+    data_drift: bool,
+    model_drift: bool,
+    last_trained_path: Path | None,
+    dc3s_health: dict | None = None,
+) -> RetrainingDecision:
     """Combine drift checks and cadence rules into a retrain decision."""
     retrain_cfg = cfg.get("retraining", {})
     cadence_days = int(retrain_cfg.get("cadence_days", 30))
@@ -85,6 +107,14 @@ def retraining_decision(cfg: dict, data_drift: bool, model_drift: bool, last_tra
         reasons.append("data_drift")
     if model_drift:
         reasons.append("model_drift")
+    if isinstance(dc3s_health, dict) and bool(dc3s_health.get("triggered", False)):
+        flags = set(dc3s_health.get("triggered_flags", []) or [])
+        if "intervention_rate" in flags:
+            reasons.append("dc3s_intervention_spike")
+        if "low_reliability_rate" in flags:
+            reasons.append("dc3s_reliability_degradation")
+        if "drift_flag_rate" in flags:
+            reasons.append("dc3s_drift_persistence")
     if last_days is not None and last_days >= cadence_days:
         reasons.append("scheduled_cadence")
 

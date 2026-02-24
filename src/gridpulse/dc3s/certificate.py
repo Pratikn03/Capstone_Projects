@@ -51,6 +51,11 @@ def make_certificate(
     config_hash: str,
     prev_hash: str | None = None,
     dispatch_plan: Mapping[str, Any] | None = None,
+    intervened: bool | None = None,
+    intervention_reason: str | None = None,
+    reliability_w: float | None = None,
+    drift_flag: bool | None = None,
+    inflation: float | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "command_id": command_id,
@@ -68,9 +73,25 @@ def make_certificate(
         "config_hash": config_hash,
         "prev_hash": prev_hash,
         "dispatch_plan": dict(dispatch_plan) if dispatch_plan is not None else None,
+        "intervened": bool(intervened) if intervened is not None else None,
+        "intervention_reason": intervention_reason,
+        "reliability_w": float(reliability_w) if reliability_w is not None else None,
+        "drift_flag": bool(drift_flag) if drift_flag is not None else None,
+        "inflation": float(inflation) if inflation is not None else None,
     }
     payload["certificate_hash"] = _sha256_bytes(_canonical_bytes(payload))
     return payload
+
+
+def _table_columns(conn: duckdb.DuckDBPyConnection, table_name: str) -> set[str]:
+    rows = conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()
+    return {str(row[1]) for row in rows}
+
+
+def _add_column_if_missing(conn: duckdb.DuckDBPyConnection, table_name: str, column_name: str, column_type: str) -> None:
+    if column_name in _table_columns(conn, table_name):
+        return
+    conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")
 
 
 def _ensure_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
@@ -81,10 +102,20 @@ def _ensure_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
             certificate_hash VARCHAR,
             prev_hash VARCHAR,
             created_at VARCHAR,
-            payload_json VARCHAR
+            payload_json VARCHAR,
+            intervened BOOLEAN,
+            intervention_reason VARCHAR,
+            reliability_w DOUBLE,
+            drift_flag BOOLEAN,
+            inflation DOUBLE
         )
         """
     )
+    _add_column_if_missing(conn, table_name, "intervened", "BOOLEAN")
+    _add_column_if_missing(conn, table_name, "intervention_reason", "VARCHAR")
+    _add_column_if_missing(conn, table_name, "reliability_w", "DOUBLE")
+    _add_column_if_missing(conn, table_name, "drift_flag", "BOOLEAN")
+    _add_column_if_missing(conn, table_name, "inflation", "DOUBLE")
 
 
 def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_name: str) -> None:
@@ -97,8 +128,17 @@ def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_na
         conn.execute(
             f"""
             INSERT OR REPLACE INTO {table_name} (
-                command_id, certificate_hash, prev_hash, created_at, payload_json
-            ) VALUES (?, ?, ?, ?, ?)
+                command_id,
+                certificate_hash,
+                prev_hash,
+                created_at,
+                payload_json,
+                intervened,
+                intervention_reason,
+                reliability_w,
+                drift_flag,
+                inflation
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 str(certificate.get("command_id")),
@@ -106,6 +146,11 @@ def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_na
                 certificate.get("prev_hash"),
                 str(certificate.get("created_at")),
                 payload_json,
+                certificate.get("intervened"),
+                certificate.get("intervention_reason"),
+                certificate.get("reliability_w"),
+                certificate.get("drift_flag"),
+                certificate.get("inflation"),
             ],
         )
     finally:
