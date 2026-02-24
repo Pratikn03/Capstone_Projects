@@ -39,10 +39,23 @@ training:
   lookback: 168   # 1 week history
   horizon: 24     # 24 hour forecast
   batch_size: 64
-  epochs: 50
-  learning_rate: 0.001
+  epochs: 300               # Increased from 50 for proper convergence
+  learning_rate: 0.0003     # Reduced from 0.001 for stability
+  weight_decay: 1e-4        # L2 regularization
+  scheduler: cosine_warm_restarts
+  warmup_epochs: 10
+  T_0: 50                   # Warm restart period
+  T_mult: 2
+  gradient_clip: 0.5        # Gradient clipping for stability
+  early_stopping:
+    enabled: true
+    patience: 30
+    min_delta: 0.00005
 
 model:
-  hidden_size: 64
+  hidden_size: 512          # Increased from 64 for capacity
   num_layers: 2
-  dropout: 0.1
+  dropout: 0.2              # Increased from 0.1
+  bidirectional: true       # Bidirectional LSTM
+  attention: true           # Attention mechanism
+  residual: true            # Residual connections

@@ -9,3 +9,14 @@ model_drift:
 retraining:
   cadence_days: 30
   min_new_data_days: 14
+
+dc3s_health:
+  enabled: true
+  lookback_hours: 24
+  min_commands: 50
+  intervention_rate_threshold: 0.30
+  low_reliability_w_threshold: 0.60
+  low_reliability_rate_threshold: 0.25
+  drift_flag_rate_threshold: 0.10
+  inflation_p95_threshold: 2.0
+  sustained_windows: 3

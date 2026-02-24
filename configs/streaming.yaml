@@ -7,7 +7,7 @@ kafka:
 storage:
   mode: "duckdb"            # duckdb|parquet
   duckdb_path: "data/interim/streaming.duckdb"
-  table_name: "telemetry_opsd"
+  table_name: "telemetry_events"
   parquet_dir: "data/interim/streaming_parquet"
 
 checkpoint:
