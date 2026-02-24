@@ -58,3 +58,32 @@ python scripts/update_readme_impact.py
 uvicorn services.api.main:app --reload --port 8000
 cd frontend && npm run dev
 ```
+
+## 7) Run monitoring with DC3S health
+```bash
+python scripts/run_monitoring.py
+cat reports/monitoring_summary.json
+```
+
+Expected monitoring payload now includes:
+- `dc3s_health.commands_total`
+- `dc3s_health.intervention_rate`
+- `dc3s_health.low_reliability_rate`
+- `dc3s_health.drift_flag_rate`
+- `dc3s_health.inflation_p95`
+- `dc3s_health.triggered_flags`
+
+If command volume is too low, `dc3s_health.insufficient_data` is `true` and DC3S retraining triggers remain disabled.
+
+## 8) Conditional retraining (includes DC3S triggers)
+```bash
+python scripts/retrain_if_needed.py --refresh
+```
+
+Retraining reasons can include:
+- `data_drift`
+- `model_drift`
+- `scheduled_cadence`
+- `dc3s_intervention_spike`
+- `dc3s_reliability_degradation`
+- `dc3s_drift_persistence`

@@ -162,9 +162,14 @@ GridPulse implements a **Level-4 Decision System** architecture where prediction
 │  • Rolling RMSE comparison vs calibration baseline                           │
 │  • Alert if degradation > 10%                                                │
 │                                                                              │
+│  DC3S Health Detection:                                                      │
+│  • Intervention rate, low-reliability rate, drift-flag rate, inflation p95  │
+│  • Sustained-window triggering persisted in reports/monitoring_state.json    │
+│                                                                              │
 │  Retraining Triggers:                                                        │
 │  • Scheduled: Weekly full retrain                                            │
 │  • Drift-based: Automatic if KS p-value < threshold                          │
+│  • DC3S-based: intervention spikes, reliability degradation, drift persistence│
 │                                                                              │
 │  Output: reports/monitoring_summary.json, reports/monitoring_report.md      │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -179,7 +184,9 @@ GridPulse implements a **Level-4 Decision System** architecture where prediction
 │  • GET  /metrics         - Prometheus metrics                                │
 │  • POST /forecast        - Generate forecast for region/target               │
 │  • POST /optimize        - Run dispatch optimization                         │
-│  • GET  /monitor/drift   - Current drift status                              │
+│  • POST /dc3s/step       - Safety-gated dispatch with certificate issuance   │
+│  • GET  /monitor         - Drift + DC3S health + retraining decision         │
+│  • GET  /monitor/dc3s    - DC3S health-only view                             │
 │  • GET  /anomaly/recent  - Recent anomaly events                             │
 │                                                                              │
 │  Next.js 15 Dashboard (frontend/):                                           │
