@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import time
 from functools import wraps
+import inspect
 from typing import Callable, Optional
 
 from prometheus_client import (
@@ -238,15 +239,42 @@ SERVICE_INFO = Info(
 def track_request_metrics(endpoint: str):
     """Decorator to track request metrics for an endpoint."""
     def decorator(func: Callable):
+        method = "POST"  # Default, could be extracted from request
+
+        if inspect.iscoroutinefunction(func):
+            @wraps(func)
+            async def async_wrapper(*args, **kwargs):
+                REQUESTS_IN_PROGRESS.labels(endpoint=endpoint).inc()
+                start_time = time.perf_counter()
+
+                try:
+                    result = await func(*args, **kwargs)
+                    REQUESTS_TOTAL.labels(
+                        endpoint=endpoint, method=method, status="success"
+                    ).inc()
+                    return result
+                except Exception as e:
+                    REQUESTS_TOTAL.labels(
+                        endpoint=endpoint, method=method, status="error"
+                    ).inc()
+                    REQUEST_ERRORS.labels(
+                        endpoint=endpoint, method=method, error_type=type(e).__name__
+                    ).inc()
+                    raise
+                finally:
+                    duration = time.perf_counter() - start_time
+                    REQUEST_DURATION.labels(endpoint=endpoint, method=method).observe(duration)
+                    REQUESTS_IN_PROGRESS.labels(endpoint=endpoint).dec()
+
+            return async_wrapper
+
         @wraps(func)
-        async def wrapper(*args, **kwargs):
-            method = "POST"  # Default, could be extracted from request
-            
+        def sync_wrapper(*args, **kwargs):
             REQUESTS_IN_PROGRESS.labels(endpoint=endpoint).inc()
             start_time = time.perf_counter()
-            
+
             try:
-                result = await func(*args, **kwargs)
+                result = func(*args, **kwargs)
                 REQUESTS_TOTAL.labels(
                     endpoint=endpoint, method=method, status="success"
                 ).inc()
@@ -263,8 +291,9 @@ def track_request_metrics(endpoint: str):
                 duration = time.perf_counter() - start_time
                 REQUEST_DURATION.labels(endpoint=endpoint, method=method).observe(duration)
                 REQUESTS_IN_PROGRESS.labels(endpoint=endpoint).dec()
-        
-        return wrapper
+
+        return sync_wrapper
+
     return decorator
 
 
@@ -363,12 +392,22 @@ def update_battery_metrics(
 
 def update_streaming_metrics(
     topic: str,
-    consumer_lag: int,
-    processing_delay: float,
+    consumer_lag: Optional[int] = None,
+    processing_delay: float = 0.0,
+    partition: int | str = 0,
+    lag: Optional[int] = None,
 ):
-    """Update streaming-related metrics."""
-    KAFKA_CONSUMER_LAG.labels(topic=topic, partition="0").set(consumer_lag)
-    STREAMING_PROCESSING_DELAY.labels(topic=topic).set(processing_delay)
+    """Update streaming-related metrics.
+
+    Supports both the current argument names (`consumer_lag`) and
+    legacy aliases (`lag`, `partition`) for compatibility.
+    """
+    resolved_lag = consumer_lag if consumer_lag is not None else lag
+    if resolved_lag is None:
+        raise ValueError("Either consumer_lag or lag must be provided")
+
+    KAFKA_CONSUMER_LAG.labels(topic=topic, partition=str(partition)).set(int(resolved_lag))
+    STREAMING_PROCESSING_DELAY.labels(topic=topic).set(float(processing_delay))
 
 
 def record_anomaly(target: str, region: str, detector: str, score: float):
