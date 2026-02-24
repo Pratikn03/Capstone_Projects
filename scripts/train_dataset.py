@@ -29,11 +29,19 @@ Author: GridPulse Team
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
+import json
+import os
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+
+import yaml
+
+PYTHON_BIN = sys.executable or "python3"
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 # =============================================================================
@@ -88,12 +96,27 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
     ),
 }
 
+AGGRESSIVE_DEFAULTS = {
+    "DE": {"n_trials": 220, "top_pct": 0.20, "max_seeds": 8},
+    "US": {"n_trials": 260, "top_pct": 0.20, "max_seeds": 5},
+}
+
 
 # =============================================================================
 # PIPELINE FUNCTIONS
 # =============================================================================
 
-def run_command(cmd: list[str], description: str) -> bool:
+def _load_publish_audit_cfg(path: str = "configs/publish_audit.yaml") -> dict:
+    cfg_path = Path(path)
+    if not cfg_path.exists():
+        return {}
+    payload = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+    if not isinstance(payload, dict):
+        return {}
+    return payload.get("publish_audit", {}) if isinstance(payload.get("publish_audit"), dict) else {}
+
+
+def run_command(cmd: list[str], description: str, timeout_seconds: float | None = None) -> bool:
     """
     Execute a subprocess command with logging.
     
@@ -110,10 +133,25 @@ def run_command(cmd: list[str], description: str) -> bool:
     print(f"   Command: {' '.join(cmd)}")
     print()
     
+    cmd_env = os.environ.copy()
+    src_path = str(REPO_ROOT / "src")
+    existing_pythonpath = cmd_env.get("PYTHONPATH", "")
+    cmd_env["PYTHONPATH"] = f"{src_path}{os.pathsep}{existing_pythonpath}" if existing_pythonpath else src_path
+
     try:
-        result = subprocess.run(cmd, check=True, capture_output=False)
+        subprocess.run(
+            cmd,
+            check=True,
+            capture_output=False,
+            timeout=timeout_seconds,
+            cwd=str(REPO_ROOT),
+            env=cmd_env,
+        )
         print(f"✅ {description} - completed successfully")
         return True
+    except subprocess.TimeoutExpired:
+        print(f"❌ {description} - timed out after {timeout_seconds} seconds")
+        return False
     except subprocess.CalledProcessError as e:
         print(f"❌ {description} - failed with exit code {e.returncode}")
         return False
@@ -138,7 +176,7 @@ def build_features(cfg: DatasetConfig, force: bool = False) -> bool:
     
     # Build command based on dataset type
     cmd = [
-        "python", "-m", cfg.feature_module,
+        PYTHON_BIN, "-m", cfg.feature_module,
         "--in", cfg.raw_data_path,
         "--out", str(features_path.parent),
     ]
@@ -174,7 +212,7 @@ def create_splits(cfg: DatasetConfig, force: bool = False) -> bool:
         return True
     
     cmd = [
-        "python", "-m", "gridpulse.data_pipeline.split_time_series",
+        PYTHON_BIN, "-m", "gridpulse.data_pipeline.split_time_series",
         "--in", cfg.features_path,
         "--out", cfg.splits_path,
     ]
@@ -182,7 +220,17 @@ def create_splits(cfg: DatasetConfig, force: bool = False) -> bool:
     return run_command(cmd, f"Creating time series splits for {cfg.display_name}")
 
 
-def train_models(cfg: DatasetConfig, tune: bool = False) -> bool:
+def train_models(
+    cfg: DatasetConfig,
+    tune: bool = False,
+    no_tune: bool = False,
+    ensemble: bool = False,
+    max_seeds: Optional[int] = None,
+    n_trials: Optional[int] = None,
+    top_pct: Optional[float] = None,
+    profile: str = "standard",
+    max_runtime_hours: Optional[float] = None,
+) -> bool:
     """
     Train forecasting models.
     
@@ -193,15 +241,46 @@ def train_models(cfg: DatasetConfig, tune: bool = False) -> bool:
     Returns:
         True if successful
     """
+    effective_tune = bool(tune)
+    effective_ensemble = bool(ensemble)
+    effective_max_seeds = max_seeds
+    effective_n_trials = n_trials
+    effective_top_pct = top_pct
+
+    if profile == "aggressive":
+        defaults = AGGRESSIVE_DEFAULTS.get(cfg.name, AGGRESSIVE_DEFAULTS["DE"])
+        effective_tune = True
+        effective_ensemble = True
+        if effective_max_seeds is None:
+            effective_max_seeds = int(defaults["max_seeds"])
+        if effective_n_trials is None:
+            effective_n_trials = int(defaults["n_trials"])
+        if effective_top_pct is None:
+            effective_top_pct = float(defaults["top_pct"])
+
     cmd = [
-        "python", "-m", "gridpulse.forecasting.train",
+        PYTHON_BIN, "-m", "gridpulse.forecasting.train",
         "--config", cfg.config_file,
     ]
     
-    if tune:
+    if effective_tune:
         cmd.append("--tune")
+    if no_tune:
+        cmd.append("--no-tune")
+    if effective_ensemble:
+        cmd.append("--ensemble")
+    if effective_max_seeds is not None and effective_max_seeds > 0:
+        cmd.extend(["--max-seeds", str(int(effective_max_seeds))])
+    if effective_n_trials is not None and effective_n_trials > 0:
+        cmd.extend(["--n-trials", str(int(effective_n_trials))])
+    if effective_top_pct is not None:
+        cmd.extend(["--top-pct", str(float(effective_top_pct))])
     
-    return run_command(cmd, f"Training models for {cfg.display_name}")
+    timeout_seconds = None
+    if max_runtime_hours is not None and max_runtime_hours > 0:
+        timeout_seconds = float(max_runtime_hours) * 3600.0
+
+    return run_command(cmd, f"Training models for {cfg.display_name}", timeout_seconds=timeout_seconds)
 
 
 def generate_reports(cfg: DatasetConfig) -> bool:
@@ -215,7 +294,7 @@ def generate_reports(cfg: DatasetConfig) -> bool:
         True if successful
     """
     cmd = [
-        "python", "scripts/build_reports.py",
+        PYTHON_BIN, "scripts/build_reports.py",
         "--features", cfg.features_path,
         "--splits", cfg.splits_path,
         "--models-dir", cfg.models_dir,
@@ -242,11 +321,136 @@ def run_conformal_intervals(cfg: DatasetConfig) -> bool:
         return True  # Reports include conformal if configured
     
     cmd = [
-        "python", str(conformal_script),
+        PYTHON_BIN, str(conformal_script),
         "--config", cfg.config_file,
     ]
     
     return run_command(cmd, f"Computing conformal intervals for {cfg.display_name}")
+
+
+def _load_json(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _evaluate_against_baseline(
+    *,
+    dataset_name: str,
+    reports_dir: Path,
+    target_metrics_file: Path | None,
+    publish_cfg: dict,
+    profile: str,
+) -> dict:
+    current_metrics = _load_json(reports_dir / "week2_metrics.json")
+    baseline_metrics = _load_json(target_metrics_file) if target_metrics_file else {}
+
+    acc_cfg = publish_cfg.get("retraining_acceptance", {}) if isinstance(publish_cfg.get("retraining_acceptance"), dict) else {}
+    metric_name = str(acc_cfg.get("metric", "mape"))
+    require_non_reg = bool(acc_cfg.get("require_non_regression", True))
+    min_impr = acc_cfg.get("min_improvement_by_target", {})
+    if not isinstance(min_impr, dict):
+        min_impr = {}
+    max_cv_std = float(acc_cfg.get("max_cv_rmse_std", 1e9))
+
+    current_targets = current_metrics.get("targets", {}) if isinstance(current_metrics.get("targets"), dict) else {}
+    baseline_targets = baseline_metrics.get("targets", {}) if isinstance(baseline_metrics.get("targets"), dict) else {}
+
+    target_rows: list[dict] = []
+    overall_pass = True
+    for target, target_payload in current_targets.items():
+        if not isinstance(target_payload, dict):
+            continue
+        cur_gbm = target_payload.get("gbm", {}) if isinstance(target_payload.get("gbm"), dict) else {}
+        cur_metric = cur_gbm.get(metric_name)
+        baseline_payload = baseline_targets.get(target, {}) if isinstance(baseline_targets.get(target), dict) else {}
+        base_gbm = baseline_payload.get("gbm", {}) if isinstance(baseline_payload.get("gbm"), dict) else {}
+        base_metric = base_gbm.get(metric_name)
+
+        improvement = None
+        if isinstance(base_metric, (int, float)) and isinstance(cur_metric, (int, float)) and base_metric != 0:
+            improvement = (float(base_metric) - float(cur_metric)) / abs(float(base_metric))
+
+        min_req = float(min_impr.get(target, 0.0))
+        non_regression_pass = True
+        if require_non_reg and isinstance(base_metric, (int, float)) and isinstance(cur_metric, (int, float)):
+            non_regression_pass = float(cur_metric) <= float(base_metric)
+        improvement_pass = True
+        if improvement is not None:
+            improvement_pass = float(improvement) >= min_req
+
+        cv_std = None
+        if isinstance(cur_gbm.get("cv_results"), dict):
+            cv_std = cur_gbm["cv_results"].get("rmse_std")
+        cv_std_pass = True
+        if isinstance(cv_std, (int, float)):
+            cv_std_pass = float(cv_std) <= max_cv_std
+
+        row_pass = bool(non_regression_pass and improvement_pass and cv_std_pass)
+        if not row_pass:
+            overall_pass = False
+
+        target_rows.append(
+            {
+                "target": target,
+                "metric": metric_name,
+                "current_metric": cur_metric,
+                "baseline_metric": base_metric,
+                "improvement": improvement,
+                "min_improvement_required": min_req,
+                "non_regression_pass": non_regression_pass,
+                "improvement_pass": improvement_pass,
+                "cv_rmse_std": cv_std,
+                "cv_std_pass": cv_std_pass,
+                "accepted": row_pass,
+            }
+        )
+
+    if not target_rows:
+        overall_pass = False
+
+    return {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "dataset": dataset_name,
+        "profile": profile,
+        "metric": metric_name,
+        "target_metrics_file": str(target_metrics_file) if target_metrics_file else None,
+        "targets": target_rows,
+        "accepted": overall_pass,
+    }
+
+
+def _persist_selection_artifacts(
+    *,
+    cfg: DatasetConfig,
+    evaluation: dict,
+    output_dir: Path,
+) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    summary_path = output_dir / f"tuning_summary_{cfg.name.lower()}.json"
+    summary_path.write_text(json.dumps(evaluation, indent=2), encoding="utf-8")
+
+    decision_path = output_dir / "model_selection_decisions.md"
+    lines: list[str] = []
+    if decision_path.exists():
+        lines.append(decision_path.read_text(encoding="utf-8").rstrip())
+        lines.append("")
+    lines.append(f"## {cfg.name} - {datetime.now(timezone.utc).isoformat()}")
+    lines.append(f"- Accepted: **{evaluation.get('accepted')}**")
+    lines.append(f"- Profile: `{evaluation.get('profile')}`")
+    lines.append("")
+    lines.append("| Target | Current | Baseline | Improvement | Accepted |")
+    lines.append("|---|---:|---:|---:|:---:|")
+    for row in evaluation.get("targets", []):
+        lines.append(
+            f"| {row.get('target')} | {row.get('current_metric')} | {row.get('baseline_metric')} | "
+            f"{row.get('improvement')} | {row.get('accepted')} |"
+        )
+    decision_path.write_text("\n".join(lines).strip() + "\n", encoding="utf-8")
 
 
 # =============================================================================
@@ -256,6 +460,14 @@ def run_conformal_intervals(cfg: DatasetConfig) -> bool:
 def train_dataset(
     dataset_name: str,
     tune: bool = False,
+    no_tune: bool = False,
+    ensemble: bool = False,
+    max_seeds: Optional[int] = None,
+    n_trials: Optional[int] = None,
+    top_pct: Optional[float] = None,
+    profile: str = "standard",
+    max_runtime_hours: Optional[float] = None,
+    target_metrics_file: Optional[str] = None,
     reports: bool = True,
     rebuild_features: bool = False,
     skip_training: bool = False,
@@ -295,14 +507,41 @@ def train_dataset(
     
     # Step 3: Train models
     if not skip_training:
-        if not train_models(cfg, tune=tune):
+        if not train_models(
+            cfg,
+            tune=tune,
+            no_tune=no_tune,
+            ensemble=ensemble,
+            max_seeds=max_seeds,
+            n_trials=n_trials,
+            top_pct=top_pct,
+            profile=profile,
+            max_runtime_hours=max_runtime_hours,
+        ):
             return False
     
     # Step 4: Generate reports (includes conformal coverage)
     if reports:
         if not generate_reports(cfg):
             print("⚠️  Reports generation failed, continuing...")
-    
+
+    publish_cfg = _load_publish_audit_cfg()
+    target_metrics_path = Path(target_metrics_file) if target_metrics_file else None
+    evaluation = _evaluate_against_baseline(
+        dataset_name=cfg.name,
+        reports_dir=Path(cfg.reports_dir),
+        target_metrics_file=target_metrics_path,
+        publish_cfg=publish_cfg,
+        profile=profile,
+    )
+    _persist_selection_artifacts(
+        cfg=cfg,
+        evaluation=evaluation,
+        output_dir=Path("reports/publish"),
+    )
+    if not bool(evaluation.get("accepted", False)):
+        print(f"⚠️  Acceptance gates not met for {cfg.display_name}. See reports/publish.")
+
     print(f"\n✅ Pipeline completed for {cfg.display_name}")
     return True
 
@@ -356,7 +595,7 @@ Examples:
     
     parser.add_argument(
         "--dataset", "-d",
-        choices=list(DATASET_REGISTRY.keys()),
+        choices=list(DATASET_REGISTRY.keys()) + ["ALL"],
         help="Dataset to train (DE, US, etc.)",
     )
     parser.add_argument(
@@ -373,6 +612,51 @@ Examples:
         "--tune", "-t",
         action="store_true",
         help="Enable Optuna hyperparameter tuning",
+    )
+    parser.add_argument(
+        "--no-tune",
+        action="store_true",
+        help="Disable tuning even if YAML has tuning.enabled=true",
+    )
+    parser.add_argument(
+        "--ensemble",
+        action="store_true",
+        help="Train multi-seed GBM ensembles using config.seeds",
+    )
+    parser.add_argument(
+        "--max-seeds",
+        type=int,
+        default=None,
+        help="Optional cap for ensemble seed count",
+    )
+    parser.add_argument(
+        "--n-trials",
+        type=int,
+        default=None,
+        help="Override Optuna trial count for this run",
+    )
+    parser.add_argument(
+        "--top-pct",
+        type=float,
+        default=None,
+        help="Use top percent of trials for param aggregation (e.g. 0.30 or 0.001)",
+    )
+    parser.add_argument(
+        "--profile",
+        choices=["standard", "aggressive"],
+        default="standard",
+        help="Training profile. aggressive forces tune+ensemble and higher trial budgets.",
+    )
+    parser.add_argument(
+        "--max-runtime-hours",
+        type=float,
+        default=None,
+        help="Optional timeout for each training invocation.",
+    )
+    parser.add_argument(
+        "--target-metrics-file",
+        default=None,
+        help="Optional baseline metrics JSON for acceptance comparison.",
     )
     parser.add_argument(
         "--reports", "-r",
@@ -413,9 +697,18 @@ Examples:
         return 1
     
     # Run training
-    if args.all:
+    run_all = bool(args.all or args.dataset == "ALL")
+    if run_all:
         success = train_all_datasets(
             tune=args.tune,
+            no_tune=args.no_tune,
+            ensemble=args.ensemble,
+            max_seeds=args.max_seeds,
+            n_trials=args.n_trials,
+            top_pct=args.top_pct,
+            profile=args.profile,
+            max_runtime_hours=args.max_runtime_hours,
+            target_metrics_file=args.target_metrics_file,
             reports=reports,
             rebuild_features=args.rebuild,
             skip_training=args.reports_only,
@@ -424,6 +717,14 @@ Examples:
         success = train_dataset(
             args.dataset,
             tune=args.tune,
+            no_tune=args.no_tune,
+            ensemble=args.ensemble,
+            max_seeds=args.max_seeds,
+            n_trials=args.n_trials,
+            top_pct=args.top_pct,
+            profile=args.profile,
+            max_runtime_hours=args.max_runtime_hours,
+            target_metrics_file=args.target_metrics_file,
             reports=reports,
             rebuild_features=args.rebuild,
             skip_training=args.reports_only,

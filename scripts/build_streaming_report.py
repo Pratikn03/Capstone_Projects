@@ -10,7 +10,7 @@ import duckdb
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--duckdb", default="data/interim/streaming.duckdb")
-    ap.add_argument("--table", default="telemetry_opsd")
+    ap.add_argument("--table", default="telemetry_events")
     ap.add_argument("--out-md", default="reports/streaming_ingestion_report.md")
     args = ap.parse_args()
 
