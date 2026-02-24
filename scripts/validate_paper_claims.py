@@ -1,0 +1,278 @@
+#!/usr/bin/env python3
+"""Validate manuscript claims against paper/metrics_manifest.json.
+
+This checker is intentionally non-mutating. It validates:
+1. Required metric/run-id patterns exist in markdown and LaTeX.
+2. Banned legacy patterns are absent.
+3. Placeholder tokens are absent.
+4. LaTeX \\input references resolve.
+5. Run IDs used in manuscript match allowed dataset-scoped run IDs.
+6. claim_matrix status values are valid.
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import re
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterable
+
+
+ALLOWED_CLAIM_STATUSES = {"Verified", "Conflicting", "Unsupported", "Needs Citation"}
+RUN_ID_RE = re.compile(r"\b20\d{6}_\d{6}\b")
+
+
+@dataclass
+class Finding:
+    severity: str  # ERROR or WARN
+    check: str
+    file: str
+    detail: str
+
+
+def _load_json(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        raise SystemExit(f"Missing required JSON file: {path}")
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"Invalid JSON in {path}: {exc}")
+
+
+def _read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        raise SystemExit(f"Missing required text file: {path}")
+
+
+def _normalize_space(text: str) -> str:
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _check_patterns(
+    findings: list[Finding],
+    pattern_specs: Iterable[dict],
+    markdown_text: str,
+    tex_text: str,
+    markdown_path: Path,
+    tex_path: Path,
+    required: bool,
+) -> None:
+    for spec in pattern_specs:
+        pid = spec.get("id", "unnamed")
+        regex = spec.get("regex")
+        files = spec.get("files", ["markdown", "tex"]) if required else ["markdown", "tex"]
+        if not regex:
+            findings.append(Finding("ERROR", "manifest_pattern", "manifest", f"Pattern '{pid}' missing regex"))
+            continue
+
+        try:
+            compiled = re.compile(regex)
+        except re.error as exc:
+            findings.append(Finding("ERROR", "manifest_pattern", "manifest", f"Invalid regex for '{pid}': {exc}"))
+            continue
+
+        targets = []
+        if "markdown" in files:
+            targets.append((markdown_path, markdown_text))
+        if "tex" in files:
+            targets.append((tex_path, tex_text))
+
+        for path, text in targets:
+            matched = compiled.search(text) is not None
+            if required and not matched:
+                findings.append(Finding("ERROR", "required_pattern", str(path), f"Missing required pattern '{pid}' /{regex}/"))
+            if not required and matched:
+                reason = spec.get("reason", "Banned pattern detected")
+                findings.append(Finding("ERROR", "banned_pattern", str(path), f"Pattern '{pid}' matched /{regex}/ ({reason})"))
+
+
+def _check_placeholders(
+    findings: list[Finding],
+    placeholder_patterns: Iterable[str],
+    markdown_text: str,
+    tex_text: str,
+    markdown_path: Path,
+    tex_path: Path,
+) -> None:
+    for patt in placeholder_patterns:
+        try:
+            compiled = re.compile(patt)
+        except re.error as exc:
+            findings.append(Finding("ERROR", "placeholder_pattern", "manifest", f"Invalid placeholder regex '{patt}': {exc}"))
+            continue
+        for path, text in ((markdown_path, markdown_text), (tex_path, tex_text)):
+            if compiled.search(text):
+                findings.append(Finding("ERROR", "placeholder", str(path), f"Placeholder pattern found: /{patt}/"))
+
+
+def _check_run_ids(
+    findings: list[Finding],
+    expected_run_ids: set[str],
+    markdown_text: str,
+    tex_text: str,
+    markdown_path: Path,
+    tex_path: Path,
+) -> None:
+    for path, text in ((markdown_path, markdown_text), (tex_path, tex_text)):
+        # LaTeX escapes underscores as "\\_", so normalize before run-id extraction.
+        normalized = text.replace("\\_", "_")
+        found = set(RUN_ID_RE.findall(normalized))
+        unknown = sorted(found - expected_run_ids)
+        missing = sorted(expected_run_ids - found)
+        if unknown:
+            findings.append(Finding("ERROR", "run_id_scope", str(path), f"Unknown run IDs present: {', '.join(unknown)}"))
+        if missing:
+            findings.append(Finding("WARN", "run_id_scope", str(path), f"Expected run IDs not found: {', '.join(missing)}"))
+
+
+def _check_tex_inputs(findings: list[Finding], tex_text: str, tex_path: Path) -> None:
+    inputs = re.findall(r"\\input\{([^}]+)\}", tex_text)
+    tex_dir = tex_path.parent
+    for ref in inputs:
+        resolved = (tex_dir / ref).resolve()
+        if not resolved.exists():
+            findings.append(Finding("ERROR", "latex_input", str(tex_path), f"Missing \\input target: {ref} -> {resolved}"))
+
+
+def _check_title_alignment(findings: list[Finding], markdown_text: str, tex_text: str, markdown_path: Path, tex_path: Path) -> None:
+    md_title_match = re.search(r"^#\s+(.+)$", markdown_text, flags=re.MULTILINE)
+    tex_title_match = re.search(r"\\title\{(.+?)\}", tex_text, flags=re.DOTALL)
+
+    if not md_title_match:
+        findings.append(Finding("WARN", "title_alignment", str(markdown_path), "Could not find markdown title"))
+        return
+    if not tex_title_match:
+        findings.append(Finding("WARN", "title_alignment", str(tex_path), "Could not find LaTeX title"))
+        return
+
+    md_title = _normalize_space(md_title_match.group(1).replace("\\", " "))
+    tex_title = _normalize_space(tex_title_match.group(1).replace("\\", " "))
+
+    md_norm = re.sub(r"[^a-z0-9]+", "", md_title.lower())
+    tex_norm = re.sub(r"[^a-z0-9]+", "", tex_title.lower())
+
+    if md_norm != tex_norm:
+        findings.append(Finding(
+            "WARN",
+            "title_alignment",
+            f"{markdown_path} <-> {tex_path}",
+            "Title mismatch between markdown and LaTeX",
+        ))
+
+
+def _check_claim_matrix(findings: list[Finding], claim_matrix_path: Path) -> None:
+    if not claim_matrix_path.exists():
+        findings.append(Finding("ERROR", "claim_matrix", str(claim_matrix_path), "Missing claim matrix CSV"))
+        return
+
+    with claim_matrix_path.open("r", encoding="utf-8", newline="") as fh:
+        reader = csv.DictReader(fh)
+        rows = list(reader)
+
+    if not rows:
+        findings.append(Finding("ERROR", "claim_matrix", str(claim_matrix_path), "Claim matrix is empty"))
+        return
+
+    required_cols = {
+        "claim_id",
+        "status",
+        "category",
+        "claim_text",
+        "source_file",
+    }
+    missing_cols = required_cols - set(reader.fieldnames or [])
+    if missing_cols:
+        findings.append(Finding("ERROR", "claim_matrix", str(claim_matrix_path), f"Missing columns: {', '.join(sorted(missing_cols))}"))
+
+    seen_ids: set[str] = set()
+    for row in rows:
+        cid = (row.get("claim_id") or "").strip()
+        status = (row.get("status") or "").strip()
+        if not cid:
+            findings.append(Finding("ERROR", "claim_matrix", str(claim_matrix_path), "Found row without claim_id"))
+            continue
+        if cid in seen_ids:
+            findings.append(Finding("ERROR", "claim_matrix", str(claim_matrix_path), f"Duplicate claim_id: {cid}"))
+        seen_ids.add(cid)
+        if status not in ALLOWED_CLAIM_STATUSES:
+            findings.append(Finding("ERROR", "claim_matrix", str(claim_matrix_path), f"Invalid status '{status}' for {cid}"))
+
+
+def _print_findings(findings: list[Finding]) -> None:
+    if not findings:
+        print("[validate_paper_claims] PASS: no findings")
+        return
+
+    print("[validate_paper_claims] Findings:")
+    for f in findings:
+        print(f"- {f.severity}: {f.check}: {f.file}: {f.detail}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Validate manuscript claims and references")
+    parser.add_argument("--manifest", default="paper/metrics_manifest.json", help="Path to metrics manifest JSON")
+    parser.add_argument("--markdown", default="paper/PAPER_DRAFT.md", help="Path to master markdown manuscript")
+    parser.add_argument("--tex", default="paper/paper.tex", help="Path to LaTeX manuscript")
+    parser.add_argument("--claim-matrix", default="paper/claim_matrix.csv", help="Path to claim matrix CSV")
+    args = parser.parse_args()
+
+    manifest_path = Path(args.manifest)
+    markdown_path = Path(args.markdown)
+    tex_path = Path(args.tex)
+    claim_matrix_path = Path(args.claim_matrix)
+
+    manifest = _load_json(manifest_path)
+    markdown_text = _read_text(markdown_path)
+    tex_text = _read_text(tex_path)
+
+    findings: list[Finding] = []
+
+    validation = manifest.get("validation", {})
+    required_patterns = validation.get("required_patterns", [])
+    banned_patterns = validation.get("banned_patterns", [])
+    placeholder_patterns = validation.get("placeholder_patterns", [])
+
+    _check_patterns(
+        findings,
+        required_patterns,
+        markdown_text,
+        tex_text,
+        markdown_path,
+        tex_path,
+        required=True,
+    )
+    _check_patterns(
+        findings,
+        banned_patterns,
+        markdown_text,
+        tex_text,
+        markdown_path,
+        tex_path,
+        required=False,
+    )
+    _check_placeholders(findings, placeholder_patterns, markdown_text, tex_text, markdown_path, tex_path)
+
+    run_ids = set((manifest.get("run_ids") or {}).values())
+    if not run_ids:
+        findings.append(Finding("ERROR", "manifest", str(manifest_path), "No run_ids configured in manifest"))
+    else:
+        _check_run_ids(findings, run_ids, markdown_text, tex_text, markdown_path, tex_path)
+
+    _check_tex_inputs(findings, tex_text, tex_path)
+    _check_title_alignment(findings, markdown_text, tex_text, markdown_path, tex_path)
+    _check_claim_matrix(findings, claim_matrix_path)
+
+    _print_findings(findings)
+
+    errors = [f for f in findings if f.severity == "ERROR"]
+    if errors:
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
