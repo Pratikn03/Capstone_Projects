@@ -124,7 +124,9 @@ def main() -> None:
     # -------------------------------------------------------------------------
     # GATE 3: All tests pass
     # -------------------------------------------------------------------------
-    _run([sys.executable, "-m", "pytest", "-q"], "tests")
+    # Coverage is enforced in dedicated CI jobs; release gate focuses on
+    # functional pass/fail to keep this check stable across local environments.
+    _run([sys.executable, "-m", "pytest", "-q", "--no-cov"], "tests")
 
     # -------------------------------------------------------------------------
     # GATE 4: API service is healthy

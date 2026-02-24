@@ -1,4 +1,4 @@
-"""Generate a lightweight monitoring report (data drift + model drift)."""
+"""Generate a lightweight monitoring report (data drift + model drift + DC3S health)."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -18,6 +18,7 @@ if str(repo_root / "src") not in sys.path:
 from gridpulse.monitoring.report import write_monitoring_report
 from gridpulse.monitoring.alerts import send_webhook
 from gridpulse.utils.logging import setup_logging
+from gridpulse.monitoring.dc3s_health import compute_dc3s_health, load_dc3s_audit_config, load_dc3s_health_config
 from gridpulse.monitoring.retraining import (
     load_monitoring_config,
     compute_data_drift,
@@ -54,13 +55,34 @@ def main() -> None:
     if args.disable_alerts:
         os.environ.pop("GRIDPULSE_ALERT_WEBHOOK", None)
     cfg = load_monitoring_config()
+    dc3s_health_cfg = load_dc3s_health_config()
+    dc3s_health = None
+    if bool(dc3s_health_cfg.get("enabled", True)):
+        audit_cfg = load_dc3s_audit_config()
+        dc3s_health = compute_dc3s_health(
+            window_hours=int(dc3s_health_cfg.get("lookback_hours", 24)),
+            min_commands=int(dc3s_health_cfg.get("min_commands", 50)),
+            thresholds=dc3s_health_cfg,
+            duckdb_path=str(audit_cfg.get("duckdb_path", "data/audit/dc3s_audit.duckdb")),
+            table_name=str(audit_cfg.get("table_name", "dispatch_certificates")),
+            sustained_windows=int(dc3s_health_cfg.get("sustained_windows", 3)),
+            state_path="reports/monitoring_state.json",
+            update_state=True,
+        )
     train_df, test_df = _load_split()
-    payload: dict = {"data_drift": None, "model_drift": None, "retraining": None}
+    payload: dict = {"data_drift": None, "model_drift": None, "retraining": None, "dc3s_health": dc3s_health}
 
     if train_df is None or test_df is None or train_df.empty or test_df.empty:
+        retraining = retraining_decision(cfg, False, False, None, dc3s_health=dc3s_health)
         payload["note"] = "Missing splits/features; monitoring skipped."
+        payload["retraining"] = {
+            "retrain": retraining.retrain,
+            "reasons": retraining.reasons,
+            "last_trained_days_ago": retraining.last_trained_days_ago,
+        }
         write_monitoring_report(payload)
         _write_summary(payload)
+        _maybe_alert(payload)
         print("Monitoring report written (no data).")
         return
 
@@ -92,7 +114,13 @@ def main() -> None:
             "decision": evaluate_model_drift(baseline_metric, current_metrics.get("mape"), thresh),
         }
 
-    retraining = retraining_decision(cfg, data_drift.get("drift", False), model_drift.get("decision", {}).get("drift", False), gbm_path)
+    retraining = retraining_decision(
+        cfg,
+        data_drift.get("drift", False),
+        model_drift.get("decision", {}).get("drift", False),
+        gbm_path,
+        dc3s_health=dc3s_health,
+    )
 
     payload["data_drift"] = data_drift
     payload["model_drift"] = model_drift
@@ -124,6 +152,7 @@ def _maybe_alert(payload: dict) -> None:
     should_alert = bool(data_drift.get("drift")) or bool(model_drift.get("decision", {}).get("drift")) or bool(
         retraining.get("retrain")
     )
+    should_alert = should_alert or bool((payload.get("dc3s_health") or {}).get("triggered"))
     if not should_alert:
         return
     send_webhook(webhook, payload)

@@ -176,6 +176,14 @@ def _clean_series(arr: np.ndarray) -> np.ndarray:
     return arr
 
 
+def _align_feature_frame(df: pd.DataFrame, feat_cols: list[str]) -> pd.DataFrame:
+    aligned = df.copy()
+    for col in feat_cols:
+        if col not in aligned.columns:
+            aligned[col] = np.nan
+    return aligned
+
+
 def _load_optimization_config(ctx: ReportContext) -> dict:
     cfg_path = ctx.repo_root / "configs" / "optimization.yaml"
     if cfg_path.exists():
@@ -222,7 +230,8 @@ def _eval_seq_model(bundle: dict, df: pd.DataFrame) -> dict | None:
     if not feat_cols or target is None:
         return None
     # Use the same scalers saved in the bundle (prevents train/test mismatch).
-    X = df[feat_cols].to_numpy()
+    aligned = _align_feature_frame(df, feat_cols)
+    X = aligned[feat_cols].to_numpy()
     y = df[target].to_numpy()
     x_scaler = StandardScaler.from_dict(bundle.get("x_scaler"))
     y_scaler = StandardScaler.from_dict(bundle.get("y_scaler"))
@@ -235,7 +244,15 @@ def _eval_seq_model(bundle: dict, df: pd.DataFrame) -> dict | None:
     if len(ds) == 0:
         return None
     dl = DataLoader(ds, batch_size=256, shuffle=False)
-    model = _build_torch_model(bundle)
+    try:
+        model = _build_torch_model(bundle)
+    except Exception as exc:
+        model_type = str(bundle.get("model_type", "unknown"))
+        print(
+            f"[build_reports] Skipping {model_type} model for target={target}: "
+            f"incompatible checkpoint ({exc})"
+        )
+        return None
     preds = []
     trues = []
     with torch.no_grad():
@@ -494,7 +511,8 @@ def refresh_metrics_from_models(ctx: ReportContext) -> dict:
             bundle = load_model_bundle(gbm_path)
             feat_cols = bundle.get("feature_cols", [])
             if feat_cols:
-                X = test_df[feat_cols]
+                aligned_test = _align_feature_frame(test_df, feat_cols)
+                X = aligned_test[feat_cols]
                 y = test_df[target].to_numpy()
                 pred = bundle["model"].predict(X)
                 m = _compute_metrics(y, pred, target)
@@ -980,7 +998,7 @@ def build_rolling_backtest(
             bundle = load_model_bundle(gbm_path)
             feat_cols = bundle.get("feature_cols", [])
             if feat_cols:
-                X = df[feat_cols].to_numpy()
+                X = _align_feature_frame(df, feat_cols)[feat_cols].to_numpy()
                 gbm_pred = bundle["model"].predict(X)
 
         models = {"persistence": persistence}
@@ -1062,7 +1080,7 @@ def build_case_study(ctx: ReportContext, days: int = 90) -> dict | None:
         bundle = load_model_bundle(gbm_path)
         feat_cols = bundle.get("feature_cols", [])
         if feat_cols:
-            pred = bundle["model"].predict(case_df[feat_cols].to_numpy())
+            pred = bundle["model"].predict(_align_feature_frame(case_df, feat_cols)[feat_cols].to_numpy())
             model_name = "gbm"
     if pred is None:
         pred = persistence_24h(case_df, "load_mw")
