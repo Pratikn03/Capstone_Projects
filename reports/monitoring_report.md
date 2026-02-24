@@ -9,11 +9,6 @@
         "p_value": 0.0499158528040099,
         "drift": false
       },
-      "carbon_kg_per_mwh": {
-        "ks_stat": 0.14553309607983622,
-        "p_value": 0.0015646005353441577,
-        "drift": true
-      },
       "hour": {
         "ks_stat": 0.00030831209405579596,
         "p_value": 1.0,
@@ -99,29 +94,9 @@
         "p_value": 0.999963816607781,
         "drift": false
       },
-      "wx_temperature_2m": {
-        "ks_stat": 0.453080282511755,
-        "p_value": 1.2134193826958065e-31,
-        "drift": true
-      },
-      "wx_relative_humidity_2m": {
-        "ks_stat": 0.12265584931662382,
-        "p_value": 0.012353636139657717,
-        "drift": false
-      },
-      "wx_precipitation": {
-        "ks_stat": 0.0762945192876131,
-        "p_value": 0.2745149548530621,
-        "drift": false
-      },
-      "wx_cloud_cover": {
-        "ks_stat": 0.16703810933236235,
-        "p_value": 0.00016195422254072306,
-        "drift": true
-      },
-      "wx_wind_speed_10m": {
-        "ks_stat": 0.4226963703346997,
-        "p_value": 2.0588324675282378e-27,
+      "carbon_kg_per_mwh": {
+        "ks_stat": 0.19496286552111597,
+        "p_value": 5.29189294457347e-06,
         "drift": true
       },
       "load_mw_lag_1": {
@@ -265,213 +240,38 @@
         "drift": true
       },
       "carbon_kg_per_mwh_lag_1": {
-        "ks_stat": 0.14545087952142133,
-        "p_value": 0.0015772679492010264,
+        "ks_stat": 0.19496286552111597,
+        "p_value": 5.29189294457347e-06,
         "drift": true
       },
       "carbon_kg_per_mwh_lag_24": {
-        "ks_stat": 0.12250267203814848,
-        "p_value": 0.012510755881264537,
-        "drift": false
+        "ks_stat": 0.14098818430603352,
+        "p_value": 0.0024265498462473674,
+        "drift": true
       },
       "carbon_kg_per_mwh_lag_168": {
-        "ks_stat": 0.18329545499034938,
-        "p_value": 2.3603356032169618e-05,
+        "ks_stat": 0.13488751991794,
+        "p_value": 0.004277670941799961,
         "drift": true
       },
       "carbon_kg_per_mwh_roll_mean_24": {
-        "ks_stat": 0.2066547452656965,
-        "p_value": 1.075099997052564e-06,
+        "ks_stat": 0.24269789721364166,
+        "p_value": 4.301240458228108e-09,
         "drift": true
       },
       "carbon_kg_per_mwh_roll_std_24": {
-        "ks_stat": 0.2667447723971608,
-        "p_value": 6.434657032947179e-11,
+        "ks_stat": 0.20870086092481882,
+        "p_value": 8.054400601901655e-07,
         "drift": true
       },
       "carbon_kg_per_mwh_roll_mean_168": {
-        "ks_stat": 0.5390939735262682,
-        "p_value": 1.138785315157773e-45,
+        "ks_stat": 0.5954945325988654,
+        "p_value": 1.0136829416012473e-56,
         "drift": true
       },
       "carbon_kg_per_mwh_roll_std_168": {
-        "ks_stat": 0.6076963507593286,
-        "p_value": 2.4936024547784393e-59,
-        "drift": true
-      },
-      "wx_temperature_2m_lag_1": {
-        "ks_stat": 0.453080282511755,
-        "p_value": 1.2134193826958065e-31,
-        "drift": true
-      },
-      "wx_temperature_2m_lag_24": {
-        "ks_stat": 0.4692930942006006,
-        "p_value": 4.769831521257671e-34,
-        "drift": true
-      },
-      "wx_temperature_2m_lag_168": {
-        "ks_stat": 0.44674911812953416,
-        "p_value": 9.88399886375292e-31,
-        "drift": true
-      },
-      "wx_temperature_2m_roll_mean_24": {
-        "ks_stat": 0.5618679602071858,
-        "p_value": 6.109697849317829e-50,
-        "drift": true
-      },
-      "wx_temperature_2m_roll_std_24": {
-        "ks_stat": 0.09438460906026469,
-        "p_value": 0.09734187849978115,
-        "drift": false
-      },
-      "wx_temperature_2m_roll_mean_168": {
-        "ks_stat": 0.6696538682890735,
-        "p_value": 6.02206594749473e-74,
-        "drift": true
-      },
-      "wx_temperature_2m_roll_std_168": {
-        "ks_stat": 0.6830399963981317,
-        "p_value": 1.9410274108383744e-77,
-        "drift": true
-      },
-      "wx_relative_humidity_2m_lag_1": {
-        "ks_stat": 0.11670346836424283,
-        "p_value": 0.019953288587336093,
-        "drift": false
-      },
-      "wx_relative_humidity_2m_lag_24": {
-        "ks_stat": 0.09259346260908374,
-        "p_value": 0.10894691154764391,
-        "drift": false
-      },
-      "wx_relative_humidity_2m_lag_168": {
-        "ks_stat": 0.355476014297851,
-        "p_value": 2.82550288948742e-19,
-        "drift": true
-      },
-      "wx_relative_humidity_2m_roll_mean_24": {
-        "ks_stat": 0.18594449207784733,
-        "p_value": 1.6949222683246334e-05,
-        "drift": true
-      },
-      "wx_relative_humidity_2m_roll_std_24": {
-        "ks_stat": 0.17354936712825386,
-        "p_value": 7.654629033717053e-05,
-        "drift": true
-      },
-      "wx_relative_humidity_2m_roll_mean_168": {
-        "ks_stat": 0.43796760667598456,
-        "p_value": 1.7077171663525914e-29,
-        "drift": true
-      },
-      "wx_relative_humidity_2m_roll_std_168": {
-        "ks_stat": 0.5273051956949845,
-        "p_value": 1.48119773317206e-43,
-        "drift": true
-      },
-      "wx_precipitation_lag_1": {
-        "ks_stat": 0.0762945192876131,
-        "p_value": 0.2745149548530621,
-        "drift": false
-      },
-      "wx_precipitation_lag_24": {
-        "ks_stat": 0.07645895240444289,
-        "p_value": 0.2722199327420044,
-        "drift": false
-      },
-      "wx_precipitation_lag_168": {
-        "ks_stat": 0.1429912341488433,
-        "p_value": 0.002003306845525364,
-        "drift": true
-      },
-      "wx_precipitation_roll_mean_24": {
-        "ks_stat": 0.2615426175403155,
-        "p_value": 1.6551348123907988e-10,
-        "drift": true
-      },
-      "wx_precipitation_roll_std_24": {
-        "ks_stat": 0.2903839904785396,
-        "p_value": 6.839227555209531e-13,
-        "drift": true
-      },
-      "wx_precipitation_roll_mean_168": {
-        "ks_stat": 0.5866542950321624,
-        "p_value": 7.006787756026468e-55,
-        "drift": true
-      },
-      "wx_precipitation_roll_std_168": {
-        "ks_stat": 0.7215520920199042,
-        "p_value": 2.934993580887165e-88,
-        "drift": true
-      },
-      "wx_cloud_cover_lag_1": {
-        "ks_stat": 0.16703810933236235,
-        "p_value": 0.00016195422254072306,
-        "drift": true
-      },
-      "wx_cloud_cover_lag_24": {
-        "ks_stat": 0.1675314086828516,
-        "p_value": 0.0001531718840885286,
-        "drift": true
-      },
-      "wx_cloud_cover_lag_168": {
-        "ks_stat": 0.35772571381590534,
-        "p_value": 1.6024901110496628e-19,
-        "drift": true
-      },
-      "wx_cloud_cover_roll_mean_24": {
-        "ks_stat": 0.2624949593419543,
-        "p_value": 1.3943186808481238e-10,
-        "drift": true
-      },
-      "wx_cloud_cover_roll_std_24": {
-        "ks_stat": 0.21714420784345967,
-        "p_value": 2.371061028272068e-07,
-        "drift": true
-      },
-      "wx_cloud_cover_roll_mean_168": {
-        "ks_stat": 0.25165607639092796,
-        "p_value": 9.440558551273604e-10,
-        "drift": true
-      },
-      "wx_cloud_cover_roll_std_168": {
-        "ks_stat": 0.3552993465741143,
-        "p_value": 2.953679038611925e-19,
-        "drift": true
-      },
-      "wx_wind_speed_10m_lag_1": {
-        "ks_stat": 0.4226141537762848,
-        "p_value": 2.1114721119597616e-27,
-        "drift": true
-      },
-      "wx_wind_speed_10m_lag_24": {
-        "ks_stat": 0.404099278451823,
-        "p_value": 5.360814773158499e-25,
-        "drift": true
-      },
-      "wx_wind_speed_10m_lag_168": {
-        "ks_stat": 0.36576874439655005,
-        "p_value": 2.0409223637646272e-20,
-        "drift": true
-      },
-      "wx_wind_speed_10m_roll_mean_24": {
-        "ks_stat": 0.45918535135833505,
-        "p_value": 1.550877872858e-32,
-        "drift": true
-      },
-      "wx_wind_speed_10m_roll_std_24": {
-        "ks_stat": 0.1049714591090074,
-        "p_value": 0.04786234572713588,
-        "drift": false
-      },
-      "wx_wind_speed_10m_roll_mean_168": {
-        "ks_stat": 0.8941872893200691,
-        "p_value": 2.5828184797968027e-162,
-        "drift": true
-      },
-      "wx_wind_speed_10m_roll_std_168": {
-        "ks_stat": 0.5089204965880127,
-        "p_value": 2.1958738504926284e-40,
+        "ks_stat": 0.5092493628216723,
+        "p_value": 1.9328824966776505e-40,
         "drift": true
       }
     },
@@ -479,10 +279,10 @@
   },
   "model_drift": {
     "current": {
-      "rmse": 271.1705912291987,
-      "mape": 0.0034268962116018524
+      "rmse": 309.97523464409807,
+      "mape": 0.003932067586089694
     },
-    "baseline_mape": 0.0034268962116018524,
+    "baseline_mape": 0.003932067586089694,
     "decision": {
       "drift": false,
       "ratio": 0.0
@@ -491,9 +291,36 @@
   "retraining": {
     "retrain": true,
     "reasons": [
-      "data_drift"
+      "data_drift",
+      "dc3s_intervention_spike"
     ],
-    "last_trained_days_ago": 0
+    "last_trained_days_ago": 6
+  },
+  "dc3s_health": {
+    "window_hours": 24,
+    "commands_total": 306,
+    "intervention_rate": 1.0,
+    "low_reliability_rate": 0.032679738562091505,
+    "drift_flag_rate": 0.0,
+    "inflation_p95": 1.0,
+    "triggered_flags": [
+      "intervention_rate"
+    ],
+    "triggered": true,
+    "insufficient_data": false,
+    "sustained_windows": 3,
+    "sustained_breach_counts": {
+      "intervention_rate": 11,
+      "low_reliability_rate": 0,
+      "drift_flag_rate": 0,
+      "inflation_p95": 0
+    },
+    "top_intervention_reasons": [
+      "projection_clip"
+    ],
+    "raw_breach_flags": [
+      "intervention_rate"
+    ]
   }
 }
 ```
