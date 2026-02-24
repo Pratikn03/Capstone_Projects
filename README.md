@@ -1,105 +1,41 @@
-# GridPulse: Autonomous Energy Intelligence & Optimization Platform
+# GridPulse: Safe Streaming Control under Telemetry Degradation via DC³S
 
-![CI](https://github.com/Pratikn03/Capstone_Projects/actions/workflows/ci.yml/badge.svg)
-![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
-![Next.js 15](https://img.shields.io/badge/next.js-15-black)
-![Models](https://img.shields.io/badge/models-21-green)
-![Reproducible](https://img.shields.io/badge/reproducible-yes-success)
-![License](https://img.shields.io/badge/license-MIT-green)
+GridPulse is an end-to-end cyber-physical control system for safe battery dispatch under degraded IoT telemetry. It introduces DC³S (Drift-Calibrated Conformal Safety Shield) and implements a safety-gated decision loop: **Forecast -> Optimize -> DC3S Shield -> Dispatch -> Audit**.
 
-GridPulse is a **Level-4 Decision System** that transforms raw energy telemetry into actionable dispatch schedules. Unlike conventional forecasting pipelines that stop at prediction, GridPulse implements a complete decision loop: **Forecast → Optimize → Dispatch → Measure → Monitor**. The platform ingests power system data from multiple regions (Germany OPSD, USA EIA-930), generates probabilistic forecasts with calibrated uncertainty intervals, detects anomalous conditions, and produces feasible battery dispatch schedules via Distributionally Robust Optimization (DRO).
-
-**Production Deployment:** 21 trained ML models • 8-page Next.js operator dashboard • FastAPI backend with `/forecast`, `/optimize`, `/monitor` endpoints • Real-time Prometheus metrics • Conformal prediction intervals with FACI adaptation.
-
----
+## Core Contributions
+- **DC³S Method**: A reliability-weighted safety shield that inflates conformal uncertainty intervals online using telemetry reliability (`w_t`) and drift signals.
+- **CPSBench-IoT**: A reproducible benchmark suite for evaluating controller behavior under deterministic telemetry faults.
+- **Runtime Validation**: Sub-10ms model/solver runtime on benchmark hardware is observed in software-in-the-loop profiling (`reports/runtime_benchmark.json`); field hardware commissioning remains pending in the current evidence lock.
+- **Strict MLOps Governance**: 21 trained models across Germany OPSD and US EIA-930, with publication-facing claims locked through `paper/metrics_manifest.json` and validator tooling.
 
 ## Table of Contents
+- [Reproducing the Paper](#reproducing-the-paper)
+- [Architecture](#architecture)
+- [Safety under Telemetry Degradation (CPSBench-IoT)](#safety-under-telemetry-degradation-cpsbench-iot)
+- [Baseline Economic Impact (Unfaulted Regime)](#baseline-economic-impact-unfaulted-regime)
+- [Trained Models & Dashboard](#trained-models--dashboard)
+- [Citation](#citation)
+- [License](#license)
 
-1. [Key Results](#key-results)
-2. [Architecture](#architecture)
-3. [Dashboard](#dashboard)
-4. [Technology Stack](#technology-stack)
-5. [Quickstart](#quickstart)
-6. [Trained Models](#21-trained-models)
-7. [Data Sources](#data-sources)
-8. [Reproducibility](#reproducibility)
-9. [Documentation](#documentation)
-10. [License](#license)
+## Reproducing the Paper
+The repository enforces artifact-locked reproducibility for publication-facing metrics and tables.
 
----
+```bash
+# 1. Setup environment
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 
-## Key Results
+# 2. Reproduce CPSBench-IoT publication artifacts
+make cpsbench
 
-### Germany (OPSD) — 17,377 hourly observations × 98 features
+# 3. Run software-in-the-loop IoT simulation
+make iot-sim
 
-| Model | Target | RMSE (MW) | MAE (MW) | R² | 90% Coverage |
-|---|---|---:|---:|---:|---:|
-| **GBM** | load_mw | 271.2 | 161.1 | 0.9991 | 95.2% |
-| **GBM** | wind_mw | 127.1 | 87.3 | 0.9997 | 92.4% |
-| **GBM** | solar_mw | 269.6 | 129.5 | 0.9991 | 89.4% |
-| LSTM | load_mw | 2,356.0 | 1,732.1 | 0.931 | — |
-| TCN | load_mw | 3,394.2 | 2,613.5 | 0.857 | — |
-
-**Frozen Run `20260217_165756`:** 7.11% cost savings · 0.30% carbon reduction · 6.13% peak shaving
-
-### USA (EIA-930 / MISO) — 13,638 hourly observations × 118 features
-
-| Model | Target | RMSE (MW) | MAE (MW) | R² | 90% Coverage |
-|---|---|---:|---:|---:|---:|
-| **GBM** | load_mw | 139.8 | 104.2 | 0.9997 | 87.4% |
-| **GBM** | wind_mw | 239.6 | 109.4 | 0.9986 | 80.5% |
-| **GBM** | solar_mw | 212.9 | 76.2 | 0.9961 | 90.5% |
-| LSTM | load_mw | 3,684.7 | — | 0.762 | — |
-| TCN | load_mw | 4,235.4 | — | 0.685 | — |
-
-**Frozen Run `20260217_165756`:** 0.11% cost savings · 0.13% carbon reduction · 0.00% peak shaving
-
-### Conformal Prediction Intervals (90% Nominal Coverage)
-
-| Dataset | Target | PICP (%) | MPIW (MW) | N_test |
-|---|---|---:|---:|---:|
-| Germany | Load | **95.2** | 742.7 | 1,739 |
-| Germany | Wind | 92.4 | 350.8 | 1,739 |
-| Germany | Solar | 89.4 | 622.7 | 1,739 |
-| USA | Load | **87.4** | 415.6 | 1,364 |
-| USA | Wind | 80.5 | 299.8 | 1,364 |
-| USA | Solar | **90.5** | 421.4 | 1,364 |
-
-> **PICP** = Prediction Interval Coverage Probability (target: ≥90%)  
-> **MPIW** = Mean Prediction Interval Width (lower = sharper intervals)
-
-### Statistical Significance (Diebold-Mariano Test)
-
-| Model 1 | Model 2 | DM Statistic | p-value | Interpretation |
-|---|---|---:|---:|---|
-| GBM | LSTM | -9.42 | <0.001 | GBM significantly outperforms*** |
-| GBM | TCN | -7.46 | <0.001 | GBM significantly outperforms*** |
-| GBM | Persistence | -12.31 | <0.001 | GBM significantly outperforms*** |
-
-### Stochastic Value Metrics (Frozen Run `20260217_165756`)
-
-| Dataset | EVPI_robust (€) | EVPI_deterministic (€) | VSS (€) |
-|---|---:|---:|---:|
-| Germany | 2.32 | -30.40 | **2,708.61** |
-| USA | 0.00 | 0.00 | 0.00 |
-
-> **EVPI** (Expected Value of Perfect Information) = Cost(actual forecast) - Cost(perfect oracle)  
-> **VSS** (Value of Stochastic Solution) = Cost(deterministic) - Cost(robust)  
-> Positive VSS indicates robust optimization outperforms point-forecast optimization
-
-### Ablation Study Results
-
-| Configuration | Mean Cost (€M) | Regret vs Full (%) | Statistical Significance |
-|---|---:|---:|---|
-| **Full System** | 428.2 | — | Baseline |
-| No Uncertainty | 428.2 | 0.0% | — |
-| No Carbon Weight | 377.8 | -11.8% | p < 0.05 |
-| Forecast Only | 451.3 | +5.4% | p < 0.01 |
-
----
+# 4. Run one-step DC3S projection and audit certificate flow
+make dc3s-demo
+```
 
 ## Architecture
-
 ```mermaid
 %%{init: {
   'theme': 'base',
@@ -116,40 +52,40 @@ GridPulse is a **Level-4 Decision System** that transforms raw energy telemetry 
 }}%%
 
 flowchart TB
-  subgraph sources["🗄️ DATA SOURCES"]
+  subgraph sources["DATA & TELEMETRY"]
     direction LR
-    A1["🇩🇪 OPSD Germany<br/>Load · Wind · Solar · Price"]
-    A2["🇺🇸 EIA-930 USA<br/>MISO Demand · Generation"]
-    A3["🌤️ Open-Meteo<br/>Berlin · Chicago Weather"]
+    A1["OPSD Germany<br/>Load · Wind · Solar"]
+    A2["EIA-930 USA<br/>MISO Demand"]
+    A3["IoT Edge Sensors<br/>(Subject to Faults)"]
   end
 
-  subgraph pipeline["⚙️ DATA PIPELINE"]
+  subgraph pipeline["DATA PIPELINE"]
     direction TB
-    B["📥 Ingestion & Validation"]
-    C["🔧 Feature Engineering<br/>Lags · Calendar · Weather"]
-    D["📊 Time-Series Splits<br/>Train · Val · Test"]
-    B --> C --> D
+    B["Ingestion & Validation"]
+    C["Feature Engineering"]
+    B --> C
   end
 
-  subgraph ml["🤖 ML ENGINE"]
+  subgraph ml["ML ENGINE"]
     direction TB
-    E["🌳 LightGBM<br/>21 Ensemble Models"]
-    F["🧠 Deep Learning<br/>LSTM · TCN"]
-    G["📏 Conformal Prediction<br/>90% Coverage Intervals"]
-    E & F --> G
+    E["LightGBM / LSTM / TCN<br/>21 Trained Models"]
+    G["Base Conformal Bounds<br/>90% Nominal Coverage"]
+    E --> G
   end
 
-  subgraph ops["🔄 OPERATIONS"]
+  subgraph ops["DC³S CYBER-PHYSICAL CONTROL"]
     direction TB
-    H["🚨 Anomaly Detection<br/>Z-Score · IsolationForest"]
-    I["⚡ LP Optimizer<br/>Cost · Carbon · Battery"]
-    J["📈 MLOps Monitor<br/>Drift · Retraining"]
+    I["LP Optimizer<br/>Proposes Dispatch Action"]
+    S["DC³S Safety Shield<br/>Telemetry Weight (w_t) + Drift"]
+    A["Certificate Auditor<br/>Tamper-Evident Hash Chain"]
+    I -->|a* proposed| S
+    S -->|a_safe repaired| A
   end
 
-  subgraph serve["🚀 SERVING"]
+  subgraph serve["SERVING & UX"]
     direction TB
-    K["🔌 FastAPI Backend<br/>/forecast · /optimize · /monitor"]
-    L["💻 Next.js 15 Dashboard<br/>8 Pages · Region Toggle"]
+    K["FastAPI Backend<br/>/dc3s/step · /iot/telemetry · /monitor/*"]
+    L["Next.js 15 Dashboard<br/>Live Audit & Monitoring"]
     K --> L
   end
 
@@ -161,332 +97,72 @@ flowchart TB
   style sources fill:#1e3a5f,stroke:#7aa2f7,stroke-width:2px,color:#c0caf5
   style pipeline fill:#1e3a5f,stroke:#9ece6a,stroke-width:2px,color:#c0caf5
   style ml fill:#1e3a5f,stroke:#bb9af7,stroke-width:2px,color:#c0caf5
-  style ops fill:#1e3a5f,stroke:#f7768e,stroke-width:2px,color:#c0caf5
+  style ops fill:#3a1e1e,stroke:#f7768e,stroke-width:3px,color:#c0caf5
   style serve fill:#1e3a5f,stroke:#7dcfff,stroke-width:2px,color:#c0caf5
 ```
 
----
+## Safety under Telemetry Degradation (CPSBench-IoT)
+In current locked CPSBench artifacts, all controllers remain at 0.0 violation rate under configured scenarios, while DC³S provides certified safety gating and lower intervention burden than naive clipping.
 
-## Dashboard
+Dropout scenario shown below uses the currently configured CPSBench dropout setting (`src/gridpulse/cpsbench_iot/scenarios.py`, 8%).
 
-The Next.js 15 operator dashboard shows **real ML results** — no mock data on production pages.
+| Controller | Dropout Violation Rate | Severity (MWh) | Intervention Rate |
+|---|---:|---:|---:|
+| `deterministic_lp` | 0.0% | 0.0 | 0.00% |
+| `robust_fixed_interval` | 0.0% | 0.0 | 0.00% |
+| `dc3s_wrapped` | 0.0% | 0.0 | 1.31% |
+| `naive_safe_clip` | 0.0% | 0.0 | 5.36% |
 
-| Page | Description |
-|---|---|
-| **Overview** | KPIs, dispatch chart, model registry, dataset stats |
-| **Forecasting** | Forecast vs actual, model comparison table, hourly profiles |
-| **Optimization** | Dispatch plan, battery SOC, cost impact panel |
-| **Carbon** | Carbon impact breakdown, baseline vs optimized emissions |
-| **Anomalies** | Z-score timeline, event log, data quality overview |
-| **Monitoring** | Model drift, active model versions, artifact sizes |
-| **Reports** | Formal evaluation, model cards, publication figures |
-| **Data Explorer** | Dataset statistics, time series, hourly profiles, forecast comparison |
+Source: `reports/publication/dc3s_main_table.csv`.
 
-All pages support a **DE / US region toggle** in the top bar.
+## Baseline Economic Impact (Unfaulted Regime)
+Results are locked under the dataset-scoped publication policy in `paper/metrics_manifest.json`.
 
----
+### Germany (OPSD) - 17,377 hourly observations x 98 features
+| Model | Target | RMSE (MW) | MAE (MW) | R² | 90% Coverage |
+|---|---|---:|---:|---:|---:|
+| GBM | load_mw | 271.2 | 161.1 | 0.9991 | 95.2% |
+| GBM | wind_mw | 127.1 | 87.3 | 0.9997 | 92.4% |
+| GBM | solar_mw | 269.6 | 129.5 | 0.9991 | 89.4% |
 
-## Technology Stack
+Decision Impact: **7.11% cost savings** · **0.30% carbon reduction** · **6.13% peak shaving**
 
-| Layer | Technologies |
-|---|---|
-| **ML/Data** | Python 3.11, LightGBM 4.6, PyTorch 2.8, scikit-learn, Pandas, NumPy |
-| **API** | FastAPI 0.110+, Uvicorn, Pydantic v2 |
-| **Frontend** | Next.js 15.3, React 19, TypeScript 5.8, Tailwind v4, Recharts, Framer Motion |
-| **Ops** | Docker, GitHub Actions CI/CD, DuckDB |
-| **Optimization** | SciPy MILP (physics-informed deterministic) + Pyomo/HiGHS DRO (robust dispatch) |
+### USA (EIA-930 / MISO) - 13,638 hourly observations x 118 features
+| Model | Target | RMSE (MW) | MAE (MW) | R² | 90% Coverage |
+|---|---|---:|---:|---:|---:|
+| GBM | load_mw | 139.8 | 104.2 | 0.9997 | 87.4% |
+| GBM | wind_mw | 239.6 | 109.4 | 0.9986 | 80.5% |
+| GBM | solar_mw | 212.9 | 76.2 | 0.9961 | 90.5% |
 
----
+Decision Impact: **0.11% cost savings** · **0.13% carbon reduction** · **0.00% peak shaving**
 
-## Quickstart
+## Trained Models & Dashboard
+GridPulse runs 21 trained ML models (LightGBM, LSTM, TCN) across DE/US profiles. The Next.js 15 dashboard consumes FastAPI endpoints to display forecasts, uncertainty intervals, and DC3S audit telemetry in near real-time.
 
-### 1. Environment Setup
-
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cd frontend && npm install && cd ..
-```
-
-### 2. Run Data Pipeline
+To run backend and UI:
 
 ```bash
-# Germany (OPSD)
-python -m gridpulse.pipeline.run --all
-
-# USA (EIA-930)
-python scripts/build_features_eia930.py
-```
-
-### 3. Train All Models (21 total)
-
-```bash
-# Germany: 12 models (GBM×4 + LSTM×4 + TCN×4)
-python -m gridpulse.forecasting.train --config configs/train_forecast.yaml
-
-# USA: 9 models (GBM×3 + LSTM×3 + TCN×3)
-python -m gridpulse.forecasting.train --config configs/train_forecast_eia930.yaml
-```
-
-Or train both at once:
-```bash
-python scripts/train_multi_dataset.py --ba MISO
-```
-
-### 4. Extract Dashboard Data
-
-```bash
-make extract-data
-# → generates data/dashboard/*.json (17 files)
-```
-
-### 5. Generate Reports & Figures
-
-```bash
-python scripts/build_reports.py                     # DE reports
-python scripts/build_reports.py \
-  --features data/processed/us_eia930/features.parquet \
-  --splits data/processed/us_eia930/splits \
-  --models-dir artifacts/models_eia930 \
-  --reports-dir reports/eia930                       # US reports
-```
-
-### 6. Start Services
-
-```bash
-# Terminal 1: API
+# Terminal 1
 make api
 
-# Terminal 2: Dashboard
+# Terminal 2
 make frontend
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
+Open `http://localhost:3000`.
 
-### Docker Deployment
+## Citation
+If you use DC³S, CPSBench-IoT, or the GridPulse architecture in your research, cite:
 
-```bash
-cd docker && docker compose up --build
+```bibtex
+@techreport{niroula2026gridpulse,
+  title={Safe Streaming Control under Telemetry Degradation via Drift-Calibrated Conformal Shields},
+  author={Niroula, Pratik},
+  institution={Minnesota State University, Mankato},
+  year={2026},
+  month={Feb}
+}
 ```
-
----
-
-## 21 Trained Models
-
-| # | Region | Target | Model | Artifact |
-|---|---|---|---|---|
-| 1 | DE | load_mw | GBM | `artifacts/models/gbm_load_mw.txt` |
-| 2 | DE | wind_mw | GBM | `artifacts/models/gbm_wind_mw.txt` |
-| 3 | DE | solar_mw | GBM | `artifacts/models/gbm_solar_mw.txt` |
-| 4 | DE | price_eur_mwh | GBM | `artifacts/models/gbm_price_eur_mwh.txt` |
-| 5 | DE | load_mw | LSTM | `artifacts/models/lstm_load_mw.pt` |
-| 6 | DE | wind_mw | LSTM | `artifacts/models/lstm_wind_mw.pt` |
-| 7 | DE | solar_mw | LSTM | `artifacts/models/lstm_solar_mw.pt` |
-| 8 | DE | price_eur_mwh | LSTM | `artifacts/models/lstm_price_eur_mwh.pt` |
-| 9 | DE | load_mw | TCN | `artifacts/models/tcn_load_mw.pt` |
-| 10 | DE | wind_mw | TCN | `artifacts/models/tcn_wind_mw.pt` |
-| 11 | DE | solar_mw | TCN | `artifacts/models/tcn_solar_mw.pt` |
-| 12 | DE | price_eur_mwh | TCN | `artifacts/models/tcn_price_eur_mwh.pt` |
-| 13 | US | load_mw | GBM | `artifacts/models_eia930/gbm_load_mw.txt` |
-| 14 | US | wind_mw | GBM | `artifacts/models_eia930/gbm_wind_mw.txt` |
-| 15 | US | solar_mw | GBM | `artifacts/models_eia930/gbm_solar_mw.txt` |
-| 16 | US | load_mw | LSTM | `artifacts/models_eia930/lstm_load_mw.pt` |
-| 17 | US | wind_mw | LSTM | `artifacts/models_eia930/lstm_wind_mw.pt` |
-| 18 | US | solar_mw | LSTM | `artifacts/models_eia930/lstm_solar_mw.pt` |
-| 19 | US | load_mw | TCN | `artifacts/models_eia930/tcn_load_mw.pt` |
-| 20 | US | wind_mw | TCN | `artifacts/models_eia930/tcn_wind_mw.pt` |
-| 21 | US | solar_mw | TCN | `artifacts/models_eia930/tcn_solar_mw.pt` |
-
----
-
-## Publication Figures
-
-### Forecasting Performance
-
-| Load | Wind | Solar |
-|:---:|:---:|:---:|
-| ![](reports/figures/forecast_vs_actual_load.png) | ![](reports/figures/forecast_vs_actual_wind.png) | ![](reports/figures/forecast_vs_actual_solar.png) |
-
-| Rolling Backtest RMSE | Residual Distribution | Seasonality Heatmap |
-|:---:|:---:|:---:|
-| ![](reports/figures/rolling_backtest_rmse_by_week.png) | ![](reports/figures/error_distribution_residuals.png) | ![](reports/figures/seasonality_error_heatmap.png) |
-
-### Uncertainty Quantification
-
-| PI — Load (90%) | Coverage by Horizon | Interval Width |
-|:---:|:---:|:---:|
-| ![](reports/figures/prediction_intervals_load.png) | ![](reports/figures/coverage_by_horizon.png) | ![](reports/figures/interval_width_by_horizon.png) |
-
-### Dispatch & Impact
-
-| Dispatch Comparison | Battery SOC | Impact Savings | Cost vs Carbon |
-|:---:|:---:|:---:|:---:|
-| ![](reports/figures/dispatch_compare.png) | ![](reports/figures/soc_trajectory.png) | ![](reports/figures/impact_savings.png) | ![](reports/figures/cost_vs_carbon_tradeoff.png) |
-
-### Monitoring & Anomalies
-
-| Anomaly Timeline | Z-Score | Data Drift | Model Drift |
-|:---:|:---:|:---:|:---:|
-| ![](reports/figures/anomaly_timeline.png) | ![](reports/figures/residual_zscore_timeline.png) | ![](reports/figures/data_drift_ks_over_time.png) | ![](reports/figures/model_drift_metric_over_time.png) |
-
----
-
-## Data Sources
-
-| Dataset | Region | Rows | Features | Period |
-|---|---|---:|---:|---|
-| **OPSD** | Germany | 17,377 | 98 | 2015–2020 |
-| **EIA-930** | USA (MISO) | 13,638 | 118 | 2019–2024 |
-| **Open-Meteo** | Berlin + Chicago | — | 7 weather vars | aligned |
-| **SMARD** | Germany | — | carbon intensity | 2015–2020 |
-
-See `DATA.md` for download instructions and licensing.
-
----
-
-## Project Structure
-
-```
-gridpulse/
-├── src/gridpulse/          # Core library
-│   ├── data_pipeline/      #   ingest, validate, features, splits
-│   ├── forecasting/        #   GBM, LSTM, TCN training & inference
-│   ├── anomaly/            #   residual z-scores + IsolationForest
-│   ├── optimizer/          #   deterministic MILP + robust DRO dispatch
-│   └── monitoring/         #   drift detection, retraining triggers
-├── services/api/           # FastAPI service (forecast, optimize, monitor)
-├── frontend/               # Next.js 15 dashboard (8 pages)
-│   ├── src/app/(dashboard)/   Overview, Forecasting, Optimization, ...
-│   ├── src/components/        Charts, panels, sidebar, top bar
-│   └── src/lib/               API hooks, server loaders, utilities
-├── scripts/                # Training, reports, data extraction
-├── configs/                # YAML configs (training, optimization, etc.)
-├── notebooks/              # 14 Jupyter notebooks (EDA → production)
-├── data/                   # raw / processed / dashboard JSON
-├── artifacts/              # models, scalers, backtests, runs
-├── reports/                # figures, model cards, evaluation reports
-├── docker/                 # Dockerfiles + compose
-└── .github/workflows/      # CI (backend + frontend) + deploy
-```
-
----
-
-## Reproducibility
-
-```bash
-# One-command reproducible run
-./scripts/repro_run.sh
-```
-
-- **Fixed seed:** `seed: 42` in all training configs
-- **Deterministic:** seeds applied to Python, NumPy, PyTorch
-- **Version locks:** `requirements.lock.txt`
-- **Pipeline cache:** `.cache/pipeline.json` skips unchanged steps
-- **Run snapshots:** `artifacts/runs/<run_id>/manifest.json`
-
----
-
-## CPSBench-IoT and Closed-Loop IoT Reproduction
-
-### Benchmark Harness
-
-```bash
-make cpsbench
-```
-
-Generates:
-
-- `reports/publication/dc3s_main_table.csv`
-- `reports/publication/dc3s_fault_breakdown.csv`
-- `reports/publication/calibration_plot.png`
-- `reports/publication/violation_vs_cost_curve.png`
-- `reports/publication/dc3s_run_summary.json`
-
-Determinism controls:
-
-- fixed scenario seeds,
-- deterministic row ordering,
-- stable CSV float formatting.
-
-### Closed-Loop IoT Simulation
-
-```bash
-export GRIDPULSE_API_KEYS='{"iot-sim-key":["read","write"]}'
-make iot-sim
-```
-
-Runs in-process loop:
-
-`/iot/telemetry -> /dc3s/step(enqueue_iot=true) -> /iot/command/next -> apply -> /iot/ack`
-
-and prints:
-
-- safety violations,
-- interventions,
-- certificate completeness rate.
-- queue timeout/hold behavior is enforced (30s default TTL).
-
-### Real-Device Shadow Runtime (HTTP Gateway)
-
-```bash
-export GRIDPULSE_IOT_API_KEY='<gridpulse_rw_key>'
-python iot/edge_agent/run_agent.py --config configs/iot.yaml --mode shadow --iterations 24
-```
-
-Notes:
-
-- `/iot/*` endpoints are scope-protected via `X-GridPulse-Key`.
-- Shadow mode sends `acked` with `payload.shadow_mode=true` and `payload.applied=false`.
-- If command ACK timeout occurs, `/iot/command/next` returns `status=hold`; clear via:
-
-```bash
-curl -X POST http://localhost:8000/iot/control/reset-hold \
-  -H 'Content-Type: application/json' \
-  -H 'X-GridPulse-Key: <gridpulse_rw_key>' \
-  -d '{"device_id":"edge-device-001","reason":"operator_clearance"}'
-```
-
-### Single-Step DC3S Demo
-
-```bash
-make dc3s-demo
-```
-
-Executes one `/dc3s/step` call and verifies `/dc3s/audit/{command_id}` retrieval.
-
----
-
-## Makefile Targets
-
-| Target | Description |
-|---|---|
-| `make setup` | Create venv + install Python & Node deps |
-| `make test` | Run pytest suite |
-| `make api` | Start FastAPI on :8000 |
-| `make frontend` | Start Next.js on :3000 |
-| `make extract-data` | Extract dashboard JSON from parquets |
-| `make train` | Train all DE models (legacy) |
-| `make train-dataset DATASET=DE` | **Train any dataset (DE, US)** |
-| `make train-all` | **Train all registered datasets** |
-| `make list-datasets` | Show available datasets |
-| `make reports` | Generate reports & figures |
-| `make cpsbench` | Run CPSBench-IoT suite and write publication artifacts |
-| `make iot-sim` | Run in-process IoT closed-loop validation loop |
-| `make dc3s-demo` | Run one DC3S step and verify audit retrieval |
-| `make production` | Full pipeline → train → extract |
-
-See [docs/ADDING_DATASETS.md](docs/ADDING_DATASETS.md) for adding new datasets.
-
----
-
-## Reports & Notebooks
-
-**Reports:** `reports/formal_evaluation_report.md` · `reports/model_cards/` · `reports/case_study.md` · `reports/impact_comparison.md` · 19 publication figures
-
-**Notebooks:** 14 notebooks from EDA through production deployment — see `notebooks/` directory.
-
----
 
 ## License
-
 MIT
