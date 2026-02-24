@@ -50,3 +50,8 @@ build/
 *.log
 logs/
 /tmp/
+
+# Coverage artifacts
+reports/.coverage
+reports/coverage.xml
+reports/coverage/

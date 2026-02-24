@@ -22,6 +22,12 @@ data:
   processed_path: data/processed/us_eia930/features.parquet
   timestamp_col: timestamp
 
+# Time split used inside training orchestration.
+# 70% train is fixed by request; val/test are configured from the remainder.
+splits:
+  train_ratio: 0.70
+  val_ratio: 0.15
+
 models:
   baseline_gbm:
     kind: lightgbm
@@ -100,9 +106,13 @@ backtest:
 tuning:
   enabled: true
   engine: optuna
-  n_trials: 50
+  n_trials: 120
   metric: val_loss
   direction: minimize
+  selection_mode: top_pct_median
+  select_top_pct: 0.30
+  min_top_trials: 5
+  # Set to 0.001 for top 0.1% selection only when n_trials is very large.
   n_jobs: 4  # Parallel trials
   pruner: median  # Early stopping of bad trials
   params:

@@ -1,0 +1,112 @@
+publish_audit:
+  reproducibility:
+    out_dir: reports/publish
+    run_id_prefix: publish
+    seeds:
+      DE: [42, 123, 456, 789, 2024, 1337, 7777, 9999]
+      US: [42, 123, 456, 789, 2024]
+
+  scope:
+    include:
+      - src/gridpulse/**
+      - services/api/**
+      - scripts/**
+      - configs/**
+      - iot/**
+    non_blocking_out_of_scope:
+      - frontend visual/style-only changes
+      - paper formatting/layout artifacts
+      - generated figure diffs
+
+  na_policy:
+    strict: true
+    default_max_ratio: 0.0
+    allowlist:
+      - path_glob: data/audit/iot_loop.duckdb::iot_ack
+        columns: [reason]
+        max_ratio: 1.0
+      - path_glob: data/audit/iot_loop.duckdb::iot_command_queue
+        columns: [expires_at, timeout_at, timeout_reason]
+        max_ratio: 1.0
+      - path_glob: data/audit/iot_loop.duckdb::iot_device_state
+        columns: [hold_reason, hold_since_utc]
+        max_ratio: 1.0
+      - path_glob: data/audit/dc3s_audit.duckdb::dispatch_certificates
+        columns: [intervention_reason, prev_hash]
+        max_ratio: 1.0
+      - path_glob: reports/metrics/forecast_point_metrics.csv
+        columns: [daylight_mape]
+        max_ratio: 1.0
+      - path_glob: reports/metrics/forecast_window_metrics.csv
+        columns: [daylight_mape]
+        max_ratio: 1.0
+      - path_glob: reports/publication/tables/table2_forecast_metrics_de.csv
+        columns: [daylight_mape]
+        max_ratio: 1.0
+      - path_glob: reports/publication/tables/table3_forecast_metrics_us.csv
+        columns: [daylight_mape]
+        max_ratio: 1.0
+      - path_glob: reports/publication/dc3s_main_table.csv
+        columns: [carbon_kg]
+        max_ratio: 1.0
+      - path_glob: reports/publication/tables/table5_optimization_impact.csv
+        columns: [Delta]
+        max_ratio: 1.0
+      - path_glob: reports/ablations/ablation_results.csv
+        columns: [total_cost, oracle_cost, regret, regret_pct, carbon_emissions, infeasible_rate]
+        max_ratio: 1.0
+      - path_glob: reports/ablations/ablation_summary.csv
+        columns: [mean_cost, median_cost, std_cost, mean_regret_pct, mean_infeasible_rate, ci_lower, ci_upper]
+        max_ratio: 1.0
+      - path_glob: reports/ablations_smoke/ablation_results.csv
+        columns: [total_cost, oracle_cost, regret, regret_pct, carbon_emissions, infeasible_rate]
+        max_ratio: 1.0
+      - path_glob: reports/ablations_smoke/ablation_summary.csv
+        columns: [mean_cost, median_cost, std_cost, mean_regret_pct, mean_infeasible_rate, ci_lower, ci_upper]
+        max_ratio: 1.0
+      - path_glob: reports/research_metrics_de.csv
+        columns: [faci_scale_bound_lower, faci_scale_bound_upper, window_idx, window_start, window_end]
+        max_ratio: 1.0
+      - path_glob: reports/research_metrics_us.csv
+        columns: [mean_stressed_interval_width, operational_grid_cap_mw, reserve_soc_mwh, terminal_soc_target_mwh, load_stress_additive_mw, stress_interval_multiplier, faci_scale_bound_lower, faci_scale_bound_upper, window_idx, window_start, window_end]
+        max_ratio: 1.0
+
+  leakage_gates:
+    max_overlap_train_val: 0
+    max_overlap_train_test: 0
+    max_overlap_val_test: 0
+    forbidden_feature_exact:
+      - y_true
+      - target_value
+      - label
+    forbidden_feature_patterns:
+      - "(?i)lead"
+      - "(?i)future"
+      - "(?i)next_"
+      - "(?i)t\\+"
+      - "(?i)forward"
+
+  code_health:
+    max_function_lines: 180
+    max_cyclomatic_estimate: 30
+    max_file_lines: 1200
+    fail_on_bare_except: true
+    fail_on_except_pass: true
+    fail_on_unused_imports: false
+
+  retraining_acceptance:
+    metric: mape
+    require_non_regression: true
+    min_improvement_by_target:
+      load_mw: 0.005
+      wind_mw: 0.002
+      solar_mw: 0.002
+      price_eur_mwh: 0.0
+    max_cv_rmse_std: 1000.0
+
+  go_no_go:
+    safety_violations: 0
+    certificate_completeness_rate_min: 0.99
+    ack_success_rate_min: 0.99
+    hold_rate_max: 0.01
+    require_no_critical_alerts: true

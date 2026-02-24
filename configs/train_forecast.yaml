@@ -5,7 +5,7 @@ task:
   targets: [load_mw, wind_mw, solar_mw, price_eur_mwh]
 
 seed: 42
-seeds: [42, 123, 456, 789, 2024]  # Multiple seeds for ensemble
+seeds: [42, 123, 456, 789, 2024, 1337, 7777, 9999]  # 8 seeds for robust ensemble
 
 # Advanced training options:
 # --enable-cv: 10-fold time-series cross-validation
@@ -21,6 +21,12 @@ cross_validation:
 data:
   processed_path: data/processed/features.parquet
   timestamp_col: timestamp
+
+# Time split used inside training orchestration.
+# 70% train is fixed by request; val/test are configured from the remainder.
+splits:
+  train_ratio: 0.70
+  val_ratio: 0.15
 
 models:
   baseline_gbm:
@@ -55,38 +61,48 @@ models:
     kind: lstm
     enabled: true
     params:
-      hidden_size: 256
-      num_layers: 3
-      dropout: 0.3
-      epochs: 100
-      batch_size: 128
-      learning_rate: 0.001
-      weight_decay: 1e-5
-      scheduler: cosine  # Cosine annealing LR
-      warmup_epochs: 5
+      hidden_size: 512          # Increased from 256 for more capacity
+      num_layers: 2             # Reduced from 3 (wider > deeper for time series)
+      dropout: 0.2              # Reduced from 0.3 (less regularization)
+      epochs: 300               # Increased from 100 for convergence
+      batch_size: 64            # Reduced from 128 (better generalization)
+      learning_rate: 0.0003     # Reduced from 0.001 (more stable)
+      weight_decay: 1e-4        # Increased from 1e-5
+      scheduler: cosine_warm_restarts  # Better than plain cosine
+      warmup_epochs: 10         # Increased from 5
+      T_0: 50                   # Restart period for cosine warm restarts
+      T_mult: 2                 # Multiply period after each restart
       early_stopping:
         enabled: true
-        patience: 15
-        min_delta: 0.0001
-      gradient_clip: 1.0
+        patience: 30            # Increased from 15 (more patience)
+        min_delta: 0.00005      # Tighter threshold
+      gradient_clip: 0.5        # Tighter clipping for stability
+      bidirectional: true       # Enable bidirectional LSTM
+      attention: true           # Add attention mechanism
   dl_tcn:
     kind: tcn
     enabled: true
     params:
-      num_channels: [128, 128, 128, 64]
-      kernel_size: 5
-      dropout: 0.3
-      epochs: 100
-      batch_size: 128
-      learning_rate: 0.001
-      weight_decay: 1e-5
-      scheduler: cosine
-      warmup_epochs: 5
+      num_channels: [256, 256, 128, 128, 64]  # Wider network, more layers
+      kernel_size: 7            # Increased from 5 (larger receptive field)
+      dilation_base: 2          # Exponential dilation for longer context
+      dropout: 0.25             # Reduced from 0.3
+      epochs: 300               # Increased from 100
+      batch_size: 64            # Reduced from 128
+      learning_rate: 0.0003     # Reduced from 0.001
+      weight_decay: 1e-4        # Increased from 1e-5
+      scheduler: cosine_warm_restarts
+      warmup_epochs: 10         # Increased from 5
+      T_0: 50
+      T_mult: 2
       early_stopping:
         enabled: true
-        patience: 15
-        min_delta: 0.0001
-      gradient_clip: 1.0
+        patience: 30            # Increased from 15
+        min_delta: 0.00005
+      gradient_clip: 0.5        # Tighter clipping
+      residual: true            # Enable residual connections
+      causal: true              # Causal convolutions for forecasting
+      use_skip_connections: true # Skip connections for gradient flow
 
 artifacts:
   out_dir: artifacts/models
@@ -100,11 +116,20 @@ backtest:
 tuning:
   enabled: true
   engine: optuna
-  n_trials: 50
+  n_trials: 100              # Increased from 50 for better search
   metric: val_loss
   direction: minimize
+  # Param selection strategy:
+  # - top_pct_median: aggregate params from top % trials (robust)
+  # - best: use single best trial
+  selection_mode: top_pct_median
+  select_top_pct: 0.30
+  min_top_trials: 5
+  # Set to 0.001 if you explicitly want top 0.1% selection, but only useful with very high n_trials.
   n_jobs: 4  # Parallel trials
-  pruner: median  # Early stopping of bad trials
+  pruner: hyperband           # Better than median for DL
+  sampler: tpe                # Tree-structured Parzen Estimator
+  startup_trials: 20          # Random trials before TPE kicks in
   params:
     baseline_gbm:
       n_estimators: {type: int, low: 500, high: 2000}
@@ -112,14 +137,18 @@ tuning:
       max_depth: {type: int, low: 8, high: 15}
       num_leaves: {type: int, low: 64, high: 512}
     dl_lstm:
-      hidden_size: {type: categorical, choices: [128, 256, 512]}
-      num_layers: {type: int, low: 2, high: 4}
-      dropout: {type: float, low: 0.1, high: 0.5}
-      learning_rate: {type: float, low: 0.0001, high: 0.01, log: true}
+      hidden_size: {type: categorical, choices: [256, 512, 768, 1024]}
+      num_layers: {type: int, low: 1, high: 3}
+      dropout: {type: float, low: 0.1, high: 0.4}
+      learning_rate: {type: float, low: 0.00005, high: 0.003, log: true}
+      batch_size: {type: categorical, choices: [32, 64, 128]}
+      weight_decay: {type: float, low: 1e-5, high: 1e-3, log: true}
     dl_tcn:
-      num_channels: {type: categorical, choices: [[64, 64, 64], [128, 128, 128], [128, 128, 128, 64]]}
-      kernel_size: {type: int, low: 3, high: 7}
-      dropout: {type: float, low: 0.1, high: 0.5}
+      num_channels: {type: categorical, choices: [[128, 128, 64], [256, 256, 128], [256, 256, 128, 128, 64], [512, 256, 128, 64]]}
+      kernel_size: {type: int, low: 5, high: 9}
+      dropout: {type: float, low: 0.1, high: 0.4}
+      learning_rate: {type: float, low: 0.00005, high: 0.003, log: true}
+      batch_size: {type: categorical, choices: [32, 64, 128]}
 
 tracking:
   enabled: true
