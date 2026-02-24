@@ -52,6 +52,7 @@ See Also:
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import json
 from pathlib import Path
 import warnings
@@ -174,6 +175,63 @@ def _sample_param(trial, spec: dict):
     return None
 
 
+def _resolve_split_cfg(cfg: dict) -> tuple[float, float, float, float]:
+    """
+    Resolve train/val/test split ratios from config.
+
+    Priority:
+    1. cfg["splits"]
+    2. cfg["split"]
+    3. defaults (0.70 / 0.15 / 0.15)
+    """
+    split_cfg = cfg.get("splits", cfg.get("split", {})) or {}
+    train_ratio = float(split_cfg.get("train_ratio", 0.70))
+    val_ratio = float(split_cfg.get("val_ratio", 0.15))
+    calibration_ratio = float(split_cfg.get("calibration_ratio", 0.0) or 0.0)
+
+    if not (0.0 < train_ratio < 1.0):
+        raise ValueError(f"train_ratio must be in (0, 1), got {train_ratio}")
+    if not (0.0 <= val_ratio < 1.0):
+        raise ValueError(f"val_ratio must be in [0, 1), got {val_ratio}")
+    if not (0.0 <= calibration_ratio < 1.0):
+        raise ValueError(f"calibration_ratio must be in [0, 1), got {calibration_ratio}")
+
+    test_ratio = 1.0 - train_ratio - val_ratio - calibration_ratio
+    if test_ratio < 0.0:
+        raise ValueError(
+            f"Invalid split ratios: train_ratio({train_ratio}) + "
+            f"val_ratio({val_ratio}) + calibration_ratio({calibration_ratio}) exceeds 1.0"
+        )
+    return train_ratio, val_ratio, test_ratio, calibration_ratio
+
+
+def _aggregate_top_trial_params(trials, param_specs: list[dict], top_pct: float, min_top_trials: int) -> dict:
+    """Aggregate top trial params using median (numeric) / mode (categorical)."""
+    if not trials:
+        return {}
+
+    k = max(min_top_trials, int(np.ceil(len(trials) * top_pct)))
+    k = min(k, len(trials))
+    top_trials = trials[:k]
+
+    agg: dict[str, object] = {}
+    for spec in param_specs:
+        name = str(spec.get("name"))
+        kind = str(spec.get("type", ""))
+        values = [t.params[name] for t in top_trials if name in t.params]
+        if not values:
+            continue
+
+        if kind == "int":
+            agg[name] = int(round(float(np.median([float(v) for v in values]))))
+        elif kind == "float":
+            agg[name] = float(np.median([float(v) for v in values]))
+        else:
+            # categorical and unknown fallback to mode
+            agg[name] = Counter(values).most_common(1)[0][0]
+    return agg
+
+
 def tune_gbm_params(
     X_train,
     y_train,
@@ -188,11 +246,16 @@ def tune_gbm_params(
     lgb = _try_lightgbm()
     if optuna is None or lgb is None:
         print("Optuna or LightGBM not available; skipping tuning.")
-        return base_params
+        return base_params, {"enabled": False, "reason": "optuna_or_lightgbm_missing"}
 
     params_cfg = tuning_cfg.get("params", {}).get("baseline_gbm", {})
     n_trials = int(tuning_cfg.get("n_trials", 20))
     metric = tuning_cfg.get("metric", "val_loss")
+    selection_mode = str(tuning_cfg.get("selection_mode", "top_pct_median")).lower()
+    top_pct = float(tuning_cfg.get("select_top_pct", 0.30))
+    min_top_trials = int(tuning_cfg.get("min_top_trials", 5))
+    if not (0 < top_pct <= 1.0):
+        raise ValueError(f"tuning.select_top_pct must be in (0, 1], got {top_pct}")
 
     # Normalize params spec to include name for sampling.
     param_specs = []
@@ -216,8 +279,25 @@ def tune_gbm_params(
 
     study = optuna.create_study(direction="minimize")
     study.optimize(objective, n_trials=n_trials, show_progress_bar=False)
-    best = study.best_params
-    return {**base_params, **best}
+    complete = [t for t in study.trials if t.value is not None]
+    complete = sorted(complete, key=lambda t: float(t.value))
+
+    selected = study.best_params
+    if selection_mode == "top_pct_median" and complete:
+        selected = _aggregate_top_trial_params(complete, param_specs, top_pct=top_pct, min_top_trials=min_top_trials)
+
+    tuning_meta = {
+        "enabled": True,
+        "n_trials": int(n_trials),
+        "metric": metric,
+        "selection_mode": selection_mode,
+        "select_top_pct": top_pct,
+        "min_top_trials": min_top_trials,
+        "n_complete_trials": len(complete),
+        "best_objective": float(study.best_value) if study.best_value is not None else None,
+        "selected_params": selected,
+    }
+    return {**base_params, **selected}, tuning_meta
 
 def make_xy(df: pd.DataFrame, target: str, targets: list[str]):
     """Split a dataframe into features (X) and a single target (y)."""
@@ -358,6 +438,11 @@ def train_lstm_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "c
     weight_decay = float(cfg.get("weight_decay", 1e-5))
     grad_clip = float(cfg.get("gradient_clip", 1.0))
     
+    # Enhanced LSTM options
+    bidirectional = bool(cfg.get("bidirectional", False))
+    attention = bool(cfg.get("attention", False))
+    residual = bool(cfg.get("residual", False))
+    
     # Early stopping config
     es_cfg = cfg.get("early_stopping", {})
     patience = int(es_cfg.get("patience", 15)) if isinstance(es_cfg, dict) else 15
@@ -376,6 +461,9 @@ def train_lstm_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "c
         num_layers=num_layers,
         dropout=dropout,
         horizon=horizon,
+        bidirectional=bidirectional,
+        attention=attention,
+        residual=residual,
     ).to(device)
     model = fit_sequence_model(
         model, train_dl, val_dl, 
@@ -399,6 +487,10 @@ def train_tcn_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cp
     weight_decay = float(cfg.get("weight_decay", 1e-5))
     grad_clip = float(cfg.get("gradient_clip", 1.0))
     
+    # Enhanced TCN options
+    dilation_base = int(cfg.get("dilation_base", 2))
+    use_skip_connections = bool(cfg.get("use_skip_connections", False))
+    
     # Early stopping config
     es_cfg = cfg.get("early_stopping", {})
     patience = int(es_cfg.get("patience", 15)) if isinstance(es_cfg, dict) else 15
@@ -416,6 +508,9 @@ def train_tcn_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cp
         num_channels=list(num_channels),
         kernel_size=kernel_size,
         dropout=dropout,
+        dilation_base=dilation_base,
+        use_skip_connections=use_skip_connections,
+        horizon=horizon,
     ).to(device)
     model = fit_sequence_model(
         model, train_dl, val_dl, 
@@ -463,8 +558,14 @@ def main():
     p.add_argument("--targets", default=None, help="Comma-separated targets to train (override config)")
     p.add_argument("--models", default=None, help="Comma-separated models to train: gbm,lstm,tcn")
     p.add_argument("--skip-existing", action="store_true", help="Skip training if model artifact already exists")
-    p.add_argument("--enable-cv", action="store_true", help="Enable time-series cross-validation (5-fold)")
+    p.add_argument("--enable-cv", action="store_true", help="Enable time-series cross-validation (fold count from config)")
     p.add_argument("--use-pipeline", action="store_true", help="Use sklearn Pipeline for GBM (leakage-safe preprocessing)")
+    p.add_argument("--tune", action="store_true", help="Force-enable hyperparameter tuning")
+    p.add_argument("--no-tune", action="store_true", help="Disable hyperparameter tuning even if enabled in config")
+    p.add_argument("--ensemble", action="store_true", help="Train GBM seed ensemble (uses config.seeds)")
+    p.add_argument("--max-seeds", type=int, default=None, help="Optional cap on ensemble seed count")
+    p.add_argument("--n-trials", type=int, default=None, help="Override Optuna trial count for this run")
+    p.add_argument("--top-pct", type=float, default=None, help="Override top-percent trial selection, e.g. 0.30")
     args = p.parse_args()
 
     # Config-driven training keeps runs reproducible across datasets.
@@ -483,13 +584,17 @@ def main():
     art_dir.mkdir(parents=True, exist_ok=True)
     
     print("Creating run manifest for reproducibility...")
+    cv_cfg = cfg.get("cross_validation", {}) if isinstance(cfg.get("cross_validation"), dict) else {}
+    cv_enabled = bool(args.enable_cv or cv_cfg.get("enabled", False))
     manifest = create_run_manifest(
         config_path=args.config,
         output_dir=art_dir,
         extra_metadata={
-            "enable_cv": args.enable_cv,
+            "enable_cv": cv_enabled,
+            "cv_folds": int(cv_cfg.get("n_folds", 5)),
             "use_pipeline": args.use_pipeline,
             "seed": seed,
+            "ensemble": bool(args.ensemble),
         },
     )
     print_manifest_summary(manifest)
@@ -502,9 +607,36 @@ def main():
     # Time-ordered split to prevent leakage.
     df = pd.read_parquet(features_path).sort_values("timestamp")
     n = len(df)
-    train_df = df.iloc[: int(n * 0.7)]
-    val_df = df.iloc[int(n * 0.7): int(n * 0.85)]
-    test_df = df.iloc[int(n * 0.85):]
+    train_ratio, val_ratio, test_ratio, calibration_ratio = _resolve_split_cfg(cfg)
+    train_end = int(n * train_ratio)
+    calibration_end = train_end + int(n * calibration_ratio)
+    val_end = calibration_end + int(n * val_ratio)
+    train_df = df.iloc[:train_end]
+    calibration_df = df.iloc[train_end:calibration_end]
+    val_df = df.iloc[calibration_end:val_end]
+    test_df = df.iloc[val_end:]
+    if len(test_df) == 0:
+        # Keep pipeline operable for 70/30 train/val configurations.
+        print("Warning: test split is empty; reusing validation split as evaluation holdout.")
+        test_df = val_df.copy()
+    split_boundaries = {
+        "n_rows": int(n),
+        "train_end": int(train_end),
+        "calibration_end": int(calibration_end),
+        "val_end": int(val_end),
+    }
+
+    if calibration_ratio > 0.0:
+        print(
+            f"Data split: train={len(train_df)} ({train_ratio:.2%}), "
+            f"calibration={len(calibration_df)} ({calibration_ratio:.2%}), "
+            f"val={len(val_df)} ({val_ratio:.2%}), test={len(test_df)} ({max(test_ratio, 0.0):.2%})"
+        )
+    else:
+        print(
+            f"Data split: train={len(train_df)} ({train_ratio:.2%}), "
+            f"val={len(val_df)} ({val_ratio:.2%}), test={len(test_df)} ({max(test_ratio, 0.0):.2%})"
+        )
 
     # Choose GPU if available, otherwise CPU.
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -533,8 +665,26 @@ def main():
     backtest_cfg = cfg.get("backtest", {})
     backtest_enabled = bool(backtest_cfg.get("enabled", False))
     backtest_payload = {"targets": {}} if backtest_enabled else None
-    tuning_cfg = cfg.get("tuning", {}) or {}
-    tuning_enabled = bool(tuning_cfg.get("enabled", False))
+    tuning_cfg = dict(cfg.get("tuning", {}) or {})
+    if args.n_trials is not None and args.n_trials > 0:
+        tuning_cfg["n_trials"] = int(args.n_trials)
+    if args.top_pct is not None:
+        tuning_cfg["select_top_pct"] = float(args.top_pct)
+    tuning_enabled = bool((tuning_cfg.get("enabled", False) or args.tune) and not args.no_tune)
+
+    ensemble_seeds = [int(seed)]
+    cfg_seeds = cfg.get("seeds", [])
+    if isinstance(cfg_seeds, list):
+        for s in cfg_seeds:
+            try:
+                ensemble_seeds.append(int(s))
+            except Exception:
+                continue
+    # De-duplicate, preserve order.
+    seen = set()
+    ensemble_seeds = [s for s in ensemble_seeds if not (s in seen or seen.add(s))]
+    if args.max_seeds is not None and args.max_seeds > 0:
+        ensemble_seeds = ensemble_seeds[: args.max_seeds]
     uncertainty_cfg = _load_uncertainty_cfg()
     uncertainty_enabled = bool(uncertainty_cfg.get("enabled", False))
     uncertainty_targets = _parse_uncertainty_targets(uncertainty_cfg, targets)
@@ -553,6 +703,10 @@ def main():
         X_train, y_train, feat_cols = make_xy(train_df, target, targets)
         X_val, y_val, _ = make_xy(val_df, target, targets)
         X_test, y_test, _ = make_xy(test_df, target, targets)
+        X_cal = None
+        y_cal = None
+        if not calibration_df.empty:
+            X_cal, y_cal, _ = make_xy(calibration_df, target, targets)
 
         target_res = {"n_features": len(feat_cols)}
 
@@ -564,8 +718,9 @@ def main():
             else:
                 gbm_params = dict(gbm_cfg.get("params", {}))
                 gbm_params.setdefault("random_state", int(cfg.get("seed", 42)))
+                tuning_meta = None
                 if tuning_enabled:
-                    gbm_params = tune_gbm_params(
+                    gbm_params, tuning_meta = tune_gbm_params(
                         X_train,
                         y_train,
                         X_val,
@@ -574,26 +729,52 @@ def main():
                         tuning_cfg,
                         int(cfg.get("seed", 42)),
                     )
-                
-                # Train with optional sklearn Pipeline for leakage-safe preprocessing
-                model_kind, gbm = train_gbm(
-                    X_train, 
-                    y_train, 
-                    gbm_params, 
-                    use_pipeline=args.use_pipeline,
-                    preprocessing="standard" if args.use_pipeline else None,
-                )
-                
-                gbm_pred_test = predict_gbm(gbm, X_test)
-                gbm_pred_val = predict_gbm(gbm, X_val)
+                seed_list = ensemble_seeds if args.ensemble else [int(cfg.get("seed", 42))]
+                model_kind = "gbm"
+                gbm_members: list[dict] = []
+                val_preds = []
+                test_preds = []
+
+                # Train one GBM per seed (ensemble) or a single model.
+                for seed_i in seed_list:
+                    params_i = {**gbm_params, "random_state": int(seed_i)}
+                    kind_i, gbm_i = train_gbm(
+                        X_train,
+                        y_train,
+                        params_i,
+                        use_pipeline=args.use_pipeline,
+                        preprocessing="standard" if args.use_pipeline else None,
+                    )
+                    model_kind = kind_i
+                    pred_val_i = predict_gbm(gbm_i, X_val)
+                    pred_test_i = predict_gbm(gbm_i, X_test)
+                    gbm_members.append(
+                        {
+                            "seed": int(seed_i),
+                            "model": gbm_i,
+                            "val_rmse": float(rmse(y_val, pred_val_i)),
+                            "val_mae": float(mae(y_val, pred_val_i)),
+                        }
+                    )
+                    val_preds.append(pred_val_i)
+                    test_preds.append(pred_test_i)
+
+                gbm_pred_val = np.mean(np.vstack(val_preds), axis=0)
+                gbm_pred_test = np.mean(np.vstack(test_preds), axis=0)
+                gbm_pred_cal = None
+                if X_cal is not None and len(X_cal) > 0:
+                    cal_preds = [predict_gbm(member["model"], X_cal) for member in gbm_members]
+                    gbm_pred_cal = np.mean(np.vstack(cal_preds), axis=0)
                 gbm_metrics = {
                     **compute_metrics(y_test, gbm_pred_test, target),
                     "model": f"gbm_{model_kind}",
+                    "ensemble_members": len(gbm_members),
                 }
                 
                 # Optional: time-series cross-validation
-                if args.enable_cv:
-                    print(f"Running 5-fold CV for GBM on {target}...")
+                if cv_enabled:
+                    cv_folds = int(cv_cfg.get("n_folds", 5))
+                    print(f"Running {cv_folds}-fold CV for GBM on {target}...")
                     # CV on combined train+val for robust evaluation
                     X_trainval = np.vstack([X_train, X_val])
                     y_trainval = np.concatenate([y_train, y_val])
@@ -605,7 +786,7 @@ def main():
                             X, y, gbm_params, use_pipeline=args.use_pipeline, preprocessing="standard" if args.use_pipeline else None
                         )[1],
                         predict_fn=predict_gbm,
-                        n_splits=5,
+                        n_splits=cv_folds,
                         target=target,
                     )
                     
@@ -617,16 +798,33 @@ def main():
                 
                 if uncertainty_enabled and target in uncertainty_targets and target not in conformal_payloads:
                     cal_split = str(uncertainty_cfg.get("calibration_split", "val")).lower()
+                    calibration_source = "val"
                     if cal_split == "test":
                         cal = _reshape_horizon(y_test, gbm_pred_test, horizon)
                         test = _reshape_horizon(y_val, gbm_pred_val, horizon)
+                        calibration_source = "test"
+                    elif cal_split == "calibration":
+                        if gbm_pred_cal is not None and y_cal is not None and len(y_cal) > 0:
+                            cal = _reshape_horizon(y_cal, gbm_pred_cal, horizon)
+                            calibration_source = "calibration"
+                        else:
+                            print(
+                                f"Warning: target={target} requested calibration split but calibration set is empty; "
+                                "falling back to validation split."
+                            )
+                            cal = _reshape_horizon(y_val, gbm_pred_val, horizon)
+                            calibration_source = "val_fallback_missing_calibration"
+                        test = _reshape_horizon(y_test, gbm_pred_test, horizon)
                     else:
                         cal = _reshape_horizon(y_val, gbm_pred_val, horizon)
                         test = _reshape_horizon(y_test, gbm_pred_test, horizon)
+                        calibration_source = "val"
                     if cal is not None and test is not None:
                         conformal_payloads[target] = {
                             "target": target,
                             "model": f"gbm_{model_kind}",
+                            "calibration_source": calibration_source,
+                            "split_boundaries": split_boundaries,
                             "y_true_cal": cal[0],
                             "y_pred_cal": cal[1],
                             "y_true_test": test[0],
@@ -654,20 +852,41 @@ def main():
                 with open(art_dir / f"{gbm_metrics['model']}_{target}.pkl", "wb") as f:
                     pickle.dump({
                         "model_type": "gbm",
-                        "model": gbm,
+                        # Keep single-model key for compatibility; use ensemble list when present.
+                        "model": gbm_members[0]["model"],
+                        "ensemble_models": [m["model"] for m in gbm_members] if len(gbm_members) > 1 else None,
+                        "ensemble_seeds": [m["seed"] for m in gbm_members],
                         "feature_cols": feat_cols,
                         "target": target,
                         "quantiles": quantiles,
                         "residual_quantiles": gbm_q,
                         "quantile_models": quantile_models if quantile_models else None,
                         "tuned_params": gbm_params if tuning_enabled else None,
+                        "tuning_meta": tuning_meta if tuning_enabled else None,
+                        "seed_member_metrics": [
+                            {
+                                "seed": int(m["seed"]),
+                                "val_rmse": float(m["val_rmse"]),
+                                "val_mae": float(m["val_mae"]),
+                            }
+                            for m in gbm_members
+                        ],
                     }, f)
 
                 target_res["gbm"] = {
                     **gbm_metrics,
                     "residual_quantiles": gbm_q,
                     "tuned_params": gbm_params if tuning_enabled else None,
+                    "tuning_meta": tuning_meta if tuning_enabled else None,
                     "quantile_models": list(quantile_models.keys()) if quantile_models else None,
+                    "seed_member_metrics": [
+                        {
+                            "seed": int(m["seed"]),
+                            "val_rmse": float(m["val_rmse"]),
+                            "val_mae": float(m["val_mae"]),
+                        }
+                        for m in gbm_members
+                    ],
                 }
                 if backtest_enabled:
                     backtest_payload["targets"].setdefault(target, {})
@@ -835,8 +1054,10 @@ def main():
                 "target": payload["target"],
                 "model": payload["model"],
                 "horizon": horizon,
+                "calibration_source": payload.get("calibration_source", "val"),
                 "calibration_rows": int(payload["y_true_cal"].shape[0]),
                 "test_rows": int(payload["y_true_test"].shape[0]),
+                "split_boundaries": payload.get("split_boundaries", {}),
                 "global_coverage": interval_metrics["global_coverage"],
                 "global_mean_width": interval_metrics["global_mean_width"],
                 "per_horizon_picp": interval_metrics.get("per_horizon_picp", {}),

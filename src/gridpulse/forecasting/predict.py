@@ -94,7 +94,12 @@ def predict_next_24h(features_df: pd.DataFrame, model_bundle: Dict[str, Any], ho
         X = df[feat_cols].to_numpy()
         if len(X) < horizon:
             raise ValueError("Not enough rows in features_df for GBM horizon")
-        pred = model_bundle["model"].predict(X[-horizon:])
+        ensemble_models = model_bundle.get("ensemble_models")
+        if ensemble_models:
+            preds = [m.predict(X[-horizon:]) for m in ensemble_models]
+            pred = np.mean(np.vstack(preds), axis=0)
+        else:
+            pred = model_bundle["model"].predict(X[-horizon:])
     elif model_type in {"lstm", "tcn"}:
         lookback = int(model_bundle.get("lookback", 168))
         X = df[feat_cols].to_numpy()
