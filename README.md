@@ -34,7 +34,68 @@ make iot-sim
 # 4. Run one-step DC3S projection and audit certificate flow
 make dc3s-demo
 ```
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#1a1b26',
+    'primaryTextColor': '#c0caf5',
+    'primaryBorderColor': '#7aa2f7',
+    'lineColor': '#7aa2f7',
+    'secondaryColor': '#24283b',
+    'tertiaryColor': '#1a1b26',
+    'fontFamily': 'Inter, system-ui, sans-serif',
+    'fontSize': '14px'
+  }
+}}%%
 
+flowchart TB
+  subgraph sources["DATA & TELEMETRY SOURCES"]
+    direction LR
+    A1["OPSD Germany<br/>(Grid Data)"]
+    A2["EIA-930 USA<br/>(Grid Data)"]
+    A3["IoT Edge Sensors<br/>(Real-time & Faulty)"]
+  end
+
+  subgraph pipeline["DATA PIPELINE"]
+    direction TB
+    B["Ingestion, Validation<br/>& Drift Detection"]
+    C["Feature Engineering<br/>& Temporal Splitting"]
+    B --> C
+  end
+
+  subgraph ml["ML FORECASTING ENGINE"]
+    direction TB
+    E["LightGBM / LSTM / TCN<br/>Point Forecasts (ŷ)"]
+    G["Conformal Prediction Intervals<br/>90% Nominal Coverage"]
+    E --> G
+  end
+
+  subgraph ops["DC³S CYBER-PHYSICAL CONTROL"]
+    direction TB
+    I["Robust LP Optimizer<br/>Proposes Cost-Optimal Action"]
+    S["DC³S Safety Shield<br/>Intervention based on Telemetry Health (w_t)"]
+    A["Immutable Audit Ledger<br/>Tamper-Evident Hash Chain"]
+    I -->|a* proposed| S
+    S -->|a_safe repaired| A
+  end
+
+  subgraph serve["SERVING & GOVERNANCE"]
+    direction TB
+    K["FastAPI Backend<br/>Real-time Dispatch & Telemetry APIs"]
+    L["Next.js 15 Dashboard<br/>Operator UX & System Monitor"]
+    K --> L
+  end
+
+  sources --> pipeline
+  pipeline --> ml
+  ml --> ops
+  ops --> serve
+
+  style sources fill:#1e3a5f,stroke:#7aa2f7,stroke-width:2px,color:#c0caf5
+  style pipeline fill:#1e3a5f,stroke:#9ece6a,stroke-width:2px,color:#c0caf5
+  style ml fill:#1e3a5f,stroke:#bb9af7,stroke-width:2px,color:#c0caf5
+  style ops fill:#3a1e1e,stroke:#f7768e,stroke-width:3px,color:#c0caf5
+  style serve fill:#1e3a5f,stroke:#7dcfff,stroke-width:2px,color:#c0caf5
 ## Architecture
 ```mermaid
 %%{init: {
