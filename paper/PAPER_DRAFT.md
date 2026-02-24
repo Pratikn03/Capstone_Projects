@@ -1,1471 +1,1101 @@
-# GridPulse: An Integrated Machine Learning System for Renewable Energy Forecasting and Carbon-Aware Battery Dispatch Optimization
+# GridPulse: An Integrated Machine Learning System for Renewable Energy Forecasting and Carbon-Aware Battery Dispatch
 
-**Authors:** Pratik Niroula  
+**Author:** Pratik Niroula  
 **Affiliation:** MNSU CIT (Major), Math (Minor)  
-**Date:** February 1, 2026  
-**Keywords:** Machine Learning, Renewable Energy, Load Forecasting, Battery Storage, Robust Optimization, Adaptive Conformal Inference, Stochastic Programming
-
----
+**Date:** February 19, 2026
 
 ## Abstract
+GridPulse is an end-to-end decision system that links forecasting, uncertainty estimation, battery dispatch optimization, operational safety controls, and post-decision evaluation for power-system operations. The implementation is organized as a closed loop (`Forecast -> Optimize -> Dispatch -> Measure -> Monitor`) so that model outputs are directly converted into constrained actions and then measured against baselines in the same artifact pipeline. This manuscript uses a strict dataset-scoped latest evidence policy locked to repository artifacts dated February 17, 2026. Canonical decision-impact sources are `reports/impact_summary.csv` for Germany (DE) and `reports/eia930/impact_summary.csv` for the United States (US). Canonical stochastic metrics are taken from `reports/research_metrics_de.csv` run `20260217_165756` and `reports/research_metrics_us.csv` run `20260217_182305`.
 
-We present GridPulse, an integrated forecasting-to-dispatch system for grid operations and competition-style evaluation. The stack combines LightGBM point forecasts, adaptive conformal uncertainty updates (FACI), deterministic physics-informed battery dispatch (piecewise efficiency and throughput degradation penalty), and a two-scenario distributionally robust optimization (DRO) dispatch model implemented in Pyomo/HiGHS. We also implement stochastic-programming metrics (EVPI and VSS) using realized-cost accounting under ground truth conditions.
+Under this lock, DE impact is **7.11%** cost savings, **0.30%** carbon reduction, and **6.13%** peak shaving. US impact is **0.11%** cost savings, **0.13%** carbon reduction, and **0.00%** peak shaving. Stochastic outcomes are DE EVPI_robust **2.32**, DE EVPI_deterministic **-30.40**, DE VSS **2,708.61**, and US EVPI_robust **10,279,851.74**, US EVPI_deterministic **24,915,503.93**, US VSS **297,092.71**. Beyond reporting these outcomes, the core thesis contribution is governance: each publication-facing claim is tied to explicit run IDs, source files, and rounding rules through `paper/metrics_manifest.json`, `paper/claim_matrix.csv`, and `scripts/validate_paper_claims.py`.
 
-Using frozen run `20260216_202050` across Germany (OPSD) and US (EIA-930 MISO) reports, GridPulse achieves **6.88%** cost savings in DE and **0.11%** in US relative to baseline dispatch, with small carbon reductions (**0.12%**, **0.13%**). The same run reports **EVPI_robust = 0.0** in both regions and negative **VSS** (DE: **-34,515.97**, US: **-28,928.57**), showing robust feasibility without consistent realized stochastic dominance yet. We report these negative results explicitly and use them as the primary next-step optimization target.
+The evidence shows two simultaneous realities: (1) robust/stochastic value is positive in both regions, and (2) direct percent impact magnitude can differ substantially by region even with a shared pipeline. Therefore, this thesis frames GridPulse as a decision-quality and reproducibility system, not only a forecasting benchmark.
 
----
+## Keywords
+Machine Learning, Energy Forecasting, Battery Dispatch, Robust Optimization, Conformal Prediction, Stochastic Programming, MLOps, Grid Operations
 
 ## 1. Introduction
 
-### 1.1 Motivation
+### 1.1 Operational Motivation
+Prediction-only systems stop before operational action. In grid operations, this is not sufficient: an operator needs dispatch decisions that satisfy physical constraints under uncertain demand and renewable generation. GridPulse is built as a closed decision loop:
+
+`Forecast -> Optimize -> Dispatch -> Measure -> Monitor`
+
+This loop is implemented across model training, uncertainty calibration, optimization, monitoring, and API/dashboard delivery, with explicit governance to prevent metric drift across manuscript versions.
+
+In practice, this architecture addresses a common implementation failure in applied ML projects: high model quality in isolation with weak operational accountability once predictions are handed off. GridPulse explicitly binds model outputs to dispatch feasibility, safety guards, and measurable economic/carbon outcomes so that "good forecast metrics" and "good operational decisions" are assessed together.
+
+### 1.2 Problem Statement
+The problem addressed in this thesis is integrated decision quality, not isolated prediction error. The system must:
+1. Produce accurate short-horizon forecasts for load, wind, and solar.
+2. Quantify forecast uncertainty in a form usable by dispatch optimization.
+3. Compute physically feasible battery/grid actions under cost and carbon objectives.
+4. Demonstrate measurable decision impact against baseline policies.
+5. Maintain reproducible claim traceability across markdown, LaTeX, and release documents.
+
+This framing moves the optimization target from "minimize one model metric" to "optimize a constrained cyber-physical workflow under uncertainty." In that workflow, a low forecast error can still yield poor decisions if interval calibration, solver behavior, or control-plane safety are weak.
+
+### 1.3 Research Questions
+1. Can one architecture maintain high forecasting performance across DE and US datasets with different regimes?
+2. Does uncertainty-aware dispatch provide measurable value relative to deterministic dispatch?
+3. How large is decision impact (cost/carbon/peak) under dataset-scoped latest artifacts?
+4. Can run-scoped governance prevent cross-document metric contradictions?
+
+Each question is answered with locked in-repo evidence. This manuscript intentionally avoids claims requiring untracked notebooks, ad hoc local reruns, or post hoc manual calculations that are not serialized in the evidence paths declared in Section 5 and Section 7.
+
+### 1.4 Contributions
+1. A production-oriented multi-layer GridPulse implementation with forecast, optimization, monitoring, and serving layers.
+2. A conformal + adaptive interval workflow integrated into robust dispatch evaluation.
+3. A dataset-scoped latest metric lock with explicit run IDs and reproducible evidence paths.
+4. A publication governance mechanism (`metrics_manifest`, claim matrix, validator script) that prevents legacy-claim regression.
+
+Contribution boundaries are stated explicitly. This thesis does not claim complete market realism for all settlement regimes, universal transferability across all operators, or causal policy-level effects. It claims an operationally integrated and evidence-governed system with reproducible DE/US outcomes under the locked artifacts.
+
+### 1.5 Thesis Scope and Reading Guide
+To support future editing, this draft is organized so each section can be expanded or trimmed independently:
+1. Sections 2-4 define implementation and methods with code-level anchors.
+2. Sections 5-8 define evidence policy and claim governance.
+3. Section 6 contains the canonical quantitative results.
+4. Sections 9-13 interpret findings, limits, and roadmap.
+5. Appendices provide replication commands, artifact inventory, and copy-ready writing guidance.
+
+If manuscript length must be reduced later, keep Sections 6, 7, and 14 intact first; those contain the metric-locked claims that must remain synchronized across formats.
+
+## 2. System Architecture and Implementation
+
+### 2.1 Decision Loop and Layering
+GridPulse is implemented as an eight-layer pipeline consistent with repository modules and docs (`docs/ARCHITECTURE.md`):
+1. Data ingestion and feature generation.
+2. Forecast model training/inference.
+3. Uncertainty interval calibration.
+4. Anomaly detection.
+5. Dispatch optimization (deterministic + robust).
+6. Impact and stochastic evaluation.
+7. Monitoring and retraining logic.
+8. API + dashboard serving.
+
+The layering is intentionally conservative: each layer writes explicit artifacts consumed by the next layer instead of relying on implicit in-memory contracts. This supports auditability and simplifies failure isolation. For example, optimizer-level anomalies can be traced back to concrete forecast and interval artifacts instead of inferred from logs alone.
+
+### 2.2 Component-to-Code Map
+| Layer | Purpose | Primary paths |
+|---|---|---|
+| Data pipeline | Build/validate region features and splits | `src/gridpulse/data_pipeline/`, `src/gridpulse/pipeline/run.py` |
+| Forecasting | GBM/LSTM/TCN train + predict | `src/gridpulse/forecasting/` |
+| Uncertainty | Conformal + adaptive interval logic | `src/gridpulse/forecasting/uncertainty/conformal.py` |
+| Optimization | Deterministic MILP and robust dispatch | `src/gridpulse/optimizer/lp_dispatch.py`, `src/gridpulse/optimizer/robust_dispatch.py` |
+| Monitoring | Drift detection and retraining decisions | `src/gridpulse/monitoring/` |
+| Safety | BMS-style limits and watchdog health | `src/gridpulse/safety/` |
+| API serving | Forecast/optimize/monitor/anomaly endpoints | `services/api/main.py`, `services/api/routers/` |
+| Frontend | Operator dashboard and regional views | `frontend/` |
+
+The code map is publication-relevant because this thesis claims implementation-level contributions, not only conceptual workflows. All functional claims in this manuscript should be traceable to these modules or their direct dependencies.
+
+### 2.3 Runtime Interfaces
+FastAPI includes routes for forecast, intervals, anomaly, optimization, and monitoring:
+- `/forecast`
+- `/forecast/with-intervals`
+- `/anomaly`
+- `/optimize`
+- `/monitor`
+- `/monitor/model-info`
+- `/dc3s/step`
+- `/dc3s/audit/{command_id}`
+- `/health`, `/ready`, `/metrics`
+
+Operational control routes also exist (`/system/health`, `/system/heartbeat`, `/control/dispatch`) with API-key scope checks and safety validation in `services/api/main.py`.
+
+Endpoint behavior is scoped as follows:
+1. Forecasting routes provide point forecasts and interval outputs.
+2. Optimization routes expose deterministic and robust dispatch pathways.
+3. Monitoring routes return drift and retraining state plus research metric snapshots.
+4. Control routes are guarded by scope checks and runtime safety checks (watchdog and BMS validation).
+
+Existing runtime endpoints remain unchanged; these interfaces are additive extensions for Section 1-3 implementation coverage.
+
+### 2.4 Artifact Handoff Contracts
+Primary artifact contracts used by this manuscript:
+1. Forecast/dashboard metrics: `data/dashboard/de_metrics.json`, `data/dashboard/us_metrics.json`.
+2. Dataset profiles: `data/dashboard/de_stats.json`, `data/dashboard/us_stats.json`, `data/dashboard/manifest.json`.
+3. Decision impact: `reports/impact_summary.csv`, `reports/eia930/impact_summary.csv`.
+4. Stochastic metrics: `reports/research_metrics_de.csv`, `reports/research_metrics_us.csv`.
+5. Robustness diagnostics: `reports/publication/tables/table6_robustness.csv`.
 
-The transition to renewable energy sources presents significant challenges for grid operators. Variable generation from wind and solar resources introduces uncertainty that must be managed through accurate forecasting and optimal storage utilization. Battery energy storage systems (BESS) offer flexibility but require sophisticated dispatch strategies that balance multiple objectives: minimizing operating costs, reducing carbon emissions, and maintaining grid stability.
+These contracts are treated as public interfaces between offline pipelines and publication outputs. If any contract path or schema changes, `paper/metrics_manifest.json` and `paper/claim_matrix.csv` must be updated in the same revision.
 
-### 1.2 Competition Objective and Reproducibility Requirements
+### 2.5 Deployment and Runtime Modes
+GridPulse supports both research and operational execution patterns:
+1. Offline batch mode for training, evaluation, and report generation.
+2. API service mode (`services/api/main.py`) for live forecast/optimization requests.
+3. Dashboard mode (`frontend/`) for operator-facing visualization and inspection.
 
-This work is structured for both publication and IEEE-style energy-grid competition settings. The objective is to produce dispatch decisions that are feasible under uncertainty, economically competitive under realized conditions, and reproducible from one frozen run identifier and artifact set. We enforce fixed data splits, run manifests, dataset-specific DE/US outputs, and a single frozen metrics snapshot for manuscript and repository claims.
+The manuscript does not assume uninterrupted real-time operation for all components. Instead, it documents explicit fallbacks (for example, baseline dispatch when optimization is infeasible) and health checks that allow safe degradation.
 
-### 1.3 Contributions
+### 2.6 End-to-End Request Lifecycle
+An operational request path can be summarized in six steps:
+1. Load latest feature window and resolve requested target(s).
+2. Retrieve model bundle and produce forecast vectors.
+3. Optionally attach conformal intervals where calibration artifacts exist.
+4. Solve deterministic or robust dispatch with configured constraints.
+5. Return action plan plus cost/carbon summaries when available.
+6. Record monitoring signals and maintain control-plane heartbeats.
 
-This paper makes the following contributions:
+This lifecycle is central to thesis reproducibility because it ties observed outcomes to deterministic processing stages with explicit files, routes, and solver statuses.
 
-1. **Forecasting Backbone for Dispatch**: We train GBM/LSTM/TCN pipelines and operationally prioritize GBM bundles for deterministic DE/US inference.
-2. **Adaptive Uncertainty Quantification**: We combine split conformal intervals with FACI online update rules for immediate width adaptation.
-3. **Physics-Informed + Robust Dispatch**: We integrate deterministic MILP dispatch with piecewise battery efficiency/degradation and a Pyomo DRO min-max robust dispatch layer.
-4. **Stochastic Evaluation Integration**: We add EVPI/VSS metrics and dataset-scoped research pipelines to evaluate realized decision quality, not just forecast error.
+### 2.7 Section 1-3 Implementation Update (Publish Blockers, Streaming, DC3S)
+Section 1 (immediate publish blockers) was implemented by replacing frontend chat tool mock outputs with backend-derived FastAPI calls in `frontend/src/app/api/chat/tool-executors.ts`. Production tool paths now resolve through `/forecast`, `/forecast/with-intervals`, `/optimize`, `/optimize/baseline`, `/monitor`, `/anomaly`, `/health`, `/ready`, and `/monitor/model-info`, and tool execution explicitly fails on backend errors instead of returning fabricated fallback payloads. Deployment/runtime hygiene changes were also applied: dashboard container/service ports were normalized to `3000`, dashboard deploy workflow Dockerfile targeting was corrected, local absolute report paths were removed, and tracked coverage artifacts were removed and ignored for reproducibility hygiene.
 
----
+Section 2 (streaming correctness) was implemented with a new CLI module `src/gridpulse/streaming/run_consumer.py` supporting:
+`python -m gridpulse.streaming.run_consumer --config configs/streaming.yaml --max-messages <N>`.
+This loader maps YAML config into streaming `AppConfig`, instantiates `StreamingIngestConsumer`, and closes resources cleanly. Persistence behavior was made explicit via public `write_event(...)` in `src/gridpulse/streaming/consumer.py` and integrated in `src/gridpulse/streaming/worker.py` after schema validation. The expected persistence artifact is `data/interim/streaming.duckdb` with table `telemetry_events`.
 
-## 2. Related Work
+Section 3 (DC3S) was implemented with new config `configs/dc3s.yaml`, DC3S modules in `src/gridpulse/dc3s/` (`quality.py`, `drift.py`, `calibration.py`, `shield.py`, `certificate.py`, `state.py`), and FastAPI router endpoints in `services/api/routers/dc3s.py`: `POST /dc3s/step` and `GET /dc3s/audit/{command_id}`. The step endpoint returns proposed and shield-repaired safe actions, uncertainty payloads, and certificate identifiers; audit retrieval returns persisted certificate JSON. The `heuristic` controller mode is intentionally not implemented in this phase and is explicitly rejected at runtime.
 
-### 2.1 Load and Renewable Energy Forecasting
+Frontend live-ops behavior for this flow is now explicitly implemented in `frontend/src/app/(dashboard)/page.tsx`, `frontend/src/lib/api/dc3s-client.ts`, `frontend/src/components/dashboard/DC3SLiveCard.tsx`, and `frontend/src/app/api/dc3s/audit/[commandId]/route.ts`. The dashboard initializes DC3S polling at 15 seconds, allows operator selection of auto-refresh (`Off`, `5s`, `10s`, `15s`, `30s`, `60s`), and supports manual refresh. The card displays the active `command_id` and exposes a direct audit link that opens `/api/dc3s/audit/{commandId}`; the Next.js route encodes the ID and proxies to FastAPI `/dc3s/audit/{commandId}` with explicit error propagation.
 
-Traditional statistical methods including ARIMA [1], exponential smoothing [9], and seasonal decomposition [10] have been widely applied to load forecasting. The Global Energy Forecasting Competition (GEFCom) series established benchmarks showing gradient boosting methods (XGBoost, LightGBM) consistently outperform alternatives on tabular energy data [2, 11]. Grinsztajn et al. [8] provide a comprehensive analysis of why tree-based methods remain competitive with deep learning on structured data.
+## 3. Data Assets, Scope, and Feature Design
 
-Deep learning approaches have shown promise for capturing complex temporal patterns. Hochreiter and Schmidhuber's LSTM [3] enables learning long-range dependencies, while Temporal Convolutional Networks (TCN) [12] offer parallelizable alternatives with dilated causal convolutions. Transformer-based models [13] have recently been applied to energy forecasting, though computational costs remain high for operational deployment.
+### 3.1 Dataset Policy Lock (Canonical)
+This manuscript uses the dashboard profile lock generated at `2026-02-17T11:15:38.623283` (`data/dashboard/manifest.json`).
 
-For renewable energy, Sweeney et al. [14] survey wind power forecasting methods, while Lorenz et al. [15] address solar irradiance prediction challenges including cloud transients and seasonal patterns.
+| Region | Dataset Label | Rows (hourly) | Columns | Engineered Features | Start (UTC) | End (UTC) | Approx Days |
+|---|---|---:|---:|---:|---|---|---:|
+| DE | Germany (OPSD) | 17,377 | 98 | 94 | 2018-10-07 23:00 | 2020-09-30 23:00 | 724.04 |
+| US | USA (EIA-930 MISO) | 13,638 | 118 | 114 | 2024-07-01 06:00 | 2026-01-20 11:00 | 568.25 |
 
-### 2.2 Battery Storage Optimization
+The lock is a governance boundary, not only a descriptive snapshot. Any value outside this scope may still be analytically useful, but it cannot be published as a canonical thesis claim without manifest-level reconciliation.
 
-Optimal battery dispatch has been formulated using diverse mathematical frameworks. Linear programming [4] provides tractable solutions for convex problems, while Bertsimas and Sim [5] introduce robust optimization to handle forecast uncertainty. Mixed-integer programming captures binary charge/discharge decisions [16]. Model Predictive Control (MPC) [17] enables rolling-horizon optimization with feedback.
+### 3.2 Signal and Target Definitions
+Target variables in both regions are:
+- `load_mw`
+- `wind_mw`
+- `solar_mw`
 
-Reinforcement learning approaches [6] learn dispatch policies directly from experience but require extensive training and may lack safety guarantees. Pecan Street [18] provides real-world battery dispatch datasets for benchmarking. Our approach combines forecast-driven MILP with conformal prediction intervals for uncertainty-aware constraints.
+Region-specific context:
+- DE includes `price_eur_mwh` and `carbon_kg_per_mwh` in the profile.
+- US includes generation-mix channels (`coal_mw`, `gas_mw`, `nuclear_mw`, `hydro_mw`) and `price_usd_mwh` / `carbon_kg_per_mwh` features.
 
-### 2.3 Conformal Prediction for Uncertainty Quantification
+This target alignment enables cross-region architectural comparisons while still preserving dataset-specific feature context. In other words, model families and pipeline stages are shared, but feature spaces remain region-aware.
 
-Conformal prediction [7] provides distribution-free prediction intervals with finite-sample coverage guarantees. Unlike Bayesian methods requiring distributional assumptions, conformal methods guarantee $P(Y \in \hat{C}(X)) \geq 1-\alpha$ under exchangeability. Romano et al. [19] extend conformalization to quantile regression, while Barber et al. [20] address distribution shift scenarios.
+### 3.3 Feature Family Composition
+| Region | Weather Features | Lag Features | Calendar Features | Total Features |
+|---|---:|---:|---:|---:|
+| DE | 40 | 36 | 6 | 94 |
+| US | 56 | 42 | 6 | 114 |
 
-For time series, Chernozhukov et al. [21] develop conformal inference under temporal dependence. Zaffran et al. [22] propose adaptive conformal inference (ACI) for non-stationary sequences. We apply split conformal prediction with rolling calibration windows to maintain valid coverage as grid conditions evolve.
+The US profile has a broader weather feature footprint and generation-mix context, which can affect uncertainty calibration and optimization behavior. This is one structural reason cross-region magnitude differences should be interpreted cautiously.
 
-### 2.4 Carbon-Aware Computing and Grid Emissions
+### 3.4 Target Distribution Snapshot
+Values below are from `targets_summary` in dashboard stats files.
 
-Marginal emissions intensity varies significantly by time and location [23]. WattTime and Electricity Maps provide real-time carbon intensity APIs. Baseline emission factors from EPA eGRID [24] enable retrospective analysis. Radovanović et al. [25] demonstrate 30-40% carbon reductions through temporally-aware workload scheduling in data centers, motivating similar approaches for battery dispatch.
+| Region | Target | Mean (MW) | Std (MW) | Min (MW) | Max (MW) | Median (MW) | Non-zero (%) |
+|---|---|---:|---:|---:|---:|---:|---:|
+| DE | load_mw | 55,156.42 | 9,998.06 | 31,923.0 | 76,925.0 | 54,752.0 | 100.0 |
+| DE | wind_mw | 14,368.98 | 10,321.58 | 136.0 | 46,064.0 | 11,728.0 | 100.0 |
+| DE | solar_mw | 5,013.16 | 7,665.92 | 0.0 | 32,947.0 | 156.0 | 56.8 |
+| US | load_mw | 75,757.21 | 11,819.46 | 52,940.0 | 120,343.0 | 73,564.0 | 100.0 |
+| US | wind_mw | 10,955.94 | 6,041.83 | 0.0 | 26,132.0 | 10,183.5 | 100.0 |
+| US | solar_mw | 2,875.42 | 3,842.56 | 0.0 | 14,315.0 | 110.0 | 94.6 |
 
----
+### 3.5 Missingness and Data Quality
+`missing_pct` is empty in both dashboard stats JSON files, indicating no unresolved missingness in the locked feature profiles used for this manuscript snapshot.
 
-## 3. Methodology
+Data quality interpretation in this thesis is therefore focused on distributional behavior and calibration quality rather than imputation-heavy preprocessing effects in the locked profile artifacts.
 
-### 3.1 Data Sources and Preprocessing
+### 3.6 Scope Boundaries and Legacy Drift
+This thesis explicitly excludes non-locked legacy profile claims. In particular, previously circulated row/count/date-range claims from older report families are treated as non-canonical unless reconciled to the dashboard profile lock above.
 
-We utilize two primary datasets:
+### 3.7 Leakage-Safe Temporal Framing
+The training configuration defines a 24-hour forecast horizon and 168-hour lookback with time-aware cross-validation and an explicit gap (`cross_validation.n_folds = 10`, `cross_validation.gap = 24`) in both DE and US forecast configs. This enforces temporal ordering and reduces leakage risk when comparing model families.
 
-| Dataset | Country | Period | Observations | Signals |
-|---------|---------|--------|--------------|---------|
-| OPSD | Germany (DE) | 2018-10 to 2020-09 | 17,377 | load, wind, solar |
-| EIA-930 | USA (MISO) | 2015-07 to 2026-01 | 92,382 | load, wind, solar |
+Because this thesis is decision-oriented, leakage prevention is not only a forecasting requirement. Leakage in upstream forecasting would directly contaminate optimization and impact estimates, so temporal separation is treated as an end-to-end validity condition.
 
-**Table 1: Dataset Summary**
+## 4. Methods
 
-Feature engineering includes:
-- **Temporal features**: hour, day of week, month, season, holiday indicators
-- **Lag features**: 1h, 24h, 168h (weekly) lags
-- **Rolling statistics**: 24h and 168h rolling means and standard deviations
-- **Weather features**: temperature, wind speed, solar radiation, cloud cover
+### 4.1 Forecasting Method
 
-### 3.2 Forecasting Models
+#### 4.1.1 Model Families
+GridPulse trains three model families per target:
+1. **GBM (LightGBM)**: operational primary model in current locked dashboards.
+2. **LSTM**: sequence deep model for long temporal dependence.
+3. **TCN**: convolutional sequence model with dilated temporal receptive fields.
 
-#### 3.2.1 Gradient Boosting Machine (GBM)
+#### 4.1.2 Training Setup
+Configured horizon/lookback settings from `configs/train_forecast.yaml` and `configs/train_forecast_eia930.yaml`:
+- Forecast horizon: 24 hours.
+- Lookback: 168 hours.
+- Time-aware cross-validation enabled in config (10 folds with 24-hour gap).
+- Seed control and optional multi-seed training are defined in configs.
 
-We employ LightGBM with Optuna hyperparameter optimization:
+Implementation detail that matters for reproducibility:
+1. DE and US both keep GBM as enabled baseline model with LightGBM hyperparameter blocks in config.
+2. Deep model blocks are present for LSTM and TCN in both configs, but parameterization differs by region configuration profile.
+3. Cross-validation behavior is explicitly controlled by config values rather than implicit defaults.
+4. Training artifacts are persisted into region-specific output paths (`artifacts/models` and `artifacts/models_eia930` pathways through configs/scripts).
 
-```
-Parameters: num_leaves ∈ [20, 150], learning_rate ∈ [0.01, 0.3],
-            n_estimators ∈ [100, 500], min_child_samples ∈ [5, 50]
-```
+Runtime training controls are explicit in the CLI contract (`src/gridpulse/forecasting/train.py`, `scripts/train_dataset.py`). `--tune` force-enables Optuna tuning, `--no-tune` disables tuning even when YAML enables it, `--ensemble` trains multi-seed GBM members from config seeds, `--max-seeds` caps ensemble size, `--n-trials` overrides Optuna trial count, and `--top-pct` overrides top-trial aggregation percentile. In tuned runs, selected parameters and tuning metadata are serialized in saved bundles; in ensemble runs, per-seed metrics, seed list, and `ensemble_models` are persisted so inference and reporting remain run-reproducible.
 
-#### 3.2.2 LSTM Network
+#### 4.1.3 Forecast Metrics
+Primary metrics: RMSE, MAE, sMAPE, R2. MAPE is recorded but can become numerically unstable when targets have many near-zero periods (especially solar and some wind segments), so interpretation prioritizes sMAPE and absolute metrics.
 
-Bidirectional LSTM with architecture:
-- Input sequence length: 168 hours (1 week)
-- Hidden dimensions: 64
-- Dropout: 0.2
-- Output: 24 hours (multi-step)
+Metric interpretation policy in this thesis:
+1. RMSE and MAE are primary for magnitude-sensitive operational quality.
+2. sMAPE is used for relative comparability across targets with different scales.
+3. R2 is included as explanatory fit context, not as a standalone decision metric.
+4. MAPE is treated as supplementary and interpreted carefully for near-zero regimes.
 
-#### 3.2.3 Temporal Convolutional Network (TCN)
+#### 4.1.4 Forecast Inference Contract
+API-level forecast inference (`services/api/routers/forecast.py`) follows a strict contract:
+1. Load feature matrix from configured path.
+2. Resolve model bundle by target through explicit/fallback mapping.
+3. Emit next-horizon predictions with generated timestamp and metadata.
+4. Surface missing-model states explicitly in API response metadata.
 
-TCN with dilated causal convolutions:
-- Kernel size: 3
-- Dilation factors: [1, 2, 4, 8, 16, 32]
-- Hidden channels: 64
-- Receptive field: 189 hours
+This contract is relevant for reproducibility because missing artifacts are not silently imputed; they are surfaced as explicit missing-target notes.
+Resolution behavior is deterministic: the router first checks explicit per-target model paths from config, then applies ordered fallback search (`lstm`, `tcn`, `gbm`) under `artifacts/models`. For GBM bundles containing `ensemble_models`, inference averages member predictions; for single-model bundles, it uses the single estimator path. Quantiles are served from explicit quantile models when present, otherwise from residual quantile offsets embedded in the bundle.
 
-### 3.3 Uncertainty Quantification
+### 4.2 Uncertainty: Conformal + Adaptive Intervals
+Conformal calibration (alpha = 0.10 nominal) is implemented in `src/gridpulse/forecasting/uncertainty/conformal.py` with horizon-wise residual quantiles and rolling updates.
 
-We use split conformal prediction as a base interval generator and Fully Adaptive Conformal Inference (FACI) for online interval adaptation. Let $(\ell_t, u_t)$ be the current interval, $y_t$ the realized target, and $\gamma$ the FACI step size:
+Core interval form:
+- Lower bound: `y_hat - q`
+- Upper bound: `y_hat + q`
 
-$$
-\alpha_{t+1} =
-\begin{cases}
-\min(\alpha_t + \gamma,\alpha_{\max}) & y_t \notin [\ell_t, u_t] \\
-\max(\alpha_t - \gamma,\alpha_{\min}) & y_t \in [\ell_t, u_t]
-\end{cases}
-$$
+Where `q` is a calibrated residual quantile (global or horizon-wise). Adaptive conformal logic updates alpha/scale behavior online while preserving bounded controls. Coverage is evaluated with PICP, and width with MPIW.
 
-FACI then rescales next-step interval width around the midpoint using only past observations (leakage-safe online adaptation).
+The implementation includes two linked mechanisms:
+1. `ConformalInterval` computes interval widths from residual quantiles.
+2. `AdaptiveConformal` updates effective alpha using bounded step logic (gamma-driven updates) when misses occur.
 
-### 3.4 Dispatch Optimization
+Default conformal config values in code include `alpha = 0.10`, `rolling = true`, and `rolling_window = 720`, which are operationally meaningful because interval behavior can evolve with recent residual behavior rather than remaining static.
 
-#### 3.4.1 Deterministic Dispatch (Physics-Informed MILP)
+### 4.3 Deterministic Dispatch Optimization
+Deterministic dispatch in `src/gridpulse/optimizer/lp_dispatch.py` solves a mixed-integer linear objective with battery charge/discharge, grid import, curtailment, unmet load penalty, and SOC dynamics. Objective terms include:
+1. Energy cost.
+2. Carbon-weighted cost proxy.
+3. Battery degradation throughput penalty.
+4. Optional peak-shaving penalty.
 
-The deterministic policy is solved with SciPy MILP and includes:
-- Piecewise SoC-dependent efficiency:
-  - Regime A (0–80% SoC): $\eta_A = 0.98$
-  - Regime B (80–100% SoC): $\eta_B = 0.90$
-- Binary regime gating by start-of-step SoC
-- Throughput degradation penalty:
+Key constraints:
+- Power balance.
+- SOC recursion.
+- SOC bounds.
+- Charge/discharge power limits.
+- Grid import capacity.
 
-$$C_{deg} = c_{deg} \sum_t (P_t^{ch}+P_t^{dis}), \quad c_{deg}=10\ \$/MWh$$
+The deterministic objective can be summarized as:
 
-#### 3.4.2 Robust Dispatch (DRO Min-Max)
-
-For each timestep $t$ and load scenarios $s \in \{\text{lower}, \text{upper}\}$:
-- First-stage decisions: $P_t^{ch}, P_t^{dis}$
-- Recourse decisions: $G_{s,t}$ (grid import), $SoC_{s,t}$
-- Epigraph variable: $z$
-
-Objective:
-
-$$\min\ z + c_{deg}\sum_t(P_t^{ch}+P_t^{dis})$$
-
-Subject to:
-
-$$P_t^{dis} - P_t^{ch} + G_{s,t} \ge L_{s,t} - R_t$$
-$$G_{s,t} \le G^{max}$$
-$$SoC^{min} \le SoC_{s,t} \le SoC^{max}$$
-$$z \ge \sum_t \pi_t G_{s,t} \quad \forall s$$
-
-The DRO model is implemented in Pyomo and solved with HiGHS (`appsi_highs`), returning scenario-specific SoC/grid trajectories and worst-case cost diagnostics.
-
----
-
-## 4. Experimental Setup
-
-### 4.1 Evaluation Protocol
-
-We employ time-series cross-validation with forward chaining:
-- 5 folds with expanding training window
-- Test set: final 10% of each dataset
-- Evaluation horizons: 1, 6, 12, 24 hours
-
-Competition-facing evaluation uses fixed rolling windows on the test split with horizon $H=24$, dataset-scoped DE/US model bundles, and dataset-scoped research outputs (`research_metrics_de.csv`, `research_metrics_us.csv`).
-
-### 4.2 Metrics
-
-**Forecasting:**
-- RMSE: $\sqrt{\frac{1}{n}\sum(y_i - \hat{y}_i)^2}$
-- MAE: $\frac{1}{n}\sum|y_i - \hat{y}_i|$
-- sMAPE: $\frac{100}{n}\sum\frac{|y_i - \hat{y}_i|}{(|y_i| + |\hat{y}_i|)/2}$
-
-**Uncertainty:**
-- PICP: Prediction Interval Coverage Probability
-- MPIW: Mean Prediction Interval Width
-
-**Optimization:**
-- Cost savings (%)
-- Carbon reduction (%)
-- Peak shaving (%)
-
-**Stochastic Programming:**
-- EVPI: realized cost(actual policy) − realized cost(perfect-information policy)
-- VSS: realized cost(deterministic policy) − realized cost(robust policy)
-- Realized-cost accounting includes grid import, throughput degradation, and unmet-load penalty
-
-### 4.3 Baselines
-
-- **Persistence (24h)**: $\hat{y}_t = y_{t-24}$
-- **Moving Average (24h)**: $\hat{y}_t = \frac{1}{24}\sum_{i=1}^{24} y_{t-i}$
-- **Deterministic MILP dispatch**: point-forecast policy with physics-informed battery dynamics
-- **Robust DRO dispatch**: interval-aware min-max policy on lower/upper load scenarios
-
----
-
-## 5. Results
-
-### 5.1 Forecasting Performance
-
-#### Germany (OPSD)
-
-| Target | Model | RMSE | MAE | sMAPE |
-|--------|-------|------|-----|-------|
-| Load | **GBM** | **270.26** | **160.45** | **0.34%** |
-| Load | LSTM | 4,975.17 | 3,633.78 | 7.10% |
-| Load | TCN | 6,157.08 | 5,172.09 | 10.64% |
-| Load | Persistence | 6,010.56 | 3,901.68 | 7.83% |
-| Wind | **GBM** | **124.50** | **83.73** | **1.96%** |
-| Wind | Persistence | 7,780.10 | 5,496.82 | 63.68% |
-| Solar | **GBM** | **263.93** | **123.89** | **69.55%** |
-| Solar | Persistence | 2,427.47 | 1,254.86 | 14.26% |
-
-**Table 2: Forecast Metrics - Germany**
-
-GBM achieves **95.5% improvement** over persistence for load forecasting and **98.4% improvement** for wind forecasting.
-
-#### United States (EIA-930 MISO)
-
-| Target | Model | RMSE | MAE | sMAPE |
-|--------|-------|------|-----|-------|
-| Load | **GBM** | **211.11** | **111.45** | **0.14%** |
-| Load | Persistence | 4,312.91 | 3,185.96 | 4.18% |
-| Wind | GBM | 12,411.63 | 10,782.01 | 196.7% |
-| Solar | **GBM** | **4,760.94** | **2,829.77** | **186.1%** |
-
-**Table 3: Forecast Metrics - USA**
-
-The US dataset presents additional challenges due to its larger scale and longer time span, with GBM still outperforming alternatives for load forecasting.
-
-### 5.2 Uncertainty Quantification
-
-| Dataset | Target | α | PICP | MPIW | N_test |
-|---------|--------|---|------|------|--------|
-| DE | Load | 0.10 | **93.27%** | 742.65 | 1,739 |
-| DE | Wind | 0.10 | 89.42% | 350.77 | 1,739 |
-| DE | Solar | 0.10 | 87.00% | 622.67 | 1,739 |
-| US | Load | 0.10 | **90.12%** | 439.01 | 9,239 |
-| US | Wind | 0.10 | 79.69% | 35,590 | 9,239 |
-| US | Solar | 0.10 | 69.87% | 11,332 | 9,239 |
-
-**Table 4: Conformal Prediction Results (90% confidence)**
-
-Load forecasts achieve near-nominal coverage (≥90%), validating our conformal calibration approach.
-
-### 5.3 Optimization Impact
-
-| Metric | Baseline | GridPulse | Improvement |
-|--------|----------|-----------|-------------|
-| Cost (USD) | $313,922,207 | $309,682,582 | **1.35%** |
-| Carbon (kg) | 2,735,349,208 | 2,731,872,749 | **0.13%** |
-| Peak (MW) | 60,844 | 55,876 | **8.17%** |
-
-**Table 5: Optimization Results (Germany)**
-
-### 5.4 Robustness Analysis
-
-We evaluate dispatch robustness under forecast perturbations:
-
-| Perturbation | Infeasible Rate | Mean Regret |
-|--------------|-----------------|-------------|
-| 0% | 0.0% | $0 |
-| 5% | 0.0% | -$1,509 |
-| 10% | 0.0% | -$68,064 |
-| 20% | 0.0% | -$183,810 |
-| 30% | 0.0% | -$142,934 |
-
-**Table 6: Robustness to Forecast Errors (Germany)**
-
-The system maintains 0% infeasibility even under 30% forecast perturbations, demonstrating robust constraint satisfaction.
-
-### 5.5 Stochastic Programming Metrics (Frozen Run `20260216_202050`)
-
-| Dataset | EVPI (Robust) | EVPI (Deterministic) | VSS |
-|---------|---------------|----------------------|-----|
-| Germany | 0.00 | -38.28 | -34,515.97 |
-| USA | 0.00 | 0.00 | -28,928.57 |
-
-Negative VSS in both regions indicates robust feasibility has not yet translated into deterministic-dominating realized cost under current calibration.
-
-### 5.6 Ablation Study
-
-#### 5.5.1 Feature Ablation
-
-We systematically remove feature groups to quantify their contribution:
-
-| Feature Group | # Features | Load ΔRMSE | Wind ΔRMSE | Solar ΔRMSE |
-|---------------|------------|------------|------------|-------------|
-| **Baseline (all)** | 93 | 271.2 | 127.1 | 91.2 |
-| − Lag features | 78 | +45.2 (+16.7%) | +38.4 (+30.2%) | +28.1 (+30.8%) |
-| − Rolling statistics | 81 | +23.8 (+8.8%) | +19.6 (+15.4%) | +15.2 (+16.7%) |
-| − Calendar features | 85 | +18.4 (+6.8%) | +8.2 (+6.5%) | +12.3 (+13.5%) |
-| − Weather features | 88 | +12.1 (+4.5%) | +42.1 (+33.1%) | +35.8 (+39.3%) |
-| Only target lag-1 | 1 | +312.4 (+115%) | +287.3 (+226%) | +195.2 (+214%) |
-
-**Table 8: Feature Ablation Results**
-
-**Key Insights:**
-- Lag features provide the largest individual contribution (16-30% RMSE reduction)
-- Weather features are critical for renewable forecasting (+33-39% error without them)
-- Full feature engineering provides 2-3x improvement over naive lag-1 baseline
-
-#### 5.5.2 Horizon Ablation
-
-Performance degradation across forecast horizons:
-
-| Horizon | GBM RMSE | LSTM RMSE | TCN RMSE | Persistence |
-|---------|----------|-----------|----------|-------------|
-| 1h | 142.3 | 198.4 | 215.6 | 245.8 |
-| 3h | 187.6 | 245.7 | 267.3 | 398.4 |
-| 6h | 231.8 | 312.5 | 342.1 | 612.9 |
-| 12h | 298.4 | 412.8 | 445.7 | 1,023.5 |
-| 24h | 367.2 | 534.6 | 578.3 | 1,456.2 |
-
-**Table 9: Multi-Horizon Performance (Load Forecasting, Germany)**
-
-GBM maintains < 100% error growth from 1h to 24h, while persistence shows 493% growth.
-
-#### 5.5.3 Training Data Size Ablation
-
-Sample efficiency comparison:
-
-| Training Size | GBM RMSE | LSTM RMSE | TCN RMSE | GBM R² |
-|---------------|----------|-----------|----------|--------|
-| 1,000 samples | 512.3 | 1,234.5 | 1,456.7 | 0.967 |
-| 5,000 samples | 345.6 | 623.4 | 712.8 | 0.985 |
-| 10,000 samples | 298.4 | 456.7 | 523.4 | 0.989 |
-| 15,000 samples | 275.1 | 342.1 | 387.4 | 0.991 |
-| Full (17,377) | 271.2 | 312.5 | 356.2 | 0.999 |
-
-**Table 10: Training Data Size Ablation (Load Forecasting, Germany)**
-
-GBM achieves 96.7% R² with only 1,000 samples; deep learning requires >15K for competitive performance.
-
-#### 5.5.4 Optimization Component Ablation
-
-| Configuration | Mean Cost | 95% CI | Carbon (kg) | p-value |
-|---------------|-----------|--------|-------------|---------|
-| Full System | €428.21M | [428.0, 428.4] | 2,731.9M | — |
-| No Uncertainty | €428.21M | [428.0, 428.4] | 2,731.9M | 1.000 |
-| No Carbon Penalty | €377.84M | [377.6, 378.1] | 2,748.2M | 0.062 |
-| No Battery | €445.67M | [445.4, 445.9] | 2,812.4M | <0.001*** |
-| Persistence Forecast | €498.32M | [497.8, 498.8] | 2,894.6M | <0.001*** |
-
-**Table 11: Optimization Ablation Study (5 runs each, Germany)**
-
-Statistical significance: *** p < 0.001; * p < 0.05
-
-**Key Insights:**
-- Battery storage provides €17.5M savings vs no-battery baseline
-- ML forecasting saves €70M vs persistence-based dispatch
-- Carbon penalty shows marginal significance (p=0.062), suggesting carbon pricing needs to increase for stronger economic signal
-
-#### 5.5.5 Model Architecture Ablation
-
-| LSTM Variant | Hidden Size | Layers | RMSE | Training Time |
-|--------------|-------------|--------|------|---------------|
-| Small | 32 | 1 | 456.2 | 2.1 min |
-| Medium | 64 | 2 | 312.5 | 8.4 min |
-| Large | 128 | 3 | 298.7 | 18.2 min |
-| Very Large | 256 | 4 | 301.2 | 42.1 min |
-
-**Table 12: LSTM Architecture Ablation**
-
-Optimal architecture is "Large" (128 hidden, 3 layers); beyond this, overfitting occurs.
-
----
-
-## 6. System Architecture
-
-### 6.1 Training Pipeline
-
-```
-┌─────────────┐    ┌──────────────┐    ┌─────────────┐
-│ Raw Data    │───▶│ Feature Eng. │───▶│ Train/Val   │
-│ (OPSD/EIA)  │    │ Pipeline     │    │ Split       │
-└─────────────┘    └──────────────┘    └─────────────┘
-                                              │
-       ┌──────────────────────────────────────┘
-       ▼
-┌─────────────┐    ┌──────────────┐    ┌─────────────┐
-│ GBM/LSTM/   │───▶│ Conformal    │───▶│ Model       │
-│ TCN Training│    │ Calibration  │    │ Registry    │
-└─────────────┘    └──────────────┘    └─────────────┘
+```text
+min sum_t [
+  (cost_weight * price_t + carbon_weight * carbon_cost_t) * grid_t
+  + degradation_cost * (charge_t + discharge_t)
+  + curtailment_penalty * curtail_t
+  + unmet_load_penalty * unmet_t
+] + peak_penalty * peak
 ```
 
-### 6.2 Inference Pipeline
+Key implementation choices from config and code:
+1. Piecewise battery efficiency regimes (`efficiency_regime_a`, `efficiency_regime_b`) with SOC split gating.
+2. Optional interval-aware risk binding through `risk.mode = worst_case_interval` and bound selectors.
+3. Explicit high penalties for unmet load and curtailment to preserve physical realism in solved plans.
 
+Default deterministic optimization config (`configs/optimization.yaml`) includes `objective.cost_weight = 1.0`, `objective.carbon_weight = 1.2`, battery capacity `20,000 MWh`, battery max power `5,000 MW`, and grid import cap `100,000 MW`.
+
+### 4.4 Robust Dispatch Optimization
+Robust dispatch in `src/gridpulse/optimizer/robust_dispatch.py` uses a two-scenario min-max LP over lower/upper load bounds with scenario-coupled epigraph objective. The objective mixes:
+1. Worst-case scenario cost weight.
+2. Average scenario cost weight.
+3. Throughput degradation penalty.
+
+Robust feasibility is explicitly returned with solver status, scenario costs, and operational plan outputs.
+
+Robust objective form:
+
+```text
+min [
+  risk_weight_worst_case * z
+  + (1 - risk_weight_worst_case) * average_scenario_grid_cost
+  + degradation_cost_per_mwh * throughput
+]
+subject to:
+  z >= scenario_cost_lower
+  z >= scenario_cost_upper
 ```
-┌─────────────┐    ┌──────────────┐    ┌─────────────┐
-│ Live Data   │───▶│ Forecast     │───▶│ Dispatch    │
-│ Ingestion   │    │ Generation   │    │ Optimization│
-└─────────────┘    └──────────────┘    └─────────────┘
-       │                  │                   │
-       ▼                  ▼                   ▼
-┌─────────────┐    ┌──────────────┐    ┌─────────────┐
-│ Drift       │    │ Uncertainty  │    │ Battery     │
-│ Monitoring  │    │ Intervals    │    │ Schedule    │
-└─────────────┘    └──────────────┘    └─────────────┘
-```
 
-### 6.3 Deployment
-
-The system is deployed with:
-- **API Service**: FastAPI with health/readiness probes
-- **Dashboard**: Next.js with real-time visualization
-- **Monitoring**: Drift detection with KS-test (p<0.05 threshold)
-- **Retraining**: Automated triggers on drift detection
-
----
-
-## 7. Discussion
-
-### 7.1 Model Selection: Why GBM Dominates
-
-Our experiments reveal GBM consistently outperforms LSTM and TCN across both datasets. We identify three primary factors explaining this performance gap:
-
-**Factor 1: Feature Engineering Effectiveness**
-Our 93 engineered features capture domain-specific patterns (hourly profiles, weekly seasonality, holiday effects) that GBM exploits efficiently. Deep learning models must learn these representations from raw data, requiring more samples than available in our 17,377-observation German dataset.
-
-**Factor 2: Tabular Data Regime**
-Consistent with Grinsztajn et al. [8], tree-based methods excel on structured tabular data with heterogeneous features. Energy datasets combine categorical (hour, day-of-week), continuous (temperature), and derived features (rolling means)—a combination where boosting's adaptive weighting provides advantage.
-
-**Factor 3: Sample Efficiency**
-With ~17K training samples, deep models show signs of underfitting. Our LSTM achieves R² = 0.93 vs GBM's R² = 0.999, a gap that likely narrows with larger datasets (as suggested by EIA-930's improved LSTM relative performance with 92K samples).
-
-**Model Selection Guidelines:**
-
-| Condition | Recommended Model | Reasoning |
-|-----------|-------------------|-----------|
-| < 50K samples | GBM | Sample efficiency |
-| Heterogeneous features | GBM | Tree-based advantage |
-| > 500K samples | LSTM/TCN | Deep learning scalability |
-| Real-time edge deployment | TCN | Parallelizable inference |
-| Interpretability required | GBM | SHAP feature importance |
-
-### 7.2 Temporal Error Analysis
-
-Analysis of residuals reveals systematic patterns by time regime:
-
-| Time Regime | Mean Absolute Error | Relative Increase |
-|-------------|---------------------|-------------------|
-| Night (00:00-06:00) | 142 MW | Baseline |
-| Morning ramp (06:00-09:00) | 287 MW | +102% |
-| Midday (09:00-17:00) | 168 MW | +18% |
-| Evening peak (17:00-21:00) | 312 MW | +120% |
-| Late evening (21:00-00:00) | 198 MW | +39% |
-
-The elevated errors during morning and evening load ramps suggest opportunities for:
-1. Additional features capturing transition dynamics (rate-of-change features)
-2. Separate models for high-volatility periods
-3. Ensemble weighting by time-of-day
-
-### 7.3 Uncertainty Quantification Value
-
-Conformal prediction provides calibrated intervals critical for risk-aware dispatch:
-- **Load forecasting** achieves 92.4% coverage at 90% nominal—slight overcoverage provides safety margin
-- **Wind/Solar** show under-coverage (79-87%), reflecting higher intrinsic variability
-- Adaptive calibration windows (rolling 30-day) maintain validity under distribution shift
-
-The conservative load intervals enable dispatch strategies that avoid costly grid imbalance penalties while maximizing renewable utilization.
-
-### 7.4 Carbon-Cost Tradeoff Analysis
-
-The multi-objective optimization reveals a Pareto frontier between cost and carbon:
-
-| Strategy | Cost ($/week) | Carbon (kg CO₂/week) | Pareto Optimal |
-|----------|---------------|----------------------|----------------|
-| Cost-only | $309.1M | 2,735M | Yes |
-| GridPulse (balanced) | $309.7M | 2,732M | Yes |
-| Carbon-only | $312.4M | 2,728M | Yes |
-
-**Key Insight**: Marginal carbon reduction becomes expensive beyond ~0.5%. Grid operators should select operating points based on carbon pricing or regulatory requirements.
-
-### 7.5 Production Deployment Lessons
-
-Simulated 6-month production operation revealed:
-
-**Drift Detection**: 
-- Feature distributions shift ~2.3% per month (KS statistic)
-- Model performance degrades 5-8% over 3 months without retraining
-- Recommended retraining cadence: quarterly or on drift alert (p < 0.05)
-
-**Edge Cases Encountered**:
-| Event Type | Frequency | Error Increase | Mitigation |
-|------------|-----------|----------------|------------|
-| Extreme weather | 2-3/year | +45% | Ensemble uncertainty |
-| Holiday transitions | 12/year | +23% | Holiday-specific features |
-| Grid outages | Rare | Undefined | Anomaly detection |
-
-**Operational Recommendations**:
-- Maintain warm standby models trained on recent 6-month windows
-- Implement circuit breakers for >50% MAPE predictions
-- Human-in-the-loop for dispatch decisions > $100K impact
-
-### 7.6 Model Uses in Real Grid Operations
-
-GridPulse is intended for three operating modes:
-- **Day-ahead planning**: produce 24h dispatch schedules from forecasted load/renewables/price.
-- **Intra-day risk control**: adapt interval widths online via FACI and recompute robust schedules on miss spikes.
-- **Post-event audit**: compare deterministic vs robust realized costs with EVPI/VSS decomposition.
-
-### 7.7 Why This Work and Why Now
-
-Rising renewable penetration increases net-load volatility, while competition and deployment standards increasingly require reproducibility and explicit safety behavior. Phase 1–6 upgrades focus on integrated decision quality: adaptive uncertainty, robust feasibility, physics-informed battery dispatch, and realized stochastic evaluation.
-
-### 7.8 Competition Package Status
-
-The package is reproducible and safety-oriented (frozen manifests, DE/US dataset-scoped outputs, robust feasibility checks). It is not yet dominant on all stochastic metrics; negative VSS in the frozen run defines the next calibration objective.
-
----
-
-## 8. Limitations
-
-### 8.1 Data Limitations
-
-**Geographic Scope**: 
-Our evaluation covers only Germany (OPSD) and US-MISO (EIA-930). Generalization to other grid configurations (island grids, developing nations with unreliable data) requires validation. Transfer learning experiments show 15-30% performance degradation when applying German-trained models to US data without fine-tuning.
-
-**Temporal Coverage**:
-Training data spans 2015-2020 (DE) and 2019-2024 (US). The COVID-19 pandemic introduced anomalous load patterns (March-June 2020) that may not represent future operational conditions. Models trained exclusively on pandemic-era data may not generalize to post-pandemic load patterns.
-
-**Weather Data Quality**:
-We use interpolated weather forecasts from public sources. Operational grid systems may have access to higher-fidelity (1-km resolution) meteorological models that could improve renewable generation predictions by 10-20%.
-
-**Carbon Intensity Data**:
-We use average grid mix carbon factors. Real-time marginal emission rates from WattTime or Electricity Maps would provide more accurate carbon accounting but were not available for the full training period.
-
-### 8.2 Modeling Limitations
-
-**Simplified Electrochemical Representation**:
-The deterministic optimizer now models piecewise SoC efficiency (0.98 below 80% SoC, 0.90 above 80%) plus throughput degradation penalties. This remains a linearized approximation. Real batteries exhibit:
-- Nonlinear degradation (capacity fade ~2% annually)
-- State-of-health dependent efficiency
-- Temperature-dependent performance
-- C-rate limitations at high charge/discharge rates
-
-Future work should incorporate physics-informed battery models.
-
-**Robust Policy Dominance Gap**:
-Robust optimization is implemented and provides scenario-feasible schedules, but the frozen run still shows negative VSS in both DE and US. Closing this gap is a central near-term objective.
-
-**No Market Dynamics**:
-Electricity prices are treated as exogenous parameters. In reality, large battery dispatch (>100 MW) influences market clearing prices, creating feedback effects our model ignores. Market impact modeling would be required for utility-scale deployment.
-
-**Single Asset Optimization**:
-We optimize a single battery independently. Real grid operations involve coordination across multiple batteries, demand response assets, and EV fleets—a multi-agent optimization problem not addressed here.
-
-### 8.3 Evaluation Limitations
-
-**Simulation vs. Reality**:
-Our dispatch optimization runs on historical data in simulation. Real-world deployment faces:
-- Communication latencies (50-500ms round-trip)
-- Measurement errors (±1-2%)
-- Control system constraints and delays
-- Unmodeled grid events (frequency deviations, voltage issues)
-
-**No A/B Testing**:
-Results represent offline backtesting. True business impact requires controlled deployment trials with grid operators—a multi-year process requiring regulatory approval.
-
-**Limited Ablation Variance**:
-The ablation study shows limited variance because optimization is deterministic given forecasts. Stochastic elements (multiple forecast samples, bootstrap training) would provide more statistically robust conclusions.
-
----
-
-## 9. Broader Impact
-
-### 9.1 Positive Societal Implications
-
-**Climate Change Mitigation**:
-In frozen run `20260216_202050`, carbon reductions are modest but positive (DE: 0.12%, US: 0.13%). At scale:
-- Global grid-scale storage: ~50 GW by 2030
-- Even sub-1% reductions can become material when multiplied across high-throughput grid operations
-- Region-specific carbon signals and market design strongly influence achievable reductions
-
-**Grid Reliability and Renewable Integration**:
-Improved forecasting enables better integration of variable renewable energy, supporting the transition away from fossil fuel baseload generation while maintaining grid stability. Wind/solar curtailment (currently 2-5% of generation) could be reduced significantly.
-
-**Economic Efficiency**:
-Frozen-run cost savings are region dependent (DE: 6.88%, US: 0.11%). Cost improvements can:
-- Reduce electricity bills for consumers
-- Improve utility financial sustainability
-- Accelerate battery storage payback periods from ~8 years to ~6 years
-
-**Open Science Contribution**:
-Our open-source release enables:
-- Reproducibility and independent verification
-- Adaptation to other grid regions and market structures
-- Educational use in energy systems courses
-
-### 9.2 Potential Negative Consequences
-
-**Job Displacement**:
-Automation of dispatch decisions may reduce demand for human grid operators. Current MISO employs ~100 operators per shift; ML-augmented systems could reduce this to 60-80. **Recommendation**: Gradual deployment with retraining programs for workforce transition to monitoring and exception-handling roles.
-
-**Equity Concerns**:
-Optimization systems prioritizing cost may inadvertently disadvantage:
-- Low-income regions with older grid infrastructure
-- Rural areas with less favorable renewable resources
-- Communities facing energy poverty
-
-**Recommendation**: Equity-weighted objective functions that include social cost factors; regulatory oversight of ML dispatch systems.
-
-**Dual Use Risk**:
-High-accuracy grid forecasting could enable adversarial actors to:
-- Predict grid vulnerabilities for cyber attacks
-- Time market manipulation for financial gain
-- Identify critical infrastructure weak points
-
-**Recommendation**: Access controls for production models; security audits; rate limiting on prediction APIs.
-
-**Algorithmic Bias**:
-Models trained primarily on developed-nation grids (Germany, US) may embed assumptions about:
-- Load patterns (industrial schedules, HVAC usage)
-- Renewable availability (solar irradiance, wind patterns)
-- Grid infrastructure quality
-
-**Recommendation**: Validation on diverse grid contexts before global deployment.
-
-### 9.3 Environmental Footprint of ML
-
-**Training Carbon Footprint**:
-- Total training compute: ~45 kWh electricity
-- Emissions: ~15 kg CO₂ (US average grid)
-- Offset time: < 1 hour of deployment savings
-
-**Inference Carbon Footprint**:
-- Per prediction: ~0.0001 kWh
-- Annual operation: ~876 kWh = ~290 kg CO₂
-- Net savings: 8.5M kg CO₂/week >> 290 kg/year
-
-**Conclusion**: ML carbon costs are negligible compared to optimization benefits.
-
-### 9.4 Data Privacy
-
-Our system uses only aggregate grid-level data:
-- No individual household consumption
-- No personally identifiable information
-- No smart meter data
-
-However, future extensions incorporating demand response would require privacy-preserving techniques (federated learning, differential privacy).
-
-### 9.5 Regulatory Compliance
-
-Grid dispatch systems are subject to FERC (US) and ENTSO-E (EU) regulations. Our system:
-- Maintains human oversight capability
-- Logs all dispatch decisions for audit
-- Provides explainability via SHAP feature importance
-- Fails safely to conservative dispatch on errors
-
----
-
-## 10. Future Work
-
-### 10.1 Short-Term Extensions 
-
-**Multi-Task Learning**: Joint forecasting of load, wind, and solar using shared representations. Early experiments suggest 5-10% improvement from cross-target information transfer.
-
-**Robust-Dominance Calibration**: Improve robust objective calibration and scenario design to move VSS toward positive values while preserving robust feasibility constraints.
-
-**Real-Time Incremental Learning**: Online model updates as new data arrives, eliminating batch retraining overhead while maintaining accuracy.
-
-### 10.2 Medium-Term Research (1-2 years)
-
-**Transformer Architectures**: Apply PatchTST, Informer, or TimesFM to energy forecasting. Initial exploration shows mixed results, requiring extensive hyperparameter tuning.
-
-**Graph Neural Networks**: Model spatial correlations between grid nodes, substations, and renewable plants. Particularly relevant for wind farm wake effects and transmission constraints.
-
-**Reinforcement Learning for Sequential Dispatch**: Move beyond myopic MILP to RL-based policies that optimize over multi-week horizons, accounting for battery degradation and seasonal patterns.
-
-**Multi-Asset Coordination**: Extend from single-battery optimization to coordinated dispatch of:
-- Multiple batteries
-- Demand response aggregators
-- Electric vehicle fleets
-- Distributed energy resources
-
-### 10.3 Long-Term Vision (2-5 years)
-
-**Federated Learning Across Grid Operators**: Privacy-preserving model training across utilities without sharing raw data. Addresses data governance concerns while enabling global model improvement.
-
-**Causal Discovery for Root-Cause Analysis**: Move beyond correlation-based forecasting to understand causal mechanisms (weather → generation → prices → dispatch). Enables counterfactual analysis for planning.
-
-**Digital Twin Integration**: Couple ML forecasts with physics-based grid simulators for realistic fault scenario analysis and contingency planning.
-
-**Carbon-Aware Computing**: Extend carbon optimization from grid dispatch to the ML system itself—schedule model training during low-carbon periods.
-
----
-
-## 11. Conclusion
-
-We present GridPulse, an integrated machine learning system addressing the critical challenge of renewable energy integration through forecast-driven battery dispatch optimization. Our key contributions and findings include:
-
-**Forecasting Performance**: Gradient boosting models (LightGBM) consistently outperform both persistence baselines and deep learning alternatives on tabular energy data. For load forecasting, GBM achieves 271 MW RMSE—a **95.5% improvement** over the 24-hour persistence baseline (6,011 MW). Wind forecasting shows similar gains with 127 MW RMSE versus 7,780 MW for persistence (**98.4% improvement**). These results align with recent findings on tree-based model superiority for structured data [8].
-
-**Uncertainty Quantification and Adaptation**: The pipeline combines split conformal calibration with FACI online adaptation, enabling dynamic interval scaling during anomalous periods while preserving leakage-safe updates.
-
-**Optimization Impact**: In frozen run `20260216_202050`, dispatch cost savings are **6.88%** (DE) and **0.11%** (US), with carbon reductions of **0.12%** (DE) and **0.13%** (US). Robust optimization preserves scenario-feasible schedules in evaluated windows.
-
-**Stochastic Decision Quality**: EVPI/VSS reporting exposes an unresolved gap between robust feasibility and realized stochastic dominance (EVPI_robust = 0, VSS < 0 in DE/US). This is treated as a first-class research objective.
-
-GridPulse demonstrates that end-to-end ML systems can deliver measurable operational value while remaining auditable and reproducible for competition and publication settings. The next milestone is improving robust-vs-deterministic realized value without sacrificing safety constraints.
-
----
-
-## References
-
-[1] Hong, T., & Fan, S. (2016). Probabilistic electric load forecasting: A tutorial review. *International Journal of Forecasting*, 32(3), 914-938.
-
-[2] Ke, G., et al. (2017). LightGBM: A highly efficient gradient boosting decision tree. *NeurIPS*.
-
-[3] Hochreiter, S., & Schmidhuber, J. (1997). Long short-term memory. *Neural Computation*, 9(8), 1735-1780.
-
-[4] Xu, B., et al. (2018). Optimal battery storage for frequency regulation. *IEEE Transactions on Smart Grid*.
-
-[5] Bertsimas, D., & Sim, M. (2004). The price of robustness. *Operations Research*, 52(1), 35-53.
-
-[6] Vazquez-Canteli, J.R., & Nagy, Z. (2019). Reinforcement learning for demand response. *Applied Energy*, 235, 1072-1089.
-
-[7] Vovk, V., Gammerman, A., & Shafer, G. (2005). *Algorithmic Learning in a Random World*. Springer.
-
-[8] Grinsztajn, L., Oyallon, E., & Varoquaux, G. (2022). Why do tree-based models still outperform deep learning on tabular data? *NeurIPS*.
-
-[9] Hyndman, R.J., & Athanasopoulos, G. (2021). *Forecasting: Principles and Practice*. 3rd ed. OTexts.
-
-[10] Cleveland, R.B., et al. (1990). STL: A seasonal-trend decomposition procedure based on loess. *Journal of Official Statistics*, 6(1), 3-73.
-
-[11] Hong, T., et al. (2016). Probabilistic energy forecasting: Global Energy Forecasting Competition 2014 and beyond. *International Journal of Forecasting*, 32(3), 896-913.
-
-[12] Bai, S., Kolter, J.Z., & Koltun, V. (2018). An empirical evaluation of generic convolutional and recurrent networks for sequence modeling. *arXiv:1803.01271*.
-
-[13] Vaswani, A., et al. (2017). Attention is all you need. *NeurIPS*.
-
-[14] Sweeney, C., et al. (2020). The future of forecasting for renewable energy. *WIREs Energy and Environment*, 9(2), e365.
-
-[15] Lorenz, E., et al. (2009). Irradiance forecasting for the power prediction of grid-connected photovoltaic systems. *IEEE Journal of Selected Topics in Applied Earth Observations*, 2(1), 2-10.
-
-[16] Krishnamurthy, D., et al. (2018). Energy storage arbitrage under day-ahead and real-time price uncertainty. *IEEE Transactions on Power Systems*, 33(1), 84-93.
-
-[17] Garcia-Torres, F., & Bordons, C. (2015). Optimal economical schedule of hydrogen-based microgrids with hybrid storage using model predictive control. *IEEE Transactions on Industrial Electronics*, 62(8), 5195-5207.
-
-[18] Rhodes, J.D., et al. (2014). Experimental and data collection methods for a large-scale smart grid deployment. *Energy*, 65, 462-471.
-
-[19] Romano, Y., Patterson, E., & Candès, E. (2019). Conformalized quantile regression. *NeurIPS*.
-
-[20] Barber, R.F., et al. (2023). Conformal prediction beyond exchangeability. *Annals of Statistics*, 51(2), 816-845.
-
-[21] Chernozhukov, V., Wüthrich, K., & Zhu, Y. (2021). Distributional conformal prediction. *PNAS*, 118(48), e2107794118.
-
-[22] Zaffran, M., et al. (2022). Adaptive conformal predictions for time series. *ICML*.
-
-[23] Siler-Evans, K., Azevedo, I.L., & Morgan, M.G. (2012). Marginal emissions factors for the US electricity system. *Environmental Science & Technology*, 46(9), 4742-4748.
-
-[24] US EPA. (2023). Emissions & Generation Resource Integrated Database (eGRID). https://www.epa.gov/egrid
-
-[25] Radovanović, A., et al. (2022). Carbon-aware computing for datacenters. *IEEE Transactions on Power Systems*, 37(2), 1057-1068.
-
----
-
-## Appendix A: Reproducibility
-
-All experiments are reproducible with:
+Important implementation behaviors:
+1. Charge/discharge decisions are shared across scenarios, while grid import and SOC are scenario-indexed.
+2. Non-optimal solve termination returns an explicit infeasible-safe payload instead of partial unsafe actions.
+3. Solver availability is checked before solve, and status is returned in publication-facing artifacts.
+
+### 4.5 DC3S: Drift-Calibrated Conformal Safety Shield
+DC3S is implemented in `src/gridpulse/dc3s/` and exposed through `POST /dc3s/step` and `GET /dc3s/audit/{command_id}` in `services/api/routers/dc3s.py`. It composes telemetry quality weighting, drift detection, uncertainty inflation, safe action repair, and certificate-grade audit persistence.
+
+The implemented interval inflation law is linear and bounded:
+1. Base half-width is conformal quantile `q`.
+2. Reliability floor is applied as `w_t <- max(w_t, min_w)`.
+3. Inflation factor:
+`infl = clip(1 + k_q * (1 - w_t) + k_d * 1[drift], 1, infl_max)`.
+4. Final interval:
+`lower = y_hat - q * infl`,
+`upper = y_hat + q * infl`.
+
+The reliability module (`quality.py`) computes `w_t` from missingness, delay, out-of-order behavior, and spike penalties. Drift logic (`drift.py`) uses Page-Hinkley updates on residual magnitude `r_t = |y_t - y_hat_t|` with configured warmup and cooldown controls.
+
+Safety shielding (`shield.py`) supports two modes:
+1. `projection`: deterministic clipping against SOC, power, and ramp constraints.
+2. `robust_resolve`: attempt robust optimization under interval bounds, then project as final guard.
+
+Certification (`certificate.py`) computes `model_hash` and `config_hash`, supports optional `prev_hash` chaining, and stores signed payload structure to DuckDB. Runtime online state (`state.py`) persists per `(zone, device, target)` keys including drift state, last inflation, latest telemetry/action context, and audit linkage pointers.
+
+### 4.6 Monitoring and Retraining Controls
+Monitoring logic (`services/api/routers/monitor.py`, `src/gridpulse/monitoring/`) includes:
+- KS-based data drift checks (`ks_drift`).
+- Model drift based on performance degradation thresholds.
+- Retraining decision logic with cadence and new-data conditions.
+
+Default monitoring thresholds are configured in `configs/monitoring.yaml`.
+
+Configured defaults in the lock snapshot:
+1. `data_drift.p_value_threshold = 0.01`.
+2. `model_drift.metric = mape`.
+3. `model_drift.degradation_threshold = 0.15`.
+4. `retraining.cadence_days = 30`.
+5. `retraining.min_new_data_days = 14`.
+
+These controls establish decision rules for when to retrain and when to keep current models, preventing ad hoc retraining that can invalidate comparability across evaluation windows.
+
+### 4.7 Safety and Operational Controls
+Safety controls include:
+1. BMS constraint checking for dispatch commands.
+2. Watchdog heartbeat and islanding protection.
+3. API scope verification for read/write operations.
+4. Health and readiness endpoints for runtime gating.
+
+`/control/dispatch` is protected by a three-step sequence in code:
+1. API scope authorization (`verify_scope("write", api_key)`).
+2. Watchdog islanding check (reject if isolated).
+3. BMS validation of charge/discharge/SOC bounds.
+
+This layered gate is part of the thesis contribution because it makes optimization outputs operationally enforceable rather than advisory.
+
+### 4.8 Reproducibility Controls
+Run manifests, pinned artifact paths, and non-mutating claim checks are core reproducibility controls for this thesis:
+- `paper/metrics_manifest.json`
+- `paper/claim_matrix.csv`
+- `scripts/validate_paper_claims.py`
+
+These controls are used as release gates, not passive documentation. A manuscript edit is considered incomplete unless the validator passes and claim rows remain traceable to canonical sources.
+
+### 4.9 Method Assumptions and Boundary Conditions
+This thesis assumes:
+1. Hourly dispatch horizon and timestep consistency.
+2. Price/carbon proxies are suitable for comparative decision analysis in the locked windows.
+3. Forecast uncertainty is represented by interval bounds rather than full probabilistic distributions.
+4. Battery and grid constraints in config are sufficient to produce physically plausible dispatch plans.
+
+These are engineering assumptions, not universal truths; they should be revisited for different markets or finer control cadences.
+
+### 4.10 Baselines and Comparator Policies
+This manuscript uses three explicit baseline policies for decision comparisons:
+1. **B1 (Deterministic LP, no uncertainty intervals)**: implemented in `src/gridpulse/optimizer/lp_dispatch.py` via `optimize_dispatch(...)` with point forecasts and without `load_interval` / `renewables_interval`. It uses battery + grid constraints and is the optimization policy reported as GridPulse in canonical impact artifacts.
+2. **B2 (Grid-only, no battery)**: implemented in `src/gridpulse/optimizer/baselines.py` as `grid_only_dispatch(...)`. It sets `battery_charge_mw = 0` and `battery_discharge_mw = 0`, and serves net deficit from grid import. This is the denominator baseline for canonical DE/US impact percentages.
+3. **B3 (Naive battery heuristic)**: implemented in `src/gridpulse/optimizer/baselines.py` as `naive_battery_dispatch(...)`, with a fixed rule that charges at 00-05 and discharges at 17-21.
+
+Runtime disambiguation: while API `/optimize` may default to robust mode in service context, publication impact percentages in this thesis are produced from offline deterministic `optimize_dispatch(...)` (B1) versus grid-only baseline (B2).
+
+## 5. Experimental Protocol
+
+### 5.1 Evidence-Lock Policy
+All publication-facing numeric claims in this draft must map to canonical values in `paper/metrics_manifest.json`. `paper/PAPER_DRAFT.md` is the authority file for writing, with synchronization rules defined in `paper/sync_rules.md`.
+
+The evidence-lock policy is intentionally strict because this project has multiple report families and historical drafts. Without a lock, metric drift can occur even when each individual number is locally valid in some artifact.
+
+### 5.2 Canonical Source and Run Selection
+| Claim Domain | Source | Selection Rule | Locked ID / Time |
+|---|---|---|---|
+| DE decision impact | `reports/impact_summary.csv` | latest dataset-scoped record | snapshot used in manifest |
+| US decision impact | `reports/eia930/impact_summary.csv` | latest dataset-scoped record | snapshot used in manifest |
+| DE stochastic metrics | `reports/research_metrics_de.csv` | row_type = run_summary | run `20260217_165756`, `2026-02-17T16:57:56.736552` |
+| US stochastic metrics | `reports/research_metrics_us.csv` | row_type = run_summary | run `20260217_182305`, `2026-02-17T18:23:06.287827` |
+| Dataset profile | `data/dashboard/*_stats.json` + manifest | dashboard lock only | `2026-02-17T11:15:38.623283` |
+
+### 5.3 Rounding and Formatting Rules
+From `paper/metrics_manifest.json`:
+1. Percent metrics: `round(value * 100, 2)`.
+2. Monetary, mass, and power values: two-decimal display where reported.
+3. Large stochastic values: thousands separators plus two decimals.
+
+Rounding is part of the claim contract. If raw values change in source files, manuscript updates must be generated from raw values and then rounded by these explicit rules, never by manual ad hoc formatting.
+
+### 5.4 Cross-Region Comparability Rules
+1. Compare methods and governance processes across DE/US.
+2. Do not assume equal effect sizes across regions.
+3. Use region-scoped source artifacts and run IDs for all stochastic statements.
+
+In practice, this means "same pipeline, different evidence contexts." The thesis compares architecture-level behavior while preserving region-specific dataset scope and run provenance.
+
+### 5.5 Consistency Gates
+The draft is considered publication-safe only when:
+1. `python scripts/validate_paper_claims.py` passes.
+2. Required run IDs appear exactly in markdown and LaTeX.
+3. No banned legacy percentages or placeholder tokens appear.
+4. All core claims are mapped in `paper/claim_matrix.csv`.
+
+### 5.6 Reconciliation Procedure for Conflicts
+When a conflicting value is found:
+1. Locate claim text and claim ID in `paper/claim_matrix.csv`.
+2. Identify canonical source and extraction rule from `paper/metrics_manifest.json`.
+3. Replace manuscript value with canonical display value derived from rounding policy.
+4. Re-run `scripts/validate_paper_claims.py`.
+5. Mirror the same correction in LaTeX/DOCX sync outputs.
+
+This procedure prevents "partial fixes" where one format is corrected while another remains stale.
+
+## 6. Results
+
+### 6.1 Forecast Quality Across Model Families
+Source: `data/dashboard/de_metrics.json`, `data/dashboard/us_metrics.json`.
+
+#### 6.1.1 Germany (DE)
+| Target | Model | RMSE | MAE | sMAPE (%) | R2 |
+|---|---|---:|---:|---:|---:|
+| load_mw | GBM | 267.51 | 167.49 | 0.35 | 0.9991 |
+| load_mw | LSTM | 3,474.78 | 2,722.50 | 5.38 | 0.8498 |
+| load_mw | TCN | 2,668.05 | 2,031.12 | 3.94 | 0.9114 |
+| wind_mw | GBM | 183.93 | 118.19 | 2.29 | 0.9993 |
+| wind_mw | LSTM | 6,735.07 | 5,511.23 | 60.85 | 0.1545 |
+| wind_mw | TCN | 9,196.16 | 7,167.41 | 76.67 | -0.5763 |
+| solar_mw | GBM | 251.44 | 121.22 | 69.27 | 0.9992 |
+| solar_mw | LSTM | 4,079.38 | 2,835.74 | 109.44 | 0.8007 |
+| solar_mw | TCN | 2,702.34 | 1,583.05 | 93.76 | 0.9125 |
+
+#### 6.1.2 United States (US)
+| Target | Model | RMSE | MAE | sMAPE (%) | R2 |
+|---|---|---:|---:|---:|---:|
+| load_mw | GBM | 162.89 | 123.23 | 0.17 | 0.9996 |
+| load_mw | LSTM | 4,767.14 | 3,835.32 | 5.24 | 0.6014 |
+| load_mw | TCN | 3,850.49 | 2,877.31 | 3.82 | 0.7399 |
+| wind_mw | GBM | 269.23 | 144.66 | 1.75 | 0.9982 |
+| wind_mw | LSTM | 6,301.91 | 5,234.31 | 42.59 | 0.0627 |
+| wind_mw | TCN | 7,187.54 | 5,930.74 | 47.65 | -0.2192 |
+| solar_mw | GBM | 208.92 | 74.93 | 45.45 | 0.9962 |
+| solar_mw | LSTM | 1,781.97 | 1,055.34 | 136.92 | 0.7135 |
+| solar_mw | TCN | 1,743.66 | 965.08 | 131.50 | 0.7257 |
+
+Interpretation: GBM is the strongest performer in the locked operational snapshots for both regions and all targets.
+
+Thesis-level interpretation:
+1. The GBM advantage is broad across load, wind, and solar in both regions for the locked evaluation artifacts.
+2. Deep models remain analytically useful but are not operational leaders in this snapshot.
+3. Because decisions are downstream of forecasts, model ranking should be interpreted together with optimization impact and not as an isolated leaderboard.
+
+### 6.2 GBM Residual and Coverage Diagnostics (90% Intervals)
+| Region | Target | Residual q10 | Residual q50 | Residual q90 | PICP (%) |
+|---|---|---:|---:|---:|---:|
+| DE | load_mw | -321.56 | -11.61 | 254.52 | 95.17 |
+| DE | wind_mw | -293.49 | -42.68 | 221.95 | 88.15 |
+| DE | solar_mw | -165.27 | 0.40 | 336.66 | 87.00 |
+| US | load_mw | -240.08 | 1.00 | 223.77 | 87.39 |
+| US | wind_mw | -146.14 | -3.96 | 122.64 | 80.50 |
+| US | solar_mw | -105.40 | -0.14 | 186.94 | 90.47 |
+
+Interpretation: coverage is close to nominal for some targets and lower for others, motivating region/target-specific uncertainty calibration tuning.
+
+Coverage pattern notes:
+1. DE load coverage exceeds nominal (conservative intervals in this slice).
+2. US wind coverage is materially below nominal, indicating under-coverage risk.
+3. Solar coverage differs by region and likely reflects different generation profiles and feature regimes.
+
+### 6.2A Baselines and Comparator Mapping
+| Result section/table | Numerator policy | Denominator/comparator policy | Source artifact |
+|---|---|---|---|
+| Decision Impact (Canonical Percent Outcomes) | B1 (deterministic LP, no uncertainty intervals) | B2 (grid-only, no battery) | `reports/impact_summary.csv`; `reports/eia930/impact_summary.csv` |
+| Decision Impact (Absolute Values) | B1 (deterministic LP, no uncertainty intervals) | B2 (grid-only, no battery) | `reports/impact_summary.csv`; `reports/eia930/impact_summary.csv` |
+| Stochastic Value Metrics (Canonical Run IDs) | robust vs deterministic stochastic formulations | deterministic/robust run-family comparator (not B2 denominator) | `reports/research_metrics_de.csv`; `reports/research_metrics_us.csv` |
+
+### 6.2B Baseline Absolute Policy Outcomes (DE/US)
+Source files:
+- `reports/impact_comparison.json` (DE)
+- `reports/eia930/impact_comparison.json` (US)
+
+Table uses existing serialized artifacts only (`baseline` = B2, `naive` = B3, `optimized_forecast` = B1) and applies two-decimal display rounding.
+
+| Region | Policy ID | Policy name | Cost (USD) | Carbon (kg) | Peak (MW) |
+|---|---|---|---:|---:|---:|
+| DE | B2 | Grid-only (no battery) | 154,773,462.72 | 1,461,641,243.28 | 52,165.00 |
+| DE | B3 | Naive battery heuristic | 154,200,945.64 | 1,454,657,899.03 | 52,165.00 |
+| DE | B1 | Deterministic LP (no uncertainty intervals) | 143,776,429.88 | 1,457,205,025.31 | 48,969.37 |
+| US | B2 | Grid-only (no battery) | 461,364,890.00 | 3,907,803,618.32 | 74,741.00 |
+| US | B3 | Naive battery heuristic | 462,821,035.03 | 3,911,194,390.28 | 70,929.00 |
+| US | B1 | Deterministic LP (no uncertainty intervals) | 460,842,677.76 | 3,902,642,369.72 | 74,741.00 |
+
+### 6.3 Decision Impact (Canonical Percent Outcomes)
+| Region | Cost Savings | Carbon Reduction | Peak Shaving |
+|---|---:|---:|---:|
+| DE | **7.11%** | **0.30%** | **6.13%** |
+| US | **0.11%** | **0.13%** | **0.00%** |
+
+Source files:
+- `reports/impact_summary.csv`
+- `reports/eia930/impact_summary.csv`
+
+All reported DE/US impact percentages are computed as B1 vs B2.
+
+Decision-impact reading guidance:
+1. Percent values are the canonical publication claims.
+2. The absolute table below should be used to explain scale.
+3. DE and US should not be treated as directly interchangeable market contexts.
+
+### 6.4 Decision Impact (Absolute Values)
+| Region | Baseline Cost (USD) | GridPulse Cost (USD) | Cost Delta (USD) | Baseline Carbon (kg) | GridPulse Carbon (kg) | Carbon Delta (kg) | Baseline Peak (MW) | GridPulse Peak (MW) | Peak Delta (MW) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| DE | 154,773,462.72 | 143,776,429.88 | 10,997,032.84 | 1,461,641,243.28 | 1,457,205,025.31 | 4,436,217.97 | 52,165.00 | 48,969.37 | 3,195.63 |
+| US | 461,364,890.00 | 460,842,677.76 | 522,212.24 | 3,907,803,618.32 | 3,902,642,369.72 | 5,161,248.60 | 74,741.00 | 74,741.00 | 0.00 |
+
+Absolute impacts are critical for thesis writing because they show that a small percentage in a large system can still correspond to substantial absolute deltas.
+
+### 6.5 Stochastic Value Metrics (Canonical Run IDs)
+| Region | Run ID | Timestamp (UTC) | EVPI_robust | EVPI_deterministic | VSS | Robust Feasible | Solver Status |
+|---|---|---|---:|---:|---:|---|---|
+| DE | `20260217_165756` | 2026-02-17T16:57:56.736552 | 2.32 | -30.40 | 2,708.61 | True | summary |
+| US | `20260217_182305` | 2026-02-17T18:23:06.287827 | 10,279,851.74 | 24,915,503.93 | 297,092.71 | True | summary |
+
+Additional run-summary context:
+
+| Region | Mean Dynamic Interval Width | Mean Base Interval Width | Mean Stressed Interval Width | FACI Scale Lower | FACI Scale Upper |
+|---|---:|---:|---:|---:|---:|
+| DE | 653.57 | 657.11 | not reported in DE schema | 0.0648 | 1.0000 |
+| US | 649.20 | 415.60 | 1,233.49 | 0.1035 | 1.5965 |
+
+US run summary also includes operational control fields (same run row):
+- Operational grid cap (MW): 69,844.27
+- Reserve SOC (MWh): 2,000.00
+- Terminal SOC target (MWh): 4,450.43
+- Load stress additive (MW): 1,257.02
+- Stress interval multiplier: 1.90
+
+Interpretation for writing:
+1. Both runs are feasible and explicitly tied to run IDs and timestamps.
+2. DE run shows modest EVPI magnitudes with positive VSS.
+3. US run shows very large EVPI magnitudes and positive VSS, indicating strong sensitivity to uncertainty and scenario setup.
+4. These values are run-scoped and should always be written with run IDs.
+
+### 6.6 Robustness Perturbation Summary
+Source: `reports/publication/tables/table6_robustness.csv`.
+
+| Dataset | Perturbation (%) | Infeasible (%) | Mean Regret |
+|---|---:|---:|---:|
+| DE | 0.0 | 0.0 | 0.00 |
+| DE | 5.0 | 0.0 | -1,509.47 |
+| DE | 10.0 | 0.0 | -68,063.96 |
+| DE | 20.0 | 0.0 | -183,810.02 |
+| DE | 30.0 | 0.0 | -142,933.97 |
+| US | 0.0 | 0.0 | 0.00 |
+| US | 5.0 | 0.0 | 25,431.64 |
+| US | 10.0 | 0.0 | -241,341.60 |
+| US | 20.0 | 0.0 | -140,118.36 |
+| US | 30.0 | 0.0 | 506,266.38 |
+
+All listed perturbation points remain feasible in this summary table.
+
+Regret sign caution:
+1. Negative regret values can appear depending on comparator definitions and scenario realization.
+2. Regret magnitude should be interpreted with consistent metric definitions from the source table, not redefined ad hoc in text.
+
+### 6.7 Cross-Region Interpretation
+1. Both regions show positive VSS under canonical runs, indicating stochastic/robust value exists in both settings.
+2. Magnitude differs strongly by region, implying scenario design and market regime sensitivity.
+3. DE shows stronger direct percent decision impact in the locked snapshot.
+4. US shows smaller percent impact in cost/peak, but large stochastic value magnitudes in canonical run summary metrics.
+
+This pattern supports a key thesis argument: forecast-to-dispatch systems should be evaluated as region-specific decision systems, not benchmarked only by aggregate forecast score transferability.
+
+### 6.8 Copy-Ready Core Claims
+Use these exact statements in publication sections to avoid drift:
+1. DE cost savings: 7.11%; DE carbon reduction: 0.30%; DE peak shaving: 6.13%.
+2. US cost savings: 0.11%; US carbon reduction: 0.13%; US peak shaving: 0.00%.
+3. DE stochastic run: 20260217_165756 (EVPI_robust 2.32; EVPI_deterministic -30.40; VSS 2,708.61).
+4. US stochastic run: 20260217_182305 (EVPI_robust 10,279,851.74; EVPI_deterministic 24,915,503.93; VSS 297,092.71).
+5. Metric policy is dataset-scoped latest; this manuscript is not a single common-run freeze.
+
+### 6.9 Negative and Neutral Findings (Do Not Omit)
+To keep the thesis technically honest, the following points should remain explicit:
+1. US peak shaving in the locked impact source is `0.00%`.
+2. Several interval coverage values are below 90% nominal target.
+3. Deep model families are not top-ranked in the locked dashboard snapshots.
+4. Cross-region impact magnitude varies significantly despite shared architecture.
+
+## 7. Metrics Source of Truth and Run IDs
+
+### 7.1 Locked Sources
+| Claim Group | Canonical Source | Selection |
+|---|---|---|
+| DE impact metrics | `reports/impact_summary.csv` | dataset-scoped latest |
+| US impact metrics | `reports/eia930/impact_summary.csv` | dataset-scoped latest |
+| DE stochastic metrics | `reports/research_metrics_de.csv` | `run_id = 20260217_165756`, `row_type = run_summary` |
+| US stochastic metrics | `reports/research_metrics_us.csv` | `run_id = 20260217_182305`, `row_type = run_summary` |
+| Dataset profile claims | `data/dashboard/de_stats.json`, `data/dashboard/us_stats.json`, `data/dashboard/manifest.json` | dashboard profile lock |
+
+### 7.2 Rule for Any Future Metric Update
+A metric can be changed in manuscript text only if all conditions are met:
+1. Value is updated in `paper/metrics_manifest.json` with source path and run ID.
+2. Claim row exists/updates in `paper/claim_matrix.csv`.
+3. `scripts/validate_paper_claims.py` passes after edit.
+4. Markdown and LaTeX versions retain matching core values.
+
+This rule applies to percentages, absolute values, run IDs, timestamps, and any sentence that embeds quantitative evidence. Editorial convenience is not a valid reason to bypass the update chain.
+
+### 7.3 Non-Policy Sources
+Publication table exports and legacy markdown reports are secondary evidence only. They may be used for narrative context after explicit reconciliation, but not as primary numeric sources for locked claims.
+
+### 7.4 Metrics Change-Control Checklist
+Before approving any numeric edit:
+1. Confirm source artifact path exists and is versioned.
+2. Confirm row/field selection rule is unambiguous.
+3. Regenerate display value from raw value using manifest rounding rules.
+4. Verify the same metric is synchronized in abstract, results, and conclusion.
+5. Re-run `scripts/validate_paper_claims.py` and archive pass output in revision notes.
+
+## 8. Claim Traceability and Editorial Governance
+
+### 8.1 Claim Status Definitions
+- **Verified**: directly traceable to locked artifact(s).
+- **Conflicting**: disagrees with canonical policy or other locked values.
+- **Unsupported**: no in-repo evidence found.
+- **Needs Citation**: plausible but requires external published source.
+
+Claim statuses are operational controls. A status changes only when evidence or citation coverage changes; wording-only edits are insufficient.
+
+### 8.2 Traceability Fields Required per Claim
+Each claim row in `paper/claim_matrix.csv` should include:
+1. `claim_id`
+2. `status`
+3. `category`
+4. `claim_text`
+5. `source_file`
+6. `source_locator`
+7. `run_id` when applicable
+8. `timestamp_utc` when applicable
+9. `rounding_rule`
+
+### 8.3 Publication Rule
+Publication-facing sections should retain only:
+1. Verified claims.
+2. External claims with explicit citations.
+
+Conflicting/unsupported claims should be removed or rewritten before release export.
+
+### 8.4 Editing Workflow
+1. Edit `paper/PAPER_DRAFT.md` only.
+2. Run claim validator.
+3. Sync `paper/paper.tex` from markdown master rules.
+4. Sync DOCX last and record any environment limitation.
+
+### 8.5 Reviewer and Advisor Workflow
+Recommended review loop for future revisions:
+1. Reviewer flags text spans or claim IDs.
+2. Author resolves each item against `claim_matrix` and manifest source.
+3. Any unresolved numeric conflict blocks release.
+4. Validator pass output is attached to the revision package.
+
+## 9. Discussion
+
+### 9.1 Strongly Supported Findings
+1. The DE and US impact percentages above are directly reproducible from canonical impact CSVs.
+2. The DE and US stochastic values above are directly reproducible from canonical run-summary rows.
+3. Forecast model ranking in dashboard artifacts favors GBM for the locked snapshots.
+4. Governance controls materially reduce manuscript drift risk.
+
+The strongest supported thesis claim is the combination of measurable decision outcomes and explicit provenance enforcement. This manuscript treats those two properties as inseparable.
+
+### 9.2 Why Cross-Region Results Differ
+Likely drivers include:
+1. Different data windows and distributions.
+2. Different operational constraints and stress/control settings.
+3. Different feature spaces and generation mix dynamics.
+4. Different scale of system-level costs and uncertainty realizations.
+
+This implies deployment should be region-tuned. A strategy that yields high percentage gains in one setting may remain valuable in another while showing smaller direct percentages.
+
+### 9.3 Non-Overclaim Boundary
+This manuscript does not claim universal superiority across all markets. It reports locked evidence for the stated DE/US windows and explicitly separates verified local findings from global claims requiring citation.
+
+### 9.4 Engineering Significance
+The main engineering contribution is integration plus governance:
+- Integrated forecast-to-dispatch pipeline.
+- Artifact-locked evidence policy.
+- Automated cross-file consistency checks before publication.
+
+### 9.5 Practical Operator Interpretation
+Operationally, GridPulse behaves as a guarded decision-support system:
+1. Healthy forecast and interval artifacts trigger optimization-led dispatch planning.
+2. Infeasible or degraded states trigger explicit safe fallbacks.
+3. Control-plane watchdog and BMS checks enforce dispatch safety before execution.
+
+This framing links thesis evidence to practical operational deployment behavior.
+Operationally, the stack is ready for software deployment pathways and controlled integration tests, but hardware field validation remains pending in the current evidence lock.
+
+## 10. Threats to Validity
+
+### 10.1 Internal Validity
+Risk: mixed source families can reintroduce contradictory metrics.  
+Mitigation: manifest lock + validator + claim matrix.
+
+### 10.2 External Validity
+Risk: findings may not generalize to other regions/time periods.  
+Mitigation: keep claims region-scoped; extend datasets in future work.
+
+### 10.3 Construct Validity
+Risk: price/carbon proxies may not represent every market rule in detail.  
+Mitigation: document proxy assumptions and avoid over-broad causal claims.
+
+### 10.4 Conclusion Validity
+Risk: stochastic value magnitude is sensitive to run/scenario specification.  
+Mitigation: report explicit run IDs and discourage metric mixing across run families.
+
+### 10.5 Residual Risk Prioritization
+Priority order for next validity improvements:
+1. Keep metric-source synchronization strict across markdown, LaTeX, and DOCX.
+2. Improve interval calibration on under-covered targets.
+3. Expand external validity with additional regions and time windows.
+4. Close all citation gaps for non-repository claims.
+
+## 11. Operational Safety and Failure Modes
+
+### 11.1 Failure-Mode Table
+| Failure Mode | Trigger | Detection | Mitigation | Fallback |
+|---|---|---|---|---|
+| Missing/stale feature data | upstream delay or schema break | `/ready`, data checks, missing file checks | block forecast/optimize calls until fresh data available | serve health warning, skip optimization |
+| Forecast drift | distribution shift in live windows | KS/model drift checks in monitor pipeline | retraining decision logic | temporary conservative dispatch mode |
+| Optimization infeasibility | extreme constraints or malformed intervals | solver status + feasibility flags | return safe infeasible payload, investigate constraints | grid-only baseline dispatch |
+| Unsafe dispatch command | SOC/power constraint violation | BMS validation in control route | reject command with explicit error | keep current safe operating state |
+| Control-plane degradation | missed heartbeat / watchdog timeout | watchdog islanding behavior | lock remote control | manual/local control only |
+| API auth misuse | invalid scope/key | API security middleware | deny operation | read-only status endpoints |
+
+### 11.2 Incident Response Sequence
+1. Detect (health/monitoring/solver flags).
+2. Contain (reject unsafe commands or switch to baseline).
+3. Diagnose (artifact/log inspection with run IDs).
+4. Recover (retrain, reconfigure, or rollback models).
+5. Record (update governance artifacts and incident notes).
+
+### 11.3 Governance Safeguards
+1. Source-of-truth lock for manuscript claims.
+2. Explicit banned legacy metrics in validator.
+3. Claim matrix with status enforcement.
+
+### 11.4 Config-Level Safety Snapshot
+Selected defaults in locked configs:
+1. KS drift threshold `p_value_threshold = 0.01`.
+2. Model drift threshold `degradation_threshold = 0.15` on configured metric.
+3. Retraining cadence `30` days with minimum new-data rule in config.
+4. Deterministic objective weights: cost `1.0`, carbon `1.2`.
+5. High unmet-load and curtailment penalties to discourage unsafe optimization shortcuts.
+
+## 12. Limitations
+
+### 12.1 Dataset and Coverage Limits
+1. Evidence is restricted to the locked DE/US windows listed in Section 3.
+2. Broader climate/market regimes remain outside this current lock.
+
+These limits are intentional for traceability. Scope expansion should happen only with a corresponding manifest and claim-matrix update.
+
+### 12.2 Modeling and Optimization Limits
+1. Scenario and stress design choices influence stochastic magnitudes.
+2. Proxy cost/carbon assumptions may differ from real settlement mechanisms.
+
+Robust objective weighting and interval-construction choices can shift tradeoff behavior; therefore results should be interpreted as evidence for this configured system, not as universal constants.
+
+### 12.3 Documentation Synchronization Limits
+Programmatic DOCX sync is currently constrained in this shell environment:
+1. system `python3` lacks `python-docx`.
+2. the `.venv` Python launcher is not currently usable here.
+
+### 12.4 Citation Limits
+Some broader operational/societal statements require external literature or official source citation before publication.
+
+Claims without internal artifact evidence should remain clearly marked as requiring citation until sources are added.
+
+### 12.5 IoT Validation Boundary (Deployment-Readiness, Non-Field Evidence)
+IoT-related validation reported in this manuscript is software-in-the-loop/API/streaming-smoke evidence, not completed hardware field commissioning evidence.
+1. Streaming checks rely on replayed telemetry and broker-consumer pipeline execution.
+2. DC3S live checks are API-level evaluations driven by simulated/replayed telemetry inputs.
+3. No physical inverter/BMS edge commissioning logs or field-trial artifacts are claimed in this revision.
+
+Therefore, deployment-readiness claims are limited to software stack correctness and observability, not hardware-operational certification.
+
+## 13. Future Work
+
+### 13.1 Near-Term (Next Revision Cycle)
+1. Unify all report generators so dashboard and publication tables derive from one locked pipeline.
+2. Add stricter section-level linting for unsupported claim phrases.
+3. Improve uncertainty calibration for under-covered target/region combinations.
+
+Near-term success condition: no unresolved claim conflicts and consistent core metrics across markdown and LaTeX outputs.
+
+### 13.2 Mid-Term
+1. Extend stochastic scenario design with explicit sensitivity studies.
+2. Add more regions and tariff/carbon regimes for external-validity testing.
+3. Improve model registry lineage and release metadata binding.
+
+Mid-term success condition: cross-region comparisons with fully serialized scenario assumptions and reproducible run-level evidence.
+
+### 13.3 Long-Term
+1. Transition from artifact checks to signed evidence bundles.
+2. Integrate richer operational economics and market constraints.
+3. Deploy continuous publication-quality reporting with deterministic synchronization.
+
+Long-term success condition: end-to-end signed provenance from data extraction to publication-ready manuscript artifacts.
+
+## 14. Conclusion
+GridPulse demonstrates a decision-grade ML system that connects forecasting, uncertainty, optimization, and governance. Under the dataset-scoped latest lock (February 17, 2026 artifacts), DE impact is 7.11% cost savings, 0.30% carbon reduction, and 6.13% peak shaving; US impact is 0.11% cost savings, 0.13% carbon reduction, and 0.00% peak shaving. Canonical stochastic values come from DE run `20260217_165756` and US run `20260217_182305`, with positive VSS in both regions (`2,708.61` and `297,092.71`, respectively). The thesis-level contribution is therefore both algorithmic and operational: measurable decision outcomes plus a reproducible governance framework that keeps claims stable across manuscript iterations.
+
+The central practical message is that trustworthy decision systems require both technical performance and claim governance. GridPulse shows that forecast quality, uncertainty quantification, optimization feasibility, and publication traceability can be engineered as one coherent system.
+Current IoT validation evidence in this manuscript is non-field and should be interpreted as software stack readiness rather than completed hardware-operational certification.
+
+## 15. References
+
+### 15.1 Internal Artifact References
+- `paper/metrics_manifest.json`
+- `paper/claim_matrix.csv`
+- `paper/accuracy_audit.md`
+- `paper/rewrite_pack.md`
+- `paper/sync_rules.md`
+- `scripts/validate_paper_claims.py`
+- `frontend/src/app/api/chat/tool-executors.ts`
+- `services/api/routers/monitor.py`
+- `src/gridpulse/streaming/run_consumer.py`
+- `src/gridpulse/streaming/consumer.py`
+- `src/gridpulse/streaming/worker.py`
+- `configs/dc3s.yaml`
+- `src/gridpulse/dc3s/`
+- `services/api/routers/dc3s.py`
+- `data/dashboard/manifest.json`
+- `data/dashboard/de_stats.json`
+- `data/dashboard/us_stats.json`
+- `data/dashboard/de_metrics.json`
+- `data/dashboard/us_metrics.json`
+- `reports/impact_summary.csv`
+- `reports/eia930/impact_summary.csv`
+- `reports/impact_comparison.json`
+- `reports/eia930/impact_comparison.json`
+- `reports/research_metrics_de.csv`
+- `reports/research_metrics_us.csv`
+- `reports/publication/tables/table6_robustness.csv`
+- `docs/ARCHITECTURE.md`
+- `docs/TRAINING_PIPELINE.md`
+- `docs/EVALUATION.md`
+
+### 15.2 External Method Literature (Maintain in Publication Export)
+Keep explicit citations for:
+1. Conformal prediction and adaptive conformal inference.
+2. Robust/stochastic optimization for power systems.
+3. Forecast model classes used (GBM, LSTM, TCN) where method background is discussed.
+
+### 15.3 External Factual Claims Requiring Citation
+Any non-repository factual statement (policy, workforce, market forecasts, environmental lifecycle values) must cite a reliable external source before publication.
+
+## Appendix A. Replication Checklist
+1. Validate manuscript claims against manifest and claim matrix:
 ```bash
-git clone https://github.com/pratik-n/gridpulse
-cd gridpulse
-make install
-make train
-make ablations
-make stats-tables
+python scripts/validate_paper_claims.py
 ```
-
-**Environment:**
-- Python 3.9.6
-- LightGBM 4.1.0
-- PyTorch 2.0.1
-- SciPy 1.11.0 (HiGHS LP solver)
-- Seed: 42
-
-**Hardware Specifications:**
-- Platform: macOS 26.2 (Apple Silicon)
-- Processor: Apple M-series ARM64
-- CPU: 10 physical cores / 10 logical cores
-- RAM: 16 GB
-- Accelerator: Apple MPS (Metal Performance Shaders)
-- No GPU/CUDA required
-
-**Runtime Benchmarks:**
-
-| Component | Time | Configuration |
-|-----------|------|---------------|
-| GBM Training | 0.4s | 10k samples, 100 trees |
-| GBM Inference | 0.3ms | 24-hour horizon |
-| LSTM Inference | 2.1ms | 168-step sequence |
-| LP Dispatch | 1.2ms | 24h, 48 variables (HiGHS) |
-| Full Pipeline | <5s | End-to-end forecast + dispatch |
-
-**Model Registry:** `artifacts/registry/models.json`
-
-**Data Availability:** OPSD data available at https://open-power-system-data.org/; EIA-930 data at https://www.eia.gov/electricity/gridmonitor/
-
----
-
-## Appendix B: Publication Figures
-
-The following figures are available in `reports/publication/figures/`:
-
-1. `fig01_geographic_scope.png` - Dataset coverage map
-2. `fig02_load_renewable_profiles.png` - Time series visualization
-3. `fig03_05_forecast_vs_actual.png` - Forecast accuracy plots
-4. `fig06_rolling_backtest_rmse.png` - Cross-validation results
-5. `fig07_error_seasonality.png` - Error decomposition
-6. `fig08_conformal_intervals.png` - Uncertainty visualization
-7. `fig09_coverage_vs_horizon.png` - PICP by forecast horizon
-8. `fig10_anomaly_timeline.png` - Detected anomalies
-9. `fig11_dispatch_comparison.png` - Baseline vs GridPulse dispatch
-10. `fig12_soc_trajectory.png` - Battery state of charge
-11. `fig13_cost_carbon_tradeoff.png` - Pareto frontier
-12. `fig14_savings_sensitivity.png` - Sensitivity analysis
-13. `fig15_regret_perturbation.png` - Robustness analysis
-14. `fig16_data_drift.png` - Drift monitoring results
-
----
-
-## Appendix C: LaTeX Tables
-
-Pre-formatted LaTeX tables are available in `reports/tables/`:
-
-| Table | File | Description |
-|-------|------|-------------|
-| Table 1 | `forecast_metrics_de.tex` | Germany forecast performance |
-| Table 2 | `forecast_metrics_us.tex` | USA forecast performance |
-| Table 3 | `conformal_coverage.tex` | Conformal prediction PICP |
-| Table 4 | `optimization_impact.tex` | Dispatch cost/carbon savings |
-| Table 5 | `significance_tests.tex` | Diebold-Mariano test results |
-| Table 6 | `ablation_study.tex` | Component ablation analysis |
-| Table 7 | `robustness_analysis.tex` | Perturbation robustness |
-| Table 8 | `shap_importance.tex` | SHAP feature importance |
-| Table 9 | `runtime_benchmarks.tex` | Training/inference timing |
-| Table 10 | `dataset_summary.tex` | Dataset characteristics |
-
-```latex
-% Include in your LaTeX paper:
-\input{reports/tables/forecast_metrics_de.tex}
-\input{reports/tables/conformal_coverage.tex}
-\input{reports/tables/optimization_impact.tex}
+2. Compile LaTeX manuscript:
+```bash
+cd paper
+pdflatex paper.tex
 ```
-
----
-
-## Appendix D: Code Availability
-
-The complete GridPulse codebase is available at:
-
-- **Repository**: `https://github.com/pratik-n/gridpulse`
-- **License**: MIT License
-- **Documentation**: `docs/ARCHITECTURE.md`, `docs/RUNBOOK.md`
-- **DOI**: (To be assigned upon publication)
-
-Key directories:
-- `src/gridpulse/` - Core ML pipeline modules
-- `services/api/` - FastAPI prediction service  
-- `notebooks/` - Reproducible analysis (14 notebooks)
-- `configs/` - YAML configuration files
-- `tests/` - Unit and integration tests (15 test files)
-
----
-
-## Appendix E: Extended Cross-Validation Results
-
-### E.1 Ten-Fold Time Series Cross-Validation (Germany)
-
-| Fold | GBM RMSE | GBM MAE | GBM R² | LSTM RMSE | LSTM R² | TCN RMSE | TCN R² |
-|------|----------|---------|--------|-----------|---------|----------|--------|
-| 1 | 268.4 | 189.2 | 0.9991 | 312.5 | 0.9988 | 358.2 | 0.9984 |
-| 2 | 274.1 | 193.8 | 0.9990 | 325.8 | 0.9987 | 362.1 | 0.9983 |
-| 3 | 269.7 | 190.5 | 0.9991 | 308.4 | 0.9988 | 345.7 | 0.9985 |
-| 4 | 278.3 | 196.2 | 0.9989 | 318.6 | 0.9987 | 367.4 | 0.9983 |
-| 5 | 265.8 | 187.4 | 0.9991 | 298.7 | 0.9989 | 334.5 | 0.9986 |
-| 6 | 271.2 | 191.3 | 0.9990 | 312.1 | 0.9988 | 356.8 | 0.9984 |
-| 7 | 276.5 | 194.8 | 0.9990 | 322.4 | 0.9987 | 371.2 | 0.9982 |
-| 8 | 269.3 | 190.1 | 0.9991 | 305.6 | 0.9989 | 342.9 | 0.9985 |
-| 9 | 273.8 | 193.2 | 0.9990 | 316.8 | 0.9987 | 359.5 | 0.9984 |
-| 10 | 270.4 | 191.0 | 0.9991 | 309.7 | 0.9988 | 348.3 | 0.9985 |
-| **Mean** | **271.8** | **191.8** | **0.9990** | **313.1** | **0.9988** | **354.7** | **0.9984** |
-| **Std** | **3.8** | **2.7** | **0.0001** | **8.2** | **0.0001** | **11.5** | **0.0001** |
-
-**Table E1: 10-Fold CV Results - Load Forecasting (Germany)**
-
-### E.2 Multi-Seed Experiment Results
-
-| Seed | GBM RMSE | LSTM RMSE | TCN RMSE | GBM R² | LSTM R² | TCN R² |
-|------|----------|-----------|----------|--------|---------|--------|
-| 42 | 271.2 | 312.5 | 356.2 | 0.9991 | 0.9988 | 0.9984 |
-| 123 | 272.8 | 318.4 | 362.1 | 0.9990 | 0.9987 | 0.9983 |
-| 456 | 270.5 | 308.6 | 351.8 | 0.9991 | 0.9988 | 0.9985 |
-| 789 | 273.1 | 315.2 | 359.4 | 0.9990 | 0.9988 | 0.9984 |
-| 1000 | 271.9 | 310.8 | 354.6 | 0.9990 | 0.9988 | 0.9984 |
-| **Mean** | **271.9** | **313.1** | **356.8** | **0.9990** | **0.9988** | **0.9984** |
-| **Std** | **1.0** | **3.8** | **4.1** | **0.0001** | **0.0001** | **0.0001** |
-| **95% CI** | **[270.0, 273.8]** | **[305.6, 320.6]** | **[348.8, 364.8]** | — | — | — |
-
-**Table E2: Multi-Seed Results (5 seeds, Load Forecasting, Germany)**
-
----
-
-## Appendix F: Statistical Significance Testing
-
-### F.1 Diebold-Mariano Test Results
-
-| Model Comparison | DM Statistic | p-value | Significant (α=0.05) |
-|------------------|--------------|---------|----------------------|
-| GBM vs Persistence | 45.67 | <0.0001 | *** |
-| GBM vs LSTM | 8.23 | <0.0001 | *** |
-| GBM vs TCN | 12.45 | <0.0001 | *** |
-| LSTM vs Persistence | 38.12 | <0.0001 | *** |
-| TCN vs Persistence | 35.78 | <0.0001 | *** |
-| LSTM vs TCN | 3.42 | 0.0006 | *** |
-
-**Table F1: Diebold-Mariano Forecast Comparison Tests**
-
-Significance: *** p < 0.001; ** p < 0.01; * p < 0.05
-
-### F.2 Paired t-Test for Cost Savings
-
-| Comparison | Mean Diff ($M) | Std Err | t-statistic | p-value |
-|------------|----------------|---------|-------------|---------|
-| GridPulse vs Market | −4.47 | 0.23 | −19.42 | <0.0001 |
-| GridPulse vs Persistence | −3.89 | 0.31 | −12.55 | <0.0001 |
-| GridPulse vs No-Battery | −17.46 | 0.87 | −20.07 | <0.0001 |
-
-**Table F2: Paired t-Test Results for Weekly Cost Savings**
-
-### F.3 Bootstrap Confidence Intervals
-
-| Metric | Mean | Bootstrap 95% CI | Bootstrap Std |
-|--------|------|------------------|---------------|
-| Cost Savings (%) | 6.88% | [see frozen run snapshot] | [see frozen run snapshot] |
-| Carbon Reduction (%) | 0.12% | [see frozen run snapshot] | [see frozen run snapshot] |
-| Load Forecast RMSE | 271.2 | [267.4, 275.1] | 1.9 |
-| Wind Forecast RMSE | 127.1 | [123.8, 130.4] | 1.7 |
-
-**Table F3: 10,000-sample Bootstrap Confidence Intervals**
-
----
-
-## Appendix G: Hyperparameter Sensitivity Analysis
-
-### G.1 LightGBM Sensitivity
-
-| Parameter | Range Tested | Optimal | RMSE Range | Impact |
-|-----------|--------------|---------|------------|--------|
-| n_estimators | [100, 2000] | 1000 | [268, 298] | Medium |
-| learning_rate | [0.01, 0.3] | 0.05 | [265, 312] | High |
-| max_depth | [3, 15] | 8 | [271, 285] | Low |
-| num_leaves | [16, 256] | 64 | [268, 295] | Medium |
-| min_data_in_leaf | [5, 100] | 20 | [270, 284] | Low |
-| subsample | [0.5, 1.0] | 0.8 | [271, 278] | Low |
-| reg_alpha | [0, 10] | 0.1 | [270, 276] | Low |
-| reg_lambda | [0, 10] | 0.1 | [270, 277] | Low |
-
-**Table G1: LightGBM Hyperparameter Sensitivity (Optuna 50 trials)**
-
-**Key Finding**: Learning rate is the most sensitive parameter; optimal range is 0.03-0.08.
-
-### G.2 LSTM Sensitivity
-
-| Parameter | Range Tested | Optimal | RMSE Range | Impact |
-|-----------|--------------|---------|------------|--------|
-| hidden_size | [32, 512] | 256 | [298, 456] | High |
-| num_layers | [1, 4] | 3 | [312, 398] | High |
-| dropout | [0, 0.5] | 0.3 | [308, 342] | Medium |
-| learning_rate | [1e-4, 1e-2] | 1e-3 | [305, 412] | High |
-| batch_size | [16, 128] | 32 | [312, 325] | Low |
-| sequence_length | [24, 336] | 168 | [287, 378] | High |
-
-**Table G2: LSTM Hyperparameter Sensitivity**
-
-### G.3 Optimization Parameters
-
-| Parameter | Range | Optimal | Cost Impact | Carbon Impact |
-|-----------|-------|---------|-------------|---------------|
-| carbon_penalty | [0, 100] | 50 €/tCO₂ | +2.1% | −0.12% |
-| battery_capacity | [50, 500] MW | 100 MW | −2.8% baseline | — |
-| charge_efficiency | [0.85, 0.98] | 0.95 | ±0.3% | — |
-| forecast_horizon | [12, 72] hours | 24 | ±0.1% | — |
-
-**Table G3: MILP Optimization Parameter Sensitivity**
-
----
-
-## Appendix H: Computational Resources
-
-### H.1 Training Time Breakdown
-
-| Component | Time (min) | GPU/CPU | Memory Peak |
-|-----------|------------|---------|-------------|
-| Data Loading | 1.2 | CPU | 2.1 GB |
-| Feature Engineering | 3.5 | CPU | 4.8 GB |
-| GBM Training | 0.4 | CPU | 1.2 GB |
-| GBM CV (10-fold) | 4.1 | CPU | 1.5 GB |
-| LSTM Training (100 ep) | 18.2 | MPS | 3.2 GB |
-| TCN Training (100 ep) | 12.4 | MPS | 2.8 GB |
-| Optuna Tuning (50 trials) | 45.6 | CPU | 2.1 GB |
-| Conformal Calibration | 0.8 | CPU | 1.0 GB |
-| **Total Pipeline** | **~90** | — | **4.8 GB** |
-
-**Table H1: Training Time and Resource Usage**
-
-### H.2 Inference Latency
-
-| Component | Latency (ms) | P50 | P99 |
-|-----------|--------------|-----|-----|
-| Feature Engineering | 12.3 | 11.8 | 18.4 |
-| GBM Prediction | 0.3 | 0.2 | 0.8 |
-| LSTM Prediction | 2.1 | 1.9 | 4.2 |
-| Conformal Intervals | 0.1 | 0.1 | 0.3 |
-| MILP Dispatch | 1.2 | 1.0 | 3.5 |
-| **End-to-End** | **< 15** | **13.2** | **22.1** |
-
-**Table H2: Inference Latency Benchmarks (1000 requests)**
-
----
-
-## Appendix I: Regional Comparison (Germany vs USA)
-
-### I.1 Forecasting Performance by Region
-
-| Target | Metric | Germany (OPSD) | USA (EIA-930) | Δ Relative |
-|--------|--------|----------------|---------------|------------|
-| **Load** | RMSE (MW) | 271.2 | 1,847.3 | — |
-| | MAE (MW) | 191.3 | 1,312.5 | — |
-| | MAPE (%) | 0.47% | 1.23% | +162% |
-| | R² | 0.9991 | 0.9978 | −0.13% |
-| **Wind** | RMSE (MW) | 127.1 | 892.4 | — |
-| | MAE (MW) | 89.4 | 634.2 | — |
-| | MAPE (%) | 2.31% | 3.87% | +68% |
-| | R² | 0.9987 | 0.9962 | −0.25% |
-| **Solar** | RMSE (MW) | 91.2 | 587.3 | — |
-| | MAE (MW) | 64.8 | 421.6 | — |
-| | MAPE (%) | 3.12% | 4.56% | +46% |
-| | R² | 0.9984 | 0.9958 | −0.26% |
-
-**Table I1: Regional Forecasting Performance Comparison**
-
-**Note**: Absolute RMSE differs due to grid scale (DE: ~50 GW peak, US-MISO: ~120 GW peak). Normalized metrics (MAPE, R²) enable fair comparison.
-
-### I.2 Optimization Impact by Region
-
-| Metric | Germany | USA (MISO) | Notes |
-|--------|---------|------------|-------|
-| Baseline Cost ($/week) | $154.8M | $312.4M | Grid scale difference |
-| Optimized Cost ($/week) | $150.3M | $303.4M | — |
-| **Cost Savings (%)** | **6.88%** | **6.85%** | Region-dependent |
-| Baseline Carbon (kg/week) | 1,472.3M | 2,834.6M | Higher US coal mix |
-| Optimized Carbon (kg/week) | 1,463.8M | 2,818.2M | — |
-| **Carbon Reduction (%)** | **0.12%** | **0.13%** | Region-dependent |
-| Infeasibility Rate | 0% | 0% | — |
-
-**Table I2: Regional Optimization Impact Comparison**
-
-### I.3 Transfer Learning Results
-
-| Configuration | Load RMSE | Wind RMSE | Solar RMSE |
-|---------------|-----------|-----------|------------|
-| DE → DE (baseline) | 271.2 | 127.1 | 91.2 |
-| US → US (baseline) | 1,847.3 | 892.4 | 587.3 |
-| DE → US (zero-shot) | 2,456.8 (+33%) | 1,245.6 (+40%) | 812.4 (+38%) |
-| DE → US (fine-tuned 1k samples) | 1,923.4 (+4.1%) | 934.7 (+4.7%) | 615.2 (+4.8%) |
-| DE → US (fine-tuned 5k samples) | 1,862.1 (+0.8%) | 901.3 (+1.0%) | 592.8 (+0.9%) |
-
-**Table I3: Transfer Learning Performance**
-
-**Finding**: Fine-tuning with 5,000 local samples recovers >99% of native performance.
-
----
-
-## Appendix J: Seasonal Performance Analysis
-
-### J.1 Monthly Performance Breakdown (Germany, Load)
-
-| Month | RMSE | MAE | MAPE | Avg Load (MW) | Error/Load (%) |
-|-------|------|-----|------|---------------|----------------|
-| January | 312.4 | 221.3 | 0.52% | 52,341 | 0.60% |
-| February | 298.6 | 211.2 | 0.49% | 51,234 | 0.12% |
-| March | 267.8 | 189.4 | 0.45% | 48,923 | 0.55% |
-| April | 245.3 | 173.5 | 0.42% | 45,612 | 0.54% |
-| May | 234.7 | 165.8 | 0.41% | 43,456 | 0.54% |
-| June | 256.2 | 181.1 | 0.44% | 44,678 | 0.57% |
-| July | 278.4 | 196.8 | 0.47% | 45,234 | 0.62% |
-| August | 289.3 | 204.5 | 0.48% | 46,123 | 0.63% |
-| September | 261.5 | 184.8 | 0.43% | 47,456 | 0.55% |
-| October | 274.2 | 193.9 | 0.46% | 49,234 | 0.56% |
-| November | 295.6 | 209.1 | 0.50% | 50,678 | 0.12% |
-| December | 324.8 | 229.6 | 0.54% | 53,456 | 0.61% |
-
-**Table J1: Monthly Load Forecasting Performance (Germany)**
-
-**Seasonal Pattern**: Winter months (Dec-Feb) show +15-20% higher RMSE due to heating demand variability.
-
-### J.2 Day-of-Week Performance (Germany, Load)
-
-| Day | RMSE | MAE | MAPE | Relative to Mean |
-|-----|------|-----|------|------------------|
-| Monday | 298.4 | 211.0 | 0.51% | +10.0% |
-| Tuesday | 265.3 | 187.5 | 0.44% | −2.2% |
-| Wednesday | 262.1 | 185.2 | 0.43% | −3.4% |
-| Thursday | 264.8 | 187.1 | 0.44% | −2.4% |
-| Friday | 278.6 | 196.9 | 0.46% | +2.7% |
-| Saturday | 256.4 | 181.2 | 0.42% | −5.5% |
-| Sunday | 268.9 | 190.1 | 0.45% | −0.8% |
-
-**Table J2: Day-of-Week Load Forecasting Performance**
-
-**Finding**: Monday transitions from weekend patterns cause +10% error; weekdays are most predictable.
-
-### J.3 Hour-of-Day Performance (Germany, Load)
-
-| Hour Block | RMSE | MAE | MAPE | Pattern |
-|------------|------|-----|------|---------|
-| 00:00-05:59 (Night) | 198.4 | 140.2 | 0.38% | Low, stable |
-| 06:00-08:59 (Morning Ramp) | 342.6 | 242.3 | 0.12% | High variability |
-| 09:00-11:59 (Mid-Morning) | 287.3 | 203.1 | 0.47% | Industrial start |
-| 12:00-14:59 (Midday) | 256.8 | 181.5 | 0.43% | Stable plateau |
-| 15:00-17:59 (Afternoon) | 278.4 | 196.8 | 0.46% | Moderate |
-| 18:00-20:59 (Evening Peak) | 334.2 | 236.4 | 0.56% | Peak uncertainty |
-| 21:00-23:59 (Night Ramp) | 245.6 | 173.6 | 0.41% | Declining |
-
-**Table J3: Intraday Load Forecasting Performance**
-
-**Key Insight**: Morning ramp (06:00-09:00) and evening peak (18:00-21:00) account for 45% of total forecast error.
-
----
-
-## Appendix K: Error Distribution Analysis
-
-### K.1 Error Percentiles (Germany, GBM)
-
-| Target | P10 | P25 | P50 | P75 | P90 | P95 | P99 |
-|--------|-----|-----|-----|-----|-----|-----|-----|
-| Load (MW) | −423 | −178 | −12 | +165 | +398 | +534 | +812 |
-| Wind (MW) | −287 | −112 | −8 | +98 | +256 | +387 | +623 |
-| Solar (MW) | −198 | −78 | −4 | +72 | +178 | +267 | +445 |
-
-**Table K1: Forecast Error Percentiles (Actual − Predicted)**
-
-### K.2 Error Normality Tests
-
-| Target | Shapiro-Wilk W | p-value | Skewness | Kurtosis | Distribution |
-|--------|----------------|---------|----------|----------|--------------|
-| Load | 0.9823 | <0.001 | +0.23 | 3.87 | Light right tail |
-| Wind | 0.9456 | <0.001 | +0.67 | 5.23 | Heavy right tail |
-| Solar | 0.9234 | <0.001 | +0.89 | 6.45 | Heavy right tail |
-
-**Table K2: Error Distribution Normality Tests**
-
-**Implication**: Non-Gaussian errors justify conformal prediction over parametric intervals.
-
-### K.3 Autocorrelation of Residuals
-
-| Target | Lag-1 ACF | Lag-24 ACF | Ljung-Box Q | p-value |
-|--------|-----------|------------|-------------|---------|
-| Load | 0.312 | 0.156 | 1,245.6 | <0.001 |
-| Wind | 0.456 | 0.234 | 2,345.8 | <0.001 |
-| Solar | 0.378 | 0.189 | 1,678.4 | <0.001 |
-
-**Table K3: Residual Autocorrelation Analysis**
-
-**Finding**: Significant residual autocorrelation suggests potential for error correction models (future work).
-
----
-
-## Appendix L: SHAP Feature Importance Analysis
-
-### L.1 Top 20 Features by SHAP Value (Load Forecasting, Germany)
-
-| Rank | Feature | Mean |SHAP| | % Contribution | Cumulative % |
-|------|---------|-------------|----------------|---------------|
-| 1 | load_mw_lag_1h | 0.342 | 18.2% | 18.2% |
-| 2 | load_mw_lag_24h | 0.287 | 15.3% | 33.5% |
-| 3 | load_mw_rolling_mean_24h | 0.198 | 10.5% | 44.0% |
-| 4 | hour_sin | 0.156 | 8.3% | 52.3% |
-| 5 | hour_cos | 0.134 | 7.1% | 59.4% |
-| 6 | load_mw_lag_168h | 0.112 | 6.0% | 65.4% |
-| 7 | day_of_week_sin | 0.098 | 5.2% | 70.6% |
-| 8 | day_of_week_cos | 0.087 | 4.6% | 75.2% |
-| 9 | temperature_2m | 0.078 | 4.2% | 79.4% |
-| 10 | load_mw_rolling_std_24h | 0.065 | 3.5% | 82.9% |
-| 11 | month_sin | 0.054 | 2.9% | 85.8% |
-| 12 | month_cos | 0.048 | 2.6% | 88.4% |
-| 13 | is_weekend | 0.042 | 2.2% | 90.6% |
-| 14 | load_mw_lag_2h | 0.038 | 2.0% | 92.6% |
-| 15 | humidity | 0.032 | 1.7% | 94.3% |
-| 16 | load_mw_lag_3h | 0.028 | 1.5% | 95.8% |
-| 17 | is_holiday | 0.024 | 1.3% | 97.1% |
-| 18 | wind_speed_10m | 0.021 | 1.1% | 98.2% |
-| 19 | cloud_cover | 0.018 | 1.0% | 99.2% |
-| 20 | pressure_msl | 0.015 | 0.8% | 100.0% |
-
-**Table L1: SHAP Feature Importance Rankings (Load)**
-
-### L.2 Feature Importance Comparison Across Targets
-
-| Feature Category | Load | Wind | Solar |
-|------------------|------|------|-------|
-| Lag features (1-168h) | 42.8% | 28.4% | 25.6% |
-| Rolling statistics | 14.0% | 18.7% | 16.2% |
-| Cyclical time encoding | 23.2% | 12.3% | 31.4% |
-| Weather variables | 8.1% | 35.8% | 24.3% |
-| Calendar features | 11.9% | 4.8% | 2.5% |
-
-**Table L2: Feature Category Importance by Target**
-
-**Key Insights**:
-- Load: Dominated by lagged values (autoregressive nature) and time encoding (daily/weekly cycles)
-- Wind: Weather features (wind speed, pressure) account for 35.8% importance
-- Solar: Time encoding (31.4%) captures solar angle; weather (cloud cover) at 24.3%
-
----
-
-## Appendix M: Conformal Prediction Detailed Results
-
-### M.1 Coverage by Nominal Level
-
-| Nominal | Load PICP | Wind PICP | Solar PICP | Avg Width |
-|---------|-----------|-----------|------------|-----------|
-| 50% | 52.3% | 51.8% | 53.1% | 312 MW |
-| 70% | 71.8% | 70.4% | 72.6% | 498 MW |
-| 80% | 81.2% | 79.8% | 82.4% | 634 MW |
-| 90% | 92.4% | 91.2% | 93.1% | 856 MW |
-| 95% | 96.1% | 95.4% | 96.8% | 1,123 MW |
-| 99% | 99.2% | 98.9% | 99.4% | 1,678 MW |
-
-**Table M1: Conformal Prediction Coverage by Nominal Level**
-
-### M.2 Coverage by Forecast Horizon
-
-| Horizon | Load PICP | Wind PICP | Solar PICP | Avg Width |
-|---------|-----------|-----------|------------|-----------|
-| 1h | 94.2% | 93.8% | 94.6% | 423 MW |
-| 3h | 93.1% | 92.4% | 93.8% | 587 MW |
-| 6h | 92.4% | 91.2% | 92.8% | 734 MW |
-| 12h | 91.2% | 89.8% | 91.5% | 923 MW |
-| 24h | 89.8% | 87.6% | 89.2% | 1,234 MW |
-
-**Table M2: 90% Interval Coverage by Forecast Horizon**
-
-### M.3 Adaptive Conformal Performance
-
-| Method | Coverage | Width | CRPS |
-|--------|----------|-------|------|
-| Split Conformal (fixed) | 92.4% | 856 MW | 134.2 |
-| Rolling Calibration (7-day) | 91.8% | 812 MW | 128.6 |
-| Adaptive (ACI) | 90.8% | 756 MW | 121.4 |
-| **Adaptive + Rolling** | **91.2%** | **734 MW** | **118.2** |
-
-**Table M3: Conformal Prediction Method Comparison**
-
----
-
-## Appendix N: Supplementary Figures
-
-### Figure Inventory
-
-All figures are available in `reports/publication/figures/` and `reports/figures/`:
-
-| Figure | File | Description | Section |
-|--------|------|-------------|---------|
-| N1 | `forecast_scatter_load_de.png` | Predicted vs Actual scatter plot (Load, DE) | 5.1 |
-| N2 | `forecast_scatter_wind_de.png` | Predicted vs Actual scatter plot (Wind, DE) | 5.1 |
-| N3 | `forecast_scatter_solar_de.png` | Predicted vs Actual scatter plot (Solar, DE) | 5.1 |
-| N4 | `error_histogram_all_targets.png` | Error distribution histograms | K.1 |
-| N5 | `residual_acf_plot.png` | Autocorrelation function of residuals | K.3 |
-| N6 | `shap_summary_load.png` | SHAP beeswarm plot (Load) | L.1 |
-| N7 | `shap_summary_wind.png` | SHAP beeswarm plot (Wind) | L.1 |
-| N8 | `shap_summary_solar.png` | SHAP beeswarm plot (Solar) | L.1 |
-| N9 | `shap_interaction_heatmap.png` | Feature interaction heatmap | L.2 |
-| N10 | `conformal_calibration_curve.png` | Coverage vs Nominal level | M.1 |
-| N11 | `interval_width_vs_horizon.png` | Prediction interval width by horizon | M.2 |
-| N12 | `seasonal_performance_heatmap.png` | Month × Hour error heatmap | J.1 |
-| N13 | `cv_fold_performance.png` | 10-fold CV error bars | E.1 |
-| N14 | `optuna_history_gbm.png` | Hyperparameter tuning convergence | G.1 |
-| N15 | `pareto_frontier_detailed.png` | Cost-carbon Pareto with annotations | 6.2 |
-| N16 | `dispatch_timeseries_week.png` | Full week dispatch visualization | 6.1 |
-| N17 | `soc_trajectory_comparison.png` | Battery SoC: baseline vs optimized | 6.1 |
-| N18 | `drift_monitoring_dashboard.png` | Feature drift detection timeline | 7.5 |
-| N19 | `learning_curves_all_models.png` | Training/validation loss curves | H.1 |
-| N20 | `regional_comparison_radar.png` | DE vs US performance radar chart | I.1 |
-
-**Table N1: Supplementary Figure Inventory**
-
-### Figure Descriptions
-
-**Figure N1-N3: Forecast Scatter Plots**
-Scatter plots showing predicted (x-axis) vs actual (y-axis) values for each target variable. Includes:
-- 1:1 reference line (perfect prediction)
-- Regression line with 95% CI band
-- R² and RMSE annotations
-- Color encoding by hour-of-day
-
-**Figure N4: Error Histograms**
-Three-panel histogram showing forecast error distributions for load, wind, and solar. Includes:
-- Kernel density estimate overlay
-- Normal distribution reference
-- Mean, std, skewness, kurtosis annotations
-
-**Figure N5: Residual ACF**
-Autocorrelation function plot for forecast residuals:
-- Lags 0-48 hours displayed
-- 95% confidence bands
-- Significant lags highlighted
-
-**Figure N6-N8: SHAP Summary Plots**
-Beeswarm plots showing feature importance and direction:
-- Features ranked by mean |SHAP|
-- Color indicates feature value (low=blue, high=red)
-- Horizontal position shows SHAP impact on prediction
-
-**Figure N9: Feature Interaction Heatmap**
-Matrix showing pairwise SHAP interaction values:
-- Color intensity indicates interaction strength
-- Identifies synergistic feature combinations
-
-**Figure N10: Conformal Calibration**
-Calibration curve plotting empirical coverage (y-axis) vs nominal level (x-axis):
-- Perfect calibration = diagonal line
-- Separate curves for each target
-- Shaded region for acceptable coverage
-
-**Figure N15: Pareto Frontier**
-Scatter plot of cost (x-axis) vs carbon (y-axis) for different dispatch strategies:
-- Pareto-optimal points connected
-- Dominated strategies marked
-- GridPulse operating point highlighted
-- Marginal rate of substitution annotations
-
----
-
-## Appendix O: Detailed Model Architectures
-
-### O.1 LightGBM Final Configuration
-
-```yaml
-model_type: lightgbm
-objective: regression
-metric: rmse
-boosting_type: gbdt
-n_estimators: 1000
-learning_rate: 0.05
-max_depth: 8
-num_leaves: 64
-min_data_in_leaf: 20
-subsample: 0.8
-subsample_freq: 1
-colsample_bytree: 0.8
-reg_alpha: 0.1
-reg_lambda: 0.1
-random_state: 42
-early_stopping_rounds: 50
-verbose: -1
-```
-
-**Table O1: LightGBM Configuration**
-
-### O.2 LSTM Architecture
-
-```
-LSTMForecaster(
-  (lstm): LSTM(
-    input_size=93,
-    hidden_size=256,
-    num_layers=3,
-    batch_first=True,
-    dropout=0.3,
-    bidirectional=False
-  )
-  (fc): Sequential(
-    (0): Linear(in_features=256, out_features=128)
-    (1): ReLU()
-    (2): Dropout(p=0.3)
-    (3): Linear(in_features=128, out_features=24)
-  )
-)
-
-Total Parameters: 1,423,896
-Trainable Parameters: 1,423,896
-```
-
-**Table O2: LSTM Architecture Summary**
-
-### O.3 TCN Architecture
-
-```
-TCNForecaster(
-  (tcn): TemporalConvNet(
-    (network): Sequential(
-      (0): TemporalBlock(in=93, out=128, k=5, d=1)
-      (1): TemporalBlock(in=128, out=128, k=5, d=2)
-      (2): TemporalBlock(in=128, out=128, k=5, d=4)
-      (3): TemporalBlock(in=128, out=64, k=5, d=8)
-    )
-  )
-  (fc): Linear(in_features=64, out_features=24)
-)
-
-Total Parameters: 558,232
-Trainable Parameters: 558,232
-Receptive Field: 145 timesteps
-```
-
-**Table O3: TCN Architecture Summary**
-
----
-
-## Appendix P: Reproducibility Checklist
-
-### P.1 ML Reproducibility Checklist
-
-| Item | Status | Details |
-|------|--------|---------|
-| Code availability | ✅ | GitHub repository (MIT license) |
-| Data availability | ✅ | Public OPSD + EIA-930 |
-| Random seeds fixed | ✅ | seed=42 for all experiments |
-| Hardware specs documented | ✅ | Appendix A |
-| Hyperparameters documented | ✅ | Appendix O |
-| Training procedure documented | ✅ | Section 4 |
-| Evaluation metrics defined | ✅ | Section 5.1 |
-| Statistical tests reported | ✅ | Appendix F |
-| Error bars/CIs reported | ✅ | Tables E1-E2, F3 |
-| Multiple runs | ✅ | 5 seeds, 10-fold CV |
-
-**Table P1: NeurIPS ML Reproducibility Checklist**
-
-### P.2 Data Sheet
-
-| Field | Value |
-|-------|-------|
-| **Name** | GridPulse Energy Dataset |
-| **Source** | OPSD (Germany), EIA-930 (USA) |
-| **Time Range** | 2015-2020 (DE), 2019-2024 (US) |
-| **Frequency** | Hourly |
-| **Size** | 17,377 (DE), 43,824 (US) samples |
-| **Features** | 93 engineered features |
-| **Targets** | load_mw, wind_mw, solar_mw |
-| **Missing Data** | <0.1%, forward-filled |
-| **License** | CC-BY (OPSD), Public Domain (EIA) |
-| **Preprocessing** | Documented in `src/gridpulse/data/` |
-
-**Table P2: Dataset Information Sheet**
-
-### P.3 Model Card
-
-| Field | Value |
-|-------|-------|
-| **Model Name** | GridPulse GBM Forecaster |
-| **Version** | 1.0 |
-| **Intended Use** | Day-ahead energy forecasting |
-| **Out-of-Scope Use** | Real-time (<1h) forecasting |
-| **Training Data** | OPSD Germany 2015-2019 |
-| **Evaluation Data** | OPSD Germany 2020 |
-| **Metrics** | RMSE, MAE, MAPE, R² |
-| **Performance** | Load: 271 MW RMSE (0.47% MAPE) |
-| **Limitations** | See Section 8 |
-| **Fairness Considerations** | See Section 9.2 |
-| **Carbon Footprint** | 15 kg CO₂ training |
-
-**Table P3: Model Card Summary**
+3. Confirm core canonical strings exist in markdown and LaTeX:
+- `7.11%`
+- `0.11%`
+- `20260217_165756`
+- `20260217_182305`
+- `2,708.61`
+- `297,092.71`
+4. Confirm no banned legacy percentages or placeholder tokens are present.
+5. Confirm every publication numeric claim maps to a row in `paper/claim_matrix.csv`.
+
+## Appendix B. Artifact Inventory
+| Artifact | Purpose |
+|---|---|
+| `paper/PAPER_DRAFT.md` | Master manuscript source |
+| `paper/paper.tex` | LaTeX export manuscript |
+| `paper/metrics_manifest.json` | Canonical metric lock and validation regex |
+| `paper/claim_matrix.csv` | Claim-level provenance and status |
+| `paper/accuracy_audit.md` | Accuracy and conflict audit log |
+| `paper/rewrite_pack.md` | Extended section guidance bank |
+| `paper/sync_rules.md` | Markdown->LaTeX->DOCX synchronization contract |
+| `scripts/validate_paper_claims.py` | Automated non-mutating consistency checker |
+| `data/dashboard/*` | Dataset profiles and dashboard metrics |
+| `reports/impact_summary.csv` | Canonical DE impact outcomes |
+| `reports/eia930/impact_summary.csv` | Canonical US impact outcomes |
+| `reports/research_metrics_de.csv` | DE stochastic runs |
+| `reports/research_metrics_us.csv` | US stochastic runs |
+| `reports/publication/tables/table6_robustness.csv` | Robustness perturbation summary |
+
+## Appendix C. Section-by-Section Writing Bank (Copy-Ready)
+Use this appendix when expanding or trimming sections.
+
+### C1. Introduction
+Required facts:
+1. Forecast-only systems are insufficient for operations.
+2. GridPulse decision loop and region scope.
+3. Evidence-lock policy date and source concept.
+
+Required figures/tables:
+1. Architecture figure (`reports/figures/architecture.png` or `.svg`).
+
+Optional details:
+1. Production context and deployment pathways.
+
+External citation required:
+1. Industry-wide background claims about renewable volatility and operator workflows.
+
+### C2. Data Assets and Scope
+Required facts:
+1. DE/US rows, date ranges, and feature counts from dashboard stats.
+2. Distinction between columns and engineered features.
+3. Scope boundary against legacy profile claims.
+
+Required tables:
+1. Dataset profile table.
+2. Feature family composition table.
+
+Optional details:
+1. Target distribution table (mean/std/min/max/non-zero).
+
+External citation required:
+1. Dataset provider descriptions (OPSD, EIA-930) if discussed beyond internal files.
+
+### C3. Methods
+Required facts:
+1. Model families and horizon setup.
+2. Conformal interval logic and calibration target.
+3. Deterministic and robust optimization intents and constraints.
+4. Monitoring and safety pathways.
+
+Required tables/figures:
+1. Objective/constraint summary table.
+2. Optional equation block for EVPI/VSS definitions.
+
+Optional details:
+1. Endpoint contracts and module-level implementation map.
+
+External citation required:
+1. Foundational method references (conformal, robust optimization, sequence models).
+
+### C4. Results
+Required facts:
+1. Forecast metrics by target and model (DE and US).
+2. Coverage and residual diagnostics.
+3. Canonical DE/US impact percentages.
+4. Canonical stochastic values and run IDs.
+5. Robustness perturbation summary.
+
+Required tables:
+1. Forecast comparison tables.
+2. Impact percent table.
+3. Absolute impact table.
+4. Stochastic run table.
+
+Optional details:
+1. Additional figures from `reports/figures/` (dispatch, SOC, tradeoff, interval width).
+
+External citation required:
+1. None for repository-derived numeric outcomes.
+
+### C5. Governance Sections
+Required facts:
+1. Source-of-truth paths and run IDs.
+2. Claim status model and publication rule.
+3. Validation command and release gates.
+
+Required tables:
+1. Source-of-truth mapping table.
+2. Claim-status summary snapshot.
+
+Optional details:
+1. Governance timeline and reviewer sign-off logs.
+
+External citation required:
+1. None unless claiming formal compliance against external standards.
+
+### C6. Safety, Validity, and Limitations
+Required facts:
+1. Concrete failure modes and mitigations.
+2. Internal/external/construct/conclusion validity boundaries.
+3. Current environment limitations for DOCX sync.
+
+Required table:
+1. Failure-mode table (trigger, detection, mitigation, fallback).
+
+Optional details:
+1. SLA/SLO targets from production-readiness docs if included in thesis scope.
+
+External citation required:
+1. Policy/regulatory requirements if explicitly stated.
+
+## Appendix D. Claims Requiring Citation Before Publication
+Claims in these categories need explicit external source support or removal:
+1. Global market-size forecasts and long-horizon policy projections.
+2. Named-operator staffing/organizational metrics.
+3. Environmental footprint values not derived by reproducible in-repo method.
+4. Universal superiority claims beyond locked DE/US evidence.
+
+## Appendix E. Synchronization and Release Notes
+1. Manuscript authority remains `paper/PAPER_DRAFT.md`.
+2. `paper/paper.tex` must preserve identical title, abstract core metrics, and conclusion core metrics.
+3. DOCX synchronization is run last and must record tooling constraints in release notes when automation is unavailable.
+4. Final release gate requires passing `scripts/validate_paper_claims.py` and no unresolved claim-status conflicts in publication sections.
+
+## Appendix F. Full-Detail Authoring Blocks (Use/Trim as Needed)
+This appendix gives longer thesis-writing blocks that can be pasted into chapter drafts and then edited for style.
+
+### F1. Long-Form Intro Block
+GridPulse is designed around a decision-first interpretation of machine learning in energy systems. Rather than ending at point prediction, the system carries uncertainty information into optimization, enforces dispatch feasibility under battery and grid constraints, and evaluates outcomes against explicit baselines. This architecture creates a measurable bridge between model behavior and operational value. The thesis therefore evaluates not only forecast quality, but the integrity of the full decision chain from feature engineering to published claims.
+
+### F2. Long-Form Method Block
+The forecasting layer trains LightGBM, LSTM, and TCN families under time-aware configurations with a 24-hour horizon and 168-hour lookback. Uncertainty is represented using conformal intervals with adaptive behavior in code-level implementations. Deterministic optimization uses a mixed-integer structure with cost, carbon, degradation, curtailment, unmet-load, and peak terms. Robust optimization uses a two-scenario epigraph formulation over lower and upper load bounds. Safety constraints are enforced in serving pathways before control actions can be accepted.
+
+### F3. Long-Form Results Block
+Under the locked artifact policy, DE impact is 7.11% cost savings, 0.30% carbon reduction, and 6.13% peak shaving. US impact is 0.11% cost savings, 0.13% carbon reduction, and 0.00% peak shaving. Canonical stochastic evidence is tied to DE run 20260217_165756 and US run 20260217_182305, both marked feasible in run-summary rows. Positive VSS is observed in both regions, with large magnitude differences across datasets. These differences motivate region-scoped interpretation rather than universal-effect claims.
+
+### F4. Long-Form Governance Block
+The manuscript is governed by a source-of-truth contract in which every publication-facing numeric claim must map to `paper/metrics_manifest.json` and have an entry in `paper/claim_matrix.csv`. Claim status categories distinguish verified evidence from conflicts and citation-risk statements. Validation is automated through `scripts/validate_paper_claims.py`, which checks required canonical strings and blocks known legacy contradictions. This governance layer is necessary because multiple historical report families coexist in the repository.
+
+### F5. Long-Form Limitation Block
+Evidence in this thesis is intentionally restricted to locked DE and US windows from dashboard profile artifacts. While this improves traceability, it limits direct external generalization. In addition, optimization outcomes depend on proxy price/carbon assumptions and scenario/interval settings that may differ across market designs. Therefore, results should be read as reproducible outcomes for the documented pipeline configuration and dataset scope, not as universal constants.
+
+### F6. Long-Form Future Work Block
+Future work should focus on unifying report-generation pathways, improving uncertainty calibration where coverage is below nominal, expanding region and tariff coverage, and strengthening release automation with signed evidence bundles. This progression preserves the thesis core principle: model advances and manuscript claims must evolve together under explicit provenance controls.
+
+### F7. Keep/Trim Guidance for Final Submission
+If page limits require reduction:
+1. Keep Sections 6, 7, 8, and 14 unchanged.
+2. Keep all run IDs and canonical percentages unchanged.
+3. Trim descriptive implementation prose before trimming governance text.
+4. Do not trim limitations that clarify scope and citation boundaries.
+
+## Appendix G. Project-to-Paper Coverage Map
+This appendix maps implemented project surfaces to manuscript coverage so review can distinguish fully documented areas from areas that are currently summarized.
+
+Coverage status definitions:
+1. **Full**: implementation paths and operational behavior are explicitly described in the paper.
+2. **Partial**: core behavior is described, but implementation/runtime details are summarized.
+
+| Project Surface | Primary Implementation Paths | Current Paper Coverage | Status | Notes |
+|---|---|---|---|---|
+| Forecast training orchestration, splits, tuning | `src/gridpulse/forecasting/train.py`, `configs/train_forecast.yaml`, `configs/train_forecast_eia930.yaml`, `scripts/train_dataset.py` | Sections 3.7, 4.1 | Full | Runtime control flags (`--tune`, `--no-tune`, `--ensemble`, `--max-seeds`, `--n-trials`, `--top-pct`), serialization of tuning metadata, and ensemble member persistence are now explicitly documented. |
+| Forecast inference and bundle resolution | `services/api/routers/forecast.py`, `src/gridpulse/forecasting/predict.py` | Sections 2.3, 4.1.4 | Full | Explicit target-path resolution, ordered fallback search, ensemble averaging behavior, quantile serving order, and missing-target signaling are now documented. |
+| Streaming ingestion and persistence | `src/gridpulse/streaming/run_consumer.py`, `src/gridpulse/streaming/consumer.py`, `src/gridpulse/streaming/worker.py`, `configs/streaming.yaml` | Sections 2.7, 12.5 | Full | CLI path, config load path, and DuckDB table contract are explicitly documented. |
+| DC3S uncertainty shield and audit chain | `src/gridpulse/dc3s/`, `services/api/routers/dc3s.py`, `configs/dc3s.yaml` | Sections 2.3, 2.7, 4.5, 12.5 | Full | Endpoint contracts, implemented inflation law, shield modes, hash chain, and state/audit behavior are documented. |
+| Monitoring and retraining | `services/api/routers/monitor.py`, `src/gridpulse/monitoring/`, `configs/monitoring.yaml` | Section 4.6 | Full | Drift thresholds, cadence, and decision logic are explicitly documented. |
+| Safety and control-plane enforcement | `src/gridpulse/safety/`, `services/api/main.py` (`/control/dispatch`) | Sections 4.7, 11 | Full | Authorization, watchdog, and BMS gate sequence is documented. |
+| Frontend operator workflow and live DC3S UX | `frontend/src/app/(dashboard)/page.tsx`, `frontend/src/components/dashboard/DC3SLiveCard.tsx`, `frontend/src/lib/api/dc3s-client.ts`, `frontend/src/app/api/dc3s/audit/[commandId]/route.ts` | Sections 2.2, 2.7 | Full | Dashboard polling default, operator-selectable auto-refresh cadence, manual refresh, command-id-linked audit quick link, and proxy/error behavior are explicitly documented. |
+| Claim governance and release gates | `paper/metrics_manifest.json`, `paper/claim_matrix.csv`, `scripts/validate_paper_claims.py` | Sections 5, 7, 8 | Full | Source lock, reconciliation, and publication gating are explicitly documented. |
+
+### G1. Full-Coverage Update (Completed)
+This revision closes the previously partial surfaces:
+1. Section 4.1 now documents runtime training controls and their reproducibility implications.
+2. Section 4.1.4 now documents explicit fallback/ensemble/quantile inference resolution mechanics.
+3. Section 2.7 now documents frontend live-ops controls, auto-refresh cadence selection, and command-linked audit navigation.
+4. Baseline policy definitions and impact-table numerator/denominator mapping are now explicit for B1/B2/B3.
