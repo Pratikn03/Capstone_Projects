@@ -1,0 +1,313 @@
+{
+  "manifest_version": "1.0.0",
+  "generated_at_utc": "2026-02-19T00:00:00Z",
+  "metric_policy": {
+    "name": "dataset_scoped_latest",
+    "description": "Use latest dataset-scoped artifacts as of 2026-02-17: DE stochastic run 20260217_165756 and US stochastic run 20260217_182305; impact from latest impact_summary files.",
+    "master_manuscript": "paper/PAPER_DRAFT.md"
+  },
+  "sources": {
+    "de_impact": {
+      "path": "reports/impact_summary.csv",
+      "fields": [
+        "baseline_cost_usd",
+        "gridpulse_cost_usd",
+        "cost_savings_pct",
+        "baseline_carbon_kg",
+        "gridpulse_carbon_kg",
+        "carbon_reduction_pct",
+        "baseline_peak_mw",
+        "gridpulse_peak_mw",
+        "peak_shaving_pct"
+      ]
+    },
+    "us_impact": {
+      "path": "reports/eia930/impact_summary.csv",
+      "fields": [
+        "baseline_cost_usd",
+        "gridpulse_cost_usd",
+        "cost_savings_pct",
+        "baseline_carbon_kg",
+        "gridpulse_carbon_kg",
+        "carbon_reduction_pct",
+        "baseline_peak_mw",
+        "gridpulse_peak_mw",
+        "peak_shaving_pct"
+      ]
+    },
+    "de_impact_comparison": {
+      "path": "reports/impact_comparison.json",
+      "fields": [
+        "baseline.expected_cost_usd",
+        "baseline.carbon_kg",
+        "baseline.grid_mw",
+        "naive.expected_cost_usd",
+        "naive.carbon_kg",
+        "naive.grid_mw",
+        "optimized_forecast.expected_cost_usd",
+        "optimized_forecast.carbon_kg",
+        "optimized_forecast.peak_mw"
+      ]
+    },
+    "us_impact_comparison": {
+      "path": "reports/eia930/impact_comparison.json",
+      "fields": [
+        "baseline.expected_cost_usd",
+        "baseline.carbon_kg",
+        "baseline.grid_mw",
+        "naive.expected_cost_usd",
+        "naive.carbon_kg",
+        "naive.grid_mw",
+        "optimized_forecast.expected_cost_usd",
+        "optimized_forecast.carbon_kg",
+        "optimized_forecast.peak_mw"
+      ]
+    },
+    "de_stochastic": {
+      "path": "reports/research_metrics_de.csv",
+      "row_type": "run_summary",
+      "run_id": "20260217_165756",
+      "timestamp_utc": "2026-02-17T16:57:56.736552"
+    },
+    "us_stochastic": {
+      "path": "reports/research_metrics_us.csv",
+      "row_type": "run_summary",
+      "run_id": "20260217_182305",
+      "timestamp_utc": "2026-02-17T18:23:06.287827"
+    },
+    "de_profile": {
+      "path": "data/dashboard/de_stats.json"
+    },
+    "us_profile": {
+      "path": "data/dashboard/us_stats.json"
+    },
+    "dashboard_manifest": {
+      "path": "data/dashboard/manifest.json",
+      "generated_at": "2026-02-17T11:15:38.623283"
+    }
+  },
+  "run_ids": {
+    "de_stochastic": "20260217_165756",
+    "us_stochastic": "20260217_182305"
+  },
+  "rounding_rules": {
+    "percent": "round(value * 100, 2)",
+    "currency_usd": "round(value, 2)",
+    "mass_kg": "round(value, 2)",
+    "power_mw": "round(value, 2)",
+    "large_number": "use thousands separators and 2 decimal places"
+  },
+  "canonical_metrics": {
+    "de": {
+      "impact": {
+        "baseline_cost_usd": 154773462.72,
+        "gridpulse_cost_usd": 143776429.87944284,
+        "cost_savings_pct_raw": 0.07105244430986107,
+        "cost_savings_pct_display": "7.11%",
+        "baseline_carbon_kg": 1461641243.2827778,
+        "gridpulse_carbon_kg": 1457205025.3145804,
+        "carbon_reduction_pct_raw": 0.0030350935898837994,
+        "carbon_reduction_pct_display": "0.30%",
+        "baseline_peak_mw": 52165.0,
+        "gridpulse_peak_mw": 48969.37430220756,
+        "peak_shaving_pct_raw": 0.06125995778380988,
+        "peak_shaving_pct_display": "6.13%"
+      },
+      "baselines": {
+        "b1": {
+          "policy_name": "deterministic_lp_no_uncertainty",
+          "source_key": "optimized_forecast",
+          "cost_usd": 143776429.87944284,
+          "cost_display": "143,776,429.88",
+          "carbon_kg": 1457205025.3145804,
+          "carbon_display": "1,457,205,025.31",
+          "peak_mw": 48969.37430220756,
+          "peak_display": "48,969.37"
+        },
+        "b2": {
+          "policy_name": "grid_only_no_battery",
+          "source_key": "baseline",
+          "cost_usd": 154773462.72,
+          "cost_display": "154,773,462.72",
+          "carbon_kg": 1461641243.2827778,
+          "carbon_display": "1,461,641,243.28",
+          "peak_mw": 52165.0,
+          "peak_display": "52,165.00"
+        },
+        "b3": {
+          "policy_name": "naive_battery_dispatch",
+          "source_key": "naive",
+          "cost_usd": 154200945.64179745,
+          "cost_display": "154,200,945.64",
+          "carbon_kg": 1454657899.0345316,
+          "carbon_display": "1,454,657,899.03",
+          "peak_mw": 52165.0,
+          "peak_display": "52,165.00"
+        }
+      },
+      "stochastic": {
+        "run_id": "20260217_165756",
+        "evpi_robust": 2.3213319710464537,
+        "evpi_robust_display": "2.32",
+        "evpi_deterministic": -30.396187373062716,
+        "evpi_deterministic_display": "-30.40",
+        "vss": 2708.6138018030742,
+        "vss_display": "2,708.61"
+      }
+    },
+    "us": {
+      "impact": {
+        "baseline_cost_usd": 461364890.0,
+        "gridpulse_cost_usd": 460842677.75510204,
+        "cost_savings_pct_raw": 0.0011318855340248402,
+        "cost_savings_pct_display": "0.11%",
+        "baseline_carbon_kg": 3907803618.32431,
+        "gridpulse_carbon_kg": 3902642369.720742,
+        "carbon_reduction_pct_raw": 0.0013207543437867986,
+        "carbon_reduction_pct_display": "0.13%",
+        "baseline_peak_mw": 74741.0,
+        "gridpulse_peak_mw": 74741.0,
+        "peak_shaving_pct_raw": 0.0,
+        "peak_shaving_pct_display": "0.00%"
+      },
+      "baselines": {
+        "b1": {
+          "policy_name": "deterministic_lp_no_uncertainty",
+          "source_key": "optimized_forecast",
+          "cost_usd": 460842677.75510204,
+          "cost_display": "460,842,677.76",
+          "carbon_kg": 3902642369.720742,
+          "carbon_display": "3,902,642,369.72",
+          "peak_mw": 74741.0,
+          "peak_display": "74,741.00"
+        },
+        "b2": {
+          "policy_name": "grid_only_no_battery",
+          "source_key": "baseline",
+          "cost_usd": 461364890.0,
+          "cost_display": "461,364,890.00",
+          "carbon_kg": 3907803618.32431,
+          "carbon_display": "3,907,803,618.32",
+          "peak_mw": 74741.0,
+          "peak_display": "74,741.00"
+        },
+        "b3": {
+          "policy_name": "naive_battery_dispatch",
+          "source_key": "naive",
+          "cost_usd": 462821035.02967656,
+          "cost_display": "462,821,035.03",
+          "carbon_kg": 3911194390.27519,
+          "carbon_display": "3,911,194,390.28",
+          "peak_mw": 70929.0,
+          "peak_display": "70,929.00"
+        }
+      },
+      "stochastic": {
+        "run_id": "20260217_182305",
+        "evpi_robust": 10279851.744867317,
+        "evpi_robust_display": "10,279,851.74",
+        "evpi_deterministic": 24915503.93443662,
+        "evpi_deterministic_display": "24,915,503.93",
+        "vss": 297092.71400836046,
+        "vss_display": "297,092.71"
+      }
+    }
+  },
+  "dataset_profiles": {
+    "de": {
+      "rows": 17377,
+      "columns": 98,
+      "feature_count": 94,
+      "weather_feature_count": 40,
+      "lag_feature_count": 36,
+      "calendar_feature_count": 6,
+      "date_start_utc": "2018-10-07T23:00:00+00:00",
+      "date_end_utc": "2020-09-30T23:00:00+00:00"
+    },
+    "us": {
+      "rows": 13638,
+      "columns": 118,
+      "feature_count": 114,
+      "weather_feature_count": 56,
+      "lag_feature_count": 42,
+      "calendar_feature_count": 6,
+      "date_start_utc": "2024-07-01T06:00:00+00:00",
+      "date_end_utc": "2026-01-20T11:00:00+00:00"
+    }
+  },
+  "validation": {
+    "required_patterns": [
+      {
+        "id": "de_run_id",
+        "regex": "20260217\\\\?_165756",
+        "files": [
+          "markdown",
+          "tex"
+        ]
+      },
+      {
+        "id": "us_run_id",
+        "regex": "20260217\\\\?_182305",
+        "files": [
+          "markdown",
+          "tex"
+        ]
+      },
+      {
+        "id": "de_cost_savings",
+        "regex": "7\\.11\\\\?%",
+        "files": [
+          "markdown",
+          "tex"
+        ]
+      },
+      {
+        "id": "us_cost_savings",
+        "regex": "0\\.11\\\\?%",
+        "files": [
+          "markdown",
+          "tex"
+        ]
+      },
+      {
+        "id": "de_vss",
+        "regex": "2,?708\\.61",
+        "files": [
+          "markdown",
+          "tex"
+        ]
+      },
+      {
+        "id": "us_vss",
+        "regex": "297,?092\\.71",
+        "files": [
+          "markdown",
+          "tex"
+        ]
+      }
+    ],
+    "banned_patterns": [
+      {
+        "id": "legacy_opt_delta_135",
+        "regex": "1\\.35\\\\?%",
+        "reason": "Conflicting optimization delta from an older non-dataset-scoped table"
+      },
+      {
+        "id": "legacy_opt_delta_289",
+        "regex": "2\\.89\\\\?%",
+        "reason": "Legacy Germany-only baseline comparison; not canonical in this dataset-scoped manuscript"
+      },
+      {
+        "id": "legacy_carbon_delta_058",
+        "regex": "0\\.58\\\\?%",
+        "reason": "Legacy Germany-only carbon reduction value"
+      }
+    ],
+    "placeholder_patterns": [
+      "\\[see latest frozen outputs\\]",
+      "To be assigned",
+      "TBD",
+      "TODO"
+    ]
+  }
+}
