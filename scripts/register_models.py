@@ -17,14 +17,23 @@ from gridpulse.utils.registry import register_models
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--models-dir", default="artifacts/models")
+    parser.add_argument("--uncertainty-dir", default="artifacts/uncertainty")
     parser.add_argument("--out", default="artifacts/registry/models.json")
     parser.add_argument("--run-id", default=None, help="Optional run id for registry snapshot")
     args = parser.parse_args()
 
-    payload = register_models(Path(args.models_dir), Path(args.out), run_id=args.run_id)
-    print(f"[registry] wrote {args.out} (models={len(payload['latest']['models'])})")
+    payload = register_models(
+        Path(args.models_dir),
+        Path(args.out),
+        run_id=args.run_id,
+        uncertainty_dir=Path(args.uncertainty_dir) if args.uncertainty_dir else None,
+    )
+    latest = payload.get("latest", {})
+    print(
+        f"[registry] wrote {args.out} "
+        f"(models={len(latest.get('models', []))}, uncertainty={len(latest.get('uncertainty_artifacts', []))})"
+    )
 
 
 if __name__ == "__main__":
     main()
-

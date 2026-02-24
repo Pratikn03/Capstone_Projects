@@ -110,6 +110,14 @@ class MonitoringConfig(BaseModel):
     data_drift: dict[str, Any] = Field(default_factory=dict)
     model_drift: dict[str, Any] = Field(default_factory=dict)
     retraining: dict[str, Any] = Field(default_factory=dict)
+    dc3s_health: dict[str, Any] = Field(default_factory=dict)
+
+    model_config = ConfigDict(extra="allow")
+
+
+class PublishAuditConfig(BaseModel):
+    """Schema for configs/publish_audit.yaml."""
+    publish_audit: dict[str, Any] = Field(default_factory=dict)
 
     model_config = ConfigDict(extra="allow")
 
@@ -158,7 +166,7 @@ class StreamingKafkaConfig(BaseModel):
 class StreamingStorageConfig(BaseModel):
     mode: str = "duckdb"
     duckdb_path: str = "data/interim/streaming.duckdb"
-    table_name: str = "telemetry_opsd"
+    table_name: str = "telemetry_events"
     parquet_dir: str = "data/interim/streaming_parquet"
 
     model_config = ConfigDict(extra="allow")
@@ -195,6 +203,7 @@ CONFIG_MODELS: dict[str, Type[BaseModel]] = {
     "optimization.yaml": OptimizationConfig,
     "train_forecast.yaml": TrainForecastConfig,
     "monitoring.yaml": MonitoringConfig,
+    "publish_audit.yaml": PublishAuditConfig,
     "forecast.yaml": ForecastConfig,
     "uncertainty.yaml": UncertaintyConfig,
     "streaming.yaml": StreamingConfig,

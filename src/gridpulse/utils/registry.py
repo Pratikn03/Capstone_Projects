@@ -26,6 +26,7 @@ def register_models(
     registry_path: Path,
     *,
     run_id: str | None = None,
+    uncertainty_dir: Path | None = Path("artifacts/uncertainty"),
 ) -> dict[str, Any]:
     """Record model artifact metadata into a local registry file."""
     models_dir = Path(models_dir)
@@ -45,11 +46,28 @@ def register_models(
                 }
             )
 
+    uncertainty_artifacts: list[dict[str, Any]] = []
+    if uncertainty_dir is not None:
+        uncertainty_dir = Path(uncertainty_dir)
+        if uncertainty_dir.exists():
+            for path in sorted(uncertainty_dir.glob("*.json")):
+                uncertainty_artifacts.append(
+                    {
+                        "name": path.name,
+                        "path": str(path),
+                        "size_bytes": path.stat().st_size,
+                        "sha256": _sha256(path),
+                        "modified_at": datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).isoformat(),
+                    }
+                )
+
     snapshot = {
         "generated_at": datetime.now(tz=timezone.utc).isoformat(),
         "run_id": run_id,
         "models_dir": str(models_dir),
         "models": models,
+        "uncertainty_dir": str(uncertainty_dir) if uncertainty_dir is not None else None,
+        "uncertainty_artifacts": uncertainty_artifacts,
     }
 
     history: list[dict[str, Any]] = []
