@@ -56,6 +56,10 @@ def make_certificate(
     reliability_w: float | None = None,
     drift_flag: bool | None = None,
     inflation: float | None = None,
+    guarantee_checks_passed: bool | None = None,
+    guarantee_fail_reasons: list[str] | None = None,
+    true_soc_violation_after_apply: bool | None = None,
+    assumptions_version: str | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "command_id": command_id,
@@ -78,6 +82,12 @@ def make_certificate(
         "reliability_w": float(reliability_w) if reliability_w is not None else None,
         "drift_flag": bool(drift_flag) if drift_flag is not None else None,
         "inflation": float(inflation) if inflation is not None else None,
+        "guarantee_checks_passed": bool(guarantee_checks_passed) if guarantee_checks_passed is not None else None,
+        "guarantee_fail_reasons": list(guarantee_fail_reasons or []),
+        "true_soc_violation_after_apply": (
+            bool(true_soc_violation_after_apply) if true_soc_violation_after_apply is not None else None
+        ),
+        "assumptions_version": assumptions_version,
     }
     payload["certificate_hash"] = _sha256_bytes(_canonical_bytes(payload))
     return payload
@@ -107,7 +117,11 @@ def _ensure_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
             intervention_reason VARCHAR,
             reliability_w DOUBLE,
             drift_flag BOOLEAN,
-            inflation DOUBLE
+            inflation DOUBLE,
+            guarantee_checks_passed BOOLEAN,
+            guarantee_fail_reasons VARCHAR,
+            true_soc_violation_after_apply BOOLEAN,
+            assumptions_version VARCHAR
         )
         """
     )
@@ -116,6 +130,10 @@ def _ensure_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
     _add_column_if_missing(conn, table_name, "reliability_w", "DOUBLE")
     _add_column_if_missing(conn, table_name, "drift_flag", "BOOLEAN")
     _add_column_if_missing(conn, table_name, "inflation", "DOUBLE")
+    _add_column_if_missing(conn, table_name, "guarantee_checks_passed", "BOOLEAN")
+    _add_column_if_missing(conn, table_name, "guarantee_fail_reasons", "VARCHAR")
+    _add_column_if_missing(conn, table_name, "true_soc_violation_after_apply", "BOOLEAN")
+    _add_column_if_missing(conn, table_name, "assumptions_version", "VARCHAR")
 
 
 def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_name: str) -> None:
@@ -137,8 +155,12 @@ def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_na
                 intervention_reason,
                 reliability_w,
                 drift_flag,
-                inflation
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                inflation,
+                guarantee_checks_passed,
+                guarantee_fail_reasons,
+                true_soc_violation_after_apply,
+                assumptions_version
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 str(certificate.get("command_id")),
@@ -151,6 +173,10 @@ def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_na
                 certificate.get("reliability_w"),
                 certificate.get("drift_flag"),
                 certificate.get("inflation"),
+                certificate.get("guarantee_checks_passed"),
+                json.dumps(certificate.get("guarantee_fail_reasons", []), ensure_ascii=True, sort_keys=True),
+                certificate.get("true_soc_violation_after_apply"),
+                certificate.get("assumptions_version"),
             ],
         )
     finally:

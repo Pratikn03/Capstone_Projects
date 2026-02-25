@@ -22,6 +22,7 @@ import numpy as np
 @dataclass
 class ConformalConfig:
     alpha: float = 0.10
+    method: Literal["residual", "cqr"] = "residual"
     horizon_wise: bool = True
     rolling: bool = True
     rolling_window: int = 720
@@ -160,6 +161,7 @@ class ConformalInterval:
         self.q_global: Optional[float] = None
         self.q_h: Optional[np.ndarray] = None
         self._resid_buffers = None
+        self.method: Literal["residual", "cqr"] = cfg.method
 
     def fit_calibration(self, y_true: np.ndarray, y_pred: np.ndarray) -> None:
         """
@@ -223,6 +225,38 @@ class ConformalInterval:
         else:
             self.q_global = float(np.quantile(np.array(self._resid_buffers[0]), 1.0 - self.cfg.alpha))
 
+    def fit_calibration_cqr(self, y_true: np.ndarray, q_lo: np.ndarray, q_hi: np.ndarray) -> None:
+        """
+        Conformalized Quantile Regression calibration.
+
+        nonconformity score: s = max(q_lo - y, y - q_hi)
+        """
+        y_true = np.asarray(y_true)
+        q_lo = np.asarray(q_lo)
+        q_hi = np.asarray(q_hi)
+        if y_true.shape != q_lo.shape or y_true.shape != q_hi.shape:
+            raise ValueError("y_true, q_lo, and q_hi must have identical shape for CQR calibration")
+
+        scores = np.maximum(q_lo - y_true, y_true - q_hi)
+        scores = np.maximum(scores, 0.0)
+        if scores.ndim == 1:
+            scores = scores.reshape(-1, 1)
+
+        _, horizon = scores.shape
+        if self.cfg.horizon_wise:
+            self.q_h = np.quantile(scores, 1.0 - self.cfg.alpha, axis=0)
+            self.q_global = float(np.quantile(scores.flatten(), 1.0 - self.cfg.alpha))
+            if self.cfg.rolling:
+                self._resid_buffers = [
+                    deque(scores[:, h].tolist(), maxlen=self.cfg.rolling_window) for h in range(horizon)
+                ]
+        else:
+            self.q_global = float(np.quantile(scores.flatten(), 1.0 - self.cfg.alpha))
+            if self.cfg.rolling:
+                self._resid_buffers = [deque(scores.flatten().tolist(), maxlen=self.cfg.rolling_window)]
+
+        self.method = "cqr"
+
     def predict_interval(self, y_pred: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """Return lower/upper arrays with the same shape as y_pred."""
         y_pred = np.asarray(y_pred)
@@ -261,6 +295,42 @@ class ConformalInterval:
         lo, hi = self.predict_interval(y_pred)
         y_true = np.asarray(y_true)
         return float(np.mean((y_true >= lo) & (y_true <= hi)))
+
+    def predict_interval_cqr(self, q_lo: np.ndarray, q_hi: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        """Return CQR-corrected intervals: [q_lo - q_hat, q_hi + q_hat]."""
+        q_lo = np.asarray(q_lo)
+        q_hi = np.asarray(q_hi)
+        if q_lo.shape != q_hi.shape:
+            raise ValueError("q_lo and q_hi must have identical shape")
+        if q_lo.ndim == 1:
+            q_lo2 = q_lo.reshape(1, -1)
+            q_hi2 = q_hi.reshape(1, -1)
+        else:
+            q_lo2 = q_lo
+            q_hi2 = q_hi
+        _, horizon = q_lo2.shape
+
+        if self.cfg.horizon_wise:
+            if self.q_h is None:
+                raise RuntimeError("ConformalInterval not calibrated for CQR. Call fit_calibration_cqr() first.")
+            if len(self.q_h) == horizon:
+                q_hat = self.q_h.reshape(1, horizon)
+            elif self.q_global is not None:
+                q_hat = np.full((1, horizon), self.q_global)
+            else:
+                raise RuntimeError(
+                    f"Conformal horizon {len(self.q_h)} does not match request horizon {horizon} and no global fallback is available."
+                )
+        else:
+            if self.q_global is None:
+                raise RuntimeError("ConformalInterval not calibrated for CQR. Call fit_calibration_cqr() first.")
+            q_hat = np.full((1, horizon), self.q_global)
+
+        lower = q_lo2 - q_hat
+        upper = q_hi2 + q_hat
+        if q_lo.ndim == 1:
+            return lower.flatten(), upper.flatten()
+        return lower, upper
 
     def mean_width(self, y_pred: np.ndarray) -> float:
         lo, hi = self.predict_interval(y_pred)
@@ -347,10 +417,42 @@ class ConformalInterval:
         
         return results
 
+    def evaluate_intervals_cqr(
+        self,
+        y_true: np.ndarray,
+        q_lo: np.ndarray,
+        q_hi: np.ndarray,
+        per_horizon: bool = True,
+    ) -> dict[str, Any]:
+        """Evaluate CQR-corrected intervals."""
+        y_true = np.asarray(y_true)
+        lower, upper = self.predict_interval_cqr(q_lo, q_hi)
+        global_coverage = float(np.mean((y_true >= lower) & (y_true <= upper)))
+        global_width = float(np.mean(upper - lower))
+        results = {
+            "global_coverage": global_coverage,
+            "global_mean_width": global_width,
+        }
+        if per_horizon:
+            if y_true.ndim == 1:
+                y_true = y_true.reshape(-1, 1)
+                lower = lower.reshape(-1, 1)
+                upper = upper.reshape(-1, 1)
+            results["per_horizon_picp"] = {
+                f"h{i+1}": float(np.mean((y_true[:, i] >= lower[:, i]) & (y_true[:, i] <= upper[:, i])))
+                for i in range(y_true.shape[1])
+            }
+            results["per_horizon_mpiw"] = {
+                f"h{i+1}": float(np.mean(upper[:, i] - lower[:, i]))
+                for i in range(y_true.shape[1])
+            }
+        return results
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "config": {
                 "alpha": self.cfg.alpha,
+                "method": self.cfg.method,
                 "horizon_wise": self.cfg.horizon_wise,
                 "rolling": self.cfg.rolling,
                 "rolling_window": self.cfg.rolling_window,
@@ -358,6 +460,7 @@ class ConformalInterval:
             },
             "q_global": self.q_global,
             "q_h": self.q_h.tolist() if self.q_h is not None else None,
+            "method": self.method,
         }
 
     @classmethod
@@ -368,6 +471,9 @@ class ConformalInterval:
             inst.q_global = float(payload["q_global"])
         if payload.get("q_h") is not None:
             inst.q_h = np.asarray(payload["q_h"], dtype=float)
+        method = payload.get("method")
+        if method in {"residual", "cqr"}:
+            inst.method = method
         return inst
 
 

@@ -55,6 +55,8 @@ import argparse
 from collections import Counter
 import json
 from pathlib import Path
+import subprocess
+import sys
 import warnings
 
 import numpy as np
@@ -65,7 +67,7 @@ from gridpulse.utils.metrics import rmse, mape, mae, smape, daylight_mape, r2_sc
 from gridpulse.utils.seed import set_seed
 from gridpulse.utils.scaler import StandardScaler
 from gridpulse.utils.manifest import create_run_manifest, print_manifest_summary
-from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm, extract_base_model
+from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm
 from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
 from gridpulse.forecasting.dl_lstm import LSTMForecaster
 from gridpulse.forecasting.dl_tcn import TCNForecaster
@@ -81,7 +83,7 @@ from torch.utils.data import DataLoader
 # OPTIONAL IMPORTS (graceful degradation if not installed)
 # ============================================================================
 
-def _try_optuna():
+def _try_optuna(*, required: bool = False):
     """
     Import Optuna for hyperparameter optimization.
     
@@ -90,18 +92,27 @@ def _try_optuna():
     """
     try:
         import optuna  # type: ignore
+
         return optuna
-    except Exception:
+    except Exception as exc:
+        if required:
+            raise RuntimeError(
+                "Optuna is required for tuning but is not installed. Install dependencies from requirements.lock.txt."
+            ) from exc
         return None
 
 
-def _try_lightgbm():
+def _try_lightgbm(*, required: bool = False):
     """Import LightGBM if available (needed for quantile GBM and tuning)."""
     try:
         import lightgbm as lgb  # type: ignore
 
         return lgb
-    except Exception:
+    except Exception as exc:
+        if required:
+            raise RuntimeError(
+                "LightGBM is required for this configuration but is not installed. Install dependencies from requirements.lock.txt."
+            ) from exc
         return None
 
 
@@ -131,6 +142,67 @@ def _format_uncertainty_path(template: str, target: str, suffix: str, multi: boo
     if multi:
         return Path(f"artifacts/backtests/{target}_{suffix}.npz")
     return Path(template)
+
+
+def _sha256_file(path: Path) -> str:
+    import hashlib
+
+    hasher = hashlib.sha256()
+    with path.open("rb") as handle:
+        while True:
+            chunk = handle.read(1024 * 1024)
+            if not chunk:
+                break
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def _enforce_data_contract(features_path: Path) -> dict[str, object]:
+    """Validate feature schema and refresh dataset identity manifest before training."""
+    if not features_path.exists():
+        raise FileNotFoundError(f"Missing {features_path}. Run build_features first.")
+
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "gridpulse.data_pipeline.validate_schema",
+            "--in",
+            str(features_path),
+            "--report",
+            "reports/data_quality_report_features.md",
+        ],
+        check=True,
+    )
+
+    repo_root = Path(__file__).resolve().parents[3]
+    manifest_path = repo_root / "data" / "dashboard" / "data_manifest.json"
+    script_path = repo_root / "scripts" / "build_data_manifest.py"
+    subprocess.run(
+        [
+            sys.executable,
+            str(script_path),
+            "--dataset",
+            "ALL",
+            "--output",
+            str(manifest_path),
+        ],
+        cwd=str(repo_root),
+        check=True,
+    )
+
+    payload: dict[str, object] = {}
+    if manifest_path.exists():
+        try:
+            payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            payload = {}
+    return {
+        "path": manifest_path,
+        "sha256": _sha256_file(manifest_path) if manifest_path.exists() else None,
+        "schema_hash": payload.get("schema_hash"),
+        "split_boundaries": payload.get("split_boundaries", {}),
+    }
 
 
 def _reshape_horizon(y_true: np.ndarray, y_pred: np.ndarray, horizon: int) -> tuple[np.ndarray, np.ndarray] | None:
@@ -205,6 +277,14 @@ def _resolve_split_cfg(cfg: dict) -> tuple[float, float, float, float]:
     return train_ratio, val_ratio, test_ratio, calibration_ratio
 
 
+def _resolve_gap_hours(cfg: dict) -> int:
+    split_cfg = cfg.get("splits", cfg.get("split", {})) or {}
+    gap_hours = int(split_cfg.get("gap_hours", 0) or 0)
+    if gap_hours < 0:
+        raise ValueError(f"gap_hours must be >= 0, got {gap_hours}")
+    return gap_hours
+
+
 def _aggregate_top_trial_params(trials, param_specs: list[dict], top_pct: float, min_top_trials: int) -> dict:
     """Aggregate top trial params using median (numeric) / mode (categorical)."""
     if not trials:
@@ -242,11 +322,8 @@ def tune_gbm_params(
     seed: int,
 ):
     """Tune GBM hyperparameters on the validation split."""
-    optuna = _try_optuna()
-    lgb = _try_lightgbm()
-    if optuna is None or lgb is None:
-        print("Optuna or LightGBM not available; skipping tuning.")
-        return base_params, {"enabled": False, "reason": "optuna_or_lightgbm_missing"}
+    optuna = _try_optuna(required=True)
+    lgb = _try_lightgbm(required=True)
 
     params_cfg = tuning_cfg.get("params", {}).get("baseline_gbm", {})
     n_trials = int(tuning_cfg.get("n_trials", 20))
@@ -579,13 +656,19 @@ def main():
     seed = int(cfg.get("seed", 42))
     set_seed(seed)
     
-    # Create run manifest for reproducibility
+    # Create run manifest for reproducibility.
     art_dir = Path(cfg["artifacts"]["out_dir"])
     art_dir.mkdir(parents=True, exist_ok=True)
-    
-    print("Creating run manifest for reproducibility...")
     cv_cfg = cfg.get("cross_validation", {}) if isinstance(cfg.get("cross_validation"), dict) else {}
     cv_enabled = bool(args.enable_cv or cv_cfg.get("enabled", False))
+
+    # Load prepared features (Parquet) for training.
+    features_path = Path(cfg["data"]["processed_path"])
+    if not features_path.exists():
+        raise FileNotFoundError(f"Missing {features_path}. Run build_features first.")
+    data_contract = _enforce_data_contract(features_path)
+
+    print("Creating run manifest for reproducibility...")
     manifest = create_run_manifest(
         config_path=args.config,
         output_dir=art_dir,
@@ -596,25 +679,29 @@ def main():
             "seed": seed,
             "ensemble": bool(args.ensemble),
         },
+        data_manifest_path=data_contract.get("path"),
+        data_manifest_sha256=data_contract.get("sha256"),
+        split_boundaries=data_contract.get("split_boundaries"),
+        schema_hash=str(data_contract.get("schema_hash")) if data_contract.get("schema_hash") is not None else None,
     )
     print_manifest_summary(manifest)
-    
-    # Load prepared features (Parquet) for training.
-    features_path = Path(cfg["data"]["processed_path"])
-    if not features_path.exists():
-        raise FileNotFoundError(f"Missing {features_path}. Run build_features first.")
 
     # Time-ordered split to prevent leakage.
     df = pd.read_parquet(features_path).sort_values("timestamp")
     n = len(df)
     train_ratio, val_ratio, test_ratio, calibration_ratio = _resolve_split_cfg(cfg)
+    gap_rows = _resolve_gap_hours(cfg)
     train_end = int(n * train_ratio)
-    calibration_end = train_end + int(n * calibration_ratio)
-    val_end = calibration_end + int(n * val_ratio)
+    calibration_start = min(n, train_end + gap_rows)
+    calibration_end = min(n, calibration_start + int(n * calibration_ratio))
+    val_start = min(n, calibration_end + gap_rows)
+    val_end = min(n, val_start + int(n * val_ratio))
+    test_start = min(n, val_end + gap_rows)
+
     train_df = df.iloc[:train_end]
-    calibration_df = df.iloc[train_end:calibration_end]
-    val_df = df.iloc[calibration_end:val_end]
-    test_df = df.iloc[val_end:]
+    calibration_df = df.iloc[calibration_start:calibration_end]
+    val_df = df.iloc[val_start:val_end]
+    test_df = df.iloc[test_start:]
     if len(test_df) == 0:
         # Keep pipeline operable for 70/30 train/val configurations.
         print("Warning: test split is empty; reusing validation split as evaluation holdout.")
@@ -622,8 +709,12 @@ def main():
     split_boundaries = {
         "n_rows": int(n),
         "train_end": int(train_end),
+        "calibration_start": int(calibration_start),
         "calibration_end": int(calibration_end),
+        "val_start": int(val_start),
         "val_end": int(val_end),
+        "test_start": int(test_start),
+        "gap_hours": int(gap_rows),
     }
 
     if calibration_ratio > 0.0:
@@ -637,6 +728,14 @@ def main():
             f"Data split: train={len(train_df)} ({train_ratio:.2%}), "
             f"val={len(val_df)} ({val_ratio:.2%}), test={len(test_df)} ({max(test_ratio, 0.0):.2%})"
         )
+
+    # Persist updated split boundaries into the manifest artifact.
+    manifest["split_boundaries"] = split_boundaries
+    manifest_path_raw = manifest.get("manifest_path")
+    if isinstance(manifest_path_raw, str) and manifest_path_raw:
+        manifest_path = Path(manifest_path_raw)
+        if manifest_path.exists():
+            manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
     # Choose GPU if available, otherwise CPU.
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -796,57 +895,129 @@ def main():
                     print(f"  CV RMSE: {cv_results['aggregated']['rmse_mean']:.2f} ± {cv_results['aggregated']['rmse_std']:.2f}")
                     gbm_metrics["cv_results"] = cv_results["aggregated"]
                 
+                gbm_q = residual_quantiles(y_val, gbm_pred_val, quantiles)
+
+                # Optional: train quantile GBM models for calibrated intervals.
+                quantile_models = {}
+                quant_cfg = cfg["models"].get("quantile_gbm", {})
+                quantile_predictions: dict[str, dict[str, np.ndarray]] = {}
+                if quant_cfg.get("enabled", False):
+                    lgb = _try_lightgbm(required=True)
+                    q_params_base = dict(quant_cfg.get("params", {}))
+                    for q in quantiles:
+                        params = {**q_params_base, "objective": "quantile", "alpha": float(q)}
+                        params.setdefault("random_state", int(cfg.get("seed", 42)))
+                        q_model = lgb.LGBMRegressor(**params)
+                        q_model.fit(X_train, y_train)
+                        quantile_models[str(q)] = q_model
+                        quantile_predictions[str(q)] = {
+                            "val": np.asarray(q_model.predict(X_val), dtype=float),
+                            "test": np.asarray(q_model.predict(X_test), dtype=float),
+                        }
+                        if X_cal is not None and len(X_cal) > 0:
+                            quantile_predictions[str(q)]["calibration"] = np.asarray(q_model.predict(X_cal), dtype=float)
+
                 if uncertainty_enabled and target in uncertainty_targets and target not in conformal_payloads:
+                    conf_meta_cfg = uncertainty_cfg.get("conformal", {}) if isinstance(uncertainty_cfg.get("conformal"), dict) else {}
+                    conf_method = str(conf_meta_cfg.get("method", "residual")).lower()
                     cal_split = str(uncertainty_cfg.get("calibration_split", "val")).lower()
                     calibration_source = "val"
                     if cal_split == "test":
-                        cal = _reshape_horizon(y_test, gbm_pred_test, horizon)
-                        test = _reshape_horizon(y_val, gbm_pred_val, horizon)
+                        cal_true = y_test
+                        cal_pred = gbm_pred_test
+                        test_true = y_val
+                        test_pred = gbm_pred_val
                         calibration_source = "test"
                     elif cal_split == "calibration":
                         if gbm_pred_cal is not None and y_cal is not None and len(y_cal) > 0:
-                            cal = _reshape_horizon(y_cal, gbm_pred_cal, horizon)
+                            cal_true = y_cal
+                            cal_pred = gbm_pred_cal
                             calibration_source = "calibration"
                         else:
                             print(
                                 f"Warning: target={target} requested calibration split but calibration set is empty; "
                                 "falling back to validation split."
                             )
-                            cal = _reshape_horizon(y_val, gbm_pred_val, horizon)
+                            cal_true = y_val
+                            cal_pred = gbm_pred_val
                             calibration_source = "val_fallback_missing_calibration"
-                        test = _reshape_horizon(y_test, gbm_pred_test, horizon)
+                        test_true = y_test
+                        test_pred = gbm_pred_test
                     else:
-                        cal = _reshape_horizon(y_val, gbm_pred_val, horizon)
-                        test = _reshape_horizon(y_test, gbm_pred_test, horizon)
+                        cal_true = y_val
+                        cal_pred = gbm_pred_val
+                        test_true = y_test
+                        test_pred = gbm_pred_test
                         calibration_source = "val"
-                    if cal is not None and test is not None:
+
+                    cal = _reshape_horizon(cal_true, cal_pred, horizon)
+                    test = _reshape_horizon(test_true, test_pred, horizon)
+                    if cal is None or test is None:
+                        pass
+                    elif conf_method == "cqr":
+                        q_keys = sorted(quantile_predictions.keys(), key=lambda x: float(x))
+                        if len(q_keys) < 2:
+                            raise RuntimeError(
+                                f"CQR configured for target={target} but quantile GBM predictions are unavailable. "
+                                "Enable models.quantile_gbm in training config."
+                            )
+                        lo_key, hi_key = q_keys[0], q_keys[-1]
+                        cal_q_lo_src = quantile_predictions[lo_key].get("calibration" if calibration_source.startswith("calibration") else calibration_source.replace("_fallback_missing_calibration", "val"))
+                        cal_q_hi_src = quantile_predictions[hi_key].get("calibration" if calibration_source.startswith("calibration") else calibration_source.replace("_fallback_missing_calibration", "val"))
+                        if calibration_source == "test":
+                            cal_q_lo_src = quantile_predictions[lo_key].get("test")
+                            cal_q_hi_src = quantile_predictions[hi_key].get("test")
+                            test_q_lo_src = quantile_predictions[lo_key].get("val")
+                            test_q_hi_src = quantile_predictions[hi_key].get("val")
+                        elif calibration_source.startswith("calibration"):
+                            cal_q_lo_src = quantile_predictions[lo_key].get("calibration")
+                            cal_q_hi_src = quantile_predictions[hi_key].get("calibration")
+                            test_q_lo_src = quantile_predictions[lo_key].get("test")
+                            test_q_hi_src = quantile_predictions[hi_key].get("test")
+                        else:
+                            cal_q_lo_src = quantile_predictions[lo_key].get("val")
+                            cal_q_hi_src = quantile_predictions[hi_key].get("val")
+                            test_q_lo_src = quantile_predictions[lo_key].get("test")
+                            test_q_hi_src = quantile_predictions[hi_key].get("test")
+
+                        if cal_q_lo_src is None or cal_q_hi_src is None or test_q_lo_src is None or test_q_hi_src is None:
+                            raise RuntimeError(
+                                f"CQR configured for target={target} but missing quantile predictions for "
+                                f"calibration_source={calibration_source}."
+                            )
+                        cal_q_lo = _reshape_horizon(cal_true, np.asarray(cal_q_lo_src, dtype=float), horizon)
+                        cal_q_hi = _reshape_horizon(cal_true, np.asarray(cal_q_hi_src, dtype=float), horizon)
+                        test_q_lo = _reshape_horizon(test_true, np.asarray(test_q_lo_src, dtype=float), horizon)
+                        test_q_hi = _reshape_horizon(test_true, np.asarray(test_q_hi_src, dtype=float), horizon)
+                        if cal_q_lo is None or cal_q_hi is None or test_q_lo is None or test_q_hi is None:
+                            raise RuntimeError(f"CQR reshape failed for target={target} due horizon alignment.")
                         conformal_payloads[target] = {
                             "target": target,
                             "model": f"gbm_{model_kind}",
                             "calibration_source": calibration_source,
                             "split_boundaries": split_boundaries,
+                            "method": "cqr",
+                            "quantile_lo_key": lo_key,
+                            "quantile_hi_key": hi_key,
+                            "y_true_cal": cal[0],
+                            "q_lo_cal": cal_q_lo[1],
+                            "q_hi_cal": cal_q_hi[1],
+                            "y_true_test": test[0],
+                            "q_lo_test": test_q_lo[1],
+                            "q_hi_test": test_q_hi[1],
+                        }
+                    else:
+                        conformal_payloads[target] = {
+                            "target": target,
+                            "model": f"gbm_{model_kind}",
+                            "calibration_source": calibration_source,
+                            "split_boundaries": split_boundaries,
+                            "method": "residual",
                             "y_true_cal": cal[0],
                             "y_pred_cal": cal[1],
                             "y_true_test": test[0],
                             "y_pred_test": test[1],
                         }
-                gbm_q = residual_quantiles(y_val, gbm_pred_val, quantiles)
-
-                # Optional: train quantile GBM models for calibrated intervals.
-                quantile_models = {}
-                quant_cfg = cfg["models"].get("quantile_gbm", {})
-                if quant_cfg.get("enabled", False):
-                    lgb = _try_lightgbm()
-                    if lgb is None:
-                        print("Quantile GBM enabled but LightGBM not available; skipping quantile models.")
-                    else:
-                        q_params_base = dict(quant_cfg.get("params", {}))
-                        for q in quantiles:
-                            params = {**q_params_base, "objective": "quantile", "alpha": float(q)}
-                            params.setdefault("random_state", int(cfg.get("seed", 42)))
-                            q_model = lgb.LGBMRegressor(**params)
-                            q_model.fit(X_train, y_train)
-                            quantile_models[str(q)] = q_model
 
                 import pickle
                 with open(art_dir / f"{gbm_metrics['model']}_{target}.pkl", "wb") as f:
@@ -1036,23 +1207,47 @@ def main():
             test_path = _format_uncertainty_path(test_template, target, "test", multi)
             cal_path.parent.mkdir(parents=True, exist_ok=True)
             test_path.parent.mkdir(parents=True, exist_ok=True)
-            np.savez(cal_path, y_true=payload["y_true_cal"], y_pred=payload["y_pred_cal"])
-            np.savez(test_path, y_true=payload["y_true_test"], y_pred=payload["y_pred_test"])
+            method = str(payload.get("method", conf_cfg.method)).lower()
+            if method == "cqr":
+                np.savez(
+                    cal_path,
+                    y_true=payload["y_true_cal"],
+                    q_lo=payload["q_lo_cal"],
+                    q_hi=payload["q_hi_cal"],
+                )
+                np.savez(
+                    test_path,
+                    y_true=payload["y_true_test"],
+                    q_lo=payload["q_lo_test"],
+                    q_hi=payload["q_hi_test"],
+                )
+            else:
+                np.savez(cal_path, y_true=payload["y_true_cal"], y_pred=payload["y_pred_cal"])
+                np.savez(test_path, y_true=payload["y_true_test"], y_pred=payload["y_pred_test"])
 
             ci = ConformalInterval(conf_cfg)
-            ci.fit_calibration(payload["y_true_cal"], payload["y_pred_cal"])
-            
-            # Enhanced: per-horizon PICP + MPIW metrics
-            interval_metrics = ci.evaluate_intervals(
-                payload["y_true_test"], 
-                payload["y_pred_test"],
-                per_horizon=True
-            )
+            if method == "cqr":
+                ci.fit_calibration_cqr(payload["y_true_cal"], payload["q_lo_cal"], payload["q_hi_cal"])
+                interval_metrics = ci.evaluate_intervals_cqr(
+                    payload["y_true_test"],
+                    payload["q_lo_test"],
+                    payload["q_hi_test"],
+                    per_horizon=True,
+                )
+            else:
+                ci.fit_calibration(payload["y_true_cal"], payload["y_pred_cal"])
+                # Enhanced: per-horizon PICP + MPIW metrics
+                interval_metrics = ci.evaluate_intervals(
+                    payload["y_true_test"],
+                    payload["y_pred_test"],
+                    per_horizon=True,
+                )
             
             conformal_path = artifacts_dir / f"{payload['target']}_conformal.json"
             meta = {
                 "target": payload["target"],
                 "model": payload["model"],
+                "method": method,
                 "horizon": horizon,
                 "calibration_source": payload.get("calibration_source", "val"),
                 "calibration_rows": int(payload["y_true_cal"].shape[0]),

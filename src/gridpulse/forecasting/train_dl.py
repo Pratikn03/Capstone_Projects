@@ -5,7 +5,6 @@ import argparse
 import json
 import yaml
 import joblib
-import numpy as np
 import pandas as pd
 from pathlib import Path
 
@@ -14,7 +13,6 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 from gridpulse.forecasting.dl_lstm import LSTMForecaster
 from gridpulse.forecasting.datasets import TimeSeriesWindowDataset, SeqConfig

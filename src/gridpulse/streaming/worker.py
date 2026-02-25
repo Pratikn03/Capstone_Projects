@@ -6,7 +6,6 @@ events from Kafka, validates them, and persists to DuckDB/PostgreSQL.
 """
 from __future__ import annotations
 
-import json
 import logging
 import os
 import signal
@@ -30,9 +29,7 @@ from gridpulse.streaming.consumer import (
 from gridpulse.streaming.schemas import OPSDTelemetryEvent
 from gridpulse.monitoring.prometheus_metrics import (
     KAFKA_MESSAGES_CONSUMED,
-    KAFKA_CONSUMER_LAG,
     STREAMING_PROCESSING_DELAY,
-    update_streaming_metrics,
 )
 
 logging.basicConfig(
