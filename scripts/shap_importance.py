@@ -121,7 +121,6 @@ def shap_for_target(
 
     # Load features and split test set (last 15%).
     df = pd.read_parquet(region.features_path).sort_values("timestamp")
-    drop = {"timestamp", *TARGETS, "price_eur_mwh"}
     available = [c for c in feat_cols if c in df.columns]
     X = df[available].to_numpy()
     n = len(X)
