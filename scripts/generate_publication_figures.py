@@ -29,7 +29,7 @@ REPO = Path(__file__).resolve().parents[1]
 if str(REPO / "src") not in sys.path:
     sys.path.insert(0, str(REPO / "src"))
 
-from gridpulse.forecasting.baselines import persistence_24h, moving_average
+from gridpulse.forecasting.baselines import persistence_24h
 from gridpulse.forecasting.predict import load_model_bundle
 from gridpulse.forecasting.dl_lstm import LSTMForecaster
 from gridpulse.forecasting.dl_tcn import TCNForecaster

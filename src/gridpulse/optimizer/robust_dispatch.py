@@ -202,8 +202,8 @@ def optimize_robust_dispatch(
         return (
             m.SoC[s, 0]
             == cfg.battery_initial_soc_mwh
-            + cfg.battery_charge_efficiency * m.P_ch[0]
-            - (1.0 / cfg.battery_discharge_efficiency) * m.P_dis[0]
+            + cfg.time_step_hours * cfg.battery_charge_efficiency * m.P_ch[0]
+            - cfg.time_step_hours * (1.0 / cfg.battery_discharge_efficiency) * m.P_dis[0]
         )
 
     model.soc_initial = pyo.Constraint(model.S, rule=soc_initial_rule)
@@ -214,8 +214,8 @@ def optimize_robust_dispatch(
         return (
             m.SoC[s, t]
             == m.SoC[s, t - 1]
-            + cfg.battery_charge_efficiency * m.P_ch[t]
-            - (1.0 / cfg.battery_discharge_efficiency) * m.P_dis[t]
+            + cfg.time_step_hours * cfg.battery_charge_efficiency * m.P_ch[t]
+            - cfg.time_step_hours * (1.0 / cfg.battery_discharge_efficiency) * m.P_dis[t]
         )
 
     model.soc_dynamics = pyo.Constraint(model.S, model.T, rule=soc_dynamics_rule)
@@ -349,8 +349,8 @@ def evaluate_dispatch_robustness(
     for t in range(horizon):
         soc = (
             soc
-            + cfg.battery_charge_efficiency * battery_charge[t]
-            - (1.0 / cfg.battery_discharge_efficiency) * battery_discharge[t]
+            + cfg.time_step_hours * cfg.battery_charge_efficiency * battery_charge[t]
+            - cfg.time_step_hours * (1.0 / cfg.battery_discharge_efficiency) * battery_discharge[t]
         )
 
         if soc < cfg.battery_min_soc_mwh - 1e-6 or soc > cfg.battery_max_soc_mwh + 1e-6:

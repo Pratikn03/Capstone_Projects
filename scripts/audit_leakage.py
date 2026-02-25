@@ -60,7 +60,12 @@ def _pair_overlap(a: pd.Series, b: pd.Series) -> int:
     return int(len(set(a.astype(str)) & set(b.astype(str))))
 
 
-def _boundaries_ok(train_ts: pd.Series, val_ts: pd.Series, test_ts: pd.Series) -> dict[str, Any]:
+def _boundaries_ok(
+    train_ts: pd.Series,
+    calibration_ts: pd.Series,
+    val_ts: pd.Series,
+    test_ts: pd.Series,
+) -> dict[str, Any]:
     def _max(ts: pd.Series) -> str | None:
         return ts.max().isoformat() if not ts.empty else None
 
@@ -68,21 +73,31 @@ def _boundaries_ok(train_ts: pd.Series, val_ts: pd.Series, test_ts: pd.Series) -
         return ts.min().isoformat() if not ts.empty else None
 
     train_max = _max(train_ts)
+    cal_min = _min(calibration_ts)
+    cal_max = _max(calibration_ts)
     val_min = _min(val_ts)
     val_max = _max(val_ts)
     test_min = _min(test_ts)
 
+    train_cal_ok = (train_max is None) or (cal_min is None) or (train_max < cal_min)
+    cal_val_ok = (cal_max is None) or (val_min is None) or (cal_max < val_min)
     train_val_ok = (train_max is None) or (val_min is None) or (train_max < val_min)
     train_test_ok = (train_max is None) or (test_min is None) or (train_max < test_min)
+    cal_test_ok = (cal_max is None) or (test_min is None) or (cal_max < test_min)
     val_test_ok = (val_max is None) or (test_min is None) or (val_max < test_min)
 
     return {
         "train_max": train_max,
+        "calibration_min": cal_min,
+        "calibration_max": cal_max,
         "val_min": val_min,
         "val_max": val_max,
         "test_min": test_min,
+        "train_calibration_ok": bool(train_cal_ok),
+        "calibration_val_ok": bool(cal_val_ok),
         "train_val_ok": bool(train_val_ok),
         "train_test_ok": bool(train_test_ok),
+        "calibration_test_ok": bool(cal_test_ok),
         "val_test_ok": bool(val_test_ok),
     }
 
@@ -138,6 +153,9 @@ def run_leakage_audit(*, config_path: Path) -> dict[str, Any]:
     gates = cfg.get("leakage_gates", {}) if isinstance(cfg.get("leakage_gates"), dict) else {}
 
     max_overlap_train_val = int(gates.get("max_overlap_train_val", 0))
+    max_overlap_train_calibration = int(gates.get("max_overlap_train_calibration", 0))
+    max_overlap_calibration_val = int(gates.get("max_overlap_calibration_val", 0))
+    max_overlap_calibration_test = int(gates.get("max_overlap_calibration_test", 0))
     max_overlap_train_test = int(gates.get("max_overlap_train_test", 0))
     max_overlap_val_test = int(gates.get("max_overlap_val_test", 0))
     forbidden_exact = {str(x) for x in gates.get("forbidden_feature_exact", [])}
@@ -148,22 +166,36 @@ def run_leakage_audit(*, config_path: Path) -> dict[str, Any]:
 
     for name, dcfg in DATASETS.items():
         train_df = _read_split(dcfg["splits_dir"] / "train.parquet")
+        calibration_df = _read_split(dcfg["splits_dir"] / "calibration.parquet")
         val_df = _read_split(dcfg["splits_dir"] / "val.parquet")
         test_df = _read_split(dcfg["splits_dir"] / "test.parquet")
 
         train_ts = _to_ts_series(train_df)
+        calibration_ts = _to_ts_series(calibration_df)
         val_ts = _to_ts_series(val_df)
         test_ts = _to_ts_series(test_df)
 
+        overlap_train_calibration = _pair_overlap(train_ts, calibration_ts)
+        overlap_calibration_val = _pair_overlap(calibration_ts, val_ts)
+        overlap_calibration_test = _pair_overlap(calibration_ts, test_ts)
         overlap_train_val = _pair_overlap(train_ts, val_ts)
         overlap_train_test = _pair_overlap(train_ts, test_ts)
         overlap_val_test = _pair_overlap(val_ts, test_ts)
 
-        boundaries = _boundaries_ok(train_ts, val_ts, test_ts)
+        boundaries = _boundaries_ok(train_ts, calibration_ts, val_ts, test_ts)
         feature_scan = _scan_feature_names(dcfg["features_path"], forbidden_exact, forbidden_patterns)
         model_feature_hits = _scan_model_artifact_features(dcfg["models_dir"], forbidden_exact, forbidden_patterns)
 
         dataset_fail = False
+        if overlap_train_calibration > max_overlap_train_calibration:
+            dataset_fail = True
+            violations.append({"dataset": name, "type": "overlap_train_calibration", "value": overlap_train_calibration})
+        if overlap_calibration_val > max_overlap_calibration_val:
+            dataset_fail = True
+            violations.append({"dataset": name, "type": "overlap_calibration_val", "value": overlap_calibration_val})
+        if overlap_calibration_test > max_overlap_calibration_test:
+            dataset_fail = True
+            violations.append({"dataset": name, "type": "overlap_calibration_test", "value": overlap_calibration_test})
         if overlap_train_val > max_overlap_train_val:
             dataset_fail = True
             violations.append({"dataset": name, "type": "overlap_train_val", "value": overlap_train_val})
@@ -173,7 +205,14 @@ def run_leakage_audit(*, config_path: Path) -> dict[str, Any]:
         if overlap_val_test > max_overlap_val_test:
             dataset_fail = True
             violations.append({"dataset": name, "type": "overlap_val_test", "value": overlap_val_test})
-        if not boundaries["train_val_ok"] or not boundaries["train_test_ok"] or not boundaries["val_test_ok"]:
+        if (
+            not boundaries["train_calibration_ok"]
+            or not boundaries["calibration_val_ok"]
+            or not boundaries["train_val_ok"]
+            or not boundaries["train_test_ok"]
+            or not boundaries["calibration_test_ok"]
+            or not boundaries["val_test_ok"]
+        ):
             dataset_fail = True
             violations.append({"dataset": name, "type": "boundary_order", "value": boundaries})
         if feature_scan.get("forbidden_exact_hits") or feature_scan.get("forbidden_pattern_hits"):
@@ -195,10 +234,14 @@ def run_leakage_audit(*, config_path: Path) -> dict[str, Any]:
         datasets_out[name] = {
             "rows": {
                 "train": int(len(train_df)),
+                "calibration": int(len(calibration_df)),
                 "val": int(len(val_df)),
                 "test": int(len(test_df)),
             },
             "overlap": {
+                "train_calibration": int(overlap_train_calibration),
+                "calibration_val": int(overlap_calibration_val),
+                "calibration_test": int(overlap_calibration_test),
                 "train_val": int(overlap_train_val),
                 "train_test": int(overlap_train_test),
                 "val_test": int(overlap_val_test),
@@ -213,6 +256,9 @@ def run_leakage_audit(*, config_path: Path) -> dict[str, Any]:
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "gates": {
+            "max_overlap_train_calibration": max_overlap_train_calibration,
+            "max_overlap_calibration_val": max_overlap_calibration_val,
+            "max_overlap_calibration_test": max_overlap_calibration_test,
             "max_overlap_train_val": max_overlap_train_val,
             "max_overlap_train_test": max_overlap_train_test,
             "max_overlap_val_test": max_overlap_val_test,

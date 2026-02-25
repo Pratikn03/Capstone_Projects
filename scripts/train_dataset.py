@@ -211,13 +211,54 @@ def create_splits(cfg: DatasetConfig, force: bool = False) -> bool:
         print(f"ℹ️  Splits already exist: {splits_path}")
         return True
     
+    split_cfg = {}
+    cfg_path = Path(cfg.config_file)
+    if cfg_path.exists():
+        payload = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+        if isinstance(payload, dict):
+            candidate = payload.get("splits") or payload.get("split") or {}
+            if isinstance(candidate, dict):
+                split_cfg = candidate
+
     cmd = [
         PYTHON_BIN, "-m", "gridpulse.data_pipeline.split_time_series",
         "--in", cfg.features_path,
         "--out", cfg.splits_path,
+        "--train-ratio", str(float(split_cfg.get("train_ratio", 0.70))),
+        "--calibration-ratio", str(float(split_cfg.get("calibration_ratio", 0.0) or 0.0)),
+        "--val-ratio", str(float(split_cfg.get("val_ratio", 0.15))),
+        "--gap-hours", str(int(split_cfg.get("gap_hours", 0) or 0)),
     ]
     
     return run_command(cmd, f"Creating time series splits for {cfg.display_name}")
+
+
+def validate_features_schema(cfg: DatasetConfig) -> bool:
+    """Validate processed features schema before training."""
+    report_name = f"data_quality_report_{cfg.name.lower()}_features.md"
+    cmd = [
+        PYTHON_BIN,
+        "-m",
+        "gridpulse.data_pipeline.validate_schema",
+        "--in",
+        cfg.features_path,
+        "--report",
+        f"reports/{report_name}",
+    ]
+    return run_command(cmd, f"Validating features schema for {cfg.display_name}")
+
+
+def refresh_data_manifest(cfg: DatasetConfig) -> bool:
+    """Build deterministic data manifest before model training."""
+    cmd = [
+        PYTHON_BIN,
+        "scripts/build_data_manifest.py",
+        "--dataset",
+        cfg.name,
+        "--output",
+        "data/dashboard/data_manifest.json",
+    ]
+    return run_command(cmd, f"Building data manifest for {cfg.display_name}")
 
 
 def train_models(
@@ -503,6 +544,12 @@ def train_dataset(
     
     # Step 2: Create splits
     if not create_splits(cfg, force=rebuild_features):
+        return False
+
+    # Step 2.5: Enforce schema + data identity contracts before training.
+    if not validate_features_schema(cfg):
+        return False
+    if not refresh_data_manifest(cfg):
         return False
     
     # Step 3: Train models

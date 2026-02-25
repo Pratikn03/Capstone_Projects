@@ -90,6 +90,14 @@ def _derive_fields(payload: dict[str, Any]) -> dict[str, Any]:
     inflation = _safe_float(payload.get("inflation"))
     if inflation is None:
         inflation = _safe_float(meta.get("inflation"))
+    guarantee_checks_passed = _safe_bool(payload.get("guarantee_checks_passed"))
+    guarantee_fail_reasons = payload.get("guarantee_fail_reasons", [])
+    if not isinstance(guarantee_fail_reasons, list):
+        guarantee_fail_reasons = []
+    true_soc_violation_after_apply = _safe_bool(payload.get("true_soc_violation_after_apply"))
+    assumptions_version = payload.get("assumptions_version")
+    if not isinstance(assumptions_version, str):
+        assumptions_version = None
 
     return {
         "intervened": intervened,
@@ -97,6 +105,10 @@ def _derive_fields(payload: dict[str, Any]) -> dict[str, Any]:
         "reliability_w": reliability_w,
         "drift_flag": drift_flag,
         "inflation": inflation,
+        "guarantee_checks_passed": guarantee_checks_passed,
+        "guarantee_fail_reasons": guarantee_fail_reasons,
+        "true_soc_violation_after_apply": true_soc_violation_after_apply,
+        "assumptions_version": assumptions_version,
     }
 
 
@@ -106,6 +118,10 @@ def _ensure_columns(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
     conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS reliability_w DOUBLE")
     conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS drift_flag BOOLEAN")
     conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS inflation DOUBLE")
+    conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS guarantee_checks_passed BOOLEAN")
+    conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS guarantee_fail_reasons VARCHAR")
+    conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS true_soc_violation_after_apply BOOLEAN")
+    conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS assumptions_version VARCHAR")
 
 
 def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
@@ -127,18 +143,44 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
         rows_total = int(conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0])
         rows = conn.execute(
             f"""
-            SELECT command_id, payload_json, intervened, intervention_reason, reliability_w, drift_flag, inflation
+            SELECT
+                command_id,
+                payload_json,
+                intervened,
+                intervention_reason,
+                reliability_w,
+                drift_flag,
+                inflation,
+                guarantee_checks_passed,
+                guarantee_fail_reasons,
+                true_soc_violation_after_apply,
+                assumptions_version
             FROM {table_name}
             WHERE intervened IS NULL
                OR intervention_reason IS NULL
                OR reliability_w IS NULL
                OR drift_flag IS NULL
                OR inflation IS NULL
+               OR guarantee_checks_passed IS NULL
+               OR guarantee_fail_reasons IS NULL
+               OR assumptions_version IS NULL
             """
         ).fetchall()
         updated = 0
         for row in rows:
-            command_id, payload_json, intervened, intervention_reason, reliability_w, drift_flag, inflation = row
+            (
+                command_id,
+                payload_json,
+                intervened,
+                intervention_reason,
+                reliability_w,
+                drift_flag,
+                inflation,
+                guarantee_checks_passed,
+                guarantee_fail_reasons,
+                true_soc_violation_after_apply,
+                assumptions_version,
+            ) = row
             payload = _load_payload(payload_json)
             derived = _derive_fields(payload)
             next_intervened = intervened if intervened is not None else derived["intervened"]
@@ -146,6 +188,26 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
             next_reliability_w = reliability_w if reliability_w is not None else derived["reliability_w"]
             next_drift_flag = drift_flag if drift_flag is not None else derived["drift_flag"]
             next_inflation = inflation if inflation is not None else derived["inflation"]
+            next_guarantee_checks_passed = (
+                guarantee_checks_passed
+                if guarantee_checks_passed is not None
+                else derived["guarantee_checks_passed"]
+            )
+            next_guarantee_fail_reasons = (
+                guarantee_fail_reasons
+                if guarantee_fail_reasons is not None
+                else json.dumps(derived["guarantee_fail_reasons"], ensure_ascii=True, sort_keys=True)
+            )
+            next_true_soc_violation_after_apply = (
+                true_soc_violation_after_apply
+                if true_soc_violation_after_apply is not None
+                else derived["true_soc_violation_after_apply"]
+            )
+            next_assumptions_version = (
+                assumptions_version
+                if assumptions_version is not None
+                else derived["assumptions_version"]
+            )
 
             if (
                 next_intervened != intervened
@@ -153,6 +215,10 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
                 or next_reliability_w != reliability_w
                 or next_drift_flag != drift_flag
                 or next_inflation != inflation
+                or next_guarantee_checks_passed != guarantee_checks_passed
+                or next_guarantee_fail_reasons != guarantee_fail_reasons
+                or next_true_soc_violation_after_apply != true_soc_violation_after_apply
+                or next_assumptions_version != assumptions_version
             ):
                 conn.execute(
                     f"""
@@ -161,7 +227,11 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
                         intervention_reason = ?,
                         reliability_w = ?,
                         drift_flag = ?,
-                        inflation = ?
+                        inflation = ?,
+                        guarantee_checks_passed = ?,
+                        guarantee_fail_reasons = ?,
+                        true_soc_violation_after_apply = ?,
+                        assumptions_version = ?
                     WHERE command_id = ?
                     """,
                     [
@@ -170,6 +240,10 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
                         next_reliability_w,
                         next_drift_flag,
                         next_inflation,
+                        next_guarantee_checks_passed,
+                        next_guarantee_fail_reasons,
+                        next_true_soc_violation_after_apply,
+                        next_assumptions_version,
                         command_id,
                     ],
                 )
@@ -182,7 +256,10 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
                 SUM(CASE WHEN intervention_reason IS NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN reliability_w IS NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN drift_flag IS NULL THEN 1 ELSE 0 END),
-                SUM(CASE WHEN inflation IS NULL THEN 1 ELSE 0 END)
+                SUM(CASE WHEN inflation IS NULL THEN 1 ELSE 0 END),
+                SUM(CASE WHEN guarantee_checks_passed IS NULL THEN 1 ELSE 0 END),
+                SUM(CASE WHEN guarantee_fail_reasons IS NULL THEN 1 ELSE 0 END),
+                SUM(CASE WHEN assumptions_version IS NULL THEN 1 ELSE 0 END)
             FROM {table_name}
             """
         ).fetchone()
@@ -203,6 +280,9 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
             "reliability_w": int(nulls[2] or 0),
             "drift_flag": int(nulls[3] or 0),
             "inflation": int(nulls[4] or 0),
+            "guarantee_checks_passed": int(nulls[5] or 0),
+            "guarantee_fail_reasons": int(nulls[6] or 0),
+            "assumptions_version": int(nulls[7] or 0),
         },
     }
 

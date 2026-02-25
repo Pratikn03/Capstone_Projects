@@ -122,15 +122,33 @@ def optimize_dispatch(
     max_power = float(battery.get("max_power_mw", battery.get("max_charge_mw", 2.0)))
     max_discharge = float(battery.get("max_discharge_mw", max_power))
     max_charge = float(battery.get("max_charge_mw", max_power))
+    dt_hours = float(cfg.get("time_step_hours", 1.0))
     efficiency_legacy = float(battery.get("efficiency", 0.95))
-    eta_a = float(battery.get("efficiency_regime_a", efficiency_legacy if "efficiency" in battery else 0.98))
-    eta_b = float(battery.get("efficiency_regime_b", efficiency_legacy if "efficiency" in battery else 0.90))
+    charge_eff = float(battery.get("charge_efficiency", efficiency_legacy))
+    discharge_eff = float(battery.get("discharge_efficiency", efficiency_legacy))
+    nominal_eff = min(charge_eff, discharge_eff)
+    eta_a = float(
+        battery.get(
+            "efficiency_regime_a",
+            nominal_eff if ("charge_efficiency" in battery or "discharge_efficiency" in battery or "efficiency" in battery) else 0.98,
+        )
+    )
+    eta_b = float(
+        battery.get(
+            "efficiency_regime_b",
+            nominal_eff if ("charge_efficiency" in battery or "discharge_efficiency" in battery or "efficiency" in battery) else 0.90,
+        )
+    )
     soc_split_frac = float(battery.get("efficiency_soc_split", 0.80))
     degradation_cost_per_mwh = float(battery.get("degradation_cost_per_mwh", 10.0))
     min_soc = float(battery.get("min_soc_mwh", 0.0))
     soc0 = float(battery.get("initial_soc_mwh", capacity / 2))
     soc_split = soc_split_frac * capacity
 
+    if dt_hours <= 0.0:
+        raise ValueError("time_step_hours must be > 0")
+    if not (0.0 < charge_eff <= 1.0 and 0.0 < discharge_eff <= 1.0):
+        raise ValueError("battery charge_efficiency and discharge_efficiency must be in (0, 1]")
     if not (0.0 < eta_a <= 1.0 and 0.0 < eta_b <= 1.0):
         raise ValueError("battery efficiency_regime_a and efficiency_regime_b must be in (0, 1]")
     if not (0.0 <= soc_split_frac <= 1.0):
@@ -209,11 +227,11 @@ def optimize_dispatch(
     carbon_cost_per_kg = (carbon_cost / carbon_kg) if carbon_kg > 0 else 0.0
     carbon_cost_series = carbon_series * carbon_cost_per_kg
     # Objective: weighted energy cost + weighted carbon cost + peak penalty.
-    c[idx_grid] = cost_weight * price + carbon_weight * carbon_cost_series
-    c[idx_charge] = degradation_cost_per_mwh
-    c[idx_discharge] = degradation_cost_per_mwh
-    c[idx_curtail] = curtail_pen
-    c[idx_unmet] = unmet_pen
+    c[idx_grid] = (cost_weight * price + carbon_weight * carbon_cost_series) * dt_hours
+    c[idx_charge] = degradation_cost_per_mwh * dt_hours
+    c[idx_discharge] = degradation_cost_per_mwh * dt_hours
+    c[idx_curtail] = curtail_pen * dt_hours
+    c[idx_unmet] = unmet_pen * dt_hours
     c[idx_peak] = peak_pen
 
     # Equality constraints: load balance and SOC dynamics.
@@ -238,10 +256,10 @@ def optimize_dispatch(
     for t in range(H):
         row = np.zeros(n_vars)
         row[idx_soc.start + t] = 1.0
-        row[idx_charge_a.start + t] = -eta_a
-        row[idx_charge_b.start + t] = -eta_b
-        row[idx_discharge_a.start + t] = 1.0 / eta_a
-        row[idx_discharge_b.start + t] = 1.0 / eta_b
+        row[idx_charge_a.start + t] = -(eta_a * dt_hours)
+        row[idx_charge_b.start + t] = -(eta_b * dt_hours)
+        row[idx_discharge_a.start + t] = dt_hours / eta_a
+        row[idx_discharge_b.start + t] = dt_hours / eta_b
         if t == 0:
             A_eq.append(row)
             b_eq.append(soc0)
@@ -353,7 +371,7 @@ def optimize_dispatch(
             budget_kg = None
     if budget_kg is None and budget_pct is not None:
         baseline_grid = np.clip(load - ren, 0.0, max_import)
-        baseline_carbon = float(np.sum(baseline_grid * carbon_series))
+        baseline_carbon = float(np.sum(baseline_grid * carbon_series) * dt_hours)
         budget_kg = baseline_carbon * (1.0 - budget_pct)
     if budget_kg is not None:
         row = np.zeros(n_vars)
@@ -416,10 +434,13 @@ def optimize_dispatch(
             "unmet_load_mw": [0.0] * H,
             "soc_mwh": [soc0] * H,
             "peak_mw": float(np.max(grid_plan)) if len(grid_plan) else None,
-            "expected_cost_usd": float(np.sum(grid_plan * price) + np.sum(curtail) * curtail_pen),
+            "expected_cost_usd": float(
+                np.sum(grid_plan * price) * dt_hours
+                + np.sum(curtail) * curtail_pen * dt_hours
+            ),
             "battery_degradation_cost_usd": 0.0,
-            "carbon_kg": float(np.sum(grid_plan * carbon_series)),
-            "carbon_cost_usd": float(np.sum(grid_plan * carbon_cost_series)),
+            "carbon_kg": float(np.sum(grid_plan * carbon_series) * dt_hours),
+            "carbon_cost_usd": float(np.sum(grid_plan * carbon_cost_series) * dt_hours),
             "carbon_budget_kg": float(budget_kg) if budget_kg is not None else None,
             "note": f"milp failed: {res.message}",
         }
@@ -435,15 +456,15 @@ def optimize_dispatch(
     renewables_used = ren - curtail
 
     # Final objective terms for reporting.
-    degradation_cost = float(degradation_cost_per_mwh * np.sum(charge + discharge))
+    degradation_cost = float(degradation_cost_per_mwh * np.sum(charge + discharge) * dt_hours)
     expected_cost = float(
-        np.sum(grid_plan * price)
-        + np.sum(curtail) * curtail_pen
-        + np.sum(unmet) * unmet_pen
+        np.sum(grid_plan * price) * dt_hours
+        + np.sum(curtail) * curtail_pen * dt_hours
+        + np.sum(unmet) * unmet_pen * dt_hours
         + degradation_cost
     )
-    carbon = float(np.sum(grid_plan * carbon_series))
-    carbon_cost = float(np.sum(grid_plan * carbon_cost_series))
+    carbon = float(np.sum(grid_plan * carbon_series) * dt_hours)
+    carbon_cost = float(np.sum(grid_plan * carbon_cost_series) * dt_hours)
 
     return {
         "grid_mw": grid_plan.tolist(),

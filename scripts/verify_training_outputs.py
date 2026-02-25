@@ -19,7 +19,6 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 
@@ -183,7 +182,6 @@ class ArtifactChecker:
             
             # Calibration and test NPZ files
             cal_path = artifacts_dir / "backtests" / f"{target}_calibration.npz"
-            test_path = artifacts_dir / "backtests" / f"{target}_test.npz"
             
             if cal_path.exists():
                 try:

@@ -34,7 +34,6 @@ if str(REPO / "src") not in sys.path:
     sys.path.insert(0, str(REPO / "src"))
 
 from gridpulse.utils.metrics import rmse, mae, r2_score
-from gridpulse.forecasting.predict import load_model_bundle
 from gridpulse.forecasting.dl_lstm import LSTMForecaster
 from gridpulse.forecasting.dl_tcn import TCNForecaster
 from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
@@ -161,7 +160,6 @@ def get_predictions(region: RegionConfig, target: str, test_df: pd.DataFrame) ->
         if not available:
             continue
 
-        drop = {"timestamp", *TARGETS, "price_eur_mwh"}
         X_test = test_df[available].to_numpy()
         y_test = test_df[target].to_numpy()
 

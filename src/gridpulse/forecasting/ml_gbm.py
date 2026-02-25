@@ -8,31 +8,43 @@ from typing import Tuple, Any, Dict
 import numpy as np
 
 
-def _try_lightgbm():
+def _try_lightgbm(*, required: bool = False):
     """Import LightGBM if available (preferred GBM backend)."""
     try:
         import lightgbm as lgb
         return lgb
-    except Exception:
+    except Exception as exc:
+        if required:
+            raise RuntimeError(
+                "LightGBM backend requested but lightgbm is not installed. Install requirements.lock.txt."
+            ) from exc
         return None
 
 
-def _try_xgboost():
+def _try_xgboost(*, required: bool = False):
     """Import XGBoost if available (secondary GBM backend)."""
     try:
         import xgboost as xgb
         return xgb
-    except Exception:
+    except Exception as exc:
+        if required:
+            raise RuntimeError(
+                "XGBoost backend requested but xgboost is not installed. Install requirements.lock.txt."
+            ) from exc
         return None
 
 
-def _try_sklearn_pipeline():
+def _try_sklearn_pipeline(*, required: bool = False):
     """Import sklearn Pipeline for preprocessing."""
     try:
         from sklearn.pipeline import Pipeline
         from sklearn.preprocessing import StandardScaler
         return Pipeline, StandardScaler
-    except Exception:
+    except Exception as exc:
+        if required:
+            raise RuntimeError(
+                "Pipeline preprocessing requested but sklearn pipeline components are unavailable."
+            ) from exc
         return None, None
 
 
@@ -60,27 +72,30 @@ def train_gbm(
         If use_pipeline=True, returns a Pipeline that handles preprocessing.
         This ensures leakage-safe fit/transform for all downstream operations.
     """
-    params = params or {}
-    lgb = _try_lightgbm()
-    
-    # Build base model
-    if lgb is not None:
+    params = dict(params or {})
+    backend = str(params.pop("backend", "lightgbm")).strip().lower()
+
+    if backend == "lightgbm":
+        lgb = _try_lightgbm(required=True)
         base_model = lgb.LGBMRegressor(**params)
         model_kind = "lightgbm"
+    elif backend == "xgboost":
+        xgb = _try_xgboost(required=True)
+        base_model = xgb.XGBRegressor(**params)
+        model_kind = "xgboost"
+    elif backend in {"sklearn", "sklearn_hgbrt", "hist_gradient_boosting"}:
+        from sklearn.ensemble import HistGradientBoostingRegressor
+
+        base_model = HistGradientBoostingRegressor(**params)
+        model_kind = "sklearn_hgbrt"
     else:
-        xgb = _try_xgboost()
-        if xgb is not None:
-            base_model = xgb.XGBRegressor(**params)
-            model_kind = "xgboost"
-        else:
-            # Ultimate fallback
-            from sklearn.ensemble import HistGradientBoostingRegressor
-            base_model = HistGradientBoostingRegressor()
-            model_kind = "sklearn_hgbrt"
+        raise ValueError(
+            f"Unknown GBM backend '{backend}'. Expected one of: lightgbm, xgboost, sklearn_hgbrt."
+        )
     
     # Optionally wrap in Pipeline for preprocessing
     if use_pipeline:
-        Pipeline, StandardScaler = _try_sklearn_pipeline()
+        Pipeline, StandardScaler = _try_sklearn_pipeline(required=True)
         if Pipeline is not None and preprocessing:
             steps = []
             
@@ -115,4 +130,3 @@ def extract_base_model(model):
     if hasattr(model, "named_steps") and "model" in model.named_steps:
         return model.named_steps["model"]
     return model
-

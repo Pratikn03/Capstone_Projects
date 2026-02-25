@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -249,7 +249,6 @@ class NBEATSBaseline(BaselineModel):
             Self for chaining
         """
         try:
-            from darts import TimeSeries
             from darts.models import NBEATSModel
             from darts.dataprocessing.transformers import Scaler
         except ImportError:
@@ -296,12 +295,7 @@ class NBEATSBaseline(BaselineModel):
         """Generate predictions for the horizon."""
         if not self._fitted:
             raise RuntimeError("Model not fitted. Call fit() first.")
-        
-        try:
-            from darts import TimeSeries
-        except ImportError:
-            raise ImportError("Darts not installed")
-        
+
         # For prediction, we need the last input_chunk_length points as context
         series = self._to_darts_series(df)
         series_scaled = self.scaler.transform(series)

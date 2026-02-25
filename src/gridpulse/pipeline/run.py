@@ -5,7 +5,6 @@ import argparse
 import hashlib
 import json
 import logging
-import os
 import platform
 import shutil
 import subprocess
@@ -1294,7 +1293,6 @@ def main() -> None:
 
     raw_hash = _hash_paths([raw_csv], repo_root) if raw_csv.exists() else None
     data_cfg_hash = _hash_paths([data_cfg], repo_root) if data_cfg.exists() else None
-    train_cfg_hash = _hash_paths([train_cfg], repo_root) if train_cfg.exists() else None
     signals_hash = (
         _hash_paths([signal_cfg.path], repo_root) if signal_cfg.enabled and signal_cfg.path and signal_cfg.path.exists() else None
     )
