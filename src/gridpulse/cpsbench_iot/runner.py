@@ -19,6 +19,7 @@ import pandas as pd
 import yaml
 
 from gridpulse.dc3s.certificate import compute_config_hash, compute_model_hash, make_certificate
+from gridpulse.dc3s.calibration import build_uncertainty_set
 from gridpulse.dc3s.drift import PageHinkleyDetector
 from gridpulse.dc3s.guarantee_checks import evaluate_guarantee_checks
 from gridpulse.dc3s.quality import compute_reliability
@@ -215,46 +216,6 @@ def _cqr_bounds(load_window: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return np.maximum(0.0, load_window - q), load_window + q
 
 
-def widen_bounds(
-    *,
-    lower: np.ndarray,
-    upper: np.ndarray,
-    w_t: float,
-    drift_flag: bool,
-    dc3s_cfg: Mapping[str, Any],
-    prev_inflation: float | None,
-) -> tuple[np.ndarray, np.ndarray, dict[str, float | bool]]:
-    k_quality = float(dc3s_cfg.get("k_quality", dc3s_cfg.get("k_q", 0.8)))
-    k_drift = float(dc3s_cfg.get("k_drift", 0.6))
-    infl_max = float(dc3s_cfg.get("infl_max", 3.0))
-    smooth = float(dc3s_cfg.get("cooldown_smoothing", 0.0))
-    min_w = float(dc3s_cfg.get("reliability", {}).get("min_w", 0.05))
-
-    w_eff = max(min_w, min(float(w_t), 1.0))
-    infl_raw = 1.0 + k_quality * (1.0 - w_eff) + k_drift * (1.0 if drift_flag else 0.0)
-    infl = float(np.clip(infl_raw, 1.0, infl_max))
-    if prev_inflation is not None and 0.0 < smooth < 1.0:
-        infl = float(np.clip((smooth * float(prev_inflation)) + ((1.0 - smooth) * infl), 1.0, infl_max))
-
-    lo = np.asarray(lower, dtype=float)
-    hi = np.asarray(upper, dtype=float)
-    mid = 0.5 * (lo + hi)
-    half = 0.5 * (hi - lo)
-    half_wide = half * infl
-
-    lower_w = np.maximum(0.0, mid - half_wide)
-    upper_w = mid + half_wide
-    meta = {
-        "w_t": float(w_t),
-        "w_t_used": float(w_eff),
-        "drift_flag": bool(drift_flag),
-        "inflation_raw": float(infl_raw),
-        "inflation": float(infl),
-        "interval_width": float(max(0.0, upper_w[0] - lower_w[0])) if len(lower_w) else 0.0,
-    }
-    return lower_w, upper_w, meta
-
-
 def _controller_step_deterministic(
     *,
     load_window: np.ndarray,
@@ -392,13 +353,16 @@ def _controller_step_dc3s(
     drift = state.detector.update(residual)
 
     base_lower, base_upper = _cqr_bounds(np.asarray(load_window, dtype=float))
-    lower, upper, widen_meta = widen_bounds(
-        lower=base_lower,
-        upper=base_upper,
+    base_half_width = np.maximum(0.0, 0.5 * (np.asarray(base_upper, dtype=float) - np.asarray(base_lower, dtype=float)))
+    lower, upper, widen_meta = build_uncertainty_set(
+        yhat=np.asarray(load_window, dtype=float),
+        q=base_half_width,
         w_t=float(w_t),
         drift_flag=bool(drift.get("drift", False)),
-        dc3s_cfg=dc3s_cfg,
+        cfg=dc3s_cfg,
         prev_inflation=state.prev_inflation,
+        base_lower=np.asarray(base_lower, dtype=float),
+        base_upper=np.asarray(base_upper, dtype=float),
     )
     state.prev_inflation = float(widen_meta.get("inflation", 1.0))
 
