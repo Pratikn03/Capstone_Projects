@@ -394,7 +394,6 @@ def plot_ablation_results(results_df: pd.DataFrame, output_dir: Path) -> None:
     """Create bar chart comparison of ablation scenarios."""
     try:
         import matplotlib.pyplot as plt
-        import seaborn as sns
     except ImportError:
         print("matplotlib/seaborn not available, skipping plot")
         return

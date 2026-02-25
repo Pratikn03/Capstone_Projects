@@ -9,7 +9,6 @@ Usage:
 """
 
 import json
-import os
 import sys
 from pathlib import Path
 from datetime import datetime
@@ -375,7 +374,6 @@ def extract_model_registry(models_dir: Path, region_id: str):
         if f.suffix not in (".pkl", ".pt"):
             continue
         name = f.stem
-        parts = name.split("_")
         # Determine model type and target
         if name.startswith("gbm_lightgbm_"):
             model_type = "GBM (LightGBM)"
@@ -445,8 +443,7 @@ def extract_monitoring_data(report_path: Path, region_id: str):
     drifted_cols.sort(key=lambda x: x["ks_stat"], reverse=True)
     
     # Build drift timeline (simulate from actual KS stats)
-    # Use real KS stats from key features to build timeline
-    key_features = ["load_mw_lag_1", "wind_mw_lag_1", "solar_mw_lag_1", "price_eur_mwh"]
+    # Use real KS stats from key features to build timeline.
     base_ks = 0.04  # baseline stable period
     
     drift_timeline = []
@@ -671,8 +668,6 @@ def main():
     print("  GridPulse Dashboard Data Extraction")
     print("═" * 60)
     
-    all_data = {"generated_at": datetime.now().isoformat(), "regions": {}}
-
     # ─── Germany (OPSD) ───
     de_parquet = ROOT / "data" / "processed" / "features.parquet"
     de_metrics_json = ROOT / "reports" / "week2_metrics.json"

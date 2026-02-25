@@ -1336,7 +1336,6 @@ def build_publication_uncertainty_artifacts(ctx: ReportContext) -> None:
 
     unc_cfg = _load_uncertainty_cfg(ctx)
     targets = _parse_uncertainty_targets(unc_cfg, ["load_mw", "wind_mw", "solar_mw"])
-    cal_template = str(unc_cfg.get("calibration_npz", "artifacts/backtests/{target}_calibration.npz"))
     test_template = str(unc_cfg.get("test_npz", "artifacts/backtests/{target}_test.npz"))
     artifacts_dir = Path(unc_cfg.get("artifacts_dir", "artifacts/uncertainty"))
 

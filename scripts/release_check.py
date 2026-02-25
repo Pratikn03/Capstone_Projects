@@ -44,7 +44,15 @@ def _run(cmd: list[str], label: str, env: dict | None = None) -> None:
         subprocess.CalledProcessError: If command fails (blocks release)
     """
     print(f"[release_check] {label}: {' '.join(cmd)}")
-    subprocess.run(cmd, check=True, env=env)
+    cmd_env = dict(os.environ)
+    if env:
+        cmd_env.update(env)
+
+    repo_root = Path(__file__).resolve().parents[1]
+    src_path = str(repo_root / "src")
+    existing_pythonpath = cmd_env.get("PYTHONPATH", "")
+    cmd_env["PYTHONPATH"] = f"{src_path}{os.pathsep}{existing_pythonpath}" if existing_pythonpath else src_path
+    subprocess.run(cmd, check=True, env=cmd_env)
 
 
 def _require(path: Path, msg: str) -> None:
@@ -103,6 +111,21 @@ def main() -> None:
     # GATE 1: Configuration files are valid
     # -------------------------------------------------------------------------
     _run([sys.executable, "scripts/validate_configs.py"], "config validation")
+    _run([sys.executable, "scripts/audit_leakage.py", "--config", "configs/publish_audit.yaml"], "leakage audit")
+    _run([sys.executable, "scripts/audit_code_health.py", "--config", "configs/publish_audit.yaml"], "code health audit")
+    _run(
+        [
+            sys.executable,
+            "scripts/audit_git_delta.py",
+            "--baseline-ref",
+            "origin/main",
+            "--out-dir",
+            "reports/publish",
+            "--scope-config",
+            "configs/publish_audit.yaml",
+        ],
+        "git delta audit",
+    )
 
     # -------------------------------------------------------------------------
     # GATE 2: Required data artifacts exist
@@ -147,6 +170,8 @@ def main() -> None:
     # GATE 7: Models registered in artifact store
     # -------------------------------------------------------------------------
     _run([sys.executable, "scripts/register_models.py"], "model registry")
+    _run([sys.executable, "scripts/run_cpsbench.py", "--out-dir", "reports/publication"], "cpsbench benchmark")
+    _run([sys.executable, "scripts/validate_paper_claims.py"], "paper claims validation")
 
     # -------------------------------------------------------------------------
     # GATE 8: Generate documentation and reports
@@ -165,6 +190,17 @@ def main() -> None:
     env.setdefault("XDG_CACHE_HOME", str(xdg_dir))  # Cache directory
     
     _run([sys.executable, "scripts/build_reports.py"], "reports", env=env)
+    _run(
+        [
+            sys.executable,
+            "scripts/final_publish_audit.py",
+            "--config",
+            "configs/publish_audit.yaml",
+            "--skip-retrain",
+            "--skip-validation",
+        ],
+        "final publish audit",
+    )
 
     # -------------------------------------------------------------------------
     # All checks passed - safe to release!

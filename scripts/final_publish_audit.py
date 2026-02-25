@@ -251,7 +251,10 @@ def _compute_dc3s_typed_readiness(db_path: Path, table_name: str) -> dict[str, A
               SUM(CASE WHEN intervention_reason IS NULL THEN 1 ELSE 0 END),
               SUM(CASE WHEN reliability_w IS NULL THEN 1 ELSE 0 END),
               SUM(CASE WHEN drift_flag IS NULL THEN 1 ELSE 0 END),
-              SUM(CASE WHEN inflation IS NULL THEN 1 ELSE 0 END)
+              SUM(CASE WHEN inflation IS NULL THEN 1 ELSE 0 END),
+              SUM(CASE WHEN guarantee_checks_passed IS NULL THEN 1 ELSE 0 END),
+              SUM(CASE WHEN guarantee_fail_reasons IS NULL THEN 1 ELSE 0 END),
+              SUM(CASE WHEN assumptions_version IS NULL THEN 1 ELSE 0 END)
             FROM {table_name}
             """
         ).fetchone()
@@ -267,6 +270,9 @@ def _compute_dc3s_typed_readiness(db_path: Path, table_name: str) -> dict[str, A
             "reliability_w": int(row[2] or 0),
             "drift_flag": int(row[3] or 0),
             "inflation": int(row[4] or 0),
+            "guarantee_checks_passed": int(row[5] or 0),
+            "guarantee_fail_reasons": int(row[6] or 0),
+            "assumptions_version": int(row[7] or 0),
         },
         "null_ratios": {
             "intervened": float((row[0] or 0) / n),
@@ -274,6 +280,9 @@ def _compute_dc3s_typed_readiness(db_path: Path, table_name: str) -> dict[str, A
             "reliability_w": float((row[2] or 0) / n),
             "drift_flag": float((row[3] or 0) / n),
             "inflation": float((row[4] or 0) / n),
+            "guarantee_checks_passed": float((row[5] or 0) / n),
+            "guarantee_fail_reasons": float((row[6] or 0) / n),
+            "assumptions_version": float((row[7] or 0) / n),
         },
     }
 
@@ -655,6 +664,33 @@ def main() -> None:
                     None,
                 ),
                 ("cpsbench", ["make", "cpsbench"], None, None),
+                (
+                    "dc3s_ablations",
+                    [
+                        sys.executable,
+                        "scripts/run_ablations.py",
+                        "--dc3s",
+                        "--output",
+                        "reports/publication",
+                        "--scenario",
+                        "drift_combo",
+                        "--horizon",
+                        "96",
+                        "--seeds",
+                        "0",
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                        "7",
+                        "8",
+                        "9",
+                    ],
+                    None,
+                    None,
+                ),
                 ("release_check", ["bash", "scripts/release_check.sh"], None, None),
             ]
         )
