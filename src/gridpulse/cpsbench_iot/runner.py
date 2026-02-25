@@ -29,7 +29,7 @@ from gridpulse.optimizer.robust_dispatch import RobustDispatchConfig, optimize_r
 
 from .metrics import compute_all_metrics
 from .plant import BatteryPlant
-from .scenarios import DEFAULT_SCENARIOS, FAULT_COLUMNS, generate_episode
+from .scenarios import FAULT_COLUMNS, generate_episode
 from .telemetry_soc import SOCTelemetryChannel, SOCTelemetryFaultConfig
 
 

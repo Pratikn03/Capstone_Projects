@@ -34,7 +34,15 @@ class SafetyLayer:
         self.min_soc_limit = min_soc_pct * capacity_mwh  # Never go below configured minimum
         self.max_soc_limit = max_soc_pct * capacity_mwh  # Never go above configured maximum
 
-    def validate_dispatch(self, current_soc: float, charge_mw: float, discharge_mw: float) -> bool:
+    def validate_dispatch(
+        self,
+        current_soc: float,
+        charge_mw: float,
+        discharge_mw: float,
+        time_step_hours: float = 1.0,
+        charge_efficiency: float = 1.0,
+        discharge_efficiency: float = 1.0,
+    ) -> bool:
         """Return True if safe, raise SafetyViolation if unsafe."""
         # 1. Power Limit Check
         if charge_mw > self.max_power_mw or discharge_mw > self.max_power_mw:
@@ -51,8 +59,10 @@ class SafetyLayer:
             raise SafetyViolation("Cannot charge and discharge simultaneously.")
 
         # 3. State of Charge (SOC) Lookahead Check
-        # Assuming 1-hour dispatch interval
-        next_soc = current_soc + (charge_mw * 1.0) - (discharge_mw * 1.0)
+        dt = max(float(time_step_hours), 1e-9)
+        eta_c = max(float(charge_efficiency), 1e-6)
+        eta_d = max(float(discharge_efficiency), 1e-6)
+        next_soc = current_soc + dt * ((charge_mw * eta_c) - (discharge_mw / eta_d))
 
         if next_soc < self.min_soc_limit:
             audit_logger.critical("SAFETY TRIP: Deep Discharge Risk. Predicted SOC: %s MWh", next_soc)

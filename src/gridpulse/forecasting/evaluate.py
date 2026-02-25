@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from typing import Any, Callable
 import numpy as np
-import pandas as pd
 from sklearn.model_selection import TimeSeriesSplit
 
 from gridpulse.utils.metrics import rmse, mae, mape, smape, daylight_mape, r2_score
