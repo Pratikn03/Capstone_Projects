@@ -3,11 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict
 
+import numpy as np
+
 
 @dataclass
 class BatteryPlant:
-    """Truth plant: evolves SOC using physics and does not clamp SOC."""
-
+    """Truth plant: evolves SOC using physics. NEVER clamps SOC."""
     soc_mwh: float
     min_soc_mwh: float
     max_soc_mwh: float
@@ -16,21 +17,18 @@ class BatteryPlant:
     dt_hours: float = 1.0
 
     def step(self, charge_mw: float, discharge_mw: float) -> float:
-        charge = max(0.0, float(charge_mw))
-        discharge = max(0.0, float(discharge_mw))
+        c = max(0.0, float(charge_mw))
+        d = max(0.0, float(discharge_mw))
 
-        # Battery cannot physically charge and discharge simultaneously.
-        if charge > 0.0 and discharge > 0.0:
-            if discharge >= charge:
-                charge = 0.0
+        # no simultaneous charge/discharge
+        if c > 0.0 and d > 0.0:
+            if d >= c:
+                c = 0.0
             else:
-                discharge = 0.0
+                d = 0.0
 
-        self.soc_mwh = self.soc_mwh + (
-            self.charge_eff * charge * self.dt_hours
-        ) - (
-            discharge * self.dt_hours / max(self.discharge_eff, 1e-9)
-        )
+        # physics (truth). NO CLAMP.
+        self.soc_mwh = self.soc_mwh + (self.charge_eff * c * self.dt_hours) - (d * self.dt_hours / max(self.discharge_eff, 1e-9))
         return float(self.soc_mwh)
 
     def violation(self) -> Dict[str, float | bool]:
