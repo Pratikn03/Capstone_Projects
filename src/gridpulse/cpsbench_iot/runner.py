@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
+from functools import lru_cache
 import json
 import os
 from pathlib import Path
@@ -16,15 +18,15 @@ import numpy as np
 import pandas as pd
 import yaml
 
+from gridpulse.dc3s.certificate import compute_config_hash, compute_model_hash, make_certificate
+from gridpulse.dc3s.drift import PageHinkleyDetector
 from gridpulse.dc3s.guarantee_checks import evaluate_guarantee_checks
+from gridpulse.dc3s.quality import compute_reliability
+from gridpulse.dc3s.shield import repair_action
+from gridpulse.forecasting.uncertainty.conformal import load_conformal
+from gridpulse.optimizer import optimize_dispatch
+from gridpulse.optimizer.robust_dispatch import RobustDispatchConfig, optimize_robust_dispatch
 
-from .baselines import (
-    dc3s_wrapped_step,
-    deterministic_lp_step,
-    init_dc3s_loop_state,
-    naive_safe_clip_step,
-    robust_fixed_interval_step,
-)
 from .metrics import compute_all_metrics
 from .plant import BatteryPlant
 from .scenarios import DEFAULT_SCENARIOS, FAULT_COLUMNS, generate_episode
@@ -50,6 +52,15 @@ FAULT_SWEEP_LEVELS: dict[str, list[float]] = {
     "out_of_order": [0.0, 0.05, 0.15],
     "spike_sigma": [0.0, 1.0, 2.0, 3.0],
 }
+
+
+@dataclass
+class _DC3SLoopState:
+    detector: PageHinkleyDetector
+    prev_event: Mapping[str, Any] | None = None
+    prev_hash: str | None = None
+    prev_inflation: float | None = None
+    last_net_mw: float = 0.0
 
 
 def _deep_update(base: dict[str, Any], patch: Mapping[str, Any]) -> dict[str, Any]:
@@ -83,24 +94,37 @@ def _load_dc3s_cfg() -> dict[str, Any]:
     return dc3s if isinstance(dc3s, dict) else {}
 
 
+def _load_uncertainty_cfg() -> dict[str, Any]:
+    payload = _load_yaml("configs/uncertainty.yaml")
+    return payload if isinstance(payload, dict) else {}
+
+
 def _battery_constraints(cfg: dict[str, Any]) -> dict[str, float]:
     battery = dict(cfg.get("battery", {}))
     capacity = float(battery.get("capacity_mwh", 100.0))
     max_power = float(battery.get("max_power_mw", 50.0))
-    eff = float(battery.get("efficiency", battery.get("efficiency_regime_a", 0.95)))
+    min_soc = float(battery.get("min_soc_mwh", 0.0))
+    max_soc = float(battery.get("max_soc_mwh", capacity))
+    init_soc = float(battery.get("initial_soc_mwh", capacity * 0.5))
+
+    eff = float(battery.get("efficiency", 0.95))
+    charge_eff = float(battery.get("charge_efficiency", eff))
+    discharge_eff = float(battery.get("discharge_efficiency", eff))
+    dt = float(cfg.get("time_step_hours", 1.0))
+
     return {
         "capacity_mwh": capacity,
         "max_power_mw": max_power,
         "max_charge_mw": float(battery.get("max_charge_mw", max_power)),
         "max_discharge_mw": float(battery.get("max_discharge_mw", max_power)),
-        "min_soc_mwh": float(battery.get("min_soc_mwh", 0.0)),
-        "max_soc_mwh": float(battery.get("max_soc_mwh", capacity)),
-        "initial_soc_mwh": float(battery.get("initial_soc_mwh", capacity * 0.5)),
-        "charge_efficiency": float(battery.get("charge_efficiency", eff)),
-        "discharge_efficiency": float(battery.get("discharge_efficiency", eff)),
-        "time_step_hours": float(cfg.get("time_step_hours", 1.0)),
+        "min_soc_mwh": min_soc,
+        "max_soc_mwh": max_soc,
+        "initial_soc_mwh": init_soc,
+        "charge_efficiency": charge_eff,
+        "discharge_efficiency": discharge_eff,
         "degradation_cost_per_mwh": float(battery.get("degradation_cost_per_mwh", 10.0)),
         "max_grid_import_mw": float(cfg.get("grid", {}).get("max_import_mw", 500.0)),
+        "time_step_hours": dt,
     }
 
 
@@ -131,192 +155,401 @@ def _soc_fault_config_for_episode(
     scenario: str,
     event_log: pd.DataFrame,
     seed: int,
+    fault_overrides: Mapping[str, Any] | None,
 ) -> SOCTelemetryFaultConfig:
+    overrides = dict(fault_overrides or {})
+
     dropout_prob = float(event_log["dropout"].mean()) if "dropout" in event_log.columns else 0.0
     stale_prob = float(event_log["stale_sensor"].mean()) if "stale_sensor" in event_log.columns else 0.0
 
-    # Keep a minimum stress level for canonical telemetry-fault scenarios.
     if scenario in {"dropout", "drift_combo"} and dropout_prob == 0.0:
         dropout_prob = 0.20
     if scenario in {"stale_sensor", "drift_combo"} and stale_prob == 0.0:
         stale_prob = 0.20
 
+    if "soc_dropout_prob" in overrides:
+        dropout_prob = float(overrides["soc_dropout_prob"])
+    if "soc_stale_prob" in overrides:
+        stale_prob = float(overrides["soc_stale_prob"])
+    if "dropout_prob" in overrides:
+        dropout_prob = float(overrides["dropout_prob"])
+    if "stale_prob" in overrides:
+        stale_prob = float(overrides["stale_prob"])
+
+    noise_std = float(overrides.get("soc_noise_std_mwh", 0.25))
+
     return SOCTelemetryFaultConfig(
         dropout_prob=min(max(dropout_prob, 0.0), 0.95),
         stale_prob=min(max(stale_prob, 0.0), 0.95),
-        noise_std_mwh=0.25,
+        noise_std_mwh=max(0.0, noise_std),
         seed=int(seed),
     )
 
 
-def _run_controller_episode(
+@lru_cache(maxsize=2)
+def _load_load_conformal(target: str = "load_mw") -> Any | None:
+    unc_cfg = _load_uncertainty_cfg()
+    artifacts_dir = Path(unc_cfg.get("artifacts_dir", "artifacts/uncertainty"))
+    path = artifacts_dir / f"{target}_conformal.json"
+    if not path.exists():
+        return None
+    try:
+        return load_conformal(path)
+    except Exception:
+        return None
+
+
+def _cqr_bounds(load_window: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    ci = _load_load_conformal("load_mw")
+    if ci is not None:
+        try:
+            lo, hi = ci.predict_interval(np.asarray(load_window, dtype=float))
+            lo = np.maximum(0.0, np.asarray(lo, dtype=float))
+            hi = np.asarray(hi, dtype=float)
+            if lo.shape == hi.shape == load_window.shape:
+                return lo, hi
+        except Exception:
+            pass
+
+    q = np.maximum(75.0, 0.08 * np.abs(load_window))
+    return np.maximum(0.0, load_window - q), load_window + q
+
+
+def widen_bounds(
     *,
-    controller: str,
-    scenario: str,
-    seed: int,
-    timestamps: pd.Series,
-    load_obs: np.ndarray,
-    renew_obs: np.ndarray,
-    load_true: np.ndarray,
-    renew_true: np.ndarray,
-    price: np.ndarray,
-    carbon: np.ndarray,
-    event_log: pd.DataFrame,
-    telemetry_events: list[dict[str, Any]],
-    optimization_cfg: dict[str, Any],
-    dc3s_cfg: dict[str, Any],
+    lower: np.ndarray,
+    upper: np.ndarray,
+    w_t: float,
+    drift_flag: bool,
+    dc3s_cfg: Mapping[str, Any],
+    prev_inflation: float | None,
+) -> tuple[np.ndarray, np.ndarray, dict[str, float | bool]]:
+    k_quality = float(dc3s_cfg.get("k_quality", dc3s_cfg.get("k_q", 0.8)))
+    k_drift = float(dc3s_cfg.get("k_drift", 0.6))
+    infl_max = float(dc3s_cfg.get("infl_max", 3.0))
+    smooth = float(dc3s_cfg.get("cooldown_smoothing", 0.0))
+    min_w = float(dc3s_cfg.get("reliability", {}).get("min_w", 0.05))
+
+    w_eff = max(min_w, min(float(w_t), 1.0))
+    infl_raw = 1.0 + k_quality * (1.0 - w_eff) + k_drift * (1.0 if drift_flag else 0.0)
+    infl = float(np.clip(infl_raw, 1.0, infl_max))
+    if prev_inflation is not None and 0.0 < smooth < 1.0:
+        infl = float(np.clip((smooth * float(prev_inflation)) + ((1.0 - smooth) * infl), 1.0, infl_max))
+
+    lo = np.asarray(lower, dtype=float)
+    hi = np.asarray(upper, dtype=float)
+    mid = 0.5 * (lo + hi)
+    half = 0.5 * (hi - lo)
+    half_wide = half * infl
+
+    lower_w = np.maximum(0.0, mid - half_wide)
+    upper_w = mid + half_wide
+    meta = {
+        "w_t": float(w_t),
+        "w_t_used": float(w_eff),
+        "drift_flag": bool(drift_flag),
+        "inflation_raw": float(infl_raw),
+        "inflation": float(infl),
+        "interval_width": float(max(0.0, upper_w[0] - lower_w[0])) if len(lower_w) else 0.0,
+    }
+    return lower_w, upper_w, meta
+
+
+def _controller_step_deterministic(
+    *,
+    load_window: np.ndarray,
+    renew_window: np.ndarray,
+    price_window: np.ndarray,
+    carbon_window: np.ndarray,
+    optimization_cfg: Mapping[str, Any],
+    observed_soc_mwh: float,
 ) -> dict[str, Any]:
-    n = len(load_obs)
-    constraints = _battery_constraints(optimization_cfg)
-    plant = BatteryPlant(
-        soc_mwh=float(constraints["initial_soc_mwh"]),
-        min_soc_mwh=float(constraints["min_soc_mwh"]),
-        max_soc_mwh=float(constraints["max_soc_mwh"]),
-        charge_eff=float(constraints["charge_efficiency"]),
-        discharge_eff=float(constraints["discharge_efficiency"]),
-        dt_hours=float(constraints["time_step_hours"]),
+    cfg = json.loads(json.dumps(dict(optimization_cfg)))
+    cfg.setdefault("battery", {})
+    cfg["battery"]["initial_soc_mwh"] = float(observed_soc_mwh)
+
+    try:
+        dispatch = optimize_dispatch(
+            forecast_load=load_window.tolist(),
+            forecast_renewables=renew_window.tolist(),
+            forecast_price=price_window.tolist(),
+            forecast_carbon_kg=carbon_window.tolist(),
+            config=cfg,
+        )
+    except Exception:
+        dispatch = {"battery_charge_mw": [0.0], "battery_discharge_mw": [0.0]}
+
+    lower_90, upper_90 = _cqr_bounds(np.asarray(load_window, dtype=float))
+    return {
+        "proposed_charge_mw": float(np.asarray(dispatch.get("battery_charge_mw", [0.0]), dtype=float)[0]),
+        "proposed_discharge_mw": float(np.asarray(dispatch.get("battery_discharge_mw", [0.0]), dtype=float)[0]),
+        "safe_charge_mw": float(np.asarray(dispatch.get("battery_charge_mw", [0.0]), dtype=float)[0]),
+        "safe_discharge_mw": float(np.asarray(dispatch.get("battery_discharge_mw", [0.0]), dtype=float)[0]),
+        "interval_lower": np.asarray(lower_90, dtype=float),
+        "interval_upper": np.asarray(upper_90, dtype=float),
+        "solver_status": "deterministic",
+        "w_t": 1.0,
+        "delta_mw": 0.0,
+        "interval_width": float(max(0.0, upper_90[0] - lower_90[0])) if len(lower_90) else 0.0,
+        "guarantee_checks_passed": True,
+        "certificate": None,
+    }
+
+
+def _controller_step_robust_fixed(
+    *,
+    load_window: np.ndarray,
+    renew_window: np.ndarray,
+    price_window: np.ndarray,
+    optimization_cfg: Mapping[str, Any],
+    observed_soc_mwh: float,
+    width_frac: float = 0.12,
+) -> dict[str, Any]:
+    constraints = _battery_constraints(dict(optimization_cfg))
+    width = np.maximum(50.0, float(width_frac) * np.abs(load_window))
+    lower = np.maximum(0.0, load_window - width)
+    upper = load_window + width
+
+    rcfg = RobustDispatchConfig(
+        battery_capacity_mwh=constraints["capacity_mwh"],
+        battery_max_charge_mw=constraints["max_charge_mw"],
+        battery_max_discharge_mw=constraints["max_discharge_mw"],
+        battery_charge_efficiency=constraints["charge_efficiency"],
+        battery_discharge_efficiency=constraints["discharge_efficiency"],
+        battery_initial_soc_mwh=float(observed_soc_mwh),
+        battery_min_soc_mwh=constraints["min_soc_mwh"],
+        battery_max_soc_mwh=constraints["max_soc_mwh"],
+        max_grid_import_mw=constraints["max_grid_import_mw"],
+        default_price_per_mwh=float(np.mean(price_window)),
+        degradation_cost_per_mwh=constraints["degradation_cost_per_mwh"],
+        risk_weight_worst_case=float(dict(optimization_cfg).get("robust", {}).get("risk_weight_worst_case", 1.0)),
+        time_step_hours=constraints["time_step_hours"],
+        solver_name=str(dict(optimization_cfg).get("solver_name", "appsi_highs")),
     )
-    soc_channel = SOCTelemetryChannel(
-        _soc_fault_config_for_episode(scenario=scenario, event_log=event_log, seed=int(seed))
+
+    solver_status = "error"
+    try:
+        robust = optimize_robust_dispatch(
+            load_lower_bound=lower.tolist(),
+            load_upper_bound=upper.tolist(),
+            renewables_forecast=renew_window.tolist(),
+            price=price_window.tolist(),
+            config=rcfg,
+            verbose=False,
+        )
+        solver_status = str(robust.get("solver_status", "ok"))
+    except Exception:
+        robust = {"battery_charge_mw": [0.0], "battery_discharge_mw": [0.0], "feasible": False}
+
+    ch = float(np.asarray(robust.get("battery_charge_mw", [0.0]), dtype=float)[0])
+    dis = float(np.asarray(robust.get("battery_discharge_mw", [0.0]), dtype=float)[0])
+    return {
+        "proposed_charge_mw": ch,
+        "proposed_discharge_mw": dis,
+        "safe_charge_mw": ch,
+        "safe_discharge_mw": dis,
+        "interval_lower": np.asarray(lower, dtype=float),
+        "interval_upper": np.asarray(upper, dtype=float),
+        "solver_status": solver_status,
+        "w_t": 1.0,
+        "delta_mw": 0.0,
+        "interval_width": float(max(0.0, upper[0] - lower[0])) if len(lower) else 0.0,
+        "guarantee_checks_passed": True,
+        "certificate": None,
+    }
+
+
+def _controller_step_dc3s(
+    *,
+    load_window: np.ndarray,
+    renew_window: np.ndarray,
+    price_window: np.ndarray,
+    carbon_window: np.ndarray,
+    load_true_t: float,
+    observed_soc_mwh: float,
+    current_true_soc_mwh: float,
+    telemetry_event: Mapping[str, Any],
+    optimization_cfg: Mapping[str, Any],
+    dc3s_cfg: Mapping[str, Any],
+    state: _DC3SLoopState,
+    command_id: str,
+) -> dict[str, Any]:
+    _ = carbon_window
+    constraints = _battery_constraints(dict(optimization_cfg))
+
+    event = dict(telemetry_event)
+    if "ts_utc" not in event:
+        event["ts_utc"] = str(command_id)
+
+    expected_cadence_s = float(dc3s_cfg.get("expected_cadence_s", 3600.0))
+    w_t, flags = compute_reliability(
+        event,
+        state.prev_event,
+        expected_cadence_s=expected_cadence_s,
+        reliability_cfg=dc3s_cfg.get("reliability", {}),
+    )
+    residual = abs(float(load_true_t) - float(load_window[0]))
+    drift = state.detector.update(residual)
+
+    base_lower, base_upper = _cqr_bounds(np.asarray(load_window, dtype=float))
+    lower, upper, widen_meta = widen_bounds(
+        lower=base_lower,
+        upper=base_upper,
+        w_t=float(w_t),
+        drift_flag=bool(drift.get("drift", False)),
+        dc3s_cfg=dc3s_cfg,
+        prev_inflation=state.prev_inflation,
+    )
+    state.prev_inflation = float(widen_meta.get("inflation", 1.0))
+
+    rcfg = RobustDispatchConfig(
+        battery_capacity_mwh=constraints["capacity_mwh"],
+        battery_max_charge_mw=constraints["max_charge_mw"],
+        battery_max_discharge_mw=constraints["max_discharge_mw"],
+        battery_charge_efficiency=constraints["charge_efficiency"],
+        battery_discharge_efficiency=constraints["discharge_efficiency"],
+        battery_initial_soc_mwh=float(observed_soc_mwh),
+        battery_min_soc_mwh=constraints["min_soc_mwh"],
+        battery_max_soc_mwh=constraints["max_soc_mwh"],
+        max_grid_import_mw=constraints["max_grid_import_mw"],
+        default_price_per_mwh=float(np.mean(price_window)),
+        degradation_cost_per_mwh=constraints["degradation_cost_per_mwh"],
+        risk_weight_worst_case=float(dict(optimization_cfg).get("robust", {}).get("risk_weight_worst_case", 1.0)),
+        time_step_hours=constraints["time_step_hours"],
+        solver_name=str(dict(optimization_cfg).get("solver_name", "appsi_highs")),
     )
 
-    proposed_charge = np.zeros(n, dtype=float)
-    proposed_discharge = np.zeros(n, dtype=float)
-    safe_charge = np.zeros(n, dtype=float)
-    safe_discharge = np.zeros(n, dtype=float)
-    soc_true = np.zeros(n, dtype=float)
-    soc_observed = np.zeros(n, dtype=float)
-    interval_lower = np.zeros(n, dtype=float)
-    interval_upper = np.zeros(n, dtype=float)
-    reliability_w = np.ones(n, dtype=float)
-    drift_flag = np.zeros(n, dtype=bool)
-    inflation = np.ones(n, dtype=float)
-    guarantee_passed = np.ones(n, dtype=bool)
-    bms_trip_mask = np.zeros(n, dtype=bool)
-    certificates: list[dict[str, Any] | None] = []
-
-    dc3s_state = init_dc3s_loop_state(dc3s_cfg) if controller == "dc3s_wrapped" else None
-    q_base = max(50.0, float(np.quantile(np.abs(load_true - load_obs), 0.90)))
-    expected_cost_usd = 0.0
-    carbon_kg = 0.0
-
-    for t in range(n):
-        load_window = load_obs[t:]
-        renew_window = renew_obs[t:]
-        price_window = price[t:]
-        carbon_window = carbon[t:]
-        current_true_soc = float(plant.soc_mwh)
-        current_observed_soc, _soc_meta = soc_channel.observe(current_true_soc)
-        soc_observed[t] = float(current_observed_soc)
-
-        if controller == "deterministic_lp":
-            step = deterministic_lp_step(
-                load_obs_window=load_window,
-                renew_obs_window=renew_window,
-                price_window=price_window,
-                carbon_window=carbon_window,
-                observed_soc_mwh=current_observed_soc,
-                optimization_cfg=optimization_cfg,
-            )
-        elif controller == "robust_fixed_interval":
-            step = robust_fixed_interval_step(
-                load_obs_window=load_window,
-                renew_obs_window=renew_window,
-                price_window=price_window,
-                observed_soc_mwh=current_observed_soc,
-                optimization_cfg=optimization_cfg,
-            )
-        elif controller == "naive_safe_clip":
-            step = naive_safe_clip_step(
-                timestamp=pd.to_datetime(timestamps.iloc[t], utc=True),
-                load_obs_t=float(load_window[0]),
-                renew_obs_t=float(renew_window[0]),
-                price_t=float(price_window[0]),
-                carbon_t=float(carbon_window[0]),
-                observed_soc_mwh=current_observed_soc,
-                optimization_cfg=optimization_cfg,
-            )
-        elif controller == "dc3s_wrapped":
-            assert dc3s_state is not None
-            step = dc3s_wrapped_step(
-                load_obs_window=load_window,
-                renew_obs_window=renew_window,
-                load_true_t=float(load_true[t]),
-                telemetry_event=telemetry_events[t],
-                price_window=price_window,
-                observed_soc_mwh=current_observed_soc,
-                dc3s_state=dc3s_state,
-                command_id=f"{scenario}-{seed}-{controller}-{t:04d}",
-                optimization_cfg=optimization_cfg,
-                dc3s_cfg=dc3s_cfg,
-                q_base=q_base,
-            )
-        else:
-            raise ValueError(f"Unknown controller: {controller}")
-
-        proposed = dict(step["proposed_action"])
-        safe = dict(step["safe_action"])
-        proposed_charge[t] = float(proposed.get("charge_mw", 0.0))
-        proposed_discharge[t] = float(proposed.get("discharge_mw", 0.0))
-        safe_charge[t] = float(safe.get("charge_mw", 0.0))
-        safe_discharge[t] = float(safe.get("discharge_mw", 0.0))
-        interval_lower[t] = float(step.get("interval_lower_t", load_window[0]))
-        interval_upper[t] = float(step.get("interval_upper_t", load_window[0]))
-        certificates.append(step.get("certificate"))
-        reliability_w[t] = float(step.get("reliability_w", 1.0))
-        drift_flag[t] = bool(step.get("drift_flag", False))
-        inflation[t] = float(step.get("inflation", 1.0))
-        guarantee_passed[t] = bool(step.get("guarantee_checks_passed", True))
-
-        g_ok, _, _ = evaluate_guarantee_checks(
-            current_soc=current_true_soc,
-            action={"charge_mw": safe_charge[t], "discharge_mw": safe_discharge[t]},
-            constraints=constraints,
+    solver_status = "error"
+    proposed_charge = 0.0
+    proposed_discharge = 0.0
+    try:
+        robust = optimize_robust_dispatch(
+            load_lower_bound=lower.tolist(),
+            load_upper_bound=upper.tolist(),
+            renewables_forecast=renew_window.tolist(),
+            price=price_window.tolist(),
+            config=rcfg,
+            verbose=False,
         )
-        if not g_ok:
-            bms_trip_mask[t] = True
-            applied_charge = 0.0
-            applied_discharge = 0.0
-        else:
-            applied_charge = safe_charge[t]
-            applied_discharge = safe_discharge[t]
+        solver_status = str(robust.get("solver_status", "ok"))
+        proposed_charge = float(np.asarray(robust.get("battery_charge_mw", [0.0]), dtype=float)[0])
+        proposed_discharge = float(np.asarray(robust.get("battery_discharge_mw", [0.0]), dtype=float)[0])
+    except Exception:
+        robust = {"battery_charge_mw": [0.0], "battery_discharge_mw": [0.0], "feasible": False}
 
-        next_true_soc = plant.step(
-            charge_mw=applied_charge,
-            discharge_mw=applied_discharge,
-        )
-        soc_true[t] = float(next_true_soc)
+    # Projection-repair the robust first-step action.
+    repair_cfg = json.loads(json.dumps(dict(dc3s_cfg)))
+    repair_cfg.setdefault("shield", {})
+    repair_cfg["shield"]["mode"] = "projection"
+    repair_constraints = {
+        **constraints,
+        "current_soc_mwh": float(observed_soc_mwh),
+        "last_net_mw": float(state.last_net_mw),
+        "ramp_mw": float(dc3s_cfg.get("shield", {}).get("max_ramp_mw", 0.0) or 0.0),
+        "solver_name": str(dict(optimization_cfg).get("solver_name", "appsi_highs")),
+    }
+    safe_action, repair_meta = repair_action(
+        a_star={"charge_mw": proposed_charge, "discharge_mw": proposed_discharge},
+        state={"current_soc_mwh": float(observed_soc_mwh)},
+        uncertainty_set={
+            "lower": lower.tolist(),
+            "upper": upper.tolist(),
+            "meta": {**widen_meta, "flags": flags},
+            "renewables_forecast": renew_window.tolist(),
+            "price": price_window.tolist(),
+        },
+        constraints=repair_constraints,
+        cfg=repair_cfg,
+    )
 
-        grid_import_true = max(
-            0.0,
-            float(load_true[t] - renew_true[t] - applied_discharge + applied_charge),
-        )
-        dt = float(constraints.get("time_step_hours", 1.0))
-        deg = float(constraints.get("degradation_cost_per_mwh", 10.0))
-        expected_cost_usd += float(price[t]) * grid_import_true * dt
-        expected_cost_usd += deg * (abs(applied_charge) + abs(applied_discharge)) * dt
-        carbon_kg += float(carbon[t]) * grid_import_true * dt
+    safe_charge = float(safe_action.get("charge_mw", 0.0))
+    safe_discharge = float(safe_action.get("discharge_mw", 0.0))
+    delta_mw = float(abs(safe_charge - proposed_charge) + abs(safe_discharge - proposed_discharge))
+
+    guarantee_ok, guarantee_reasons, _ = evaluate_guarantee_checks(
+        current_soc=float(current_true_soc_mwh),
+        action={"charge_mw": safe_charge, "discharge_mw": safe_discharge},
+        constraints=repair_constraints,
+    )
+
+    config_hash = compute_config_hash(json.dumps(dc3s_cfg, sort_keys=True).encode("utf-8"))
+    cert = make_certificate(
+        command_id=command_id,
+        device_id=str(event.get("device_id", "bench-device")),
+        zone_id=str(event.get("zone_id", "DE")),
+        controller="dc3s_wrapped",
+        proposed_action={"charge_mw": proposed_charge, "discharge_mw": proposed_discharge},
+        safe_action={"charge_mw": safe_charge, "discharge_mw": safe_discharge},
+        uncertainty={
+            "lower": lower.tolist(),
+            "upper": upper.tolist(),
+            "meta": {
+                **widen_meta,
+                "delta_mw": float(delta_mw),
+                "solver_status": solver_status,
+                "repair_meta": repair_meta,
+            },
+        },
+        reliability={"w_t": float(w_t), "flags": flags},
+        drift=drift,
+        model_hash=compute_model_hash([]),
+        config_hash=config_hash,
+        prev_hash=state.prev_hash,
+        dispatch_plan=None,
+        intervened=bool(delta_mw > 1e-9),
+        intervention_reason="projection_repair" if delta_mw > 1e-9 else "none",
+        reliability_w=float(w_t),
+        drift_flag=bool(drift.get("drift", False)),
+        inflation=float(widen_meta.get("inflation", 1.0)),
+        guarantee_checks_passed=bool(guarantee_ok),
+        guarantee_fail_reasons=guarantee_reasons,
+        assumptions_version=str(dc3s_cfg.get("assumptions_version", "dc3s-assumptions-v1")),
+    )
+    cert["w_t"] = float(w_t)
+    cert["delta_mw"] = float(delta_mw)
+    cert["interval_width"] = float(widen_meta.get("interval_width", 0.0))
+    cert["solver_status"] = solver_status
+    cert["guarantee_checks_passed"] = bool(guarantee_ok)
+
+    state.prev_event = event
+    state.prev_hash = str(cert.get("certificate_hash"))
+    state.last_net_mw = float(safe_discharge - safe_charge)
 
     return {
-        "policy": controller,
         "proposed_charge_mw": proposed_charge,
         "proposed_discharge_mw": proposed_discharge,
         "safe_charge_mw": safe_charge,
         "safe_discharge_mw": safe_discharge,
-        "soc_mwh": soc_true,
-        "soc_true_mwh": soc_true,
-        "soc_observed_mwh": soc_observed,
-        "interval_lower": interval_lower,
-        "interval_upper": interval_upper,
-        "reliability_w": reliability_w,
-        "drift_flag": drift_flag.astype(int),
-        "inflation": inflation,
-        "guarantee_checks_passed": guarantee_passed.astype(int),
-        "bms_trip_mask": bms_trip_mask.astype(int),
-        "certificates": certificates,
-        "constraints": constraints,
-        "expected_cost_usd": float(expected_cost_usd),
-        "carbon_kg": float(carbon_kg),
+        "interval_lower": lower,
+        "interval_upper": upper,
+        "solver_status": solver_status,
+        "w_t": float(w_t),
+        "delta_mw": float(delta_mw),
+        "interval_width": float(widen_meta.get("interval_width", 0.0)),
+        "guarantee_checks_passed": bool(guarantee_ok),
+        "certificate": cert,
+    }
+
+
+def _init_controller_buffers(n: int) -> dict[str, Any]:
+    return {
+        "proposed_charge_mw": np.zeros(n, dtype=float),
+        "proposed_discharge_mw": np.zeros(n, dtype=float),
+        "safe_charge_mw": np.zeros(n, dtype=float),
+        "safe_discharge_mw": np.zeros(n, dtype=float),
+        "soc_true_mwh": np.zeros(n, dtype=float),
+        "soc_observed_mwh": np.zeros(n, dtype=float),
+        "interval_lower": np.zeros(n, dtype=float),
+        "interval_upper": np.zeros(n, dtype=float),
+        "w_t": np.ones(n, dtype=float),
+        "delta_mw": np.zeros(n, dtype=float),
+        "interval_width": np.zeros(n, dtype=float),
+        "guarantee_checks_passed": np.ones(n, dtype=float),
+        "bms_trip_mask": np.zeros(n, dtype=float),
+        "certificates": [None] * n,
+        "solver_status": ["ok"] * n,
+        "expected_cost_usd": 0.0,
+        "carbon_kg": 0.0,
     }
 
 
@@ -335,6 +568,14 @@ def run_single(
         horizon=horizon,
         fault_overrides=fault_overrides,
     )
+
+    optimization_cfg = _load_optimization_cfg()
+    dc3s_cfg = _load_dc3s_cfg()
+    if dc3s_overrides:
+        dc3s_cfg = _deep_update(dc3s_cfg, dc3s_overrides)
+
+    constraints = _battery_constraints(optimization_cfg)
+
     load_obs = x_obs["load_mw"].to_numpy(dtype=float)
     renew_obs = x_obs["renewables_mw"].to_numpy(dtype=float)
     load_true = x_true["load_mw"].to_numpy(dtype=float)
@@ -343,82 +584,170 @@ def run_single(
     carbon = x_obs["carbon_kg_per_mwh"].to_numpy(dtype=float)
     telemetry_events = _to_telemetry_events(x_obs=x_obs, event_log=event_log)
 
-    optimization_cfg = _load_optimization_cfg()
-    dc3s_cfg = _load_dc3s_cfg()
-    if dc3s_overrides:
-        dc3s_cfg = _deep_update(dc3s_cfg, dc3s_overrides)
+    n = len(load_obs)
+    controllers = ("deterministic_lp", "robust_fixed_interval", "dc3s_wrapped")
 
-    controllers = ["deterministic_lp", "robust_fixed_interval", "naive_safe_clip", "dc3s_wrapped"]
-    results = {
-        controller: _run_controller_episode(
-            controller=controller,
-            scenario=scenario,
-            seed=int(seed),
-            timestamps=x_obs["timestamp"],
-            load_obs=load_obs,
-            renew_obs=renew_obs,
-            load_true=load_true,
-            renew_true=renew_true,
-            price=price,
-            carbon=carbon,
-            event_log=event_log,
-            telemetry_events=telemetry_events,
-            optimization_cfg=optimization_cfg,
-            dc3s_cfg=dc3s_cfg,
+    results: dict[str, dict[str, Any]] = {}
+    for controller in controllers:
+        plant = BatteryPlant(
+            soc_mwh=float(constraints["initial_soc_mwh"]),
+            min_soc_mwh=float(constraints["min_soc_mwh"]),
+            max_soc_mwh=float(constraints["max_soc_mwh"]),
+            charge_eff=float(constraints["charge_efficiency"]),
+            discharge_eff=float(constraints["discharge_efficiency"]),
+            dt_hours=float(constraints["time_step_hours"]),
         )
-        for controller in controllers
-    }
+        soc_channel = SOCTelemetryChannel(
+            _soc_fault_config_for_episode(
+                scenario=scenario,
+                event_log=event_log,
+                seed=int(seed),
+                fault_overrides=fault_overrides,
+            )
+        )
+        dc3s_state = _DC3SLoopState(detector=PageHinkleyDetector.from_state(None, cfg=dc3s_cfg.get("drift", {})))
+
+        buf = _init_controller_buffers(n)
+        for t in range(n):
+            t_end = n
+            load_window = load_obs[t:t_end]
+            renew_window = renew_obs[t:t_end]
+            price_window = price[t:t_end]
+            carbon_window = carbon[t:t_end]
+            current_true_soc = float(plant.soc_mwh)
+            observed_soc, _ = soc_channel.observe(current_true_soc)
+
+            if controller == "deterministic_lp":
+                step = _controller_step_deterministic(
+                    load_window=load_window,
+                    renew_window=renew_window,
+                    price_window=price_window,
+                    carbon_window=carbon_window,
+                    optimization_cfg=optimization_cfg,
+                    observed_soc_mwh=float(observed_soc),
+                )
+            elif controller == "robust_fixed_interval":
+                step = _controller_step_robust_fixed(
+                    load_window=load_window,
+                    renew_window=renew_window,
+                    price_window=price_window,
+                    optimization_cfg=optimization_cfg,
+                    observed_soc_mwh=float(observed_soc),
+                )
+            else:
+                step = _controller_step_dc3s(
+                    load_window=load_window,
+                    renew_window=renew_window,
+                    price_window=price_window,
+                    carbon_window=carbon_window,
+                    load_true_t=float(load_true[t]),
+                    observed_soc_mwh=float(observed_soc),
+                    current_true_soc_mwh=current_true_soc,
+                    telemetry_event=telemetry_events[t],
+                    optimization_cfg=optimization_cfg,
+                    dc3s_cfg=dc3s_cfg,
+                    state=dc3s_state,
+                    command_id=f"{scenario}-{seed}-{controller}-{t:04d}",
+                )
+
+            safe_charge = float(step["safe_charge_mw"])
+            safe_discharge = float(step["safe_discharge_mw"])
+            guarantee_ok = bool(step.get("guarantee_checks_passed", True))
+
+            if not guarantee_ok:
+                buf["bms_trip_mask"][t] = 1.0
+                applied_charge = 0.0
+                applied_discharge = 0.0
+            else:
+                applied_charge = safe_charge
+                applied_discharge = safe_discharge
+
+            next_soc = float(plant.step(charge_mw=applied_charge, discharge_mw=applied_discharge))
+            violation_after_apply = bool(next_soc < constraints["min_soc_mwh"] or next_soc > constraints["max_soc_mwh"])
+            cert = step.get("certificate")
+            if isinstance(cert, dict):
+                cert["true_soc_violation_after_apply"] = violation_after_apply
+                buf["certificates"][t] = cert
+
+            buf["proposed_charge_mw"][t] = float(step["proposed_charge_mw"])
+            buf["proposed_discharge_mw"][t] = float(step["proposed_discharge_mw"])
+            buf["safe_charge_mw"][t] = safe_charge
+            buf["safe_discharge_mw"][t] = safe_discharge
+            buf["soc_true_mwh"][t] = next_soc
+            buf["soc_observed_mwh"][t] = float(observed_soc)
+            buf["interval_lower"][t] = float(np.asarray(step["interval_lower"], dtype=float)[0])
+            buf["interval_upper"][t] = float(np.asarray(step["interval_upper"], dtype=float)[0])
+            buf["w_t"][t] = float(step.get("w_t", 1.0))
+            buf["delta_mw"][t] = float(step.get("delta_mw", 0.0))
+            buf["interval_width"][t] = float(step.get("interval_width", max(0.0, buf["interval_upper"][t] - buf["interval_lower"][t])))
+            buf["guarantee_checks_passed"][t] = 1.0 if guarantee_ok else 0.0
+            buf["solver_status"][t] = str(step.get("solver_status", "ok"))
+
+            grid_import_true = max(
+                0.0,
+                float(load_true[t] - renew_true[t] - applied_discharge + applied_charge),
+            )
+            dt = float(constraints.get("time_step_hours", 1.0))
+            deg = float(constraints.get("degradation_cost_per_mwh", 10.0))
+            buf["expected_cost_usd"] += float(price[t]) * grid_import_true * dt
+            buf["expected_cost_usd"] += deg * (abs(applied_charge) + abs(applied_discharge)) * dt
+            buf["carbon_kg"] += float(carbon[t]) * grid_import_true * dt
+
+        results[controller] = buf
 
     baseline_cost = float(results["deterministic_lp"]["expected_cost_usd"])
+
     main_rows: list[dict[str, Any]] = []
     fault_rows: list[dict[str, Any]] = []
-    for controller, result in results.items():
+    for controller in controllers:
+        res = results[controller]
         metrics = compute_all_metrics(
             y_true=load_true,
             y_pred=load_obs,
-            lower_90=result["interval_lower"],
-            upper_90=result["interval_upper"],
-            proposed_charge_mw=result["proposed_charge_mw"],
-            proposed_discharge_mw=result["proposed_discharge_mw"],
-            safe_charge_mw=result["safe_charge_mw"],
-            safe_discharge_mw=result["safe_discharge_mw"],
-            soc_mwh=result["soc_mwh"],
-            constraints=result["constraints"],
-            certificates=result["certificates"],
+            lower_90=res["interval_lower"],
+            upper_90=res["interval_upper"],
+            proposed_charge_mw=res["proposed_charge_mw"],
+            proposed_discharge_mw=res["proposed_discharge_mw"],
+            safe_charge_mw=res["safe_charge_mw"],
+            safe_discharge_mw=res["safe_discharge_mw"],
+            soc_mwh=res["soc_true_mwh"],
+            true_soc_mwh=res["soc_true_mwh"],
+            constraints=constraints,
+            certificates=res["certificates"],
             event_log=event_log,
-            true_soc_mwh=result["soc_true_mwh"],
-            bms_trip_mask=result["bms_trip_mask"],
+            bms_trip_mask=res["bms_trip_mask"],
             load_true=load_true,
             renewables_true=renew_true,
         )
+
         cost_delta_pct = None
         if baseline_cost > 0:
-            cost_delta_pct = 100.0 * (float(result.get("expected_cost_usd", 0.0)) - baseline_cost) / baseline_cost
-        main_rows.append(
-            {
-                "scenario": scenario,
-                "seed": int(seed),
-                "controller": controller,
-                "policy": result["policy"],
-                "expected_cost_usd": result.get("expected_cost_usd"),
-                "carbon_kg": result.get("carbon_kg"),
-                "cost_delta_pct": float(cost_delta_pct) if cost_delta_pct is not None else None,
-                "mean_reliability_w": float(np.mean(result.get("reliability_w", np.ones_like(load_true)))),
-                "drift_flag_rate": float(np.mean(np.asarray(result.get("drift_flag", np.zeros_like(load_true)), dtype=float))),
-                "inflation_p95": float(np.quantile(np.asarray(result.get("inflation", np.ones_like(load_true)), dtype=float), 0.95)),
-                "guarantee_checks_passed_rate": float(
-                    np.mean(np.asarray(result.get("guarantee_checks_passed", np.ones_like(load_true)), dtype=float))
-                ),
-                **metrics,
-            }
+            cost_delta_pct = 100.0 * (float(res["expected_cost_usd"]) - baseline_cost) / baseline_cost
+
+        row = {
+            "scenario": scenario,
+            "seed": int(seed),
+            "controller": controller,
+            "policy": controller,
+            "expected_cost_usd": float(res["expected_cost_usd"]),
+            "carbon_kg": float(res["carbon_kg"]),
+            "cost_delta_pct": float(cost_delta_pct) if cost_delta_pct is not None else None,
+            "mean_reliability_w": float(np.mean(res["w_t"])),
+            "mean_delta_mw": float(np.mean(res["delta_mw"])),
+            "mean_interval_width_cert": float(np.mean(res["interval_width"])),
+            "solver_status_ok_rate": float(np.mean(np.asarray([s in {"ok", "deterministic", "optimal"} for s in res["solver_status"]], dtype=float))),
+            "guarantee_checks_passed_rate": float(np.mean(res["guarantee_checks_passed"])),
+            **metrics,
+        }
+        main_rows.append(row)
+
+        violated = np.asarray(metrics["true_soc_violation_mask"], dtype=bool)
+        interventions = (
+            np.abs(np.asarray(res["proposed_charge_mw"], dtype=float) - np.asarray(res["safe_charge_mw"], dtype=float)) > 1e-6
+        ) | (
+            np.abs(np.asarray(res["proposed_discharge_mw"], dtype=float) - np.asarray(res["safe_discharge_mw"], dtype=float)) > 1e-6
         )
 
-        violations = np.asarray(metrics["true_soc_violation_mask"], dtype=bool)
-        interventions = (
-            np.abs(np.asarray(result["proposed_charge_mw"]) - np.asarray(result["safe_charge_mw"])) > 1e-6
-        ) | (
-            np.abs(np.asarray(result["proposed_discharge_mw"]) - np.asarray(result["safe_discharge_mw"])) > 1e-6
-        )
         for fault_col in FAULT_COLUMNS:
             mask = event_log[fault_col].to_numpy(dtype=int) > 0
             fault_rows.append(
@@ -428,7 +757,8 @@ def run_single(
                     "controller": controller,
                     "fault_type": fault_col,
                     "fault_count": int(mask.sum()),
-                    "violation_rate_at_fault": float(np.mean(violations[mask])) if mask.any() else 0.0,
+                    "true_soc_violation_rate_at_fault": float(np.mean(violated[mask])) if mask.any() else 0.0,
+                    "violation_rate_at_fault": float(np.mean(violated[mask])) if mask.any() else 0.0,
                     "intervention_rate_at_fault": float(np.mean(interventions[mask])) if mask.any() else 0.0,
                 }
             )
@@ -483,12 +813,13 @@ def _plot_true_soc_curves(main_df: pd.DataFrame, out_violation: Path, out_severi
     fig.savefig(out_violation, dpi=220)
     plt.close(fig)
 
+    sev_col = "true_soc_violation_severity_p95_mwh" if "true_soc_violation_severity_p95_mwh" in subset.columns else "true_soc_violation_severity_p95"
     fig, ax = plt.subplots(figsize=(8, 5))
     if subset.empty:
         ax.text(0.5, 0.5, "No dropout/drift_combo rows in run", ha="center", va="center")
     else:
         for controller, sub in subset.groupby("controller", sort=True):
-            ax.plot(sub["seed"], sub["true_soc_violation_severity_p95"], marker="o", linestyle="-", label=controller)
+            ax.plot(sub["seed"], sub[sev_col], marker="o", linestyle="-", label=controller)
         ax.legend()
     ax.set_xlabel("Seed")
     ax.set_ylabel("True SOC Violation Severity P95 (MWh)")
@@ -551,8 +882,11 @@ def run_fault_sweep(
             overrides: dict[str, Any] = {}
             if dim == "dropout":
                 overrides["dropout_rate"] = float(level)
+                overrides["soc_dropout_prob"] = float(level)
             elif dim == "delay_seconds":
                 overrides["delay_seconds"] = float(level)
+                overrides["delay_rate"] = 0.50 if float(level) > 0 else 0.0
+                overrides["soc_stale_prob"] = 0.35 if float(level) >= 5.0 else 0.0
             elif dim == "out_of_order":
                 overrides["out_of_order_rate"] = float(level)
             elif dim == "spike_sigma":
@@ -574,7 +908,12 @@ def run_fault_sweep(
                             **row,
                         }
                     )
-    sweep_df = pd.DataFrame(rows).sort_values(["fault_dimension", "severity", "scenario", "seed", "controller"]).reset_index(drop=True)
+
+    sweep_df = (
+        pd.DataFrame(rows)
+        .sort_values(["fault_dimension", "severity", "scenario", "seed", "controller"])
+        .reset_index(drop=True)
+    )
     sweep_df.to_csv(out_dir / "cpsbench_merged_sweep.csv", index=False, float_format="%.6f")
     return sweep_df
 
@@ -618,7 +957,9 @@ def run_suite(
     fault_df.to_csv(fault_csv, index=False, float_format="%.6f")
     _plot_calibration(main_df, calibration_png)
     _plot_violation_vs_cost(main_df, violation_png)
+
     sweep_df = run_fault_sweep(seeds=seeds_list, horizon=horizon, out_dir=out)
+    sev_col = "true_soc_violation_severity_p95_mwh" if "true_soc_violation_severity_p95_mwh" in sweep_df.columns else "true_soc_violation_severity_p95"
     _plot_sweep_metric(
         sweep_df=sweep_df,
         metric_col="true_soc_violation_rate",
@@ -628,7 +969,7 @@ def run_suite(
     )
     _plot_sweep_metric(
         sweep_df=sweep_df,
-        metric_col="true_soc_violation_severity_p95",
+        metric_col=sev_col,
         ylabel="True SOC Violation Severity P95 (MWh)",
         title="Violation Severity (P95) vs Fault Severity",
         out_path=fig_violation_severity,
@@ -645,6 +986,13 @@ def run_suite(
         "controller_summary": {
             controller: {
                 "mean_true_soc_violation_rate": float(sub["true_soc_violation_rate"].mean()),
+                "mean_true_soc_violation_severity_p95_mwh": float(
+                    sub[
+                        "true_soc_violation_severity_p95_mwh"
+                        if "true_soc_violation_severity_p95_mwh" in sub.columns
+                        else "true_soc_violation_severity_p95"
+                    ].mean()
+                ),
                 "mean_intervention_rate": float(sub["intervention_rate"].mean()),
                 "mean_cost_usd": float(sub["expected_cost_usd"].dropna().mean()) if not sub["expected_cost_usd"].dropna().empty else None,
             }
