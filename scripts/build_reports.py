@@ -72,6 +72,31 @@ def _load_uncertainty_cfg(ctx: ReportContext) -> dict:
     return {"enabled": False}
 
 
+def _parse_uncertainty_targets(cfg: dict, default_targets: list[str]) -> list[str]:
+    targets = cfg.get("targets")
+    if targets:
+        if isinstance(targets, str):
+            if targets.strip().lower() == "all":
+                return default_targets
+            return [t.strip() for t in targets.split(",") if t.strip()]
+        if isinstance(targets, list):
+            parsed = [str(t).strip() for t in targets if str(t).strip()]
+            if parsed:
+                return parsed
+    target = cfg.get("target")
+    if target and str(target).strip():
+        return [str(target).strip()]
+    return default_targets
+
+
+def _format_uncertainty_path(template: str, target: str, suffix: str, multi: bool) -> Path:
+    if "{target}" in template:
+        return Path(template.format(target=target))
+    if multi:
+        return Path(f"artifacts/backtests/{target}_{suffix}.npz")
+    return Path(template)
+
+
 def _conformal_bounds(target: str, yhat: np.ndarray, ctx: ReportContext, cfg: dict) -> dict | None:
     if not cfg.get("enabled", False):
         return None
@@ -1294,6 +1319,206 @@ def build_formal_report(
     out_path.write_text("".join(lines), encoding="utf-8")
 
 
+def _load_json_file(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def build_publication_uncertainty_artifacts(ctx: ReportContext) -> None:
+    """Build publication tables/figures for coverage-width and transfer sections."""
+    publication_dir = ctx.repo_root / "reports" / "publication"
+    publication_dir.mkdir(parents=True, exist_ok=True)
+
+    unc_cfg = _load_uncertainty_cfg(ctx)
+    targets = _parse_uncertainty_targets(unc_cfg, ["load_mw", "wind_mw", "solar_mw"])
+    cal_template = str(unc_cfg.get("calibration_npz", "artifacts/backtests/{target}_calibration.npz"))
+    test_template = str(unc_cfg.get("test_npz", "artifacts/backtests/{target}_test.npz"))
+    artifacts_dir = Path(unc_cfg.get("artifacts_dir", "artifacts/uncertainty"))
+
+    group_rows: list[dict] = []
+    for target in targets:
+        conformal_path = artifacts_dir / f"{target}_conformal.json"
+        if not conformal_path.exists():
+            continue
+        ci = load_conformal(conformal_path)
+        test_path = _format_uncertainty_path(test_template, target, "test", multi=True)
+        if not test_path.exists():
+            test_path = _format_uncertainty_path(test_template, target, "test", multi=False)
+        if not test_path.exists():
+            continue
+        payload = np.load(test_path)
+        y_true = np.asarray(payload["y_true"], dtype=float)
+        if "q_lo" in payload.files and "q_hi" in payload.files:
+            q_lo = np.asarray(payload["q_lo"], dtype=float)
+            q_hi = np.asarray(payload["q_hi"], dtype=float)
+            lower, upper = ci.predict_interval_cqr(q_lo, q_hi)
+        else:
+            y_pred = np.asarray(payload["y_pred"], dtype=float)
+            lower, upper = ci.predict_interval(y_pred)
+
+        y_true_flat = y_true.reshape(-1)
+        lower_flat = np.asarray(lower, dtype=float).reshape(-1)
+        upper_flat = np.asarray(upper, dtype=float).reshape(-1)
+        width = upper_flat - lower_flat
+        covered = ((y_true_flat >= lower_flat) & (y_true_flat <= upper_flat)).astype(float)
+
+        vol = pd.Series(y_true_flat).rolling(window=24, min_periods=6).std().fillna(0.0).to_numpy()
+        quantiles = np.quantile(vol, [1 / 3, 2 / 3]) if len(vol) > 2 else np.array([0.0, 0.0])
+        labels = np.where(vol <= quantiles[0], "low", np.where(vol <= quantiles[1], "mid", "high"))
+        for regime in ("low", "mid", "high"):
+            mask = labels == regime
+            if not np.any(mask):
+                continue
+            group_rows.append(
+                {
+                    "target": target,
+                    "regime": regime,
+                    "picp_group_90": float(np.mean(covered[mask])),
+                    "width_group_mean": float(np.mean(width[mask])),
+                    "n": int(np.sum(mask)),
+                }
+            )
+
+    table3 = pd.DataFrame(group_rows)
+    table3_path = publication_dir / "table3_group_coverage.csv"
+    table3.to_csv(table3_path, index=False, float_format="%.6f")
+    if not table3.empty:
+        cqr_table = table3.rename(
+            columns={
+                "regime": "group",
+                "picp_group_90": "picp_90",
+                "width_group_mean": "mean_width",
+                "n": "sample_count",
+            }
+        )[["target", "group", "picp_90", "mean_width", "sample_count"]]
+    else:
+        cqr_table = pd.DataFrame(columns=["target", "group", "picp_90", "mean_width", "sample_count"])
+    cqr_table.to_csv(publication_dir / "cqr_group_coverage.csv", index=False, float_format="%.6f")
+    # Keep old and new figure names in sync.
+    fig_cov_tradeoff = publication_dir / "fig_coverage_width_tradeoff.png"
+    fig_cov_alias = publication_dir / "fig_coverage_width.png"
+    fig, ax = plt.subplots(figsize=(7, 4))
+    if cqr_table.empty:
+        ax.text(0.5, 0.5, "No group coverage rows", ha="center", va="center")
+    else:
+        for _, row in cqr_table.iterrows():
+            ax.scatter(float(row["mean_width"]), float(row["picp_90"]), s=70)
+            ax.text(float(row["mean_width"]), float(row["picp_90"]), f" {row['group']}")
+        ax.axhline(0.90, color="black", linestyle="--", linewidth=1.0)
+    ax.set_xlabel("Mean Width")
+    ax.set_ylabel("PICP@90")
+    ax.set_title("Coverage-Width Tradeoff")
+    ax.grid(alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(fig_cov_tradeoff, dpi=220)
+    fig.savefig(fig_cov_alias, dpi=220)
+    plt.close(fig)
+
+    # Region compare table from locked DE/US metrics snapshots.
+    region_rows: list[dict] = []
+    for region, path in [
+        ("DE", ctx.repo_root / "reports" / "week2_metrics.json"),
+        ("US", ctx.repo_root / "reports" / "eia930" / "week2_metrics.json"),
+    ]:
+        payload = _load_json_file(path)
+        targets_payload = payload.get("targets", {}) if isinstance(payload.get("targets"), dict) else {}
+        for target, vals in targets_payload.items():
+            if not isinstance(vals, dict):
+                continue
+            gbm = vals.get("gbm", {}) if isinstance(vals.get("gbm"), dict) else {}
+            region_rows.append(
+                {
+                    "region": region,
+                    "target": target,
+                    "rmse": gbm.get("rmse"),
+                    "mae": gbm.get("mae"),
+                    "mape": gbm.get("mape"),
+                    "smape": gbm.get("smape"),
+                    "r2": gbm.get("r2"),
+                }
+            )
+    table4 = pd.DataFrame(region_rows)
+    table4.to_csv(publication_dir / "table4_region_compare.csv", index=False, float_format="%.6f")
+
+    # Transfer table from available transfer/uncertainty artifacts (best-effort, evidence-linked).
+    transfer_rows: list[dict] = []
+    transfer_candidates = [
+        ("de_to_us", ctx.repo_root / "reports" / "publication" / "uncertainty_de_transfer_us.json"),
+        ("us_to_de", ctx.repo_root / "reports" / "publication" / "uncertainty_us_transfer_de.json"),
+        ("de_seasonal_shift", ctx.repo_root / "reports" / "publication" / "uncertainty_de.json"),
+        ("us_seasonal_shift", ctx.repo_root / "reports" / "publication" / "uncertainty_us.json"),
+    ]
+    for name, path in transfer_candidates:
+        payload = _load_json_file(path)
+        if not payload:
+            continue
+        transfer_rows.append(
+            {
+                "transfer_case": name,
+                "source_artifact": str(path.relative_to(ctx.repo_root)),
+                "global_coverage": payload.get("global_coverage"),
+                "global_mean_width": payload.get("global_mean_width"),
+            }
+        )
+    if not transfer_rows:
+        transfer_rows.append(
+            {
+                "transfer_case": "pending_transfer_artifacts",
+                "source_artifact": None,
+                "global_coverage": None,
+                "global_mean_width": None,
+            }
+        )
+    table5 = pd.DataFrame(transfer_rows)
+    table5_path = publication_dir / "table5_transfer.csv"
+    table5.to_csv(table5_path, index=False, float_format="%.6f")
+    transfer_alias = table5.rename(
+        columns={
+            "global_mean_width": "mean_width",
+            "global_coverage": "picp_90",
+        }
+    )
+    if "mean_width" not in transfer_alias.columns:
+        transfer_alias["mean_width"] = np.nan
+    if "picp_90" not in transfer_alias.columns:
+        transfer_alias["picp_90"] = np.nan
+    if "true_soc_violation_rate" not in transfer_alias.columns:
+        transfer_alias["true_soc_violation_rate"] = np.nan
+    if "true_soc_violation_severity_p95_mwh" not in transfer_alias.columns:
+        transfer_alias["true_soc_violation_severity_p95_mwh"] = np.nan
+    if "cost_delta_pct" not in transfer_alias.columns:
+        transfer_alias["cost_delta_pct"] = np.nan
+    transfer_alias.to_csv(publication_dir / "transfer_stress.csv", index=False, float_format="%.6f")
+
+    # Transfer coverage figure.
+    fig_path = publication_dir / "fig_transfer_coverage.png"
+    fig, ax = plt.subplots(figsize=(7, 4))
+    transfer_numeric = table5.dropna(subset=["global_coverage"])
+    if not transfer_numeric.empty:
+        ax.bar(
+            transfer_numeric["transfer_case"].astype(str).tolist(),
+            transfer_numeric["global_coverage"].astype(float).tolist(),
+            color="#4c78a8",
+        )
+        ax.axhline(0.90, color="black", linestyle="--", linewidth=1.0)
+        ax.set_ylim(0, 1.05)
+    else:
+        ax.text(0.5, 0.5, "Transfer artifacts unavailable", ha="center", va="center")
+        ax.set_xticks([])
+        ax.set_yticks([])
+    ax.set_title("Transfer Coverage")
+    ax.set_ylabel("Coverage")
+    ax.grid(axis="y", alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(fig_path, dpi=220)
+    plt.close(fig)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--features", default="data/processed/features.parquet")
@@ -1331,6 +1556,7 @@ def main():
     build_impact_report(ctx)
     build_rolling_backtest(ctx)
     build_case_study(ctx)
+    build_publication_uncertainty_artifacts(ctx)
 
     print("Reports and figures generated.")
 
