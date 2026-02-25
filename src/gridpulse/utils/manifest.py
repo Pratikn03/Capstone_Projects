@@ -5,6 +5,7 @@ import json
 import subprocess
 import sys
 from datetime import datetime, timezone
+import hashlib
 from pathlib import Path
 from typing import Any
 import shutil
@@ -93,11 +94,26 @@ def get_system_info() -> dict[str, Any]:
     }
 
 
+def _sha256_path(path: Path) -> str:
+    hasher = hashlib.sha256()
+    with path.open("rb") as handle:
+        while True:
+            chunk = handle.read(1024 * 1024)
+            if not chunk:
+                break
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
 def create_run_manifest(
     config_path: Path | str,
     output_dir: Path | str,
     run_id: str | None = None,
     extra_metadata: dict[str, Any] | None = None,
+    data_manifest_path: Path | str | None = "data/dashboard/data_manifest.json",
+    data_manifest_sha256: str | None = None,
+    split_boundaries: dict[str, Any] | None = None,
+    schema_hash: str | None = None,
 ) -> dict[str, Any]:
     """
     Create a comprehensive training run manifest for reproducibility.
@@ -117,6 +133,25 @@ def create_run_manifest(
     
     if run_id is None:
         run_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+
+    resolved_data_manifest = None
+    if data_manifest_path:
+        resolved_data_manifest = Path(data_manifest_path)
+        if not resolved_data_manifest.is_absolute():
+            resolved_data_manifest = Path.cwd() / resolved_data_manifest
+
+    data_manifest_payload: dict[str, Any] = {}
+    if resolved_data_manifest and resolved_data_manifest.exists():
+        try:
+            data_manifest_payload = json.loads(resolved_data_manifest.read_text(encoding="utf-8"))
+        except Exception:
+            data_manifest_payload = {}
+        if data_manifest_sha256 is None:
+            data_manifest_sha256 = _sha256_path(resolved_data_manifest)
+        if schema_hash is None and isinstance(data_manifest_payload, dict):
+            schema_hash = data_manifest_payload.get("schema_hash") or data_manifest_payload.get("manifest_sha256")
+        if split_boundaries is None and isinstance(data_manifest_payload, dict):
+            split_boundaries = data_manifest_payload.get("split_boundaries")
     
     manifest = {
         "run_id": run_id,
@@ -128,6 +163,10 @@ def create_run_manifest(
             "path": str(config_path),
             "exists": config_path.exists(),
         },
+        "data_manifest_path": str(resolved_data_manifest) if resolved_data_manifest is not None else None,
+        "data_manifest_sha256": data_manifest_sha256,
+        "split_boundaries": split_boundaries if isinstance(split_boundaries, dict) else {},
+        "schema_hash": schema_hash,
     }
     
     # Copy config file to output directory for snapshot
@@ -149,6 +188,7 @@ def create_run_manifest(
     # Save manifest
     manifest_path = output_dir / f"manifest_{run_id}.json"
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    manifest["manifest_path"] = str(manifest_path)
     
     return manifest
 

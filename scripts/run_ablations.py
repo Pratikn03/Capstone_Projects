@@ -21,6 +21,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
+from scipy.stats import wilcoxon
 
 import numpy as np
 import pandas as pd
@@ -38,6 +39,7 @@ from gridpulse.optimizer.robust_dispatch import (
 )
 from gridpulse.evaluation.stats import compare_systems_statistically, bootstrap_ci
 from gridpulse.utils.seed import set_seed
+from gridpulse.cpsbench_iot.runner import run_suite as run_cpsbench_suite
 
 
 def load_test_data(data_path: Path) -> dict[str, np.ndarray]:
@@ -392,7 +394,6 @@ def plot_ablation_results(results_df: pd.DataFrame, output_dir: Path) -> None:
     """Create bar chart comparison of ablation scenarios."""
     try:
         import matplotlib.pyplot as plt
-        import seaborn as sns
     except ImportError:
         print("matplotlib/seaborn not available, skipping plot")
         return
@@ -431,9 +432,237 @@ def plot_ablation_results(results_df: pd.DataFrame, output_dir: Path) -> None:
     print(f"Saved ablation plot: {plot_path}")
 
 
+def _load_dc3s_ablation_cfg(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(payload, dict):
+        return {}
+    return payload
+
+
+def _bootstrap_ci_mean(values: np.ndarray, n_bootstrap: int = 10000, alpha: float = 0.05) -> tuple[float, float]:
+    vals = np.asarray(values, dtype=float)
+    vals = vals[np.isfinite(vals)]
+    if vals.size == 0:
+        return (float("nan"), float("nan"))
+    if vals.size == 1:
+        return (float(vals[0]), float(vals[0]))
+    rng = np.random.default_rng(42)
+    idx = rng.integers(0, vals.size, size=(n_bootstrap, vals.size))
+    means = vals[idx].mean(axis=1)
+    lo = float(np.quantile(means, alpha / 2.0))
+    hi = float(np.quantile(means, 1.0 - (alpha / 2.0)))
+    return lo, hi
+
+
+def _bootstrap_ci_relative_reduction(
+    baseline: np.ndarray,
+    candidate: np.ndarray,
+    n_bootstrap: int = 10000,
+    alpha: float = 0.05,
+) -> tuple[float, float]:
+    base = np.asarray(baseline, dtype=float)
+    cand = np.asarray(candidate, dtype=float)
+    mask = np.isfinite(base) & np.isfinite(cand) & (base > 1e-9)
+    base = base[mask]
+    cand = cand[mask]
+    if base.size == 0:
+        return (float("nan"), float("nan"))
+    if base.size == 1:
+        rel = float((base[0] - cand[0]) / base[0])
+        return (rel, rel)
+    rng = np.random.default_rng(42)
+    idx = rng.integers(0, base.size, size=(n_bootstrap, base.size))
+    rel = (base[idx] - cand[idx]) / np.maximum(base[idx], 1e-9)
+    rel_mean = rel.mean(axis=1)
+    lo = float(np.quantile(rel_mean, alpha / 2.0))
+    hi = float(np.quantile(rel_mean, 1.0 - (alpha / 2.0)))
+    return lo, hi
+
+
+def _wilcoxon_safe(x: pd.Series, y: pd.Series) -> tuple[float | None, float | None]:
+    """Run Wilcoxon signed-rank safely when vectors are identical or too short."""
+    xv = pd.to_numeric(x, errors="coerce").to_numpy(dtype=float)
+    yv = pd.to_numeric(y, errors="coerce").to_numpy(dtype=float)
+    mask = np.isfinite(xv) & np.isfinite(yv)
+    xv = xv[mask]
+    yv = yv[mask]
+    if len(xv) < 2:
+        return None, None
+    if np.allclose(xv - yv, 0.0, rtol=0.0, atol=1e-12):
+        return 0.0, 1.0
+    stat, p = wilcoxon(xv, yv)
+    return float(stat), float(p)
+
+
+def run_dc3s_ablation_matrix(
+    *,
+    output_dir: Path,
+    seeds: list[int],
+    scenario: str = "drift_combo",
+    horizon: int = 96,
+    cfg_path: Path = Path("configs/dc3s_ablations.yaml"),
+) -> dict:
+    cfg = _load_dc3s_ablation_cfg(cfg_path)
+    if len(seeds) != 10:
+        raise ValueError("Task-2 protocol requires exactly 10 seeds")
+
+    scenarios = cfg.get("scenarios")
+    if not isinstance(scenarios, list) or not scenarios:
+        scenarios = [str(scenario), "dropout", "drift_combo"]
+    scenarios = list(dict.fromkeys(str(s) for s in scenarios))
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    suite_out = output_dir / "_cpsbench_ablation_suite"
+    run_cpsbench_suite(
+        scenarios=scenarios,
+        seeds=seeds,
+        out_dir=suite_out,
+        horizon=int(horizon),
+    )
+    main_df = pd.read_csv(suite_out / "dc3s_main_table.csv")
+
+    sev_col = "true_soc_violation_severity_p95_mwh"
+    if sev_col not in main_df.columns:
+        sev_col = "true_soc_violation_severity_p95"
+
+    metrics = {
+        "true_soc_violation_rate": {"threshold_rel": 0.10},
+        sev_col: {"threshold_rel": 0.10},
+    }
+    baselines = ["robust_fixed_interval", "deterministic_lp"]
+
+    summary_rows: list[dict[str, Any]] = []
+    stats_summary: dict[str, Any] = {
+        "generated_at": datetime.utcnow().isoformat(),
+        "scenarios": scenarios,
+        "seeds": seeds,
+        "wilcoxon_threshold_p": 0.01,
+        "bootstrap_ci": 0.95,
+        "comparisons": {},
+    }
+
+    for baseline in baselines:
+        base_df = main_df[main_df["controller"] == baseline]
+        dc3s_df = main_df[main_df["controller"] == "dc3s_wrapped"]
+        merged = base_df.merge(
+            dc3s_df,
+            on=["scenario", "seed"],
+            suffixes=("_baseline", "_dc3s"),
+            how="inner",
+        )
+        for sc in scenarios:
+            sub = merged[merged["scenario"] == sc]
+            if sub.empty:
+                continue
+
+            row: dict[str, Any] = {
+                "scenario": sc,
+                "baseline_controller": baseline,
+                "candidate_controller": "dc3s_wrapped",
+                "n_pairs": int(len(sub)),
+            }
+            stats_summary["comparisons"].setdefault(sc, {})[baseline] = {}
+            overall_pass = True
+
+            for metric, metric_cfg in metrics.items():
+                b = pd.to_numeric(sub[f"{metric}_baseline"], errors="coerce").to_numpy(dtype=float)
+                d = pd.to_numeric(sub[f"{metric}_dc3s"], errors="coerce").to_numpy(dtype=float)
+                m = np.isfinite(b) & np.isfinite(d)
+                b = b[m]
+                d = d[m]
+                if len(b) == 0:
+                    continue
+
+                rel_reduction = (b - d) / np.maximum(b, 1e-9)
+                ci_lo, ci_hi = _bootstrap_ci_mean(d, n_bootstrap=int(cfg.get("bootstrap_n", 10000)))
+                rel_lo, rel_hi = _bootstrap_ci_relative_reduction(
+                    b,
+                    d,
+                    n_bootstrap=int(cfg.get("bootstrap_n", 10000)),
+                )
+                stat, p = _wilcoxon_safe(pd.Series(b), pd.Series(d))
+                mean_rel = float(np.mean(rel_reduction))
+                passes_rel = bool(mean_rel >= float(metric_cfg["threshold_rel"]))
+                passes_sig = bool((p is not None) and (p < 0.01))
+                overall_pass = overall_pass and passes_rel and passes_sig
+
+                metric_key = metric.replace("_mwh", "")
+                row[f"{metric_key}_baseline_mean"] = float(np.mean(b))
+                row[f"{metric_key}_dc3s_mean"] = float(np.mean(d))
+                row[f"{metric_key}_dc3s_ci_low"] = float(ci_lo)
+                row[f"{metric_key}_dc3s_ci_high"] = float(ci_hi)
+                row[f"{metric_key}_rel_reduction"] = mean_rel
+                row[f"{metric_key}_rel_reduction_ci_low"] = float(rel_lo)
+                row[f"{metric_key}_rel_reduction_ci_high"] = float(rel_hi)
+                row[f"{metric_key}_wilcoxon_stat"] = stat
+                row[f"{metric_key}_wilcoxon_p"] = p
+                row[f"{metric_key}_passes_10pct"] = passes_rel
+                row[f"{metric_key}_passes_p01"] = passes_sig
+
+                stats_summary["comparisons"][sc][baseline][metric] = {
+                    "n_pairs": int(len(b)),
+                    "baseline_mean": float(np.mean(b)),
+                    "dc3s_mean": float(np.mean(d)),
+                    "rel_reduction_mean": mean_rel,
+                    "rel_reduction_ci_low": float(rel_lo),
+                    "rel_reduction_ci_high": float(rel_hi),
+                    "wilcoxon_stat": stat,
+                    "wilcoxon_p": p,
+                    "passes_10pct": passes_rel,
+                    "passes_p01": passes_sig,
+                }
+
+            row["passes_all_thresholds"] = bool(overall_pass)
+            summary_rows.append(row)
+
+    summary_df = pd.DataFrame(summary_rows).sort_values(["scenario", "baseline_controller"]).reset_index(drop=True)
+    table2_path = output_dir / "table2_ablations.csv"
+    summary_df.to_csv(table2_path, index=False, float_format="%.6f")
+
+    stats_path = output_dir / "stats_summary.json"
+    stats_summary["table2_ablations"] = str(table2_path)
+    stats_summary["overall_pass"] = bool(summary_df["passes_all_thresholds"].all()) if not summary_df.empty else False
+    stats_path.write_text(json.dumps(stats_summary, indent=2), encoding="utf-8")
+
+    publication_dir = Path("reports/publication")
+    publication_dir.mkdir(parents=True, exist_ok=True)
+    summary_df.to_csv(publication_dir / "table2_ablations.csv", index=False, float_format="%.6f")
+    (publication_dir / "stats_summary.json").write_text(stats_path.read_text(encoding="utf-8"), encoding="utf-8")
+
+    return {
+        "rows": int(len(summary_df)),
+        "scenarios": scenarios,
+        "table2_path": str(table2_path),
+        "stats_path": str(stats_path),
+        "overall_pass": bool(stats_summary.get("overall_pass", False)),
+    }
+
+
 def main():
     """CLI entrypoint."""
     parser = argparse.ArgumentParser(description="Run GridPulse ablation study")
+    parser.add_argument(
+        "--dc3s",
+        action="store_true",
+        help="Run DC3S CPSBench ablation matrix instead of legacy optimizer ablations",
+    )
+    parser.add_argument("--scenario", type=str, default="drift_combo", help="CPSBench scenario for --dc3s mode")
+    parser.add_argument("--horizon", type=int, default=96, help="CPSBench horizon for --dc3s mode")
+    parser.add_argument(
+        "--seeds",
+        nargs="*",
+        type=int,
+        default=None,
+        help="Seed list for --dc3s mode (default: 0..9)",
+    )
+    parser.add_argument(
+        "--dc3s-config",
+        type=Path,
+        default=Path("configs/dc3s_ablations.yaml"),
+        help="DC3S ablation config path",
+    )
     parser.add_argument(
         "--data",
         type=Path,
@@ -465,6 +694,18 @@ def main():
     )
     
     args = parser.parse_args()
+
+    if args.dc3s:
+        seeds = list(args.seeds or list(range(10)))
+        summary = run_dc3s_ablation_matrix(
+            output_dir=args.output,
+            seeds=seeds,
+            scenario=str(args.scenario),
+            horizon=int(args.horizon),
+            cfg_path=args.dc3s_config,
+        )
+        print(json.dumps(summary, indent=2))
+        return
     
     print("=" * 60)
     print("GridPulse Ablation Study")

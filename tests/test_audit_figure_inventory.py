@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 import json
 
 import scripts.audit_figure_inventory as fig_audit
+from gridpulse.cpsbench_iot.runner import REQUIRED_OUTPUTS
 
 
 def _write(path, data: bytes) -> None:
@@ -33,13 +34,7 @@ def test_audit_figure_inventory_main_writes_outputs(tmp_path, monkeypatch) -> No
     manifest.parent.mkdir(parents=True, exist_ok=True)
     manifest.write_text(json.dumps({"generated_at_utc": "2026-02-19T00:00:00Z"}), encoding="utf-8")
 
-    required = [
-        "dc3s_main_table.csv",
-        "dc3s_fault_breakdown.csv",
-        "calibration_plot.png",
-        "violation_vs_cost_curve.png",
-        "dc3s_run_summary.json",
-    ]
+    required = list(REQUIRED_OUTPUTS)
     for name in required:
         _write(tmp_path / "reports" / "publication" / name, b"ok")
     _write(tmp_path / "reports" / "figures" / "impact_savings.png", b"ok")

@@ -86,13 +86,14 @@ def _robust_cfg_from_constraints(constraints: Mapping[str, Any]) -> RobustDispat
     max_power = _f(constraints.get("max_power_mw"), 5.0)
     max_charge = _f(constraints.get("max_charge_mw"), max_power)
     max_discharge = _f(constraints.get("max_discharge_mw"), max_power)
-    efficiency = max(1e-6, _f(constraints.get("charge_efficiency"), _f(constraints.get("efficiency"), 0.95)))
+    charge_eff = max(1e-6, _f(constraints.get("charge_efficiency"), _f(constraints.get("efficiency"), 0.95)))
+    discharge_eff = max(1e-6, _f(constraints.get("discharge_efficiency"), _f(constraints.get("efficiency"), 0.95)))
     return RobustDispatchConfig(
         battery_capacity_mwh=capacity,
         battery_max_charge_mw=max_charge,
         battery_max_discharge_mw=max_discharge,
-        battery_charge_efficiency=efficiency,
-        battery_discharge_efficiency=efficiency,
+        battery_charge_efficiency=charge_eff,
+        battery_discharge_efficiency=discharge_eff,
         battery_initial_soc_mwh=_f(constraints.get("current_soc_mwh"), capacity / 2.0),
         battery_min_soc_mwh=_f(constraints.get("min_soc_mwh"), 0.0),
         battery_max_soc_mwh=_f(constraints.get("max_soc_mwh"), capacity),
@@ -100,7 +101,7 @@ def _robust_cfg_from_constraints(constraints: Mapping[str, Any]) -> RobustDispat
         default_price_per_mwh=_f(constraints.get("default_price_per_mwh"), 60.0),
         degradation_cost_per_mwh=_f(constraints.get("degradation_cost_per_mwh"), 10.0),
         risk_weight_worst_case=_f(constraints.get("risk_weight_worst_case"), 1.0),
-        time_step_hours=1.0,
+        time_step_hours=_f(constraints.get("time_step_hours"), 1.0),
         solver_name=str(constraints.get("solver_name", "appsi_highs")),
     )
 
