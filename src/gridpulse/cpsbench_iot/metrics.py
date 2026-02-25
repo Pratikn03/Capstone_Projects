@@ -80,6 +80,66 @@ def _compute_recovery_time(violations: np.ndarray, event_log: pd.DataFrame | Non
     return float(np.mean(recovery_steps))
 
 
+def _mean_recovery_steps(violation_mask: np.ndarray) -> float:
+    """Average number of steps until violations clear."""
+    idx = np.where(violation_mask)[0]
+    if idx.size == 0:
+        return 0.0
+    steps: list[float] = []
+    for i in idx:
+        cleared = np.where(~violation_mask[i:])[0]
+        if cleared.size > 0:
+            steps.append(float(cleared[0]))
+        else:
+            steps.append(float(len(violation_mask) - i))
+    return float(np.mean(steps)) if steps else 0.0
+
+
+def _next_soc(
+    *,
+    soc_now: float,
+    charge_mw: float,
+    discharge_mw: float,
+    dt_hours: float,
+    charge_efficiency: float,
+    discharge_efficiency: float,
+) -> float:
+    dt = max(float(dt_hours), 1e-9)
+    eta_c = max(float(charge_efficiency), 1e-6)
+    eta_d = max(float(discharge_efficiency), 1e-6)
+    return float(soc_now + dt * (eta_c * max(charge_mw, 0.0) - (max(discharge_mw, 0.0) / eta_d)))
+
+
+def summarize_true_soc_violations(true_soc: np.ndarray, min_soc: float, max_soc: float) -> dict[str, float]:
+    true_soc = np.asarray(true_soc, dtype=float)
+    below = true_soc < float(min_soc)
+    above = true_soc > float(max_soc)
+    violated = below | above
+
+    severity = np.zeros_like(true_soc, dtype=float)
+    severity[below] = float(min_soc) - true_soc[below]
+    severity[above] = true_soc[above] - float(max_soc)
+
+    if violated.any():
+        severity_mean = float(np.mean(severity[violated]))
+        severity_p95 = float(np.quantile(severity[violated], 0.95))
+    else:
+        severity_mean = 0.0
+        severity_p95 = 0.0
+
+    return {
+        "true_soc_violation_rate": float(np.mean(violated)),
+        "true_soc_violation_steps": float(np.sum(violated)),
+        "true_soc_violation_severity_mean_mwh": severity_mean,
+        "true_soc_violation_severity_p95_mwh": severity_p95,
+        # Backward-compatible aliases consumed by existing scripts/tests.
+        "true_soc_violation_severity_mean": severity_mean,
+        "true_soc_violation_severity_p95": severity_p95,
+        "true_soc_min_mwh": float(np.min(true_soc)) if len(true_soc) else 0.0,
+        "true_soc_max_mwh": float(np.max(true_soc)) if len(true_soc) else 0.0,
+    }
+
+
 def compute_control_metrics(
     *,
     proposed_charge_mw: Iterable[float] | np.ndarray,
@@ -87,10 +147,14 @@ def compute_control_metrics(
     safe_charge_mw: Iterable[float] | np.ndarray,
     safe_discharge_mw: Iterable[float] | np.ndarray,
     soc_mwh: Iterable[float] | np.ndarray,
+    true_soc_mwh: Iterable[float] | np.ndarray | None = None,
     constraints: Mapping[str, Any],
     event_log: pd.DataFrame | None = None,
+    bms_trip_mask: Iterable[float] | np.ndarray | None = None,
+    load_true: Iterable[float] | np.ndarray | None = None,
+    renewables_true: Iterable[float] | np.ndarray | None = None,
     intervention_eps: float = 1e-6,
-) -> dict[str, float]:
+) -> dict[str, Any]:
     """Compute safety/control metrics including violation and intervention rates."""
     p_ch = _as_array(proposed_charge_mw)
     p_dis = _as_array(proposed_discharge_mw)
@@ -102,8 +166,15 @@ def compute_control_metrics(
         raise ValueError("Control arrays must have identical length")
 
     max_power = float(constraints.get("max_power_mw", max(np.max(s_ch, initial=0.0), np.max(s_dis, initial=0.0))))
+    max_charge = float(constraints.get("max_charge_mw", max_power))
+    max_discharge = float(constraints.get("max_discharge_mw", max_power))
     min_soc = float(constraints.get("min_soc_mwh", np.min(soc, initial=0.0)))
     max_soc = float(constraints.get("max_soc_mwh", np.max(soc, initial=0.0)))
+    dt = float(constraints.get("time_step_hours", 1.0))
+    charge_eff = float(constraints.get("charge_efficiency", constraints.get("efficiency", 1.0)))
+    discharge_eff = float(constraints.get("discharge_efficiency", constraints.get("efficiency", 1.0)))
+    initial_soc = float(constraints.get("initial_soc_mwh", soc[0] if len(soc) else min_soc))
+    max_grid_import = constraints.get("max_grid_import_mw")
     ramp_mw = float(constraints.get("ramp_mw", 0.0))
 
     net = s_dis - s_ch
@@ -115,7 +186,13 @@ def compute_control_metrics(
         ramp_violation[1:] = excess > 1e-9
         ramp_excess[1:] = excess
 
-    power_violation = (s_ch > max_power + 1e-9) | (s_dis > max_power + 1e-9) | ((s_ch > 1e-9) & (s_dis > 1e-9))
+    power_violation = (
+        (s_ch > max_power + 1e-9)
+        | (s_dis > max_power + 1e-9)
+        | (s_ch > max_charge + 1e-9)
+        | (s_dis > max_discharge + 1e-9)
+        | ((s_ch > 1e-9) & (s_dis > 1e-9))
+    )
     soc_violation = (soc < min_soc - 1e-9) | (soc > max_soc + 1e-9)
     violations = power_violation | soc_violation | ramp_violation
 
@@ -129,11 +206,66 @@ def compute_control_metrics(
     interventions = (np.abs(p_ch - s_ch) > intervention_eps) | (np.abs(p_dis - s_dis) > intervention_eps)
     recovery_time = _compute_recovery_time(violations=violations, event_log=event_log)
 
+    true_soc = soc if true_soc_mwh is None else _as_array(true_soc_mwh)
+    true_soc_violation_low = np.maximum(0.0, min_soc - true_soc)
+    true_soc_violation_high = np.maximum(0.0, true_soc - max_soc)
+    true_soc_violation_severity = true_soc_violation_low + true_soc_violation_high
+    true_soc_violation_mask = true_soc_violation_severity > 1e-9
+    true_soc_summary = summarize_true_soc_violations(true_soc=true_soc, min_soc=min_soc, max_soc=max_soc)
+
+    pre_soc = np.empty_like(true_soc)
+    if len(pre_soc) > 0:
+        pre_soc[0] = initial_soc
+        if len(pre_soc) > 1:
+            pre_soc[1:] = true_soc[:-1]
+    proposed_next_soc = np.asarray(
+        [
+            _next_soc(
+                soc_now=float(pre_soc[i]),
+                charge_mw=float(p_ch[i]),
+                discharge_mw=float(p_dis[i]),
+                dt_hours=dt,
+                charge_efficiency=charge_eff,
+                discharge_efficiency=discharge_eff,
+            )
+            for i in range(n)
+        ],
+        dtype=float,
+    )
+    proposed_unsafe = (
+        (p_ch > max_charge + 1e-9)
+        | (p_dis > max_discharge + 1e-9)
+        | ((p_ch > 1e-9) & (p_dis > 1e-9))
+        | (proposed_next_soc < min_soc - 1e-9)
+        | (proposed_next_soc > max_soc + 1e-9)
+    )
+
+    bms_trip = np.zeros(n, dtype=bool)
+    if bms_trip_mask is not None:
+        bms_trip = _as_array(bms_trip_mask).astype(float) > 0.0
+
+    grid_import_violation_rate = 0.0
+    if max_grid_import is not None and load_true is not None and renewables_true is not None:
+        load_arr = _as_array(load_true)
+        renew_arr = _as_array(renewables_true)
+        horizon = min(len(load_arr), len(renew_arr), len(s_ch))
+        grid_import = np.maximum(
+            0.0,
+            load_arr[:horizon] - renew_arr[:horizon] - s_dis[:horizon] + s_ch[:horizon],
+        )
+        grid_import_violation_rate = float(np.mean(grid_import > float(max_grid_import) + 1e-9))
+
     return {
         "violation_rate": float(np.mean(violations)),
         "violation_severity": float(np.sum(severity)),
         "recovery_time": float(recovery_time),
         "intervention_rate": float(np.mean(interventions)),
+        **true_soc_summary,
+        "recovery_time_mean": float(_mean_recovery_steps(true_soc_violation_mask)),
+        "unsafe_command_rate": float(np.mean(proposed_unsafe)),
+        "bms_trip_rate": float(np.mean(bms_trip)),
+        "grid_import_violation_rate": float(grid_import_violation_rate),
+        "true_soc_violation_mask": true_soc_violation_mask,
     }
 
 
@@ -171,10 +303,14 @@ def compute_all_metrics(
     safe_charge_mw: Iterable[float] | np.ndarray,
     safe_discharge_mw: Iterable[float] | np.ndarray,
     soc_mwh: Iterable[float] | np.ndarray,
+    true_soc_mwh: Iterable[float] | np.ndarray | None = None,
     constraints: Mapping[str, Any],
     certificates: Iterable[Mapping[str, Any] | None],
     event_log: pd.DataFrame | None = None,
-) -> dict[str, float]:
+    bms_trip_mask: Iterable[float] | np.ndarray | None = None,
+    load_true: Iterable[float] | np.ndarray | None = None,
+    renewables_true: Iterable[float] | np.ndarray | None = None,
+) -> dict[str, Any]:
     """Aggregate all CPSBench metric families into one dict."""
     metrics = {}
     metrics.update(
@@ -192,10 +328,13 @@ def compute_all_metrics(
             safe_charge_mw=safe_charge_mw,
             safe_discharge_mw=safe_discharge_mw,
             soc_mwh=soc_mwh,
+            true_soc_mwh=true_soc_mwh,
             constraints=constraints,
             event_log=event_log,
+            bms_trip_mask=bms_trip_mask,
+            load_true=load_true,
+            renewables_true=renewables_true,
         )
     )
     metrics.update(compute_trace_metrics(certificates))
     return metrics
-
