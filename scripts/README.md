@@ -77,3 +77,44 @@ Scripts expect:
 - Virtual environment activated (`.venv`)
 - Working directory at project root
 - Required data in `data/` directory
+
+## UMN Proof Package Runbook
+
+Canonical training configs:
+- DE: `configs/train_forecast.yaml`
+- US: `configs/train_forecast_eia930.yaml`
+
+Suggested end-to-end sequence:
+
+```bash
+python scripts/train_dataset.py --dataset DE --profile aggressive --max-runtime-hours 6
+python scripts/train_dataset.py --dataset US --profile aggressive --max-runtime-hours 6
+python scripts/run_cpsbench.py --out-dir reports/publication
+python scripts/run_ablations.py --dc3s --output reports/publication --scenario drift_combo --horizon 96 --seeds 0 1 2 3 4 5 6 7 8 9
+python scripts/build_reports.py --features data/processed/features.parquet --splits data/processed/splits --models-dir artifacts/models --reports-dir reports
+python scripts/validate_paper_claims.py
+python scripts/final_publish_audit.py --config configs/publish_audit.yaml --max-runtime-hours 6 --iot-steps 72 --baseline-ref origin/main
+```
+
+## UMN One-Command Reproducibility
+
+Build the full admissions artifact package (Tasks 1-4) with one command:
+
+```bash
+make umn-artifact
+```
+
+This writes/refreshes:
+- `reports/publication/dc3s_main_table.csv`
+- `reports/publication/dc3s_fault_breakdown.csv`
+- `reports/publication/fig_true_soc_violation_vs_dropout.png`
+- `reports/publication/fig_true_soc_severity_p95_vs_dropout.png`
+- `reports/publication/table2_ablations.csv`
+- `reports/publication/stats_summary.json`
+- `reports/publication/cqr_group_coverage.csv`
+- `reports/publication/table3_group_coverage.csv` (compat alias)
+- `reports/publication/fig_coverage_width_tradeoff.png`
+- `reports/publication/fig_coverage_width.png` (compat alias)
+- `reports/publication/transfer_stress.csv`
+- `reports/publication/table5_transfer.csv` (compat alias)
+- `reports/publication/fig_transfer_coverage.png`
