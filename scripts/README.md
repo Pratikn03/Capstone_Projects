@@ -78,7 +78,7 @@ Scripts expect:
 - Working directory at project root
 - Required data in `data/` directory
 
-## UMN Proof Package Runbook
+## Publication Package Runbook
 
 Canonical training configs:
 - DE: `configs/train_forecast.yaml`
@@ -96,12 +96,12 @@ python scripts/validate_paper_claims.py
 python scripts/final_publish_audit.py --config configs/publish_audit.yaml --max-runtime-hours 6 --iot-steps 72 --baseline-ref origin/main
 ```
 
-## UMN One-Command Reproducibility
+## One-Command Reproducibility
 
 Build the full admissions artifact package (Tasks 1-4) with one command:
 
 ```bash
-make umn-artifact
+make publication-artifact
 ```
 
 This writes/refreshes:

@@ -1,4 +1,4 @@
-.PHONY: setup lint test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated umn-artifact
+.PHONY: setup lint test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact
 
 PYTHON ?= $(if $(wildcard .venv/bin/python3),.venv/bin/python3,python3)
 
@@ -216,8 +216,8 @@ eval-baselines:
 cpsbench:
 	.venv/bin/python3 scripts/run_cpsbench.py
 
-umn-artifact:
-	.venv/bin/python3 scripts/build_umn_artifact.py --out-dir reports/publication --horizon 96 --seeds 0 1 2 3 4 5 6 7 8 9
+publication-artifact:
+	.venv/bin/python3 scripts/build_publication_artifact.py --out-dir reports/publication --horizon 96 --seeds 0 1 2 3 4 5 6 7 8 9
 
 dc3s-demo:
 	.venv/bin/python3 scripts/run_dc3s_demo.py

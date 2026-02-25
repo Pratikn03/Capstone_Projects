@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-command UMN artifact builder for CPSBench/DC3S publication outputs."""
+"""One-command artifact builder for CPSBench/DC3S publication outputs."""
 from __future__ import annotations
 
 import argparse
@@ -39,7 +39,7 @@ REQUIRED_PUBLICATION = (
 
 
 def _parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Build full UMN admission artifact package")
+    p = argparse.ArgumentParser(description="Build full publication artifact package")
     p.add_argument("--out-dir", default="reports/publication")
     p.add_argument("--horizon", type=int, default=96)
     p.add_argument("--seeds", nargs="*", type=int, default=None)
@@ -319,7 +319,10 @@ def main() -> None:
         "transfer": transfer_summary,
         "required_outputs": [str(out_dir / x) for x in REQUIRED_PUBLICATION],
     }
-    (out_dir / "umn_artifact_summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+    (out_dir / "publication_artifact_summary.json").write_text(
+        json.dumps(summary, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
     print(json.dumps(summary, indent=2, sort_keys=True))
 
 
