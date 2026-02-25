@@ -24,9 +24,15 @@ from gridpulse.dc3s.drift import PageHinkleyDetector
 from gridpulse.dc3s.guarantee_checks import evaluate_guarantee_checks
 from gridpulse.dc3s.quality import compute_reliability
 from gridpulse.dc3s.shield import repair_action
+from gridpulse.forecasting.uncertainty.cqr import RegimeCQR
 from gridpulse.forecasting.uncertainty.conformal import load_conformal
 from gridpulse.optimizer import optimize_dispatch
-from gridpulse.optimizer.robust_dispatch import RobustDispatchConfig, optimize_robust_dispatch
+from gridpulse.optimizer.robust_dispatch import (
+    CVaRDispatchConfig,
+    RobustDispatchConfig,
+    optimize_cvar_dispatch,
+    optimize_robust_dispatch,
+)
 
 from .metrics import compute_all_metrics
 from .plant import BatteryPlant
@@ -200,7 +206,44 @@ def _load_load_conformal(target: str = "load_mw") -> Any | None:
         return None
 
 
-def _cqr_bounds(load_window: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def _regime_runtime_cfg() -> dict[str, Any]:
+    unc_cfg = _load_uncertainty_cfg()
+    regime_cfg = unc_cfg.get("regime_cqr", {}) if isinstance(unc_cfg, dict) else {}
+    if not isinstance(regime_cfg, dict):
+        regime_cfg = {}
+    artifacts_dir = Path(unc_cfg.get("artifacts_dir", "artifacts/uncertainty"))
+    default_artifact = str(artifacts_dir / "{target}_regime_cqr.json")
+    return {
+        "enabled": bool(regime_cfg.get("enabled", False)),
+        "artifact_path": str(regime_cfg.get("artifact_path", default_artifact)),
+        "policy": str(regime_cfg.get("quantile_backend_policy", "fallback")).strip().lower(),
+    }
+
+
+@lru_cache(maxsize=2)
+def _load_regime_cqr(target: str = "load_mw") -> RegimeCQR | None:
+    cfg = _regime_runtime_cfg()
+    if not cfg["enabled"]:
+        return None
+
+    path = Path(str(cfg["artifact_path"]).format(target=target))
+    if not path.exists():
+        if cfg["policy"] == "strict":
+            raise RuntimeError(
+                f"Regime CQR enabled with strict policy but missing artifact: {path}. "
+                "Run scripts/train_regime_cqr.py first."
+            )
+        return None
+
+    try:
+        return RegimeCQR.from_json(path.read_text(encoding="utf-8"))
+    except Exception:
+        if cfg["policy"] == "strict":
+            raise
+        return None
+
+
+def _base_interval_bounds(load_window: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     ci = _load_load_conformal("load_mw")
     if ci is not None:
         try:
@@ -214,6 +257,27 @@ def _cqr_bounds(load_window: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
     q = np.maximum(75.0, 0.08 * np.abs(load_window))
     return np.maximum(0.0, load_window - q), load_window + q
+
+
+def _cqr_bounds(load_window: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    base_lower, base_upper = _base_interval_bounds(np.asarray(load_window, dtype=float))
+    regime = _load_regime_cqr("load_mw")
+    if regime is None:
+        return base_lower, base_upper
+
+    try:
+        lo, hi, _bins = regime.predict_interval(
+            y_context=np.asarray(load_window, dtype=float),
+            q_lo=np.asarray(base_lower, dtype=float),
+            q_hi=np.asarray(base_upper, dtype=float),
+        )
+        lo = np.maximum(0.0, np.asarray(lo, dtype=float))
+        hi = np.asarray(hi, dtype=float)
+        if lo.shape == hi.shape == np.asarray(load_window).shape:
+            return lo, hi
+    except Exception:
+        pass
+    return base_lower, base_upper
 
 
 def _controller_step_deterministic(
@@ -254,6 +318,8 @@ def _controller_step_deterministic(
         "interval_width": float(max(0.0, upper_90[0] - lower_90[0])) if len(lower_90) else 0.0,
         "guarantee_checks_passed": True,
         "certificate": None,
+        "cvar_eta": np.nan,
+        "cvar_cost": np.nan,
     }
 
 
@@ -317,6 +383,110 @@ def _controller_step_robust_fixed(
         "interval_width": float(max(0.0, upper[0] - lower[0])) if len(lower) else 0.0,
         "guarantee_checks_passed": True,
         "certificate": None,
+        "cvar_eta": np.nan,
+        "cvar_cost": np.nan,
+    }
+
+
+def _sample_load_scenarios(
+    *,
+    lower: np.ndarray,
+    upper: np.ndarray,
+    n_scenarios: int,
+    seed: int,
+) -> np.ndarray:
+    lo = np.asarray(lower, dtype=float).reshape(-1)
+    hi = np.asarray(upper, dtype=float).reshape(-1)
+    if lo.size != hi.size:
+        raise ValueError("lower and upper must have the same length")
+    if np.any(lo > hi):
+        raise ValueError("lower cannot exceed upper")
+    rng = np.random.default_rng(int(seed))
+    return rng.uniform(lo, hi, size=(int(n_scenarios), lo.size))
+
+
+def _controller_step_cvar_interval(
+    *,
+    load_window: np.ndarray,
+    renew_window: np.ndarray,
+    price_window: np.ndarray,
+    optimization_cfg: Mapping[str, Any],
+    observed_soc_mwh: float,
+    random_seed: int,
+) -> dict[str, Any]:
+    constraints = _battery_constraints(dict(optimization_cfg))
+    lower, upper = _cqr_bounds(np.asarray(load_window, dtype=float))
+
+    cvar_cfg = dict(dict(optimization_cfg).get("cvar", {}))
+    n_scenarios = int(cvar_cfg.get("n_scenarios", 20))
+    beta = float(cvar_cfg.get("beta", 0.90))
+    risk_weight_cvar = float(cvar_cfg.get("risk_weight_cvar", 1.0))
+
+    scenarios = _sample_load_scenarios(
+        lower=np.asarray(lower, dtype=float),
+        upper=np.asarray(upper, dtype=float),
+        n_scenarios=n_scenarios,
+        seed=int(random_seed),
+    )
+
+    cfg = CVaRDispatchConfig(
+        battery_capacity_mwh=constraints["capacity_mwh"],
+        battery_max_charge_mw=constraints["max_charge_mw"],
+        battery_max_discharge_mw=constraints["max_discharge_mw"],
+        battery_charge_efficiency=constraints["charge_efficiency"],
+        battery_discharge_efficiency=constraints["discharge_efficiency"],
+        battery_initial_soc_mwh=float(observed_soc_mwh),
+        battery_min_soc_mwh=constraints["min_soc_mwh"],
+        battery_max_soc_mwh=constraints["max_soc_mwh"],
+        max_grid_import_mw=constraints["max_grid_import_mw"],
+        default_price_per_mwh=float(np.mean(price_window)),
+        degradation_cost_per_mwh=constraints["degradation_cost_per_mwh"],
+        risk_weight_worst_case=float(dict(optimization_cfg).get("robust", {}).get("risk_weight_worst_case", 1.0)),
+        time_step_hours=constraints["time_step_hours"],
+        solver_name=str(dict(optimization_cfg).get("solver_name", "appsi_highs")),
+        beta=beta,
+        n_scenarios=int(max(2, n_scenarios)),
+        risk_weight_cvar=max(0.0, min(1.0, risk_weight_cvar)),
+        scenario_seed=int(random_seed),
+    )
+
+    solver_status = "error"
+    cvar_eta = np.nan
+    cvar_cost = np.nan
+    try:
+        sol = optimize_cvar_dispatch(
+            load_scenarios=scenarios,
+            renewables_forecast=renew_window.tolist(),
+            price=price_window.tolist(),
+            config=cfg,
+            verbose=False,
+        )
+        solver_status = str(sol.get("solver_status", "ok"))
+        ch = float(np.asarray(sol.get("battery_charge_mw", [0.0]), dtype=float)[0])
+        dis = float(np.asarray(sol.get("battery_discharge_mw", [0.0]), dtype=float)[0])
+        if sol.get("eta") is not None:
+            cvar_eta = float(sol.get("eta"))
+        if sol.get("cvar_cost") is not None:
+            cvar_cost = float(sol.get("cvar_cost"))
+    except Exception:
+        ch = 0.0
+        dis = 0.0
+
+    return {
+        "proposed_charge_mw": ch,
+        "proposed_discharge_mw": dis,
+        "safe_charge_mw": ch,
+        "safe_discharge_mw": dis,
+        "interval_lower": np.asarray(lower, dtype=float),
+        "interval_upper": np.asarray(upper, dtype=float),
+        "solver_status": solver_status,
+        "w_t": 1.0,
+        "delta_mw": 0.0,
+        "interval_width": float(max(0.0, upper[0] - lower[0])) if len(lower) else 0.0,
+        "guarantee_checks_passed": True,
+        "certificate": None,
+        "cvar_eta": float(cvar_eta) if np.isfinite(cvar_eta) else np.nan,
+        "cvar_cost": float(cvar_cost) if np.isfinite(cvar_cost) else np.nan,
     }
 
 
@@ -492,6 +662,8 @@ def _controller_step_dc3s(
         "interval_width": float(widen_meta.get("interval_width", 0.0)),
         "guarantee_checks_passed": bool(guarantee_ok),
         "certificate": cert,
+        "cvar_eta": np.nan,
+        "cvar_cost": np.nan,
     }
 
 
@@ -508,6 +680,8 @@ def _init_controller_buffers(n: int) -> dict[str, Any]:
         "w_t": np.ones(n, dtype=float),
         "delta_mw": np.zeros(n, dtype=float),
         "interval_width": np.zeros(n, dtype=float),
+        "cvar_eta": np.full(n, np.nan, dtype=float),
+        "cvar_cost": np.full(n, np.nan, dtype=float),
         "guarantee_checks_passed": np.ones(n, dtype=float),
         "bms_trip_mask": np.zeros(n, dtype=float),
         "certificates": [None] * n,
@@ -515,6 +689,35 @@ def _init_controller_buffers(n: int) -> dict[str, Any]:
         "expected_cost_usd": 0.0,
         "carbon_kg": 0.0,
     }
+
+
+def _compute_cqr_group_metrics(y_true: np.ndarray, y_context: np.ndarray) -> dict[str, float]:
+    lower, upper = _cqr_bounds(np.asarray(y_context, dtype=float))
+    y = np.asarray(y_true, dtype=float).reshape(-1)
+    lo = np.asarray(lower, dtype=float).reshape(-1)
+    hi = np.asarray(upper, dtype=float).reshape(-1)
+    if not (len(y) == len(lo) == len(hi)):
+        return {
+            "cqr_picp_group_low": np.nan,
+            "cqr_picp_group_mid": np.nan,
+            "cqr_picp_group_high": np.nan,
+            "cqr_width_group_low": np.nan,
+            "cqr_width_group_mid": np.nan,
+            "cqr_width_group_high": np.nan,
+        }
+
+    width = hi - lo
+    covered = (y >= lo) & (y <= hi)
+    vol = pd.Series(y).rolling(window=24, min_periods=6).std().fillna(0.0).to_numpy()
+    q1, q2 = np.quantile(vol, [1.0 / 3.0, 2.0 / 3.0]) if len(vol) > 2 else (0.0, 0.0)
+    labels = np.where(vol <= q1, "low", np.where(vol <= q2, "mid", "high"))
+
+    out: dict[str, float] = {}
+    for label in ("low", "mid", "high"):
+        mask = labels == label
+        out[f"cqr_picp_group_{label}"] = float(np.mean(covered[mask])) if np.any(mask) else np.nan
+        out[f"cqr_width_group_{label}"] = float(np.mean(width[mask])) if np.any(mask) else np.nan
+    return out
 
 
 def run_single(
@@ -549,7 +752,8 @@ def run_single(
     telemetry_events = _to_telemetry_events(x_obs=x_obs, event_log=event_log)
 
     n = len(load_obs)
-    controllers = ("deterministic_lp", "robust_fixed_interval", "dc3s_wrapped")
+    controllers = ("deterministic_lp", "robust_fixed_interval", "cvar_interval", "dc3s_wrapped")
+    cqr_group_metrics = _compute_cqr_group_metrics(load_true, load_obs)
 
     results: dict[str, dict[str, Any]] = {}
     for controller in controllers:
@@ -598,6 +802,15 @@ def run_single(
                     optimization_cfg=optimization_cfg,
                     observed_soc_mwh=float(observed_soc),
                 )
+            elif controller == "cvar_interval":
+                step = _controller_step_cvar_interval(
+                    load_window=load_window,
+                    renew_window=renew_window,
+                    price_window=price_window,
+                    optimization_cfg=optimization_cfg,
+                    observed_soc_mwh=float(observed_soc),
+                    random_seed=int(seed * 100000 + t),
+                )
             else:
                 step = _controller_step_dc3s(
                     load_window=load_window,
@@ -644,6 +857,8 @@ def run_single(
             buf["w_t"][t] = float(step.get("w_t", 1.0))
             buf["delta_mw"][t] = float(step.get("delta_mw", 0.0))
             buf["interval_width"][t] = float(step.get("interval_width", max(0.0, buf["interval_upper"][t] - buf["interval_lower"][t])))
+            buf["cvar_eta"][t] = float(step.get("cvar_eta", np.nan))
+            buf["cvar_cost"][t] = float(step.get("cvar_cost", np.nan))
             buf["guarantee_checks_passed"][t] = 1.0 if guarantee_ok else 0.0
             buf["solver_status"][t] = str(step.get("solver_status", "ok"))
 
@@ -688,6 +903,13 @@ def run_single(
         if baseline_cost > 0:
             cost_delta_pct = 100.0 * (float(res["expected_cost_usd"]) - baseline_cost) / baseline_cost
 
+        cvar_eta_vals = np.asarray(res["cvar_eta"], dtype=float)
+        cvar_cost_vals = np.asarray(res["cvar_cost"], dtype=float)
+        cvar_eta_mean = float(np.nanmean(cvar_eta_vals)) if np.isfinite(cvar_eta_vals).any() else np.nan
+        cvar_cost_mean = float(np.nanmean(cvar_cost_vals)) if np.isfinite(cvar_cost_vals).any() else np.nan
+        adaptive_width_mean = float(np.mean(res["interval_width"])) if len(res["interval_width"]) else np.nan
+        adaptive_width_p95 = float(np.quantile(res["interval_width"], 0.95)) if len(res["interval_width"]) else np.nan
+
         row = {
             "scenario": scenario,
             "seed": int(seed),
@@ -699,8 +921,24 @@ def run_single(
             "mean_reliability_w": float(np.mean(res["w_t"])),
             "mean_delta_mw": float(np.mean(res["delta_mw"])),
             "mean_interval_width_cert": float(np.mean(res["interval_width"])),
-            "solver_status_ok_rate": float(np.mean(np.asarray([s in {"ok", "deterministic", "optimal"} for s in res["solver_status"]], dtype=float))),
+            "solver_status_ok_rate": float(
+                np.mean(
+                    np.asarray(
+                        [
+                            (s in {"ok", "deterministic", "optimal"})
+                            or ("optimal" in str(s).lower())
+                            for s in res["solver_status"]
+                        ],
+                        dtype=float,
+                    )
+                )
+            ),
             "guarantee_checks_passed_rate": float(np.mean(res["guarantee_checks_passed"])),
+            "adaptive_width_mean": adaptive_width_mean,
+            "adaptive_width_p95": adaptive_width_p95,
+            "cvar_eta": cvar_eta_mean,
+            "cvar_cost": cvar_cost_mean,
+            **cqr_group_metrics,
             **metrics,
         }
         main_rows.append(row)
