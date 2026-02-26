@@ -1,0 +1,18 @@
+target-version = "py311"
+line-length = 110
+
+[lint]
+select = ["E", "F", "W", "I", "B", "C4", "UP", "SIM", "A", "T20", "RUF", "S", "C90"]
+ignore = ["E203", "E266", "E501", "S101", "B008"]
+
+[lint.mccabe]
+max-complexity = 40
+
+[lint.per-file-ignores]
+"scripts/**/*.py" = ["T20", "S603", "S607"]
+"tests/**/*.py" = ["T20", "S101"]
+"src/gridpulse/forecasting/train.py" = ["T20", "C901"]
+
+[format]
+quote-style = "double"
+indent-style = "space"

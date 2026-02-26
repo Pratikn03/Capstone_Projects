@@ -17,14 +17,21 @@ jobs:
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest
-          pip install ruff build
+          pip install -r requirements.lock.txt
+          pip install ruff mypy pre-commit pytest build
           pip install -e .
-      - name: Lint
-        run: ruff check src services scripts --select=E9,F63,F7,F82
+      - name: Ruff Check
+        run: ruff check src services scripts
+      - name: Ruff Format Check
+        run: ruff format --check src services scripts
+      - name: Mypy
+        run: mypy src
       - name: Run tests
         run: pytest -q
+      - name: Release Check Full
+        run: python scripts/release_check.py --full
+      - name: Final Publish Audit
+        run: python scripts/final_publish_audit.py --config configs/publish_audit.yaml --skip-retrain
       - name: Build package
         run: python -m build
 
