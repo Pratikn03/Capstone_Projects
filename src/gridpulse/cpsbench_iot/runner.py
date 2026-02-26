@@ -574,13 +574,18 @@ def _controller_step_dc3s(
     # Projection-repair the robust first-step action.
     repair_cfg = json.loads(json.dumps(dict(dc3s_cfg)))
     repair_cfg.setdefault("shield", {})
-    repair_cfg["shield"]["mode"] = "projection"
+    repair_cfg["shield"]["mode"] = str(dc3s_cfg.get("shield", {}).get("mode", "projection"))
+    cvar_cfg = dict(dc3s_cfg.get("shield", {}).get("cvar", {}))
     repair_constraints = {
         **constraints,
         "current_soc_mwh": float(observed_soc_mwh),
         "last_net_mw": float(state.last_net_mw),
         "ramp_mw": float(dc3s_cfg.get("shield", {}).get("max_ramp_mw", 0.0) or 0.0),
         "solver_name": str(dict(optimization_cfg).get("solver_name", "appsi_highs")),
+        "cvar_beta": float(cvar_cfg.get("beta", 0.90)),
+        "cvar_n_scenarios": int(cvar_cfg.get("n_scenarios", 20)),
+        "cvar_risk_weight": float(cvar_cfg.get("risk_weight_cvar", 1.0)),
+        "scenario_seed": int(cvar_cfg.get("scenario_seed", 0)),
     }
     safe_action, repair_meta = repair_action(
         a_star={"charge_mw": proposed_charge, "discharge_mw": proposed_discharge},

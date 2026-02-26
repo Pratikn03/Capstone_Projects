@@ -34,6 +34,8 @@ REQUIRED_PUBLICATION = (
     "table2_ablations.csv",
     "stats_summary.json",
     "cqr_group_coverage.csv",
+    "cqr_calibration_summary.json",
+    "fig_cqr_group_coverage.png",
     "transfer_stress.csv",
 )
 
@@ -118,6 +120,7 @@ def _build_cqr_group_coverage(out_dir: Path) -> dict[str, Any]:
     cov_df.to_csv(cov_path, index=False, float_format="%.6f")
     cov_df.to_csv(cov_alias, index=False, float_format="%.6f")
 
+    fig_primary = out_dir / "fig_cqr_group_coverage.png"
     fig_tradeoff = out_dir / "fig_coverage_width_tradeoff.png"
     fig_alias = out_dir / "fig_coverage_width.png"
 
@@ -134,15 +137,29 @@ def _build_cqr_group_coverage(out_dir: Path) -> dict[str, Any]:
     ax.set_title("Coverage vs Width by Volatility Group (load_mw)")
     ax.grid(alpha=0.3)
     fig.tight_layout()
+    fig.savefig(fig_primary, dpi=220)
     fig.savefig(fig_tradeoff, dpi=220)
     fig.savefig(fig_alias, dpi=220)
     plt.close(fig)
+
+    summary_path = out_dir / "cqr_calibration_summary.json"
+    if not summary_path.exists():
+        summary_payload = {
+            "source": "build_publication_artifact._build_cqr_group_coverage",
+            "target": target,
+            "rows": int(len(cov_df)),
+            "groups": sorted(cov_df["group"].astype(str).unique().tolist()) if not cov_df.empty else [],
+            "overall_picp_90": float(cov_df["picp_90"].mean()) if not cov_df.empty else None,
+            "overall_mean_width": float(cov_df["mean_width"].mean()) if not cov_df.empty else None,
+        }
+        summary_path.write_text(json.dumps(summary_payload, indent=2, sort_keys=True), encoding="utf-8")
 
     return {
         "rows": int(len(cov_df)),
         "path": str(cov_path),
         "alias": str(cov_alias),
-        "figure": str(fig_tradeoff),
+        "figure": str(fig_primary),
+        "summary": str(summary_path),
     }
 
 

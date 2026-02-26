@@ -112,7 +112,9 @@ This writes/refreshes:
 - `reports/publication/table2_ablations.csv`
 - `reports/publication/stats_summary.json`
 - `reports/publication/cqr_group_coverage.csv`
+- `reports/publication/cqr_calibration_summary.json`
 - `reports/publication/table3_group_coverage.csv` (compat alias)
+- `reports/publication/fig_cqr_group_coverage.png`
 - `reports/publication/fig_coverage_width_tradeoff.png`
 - `reports/publication/fig_coverage_width.png` (compat alias)
 - `reports/publication/transfer_stress.csv`
