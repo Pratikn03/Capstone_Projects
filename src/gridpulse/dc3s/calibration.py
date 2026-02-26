@@ -6,6 +6,7 @@ from typing import Any, Mapping
 import numpy as np
 
 from .ambiguity import AmbiguityConfig, widen_bounds
+from .rac_cert import RACCertConfig, compute_q_multiplier, normalize_sensitivity
 
 
 def _as_1d(value: float | list[float] | np.ndarray, label: str) -> np.ndarray:
@@ -73,11 +74,29 @@ def build_uncertainty_set(
     """
     dcfg = dict(cfg)
     reliability_cfg = dict(dcfg.get("reliability", {}))
+    rac_cfg_raw = dict(dcfg.get("rac_cert", {})) if isinstance(dcfg.get("rac_cert"), Mapping) else {}
 
     k_q = float(dcfg.get("k_quality", dcfg.get("k_q", 0.8)))
     k_d = float(dcfg.get("k_drift", 0.6))
-    infl_max = float(dcfg.get("infl_max", 3.0))
+    infl_max = float(dcfg.get("infl_max", rac_cfg_raw.get("infl_max", 3.0)))
     min_w = float(reliability_cfg.get("min_w", 0.05))
+    k_s = float(dcfg.get("k_sensitivity", rac_cfg_raw.get("k_sensitivity", 0.0)))
+
+    rac_cfg = RACCertConfig(
+        alpha=float(rac_cfg_raw.get("alpha", 0.10)),
+        n_vol_bins=int(rac_cfg_raw.get("n_vol_bins", 3)),
+        vol_window=int(rac_cfg_raw.get("vol_window", 24)),
+        beta_reliability=float(rac_cfg_raw.get("beta_reliability", 0.0)),
+        beta_sensitivity=float(rac_cfg_raw.get("beta_sensitivity", 0.0)),
+        k_sensitivity=float(k_s),
+        infl_max=float(infl_max),
+        sens_eps_mw=float(rac_cfg_raw.get("sens_eps_mw", 25.0)),
+        sens_norm_ref=float(rac_cfg_raw.get("sens_norm_ref", 0.5)),
+        qhat_shrink_tau=float(rac_cfg_raw.get("qhat_shrink_tau", 30.0)),
+        max_q_multiplier=float(rac_cfg_raw.get("max_q_multiplier", 3.0)),
+        min_w=float(rac_cfg_raw.get("min_w", min_w)),
+        eps=float(rac_cfg_raw.get("eps", 1e-9)),
+    )
 
     yhat_arr = _as_1d(yhat, "yhat")
     q_arr = _as_1d(q, "q")
@@ -88,7 +107,20 @@ def build_uncertainty_set(
 
     w_eff = max(float(w_t), min_w)
     drift_term = 1.0 if bool(drift_flag) else 0.0
-    infl_raw = 1.0 + k_q * (1.0 - w_eff) + k_d * drift_term
+    sensitivity_t = float(dcfg.get("sensitivity_t", dcfg.get("runtime_sensitivity_t", 0.0)))
+    sensitivity_norm = dcfg.get("sensitivity_norm", dcfg.get("runtime_sensitivity_norm"))
+    if sensitivity_norm is None:
+        sensitivity_norm_val = normalize_sensitivity(sensitivity_t, norm_ref=rac_cfg.sens_norm_ref)
+    else:
+        sensitivity_norm_val = float(np.clip(float(sensitivity_norm), 0.0, 1.0))
+
+    q_multiplier, q_meta = compute_q_multiplier(
+        w_t=float(w_t),
+        sensitivity_norm=float(sensitivity_norm_val),
+        cfg=rac_cfg,
+    )
+
+    infl_raw = 1.0 + k_q * (1.0 - w_eff) + k_d * drift_term + k_s * float(sensitivity_norm_val)
     inflation = float(np.clip(infl_raw, 1.0, infl_max))
 
     smoothing = float(dcfg.get("cooldown_smoothing", 0.0))
@@ -106,9 +138,16 @@ def build_uncertainty_set(
             base_hi = np.full(yhat_arr.size, float(base_hi[0]), dtype=float)
         if base_lo.size != yhat_arr.size or base_hi.size != yhat_arr.size:
             raise ValueError("base_lower/base_upper must have size 1 or match yhat length")
-        lower, upper = inflate_interval(base_lo, base_hi, inflation)
+        base_mid = 0.5 * (base_lo + base_hi)
+        base_half = 0.5 * (base_hi - base_lo)
+        rac_half = base_half * float(q_multiplier)
+        pre_infl_lo = base_mid - rac_half
+        pre_infl_hi = base_mid + rac_half
+        lower, upper = inflate_interval(pre_infl_lo, pre_infl_hi, inflation)
+        q_eff = rac_half
     else:
-        half_width = q_arr * inflation
+        q_eff = q_arr * float(q_multiplier)
+        half_width = q_eff * inflation
         lower = yhat_arr - half_width
         upper = yhat_arr + half_width
 
@@ -145,7 +184,18 @@ def build_uncertainty_set(
         "infl_max": float(infl_max),
         "k_quality": float(k_q),
         "k_drift": float(k_d),
+        "k_sensitivity": float(k_s),
         "lambda_mw_used": float(amb.lambda_mw),
         "interval_width": float(max(0.0, upper[0] - lower[0])) if len(lower) else 0.0,
+        "sensitivity_t": float(sensitivity_t),
+        "sensitivity_norm": float(sensitivity_norm_val),
+        "q_eff": float(np.asarray(q_eff, dtype=float)[0]) if len(np.asarray(q_eff).reshape(-1)) else 0.0,
+        "q_multiplier": float(q_multiplier),
+        "inflation_components": {
+            "quality": float(k_q * (1.0 - w_eff)),
+            "drift": float(k_d * drift_term),
+            "sensitivity": float(k_s * float(sensitivity_norm_val)),
+            "q_multiplier_raw": float(q_meta.get("q_multiplier_raw", q_multiplier)),
+        },
     }
     return lower, upper, meta

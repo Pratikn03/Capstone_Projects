@@ -4,7 +4,10 @@ dc3s:
   alpha_min: 0.02
   k_quality: 0.8
   k_drift: 0.6
+  k_sensitivity: 0.4
   infl_max: 3.0
+  beta_reliability: 0.7
+  beta_sensitivity: 0.5
   cooldown_smoothing: 0.0
   ambiguity:
     lambda_mw: 0.0
@@ -14,6 +17,16 @@ dc3s:
     lambda_min_mw: 0.0
     min_w: 0.05
     max_extra: 1.0
+  rac_cert:
+    enabled: true
+    beta_reliability: 0.7
+    beta_sensitivity: 0.5
+    k_sensitivity: 0.4
+    sensitivity_probe: heuristic
+    sens_eps_mw: 25.0
+    sens_norm_ref: 0.5
+    qhat_shrink_tau: 30.0
+    max_q_multiplier: 3.0
   expected_cadence_s: 3600
   reliability:
     lambda_delay: 0.002

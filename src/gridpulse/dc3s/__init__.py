@@ -12,6 +12,14 @@ from .certificate import (
     compute_config_hash,
 )
 from .state import DC3SStateStore
+from .rac_cert import (
+    RACCertConfig,
+    RACCertModel,
+    compute_dispatch_sensitivity,
+    compute_q_multiplier,
+    compute_inflation,
+    normalize_sensitivity,
+)
 
 __all__ = [
     "compute_reliability",
@@ -26,4 +34,10 @@ __all__ = [
     "compute_model_hash",
     "compute_config_hash",
     "DC3SStateStore",
+    "RACCertConfig",
+    "RACCertModel",
+    "compute_dispatch_sensitivity",
+    "compute_q_multiplier",
+    "compute_inflation",
+    "normalize_sensitivity",
 ]
