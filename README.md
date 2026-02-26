@@ -7,6 +7,7 @@ GridPulse is an end-to-end cyber-physical control system for safe battery dispat
 - **CPSBench-IoT**: A reproducible benchmark suite for evaluating controller behavior under deterministic telemetry faults.
 - **Runtime Validation**: Sub-10ms model/solver runtime on benchmark hardware is observed in software-in-the-loop profiling (`reports/runtime_benchmark.json`); field hardware commissioning remains pending in the current evidence lock.
 - **Strict MLOps Governance**: 21 trained models across Germany OPSD and US EIA-930, with publication-facing claims locked through `paper/metrics_manifest.json` and validator tooling.
+- **Explicit Guarantee Contract**: Runtime guarantee checks and assumptions are versioned and auditable (`docs/ASSUMPTIONS_AND_GUARANTEES.md`, certificate `assumptions_version`).
 
 ## Table of Contents
 - [Reproducing the Paper](#reproducing-the-paper)

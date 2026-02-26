@@ -3,7 +3,14 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from gridpulse.optimizer.robust_dispatch import RobustDispatchConfig, optimize_robust_dispatch
+import numpy as np
+
+from gridpulse.optimizer.robust_dispatch import (
+    CVaRDispatchConfig,
+    RobustDispatchConfig,
+    optimize_cvar_dispatch,
+    optimize_robust_dispatch,
+)
 
 
 def _f(x: Any, default: float) -> float:
@@ -106,6 +113,52 @@ def _robust_cfg_from_constraints(constraints: Mapping[str, Any]) -> RobustDispat
     )
 
 
+def _cvar_cfg_from_constraints(
+    constraints: Mapping[str, Any],
+    *,
+    n_scenarios: int,
+    scenario_seed: int,
+) -> CVaRDispatchConfig:
+    robust_cfg = _robust_cfg_from_constraints(constraints)
+    return CVaRDispatchConfig(
+        battery_capacity_mwh=robust_cfg.battery_capacity_mwh,
+        battery_max_charge_mw=robust_cfg.battery_max_charge_mw,
+        battery_max_discharge_mw=robust_cfg.battery_max_discharge_mw,
+        battery_charge_efficiency=robust_cfg.battery_charge_efficiency,
+        battery_discharge_efficiency=robust_cfg.battery_discharge_efficiency,
+        battery_initial_soc_mwh=robust_cfg.battery_initial_soc_mwh,
+        battery_min_soc_mwh=robust_cfg.battery_min_soc_mwh,
+        battery_max_soc_mwh=robust_cfg.battery_max_soc_mwh,
+        max_grid_import_mw=robust_cfg.max_grid_import_mw,
+        default_price_per_mwh=robust_cfg.default_price_per_mwh,
+        degradation_cost_per_mwh=robust_cfg.degradation_cost_per_mwh,
+        risk_weight_worst_case=robust_cfg.risk_weight_worst_case,
+        time_step_hours=robust_cfg.time_step_hours,
+        solver_name=robust_cfg.solver_name,
+        beta=_f(constraints.get("cvar_beta"), 0.90),
+        n_scenarios=int(max(2, n_scenarios)),
+        risk_weight_cvar=_f(constraints.get("cvar_risk_weight"), 1.0),
+        scenario_seed=int(scenario_seed),
+    )
+
+
+def _sample_load_scenarios(
+    *,
+    lower: np.ndarray,
+    upper: np.ndarray,
+    n_scenarios: int,
+    seed: int,
+) -> np.ndarray:
+    lo = np.asarray(lower, dtype=float).reshape(-1)
+    hi = np.asarray(upper, dtype=float).reshape(-1)
+    if lo.size != hi.size:
+        raise ValueError("lower and upper must have the same length")
+    if np.any(lo > hi):
+        raise ValueError("lower cannot exceed upper")
+    rng = np.random.default_rng(int(seed))
+    return rng.uniform(lo, hi, size=(int(n_scenarios), lo.size))
+
+
 def _robust_resolve(
     state: Mapping[str, Any],
     uncertainty_set: Mapping[str, Any],
@@ -145,6 +198,58 @@ def _robust_resolve(
     }
 
 
+def _robust_resolve_cvar(
+    state: Mapping[str, Any],
+    uncertainty_set: Mapping[str, Any],
+    constraints: Mapping[str, Any],
+) -> tuple[dict[str, float] | None, dict[str, Any]]:
+    _ = state
+    lower = uncertainty_set.get("lower")
+    upper = uncertainty_set.get("upper")
+    renewables = uncertainty_set.get("renewables_forecast")
+    if lower is None or upper is None or renewables is None:
+        return None, {"robust_attempted": False, "reason": "missing_uncertainty_inputs"}
+
+    cvar_n = int(max(2, _f(constraints.get("cvar_n_scenarios"), 20.0)))
+    cvar_seed = int(_f(constraints.get("scenario_seed"), 0.0))
+
+    try:
+        scenarios = _sample_load_scenarios(
+            lower=np.asarray(lower, dtype=float),
+            upper=np.asarray(upper, dtype=float),
+            n_scenarios=cvar_n,
+            seed=cvar_seed,
+        )
+        result = optimize_cvar_dispatch(
+            load_scenarios=scenarios,
+            renewables_forecast=renewables,
+            price=uncertainty_set.get("price"),
+            config=_cvar_cfg_from_constraints(constraints, n_scenarios=cvar_n, scenario_seed=cvar_seed),
+            verbose=False,
+        )
+    except Exception as exc:
+        return None, {"robust_attempted": True, "reason": f"cvar_failed:{exc}"}
+
+    if not bool(result.get("feasible", False)):
+        return None, {
+            "robust_attempted": True,
+            "reason": "cvar_infeasible",
+            "solver_status": result.get("solver_status"),
+            "n_scenarios": int(cvar_n),
+        }
+
+    charge = float(result.get("battery_charge_mw", [0.0])[0])
+    discharge = float(result.get("battery_discharge_mw", [0.0])[0])
+    return {"charge_mw": charge, "discharge_mw": discharge}, {
+        "robust_attempted": True,
+        "reason": "ok",
+        "solver_status": result.get("solver_status"),
+        "eta": result.get("eta"),
+        "cvar_cost": result.get("cvar_cost"),
+        "n_scenarios": int(cvar_n),
+    }
+
+
 def repair_action(
     a_star: Mapping[str, Any],
     state: Mapping[str, Any],
@@ -166,6 +271,18 @@ def repair_action(
         safe, proj_meta = _projection_repair(action_seed, state, uncertainty_set, constraints, cfg)
         proj_meta["mode"] = "robust_resolve"
         proj_meta["robust_meta"] = robust_meta
+        proj_meta["seed_action"] = {
+            "charge_mw": float(max(0.0, _f(action_seed.get("charge_mw"), 0.0))),
+            "discharge_mw": float(max(0.0, _f(action_seed.get("discharge_mw"), 0.0))),
+        }
+        return safe, proj_meta
+
+    if mode == "robust_resolve_cvar":
+        cvar_action, cvar_meta = _robust_resolve_cvar(state, uncertainty_set, constraints)
+        action_seed = cvar_action if cvar_action is not None else a_star
+        safe, proj_meta = _projection_repair(action_seed, state, uncertainty_set, constraints, cfg)
+        proj_meta["mode"] = "robust_resolve_cvar"
+        proj_meta["robust_meta"] = cvar_meta
         proj_meta["seed_action"] = {
             "charge_mw": float(max(0.0, _f(action_seed.get("charge_mw"), 0.0))),
             "discharge_mw": float(max(0.0, _f(action_seed.get("discharge_mw"), 0.0))),

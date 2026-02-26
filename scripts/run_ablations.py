@@ -496,6 +496,63 @@ def _wilcoxon_safe(x: pd.Series, y: pd.Series) -> tuple[float | None, float | No
     return float(stat), float(p)
 
 
+def _compute_metric_bundle(
+    *,
+    baseline: np.ndarray,
+    candidate: np.ndarray,
+    metric: str,
+    threshold_rel: float,
+    p_threshold: float,
+    bootstrap_n: int,
+) -> dict[str, float | bool | int | None]:
+    b = np.asarray(baseline, dtype=float)
+    d = np.asarray(candidate, dtype=float)
+    mask = np.isfinite(b) & np.isfinite(d)
+    b = b[mask]
+    d = d[mask]
+    if len(b) == 0:
+        return {
+            "metric": metric,
+            "n_pairs": 0,
+            "baseline_mean": np.nan,
+            "dc3s_mean": np.nan,
+            "dc3s_ci_low": np.nan,
+            "dc3s_ci_high": np.nan,
+            "rel_reduction_mean": np.nan,
+            "rel_reduction_ci_low": np.nan,
+            "rel_reduction_ci_high": np.nan,
+            "wilcoxon_stat": None,
+            "wilcoxon_p": None,
+            "passes_10pct": False,
+            "passes_p01": False,
+            "passes_metric": False,
+        }
+
+    rel_reduction = (b - d) / np.maximum(b, 1e-9)
+    ci_lo, ci_hi = _bootstrap_ci_mean(d, n_bootstrap=bootstrap_n)
+    rel_lo, rel_hi = _bootstrap_ci_relative_reduction(b, d, n_bootstrap=bootstrap_n)
+    stat, p = _wilcoxon_safe(pd.Series(b), pd.Series(d))
+    mean_rel = float(np.mean(rel_reduction))
+    passes_rel = bool(mean_rel >= float(threshold_rel))
+    passes_sig = bool((p is not None) and (p < float(p_threshold)))
+    return {
+        "metric": metric,
+        "n_pairs": int(len(b)),
+        "baseline_mean": float(np.mean(b)),
+        "dc3s_mean": float(np.mean(d)),
+        "dc3s_ci_low": float(ci_lo),
+        "dc3s_ci_high": float(ci_hi),
+        "rel_reduction_mean": float(mean_rel),
+        "rel_reduction_ci_low": float(rel_lo),
+        "rel_reduction_ci_high": float(rel_hi),
+        "wilcoxon_stat": stat,
+        "wilcoxon_p": p,
+        "passes_10pct": passes_rel,
+        "passes_p01": passes_sig,
+        "passes_metric": bool(passes_rel and passes_sig),
+    }
+
+
 def run_dc3s_ablation_matrix(
     *,
     output_dir: Path,
@@ -522,30 +579,99 @@ def run_dc3s_ablation_matrix(
         horizon=int(horizon),
     )
     main_df = pd.read_csv(suite_out / "dc3s_main_table.csv")
+    sweep_df = pd.read_csv(suite_out / "cpsbench_merged_sweep.csv")
 
     sev_col = "true_soc_violation_severity_p95_mwh"
     if sev_col not in main_df.columns:
         sev_col = "true_soc_violation_severity_p95"
+    if sev_col not in sweep_df.columns:
+        sev_col = "true_soc_violation_severity_p95"
 
-    metrics = {
-        "true_soc_violation_rate": {"threshold_rel": 0.10},
-        sev_col: {"threshold_rel": 0.10},
-    }
-    baselines = ["robust_fixed_interval", "deterministic_lp"]
+    primary_cfg = cfg.get("primary_gate", {}) if isinstance(cfg.get("primary_gate"), dict) else {}
+    p_threshold = float(primary_cfg.get("p_threshold", 0.01))
+    threshold_rel = float(primary_cfg.get("min_relative_reduction", 0.10))
+    primary_baseline = str(primary_cfg.get("baseline", "robust_fixed_interval"))
+    candidate = str(primary_cfg.get("candidate", "dc3s_wrapped"))
+    faulted_only = bool(primary_cfg.get("faulted_only", True))
+    severity_min = float(primary_cfg.get("severity_min", 0.0))
+    enforce_primary_gate = bool(cfg.get("enforce_primary_gate", True))
+    bootstrap_n = int(cfg.get("bootstrap_n", 10000))
 
-    summary_rows: list[dict[str, Any]] = []
-    stats_summary: dict[str, Any] = {
+    metrics = ("true_soc_violation_rate", sev_col)
+    summary_rows: list[dict[str, object]] = []
+    stats_summary: dict[str, object] = {
         "generated_at": datetime.utcnow().isoformat(),
         "scenarios": scenarios,
         "seeds": seeds,
-        "wilcoxon_threshold_p": 0.01,
+        "wilcoxon_threshold_p": p_threshold,
         "bootstrap_ci": 0.95,
+        "min_relative_reduction": threshold_rel,
         "comparisons": {},
     }
 
-    for baseline in baselines:
+    # Primary gate: aggregate faulted sweep points.
+    pair_cols = ["fault_dimension", "severity", "scenario", "seed"]
+    base_sweep = sweep_df[sweep_df["controller"] == primary_baseline]
+    cand_sweep = sweep_df[sweep_df["controller"] == candidate]
+    primary_pairs = base_sweep.merge(cand_sweep, on=pair_cols, suffixes=("_baseline", "_dc3s"), how="inner")
+    if faulted_only:
+        sev_vals = pd.to_numeric(primary_pairs["severity"], errors="coerce")
+        primary_pairs = primary_pairs[sev_vals > severity_min].copy()
+
+    primary_metrics: dict[str, dict[str, object]] = {}
+    primary_pass = True
+    primary_row: dict[str, object] = {
+        "analysis_scope": "primary_aggregate_fault_sweep",
+        "baseline_role": "primary",
+        "scenario": "aggregate_fault_sweep",
+        "fault_dimension": "all",
+        "baseline_controller": primary_baseline,
+        "candidate_controller": candidate,
+        "n_pairs": int(len(primary_pairs)),
+    }
+    for metric in metrics:
+        bundle = _compute_metric_bundle(
+            baseline=primary_pairs[f"{metric}_baseline"].to_numpy(dtype=float) if len(primary_pairs) else np.asarray([], dtype=float),
+            candidate=primary_pairs[f"{metric}_dc3s"].to_numpy(dtype=float) if len(primary_pairs) else np.asarray([], dtype=float),
+            metric=metric,
+            threshold_rel=threshold_rel,
+            p_threshold=p_threshold,
+            bootstrap_n=bootstrap_n,
+        )
+        metric_key = metric.replace("_mwh", "")
+        primary_row[f"{metric_key}_baseline_mean"] = bundle["baseline_mean"]
+        primary_row[f"{metric_key}_dc3s_mean"] = bundle["dc3s_mean"]
+        primary_row[f"{metric_key}_dc3s_ci_low"] = bundle["dc3s_ci_low"]
+        primary_row[f"{metric_key}_dc3s_ci_high"] = bundle["dc3s_ci_high"]
+        primary_row[f"{metric_key}_rel_reduction"] = bundle["rel_reduction_mean"]
+        primary_row[f"{metric_key}_rel_reduction_ci_low"] = bundle["rel_reduction_ci_low"]
+        primary_row[f"{metric_key}_rel_reduction_ci_high"] = bundle["rel_reduction_ci_high"]
+        primary_row[f"{metric_key}_wilcoxon_stat"] = bundle["wilcoxon_stat"]
+        primary_row[f"{metric_key}_wilcoxon_p"] = bundle["wilcoxon_p"]
+        primary_row[f"{metric_key}_passes_10pct"] = bundle["passes_10pct"]
+        primary_row[f"{metric_key}_passes_p01"] = bundle["passes_p01"]
+        primary_pass = bool(primary_pass and bundle["passes_metric"])
+        primary_metrics[metric] = dict(bundle)
+    primary_row["passes_all_thresholds"] = bool(primary_pass)
+    summary_rows.append(primary_row)
+    stats_summary["primary_gate"] = {
+        "scope": "aggregate_fault_sweep",
+        "faulted_only": bool(faulted_only),
+        "severity_min": float(severity_min),
+        "baseline_controller": primary_baseline,
+        "candidate_controller": candidate,
+        "n_pairs": int(len(primary_pairs)),
+        "passes_all_thresholds": bool(primary_pass),
+        "metrics": primary_metrics,
+    }
+
+    # Secondary diagnostics: per-fault and per-scenario.
+    sec_cfg = cfg.get("secondary_diagnostics", {}) if isinstance(cfg.get("secondary_diagnostics"), dict) else {}
+    baselines = sec_cfg.get("baselines", ["robust_fixed_interval", "deterministic_lp"])
+    include_per_fault = bool(sec_cfg.get("include_per_fault", True))
+    for baseline in [str(b) for b in baselines]:
         base_df = main_df[main_df["controller"] == baseline]
-        dc3s_df = main_df[main_df["controller"] == "dc3s_wrapped"]
+        dc3s_df = main_df[main_df["controller"] == candidate]
         merged = base_df.merge(
             dc3s_df,
             on=["scenario", "seed"],
@@ -557,73 +683,111 @@ def run_dc3s_ablation_matrix(
             if sub.empty:
                 continue
 
-            row: dict[str, Any] = {
+            row: dict[str, object] = {
+                "analysis_scope": "secondary_scenario",
+                "baseline_role": "secondary",
                 "scenario": sc,
+                "fault_dimension": "aggregate",
                 "baseline_controller": baseline,
-                "candidate_controller": "dc3s_wrapped",
+                "candidate_controller": candidate,
                 "n_pairs": int(len(sub)),
             }
             stats_summary["comparisons"].setdefault(sc, {})[baseline] = {}
             overall_pass = True
 
-            for metric, metric_cfg in metrics.items():
-                b = pd.to_numeric(sub[f"{metric}_baseline"], errors="coerce").to_numpy(dtype=float)
-                d = pd.to_numeric(sub[f"{metric}_dc3s"], errors="coerce").to_numpy(dtype=float)
-                m = np.isfinite(b) & np.isfinite(d)
-                b = b[m]
-                d = d[m]
-                if len(b) == 0:
-                    continue
-
-                rel_reduction = (b - d) / np.maximum(b, 1e-9)
-                ci_lo, ci_hi = _bootstrap_ci_mean(d, n_bootstrap=int(cfg.get("bootstrap_n", 10000)))
-                rel_lo, rel_hi = _bootstrap_ci_relative_reduction(
-                    b,
-                    d,
-                    n_bootstrap=int(cfg.get("bootstrap_n", 10000)),
+            for metric in metrics:
+                bundle = _compute_metric_bundle(
+                    baseline=pd.to_numeric(sub[f"{metric}_baseline"], errors="coerce").to_numpy(dtype=float),
+                    candidate=pd.to_numeric(sub[f"{metric}_dc3s"], errors="coerce").to_numpy(dtype=float),
+                    metric=metric,
+                    threshold_rel=threshold_rel,
+                    p_threshold=p_threshold,
+                    bootstrap_n=bootstrap_n,
                 )
-                stat, p = _wilcoxon_safe(pd.Series(b), pd.Series(d))
-                mean_rel = float(np.mean(rel_reduction))
-                passes_rel = bool(mean_rel >= float(metric_cfg["threshold_rel"]))
-                passes_sig = bool((p is not None) and (p < 0.01))
-                overall_pass = overall_pass and passes_rel and passes_sig
-
+                overall_pass = bool(overall_pass and bundle["passes_metric"])
                 metric_key = metric.replace("_mwh", "")
-                row[f"{metric_key}_baseline_mean"] = float(np.mean(b))
-                row[f"{metric_key}_dc3s_mean"] = float(np.mean(d))
-                row[f"{metric_key}_dc3s_ci_low"] = float(ci_lo)
-                row[f"{metric_key}_dc3s_ci_high"] = float(ci_hi)
-                row[f"{metric_key}_rel_reduction"] = mean_rel
-                row[f"{metric_key}_rel_reduction_ci_low"] = float(rel_lo)
-                row[f"{metric_key}_rel_reduction_ci_high"] = float(rel_hi)
-                row[f"{metric_key}_wilcoxon_stat"] = stat
-                row[f"{metric_key}_wilcoxon_p"] = p
-                row[f"{metric_key}_passes_10pct"] = passes_rel
-                row[f"{metric_key}_passes_p01"] = passes_sig
+                row[f"{metric_key}_baseline_mean"] = bundle["baseline_mean"]
+                row[f"{metric_key}_dc3s_mean"] = bundle["dc3s_mean"]
+                row[f"{metric_key}_dc3s_ci_low"] = bundle["dc3s_ci_low"]
+                row[f"{metric_key}_dc3s_ci_high"] = bundle["dc3s_ci_high"]
+                row[f"{metric_key}_rel_reduction"] = bundle["rel_reduction_mean"]
+                row[f"{metric_key}_rel_reduction_ci_low"] = bundle["rel_reduction_ci_low"]
+                row[f"{metric_key}_rel_reduction_ci_high"] = bundle["rel_reduction_ci_high"]
+                row[f"{metric_key}_wilcoxon_stat"] = bundle["wilcoxon_stat"]
+                row[f"{metric_key}_wilcoxon_p"] = bundle["wilcoxon_p"]
+                row[f"{metric_key}_passes_10pct"] = bundle["passes_10pct"]
+                row[f"{metric_key}_passes_p01"] = bundle["passes_p01"]
 
                 stats_summary["comparisons"][sc][baseline][metric] = {
-                    "n_pairs": int(len(b)),
-                    "baseline_mean": float(np.mean(b)),
-                    "dc3s_mean": float(np.mean(d)),
-                    "rel_reduction_mean": mean_rel,
-                    "rel_reduction_ci_low": float(rel_lo),
-                    "rel_reduction_ci_high": float(rel_hi),
-                    "wilcoxon_stat": stat,
-                    "wilcoxon_p": p,
-                    "passes_10pct": passes_rel,
-                    "passes_p01": passes_sig,
+                    "n_pairs": bundle["n_pairs"],
+                    "baseline_mean": bundle["baseline_mean"],
+                    "dc3s_mean": bundle["dc3s_mean"],
+                    "rel_reduction_mean": bundle["rel_reduction_mean"],
+                    "rel_reduction_ci_low": bundle["rel_reduction_ci_low"],
+                    "rel_reduction_ci_high": bundle["rel_reduction_ci_high"],
+                    "wilcoxon_stat": bundle["wilcoxon_stat"],
+                    "wilcoxon_p": bundle["wilcoxon_p"],
+                    "passes_10pct": bundle["passes_10pct"],
+                    "passes_p01": bundle["passes_p01"],
                 }
 
             row["passes_all_thresholds"] = bool(overall_pass)
             summary_rows.append(row)
 
-    summary_df = pd.DataFrame(summary_rows).sort_values(["scenario", "baseline_controller"]).reset_index(drop=True)
+        if include_per_fault:
+            baseline_sweep = sweep_df[sweep_df["controller"] == baseline]
+            candidate_sweep = sweep_df[sweep_df["controller"] == candidate]
+            merged_fault = baseline_sweep.merge(candidate_sweep, on=pair_cols, suffixes=("_baseline", "_dc3s"), how="inner")
+            if faulted_only:
+                sev_vals = pd.to_numeric(merged_fault["severity"], errors="coerce")
+                merged_fault = merged_fault[sev_vals > severity_min].copy()
+            for fault_dim, sub_fault in merged_fault.groupby("fault_dimension", sort=True):
+                row_fault: dict[str, object] = {
+                    "analysis_scope": "secondary_fault_dimension",
+                    "baseline_role": "secondary",
+                    "scenario": "aggregate_fault_sweep",
+                    "fault_dimension": str(fault_dim),
+                    "baseline_controller": baseline,
+                    "candidate_controller": candidate,
+                    "n_pairs": int(len(sub_fault)),
+                }
+                fault_pass = True
+                for metric in metrics:
+                    bundle = _compute_metric_bundle(
+                        baseline=sub_fault[f"{metric}_baseline"].to_numpy(dtype=float),
+                        candidate=sub_fault[f"{metric}_dc3s"].to_numpy(dtype=float),
+                        metric=metric,
+                        threshold_rel=threshold_rel,
+                        p_threshold=p_threshold,
+                        bootstrap_n=bootstrap_n,
+                    )
+                    metric_key = metric.replace("_mwh", "")
+                    row_fault[f"{metric_key}_baseline_mean"] = bundle["baseline_mean"]
+                    row_fault[f"{metric_key}_dc3s_mean"] = bundle["dc3s_mean"]
+                    row_fault[f"{metric_key}_dc3s_ci_low"] = bundle["dc3s_ci_low"]
+                    row_fault[f"{metric_key}_dc3s_ci_high"] = bundle["dc3s_ci_high"]
+                    row_fault[f"{metric_key}_rel_reduction"] = bundle["rel_reduction_mean"]
+                    row_fault[f"{metric_key}_rel_reduction_ci_low"] = bundle["rel_reduction_ci_low"]
+                    row_fault[f"{metric_key}_rel_reduction_ci_high"] = bundle["rel_reduction_ci_high"]
+                    row_fault[f"{metric_key}_wilcoxon_stat"] = bundle["wilcoxon_stat"]
+                    row_fault[f"{metric_key}_wilcoxon_p"] = bundle["wilcoxon_p"]
+                    row_fault[f"{metric_key}_passes_10pct"] = bundle["passes_10pct"]
+                    row_fault[f"{metric_key}_passes_p01"] = bundle["passes_p01"]
+                    fault_pass = bool(fault_pass and bundle["passes_metric"])
+                row_fault["passes_all_thresholds"] = bool(fault_pass)
+                summary_rows.append(row_fault)
+
+    summary_df = pd.DataFrame(summary_rows)
+    if not summary_df.empty:
+        summary_df = summary_df.sort_values(
+            ["baseline_role", "analysis_scope", "scenario", "fault_dimension", "baseline_controller"]
+        ).reset_index(drop=True)
     table2_path = output_dir / "table2_ablations.csv"
     summary_df.to_csv(table2_path, index=False, float_format="%.6f")
 
     stats_path = output_dir / "stats_summary.json"
     stats_summary["table2_ablations"] = str(table2_path)
-    stats_summary["overall_pass"] = bool(summary_df["passes_all_thresholds"].all()) if not summary_df.empty else False
+    stats_summary["overall_pass"] = bool(primary_pass)
     stats_path.write_text(json.dumps(stats_summary, indent=2), encoding="utf-8")
 
     publication_dir = Path("reports/publication")
@@ -631,13 +795,19 @@ def run_dc3s_ablation_matrix(
     summary_df.to_csv(publication_dir / "table2_ablations.csv", index=False, float_format="%.6f")
     (publication_dir / "stats_summary.json").write_text(stats_path.read_text(encoding="utf-8"), encoding="utf-8")
 
-    return {
+    result = {
         "rows": int(len(summary_df)),
         "scenarios": scenarios,
         "table2_path": str(table2_path),
         "stats_path": str(stats_path),
-        "overall_pass": bool(stats_summary.get("overall_pass", False)),
+        "overall_pass": bool(primary_pass),
     }
+    if enforce_primary_gate and not primary_pass:
+        raise RuntimeError(
+            "Primary aggregate robust gate failed: expected p < 0.01 and >=10% relative reduction "
+            "for both violation rate and severity metrics."
+        )
+    return result
 
 
 def main():

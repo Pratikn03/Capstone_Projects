@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+
 repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
@@ -103,6 +104,103 @@ def _build_table1_and_coverage_fig(out_dir: Path) -> None:
     plt.close(fig)
 
 
+def _run_wilcoxon_tests(out_dir: Path) -> dict:
+    """
+    Wilcoxon signed-rank test: dc3s_wrapped vs naive_safe_clip.
+
+    Tests whether DC³S produces statistically significantly lower violation_rate
+    and intervention_rate than the naive safe clip baseline, and whether its
+    mean_interval_width is statistically significantly different.
+
+    Uses the Wilcoxon signed-rank test (non-parametric, paired) on per-seed
+    per-scenario results. This is the standard test for paired comparisons
+    in benchmarks where the same episodes are evaluated across controllers.
+
+    Output: wilcoxon_tests.json with p-values and effect sizes.
+    """
+    try:
+        from scipy import stats as scipy_stats
+    except ImportError:
+        print("  scipy not available — skipping Wilcoxon tests. Install scipy to enable.")
+        return {}
+
+    main_csv = out_dir / "dc3s_main_table.csv"
+    if not main_csv.exists():
+        print(f"  Wilcoxon: {main_csv} not found — skipping.")
+        return {}
+
+    df = pd.read_csv(main_csv)
+    if "controller" not in df.columns:
+        return {}
+
+    dc3s = df[df["controller"] == "dc3s_wrapped"].sort_values(["scenario", "seed"]).reset_index(drop=True)
+    naive = df[df["controller"] == "naive_safe_clip"].sort_values(["scenario", "seed"]).reset_index(drop=True)
+
+    if dc3s.empty or naive.empty:
+        print("  Wilcoxon: dc3s_wrapped or naive_safe_clip not found in results — skipping.")
+        return {}
+
+    # Align on (scenario, seed) pairs
+    merged = dc3s.merge(
+        naive,
+        on=["scenario", "seed"],
+        suffixes=("_dc3s", "_naive"),
+        how="inner",
+    )
+
+    metrics = [
+        ("true_soc_violation_rate", "lower"),        # DC³S should be lower
+        ("intervention_rate",       "lower"),         # DC³S should need fewer interventions
+        ("mean_interval_width",     "two-sided"),     # Width comparison (no direction prior)
+        ("picp_90",                 "greater"),       # DC³S should have higher PICP
+    ]
+
+    results = {}
+    print("\n" + "=" * 72)
+    print("WILCOXON SIGNED-RANK TEST: dc3s_wrapped vs naive_safe_clip")
+    print(f"  n_pairs = {len(merged)}")
+    print("=" * 72)
+    print(f"{'Metric':<35} {'Stat':>10} {'p-value':>12} {'Sig?':>8} {'Direction':>12}")
+    print("-" * 72)
+
+    for metric, alternative in metrics:
+        col_dc3s  = f"{metric}_dc3s"
+        col_naive = f"{metric}_naive"
+        if col_dc3s not in merged.columns or col_naive not in merged.columns:
+            continue
+        x = merged[col_dc3s].to_numpy(dtype=float)
+        y = merged[col_naive].to_numpy(dtype=float)
+        finite = np.isfinite(x) & np.isfinite(y)
+        x, y = x[finite], y[finite]
+        if len(x) < 3:
+            continue
+
+        stat, pval = scipy_stats.wilcoxon(x, y, alternative=alternative, zero_method="wilcox")
+        sig = "***" if pval < 0.001 else "**" if pval < 0.01 else "*" if pval < 0.05 else "ns"
+        direction_label = f"DC³S {'<' if alternative == 'lower' else '>' if alternative == 'greater' else '≠'} naive"
+        results[metric] = {
+            "statistic": float(stat),
+            "p_value": float(pval),
+            "n_pairs": int(len(x)),
+            "alternative": alternative,
+            "significant_at_0.05": bool(pval < 0.05),
+            "significant_at_0.01": bool(pval < 0.01),
+            "dc3s_mean": float(np.mean(x)),
+            "naive_mean": float(np.mean(y)),
+            "mean_diff": float(np.mean(x - y)),
+        }
+        print(f"  {metric:<33} {stat:>10.2f} {pval:>12.4f} {sig:>8} {direction_label:>12}")
+
+    print("=" * 72)
+    print("  Significance: *** p<0.001  ** p<0.01  * p<0.05  ns = not significant")
+
+    # Export JSON
+    out_json = out_dir / "wilcoxon_tests.json"
+    out_json.write_text(json.dumps(results, indent=2, sort_keys=True), encoding="utf-8")
+    print(f"\n  Wilcoxon results → {out_json}")
+    return results
+
+
 def main() -> None:
     args = _parse_args()
     out_dir = Path(args.out_dir)
@@ -114,8 +212,10 @@ def main() -> None:
     )
     _verify_artifacts(out_dir)
     _build_table1_and_coverage_fig(out_dir)
+    _run_wilcoxon_tests(out_dir)
     print(json.dumps(summary, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
     main()
+
