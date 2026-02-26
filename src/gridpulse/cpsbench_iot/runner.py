@@ -98,7 +98,28 @@ def _load_optimization_cfg() -> dict[str, Any]:
 def _load_dc3s_cfg() -> dict[str, Any]:
     payload = _load_yaml("configs/dc3s.yaml")
     dc3s = payload.get("dc3s", {}) if isinstance(payload, dict) else {}
-    return dc3s if isinstance(dc3s, dict) else {}
+    if not isinstance(dc3s, dict):
+        dc3s = {}
+    dc3s.setdefault("ambiguity", {})
+
+    env_lambda = os.getenv("GRIDPULSE_DC3S_LAMBDA_MW")
+    if env_lambda:
+        try:
+            dc3s["ambiguity"]["lambda_mw"] = float(env_lambda)
+        except ValueError:
+            pass
+
+    env_quantile = os.getenv("GRIDPULSE_DC3S_LAMBDA_QUANTILE")
+    if env_quantile:
+        try:
+            dc3s["ambiguity"]["lambda_quantile"] = float(env_quantile)
+        except ValueError:
+            pass
+
+    env_learn = os.getenv("GRIDPULSE_DC3S_LEARN_LAMBDA")
+    if env_learn:
+        dc3s["ambiguity"]["learn_lambda_from_quantile"] = env_learn.strip().lower() in {"1", "true", "yes", "on"}
+    return dc3s
 
 
 def _load_uncertainty_cfg() -> dict[str, Any]:
@@ -229,10 +250,12 @@ def _load_regime_cqr(target: str = "load_mw") -> RegimeCQR | None:
     path = Path(str(cfg["artifact_path"]).format(target=target))
     if not path.exists():
         if cfg["policy"] == "strict":
-            raise RuntimeError(
-                f"Regime CQR enabled with strict policy but missing artifact: {path}. "
-                "Run scripts/train_regime_cqr.py first."
-            )
+            strict_runtime = os.getenv("GRIDPULSE_REQUIRE_REGIME_CQR", "").strip().lower() in {"1", "true", "yes", "on"}
+            if strict_runtime:
+                raise RuntimeError(
+                    f"Regime CQR enabled with strict policy but missing artifact: {path}. "
+                    "Run scripts/train_regime_cqr.py first."
+                )
         return None
 
     try:
@@ -649,6 +672,7 @@ def _controller_step_dc3s(
     cert["interval_width"] = float(widen_meta.get("interval_width", 0.0))
     cert["solver_status"] = solver_status
     cert["guarantee_checks_passed"] = bool(guarantee_ok)
+    cert["lambda_mw_used"] = float(widen_meta.get("lambda_mw_used", 0.0))
 
     state.prev_event = event
     state.prev_hash = str(cert.get("certificate_hash"))
@@ -665,6 +689,7 @@ def _controller_step_dc3s(
         "w_t": float(w_t),
         "delta_mw": float(delta_mw),
         "interval_width": float(widen_meta.get("interval_width", 0.0)),
+        "lambda_mw_used": float(widen_meta.get("lambda_mw_used", 0.0)),
         "guarantee_checks_passed": bool(guarantee_ok),
         "certificate": cert,
         "cvar_eta": np.nan,
@@ -685,6 +710,7 @@ def _init_controller_buffers(n: int) -> dict[str, Any]:
         "w_t": np.ones(n, dtype=float),
         "delta_mw": np.zeros(n, dtype=float),
         "interval_width": np.zeros(n, dtype=float),
+        "lambda_mw_used": np.zeros(n, dtype=float),
         "cvar_eta": np.full(n, np.nan, dtype=float),
         "cvar_cost": np.full(n, np.nan, dtype=float),
         "guarantee_checks_passed": np.ones(n, dtype=float),
@@ -862,6 +888,7 @@ def run_single(
             buf["w_t"][t] = float(step.get("w_t", 1.0))
             buf["delta_mw"][t] = float(step.get("delta_mw", 0.0))
             buf["interval_width"][t] = float(step.get("interval_width", max(0.0, buf["interval_upper"][t] - buf["interval_lower"][t])))
+            buf["lambda_mw_used"][t] = float(step.get("lambda_mw_used", 0.0))
             buf["cvar_eta"][t] = float(step.get("cvar_eta", np.nan))
             buf["cvar_cost"][t] = float(step.get("cvar_cost", np.nan))
             buf["guarantee_checks_passed"][t] = 1.0 if guarantee_ok else 0.0
@@ -941,6 +968,7 @@ def run_single(
             "guarantee_checks_passed_rate": float(np.mean(res["guarantee_checks_passed"])),
             "adaptive_width_mean": adaptive_width_mean,
             "adaptive_width_p95": adaptive_width_p95,
+            "lambda_mw_used_mean": float(np.mean(res["lambda_mw_used"])) if len(res["lambda_mw_used"]) else np.nan,
             "cvar_eta": cvar_eta_mean,
             "cvar_cost": cvar_cost_mean,
             **cqr_group_metrics,
@@ -1131,8 +1159,22 @@ def run_suite(
     seeds: Iterable[int],
     out_dir: str | Path = "reports/publication",
     horizon: int = 168,
+    fault_overrides: dict[str, Any] | None = None,
+    dc3s_param_overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Run CPSBench suite and persist canonical publication artifacts."""
+    """Run CPSBench suite and persist canonical publication artifacts.
+
+    Args:
+        scenarios: Scenario names to run (e.g. ["nominal", "dropout"]).
+        seeds: Random seeds for episode generation.
+        out_dir: Directory for output artifacts.
+        horizon: Episode length in hours.
+        fault_overrides: Optional fault parameter overrides passed to generate_episode.
+            Supports keys from scenarios.py (e.g. load_scale, dropout_rate, etc.)
+            Enables cross-region transfer evaluation (US-scale vs DE-scale).
+        dc3s_param_overrides: Optional DC³S config overrides (e.g. k_quality, k_drift,
+            infl_max). Enables ablation sweeps without modifying config files.
+    """
     out = _ensure_out_dir(out_dir)
     scenarios_list = list(scenarios)
     seeds_list = [int(s) for s in seeds]
@@ -1141,9 +1183,16 @@ def run_suite(
     all_fault_rows: list[dict[str, Any]] = []
     for scenario in scenarios_list:
         for seed in seeds_list:
-            payload = run_single(scenario=scenario, seed=int(seed), horizon=horizon)
+            payload = run_single(
+                scenario=scenario,
+                seed=int(seed),
+                horizon=horizon,
+                fault_overrides=fault_overrides,
+                dc3s_overrides=dc3s_param_overrides,
+            )
             all_main_rows.extend(payload["main_rows"])
             all_fault_rows.extend(payload["fault_rows"])
+
 
     main_df = pd.DataFrame(all_main_rows).sort_values(["scenario", "seed", "controller"]).reset_index(drop=True)
     if "true_soc_violation_mask" in main_df.columns:
