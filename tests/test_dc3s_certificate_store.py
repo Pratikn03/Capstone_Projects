@@ -28,6 +28,10 @@ def _build_certificate(command_id: str) -> dict:
         reliability_w=0.52,
         drift_flag=True,
         inflation=1.4,
+        guarantee_checks_passed=True,
+        guarantee_fail_reasons=[],
+        true_soc_violation_after_apply=False,
+        assumptions_version="dc3s-assumptions-v1",
     )
 
 
@@ -44,11 +48,29 @@ def test_store_certificate_persists_typed_dc3s_columns(tmp_path) -> None:
             row[1]
             for row in conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()
         }
-        assert {"intervened", "intervention_reason", "reliability_w", "drift_flag", "inflation"} <= cols
+        assert {
+            "intervened",
+            "intervention_reason",
+            "reliability_w",
+            "drift_flag",
+            "inflation",
+            "guarantee_checks_passed",
+            "guarantee_fail_reasons",
+            "true_soc_violation_after_apply",
+            "assumptions_version",
+        } <= cols
 
         row = conn.execute(
             f"""
-            SELECT intervened, intervention_reason, reliability_w, drift_flag, inflation, payload_json
+            SELECT
+              intervened,
+              intervention_reason,
+              reliability_w,
+              drift_flag,
+              inflation,
+              guarantee_checks_passed,
+              assumptions_version,
+              payload_json
             FROM {table_name}
             WHERE command_id = ?
             """,
@@ -63,7 +85,9 @@ def test_store_certificate_persists_typed_dc3s_columns(tmp_path) -> None:
     assert float(row[2]) == 0.52
     assert bool(row[3]) is True
     assert float(row[4]) == 1.4
-    payload = json.loads(str(row[5]))
+    assert bool(row[5]) is True
+    assert row[6] == "dc3s-assumptions-v1"
+    payload = json.loads(str(row[7]))
     assert payload["intervened"] is True
 
 
@@ -95,7 +119,17 @@ def test_store_certificate_migrates_legacy_table(tmp_path) -> None:
             row[1]
             for row in conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()
         }
-        assert {"intervened", "intervention_reason", "reliability_w", "drift_flag", "inflation"} <= cols
+        assert {
+            "intervened",
+            "intervention_reason",
+            "reliability_w",
+            "drift_flag",
+            "inflation",
+            "guarantee_checks_passed",
+            "guarantee_fail_reasons",
+            "true_soc_violation_after_apply",
+            "assumptions_version",
+        } <= cols
 
         row = conn.execute(
             f"SELECT intervened, reliability_w, drift_flag, inflation FROM {table_name} WHERE command_id = ?",
