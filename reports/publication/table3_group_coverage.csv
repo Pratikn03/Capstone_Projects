@@ -1,4 +1,4 @@
 target,group,bin,picp_90,mean_width,sample_count
-load_mw,low,0,0.863548,1360.192227,513
-load_mw,med,1,0.812261,1257.556498,261
-load_mw,high,2,0.893364,827.569269,1763
+load_mw,low,0,0.867446,1400.418976,513
+load_mw,med,1,0.816092,1247.121245,261
+load_mw,high,2,0.887691,836.839593,1763

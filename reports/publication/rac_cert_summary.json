@@ -1,0 +1,12 @@
+{
+  "controllers": [
+    "cvar_interval",
+    "dc3s_wrapped",
+    "deterministic_lp",
+    "robust_fixed_interval"
+  ],
+  "rac_inflation_mean_global": 1.0044196500000002,
+  "rac_q_multiplier_mean_global": 1.005493025,
+  "rac_sensitivity_mean_global": 0.0054193875,
+  "rows": 80
+}

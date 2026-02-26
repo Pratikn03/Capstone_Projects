@@ -1,0 +1,43 @@
+{
+  "artifact_hashes_sha256": {
+    "ambiguity_calibration_summary.json": "49494b142698fcc58527697cf606b21f659e035c8aec1739c12e4c9d085951d7",
+    "cost_safety_pareto.csv": "a329765d7015d78ca9e5f03fe23a582220c55fd67990e753ccdf1f49efbf021a",
+    "cqr_calibration_summary.json": "68b5f1e4eff3e75955d66b7a024b15b8d3f468317e0ce90114eea7675dd0d47b",
+    "cqr_group_coverage.csv": "63a459abd257c1b824d094dd3ab83f98fe0b0dc6474fb041f6a1c730100df49e",
+    "dc3s_fault_breakdown.csv": "6e79ab12a8aaababd45f1742a899256b3d504e60cab04e1432047088ad87c964",
+    "dc3s_main_table.csv": "fc79c173e48f845526257b19c931cd6c3e30dcac846965588f1bdecda05c1841",
+    "fig_cost_safety_pareto.png": "3b9f846e6ecbd4cf89d772acb829dc9bed8e146c3a943b08777a0c5de6b85c6a",
+    "fig_cqr_group_coverage.png": "4d652f6739e7812f762ded26af9e841c0af6cbe77d1212bd2e0304e99c5d3d74",
+    "fig_distributional_vs_cqr.png": "04c0dfb06f20561987c3c1c7af84a7cfea74bd86b553dfd1a57f85a5519f4129",
+    "fig_rac_sensitivity_vs_width.png": "bfb1391ee35f43215f8c5146d855c52e5a4ab302238c694c3bdba301479440f9",
+    "fig_true_soc_severity_p95_vs_dropout.png": "3b6251dcf5463d5a6c9f767183e12972da5ec139e1e9d9ce3a7d21b256505a7c",
+    "fig_true_soc_violation_vs_dropout.png": "9a70464d695460451f804e6867d4c6dab4b7358ae02734e23f83de221569d0a9",
+    "rac_cert_summary.json": "ab68f8a192e3b595a33572e667cca5b7f837632a74966ee457c077d62a854220",
+    "release_manifest.json": "6e93c3376c6b73fddddc385b2ac7decd17f2050cf7094990ad26fe11494dab87",
+    "stats_summary.json": "b2ab005f7d37ed9bc12616bbcd568a1c25d1bfcc5aa477b334576c7251cde00f",
+    "table2_ablations.csv": "e9fc0dd78ede420949512651834a65369524eee1877b4598591514ebbdb3480e",
+    "table5_transfer.csv": "a115182eb6b615ae0b0a8cfcaa72aed9ededa612535b5f360d0dce9de8f184b6",
+    "table_cqr_distributional_compare.csv": "89f4f0724814206869ae31b1b3348c54e21f535b1c5a35449a3d3c8d1632d22a",
+    "transfer_stress.csv": "a115182eb6b615ae0b0a8cfcaa72aed9ededa612535b5f360d0dce9de8f184b6"
+  },
+  "command": "manual canonicalized publication pipeline (train_regime_cqr + run_suite + run_ablations + transfer + pareto + verify)",
+  "generated_at_utc": "2026-02-26T10:26:49.593877+00:00",
+  "git_commit": "e2df1e533b3771aaad002198a5942aa61769a878",
+  "horizon": 8,
+  "scenarios": [
+    "nominal",
+    "dropout"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ]
+}
