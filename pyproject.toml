@@ -83,7 +83,7 @@ dependencies = [
   "nbformat==5.10.4",
   "nest-asyncio==1.6.0",
   "networkx==3.2.1",
-  "ngboost==0.5.9",
+  "ngboost==0.5.8",
   "numpy==2.0.2",
   "packaging==25.0",
   "pandas==2.3.3",
