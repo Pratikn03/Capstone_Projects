@@ -127,6 +127,8 @@ def _run_one_config(
     # We call it with a temp subdir so ablation runs don't clobber the main table
     tmp_dir = out_dir / "_ablation_tmp"
     tmp_dir.mkdir(parents=True, exist_ok=True)
+    # Also pre-create the output dir in case it doesn't exist
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     summary = run_suite(
         scenarios=grid["scenarios"],
