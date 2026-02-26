@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 from typing import Any
 
@@ -40,12 +43,16 @@ REQUIRED_PUBLICATION = (
     "cqr_group_coverage.csv",
     "cqr_calibration_summary.json",
     "fig_cqr_group_coverage.png",
+    "rac_cert_summary.json",
+    "fig_rac_sensitivity_vs_width.png",
     "transfer_stress.csv",
+    "table5_transfer.csv",
     "table_cqr_distributional_compare.csv",
     "fig_distributional_vs_cqr.png",
     "ambiguity_calibration_summary.json",
     "cost_safety_pareto.csv",
     "fig_cost_safety_pareto.png",
+    "release_manifest.json",
 )
 
 
@@ -113,7 +120,12 @@ def _prepare_regime_cqr(out_dir: Path, split_paths: dict[str, Path], unc_cfg: di
     regime_path = Path(str(regime_cfg.get("artifact_path", "artifacts/uncertainty/{target}_regime_cqr.json")).format(target="load_mw"))
     if not regime_path.exists():
         raise FileNotFoundError(f"Regime CQR artifact missing after training: {regime_path}")
+    rac_cfg = unc_cfg.get("rac_cert", {}) if isinstance(unc_cfg.get("rac_cert"), dict) else {}
+    rac_path = Path(str(rac_cfg.get("artifact_path", "artifacts/uncertainty/{target}_rac_cert.json")).format(target="load_mw"))
+    if not rac_path.exists():
+        raise FileNotFoundError(f"RAC-Cert artifact missing after training: {rac_path}")
     payload["regime_path_resolved"] = str(regime_path)
+    payload["rac_path_resolved"] = str(rac_path)
     return payload
 
 
@@ -186,6 +198,54 @@ def _build_cqr_group_coverage(out_dir: Path) -> dict[str, Any]:
         "figure": str(fig_primary),
         "summary": str(summary_path),
     }
+
+
+def _build_rac_diagnostics(out_dir: Path) -> dict[str, Any]:
+    main_path = out_dir / "dc3s_main_table.csv"
+    if not main_path.exists():
+        raise FileNotFoundError(f"Missing main table for RAC diagnostics: {main_path}")
+    df = pd.read_csv(main_path)
+
+    required_cols = {
+        "rac_sensitivity_mean",
+        "rac_sensitivity_p95",
+        "rac_q_multiplier_mean",
+        "rac_q_multiplier_p95",
+        "rac_inflation_mean",
+        "adaptive_width_mean",
+    }
+    missing = required_cols - set(df.columns)
+    if missing:
+        raise RuntimeError(f"Main table missing RAC diagnostics columns: {sorted(missing)}")
+
+    summary = {
+        "rows": int(len(df)),
+        "controllers": sorted(df["controller"].astype(str).unique().tolist()) if "controller" in df.columns else [],
+        "rac_sensitivity_mean_global": float(pd.to_numeric(df["rac_sensitivity_mean"], errors="coerce").mean()),
+        "rac_q_multiplier_mean_global": float(pd.to_numeric(df["rac_q_multiplier_mean"], errors="coerce").mean()),
+        "rac_inflation_mean_global": float(pd.to_numeric(df["rac_inflation_mean"], errors="coerce").mean()),
+    }
+    summary_path = out_dir / "rac_cert_summary.json"
+    summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+
+    fig_path = out_dir / "fig_rac_sensitivity_vs_width.png"
+    fig, ax = plt.subplots(figsize=(8, 5))
+    for controller, sub in df.groupby("controller", sort=True):
+        x = pd.to_numeric(sub["rac_sensitivity_mean"], errors="coerce").to_numpy(dtype=float)
+        y = pd.to_numeric(sub["adaptive_width_mean"], errors="coerce").to_numpy(dtype=float)
+        mask = np.isfinite(x) & np.isfinite(y)
+        if mask.any():
+            ax.scatter(x[mask], y[mask], alpha=0.8, label=str(controller))
+    ax.set_xlabel("RAC Sensitivity Mean")
+    ax.set_ylabel("Adaptive Width Mean")
+    ax.set_title("RAC Sensitivity vs Interval Width")
+    ax.grid(alpha=0.3)
+    if len(df):
+        ax.legend(fontsize=8)
+    fig.tight_layout()
+    fig.savefig(fig_path, dpi=220)
+    plt.close(fig)
+    return {"summary_path": str(summary_path), "figure_path": str(fig_path)}
 
 
 def _calibrate_ambiguity_from_splits(
@@ -368,6 +428,54 @@ def _verify_outputs(out_dir: Path) -> None:
     }
     if not required_cases.issubset(set(transfer["transfer_case"].astype(str).unique().tolist())):
         raise RuntimeError("transfer_stress.csv missing one or more required transfer cases")
+    table5 = pd.read_csv(out_dir / "table5_transfer.csv")
+    if "transfer_case" in table5.columns and table5["transfer_case"].astype(str).str.contains("pending_transfer_artifacts", na=False).any():
+        raise RuntimeError("table5_transfer.csv contains placeholder rows")
+    stats = json.loads((out_dir / "stats_summary.json").read_text(encoding="utf-8"))
+    stats_blob = json.dumps(stats, sort_keys=True)
+    if "/tmp/" in stats_blob:
+        raise RuntimeError("stats_summary.json contains /tmp paths")
+
+
+def _sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _write_release_manifest(
+    *,
+    out_dir: Path,
+    seeds: list[int],
+    scenarios: list[str],
+    horizon: int,
+    command: str,
+) -> dict[str, Any]:
+    try:
+        commit = (
+            subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True).strip()
+        )
+    except Exception:
+        commit = "unknown"
+    artifact_hashes: dict[str, str] = {}
+    for name in REQUIRED_PUBLICATION:
+        p = out_dir / name
+        if p.exists() and p.is_file():
+            artifact_hashes[name] = _sha256_file(p)
+    manifest = {
+        "git_commit": commit,
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "command": command,
+        "seeds": seeds,
+        "scenarios": scenarios,
+        "horizon": int(horizon),
+        "artifact_hashes_sha256": artifact_hashes,
+    }
+    manifest_path = out_dir / "release_manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    return manifest
 
 
 def main() -> None:
@@ -389,6 +497,7 @@ def main() -> None:
         dc3s_cfg=_load_dc3s_cfg(),
     )
     os.environ["GRIDPULSE_REQUIRE_REGIME_CQR"] = "true"
+    os.environ["GRIDPULSE_REQUIRE_RAC_CERT"] = "true"
 
     cpsbench_summary = run_suite(
         scenarios=scenarios,
@@ -402,11 +511,23 @@ def main() -> None:
         seeds=seeds,
         scenario="drift_combo",
         horizon=int(args.horizon),
+        precomputed_main_csv=out_dir / "dc3s_main_table.csv",
+        precomputed_sweep_csv=out_dir / "cpsbench_merged_sweep.csv",
     )
 
     transfer_summary = _build_transfer_stress(out_dir, seeds=seeds, horizon=int(args.horizon))
     pareto_summary = build_cost_safety_pareto(main_table_path=out_dir / "dc3s_main_table.csv", out_dir=out_dir)
+    rac_summary = _build_rac_diagnostics(out_dir)
 
+    release_manifest = _write_release_manifest(
+        out_dir=out_dir,
+        seeds=seeds,
+        scenarios=scenarios,
+        horizon=int(args.horizon),
+        command="python3 scripts/build_publication_artifact.py "
+        + f"--out-dir {out_dir} --horizon {int(args.horizon)} --seeds {' '.join(str(s) for s in seeds)} "
+        + f"--scenarios {' '.join(str(s) for s in scenarios)}",
+    )
     _verify_outputs(out_dir)
 
     summary = {
@@ -416,8 +537,10 @@ def main() -> None:
         "regime_training": regime_summary,
         "distributional": distributional_summary,
         "ambiguity_calibration": ambiguity_summary,
+        "rac_diagnostics": rac_summary,
         "transfer": transfer_summary,
         "pareto": pareto_summary,
+        "release_manifest": release_manifest,
         "required_outputs": [str(out_dir / x) for x in REQUIRED_PUBLICATION],
     }
     (out_dir / "publication_artifact_summary.json").write_text(

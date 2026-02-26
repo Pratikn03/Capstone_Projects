@@ -78,6 +78,15 @@ Scripts expect:
 - Working directory at project root
 - Required data in `data/` directory
 
+## Code Quality Lock
+
+Use release-grade static hygiene checks before publication freeze:
+
+```bash
+.venv/bin/pip install ruff
+make lint-release
+```
+
 ## Publication Package Runbook
 
 Canonical training configs:
@@ -115,6 +124,8 @@ This writes/refreshes:
 - `reports/publication/cqr_calibration_summary.json`
 - `reports/publication/table3_group_coverage.csv` (compat alias)
 - `reports/publication/fig_cqr_group_coverage.png`
+- `reports/publication/rac_cert_summary.json`
+- `reports/publication/fig_rac_sensitivity_vs_width.png`
 - `reports/publication/fig_coverage_width_tradeoff.png`
 - `reports/publication/fig_coverage_width.png` (compat alias)
 - `reports/publication/table_cqr_distributional_compare.csv`
@@ -125,3 +136,4 @@ This writes/refreshes:
 - `reports/publication/fig_transfer_coverage.png`
 - `reports/publication/cost_safety_pareto.csv`
 - `reports/publication/fig_cost_safety_pareto.png`
+- `reports/publication/release_manifest.json`

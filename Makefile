@@ -1,4 +1,4 @@
-.PHONY: setup lint test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact
+.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact
 
 PYTHON ?= $(if $(wildcard .venv/bin/python3),.venv/bin/python3,python3)
 
@@ -8,6 +8,27 @@ setup:
 
 lint:
 	PYTHONPYCACHEPREFIX=/tmp/gridpulse_pycache $(PYTHON) -m compileall src services scripts
+
+# Release-focused static hygiene checks (unused imports/locals)
+lint-release:
+	@if [ -x .venv/bin/ruff ]; then \
+		./.venv/bin/ruff check \
+			src/gridpulse/dc3s/rac_cert.py \
+			src/gridpulse/dc3s/calibration.py \
+			src/gridpulse/cpsbench_iot/runner.py \
+			scripts/build_publication_artifact.py \
+			scripts/run_ablations.py \
+			scripts/train_regime_cqr.py \
+			tests/test_rac_cert.py \
+			tests/test_rac_bounds_integration.py \
+			tests/test_publication_rac_required.py \
+			tests/test_cpsbench_smoke.py \
+			tests/test_run_ablations_dc3s.py \
+			--select F401,F841; \
+	else \
+		echo "ruff not found in .venv. Install with: .venv/bin/pip install ruff"; \
+		exit 1; \
+	fi
 
 test:
 	pytest -q --no-cov
@@ -253,7 +274,7 @@ publish-audit-isolated:
 	bash scripts/run_publish_audit_isolated.sh --config configs/publish_audit.yaml --run-hooks --baseline-ref origin/main --max-runtime-hours 6 --iot-steps 72
 
 # Full CI check (coverage + lint + integration)
-ci: lint test-cov test-integration
+ci: lint lint-release test-cov test-integration
 	@echo "✅ CI checks passed"
 
 # Pre-release validation
