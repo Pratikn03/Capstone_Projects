@@ -279,13 +279,13 @@
   },
   "model_drift": {
     "current": {
-      "rmse": 309.97523464409807,
-      "mape": 0.003932067586089694
+      "rmse": 305.1209624375309,
+      "mape": 0.003911572495132256
     },
     "baseline_mape": 0.003932067586089694,
     "decision": {
       "drift": false,
-      "ratio": 0.0
+      "ratio": -0.005212293661976448
     }
   },
   "retraining": {
@@ -298,9 +298,9 @@
   },
   "dc3s_health": {
     "window_hours": 24,
-    "commands_total": 306,
+    "commands_total": 257,
     "intervention_rate": 1.0,
-    "low_reliability_rate": 0.032679738562091505,
+    "low_reliability_rate": 0.03501945525291829,
     "drift_flag_rate": 0.0,
     "inflation_p95": 1.0,
     "triggered_flags": [
@@ -310,7 +310,7 @@
     "insufficient_data": false,
     "sustained_windows": 3,
     "sustained_breach_counts": {
-      "intervention_rate": 11,
+      "intervention_rate": 12,
       "low_reliability_rate": 0,
       "drift_flag_rate": 0,
       "inflation_p95": 0
