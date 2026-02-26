@@ -13,6 +13,7 @@ os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -22,8 +23,11 @@ if str(REPO_ROOT / "src") not in sys.path:
 
 from gridpulse.cpsbench_iot.runner import run_suite, run_single
 from gridpulse.cpsbench_iot.scenarios import DEFAULT_SCENARIOS
-from gridpulse.forecasting.uncertainty.conformal import load_conformal
+from gridpulse.dc3s.calibration import calibrate_ambiguity_lambda
+from scripts.build_cost_safety_pareto import build_cost_safety_pareto
 from scripts.run_ablations import run_dc3s_ablation_matrix
+from scripts.train_distributional_load import train_distributional_load
+from scripts.train_regime_cqr import train_regime_cqr_artifacts
 
 
 REQUIRED_PUBLICATION = (
@@ -37,6 +41,11 @@ REQUIRED_PUBLICATION = (
     "cqr_calibration_summary.json",
     "fig_cqr_group_coverage.png",
     "transfer_stress.csv",
+    "table_cqr_distributional_compare.csv",
+    "fig_distributional_vs_cqr.png",
+    "ambiguity_calibration_summary.json",
+    "cost_safety_pareto.csv",
+    "fig_cost_safety_pareto.png",
 )
 
 
@@ -49,75 +58,89 @@ def _parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
+def _load_uncertainty_cfg() -> dict[str, Any]:
+    path = REPO_ROOT / "configs" / "uncertainty.yaml"
+    if not path.exists():
+        return {}
+    payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _load_dc3s_cfg() -> dict[str, Any]:
+    path = REPO_ROOT / "configs" / "dc3s.yaml"
+    if not path.exists():
+        return {}
+    payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(payload, dict):
+        return {}
+    dc3s = payload.get("dc3s", {})
+    return dc3s if isinstance(dc3s, dict) else {}
+
+
+def _resolve_split_paths(unc_cfg: dict[str, Any]) -> dict[str, Path]:
+    split_cfg = unc_cfg.get("publication_splits", {}) if isinstance(unc_cfg.get("publication_splits"), dict) else {}
+    train = Path(str(split_cfg.get("train", "data/processed/splits/train.parquet")))
+    cal = Path(str(split_cfg.get("calibration", "data/processed/splits/calibration.parquet")))
+    test = Path(str(split_cfg.get("test", "data/processed/splits/test.parquet")))
+    if not train.is_absolute():
+        train = REPO_ROOT / train
+    if not cal.is_absolute():
+        cal = REPO_ROOT / cal
+    if not test.is_absolute():
+        test = REPO_ROOT / test
+    for p in (train, cal, test):
+        if not p.exists():
+            raise FileNotFoundError(f"Missing publication split file: {p}")
+    return {"train": train, "calibration": cal, "test": test}
+
+
+def _prepare_regime_cqr(out_dir: Path, split_paths: dict[str, Path], unc_cfg: dict[str, Any]) -> dict[str, Any]:
+    regime_cfg = unc_cfg.get("regime_cqr", {}) if isinstance(unc_cfg.get("regime_cqr"), dict) else {}
+    if not bool(regime_cfg.get("enabled", True)):
+        raise RuntimeError("regime_cqr.enabled must be true for publication runs")
+    payload = train_regime_cqr_artifacts(
+        train_path=split_paths["train"],
+        cal_path=split_paths["calibration"],
+        test_path=split_paths["test"],
+        out_dir=out_dir,
+        target="load_mw",
+        alpha=float(unc_cfg.get("conformal", {}).get("alpha", 0.10)),
+        bins=int(regime_cfg.get("n_bins", 3)),
+        vol_window=int(regime_cfg.get("vol_window", 24)),
+        backend_policy=str(regime_cfg.get("quantile_backend_policy", "strict")),
+        quantile_backend=str(regime_cfg.get("quantile_backend", "lightgbm")),
+    )
+    regime_path = Path(str(regime_cfg.get("artifact_path", "artifacts/uncertainty/{target}_regime_cqr.json")).format(target="load_mw"))
+    if not regime_path.exists():
+        raise FileNotFoundError(f"Regime CQR artifact missing after training: {regime_path}")
+    payload["regime_path_resolved"] = str(regime_path)
+    return payload
+
+
+def _prepare_distributional(out_dir: Path, split_paths: dict[str, Path]) -> dict[str, Any]:
+    return train_distributional_load(
+        train_path=split_paths["train"],
+        cal_path=split_paths["calibration"],
+        test_path=split_paths["test"],
+        out_dir=out_dir,
+        target="load_mw",
+    )
+
+
 def _build_cqr_group_coverage(out_dir: Path) -> dict[str, Any]:
-    target = "load_mw"
-    unc_cfg_path = REPO_ROOT / "configs" / "uncertainty.yaml"
-    artifacts_dir = Path("artifacts/uncertainty")
-    test_npz = Path("artifacts/backtests/load_mw_test.npz")
-    if unc_cfg_path.exists():
-        try:
-            import yaml
-
-            unc_cfg = yaml.safe_load(unc_cfg_path.read_text(encoding="utf-8")) or {}
-            artifacts_dir = Path(unc_cfg.get("artifacts_dir", artifacts_dir))
-            test_tmpl = str(unc_cfg.get("test_npz", "artifacts/backtests/{target}_test.npz"))
-            if "{target}" in test_tmpl:
-                test_npz = Path(test_tmpl.format(target=target))
-            else:
-                test_npz = Path(test_tmpl)
-        except Exception:
-            pass
-
-    conf_path = artifacts_dir / f"{target}_conformal.json"
-    if not conf_path.exists():
-        raise FileNotFoundError(f"Missing conformal artifact: {conf_path}")
-    if not test_npz.exists():
-        fallback = Path("artifacts/backtests/test.npz")
-        if fallback.exists():
-            test_npz = fallback
-        else:
-            raise FileNotFoundError(f"Missing test backtest arrays: {test_npz}")
-
-    ci = load_conformal(conf_path)
-    payload = np.load(test_npz)
-    y_true = np.asarray(payload["y_true"], dtype=float)
-    if "q_lo" in payload.files and "q_hi" in payload.files:
-        q_lo = np.asarray(payload["q_lo"], dtype=float)
-        q_hi = np.asarray(payload["q_hi"], dtype=float)
-        lower, upper = ci.predict_interval_cqr(q_lo, q_hi)
-    else:
-        y_pred = np.asarray(payload["y_pred"], dtype=float)
-        lower, upper = ci.predict_interval(y_pred)
-
-    y = y_true.reshape(-1)
-    lo = np.asarray(lower, dtype=float).reshape(-1)
-    hi = np.asarray(upper, dtype=float).reshape(-1)
-
-    width = hi - lo
-    covered = ((y >= lo) & (y <= hi)).astype(float)
-    vol = pd.Series(y).rolling(window=24, min_periods=6).std().fillna(0.0).to_numpy()
-    q1, q2 = np.quantile(vol, [1.0 / 3.0, 2.0 / 3.0]) if len(vol) > 2 else (0.0, 0.0)
-    labels = np.where(vol <= q1, "low", np.where(vol <= q2, "med", "high"))
-
-    rows: list[dict[str, Any]] = []
-    for label in ("low", "med", "high"):
-        mask = labels == label
-        if not np.any(mask):
-            continue
-        rows.append(
-            {
-                "target": target,
-                "group": label,
-                "picp_90": float(np.mean(covered[mask])),
-                "mean_width": float(np.mean(width[mask])),
-                "sample_count": int(np.sum(mask)),
-            }
-        )
-
-    cov_df = pd.DataFrame(rows)
     cov_path = out_dir / "cqr_group_coverage.csv"
-    cov_alias = out_dir / "table3_group_coverage.csv"
+    if not cov_path.exists():
+        raise FileNotFoundError(
+            f"Missing RegimeCQR coverage file: {cov_path}. "
+            "train_regime_cqr.py must run before publication build."
+        )
+    cov_df = pd.read_csv(cov_path)
+    if "group" not in cov_df.columns:
+        raise ValueError("cqr_group_coverage.csv missing 'group' column")
+    cov_df["group"] = cov_df["group"].astype(str).replace({"mid": "med"})
     cov_df.to_csv(cov_path, index=False, float_format="%.6f")
+
+    cov_alias = out_dir / "table3_group_coverage.csv"
     cov_df.to_csv(cov_alias, index=False, float_format="%.6f")
 
     fig_primary = out_dir / "fig_cqr_group_coverage.png"
@@ -129,6 +152,8 @@ def _build_cqr_group_coverage(out_dir: Path) -> dict[str, Any]:
         ax.text(0.5, 0.5, "No CQR group coverage rows", ha="center", va="center")
     else:
         for _, row in cov_df.iterrows():
+            if not np.isfinite(float(row.get("mean_width", np.nan))) or not np.isfinite(float(row.get("picp_90", np.nan))):
+                continue
             ax.scatter(float(row["mean_width"]), float(row["picp_90"]), s=80)
             ax.text(float(row["mean_width"]), float(row["picp_90"]), f" {row['group']}")
         ax.axhline(0.90, color="black", linestyle="--", linewidth=1.0)
@@ -146,7 +171,7 @@ def _build_cqr_group_coverage(out_dir: Path) -> dict[str, Any]:
     if not summary_path.exists():
         summary_payload = {
             "source": "build_publication_artifact._build_cqr_group_coverage",
-            "target": target,
+            "target": "load_mw",
             "rows": int(len(cov_df)),
             "groups": sorted(cov_df["group"].astype(str).unique().tolist()) if not cov_df.empty else [],
             "overall_picp_90": float(cov_df["picp_90"].mean()) if not cov_df.empty else None,
@@ -161,6 +186,49 @@ def _build_cqr_group_coverage(out_dir: Path) -> dict[str, Any]:
         "figure": str(fig_primary),
         "summary": str(summary_path),
     }
+
+
+def _calibrate_ambiguity_from_splits(
+    *,
+    out_dir: Path,
+    split_paths: dict[str, Path],
+    dc3s_cfg: dict[str, Any],
+) -> dict[str, Any]:
+    cal_df = pd.read_parquet(split_paths["calibration"]) if split_paths["calibration"].suffix == ".parquet" else pd.read_csv(split_paths["calibration"])
+    if "load_mw" not in cal_df.columns:
+        raise ValueError("Calibration split missing load_mw needed for ambiguity calibration")
+    load = cal_df["load_mw"].to_numpy(dtype=float)
+    if len(load) < 2:
+        raise ValueError("Calibration split too short for ambiguity calibration")
+    residuals = np.abs(np.diff(load))
+
+    ambiguity_cfg = dc3s_cfg.get("ambiguity", {}) if isinstance(dc3s_cfg.get("ambiguity"), dict) else {}
+    q = float(ambiguity_cfg.get("lambda_quantile", 0.95))
+    scale = float(ambiguity_cfg.get("lambda_scale", 1.0))
+    min_lambda = float(ambiguity_cfg.get("lambda_min_mw", 0.0))
+    max_lambda = float(ambiguity_cfg["lambda_max_mw"]) if "lambda_max_mw" in ambiguity_cfg else None
+    lambda_mw = calibrate_ambiguity_lambda(
+        residuals_mw=residuals,
+        quantile=q,
+        scale=scale,
+        min_lambda=min_lambda,
+        max_lambda=max_lambda,
+    )
+
+    summary = {
+        "residual_count": int(len(residuals)),
+        "residual_quantile": float(q),
+        "lambda_scale": float(scale),
+        "lambda_mw_calibrated": float(lambda_mw),
+        "residual_mean_mw": float(np.mean(residuals)),
+        "residual_p95_mw": float(np.quantile(residuals, 0.95)),
+    }
+    summary_path = out_dir / "ambiguity_calibration_summary.json"
+    summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+
+    os.environ["GRIDPULSE_DC3S_LAMBDA_MW"] = str(lambda_mw)
+    os.environ["GRIDPULSE_DC3S_LEARN_LAMBDA"] = "false"
+    return {"summary_path": str(summary_path), **summary}
 
 
 def _build_transfer_stress(out_dir: Path, seeds: list[int], horizon: int) -> dict[str, Any]:
@@ -310,6 +378,18 @@ def main() -> None:
     seeds = list(args.seeds or list(range(10)))
     scenarios = list(args.scenarios or DEFAULT_SCENARIOS)
 
+    unc_cfg = _load_uncertainty_cfg()
+    split_paths = _resolve_split_paths(unc_cfg)
+    regime_summary = _prepare_regime_cqr(out_dir=out_dir, split_paths=split_paths, unc_cfg=unc_cfg)
+    coverage_summary = _build_cqr_group_coverage(out_dir)
+    distributional_summary = _prepare_distributional(out_dir=out_dir, split_paths=split_paths)
+    ambiguity_summary = _calibrate_ambiguity_from_splits(
+        out_dir=out_dir,
+        split_paths=split_paths,
+        dc3s_cfg=_load_dc3s_cfg(),
+    )
+    os.environ["GRIDPULSE_REQUIRE_REGIME_CQR"] = "true"
+
     cpsbench_summary = run_suite(
         scenarios=scenarios,
         seeds=seeds,
@@ -324,8 +404,8 @@ def main() -> None:
         horizon=int(args.horizon),
     )
 
-    coverage_summary = _build_cqr_group_coverage(out_dir)
     transfer_summary = _build_transfer_stress(out_dir, seeds=seeds, horizon=int(args.horizon))
+    pareto_summary = build_cost_safety_pareto(main_table_path=out_dir / "dc3s_main_table.csv", out_dir=out_dir)
 
     _verify_outputs(out_dir)
 
@@ -333,7 +413,11 @@ def main() -> None:
         "cpsbench": cpsbench_summary,
         "ablations": ablation_summary,
         "group_coverage": coverage_summary,
+        "regime_training": regime_summary,
+        "distributional": distributional_summary,
+        "ambiguity_calibration": ambiguity_summary,
         "transfer": transfer_summary,
+        "pareto": pareto_summary,
         "required_outputs": [str(out_dir / x) for x in REQUIRED_PUBLICATION],
     }
     (out_dir / "publication_artifact_summary.json").write_text(
