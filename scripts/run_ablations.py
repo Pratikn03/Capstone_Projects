@@ -18,7 +18,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from scipy.stats import wilcoxon
@@ -524,6 +526,9 @@ def _compute_metric_bundle(
             "wilcoxon_stat": None,
             "wilcoxon_p": None,
             "passes_10pct": False,
+            "passes_15pct": False,
+            "target_relative_reduction": float(threshold_rel),
+            "passes_target": False,
             "passes_p01": False,
             "passes_metric": False,
         }
@@ -547,7 +552,10 @@ def _compute_metric_bundle(
         "rel_reduction_ci_high": float(rel_hi),
         "wilcoxon_stat": stat,
         "wilcoxon_p": p,
-        "passes_10pct": passes_rel,
+        "passes_10pct": bool(mean_rel >= 0.10),
+        "passes_15pct": bool(mean_rel >= 0.15),
+        "target_relative_reduction": float(threshold_rel),
+        "passes_target": passes_rel,
         "passes_p01": passes_sig,
         "passes_metric": bool(passes_rel and passes_sig),
     }
@@ -560,6 +568,8 @@ def run_dc3s_ablation_matrix(
     scenario: str = "drift_combo",
     horizon: int = 96,
     cfg_path: Path = Path("configs/dc3s_ablations.yaml"),
+    precomputed_main_csv: Path | None = None,
+    precomputed_sweep_csv: Path | None = None,
 ) -> dict:
     cfg = _load_dc3s_ablation_cfg(cfg_path)
     if len(seeds) != 10:
@@ -571,15 +581,28 @@ def run_dc3s_ablation_matrix(
     scenarios = list(dict.fromkeys(str(s) for s in scenarios))
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    suite_out = output_dir / "_cpsbench_ablation_suite"
-    run_cpsbench_suite(
-        scenarios=scenarios,
-        seeds=seeds,
-        out_dir=suite_out,
-        horizon=int(horizon),
+    use_precomputed = (
+        precomputed_main_csv is not None
+        and precomputed_sweep_csv is not None
+        and Path(precomputed_main_csv).exists()
+        and Path(precomputed_sweep_csv).exists()
     )
-    main_df = pd.read_csv(suite_out / "dc3s_main_table.csv")
-    sweep_df = pd.read_csv(suite_out / "cpsbench_merged_sweep.csv")
+    if use_precomputed:
+        main_df = pd.read_csv(Path(precomputed_main_csv))
+        sweep_df = pd.read_csv(Path(precomputed_sweep_csv))
+    else:
+        suite_out = Path(tempfile.mkdtemp(prefix="cpsbench_ablation_", dir=str(output_dir)))
+        try:
+            run_cpsbench_suite(
+                scenarios=scenarios,
+                seeds=seeds,
+                out_dir=suite_out,
+                horizon=int(horizon),
+            )
+            main_df = pd.read_csv(suite_out / "dc3s_main_table.csv")
+            sweep_df = pd.read_csv(suite_out / "cpsbench_merged_sweep.csv")
+        finally:
+            shutil.rmtree(suite_out, ignore_errors=True)
 
     sev_col = "true_soc_violation_severity_p95_mwh"
     if sev_col not in main_df.columns:
@@ -649,6 +672,9 @@ def run_dc3s_ablation_matrix(
         primary_row[f"{metric_key}_wilcoxon_stat"] = bundle["wilcoxon_stat"]
         primary_row[f"{metric_key}_wilcoxon_p"] = bundle["wilcoxon_p"]
         primary_row[f"{metric_key}_passes_10pct"] = bundle["passes_10pct"]
+        primary_row[f"{metric_key}_passes_15pct"] = bundle["passes_15pct"]
+        primary_row[f"{metric_key}_target_relative_reduction"] = bundle["target_relative_reduction"]
+        primary_row[f"{metric_key}_passes_target"] = bundle["passes_target"]
         primary_row[f"{metric_key}_passes_p01"] = bundle["passes_p01"]
         primary_pass = bool(primary_pass and bundle["passes_metric"])
         primary_metrics[metric] = dict(bundle)
@@ -716,6 +742,9 @@ def run_dc3s_ablation_matrix(
                 row[f"{metric_key}_wilcoxon_stat"] = bundle["wilcoxon_stat"]
                 row[f"{metric_key}_wilcoxon_p"] = bundle["wilcoxon_p"]
                 row[f"{metric_key}_passes_10pct"] = bundle["passes_10pct"]
+                row[f"{metric_key}_passes_15pct"] = bundle["passes_15pct"]
+                row[f"{metric_key}_target_relative_reduction"] = bundle["target_relative_reduction"]
+                row[f"{metric_key}_passes_target"] = bundle["passes_target"]
                 row[f"{metric_key}_passes_p01"] = bundle["passes_p01"]
 
                 stats_summary["comparisons"][sc][baseline][metric] = {
@@ -728,6 +757,9 @@ def run_dc3s_ablation_matrix(
                     "wilcoxon_stat": bundle["wilcoxon_stat"],
                     "wilcoxon_p": bundle["wilcoxon_p"],
                     "passes_10pct": bundle["passes_10pct"],
+                    "passes_15pct": bundle["passes_15pct"],
+                    "target_relative_reduction": bundle["target_relative_reduction"],
+                    "passes_target": bundle["passes_target"],
                     "passes_p01": bundle["passes_p01"],
                 }
 
@@ -772,6 +804,9 @@ def run_dc3s_ablation_matrix(
                     row_fault[f"{metric_key}_wilcoxon_stat"] = bundle["wilcoxon_stat"]
                     row_fault[f"{metric_key}_wilcoxon_p"] = bundle["wilcoxon_p"]
                     row_fault[f"{metric_key}_passes_10pct"] = bundle["passes_10pct"]
+                    row_fault[f"{metric_key}_passes_15pct"] = bundle["passes_15pct"]
+                    row_fault[f"{metric_key}_target_relative_reduction"] = bundle["target_relative_reduction"]
+                    row_fault[f"{metric_key}_passes_target"] = bundle["passes_target"]
                     row_fault[f"{metric_key}_passes_p01"] = bundle["passes_p01"]
                     fault_pass = bool(fault_pass and bundle["passes_metric"])
                 row_fault["passes_all_thresholds"] = bool(fault_pass)
@@ -804,8 +839,8 @@ def run_dc3s_ablation_matrix(
     }
     if enforce_primary_gate and not primary_pass:
         raise RuntimeError(
-            "Primary aggregate robust gate failed: expected p < 0.01 and >=10% relative reduction "
-            "for both violation rate and severity metrics."
+            f"Primary aggregate robust gate failed: expected p < {p_threshold:.3f} and >="
+            f"{100.0 * threshold_rel:.1f}% relative reduction for both violation rate and severity metrics."
         )
     return result
 
