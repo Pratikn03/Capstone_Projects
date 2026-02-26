@@ -8,6 +8,10 @@ dc3s:
   cooldown_smoothing: 0.0
   ambiguity:
     lambda_mw: 0.0
+    learn_lambda_from_quantile: false
+    lambda_quantile: 0.95
+    lambda_scale: 1.0
+    lambda_min_mw: 0.0
     min_w: 0.05
     max_extra: 1.0
   expected_cadence_s: 3600
