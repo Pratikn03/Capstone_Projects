@@ -9,11 +9,11 @@ conformal:
   eps: 1e-6
 
 regime_cqr:
-  enabled: false
+  enabled: true
   artifact_path: "artifacts/uncertainty/{target}_regime_cqr.json"
   vol_window: 24
   n_bins: 3
-  quantile_backend_policy: fallback
+  quantile_backend_policy: strict
 
 # FACI interval expansion controls (data-driven, no fixed hardcoded cap)
 faci:
@@ -28,6 +28,10 @@ faci:
 # Which split to use for calibration:
 # Usually "val" is fine, but best practice is a dedicated "calibration" split after train.
 calibration_split: "calibration"
+publication_splits:
+  train: "data/processed/splits/train.parquet"
+  calibration: "data/processed/splits/calibration.parquet"
+  test: "data/processed/splits/test.parquet"
 
 targets: ["load_mw", "wind_mw", "solar_mw"]
 artifacts_dir: "artifacts/uncertainty"

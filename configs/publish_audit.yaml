@@ -72,6 +72,9 @@ publish_audit:
         max_ratio: 1.0
 
   leakage_gates:
+    max_overlap_train_calibration: 0
+    max_overlap_calibration_val: 0
+    max_overlap_calibration_test: 0
     max_overlap_train_val: 0
     max_overlap_train_test: 0
     max_overlap_val_test: 0
