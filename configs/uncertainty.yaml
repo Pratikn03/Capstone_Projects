@@ -15,6 +15,15 @@ regime_cqr:
   n_bins: 3
   quantile_backend_policy: strict
 
+rac_cert:
+  enabled: true
+  artifact_path: "artifacts/uncertainty/{target}_rac_cert.json"
+  sens_eps_mw: 25.0
+  sens_norm_ref: 0.5
+  qhat_shrink_tau: 30
+  max_q_multiplier: 3.0
+  quantile_backend_policy: strict
+
 # FACI interval expansion controls (data-driven, no fixed hardcoded cap)
 faci:
   learn_scale_bounds: true

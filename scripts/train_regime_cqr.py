@@ -17,6 +17,7 @@ import pandas as pd
 
 from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm
 from gridpulse.forecasting.uncertainty.cqr import RegimeCQR, RegimeCQRConfig
+from gridpulse.dc3s.rac_cert import RACCertConfig, RACCertModel
 
 
 def _load_table(path: Path) -> pd.DataFrame:
@@ -228,6 +229,17 @@ def train_regime_cqr_artifacts(
     regime_path = artifact_dir / f"{target}_regime_cqr.json"
     regime_path.write_text(regime.to_json(), encoding="utf-8")
 
+    rac_model = RACCertModel(
+        cfg=RACCertConfig(
+            alpha=float(alpha),
+            n_vol_bins=int(bins),
+            vol_window=int(vol_window),
+        )
+    )
+    rac_model.fit(y_cal=y_cal, q_lo_cal=q10_cal, q_hi_cal=q90_cal)
+    rac_path = artifact_dir / f"{target}_rac_cert.json"
+    rac_path.write_text(rac_model.to_json(), encoding="utf-8")
+
     fig_path = out_dir / "fig_cqr_group_coverage.png"
     fig, ax = plt.subplots(figsize=(7, 4.5))
     if coverage_df.empty:
@@ -251,6 +263,7 @@ def train_regime_cqr_artifacts(
         "coverage_path": str(coverage_path),
         "summary_path": str(summary_path),
         "regime_path": str(regime_path),
+        "rac_path": str(rac_path),
         "figure_path": str(fig_path),
     }
 
