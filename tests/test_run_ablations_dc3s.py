@@ -131,6 +131,7 @@ def test_run_dc3s_ablation_matrix_primary_gate_uses_sweep(monkeypatch, tmp_path:
     assert stats["primary_gate"]["passes_all_thresholds"] is True
     assert stats["primary_gate"]["metrics"]["true_soc_violation_rate"]["passes_p01"] is True
     assert stats["primary_gate"]["metrics"]["true_soc_violation_severity_p95_mwh"]["passes_10pct"] is True
+    assert stats["primary_gate"]["metrics"]["true_soc_violation_severity_p95_mwh"]["passes_target"] is True
 
     table = pd.read_csv(out_dir / "table2_ablations.csv")
     assert "analysis_scope" in table.columns
