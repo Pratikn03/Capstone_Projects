@@ -1,0 +1,8 @@
+{
+  "lambda_mw_calibrated": 4422.399999999999,
+  "lambda_scale": 1.0,
+  "residual_count": 867,
+  "residual_mean_mw": 1928.4878892733564,
+  "residual_p95_mw": 4422.399999999999,
+  "residual_quantile": 0.95
+}

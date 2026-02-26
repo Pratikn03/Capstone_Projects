@@ -1,7 +1,7 @@
 target,group,picp_90,mean_width,sample_count,method
-load_mw,low,0.863548,1360.192227,513,regime_cqr
-load_mw,med,0.812261,1257.556498,261,regime_cqr
-load_mw,high,0.893364,827.569269,1763,regime_cqr
-load_mw,low,0.659574,544.397951,846,ngboost
-load_mw,med,0.701775,584.443892,845,ngboost
-load_mw,high,0.723404,562.511532,846,ngboost
+load_mw,low,0.867446,1400.418976,513,regime_cqr
+load_mw,med,0.816092,1247.121245,261,regime_cqr
+load_mw,high,0.887691,836.839593,1763,regime_cqr
+load_mw,low,0.669031,530.281594,846,ngboost
+load_mw,med,0.694675,569.728846,845,ngboost
+load_mw,high,0.728132,554.505305,846,ngboost

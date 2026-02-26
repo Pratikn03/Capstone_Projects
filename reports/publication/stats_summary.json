@@ -1,0 +1,207 @@
+{
+  "generated_at": "2026-02-26T16:37:05.656264",
+  "scenarios": [
+    "dropout",
+    "drift_combo"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "wilcoxon_threshold_p": 0.01,
+  "bootstrap_ci": 0.95,
+  "min_relative_reduction": 0.1,
+  "comparisons": {
+    "dropout": {
+      "robust_fixed_interval": {
+        "true_soc_violation_rate": {
+          "n_pairs": 10,
+          "baseline_mean": 0.1250001,
+          "dc3s_mean": 0.0,
+          "rel_reduction_mean": 1.0,
+          "rel_reduction_ci_low": 1.0,
+          "rel_reduction_ci_high": 1.0,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.001953125,
+          "passes_10pct": true,
+          "passes_15pct": true,
+          "target_relative_reduction": 0.1,
+          "passes_target": true,
+          "passes_p01": true
+        },
+        "true_soc_violation_severity_p95_mwh": {
+          "n_pairs": 10,
+          "baseline_mean": 543.6475197,
+          "dc3s_mean": 0.0,
+          "rel_reduction_mean": 1.0,
+          "rel_reduction_ci_low": 1.0,
+          "rel_reduction_ci_high": 1.0,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.001953125,
+          "passes_10pct": true,
+          "passes_15pct": true,
+          "target_relative_reduction": 0.1,
+          "passes_target": true,
+          "passes_p01": true
+        }
+      },
+      "deterministic_lp": {
+        "true_soc_violation_rate": {
+          "n_pairs": 10,
+          "baseline_mean": 0.15,
+          "dc3s_mean": 0.0,
+          "rel_reduction_mean": 1.0,
+          "rel_reduction_ci_low": 1.0,
+          "rel_reduction_ci_high": 1.0,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.001953125,
+          "passes_10pct": true,
+          "passes_15pct": true,
+          "target_relative_reduction": 0.1,
+          "passes_target": true,
+          "passes_p01": true
+        },
+        "true_soc_violation_severity_p95_mwh": {
+          "n_pairs": 10,
+          "baseline_mean": 643.3382606,
+          "dc3s_mean": 0.0,
+          "rel_reduction_mean": 1.0,
+          "rel_reduction_ci_low": 1.0,
+          "rel_reduction_ci_high": 1.0,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.001953125,
+          "passes_10pct": true,
+          "passes_15pct": true,
+          "target_relative_reduction": 0.1,
+          "passes_target": true,
+          "passes_p01": true
+        }
+      }
+    },
+    "drift_combo": {
+      "robust_fixed_interval": {
+        "true_soc_violation_rate": {
+          "n_pairs": 10,
+          "baseline_mean": 0.1166666,
+          "dc3s_mean": 0.0,
+          "rel_reduction_mean": 0.8,
+          "rel_reduction_ci_low": 1.0,
+          "rel_reduction_ci_high": 1.0,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.011513828076845417,
+          "passes_10pct": true,
+          "passes_15pct": true,
+          "target_relative_reduction": 0.1,
+          "passes_target": true,
+          "passes_p01": false
+        },
+        "true_soc_violation_severity_p95_mwh": {
+          "n_pairs": 10,
+          "baseline_mean": 2520.5803544,
+          "dc3s_mean": 0.0,
+          "rel_reduction_mean": 0.8,
+          "rel_reduction_ci_low": 1.0,
+          "rel_reduction_ci_high": 1.0,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.011718685599768632,
+          "passes_10pct": true,
+          "passes_15pct": true,
+          "target_relative_reduction": 0.1,
+          "passes_target": true,
+          "passes_p01": false
+        }
+      },
+      "deterministic_lp": {
+        "true_soc_violation_rate": {
+          "n_pairs": 10,
+          "baseline_mean": 0.1499999,
+          "dc3s_mean": 0.0,
+          "rel_reduction_mean": 1.0,
+          "rel_reduction_ci_low": 1.0,
+          "rel_reduction_ci_high": 1.0,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.001953125,
+          "passes_10pct": true,
+          "passes_15pct": true,
+          "target_relative_reduction": 0.1,
+          "passes_target": true,
+          "passes_p01": true
+        },
+        "true_soc_violation_severity_p95_mwh": {
+          "n_pairs": 10,
+          "baseline_mean": 1981.8794228,
+          "dc3s_mean": 0.0,
+          "rel_reduction_mean": 1.0,
+          "rel_reduction_ci_low": 1.0,
+          "rel_reduction_ci_high": 1.0,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.001953125,
+          "passes_10pct": true,
+          "passes_15pct": true,
+          "target_relative_reduction": 0.1,
+          "passes_target": true,
+          "passes_p01": true
+        }
+      }
+    }
+  },
+  "primary_gate": {
+    "scope": "aggregate_fault_sweep",
+    "faulted_only": true,
+    "severity_min": 0.0,
+    "baseline_controller": "robust_fixed_interval",
+    "candidate_controller": "dc3s_wrapped",
+    "n_pairs": 120,
+    "passes_all_thresholds": true,
+    "metrics": {
+      "true_soc_violation_rate": {
+        "metric": "true_soc_violation_rate",
+        "n_pairs": 120,
+        "baseline_mean": 0.21640626666666662,
+        "dc3s_mean": 0.0,
+        "dc3s_ci_low": 0.0,
+        "dc3s_ci_high": 0.0,
+        "rel_reduction_mean": 0.8833333333333333,
+        "rel_reduction_ci_low": 1.0,
+        "rel_reduction_ci_high": 1.0,
+        "wilcoxon_stat": 0.0,
+        "wilcoxon_p": 3.535274815964911e-19,
+        "passes_10pct": true,
+        "passes_15pct": true,
+        "target_relative_reduction": 0.1,
+        "passes_target": true,
+        "passes_p01": true,
+        "passes_metric": true
+      },
+      "true_soc_violation_severity_p95_mwh": {
+        "metric": "true_soc_violation_severity_p95_mwh",
+        "n_pairs": 120,
+        "baseline_mean": 190.43142474166663,
+        "dc3s_mean": 0.0,
+        "dc3s_ci_low": 0.0,
+        "dc3s_ci_high": 0.0,
+        "rel_reduction_mean": 0.8833333333333333,
+        "rel_reduction_ci_low": 1.0,
+        "rel_reduction_ci_high": 1.0,
+        "wilcoxon_stat": 0.0,
+        "wilcoxon_p": 3.943753261574939e-19,
+        "passes_10pct": true,
+        "passes_15pct": true,
+        "target_relative_reduction": 0.1,
+        "passes_target": true,
+        "passes_p01": true,
+        "passes_metric": true
+      }
+    }
+  },
+  "table2_ablations": "reports/publication/table2_ablations.csv",
+  "overall_pass": true
+}
