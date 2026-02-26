@@ -96,23 +96,32 @@ def _build_parser() -> argparse.ArgumentParser:
     return p
 
 
-def main() -> None:
-    args = _build_parser().parse_args()
-
-    out_dir = Path(args.out)
+def train_regime_cqr_artifacts(
+    *,
+    train_path: Path,
+    cal_path: Path,
+    test_path: Path,
+    out_dir: Path,
+    target: str = "load_mw",
+    features: str | None = None,
+    alpha: float = 0.10,
+    bins: int = 3,
+    vol_window: int = 24,
+    backend_policy: str = "strict",
+    quantile_backend: str = "lightgbm",
+) -> dict[str, str | float]:
     out_dir.mkdir(parents=True, exist_ok=True)
     artifact_dir = Path("artifacts/uncertainty")
     artifact_dir.mkdir(parents=True, exist_ok=True)
 
-    train_df = _load_table(Path(args.train))
-    cal_df = _load_table(Path(args.cal))
-    test_df = _load_table(Path(args.test))
+    train_df = _load_table(train_path)
+    cal_df = _load_table(cal_path)
+    test_df = _load_table(test_path)
 
-    target = str(args.target)
     if target not in train_df.columns or target not in cal_df.columns or target not in test_df.columns:
         raise ValueError(f"target '{target}' must exist in train/cal/test tables")
 
-    feats = _feature_cols(train_df, target, args.features)
+    feats = _feature_cols(train_df, target, features)
     x_train = train_df[feats].to_numpy(dtype=float)
     y_train = train_df[target].to_numpy(dtype=float)
     x_cal = cal_df[feats].to_numpy(dtype=float)
@@ -128,10 +137,10 @@ def main() -> None:
             y_train=y_train,
             x_cal=x_cal,
             x_test=x_test,
-            backend=str(args.quantile_backend),
+            backend=str(quantile_backend),
         )
     except Exception as exc:
-        if args.backend_policy == "strict":
+        if backend_policy == "strict":
             raise RuntimeError(
                 "Quantile backend unavailable or failed. Re-run with --backend-policy fallback for dev mode."
             ) from exc
@@ -148,7 +157,7 @@ def main() -> None:
         yhat_cal = np.asarray(predict_gbm(model, x_cal), dtype=float)
         yhat_test = np.asarray(predict_gbm(model, x_test), dtype=float)
         resid_cal = np.abs(y_cal - yhat_cal)
-        qhat = float(np.quantile(resid_cal, max(1e-6, 1.0 - float(args.alpha))))
+        qhat = float(np.quantile(resid_cal, max(1e-6, 1.0 - float(alpha))))
         q10_cal = yhat_cal - qhat
         q90_cal = yhat_cal + qhat
         q10_test = yhat_test - qhat
@@ -157,23 +166,23 @@ def main() -> None:
 
     regime = RegimeCQR(
         cfg=RegimeCQRConfig(
-            alpha=float(args.alpha),
-            n_bins=int(args.bins),
-            vol_window=int(args.vol_window),
+            alpha=float(alpha),
+            n_bins=int(bins),
+            vol_window=int(vol_window),
             eps=1e-9,
-            fail_fast_quantile_backend=(args.backend_policy == "strict"),
+            fail_fast_quantile_backend=(backend_policy == "strict"),
         )
     )
     fit_meta = regime.fit(y_cal=y_cal, q_lo_cal=q10_cal, q_hi_cal=q90_cal)
 
-    lower, upper, bins = regime.predict_interval(y_context=y_test, q_lo=q10_test, q_hi=q90_test)
+    lower, upper, bin_ids = regime.predict_interval(y_context=y_test, q_lo=q10_test, q_hi=q90_test)
     width = np.asarray(upper - lower, dtype=float)
     covered = np.asarray((y_test >= lower) & (y_test <= upper), dtype=float)
 
     label_map = {0: "low", 1: "mid", 2: "high"}
     rows: list[dict[str, Any]] = []
-    for b in range(int(args.bins)):
-        mask = bins == b
+    for b in range(int(bins)):
+        mask = bin_ids == b
         group_name = label_map.get(b, f"bin_{b}")
         if not np.any(mask):
             rows.append(
@@ -209,8 +218,8 @@ def main() -> None:
         "fit": fit_meta,
         "overall_picp_90": float(np.mean(covered)) if covered.size else 0.0,
         "overall_mean_width": float(np.mean(width)) if width.size else 0.0,
-        "backend_policy": str(args.backend_policy),
-        "quantile_backend": str(args.quantile_backend),
+        "backend_policy": str(backend_policy),
+        "quantile_backend": str(quantile_backend),
         **fallback_meta,
     }
     summary_path = out_dir / "cqr_calibration_summary.json"
@@ -238,10 +247,30 @@ def main() -> None:
     fig.savefig(fig_path, dpi=220)
     plt.close(fig)
 
-    print(f"Wrote: {coverage_path}")
-    print(f"Wrote: {summary_path}")
-    print(f"Wrote: {regime_path}")
-    print(f"Wrote: {fig_path}")
+    return {
+        "coverage_path": str(coverage_path),
+        "summary_path": str(summary_path),
+        "regime_path": str(regime_path),
+        "figure_path": str(fig_path),
+    }
+
+
+def main() -> None:
+    args = _build_parser().parse_args()
+    payload = train_regime_cqr_artifacts(
+        train_path=Path(args.train),
+        cal_path=Path(args.cal),
+        test_path=Path(args.test),
+        out_dir=Path(args.out),
+        target=str(args.target),
+        features=args.features,
+        alpha=float(args.alpha),
+        bins=int(args.bins),
+        vol_window=int(args.vol_window),
+        backend_policy=str(args.backend_policy),
+        quantile_backend=str(args.quantile_backend),
+    )
+    print(json.dumps(payload, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
