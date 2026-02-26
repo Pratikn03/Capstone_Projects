@@ -1,0 +1,7 @@
+target,group,picp_90,mean_width,sample_count,method
+load_mw,low,0.863548,1360.192227,513,regime_cqr
+load_mw,med,0.812261,1257.556498,261,regime_cqr
+load_mw,high,0.893364,827.569269,1763,regime_cqr
+load_mw,low,0.659574,544.397951,846,ngboost
+load_mw,med,0.701775,584.443892,845,ngboost
+load_mw,high,0.723404,562.511532,846,ngboost
