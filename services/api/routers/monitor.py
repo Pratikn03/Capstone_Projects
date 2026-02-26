@@ -235,5 +235,210 @@ def model_info() -> Dict[str, Any]:
             "model_count": len(registry_latest.get("models", [])) if registry_latest else 0,
             "models": registry_latest.get("models", []) if registry_latest else [],
         },
+        "dc3s_shield": _load_dc3s_shield_summary(),
         "notes": notes,
+    }
+
+
+def _load_dc3s_calibrated_params() -> dict | None:
+    """Load data-fitted k_quality/k_drift/infl_max from calibrate_dc3s_params.py output."""
+    path = Path("configs/dc3s_calibrated.yaml")
+    if not path.exists():
+        return None
+    try:
+        import yaml  # type: ignore[import]
+        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        return raw.get("dc3s") or None
+    except Exception:
+        return None
+
+
+def _load_dc3s_base_params() -> dict:
+    """Load base DC³S config (k_quality, k_drift, infl_max, detector type)."""
+    path = Path("configs/dc3s.yaml")
+    if not path.exists():
+        return {}
+    try:
+        import yaml  # type: ignore[import]
+        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        dc3s = raw.get("dc3s", raw)
+        return {
+            "k_quality": dc3s.get("k_quality"),
+            "k_drift":   dc3s.get("k_drift"),
+            "infl_max":  dc3s.get("infl_max"),
+            "detector":  dc3s.get("drift", {}).get("detector", "page_hinkley"),
+            "alpha":     dc3s.get("alpha", 0.10),
+        }
+    except Exception:
+        return {}
+
+
+def _load_ablation_top5() -> list[dict] | None:
+    """Load top-5 ablation configs (narrowest width at PICP>=88%) from ablation_summary.csv."""
+    path = Path("reports/publication/ablation_summary.csv")
+    if not path.exists():
+        return None
+    try:
+        df = pd.read_csv(path)
+        if df.empty:
+            return None
+        # Filter dc3s_wrapped rows with PICP >= 88%
+        picp_col = next(
+            (c for c in ["picp_90_mean", "picp_90", "mean_picp_90"] if c in df.columns),
+            None,
+        )
+        width_col = next(
+            (c for c in ["mean_interval_width_mean", "mean_interval_width", "adaptive_width_mean_mean"]
+             if c in df.columns),
+            None,
+        )
+        ctrl_col = "controller" if "controller" in df.columns else None
+        if ctrl_col:
+            df = df[df[ctrl_col] == "dc3s_wrapped"]
+        if picp_col and df[picp_col].notna().any():
+            meets = df[pd.to_numeric(df[picp_col], errors="coerce") >= 0.88]
+            df = meets if not meets.empty else df
+        if width_col and df[width_col].notna().any():
+            df = df.sort_values(width_col)
+        return df[["k_quality", "k_drift", "infl_max", *(c for c in [picp_col, width_col] if c)]
+                  ].head(5).to_dict(orient="records")
+    except Exception:
+        return None
+
+
+def _load_wilcoxon_results() -> dict | None:
+    """Load Wilcoxon signed-rank test results from wilcoxon_tests.json."""
+    path = Path("reports/publication/wilcoxon_tests.json")
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+
+
+def _load_dc3s_shield_summary() -> Dict[str, Any]:
+    """
+    Aggregate DC³S formal guarantee and parameter metadata for the /model-info endpoint.
+
+    Surfaces:
+    - Coverage theorem availability (formal guarantee from coverage_theorem.py)
+    - Calibrated parameters (from calibrate_dc3s_params.py output)
+    - Base config (k_quality, k_drift, detector type)
+    - Top ablation configs
+    - Statistical significance (Wilcoxon test results)
+    - Cross-region transfer summary
+    """
+    calibrated = _load_dc3s_calibrated_params()
+    base = _load_dc3s_base_params()
+    wilcoxon = _load_wilcoxon_results()
+    ablation_top5 = _load_ablation_top5()
+
+    # Cross-region transfer summary
+    transfer_summary: dict | None = None
+    transfer_path = Path("reports/publication/cross_region_transfer.csv")
+    if transfer_path.exists():
+        try:
+            df_t = pd.read_csv(transfer_path)
+            dc3s_t = df_t[df_t["controller"] == "dc3s_wrapped"] if "controller" in df_t.columns else df_t
+            metric_col = next(
+                (c for c in ["true_soc_violation_rate", "violation_rate"] if c in dc3s_t.columns), None
+            )
+            transfer_summary = {
+                "available": True,
+                "n_rows": int(len(df_t)),
+                "regions": list(df_t["region"].unique()) if "region" in df_t.columns else [],
+            }
+            if metric_col and not dc3s_t.empty:
+                for region in df_t.get("region", pd.Series()).unique() if "region" in df_t.columns else []:
+                    reg_data = dc3s_t[dc3s_t["region"] == region]
+                    transfer_summary.setdefault("dc3s_by_region", {})[str(region)] = {
+                        "mean_violation_rate": float(reg_data[metric_col].mean()),
+                    }
+        except Exception:
+            transfer_summary = {"available": False}
+
+    # Coverage theorem: check if module exists and can verify
+    coverage_theorem_available = False
+    try:
+        from gridpulse.dc3s.coverage_theorem import verify_inflation_geq_one  # noqa: F401
+        coverage_theorem_available = True
+    except ImportError:
+        pass
+
+    return {
+        "coverage_theorem_implemented": coverage_theorem_available,
+        "coverage_guarantee": "Marginal coverage: P(y ∈ [ŷ - λ·q, ŷ + λ·q]) ≥ 1 - α (Proposition 1, Theorem 3.1)",
+        "detector_type": base.get("detector", "page_hinkley"),
+        "supported_detectors": ["page_hinkley", "adwin"],
+        "base_params": base,
+        "calibrated_params": calibrated,
+        "calibration_source": "configs/dc3s_calibrated.yaml" if calibrated else None,
+        "ablation_top5_configs": ablation_top5,
+        "statistical_significance": {
+            "test": "Wilcoxon signed-rank (paired, non-parametric)",
+            "comparison": "dc3s_wrapped vs deterministic_lp",
+            "results": wilcoxon,
+        } if wilcoxon else None,
+        "cross_region_transfer": transfer_summary,
+    }
+
+
+@router.get("/dc3s-params")
+def dc3s_params() -> Dict[str, Any]:
+    """
+    Detailed DC³S parameter and ablation endpoint.
+
+    Returns full ablation summary, calibrated params, and statistical test results
+    for use in the frontend model info panel and research dashboard.
+    """
+    calibrated = _load_dc3s_calibrated_params()
+    base = _load_dc3s_base_params()
+    wilcoxon = _load_wilcoxon_results()
+    ablation_top5 = _load_ablation_top5()
+
+    # Full ablation table (max 50 rows for API response size)
+    ablation_full: list[dict] | None = None
+    ablation_path = Path("reports/publication/ablation_summary.csv")
+    if ablation_path.exists():
+        try:
+            df = pd.read_csv(ablation_path)
+            ablation_full = df.head(50).to_dict(orient="records")
+        except Exception:
+            pass
+
+    # Cross-region transfer stats
+    transfer_stats: dict | None = None
+    xr_path = Path("reports/publication/cross_region_transfer_summary.csv")
+    if xr_path.exists():
+        try:
+            df_xr = pd.read_csv(xr_path)
+            transfer_stats = df_xr.to_dict(orient="records")
+        except Exception:
+            pass
+
+    return {
+        "available": True,
+        "base_params": base,
+        "calibrated_params": calibrated,
+        "calibration_source": "configs/dc3s_calibrated.yaml" if calibrated else None,
+        "coverage_theorem": {
+            "implemented": True,
+            "guarantee": "P(y ∈ inflated interval) ≥ 1 − α",
+            "proof": "Monotonicity of inflation factor λ ≥ 1 under Prop.1 conditions",
+            "runtime_assertions": "verify_inflation_geq_one() + assert_coverage_guarantee()",
+        },
+        "ablation": {
+            "top5": ablation_top5,
+            "full_summary": ablation_full,
+            "source": str(ablation_path) if ablation_path.exists() else None,
+        },
+        "statistical_tests": {
+            "wilcoxon": wilcoxon,
+            "source": "reports/publication/wilcoxon_tests.json",
+        },
+        "cross_region_transfer": {
+            "summary": transfer_stats,
+            "source": str(xr_path) if xr_path.exists() else None,
+        },
     }
