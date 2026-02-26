@@ -67,21 +67,22 @@ def _build_robust_config(cfg: dict[str, Any]) -> RobustDispatchConfig:
     max_power = float(battery.get("max_power_mw", 50.0))
     max_charge = float(battery.get("max_charge_mw", max_power))
     max_discharge = float(battery.get("max_discharge_mw", max_power))
-    efficiency = float(battery.get("efficiency", battery.get("efficiency_regime_a", 0.95)))
+    charge_eff = float(battery.get("charge_efficiency", battery.get("efficiency", battery.get("efficiency_regime_a", 0.95))))
+    discharge_eff = float(battery.get("discharge_efficiency", battery.get("efficiency", battery.get("efficiency_regime_a", 0.95))))
 
     return RobustDispatchConfig(
         battery_capacity_mwh=capacity,
         battery_max_charge_mw=max_charge,
         battery_max_discharge_mw=max_discharge,
-        battery_charge_efficiency=efficiency,
-        battery_discharge_efficiency=efficiency,
+        battery_charge_efficiency=charge_eff,
+        battery_discharge_efficiency=discharge_eff,
         battery_initial_soc_mwh=float(battery.get("initial_soc_mwh", capacity / 2.0)),
         battery_min_soc_mwh=float(battery.get("min_soc_mwh", 0.0)),
         battery_max_soc_mwh=float(battery.get("max_soc_mwh", capacity)),
         max_grid_import_mw=float(grid.get("max_import_mw", grid.get("max_draw_mw", 500.0))),
         default_price_per_mwh=float(grid.get("price_per_mwh", grid.get("price_usd_per_mwh", 60.0))),
         degradation_cost_per_mwh=float(battery.get("degradation_cost_per_mwh", 10.0)),
-        time_step_hours=1.0,
+        time_step_hours=float(cfg.get("time_step_hours", 1.0)),
         solver_name=str(cfg.get("solver_name", "appsi_highs")),
     )
 

@@ -56,8 +56,12 @@ def test_dc3s_step_and_audit_round_trip(monkeypatch):
     assert "reliability_w" in payload
     assert "drift_flag" in payload
     assert "inflation" in payload
+    assert "guarantee_checks_passed" in payload
+    assert "guarantee_fail_reasons" in payload
     assert 0.0 <= float(payload["reliability_w"]) <= 1.0
     assert float(payload["inflation"]) >= 1.0
+    assert payload["guarantee_checks_passed"] in {True, False}
+    assert isinstance(payload["guarantee_fail_reasons"], list) or payload["guarantee_fail_reasons"] is None
 
     audit = client.get(f"/dc3s/audit/{payload['command_id']}")
     assert audit.status_code == 200, audit.text
@@ -68,3 +72,34 @@ def test_dc3s_step_and_audit_round_trip(monkeypatch):
     assert cert.get("reliability_w") == payload["reliability_w"]
     assert cert.get("drift_flag") == payload["drift_flag"]
     assert cert.get("inflation") == payload["inflation"]
+    assert cert.get("guarantee_checks_passed") == payload["guarantee_checks_passed"]
+
+
+def test_dc3s_step_active_mode_blocks_failed_guarantees(monkeypatch):
+    monkeypatch.setattr(dc3s_router, "_load_features_df", lambda _cfg: pd.DataFrame({"price_eur_mwh": [60.0], "carbon_kg_per_mwh": [400.0]}))
+    monkeypatch.setattr(dc3s_router, "_predict_target", _predict_target)
+    monkeypatch.setattr(dc3s_router, "_resolve_conformal_q", lambda target, horizon: np.full(horizon, 4.0, dtype=float))
+    monkeypatch.setattr(dc3s_router, "_resolve_iot_mode", lambda _event: "active")
+    monkeypatch.setattr(
+        dc3s_router,
+        "evaluate_guarantee_checks",
+        lambda current_soc, action, constraints: (False, ["soc_invariance"], current_soc),
+    )
+
+    client = TestClient(app)
+    req = {
+        "device_id": "test-device-active",
+        "zone_id": "DE",
+        "current_soc_mwh": 1.0,
+        "telemetry_event": {
+            "ts_utc": "2026-02-22T00:00:00+00:00",
+            "load_mw": 52.0,
+            "renewables_mw": 12.0,
+        },
+        "controller": "deterministic",
+        "horizon": 24,
+        "include_certificate": False,
+    }
+    step = client.post("/dc3s/step", json=req)
+    assert step.status_code == 400
+    assert "guarantee checks failed" in step.text.lower()

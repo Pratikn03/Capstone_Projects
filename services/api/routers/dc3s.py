@@ -22,6 +22,7 @@ from gridpulse.dc3s.certificate import (
     store_certificate,
 )
 from gridpulse.dc3s.drift import PageHinkleyDetector
+from gridpulse.dc3s.guarantee_checks import evaluate_guarantee_checks
 from gridpulse.dc3s.quality import compute_reliability
 from gridpulse.dc3s.shield import repair_action
 from gridpulse.dc3s.state import DC3SStateStore
@@ -77,6 +78,8 @@ class DC3SStepResponse(BaseModel):
     reliability_w: float
     drift_flag: bool
     inflation: float
+    guarantee_checks_passed: bool
+    guarantee_fail_reasons: Optional[List[str]] = None
     certificate: Optional[Dict[str, Any]] = None
 
 
@@ -202,6 +205,19 @@ def _derive_intervention_reason(repair_meta: Dict[str, Any], intervened: bool) -
     return "projection_clip"
 
 
+def _resolve_iot_mode(telemetry_event: Dict[str, Any]) -> str:
+    event_mode = telemetry_event.get("mode")
+    if isinstance(event_mode, str) and event_mode.strip():
+        return event_mode.strip().lower()
+    iot_cfg_path = Path("configs/iot.yaml")
+    if not iot_cfg_path.exists():
+        return "shadow"
+    payload = yaml.safe_load(iot_cfg_path.read_text(encoding="utf-8")) or {}
+    defaults = ((payload.get("iot") or {}).get("defaults") or {}) if isinstance(payload, dict) else {}
+    mode = defaults.get("mode", "shadow")
+    return str(mode).strip().lower()
+
+
 @router.post("/step", response_model=DC3SStepResponse)
 def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
     if req.controller == "heuristic":
@@ -312,7 +328,18 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
         max_power_opt = float(battery_cfg.get("max_power_mw", battery_cfg.get("max_charge_mw", 5.0)))
         max_charge_opt = float(battery_cfg.get("max_charge_mw", max_power_opt))
         max_discharge_opt = float(battery_cfg.get("max_discharge_mw", max_power_opt))
-        eff = float(battery_cfg.get("efficiency", battery_cfg.get("efficiency_regime_a", 0.95)))
+        charge_eff = float(
+            battery_cfg.get(
+                "charge_efficiency",
+                battery_cfg.get("efficiency", battery_cfg.get("efficiency_regime_a", 0.95)),
+            )
+        )
+        discharge_eff = float(
+            battery_cfg.get(
+                "discharge_efficiency",
+                battery_cfg.get("efficiency", battery_cfg.get("efficiency_regime_a", 0.95)),
+            )
+        )
         min_soc_opt = float(battery_cfg.get("min_soc_mwh", 0.0))
         max_soc_opt = float(battery_cfg.get("max_soc_mwh", capacity_opt))
 
@@ -346,8 +373,9 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
             "max_discharge_mw": max_discharge,
             "ramp_mw": float(dc3s_cfg.get("shield", {}).get("max_ramp_mw", 0.0) or 0.0),
             "last_net_mw": last_net,
-            "charge_efficiency": eff,
-            "discharge_efficiency": eff,
+            "charge_efficiency": charge_eff,
+            "discharge_efficiency": discharge_eff,
+            "time_step_hours": float(opt_cfg.get("time_step_hours", 1.0)),
             "current_soc_mwh": float(req.current_soc_mwh),
             "robust_config": robust_cfg,
             "degradation_cost_per_mwh": float(battery_cfg.get("degradation_cost_per_mwh", 10.0)),
@@ -367,12 +395,29 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
         reliability_w = float(w_t)
         drift_flag = bool(drift_info.get("drift", False))
         inflation = float(uncertainty_meta.get("inflation", 1.0))
+        guarantee_passed, guarantee_fail_reasons, _ = evaluate_guarantee_checks(
+            current_soc=float(req.current_soc_mwh),
+            action=safe_action,
+            constraints=constraints,
+        )
+        runtime_mode = _resolve_iot_mode(req.telemetry_event or {})
+        if runtime_mode == "active" and not guarantee_passed:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "DC3S guarantee checks failed in active mode: "
+                    + ",".join(guarantee_fail_reasons)
+                ),
+            )
 
         try:
             bms.validate_dispatch(
                 current_soc=float(req.current_soc_mwh),
                 charge_mw=float(safe_action["charge_mw"]),
                 discharge_mw=float(safe_action["discharge_mw"]),
+                time_step_hours=float(opt_cfg.get("time_step_hours", 1.0)),
+                charge_efficiency=charge_eff,
+                discharge_efficiency=discharge_eff,
             )
         except SafetyViolation as exc:
             raise HTTPException(status_code=400, detail=f"DC3S safe action violates BMS: {exc}") from exc
@@ -407,6 +452,9 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
             reliability_w=reliability_w,
             drift_flag=drift_flag,
             inflation=inflation,
+            guarantee_checks_passed=guarantee_passed,
+            guarantee_fail_reasons=guarantee_fail_reasons,
+            assumptions_version=str(dc3s_cfg.get("assumptions_version", "dc3s-assumptions-v1")),
         )
         store_certificate(certificate, duckdb_path=audit_path, table_name=audit_table)
         queued = False
@@ -466,6 +514,8 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
             reliability_w=reliability_w,
             drift_flag=drift_flag,
             inflation=inflation,
+            guarantee_checks_passed=guarantee_passed,
+            guarantee_fail_reasons=guarantee_fail_reasons if guarantee_fail_reasons else None,
             certificate=certificate if req.include_certificate else None,
         )
     finally:

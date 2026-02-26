@@ -27,5 +27,23 @@ def test_cpsbench_runner_smoke_and_determinism(tmp_path):
 
     main_a = pd.read_csv(out_a / "dc3s_main_table.csv").sort_values(["scenario", "seed", "controller"]).reset_index(drop=True)
     main_b = pd.read_csv(out_b / "dc3s_main_table.csv").sort_values(["scenario", "seed", "controller"]).reset_index(drop=True)
+    required_cols = {
+        "true_soc_violation_rate",
+        "true_soc_violation_severity_mean",
+        "true_soc_violation_severity_p95",
+        "unsafe_command_rate",
+        "bms_trip_rate",
+        "intervention_rate",
+        "adaptive_width_mean",
+        "adaptive_width_p95",
+        "cvar_eta",
+        "cvar_cost",
+        "cqr_picp_group_low",
+        "cqr_picp_group_mid",
+        "cqr_picp_group_high",
+        "cqr_width_group_low",
+        "cqr_width_group_mid",
+        "cqr_width_group_high",
+    }
+    assert required_cols <= set(main_a.columns)
     pd.testing.assert_frame_equal(main_a, main_b, rtol=1e-8, atol=1e-8)
-

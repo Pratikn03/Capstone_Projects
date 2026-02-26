@@ -32,6 +32,16 @@ class RobustDispatchConfig:
     solver_name: str = "appsi_highs"
 
 
+@dataclass
+class CVaRDispatchConfig(RobustDispatchConfig):
+    """Configuration for scenario-based CVaR dispatch."""
+
+    beta: float = 0.90
+    n_scenarios: int = 20
+    risk_weight_cvar: float = 1.0
+    scenario_seed: int = 0
+
+
 def _as_array(x: Any, label: str) -> np.ndarray:
     if isinstance(x, (list, tuple, np.ndarray)):
         arr = np.asarray(x, dtype=float)
@@ -288,6 +298,135 @@ def optimize_robust_dispatch(
         "feasible": True,
         "solver_status": status_str,
         "binding_scenario": binding_scenario,
+    }
+
+
+def optimize_cvar_dispatch(
+    load_scenarios,
+    renewables_forecast,
+    price=None,
+    config: CVaRDispatchConfig | None = None,
+    verbose: bool = False,
+) -> dict[str, Any]:
+    """Solve scenario dispatch minimizing blended mean + CVaR cost."""
+    cfg = config or CVaRDispatchConfig()
+    _validate_config(cfg)
+    if not (0.0 < float(cfg.beta) < 1.0):
+        raise ValueError("beta must be in (0, 1)")
+    if int(cfg.n_scenarios) < 2:
+        raise ValueError("n_scenarios must be >= 2")
+    if not (0.0 <= float(cfg.risk_weight_cvar) <= 1.0):
+        raise ValueError("risk_weight_cvar must be in [0, 1]")
+
+    scen = np.asarray(load_scenarios, dtype=float)
+    if scen.ndim != 2:
+        raise ValueError("load_scenarios must be a 2D array with shape (S, H)")
+    s_count, horizon = scen.shape
+    if s_count != int(cfg.n_scenarios):
+        raise ValueError(f"load_scenarios has S={s_count}, expected n_scenarios={cfg.n_scenarios}")
+
+    renewables = _broadcast(_as_array(renewables_forecast, "renewables_forecast"), horizon, "renewables_forecast")
+    prices = np.full(horizon, cfg.default_price_per_mwh, dtype=float) if price is None else _broadcast(
+        _as_array(price, "price"),
+        horizon,
+        "price",
+    )
+
+    _ensure_non_negative(renewables, "renewables_forecast")
+    _ensure_non_negative(prices, "price")
+    _ensure_non_negative(scen.reshape(-1), "load_scenarios")
+
+    _ensure_highs_solver_available(cfg.solver_name)
+
+    model = pyo.ConcreteModel(name="cvar_dispatch")
+    model.T = pyo.RangeSet(0, horizon - 1)
+    model.S = pyo.RangeSet(0, s_count - 1)
+
+    model.P_ch = pyo.Var(model.T, domain=pyo.NonNegativeReals, bounds=(0.0, cfg.battery_max_charge_mw))
+    model.P_dis = pyo.Var(model.T, domain=pyo.NonNegativeReals, bounds=(0.0, cfg.battery_max_discharge_mw))
+    model.G = pyo.Var(model.S, model.T, domain=pyo.NonNegativeReals)
+    model.SoC = pyo.Var(model.S, model.T, bounds=(cfg.battery_min_soc_mwh, cfg.battery_max_soc_mwh))
+
+    model.eta = pyo.Var(domain=pyo.Reals)
+    model.u = pyo.Var(model.S, domain=pyo.NonNegativeReals)
+
+    def adequacy_rule(m, s, t):
+        rhs = float(scen[s, t] - renewables[t])
+        return m.P_dis[t] - m.P_ch[t] + m.G[s, t] >= rhs
+
+    model.adequacy = pyo.Constraint(model.S, model.T, rule=adequacy_rule)
+
+    def grid_cap_rule(m, s, t):
+        return m.G[s, t] <= cfg.max_grid_import_mw
+
+    model.grid_cap = pyo.Constraint(model.S, model.T, rule=grid_cap_rule)
+
+    def soc_initial_rule(m, s):
+        return (
+            m.SoC[s, 0]
+            == cfg.battery_initial_soc_mwh
+            + cfg.time_step_hours * cfg.battery_charge_efficiency * m.P_ch[0]
+            - cfg.time_step_hours * (1.0 / cfg.battery_discharge_efficiency) * m.P_dis[0]
+        )
+
+    model.soc_initial = pyo.Constraint(model.S, rule=soc_initial_rule)
+
+    def soc_dyn_rule(m, s, t):
+        if t == 0:
+            return pyo.Constraint.Skip
+        return (
+            m.SoC[s, t]
+            == m.SoC[s, t - 1]
+            + cfg.time_step_hours * cfg.battery_charge_efficiency * m.P_ch[t]
+            - cfg.time_step_hours * (1.0 / cfg.battery_discharge_efficiency) * m.P_dis[t]
+        )
+
+    model.soc_dyn = pyo.Constraint(model.S, model.T, rule=soc_dyn_rule)
+
+    def scenario_grid_cost(m, s):
+        return sum(prices[t] * m.G[s, t] * cfg.time_step_hours for t in m.T)
+
+    def cvar_link_rule(m, s):
+        return m.u[s] >= scenario_grid_cost(m, s) - m.eta
+
+    model.cvar_link = pyo.Constraint(model.S, rule=cvar_link_rule)
+
+    mean_cost = (1.0 / s_count) * sum(scenario_grid_cost(model, s) for s in model.S)
+    cvar_cost = model.eta + (1.0 / ((1.0 - cfg.beta) * s_count)) * sum(model.u[s] for s in model.S)
+    throughput = sum((model.P_ch[t] + model.P_dis[t]) * cfg.time_step_hours for t in model.T)
+    model.obj = pyo.Objective(
+        expr=(
+            (1.0 - cfg.risk_weight_cvar) * mean_cost
+            + cfg.risk_weight_cvar * cvar_cost
+            + cfg.degradation_cost_per_mwh * throughput
+        ),
+        sense=pyo.minimize,
+    )
+
+    solver = pyo.SolverFactory(cfg.solver_name)
+    result = solver.solve(model, tee=verbose, load_solutions=False)
+    term = result.solver.termination_condition
+    status = result.solver.status
+    status_str = f"{status}:{term}"
+    if term != TerminationCondition.optimal:
+        return _infeasible_result(horizon, status_str, cfg)
+
+    if hasattr(solver, "load_vars"):
+        solver.load_vars()
+
+    battery_charge = np.asarray([pyo.value(model.P_ch[t]) for t in model.T], dtype=float)
+    battery_discharge = np.asarray([pyo.value(model.P_dis[t]) for t in model.T], dtype=float)
+    eta = float(pyo.value(model.eta))
+    u = np.asarray([pyo.value(model.u[s]) for s in model.S], dtype=float)
+    cvar_val = eta + float(np.mean(u)) / max(1e-9, (1.0 - cfg.beta))
+
+    return {
+        "battery_charge_mw": battery_charge.tolist(),
+        "battery_discharge_mw": battery_discharge.tolist(),
+        "eta": eta,
+        "cvar_cost": float(cvar_val),
+        "feasible": True,
+        "solver_status": status_str,
     }
 
 

@@ -1,0 +1,46 @@
+# DC³S Parameter Ablation Configuration
+# Used by scripts/ablation_dc3s.py
+# Sweeps k_quality, k_drift, and infl_max across CPSBench scenarios.
+
+ablation:
+  # Grid of k_quality values to sweep
+  k_quality_values: [0.2, 0.4, 0.6, 0.8, 1.0, 1.2]
+
+  # Grid of k_drift values to sweep
+  k_drift_values: [0.0, 0.3, 0.6, 0.9]
+
+  # Grid of infl_max values to sweep
+  infl_max_values: [2.0, 3.0, 5.0]
+
+  # Seeds for each parameter configuration
+  seeds: [11, 22, 33]
+
+  # Scenarios to run for each config (subset for speed)
+  scenarios: ["nominal", "dropout", "spikes", "drift_combo"]
+
+  # Benchmark horizon per episode (hours)
+  horizon: 168
+
+  # Coverage target for selecting optimal params
+  coverage_target: 0.90
+
+  # Output path
+  out_dir: "reports/publication"
+  out_file: "ablation_table.csv"
+
+# k-calibration settings (used by scripts/calibrate_dc3s_params.py)
+calibration:
+  # Target coverage level
+  alpha: 0.10
+
+  # Calibration split fraction from training data
+  calibration_fraction: 0.15
+
+  # Optimization: minimize mean width subject to PICP >= (1 - alpha)
+  objective: "min_width_at_coverage"
+
+  # Allow slight under-coverage for numerical stability
+  coverage_slack: 0.01
+
+  # Output path for calibrated parameters
+  out_config: "configs/dc3s_calibrated.yaml"

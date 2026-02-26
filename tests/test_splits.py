@@ -47,13 +47,32 @@ def test_time_split_order():
     })
     
     # Act: Split with standard 70/15/15 ratios
-    train, val, test = time_split(df, 0.7, 0.15)
+    train, calibration, val, test = time_split(df, 0.7, 0.15, 0.0, 0)
     
     # Assert: Sizes match expected ratios
     assert len(train) == 70, "Train should be 70% of data"
+    assert len(calibration) == 0, "Calibration should be empty when ratio is 0"
     assert len(val) == 15, "Validation should be 15% of data"
     assert len(test) == 15, "Test should be 15% of data"
     
     # Assert: Temporal ordering is strict (train ends before val starts)
     assert train["timestamp"].max() < val["timestamp"].min(), \
         "Train data must end before validation data begins (no overlap)"
+
+
+def test_time_split_with_calibration_and_gap():
+    df = pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2020-01-01", periods=120, freq="h"),
+            "x": range(120),
+        }
+    )
+    train, calibration, val, test = time_split(df, 0.6, 0.15, 0.1, 2)
+
+    assert len(train) == 72
+    assert len(calibration) == 12
+    assert len(val) == 18
+    assert len(test) <= 14
+    assert train["timestamp"].max() < calibration["timestamp"].min()
+    assert calibration["timestamp"].max() < val["timestamp"].min()
+    assert val["timestamp"].max() < test["timestamp"].min()
