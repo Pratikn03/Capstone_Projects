@@ -1,2 +1,8 @@
 *.md
 *.json
+!publication/ambiguity_calibration_summary.json
+!publication/cqr_calibration_summary.json
+!publication/distributional_summary.json
+!publication/rac_cert_summary.json
+!publication/release_manifest.json
+!publication/stats_summary.json
