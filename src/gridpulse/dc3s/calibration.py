@@ -37,6 +37,23 @@ def inflate_interval(
     return mid - half_new, mid + half_new
 
 
+def calibrate_ambiguity_lambda(
+    residuals_mw: float | list[float] | np.ndarray,
+    *,
+    quantile: float = 0.95,
+    scale: float = 1.0,
+    min_lambda: float = 0.0,
+    max_lambda: float | None = None,
+) -> float:
+    residuals = np.abs(_as_1d(residuals_mw, "residuals_mw"))
+    q = float(np.clip(float(quantile), 1e-6, 1.0))
+    lam = float(np.quantile(residuals, q)) * float(scale)
+    lam = max(float(min_lambda), lam)
+    if max_lambda is not None:
+        lam = min(float(max_lambda), lam)
+    return float(lam)
+
+
 def build_uncertainty_set(
     yhat: float | list[float] | np.ndarray,
     q: float | list[float] | np.ndarray,
@@ -96,8 +113,20 @@ def build_uncertainty_set(
         upper = yhat_arr + half_width
 
     ambiguity_cfg = dict(dcfg.get("ambiguity", {}))
+    lambda_mw = float(ambiguity_cfg.get("lambda_mw", 0.0))
+    if lambda_mw <= 0.0 and bool(ambiguity_cfg.get("learn_lambda_from_quantile", False)):
+        residual_source = ambiguity_cfg.get("calibration_residuals_mw")
+        if residual_source is None:
+            residual_source = q_arr
+        lambda_mw = calibrate_ambiguity_lambda(
+            residuals_mw=residual_source,
+            quantile=float(ambiguity_cfg.get("lambda_quantile", 0.95)),
+            scale=float(ambiguity_cfg.get("lambda_scale", 1.0)),
+            min_lambda=float(ambiguity_cfg.get("lambda_min_mw", 0.0)),
+            max_lambda=float(ambiguity_cfg["lambda_max_mw"]) if "lambda_max_mw" in ambiguity_cfg else None,
+        )
     amb = AmbiguityConfig(
-        lambda_mw=float(ambiguity_cfg.get("lambda_mw", 0.0)),
+        lambda_mw=float(lambda_mw),
         min_w=float(ambiguity_cfg.get("min_w", min_w)),
         max_extra=float(ambiguity_cfg.get("max_extra", 1.0)),
     )
@@ -116,6 +145,7 @@ def build_uncertainty_set(
         "infl_max": float(infl_max),
         "k_quality": float(k_q),
         "k_drift": float(k_d),
+        "lambda_mw_used": float(amb.lambda_mw),
         "interval_width": float(max(0.0, upper[0] - lower[0])) if len(lower) else 0.0,
     }
     return lower, upper, meta
