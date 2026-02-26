@@ -44,6 +44,11 @@ def test_cpsbench_runner_smoke_and_determinism(tmp_path):
         "cqr_width_group_low",
         "cqr_width_group_mid",
         "cqr_width_group_high",
+        "rac_sensitivity_mean",
+        "rac_sensitivity_p95",
+        "rac_q_multiplier_mean",
+        "rac_q_multiplier_p95",
+        "rac_inflation_mean",
     }
     assert required_cols <= set(main_a.columns)
     pd.testing.assert_frame_equal(main_a, main_b, rtol=1e-8, atol=1e-8)

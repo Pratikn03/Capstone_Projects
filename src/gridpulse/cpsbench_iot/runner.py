@@ -23,6 +23,7 @@ from gridpulse.dc3s.calibration import build_uncertainty_set
 from gridpulse.dc3s.drift import PageHinkleyDetector
 from gridpulse.dc3s.guarantee_checks import evaluate_guarantee_checks
 from gridpulse.dc3s.quality import compute_reliability
+from gridpulse.dc3s.rac_cert import RACCertModel, compute_dispatch_sensitivity, normalize_sensitivity
 from gridpulse.dc3s.shield import repair_action
 from gridpulse.forecasting.uncertainty.cqr import RegimeCQR
 from gridpulse.forecasting.uncertainty.conformal import load_conformal
@@ -241,6 +242,22 @@ def _regime_runtime_cfg() -> dict[str, Any]:
     }
 
 
+def _rac_runtime_cfg() -> dict[str, Any]:
+    unc_cfg = _load_uncertainty_cfg()
+    rac_cfg = unc_cfg.get("rac_cert", {}) if isinstance(unc_cfg, dict) else {}
+    if not isinstance(rac_cfg, dict):
+        rac_cfg = {}
+    artifacts_dir = Path(unc_cfg.get("artifacts_dir", "artifacts/uncertainty"))
+    default_artifact = str(artifacts_dir / "{target}_rac_cert.json")
+    return {
+        "enabled": bool(rac_cfg.get("enabled", True)),
+        "artifact_path": str(rac_cfg.get("artifact_path", default_artifact)),
+        "sens_eps_mw": float(rac_cfg.get("sens_eps_mw", 25.0)),
+        "sens_norm_ref": float(rac_cfg.get("sens_norm_ref", 0.5)),
+        "policy": str(rac_cfg.get("quantile_backend_policy", "strict")).strip().lower(),
+    }
+
+
 @lru_cache(maxsize=2)
 def _load_regime_cqr(target: str = "load_mw") -> RegimeCQR | None:
     cfg = _regime_runtime_cfg()
@@ -256,6 +273,28 @@ def _load_regime_cqr(target: str = "load_mw") -> RegimeCQR | None:
                     f"Regime CQR enabled with strict policy but missing artifact: {path}. "
                     "Run scripts/train_regime_cqr.py first."
                 )
+        return None
+
+
+@lru_cache(maxsize=2)
+def _load_rac_cert(target: str = "load_mw") -> RACCertModel | None:
+    cfg = _rac_runtime_cfg()
+    if not cfg["enabled"]:
+        return None
+    path = Path(str(cfg["artifact_path"]).format(target=target))
+    if not path.exists():
+        strict_runtime = os.getenv("GRIDPULSE_REQUIRE_RAC_CERT", "").strip().lower() in {"1", "true", "yes", "on"}
+        if strict_runtime:
+            raise RuntimeError(
+                f"RAC-Cert enabled with strict policy but missing artifact: {path}. "
+                "Run scripts/train_regime_cqr.py first."
+            )
+        return None
+    try:
+        return RACCertModel.from_json(path.read_text(encoding="utf-8"))
+    except Exception:
+        if cfg["policy"] == "strict":
+            raise
         return None
 
     try:
@@ -303,6 +342,80 @@ def _cqr_bounds(load_window: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return base_lower, base_upper
 
 
+def _rac_bounds(
+    *,
+    load_window: np.ndarray,
+    dc3s_cfg: Mapping[str, Any] | None = None,
+    w_t: float = 1.0,
+    drift_flag: bool = False,
+    sensitivity_t: float = 0.0,
+    sensitivity_norm: float | None = None,
+    prev_inflation: float | None = None,
+) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
+    load_arr = np.asarray(load_window, dtype=float).reshape(-1)
+    base_lower, base_upper = _cqr_bounds(load_arr)
+    base_half = np.maximum(0.0, 0.5 * (base_upper - base_lower))
+
+    cfg = dict(dc3s_cfg or _load_dc3s_cfg())
+    cfg.setdefault("ambiguity", {})
+    cfg.setdefault("reliability", {})
+    cfg.setdefault("rac_cert", {})
+
+    rac_runtime = _rac_runtime_cfg()
+    rac_model = _load_rac_cert("load_mw")
+    q_for_build = np.asarray(base_half, dtype=float)
+    if rac_model is not None:
+        try:
+            q_for_build = np.asarray(rac_model.qhat_for_context(load_arr, horizon=len(load_arr)), dtype=float)
+            cfg["rac_cert"] = _deep_update(
+                dict(cfg.get("rac_cert", {})),
+                {
+                    "enabled": True,
+                    "alpha": float(rac_model.cfg.alpha),
+                    "n_vol_bins": int(rac_model.cfg.n_vol_bins),
+                    "vol_window": int(rac_model.cfg.vol_window),
+                    "beta_reliability": float(rac_model.cfg.beta_reliability),
+                    "beta_sensitivity": float(rac_model.cfg.beta_sensitivity),
+                    "k_sensitivity": float(rac_model.cfg.k_sensitivity),
+                    "infl_max": float(rac_model.cfg.infl_max),
+                    "sens_eps_mw": float(rac_model.cfg.sens_eps_mw),
+                    "sens_norm_ref": float(rac_model.cfg.sens_norm_ref),
+                    "qhat_shrink_tau": float(rac_model.cfg.qhat_shrink_tau),
+                    "max_q_multiplier": float(rac_model.cfg.max_q_multiplier),
+                    "min_w": float(rac_model.cfg.min_w),
+                },
+            )
+        except Exception:
+            q_for_build = np.asarray(base_half, dtype=float)
+
+    cfg["rac_cert"] = _deep_update(
+        dict(cfg.get("rac_cert", {})),
+        {
+            "enabled": True,
+            "sens_eps_mw": float(rac_runtime["sens_eps_mw"]),
+            "sens_norm_ref": float(rac_runtime["sens_norm_ref"]),
+        },
+    )
+    cfg["sensitivity_t"] = float(sensitivity_t)
+    if sensitivity_norm is not None:
+        cfg["sensitivity_norm"] = float(np.clip(float(sensitivity_norm), 0.0, 1.0))
+    else:
+        cfg.pop("sensitivity_norm", None)
+
+    lower, upper, meta = build_uncertainty_set(
+        yhat=load_arr,
+        q=np.asarray(q_for_build, dtype=float),
+        w_t=float(w_t),
+        drift_flag=bool(drift_flag),
+        cfg=cfg,
+        prev_inflation=prev_inflation,
+        base_lower=np.asarray(base_lower, dtype=float),
+        base_upper=np.asarray(base_upper, dtype=float),
+    )
+    meta["coverage_lb_t"] = float(max(0.0, 1.0 - float(cfg.get("alpha0", 0.10))))
+    return lower, upper, meta
+
+
 def _controller_step_deterministic(
     *,
     load_window: np.ndarray,
@@ -310,6 +423,7 @@ def _controller_step_deterministic(
     price_window: np.ndarray,
     carbon_window: np.ndarray,
     optimization_cfg: Mapping[str, Any],
+    dc3s_cfg: Mapping[str, Any],
     observed_soc_mwh: float,
 ) -> dict[str, Any]:
     cfg = json.loads(json.dumps(dict(optimization_cfg)))
@@ -327,7 +441,14 @@ def _controller_step_deterministic(
     except Exception:
         dispatch = {"battery_charge_mw": [0.0], "battery_discharge_mw": [0.0]}
 
-    lower_90, upper_90 = _cqr_bounds(np.asarray(load_window, dtype=float))
+    lower_90, upper_90, rac_meta = _rac_bounds(
+        load_window=np.asarray(load_window, dtype=float),
+        dc3s_cfg=dc3s_cfg,
+        w_t=1.0,
+        drift_flag=False,
+        sensitivity_t=0.0,
+        sensitivity_norm=0.0,
+    )
     return {
         "proposed_charge_mw": float(np.asarray(dispatch.get("battery_charge_mw", [0.0]), dtype=float)[0]),
         "proposed_discharge_mw": float(np.asarray(dispatch.get("battery_discharge_mw", [0.0]), dtype=float)[0]),
@@ -336,9 +457,15 @@ def _controller_step_deterministic(
         "interval_lower": np.asarray(lower_90, dtype=float),
         "interval_upper": np.asarray(upper_90, dtype=float),
         "solver_status": "deterministic",
-        "w_t": 1.0,
-        "delta_mw": 0.0,
-        "interval_width": float(max(0.0, upper_90[0] - lower_90[0])) if len(lower_90) else 0.0,
+        "w_t": float(rac_meta.get("w_t", 1.0)),
+        "delta_mw": float(rac_meta.get("delta_mw", 0.0)),
+        "interval_width": float(rac_meta.get("interval_width", max(0.0, upper_90[0] - lower_90[0]) if len(lower_90) else 0.0)),
+        "sensitivity_t": float(rac_meta.get("sensitivity_t", 0.0)),
+        "sensitivity_norm": float(rac_meta.get("sensitivity_norm", 0.0)),
+        "q_eff": float(rac_meta.get("q_eff", 0.0)),
+        "q_multiplier": float(rac_meta.get("q_multiplier", 1.0)),
+        "rac_inflation": float(rac_meta.get("inflation", 1.0)),
+        "coverage_lb_t": float(rac_meta.get("coverage_lb_t", 0.0)),
         "guarantee_checks_passed": True,
         "certificate": None,
         "cvar_eta": np.nan,
@@ -352,13 +479,18 @@ def _controller_step_robust_fixed(
     renew_window: np.ndarray,
     price_window: np.ndarray,
     optimization_cfg: Mapping[str, Any],
+    dc3s_cfg: Mapping[str, Any],
     observed_soc_mwh: float,
-    width_frac: float = 0.12,
 ) -> dict[str, Any]:
     constraints = _battery_constraints(dict(optimization_cfg))
-    width = np.maximum(50.0, float(width_frac) * np.abs(load_window))
-    lower = np.maximum(0.0, load_window - width)
-    upper = load_window + width
+    lower, upper, rac_meta = _rac_bounds(
+        load_window=np.asarray(load_window, dtype=float),
+        dc3s_cfg=dc3s_cfg,
+        w_t=1.0,
+        drift_flag=False,
+        sensitivity_t=0.0,
+        sensitivity_norm=0.0,
+    )
 
     rcfg = RobustDispatchConfig(
         battery_capacity_mwh=constraints["capacity_mwh"],
@@ -401,9 +533,15 @@ def _controller_step_robust_fixed(
         "interval_lower": np.asarray(lower, dtype=float),
         "interval_upper": np.asarray(upper, dtype=float),
         "solver_status": solver_status,
-        "w_t": 1.0,
-        "delta_mw": 0.0,
-        "interval_width": float(max(0.0, upper[0] - lower[0])) if len(lower) else 0.0,
+        "w_t": float(rac_meta.get("w_t", 1.0)),
+        "delta_mw": float(rac_meta.get("delta_mw", 0.0)),
+        "interval_width": float(rac_meta.get("interval_width", max(0.0, upper[0] - lower[0]) if len(lower) else 0.0)),
+        "sensitivity_t": float(rac_meta.get("sensitivity_t", 0.0)),
+        "sensitivity_norm": float(rac_meta.get("sensitivity_norm", 0.0)),
+        "q_eff": float(rac_meta.get("q_eff", 0.0)),
+        "q_multiplier": float(rac_meta.get("q_multiplier", 1.0)),
+        "rac_inflation": float(rac_meta.get("inflation", 1.0)),
+        "coverage_lb_t": float(rac_meta.get("coverage_lb_t", 0.0)),
         "guarantee_checks_passed": True,
         "certificate": None,
         "cvar_eta": np.nan,
@@ -434,11 +572,19 @@ def _controller_step_cvar_interval(
     renew_window: np.ndarray,
     price_window: np.ndarray,
     optimization_cfg: Mapping[str, Any],
+    dc3s_cfg: Mapping[str, Any],
     observed_soc_mwh: float,
     random_seed: int,
 ) -> dict[str, Any]:
     constraints = _battery_constraints(dict(optimization_cfg))
-    lower, upper = _cqr_bounds(np.asarray(load_window, dtype=float))
+    lower, upper, rac_meta = _rac_bounds(
+        load_window=np.asarray(load_window, dtype=float),
+        dc3s_cfg=dc3s_cfg,
+        w_t=1.0,
+        drift_flag=False,
+        sensitivity_t=0.0,
+        sensitivity_norm=0.0,
+    )
 
     cvar_cfg = dict(dict(optimization_cfg).get("cvar", {}))
     n_scenarios = int(cvar_cfg.get("n_scenarios", 20))
@@ -503,9 +649,15 @@ def _controller_step_cvar_interval(
         "interval_lower": np.asarray(lower, dtype=float),
         "interval_upper": np.asarray(upper, dtype=float),
         "solver_status": solver_status,
-        "w_t": 1.0,
-        "delta_mw": 0.0,
-        "interval_width": float(max(0.0, upper[0] - lower[0])) if len(lower) else 0.0,
+        "w_t": float(rac_meta.get("w_t", 1.0)),
+        "delta_mw": float(rac_meta.get("delta_mw", 0.0)),
+        "interval_width": float(rac_meta.get("interval_width", max(0.0, upper[0] - lower[0]) if len(lower) else 0.0)),
+        "sensitivity_t": float(rac_meta.get("sensitivity_t", 0.0)),
+        "sensitivity_norm": float(rac_meta.get("sensitivity_norm", 0.0)),
+        "q_eff": float(rac_meta.get("q_eff", 0.0)),
+        "q_multiplier": float(rac_meta.get("q_multiplier", 1.0)),
+        "rac_inflation": float(rac_meta.get("inflation", 1.0)),
+        "coverage_lb_t": float(rac_meta.get("coverage_lb_t", 0.0)),
         "guarantee_checks_passed": True,
         "certificate": None,
         "cvar_eta": float(cvar_eta) if np.isfinite(cvar_eta) else np.nan,
@@ -545,20 +697,6 @@ def _controller_step_dc3s(
     residual = abs(float(load_true_t) - float(load_window[0]))
     drift = state.detector.update(residual)
 
-    base_lower, base_upper = _cqr_bounds(np.asarray(load_window, dtype=float))
-    base_half_width = np.maximum(0.0, 0.5 * (np.asarray(base_upper, dtype=float) - np.asarray(base_lower, dtype=float)))
-    lower, upper, widen_meta = build_uncertainty_set(
-        yhat=np.asarray(load_window, dtype=float),
-        q=base_half_width,
-        w_t=float(w_t),
-        drift_flag=bool(drift.get("drift", False)),
-        cfg=dc3s_cfg,
-        prev_inflation=state.prev_inflation,
-        base_lower=np.asarray(base_lower, dtype=float),
-        base_upper=np.asarray(base_upper, dtype=float),
-    )
-    state.prev_inflation = float(widen_meta.get("inflation", 1.0))
-
     rcfg = RobustDispatchConfig(
         battery_capacity_mwh=constraints["capacity_mwh"],
         battery_max_charge_mw=constraints["max_charge_mw"],
@@ -575,6 +713,61 @@ def _controller_step_dc3s(
         time_step_hours=constraints["time_step_hours"],
         solver_name=str(dict(optimization_cfg).get("solver_name", "appsi_highs")),
     )
+
+    rac_cfg = dc3s_cfg.get("rac_cert", {}) if isinstance(dc3s_cfg.get("rac_cert"), Mapping) else {}
+    sens_eps = float(rac_cfg.get("sens_eps_mw", _rac_runtime_cfg()["sens_eps_mw"]))
+    sens_norm_ref = float(rac_cfg.get("sens_norm_ref", _rac_runtime_cfg()["sens_norm_ref"]))
+    probe_mode = str(rac_cfg.get("sensitivity_probe", "heuristic")).strip().lower()
+    drift_flag = bool(drift.get("drift", False))
+
+    if probe_mode in {"finite_diff", "fd", "robust_fd"}:
+        def _robust_probe(load_probe: np.ndarray) -> tuple[float, float]:
+            probe_lower, probe_upper, _ = _rac_bounds(
+                load_window=np.asarray(load_probe, dtype=float),
+                dc3s_cfg=dc3s_cfg,
+                w_t=float(w_t),
+                drift_flag=drift_flag,
+                sensitivity_t=0.0,
+                sensitivity_norm=0.0,
+            )
+            probe_sol = optimize_robust_dispatch(
+                load_lower_bound=probe_lower.tolist(),
+                load_upper_bound=probe_upper.tolist(),
+                renewables_forecast=renew_window.tolist(),
+                price=price_window.tolist(),
+                config=rcfg,
+                verbose=False,
+            )
+            ch_probe = float(np.asarray(probe_sol.get("battery_charge_mw", [0.0]), dtype=float)[0])
+            dis_probe = float(np.asarray(probe_sol.get("battery_discharge_mw", [0.0]), dtype=float)[0])
+            return ch_probe, dis_probe
+
+        try:
+            sensitivity_t = compute_dispatch_sensitivity(
+                load_window=np.asarray(load_window, dtype=float),
+                dispatch_probe=_robust_probe,
+                sens_eps_mw=float(sens_eps),
+            )
+        except Exception:
+            sensitivity_t = 0.0
+    else:
+        if len(load_window) > 1:
+            slope = abs(float(load_window[1]) - float(load_window[0])) / max(abs(float(load_window[0])), 1.0)
+        else:
+            slope = 0.0
+        sensitivity_t = float(np.clip(slope, 0.0, 1.0))
+    sensitivity_norm = normalize_sensitivity(sensitivity_t, norm_ref=sens_norm_ref)
+
+    lower, upper, widen_meta = _rac_bounds(
+        load_window=np.asarray(load_window, dtype=float),
+        dc3s_cfg=dc3s_cfg,
+        w_t=float(w_t),
+        drift_flag=drift_flag,
+        sensitivity_t=float(sensitivity_t),
+        sensitivity_norm=float(sensitivity_norm),
+        prev_inflation=state.prev_inflation,
+    )
+    state.prev_inflation = float(widen_meta.get("inflation", 1.0))
 
     solver_status = "error"
     proposed_charge = 0.0
@@ -673,6 +866,11 @@ def _controller_step_dc3s(
     cert["solver_status"] = solver_status
     cert["guarantee_checks_passed"] = bool(guarantee_ok)
     cert["lambda_mw_used"] = float(widen_meta.get("lambda_mw_used", 0.0))
+    cert["coverage_lb_t"] = float(widen_meta.get("coverage_lb_t", 0.0))
+    cert["sensitivity_t"] = float(widen_meta.get("sensitivity_t", sensitivity_t))
+    cert["sensitivity_norm"] = float(widen_meta.get("sensitivity_norm", sensitivity_norm))
+    cert["q_eff"] = float(widen_meta.get("q_eff", 0.0))
+    cert["q_multiplier"] = float(widen_meta.get("q_multiplier", 1.0))
 
     state.prev_event = event
     state.prev_hash = str(cert.get("certificate_hash"))
@@ -690,6 +888,12 @@ def _controller_step_dc3s(
         "delta_mw": float(delta_mw),
         "interval_width": float(widen_meta.get("interval_width", 0.0)),
         "lambda_mw_used": float(widen_meta.get("lambda_mw_used", 0.0)),
+        "sensitivity_t": float(widen_meta.get("sensitivity_t", sensitivity_t)),
+        "sensitivity_norm": float(widen_meta.get("sensitivity_norm", sensitivity_norm)),
+        "q_eff": float(widen_meta.get("q_eff", 0.0)),
+        "q_multiplier": float(widen_meta.get("q_multiplier", 1.0)),
+        "rac_inflation": float(widen_meta.get("inflation", 1.0)),
+        "coverage_lb_t": float(widen_meta.get("coverage_lb_t", 0.0)),
         "guarantee_checks_passed": bool(guarantee_ok),
         "certificate": cert,
         "cvar_eta": np.nan,
@@ -711,6 +915,10 @@ def _init_controller_buffers(n: int) -> dict[str, Any]:
         "delta_mw": np.zeros(n, dtype=float),
         "interval_width": np.zeros(n, dtype=float),
         "lambda_mw_used": np.zeros(n, dtype=float),
+        "rac_sensitivity": np.zeros(n, dtype=float),
+        "rac_sensitivity_norm": np.zeros(n, dtype=float),
+        "rac_q_multiplier": np.ones(n, dtype=float),
+        "rac_inflation": np.ones(n, dtype=float),
         "cvar_eta": np.full(n, np.nan, dtype=float),
         "cvar_cost": np.full(n, np.nan, dtype=float),
         "guarantee_checks_passed": np.ones(n, dtype=float),
@@ -723,7 +931,14 @@ def _init_controller_buffers(n: int) -> dict[str, Any]:
 
 
 def _compute_cqr_group_metrics(y_true: np.ndarray, y_context: np.ndarray) -> dict[str, float]:
-    lower, upper = _cqr_bounds(np.asarray(y_context, dtype=float))
+    lower, upper, _ = _rac_bounds(
+        load_window=np.asarray(y_context, dtype=float),
+        dc3s_cfg=_load_dc3s_cfg(),
+        w_t=1.0,
+        drift_flag=False,
+        sensitivity_t=0.0,
+        sensitivity_norm=0.0,
+    )
     y = np.asarray(y_true, dtype=float).reshape(-1)
     lo = np.asarray(lower, dtype=float).reshape(-1)
     hi = np.asarray(upper, dtype=float).reshape(-1)
@@ -823,6 +1038,7 @@ def run_single(
                     price_window=price_window,
                     carbon_window=carbon_window,
                     optimization_cfg=optimization_cfg,
+                    dc3s_cfg=dc3s_cfg,
                     observed_soc_mwh=float(observed_soc),
                 )
             elif controller == "robust_fixed_interval":
@@ -831,6 +1047,7 @@ def run_single(
                     renew_window=renew_window,
                     price_window=price_window,
                     optimization_cfg=optimization_cfg,
+                    dc3s_cfg=dc3s_cfg,
                     observed_soc_mwh=float(observed_soc),
                 )
             elif controller == "cvar_interval":
@@ -839,6 +1056,7 @@ def run_single(
                     renew_window=renew_window,
                     price_window=price_window,
                     optimization_cfg=optimization_cfg,
+                    dc3s_cfg=dc3s_cfg,
                     observed_soc_mwh=float(observed_soc),
                     random_seed=int(seed * 100000 + t),
                 )
@@ -889,6 +1107,10 @@ def run_single(
             buf["delta_mw"][t] = float(step.get("delta_mw", 0.0))
             buf["interval_width"][t] = float(step.get("interval_width", max(0.0, buf["interval_upper"][t] - buf["interval_lower"][t])))
             buf["lambda_mw_used"][t] = float(step.get("lambda_mw_used", 0.0))
+            buf["rac_sensitivity"][t] = float(step.get("sensitivity_t", 0.0))
+            buf["rac_sensitivity_norm"][t] = float(step.get("sensitivity_norm", 0.0))
+            buf["rac_q_multiplier"][t] = float(step.get("q_multiplier", 1.0))
+            buf["rac_inflation"][t] = float(step.get("rac_inflation", step.get("inflation", 1.0)))
             buf["cvar_eta"][t] = float(step.get("cvar_eta", np.nan))
             buf["cvar_cost"][t] = float(step.get("cvar_cost", np.nan))
             buf["guarantee_checks_passed"][t] = 1.0 if guarantee_ok else 0.0
@@ -969,6 +1191,11 @@ def run_single(
             "adaptive_width_mean": adaptive_width_mean,
             "adaptive_width_p95": adaptive_width_p95,
             "lambda_mw_used_mean": float(np.mean(res["lambda_mw_used"])) if len(res["lambda_mw_used"]) else np.nan,
+            "rac_sensitivity_mean": float(np.mean(res["rac_sensitivity"])) if len(res["rac_sensitivity"]) else np.nan,
+            "rac_sensitivity_p95": float(np.quantile(res["rac_sensitivity"], 0.95)) if len(res["rac_sensitivity"]) else np.nan,
+            "rac_q_multiplier_mean": float(np.mean(res["rac_q_multiplier"])) if len(res["rac_q_multiplier"]) else np.nan,
+            "rac_q_multiplier_p95": float(np.quantile(res["rac_q_multiplier"], 0.95)) if len(res["rac_q_multiplier"]) else np.nan,
+            "rac_inflation_mean": float(np.mean(res["rac_inflation"])) if len(res["rac_inflation"]) else np.nan,
             "cvar_eta": cvar_eta_mean,
             "cvar_cost": cvar_cost_mean,
             **cqr_group_metrics,
