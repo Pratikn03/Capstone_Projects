@@ -55,34 +55,6 @@ delay_seconds,0.000000,delay_jitter,22,robust_fixed_interval,robust_fixed_interv
  False False False False False False False False False False False False
  False False False False False False False False  True  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-delay_seconds,0.000000,delay_jitter,33,cvar_interval,cvar_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,951.890877,0.678571,1.000000,951.890877,948.870247,0.000000,122877254.740605,122905371.906494,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-delay_seconds,0.000000,delay_jitter,33,dc3s_wrapped,dc3s_wrapped,193199091.256945,1352816727.808704,0.032729,0.999775,0.000000,952.061358,0.976190,0.952381,952.061358,948.870247,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,952.061358,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.005030,10000.000000,0.000000,0.047619,0.047619,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-delay_seconds,0.000000,delay_jitter,33,deterministic_lp,deterministic_lp,193135879.006799,1352830533.957613,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.130952,334.167062,0.000000,0.000000,0.130952,11.000000,30.378824,165.400475,30.378824,165.400475,-311.940550,10000.000000,2.181818,0.130952,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
- False False False False False False False False False False False False
- False False False False False False False  True False  True  True  True
- False False False False False False False  True False False  True False]",0.000000,336.000000
-delay_seconds,0.000000,delay_jitter,33,robust_fixed_interval,robust_fixed_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,12004.354983,0.678571,1.000000,12004.354983,13675.985218,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,12004.354983,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
 delay_seconds,1.000000,delay_jitter,11,cvar_interval,cvar_interval,192712776.968431,1347321730.142499,-0.004709,1.000000,0.000000,951.890877,0.869048,1.000000,951.890877,948.870247,0.000000,107713334.170589,107738242.214321,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.190476,2.190499,0.000000,0.000000,0.190476,16.000000,0.136906,0.272948,0.136906,0.272948,-0.272948,10000.000000,8.500000,0.190476,0.000000,0.000000,"[False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False False False False False
@@ -138,34 +110,6 @@ delay_seconds,1.000000,delay_jitter,22,robust_fixed_interval,robust_fixed_interv
  False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-delay_seconds,1.000000,delay_jitter,33,cvar_interval,cvar_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,951.890877,0.678571,1.000000,951.890877,948.870247,0.000000,122877254.740605,122905371.906494,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-delay_seconds,1.000000,delay_jitter,33,dc3s_wrapped,dc3s_wrapped,193199091.256945,1352816727.808704,0.032729,0.999775,0.000000,952.061358,0.976190,0.952381,952.061358,948.870247,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,952.061358,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.005030,10000.000000,0.000000,0.047619,0.047619,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-delay_seconds,1.000000,delay_jitter,33,deterministic_lp,deterministic_lp,193135879.006799,1352830533.957613,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.130952,334.167062,0.285714,0.000000,0.130952,11.000000,30.378824,165.400475,30.378824,165.400475,-311.940550,10000.000000,2.181818,0.130952,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
- False False False False False False False False False False False False
- False False False False False False False  True False  True  True  True
- False False False False False False False  True False False  True False]",0.000000,336.000000
-delay_seconds,1.000000,delay_jitter,33,robust_fixed_interval,robust_fixed_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,12004.354983,0.678571,1.000000,12004.354983,13675.985218,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,12004.354983,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
 delay_seconds,5.000000,delay_jitter,11,cvar_interval,cvar_interval,192712778.610011,1347321755.639825,-0.004709,1.000000,0.000000,951.890877,0.821429,1.000000,951.890877,948.870247,0.000000,112827446.524136,112853580.726445,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.190476,3.276303,0.000000,0.000000,0.190476,16.000000,0.204769,0.204769,0.204769,0.204769,-0.204769,10000.000000,8.500000,0.190476,0.000000,0.000000,"[False False False False False False False False False False False False
  False False False False False False False False False False False False
@@ -223,34 +167,6 @@ delay_seconds,5.000000,delay_jitter,22,robust_fixed_interval,robust_fixed_interv
  False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False False False False  True]",0.000000,336.000000
-delay_seconds,5.000000,delay_jitter,33,cvar_interval,cvar_interval,193126115.203147,1352808493.849371,-0.004625,1.000000,0.000000,951.890877,0.857143,1.000000,951.890877,948.870247,0.000000,109254892.240712,109281181.365660,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.202381,5.859427,0.000000,0.000000,0.202381,17.000000,0.344672,0.381405,0.344672,0.381405,-0.381405,10000.000000,9.000000,0.202381,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-delay_seconds,5.000000,delay_jitter,33,dc3s_wrapped,dc3s_wrapped,193126151.614775,1352808731.099039,-0.004606,0.999775,0.000000,952.061358,0.964286,0.964286,952.061358,948.870247,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,952.061358,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.245924,10000.000000,0.000000,0.035714,0.035714,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-delay_seconds,5.000000,delay_jitter,33,deterministic_lp,deterministic_lp,193135047.868131,1352830323.378317,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.154762,646.327263,0.309524,0.000000,0.154762,13.000000,49.717482,311.794498,49.717482,311.794498,-311.794498,10000.000000,2.846154,0.154762,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True False False False False False  True  True  True False False False]",0.000000,336.000000
-delay_seconds,5.000000,delay_jitter,33,robust_fixed_interval,robust_fixed_interval,193126115.203147,1352808493.849371,-0.004625,1.000000,0.000000,12004.354983,0.857143,1.000000,12004.354983,13675.985218,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,12004.354983,0.202381,5.859427,0.000000,0.000000,0.202381,17.000000,0.344672,0.381405,0.344672,0.381405,-0.381405,10000.000000,9.000000,0.202381,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
 delay_seconds,15.000000,delay_jitter,11,cvar_interval,cvar_interval,192712778.610011,1347321755.639825,-0.004709,1.000000,0.000000,951.890877,0.821429,1.000000,951.890877,948.870247,0.000000,112827446.524136,112853580.726445,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.190476,3.276303,0.000000,0.000000,0.190476,16.000000,0.204769,0.204769,0.204769,0.204769,-0.204769,10000.000000,8.500000,0.190476,0.000000,0.000000,"[False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False False False False False
@@ -307,34 +223,6 @@ delay_seconds,15.000000,delay_jitter,22,robust_fixed_interval,robust_fixed_inter
  False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False False False False  True]",0.000000,336.000000
-delay_seconds,15.000000,delay_jitter,33,cvar_interval,cvar_interval,193126115.203147,1352808493.849371,-0.004625,1.000000,0.000000,951.890877,0.857143,1.000000,951.890877,948.870247,0.000000,109254892.240712,109281181.365660,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.202381,5.859427,0.000000,0.000000,0.202381,17.000000,0.344672,0.381405,0.344672,0.381405,-0.381405,10000.000000,9.000000,0.202381,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-delay_seconds,15.000000,delay_jitter,33,dc3s_wrapped,dc3s_wrapped,193126151.614775,1352808731.099039,-0.004606,0.999775,0.000000,952.061358,0.964286,0.964286,952.061358,948.870247,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,952.061358,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.245924,10000.000000,0.000000,0.035714,0.035714,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-delay_seconds,15.000000,delay_jitter,33,deterministic_lp,deterministic_lp,193135047.868131,1352830323.378317,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.154762,646.327263,0.309524,0.000000,0.154762,13.000000,49.717482,311.794498,49.717482,311.794498,-311.794498,10000.000000,2.846154,0.154762,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True False False False False False  True  True  True False False False]",0.000000,336.000000
-delay_seconds,15.000000,delay_jitter,33,robust_fixed_interval,robust_fixed_interval,193126115.203147,1352808493.849371,-0.004625,1.000000,0.000000,12004.354983,0.857143,1.000000,12004.354983,13675.985218,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,12004.354983,0.202381,5.859427,0.000000,0.000000,0.202381,17.000000,0.344672,0.381405,0.344672,0.381405,-0.381405,10000.000000,9.000000,0.202381,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
 dropout,0.000000,dropout,11,cvar_interval,cvar_interval,192712776.968431,1347321730.142499,-0.004709,1.000000,0.000000,951.890877,0.869048,1.000000,951.890877,948.870247,0.000000,107713334.170589,107738242.214321,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.190476,2.190499,0.000000,0.000000,0.190476,16.000000,0.136906,0.272948,0.136906,0.272948,-0.272948,10000.000000,8.500000,0.190476,0.000000,0.000000,"[False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False False False False False
@@ -390,34 +278,6 @@ dropout,0.000000,dropout,22,robust_fixed_interval,robust_fixed_interval,19227206
  False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-dropout,0.000000,dropout,33,cvar_interval,cvar_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,951.890877,0.678571,1.000000,951.890877,948.870247,0.000000,122877254.740605,122905371.906494,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-dropout,0.000000,dropout,33,dc3s_wrapped,dc3s_wrapped,193199091.256945,1352816727.808704,0.032729,0.999775,0.000000,952.061358,0.976190,0.952381,952.061358,948.870247,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,952.061358,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.005030,10000.000000,0.000000,0.047619,0.047619,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-dropout,0.000000,dropout,33,deterministic_lp,deterministic_lp,193135879.006799,1352830533.957613,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.130952,334.167062,0.000000,0.000000,0.130952,11.000000,30.378824,165.400475,30.378824,165.400475,-311.940550,10000.000000,2.181818,0.130952,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
- False False False False False False False False False False False False
- False False False False False False False  True False  True  True  True
- False False False False False False False  True False False  True False]",0.000000,336.000000
-dropout,0.000000,dropout,33,robust_fixed_interval,robust_fixed_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,12004.354983,0.678571,1.000000,12004.354983,13675.985218,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,12004.354983,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
 dropout,0.050000,dropout,11,cvar_interval,cvar_interval,192712764.544697,1347321664.165492,-0.004717,1.000000,0.000000,951.890877,0.821429,1.000000,951.890877,948.870247,0.000000,112934870.003324,112961004.205633,0.928571,948.870247,0.964286,948.870247,0.964286,948.870247,66.965284,331.219589,0.952381,0.964286,951.890877,0.190476,7.158266,0.000000,0.000000,0.190476,16.000000,0.447392,0.447392,0.447392,0.447392,-0.447392,10000.000000,8.500000,0.190476,0.000000,0.000000,"[False False False False False False False False False False False False
  False False False False False False False False False False False False
@@ -475,34 +335,6 @@ dropout,0.050000,dropout,22,robust_fixed_interval,robust_fixed_interval,19227205
   True  True  True  True  True  True  True  True  True  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-dropout,0.050000,dropout,33,cvar_interval,cvar_interval,193126112.950613,1352808477.506498,-0.004600,1.000000,0.000000,951.890877,0.821429,1.000000,951.890877,948.870247,0.000000,112381001.852459,112407700.565310,1.000000,948.870247,0.892857,948.870247,1.000000,948.870247,49.020313,273.598484,0.964286,0.964286,951.890877,0.202381,7.030359,0.000000,0.000000,0.202381,17.000000,0.413551,0.417771,0.413551,0.417771,-0.417771,10000.000000,9.000000,0.202381,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-dropout,0.050000,dropout,33,dc3s_wrapped,dc3s_wrapped,193126143.030520,1352808639.651751,-0.004585,0.997292,0.000000,967.502148,0.952381,0.964286,967.502148,971.028585,0.000000,,,1.000000,948.870247,0.892857,948.870247,1.000000,948.870247,49.020313,273.598484,0.964286,0.964286,967.502148,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.005514,10000.000000,0.000000,0.035714,0.035714,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-dropout,0.050000,dropout,33,deterministic_lp,deterministic_lp,193134997.518868,1352829989.414640,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,1.000000,948.870247,0.892857,948.870247,1.000000,948.870247,49.020313,273.598484,0.964286,0.964286,951.890877,0.142857,644.930845,0.250000,0.000000,0.142857,12.000000,53.744237,311.481008,53.744237,311.481008,-311.481008,10000.000000,2.833333,0.142857,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True False False False False False False False False False False
- False False False False False False False  True False  True False False
- False False False False False False False  True False False  True  True]",0.000000,336.000000
-dropout,0.050000,dropout,33,robust_fixed_interval,robust_fixed_interval,193126112.950613,1352808477.506498,-0.004600,1.000000,0.000000,12004.168060,0.821429,1.000000,12004.168060,13675.985218,0.000000,,,1.000000,948.870247,0.892857,948.870247,1.000000,948.870247,49.020313,273.598484,1.000000,1.000000,12004.168060,0.202381,7.030359,0.000000,0.000000,0.202381,17.000000,0.413551,0.417771,0.413551,0.417771,-0.417771,10000.000000,9.000000,0.202381,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
 dropout,0.100000,dropout,11,cvar_interval,cvar_interval,192712784.871304,1347321767.451306,-0.004716,1.000000,0.000000,951.890877,0.940476,1.000000,951.890877,948.870247,0.000000,101366131.996360,101390078.208788,0.857143,948.870247,0.964286,948.870247,0.928571,948.870247,168.101008,643.471875,0.916667,0.916667,951.890877,0.059524,0.872575,0.000000,0.000000,0.059524,5.000000,0.174515,0.174515,0.174515,0.174515,-0.174515,10000.000000,3.000000,0.059524,0.000000,0.000000,"[False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False False False False False
@@ -558,34 +390,6 @@ dropout,0.100000,dropout,22,robust_fixed_interval,robust_fixed_interval,19227205
   True  True  True  True  True  True  True  True  True  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-dropout,0.100000,dropout,33,cvar_interval,cvar_interval,193126115.143375,1352808493.160305,-0.005227,1.000000,0.000000,951.890877,0.785714,1.000000,951.890877,948.870247,0.000000,112798844.039271,112827151.410951,0.928571,948.870247,1.000000,948.870247,0.821429,948.870247,196.627724,742.710016,0.916667,0.916667,951.890877,0.202381,5.967508,0.000000,0.000000,0.202381,17.000000,0.351030,0.381897,0.351030,0.381897,-0.381897,10000.000000,9.000000,0.202381,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-dropout,0.100000,dropout,33,dc3s_wrapped,dc3s_wrapped,193126149.265017,1352808711.126320,-0.005209,0.998916,0.000000,966.268908,0.892857,0.976190,966.268908,948.870247,0.000000,,,0.928571,948.870247,1.000000,948.870247,0.821429,948.870247,196.627724,742.710016,0.916667,0.916667,966.268908,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.193877,10000.000000,0.000000,0.023810,0.023810,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-dropout,0.100000,dropout,33,deterministic_lp,deterministic_lp,193136210.100417,1352831728.902130,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,0.928571,948.870247,1.000000,948.870247,0.821429,948.870247,196.627724,742.710016,0.916667,0.916667,951.890877,0.095238,333.623782,0.375000,0.000000,0.095238,8.000000,41.702973,209.342815,41.702973,209.342815,-311.884153,10000.000000,1.750000,0.095238,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True False False
- False False False False False False False False False False False False
- False False False False False False False  True False  True False False
- False False False False False False False  True  True  True False False]",0.000000,336.000000
-dropout,0.100000,dropout,33,robust_fixed_interval,robust_fixed_interval,193126115.143375,1352808493.160305,-0.005227,1.000000,0.000000,11980.181663,0.785714,1.000000,11980.181663,13675.985218,0.000000,,,0.928571,948.870247,1.000000,948.870247,0.821429,948.870247,196.627724,742.710016,1.000000,1.000000,11980.181663,0.202381,5.967508,0.000000,0.000000,0.202381,17.000000,0.351030,0.381897,0.351030,0.381897,-0.381897,10000.000000,9.000000,0.202381,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
 dropout,0.200000,dropout,11,cvar_interval,cvar_interval,192712770.630276,1347321675.602339,-0.004691,1.000000,0.000000,951.890877,0.892857,1.000000,951.890877,948.870247,0.000000,105011736.224359,105036323.322424,0.892857,948.870247,0.821429,948.870247,0.857143,948.870247,226.410749,592.382785,0.857143,0.857143,951.890877,0.178571,1.781194,0.000000,0.000000,0.178571,15.000000,0.118746,0.194869,0.118746,0.194869,-0.423239,10000.000000,8.000000,0.178571,0.000000,0.000000,"[False False False False False False False False False False False False
  False False False False False False False False False False False False
@@ -643,34 +447,6 @@ dropout,0.200000,dropout,22,robust_fixed_interval,robust_fixed_interval,19227205
   True  True  True  True  True  True  True  True  True  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-dropout,0.200000,dropout,33,cvar_interval,cvar_interval,193126122.610170,1352808540.632470,-0.005036,1.000000,0.000000,951.890877,0.797619,1.000000,951.890877,948.870247,0.000000,112911129.025640,112938458.304662,0.892857,948.870247,0.821429,948.870247,0.750000,948.870247,193.169506,479.024143,0.821429,0.857143,951.890877,0.202381,4.269293,0.000000,0.000000,0.202381,17.000000,0.251135,0.251135,0.251135,0.251135,-0.251135,10000.000000,9.000000,0.202381,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-dropout,0.200000,dropout,33,dc3s_wrapped,dc3s_wrapped,193126151.614775,1352808731.099039,-0.005021,0.997242,0.000000,967.539860,0.928571,0.940476,967.539860,973.721253,0.000000,,,0.892857,948.870247,0.821429,948.870247,0.750000,948.870247,193.169506,479.024143,0.821429,0.857143,967.539860,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.245924,10000.000000,0.000000,0.059524,0.059524,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-dropout,0.200000,dropout,33,deterministic_lp,deterministic_lp,193135848.096939,1352830228.543527,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,0.892857,948.870247,0.821429,948.870247,0.750000,948.870247,193.169506,479.024143,0.821429,0.857143,951.890877,0.107143,334.857814,0.125000,0.000000,0.107143,9.000000,37.206424,194.918825,37.206424,194.918825,-312.173993,10000.000000,1.555556,0.107143,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True False False
- False False False False False False False False False False False False
- False False False False False False False  True False  True False False
- False False False False False False False  True  True False  True  True]",0.000000,336.000000
-dropout,0.200000,dropout,33,robust_fixed_interval,robust_fixed_interval,193126122.610170,1352808540.632470,-0.005036,1.000000,0.000000,12002.079774,0.797619,1.000000,12002.079774,13792.793666,0.000000,,,0.892857,948.870247,0.821429,948.870247,0.750000,948.870247,193.169506,479.024143,1.000000,1.000000,12002.079774,0.202381,4.269293,0.000000,0.000000,0.202381,17.000000,0.251135,0.251135,0.251135,0.251135,-0.251135,10000.000000,9.000000,0.202381,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
 dropout,0.300000,dropout,11,cvar_interval,cvar_interval,192712782.286701,1347321777.689942,-0.004707,1.000000,0.000000,951.890877,0.880952,1.000000,951.890877,948.870247,0.000000,107349446.505879,107374793.794875,0.750000,948.870247,0.821429,948.870247,0.714286,948.870247,428.416037,894.350976,0.761905,0.773810,951.890877,0.178571,2.166990,0.000000,0.000000,0.178571,15.000000,0.144466,0.144466,0.144466,0.144466,-0.144466,10000.000000,8.000000,0.178571,0.000000,0.000000,"[False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False False False False False
@@ -726,34 +502,6 @@ dropout,0.300000,dropout,22,robust_fixed_interval,robust_fixed_interval,19227199
  False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-dropout,0.300000,dropout,33,cvar_interval,cvar_interval,193126118.102004,1352808503.431733,-0.004601,1.000000,0.000000,951.890877,0.702381,1.000000,951.890877,948.870247,0.000000,119475930.066307,119503393.112557,0.821429,948.870247,0.714286,948.870247,0.678571,948.870247,444.812913,1058.506997,0.738095,0.761905,951.890877,0.178571,4.383982,0.000000,0.000000,0.178571,15.000000,0.292265,0.353961,0.292265,0.353961,-0.353961,10000.000000,8.000000,0.178571,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-dropout,0.300000,dropout,33,dc3s_wrapped,dc3s_wrapped,193126137.946374,1352808641.153045,-0.004591,0.994801,0.000000,969.392646,0.761905,0.964286,969.392646,1033.688072,0.000000,,,0.821429,948.870247,0.714286,948.870247,0.678571,948.870247,444.812913,1058.506997,0.738095,0.761905,969.392646,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.012198,10000.000000,0.000000,0.035714,0.035714,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-dropout,0.300000,dropout,33,deterministic_lp,deterministic_lp,193135004.409577,1352830028.034865,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,0.821429,948.870247,0.714286,948.870247,0.678571,948.870247,444.812913,1058.506997,0.738095,0.761905,951.890877,0.095238,645.505670,0.040000,0.000000,0.095238,8.000000,80.688209,311.917598,80.688209,311.917598,-311.917598,10000.000000,2.250000,0.095238,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
- False False False False False False False False False False False False
- False False False False False False False False False  True False False
- False False False False False False  True False False False False  True]",0.000000,336.000000
-dropout,0.300000,dropout,33,robust_fixed_interval,robust_fixed_interval,193126118.102004,1352808503.431733,-0.004601,1.000000,0.000000,11976.766873,0.702381,1.000000,11976.766873,13675.985218,0.000000,,,0.821429,948.870247,0.714286,948.870247,0.678571,948.870247,444.812913,1058.506997,0.988095,1.000000,11976.766873,0.178571,4.383982,0.000000,0.000000,0.178571,15.000000,0.292265,0.353961,0.292265,0.353961,-0.353961,10000.000000,8.000000,0.178571,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
 out_of_order,0.000000,out_of_order,11,cvar_interval,cvar_interval,192712776.968431,1347321730.142499,-0.004709,1.000000,0.000000,951.890877,0.869048,1.000000,951.890877,948.870247,0.000000,107713334.170589,107738242.214321,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.190476,2.190499,0.000000,0.000000,0.190476,16.000000,0.136906,0.272948,0.136906,0.272948,-0.272948,10000.000000,8.500000,0.190476,0.000000,0.000000,"[False False False False False False False False False False False False
  False False False False False False False False False False False False
@@ -811,34 +559,6 @@ out_of_order,0.000000,out_of_order,22,robust_fixed_interval,robust_fixed_interva
  False False False False False False False False False False False False
  False False False False False False False False  True  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-out_of_order,0.000000,out_of_order,33,cvar_interval,cvar_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,951.890877,0.678571,1.000000,951.890877,948.870247,0.000000,122877254.740605,122905371.906494,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-out_of_order,0.000000,out_of_order,33,dc3s_wrapped,dc3s_wrapped,193199091.256945,1352816727.808704,0.032729,0.999775,0.000000,952.061358,0.976190,0.952381,952.061358,948.870247,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,952.061358,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.005030,10000.000000,0.000000,0.047619,0.047619,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-out_of_order,0.000000,out_of_order,33,deterministic_lp,deterministic_lp,193135879.006799,1352830533.957613,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.130952,334.167062,0.000000,0.000000,0.130952,11.000000,30.378824,165.400475,30.378824,165.400475,-311.940550,10000.000000,2.181818,0.130952,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
- False False False False False False False False False False False False
- False False False False False False False  True False  True  True  True
- False False False False False False False  True False False  True False]",0.000000,336.000000
-out_of_order,0.000000,out_of_order,33,robust_fixed_interval,robust_fixed_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,12004.354983,0.678571,1.000000,12004.354983,13675.985218,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,12004.354983,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
 out_of_order,0.050000,out_of_order,11,cvar_interval,cvar_interval,192712776.968431,1347321730.142499,-0.004709,1.000000,0.000000,951.890877,0.869048,1.000000,951.890877,948.870247,0.000000,107713334.170589,107738242.214321,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.190476,2.190499,0.000000,0.000000,0.190476,16.000000,0.136906,0.272948,0.136906,0.272948,-0.272948,10000.000000,8.500000,0.190476,0.000000,0.000000,"[False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False False False False False
@@ -894,34 +614,6 @@ out_of_order,0.050000,out_of_order,22,robust_fixed_interval,robust_fixed_interva
  False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-out_of_order,0.050000,out_of_order,33,cvar_interval,cvar_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,951.890877,0.678571,1.000000,951.890877,948.870247,0.000000,122877254.740605,122905371.906494,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-out_of_order,0.050000,out_of_order,33,dc3s_wrapped,dc3s_wrapped,193199091.256945,1352816727.808704,0.032729,0.932143,0.000000,1003.400976,0.976190,0.952381,1003.400976,1670.011635,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,1003.400976,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.005030,10000.000000,0.000000,0.047619,0.047619,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-out_of_order,0.050000,out_of_order,33,deterministic_lp,deterministic_lp,193135879.006799,1352830533.957613,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.130952,334.167062,0.250000,0.000000,0.130952,11.000000,30.378824,165.400475,30.378824,165.400475,-311.940550,10000.000000,2.181818,0.130952,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
- False False False False False False False False False False False False
- False False False False False False False  True False  True  True  True
- False False False False False False False  True False False  True False]",0.000000,336.000000
-out_of_order,0.050000,out_of_order,33,robust_fixed_interval,robust_fixed_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,12004.354983,0.678571,1.000000,12004.354983,13675.985218,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,12004.354983,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
 out_of_order,0.150000,out_of_order,11,cvar_interval,cvar_interval,192712776.968431,1347321730.142499,-0.004709,1.000000,0.000000,951.890877,0.869048,1.000000,951.890877,948.870247,0.000000,107713334.170589,107738242.214321,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.190476,2.190499,0.000000,0.000000,0.190476,16.000000,0.136906,0.272948,0.136906,0.272948,-0.272948,10000.000000,8.500000,0.190476,0.000000,0.000000,"[False False False False False False False False False False False False
  False False False False False False False False False False False False
@@ -979,34 +671,6 @@ out_of_order,0.150000,out_of_order,22,robust_fixed_interval,robust_fixed_interva
  False False False False False False False False False False False False
  False False False False False False False False  True  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-out_of_order,0.150000,out_of_order,33,cvar_interval,cvar_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,951.890877,0.678571,1.000000,951.890877,948.870247,0.000000,122877254.740605,122905371.906494,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-out_of_order,0.150000,out_of_order,33,dc3s_wrapped,dc3s_wrapped,193199091.256945,1352816727.808704,0.032729,0.773810,0.000000,1123.591207,0.976190,0.952381,1123.591207,1670.011635,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,1123.591207,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.005030,10000.000000,0.000000,0.047619,0.047619,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-out_of_order,0.150000,out_of_order,33,deterministic_lp,deterministic_lp,193135879.006799,1352830533.957613,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,951.890877,0.130952,334.167062,0.416667,0.000000,0.130952,11.000000,30.378824,165.400475,30.378824,165.400475,-311.940550,10000.000000,2.181818,0.130952,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
- False False False False False False False False False False False False
- False False False False False False False  True False  True  True  True
- False False False False False False False  True False False  True False]",0.000000,336.000000
-out_of_order,0.150000,out_of_order,33,robust_fixed_interval,robust_fixed_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,12004.354983,0.678571,1.000000,12004.354983,13675.985218,0.000000,,,1.000000,948.870247,1.000000,948.870247,1.000000,948.870247,0.000000,0.000000,1.000000,1.000000,12004.354983,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
 spike_sigma,0.000000,spikes,11,cvar_interval,cvar_interval,192712776.968431,1347321730.142499,-0.004709,1.000000,0.000000,951.890877,0.869048,1.000000,951.890877,948.870247,0.000000,108226937.641991,108251972.158014,0.928571,948.870247,0.964286,948.870247,0.964286,948.870247,229.745389,1435.330883,0.952381,0.964286,951.890877,0.190476,2.190499,0.000000,0.000000,0.190476,16.000000,0.136906,0.272948,0.136906,0.272948,-0.272948,10000.000000,8.500000,0.190476,0.000000,0.000000,"[False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False False False False False
@@ -1062,34 +726,6 @@ spike_sigma,0.000000,spikes,22,robust_fixed_interval,robust_fixed_interval,19227
  False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-spike_sigma,0.000000,spikes,33,cvar_interval,cvar_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,951.890877,0.678571,1.000000,951.890877,948.870247,0.000000,123746480.578782,123774597.744671,1.000000,948.870247,0.892857,948.870247,0.964286,948.870247,193.956676,1076.871726,0.952381,0.952381,951.890877,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-spike_sigma,0.000000,spikes,33,dc3s_wrapped,dc3s_wrapped,193199091.256945,1352816727.808704,0.032729,0.994862,0.000000,969.346572,0.976190,0.952381,969.346572,962.272792,0.000000,,,1.000000,948.870247,0.892857,948.870247,0.964286,948.870247,193.956676,1076.871726,0.952381,0.952381,969.346572,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.005030,10000.000000,0.000000,0.047619,0.047619,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-spike_sigma,0.000000,spikes,33,deterministic_lp,deterministic_lp,193135880.411910,1352830539.867254,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,1.000000,948.870247,0.892857,948.870247,0.964286,948.870247,193.956676,1076.871726,0.952381,0.952381,951.890877,0.130952,334.204538,0.250000,0.000000,0.130952,11.000000,30.382231,165.400475,30.382231,165.400475,-311.940550,10000.000000,2.181818,0.130952,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
- False False False False False False False False False False False False
- False False False False False False False  True False  True  True  True
- False False False False False False False  True False False  True False]",0.000000,336.000000
-spike_sigma,0.000000,spikes,33,robust_fixed_interval,robust_fixed_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,12050.904585,0.678571,1.000000,12050.904585,13790.640676,0.000000,,,1.000000,948.870247,0.892857,948.870247,0.964286,948.870247,193.956676,1076.871726,0.988095,1.000000,12050.904585,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
 spike_sigma,1.000000,spikes,11,cvar_interval,cvar_interval,192712776.968431,1347321730.142499,-0.004709,1.000000,0.000000,951.890877,0.869048,1.000000,951.890877,948.870247,0.000000,108646532.410523,108671719.416107,0.928571,956.470870,0.964286,953.937329,0.964286,979.272738,480.463084,2734.830822,0.952381,0.952381,951.890877,0.190476,2.190499,0.000000,0.000000,0.190476,16.000000,0.136906,0.272948,0.136906,0.272948,-0.272948,10000.000000,8.500000,0.190476,0.000000,0.000000,"[False False False False False False False False False False False False
  False False False False False False False False False False False False
@@ -1147,34 +783,6 @@ spike_sigma,1.000000,spikes,22,robust_fixed_interval,robust_fixed_interval,19227
  False False False False False False False False False False False False
  False False False False False False False False  True  True  True  True
   True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-spike_sigma,1.000000,spikes,33,cvar_interval,cvar_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,951.890877,0.678571,1.000000,951.890877,948.870247,0.000000,126158892.765056,126187646.361610,1.000000,959.527844,0.892857,981.717234,0.964286,992.987310,867.204256,4289.457591,0.952381,0.952381,951.890877,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-spike_sigma,1.000000,spikes,33,dc3s_wrapped,dc3s_wrapped,193199091.256945,1352816727.808704,0.032729,0.985031,0.000000,976.809294,0.976190,0.952381,976.809294,1117.419348,0.000000,,,1.000000,959.527844,0.892857,981.717234,0.964286,992.987310,867.204256,4289.457591,0.952381,0.952381,976.809294,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.005030,10000.000000,0.000000,0.047619,0.047619,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-spike_sigma,1.000000,spikes,33,deterministic_lp,deterministic_lp,193135880.411910,1352830539.867254,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,1.000000,959.527844,0.892857,981.717234,0.964286,992.987310,867.204256,4289.457591,0.952381,0.952381,951.890877,0.130952,334.204538,0.250000,0.000000,0.130952,11.000000,30.382231,165.400475,30.382231,165.400475,-311.940550,10000.000000,2.181818,0.130952,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
- False False False False False False False False False False False False
- False False False False False False False  True False  True  True  True
- False False False False False False False  True False False  True False]",0.000000,336.000000
-spike_sigma,1.000000,spikes,33,robust_fixed_interval,robust_fixed_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,12212.484005,0.678571,1.000000,12212.484005,14078.872067,0.000000,,,1.000000,959.527844,0.892857,981.717234,0.964286,992.987310,867.204256,4289.457591,0.952381,0.952381,12212.484005,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
 spike_sigma,2.000000,spikes,11,cvar_interval,cvar_interval,192712776.968431,1347321730.142499,-0.006721,1.000000,0.000000,951.890877,0.869048,1.000000,951.890877,948.870247,0.000000,110252985.334672,110278419.988113,0.928571,959.527844,0.964286,969.572963,0.964286,982.413339,1174.729828,5819.634804,0.952381,0.952381,951.890877,0.190476,2.190499,0.000000,0.000000,0.190476,16.000000,0.136906,0.272948,0.136906,0.272948,-0.272948,10000.000000,8.500000,0.190476,0.000000,0.000000,"[False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False False False False False
@@ -1231,34 +839,6 @@ spike_sigma,2.000000,spikes,22,robust_fixed_interval,robust_fixed_interval,19240
  False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False False False False False]",0.000000,336.000000
-spike_sigma,2.000000,spikes,33,cvar_interval,cvar_interval,193126112.855877,1352808476.339285,-0.005057,1.000000,0.000000,951.890877,0.678571,1.000000,951.890877,948.870247,0.000000,129446069.172517,129475038.686162,1.000000,960.051278,0.892857,985.208597,0.964286,978.220452,1737.305227,8247.826311,0.952381,0.952381,951.890877,0.488095,7.956540,0.000000,0.000000,0.488095,41.000000,0.194062,0.417771,0.194062,0.417771,-0.417771,10000.000000,21.000000,0.488095,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-spike_sigma,2.000000,spikes,33,dc3s_wrapped,dc3s_wrapped,193199091.256945,1352816727.808704,0.032729,0.971983,0.000000,986.714045,0.976190,0.952381,986.714045,1264.571795,0.000000,,,1.000000,960.051278,0.892857,985.208597,0.964286,978.220452,1737.305227,8247.826311,0.952381,0.952381,986.714045,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.005030,10000.000000,0.000000,0.047619,0.047619,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-spike_sigma,2.000000,spikes,33,deterministic_lp,deterministic_lp,193135880.411910,1352830539.867254,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,1.000000,960.051278,0.892857,985.208597,0.964286,978.220452,1737.305227,8247.826311,0.952381,0.952381,951.890877,0.130952,334.204538,0.250000,0.000000,0.130952,11.000000,30.382231,165.400475,30.382231,165.400475,-311.940550,10000.000000,2.181818,0.130952,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
- False False False False False False False False False False False False
- False False False False False False False  True False  True  True  True
- False False False False False False False  True False False  True False]",0.000000,336.000000
-spike_sigma,2.000000,spikes,33,robust_fixed_interval,robust_fixed_interval,193126697.589863,1352816002.897056,-0.004755,1.000000,0.000000,12421.308238,0.345238,1.000000,12421.308238,14078.872067,0.000000,,,1.000000,960.051278,0.892857,985.208597,0.964286,978.220452,1737.305227,8247.826311,0.952381,0.952381,12421.308238,0.202381,7.102108,0.000000,0.000000,0.202381,17.000000,0.417771,0.417771,0.417771,0.417771,-0.417771,10000.000000,9.000000,0.202381,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
 spike_sigma,3.000000,spikes,11,cvar_interval,cvar_interval,192730619.184496,1347320811.506302,-0.002691,1.000000,0.000000,951.890877,0.869048,1.000000,951.890877,948.870247,0.000000,111902982.836996,111928540.480843,0.928571,964.856643,0.964286,968.437051,0.964286,982.413339,1868.996573,9012.586955,0.952381,0.952381,951.890877,0.190476,2.190499,0.000000,0.000000,0.190476,16.000000,0.136906,0.272948,0.136906,0.272948,-0.272948,10000.000000,8.500000,0.190476,0.000000,0.000000,"[False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False False False False False
@@ -1315,31 +895,3 @@ spike_sigma,3.000000,spikes,22,robust_fixed_interval,robust_fixed_interval,19240
  False False False False False False False False False False False False
  False False False False False False False False False False False False
  False False False False False False False False False False False False]",0.000000,336.000000
-spike_sigma,3.000000,spikes,33,cvar_interval,cvar_interval,193167655.963170,1352838940.742344,-0.047954,1.000000,0.000000,951.890877,0.345238,1.000000,951.890877,948.870247,0.000000,68112910.223936,68128973.215508,1.000000,960.051278,0.892857,985.208597,0.964286,978.220452,2607.406198,12249.131806,0.952381,0.952381,951.890877,0.202381,7.102108,0.000000,0.000000,0.202381,17.000000,0.417771,0.417771,0.417771,0.417771,-0.417771,10000.000000,9.000000,0.202381,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False  True  True  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000
-spike_sigma,3.000000,spikes,33,dc3s_wrapped,dc3s_wrapped,193187084.885973,1352839884.215079,-0.037901,0.961835,0.000000,994.416971,0.488095,0.964286,994.416971,1321.788410,0.000000,,,1.000000,960.051278,0.892857,985.208597,0.964286,978.220452,2607.406198,12249.131806,0.952381,0.952381,994.416971,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.005030,10000.000000,0.000000,0.035714,0.035714,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False]",1.000000,0.000000
-spike_sigma,3.000000,spikes,33,deterministic_lp,deterministic_lp,193260332.223915,1353033858.676466,0.000000,1.000000,0.000000,951.890877,1.000000,1.000000,951.890877,948.870247,0.000000,,,1.000000,960.051278,0.892857,985.208597,0.964286,978.220452,2607.406198,12249.131806,0.952381,0.952381,951.890877,0.107143,171.570575,1.000000,0.000000,0.107143,9.000000,19.063397,99.720032,19.063397,99.720032,-159.790270,12489.675401,1.666667,0.107143,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False  True  True  True
- False False False False False False False  True False  True  True  True
- False False False False False False False  True False False  True False]",0.000000,336.000000
-spike_sigma,3.000000,spikes,33,robust_fixed_interval,robust_fixed_interval,193130737.002631,1352873017.064369,-0.067057,1.000000,0.000000,12630.132471,0.166667,1.000000,12630.132471,14078.872067,0.000000,,,1.000000,960.051278,0.892857,985.208597,0.964286,978.220452,2607.406198,12249.131806,0.952381,0.952381,12630.132471,0.178571,4.015452,0.000000,0.000000,0.178571,15.000000,0.267697,0.267697,0.267697,0.267697,-0.267697,10000.000000,8.000000,0.178571,0.000000,0.000000,"[False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False False False False
- False False False False False False False False False  True  True  True
-  True  True  True  True  True  True  True  True  True  True  True  True]",0.000000,336.000000

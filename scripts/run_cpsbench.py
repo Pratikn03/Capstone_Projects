@@ -134,7 +134,11 @@ def _run_wilcoxon_tests(out_dir: Path) -> dict:
         return {}
 
     dc3s = df[df["controller"] == "dc3s_wrapped"].sort_values(["scenario", "seed"]).reset_index(drop=True)
-    naive = df[df["controller"] == "naive_safe_clip"].sort_values(["scenario", "seed"]).reset_index(drop=True)
+    # Use deterministic_lp as the reference baseline (the standard LP controller without DC³S safety shield)
+    for reference_controller in ["deterministic_lp", "naive_safe_clip", "robust_fixed_interval"]:
+        naive = df[df["controller"] == reference_controller].sort_values(["scenario", "seed"]).reset_index(drop=True)
+        if not naive.empty:
+            break
 
     if dc3s.empty or naive.empty:
         print("  Wilcoxon: dc3s_wrapped or naive_safe_clip not found in results — skipping.")
