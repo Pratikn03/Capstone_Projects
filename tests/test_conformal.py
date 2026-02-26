@@ -133,3 +133,28 @@ def test_existing_conformal_interval_unchanged():
     assert hi.shape == (20, 8)
     cov = ci.coverage(y_true[:20], y_pred[:20])
     assert 0.70 <= cov <= 1.0
+
+
+def test_cqr_calibration_and_interval_evaluation():
+    rng = np.random.default_rng(7)
+    y_true_cal = rng.normal(loc=50.0, scale=5.0, size=(240, 4))
+    q_lo_cal = y_true_cal - np.abs(rng.normal(loc=3.0, scale=0.5, size=(240, 4)))
+    q_hi_cal = y_true_cal + np.abs(rng.normal(loc=3.0, scale=0.5, size=(240, 4)))
+
+    y_true_test = rng.normal(loc=52.0, scale=5.5, size=(120, 4))
+    q_lo_test = y_true_test - np.abs(rng.normal(loc=2.8, scale=0.6, size=(120, 4)))
+    q_hi_test = y_true_test + np.abs(rng.normal(loc=2.8, scale=0.6, size=(120, 4)))
+
+    ci = ConformalInterval(ConformalConfig(alpha=0.10, method="cqr", horizon_wise=True, rolling=False))
+    ci.fit_calibration_cqr(y_true_cal, q_lo_cal, q_hi_cal)
+
+    lo, hi = ci.predict_interval_cqr(q_lo_test, q_hi_test)
+    assert lo.shape == q_lo_test.shape
+    assert hi.shape == q_hi_test.shape
+    assert np.all(lo <= hi)
+
+    eval_metrics = ci.evaluate_intervals_cqr(y_true_test, q_lo_test, q_hi_test, per_horizon=True)
+    assert "global_coverage" in eval_metrics
+    assert "global_mean_width" in eval_metrics
+    assert "per_horizon_picp" in eval_metrics
+    assert "per_horizon_mpiw" in eval_metrics
