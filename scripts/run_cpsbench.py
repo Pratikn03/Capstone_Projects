@@ -153,8 +153,8 @@ def _run_wilcoxon_tests(out_dir: Path) -> dict:
     )
 
     metrics = [
-        ("true_soc_violation_rate", "lower"),        # DC³S should be lower
-        ("intervention_rate",       "lower"),         # DC³S should need fewer interventions
+        ("true_soc_violation_rate", "less"),         # DC³S should be lower
+        ("intervention_rate",       "less"),          # DC³S should need fewer interventions
         ("mean_interval_width",     "two-sided"),     # Width comparison (no direction prior)
         ("picp_90",                 "greater"),       # DC³S should have higher PICP
     ]
@@ -179,9 +179,22 @@ def _run_wilcoxon_tests(out_dir: Path) -> dict:
         if len(x) < 3:
             continue
 
+        # Guard: if all differences are zero, the test is undefined (equal distributions)
+        diff = x - y
+        if np.all(np.abs(diff) < 1e-12):
+            results[metric] = {
+                "statistic": 0.0, "p_value": 1.0, "n_pairs": int(len(x)),
+                "alternative": alternative, "significant_at_0.05": False,
+                "significant_at_0.01": False, "dc3s_mean": float(np.mean(x)),
+                "naive_mean": float(np.mean(y)), "mean_diff": 0.0,
+                "note": "all_differences_zero_distributions_identical",
+            }
+            print(f"  {metric:<33} {'—':>10} {'1.0000':>12} {'ns':>8}   (identical distributions)")
+            continue
+
         stat, pval = scipy_stats.wilcoxon(x, y, alternative=alternative, zero_method="wilcox")
         sig = "***" if pval < 0.001 else "**" if pval < 0.01 else "*" if pval < 0.05 else "ns"
-        direction_label = f"DC³S {'<' if alternative == 'lower' else '>' if alternative == 'greater' else '≠'} naive"
+        direction_label = f"DC³S {'<' if alternative == 'less' else '>' if alternative == 'greater' else '≠'} baseline"
         results[metric] = {
             "statistic": float(stat),
             "p_value": float(pval),
