@@ -1,0 +1,51 @@
+n_runs: 10
+bootstrap_n: 10000
+paired_test: wilcoxon
+alpha: 0.05
+scenarios: ["dropout", "drift_combo"]
+enforce_primary_gate: true
+primary_gate:
+  baseline: robust_fixed_interval
+  candidate: dc3s_wrapped
+  p_threshold: 0.01
+  min_relative_reduction: 0.10
+  faulted_only: true
+  severity_min: 0.0
+secondary_diagnostics:
+  include_per_fault: true
+  baselines: ["robust_fixed_interval", "deterministic_lp"]
+
+variants:
+  dc3s_full:
+    controller: dc3s_wrapped
+    dc3s_overrides: {}
+  no_drift:
+    controller: dc3s_wrapped
+    dc3s_overrides:
+      k_drift: 0.0
+  no_reliability_weight:
+    controller: dc3s_wrapped
+    dc3s_overrides:
+      k_quality: 0.0
+  no_inflation_cap:
+    controller: dc3s_wrapped
+    dc3s_overrides:
+      infl_max: 10.0
+  projection_only:
+    controller: dc3s_wrapped
+    dc3s_overrides:
+      shield:
+        mode: projection
+  robust_resolve_only:
+    controller: dc3s_wrapped
+    dc3s_overrides:
+      shield:
+        mode: robust_resolve
+  conformal_only:
+    controller: dc3s_wrapped
+    dc3s_overrides:
+      k_quality: 0.0
+      k_drift: 0.0
+  deterministic_clip_only:
+    controller: naive_safe_clip
+    dc3s_overrides: {}
