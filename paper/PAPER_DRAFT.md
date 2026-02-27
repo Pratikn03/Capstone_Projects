@@ -43,6 +43,14 @@ This framing moves the optimization target from "minimize one model metric" to "
 
 Each question is answered with locked in-repo evidence. This manuscript intentionally avoids claims requiring untracked notebooks, ad hoc local reruns, or post hoc manual calculations that are not serialized in the evidence paths declared in Section 5 and Section 7.
 
+### 1.3.1 Tight RQ -> Hypothesis -> Test -> Result Map
+| RQ | Hypothesis | Test protocol | Locked result | Decision |
+|---|---|---|---|---|
+| RQ1 | A shared architecture can maintain strong forecasting quality across DE/US regimes. | Train/evaluate DE and US under the same temporal framing (24-hour horizon, 168-hour lookback, 10-fold CV, 24-hour gap); compare RMSE/MAE/sMAPE/R2 in dashboard metric artifacts. | GBM is the strongest family across locked DE/US targets; representative load RMSE values are 267.51 (DE) and 162.89 (US). | Supported (within locked DE/US scope). |
+| RQ2 | Uncertainty-aware stochastic dispatch provides measurable value relative to deterministic stochastic formulation. | Read locked run-summary rows in `reports/research_metrics_de.csv` and `reports/research_metrics_us.csv`; evaluate VSS/EVPI under pinned run IDs. | VSS is positive in both locked runs: DE 2,708.61 (`20260217_165756`) and US 297,092.71 (`20260217_182305`). | Supported for stochastic value; impact percentages are reported separately as deterministic B1 vs B2. |
+| RQ3 | Dataset-scoped latest locking yields measurable, reproducible region-level impact magnitudes. | Extract latest dataset-scoped rows from `reports/impact_summary.csv` (DE) and `reports/eia930/impact_summary.csv` (US) using manifest rounding rules. | DE: 7.11% cost, 0.30% carbon, 6.13% peak. US: 0.11% cost, 0.13% carbon, 0.00% peak. | Supported. |
+| RQ4 | Run-scoped governance prevents cross-document metric contradictions at release time. | Enforce manifest/claim/validator contract across outputs: `paper/metrics_manifest.json`, `paper/claim_matrix.csv`, `scripts/validate_paper_claims.py`. | Publication claims are run-ID scoped and validator-gated; canonical values cannot change without synchronized source and claim updates. | Supported as an empirical process-control property. |
+
 ### 1.4 Contributions
 1. A production-oriented multi-layer GridPulse implementation with forecast, optimization, monitoring, and serving layers.
 2. A conformal + adaptive interval workflow integrated into robust dispatch evaluation.
@@ -50,6 +58,14 @@ Each question is answered with locked in-repo evidence. This manuscript intentio
 4. A publication governance mechanism (`metrics_manifest`, claim matrix, validator script) that prevents legacy-claim regression.
 
 Contribution boundaries are stated explicitly. This thesis does not claim complete market realism for all settlement regimes, universal transferability across all operators, or causal policy-level effects. It claims an operationally integrated and evidence-governed system with reproducible DE/US outcomes under the locked artifacts.
+
+### 1.4.1 Scientific Novelty Beyond Integration
+Most prior work treats forecasting, uncertainty, dispatch, and reporting as loosely coupled stages. This thesis makes three method-level claims beyond engineering integration:
+1. **RAC-Cert as a control-coupled conformal method:** interval width is adapted by telemetry reliability, drift state, and dispatch sensitivity, then enforced through shielded repair and certificate persistence, coupling uncertainty construction directly to control risk.
+2. **Truth-vs-observed safety semantics:** safety is evaluated on `SOC_true` while control actions are chosen from degraded `SOC_obs`, exposing hidden violation risk under telemetry faults that is masked by observed-state-only evaluation.
+3. **Governance as an experimental object:** claim validity is machine-checkable through manifest-locked sources, claim-level provenance, and validator gates, making reproducibility a testable release condition rather than a narrative claim.
+
+These novelty claims are evaluated only within the locked DE/US evidence scope and are not asserted as universal guarantees across all grids.
 
 ### 1.5 Thesis Scope and Reading Guide
 To support future editing, this draft is organized so each section can be expanded or trimmed independently:
