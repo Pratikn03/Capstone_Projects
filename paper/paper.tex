@@ -10,10 +10,59 @@
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage{enumitem}
+\usepackage{xcolor}
 
 \title{GridPulse: An Integrated Machine Learning System for \\ Renewable Energy Forecasting and Carbon-Aware Battery Dispatch}
 \author{Pratik Niroula\\MNSU CIT (Major), Math (Minor)}
 \date{February 19, 2026}
+
+\makeatletter
+\newcommand{\DeclarePaperFigure}[2]{\expandafter\def\csname PaperFigurePath@#1\endcsname{#2}}
+\newcommand{\DeclarePaperTable}[2]{\expandafter\def\csname PaperTablePath@#1\endcsname{#2}}
+\newcommand{\PaperMetric}[2]{\@ifundefined{PaperMetric@#1}{#2}{\csname PaperMetric@#1\endcsname}}
+
+\newcommand{\PaperFigure}[2]{%
+  \begin{figure}[htbp]
+  \centering
+  \@ifundefined{PaperFigurePath@#1}{%
+    \fbox{\parbox{0.9\linewidth}{\textbf{Missing figure token:} #1}}%
+  }{%
+    \IfFileExists{\csname PaperFigurePath@#1\endcsname}{%
+      \includegraphics[width=0.9\linewidth]{\csname PaperFigurePath@#1\endcsname}%
+    }{%
+      \fbox{\parbox{0.9\linewidth}{\textbf{Missing figure file for token #1:} \csname PaperFigurePath@#1\endcsname}}%
+    }%
+  }%
+  \caption{#2}
+  \label{fig:#1}
+  \end{figure}
+}
+
+\newcommand{\PaperTableCSV}[2]{%
+  \@ifundefined{PaperTablePath@#1}{%
+    \begin{table}[htbp]
+    \centering
+    \caption{#2}
+    \fbox{\parbox{0.9\linewidth}{\textbf{Missing table token:} #1}}
+    \label{tab:#1}
+    \end{table}
+  }{%
+    \IfFileExists{\csname PaperTablePath@#1\endcsname}{%
+      \InputIfFileExists{\csname PaperTablePath@#1\endcsname}{}{}%
+    }{%
+      \begin{table}[htbp]
+      \centering
+      \caption{#2}
+      \fbox{\parbox{0.9\linewidth}{\textbf{Missing table file for token #1:} \csname PaperTablePath@#1\endcsname}}
+      \label{tab:#1}
+      \end{table}
+    }%
+  }%
+}
+\makeatother
+
+\IfFileExists{assets/data/manifest_lookup.tex}{\input{assets/data/manifest_lookup.tex}}{}
+\IfFileExists{assets/data/metrics_values.tex}{\input{assets/data/metrics_values.tex}}{}
 
 \begin{document}
 \maketitle
@@ -21,23 +70,23 @@
 \begin{abstract}
 GridPulse is an end-to-end decision system that links forecasting, uncertainty estimation, battery dispatch optimization, operational safety controls, and post-decision evaluation for power-system operations. The implementation follows a closed loop (\textit{Forecast $\rightarrow$ Optimize $\rightarrow$ Dispatch $\rightarrow$ Measure $\rightarrow$ Monitor}) so model outputs are translated into constrained actions and measured against baselines in the same artifact pipeline. This thesis uses a strict dataset-scoped latest evidence policy locked to artifacts dated February 17, 2026. Canonical decision-impact sources are \path{reports/impact_summary.csv} for Germany (DE) and \path{reports/eia930/impact_summary.csv} for the United States (US). Canonical stochastic metrics are sourced from \path{reports/research_metrics_de.csv} run \texttt{20260217\_165756} and \path{reports/research_metrics_us.csv} run \texttt{20260217\_182305}.
 
-Under this lock, DE impact is 7.11\% cost savings, 0.30\% carbon reduction, and 6.13\% peak shaving. US impact is 0.11\% cost savings, 0.13\% carbon reduction, and 0.00\% peak shaving. Stochastic outcomes are DE EVPI\textsubscript{robust} 2.32, DE EVPI\textsubscript{deterministic} -30.40, DE VSS 2,708.61, and US EVPI\textsubscript{robust} 10,279,851.74, US EVPI\textsubscript{deterministic} 24,915,503.93, US VSS 297,092.71. Beyond these outcomes, the core contribution is governance: publication-facing claims are traceable to source files, run IDs, and rounding rules through \path{paper/metrics_manifest.json}, \path{paper/claim_matrix.csv}, and \path{scripts/validate_paper_claims.py}.
+Under this lock, DE impact is \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\% cost savings, \PaperMetric{DE_CARBON_REDUCTION_PCT}{0.30}\% carbon reduction, and \PaperMetric{DE_PEAK_SHAVING_PCT}{6.13}\% peak shaving. US impact is \PaperMetric{US_COST_SAVINGS_PCT}{0.11}\% cost savings, \PaperMetric{US_CARBON_REDUCTION_PCT}{0.13}\% carbon reduction, and \PaperMetric{US_PEAK_SHAVING_PCT}{0.00}\% peak shaving. Stochastic outcomes are DE EVPI\textsubscript{robust} \PaperMetric{DE_EVPI_ROBUST}{2.32}, DE EVPI\textsubscript{deterministic} \PaperMetric{DE_EVPI_DETERMINISTIC}{-30.40}, DE VSS \PaperMetric{DE_VSS}{2,708.61}, and US EVPI\textsubscript{robust} \PaperMetric{US_EVPI_ROBUST}{10,279,851.74}, US EVPI\textsubscript{deterministic} \PaperMetric{US_EVPI_DETERMINISTIC}{24,915,503.93}, US VSS \PaperMetric{US_VSS}{297,092.71}. Beyond these outcomes, the core contribution is governance: publication-facing claims are traceable to source files, run IDs, and rounding rules through \path{paper/metrics_manifest.json}, \path{paper/claim_matrix.csv}, and \path{scripts/validate_paper_claims.py}.
 \end{abstract}
 
 \noindent\textbf{Keywords:} Machine Learning, Energy Forecasting, Battery Dispatch, Robust Optimization, Conformal Prediction, Stochastic Programming, MLOps, Grid Operations
 
 \section{Introduction}
 
-\subsection{Operational Motivation}
+\subsection{Motivation: autonomy + telemetry dependence}
 Prediction-only systems do not deliver operational action. Grid operators need feasible dispatch decisions under uncertainty while balancing cost and carbon objectives. GridPulse is designed as a closed decision loop:
 \[
 \text{Forecast} \rightarrow \text{Optimize} \rightarrow \text{Dispatch} \rightarrow \text{Measure} \rightarrow \text{Monitor}
 \]
 
-\subsection{Problem Statement}
+\subsection{Failure mode: telemetry degradation \texorpdfstring{$\rightarrow$}{->} miscalibrated uncertainty \texorpdfstring{$\rightarrow$}{->} unsafe dispatch}
 The central problem is integrated decision quality rather than isolated forecast error. The system must jointly satisfy five requirements: accurate short-horizon forecasting, uncertainty quantification usable in optimization, physically feasible dispatch, measurable impact vs. baselines, and reproducible claim traceability across manuscript formats.
 
-\subsection{Research Questions}
+\subsection{Problem statement + research questions (RQs)}
 \begin{enumerate}[leftmargin=*]
     \item Can one architecture maintain strong forecasting quality across DE and US datasets with different operating regimes?
     \item Does uncertainty-aware dispatch provide measurable value relative to deterministic dispatch?
@@ -45,7 +94,26 @@ The central problem is integrated decision quality rather than isolated forecast
     \item Can run-scoped governance prevent cross-document metric contradictions?
 \end{enumerate}
 
-\subsection{Contributions}
+\subsection{RQ \texorpdfstring{$\rightarrow$}{->} Hypothesis \texorpdfstring{$\rightarrow$}{->} Test \texorpdfstring{$\rightarrow$}{->} Result Map}
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption{Tight RQ-to-Hypothesis-to-Test-to-Result Mapping Under Locked Evidence}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{p{0.8cm} p{3.5cm} p{4.4cm} p{5.0cm} p{2.6cm}}
+\toprule
+RQ & Hypothesis & Test protocol & Locked result & Decision \\
+\midrule
+RQ1 & A shared architecture can maintain strong forecasting quality across DE/US regimes. & Train/evaluate DE and US with the same temporal framing (24-hour horizon, 168-hour lookback, 10-fold CV, 24-hour gap); compare RMSE/MAE/sMAPE/\(R^2\) in dashboard metric artifacts. & GBM is the strongest family across locked DE/US targets; representative load RMSE values are 267.51 (DE) and 162.89 (US). & Supported (within locked DE/US scope). \\
+RQ2 & Uncertainty-aware stochastic dispatch provides measurable value relative to deterministic stochastic formulation. & Read locked run-summary rows from \texttt{reports/research\_metrics\_de.csv} and \texttt{reports/research\_metrics\_us.csv}; evaluate VSS/EVPI under pinned run IDs. & VSS is positive in both locked runs: DE \PaperMetric{DE_VSS}{2,708.61} (run \texttt{20260217\_165756}) and US \PaperMetric{US_VSS}{297,092.71} (run \texttt{20260217\_182305}). & Supported for stochastic value; impact percentages are reported separately as deterministic B1 vs B2. \\
+RQ3 & Dataset-scoped latest locking yields measurable, reproducible region-level impact magnitudes. & Extract latest dataset-scoped rows from \texttt{reports/impact\_summary.csv} (DE) and \texttt{reports/eia930/impact\_summary.csv} (US) using manifest rounding rules. & DE: \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\% cost, \PaperMetric{DE_CARBON_REDUCTION_PCT}{0.30}\% carbon, \PaperMetric{DE_PEAK_SHAVING_PCT}{6.13}\% peak. US: \PaperMetric{US_COST_SAVINGS_PCT}{0.11}\% cost, \PaperMetric{US_CARBON_REDUCTION_PCT}{0.13}\% carbon, \PaperMetric{US_PEAK_SHAVING_PCT}{0.00}\% peak. & Supported. \\
+RQ4 & Run-scoped governance prevents cross-document metric contradictions at release time. & Enforce manifest/claim/validator contract across manuscript outputs: \texttt{paper/metrics\_manifest.json}, \texttt{paper/claim\_matrix.csv}, and \texttt{scripts/validate\_paper\_claims.py}. & Publication claims are run-ID scoped and validator-gated; canonical values cannot change without synchronized source and claim updates. & Supported as an empirical process-control property. \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\subsection{Contributions (3--5 verifiable bullets)}
 \begin{enumerate}[leftmargin=*]
     \item A production-oriented multi-layer GridPulse system spanning data, forecasting, optimization, monitoring, and serving.
     \item A conformal and adaptive interval workflow integrated with robust dispatch evaluation.
@@ -55,7 +123,16 @@ The central problem is integrated decision quality rather than isolated forecast
 
 Contribution boundaries are explicit: this thesis does not claim universal market realism across all settlement regimes or universal transferability across all operators. It claims reproducible DE/US decision outcomes under the locked artifacts and governance policy.
 
-\subsection{Thesis Scope and Reading Guide}
+\subsection{Scientific novelty beyond integration}
+Most prior work treats forecasting, uncertainty, dispatch, and reporting as loosely coupled stages. This thesis makes three method-level claims beyond engineering integration:
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{RAC-Cert as a control-coupled conformal method:} interval width is adapted by telemetry reliability, drift state, and dispatch sensitivity, then enforced through shielded repair and certificate persistence, coupling uncertainty construction directly to control risk.
+    \item \textbf{Truth-vs-observed safety semantics:} safety is evaluated on \(SOC^{true}\) while control actions are chosen from degraded \(SOC^{obs}\), exposing hidden violation risk under telemetry faults that is masked by observed-state-only evaluation.
+    \item \textbf{Governance as an experimental object:} claim validity is machine-checkable through manifest-locked sources, claim-level provenance, and validator gates, making reproducibility a testable release condition rather than a narrative claim.
+\end{enumerate}
+These novelty claims are evaluated only within the locked DE/US evidence scope and are not asserted as universal guarantees across all grids.
+
+\subsection{Paper organization}
 This draft is structured so sections can be expanded or trimmed without breaking metric consistency:
 \begin{enumerate}[leftmargin=*]
     \item Sections 2--4 define implementation and methods with code-level anchors.
@@ -66,9 +143,9 @@ This draft is structured so sections can be expanded or trimmed without breaking
 \end{enumerate}
 If length must be reduced, preserve Sections 6, 7, and 14 first because they carry the metric-locked publication claims.
 
-\section{System Architecture and Implementation}
+\section{Background and Related Work}
 
-\subsection{Decision Loop and Layering}
+\subsection{Forecast uncertainty \& conformal prediction}
 GridPulse follows an eight-layer decision architecture implemented across repository modules:
 \begin{enumerate}[leftmargin=*]
     \item Data ingestion and feature generation.
@@ -81,7 +158,7 @@ GridPulse follows an eight-layer decision architecture implemented across reposi
     \item API and dashboard serving.
 \end{enumerate}
 
-\subsection{Component-to-Code Map}
+\subsection{CQR and heteroscedastic uncertainty}
 \begin{table}[htbp]
 \centering
 \small
@@ -102,7 +179,7 @@ Frontend & Operator dashboard and region views & \path{frontend/} \\
 \end{tabular}
 \end{table}
 
-\subsection{Runtime Interfaces}
+\subsection{Online drift/change detection in streaming systems}
 FastAPI serving endpoints include:
 \begin{itemize}[leftmargin=*]
     \item \path{/forecast}
@@ -118,7 +195,7 @@ FastAPI serving endpoints include:
 Additional control endpoints include \path{/system/health}, \path{/system/heartbeat}, and \path{/control/dispatch}, gated by API-key scope and safety validation.
 Existing runtime endpoints remain unchanged; these interfaces are additive extensions for Section 1--3 implementation coverage.
 
-\subsection{Artifact Handoff Contracts}
+\subsection{Robust optimization \& risk-aware control (min--max, CVaR)}
 This thesis uses the following artifact families:
 \begin{enumerate}[leftmargin=*]
     \item Dataset profile and dashboard metrics: \path{data/dashboard/*.json}.
@@ -130,7 +207,7 @@ This thesis uses the following artifact families:
 
 These artifact contracts are treated as publication interfaces. If a contract path or schema changes, both \path{paper/metrics_manifest.json} and \path{paper/claim_matrix.csv} must be updated in the same revision.
 
-\subsection{Deployment and Runtime Modes}
+\subsection{Networked control/IoT faults (dropout, delay, stale, out-of-order)}
 GridPulse supports three execution modes:
 \begin{enumerate}[leftmargin=*]
     \item Offline batch mode for training, evaluation, and report generation.
@@ -139,7 +216,7 @@ GridPulse supports three execution modes:
 \end{enumerate}
 The system is documented with safe degradation paths (for example, fallback baseline dispatch on infeasible optimization states) rather than assuming uninterrupted perfect runtime conditions.
 
-\subsection{End-to-End Request Lifecycle}
+\subsection{Reproducible research artifacts and evaluation governance}
 An operational request path is:
 \begin{enumerate}[leftmargin=*]
     \item Load latest feature window and resolve requested targets.
@@ -150,7 +227,7 @@ An operational request path is:
     \item Emit monitoring signals and preserve control-plane heartbeat state.
 \end{enumerate}
 
-\subsection{Section 1--3 Implementation Update (Publish Blockers, Streaming, DC3S)}
+\subsection{Positioning summary: what's missing and why DC\textsuperscript{3}S}
 Section 1 (immediate publish blockers) was implemented by replacing frontend chat-tool mock payloads with backend-derived FastAPI calls in \path{frontend/src/app/api/chat/tool-executors.ts}. Production tool paths now resolve through \path{/forecast}, \path{/forecast/with-intervals}, \path{/optimize}, \path{/optimize/baseline}, \path{/monitor}, \path{/anomaly}, \path{/health}, \path{/ready}, and \path{/monitor/model-info}. Tool execution explicitly fails on backend errors instead of returning fabricated fallback payloads. Deployment/runtime hygiene updates were applied as well: dashboard ports were normalized to \texttt{3000}, dashboard deploy workflow Dockerfile targeting was corrected, local absolute report paths were removed, and coverage artifacts were removed/ignored for reproducibility hygiene.
 
 Section 2 (streaming correctness) was implemented with a new CLI module \path{src/gridpulse/streaming/run_consumer.py} supporting:
@@ -161,9 +238,27 @@ Section 3 (DC3S) was implemented with new config \path{configs/dc3s.yaml}, DC3S 
 
 Frontend live-ops behavior for this flow is explicitly implemented in \path{frontend/src/app/(dashboard)/page.tsx}, \path{frontend/src/lib/api/dc3s-client.ts}, \path{frontend/src/components/dashboard/DC3SLiveCard.tsx}, and \path{frontend/src/app/api/dc3s/audit/[commandId]/route.ts}. The dashboard initializes DC3S polling at 15 seconds, supports operator-selected auto-refresh (\texttt{Off}, \texttt{5s}, \texttt{10s}, \texttt{15s}, \texttt{30s}, \texttt{60s}), and provides manual refresh. The live card exposes a command-linked audit route (\path{/api/dc3s/audit/\{commandId\}}) that proxies to FastAPI \path{/dc3s/audit/\{commandId\}} with explicit error propagation.
 
-\section{Data Assets, Scope, and Feature Design}
+\section{Problem Formulation and Safety Definitions}
 
-\subsection{Dataset Policy Lock (Canonical)}
+\subsection{Time index, horizon, and notation}
+We use discrete time \(t \in \{0,\dots,H-1\}\), horizon \(H\), and \(\Delta t=1\) hour in canonical experiments. Core symbols are standardized to avoid notation drift across control and evaluation sections.
+\begin{table}[htbp]
+\centering
+\small
+\caption{Core notation}
+\begin{tabular}{p{2.2cm} p{9.5cm}}
+\toprule
+Symbol & Meaning \\
+\midrule
+\(SOC_t^{true}\) & True plant state used for safety evaluation. \\
+\(SOC_t^{obs}\) & Telemetry-observed state used by controller. \\
+\(U_t=[L_t,U_t]\) & Uncertainty set for robust/risk-aware dispatch at step \(t\). \\
+\(\hat{q}\) & CQR correction quantile from calibration split. \\
+\(w_t\) & Telemetry reliability score in \([0,1]\). \\
+\(\eta, u_s\) & CVaR variables (VaR anchor and tail slacks). \\
+\bottomrule
+\end{tabular}
+\end{table}
 This manuscript follows the dashboard profile lock in \path{data/dashboard/manifest.json} generated at \texttt{2026-02-17T11:15:38.623283}.
 
 \begin{table}[htbp]
@@ -186,10 +281,10 @@ Date ranges (UTC):
     \item US: 2024-07-01 06:00 to 2026-01-20 11:00
 \end{itemize}
 
-\subsection{Signals and Targets}
+\subsection{Battery dynamics and constraints}
 Both regions use three target variables: \texttt{load\_mw}, \texttt{wind\_mw}, and \texttt{solar\_mw}. The DE profile includes price/carbon channels specific to OPSD-based processing, while the US profile includes EIA-930 generation-mix channels and region-specific price/carbon features.
 
-\subsection{Feature Family Composition}
+\subsection{Grid interaction constraints (import cap, balance)}
 \begin{table}[htbp]
 \centering
 \small
@@ -204,7 +299,14 @@ US & 56 & 42 & 6 & 114 \\
 \end{tabular}
 \end{table}
 
-\subsection{Target Distribution Snapshot}
+\subsection{Uncertainty set definition \texorpdfstring{$U_t$}{U_t}}
+We define the interval uncertainty set as:
+\[
+U_t=[L_t,U_t], \qquad
+L_t=\hat{y}_t-\hat{q}_t,\quad
+U_t=\hat{y}_t+\hat{q}_t.
+\]
+For RAC-Cert, \(\hat{q}_t\) is adapted by reliability and sensitivity multipliers before robust/CVaR solving.
 \begin{table}[htbp]
 \centering
 \scriptsize
@@ -223,15 +325,20 @@ US & \texttt{solar\_mw} & 2,875.42 & 3,842.56 & 0.0 & 14,315.0 & 110.0 & 94.6 \\
 \end{tabular}
 \end{table}
 
-\subsection{Scope Boundary and Legacy Drift}
+\subsection{Telemetry degradation model and belief vs truth states}
 Legacy profile claims from older report families are out of scope unless explicitly reconciled to this dashboard lock. This avoids reintroducing conflicting row/date/feature statements.
 
-\subsection{Leakage-Safe Temporal Framing}
+\subsection{Safety metrics: violation rate + severity (P95)}
 Both DE and US training configs use a 24-hour forecast horizon and 168-hour lookback with time-aware cross-validation and an explicit 24-hour gap (\texttt{cross\_validation.n\_folds = 10}, \texttt{cross\_validation.gap = 24}). This temporal framing reduces leakage risk and protects downstream decision-impact validity.
 
-\section{Methods}
+\subsection{What is guaranteed vs empirical (assumptions)}
+Guaranteed properties are command-level feasibility after shielding/projection and certificate persistence integrity. Empirical properties include coverage, violation reduction, and transfer performance. Assumptions include synchronized timebase, consistent efficiency parameters, and valid truth-state simulation in CPSBench.
 
-\subsection{Forecasting Method}
+\section{System Overview: GridPulse Execution Pipeline}
+
+\subsection{Control loop and execution boundary}
+\PaperFigure{FIG01_ARCHITECTURE}{GridPulse execution pipeline and DC\textsuperscript{3}S placement at the execution boundary.}
+\PaperFigure{FIG02_DC3S_STEP}{DC\textsuperscript{3}S runtime step flow: observe \texorpdfstring{$\rightarrow$}{->} score \texorpdfstring{$\rightarrow$}{->} detect \texorpdfstring{$\rightarrow$}{->} bound \texorpdfstring{$\rightarrow$}{->} solve \texorpdfstring{$\rightarrow$}{->} repair \texorpdfstring{$\rightarrow$}{->} certify.}
 
 \subsubsection*{Model Families}
 GridPulse trains three forecasting families per target:
@@ -278,7 +385,7 @@ API-level forecast inference (\path{services/api/routers/forecast.py}) follows a
 \end{enumerate}
 Resolution behavior is deterministic: explicit per-target model paths are checked first, then ordered fallback search (\texttt{lstm}, \texttt{tcn}, \texttt{gbm}) is applied under \path{artifacts/models}. If \texttt{ensemble\_models} is present in a GBM bundle, inference averages member predictions; quantiles are emitted from explicit quantile models when present, otherwise from stored residual quantile offsets.
 
-\subsection{Uncertainty: Conformal and Adaptive Intervals}
+\subsection{Component interfaces (inputs/outputs)}
 Conformal calibration at $\alpha = 0.10$ is implemented in the uncertainty module (\texttt{conformal.py}). For point forecast $\hat{y}$ and calibrated residual quantile $q$, interval bounds are:
 \[
 \text{Lower} = \hat{y} - q, \qquad \text{Upper} = \hat{y} + q.
@@ -286,7 +393,7 @@ Conformal calibration at $\alpha = 0.10$ is implemented in the uncertainty modul
 The implementation supports horizon-wise quantiles, rolling updates, and adaptive scaling behavior for online coverage control.
 It combines two mechanisms: \texttt{ConformalInterval} for calibrated interval construction and \texttt{AdaptiveConformal} for bounded online alpha updates under miss events. Default code-level settings include \texttt{alpha = 0.10}, \texttt{rolling = true}, and \texttt{rolling\_window = 720}.
 
-\subsection{Deterministic Dispatch Optimization}
+\subsection{Runtime modes (simulation, shadow, active)}
 The deterministic optimizer in \path{src/gridpulse/optimizer/lp_dispatch.py} solves a mixed-integer linear formulation with:
 \begin{itemize}[leftmargin=*]
     \item battery charge/discharge decisions,
@@ -307,7 +414,7 @@ Key implementation behaviors:
 \end{enumerate}
 Locked default config highlights in \path{configs/optimization.yaml}: \texttt{objective.cost\_weight = 1.0}, \texttt{objective.carbon\_weight = 1.2}, battery capacity 20,000 MWh, battery max power 5,000 MW, grid import cap 100,000 MW.
 
-\subsection{Robust Dispatch Optimization}
+\subsection{Auditing and certificate records}
 The robust optimizer in \path{src/gridpulse/optimizer/robust_dispatch.py} solves a two-scenario min-max linear program over lower/upper load bounds. With epigraph variable $z$ and scenario costs $C_s$:
 \[
 \min \lambda z + (1-\lambda)\bar{C} + c^{\text{deg}}\,\text{throughput}, \qquad z \ge C_s\ \forall s.
@@ -320,7 +427,7 @@ Additional behavior:
     \item Solver availability and status are explicit in outputs used for publication metrics.
 \end{enumerate}
 
-\subsection{DC3S: Drift-Calibrated Conformal Safety Shield}
+\subsection{Artifact-locked reproducibility workflow}
 DC3S is implemented in \path{src/gridpulse/dc3s/} and exposed through \path{POST /dc3s/step} and \path{GET /dc3s/audit/\{command\_id\}} in \path{services/api/routers/dc3s.py}. It composes telemetry quality weighting, drift detection, uncertainty inflation, safe action repair, and certificate-grade audit persistence.
 
 The implemented interval inflation law is linear and bounded:
@@ -390,12 +497,93 @@ This manuscript uses three explicit baseline policies for decision comparisons:
 \end{enumerate}
 Runtime disambiguation: while API \path{/optimize} may default to robust mode in service context, publication impact percentages in this thesis are produced from offline deterministic \path{optimize_dispatch(...)} (B1) versus grid-only baseline (B2).
 
-\section{Experimental Protocol}
+\subsection{RAC-Cert Unified Uncertainty-Control Method (Flagship)}
+To convert interval construction from a fixed post-processing layer into a control-aware method class, this manuscript defines \textbf{RAC-Cert} (Reliability-Adaptive Conformal with Certified Robustness). RAC-Cert is implemented in \path{src/gridpulse/dc3s/rac_cert.py} and consumed by calibration/runtime paths in \path{src/gridpulse/dc3s/calibration.py} and \path{src/gridpulse/cpsbench_iot/runner.py}.
 
-\subsection{Evidence-Lock Policy}
+\subsubsection*{Notation and Calibration Objects}
+At each time step $t$, let $\hat{y}_t$ denote point forecast, $q^{lo}_t$ and $q^{hi}_t$ denote base quantile forecasts, $w_t \in [0,1]$ denote telemetry reliability, and $s_t$ denote dispatch sensitivity.
+On calibration index $i$, nonconformity is:
+\[
+\text{score}_i=\max\left(q^{lo}_i-y_i,\; y_i-q^{hi}_i,\;0\right).
+\]
+Calibration points are assigned to volatility bin $k$ using rolling volatility features (default three bins: low/mid/high). For each bin:
+\[
+\hat{q}_k=\text{Quantile}_{1-\alpha}\left(\text{score}_i\mid i\in k\right),\qquad
+\hat{q}_{global}=\text{Quantile}_{1-\alpha}\left(\text{score}_i\right).
+\]
+To stabilize sparse bins, RAC-Cert applies shrinkage:
+\[
+\hat{q}^{shrunk}_k=\frac{n_k}{n_k+\tau}\hat{q}_k+\frac{\tau}{n_k+\tau}\hat{q}_{global},
+\]
+where $\tau$ is configurable (\texttt{qhat\_shrink\_tau}).
+
+\subsubsection*{Reliability + Sensitivity Adaptive Width Law}
+At runtime, RAC-Cert computes an effective half-width multiplier:
+\[
+m_t=1+\beta_r(1-w_t)+\beta_s \cdot \tilde{s}_t,
+\]
+with normalized sensitivity
+\[
+\tilde{s}_t=\mathrm{clip}\!\left(\frac{s_t}{s_{ref}},0,1\right).
+\]
+Effective conformal radius is:
+\[
+q^{eff}_t=\min(\hat{q}^{shrunk}_{k_t}\cdot m_t,\; q_{max}\cdot \hat{q}^{shrunk}_{k_t}),
+\]
+where $q_{max}$ is \texttt{max\_q\_multiplier}. Drift/reliability inflation remains explicit:
+\[
+\text{infl}_t=\mathrm{clip}\left(1+k_q(1-w_t)+k_d\mathbf{1}[\text{drift}]+k_s\tilde{s}_t,\;1,\;\text{infl}_{max}\right).
+\]
+Base RAC interval:
+\[
+L_t=\hat{y}_t-q^{eff}_t\cdot \text{infl}_t,\qquad U_t=\hat{y}_t+q^{eff}_t\cdot \text{infl}_t.
+\]
+Then ambiguity widening from \path{widen_bounds(...)} is applied as a final robustification stage.
+
+\subsubsection*{Controller-Consistent RAC Runtime}
+RAC-Cert is applied to all controllers in CPSBench runner while preserving controller names for comparability:
+\begin{enumerate}[leftmargin=*]
+    \item \texttt{deterministic\_lp}: RAC intervals with neutral reliability defaults.
+    \item \texttt{robust\_fixed\_interval}: RAC intervals used by robust solver.
+    \item \texttt{cvar\_interval}: RAC intervals used to sample CVaR scenarios.
+    \item \texttt{dc3s\_wrapped}: full reliability + drift + sensitivity adaptation with certificate logging.
+\end{enumerate}
+This design avoids mixed uncertainty semantics across controllers and keeps ablation interpretation clean.
+
+\subsubsection*{Sensitivity Signal}
+RAC-Cert supports two probe modes:
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Heuristic probe} (release default): deterministic low-cost estimator for throughput.
+    \item \textbf{Finite-difference probe} (diagnostic): perturb load by $\pm \epsilon$ and measure first-step net battery-action response.
+\end{enumerate}
+Sensitivity metadata is persisted as:
+\path{sensitivity\_t}, \path{sensitivity\_norm}, \path{q\_eff}, \path{q\_multiplier}, and \path{inflation\_components}.
+
+\subsubsection*{Certificate and Main-Table Contract}
+Publication outputs must include RAC diagnostics in \path{reports/publication/dc3s_main_table.csv}:
+\begin{itemize}[leftmargin=*]
+    \item \path{rac\_sensitivity\_mean}
+    \item \path{rac\_sensitivity\_p95}
+    \item \path{rac\_q\_multiplier\_mean}
+    \item \path{rac\_q\_multiplier\_p95}
+    \item \path{rac\_inflation\_mean}
+\end{itemize}
+DC3S certificates additionally include:
+\path{coverage\_lb\_t}, \path{sensitivity\_t}, \path{sensitivity\_norm}, \path{q\_eff}, \path{q\_multiplier}, \path{interval\_width}, and \path{guarantee\_checks\_passed}.
+
+\subsubsection*{Truth-vs-Observed SOC Safety Semantics}
+Safety is evaluated on physical truth state (\path{soc\_true}), while control decisions are based on degraded telemetry (\path{soc\_obs}) under dropout/stale/noise faults. This closes the common evaluation gap where controller-visible state is conflated with plant truth.
+\[
+\text{violation}_t=\mathbf{1}\{SOC^{true}_t<SOC_{min}\;\lor\;SOC^{true}_t>SOC_{max}\}.
+\]
+Severity is measured as boundary-distance MWh violation, including P95 severity for release-gate reporting.
+
+\section{Forecasting and Regime-Aware CQR Uncertainty}
+
+\subsection{Forecasting target(s), features, and training objective}
 All publication-facing values in this thesis must map to canonical entries in \path{paper/metrics_manifest.json}. The markdown master file is \path{paper/PAPER_DRAFT.md}.
 
-\subsection{Canonical Source and Run Selection}
+\subsection{Quantile forecasting (q10/q50/q90)}
 \begin{table}[htbp]
 \centering
 \small
@@ -413,21 +601,32 @@ Dataset profile claims & \path{data/dashboard/*_stats.json} + manifest & dashboa
 \end{tabular}
 \end{table}
 
-\subsection{Rounding and Formatting Rules}
+\subsection{CQR calibration split and correction \texorpdfstring{$\hat{q}$}{qhat}}
+Conformal correction is computed from calibration nonconformity:
+\[
+s_i=\max(q^{lo}(x_i)-y_i,\;y_i-q^{hi}(x_i),\;0),\qquad
+\hat{q}=\mathrm{Quantile}_{1-\alpha}(s_i).
+\]
+Corrected interval:
+\[
+\left[q^{lo}(x)-\hat{q},\;q^{hi}(x)+\hat{q}\right].
+\]
 \begin{enumerate}[leftmargin=*]
     \item Percent values: \texttt{round(value*100,2)}.
     \item Monetary/mass/power values: two-decimal display where reported.
     \item Large stochastic values: thousands separators plus two decimals.
 \end{enumerate}
 
-\subsection{Cross-Region Comparability Rules}
+\subsection{Regime binning (volatility bins) and group coverage}
+\PaperTableCSV{TBL03_CQR_GROUP_COVERAGE}{Regime-group coverage and interval width for CQR.}
+\PaperFigure{FIG05_CQR_GROUP_COVERAGE}{Regime-aware CQR coverage and width behavior by volatility bin.}
 \begin{enumerate}[leftmargin=*]
     \item Compare methods and process governance across regions.
     \item Do not enforce equal effect-size expectations across regions.
     \item Keep all stochastic claims tied to region-specific run IDs.
 \end{enumerate}
 
-\subsection{Consistency Gates}
+\subsection{Uncertainty metrics (PICP@90, width, sharpness--calibration tradeoff)}
 The manuscript is release-ready only when:
 \begin{enumerate}[leftmargin=*]
     \item \path{python scripts/validate_paper_claims.py} passes.
@@ -447,9 +646,14 @@ When a conflicting claim is found:
 \end{enumerate}
 This blocks partial fixes where one format is updated and another remains stale.
 
-\section{Results}
+\section{Telemetry Reliability Scoring and Drift Detection}
 
-\subsection{Forecast Quality Across Model Families}
+\subsection{Telemetry fault signals and reliability score \texorpdfstring{$w_t$}{w_t}}
+Reliability is modeled as a bounded aggregate of telemetry degradation signals:
+\[
+w_t=\mathrm{clip}\!\left(1-\lambda_d d_t-\lambda_s s_t-\lambda_o o_t-\lambda_p p_t,\;0,\;1\right),
+\]
+where \(d_t\) is dropout, \(s_t\) stale telemetry, \(o_t\) out-of-order behavior, and \(p_t\) spike/noise penalty.
 Source: \path{data/dashboard/de_metrics.json}, \path{data/dashboard/us_metrics.json}.
 
 \subsubsection*{Germany (DE)}
@@ -504,7 +708,7 @@ Thesis-level interpretation:
     \item Forecast rankings should be read together with downstream optimization outcomes.
 \end{enumerate}
 
-\subsection{GBM Residual and Coverage Diagnostics (90\% Intervals)}
+\subsection{Drift detection (residual-based test, e.g., Page--Hinkley)}
 \begin{table}[htbp]
 \centering
 \small
@@ -531,7 +735,7 @@ Coverage pattern notes:
     \item Solar coverage differs across regions, reflecting profile and feature differences.
 \end{enumerate}
 
-\subsection{Baselines and Comparator Mapping (6.2A)}
+\subsection{Reliability-weighted ambiguity adaptation}
 \begin{table}[htbp]
 \centering
 \small
@@ -549,7 +753,7 @@ Stochastic Value Metrics (Canonical Run IDs) & robust vs deterministic stochasti
 }
 \end{table}
 
-\subsection{Baseline Absolute Policy Outcomes (DE/US) (6.2B)}
+\subsection{Fail-safe logic when telemetry is poor (hold/constraint tightening)}
 Source files: \path{reports/impact_comparison.json} (DE), \path{reports/eia930/impact_comparison.json} (US).
 The table uses existing serialized artifacts only (\path{baseline} = B2, \path{naive} = B3, \path{optimized_forecast} = B1) with two-decimal display rounding.
 
@@ -715,10 +919,10 @@ This supports a core thesis claim: forecast-to-dispatch systems should be evalua
 \subsection{Copy-Ready Core Claims}
 Use these exact strings to avoid drift:
 \begin{enumerate}[leftmargin=*]
-    \item DE cost savings: 7.11\%; DE carbon reduction: 0.30\%; DE peak shaving: 6.13\%.
-    \item US cost savings: 0.11\%; US carbon reduction: 0.13\%; US peak shaving: 0.00\%.
-    \item DE stochastic run: 20260217\_165756 (EVPI\textsubscript{robust} 2.32; EVPI\textsubscript{deterministic} -30.40; VSS 2,708.61).
-    \item US stochastic run: 20260217\_182305 (EVPI\textsubscript{robust} 10,279,851.74; EVPI\textsubscript{deterministic} 24,915,503.93; VSS 297,092.71).
+    \item DE cost savings: \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\%; DE carbon reduction: \PaperMetric{DE_CARBON_REDUCTION_PCT}{0.30}\%; DE peak shaving: \PaperMetric{DE_PEAK_SHAVING_PCT}{6.13}\%.
+    \item US cost savings: \PaperMetric{US_COST_SAVINGS_PCT}{0.11}\%; US carbon reduction: \PaperMetric{US_CARBON_REDUCTION_PCT}{0.13}\%; US peak shaving: \PaperMetric{US_PEAK_SHAVING_PCT}{0.00}\%.
+    \item DE stochastic run: \PaperMetric{DE_STOCH_RUN_ID}{20260217\_165756} (EVPI\textsubscript{robust} \PaperMetric{DE_EVPI_ROBUST}{2.32}; EVPI\textsubscript{deterministic} \PaperMetric{DE_EVPI_DETERMINISTIC}{-30.40}; VSS \PaperMetric{DE_VSS}{2,708.61}).
+    \item US stochastic run: \PaperMetric{US_STOCH_RUN_ID}{20260217\_182305} (EVPI\textsubscript{robust} \PaperMetric{US_EVPI_ROBUST}{10,279,851.74}; EVPI\textsubscript{deterministic} \PaperMetric{US_EVPI_DETERMINISTIC}{24,915,503.93}; VSS \PaperMetric{US_VSS}{297,092.71}).
     \item Dataset-scoped latest policy is used; this manuscript is not a single common-run freeze.
 \end{enumerate}
 
@@ -730,9 +934,9 @@ Use these exact strings to avoid drift:
     \item Cross-region impact magnitude differs significantly despite shared architecture.
 \end{enumerate}
 
-\section{Metrics Source of Truth and Run IDs}
+\section{Dispatch Optimization: Robust and Risk-Aware Formulations}
 
-\subsection{Locked Sources}
+\subsection{Deterministic dispatch formulation (baseline)}
 \begin{table}[htbp]
 \centering
 \small
@@ -750,7 +954,7 @@ Dataset profile claims & \path{data/dashboard/de_stats.json}, \path{data/dashboa
 \end{tabular}
 \end{table}
 
-\subsection{Update Rule for Any Future Metric Change}
+\subsection{Robust min--max dispatch with interval uncertainty}
 A manuscript metric can be changed only if all conditions hold:
 \begin{enumerate}[leftmargin=*]
     \item Value is updated in \path{paper/metrics_manifest.json} with source path and run ID.
@@ -760,10 +964,16 @@ A manuscript metric can be changed only if all conditions hold:
 \end{enumerate}
 This applies to percentages, absolute values, run IDs, timestamps, and any sentence embedding quantitative evidence.
 
-\subsection{Non-Policy Sources}
+\subsection{Scenario construction from intervals/quantiles}
 Legacy report exports and older markdown writeups are treated as secondary references unless explicitly reconciled to this lock.
 
-\subsection{Metrics Change-Control Checklist}
+\subsection{CVaR formulation as risk-aware baseline}
+CVaR is expressed via Rockafellar--Uryasev linearization:
+\[
+\min \ \eta + \frac{1}{(1-\beta)S}\sum_{s=1}^{S} u_s,
+\qquad
+u_s \ge C_s-\eta,\ \ u_s \ge 0.
+\]
 Before approving a numeric edit:
 \begin{enumerate}[leftmargin=*]
     \item Confirm source artifact path exists and is versioned.
@@ -773,9 +983,20 @@ Before approving a numeric edit:
     \item Re-run validator and archive pass output in revision notes.
 \end{enumerate}
 
-\section{Claim Traceability and Editorial Governance}
+\subsection{Computational complexity and solver configuration}
+Deterministic LP has the lowest runtime footprint; robust and CVaR variants increase variable/constraint counts through scenario dimensions and interval coupling. Canonical publication runs pin solver family, scenario counts, and seed list; staged short-horizon runs are used for correctness checks before full artifact regeneration.
 
-\subsection{Claim Status Definitions}
+\section{DC\textsuperscript{3}S Safety Shield}
+
+\subsection{Algorithm 1: DC\textsuperscript{3}S step (observe \texorpdfstring{$\rightarrow$}{->} score \texorpdfstring{$\rightarrow$}{->} detect \texorpdfstring{$\rightarrow$}{->} bound \texorpdfstring{$\rightarrow$}{->} solve \texorpdfstring{$\rightarrow$}{->} repair \texorpdfstring{$\rightarrow$}{->} certify)}
+\begin{enumerate}[leftmargin=*]
+    \item Observe telemetry and compute reliability \(w_t\).
+    \item Score residual behavior and drift indicators.
+    \item Build RAC-aware uncertainty bounds.
+    \item Solve deterministic/robust/CVaR dispatch candidate.
+    \item Repair/project command into safe feasible action space.
+    \item Persist certificate and audit metadata for traceability.
+\end{enumerate}
 \begin{itemize}[leftmargin=*]
     \item \textbf{Verified}: directly traceable to locked source artifacts.
     \item \textbf{Conflicting}: contradicts canonical policy or locked values.
@@ -784,7 +1005,7 @@ Before approving a numeric edit:
 \end{itemize}
 Claim statuses are operational controls; status changes require evidence/citation change, not wording-only edits.
 
-\subsection{Traceability Fields per Claim}
+\subsection{Action repair/projection and constraint enforcement}
 Each claim entry in \path{paper/claim_matrix.csv} should include:
 \begin{enumerate}[leftmargin=*]
     \item \texttt{claim\_id}
@@ -798,14 +1019,14 @@ Each claim entry in \path{paper/claim_matrix.csv} should include:
     \item \texttt{rounding\_rule}
 \end{enumerate}
 
-\subsection{Publication Rule}
+\subsection{Guarantee checks (command-level safety)}
 Publication-facing sections should contain only:
 \begin{enumerate}[leftmargin=*]
     \item Verified in-repo claims.
     \item External claims that are explicitly cited.
 \end{enumerate}
 
-\subsection{Editing Workflow}
+\subsection{Certificates and audit schema}
 \begin{enumerate}[leftmargin=*]
     \item Edit \path{paper/PAPER_DRAFT.md} as the master.
     \item Run the claim validator.
@@ -813,7 +1034,7 @@ Publication-facing sections should contain only:
     \item Synchronize DOCX last and record any environment/tooling limitations.
 \end{enumerate}
 
-\subsection{Reviewer and Advisor Workflow}
+\subsection{Practical considerations (latency budget, fallback thresholds)}
 \begin{enumerate}[leftmargin=*]
     \item Reviewer flags text spans or claim IDs.
     \item Author resolves each item against \path{paper/claim_matrix.csv} and manifest sources.
@@ -821,9 +1042,10 @@ Publication-facing sections should contain only:
     \item Validator pass output is attached to the revision package.
 \end{enumerate}
 
-\section{Discussion}
+\section{Benchmark and Experimental Protocol}
 
-\subsection{Strongly Supported Findings}
+\subsection{Datasets and regions (DE vs US)}
+\PaperTableCSV{TBL05_DATASET_SUMMARY}{Dataset summary used by the publication protocol.}
 \begin{enumerate}[leftmargin=*]
     \item DE and US impact percentages are directly reproducible from canonical impact CSVs.
     \item DE and US stochastic values are directly reproducible from canonical run-summary rows.
@@ -832,17 +1054,17 @@ Publication-facing sections should contain only:
 \end{enumerate}
 The strongest thesis claim is the combined result of measurable decision outcomes and explicit provenance enforcement.
 
-\subsection{Why Cross-Region Outcomes Differ}
+\subsection{CPSBench truth vs observed SOC design}
 Likely contributors include differences in data window, operating context, feature-space composition, and stress/scenario settings. This thesis reports region-scoped outcomes and does not merge them into a single universal effect claim.
 Deployment implication: a strategy with high percentage gains in one region can remain valuable in another while producing smaller direct percentages.
 
-\subsection{Non-Overclaim Boundary}
+\subsection{Fault suite and severity sweeps}
 The thesis does not claim universal superiority across all grids. All quantitative statements are tied to the locked DE/US evidence scope.
 
-\subsection{Engineering Significance}
+\subsection{Baselines and dc3s\_wrapped controller}
 The primary engineering contribution is integrated, auditable decision evidence: forecasting, uncertainty, optimization, and governance are connected in one reproducible workflow.
 
-\subsection{Practical Operator Interpretation}
+\subsection{Statistical protocol (multi-seed, CI, paired tests)}
 Operationally, GridPulse is a guarded decision-support stack:
 \begin{enumerate}[leftmargin=*]
     \item Healthy forecast and interval artifacts trigger optimization-driven dispatch plans.
@@ -851,21 +1073,32 @@ Operationally, GridPulse is a guarded decision-support stack:
 \end{enumerate}
 Operationally, the stack is ready for software deployment pathways and controlled integration tests, but hardware field validation remains pending in the current evidence lock.
 
-\section{Threats to Validity}
+\subsection{Transfer cases (DE\texorpdfstring{$\rightarrow$}{->}US, US\texorpdfstring{$\rightarrow$}{->}DE, seasonal shift \texorpdfstring{$\times$}{x}2)}
+Transfer evaluation explicitly includes four cases:
+\texttt{DE\_to\_US\_no\_retrain}, \texttt{US\_to\_DE\_no\_retrain}, \texttt{DE\_season\_shift}, and \texttt{US\_season\_shift}, each tested under nominal and telemetry-fault sweeps.
 
-\subsection{Internal Validity}
+\section{Results}
+
+\subsection{Uncertainty calibration + group coverage}
 Risk: metric drift from mixed artifacts. Mitigation: manifest lock, claim matrix, and automated validator checks.
 
-\subsection{External Validity}
+\subsection{Safety under telemetry faults (violation rate + severity)}
+\PaperTableCSV{TBL01_MAIN_RESULTS}{Main controller comparison under telemetry faults.}
+\PaperFigure{FIG03_TRUE_SOC_VIOLATION}{True SOC violation rate under fault severity sweep.}
+\PaperFigure{FIG04_TRUE_SOC_SEVERITY}{True SOC violation severity (P95) under fault severity sweep.}
 Risk: limited transferability beyond locked DE/US windows. Mitigation: explicit scope boundaries and future multi-region validation.
 
-\subsection{Construct Validity}
+\subsection{Cost--safety frontier (tradeoff curve)}
+\PaperFigure{FIG07_COST_SAFETY_FRONTIER}{Cost-safety Pareto frontier from publication artifact build.}
 Risk: proxy price/carbon signals may not represent all market settlement details. Mitigation: transparent assumptions and conservative interpretation.
 
-\subsection{Conclusion Validity}
+\subsection{Ablation study (what matters)}
+\PaperTableCSV{TBL02_ABLATIONS}{Ablation summary and strict gate outcomes for RAC-Cert and baselines.}
 Risk: stochastic value magnitudes are sensitive to run/scenario settings. Mitigation: run-ID pinning and explicit source traceability.
 
-\subsection{Residual Risk Prioritization}
+\subsection{Transfer/generalization results}
+\PaperTableCSV{TBL04_TRANSFER_STRESS}{Transfer stress outcomes across DE/US and seasonal shifts.}
+\PaperFigure{FIG06_TRANSFER_COVERAGE}{Transfer stress coverage summary across cross-region and seasonal cases.}
 \begin{enumerate}[leftmargin=*]
     \item Preserve strict metric synchronization across markdown, LaTeX, and DOCX.
     \item Improve calibration on under-covered targets.
@@ -873,9 +1106,13 @@ Risk: stochastic value magnitudes are sensitive to run/scenario settings. Mitiga
     \item Close citation gaps for non-repository claims.
 \end{enumerate}
 
-\section{Operational Safety and Failure Modes}
+\subsection{Runtime overhead and intervention behavior}
+\PaperFigure{FIG08_RAC_SENSITIVITY_WIDTH}{RAC-Cert sensitivity to interval-width relationship across controllers.}
+Runtime overhead is summarized through solver status, intervention frequency, and certificate completeness under faulted telemetry. Interpretation is comparative across controllers because absolute wall-clock latency depends on deployment hardware and solver backend details.
 
-\subsection{Failure-Mode Table}
+\section{Discussion, Limitations, and Conclusion}
+
+\subsection{Main takeaways (1 paragraph each)}
 \begin{table}[htbp]
 \centering
 \small
@@ -894,7 +1131,7 @@ API auth misuse & invalid scope/key & security middleware & deny operation & rea
 \end{tabular}
 \end{table}
 
-\subsection{Incident Response Sequence}
+\subsection{Implications for CPS/AI safety}
 \begin{enumerate}[leftmargin=*]
     \item Detect (health, monitor, solver status).
     \item Contain (block unsafe dispatch, switch fallback mode).
@@ -920,7 +1157,7 @@ Selected defaults in locked configs:
     \item High unmet-load and curtailment penalties for safe optimization behavior.
 \end{enumerate}
 
-\section{Limitations}
+\subsection{Limitations (honest, non-defensive)}
 
 \subsection{Dataset and Coverage Limits}
 Evidence is limited to the locked DE/US windows in this manuscript version.
@@ -950,7 +1187,7 @@ IoT-related validation reported in this manuscript is software-in-the-loop/API/s
 \end{enumerate}
 Therefore, deployment-readiness claims are limited to software stack correctness and observability, not hardware-operational certification.
 
-\section{Future Work}
+\subsection{Roadmap to HIL/hardware validation}
 
 \subsection{Near-Term}
 \begin{enumerate}[leftmargin=*]
@@ -976,8 +1213,8 @@ Success condition: cross-region comparisons with fully serialized scenario assum
 \end{enumerate}
 Success condition: signed provenance from data extraction to publication-ready manuscript artifacts.
 
-\section{Conclusion}
-GridPulse delivers a decision-grade ML system connecting forecasting, uncertainty, dispatch optimization, and governance. Under the dataset-scoped latest lock (February 17, 2026 artifacts), DE impact is 7.11\% cost savings, 0.30\% carbon reduction, and 6.13\% peak shaving; US impact is 0.11\% cost savings, 0.13\% carbon reduction, and 0.00\% peak shaving. Canonical stochastic values are tied to DE run \texttt{20260217\_165756} and US run \texttt{20260217\_182305}, with positive VSS in both regions (2,708.61 and 297,092.71). The thesis contribution is therefore both technical and operational: measurable decision outcomes plus reproducible claim governance.
+\subsection{Conclusion}
+GridPulse delivers a decision-grade ML system connecting forecasting, uncertainty, dispatch optimization, and governance. Under the dataset-scoped latest lock (February 17, 2026 artifacts), DE impact is \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\% cost savings, \PaperMetric{DE_CARBON_REDUCTION_PCT}{0.30}\% carbon reduction, and \PaperMetric{DE_PEAK_SHAVING_PCT}{6.13}\% peak shaving; US impact is \PaperMetric{US_COST_SAVINGS_PCT}{0.11}\% cost savings, \PaperMetric{US_CARBON_REDUCTION_PCT}{0.13}\% carbon reduction, and \PaperMetric{US_PEAK_SHAVING_PCT}{0.00}\% peak shaving. Canonical stochastic values are tied to DE run \texttt{\PaperMetric{DE_STOCH_RUN_ID}{20260217\_165756}} and US run \texttt{\PaperMetric{US_STOCH_RUN_ID}{20260217\_182305}}, with positive VSS in both regions (\PaperMetric{DE_VSS}{2,708.61} and \PaperMetric{US_VSS}{297,092.71}). The thesis contribution is therefore both technical and operational: measurable decision outcomes plus reproducible claim governance.
 The practical message is that trustworthy decision systems require both technical performance and claim governance; GridPulse integrates forecast quality, uncertainty calibration, optimization feasibility, and publication traceability as one coherent system.
 Current IoT validation evidence in this manuscript is non-field and should be interpreted as software stack readiness rather than completed hardware-operational certification.
 
@@ -1023,7 +1260,7 @@ Any non-repository factual claim (policy forecasts, staffing claims, environment
 
 \appendix
 
-\section{Replication Checklist}
+\section{Appendix A: Algorithm listings (DC\textsuperscript{3}S + CQR calibration + CVaR)}
 \begin{enumerate}[leftmargin=*]
     \item Validate manuscript claims:
 \begin{verbatim}
@@ -1047,7 +1284,7 @@ pdflatex paper.tex
     \item Confirm publication numeric claims map to \path{paper/claim_matrix.csv}.
 \end{enumerate}
 
-\section{Artifact Inventory}
+\section{Appendix B: Proof sketches / guarantee assumptions (short, clean)}
 \begin{table}[htbp]
 \centering
 \small
@@ -1074,7 +1311,124 @@ Artifact & Purpose \\
 \end{tabular}
 \end{table}
 
-\section{Section-by-Section Writing Bank (Copy-Ready)}
+\section{Appendix C: Hyperparameters + training configuration tables}
+This appendix defines the exact update protocol after retraining so tables/figures can be refreshed without introducing claim drift.
+\PaperTableCSV{TBL06_HYPERPARAMS}{Core hyperparameters and configuration knobs captured for reproducibility.}
+
+\subsection{Update Philosophy}
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Do not edit manuscript metrics manually first.}
+    \item Regenerate canonical artifacts using repository scripts.
+    \item Recompute claim tables from canonical artifacts.
+    \item Update manuscript values last, after validator pass.
+\end{enumerate}
+
+\subsection{Canonical Build Order}
+\begin{enumerate}[leftmargin=*]
+    \item Train/update uncertainty artifacts (Regime CQR + RAC).
+    \item Run CPSBench suite and fault sweeps.
+    \item Run ablations and strict statistical gate computation.
+    \item Run transfer stress and Pareto generation.
+    \item Run publication verifier and claim validator.
+\end{enumerate}
+
+\subsection{Operator Commands (Copy-Ready)}
+\begin{verbatim}
+# 1) Train or refresh artifacts
+python scripts/train_dataset.py --all --tune
+
+# 2) Build publication package (canonical output path)
+python scripts/build_publication_artifact.py \
+  --out-dir reports/publication \
+  --horizon 96 \
+  --seeds 0 1 2 3 4 5 6 7 8 9
+
+# 3) Verify artifact contract
+python scripts/final_publish_audit.py --config configs/publish_audit.yaml
+python scripts/validate_paper_claims.py
+\end{verbatim}
+If runtime constraints require staged generation, run the same command at reduced horizon for correctness checks, then rerun with release horizon before final manuscript lock.
+
+\subsection{Figure/Table Replacement Map}
+\begin{longtable}{p{4.3cm} p{5.5cm} p{5.0cm}}
+\toprule
+Manuscript element & Canonical artifact source & Update rule \\
+\midrule
+\endhead
+\path{Table 2 (Ablations)} & \path{reports/publication/table2_ablations.csv} & Replace entire table block, preserve metric names and gate flags. \\
+\path{CQR group coverage table} & \path{reports/publication/cqr_group_coverage.csv} & Keep low/mid/high bins fixed; update values only. \\
+\path{Transfer stress table} & \path{reports/publication/transfer_stress.csv} + \path{table5_transfer.csv} & Never use placeholder rows; include all 4 transfer cases. \\
+\path{RAC diagnostics text} & \path{reports/publication/rac_cert_summary.json} & Update hyperparameters and summary stats together. \\
+\path{Safety-violation figures} & \path{fig_true_soc_violation_vs_dropout.png}, \path{fig_true_soc_severity_p95_vs_dropout.png} & Replace both in same commit to avoid split evidence. \\
+\path{Pareto discussion} & \path{reports/publication/cost_safety_pareto.csv} + \path{fig_cost_safety_pareto.png} & Update cost/safety narrative from latest frontier points. \\
+\path{Release manifest note} & \path{reports/publication/release_manifest.json} & Confirm SHA/hash list and command lineage before submission. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Claim-Lock Checklist Before PDF Export}
+\begin{enumerate}[leftmargin=*]
+    \item \path{stats_summary.json} shows \path{overall_pass=true}.
+    \item \path{primary_gate.passes_all_thresholds=true}.
+    \item Robust-baseline comparison satisfies $p<0.01$ and target relative reduction.
+    \item \path{stats_summary.json} contains no temporary paths (\path{/tmp}).
+    \item Required artifacts are non-empty and hash-tracked in \path{release_manifest.json}.
+    \item \path{scripts/validate_paper_claims.py} exits successfully.
+\end{enumerate}
+
+\section{Appendix D: Additional plots (all severities, per-region breakdown)}
+\subsection{Hyperparameter and Config Disclosure Requirements}
+For final submission, disclose at minimum:
+\begin{enumerate}[leftmargin=*]
+    \item Forecast horizon, lookback, split ratios, and gap hours.
+    \item Conformal alpha, volatility binning window, and shrinkage $\tau$.
+    \item Reliability, drift, and sensitivity inflation coefficients.
+    \item Robust/CVaR solver mode, scenario counts, and seeds.
+    \item Gate thresholds and bootstrap/Wilcoxon settings.
+\end{enumerate}
+
+\subsection{Ablation Matrix Minimum Rows}
+At minimum, report:
+\begin{enumerate}[leftmargin=*]
+    \item \texttt{deterministic\_lp}
+    \item \texttt{robust\_fixed\_interval}
+    \item \texttt{cvar\_interval}
+    \item \texttt{dc3s\_wrapped (RAC-Cert path)}
+\end{enumerate}
+Primary claim row must remain robust baseline vs DC3S candidate under faulted aggregate sweep.
+
+\subsection{Failure Analysis Requirements}
+Reviewer-facing failure analysis must include:
+\begin{enumerate}[leftmargin=*]
+    \item Scenarios where robust baseline outperforms candidate.
+    \item Cases with significance pass but effect-size miss.
+    \item Cases with effect-size pass but significance miss.
+    \item Any solver infeasibility rate changes after RAC updates.
+    \item Any transfer-case regression despite in-region gains.
+\end{enumerate}
+
+\subsection{Reproducibility Metadata Block}
+Every release PDF should include:
+\begin{itemize}[leftmargin=*]
+    \item Git commit SHA.
+    \item Branch/tag name.
+    \item Build command.
+    \item Seed list and scenario list.
+    \item Build timestamp and artifact hash manifest path.
+\end{itemize}
+This block can be inserted in the appendix as a table or literal JSON snippet.
+
+\subsection{What to Update Immediately After New Training}
+After fresh training or retuning, update these narrative zones first:
+\begin{enumerate}[leftmargin=*]
+    \item Abstract quantitative claim block.
+    \item Main results section percentages and confidence intervals.
+    \item Gate summary paragraph (pass/fail, metric-wise).
+    \item Transfer/generalization paragraph.
+    \item Limitations section if any gate fails or sensitivity changes substantially.
+\end{enumerate}
+Do not update conclusion claims before these sections are synchronized.
+
+\section{Appendix E: Reproducibility checklist (one command \texorpdfstring{$\rightarrow$}{->} all artifacts)}
 
 \subsection{Introduction}
 Required facts:
@@ -1129,7 +1483,7 @@ Required facts:
     \item Current environment limitations for DOCX sync.
 \end{enumerate}
 
-\section{Claims Requiring Citation Before Publication}
+\subsection{Claims Requiring Citation Before Publication}
 The following claim classes require external source citation or removal in publication export:
 \begin{enumerate}[leftmargin=*]
     \item Global market-size or policy forecasts.
@@ -1138,7 +1492,7 @@ The following claim classes require external source citation or removal in publi
     \item Universal superiority statements beyond locked DE/US evidence.
 \end{enumerate}
 
-\section{Synchronization and Release Notes}
+\subsection{Synchronization and Release Notes}
 \begin{enumerate}[leftmargin=*]
     \item \path{paper/PAPER_DRAFT.md} remains the authority manuscript.
     \item \path{paper/paper.tex} must preserve identical title, abstract core metrics, and conclusion core metrics.
@@ -1146,7 +1500,7 @@ The following claim classes require external source citation or removal in publi
     \item Final release gate requires validator pass and no unresolved publication-facing claim conflicts.
 \end{enumerate}
 
-\section{Full-Detail Authoring Blocks (Use/Trim as Needed)}
+\subsection{Full-Detail Authoring Blocks (Use/Trim as Needed)}
 \subsection{Long-Form Intro Block}
 GridPulse is designed around a decision-first interpretation of machine learning in energy systems. Rather than ending at point prediction, the system carries uncertainty information into optimization, enforces dispatch feasibility under battery and grid constraints, and evaluates outcomes against explicit baselines. This architecture creates a measurable bridge between model behavior and operational value.
 
@@ -1174,7 +1528,7 @@ If page limits require reduction:
     \item Preserve limitations and citation-boundary statements.
 \end{enumerate}
 
-\section{Project-to-Paper Coverage Map}
+\subsection{Project-to-Paper Coverage Map}
 This appendix maps implemented project surfaces to manuscript coverage so review can distinguish fully documented areas from areas that are currently summarized.
 
 Coverage status definitions:
