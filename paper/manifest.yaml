@@ -1,0 +1,96 @@
+figures:
+  FIG01_ARCHITECTURE:
+    path: paper/assets/figures/fig01_architecture.png
+    caption: "GridPulse execution pipeline and DC3S placement at the execution boundary."
+    status: locked
+  FIG02_DC3S_STEP:
+    path: paper/assets/figures/fig02_dc3s_step.png
+    caption: "DC3S runtime step flow (observe, score, detect, bound, solve, repair, certify)."
+    status: provisional
+  FIG03_TRUE_SOC_VIOLATION:
+    path: paper/assets/figures/fig03_true_soc_violation_vs_dropout.png
+    caption: "True SOC violation rate under dropout severity sweep."
+    status: provisional
+  FIG04_TRUE_SOC_SEVERITY:
+    path: paper/assets/figures/fig04_true_soc_severity_p95_vs_dropout.png
+    caption: "True SOC violation severity (P95) under dropout severity sweep."
+    status: provisional
+  FIG05_CQR_GROUP_COVERAGE:
+    path: paper/assets/figures/fig05_cqr_group_coverage.png
+    caption: "Regime-aware CQR group coverage and interval width behavior."
+    status: provisional
+  FIG06_TRANSFER_COVERAGE:
+    path: paper/assets/figures/fig06_transfer_coverage.png
+    caption: "Transfer stress results across region and seasonal shifts."
+    status: provisional
+  FIG07_COST_SAFETY_FRONTIER:
+    path: paper/assets/figures/fig07_cost_safety_frontier.png
+    caption: "Cost-safety Pareto frontier for baseline and RAC-Cert controllers."
+    status: provisional
+  FIG08_RAC_SENSITIVITY_WIDTH:
+    path: paper/assets/figures/fig08_rac_sensitivity_vs_width.png
+    caption: "RAC-Cert sensitivity signal versus interval width expansion."
+    status: provisional
+
+tables:
+  TBL01_MAIN_RESULTS:
+    path: paper/assets/tables/tbl01_main_results.csv
+    title: "Main safety and cost outcomes under telemetry faults."
+    status: provisional
+  TBL02_ABLATIONS:
+    path: paper/assets/tables/tbl02_ablations.csv
+    title: "Ablation study with strict gate fields and statistical tests."
+    status: provisional
+  TBL03_CQR_GROUP_COVERAGE:
+    path: paper/assets/tables/tbl03_cqr_group_coverage.csv
+    title: "Regime-group CQR coverage and interval width summary."
+    status: provisional
+  TBL04_TRANSFER_STRESS:
+    path: paper/assets/tables/tbl04_transfer_stress.csv
+    title: "Transfer stress outcomes across DE/US and seasonal shifts."
+    status: provisional
+  TBL05_DATASET_SUMMARY:
+    path: paper/assets/tables/tbl05_dataset_summary.csv
+    title: "Dataset summary for publication protocol and benchmark scope."
+    status: locked
+  TBL06_HYPERPARAMS:
+    path: paper/assets/tables/tbl06_hyperparams.csv
+    title: "Core training and RAC-Cert hyperparameters."
+    status: provisional
+
+data:
+  DATA_MANIFEST:
+    path: paper/assets/data/data_manifest.json
+    status: locked
+  METRICS_SNAPSHOT:
+    path: paper/assets/data/metrics_snapshot.json
+    status: provisional
+  METRICS_TEX:
+    path: paper/assets/data/metrics_values.tex
+    status: provisional
+
+configs:
+  TRAIN_FORECAST_DE:
+    path: paper/assets/configs/train_forecast_de.yaml
+    status: locked
+  TRAIN_FORECAST_US:
+    path: paper/assets/configs/train_forecast_us.yaml
+    status: locked
+  DC3S_ABLATIONS:
+    path: paper/assets/configs/dc3s_ablations.yaml
+    status: locked
+  DC3S:
+    path: paper/assets/configs/dc3s.yaml
+    status: locked
+  UNCERTAINTY:
+    path: paper/assets/configs/uncertainty.yaml
+    status: locked
+
+notes:
+  metric_policy: "Numeric claims in prose should use \\PaperMetric keys and default to locked values until retraining refreshes metrics_values.tex."
+  refresh_flow:
+    - "python scripts/build_publication_artifact.py --out-dir reports/publication"
+    - "bash scripts/export_paper_assets.sh"
+    - "python scripts/build_paper_table_tex.py"
+    - "python scripts/update_paper_metrics.py"
+    - "cd paper && pdflatex paper.tex && pdflatex paper.tex"
