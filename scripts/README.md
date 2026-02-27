@@ -19,9 +19,12 @@ Command-line scripts for training, evaluation, deployment, and maintenance tasks
 |--------|---------|
 | `build_reports.py` | Generate evaluation reports |
 | `build_stats_tables.py` | Statistical significance tables |
+| `build_paper_table_tex.py` | Convert manifest-mapped CSV tables into LaTeX table fragments + token lookup |
 | `build_forecast_interval_report.py` | Uncertainty quantification report |
 | `statistical_tests.py` | Diebold-Mariano tests |
 | `shap_importance.py` | SHAP feature importance analysis |
+| `update_paper_metrics.py` | Materialize `\\PaperMetric` values from `reports/publication/stats_summary.json` |
+| `verify_paper_manifest.py` | Verify manifest paths, section contract, and LaTeX token resolution |
 
 ### Data Processing
 | Script | Purpose |
@@ -46,6 +49,7 @@ Command-line scripts for training, evaluation, deployment, and maintenance tasks
 | `audit_figure_inventory.py` | Figure/publication inventory + freshness + hash audit |
 | `refresh_data_delta.py` | Hybrid delta refresh and dedup checks |
 | `backfill_dc3s_typed_columns.py` | Backfill typed DC3S audit columns from payload JSON |
+| `export_paper_assets.sh` | Export curated paper assets from raw publication outputs |
 | `run_publish_audit_isolated.sh` | Run full publish audit in isolated `/tmp` workspace clone |
 | `check_api_health.py` | API health verification |
 | `validate_configs.py` | Configuration validation |
@@ -137,3 +141,18 @@ This writes/refreshes:
 - `reports/publication/cost_safety_pareto.csv`
 - `reports/publication/fig_cost_safety_pareto.png`
 - `reports/publication/release_manifest.json`
+
+## Paper Asset Refresh Workflow
+
+Manifest-driven paper refresh (training-later safe):
+
+```bash
+make paper-refresh
+```
+
+This runs:
+1. `scripts/export_paper_assets.sh`
+2. `scripts/build_paper_table_tex.py`
+3. `scripts/update_paper_metrics.py`
+4. `scripts/verify_paper_manifest.py`
+5. 2-pass `pdflatex` compile for `paper/paper.tex`
