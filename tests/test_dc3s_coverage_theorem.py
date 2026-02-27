@@ -1,0 +1,53 @@
+import numpy as np
+import pytest
+
+from gridpulse.dc3s.coverage_theorem import (
+    assert_coverage_guarantee,
+    compute_empirical_coverage,
+    inflation_lower_bound,
+    verify_inflation_geq_one,
+)
+
+
+def test_verify_inflation_geq_one():
+    verify_inflation_geq_one(1.5)
+    verify_inflation_geq_one(1.0)
+    with pytest.raises(ValueError, match="≥ 1"):
+        verify_inflation_geq_one(0.9)
+
+
+def test_compute_empirical_coverage():
+    y_true = np.array([10.0, 15.0, 20.0, 25.0])
+    lower = np.array([8.0, 16.0, 18.0, 26.0])
+    upper = np.array([12.0, 18.0, 22.0, 28.0])
+    # 10 is in [8, 12] -> True
+    # 15 is in [16, 18] -> False (15 < 16)
+    # 20 is in [18, 22] -> True
+    # 25 is in [26, 28] -> False (25 < 26)
+    # Coverage = 2/4 = 0.5
+    res = compute_empirical_coverage(y_true, lower, upper)
+    assert np.isclose(res["picp"], 0.5)
+    assert res["n_samples"] == 4
+
+
+def test_assert_coverage_guarantee():
+    y_true = np.array([10.0, 15.0, 20.0, 25.0])
+    lower = np.array([8.0, 14.0, 18.0, 26.0])
+    upper = np.array([12.0, 18.0, 22.0, 28.0])
+    # 10 in [8, 12] -> T
+    # 15 in [14, 18] -> T
+    # 20 in [18, 22] -> T
+    # 25 in [26, 28] -> F (25 < 26)
+    # Coverage = 3/4 = 0.75
+    # Target alpha=0.20 -> 0.80. Tolerance=0.05. Minimum needed = 0.75. Should pass.
+    res = assert_coverage_guarantee(y_true, lower, upper, alpha=0.20, tolerance=0.05)
+    assert res["passed"] is True
+    
+    with pytest.raises(AssertionError):
+        # Target alpha=0.10 -> 0.90. Tolerance=0.01. Minimum needed = 0.89. Fails with 0.75.
+        assert_coverage_guarantee(y_true, lower, upper, alpha=0.10, tolerance=0.01)
+
+
+def test_inflation_lower_bound():
+    res = inflation_lower_bound(k_quality=1.5, k_drift=2.0)
+    assert np.isclose(res, 1.0)
