@@ -16,6 +16,9 @@ def test_rac_bounds_columns_present_for_all_controllers(tmp_path: Path) -> None:
         "robust_fixed_interval",
         "cvar_interval",
         "dc3s_wrapped",
+        "dc3s_ftit",
+        "aci_conformal",
+        "scenario_robust",
     }
     required = {
         "rac_sensitivity_mean",
