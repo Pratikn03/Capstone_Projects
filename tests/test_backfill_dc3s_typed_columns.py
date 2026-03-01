@@ -30,6 +30,10 @@ def test_backfill_populates_missing_typed_columns(tmp_path) -> None:
             "reliability": {"w_t": 0.42},
             "drift": {"drift": True},
             "uncertainty": {"meta": {"inflation": 2.1}, "shield_repair": {"repaired": True}},
+            "gamma_mw": 3.5,
+            "e_t_mwh": 4.0,
+            "soc_tube_lower_mwh": 11.0,
+            "soc_tube_upper_mwh": 89.0,
         }
         con.execute(
             f"INSERT INTO {table} VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -44,3 +48,7 @@ def test_backfill_populates_missing_typed_columns(tmp_path) -> None:
     assert summary["remaining_nulls"]["reliability_w"] == 0
     assert summary["remaining_nulls"]["drift_flag"] == 0
     assert summary["remaining_nulls"]["inflation"] == 0
+    assert summary["remaining_nulls"]["gamma_mw"] == 0
+    assert summary["remaining_nulls"]["e_t_mwh"] == 0
+    assert summary["remaining_nulls"]["soc_tube_lower_mwh"] == 0
+    assert summary["remaining_nulls"]["soc_tube_upper_mwh"] == 0

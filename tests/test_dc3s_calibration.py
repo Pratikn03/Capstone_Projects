@@ -59,3 +59,32 @@ def test_build_uncertainty_set_clipped():
     assert np.isclose(lo[0], 70.0)
     assert np.isclose(hi[0], 130.0)
     assert meta["inflation"] == 3.0
+
+
+def test_build_uncertainty_set_ftit_ro_formula():
+    cfg = {
+        "law": "ftit_ro",
+        "reliability": {"min_w": 0.05},
+        "ftit": {"delta": 0.05, "eps_interval": 1.0e-6, "sigma2_floor": 1.0e-6, "sigma2_init": 1.0},
+        "ftit_runtime": {"sigma2": 4.0},
+    }
+    lo, hi, meta = build_uncertainty_set(yhat=100.0, q=10.0, w_t=0.5, drift_flag=False, cfg=cfg)
+    expected_kappa = 1.0 + np.sqrt(2.0 * 4.0 * np.log(1.0 / (0.05 * 0.5))) / 20.0
+    assert np.isclose(meta["inflation"], expected_kappa)
+    assert np.isclose(lo[0], 100.0 - 10.0 * expected_kappa)
+    assert np.isclose(hi[0], 100.0 + 10.0 * expected_kappa)
+
+
+def test_build_uncertainty_set_ftit_ro_meta_fields():
+    cfg = {
+        "law": "ftit_ro",
+        "reliability": {"min_w": 0.05},
+        "ftit": {"delta": 0.10, "eps_interval": 1.0e-6, "sigma2_floor": 1.0e-6, "sigma2_init": 1.0},
+        "ftit_runtime": {"sigma2": 2.5},
+    }
+    _, _, meta = build_uncertainty_set(yhat=120.0, q=8.0, w_t=0.4, drift_flag=True, cfg=cfg)
+    assert meta["inflation_rule"] == "ftit_ro"
+    assert meta["delta"] == pytest.approx(0.10)
+    assert meta["sigma2"] == pytest.approx(2.5)
+    assert meta["w_used"] == pytest.approx(0.4)
+    assert meta["q_multiplier"] == pytest.approx(1.0)

@@ -32,6 +32,10 @@ def _build_certificate(command_id: str) -> dict:
         guarantee_fail_reasons=[],
         true_soc_violation_after_apply=False,
         assumptions_version="dc3s-assumptions-v1",
+        gamma_mw=3.2,
+        e_t_mwh=4.5,
+        soc_tube_lower_mwh=12.0,
+        soc_tube_upper_mwh=88.0,
     )
 
 
@@ -58,6 +62,10 @@ def test_store_certificate_persists_typed_dc3s_columns(tmp_path) -> None:
             "guarantee_fail_reasons",
             "true_soc_violation_after_apply",
             "assumptions_version",
+            "gamma_mw",
+            "e_t_mwh",
+            "soc_tube_lower_mwh",
+            "soc_tube_upper_mwh",
         } <= cols
 
         row = conn.execute(
@@ -70,6 +78,10 @@ def test_store_certificate_persists_typed_dc3s_columns(tmp_path) -> None:
               inflation,
               guarantee_checks_passed,
               assumptions_version,
+              gamma_mw,
+              e_t_mwh,
+              soc_tube_lower_mwh,
+              soc_tube_upper_mwh,
               payload_json
             FROM {table_name}
             WHERE command_id = ?
@@ -87,7 +99,11 @@ def test_store_certificate_persists_typed_dc3s_columns(tmp_path) -> None:
     assert float(row[4]) == 1.4
     assert bool(row[5]) is True
     assert row[6] == "dc3s-assumptions-v1"
-    payload = json.loads(str(row[7]))
+    assert float(row[7]) == 3.2
+    assert float(row[8]) == 4.5
+    assert float(row[9]) == 12.0
+    assert float(row[10]) == 88.0
+    payload = json.loads(str(row[11]))
     assert payload["intervened"] is True
 
 
@@ -129,10 +145,14 @@ def test_store_certificate_migrates_legacy_table(tmp_path) -> None:
             "guarantee_fail_reasons",
             "true_soc_violation_after_apply",
             "assumptions_version",
+            "gamma_mw",
+            "e_t_mwh",
+            "soc_tube_lower_mwh",
+            "soc_tube_upper_mwh",
         } <= cols
 
         row = conn.execute(
-            f"SELECT intervened, reliability_w, drift_flag, inflation FROM {table_name} WHERE command_id = ?",
+            f"SELECT intervened, reliability_w, drift_flag, inflation, gamma_mw, e_t_mwh, soc_tube_lower_mwh, soc_tube_upper_mwh FROM {table_name} WHERE command_id = ?",
             [cert["command_id"]],
         ).fetchone()
     finally:
@@ -143,3 +163,7 @@ def test_store_certificate_migrates_legacy_table(tmp_path) -> None:
     assert float(row[1]) == 0.52
     assert bool(row[2]) is True
     assert float(row[3]) == 1.4
+    assert float(row[4]) == 3.2
+    assert float(row[5]) == 4.5
+    assert float(row[6]) == 12.0
+    assert float(row[7]) == 88.0
