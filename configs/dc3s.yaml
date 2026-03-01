@@ -1,14 +1,17 @@
 dc3s:
   assumptions_version: dc3s-assumptions-v1
+  law: linear
+  inflation_law: linear
   alpha0: 0.10
   alpha_min: 0.02
-  k_quality: 0.8
-  k_drift: 0.6
+  k_quality: 0.2
+  k_drift: 0.0
   k_sensitivity: 0.4
-  infl_max: 3.0
+  infl_max: 2.0
   beta_reliability: 0.7
   beta_sensitivity: 0.5
   cooldown_smoothing: 0.0
+  kappa_drift_penalty: 0.5
   ambiguity:
     lambda_mw: 0.0
     learn_lambda_from_quantile: false
@@ -33,6 +36,27 @@ dc3s:
     spike_beta: 0.25
     ooo_gamma: 0.35
     min_w: 0.05
+  ftit:
+    decay: 0.98
+    decay_e: 0.95
+    dt_hours: 1.0
+    stale_k: 3
+    stale_tol: 1.0e-9
+    alpha_dropout: 1.0
+    alpha_stale_sensor: 1.0
+    alpha_delay_jitter: 1.0
+    alpha_out_of_order: 1.0
+    alpha_spikes: 1.0
+    gamma_min_mw: 0.0
+    gamma_max_mw: null
+    gamma_power: 1.0
+    e_min_mwh: 0.0
+    e_max_mwh: null
+    sigma2_init: 1.0
+    sigma2_decay: 0.95
+    sigma2_floor: 1.0e-6
+    delta: 0.05
+    eps_interval: 1.0e-6
   drift:
     detector: page_hinkley
     ph_delta: 0.01

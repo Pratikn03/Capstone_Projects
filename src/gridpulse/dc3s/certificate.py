@@ -60,6 +60,10 @@ def make_certificate(
     guarantee_fail_reasons: list[str] | None = None,
     true_soc_violation_after_apply: bool | None = None,
     assumptions_version: str | None = None,
+    gamma_mw: float | None = None,
+    e_t_mwh: float | None = None,
+    soc_tube_lower_mwh: float | None = None,
+    soc_tube_upper_mwh: float | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "command_id": command_id,
@@ -88,6 +92,10 @@ def make_certificate(
             bool(true_soc_violation_after_apply) if true_soc_violation_after_apply is not None else None
         ),
         "assumptions_version": assumptions_version,
+        "gamma_mw": float(gamma_mw) if gamma_mw is not None else None,
+        "e_t_mwh": float(e_t_mwh) if e_t_mwh is not None else None,
+        "soc_tube_lower_mwh": float(soc_tube_lower_mwh) if soc_tube_lower_mwh is not None else None,
+        "soc_tube_upper_mwh": float(soc_tube_upper_mwh) if soc_tube_upper_mwh is not None else None,
     }
     payload["certificate_hash"] = _sha256_bytes(_canonical_bytes(payload))
     return payload
@@ -121,7 +129,11 @@ def _ensure_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
             guarantee_checks_passed BOOLEAN,
             guarantee_fail_reasons VARCHAR,
             true_soc_violation_after_apply BOOLEAN,
-            assumptions_version VARCHAR
+            assumptions_version VARCHAR,
+            gamma_mw DOUBLE,
+            e_t_mwh DOUBLE,
+            soc_tube_lower_mwh DOUBLE,
+            soc_tube_upper_mwh DOUBLE
         )
         """
     )
@@ -134,6 +146,10 @@ def _ensure_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
     _add_column_if_missing(conn, table_name, "guarantee_fail_reasons", "VARCHAR")
     _add_column_if_missing(conn, table_name, "true_soc_violation_after_apply", "BOOLEAN")
     _add_column_if_missing(conn, table_name, "assumptions_version", "VARCHAR")
+    _add_column_if_missing(conn, table_name, "gamma_mw", "DOUBLE")
+    _add_column_if_missing(conn, table_name, "e_t_mwh", "DOUBLE")
+    _add_column_if_missing(conn, table_name, "soc_tube_lower_mwh", "DOUBLE")
+    _add_column_if_missing(conn, table_name, "soc_tube_upper_mwh", "DOUBLE")
 
 
 def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_name: str) -> None:
@@ -159,8 +175,12 @@ def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_na
                 guarantee_checks_passed,
                 guarantee_fail_reasons,
                 true_soc_violation_after_apply,
-                assumptions_version
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                assumptions_version,
+                gamma_mw,
+                e_t_mwh,
+                soc_tube_lower_mwh,
+                soc_tube_upper_mwh
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 str(certificate.get("command_id")),
@@ -177,6 +197,10 @@ def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_na
                 json.dumps(certificate.get("guarantee_fail_reasons", []), ensure_ascii=True, sort_keys=True),
                 certificate.get("true_soc_violation_after_apply"),
                 certificate.get("assumptions_version"),
+                certificate.get("gamma_mw"),
+                certificate.get("e_t_mwh"),
+                certificate.get("soc_tube_lower_mwh"),
+                certificate.get("soc_tube_upper_mwh"),
             ],
         )
     finally:

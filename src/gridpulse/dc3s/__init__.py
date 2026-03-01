@@ -1,6 +1,7 @@
 """DC3S: Drift-Calibrated Conformal Safety Shield components."""
 
 from .quality import compute_reliability
+from .ftit import FTIT_FAULT_KEYS, preview_fault_state, update as update_ftit_state
 from .drift import PageHinkleyDetector
 from .calibration import inflate_interval, inflate_q, build_uncertainty_set
 from .shield import repair_action
@@ -23,6 +24,9 @@ from .rac_cert import (
 
 __all__ = [
     "compute_reliability",
+    "FTIT_FAULT_KEYS",
+    "preview_fault_state",
+    "update_ftit_state",
     "PageHinkleyDetector",
     "inflate_interval",
     "inflate_q",
