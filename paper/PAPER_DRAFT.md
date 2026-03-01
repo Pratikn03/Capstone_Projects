@@ -1,15 +1,13 @@
-# GridPulse: An Integrated Machine Learning System for Renewable Energy Forecasting and Carbon-Aware Battery Dispatch
+# DC³S: Telemetry-Reliability-Weighted Conformal Safety Shield for Battery Dispatch under IoT Sensor Faults
 
 **Author:** Pratik Niroula  
 **Affiliation:** MNSU CIT (Major), Math (Minor)  
 **Date:** February 19, 2026
 
 ## Abstract
-GridPulse is an end-to-end decision system that links forecasting, uncertainty estimation, battery dispatch optimization, operational safety controls, and post-decision evaluation for power-system operations. The implementation is organized as a closed loop (`Forecast -> Optimize -> Dispatch -> Measure -> Monitor`) so that model outputs are directly converted into constrained actions and then measured against baselines in the same artifact pipeline. This manuscript uses a strict dataset-scoped latest evidence policy locked to repository artifacts dated February 17, 2026. Canonical decision-impact sources are `reports/impact_summary.csv` for Germany (DE) and `reports/eia930/impact_summary.csv` for the United States (US). Canonical stochastic metrics are taken from `reports/research_metrics_de.csv` run `20260217_165756` and `reports/research_metrics_us.csv` run `20260217_182305`.
+DC³S addresses battery dispatch under unreliable IoT telemetry by coupling telemetry-reliability scoring, conformal interval inflation, and safety-constrained action repair in one online loop. In the drift_combo CPSBench scenario, DC³S raises mean PICP@90 to 38.3% from 33.8% for deterministic dispatch, while holding intervention rate at 0.00%. This calibration gain is achieved with wider mean intervals (2249.64 vs 666.98) and an expected cost of USD 61,310,572.02, which is USD 160,899.55 above robust_fixed_interval. The resulting tradeoff is explicit rather than hidden: when telemetry quality degrades, DC³S buys coverage and eliminates observed violation events by widening uncertainty sets and repairing actions against safety constraints.
 
-Under this lock, DE impact is **7.11%** cost savings, **0.30%** carbon reduction, and **6.13%** peak shaving. US impact is **0.11%** cost savings, **0.13%** carbon reduction, and **0.00%** peak shaving. Stochastic outcomes are DE EVPI_robust **2.32**, DE EVPI_deterministic **-30.40**, DE VSS **2,708.61**, and US EVPI_robust **10,279,851.74**, US EVPI_deterministic **24,915,503.93**, US VSS **297,092.71**. Beyond reporting these outcomes, the core thesis contribution is governance: each publication-facing claim is tied to explicit run IDs, source files, and rounding rules through `paper/metrics_manifest.json`, `paper/claim_matrix.csv`, and `scripts/validate_paper_claims.py`.
-
-The evidence shows two simultaneous realities: (1) robust/stochastic value is positive in both regions, and (2) direct percent impact magnitude can differ substantially by region even with a shared pipeline. Therefore, this thesis frames GridPulse as a decision-quality and reproducibility system, not only a forecasting benchmark.
+This paper presents DC³S as a telemetry-reliability-weighted conformal safety shield for battery dispatch under sensor faults such as dropout, delay jitter, stale readings, out-of-order packets, and spikes. The method combines online fault scoring, drift-aware uncertainty inflation, dispatch optimization, and certificate-backed audit persistence within the GridPulse stack. The contribution is not a new battery objective alone, but a calibrated control wrapper that converts degraded telemetry into bounded uncertainty and executable safe actions. Publication-facing quantitative claims remain locked to repository artifacts, run IDs, and validator checks so manuscript updates do not drift from source data. The result is a decision-system framing in which calibration, cost, intervention behavior, and governance are evaluated together under faulted operating conditions.
 
 ## Keywords
 Machine Learning, Energy Forecasting, Battery Dispatch, Robust Optimization, Conformal Prediction, Stochastic Programming, MLOps, Grid Operations
@@ -355,6 +353,8 @@ The implemented interval inflation law is linear and bounded:
 `upper = y_hat + q * infl`.
 
 The reliability module (`quality.py`) computes `w_t` from missingness, delay, out-of-order behavior, and spike penalties. Drift logic (`drift.py`) uses Page-Hinkley updates on residual magnitude `r_t = |y_t - y_hat_t|` with configured warmup and cooldown controls.
+
+**Coverage statement (informal).** The DC3S inflation rule is intended to tie per-step miscoverage to the effective reliability-adjusted level `delta * w_t`, so low-reliability telemetry widens intervals rather than silently preserving nominal width. Informally, this means the method targets stricter uncertainty inflation when telemetry quality falls, while still relying on adaptive conformal logic for running-average coverage control rather than claiming a pointwise theorem for every step. This should be read as a method sketch, not a formal proof: the relevant background is adaptive/running-average conformal inference [Citation placeholder: Gibbs & Candès, JMLR 2024], weighted conformal ideas for non-uniform validity [Citation placeholder: Barber, Candès, Ramdas, Tibshirani, Annals of Statistics 2023], and the subgaussian tail-bound intuition used in the inflation heuristic [Citation placeholder: Vershynin, 2018].
 
 Safety shielding (`shield.py`) supports two modes:
 1. `projection`: deterministic clipping against SOC, power, and ramp constraints.
