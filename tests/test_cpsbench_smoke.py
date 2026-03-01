@@ -51,4 +51,5 @@ def test_cpsbench_runner_smoke_and_determinism(tmp_path):
         "rac_inflation_mean",
     }
     assert required_cols <= set(main_a.columns)
+    assert "dc3s_ftit" in set(main_a["controller"].astype(str))
     pd.testing.assert_frame_equal(main_a, main_b, rtol=1e-8, atol=1e-8)
