@@ -98,6 +98,10 @@ def _derive_fields(payload: dict[str, Any]) -> dict[str, Any]:
     assumptions_version = payload.get("assumptions_version")
     if not isinstance(assumptions_version, str):
         assumptions_version = None
+    gamma_mw = _safe_float(payload.get("gamma_mw"))
+    e_t_mwh = _safe_float(payload.get("e_t_mwh"))
+    soc_tube_lower_mwh = _safe_float(payload.get("soc_tube_lower_mwh"))
+    soc_tube_upper_mwh = _safe_float(payload.get("soc_tube_upper_mwh"))
 
     return {
         "intervened": intervened,
@@ -109,6 +113,10 @@ def _derive_fields(payload: dict[str, Any]) -> dict[str, Any]:
         "guarantee_fail_reasons": guarantee_fail_reasons,
         "true_soc_violation_after_apply": true_soc_violation_after_apply,
         "assumptions_version": assumptions_version,
+        "gamma_mw": gamma_mw,
+        "e_t_mwh": e_t_mwh,
+        "soc_tube_lower_mwh": soc_tube_lower_mwh,
+        "soc_tube_upper_mwh": soc_tube_upper_mwh,
     }
 
 
@@ -122,6 +130,10 @@ def _ensure_columns(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
     conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS guarantee_fail_reasons VARCHAR")
     conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS true_soc_violation_after_apply BOOLEAN")
     conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS assumptions_version VARCHAR")
+    conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS gamma_mw DOUBLE")
+    conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS e_t_mwh DOUBLE")
+    conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS soc_tube_lower_mwh DOUBLE")
+    conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS soc_tube_upper_mwh DOUBLE")
 
 
 def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
@@ -154,7 +166,11 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
                 guarantee_checks_passed,
                 guarantee_fail_reasons,
                 true_soc_violation_after_apply,
-                assumptions_version
+                assumptions_version,
+                gamma_mw,
+                e_t_mwh,
+                soc_tube_lower_mwh,
+                soc_tube_upper_mwh
             FROM {table_name}
             WHERE intervened IS NULL
                OR intervention_reason IS NULL
@@ -164,6 +180,10 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
                OR guarantee_checks_passed IS NULL
                OR guarantee_fail_reasons IS NULL
                OR assumptions_version IS NULL
+               OR gamma_mw IS NULL
+               OR e_t_mwh IS NULL
+               OR soc_tube_lower_mwh IS NULL
+               OR soc_tube_upper_mwh IS NULL
             """
         ).fetchall()
         updated = 0
@@ -180,6 +200,10 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
                 guarantee_fail_reasons,
                 true_soc_violation_after_apply,
                 assumptions_version,
+                gamma_mw,
+                e_t_mwh,
+                soc_tube_lower_mwh,
+                soc_tube_upper_mwh,
             ) = row
             payload = _load_payload(payload_json)
             derived = _derive_fields(payload)
@@ -208,6 +232,14 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
                 if assumptions_version is not None
                 else derived["assumptions_version"]
             )
+            next_gamma_mw = gamma_mw if gamma_mw is not None else derived["gamma_mw"]
+            next_e_t_mwh = e_t_mwh if e_t_mwh is not None else derived["e_t_mwh"]
+            next_soc_tube_lower_mwh = (
+                soc_tube_lower_mwh if soc_tube_lower_mwh is not None else derived["soc_tube_lower_mwh"]
+            )
+            next_soc_tube_upper_mwh = (
+                soc_tube_upper_mwh if soc_tube_upper_mwh is not None else derived["soc_tube_upper_mwh"]
+            )
 
             if (
                 next_intervened != intervened
@@ -219,6 +251,10 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
                 or next_guarantee_fail_reasons != guarantee_fail_reasons
                 or next_true_soc_violation_after_apply != true_soc_violation_after_apply
                 or next_assumptions_version != assumptions_version
+                or next_gamma_mw != gamma_mw
+                or next_e_t_mwh != e_t_mwh
+                or next_soc_tube_lower_mwh != soc_tube_lower_mwh
+                or next_soc_tube_upper_mwh != soc_tube_upper_mwh
             ):
                 conn.execute(
                     f"""
@@ -231,7 +267,11 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
                         guarantee_checks_passed = ?,
                         guarantee_fail_reasons = ?,
                         true_soc_violation_after_apply = ?,
-                        assumptions_version = ?
+                        assumptions_version = ?,
+                        gamma_mw = ?,
+                        e_t_mwh = ?,
+                        soc_tube_lower_mwh = ?,
+                        soc_tube_upper_mwh = ?
                     WHERE command_id = ?
                     """,
                     [
@@ -244,6 +284,10 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
                         next_guarantee_fail_reasons,
                         next_true_soc_violation_after_apply,
                         next_assumptions_version,
+                        next_gamma_mw,
+                        next_e_t_mwh,
+                        next_soc_tube_lower_mwh,
+                        next_soc_tube_upper_mwh,
                         command_id,
                     ],
                 )
@@ -259,7 +303,11 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
                 SUM(CASE WHEN inflation IS NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN guarantee_checks_passed IS NULL THEN 1 ELSE 0 END),
                 SUM(CASE WHEN guarantee_fail_reasons IS NULL THEN 1 ELSE 0 END),
-                SUM(CASE WHEN assumptions_version IS NULL THEN 1 ELSE 0 END)
+                SUM(CASE WHEN assumptions_version IS NULL THEN 1 ELSE 0 END),
+                SUM(CASE WHEN gamma_mw IS NULL THEN 1 ELSE 0 END),
+                SUM(CASE WHEN e_t_mwh IS NULL THEN 1 ELSE 0 END),
+                SUM(CASE WHEN soc_tube_lower_mwh IS NULL THEN 1 ELSE 0 END),
+                SUM(CASE WHEN soc_tube_upper_mwh IS NULL THEN 1 ELSE 0 END)
             FROM {table_name}
             """
         ).fetchone()
@@ -283,6 +331,10 @@ def run_backfill(*, duckdb_path: str, table_name: str) -> dict[str, Any]:
             "guarantee_checks_passed": int(nulls[5] or 0),
             "guarantee_fail_reasons": int(nulls[6] or 0),
             "assumptions_version": int(nulls[7] or 0),
+            "gamma_mw": int(nulls[8] or 0),
+            "e_t_mwh": int(nulls[9] or 0),
+            "soc_tube_lower_mwh": int(nulls[10] or 0),
+            "soc_tube_upper_mwh": int(nulls[11] or 0),
         },
     }
 

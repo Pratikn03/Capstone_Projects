@@ -1,6 +1,7 @@
 """API router: DC3S (Drift-Calibrated Conformal Safety Shield)."""
 from __future__ import annotations
 
+from copy import deepcopy
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -22,6 +23,7 @@ from gridpulse.dc3s.certificate import (
     store_certificate,
 )
 from gridpulse.dc3s.drift import PageHinkleyDetector
+from gridpulse.dc3s.ftit import update as update_ftit_state
 from gridpulse.dc3s.guarantee_checks import evaluate_guarantee_checks
 from gridpulse.dc3s.quality import compute_reliability
 from gridpulse.dc3s.shield import repair_action
@@ -234,12 +236,17 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
     try:
         state_key_target = "load_mw"
         state_row = state_store.get(zone_id=req.zone_id, device_id=req.device_id, target=state_key_target) or {}
+        adaptive_state = state_row.get("adaptive_state") or {}
+        law = str(dc3s_cfg.get("law", "linear")).strip().lower()
+        ftit_cfg = {**dict(dc3s_cfg.get("ftit", {})), "law": law}
 
         w_t, quality_flags = compute_reliability(
             req.telemetry_event or {},
             state_row.get("last_event"),
             expected_cadence_s=float(dc3s_cfg.get("expected_cadence_s", 3600)),
             reliability_cfg=dc3s_cfg.get("reliability", {}),
+            adaptive_state=adaptive_state,
+            ftit_cfg=ftit_cfg,
         )
 
         detector = PageHinkleyDetector.from_state(state_row.get("drift_state"), cfg=dc3s_cfg.get("drift", {}))
@@ -250,6 +257,7 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
             "cooldown_remaining": detector.cooldown_remaining,
             "mean_residual": detector.mean,
         }
+        residual: float | None = None
         if req.last_actual_load_mw is not None and req.last_pred_load_mw is not None:
             residual = abs(float(req.last_actual_load_mw) - float(req.last_pred_load_mw))
             drift_info = detector.update(residual)
@@ -282,38 +290,8 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
         )
         renewables = wind_yhat + solar_yhat
 
-        q = _resolve_conformal_q(target="load_mw", horizon=req.horizon)
-        lower, upper, uncertainty_meta = build_uncertainty_set(
-            yhat=load_yhat,
-            q=q,
-            w_t=w_t,
-            drift_flag=bool(drift_info.get("drift", False)),
-            cfg=dc3s_cfg,
-            prev_inflation=state_row.get("last_inflation"),
-        )
-
         price_series, carbon_series = _build_default_price_and_carbon(features_df, req.horizon, opt_cfg)
-
         robust_cfg = _build_robust_config(opt_cfg)
-        if req.controller == "deterministic":
-            dispatch_plan = optimize_dispatch(
-                load_yhat.tolist(),
-                renewables.tolist(),
-                opt_cfg,
-                forecast_price=price_series.tolist(),
-                forecast_carbon_kg=carbon_series.tolist(),
-            )
-        else:
-            dispatch_plan = optimize_robust_dispatch(
-                load_lower_bound=lower.tolist(),
-                load_upper_bound=upper.tolist(),
-                renewables_forecast=renewables.tolist(),
-                price=price_series.tolist(),
-                config=robust_cfg,
-                verbose=False,
-            )
-
-        proposed_action = _first_action(dispatch_plan)
 
         bms_cfg = get_bms_config()
         bms = SafetyLayer(
@@ -357,13 +335,6 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
         last_action = state_row.get("last_action") or {}
         last_net = float(last_action.get("discharge_mw", 0.0)) - float(last_action.get("charge_mw", 0.0))
 
-        uncertainty_set = {
-            "lower": lower.tolist(),
-            "upper": upper.tolist(),
-            "meta": uncertainty_meta,
-            "renewables_forecast": renewables.tolist(),
-            "price": price_series.tolist(),
-        }
         constraints = {
             "capacity_mwh": capacity,
             "min_soc_mwh": min_soc,
@@ -383,12 +354,69 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
             "default_price_per_mwh": float(opt_cfg.get("grid", {}).get("price_per_mwh", 60.0)),
             "risk_weight_worst_case": float(opt_cfg.get("robust", {}).get("risk_weight_worst_case", 1.0)),
         }
+        ftit_state = update_ftit_state(
+            adaptive_state=adaptive_state,
+            fault_flags=quality_flags.get("fault_flags", {}),
+            constraints=constraints,
+            cfg=ftit_cfg,
+            stale_tracker=quality_flags.get("stale_tracker"),
+            sigma2_observation=(float(residual) ** 2) if residual is not None else None,
+        )
+        adaptive_state_next = ftit_state["adaptive_state"]
+
+        dc3s_cfg_runtime = deepcopy(dc3s_cfg)
+        if law == "ftit_ro":
+            dc3s_cfg_runtime["law"] = "ftit_ro"
+            dc3s_cfg_runtime["ftit_runtime"] = {"sigma2": float(ftit_state["sigma2"])}
+            constraints["ftit_soc_min_mwh"] = float(ftit_state["soc_tube_lower_mwh"])
+            constraints["ftit_soc_max_mwh"] = float(ftit_state["soc_tube_upper_mwh"])
+
+        q = _resolve_conformal_q(target="load_mw", horizon=req.horizon)
+        lower, upper, uncertainty_meta = build_uncertainty_set(
+            yhat=load_yhat,
+            q=q,
+            w_t=w_t,
+            drift_flag=bool(drift_info.get("drift", False)),
+            cfg=dc3s_cfg_runtime,
+            prev_inflation=state_row.get("last_inflation"),
+        )
+        uncertainty_meta["gamma_mw"] = float(ftit_state["gamma_mw"])
+        uncertainty_meta["e_t_mwh"] = float(ftit_state["e_t_mwh"])
+        uncertainty_meta["soc_tube_lower_mwh"] = float(ftit_state["soc_tube_lower_mwh"])
+        uncertainty_meta["soc_tube_upper_mwh"] = float(ftit_state["soc_tube_upper_mwh"])
+        uncertainty_set = {
+            "lower": lower.tolist(),
+            "upper": upper.tolist(),
+            "meta": uncertainty_meta,
+            "renewables_forecast": renewables.tolist(),
+            "price": price_series.tolist(),
+        }
+
+        if req.controller == "deterministic":
+            dispatch_plan = optimize_dispatch(
+                load_yhat.tolist(),
+                renewables.tolist(),
+                opt_cfg,
+                forecast_price=price_series.tolist(),
+                forecast_carbon_kg=carbon_series.tolist(),
+            )
+        else:
+            dispatch_plan = optimize_robust_dispatch(
+                load_lower_bound=lower.tolist(),
+                load_upper_bound=upper.tolist(),
+                renewables_forecast=renewables.tolist(),
+                price=price_series.tolist(),
+                config=robust_cfg,
+                verbose=False,
+            )
+
+        proposed_action = _first_action(dispatch_plan)
         safe_action, repair_meta = repair_action(
             a_star=proposed_action,
             state={"current_soc_mwh": float(req.current_soc_mwh)},
             uncertainty_set=uncertainty_set,
             constraints=constraints,
-            cfg=dc3s_cfg,
+            cfg=dc3s_cfg_runtime,
         )
         intervened = bool(repair_meta.get("repaired", False))
         intervention_reason = _derive_intervention_reason(repair_meta, intervened)
@@ -455,6 +483,10 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
             guarantee_checks_passed=guarantee_passed,
             guarantee_fail_reasons=guarantee_fail_reasons,
             assumptions_version=str(dc3s_cfg.get("assumptions_version", "dc3s-assumptions-v1")),
+            gamma_mw=float(ftit_state["gamma_mw"]),
+            e_t_mwh=float(ftit_state["e_t_mwh"]),
+            soc_tube_lower_mwh=float(ftit_state["soc_tube_lower_mwh"]),
+            soc_tube_upper_mwh=float(ftit_state["soc_tube_upper_mwh"]),
         )
         store_certificate(certificate, duckdb_path=audit_path, table_name=audit_table)
         queued = False
@@ -489,10 +521,10 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
             last_yhat=float(load_yhat[0]),
             last_y_true=float(req.last_actual_load_mw) if req.last_actual_load_mw is not None else state_row.get("last_y_true"),
             drift_state=detector.to_state(),
-            adaptive_state={},
+            adaptive_state=adaptive_state_next,
             last_prev_hash=str(certificate.get("certificate_hash")),
             last_inflation=float(uncertainty_meta.get("inflation", 1.0)),
-            last_event=req.telemetry_event,
+            last_event=req.telemetry_event or {},
             last_action=safe_action,
         )
 

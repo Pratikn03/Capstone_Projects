@@ -45,7 +45,14 @@ def _projection_repair(
 
     drift_flag = bool(uncertainty_set.get("meta", {}).get("drift_flag", False))
     reserve_soc_pct_drift = _f(cfg.get("shield", {}).get("reserve_soc_pct_drift"), 0.0)
-    min_soc_eff = min(max_soc, min_soc + (reserve_soc_pct_drift * capacity if drift_flag else 0.0))
+    ftit_min = constraints.get("ftit_soc_min_mwh")
+    ftit_max = constraints.get("ftit_soc_max_mwh")
+    if ftit_min is not None or ftit_max is not None:
+        min_soc_eff = _f(ftit_min, min_soc)
+        max_soc_eff = _f(ftit_max, max_soc)
+    else:
+        min_soc_eff = min(max_soc, min_soc + (reserve_soc_pct_drift * capacity if drift_flag else 0.0))
+        max_soc_eff = max_soc
 
     net = net_in
     if ramp_mw > 0.0:
@@ -58,7 +65,7 @@ def _projection_repair(
         discharge = min(net, max_discharge, max_power, feasible_by_soc)
         charge = 0.0
     else:
-        feasible_by_soc = max(0.0, (max_soc - current_soc) / charge_eff)
+        feasible_by_soc = max(0.0, (max_soc_eff - current_soc) / charge_eff)
         charge = min(-net, max_charge, max_power, feasible_by_soc)
         discharge = 0.0
 
@@ -79,7 +86,8 @@ def _projection_repair(
         "current_soc_mwh": float(current_soc),
         "next_soc_mwh": float(next_soc),
         "effective_min_soc_mwh": float(min_soc_eff),
-        "max_soc_mwh": float(max_soc),
+        "effective_max_soc_mwh": float(max_soc_eff),
+        "max_soc_mwh": float(max_soc_eff),
     }
     return safe, meta
 
@@ -102,8 +110,8 @@ def _robust_cfg_from_constraints(constraints: Mapping[str, Any]) -> RobustDispat
         battery_charge_efficiency=charge_eff,
         battery_discharge_efficiency=discharge_eff,
         battery_initial_soc_mwh=_f(constraints.get("current_soc_mwh"), capacity / 2.0),
-        battery_min_soc_mwh=_f(constraints.get("min_soc_mwh"), 0.0),
-        battery_max_soc_mwh=_f(constraints.get("max_soc_mwh"), capacity),
+        battery_min_soc_mwh=_f(constraints.get("ftit_soc_min_mwh"), _f(constraints.get("min_soc_mwh"), 0.0)),
+        battery_max_soc_mwh=_f(constraints.get("ftit_soc_max_mwh"), _f(constraints.get("max_soc_mwh"), capacity)),
         max_grid_import_mw=_f(constraints.get("max_grid_import_mw"), 500.0),
         default_price_per_mwh=_f(constraints.get("default_price_per_mwh"), 60.0),
         degradation_cost_per_mwh=_f(constraints.get("degradation_cost_per_mwh"), 10.0),
