@@ -1,0 +1,12 @@
+dc3s:
+  _calibration_note: These parameters were fitted by calibrate_dc3s_params.py to minimize
+    interval width subject to PICP >= target_coverage on the calibration split.
+  k_quality: 0.2
+  k_drift: 0.0
+  infl_max: 2.0
+  _calibration_meta:
+    picp: 0.9047619047619048
+    mean_width: 3589.9973896964552
+    target_coverage: 0.9
+    coverage_slack: 0.01
+    n_calibration_samples: 672

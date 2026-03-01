@@ -205,9 +205,14 @@ def main() -> None:
     if args.residuals and Path(args.residuals).exists():
         npz = np.load(args.residuals, allow_pickle=False)
         y_true = npz["y_true"].astype(float).reshape(-1) if "y_true" in npz.files else None
-        yhat = npz["y_pred"].astype(float).reshape(-1) if "y_pred" in npz.files else None
+        if "y_pred" in npz.files:
+            yhat = npz["y_pred"].astype(float).reshape(-1)
+        elif "q_lo" in npz.files and "q_hi" in npz.files:
+            yhat = (npz["q_hi"].astype(float).reshape(-1) + npz["q_lo"].astype(float).reshape(-1)) / 2.0
+        else:
+            yhat = None
         if y_true is None or yhat is None:
-            raise ValueError("--residuals npz must contain 'y_true' and 'y_pred' arrays.")
+            raise ValueError("--residuals npz must contain 'y_true' and 'y_pred' (or 'q_lo' and 'q_hi') arrays.")
     elif args.y_true and args.yhat:
         y_true = _load_npz_or_npy(args.y_true)
         yhat = _load_npz_or_npy(args.yhat)
