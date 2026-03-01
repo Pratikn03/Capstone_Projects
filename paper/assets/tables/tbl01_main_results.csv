@@ -1,0 +1,6 @@
+controller,true_soc_violation_rate_mean,true_soc_violation_rate_ci_low,true_soc_violation_rate_ci_high,true_soc_violation_severity_p95_mean,true_soc_violation_severity_p95_ci_low,true_soc_violation_severity_p95_ci_high,intervention_rate_mean,intervention_rate_ci_low,intervention_rate_ci_high,cost_delta_pct_mean
+cvar_interval,0.255754,0.174206,0.336508,0.280106,0.233700,0.329193,0.000000,0.000000,0.000000,-0.020447
+dc3s_ftit,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.027976,0.022024,0.033730,0.030392
+dc3s_wrapped,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,-0.018975
+deterministic_lp,0.039087,0.029960,0.048413,333.374926,243.596837,480.987094,0.000000,0.000000,0.000000,0.000000
+robust_fixed_interval,0.255754,0.174206,0.336508,0.280106,0.233700,0.329193,0.000000,0.000000,0.000000,-0.020447
