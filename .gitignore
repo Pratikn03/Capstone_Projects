@@ -52,6 +52,7 @@ logs/
 /tmp/
 
 # Coverage artifacts
+.coverage
 reports/.coverage
 reports/coverage.xml
 reports/coverage/
