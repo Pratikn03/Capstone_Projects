@@ -7,32 +7,131 @@
   ],
   "targets": {
     "load_mw": {
-      "n_features": 56,
+      "n_features": 53,
       "gbm": {
-        "rmse": 9045.830791045504,
-        "mae": 7448.375079337761,
-        "mape": 0.1697144917325564,
-        "smape": 0.15023520409253882,
-        "r2": -0.058028358450134876,
-        "model": "gbm_lightgbm",
+        "rmse": 305.1209624375309,
+        "mae": 187.86941461742373,
+        "mape": 0.003911572495132256,
+        "smape": 0.003903913775710714,
+        "r2": 0.9988479560783289,
+        "model": "gbm_sklearn_hgbrt",
         "ensemble_members": 1,
         "residual_quantiles": {
-          "0.1": -9364.09889745303,
-          "0.5": 293.3823574249618,
-          "0.9": 11899.294196862034
+          "0.1": -377.56404608942245,
+          "0.5": -21.553047500594403,
+          "0.9": 316.37014154864886
         },
         "tuned_params": null,
         "tuning_meta": null,
-        "quantile_models": null,
+        "quantile_models": [
+          "0.1",
+          "0.5",
+          "0.9"
+        ],
         "seed_member_metrics": [
           {
             "seed": 42,
-            "val_rmse": 8147.23891162356,
-            "val_mae": 7002.286431497035
+            "val_rmse": 402.7991946145934,
+            "val_mae": 244.87492637635114
+          }
+        ]
+      }
+    },
+    "wind_mw": {
+      "n_features": 53,
+      "gbm": {
+        "rmse": 219.1075784147325,
+        "mae": 129.3622766969851,
+        "mape": 0.027884827851954033,
+        "smape": 0.024099812028293276,
+        "r2": 0.9990741506507228,
+        "daylight_mape": 0.027884827851954033,
+        "model": "gbm_lightgbm",
+        "ensemble_members": 1,
+        "residual_quantiles": {
+          "0.1": -285.92549943919823,
+          "0.5": -9.008312594298332,
+          "0.9": 189.56323923737304
+        },
+        "tuned_params": null,
+        "tuning_meta": null,
+        "quantile_models": [
+          "0.1",
+          "0.5",
+          "0.9"
+        ],
+        "seed_member_metrics": [
+          {
+            "seed": 42,
+            "val_rmse": 240.9286899649743,
+            "val_mae": 157.43107871926847
+          }
+        ]
+      }
+    },
+    "solar_mw": {
+      "n_features": 53,
+      "gbm": {
+        "rmse": 240.35320950771336,
+        "mae": 117.3193371819155,
+        "mape": 32602460.145666324,
+        "smape": 0.6923604514515829,
+        "r2": 0.9993005047379279,
+        "daylight_mape": 0.08864876944143797,
+        "model": "gbm_lightgbm",
+        "ensemble_members": 1,
+        "residual_quantiles": {
+          "0.1": -203.0553858169236,
+          "0.5": 0.5548455440312233,
+          "0.9": 374.51407751813207
+        },
+        "tuned_params": null,
+        "tuning_meta": null,
+        "quantile_models": [
+          "0.1",
+          "0.5",
+          "0.9"
+        ],
+        "seed_member_metrics": [
+          {
+            "seed": 42,
+            "val_rmse": 471.58501068115373,
+            "val_mae": 201.15845609792976
+          }
+        ]
+      }
+    },
+    "price_eur_mwh": {
+      "n_features": 53,
+      "gbm": {
+        "rmse": 4.998528372562706,
+        "mae": 2.328736454310254,
+        "mape": 1.446678693662406,
+        "smape": 0.10161859846727576,
+        "r2": 0.8972695658299985,
+        "model": "gbm_lightgbm",
+        "ensemble_members": 1,
+        "residual_quantiles": {
+          "0.1": -5.651800192756973,
+          "0.5": -1.264136078242446,
+          "0.9": 3.423537655964969
+        },
+        "tuned_params": null,
+        "tuning_meta": null,
+        "quantile_models": [
+          "0.1",
+          "0.5",
+          "0.9"
+        ],
+        "seed_member_metrics": [
+          {
+            "seed": 42,
+            "val_rmse": 5.637386170276779,
+            "val_mae": 3.496855234764969
           }
         ]
       }
     }
   },
-  "manifest_id": "20260226_174418"
+  "manifest_id": "20260311_190508"
 }
