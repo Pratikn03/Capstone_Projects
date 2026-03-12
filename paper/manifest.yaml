@@ -31,6 +31,18 @@ figures:
     path: paper/assets/figures/fig08_rac_sensitivity_vs_width.png
     caption: "RAC-Cert sensitivity signal versus interval width expansion."
     status: provisional
+  FIG09_REGION_DATASET_CARDS:
+    path: paper/assets/figures/fig09_region_dataset_cards.png
+    caption: "Dataset cards for DE, US_MISO, US_PJM, and US_ERCOT release scope."
+    status: provisional
+  FIG10_CALIBRATION_TRADEOFF:
+    path: paper/assets/figures/fig10_calibration_tradeoff.png
+    caption: "Calibration tradeoff under standard interval metrics."
+    status: provisional
+  FIG11_TRANSFER_GENERALIZATION:
+    path: paper/assets/figures/fig11_transfer_generalization.png
+    caption: "Cross-region transfer and generalization summary."
+    status: provisional
 
 tables:
   TBL01_MAIN_RESULTS:
@@ -57,6 +69,10 @@ tables:
     path: paper/assets/tables/tbl06_hyperparams.csv
     title: "Core training and RAC-Cert hyperparameters."
     status: provisional
+  TBL07_DATASET_CARDS:
+    path: paper/assets/tables/tbl07_dataset_cards.csv
+    title: "Dataset-card inventory for the conference release family."
+    status: provisional
 
 data:
   DATA_MANIFEST:
@@ -64,6 +80,9 @@ data:
     status: locked
   METRICS_SNAPSHOT:
     path: paper/assets/data/metrics_snapshot.json
+    status: provisional
+  CONFERENCE_FIGURE_INVENTORY:
+    path: paper/assets/data/conference_figure_inventory.json
     status: provisional
   METRICS_TEX:
     path: paper/assets/data/metrics_values.tex
@@ -90,6 +109,7 @@ notes:
   metric_policy: "Numeric claims in prose should use \\PaperMetric keys and default to locked values until retraining refreshes metrics_values.tex."
   refresh_flow:
     - "python scripts/build_publication_artifact.py --out-dir reports/publication"
+    - "python scripts/build_conference_assets.py --out-dir reports/publication --dataset-summary reports/publication/tables/table1_dataset_summary.csv"
     - "bash scripts/export_paper_assets.sh"
     - "python scripts/build_paper_table_tex.py"
     - "python scripts/update_paper_metrics.py"

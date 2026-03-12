@@ -24,6 +24,18 @@ DATASET_PATHS: dict[str, dict[str, Any]] = {
         "features": Path("data/processed/us_eia930/features.parquet"),
         "splits_dir": Path("data/processed/us_eia930/splits"),
     },
+    "US_MISO": {
+        "features": Path("data/processed/us_eia930/features.parquet"),
+        "splits_dir": Path("data/processed/us_eia930/splits"),
+    },
+    "US_PJM": {
+        "features": Path("data/processed/us_eia930_pjm/features.parquet"),
+        "splits_dir": Path("data/processed/us_eia930_pjm/splits"),
+    },
+    "US_ERCOT": {
+        "features": Path("data/processed/us_eia930_ercot/features.parquet"),
+        "splits_dir": Path("data/processed/us_eia930_ercot/splits"),
+    },
 }
 
 
@@ -162,14 +174,15 @@ def build_manifest(datasets: list[str]) -> dict[str, Any]:
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build deterministic data identity manifest")
-    parser.add_argument("--dataset", choices=["DE", "US", "ALL"], default="ALL")
+    parser.add_argument("--dataset", choices=["DE", "US", "US_MISO", "US_PJM", "US_ERCOT", "ALL"], default="ALL")
     parser.add_argument("--output", default="data/dashboard/data_manifest.json")
     return parser.parse_args()
 
 
 def main() -> None:
     args = _parse_args()
-    datasets = ["DE", "US"] if args.dataset == "ALL" else [args.dataset]
+    datasets = ["DE", "US_MISO", "US_PJM", "US_ERCOT"] if args.dataset == "ALL" else [args.dataset]
+    datasets = ["US_MISO" if dataset == "US" else dataset for dataset in datasets]
     payload = build_manifest(datasets=datasets)
     output = Path(args.output)
     if not output.is_absolute():

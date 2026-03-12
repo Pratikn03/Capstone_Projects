@@ -23,6 +23,7 @@ CONTROLLER_ORDER = [
     "robust_fixed_interval",
     "cvar_interval",
     "dc3s_wrapped",
+    "dc3s_ftit",
 ]
 
 
@@ -149,25 +150,30 @@ def _print_drift_combo_summary(df_summary: pd.DataFrame) -> None:
         print("  warning: drift_combo rows are missing from the aggregated summary")
         return
 
-    wrapped = subset[subset["controller"] == "dc3s_wrapped"]
+    dc3s_rows = subset[subset["controller"].isin(["dc3s_wrapped", "dc3s_ftit"])]
     deterministic = subset[subset["controller"] == "deterministic_lp"]
     robust = subset[subset["controller"] == "robust_fixed_interval"]
-    if wrapped.empty or deterministic.empty or robust.empty:
+    if dc3s_rows.empty or deterministic.empty or robust.empty:
         print("[Table13] drift_combo summary")
         print("  warning: required drift_combo controller rows are missing from the aggregated summary")
         return
 
-    wrapped_picp = float(wrapped.iloc[0]["picp_90"])
+    best_dc3s = (
+        dc3s_rows.sort_values(["picp_90", "expected_cost_usd"], ascending=[False, True], kind="stable")
+        .iloc[0]
+    )
     det_picp = float(deterministic.iloc[0]["picp_90"])
-    cost_delta = float(wrapped.iloc[0]["expected_cost_usd"]) - float(robust.iloc[0]["expected_cost_usd"])
-    intervention_rate = float(wrapped.iloc[0]["intervention_rate"])
+    cost_delta = float(best_dc3s["expected_cost_usd"]) - float(robust.iloc[0]["expected_cost_usd"])
+    intervention_rate = float(best_dc3s["intervention_rate"])
 
     print("[Table13] drift_combo summary")
-    print(f"  dc3s_wrapped picp_90: {wrapped_picp:.3f}")
+    for _, row in dc3s_rows.sort_values("controller", kind="stable").iterrows():
+        print(f"  {row['controller']} picp_90: {float(row['picp_90']):.3f}")
     print(f"  deterministic_lp picp_90: {det_picp:.3f}")
-    print(f"  picp_90 delta (dc3s_wrapped - deterministic_lp): {wrapped_picp - det_picp:.3f}")
+    print(f"  best_dc3s_controller: {best_dc3s['controller']}")
+    print(f"  picp_90 delta (best_dc3s - deterministic_lp): {float(best_dc3s['picp_90']) - det_picp:.3f}")
     print(f"  cost delta vs robust_fixed_interval (USD): {cost_delta:.2f}")
-    print(f"  dc3s_wrapped intervention_rate: {intervention_rate:.3f}")
+    print(f"  {best_dc3s['controller']} intervention_rate: {intervention_rate:.3f}")
 
 
 def build_table13(input_path: Path, out_dir: Path) -> dict[str, Any]:

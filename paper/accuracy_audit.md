@@ -61,12 +61,14 @@ Canonical policy: **dataset-scoped latest** as of February 17, 2026.
 ## Claim Status Summary
 Detailed rows are in `paper/claim_matrix.csv`.
 
-- `Verified`: locked to artifact-backed values and run IDs.
-- `Conflicting`: contradicts canonical policy or breaks compilation.
-- `Unsupported`: no local evidence in repo artifacts.
-- `Needs Citation`: plausible claim, but no explicit source is currently linked.
+- `Verified`: locked to artifact-backed values and run IDs in the active release manuscript.
+- `Historical`: retained only as a record of superseded pre-lock wording.
+- `Inactive`: retained for future work, but absent from the active release manuscript.
+- `Conflicting`: active manuscript wording contradicts canonical policy or breaks compilation.
+- `Unsupported`: active manuscript wording has no local evidence in repo artifacts.
+- `Needs Citation`: active manuscript wording is plausible, but no explicit source is currently linked.
 
-Note: some `Conflicting` entries in `paper/claim_matrix.csv` are retained as historical reconciliation records from pre-lock drafts and should not be interpreted as active blockers in current markdown/LaTeX/DOCX output.
+Historical reconciliation rows are tracked explicitly with status `Historical` and should not be interpreted as active blockers in current markdown/LaTeX/DOCX output.
 
 ## Unsupported / Citation-Risk Claims
 These must be cited or reframed before publication:

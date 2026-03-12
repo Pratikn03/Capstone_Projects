@@ -70,4 +70,5 @@ The manuscript is release-ready only when:
 1. Claim validator exits with code 0.
 2. LaTeX compile succeeds without missing files.
 3. Claim matrix has no unresolved `Conflicting` rows in active manuscript sections.
-4. `Unsupported` and `Needs Citation` claims are cited or removed from the release version.
+4. `Unsupported` and `Needs Citation` apply only to active manuscript claims; dormant rows must be marked `Inactive`.
+5. Historical pre-lock rows must use status `Historical`, not `Conflicting`.

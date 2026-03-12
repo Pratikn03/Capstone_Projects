@@ -21,7 +21,15 @@ from pathlib import Path
 from typing import Iterable
 
 
-ALLOWED_CLAIM_STATUSES = {"Verified", "Conflicting", "Unsupported", "Needs Citation"}
+ALLOWED_CLAIM_STATUSES = {
+    "Verified",
+    "Historical",
+    "Inactive",
+    "Conflicting",
+    "Unsupported",
+    "Needs Citation",
+}
+ACTIVE_CLAIM_STATUSES = {"Verified", "Conflicting", "Unsupported", "Needs Citation"}
 RUN_ID_RE = re.compile(r"\b20\d{6}_\d{6}\b")
 
 
@@ -182,6 +190,7 @@ def _check_claim_matrix(findings: list[Finding], claim_matrix_path: Path) -> Non
         "claim_id",
         "status",
         "category",
+        "manuscript_locations",
         "claim_text",
         "source_file",
     }
@@ -193,6 +202,7 @@ def _check_claim_matrix(findings: list[Finding], claim_matrix_path: Path) -> Non
     for row in rows:
         cid = (row.get("claim_id") or "").strip()
         status = (row.get("status") or "").strip()
+        manuscript_locations = (row.get("manuscript_locations") or "").strip()
         if not cid:
             findings.append(Finding("ERROR", "claim_matrix", str(claim_matrix_path), "Found row without claim_id"))
             continue
@@ -201,6 +211,47 @@ def _check_claim_matrix(findings: list[Finding], claim_matrix_path: Path) -> Non
         seen_ids.add(cid)
         if status not in ALLOWED_CLAIM_STATUSES:
             findings.append(Finding("ERROR", "claim_matrix", str(claim_matrix_path), f"Invalid status '{status}' for {cid}"))
+            continue
+
+        is_not_present = manuscript_locations.upper() == "NOT PRESENT"
+        is_historical = manuscript_locations.startswith("historical_")
+
+        if status == "Verified" and (is_not_present or is_historical):
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "claim_matrix",
+                    str(claim_matrix_path),
+                    f"Verified claim {cid} cannot use inactive manuscript location '{manuscript_locations}'",
+                )
+            )
+        if status == "Historical" and not is_historical:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "claim_matrix",
+                    str(claim_matrix_path),
+                    f"Historical claim {cid} must use historical_* manuscript_locations",
+                )
+            )
+        if status == "Inactive" and not is_not_present:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "claim_matrix",
+                    str(claim_matrix_path),
+                    f"Inactive claim {cid} must use manuscript_locations=NOT PRESENT",
+                )
+            )
+        if status in ACTIVE_CLAIM_STATUSES and (is_not_present or is_historical):
+            findings.append(
+                Finding(
+                    "WARN",
+                    "claim_matrix",
+                    str(claim_matrix_path),
+                    f"Active review status '{status}' is attached to inactive claim {cid}; use Historical or Inactive instead",
+                )
+            )
 
 
 def _print_findings(findings: list[Finding]) -> None:

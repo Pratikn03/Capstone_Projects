@@ -130,6 +130,16 @@ def test_print_drift_combo_summary_outputs_expected_lines(capsys: pytest.Capture
             },
             {
                 "scenario": "drift_combo",
+                "controller": "dc3s_ftit",
+                "n_seeds": 2,
+                "picp_90": 0.950,
+                "mean_interval_width": 108.0,
+                "expected_cost_usd": 992.0,
+                "intervention_rate": 0.080,
+                "violation_rate": 0.005,
+            },
+            {
+                "scenario": "drift_combo",
                 "controller": "deterministic_lp",
                 "n_seeds": 2,
                 "picp_90": 0.900,
@@ -155,9 +165,11 @@ def test_print_drift_combo_summary_outputs_expected_lines(capsys: pytest.Capture
     out = capsys.readouterr().out
     assert "[Table13] drift_combo summary" in out
     assert "dc3s_wrapped picp_90: 0.930" in out
+    assert "dc3s_ftit picp_90: 0.950" in out
     assert "deterministic_lp picp_90: 0.900" in out
-    assert "cost delta vs robust_fixed_interval (USD): -5.00" in out
-    assert "dc3s_wrapped intervention_rate: 0.120" in out
+    assert "best_dc3s_controller: dc3s_ftit" in out
+    assert "cost delta vs robust_fixed_interval (USD): -3.00" in out
+    assert "dc3s_ftit intervention_rate: 0.080" in out
 
 
 def test_build_table13_sorts_rows_deterministically(tmp_path: Path) -> None:
@@ -171,6 +183,16 @@ def test_build_table13_sorts_rows_deterministically(tmp_path: Path) -> None:
             "mean_interval_width": 110.0,
             "expected_cost_usd": 1000.0,
             "intervention_rate": 0.10,
+            "violation_rate": 0.00,
+        },
+        {
+            "scenario": "drift_combo",
+            "seed": 0,
+            "controller": "dc3s_ftit",
+            "picp_90": 0.94,
+            "mean_interval_width": 111.0,
+            "expected_cost_usd": 999.0,
+            "intervention_rate": 0.08,
             "violation_rate": 0.00,
         },
         {
@@ -203,4 +225,5 @@ def test_build_table13_sorts_rows_deterministically(tmp_path: Path) -> None:
         {"scenario": "nominal", "controller": "deterministic_lp"},
         {"scenario": "nominal", "controller": "robust_fixed_interval"},
         {"scenario": "drift_combo", "controller": "dc3s_wrapped"},
+        {"scenario": "drift_combo", "controller": "dc3s_ftit"},
     ]
