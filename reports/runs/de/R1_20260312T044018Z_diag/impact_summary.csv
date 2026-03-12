@@ -1,0 +1,2 @@
+baseline_cost_usd,gridpulse_cost_usd,cost_savings_pct,baseline_carbon_kg,gridpulse_carbon_kg,carbon_reduction_pct,baseline_peak_mw,gridpulse_peak_mw,peak_shaving_pct,oracle_cost_usd,oracle_gap_pct,carbon_source
+155149015.93,136362150.56206042,12.108916872805581,1798244455.2500932,1851253975.775373,-2.9478484068456305,52165.0,44889.14184995886,13.947777532907388,152464282.91659546,-10.561248868591475,average
