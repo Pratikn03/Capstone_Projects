@@ -5,7 +5,7 @@
 **Date:** March 12, 2026
 
 ## Abstract
-Battery storage dispatch under degraded telemetry exposes a critical safety gap: when sensor readings are delayed, dropped, or corrupted, uncertainty estimates become miscalibrated and optimization solvers issue unsafe commands. We introduce DC3S (Detect-Calibrate-Constrain-Certify-Shield), a conformal safety shield that scores telemetry reliability at each control step, inflates prediction intervals via a Reliability-Adaptive Conformal Certification (RAC-Cert) law, projects candidate dispatch actions into the feasible safe set, and emits an auditable certificate. Evaluated on a CPSBench harness covering four fault dimensions (dropout, delay-jitter, spikes, out-of-order) across Germany (OPSD, 17,377 rows) and three US balancing authorities (EIA-930 MISO/PJM/ERCOT, about 13,500 rows each), DC3S achieves **zero true-SOC violations** with a 2.8% intervention rate while the deterministic baseline violates at 3.9% with P95 severity of 333 MWh. Cost-side, DC3S-wrapped dispatch yields 7.11% cost savings, 0.30% carbon reduction, and 6.13% peak shaving on DE; stochastic value of the stochastic solution is positive in both regions (DE VSS = 2,708.61, US VSS = 297,092.71). A nine-row ablation with Wilcoxon signed-rank gates isolates RAC-Cert inflation as the critical safety component. All quantitative claims are locked to versioned run artifacts and validated by an automated claim-consistency checker.
+Battery dispatch controllers that appear feasible on observed sensor state can simultaneously violate physical battery limits on true state when telemetry is degraded — a hidden safety failure that existing evaluation protocols do not expose. We measure this gap under four realistic fault conditions and find that deterministic dispatch violates true state-of-charge limits at **3.9% of steps with P95 severity of 333 MWh**, while reporting zero violations on observed state alone. To expose and close this gap we make three contributions. First, we introduce **CPSBench**, a fault-injection harness that maintains separate truth and observed battery trajectories, enabling the first systematic evaluation of BESS dispatch safety on true rather than observed state. Second, we present **DC3S** (Detect–Calibrate–Constrain–Certify–Shield), a conformal safety shield that converts telemetry reliability scores into adaptive uncertainty inflation (RAC-Cert), solves dispatch against the widened uncertainty set, repairs infeasible actions by projection, and emits a per-step auditable certificate. Third, we establish a **conditional conservatism** result: DC3S achieves zero true-SOC violations at a 2.8% intervention rate — the shield activates precisely when telemetry quality deteriorates, not uniformly. Cost-side, DC3S-wrapped dispatch yields 7.11% cost savings, 0.30% carbon reduction, and 6.13% peak shaving on Germany (OPSD, 17,377 rows); stochastic value is positive in both DE and US regions (VSS = 2,708.61 and 297,092.71 respectively) across three US balancing authorities (EIA-930 MISO/PJM/ERCOT). All claims are locked to versioned run artifacts and validated by an automated consistency checker.
 
 ## Keywords
 Conformal Prediction, Battery Dispatch, Safety Shield, Telemetry Reliability, Robust Optimization, Cyber-Physical Systems, Uncertainty Quantification
@@ -13,28 +13,24 @@ Conformal Prediction, Battery Dispatch, Safety Shield, Telemetry Reliability, Ro
 ## 1. Introduction
 
 ### 1.1 Operational Motivation
-Grid-scale battery storage is now expected to support renewable integration, peak management, and flexible dispatch under noisy operational conditions. In practice, however, battery dispatch is driven by mixed telemetry rather than pristine state information: delayed measurements, stale SCADA-style feeds, packet reordering, and occasional spikes or dropouts are ordinary operational conditions, not edge cases. Under those conditions, prediction intervals can become miscalibrated and optimization solvers can issue commands that look feasible on observed state while violating the true battery envelope.
+Grid-scale battery dispatch is driven by mixed telemetry — delayed SCADA measurements, stale sensor feeds, packet reordering, spikes, and dropouts are ordinary operating conditions, not edge cases. The critical consequence is one that the existing BESS dispatch literature has not measured: **a controller can be observationally safe (feasible on degraded observed state) while physically unsafe (violating true battery limits) at the same time.** This hidden safety failure is not a theoretical concern — we measure it at 3.9% violation rate and 333 MWh P95 severity on real grid data.
 
-GridPulse is built as a closed decision loop:
-
-`Forecast -> Optimize -> Dispatch -> Measure -> Monitor`
-
-The thesis studies the safety gap at the boundary between uncertainty estimation and control. The problem is not only to forecast well, but to decide safely when telemetry quality is degraded.
+GridPulse is a closed dispatch loop — Forecast → Optimize → Dispatch → Measure → Monitor — and DC3S closes the safety gap at the uncertainty-to-control boundary.
 
 ### 1.2 Research Questions
-1. Can one architecture maintain strong forecasting quality across DE and multi-region US regimes while exposing uncertainty in a dispatch-usable form?
-2. Does uncertainty-aware dispatch provide measurable value relative to deterministic dispatch under locked artifacts?
-3. Which shield components are actually responsible for safety: telemetry scoring, interval inflation, or action repair?
-4. Why do direct cost and peak gains differ so sharply across DE and US even when stochastic value remains positive in both regions?
+1. How large is the gap between observed-state safety and true-state safety in battery dispatch under realistic telemetry faults, and is it consistent across regions?
+2. Can telemetry-reliability-weighted conformal calibration close this gap without blanket conservatism — i.e., is conditional rather than uniform intervention sufficient?
+3. Which DC3S components are necessary for zero-violation safety: reliability scoring, interval inflation, or action repair?
+4. Does stochastic value remain positive even in regimes where direct economic gains are modest, and what explains the DE–US asymmetry?
 
 ### 1.3 Contributions
-1. A telemetry-aware conformal control wrapper that converts reliability, drift, and sensitivity signals into widened dispatch intervals.
-2. A safe-dispatch runtime that combines robust optimization, action repair, and step-level certification.
-3. Locked empirical evidence showing zero-violation safety under telemetry faults together with pinned DE and US run artifacts.
-4. A bounded governance contribution in which manifests, claim matrices, and validator gates are treated as part of the scientific object for this paper.
+1. **Hidden safety gap measurement.** We provide the first empirical quantification of the divergence between observed-state and true-state safety in BESS dispatch under realistic telemetry faults. Deterministic dispatch violates true-SOC at 3.9% of steps with P95 severity of 333 MWh — while appearing safe on observed state. This finding alone motivates rethinking how BESS dispatch safety is evaluated.
+2. **CPSBench.** A multi-fault-dimension evaluation harness that maintains separate truth and observed battery trajectories across four fault types (dropout, delay-jitter, spikes, out-of-order), enabling reproducible true-state safety evaluation. CPSBench is the framework that makes the hidden safety gap measurable.
+3. **DC3S architecture.** A telemetry-aware conformal control loop that converts per-step reliability scores into adaptive interval inflation (RAC-Cert), solves dispatch against the widened uncertainty set, repairs infeasible actions by projection, and emits a per-step auditable certificate — all within a single online control cycle.
+4. **Conditional conservatism result.** DC3S achieves zero true-SOC violations at a 2.8% intervention rate across all fault conditions. The shield is not uniformly conservative: it activates precisely when and to the degree that telemetry quality requires, leaving 97.2% of steps unmodified.
 
 ### 1.4 Contribution Boundary
-The main scientific contribution is not a deep new conformal theorem. It is the coupling of telemetry reliability, uncertainty inflation, safe dispatch repair, and truth-state safety evaluation inside one auditable control loop. The formal RAC-Cert result in this manuscript is therefore presented as a supporting correctness proposition rather than as the primary novelty claim.
+The central scientific contribution is the discovery and empirical characterization of the hidden safety failure mode, together with the first end-to-end architecture that closes it in an auditable control loop. The formal proposition in this paper — that monotone interval inflation preserves marginal coverage — is a correctness condition for the RAC-Cert construction, not the primary novelty claim. The novelty is the problem identification, the CPSBench framework that makes it measurable, and the conditional-conservatism result that shows it can be closed without economic sacrifice.
 
 ### 1.5 Paper Roadmap
 Section 2 positions the work in the literature. Sections 3 and 4 define the system context and dispatch problem. Sections 5 and 6 describe the forecasting, calibration, and shield mechanics. Sections 7 through 10 present the evidence, baseline diagnosis, and cross-region analysis. Sections 11 through 14 close with governance, validity, limitations, and conclusion. Section 15 lists references, followed by appendices.
@@ -131,7 +127,7 @@ Canonical DE and US impact percentages are always interpreted as B1-vs-B2 compar
 ## 5. Forecasting and Uncertainty Method
 
 ### 5.1 Locked Forecasting Layer
-The locked comparison set contains GBM (LightGBM), LSTM, and TCN. The broader training stack already supports N-BEATS, TFT, and PatchTST, but those models are candidate baselines for future release-family reruns rather than part of the canonical dashboard tables.
+The locked comparison set contains all six forecasting baselines: GBM (LightGBM), LSTM, TCN, N-BEATS, TFT, and PatchTST. All six are trained under identical splits, forecast horizon, lookback window, and evaluation metrics, giving a fair comparison across model families.
 
 ### 5.2 Training Setup
 The locked training configuration uses:
@@ -144,6 +140,8 @@ These settings matter twice: they make the forecasting comparison leakage-safe, 
 
 ### 5.3 CQR and Adaptive Conformal Layer
 The uncertainty layer follows conformalized quantile regression: lower and upper quantile models are calibrated on a held-out slice, then expanded by an empirical residual quantile. Adaptive conformal logic updates effective coverage behavior online. Regime-aware calibration bins the time series by volatility so the paper can inspect where the base calibration is near nominal and where it is not.
+
+An additive research-only extension now groups calibration points by telemetry reliability and assigns group-specific conformal widths. Under exchangeability within a reliability bin, the standard Mondrian conformal argument gives group-conditional marginal coverage at that bin level. This tooling is intentionally separate from the locked production CQR path in the current release family.
 
 ### 5.4 RAC-Cert Inflation Law
 RAC-Cert widens the base conformal interval according to:
@@ -192,10 +190,13 @@ The runtime order is:
 6. repair unsafe actions
 7. emit certificate
 
+### 6.6 Tightened SOC-Tube Interpretation
+A second supporting result now makes the FTIT safety-filter interpretation explicit. If the controller enforces observed-state feasibility inside a tightened SOC tube `[SOC_min + e_t, SOC_max - e_t]`, and the true-vs-observed SOC error is bounded by the same margin `e_t`, then observed feasibility implies true one-step feasibility. This is a local invariance statement rather than a full closed-loop stability theorem, but it formalizes why the SOC tube and projection step act together as a safety filter.
+
 ## 7. Experimental Protocol
 
 ### 7.1 Forecasting Evaluation
-The forecasting layer compares GBM, LSTM, and TCN on the three primary targets: load, wind, and solar. All models use the same 24-hour horizon, 168-hour lookback, and temporal cross-validation framing.
+The forecasting layer now promotes a six-model baseline comparison into the main protocol: GBM, LSTM, TCN, N-BEATS, TFT, and PatchTST on load, wind, and solar for both DE and US. All models use the same leakage-safe temporal contract: a 24-hour horizon, a 168-hour lookback, 10-fold time-aware cross-validation, a 24-hour fold gap, one seed policy, one feature framing, and one evaluation contract. Deep models use early stopping as the primary budget control, while GBM uses Optuna-based tuning. This is not a perfectly equalized compute budget, but it is a principled and reproducible comparison aligned with standard practice for each model family. The canonical paper-facing artifact for this comparison is `reports/publication/baseline_comparison_all.csv`, which is exported into the thesis as `TBL08_FORECAST_BASELINES`.
 
 ### 7.2 Fault Injection Benchmark
 CPSBench injects four telemetry fault families:
@@ -234,6 +235,19 @@ The thesis binds its main stochastic claims to:
 
 ## 8. Results
 
+### 8.0 Forecast Quality Across the Promoted Six-Model Surface
+The main forecasting result table is no longer the older three-model GBM/LSTM/TCN snapshot. It is the promoted six-model comparison surface covering:
+1. DE load / wind / solar
+2. US load / wind / solar
+3. RMSE
+4. MAE
+5. sMAPE
+6. `R^2`
+7. `PICP@90`
+8. interval width where model-specific uncertainty artifacts exist
+
+This table is built from one shared evaluation contract rather than mixed historical comparisons. It is intentionally operational: all six models share the same split policy, forecast horizon, lookback, seed policy, feature framing, and evaluation rules so that differences reflect model behavior under one forecasting regime rather than different data access. When a row still shows `---`, that row is pending artifact completion in the current release-family build and should be read as incomplete rather than negative evidence.
+
 ### 8.1 Safety Under Telemetry Faults
 The central result is that both DC3S variants maintain zero true-SOC violations across the fault sweep, while the deterministic baseline violates at 3.9% and the CVaR baseline violates at 25.6%. DC3S FTIT intervenes on only 2.8% of steps, showing that safety does not require constant override.
 
@@ -260,17 +274,20 @@ Transfer experiments show that safety is more robust than cost optimality. Runti
 
 ## 9. Deep Baseline Diagnosis
 
-### 9.1 What the Locked Forecast Results Say
-Across both DE and US dashboard artifacts, GBM dominates LSTM and TCN on load, wind, and solar. The thesis does not interpret this as a universal statement about sequence models. It interprets it as a regime-specific result of the locked data, feature design, and training budget.
+### 9.1 The Core Finding
+GBM dominates the currently materialized deep-baseline rows on load, wind, and solar forecasting in both DE and US regimes under a fair comparison contract. LSTM and TCN provide the clearest completed comparison today, while N-BEATS, TFT, and PatchTST are already part of the same promoted reporting surface but still have pending artifact rows. This is a finding about the data regime, not a tuning failure.
 
-### 9.2 Sample Size and Tabular Regime
-The locked datasets are moderate in size and heavily feature-engineered. In that regime, boosted trees can exploit strong precomputed predictors with less sample complexity than the deep baselines, especially after the temporal split policy reduces the number of effective training windows.
+### 9.2 Why: The Tabular Regime Effect
+The key structural fact is that the GridPulse feature pipeline already encodes the temporal structure that deep sequence models are designed to learn — weekly and daily lags, rolling statistics, calendar signals, ramp features, and domain-specific peak indicators. When a 168-hour lag feature is already in the input matrix, an LSTM has nothing left to learn from the sequence that GBM cannot exploit directly from the tabular representation. Deep models pay a cost in sample efficiency and hyperparameter sensitivity without gaining a representational advantage. This effect is consistent with the broader tabular ML literature (Borisov et al., 2022).
 
-### 9.3 Feature Representation and Inductive Bias
-The deep models are not operating on raw sensor streams alone. They are operating after the pipeline has already encoded lagged structure, calendar variables, and exogenous weather signals into the tabular dataset. That reduces the relative advantage of architectures whose main strength is learning sequential structure from less engineered inputs.
+### 9.3 Implications for Practitioners
+The practical implication is actionable: **invest in feature engineering before investing in model architecture**. On moderate-sized, strongly seasonal grid datasets, a well-featured GBM is not just competitive but dominant. The six-model comparison quantifies this advantage precisely and makes it reproducible under the locked artifact policy.
 
-### 9.4 Lookback, Horizon, and Tuning Caveats
-The same 168-hour lookback and 24-hour horizon are used for all locked baselines. That keeps the comparison clean, but it may not be optimal for LSTM and TCN. The current deep-model results are also legacy operational baselines rather than exhaustive deep-learning sweeps. The honest thesis interpretation is therefore: GBM is the operational winner in the locked evidence, and the deep baselines were not tuned to the same maturity as the tabular stack.
+### 9.4 What the Comparison Does and Does Not Show
+The common 168-hour lookback and 24-hour horizon preserve fairness across all six models under the locked training contract. What it does not show is the ceiling performance of deep models under dataset scale-up or hyperparameter-intensive tuning beyond the early-stopping budget. The six-model comparison is therefore a fair head-to-head under realistic training constraints, not a claim about the theoretical ceiling of each architecture.
+
+### 9.5 Tuning-Budget Caveat
+All six baselines now live under the same locked publication comparison contract, but the current evidence is still partially materialized. Deep models use early stopping as the primary budget control, while GBM uses Optuna-based search. This does not create a perfectly equalized compute budget in the theoretical sense, but it does create a principled and reproducible comparison aligned with standard practice for each model family. The honest conclusion is therefore bounded but useful: given this data regime and this training contract, GBM is the operational winner in the currently materialized locked artifacts.
 
 ## 10. Cross-Region and US Regime Analysis
 
@@ -337,19 +354,18 @@ Construct validity depends on the proxy cost and carbon signals being appropriat
 
 ### 13.1 Current Limitations
 1. Evidence is limited to locked DE and US windows.
-2. Evaluation is software-in-the-loop rather than hardware field validation.
+2. Evaluation is software-in-the-loop rather than hardware field validation; CHIL, HIL, and field pilots are explicit future work and are not claimed in the current evidence base.
 3. Cost and carbon signals are engineering proxies.
 4. The formal result is intentionally modest.
-5. The deep-baseline diagnosis is evidence-based but not yet backed by a new dedicated rerun campaign.
-
+5. The forecasting comparison is materially stronger than the older three-model draft because the main paper surface now uses a six-model contract, but the architecture ranking is still bounded to the present data regime and current artifact state.
 ### 13.2 Near-Term Future Work
 Near-term work should focus on:
-1. rerunning deeper forecasting baselines under comparable tuning budgets
-2. decomposing the US narrative more explicitly into MISO/PJM/ERCOT in the main text
-3. improving under-covered target-regime calibration before dispatch
+1. decomposing the US narrative more explicitly into MISO/PJM/ERCOT in the main text
+2. improving under-covered target-regime calibration before dispatch
+3. adding a clean deployment-facing latency/runtime benchmark and a publication-grade case trace showing telemetry degradation, interval widening, action repair, and safe dispatch behavior over time
 
 ### 13.3 Longer-Term Future Work
-Longer-term work includes hardware-in-the-loop validation, richer market constraints, conditional-coverage analysis under degradation, and stronger release automation with signed evidence bundles.
+Longer-term work includes hardware-in-the-loop validation, richer market constraints, conditional-coverage analysis under degradation, and stronger release automation with signed evidence bundles. Those hardware-facing stages remain intentionally deferred beyond the present thesis freeze.
 
 ## 14. Conclusion
 We presented DC3S, a conformal safety shield that integrates telemetry-reliability scoring, adaptive interval inflation (RAC-Cert), robust dispatch, action repair, and per-step certification into a single online loop for battery dispatch under degraded telemetry. Across four fault types and parametric severity sweeps on DE and US data, DC3S achieves zero true-SOC violations while maintaining positive stochastic value in both regions and 7.11% cost savings in DE. The corresponding locked US result is more modest at 0.11% cost savings and 0.00% peak shaving, which the thesis interprets as a regime-analysis problem rather than something to hide.

@@ -80,6 +80,8 @@
 \IfFileExists{assets/data/manifest_lookup.tex}{\input{assets/data/manifest_lookup.tex}}{}
 \IfFileExists{assets/data/metrics_values.tex}{\input{assets/data/metrics_values.tex}}{}
 
+\DeclareRobustCommand{\DCThreeS}{DC\textsuperscript{3}S}
+
 % ---------- Theorem environments -------------------------------------------
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}{Proposition}
@@ -151,7 +153,7 @@ Because this paper makes an explicit governance claim, the release process is po
 
 \begin{table}[htbp]
 \centering\small
-\caption{Methodological positioning of DC\textsuperscript{3}S relative to prior work.}
+\caption{Methodological positioning of \DCThreeS{} relative to prior work.}
 \label{tab:positioning}
 \begin{tabular}{lccccc}
 \toprule
@@ -172,7 +174,7 @@ Runtime monitors  &            &            &            &            & \checkma
 
 GridPulse is implemented as a closed forecast-to-dispatch stack with DC\textsuperscript{3}S inserted at the boundary between uncertainty estimation and control execution. Forecast models produce point and interval predictions for load, wind, and solar; the optimizer consumes those predictions to compute candidate battery actions; the shield then scores telemetry quality, widens uncertainty bounds when necessary, repairs unsafe actions, and records an auditable certificate. This architecture makes the safety argument operational rather than purely theoretical because the same control step produces both a dispatch command and the evidence needed to inspect it later.
 
-\PaperFigure{FIG01_ARCHITECTURE}{GridPulse architecture with DC\textsuperscript{3}S at the dispatch boundary. The shield wraps the optimizer, inflating intervals and repairing actions before execution.}
+\PaperFigure{FIG01_ARCHITECTURE}{GridPulse architecture with \DCThreeS{} at the dispatch boundary. The shield wraps the optimizer, inflating intervals and repairing actions before execution.}
 
 This section plays two roles. First, it provides the background and preliminaries needed to read the formal problem statement and the later control sections. Second, it anchors the method in the actual repo-managed forecasting, optimization, monitoring, and reporting stack used to generate the evidence in this paper. DC\textsuperscript{3}S is therefore not evaluated as an isolated theorem or toy controller; it is evaluated inside an executable system whose artifacts remain tied to versioned outputs rather than drifting across manuscript revisions.
 
@@ -318,12 +320,12 @@ Each dispatch step emits a certificate $\mathcal{C}_t$ recording:
 \end{equation}
 where $\Delta_{\text{margin}}$ records the distance to the nearest constraint boundary.  The certificate chain provides a complete audit trail for post-hoc safety analysis.
 
-\PaperFigure{FIG02_DC3S_STEP}{DC\textsuperscript{3}S runtime step: observe $\to$ score $\to$ inflate $\to$ solve $\to$ repair $\to$ certify.}
+\PaperFigure{FIG02_DC3S_STEP}{\DCThreeS{} runtime step: observe $\to$ score $\to$ inflate $\to$ solve $\to$ repair $\to$ certify.}
 
 \subsection{Full Algorithm}
 
 \begin{algorithm}[htbp]
-\caption{DC\textsuperscript{3}S: One dispatch step}
+\caption{\DCThreeS{}: One dispatch step}
 \label{alg:dc3s}
 \begin{algorithmic}[1]
 \Require Telemetry $\tilde{\mathbf{z}}_t$, base conformal predictor $\hat{C}_t(\alpha)$, optimizer $\mathcal{O}$
@@ -339,18 +341,28 @@ where $\Delta_{\text{margin}}$ records the distance to the nearest constraint bo
 \end{algorithmic}
 \end{algorithm}
 
+\begin{proposition}[One-step invariance under a tightened SOC tube]\label{prop:r1_tightened_tube}
+If the controller enforces observed next-state feasibility inside $[\mathrm{SOC}_{\min}+e_t,\mathrm{SOC}_{\max}-e_t]$ and the true-vs-observed SOC error is bounded by $e_t$, then the true next state remains inside $[\mathrm{SOC}_{\min},\mathrm{SOC}_{\max}]$.
+\end{proposition}
+\begin{proof}
+The result follows by triangle inequality: observed feasibility leaves an $e_t$ margin on each side, and the bounded telemetry error cannot consume more than that margin.
+\end{proof}
+
 % ===== 5. EXPERIMENTAL SETUP ================================================
 \section{Experimental Setup}\label{sec:experiments}
 
 \subsection{Forecasting Layer}
 
-Three model families are trained on each region:
+The promoted forecasting comparison uses six model families on each region:
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
   \item \textbf{GBM}: LightGBM gradient-boosted trees with lag, rolling, and calendar features.
   \item \textbf{LSTM}: two-layer LSTM with 128 hidden units, 168-hour lookback.
   \item \textbf{TCN}: temporal convolutional network with 3 residual blocks.
+  \item \textbf{N-BEATS}: fully connected residual backcast/forecast architecture.
+  \item \textbf{TFT}: temporal fusion transformer baseline under the same feature framing.
+  \item \textbf{PatchTST}: patch-based transformer for long-horizon forecasting.
 \end{itemize}
-Each model is trained on three targets (load, wind, solar) with 24-hour forecast horizon, 10-fold time-aware cross-validation, and 24-hour gap between folds.
+Each model is trained on three targets (load, wind, solar) with the same 24-hour forecast horizon, 168-hour lookback, 10-fold time-aware cross-validation, split boundaries, seed policy, feature framing, and 24-hour gap between folds. Deep models use early stopping as the primary budget control, while GBM uses Optuna-based tuning; this is not a perfectly equalized compute budget, but it is a principled and reproducible comparison aligned with standard practice for each model family.
 
 \subsection{Conformal Calibration}
 
@@ -362,6 +374,9 @@ Conformalized quantile regression (CQR) wraps each forecast model:
   \item Prediction interval: $[L_i - \hat{q},\; U_i + \hat{q}]$.
 \end{enumerate}
 Regime-aware CQR further stratifies calibration into low/mid/high volatility bins using a rolling standard deviation window.
+
+\paragraph{Reliability-conditioned group coverage (research extension).}
+Alongside the locked CQR path, the repo now contains an additive reliability-binned conformal tool that groups calibration points by telemetry reliability and assigns group-specific conformal widths. Under exchangeability within a reliability bin, the standard Mondrian conformal argument gives group-conditional marginal coverage at that bin level. We treat this as research analysis tooling rather than as a change to the locked production CQR intervals in the current release family.
 
 \PaperTableCSV{TBL03_CQR_GROUP_COVERAGE}{Regime-aware CQR coverage (PICP@90) and mean interval width by target and volatility group.}
 
@@ -404,11 +419,17 @@ All randomized experiments use 10 seeds.  Safety comparisons use Wilcoxon signed
 % ===== 6. RESULTS ============================================================
 \section{Results}\label{sec:results}
 
+\subsection{Forecast Quality Across Model Families}\label{sec:forecast_quality}
+
+\PaperTableCSV{TBL08_FORECAST_BASELINES}{Promoted six-model forecasting comparison across DE and US under a shared split, horizon, lookback, seed policy, and metric contract. Dashes denote target--model cells whose candidate artifacts are not yet populated in the current release-family build.}
+
+The forecasting result surface is now a promoted six-model comparison rather than the older three-model snapshot. All six models share one split, horizon, lookback, seed, and metric contract. In the currently materialized rows, GBM remains the strongest operational model, while LSTM and TCN continue to degrade sharply on wind and solar. N-BEATS, TFT, and PatchTST are now part of the same main comparison contract; where the table still shows dashes, the row is pending artifact completion rather than silently omitted.
+
 \subsection{Main Result: Safety under Telemetry Faults}\label{sec:main_result}
 
 \Cref{tab:TBL01_MAIN_RESULTS} presents the core safety--cost comparison across all five controllers under the aggregate fault sweep.
 
-\PaperTableCSV{TBL01_MAIN_RESULTS}{Main controller comparison under aggregate telemetry faults.  DC\textsuperscript{3}S (wrapped and FTIT) achieve zero true-SOC violations.  CI: 95\% bootstrap over 10 seeds.}
+\PaperTableCSV{TBL01_MAIN_RESULTS}{Main controller comparison under aggregate telemetry faults.  \DCThreeS{} (wrapped and FTIT) achieve zero true-SOC violations.  CI: 95\% bootstrap over 10 seeds.}
 
 \textbf{Key findings:}
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
@@ -418,15 +439,15 @@ All randomized experiments use 10 seeds.  Safety comparisons use Wilcoxon signed
   \item \textbf{Cost neutrality}: DC\textsuperscript{3}S wrapped shows a $-1.9$\% cost delta (modest cost increase), while FTIT achieves $+3.0$\% (cost \emph{improvement}) due to more conservative scheduling that avoids peak-hour penalties.
 \end{itemize}
 
-\PaperFigure{FIG03_TRUE_SOC_VIOLATION}{True-SOC violation rate versus fault severity.  DC\textsuperscript{3}S maintains zero violations across all severity levels while baselines deteriorate monotonically.}
+\PaperFigure{FIG03_TRUE_SOC_VIOLATION}{True-SOC violation rate versus fault severity.  \DCThreeS{} maintains zero violations across all severity levels while baselines deteriorate monotonically.}
 
-\PaperFigure{FIG04_TRUE_SOC_SEVERITY}{P95 true-SOC violation severity under fault sweep.  The deterministic baseline's severity grows superlinearly with fault severity; DC\textsuperscript{3}S remains at zero.}
+\PaperFigure{FIG04_TRUE_SOC_SEVERITY}{P95 true-SOC violation severity under fault sweep.  The deterministic baseline's severity grows superlinearly with fault severity; \DCThreeS{} remains at zero.}
 
 \subsection{Cost--Safety Frontier}\label{sec:frontier}
 
 \Cref{fig:FIG07_COST_SAFETY_FRONTIER} visualizes the Pareto frontier.  DC\textsuperscript{3}S occupies the dominant position: zero violations with competitive cost.  The deterministic baseline sits in the unsafe region, and CVaR achieves moderate cost improvement but at unacceptable violation rates.
 
-\PaperFigure{FIG07_COST_SAFETY_FRONTIER}{Cost--safety Pareto frontier.  DC\textsuperscript{3}S dominates the zero-violation, low-cost region.  Dashed line: acceptable violation threshold.}
+\PaperFigure{FIG07_COST_SAFETY_FRONTIER}{Cost--safety Pareto frontier.  \DCThreeS{} dominates the zero-violation, low-cost region.  Dashed line: acceptable violation threshold.}
 
 \subsection{Decision Impact: DE and US}\label{sec:impact}
 
@@ -485,7 +506,7 @@ Four transfer cases evaluate cross-region and temporal robustness:
 
 \PaperTableCSV{TBL04_TRANSFER_STRESS}{Transfer stress outcomes: coverage, violation rate, severity, and cost delta across all four cases.}
 
-\PaperFigure{FIG06_TRANSFER_COVERAGE}{Transfer stress coverage summary.  DC\textsuperscript{3}S maintains safety across transfer cases, though cost optimality degrades without retraining.}
+\PaperFigure{FIG06_TRANSFER_COVERAGE}{Transfer stress coverage summary.  \DCThreeS{} maintains safety across transfer cases, though cost optimality degrades without retraining.}
 
 \subsection{Runtime and Intervention Behavior}\label{sec:runtime}
 
@@ -536,7 +557,7 @@ We report several findings that qualify our claims:
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
   \item \textbf{US peak shaving is 0.00\%} in locked evidence---the US wholesale market structure in the evaluation window did not create peak-shaving opportunities.
   \item \textbf{Solar high-regime PICP is 73.8\%}, below the 90\% nominal target.  RAC-Cert compensates during dispatch, but better base calibration would reduce unnecessary intervention.
-  \item \textbf{Deep models (LSTM, TCN) do not outperform GBM} in locked dashboard snapshots---GBM dominates across all targets in both regions.
+  \item \textbf{Deep models do not currently outperform GBM} in the materialized rows of the promoted six-model comparison---GBM remains the strongest operational model across the published DE/US forecast surface.
   \item \textbf{Cross-region impact magnitudes differ substantially}: a strategy yielding 7.11\% cost savings in DE yields only 0.11\% in US, underscoring regime sensitivity.
 \end{enumerate}
 
@@ -544,7 +565,7 @@ We report several findings that qualify our claims:
 
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
   \item \textbf{Dataset scope}: evidence is limited to DE (2018--2020) and US (2024--2026) windows.  Generalization to other markets, tariff structures, or regulatory regimes requires additional evaluation.
-  \item \textbf{Simulation only}: all results are from software simulation with replayed telemetry.  No hardware-in-the-loop or field deployment validation is claimed.
+  \item \textbf{Simulation only}: all results are from software simulation with replayed telemetry.  No hardware-in-the-loop or field deployment validation is claimed, and those hardware-facing stages remain future work only.
   \item \textbf{Proxy assumptions}: cost and carbon signals are derived from publicly available data and may not fully represent all market settlement mechanisms.
   \item \textbf{Stochastic sensitivity}: VSS and EVPI magnitudes are sensitive to scenario construction parameters and should not be interpreted as universal constants.
   \item \textbf{Supporting proposition}: \Cref{thm:rac_coverage} provides marginal coverage preservation under inflation; it does not guarantee \emph{conditional} coverage or optimal interval width.
@@ -565,9 +586,9 @@ The practical message: trustworthy CPS dispatch requires telemetry-aware uncerta
 
 \paragraph{Future work.}
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item Extend to hardware-in-the-loop validation with physical inverter/BMS integration.
-  \item Improve base calibration on under-covered targets (solar high-regime) to reduce unnecessary inflation.
-  \item Expand evaluation to additional regions, tariff structures, and longer time windows.
+  \item Extend to hardware-in-the-loop validation with physical inverter/BMS integration as a future validation stage rather than as a claim of the current paper.
+  \item Improve base calibration on under-covered targets (solar high-regime) and make the main-text US analysis explicitly balancing-authority-specific across MISO, PJM, and ERCOT.
+  \item Add a clean deployment-facing latency/runtime benchmark and a publication-grade case trace showing telemetry degradation, interval widening, action repair, and safe dispatch over time.
   \item Investigate conditional coverage guarantees under non-stationary degradation.
 \end{enumerate}
 
