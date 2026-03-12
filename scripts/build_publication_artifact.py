@@ -33,6 +33,7 @@ from scripts.build_conference_assets import (
     build_figure_inventory as build_conference_figure_inventory,
     build_transfer_generalization,
 )
+from scripts.build_baseline_comparison_table import build_release_baseline_comparison
 from scripts.build_cost_safety_pareto import build_cost_safety_pareto
 from scripts.build_dataset_summary_table import build_dataset_summary_rows
 from scripts.run_ablations import run_dc3s_ablation_matrix
@@ -64,6 +65,8 @@ REQUIRED_PUBLICATION = (
     "fig_calibration_tradeoff.png",
     "fig_transfer_generalization.png",
     "conference_figure_inventory.json",
+    "baseline_comparison_all.csv",
+    "baseline_comparison_status.json",
     "release_manifest.json",
 )
 
@@ -88,6 +91,7 @@ PAPER_ASSET_SOURCE_MAP = {
     "TBL05_DATASET_SUMMARY": {"source_artifact": "reports/publication/tables/table1_dataset_summary.csv", "build_command": "bash scripts/export_paper_assets.sh"},
     "TBL06_HYPERPARAMS": {"source_artifact": "configs/train_forecast.yaml", "build_command": "bash scripts/export_paper_assets.sh"},
     "TBL07_DATASET_CARDS": {"source_artifact": "reports/publication/dataset_cards.csv", "build_command": "bash scripts/export_paper_assets.sh"},
+    "TBL08_FORECAST_BASELINES": {"source_artifact": "reports/publication/baseline_comparison_all.csv", "build_command": "bash scripts/export_paper_assets.sh"},
 }
 
 
@@ -553,6 +557,15 @@ def _verify_outputs(out_dir: Path) -> None:
     if not bool(summary.get("ready", False)):
         raise RuntimeError("conference_figure_inventory.json reports missing required conference figures")
 
+    baseline_table = out_dir / "baseline_comparison_all.csv"
+    baseline_status_path = out_dir / "baseline_comparison_status.json"
+    baseline_text = baseline_table.read_text(encoding="utf-8")
+    if "NaN" in baseline_text:
+        raise RuntimeError("baseline_comparison_all.csv contains NaN; missing values must render as ---")
+    baseline_status = json.loads(baseline_status_path.read_text(encoding="utf-8"))
+    if not bool(baseline_status.get("thesis_headline_point_metrics_complete", False)):
+        raise RuntimeError("baseline_comparison_status.json reports incomplete DE/US_MISO point metrics")
+
 
 def _sha256_file(path: Path) -> str:
     h = hashlib.sha256()
@@ -685,6 +698,7 @@ def main() -> None:
     pareto_summary = build_cost_safety_pareto(main_table_path=out_dir / "dc3s_main_table.csv", out_dir=out_dir)
     rac_summary = _build_rac_diagnostics(out_dir)
     dataset_summary = _build_dataset_summary_table(out_dir)
+    baseline_summary = build_release_baseline_comparison(release_id=release_id, out_dir=out_dir)
     dataset_cards = build_dataset_cards(dataset_summary_path=out_dir / "tables" / "table1_dataset_summary.csv", out_dir=out_dir)
     calibration_tradeoff = build_calibration_tradeoff(out_dir=out_dir)
     transfer_generalization = build_transfer_generalization(out_dir=out_dir)
@@ -718,6 +732,7 @@ def main() -> None:
         "transfer": transfer_summary,
         "pareto": pareto_summary,
         "dataset_summary_table": dataset_summary,
+        "baseline_comparison": baseline_summary,
         "dataset_cards": dataset_cards,
         "calibration_tradeoff": calibration_tradeoff,
         "transfer_generalization": transfer_generalization,

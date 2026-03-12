@@ -1,0 +1,31 @@
+\begin{table}[htbp]
+\centering\small
+\caption{DE forecast baseline comparison: all six model families under identical splits, horizon, and lookback settings.}
+\label{tab:baseline_comparison_de}
+\begin{tabular}{llrrrrrrr}
+\toprule
+Target & Model & RMSE & MAE & sMAPE (\%) & $R^2$ & PICP@90 (\%) & Width (MW) \\
+\midrule
+\multirow{6}{*}{Load} & \textbf{GBM} & 305.12 & 187.87 & 0.39 & 0.9988 & 88.2 & 1070.2 \\
+ & LSTM & --- & --- & --- & --- & --- & --- \\
+ & TCN & --- & --- & --- & --- & --- & --- \\
+ & N-BEATS & --- & --- & --- & --- & --- & --- \\
+ & TFT & --- & --- & --- & --- & --- & --- \\
+ & PatchTST & --- & --- & --- & --- & --- & --- \\
+\midrule
+\multirow{6}{*}{Wind} & \textbf{GBM} & 219.11 & 129.36 & 2.41 & 0.9991 & 93.7 & 833.9 \\
+ & LSTM & --- & --- & --- & --- & --- & --- \\
+ & TCN & --- & --- & --- & --- & --- & --- \\
+ & N-BEATS & --- & --- & --- & --- & --- & --- \\
+ & TFT & --- & --- & --- & --- & --- & --- \\
+ & PatchTST & --- & --- & --- & --- & --- & --- \\
+\midrule
+\multirow{6}{*}{Solar} & \textbf{GBM} & 240.35 & 117.32 & 69.24 & 0.9993 & 78.8 & 1037.7 \\
+ & LSTM & --- & --- & --- & --- & --- & --- \\
+ & TCN & --- & --- & --- & --- & --- & --- \\
+ & N-BEATS & --- & --- & --- & --- & --- & --- \\
+ & TFT & --- & --- & --- & --- & --- & --- \\
+ & PatchTST & --- & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}

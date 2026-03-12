@@ -1,14 +1,18 @@
 \begin{table}[htbp]
 \centering
-\small
+\scriptsize
 \caption{Transfer stress outcomes across DE/US and seasonal shifts.}
 \label{tab:TBL04_TRANSFER_STRESS}
-\begin{tabular}{lrrrrrr}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.96}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lllllll}
 \toprule
 transfer\_case & source\_artifact & picp\_90 & mean\_width & true\_soc\_violation\_rate & true\_soc\_violation\_severity\_p95\_mwh & cost\_delta\_pct \\
 \midrule
-pending\_transfer\_artifacts & NaN & NaN & NaN & NaN & NaN & NaN \\
+pending\_transfer\_artifacts & --- & --- & --- & --- & --- & --- \\
 \bottomrule
 \end{tabular}
 
+}
 \end{table}

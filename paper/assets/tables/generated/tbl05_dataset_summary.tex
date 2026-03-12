@@ -1,8 +1,11 @@
 \begin{table}[htbp]
 \centering
-\small
+\scriptsize
 \caption{Dataset summary for publication protocol and benchmark scope.}
 \label{tab:TBL05_DATASET_SUMMARY}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.96}
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lllllrlrr}
 \toprule
 DatasetKey & Dataset & Country & Start & End & Rows & Signal & Non-Null & Coverage\% \\
@@ -22,4 +25,5 @@ US\_ERCOT & USA (EIA-930 ERCOT) & US & 2024-07-01 & 2026-01-20 & 13453 & solar\_
 \bottomrule
 \end{tabular}
 
+}
 \end{table}

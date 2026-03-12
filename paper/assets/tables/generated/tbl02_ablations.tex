@@ -1,22 +1,25 @@
 \begin{table}[htbp]
 \centering
-\small
+\scriptsize
 \caption{Ablation study with strict gate fields and statistical tests.}
 \label{tab:TBL02_ABLATIONS}
-\begin{tabular}{llllllrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr}
+\setlength{\tabcolsep}{2.5pt}
+\renewcommand{\arraystretch}{0.94}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llrrrrrrrrrc}
 \toprule
-analysis\_scope & baseline\_role & scenario & fault\_dimension & baseline\_controller & candidate\_controller & n\_pairs & true\_soc\_violation\_rate\_baseline\_mean & true\_soc\_violation\_rate\_dc3s\_mean & true\_soc\_violation\_rate\_dc3s\_ci\_low & true\_soc\_violation\_rate\_dc3s\_ci\_high & true\_soc\_violation\_rate\_rel\_reduction & true\_soc\_violation\_rate\_rel\_reduction\_ci\_low & true\_soc\_violation\_rate\_rel\_reduction\_ci\_high & true\_soc\_violation\_rate\_wilcoxon\_stat & true\_soc\_violation\_rate\_wilcoxon\_p & true\_soc\_violation\_rate\_passes\_10pct & true\_soc\_violation\_rate\_passes\_15pct & true\_soc\_violation\_rate\_target\_relative\_reduction & true\_soc\_violation\_rate\_passes\_target & true\_soc\_violation\_rate\_passes\_p01 & true\_soc\_violation\_severity\_p95\_baseline\_mean & true\_soc\_violation\_severity\_p95\_dc3s\_mean & true\_soc\_violation\_severity\_p95\_dc3s\_ci\_low & true\_soc\_violation\_severity\_p95\_dc3s\_ci\_high & true\_soc\_violation\_severity\_p95\_rel\_reduction & true\_soc\_violation\_severity\_p95\_rel\_reduction\_ci\_low & true\_soc\_violation\_severity\_p95\_rel\_reduction\_ci\_high & true\_soc\_violation\_severity\_p95\_wilcoxon\_stat & true\_soc\_violation\_severity\_p95\_wilcoxon\_p & true\_soc\_violation\_severity\_p95\_passes\_10pct & true\_soc\_violation\_severity\_p95\_passes\_15pct & true\_soc\_violation\_severity\_p95\_target\_relative\_reduction & true\_soc\_violation\_severity\_p95\_passes\_target & true\_soc\_violation\_severity\_p95\_passes\_p01 & passes\_all\_thresholds \\
+Scope & Fault & $n$ & Viol. base & Viol. DC3S & Viol. red. & $p_v$ & Sev. base & Sev. DC3S & Sev. red. & $p_s$ & Pass \\
 \midrule
-primary\_aggregate\_fault\_sweep & primary & aggregate\_fault\_sweep & all & robust\_fixed\_interval & dc3s\_wrapped & 160 & 0.250000 & 0.230000 & 0.230000 & 0.230000 & 0.080000 & 0.080000 & 0.080000 & 0.000000 & 0.000000 & False & False & 0.100000 & False & True & 0.250000 & 0.230000 & 0.230000 & 0.230000 & 0.080000 & 0.080000 & 0.080000 & 0.000000 & 0.000000 & False & False & 0.100000 & False & True & False \\
-secondary\_fault\_dimension & secondary & aggregate\_fault\_sweep & delay\_jitter & robust\_fixed\_interval & dc3s\_wrapped & 40 & 0.250000 & 0.230000 & 0.230000 & 0.230000 & 0.080000 & 0.080000 & 0.080000 & 0.000000 & 0.000000 & False & False & 0.100000 & False & True & 0.250000 & 0.230000 & 0.230000 & 0.230000 & 0.080000 & 0.080000 & 0.080000 & 0.000000 & 0.000000 & False & False & 0.100000 & False & True & False \\
-secondary\_fault\_dimension & secondary & aggregate\_fault\_sweep & dropout & robust\_fixed\_interval & dc3s\_wrapped & 40 & 0.250000 & 0.230000 & 0.230000 & 0.230000 & 0.080000 & 0.080000 & 0.080000 & 0.000000 & 0.000000 & False & False & 0.100000 & False & True & 0.250000 & 0.230000 & 0.230000 & 0.230000 & 0.080000 & 0.080000 & 0.080000 & 0.000000 & 0.000000 & False & False & 0.100000 & False & True & False \\
-secondary\_fault\_dimension & secondary & aggregate\_fault\_sweep & out\_of\_order & robust\_fixed\_interval & dc3s\_wrapped & 40 & 0.250000 & 0.230000 & 0.230000 & 0.230000 & 0.080000 & 0.080000 & 0.080000 & 0.000000 & 0.000000 & False & False & 0.100000 & False & True & 0.250000 & 0.230000 & 0.230000 & 0.230000 & 0.080000 & 0.080000 & 0.080000 & 0.000000 & 0.000000 & False & False & 0.100000 & False & True & False \\
-secondary\_fault\_dimension & secondary & aggregate\_fault\_sweep & spikes & robust\_fixed\_interval & dc3s\_wrapped & 40 & 0.250000 & 0.230000 & 0.230000 & 0.230000 & 0.080000 & 0.080000 & 0.080000 & 0.000000 & 0.000000 & False & False & 0.100000 & False & True & 0.250000 & 0.230000 & 0.230000 & 0.230000 & 0.080000 & 0.080000 & 0.080000 & 0.000000 & 0.000000 & False & False & 0.100000 & False & True & False \\
-secondary\_scenario & secondary & drift\_combo & aggregate & deterministic\_lp & dc3s\_wrapped & 10 & 0.350000 & 0.300000 & 0.300000 & 0.300000 & 0.142857 & 0.142857 & 0.142857 & 0.000000 & 0.001953 & True & False & 0.100000 & True & True & 0.350000 & 0.300000 & 0.300000 & 0.300000 & 0.142857 & 0.142857 & 0.142857 & 0.000000 & 0.001953 & True & False & 0.100000 & True & True & True \\
-secondary\_scenario & secondary & drift\_combo & aggregate & robust\_fixed\_interval & dc3s\_wrapped & 10 & 0.250000 & 0.300000 & 0.300000 & 0.300000 & -0.200000 & -0.200000 & -0.200000 & 0.000000 & 0.001953 & False & False & 0.100000 & False & True & 0.250000 & 0.300000 & 0.300000 & 0.300000 & -0.200000 & -0.200000 & -0.200000 & 0.000000 & 0.001953 & False & False & 0.100000 & False & True & False \\
-secondary\_scenario & secondary & dropout & aggregate & deterministic\_lp & dc3s\_wrapped & 10 & 0.350000 & 0.300000 & 0.300000 & 0.300000 & 0.142857 & 0.142857 & 0.142857 & 0.000000 & 0.001953 & True & False & 0.100000 & True & True & 0.350000 & 0.300000 & 0.300000 & 0.300000 & 0.142857 & 0.142857 & 0.142857 & 0.000000 & 0.001953 & True & False & 0.100000 & True & True & True \\
-secondary\_scenario & secondary & dropout & aggregate & robust\_fixed\_interval & dc3s\_wrapped & 10 & 0.250000 & 0.300000 & 0.300000 & 0.300000 & -0.200000 & -0.200000 & -0.200000 & 0.000000 & 0.001953 & False & False & 0.100000 & False & True & 0.250000 & 0.300000 & 0.300000 & 0.300000 & -0.200000 & -0.200000 & -0.200000 & 0.000000 & 0.001953 & False & False & 0.100000 & False & True & False \\
+primary & all & 160 & 0.25 & 0.23 & 8.0 & 0.000 & 0.25 & 0.23 & 8.0 & 0.000 & no \\
+secondary & delay & 40 & 0.25 & 0.23 & 8.0 & 0.000 & 0.25 & 0.23 & 8.0 & 0.000 & no \\
+secondary & dropout & 40 & 0.25 & 0.23 & 8.0 & 0.000 & 0.25 & 0.23 & 8.0 & 0.000 & no \\
+secondary & out\_of\_order & 40 & 0.25 & 0.23 & 8.0 & 0.000 & 0.25 & 0.23 & 8.0 & 0.000 & no \\
+secondary & spikes & 40 & 0.25 & 0.23 & 8.0 & 0.000 & 0.25 & 0.23 & 8.0 & 0.000 & no \\
+secondary\_scenario & aggregate & 10 & 0.35 & 0.30 & 14.3 & 0.002 & 0.35 & 0.30 & 14.3 & 0.002 & yes \\
+secondary\_scenario & aggregate & 10 & 0.25 & 0.30 & -20.0 & 0.002 & 0.25 & 0.30 & -20.0 & 0.002 & no \\
+secondary\_scenario & aggregate & 10 & 0.35 & 0.30 & 14.3 & 0.002 & 0.35 & 0.30 & 14.3 & 0.002 & yes \\
+secondary\_scenario & aggregate & 10 & 0.25 & 0.30 & -20.0 & 0.002 & 0.25 & 0.30 & -20.0 & 0.002 & no \\
 \bottomrule
-\end{tabular}
-
+\end{tabular}%
+}
 \end{table}

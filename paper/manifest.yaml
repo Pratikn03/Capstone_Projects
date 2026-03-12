@@ -73,6 +73,10 @@ tables:
     path: paper/assets/tables/tbl07_dataset_cards.csv
     title: "Dataset-card inventory for the conference release family."
     status: provisional
+  TBL08_FORECAST_BASELINES:
+    path: paper/assets/tables/tbl08_forecast_baselines.csv
+    title: "Promoted six-model forecasting comparison across DE and US under a shared split, horizon, lookback, and metric contract."
+    status: provisional
 
 data:
   DATA_MANIFEST:
