@@ -1,8 +1,8 @@
 dataset:
-  key: US_MISO
-  label: USA (EIA-930 MISO)
+  key: US_ERCOT
+  label: USA (EIA-930 ERCOT)
   source: EIA-930
-  balancing_authority: MISO
+  balancing_authority: ERCO
   region_group: US
 
 task:
@@ -12,25 +12,18 @@ task:
   targets: [load_mw, wind_mw, solar_mw]
 
 seed: 42
-seeds: [42, 123, 456, 789, 2024]  # Multiple seeds for ensemble
-
-# Advanced training options:
-# --enable-cv: 10-fold time-series cross-validation
-# --use-pipeline: sklearn Pipeline for GBM (leakage-safe preprocessing)
-# --ensemble: Train with multiple seeds and average predictions
+seeds: [42, 123, 456, 789, 2024]
 
 cross_validation:
   enabled: true
   n_folds: 10
-  strategy: time_series  # Preserves temporal ordering
-  gap: 24  # 24-hour gap between train/val to prevent leakage
+  strategy: time_series
+  gap: 24
 
 data:
-  processed_path: data/processed/us_eia930/features.parquet
+  processed_path: data/processed/us_eia930_ercot/features.parquet
   timestamp_col: timestamp
 
-# Time split used inside training orchestration.
-# 70% train is fixed by request; val/test are configured from the remainder.
 splits:
   train_ratio: 0.70
   calibration_ratio: 0.05
@@ -77,7 +70,7 @@ models:
       batch_size: 128
       learning_rate: 0.001
       weight_decay: 1e-5
-      scheduler: cosine  # Cosine annealing LR
+      scheduler: cosine
       warmup_epochs: 5
       early_stopping:
         enabled: true
@@ -161,13 +154,13 @@ models:
         min_delta: 0.0001
 
 artifacts:
-  out_dir: artifacts/models_eia930
+  out_dir: artifacts/models_eia930_ercot
 reports:
-  out_dir: reports/eia930
+  out_dir: reports/eia930_ercot
 
 backtest:
   enabled: true
-  out_path: reports/eia930/walk_forward_report.json
+  out_path: reports/eia930_ercot/walk_forward_report.json
 
 tuning:
   enabled: true
@@ -178,33 +171,23 @@ tuning:
   selection_mode: top_pct_median
   select_top_pct: 0.30
   min_top_trials: 5
-  # Set to 0.001 for top 0.1% selection only when n_trials is very large.
-  n_jobs: 4  # Parallel trials
-  pruner: median  # Early stopping of bad trials
+  n_jobs: 4
+  pruner: median
   params:
     baseline_gbm:
       n_estimators: {type: int, low: 500, high: 2000}
       learning_rate: {type: float, low: 0.005, high: 0.1, log: true}
       max_depth: {type: int, low: 8, high: 15}
       num_leaves: {type: int, low: 64, high: 512}
-    dl_lstm:
-      hidden_size: {type: categorical, choices: [128, 256, 512]}
-      num_layers: {type: int, low: 2, high: 4}
-      dropout: {type: float, low: 0.1, high: 0.5}
-      learning_rate: {type: float, low: 0.0001, high: 0.01, log: true}
-    dl_tcn:
-      num_channels: {type: categorical, choices: [[64, 64, 64], [128, 128, 128], [128, 128, 128, 64]]}
-      kernel_size: {type: int, low: 3, high: 7}
-      dropout: {type: float, low: 0.1, high: 0.5}
 
 tracking:
   enabled: true
-  tool: mlflow # or wandb
+  tool: mlflow
   experiment_name: gridpulse_forecast
   log_models: true
   log_system_metrics: true
 
 distributed:
   enabled: false
-  backend: nccl # Options: nccl, gloo, mpi
-  nproc_per_node: 1 # Set >1 for multi-GPU training
+  backend: nccl
+  nproc_per_node: 1

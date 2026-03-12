@@ -70,6 +70,9 @@ from gridpulse.utils.manifest import create_run_manifest, print_manifest_summary
 from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm
 from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
 from gridpulse.forecasting.dl_lstm import LSTMForecaster
+from gridpulse.forecasting.dl_nbeats import NBEATSForecaster
+from gridpulse.forecasting.dl_patchtst import PatchTSTForecaster
+from gridpulse.forecasting.dl_tft import TFTForecaster
 from gridpulse.forecasting.dl_tcn import TCNForecaster
 from gridpulse.forecasting.backtest import walk_forward_horizon_metrics
 from gridpulse.forecasting.evaluate import time_series_cv_score
@@ -157,11 +160,17 @@ def _sha256_file(path: Path) -> str:
     return hasher.hexdigest()
 
 
-def _enforce_data_contract(features_path: Path) -> dict[str, object]:
+def _enforce_data_contract(
+    features_path: Path,
+    *,
+    validation_report_path: Path,
+    data_manifest_output: Path,
+) -> dict[str, object]:
     """Validate feature schema and refresh dataset identity manifest before training."""
     if not features_path.exists():
         raise FileNotFoundError(f"Missing {features_path}. Run build_features first.")
 
+    validation_report_path.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
         [
             sys.executable,
@@ -170,14 +179,14 @@ def _enforce_data_contract(features_path: Path) -> dict[str, object]:
             "--in",
             str(features_path),
             "--report",
-            "reports/data_quality_report_features.md",
+            str(validation_report_path),
         ],
         check=True,
     )
 
     repo_root = Path(__file__).resolve().parents[3]
-    manifest_path = repo_root / "data" / "dashboard" / "data_manifest.json"
     script_path = repo_root / "scripts" / "build_data_manifest.py"
+    data_manifest_output.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
         [
             sys.executable,
@@ -185,21 +194,21 @@ def _enforce_data_contract(features_path: Path) -> dict[str, object]:
             "--dataset",
             "ALL",
             "--output",
-            str(manifest_path),
+            str(data_manifest_output),
         ],
         cwd=str(repo_root),
         check=True,
     )
 
     payload: dict[str, object] = {}
-    if manifest_path.exists():
+    if data_manifest_output.exists():
         try:
-            payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+            payload = json.loads(data_manifest_output.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             payload = {}
     return {
-        "path": manifest_path,
-        "sha256": _sha256_file(manifest_path) if manifest_path.exists() else None,
+        "path": data_manifest_output,
+        "sha256": _sha256_file(data_manifest_output) if data_manifest_output.exists() else None,
         "schema_hash": payload.get("schema_hash"),
         "split_boundaries": payload.get("split_boundaries", {}),
     }
@@ -598,6 +607,158 @@ def train_tcn_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cp
     return model
 
 
+def train_nbeats_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cpu"):
+    """Train an N-BEATS style sequence model."""
+    lookback = int(cfg.get("lookback", 168))
+    horizon = int(cfg.get("horizon", 24))
+    batch_size = int(cfg.get("batch_size", 128))
+    epochs = int(cfg.get("epochs", 100))
+    hidden_dim = int(cfg.get("hidden_dim", 512))
+    num_blocks = int(cfg.get("num_blocks", 4))
+    dropout = float(cfg.get("dropout", 0.1))
+    lr = float(cfg.get("learning_rate", cfg.get("lr", 1e-3)))
+    weight_decay = float(cfg.get("weight_decay", 1e-5))
+    grad_clip = float(cfg.get("gradient_clip", 1.0))
+
+    es_cfg = cfg.get("early_stopping", {})
+    patience = int(es_cfg.get("patience", 15)) if isinstance(es_cfg, dict) else 15
+    warmup_epochs = int(cfg.get("warmup_epochs", 5))
+
+    scfg = SeqConfig(lookback=lookback, horizon=horizon)
+    train_ds = TimeSeriesWindowDataset(X_train, y_train, scfg)
+    val_ds = TimeSeriesWindowDataset(X_val, y_val, scfg)
+    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=False)
+    val_dl = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
+
+    model = NBEATSForecaster(
+        n_features=X_train.shape[1],
+        lookback=lookback,
+        horizon=horizon,
+        hidden_dim=hidden_dim,
+        num_blocks=num_blocks,
+        dropout=dropout,
+    ).to(device)
+    model = fit_sequence_model(
+        model,
+        train_dl,
+        val_dl,
+        epochs=epochs,
+        lr=lr,
+        horizon=horizon,
+        device=device,
+        weight_decay=weight_decay,
+        patience=patience,
+        warmup_epochs=warmup_epochs,
+        grad_clip=grad_clip,
+    )
+    return model
+
+
+def train_tft_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cpu"):
+    """Train a lightweight TFT-style transformer baseline."""
+    lookback = int(cfg.get("lookback", 168))
+    horizon = int(cfg.get("horizon", 24))
+    batch_size = int(cfg.get("batch_size", 128))
+    epochs = int(cfg.get("epochs", 100))
+    d_model = int(cfg.get("d_model", 128))
+    n_heads = int(cfg.get("n_heads", 4))
+    num_layers = int(cfg.get("num_layers", 2))
+    dropout = float(cfg.get("dropout", 0.1))
+    dim_feedforward = int(cfg.get("dim_feedforward", 256))
+    lr = float(cfg.get("learning_rate", cfg.get("lr", 1e-3)))
+    weight_decay = float(cfg.get("weight_decay", 1e-5))
+    grad_clip = float(cfg.get("gradient_clip", 1.0))
+
+    es_cfg = cfg.get("early_stopping", {})
+    patience = int(es_cfg.get("patience", 15)) if isinstance(es_cfg, dict) else 15
+    warmup_epochs = int(cfg.get("warmup_epochs", 5))
+
+    scfg = SeqConfig(lookback=lookback, horizon=horizon)
+    train_ds = TimeSeriesWindowDataset(X_train, y_train, scfg)
+    val_ds = TimeSeriesWindowDataset(X_val, y_val, scfg)
+    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=False)
+    val_dl = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
+
+    model = TFTForecaster(
+        n_features=X_train.shape[1],
+        horizon=horizon,
+        d_model=d_model,
+        n_heads=n_heads,
+        num_layers=num_layers,
+        dropout=dropout,
+        dim_feedforward=dim_feedforward,
+    ).to(device)
+    model = fit_sequence_model(
+        model,
+        train_dl,
+        val_dl,
+        epochs=epochs,
+        lr=lr,
+        horizon=horizon,
+        device=device,
+        weight_decay=weight_decay,
+        patience=patience,
+        warmup_epochs=warmup_epochs,
+        grad_clip=grad_clip,
+    )
+    return model
+
+
+def train_patchtst_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cpu"):
+    """Train a PatchTST-style transformer baseline."""
+    lookback = int(cfg.get("lookback", 168))
+    horizon = int(cfg.get("horizon", 24))
+    batch_size = int(cfg.get("batch_size", 128))
+    epochs = int(cfg.get("epochs", 100))
+    patch_len = int(cfg.get("patch_len", 24))
+    stride = int(cfg.get("stride", 12))
+    d_model = int(cfg.get("d_model", 128))
+    n_heads = int(cfg.get("n_heads", 4))
+    num_layers = int(cfg.get("num_layers", 2))
+    dropout = float(cfg.get("dropout", 0.1))
+    dim_feedforward = int(cfg.get("dim_feedforward", 256))
+    lr = float(cfg.get("learning_rate", cfg.get("lr", 1e-3)))
+    weight_decay = float(cfg.get("weight_decay", 1e-5))
+    grad_clip = float(cfg.get("gradient_clip", 1.0))
+
+    es_cfg = cfg.get("early_stopping", {})
+    patience = int(es_cfg.get("patience", 15)) if isinstance(es_cfg, dict) else 15
+    warmup_epochs = int(cfg.get("warmup_epochs", 5))
+
+    scfg = SeqConfig(lookback=lookback, horizon=horizon)
+    train_ds = TimeSeriesWindowDataset(X_train, y_train, scfg)
+    val_ds = TimeSeriesWindowDataset(X_val, y_val, scfg)
+    train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=False)
+    val_dl = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
+
+    model = PatchTSTForecaster(
+        n_features=X_train.shape[1],
+        lookback=lookback,
+        horizon=horizon,
+        patch_len=patch_len,
+        stride=stride,
+        d_model=d_model,
+        n_heads=n_heads,
+        num_layers=num_layers,
+        dropout=dropout,
+        dim_feedforward=dim_feedforward,
+    ).to(device)
+    model = fit_sequence_model(
+        model,
+        train_dl,
+        val_dl,
+        epochs=epochs,
+        lr=lr,
+        horizon=horizon,
+        device=device,
+        weight_decay=weight_decay,
+        patience=patience,
+        warmup_epochs=warmup_epochs,
+        grad_clip=grad_clip,
+    )
+    return model
+
+
 def collect_seq_preds(model, X: np.ndarray, y: np.ndarray, lookback: int, horizon: int, device: str, batch_size: int):
     """Collect sequential predictions for evaluation."""
     ds = TimeSeriesWindowDataset(X, y, SeqConfig(lookback=lookback, horizon=horizon))
@@ -633,9 +794,10 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--config", default="configs/train_forecast.yaml")
     p.add_argument("--targets", default=None, help="Comma-separated targets to train (override config)")
-    p.add_argument("--models", default=None, help="Comma-separated models to train: gbm,lstm,tcn")
+    p.add_argument("--models", default=None, help="Comma-separated models to train: gbm,lstm,tcn,nbeats,tft,patchtst")
     p.add_argument("--skip-existing", action="store_true", help="Skip training if model artifact already exists")
     p.add_argument("--enable-cv", action="store_true", help="Enable time-series cross-validation (fold count from config)")
+    p.add_argument("--no-cv", action="store_true", help="Disable time-series cross-validation even if config enables it")
     p.add_argument("--use-pipeline", action="store_true", help="Use sklearn Pipeline for GBM (leakage-safe preprocessing)")
     p.add_argument("--tune", action="store_true", help="Force-enable hyperparameter tuning")
     p.add_argument("--no-tune", action="store_true", help="Disable hyperparameter tuning even if enabled in config")
@@ -643,6 +805,13 @@ def main():
     p.add_argument("--max-seeds", type=int, default=None, help="Optional cap on ensemble seed count")
     p.add_argument("--n-trials", type=int, default=None, help="Override Optuna trial count for this run")
     p.add_argument("--top-pct", type=float, default=None, help="Override top-percent trial selection, e.g. 0.30")
+    p.add_argument("--artifacts-dir", default=None, help="Override trained-model artifact directory")
+    p.add_argument("--reports-dir", default=None, help="Override report output directory")
+    p.add_argument("--uncertainty-artifacts-dir", default=None, help="Override conformal artifact directory")
+    p.add_argument("--backtests-dir", default=None, help="Override calibration/test NPZ directory")
+    p.add_argument("--walk-forward-report", default=None, help="Override walk-forward backtest report path")
+    p.add_argument("--validation-report", default=None, help="Override schema validation report path")
+    p.add_argument("--data-manifest-output", default=None, help="Override refreshed data-manifest path")
     args = p.parse_args()
 
     # Config-driven training keeps runs reproducible across datasets.
@@ -655,18 +824,24 @@ def main():
     
     seed = int(cfg.get("seed", 42))
     set_seed(seed)
-    
+
     # Create run manifest for reproducibility.
-    art_dir = Path(cfg["artifacts"]["out_dir"])
+    art_dir = Path(args.artifacts_dir or cfg["artifacts"]["out_dir"])
     art_dir.mkdir(parents=True, exist_ok=True)
     cv_cfg = cfg.get("cross_validation", {}) if isinstance(cfg.get("cross_validation"), dict) else {}
-    cv_enabled = bool(args.enable_cv or cv_cfg.get("enabled", False))
+    cv_enabled = bool((args.enable_cv or cv_cfg.get("enabled", False)) and not args.no_cv)
 
     # Load prepared features (Parquet) for training.
     features_path = Path(cfg["data"]["processed_path"])
     if not features_path.exists():
         raise FileNotFoundError(f"Missing {features_path}. Run build_features first.")
-    data_contract = _enforce_data_contract(features_path)
+    validation_report_path = Path(args.validation_report or "reports/data_quality_report_features.md")
+    data_manifest_output = Path(args.data_manifest_output or "data/dashboard/data_manifest.json")
+    data_contract = _enforce_data_contract(
+        features_path,
+        validation_report_path=validation_report_path,
+        data_manifest_output=data_manifest_output,
+    )
 
     print("Creating run manifest for reproducibility...")
     manifest = create_run_manifest(
@@ -752,7 +927,7 @@ def main():
     horizon = int(cfg["task"]["horizon_hours"])
     lookback_default = int(cfg["task"].get("lookback_hours", 168))
 
-    rep_dir = Path(cfg["reports"]["out_dir"])
+    rep_dir = Path(args.reports_dir or cfg["reports"]["out_dir"])
     rep_dir.mkdir(parents=True, exist_ok=True)
 
     report = {
@@ -1192,14 +1367,225 @@ def main():
                         y_true_test, y_pred_test, horizon, target
                     )
 
+        # ---- N-BEATS (MLP sequence baseline) ----
+        nbeats_cfg = cfg["models"].get("dl_nbeats", {})
+        if nbeats_cfg.get("enabled", False) and (model_filter is None or "nbeats" in model_filter):
+            if args.skip_existing and (art_dir / f"nbeats_{target}.pt").exists():
+                print(f"Skipping N-BEATS for {target} (artifact exists)")
+            else:
+                params = nbeats_cfg.get("params", {})
+                x_scaler = StandardScaler.fit(X_train)
+                y_scaler = StandardScaler.fit(y_train.reshape(-1, 1))
+                X_train_s = x_scaler.transform(X_train)
+                X_val_s = x_scaler.transform(X_val)
+                X_test_s = x_scaler.transform(X_test)
+                y_train_s = y_scaler.transform(y_train.reshape(-1, 1)).reshape(-1)
+                y_val_s = y_scaler.transform(y_val.reshape(-1, 1)).reshape(-1)
+                y_test_s = y_scaler.transform(y_test.reshape(-1, 1)).reshape(-1)
+
+                model = train_nbeats_model(
+                    X_train_s,
+                    y_train_s,
+                    X_val_s,
+                    y_val_s,
+                    {"lookback": lookback_default, "horizon": horizon, **params},
+                    device=device,
+                )
+                batch_size = int(params.get("batch_size", 256))
+                y_true_val_s, y_pred_val_s = collect_seq_preds(model, X_val_s, y_val_s, lookback_default, horizon, device, batch_size)
+                if y_true_val_s is not None:
+                    y_true_val = y_scaler.inverse_transform(y_true_val_s.reshape(-1, 1)).reshape(-1)
+                    y_pred_val = y_scaler.inverse_transform(y_pred_val_s.reshape(-1, 1)).reshape(-1)
+                    model_q = residual_quantiles(y_true_val, y_pred_val, quantiles)
+                else:
+                    model_q = {}
+
+                torch.save({
+                    "model_type": "nbeats",
+                    "state_dict": model.state_dict(),
+                    "feature_cols": feat_cols,
+                    "target": target,
+                    "lookback": lookback_default,
+                    "horizon": horizon,
+                    "model_params": {
+                        "hidden_dim": int(params.get("hidden_dim", 512)),
+                        "num_blocks": int(params.get("num_blocks", 4)),
+                        "dropout": float(params.get("dropout", 0.1)),
+                        "lookback": int(lookback_default),
+                        "horizon": int(horizon),
+                    },
+                    "quantiles": quantiles,
+                    "residual_quantiles": model_q,
+                    "x_scaler": x_scaler.to_dict(),
+                    "y_scaler": y_scaler.to_dict(),
+                }, art_dir / f"nbeats_{target}.pt")
+
+                y_true_test_s, y_pred_test_s = collect_seq_preds(model, X_test_s, y_test_s, lookback_default, horizon, device, batch_size)
+                if y_true_test_s is not None:
+                    y_true_test = y_scaler.inverse_transform(y_true_test_s.reshape(-1, 1)).reshape(-1)
+                    y_pred_test = y_scaler.inverse_transform(y_pred_test_s.reshape(-1, 1)).reshape(-1)
+                    model_metrics = compute_metrics(y_true_test, y_pred_test, target)
+                else:
+                    model_metrics = {"rmse": None, "mae": None, "mape": None, "smape": None}
+                target_res["nbeats"] = {**model_metrics, "residual_quantiles": model_q}
+                if backtest_enabled and model_metrics.get("rmse") is not None:
+                    backtest_payload["targets"].setdefault(target, {})
+                    backtest_payload["targets"][target]["nbeats"] = walk_forward_horizon_metrics(
+                        y_true_test, y_pred_test, horizon, target
+                    )
+
+        # ---- TFT (transformer baseline) ----
+        tft_cfg = cfg["models"].get("dl_tft", {})
+        if tft_cfg.get("enabled", False) and (model_filter is None or "tft" in model_filter):
+            if args.skip_existing and (art_dir / f"tft_{target}.pt").exists():
+                print(f"Skipping TFT for {target} (artifact exists)")
+            else:
+                params = tft_cfg.get("params", {})
+                x_scaler = StandardScaler.fit(X_train)
+                y_scaler = StandardScaler.fit(y_train.reshape(-1, 1))
+                X_train_s = x_scaler.transform(X_train)
+                X_val_s = x_scaler.transform(X_val)
+                X_test_s = x_scaler.transform(X_test)
+                y_train_s = y_scaler.transform(y_train.reshape(-1, 1)).reshape(-1)
+                y_val_s = y_scaler.transform(y_val.reshape(-1, 1)).reshape(-1)
+                y_test_s = y_scaler.transform(y_test.reshape(-1, 1)).reshape(-1)
+
+                model = train_tft_model(
+                    X_train_s,
+                    y_train_s,
+                    X_val_s,
+                    y_val_s,
+                    {"lookback": lookback_default, "horizon": horizon, **params},
+                    device=device,
+                )
+                batch_size = int(params.get("batch_size", 256))
+                y_true_val_s, y_pred_val_s = collect_seq_preds(model, X_val_s, y_val_s, lookback_default, horizon, device, batch_size)
+                if y_true_val_s is not None:
+                    y_true_val = y_scaler.inverse_transform(y_true_val_s.reshape(-1, 1)).reshape(-1)
+                    y_pred_val = y_scaler.inverse_transform(y_pred_val_s.reshape(-1, 1)).reshape(-1)
+                    model_q = residual_quantiles(y_true_val, y_pred_val, quantiles)
+                else:
+                    model_q = {}
+
+                torch.save({
+                    "model_type": "tft",
+                    "state_dict": model.state_dict(),
+                    "feature_cols": feat_cols,
+                    "target": target,
+                    "lookback": lookback_default,
+                    "horizon": horizon,
+                    "model_params": {
+                        "d_model": int(params.get("d_model", 128)),
+                        "n_heads": int(params.get("n_heads", 4)),
+                        "num_layers": int(params.get("num_layers", 2)),
+                        "dropout": float(params.get("dropout", 0.1)),
+                        "dim_feedforward": int(params.get("dim_feedforward", 256)),
+                        "horizon": int(horizon),
+                    },
+                    "quantiles": quantiles,
+                    "residual_quantiles": model_q,
+                    "x_scaler": x_scaler.to_dict(),
+                    "y_scaler": y_scaler.to_dict(),
+                }, art_dir / f"tft_{target}.pt")
+
+                y_true_test_s, y_pred_test_s = collect_seq_preds(model, X_test_s, y_test_s, lookback_default, horizon, device, batch_size)
+                if y_true_test_s is not None:
+                    y_true_test = y_scaler.inverse_transform(y_true_test_s.reshape(-1, 1)).reshape(-1)
+                    y_pred_test = y_scaler.inverse_transform(y_pred_test_s.reshape(-1, 1)).reshape(-1)
+                    model_metrics = compute_metrics(y_true_test, y_pred_test, target)
+                else:
+                    model_metrics = {"rmse": None, "mae": None, "mape": None, "smape": None}
+                target_res["tft"] = {**model_metrics, "residual_quantiles": model_q}
+                if backtest_enabled and model_metrics.get("rmse") is not None:
+                    backtest_payload["targets"].setdefault(target, {})
+                    backtest_payload["targets"][target]["tft"] = walk_forward_horizon_metrics(
+                        y_true_test, y_pred_test, horizon, target
+                    )
+
+        # ---- PatchTST (patch transformer baseline) ----
+        patchtst_cfg = cfg["models"].get("dl_patchtst", {})
+        if patchtst_cfg.get("enabled", False) and (model_filter is None or "patchtst" in model_filter):
+            if args.skip_existing and (art_dir / f"patchtst_{target}.pt").exists():
+                print(f"Skipping PatchTST for {target} (artifact exists)")
+            else:
+                params = patchtst_cfg.get("params", {})
+                x_scaler = StandardScaler.fit(X_train)
+                y_scaler = StandardScaler.fit(y_train.reshape(-1, 1))
+                X_train_s = x_scaler.transform(X_train)
+                X_val_s = x_scaler.transform(X_val)
+                X_test_s = x_scaler.transform(X_test)
+                y_train_s = y_scaler.transform(y_train.reshape(-1, 1)).reshape(-1)
+                y_val_s = y_scaler.transform(y_val.reshape(-1, 1)).reshape(-1)
+                y_test_s = y_scaler.transform(y_test.reshape(-1, 1)).reshape(-1)
+
+                model = train_patchtst_model(
+                    X_train_s,
+                    y_train_s,
+                    X_val_s,
+                    y_val_s,
+                    {"lookback": lookback_default, "horizon": horizon, **params},
+                    device=device,
+                )
+                batch_size = int(params.get("batch_size", 256))
+                y_true_val_s, y_pred_val_s = collect_seq_preds(model, X_val_s, y_val_s, lookback_default, horizon, device, batch_size)
+                if y_true_val_s is not None:
+                    y_true_val = y_scaler.inverse_transform(y_true_val_s.reshape(-1, 1)).reshape(-1)
+                    y_pred_val = y_scaler.inverse_transform(y_pred_val_s.reshape(-1, 1)).reshape(-1)
+                    model_q = residual_quantiles(y_true_val, y_pred_val, quantiles)
+                else:
+                    model_q = {}
+
+                torch.save({
+                    "model_type": "patchtst",
+                    "state_dict": model.state_dict(),
+                    "feature_cols": feat_cols,
+                    "target": target,
+                    "lookback": lookback_default,
+                    "horizon": horizon,
+                    "model_params": {
+                        "patch_len": int(params.get("patch_len", 24)),
+                        "stride": int(params.get("stride", 12)),
+                        "d_model": int(params.get("d_model", 128)),
+                        "n_heads": int(params.get("n_heads", 4)),
+                        "num_layers": int(params.get("num_layers", 2)),
+                        "dropout": float(params.get("dropout", 0.1)),
+                        "dim_feedforward": int(params.get("dim_feedforward", 256)),
+                        "lookback": int(lookback_default),
+                        "horizon": int(horizon),
+                    },
+                    "quantiles": quantiles,
+                    "residual_quantiles": model_q,
+                    "x_scaler": x_scaler.to_dict(),
+                    "y_scaler": y_scaler.to_dict(),
+                }, art_dir / f"patchtst_{target}.pt")
+
+                y_true_test_s, y_pred_test_s = collect_seq_preds(model, X_test_s, y_test_s, lookback_default, horizon, device, batch_size)
+                if y_true_test_s is not None:
+                    y_true_test = y_scaler.inverse_transform(y_true_test_s.reshape(-1, 1)).reshape(-1)
+                    y_pred_test = y_scaler.inverse_transform(y_pred_test_s.reshape(-1, 1)).reshape(-1)
+                    model_metrics = compute_metrics(y_true_test, y_pred_test, target)
+                else:
+                    model_metrics = {"rmse": None, "mae": None, "mape": None, "smape": None}
+                target_res["patchtst"] = {**model_metrics, "residual_quantiles": model_q}
+                if backtest_enabled and model_metrics.get("rmse") is not None:
+                    backtest_payload["targets"].setdefault(target, {})
+                    backtest_payload["targets"][target]["patchtst"] = walk_forward_horizon_metrics(
+                        y_true_test, y_pred_test, horizon, target
+                    )
+
         report["targets"][target] = target_res
 
     if uncertainty_enabled and conformal_payloads:
         multi = len(conformal_payloads) > 1
-        cal_template = str(uncertainty_cfg.get("calibration_npz", "artifacts/backtests/calibration.npz"))
-        test_template = str(uncertainty_cfg.get("test_npz", "artifacts/backtests/test.npz"))
+        if args.backtests_dir:
+            backtests_dir = Path(args.backtests_dir)
+            cal_template = str(backtests_dir / "{target}_calibration.npz")
+            test_template = str(backtests_dir / "{target}_test.npz")
+        else:
+            cal_template = str(uncertainty_cfg.get("calibration_npz", "artifacts/backtests/calibration.npz"))
+            test_template = str(uncertainty_cfg.get("test_npz", "artifacts/backtests/test.npz"))
         conf_cfg = ConformalConfig(**(uncertainty_cfg.get("conformal", {}) or {}))
-        artifacts_dir = Path(uncertainty_cfg.get("artifacts_dir", "artifacts/uncertainty"))
+        artifacts_dir = Path(args.uncertainty_artifacts_dir or uncertainty_cfg.get("artifacts_dir", "artifacts/uncertainty"))
         
         print("\nConformal Prediction Intervals:")
         for target, payload in conformal_payloads.items():
@@ -1255,12 +1641,32 @@ def main():
                 "split_boundaries": payload.get("split_boundaries", {}),
                 "global_coverage": interval_metrics["global_coverage"],
                 "global_mean_width": interval_metrics["global_mean_width"],
+                "picp_90": interval_metrics.get("picp_90"),
+                "mean_interval_width": interval_metrics.get("mean_interval_width"),
+                "pinball_loss_q05": interval_metrics.get("pinball_loss_q05"),
+                "pinball_loss_q50": interval_metrics.get("pinball_loss_q50"),
+                "pinball_loss_q95": interval_metrics.get("pinball_loss_q95"),
+                "pinball_loss_mean": interval_metrics.get("pinball_loss_mean"),
+                "winkler_score_90": interval_metrics.get("winkler_score_90"),
                 "per_horizon_picp": interval_metrics.get("per_horizon_picp", {}),
                 "per_horizon_mpiw": interval_metrics.get("per_horizon_mpiw", {}),
             }
             
             print(f"  {target}: Coverage={interval_metrics['global_coverage']:.3f}, Width={interval_metrics['global_mean_width']:.2f}")
             save_conformal(conformal_path, ci, meta=meta)
+            target_report = report["targets"].setdefault(target, {})
+            gbm_report = target_report.get("gbm")
+            if isinstance(gbm_report, dict):
+                gbm_report["uncertainty"] = {
+                    "picp_90": interval_metrics.get("picp_90"),
+                    "picp_95": interval_metrics.get("picp_95"),
+                    "mean_interval_width": interval_metrics.get("mean_interval_width"),
+                    "pinball_loss_q05": interval_metrics.get("pinball_loss_q05"),
+                    "pinball_loss_q50": interval_metrics.get("pinball_loss_q50"),
+                    "pinball_loss_q95": interval_metrics.get("pinball_loss_q95"),
+                    "pinball_loss_mean": interval_metrics.get("pinball_loss_mean"),
+                    "winkler_score_90": interval_metrics.get("winkler_score_90"),
+                }
             print(f"Saved conformal artifacts to {cal_path}, {test_path}, {conformal_path}")
 
     # Write human-readable comparison report and machine-readable metrics.
@@ -1294,11 +1700,11 @@ def main():
     (rep_dir / "ml_vs_dl_comparison.md").write_text("".join(lines), encoding="utf-8")
     (rep_dir / "week2_metrics.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     if backtest_enabled and backtest_payload is not None:
-        out_path = Path(backtest_cfg.get("out_path", rep_dir / "walk_forward_report.json"))
+        out_path = Path(args.walk_forward_report or backtest_cfg.get("out_path", rep_dir / "walk_forward_report.json"))
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(json.dumps(backtest_payload, indent=2), encoding="utf-8")
-    print("Saved report to reports/ and models to artifacts/models")
+    print(f"Saved reports to {rep_dir} and models to {art_dir}")
 
 
 if __name__ == "__main__":

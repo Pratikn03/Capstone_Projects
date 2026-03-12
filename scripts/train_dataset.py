@@ -32,12 +32,14 @@ import argparse
 from datetime import datetime, timezone
 import json
 import os
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
+import pandas as pd
 import yaml
 
 PYTHON_BIN = sys.executable or "python3"
@@ -58,6 +60,8 @@ class DatasetConfig:
     splits_path: str                    # Path to splits directory
     models_dir: str                     # Path to model artifacts directory
     reports_dir: str                    # Path to reports output
+    uncertainty_dir: str                # Path to conformal artifacts directory
+    backtests_dir: str                  # Path to calibration/test artifact directory
     
     # Feature pipeline settings
     raw_data_path: str                  # Path to raw data
@@ -67,6 +71,37 @@ class DatasetConfig:
     ba_code: Optional[str] = None       # Balancing authority (for US)
     start_date: Optional[str] = None    # Date filter start
     end_date: Optional[str] = None      # Date filter end
+    alias_of: Optional[str] = None      # Backward-compatible dataset alias
+
+
+def _us_dataset(
+    *,
+    key: str,
+    display_name: str,
+    config_file: str,
+    processed_dir: str,
+    models_dir: str,
+    reports_dir: str,
+    uncertainty_dir: str,
+    backtests_dir: str,
+    ba_code: str,
+    alias_of: str | None = None,
+) -> DatasetConfig:
+    return DatasetConfig(
+        name=key,
+        display_name=display_name,
+        config_file=config_file,
+        features_path=f"{processed_dir}/features.parquet",
+        splits_path=f"{processed_dir}/splits",
+        models_dir=models_dir,
+        reports_dir=reports_dir,
+        uncertainty_dir=uncertainty_dir,
+        backtests_dir=backtests_dir,
+        raw_data_path="data/raw/us_eia930",
+        feature_module="gridpulse.data_pipeline.build_features_eia930",
+        ba_code=ba_code,
+        alias_of=alias_of,
+    )
 
 
 # Dataset registry - single source of truth for all datasets
@@ -79,27 +114,101 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         splits_path="data/processed/splits",
         models_dir="artifacts/models",
         reports_dir="reports",
+        uncertainty_dir="artifacts/uncertainty",
+        backtests_dir="artifacts/backtests",
         raw_data_path="data/raw",
         feature_module="gridpulse.data_pipeline.build_features",
     ),
-    "US": DatasetConfig(
-        name="US", 
+    "US_MISO": _us_dataset(
+        key="US_MISO",
         display_name="US EIA-930 (MISO)",
         config_file="configs/train_forecast_eia930.yaml",
-        features_path="data/processed/us_eia930/features.parquet",
-        splits_path="data/processed/us_eia930/splits",
+        processed_dir="data/processed/us_eia930",
         models_dir="artifacts/models_eia930",
         reports_dir="reports/eia930",
-        raw_data_path="data/raw/us_eia930",
-        feature_module="gridpulse.data_pipeline.build_features_eia930",
+        uncertainty_dir="artifacts/uncertainty/eia930",
+        backtests_dir="artifacts/backtests/eia930",
         ba_code="MISO",
+    ),
+    "US_PJM": _us_dataset(
+        key="US_PJM",
+        display_name="US EIA-930 (PJM)",
+        config_file="configs/train_forecast_eia930_pjm.yaml",
+        processed_dir="data/processed/us_eia930_pjm",
+        models_dir="artifacts/models_eia930_pjm",
+        reports_dir="reports/eia930_pjm",
+        uncertainty_dir="artifacts/uncertainty/eia930_pjm",
+        backtests_dir="artifacts/backtests/eia930_pjm",
+        ba_code="PJM",
+    ),
+    "US_ERCOT": _us_dataset(
+        key="US_ERCOT",
+        display_name="US EIA-930 (ERCOT)",
+        config_file="configs/train_forecast_eia930_ercot.yaml",
+        processed_dir="data/processed/us_eia930_ercot",
+        models_dir="artifacts/models_eia930_ercot",
+        reports_dir="reports/eia930_ercot",
+        uncertainty_dir="artifacts/uncertainty/eia930_ercot",
+        backtests_dir="artifacts/backtests/eia930_ercot",
+        ba_code="ERCO",
+    ),
+    # Backward-compatible alias for the historical single-region US pipeline.
+    "US": _us_dataset(
+        key="US_MISO",
+        display_name="US EIA-930 (MISO)",
+        config_file="configs/train_forecast_eia930.yaml",
+        processed_dir="data/processed/us_eia930",
+        models_dir="artifacts/models_eia930",
+        reports_dir="reports/eia930",
+        uncertainty_dir="artifacts/uncertainty/eia930",
+        backtests_dir="artifacts/backtests/eia930",
+        ba_code="MISO",
+        alias_of="US_MISO",
     ),
 }
 
 AGGRESSIVE_DEFAULTS = {
     "DE": {"n_trials": 220, "top_pct": 0.20, "max_seeds": 8},
-    "US": {"n_trials": 260, "top_pct": 0.20, "max_seeds": 5},
+    "US_MISO": {"n_trials": 260, "top_pct": 0.20, "max_seeds": 5},
+    "US_PJM": {"n_trials": 260, "top_pct": 0.20, "max_seeds": 5},
+    "US_ERCOT": {"n_trials": 260, "top_pct": 0.20, "max_seeds": 5},
 }
+
+
+def _iter_trainable_dataset_keys() -> list[str]:
+    keys: list[str] = []
+    seen: set[str] = set()
+    for registry_key, cfg in DATASET_REGISTRY.items():
+        canonical = cfg.alias_of or cfg.name
+        if canonical in seen:
+            continue
+        seen.add(canonical)
+        keys.append(registry_key)
+    return keys
+
+
+@dataclass
+class RunLayout:
+    """Resolved output paths for a canonical or candidate training run."""
+
+    mode: str
+    run_id: str
+    dataset: str
+    artifacts_root: Path
+    models_dir: Path
+    uncertainty_dir: Path
+    backtests_dir: Path
+    registry_dir: Path
+    reports_dir: Path
+    publication_dir: Path
+    validation_report: Path
+    data_manifest_output: Path
+    walk_forward_report: Path
+    selection_output_dir: Path
+
+    @property
+    def is_candidate(self) -> bool:
+        return self.mode == "candidate"
 
 
 # =============================================================================
@@ -114,6 +223,245 @@ def _load_publish_audit_cfg(path: str = "configs/publish_audit.yaml") -> dict:
     if not isinstance(payload, dict):
         return {}
     return payload.get("publish_audit", {}) if isinstance(payload.get("publish_audit"), dict) else {}
+
+
+def _load_training_cfg(cfg: DatasetConfig) -> dict[str, Any]:
+    cfg_path = REPO_ROOT / cfg.config_file
+    if not cfg_path.exists():
+        return {}
+    payload = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _configured_targets(train_cfg: dict[str, Any]) -> list[str]:
+    task_cfg = train_cfg.get("task", {}) if isinstance(train_cfg.get("task"), dict) else {}
+    targets = task_cfg.get("targets", [])
+    if isinstance(targets, list):
+        return [str(target).strip() for target in targets if str(target).strip()]
+    return ["load_mw"]
+
+
+def _configured_uncertainty_targets(path: Path = REPO_ROOT / "configs" / "uncertainty.yaml") -> list[str]:
+    if not path.exists():
+        return []
+    payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(payload, dict):
+        return []
+    targets = payload.get("targets", [])
+    if isinstance(targets, list):
+        return [str(target).strip() for target in targets if str(target).strip()]
+    if isinstance(targets, str):
+        return [part.strip() for part in targets.split(",") if part.strip()]
+    return []
+
+
+def _configured_model_types(train_cfg: dict[str, Any], requested_models: set[str] | None = None) -> list[str]:
+    models_cfg = train_cfg.get("models", {}) if isinstance(train_cfg.get("models"), dict) else {}
+    model_types: list[str] = []
+
+    gbm_cfg = models_cfg.get("baseline_gbm", {}) if isinstance(models_cfg.get("baseline_gbm"), dict) else {}
+    if gbm_cfg.get("enabled", True) and (requested_models is None or "gbm" in requested_models):
+        kind = str(gbm_cfg.get("kind", "lightgbm")).strip().lower() or "lightgbm"
+        model_types.append(f"gbm_{kind}")
+
+    lstm_cfg = models_cfg.get("dl_lstm", {}) if isinstance(models_cfg.get("dl_lstm"), dict) else {}
+    if lstm_cfg.get("enabled", True) and (requested_models is None or "lstm" in requested_models):
+        model_types.append("lstm")
+
+    tcn_cfg = models_cfg.get("dl_tcn", {}) if isinstance(models_cfg.get("dl_tcn"), dict) else {}
+    if tcn_cfg.get("enabled", False) and (requested_models is None or "tcn" in requested_models):
+        model_types.append("tcn")
+
+    nbeats_cfg = models_cfg.get("dl_nbeats", {}) if isinstance(models_cfg.get("dl_nbeats"), dict) else {}
+    if nbeats_cfg.get("enabled", False) and (requested_models is None or "nbeats" in requested_models):
+        model_types.append("nbeats")
+
+    tft_cfg = models_cfg.get("dl_tft", {}) if isinstance(models_cfg.get("dl_tft"), dict) else {}
+    if tft_cfg.get("enabled", False) and (requested_models is None or "tft" in requested_models):
+        model_types.append("tft")
+
+    patchtst_cfg = models_cfg.get("dl_patchtst", {}) if isinstance(models_cfg.get("dl_patchtst"), dict) else {}
+    if patchtst_cfg.get("enabled", False) and (requested_models is None or "patchtst" in requested_models):
+        model_types.append("patchtst")
+
+    return model_types
+
+
+def _resolve_run_layout(cfg: DatasetConfig, *, candidate_run: bool, run_id: str | None) -> RunLayout:
+    normalized_dataset = cfg.name.lower()
+    if candidate_run:
+        resolved_run_id = run_id or datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        artifacts_root = REPO_ROOT / "artifacts" / "runs" / normalized_dataset / resolved_run_id
+        reports_root = REPO_ROOT / "reports" / "runs" / normalized_dataset / resolved_run_id
+        return RunLayout(
+            mode="candidate",
+            run_id=resolved_run_id,
+            dataset=cfg.name,
+            artifacts_root=artifacts_root,
+            models_dir=artifacts_root / "models",
+            uncertainty_dir=artifacts_root / "uncertainty",
+            backtests_dir=artifacts_root / "backtests",
+            registry_dir=artifacts_root / "registry",
+            reports_dir=reports_root,
+            publication_dir=reports_root / "publication",
+            validation_report=reports_root / "data_quality_report_features.md",
+            data_manifest_output=artifacts_root / "registry" / "data_manifest.json",
+            walk_forward_report=reports_root / "walk_forward_report.json",
+            selection_output_dir=artifacts_root / "registry",
+        )
+
+    return RunLayout(
+        mode="canonical",
+        run_id=run_id or "canonical",
+        dataset=cfg.name,
+        artifacts_root=REPO_ROOT / "artifacts",
+        models_dir=REPO_ROOT / cfg.models_dir,
+        uncertainty_dir=REPO_ROOT / cfg.uncertainty_dir,
+        backtests_dir=REPO_ROOT / cfg.backtests_dir,
+        registry_dir=REPO_ROOT / "artifacts" / "registry",
+        reports_dir=REPO_ROOT / cfg.reports_dir,
+        publication_dir=REPO_ROOT / "reports" / "publication",
+        validation_report=REPO_ROOT / "reports" / f"data_quality_report_{cfg.name.lower()}_features.md",
+        data_manifest_output=REPO_ROOT / "data" / "dashboard" / "data_manifest.json",
+        walk_forward_report=REPO_ROOT / cfg.reports_dir / "walk_forward_report.json",
+        selection_output_dir=REPO_ROOT / "reports" / "publish",
+    )
+
+
+def _safe_iso(value: Any) -> str | None:
+    if value is None:
+        return None
+    if hasattr(value, "isoformat"):
+        return str(value.isoformat())
+    return str(value)
+
+
+def _build_preflight_analysis(
+    cfg: DatasetConfig,
+    run_layout: RunLayout,
+    *,
+    profile: str,
+    models: str | None = None,
+) -> dict[str, Any]:
+    train_cfg = _load_training_cfg(cfg)
+    features_path = REPO_ROOT / cfg.features_path
+    df = pd.read_parquet(features_path).sort_values("timestamp")
+    expected_targets = _configured_targets(train_cfg)
+    requested_models = {part.strip().lower() for part in models.split(",") if part.strip()} if models else None
+    expected_models = _configured_model_types(train_cfg, requested_models=requested_models)
+
+    split_sizes: dict[str, Any] = {}
+    split_ranges: dict[str, Any] = {}
+    for split_name in ("train", "calibration", "val", "test"):
+        split_path = REPO_ROOT / cfg.splits_path / f"{split_name}.parquet"
+        if not split_path.exists():
+            continue
+        split_df = pd.read_parquet(split_path)
+        split_sizes[split_name] = int(len(split_df))
+        if "timestamp" in split_df.columns and not split_df.empty:
+            split_ranges[split_name] = {
+                "start": _safe_iso(split_df["timestamp"].min()),
+                "end": _safe_iso(split_df["timestamp"].max()),
+            }
+
+    target_presence: dict[str, Any] = {}
+    for target in expected_targets:
+        present = target in df.columns
+        null_ratio = float(df[target].isna().mean()) if present else None
+        target_presence[target] = {
+            "present": present,
+            "non_null_rows": int(df[target].notna().sum()) if present else 0,
+            "null_ratio": null_ratio,
+        }
+
+    null_ratios = {
+        column: float(df[column].isna().mean())
+        for column in df.columns
+        if float(df[column].isna().mean()) > 0.0
+    }
+
+    return {
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "dataset": cfg.name,
+        "profile": profile,
+        "features_path": cfg.features_path,
+        "splits_path": cfg.splits_path,
+        "row_count": int(len(df)),
+        "date_range": {
+            "start": _safe_iso(df["timestamp"].min()) if "timestamp" in df.columns and not df.empty else None,
+            "end": _safe_iso(df["timestamp"].max()) if "timestamp" in df.columns and not df.empty else None,
+        },
+        "expected_targets": expected_targets,
+        "expected_model_types": expected_models,
+        "target_presence": target_presence,
+        "null_ratios": null_ratios,
+        "split_sizes": split_sizes,
+        "split_ranges": split_ranges,
+        "gap_hours": int(
+            (
+                (train_cfg.get("splits") or train_cfg.get("split") or {})
+                if isinstance(train_cfg.get("splits") or train_cfg.get("split") or {}, dict)
+                else {}
+            ).get("gap_hours", 0)
+            or 0
+        ),
+        "expected_target_model_matrix": [
+            {"target": target, "models": expected_models}
+            for target in expected_targets
+        ],
+        "output_layout": {
+            "mode": run_layout.mode,
+            "run_id": run_layout.run_id,
+            "models_dir": str(run_layout.models_dir.relative_to(REPO_ROOT)),
+            "reports_dir": str(run_layout.reports_dir.relative_to(REPO_ROOT)),
+            "uncertainty_dir": str(run_layout.uncertainty_dir.relative_to(REPO_ROOT)),
+            "backtests_dir": str(run_layout.backtests_dir.relative_to(REPO_ROOT)),
+        },
+    }
+
+
+def _write_preflight_analysis(
+    cfg: DatasetConfig,
+    run_layout: RunLayout,
+    *,
+    profile: str,
+    models: str | None = None,
+) -> dict[str, Any]:
+    payload = _build_preflight_analysis(cfg, run_layout, profile=profile, models=models)
+    run_layout.reports_dir.mkdir(parents=True, exist_ok=True)
+    out_path = run_layout.reports_dir / "preflight_dataset_analysis.json"
+    out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return payload
+
+
+def _write_run_context(
+    *,
+    cfg: DatasetConfig,
+    run_layout: RunLayout,
+    preflight: dict[str, Any],
+    profile: str,
+    models: str | None = None,
+) -> None:
+    run_layout.registry_dir.mkdir(parents=True, exist_ok=True)
+    context = {
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "dataset": cfg.name,
+        "display_name": cfg.display_name,
+        "profile": profile,
+        "requested_models": models,
+        "run_mode": run_layout.mode,
+        "run_id": run_layout.run_id,
+        "features_path": cfg.features_path,
+        "splits_path": cfg.splits_path,
+        "models_dir": str(run_layout.models_dir),
+        "reports_dir": str(run_layout.reports_dir),
+        "uncertainty_dir": str(run_layout.uncertainty_dir),
+        "backtests_dir": str(run_layout.backtests_dir),
+        "expected_targets": preflight.get("expected_targets", []),
+        "expected_model_types": preflight.get("expected_model_types", []),
+        "preflight_analysis": str(run_layout.reports_dir / "preflight_dataset_analysis.json"),
+    }
+    (run_layout.registry_dir / "run_context.json").write_text(json.dumps(context, indent=2), encoding="utf-8")
 
 
 def run_command(cmd: list[str], description: str, timeout_seconds: float | None = None) -> bool:
@@ -137,6 +485,10 @@ def run_command(cmd: list[str], description: str, timeout_seconds: float | None 
     src_path = str(REPO_ROOT / "src")
     existing_pythonpath = cmd_env.get("PYTHONPATH", "")
     cmd_env["PYTHONPATH"] = f"{src_path}{os.pathsep}{existing_pythonpath}" if existing_pythonpath else src_path
+    cmd_env.setdefault("MPLBACKEND", "Agg")
+    cmd_env.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
+    cmd_env.setdefault("XDG_CACHE_HOME", "/tmp/xdg-cache-gridpulse")
+    cmd_env.setdefault("LOKY_MAX_CPU_COUNT", str(os.cpu_count() or 1))
 
     try:
         subprocess.run(
@@ -233,9 +585,10 @@ def create_splits(cfg: DatasetConfig, force: bool = False) -> bool:
     return run_command(cmd, f"Creating time series splits for {cfg.display_name}")
 
 
-def validate_features_schema(cfg: DatasetConfig) -> bool:
+def validate_features_schema(cfg: DatasetConfig, report_path: Path | None = None) -> bool:
     """Validate processed features schema before training."""
-    report_name = f"data_quality_report_{cfg.name.lower()}_features.md"
+    target_report = report_path or (REPO_ROOT / "reports" / f"data_quality_report_{cfg.name.lower()}_features.md")
+    target_report.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
         PYTHON_BIN,
         "-m",
@@ -243,28 +596,33 @@ def validate_features_schema(cfg: DatasetConfig) -> bool:
         "--in",
         cfg.features_path,
         "--report",
-        f"reports/{report_name}",
+        str(target_report),
     ]
     return run_command(cmd, f"Validating features schema for {cfg.display_name}")
 
 
-def refresh_data_manifest(cfg: DatasetConfig) -> bool:
+def refresh_data_manifest(cfg: DatasetConfig, output_path: Path | None = None) -> bool:
     """Build deterministic data manifest before model training."""
+    manifest_path = output_path or (REPO_ROOT / "data" / "dashboard" / "data_manifest.json")
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
         PYTHON_BIN,
         "scripts/build_data_manifest.py",
         "--dataset",
         cfg.name,
         "--output",
-        "data/dashboard/data_manifest.json",
+        str(manifest_path),
     ]
     return run_command(cmd, f"Building data manifest for {cfg.display_name}")
 
 
 def train_models(
     cfg: DatasetConfig,
+    run_layout: RunLayout | None = None,
+    models: str | None = None,
     tune: bool = False,
     no_tune: bool = False,
+    no_cv: bool = False,
     ensemble: bool = False,
     max_seeds: Optional[int] = None,
     n_trials: Optional[int] = None,
@@ -303,11 +661,27 @@ def train_models(
         PYTHON_BIN, "-m", "gridpulse.forecasting.train",
         "--config", cfg.config_file,
     ]
+    if models:
+        cmd.extend(["--models", models])
+    if run_layout is not None:
+        cmd.extend(
+            [
+                "--artifacts-dir", str(run_layout.models_dir),
+                "--reports-dir", str(run_layout.reports_dir),
+                "--uncertainty-artifacts-dir", str(run_layout.uncertainty_dir),
+                "--backtests-dir", str(run_layout.backtests_dir),
+                "--walk-forward-report", str(run_layout.walk_forward_report),
+                "--validation-report", str(run_layout.validation_report),
+                "--data-manifest-output", str(run_layout.data_manifest_output),
+            ]
+        )
     
     if effective_tune:
         cmd.append("--tune")
     if no_tune:
         cmd.append("--no-tune")
+    if no_cv:
+        cmd.append("--no-cv")
     if effective_ensemble:
         cmd.append("--ensemble")
     if effective_max_seeds is not None and effective_max_seeds > 0:
@@ -324,7 +698,7 @@ def train_models(
     return run_command(cmd, f"Training models for {cfg.display_name}", timeout_seconds=timeout_seconds)
 
 
-def generate_reports(cfg: DatasetConfig) -> bool:
+def generate_reports(cfg: DatasetConfig, run_layout: RunLayout | None = None) -> bool:
     """
     Generate evaluation reports including conformal coverage.
     
@@ -338,9 +712,18 @@ def generate_reports(cfg: DatasetConfig) -> bool:
         PYTHON_BIN, "scripts/build_reports.py",
         "--features", cfg.features_path,
         "--splits", cfg.splits_path,
-        "--models-dir", cfg.models_dir,
-        "--reports-dir", cfg.reports_dir,
+        "--models-dir", cfg.models_dir if run_layout is None else str(run_layout.models_dir),
+        "--reports-dir", cfg.reports_dir if run_layout is None else str(run_layout.reports_dir),
     ]
+    if run_layout is not None:
+        cmd.extend(
+            [
+                "--publication-dir", str(run_layout.publication_dir),
+                "--uncertainty-artifacts-dir", str(run_layout.uncertainty_dir),
+                "--backtests-dir", str(run_layout.backtests_dir),
+                "--current-dataset", cfg.name,
+            ]
+        )
     
     return run_command(cmd, f"Generating reports for {cfg.display_name}")
 
@@ -367,6 +750,94 @@ def run_conformal_intervals(cfg: DatasetConfig) -> bool:
     ]
     
     return run_command(cmd, f"Computing conformal intervals for {cfg.display_name}")
+
+
+def verify_training_outputs(cfg: DatasetConfig, run_layout: RunLayout, *, models: str | None = None) -> bool:
+    """Verify that a run produced the expected artifacts and per-target metrics."""
+    train_cfg = _load_training_cfg(cfg)
+    targets = _configured_targets(train_cfg)
+    uncertainty_targets = _configured_uncertainty_targets()
+    requested_models = {part.strip().lower() for part in models.split(",") if part.strip()} if models else None
+    model_types = _configured_model_types(train_cfg, requested_models=requested_models)
+    cmd = [
+        PYTHON_BIN,
+        "scripts/verify_training_outputs.py",
+        "--models-dir",
+        str(run_layout.models_dir),
+        "--reports-dir",
+        str(run_layout.reports_dir),
+        "--artifacts-dir",
+        str(run_layout.artifacts_root),
+        "--uncertainty-dir",
+        str(run_layout.uncertainty_dir),
+        "--backtests-dir",
+        str(run_layout.backtests_dir),
+        "--targets",
+        *targets,
+        "--uncertainty-targets",
+        *(uncertainty_targets or targets),
+        "--model-types",
+        *model_types,
+    ]
+    return run_command(cmd, f"Verifying training outputs for {cfg.display_name}")
+
+
+def _copy_tree_contents(src: Path, dst: Path) -> None:
+    if not src.exists():
+        return
+    dst.mkdir(parents=True, exist_ok=True)
+    for item in src.iterdir():
+        target = dst / item.name
+        if item.is_dir():
+            shutil.copytree(item, target, dirs_exist_ok=True)
+        else:
+            shutil.copy2(item, target)
+
+
+def _promote_candidate_run(cfg: DatasetConfig, run_layout: RunLayout, evaluation: dict[str, Any]) -> None:
+    canonical_models_dir = REPO_ROOT / cfg.models_dir
+    canonical_reports_dir = REPO_ROOT / cfg.reports_dir
+    canonical_uncertainty_dir = REPO_ROOT / cfg.uncertainty_dir
+    canonical_backtests_dir = REPO_ROOT / cfg.backtests_dir
+
+    _copy_tree_contents(run_layout.models_dir, canonical_models_dir)
+    _copy_tree_contents(run_layout.uncertainty_dir, canonical_uncertainty_dir)
+    _copy_tree_contents(run_layout.backtests_dir, canonical_backtests_dir)
+
+    canonical_reports_dir.mkdir(parents=True, exist_ok=True)
+    for item in run_layout.reports_dir.iterdir():
+        if item.name == "publication":
+            continue
+        target = canonical_reports_dir / item.name
+        if item.is_dir():
+            shutil.copytree(item, target, dirs_exist_ok=True)
+        else:
+            shutil.copy2(item, target)
+
+    publish_dir = REPO_ROOT / "reports" / "publish"
+    publish_dir.mkdir(parents=True, exist_ok=True)
+    promotion_record = {
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "dataset": cfg.name,
+        "source_run_id": run_layout.run_id,
+        "source_reports_dir": str(run_layout.reports_dir),
+        "source_models_dir": str(run_layout.models_dir),
+        "promoted_to": {
+            "models_dir": str(canonical_models_dir),
+            "reports_dir": str(canonical_reports_dir),
+            "uncertainty_dir": str(canonical_uncertainty_dir),
+            "backtests_dir": str(canonical_backtests_dir),
+        },
+        "accepted": bool(evaluation.get("accepted", False)),
+    }
+    (run_layout.registry_dir / "promotion_record.json").write_text(
+        json.dumps(promotion_record, indent=2),
+        encoding="utf-8",
+    )
+    (publish_dir / f"promotion_{cfg.name.lower()}_{run_layout.run_id}.json").write_text(
+        json.dumps(promotion_record, indent=2),
+        encoding="utf-8",
+    )
 
 
 def _load_json(path: Path) -> dict:
@@ -500,8 +971,10 @@ def _persist_selection_artifacts(
 
 def train_dataset(
     dataset_name: str,
+    models: Optional[str] = None,
     tune: bool = False,
     no_tune: bool = False,
+    no_cv: bool = False,
     ensemble: bool = False,
     max_seeds: Optional[int] = None,
     n_trials: Optional[int] = None,
@@ -512,6 +985,9 @@ def train_dataset(
     reports: bool = True,
     rebuild_features: bool = False,
     skip_training: bool = False,
+    candidate_run: bool = False,
+    run_id: Optional[str] = None,
+    promote_on_accept: bool = False,
 ) -> bool:
     """
     Full training pipeline for a single dataset.
@@ -532,10 +1008,12 @@ def train_dataset(
         return False
     
     cfg = DATASET_REGISTRY[dataset_name]
+    run_layout = _resolve_run_layout(cfg, candidate_run=candidate_run, run_id=run_id)
     
     print(f"\n{'#'*60}")
     print(f"#  TRAINING PIPELINE: {cfg.display_name}")
     print(f"#  Config: {cfg.config_file}")
+    print(f"#  Output mode: {run_layout.mode} ({run_layout.run_id})")
     print(f"{'#'*60}")
     
     # Step 1: Build features
@@ -547,17 +1025,23 @@ def train_dataset(
         return False
 
     # Step 2.5: Enforce schema + data identity contracts before training.
-    if not validate_features_schema(cfg):
+    if not validate_features_schema(cfg, report_path=run_layout.validation_report):
         return False
-    if not refresh_data_manifest(cfg):
+    if not refresh_data_manifest(cfg, output_path=run_layout.data_manifest_output):
         return False
+
+    preflight = _write_preflight_analysis(cfg, run_layout, profile=profile, models=models)
+    _write_run_context(cfg=cfg, run_layout=run_layout, preflight=preflight, profile=profile, models=models)
     
     # Step 3: Train models
     if not skip_training:
         if not train_models(
             cfg,
+            run_layout=run_layout,
+            models=models,
             tune=tune,
             no_tune=no_tune,
+            no_cv=no_cv,
             ensemble=ensemble,
             max_seeds=max_seeds,
             n_trials=n_trials,
@@ -569,14 +1053,18 @@ def train_dataset(
     
     # Step 4: Generate reports (includes conformal coverage)
     if reports:
-        if not generate_reports(cfg):
+        if not generate_reports(cfg, run_layout=run_layout):
             print("⚠️  Reports generation failed, continuing...")
+
+    if not verify_training_outputs(cfg, run_layout, models=models):
+        print(f"❌ Verification failed for {cfg.display_name}. Candidate outputs kept at {run_layout.reports_dir}.")
+        return False
 
     publish_cfg = _load_publish_audit_cfg()
     target_metrics_path = Path(target_metrics_file) if target_metrics_file else None
     evaluation = _evaluate_against_baseline(
         dataset_name=cfg.name,
-        reports_dir=Path(cfg.reports_dir),
+        reports_dir=run_layout.reports_dir,
         target_metrics_file=target_metrics_path,
         publish_cfg=publish_cfg,
         profile=profile,
@@ -584,10 +1072,13 @@ def train_dataset(
     _persist_selection_artifacts(
         cfg=cfg,
         evaluation=evaluation,
-        output_dir=Path("reports/publish"),
+        output_dir=run_layout.selection_output_dir,
     )
     if not bool(evaluation.get("accepted", False)):
-        print(f"⚠️  Acceptance gates not met for {cfg.display_name}. See reports/publish.")
+        print(f"⚠️  Acceptance gates not met for {cfg.display_name}. See {run_layout.selection_output_dir}.")
+    elif run_layout.is_candidate and promote_on_accept:
+        _promote_candidate_run(cfg, run_layout, evaluation)
+        print(f"📦 Promoted accepted candidate run {run_layout.run_id} into canonical paths.")
 
     print(f"\n✅ Pipeline completed for {cfg.display_name}")
     return True
@@ -595,12 +1086,13 @@ def train_dataset(
 
 def train_all_datasets(**kwargs) -> bool:
     """Train all registered datasets with the same settings."""
+    trainable_keys = _iter_trainable_dataset_keys()
     print(f"\n{'='*60}")
-    print(f"  TRAINING ALL DATASETS: {list(DATASET_REGISTRY.keys())}")
+    print(f"  TRAINING ALL DATASETS: {trainable_keys}")
     print(f"{'='*60}")
     
     results = {}
-    for name in DATASET_REGISTRY:
+    for name in trainable_keys:
         results[name] = train_dataset(name, **kwargs)
     
     # Summary
@@ -620,6 +1112,8 @@ def list_datasets() -> None:
     print("-" * 60)
     for key, cfg in DATASET_REGISTRY.items():
         print(f"   {key:8s} - {cfg.display_name}")
+        if cfg.alias_of:
+            print(f"            Alias of: {cfg.alias_of}")
         print(f"            Config: {cfg.config_file}")
         print(f"            Features: {cfg.features_path}")
         print()
@@ -661,9 +1155,19 @@ Examples:
         help="Enable Optuna hyperparameter tuning",
     )
     parser.add_argument(
+        "--models",
+        default=None,
+        help="Optional comma-separated model filter passed to training, e.g. gbm or gbm,lstm",
+    )
+    parser.add_argument(
         "--no-tune",
         action="store_true",
         help="Disable tuning even if YAML has tuning.enabled=true",
+    )
+    parser.add_argument(
+        "--no-cv",
+        action="store_true",
+        help="Disable cross-validation even if YAML enables it",
     )
     parser.add_argument(
         "--ensemble",
@@ -726,6 +1230,21 @@ Examples:
         action="store_true",
         help="Only generate reports (skip training)",
     )
+    parser.add_argument(
+        "--candidate-run",
+        action="store_true",
+        help="Write outputs into isolated artifacts/runs/... and reports/runs/... directories",
+    )
+    parser.add_argument(
+        "--run-id",
+        default=None,
+        help="Optional run identifier for candidate outputs",
+    )
+    parser.add_argument(
+        "--promote-on-accept",
+        action="store_true",
+        help="Promote candidate outputs into canonical paths only after acceptance gates pass",
+    )
     
     args = parser.parse_args()
     
@@ -748,7 +1267,9 @@ Examples:
     if run_all:
         success = train_all_datasets(
             tune=args.tune,
+            models=args.models,
             no_tune=args.no_tune,
+            no_cv=args.no_cv,
             ensemble=args.ensemble,
             max_seeds=args.max_seeds,
             n_trials=args.n_trials,
@@ -759,12 +1280,17 @@ Examples:
             reports=reports,
             rebuild_features=args.rebuild,
             skip_training=args.reports_only,
+            candidate_run=args.candidate_run,
+            run_id=args.run_id,
+            promote_on_accept=args.promote_on_accept,
         )
     else:
         success = train_dataset(
             args.dataset,
+            models=args.models,
             tune=args.tune,
             no_tune=args.no_tune,
+            no_cv=args.no_cv,
             ensemble=args.ensemble,
             max_seeds=args.max_seeds,
             n_trials=args.n_trials,
@@ -775,6 +1301,9 @@ Examples:
             reports=reports,
             rebuild_features=args.rebuild,
             skip_training=args.reports_only,
+            candidate_run=args.candidate_run,
+            run_id=args.run_id,
+            promote_on_accept=args.promote_on_accept,
         )
     
     return 0 if success else 1
