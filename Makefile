@@ -295,3 +295,46 @@ ci: lint lint-release test-cov test-integration
 # Pre-release validation
 pre-release: ci release_check
 	@echo "✅ Pre-release validation complete"
+
+# ============================================================
+# R1 Paper Release Family
+# ============================================================
+
+# R1 diagnostic: single-seed quick check across all BAs
+r1-diagnostic:
+	PYTHONPATH=src $(PYTHON) scripts/run_r1_release.py --stage diagnostic
+
+# R1 full: multi-seed training across DE + US BAs
+r1-full:
+	PYTHONPATH=src $(PYTHON) scripts/run_r1_release.py --stage full
+
+# R1 CPSBench: severity sweeps with MPC baseline
+r1-cpsbench:
+	PYTHONPATH=src $(PYTHON) scripts/run_r1_release.py --stage cpsbench
+
+# R1 verify: lint + test + paper asset sync
+r1-verify:
+	PYTHONPATH=src $(PYTHON) scripts/run_r1_release.py --stage verify
+
+# R1 promote: promote candidate artifacts
+r1-promote:
+	PYTHONPATH=src $(PYTHON) scripts/run_r1_release.py --stage promote
+
+# R1 full pipeline end-to-end
+r1-all: r1-diagnostic r1-full r1-cpsbench r1-verify r1-promote
+	@echo "✅ R1 release family complete"
+
+# Paper asset sync check
+paper-sync:
+	PYTHONPATH=src $(PYTHON) scripts/sync_paper_assets.py --check
+
+# Transfer study (cross-region evaluation)
+transfer-study:
+	PYTHONPATH=src $(PYTHON) scripts/run_transfer_study.py --all-pairs --models baseline_gbm dl_lstm
+
+# Train all BAs with full model suite
+train-all-ba:
+	PYTHONPATH=src $(PYTHON) scripts/train_dataset.py --dataset DE --profile full
+	PYTHONPATH=src $(PYTHON) scripts/train_dataset.py --dataset US_MISO --profile full
+	PYTHONPATH=src $(PYTHON) scripts/train_dataset.py --dataset US_PJM --profile full
+	PYTHONPATH=src $(PYTHON) scripts/train_dataset.py --dataset US_ERCOT --profile full

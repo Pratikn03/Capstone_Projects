@@ -1,0 +1,83 @@
+# CPSBench R1 severity sweep configuration
+# ------------------------------------------------------------------
+# Goal: ensure at least one regime produces non-trivial baseline
+# failures so that DC3S safety improvements are measurable.
+#
+# Usage:
+#   python scripts/run_cpsbench.py --config configs/cpsbench_r1_severity.yaml
+# ------------------------------------------------------------------
+
+cpsbench:
+  # ── Episode generation ──────────────────────────────────────────
+  horizon: 168        # 1 week (hours)
+  seeds: [11, 42, 73, 99, 137]
+
+  # ── Controllers to evaluate ─────────────────────────────────────
+  controllers:
+    - deterministic_lp
+    - robust_fixed_interval
+    - cvar_interval
+    - scenario_mpc           # NEW receding-horizon strong baseline
+    - dc3s_wrapped
+    - dc3s_ftit
+
+  # ── Scenarios ───────────────────────────────────────────────────
+  # Each scenario can run a single level (default) or a severity
+  # sweep.  When "sweep" is present the scenario is expanded into
+  # one sub-run per parameter combination.
+  scenarios:
+    nominal:
+      enabled: true
+
+    dropout:
+      enabled: true
+      sweep:
+        rate: [0.05, 0.10, 0.20, 0.40, 0.60]
+
+    delay_jitter:
+      enabled: true
+      sweep:
+        max_delay_steps: [1, 3, 6, 12]
+
+    stale:
+      enabled: true
+      sweep:
+        stale_duration_steps: [2, 6, 12, 24]
+
+    spikes:
+      enabled: true
+      sweep:
+        spike_magnitude_sigma: [3.0, 5.0, 10.0, 20.0]
+        spike_rate: [0.01, 0.05, 0.10]
+
+    drift_combo:
+      enabled: true
+      sweep:
+        drift_magnitude_pct: [0.05, 0.10, 0.20]
+        dropout_rate: [0.05, 0.10]
+
+    soc_mismatch:              # NEW: observed SOC ≠ true SOC
+      enabled: true
+      sweep:
+        observation_noise_mwh: [0.5, 1.0, 2.0, 5.0]
+        observation_bias_mwh: [0.0, 1.0, -1.0, 2.0]
+
+  # ── Safety evaluation scope ─────────────────────────────────────
+  safety_metrics:
+    - truth_soc_violation_rate        # SOC truth outside [min, max]
+    - truth_soc_violation_severity_p95
+    - power_bound_violation_rate      # |P| > max_charge / max_discharge
+    - ramp_violation_rate             # |ΔP| > max ramp (default = max_power)
+    - grid_import_cap_violation_rate  # G > max_grid_import
+    - solver_infeasibility_rate
+
+  # ── Acceptance gate ─────────────────────────────────────────────
+  acceptance_criteria:
+    # At least one sweep point must produce violation_rate >
+    # threshold for non-DC3S baselines.
+    min_baseline_violation_rate: 0.02
+    # DC3S must reduce violation rate relative to best non-DC3S
+    # baseline in ≥1 hard regime.
+    required_dc3s_reduction_pct: 0.50
+    # DC3S must also reduce P95 violation severity.
+    required_severity_reduction: true

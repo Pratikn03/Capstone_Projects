@@ -16,6 +16,23 @@ def _picp(y_true: np.ndarray, lower: np.ndarray, upper: np.ndarray) -> float:
     return float(np.mean(covered))
 
 
+def _pinball_loss(y_true: np.ndarray, y_pred: np.ndarray, quantile: float) -> float:
+    error = y_true - y_pred
+    q = float(quantile)
+    return float(np.mean(np.maximum(q * error, (q - 1.0) * error)))
+
+
+def _winkler_score(y_true: np.ndarray, lower: np.ndarray, upper: np.ndarray, alpha: float) -> float:
+    alpha = max(float(alpha), 1e-9)
+    width = upper - lower
+    below = y_true < lower
+    above = y_true > upper
+    score = width.copy()
+    score[below] = width[below] + (2.0 / alpha) * (lower[below] - y_true[below])
+    score[above] = width[above] + (2.0 / alpha) * (y_true[above] - upper[above])
+    return float(np.mean(score))
+
+
 def compute_forecast_metrics(
     *,
     y_true: Iterable[float] | np.ndarray,
@@ -49,12 +66,26 @@ def compute_forecast_metrics(
     picp90 = _picp(yt, lo90, hi90)
     picp95 = _picp(yt, lo95, hi95)
     mean_width = float(np.mean(hi90 - lo90))
+    midpoint = 0.5 * (lo90 + hi90)
     return {
         "mae": mae,
         "rmse": rmse,
         "picp_90": picp90,
         "picp_95": picp95,
         "mean_interval_width": mean_width,
+        "pinball_loss_q05": _pinball_loss(yt, lo90, 0.05),
+        "pinball_loss_q50": _pinball_loss(yt, midpoint, 0.50),
+        "pinball_loss_q95": _pinball_loss(yt, hi90, 0.95),
+        "pinball_loss_mean": float(
+            np.mean(
+                [
+                    _pinball_loss(yt, lo90, 0.05),
+                    _pinball_loss(yt, midpoint, 0.50),
+                    _pinball_loss(yt, hi90, 0.95),
+                ]
+            )
+        ),
+        "winkler_score_90": _winkler_score(yt, lo90, hi90, 0.10),
     }
 
 
