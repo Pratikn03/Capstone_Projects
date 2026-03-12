@@ -9,13 +9,15 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## 1) OPSD pipeline (Germany)
+## 1) OPSD pipeline (country-aware)
 ```bash
 python -m gridpulse.data_pipeline.download_opsd --out data/raw
 python -m gridpulse.data_pipeline.validate_schema --in data/raw --report reports/data_quality_report.md
-python -m gridpulse.data_pipeline.build_features --in data/raw --out data/processed
+python -m gridpulse.data_pipeline.build_features --in data/raw --out data/processed --country DE
 python -m gridpulse.data_pipeline.split_time_series --in data/processed/features.parquet --out data/processed/splits
 ```
+
+Swap `--country DE` for any supported OPSD country code such as `FR` or `ES`. The normalized downstream schema remains unchanged: `timestamp`, `load_mw`, `wind_mw`, `solar_mw`, and optional `price_eur_mwh`.
 
 ## 2) EIA-930 pipeline (US)
 ```bash
