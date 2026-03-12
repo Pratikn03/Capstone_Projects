@@ -26,6 +26,9 @@ from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm
 from gridpulse.forecasting.backtest import multi_horizon_metrics
 from gridpulse.forecasting.predict import load_model_bundle, predict_next_24h
 from gridpulse.forecasting.dl_lstm import LSTMForecaster
+from gridpulse.forecasting.dl_nbeats import NBEATSForecaster
+from gridpulse.forecasting.dl_patchtst import PatchTSTForecaster
+from gridpulse.forecasting.dl_tft import TFTForecaster
 from gridpulse.forecasting.dl_tcn import TCNForecaster
 from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
 from gridpulse.optimizer.lp_dispatch import optimize_dispatch
@@ -51,6 +54,10 @@ class ReportContext:
     splits_dir: Path
     models_dir: Path
     reports_dir: Path
+    publication_dir: Path
+    uncertainty_artifacts_dir: Path | None = None
+    backtests_dir: Path | None = None
+    current_dataset: str | None = None
 
 
 def ensure_dir(path: Path):
@@ -70,6 +77,20 @@ def _load_uncertainty_cfg(ctx: ReportContext) -> dict:
     if cfg_path.exists():
         return yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
     return {"enabled": False}
+
+
+def _resolve_uncertainty_artifacts_dir(ctx: ReportContext, cfg: dict) -> Path:
+    if ctx.uncertainty_artifacts_dir is not None:
+        return ctx.uncertainty_artifacts_dir
+    return Path(cfg.get("artifacts_dir", "artifacts/uncertainty"))
+
+
+def _resolve_backtests_template(ctx: ReportContext, cfg: dict, suffix: str) -> str:
+    if ctx.backtests_dir is not None:
+        return str(ctx.backtests_dir / f"{{target}}_{suffix}.npz")
+    default = "artifacts/backtests/calibration.npz" if suffix == "calibration" else "artifacts/backtests/test.npz"
+    key = "calibration_npz" if suffix == "calibration" else "test_npz"
+    return str(cfg.get(key, default))
 
 
 def _parse_uncertainty_targets(cfg: dict, default_targets: list[str]) -> list[str]:
@@ -100,7 +121,7 @@ def _format_uncertainty_path(template: str, target: str, suffix: str, multi: boo
 def _conformal_bounds(target: str, yhat: np.ndarray, ctx: ReportContext, cfg: dict) -> dict | None:
     if not cfg.get("enabled", False):
         return None
-    artifacts_dir = Path(cfg.get("artifacts_dir", "artifacts/uncertainty"))
+    artifacts_dir = _resolve_uncertainty_artifacts_dir(ctx, cfg)
     path = artifacts_dir / f"{target}_conformal.json"
     if not path.exists():
         return None
@@ -237,6 +258,39 @@ def _build_torch_model(bundle: dict):
             num_channels=list(params.get("num_channels", [32, 32, 32])),
             kernel_size=int(params.get("kernel_size", 3)),
             dropout=float(params.get("dropout", 0.1)),
+            horizon=horizon,
+        )
+    elif model_type == "nbeats":
+        model = NBEATSForecaster(
+            n_features=len(feat_cols),
+            lookback=int(bundle.get("lookback", params.get("lookback", 168))),
+            horizon=horizon,
+            hidden_dim=int(params.get("hidden_dim", 512)),
+            num_blocks=int(params.get("num_blocks", 4)),
+            dropout=float(params.get("dropout", 0.1)),
+        )
+    elif model_type == "tft":
+        model = TFTForecaster(
+            n_features=len(feat_cols),
+            horizon=horizon,
+            d_model=int(params.get("d_model", 128)),
+            n_heads=int(params.get("n_heads", 4)),
+            num_layers=int(params.get("num_layers", 2)),
+            dropout=float(params.get("dropout", 0.1)),
+            dim_feedforward=int(params.get("dim_feedforward", 256)),
+        )
+    elif model_type == "patchtst":
+        model = PatchTSTForecaster(
+            n_features=len(feat_cols),
+            lookback=int(bundle.get("lookback", params.get("lookback", 168))),
+            horizon=horizon,
+            patch_len=int(params.get("patch_len", 24)),
+            stride=int(params.get("stride", 12)),
+            d_model=int(params.get("d_model", 128)),
+            n_heads=int(params.get("n_heads", 4)),
+            num_layers=int(params.get("num_layers", 2)),
+            dropout=float(params.get("dropout", 0.1)),
+            dim_feedforward=int(params.get("dim_feedforward", 256)),
         )
     else:
         raise ValueError(f"Unknown torch model_type: {model_type}")
@@ -525,6 +579,9 @@ def refresh_metrics_from_models(ctx: ReportContext) -> dict:
         return metrics
 
     targets = ["load_mw", "wind_mw", "solar_mw"]
+    unc_cfg = _load_uncertainty_cfg(ctx)
+    unc_dir = _resolve_uncertainty_artifacts_dir(ctx, unc_cfg)
+    seq_model_kinds = ["lstm", "tcn", "nbeats", "tft", "patchtst"]
     for target in targets:
         metrics.setdefault("targets", {}).setdefault(target, {})
 
@@ -546,8 +603,22 @@ def refresh_metrics_from_models(ctx: ReportContext) -> dict:
                     **metrics["targets"][target].get("gbm", {}),
                     **m,
                 }
+                conformal_path = unc_dir / f"{target}_conformal.json"
+                if conformal_path.exists():
+                    payload = _load_json_file(conformal_path)
+                    meta = payload.get("meta", {}) if isinstance(payload.get("meta"), dict) else {}
+                    metrics["targets"][target]["gbm"]["uncertainty"] = {
+                        "picp_90": meta.get("picp_90", meta.get("global_coverage")),
+                        "picp_95": meta.get("picp_95"),
+                        "mean_interval_width": meta.get("mean_interval_width", meta.get("global_mean_width")),
+                        "pinball_loss_q05": meta.get("pinball_loss_q05"),
+                        "pinball_loss_q50": meta.get("pinball_loss_q50"),
+                        "pinball_loss_q95": meta.get("pinball_loss_q95"),
+                        "pinball_loss_mean": meta.get("pinball_loss_mean"),
+                        "winkler_score_90": meta.get("winkler_score_90"),
+                    }
 
-        for kind in ["lstm", "tcn"]:
+        for kind in seq_model_kinds:
             path = ctx.models_dir / f"{kind}_{target}.pt"
             if path.exists():
                 # Evaluate sequence models with the same scaling as training.
@@ -1331,13 +1402,13 @@ def _load_json_file(path: Path) -> dict:
 
 def build_publication_uncertainty_artifacts(ctx: ReportContext) -> None:
     """Build publication tables/figures for coverage-width and transfer sections."""
-    publication_dir = ctx.repo_root / "reports" / "publication"
+    publication_dir = ctx.publication_dir
     publication_dir.mkdir(parents=True, exist_ok=True)
 
     unc_cfg = _load_uncertainty_cfg(ctx)
     targets = _parse_uncertainty_targets(unc_cfg, ["load_mw", "wind_mw", "solar_mw"])
-    test_template = str(unc_cfg.get("test_npz", "artifacts/backtests/{target}_test.npz"))
-    artifacts_dir = Path(unc_cfg.get("artifacts_dir", "artifacts/uncertainty"))
+    test_template = _resolve_backtests_template(ctx, unc_cfg, "test")
+    artifacts_dir = _resolve_uncertainty_artifacts_dir(ctx, unc_cfg)
 
     group_rows: list[dict] = []
     for target in targets:
@@ -1420,10 +1491,16 @@ def build_publication_uncertainty_artifacts(ctx: ReportContext) -> None:
 
     # Region compare table from locked DE/US metrics snapshots.
     region_rows: list[dict] = []
-    for region, path in [
-        ("DE", ctx.repo_root / "reports" / "week2_metrics.json"),
-        ("US", ctx.repo_root / "reports" / "eia930" / "week2_metrics.json"),
-    ]:
+    region_metric_paths = {
+        "DE": ctx.repo_root / "reports" / "week2_metrics.json",
+        "US_MISO": ctx.repo_root / "reports" / "eia930" / "week2_metrics.json",
+        "US_PJM": ctx.repo_root / "reports" / "eia930_pjm" / "week2_metrics.json",
+        "US_ERCOT": ctx.repo_root / "reports" / "eia930_ercot" / "week2_metrics.json",
+    }
+    if ctx.current_dataset in region_metric_paths:
+        region_metric_paths[ctx.current_dataset] = ctx.reports_dir / "week2_metrics.json"
+
+    for region, path in region_metric_paths.items():
         payload = _load_json_file(path)
         targets_payload = payload.get("targets", {}) if isinstance(payload.get("targets"), dict) else {}
         for target, vals in targets_payload.items():
@@ -1447,10 +1524,10 @@ def build_publication_uncertainty_artifacts(ctx: ReportContext) -> None:
     # Transfer table from available transfer/uncertainty artifacts (best-effort, evidence-linked).
     transfer_rows: list[dict] = []
     transfer_candidates = [
-        ("de_to_us", ctx.repo_root / "reports" / "publication" / "uncertainty_de_transfer_us.json"),
-        ("us_to_de", ctx.repo_root / "reports" / "publication" / "uncertainty_us_transfer_de.json"),
-        ("de_seasonal_shift", ctx.repo_root / "reports" / "publication" / "uncertainty_de.json"),
-        ("us_seasonal_shift", ctx.repo_root / "reports" / "publication" / "uncertainty_us.json"),
+        ("de_to_us", publication_dir / "uncertainty_de_transfer_us.json"),
+        ("us_to_de", publication_dir / "uncertainty_us_transfer_de.json"),
+        ("de_seasonal_shift", publication_dir / "uncertainty_de.json"),
+        ("us_seasonal_shift", publication_dir / "uncertainty_us.json"),
     ]
     for name, path in transfer_candidates:
         payload = _load_json_file(path)
@@ -1524,6 +1601,10 @@ def main():
     parser.add_argument("--splits", default="data/processed/splits")
     parser.add_argument("--models-dir", default="artifacts/models")
     parser.add_argument("--reports-dir", default="reports")
+    parser.add_argument("--publication-dir", default=None)
+    parser.add_argument("--uncertainty-artifacts-dir", default=None)
+    parser.add_argument("--backtests-dir", default=None)
+    parser.add_argument("--current-dataset", default=None)
     args = parser.parse_args()
 
     # Silence known LightGBM feature‑name warning for cleaner logs.
@@ -1539,6 +1620,10 @@ def main():
         splits_dir=repo_root / args.splits,
         models_dir=repo_root / args.models_dir,
         reports_dir=repo_root / args.reports_dir,
+        publication_dir=repo_root / (args.publication_dir or "reports/publication"),
+        uncertainty_artifacts_dir=(repo_root / args.uncertainty_artifacts_dir) if args.uncertainty_artifacts_dir else None,
+        backtests_dir=(repo_root / args.backtests_dir) if args.backtests_dir else None,
+        current_dataset=str(args.current_dataset).upper() if args.current_dataset else None,
     )
 
     # End‑to‑end report generation (figures + markdown + JSON summaries).

@@ -336,6 +336,68 @@ class ConformalInterval:
         lo, hi = self.predict_interval(y_pred)
         return float(np.mean(hi - lo))
 
+    @staticmethod
+    def pinball_loss(y_true: np.ndarray, y_pred: np.ndarray, quantile: float) -> float:
+        y_true = np.asarray(y_true, dtype=float)
+        y_pred = np.asarray(y_pred, dtype=float)
+        error = y_true - y_pred
+        q = float(quantile)
+        return float(np.mean(np.maximum(q * error, (q - 1.0) * error)))
+
+    @staticmethod
+    def winkler_score(y_true: np.ndarray, lower: np.ndarray, upper: np.ndarray, alpha: float) -> float:
+        y_true = np.asarray(y_true, dtype=float)
+        lower = np.asarray(lower, dtype=float)
+        upper = np.asarray(upper, dtype=float)
+        alpha = max(float(alpha), 1e-9)
+        width = upper - lower
+        below = y_true < lower
+        above = y_true > upper
+        score = width.copy()
+        score[below] = width[below] + (2.0 / alpha) * (lower[below] - y_true[below])
+        score[above] = width[above] + (2.0 / alpha) * (y_true[above] - upper[above])
+        return float(np.mean(score))
+
+    def interval_metrics_from_bounds(
+        self,
+        *,
+        y_true: np.ndarray,
+        y_pred: np.ndarray,
+        lower: np.ndarray,
+        upper: np.ndarray,
+    ) -> dict[str, float]:
+        y_true = np.asarray(y_true, dtype=float)
+        y_pred = np.asarray(y_pred, dtype=float)
+        lower = np.asarray(lower, dtype=float)
+        upper = np.asarray(upper, dtype=float)
+        coverage_90 = float(np.mean((y_true >= lower) & (y_true <= upper)))
+        width = upper - lower
+        alpha = float(self.cfg.alpha)
+        midpoint = 0.5 * (lower + upper)
+        half_width = 0.5 * width
+        lower_95 = midpoint - 1.2 * half_width
+        upper_95 = midpoint + 1.2 * half_width
+        lower_q = alpha / 2.0
+        upper_q = 1.0 - alpha / 2.0
+        return {
+            "picp_90": coverage_90,
+            "picp_95": float(np.mean((y_true >= lower_95) & (y_true <= upper_95))),
+            "mean_interval_width": float(np.mean(width)),
+            "pinball_loss_q05": self.pinball_loss(y_true, lower, lower_q),
+            "pinball_loss_q50": self.pinball_loss(y_true, y_pred, 0.5),
+            "pinball_loss_q95": self.pinball_loss(y_true, upper, upper_q),
+            "pinball_loss_mean": float(
+                np.mean(
+                    [
+                        self.pinball_loss(y_true, lower, lower_q),
+                        self.pinball_loss(y_true, y_pred, 0.5),
+                        self.pinball_loss(y_true, upper, upper_q),
+                    ]
+                )
+            ),
+            "winkler_score_90": self.winkler_score(y_true, lower, upper, alpha),
+        }
+
     def per_horizon_coverage(self, y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, float]:
         """
         Compute PICP (Prediction Interval Coverage Probability) per horizon step.
@@ -410,6 +472,15 @@ class ConformalInterval:
             "global_coverage": self.coverage(y_true, y_pred),
             "global_mean_width": self.mean_width(y_pred),
         }
+        lo, hi = self.predict_interval(y_pred)
+        results.update(
+            self.interval_metrics_from_bounds(
+                y_true=y_true,
+                y_pred=y_pred,
+                lower=lo,
+                upper=hi,
+            )
+        )
         
         if per_horizon:
             results["per_horizon_picp"] = self.per_horizon_coverage(y_true, y_pred)
@@ -433,6 +504,15 @@ class ConformalInterval:
             "global_coverage": global_coverage,
             "global_mean_width": global_width,
         }
+        midpoint = 0.5 * (np.asarray(lower, dtype=float) + np.asarray(upper, dtype=float))
+        results.update(
+            self.interval_metrics_from_bounds(
+                y_true=y_true,
+                y_pred=midpoint,
+                lower=lower,
+                upper=upper,
+            )
+        )
         if per_horizon:
             if y_true.ndim == 1:
                 y_true = y_true.reshape(-1, 1)

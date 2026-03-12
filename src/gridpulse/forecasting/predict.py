@@ -9,6 +9,9 @@ import pandas as pd
 import torch
 
 from gridpulse.forecasting.dl_lstm import LSTMForecaster
+from gridpulse.forecasting.dl_nbeats import NBEATSForecaster
+from gridpulse.forecasting.dl_patchtst import PatchTSTForecaster
+from gridpulse.forecasting.dl_tft import TFTForecaster
 from gridpulse.forecasting.dl_tcn import TCNForecaster
 from gridpulse.utils.scaler import StandardScaler
 
@@ -49,6 +52,39 @@ def _build_torch_model(bundle: Dict[str, Any]):
             num_channels=list(params.get("num_channels", [32, 32, 32])),
             kernel_size=int(params.get("kernel_size", 3)),
             dropout=float(params.get("dropout", 0.1)),
+            horizon=int(bundle.get("horizon", params.get("horizon", 24))),
+        )
+    elif model_type == "nbeats":
+        model = NBEATSForecaster(
+            n_features=len(feat_cols),
+            lookback=int(bundle.get("lookback", params.get("lookback", 168))),
+            horizon=int(bundle.get("horizon", params.get("horizon", 24))),
+            hidden_dim=int(params.get("hidden_dim", 512)),
+            num_blocks=int(params.get("num_blocks", 4)),
+            dropout=float(params.get("dropout", 0.1)),
+        )
+    elif model_type == "tft":
+        model = TFTForecaster(
+            n_features=len(feat_cols),
+            horizon=int(bundle.get("horizon", params.get("horizon", 24))),
+            d_model=int(params.get("d_model", 128)),
+            n_heads=int(params.get("n_heads", 4)),
+            num_layers=int(params.get("num_layers", 2)),
+            dropout=float(params.get("dropout", 0.1)),
+            dim_feedforward=int(params.get("dim_feedforward", 256)),
+        )
+    elif model_type == "patchtst":
+        model = PatchTSTForecaster(
+            n_features=len(feat_cols),
+            lookback=int(bundle.get("lookback", params.get("lookback", 168))),
+            horizon=int(bundle.get("horizon", params.get("horizon", 24))),
+            patch_len=int(params.get("patch_len", 24)),
+            stride=int(params.get("stride", 12)),
+            d_model=int(params.get("d_model", 128)),
+            n_heads=int(params.get("n_heads", 4)),
+            num_layers=int(params.get("num_layers", 2)),
+            dropout=float(params.get("dropout", 0.1)),
+            dim_feedforward=int(params.get("dim_feedforward", 256)),
         )
     else:
         raise ValueError(f"Unknown torch model_type: {model_type}")
@@ -100,7 +136,7 @@ def predict_next_24h(features_df: pd.DataFrame, model_bundle: Dict[str, Any], ho
             pred = np.mean(np.vstack(preds), axis=0)
         else:
             pred = model_bundle["model"].predict(X[-horizon:])
-    elif model_type in {"lstm", "tcn"}:
+    elif model_type in {"lstm", "tcn", "nbeats", "tft", "patchtst"}:
         lookback = int(model_bundle.get("lookback", 168))
         X = df[feat_cols].to_numpy()
         if len(X) < lookback:

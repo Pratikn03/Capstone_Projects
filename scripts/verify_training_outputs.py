@@ -113,6 +113,52 @@ class ArtifactChecker:
             self.errors.append(f"Invalid JSON: {path}")
             self.checks_failed += 1
             return False
+
+    def _fail(self, message: str) -> None:
+        print_fail(message)
+        self.errors.append(message)
+        self.checks_failed += 1
+
+    def _report_key_for_model_type(self, model_type: str) -> str:
+        if model_type.startswith("gbm"):
+            return "gbm"
+        return model_type
+
+    def check_week2_metrics(self, path: Path, targets: list[str], model_types: list[str]) -> bool:
+        """Validate that week2_metrics.json contains every expected target/model pair."""
+        if not self.check_json_valid(path, "Week 2 metrics", required_keys=["targets"]):
+            return False
+
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return False
+
+        target_payload = payload.get("targets", {})
+        if not isinstance(target_payload, dict):
+            self._fail(f"Week 2 metrics targets payload is not a mapping: {path}")
+            return False
+
+        ok = True
+        expected_report_keys = {self._report_key_for_model_type(model_type) for model_type in model_types}
+        for target in targets:
+            metrics = target_payload.get(target)
+            if not isinstance(metrics, dict):
+                self._fail(f"Week 2 metrics missing target '{target}' in {path}")
+                ok = False
+                continue
+            present_models = {key for key, value in metrics.items() if isinstance(value, dict)}
+            missing_models = sorted(expected_report_keys - present_models)
+            if missing_models:
+                self._fail(
+                    f"Week 2 metrics missing model entries for target '{target}' in {path}: {missing_models}"
+                )
+                ok = False
+
+        if ok:
+            print_ok(f"Week 2 metrics cover expected targets/models: {path}")
+            self.checks_passed += 1
+        return ok
     
     def check_model_bundle(self, path: Path, model_type: str, target: str) -> bool:
         """Check model bundle completeness."""
@@ -143,7 +189,7 @@ class ArtifactChecker:
                 self.checks_failed += 1
                 return False
         
-        elif model_type in ("lstm", "tcn"):
+        elif model_type in ("lstm", "tcn", "nbeats", "tft", "patchtst"):
             # PyTorch checkpoint for DL models
             if not self.check_file_exists(path, f"{model_type.upper()} model {target}"):
                 return False
@@ -152,7 +198,7 @@ class ArtifactChecker:
                 import torch
                 checkpoint = torch.load(path, map_location="cpu")
                 
-                required = ["model_state", "x_scaler", "y_scaler", "feature_cols", "target"]
+                required = ["state_dict", "x_scaler", "y_scaler", "feature_cols", "target"]
                 missing = [k for k in required if k not in checkpoint]
                 if missing:
                     print_warn(f"  Checkpoint missing keys: {missing}")
@@ -171,41 +217,47 @@ class ArtifactChecker:
         
         return False
     
-    def check_conformal_artifacts(self, artifacts_dir: Path, targets: list[str]) -> None:
+    def check_conformal_artifacts(
+        self,
+        *,
+        uncertainty_dir: Path,
+        backtests_dir: Path,
+        targets: list[str],
+    ) -> None:
         """Check conformal prediction artifacts."""
         print_section("Conformal Prediction Artifacts")
         
         for target in targets:
             # Conformal interval JSON
-            conf_path = artifacts_dir / "uncertainty" / f"{target}_conformal.json"
+            conf_path = uncertainty_dir / f"{target}_conformal.json"
             self.check_json_valid(conf_path, f"Conformal {target}", ["config", "meta"])
             
             # Calibration and test NPZ files
-            cal_path = artifacts_dir / "backtests" / f"{target}_calibration.npz"
-            
-            if cal_path.exists():
-                try:
-                    data = np.load(cal_path)
-                    if "y_true" in data and "y_pred" in data:
-                        print_ok(f"Calibration data {target}: {cal_path}")
-                        self.checks_passed += 1
-                    else:
-                        print_warn(f"Calibration NPZ missing arrays: {cal_path}")
-                        self.warnings.append(f"Incomplete NPZ: {cal_path}")
-                except Exception as e:
-                    print_fail(f"Invalid NPZ {cal_path}: {e}")
-                    self.errors.append(f"Invalid NPZ: {cal_path}")
-                    self.checks_failed += 1
-            else:
-                print_warn(f"Calibration data {target}: {cal_path} (MISSING)")
-                self.warnings.append(f"Missing calibration: {cal_path}")
+            for suffix in ("calibration", "test"):
+                npz_path = backtests_dir / f"{target}_{suffix}.npz"
+                if npz_path.exists():
+                    try:
+                        data = np.load(npz_path)
+                        required_arrays = {"y_true", "y_pred"} if "y_pred" in data.files else {"y_true", "q_lo", "q_hi"}
+                        if required_arrays.issubset(set(data.files)):
+                            print_ok(f"{suffix.title()} data {target}: {npz_path}")
+                            self.checks_passed += 1
+                        else:
+                            self._fail(f"{suffix.title()} NPZ missing arrays {sorted(required_arrays)}: {npz_path}")
+                    except Exception as e:
+                        self._fail(f"Invalid NPZ {npz_path}: {e}")
+                else:
+                    self._fail(f"Missing {suffix} NPZ for target '{target}': {npz_path}")
     
     def verify_training_run(
         self,
         models_dir: Path,
         reports_dir: Path,
         artifacts_dir: Path,
+        uncertainty_dir: Path,
+        backtests_dir: Path,
         targets: list[str],
+        uncertainty_targets: list[str],
         model_types: list[str],
         check_cv: bool = False,
     ) -> bool:
@@ -222,17 +274,13 @@ class ArtifactChecker:
                 if model_type.startswith("gbm"):
                     path = models_dir / f"{model_type}_{target}.pkl"
                     self.check_model_bundle(path, model_type, target)
-                elif model_type in ("lstm", "tcn"):
+                elif model_type in ("lstm", "tcn", "nbeats", "tft", "patchtst"):
                     path = models_dir / f"{model_type}_{target}.pt"
                     self.check_model_bundle(path, model_type, target)
         
         # Check metrics
         print_section("Metrics and Reports")
-        self.check_json_valid(
-            reports_dir / "week2_metrics.json",
-            "Week 2 metrics",
-            required_keys=["targets"],
-        )
+        self.check_week2_metrics(reports_dir / "week2_metrics.json", targets, model_types)
         self.check_file_exists(
             reports_dir / "ml_vs_dl_comparison.md",
             "ML vs DL comparison",
@@ -246,12 +294,16 @@ class ArtifactChecker:
         # Check CV results (if enabled)
         if check_cv:
             for target in targets:
-                cv_path = reports_dir / f"{target}_cv_results.json"
+                cv_path = reports_dir / f"{target}_gbm_cv_results.json"
                 if cv_path.exists():
                     self.check_json_valid(cv_path, f"CV results {target}", ["n_splits"])
         
         # Check conformal artifacts
-        self.check_conformal_artifacts(artifacts_dir, targets)
+        self.check_conformal_artifacts(
+            uncertainty_dir=uncertainty_dir,
+            backtests_dir=backtests_dir,
+            targets=uncertainty_targets,
+        )
         
         # Check manifests
         print_section("Run Manifests")
@@ -319,10 +371,28 @@ def main():
         help="Artifacts root directory (default: artifacts)",
     )
     parser.add_argument(
+        "--uncertainty-dir",
+        type=Path,
+        default=None,
+        help="Conformal artifact directory (default: <artifacts-dir>/uncertainty)",
+    )
+    parser.add_argument(
+        "--backtests-dir",
+        type=Path,
+        default=None,
+        help="Calibration/test NPZ directory (default: <artifacts-dir>/backtests)",
+    )
+    parser.add_argument(
         "--targets",
         nargs="+",
         default=["load_mw", "wind_mw", "solar_mw", "price_eur_mwh"],
         help="Target variables to check",
+    )
+    parser.add_argument(
+        "--uncertainty-targets",
+        nargs="+",
+        default=None,
+        help="Subset of targets that must have conformal/backtest artifacts",
     )
     parser.add_argument(
         "--model-types",
@@ -349,7 +419,10 @@ def main():
         models_dir=args.models_dir,
         reports_dir=args.reports_dir,
         artifacts_dir=args.artifacts_dir,
+        uncertainty_dir=args.uncertainty_dir or (args.artifacts_dir / "uncertainty"),
+        backtests_dir=args.backtests_dir or (args.artifacts_dir / "backtests"),
         targets=args.targets,
+        uncertainty_targets=args.uncertainty_targets or args.targets,
         model_types=args.model_types,
         check_cv=args.check_cv,
     )

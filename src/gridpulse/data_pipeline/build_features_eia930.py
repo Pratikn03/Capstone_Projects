@@ -8,6 +8,7 @@ Handles three CSV schema eras:
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 import zipfile
 
@@ -58,6 +59,38 @@ _ALL_USECOLS: set[str] = {
     "Net Generation (MW) from Natural Gas (Adjusted)",
     "Net Generation (MW) from Nuclear (Adjusted)",
     "Net Generation (MW) from Hydropower Excluding Pumped Storage (Adjusted)",
+}
+
+
+BA_METADATA: dict[str, dict[str, object]] = {
+    "MISO": {
+        "label": "Midcontinent ISO",
+        "weather_lat": 41.8781,
+        "weather_lon": -87.6298,
+        "weather_cache": "weather_miso_hourly.csv",
+        "carbon_source": "proxy_generation_mix",
+    },
+    "PJM": {
+        "label": "PJM Interconnection",
+        "weather_lat": 39.9526,
+        "weather_lon": -75.1652,
+        "weather_cache": "weather_pjm_hourly.csv",
+        "carbon_source": "proxy_generation_mix",
+    },
+    "ERCOT": {
+        "label": "ERCOT",
+        "weather_lat": 30.2672,
+        "weather_lon": -97.7431,
+        "weather_cache": "weather_ercot_hourly.csv",
+        "carbon_source": "proxy_generation_mix",
+    },
+    "ERCO": {
+        "label": "ERCOT",
+        "weather_lat": 30.2672,
+        "weather_lon": -97.7431,
+        "weather_cache": "weather_ercot_hourly.csv",
+        "carbon_source": "proxy_generation_mix",
+    },
 }
 
 
@@ -239,6 +272,9 @@ def build_eia930_features(
 ):
     """Build model-ready features from EIA‑930 data."""
     out_dir.mkdir(parents=True, exist_ok=True)
+    ba_key = str(ba).upper()
+    ba_filter = "ERCO" if ba_key == "ERCOT" else ba_key
+    ba_meta = dict(BA_METADATA.get(ba_filter, BA_METADATA.get(ba_key, {})))
 
     frames: list[pd.DataFrame] = []
     # Prefer extracted CSVs (faster), fall back to ZIPs.
@@ -250,12 +286,12 @@ def build_eia930_features(
     if not files:
         raise FileNotFoundError(f"No EIA‑930 files found in {raw_dir}")
 
-    print(f"Reading {len(files)} files for BA={ba} …")
+    print(f"Reading {len(files)} files for BA={ba_filter} …")
     for f in files:
         file_rows = 0
         for chunk in _read_balance_csv(f):
-            if ba:
-                chunk = chunk[chunk["Balancing Authority"] == ba]
+            if ba_filter:
+                chunk = chunk[chunk["Balancing Authority"] == ba_filter]
             if chunk.empty:
                 continue
             normed = _normalize(chunk)
@@ -264,7 +300,7 @@ def build_eia930_features(
         print(f"  {f.name}: {file_rows:,} rows")
 
     if not frames:
-        raise ValueError(f"No records for BA='{ba}'. Check spelling.")
+        raise ValueError(f"No records for BA='{ba_filter}'. Check spelling.")
 
     df = pd.concat(frames, ignore_index=True).sort_values("timestamp")
     df = df.drop_duplicates(subset="timestamp", keep="last")
@@ -296,7 +332,7 @@ def build_eia930_features(
 
     # ── Weather merge (Open-Meteo archive) ────────────────────────────
     if weather:
-        wx_cache = raw_dir / "weather_chicago_hourly.csv"
+        wx_cache = raw_dir / str(ba_meta.get("weather_cache", f"weather_{str(ba).lower()}_hourly.csv"))
         date_min = df["timestamp"].min().strftime("%Y-%m-%d")
         date_max = df["timestamp"].max().strftime("%Y-%m-%d")
         try:
@@ -305,7 +341,13 @@ def build_eia930_features(
                 wx = pd.read_csv(wx_cache)
                 wx["timestamp"] = pd.to_datetime(wx["timestamp"], utc=True)
             else:
-                wx = fetch_weather_openmeteo(date_min, date_max, out_path=wx_cache)
+                wx = fetch_weather_openmeteo(
+                    date_min,
+                    date_max,
+                    lat=float(ba_meta.get("weather_lat", 41.88)),
+                    lon=float(ba_meta.get("weather_lon", -87.63)),
+                    out_path=wx_cache,
+                )
             df = df.merge(wx, on="timestamp", how="left")
             wx_cols = [c for c in df.columns if c.startswith("wx_")]
             for col in wx_cols:
@@ -329,6 +371,20 @@ def build_eia930_features(
     # ── Persist ───────────────────────────────────────────────────────
     out_path = out_dir / "features.parquet"
     df.to_parquet(out_path, index=False)
+    provenance = {
+        "dataset": "EIA-930",
+        "balancing_authority": ba_filter,
+        "balancing_authority_label": ba_meta.get("label", ba_key),
+        "rows": int(len(df)),
+        "columns": int(df.shape[1]),
+        "date_start_utc": df["timestamp"].min().isoformat() if len(df) else None,
+        "date_end_utc": df["timestamp"].max().isoformat() if len(df) else None,
+        "weather_source": "Open-Meteo archive API" if weather else "disabled",
+        "weather_cache": str(wx_cache) if weather else None,
+        "price_source": "proxy_dynamic_tariff",
+        "carbon_source": ba_meta.get("carbon_source", "proxy_generation_mix"),
+    }
+    (out_dir / "dataset_provenance.json").write_text(json.dumps(provenance, indent=2), encoding="utf-8")
     print(f"\n✅ Saved: {out_path}")
     print(f"   Rows: {len(df):,}  |  Columns: {df.shape[1]}")
     print(f"   Wind  non-zero: {(df['wind_mw'] > 0).mean():.1%}")
