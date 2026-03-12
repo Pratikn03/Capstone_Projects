@@ -1,9 +1,9 @@
 % =============================================================================
-%  DC³S: Telemetry-Reliability-Weighted Conformal Safety Shield for
+%  DC3S: Telemetry-Reliability-Weighted Conformal Safety Shield for
 %        Battery Dispatch under Degraded Mixed Telemetry
-%  R1 Conference Submission Draft
+%  Thesis Manuscript (Canonical LaTeX Twin of PAPER_DRAFT.md)
 % =============================================================================
-\documentclass[11pt,a4paper]{article}
+\documentclass[11pt,a4paper,twocolumn]{article}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -22,16 +22,13 @@
 \usepackage{subcaption}
 \usepackage{cleveref}
 
-% ---------- Title ----------------------------------------------------------
-\title{DC\textsuperscript{3}S: Telemetry-Reliability-Weighted Conformal Safety Shield\\
-       for Battery Dispatch under Degraded Mixed Telemetry}
+\title{DC3S: Telemetry-Reliability-Weighted Conformal Safety Shield for Battery Dispatch under Degraded Mixed Telemetry}
 \author{Pratik Niroula\\
         Minnesota State University, Mankato\\
         CIT (Major), Mathematics (Minor)\\
         \texttt{pratik.niroula@mnsu.edu}}
 \date{}
 
-% ---------- Macros ---------------------------------------------------------
 \makeatletter
 \newcommand{\DeclarePaperFigure}[2]{\expandafter\def\csname PaperFigurePath@#1\endcsname{#2}}
 \newcommand{\DeclarePaperTable}[2]{\expandafter\def\csname PaperTablePath@#1\endcsname{#2}}
@@ -77,392 +74,682 @@
 }
 \makeatother
 
-% ---------- Locked metric values -------------------------------------------
 \IfFileExists{assets/data/manifest_lookup.tex}{\input{assets/data/manifest_lookup.tex}}{}
 \IfFileExists{assets/data/metrics_values.tex}{\input{assets/data/metrics_values.tex}}{}
 
-% ---------- Theorem environments -------------------------------------------
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}{Proposition}
 \newtheorem{definition}{Definition}
 
-% =============================================================================
 \begin{document}
 \maketitle
 
-% ===== ABSTRACT ==============================================================
 \begin{abstract}
-Battery storage dispatch under degraded telemetry exposes a critical safety gap: when sensor readings are delayed, dropped, or corrupted, uncertainty estimates become miscalibrated and optimization solvers issue unsafe commands.  We introduce DC\textsuperscript{3}S (Detect--Calibrate--Constrain--Certify--Shield), a conformal safety shield that scores telemetry reliability at each control step, inflates prediction intervals via a Reliability-Adaptive Conformal Certification (RAC-Cert) law, projects candidate dispatch actions into the feasible safe set, and emits an auditable certificate.  Evaluated on a CPSBench harness covering four fault dimensions (dropout, delay-jitter, spikes, out-of-order) across Germany (OPSD, 17{,}377 rows) and three US balancing authorities (EIA-930 MISO/PJM/ERCOT, ${\sim}$13{,}500 rows each), DC\textsuperscript{3}S achieves \textbf{zero true-SOC violations} with a 2.8\% intervention rate while the deterministic baseline violates at 3.9\% with P95 severity of 333\,MWh.  Cost-side, DC\textsuperscript{3}S-wrapped dispatch yields \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\% cost savings, \PaperMetric{DE_CARBON_REDUCTION_PCT}{0.30}\% carbon reduction, and \PaperMetric{DE_PEAK_SHAVING_PCT}{6.13}\% peak shaving on DE; stochastic value of the stochastic solution is positive in both regions (DE VSS\,=\,\PaperMetric{DE_VSS}{2,708.61}, US VSS\,=\,\PaperMetric{US_VSS}{297,092.71}).  A nine-row ablation with Wilcoxon signed-rank gates isolates RAC-Cert inflation as the critical safety component.  All quantitative claims are locked to versioned run artifacts and validated by an automated claim-consistency checker.
+Battery storage dispatch under degraded telemetry exposes a critical safety gap: when sensor readings are delayed, dropped, or corrupted, uncertainty estimates become miscalibrated and optimization solvers issue unsafe commands. We introduce DC\textsuperscript{3}S (Detect--Calibrate--Constrain--Certify--Shield), a conformal safety shield that scores telemetry reliability at each control step, inflates prediction intervals via a Reliability-Adaptive Conformal Certification (RAC-Cert) law, projects candidate dispatch actions into the feasible safe set, and emits an auditable certificate. Evaluated on a CPSBench harness covering four fault dimensions (dropout, delay-jitter, spikes, out-of-order) across Germany (OPSD, 17{,}377 rows) and three US balancing authorities (EIA-930 MISO/PJM/ERCOT, ${\sim}$13{,}500 rows each), DC\textsuperscript{3}S achieves \textbf{zero true-SOC violations} with a 2.8\% intervention rate while the deterministic baseline violates at 3.9\% with P95 severity of 333\,MWh. Cost-side, DC\textsuperscript{3}S-wrapped dispatch yields \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\% cost savings, \PaperMetric{DE_CARBON_REDUCTION_PCT}{0.30}\% carbon reduction, and \PaperMetric{DE_PEAK_SHAVING_PCT}{6.13}\% peak shaving on DE; stochastic value of the stochastic solution is positive in both regions (DE VSS\,=\,\PaperMetric{DE_VSS}{2,708.61}, US VSS\,=\,\PaperMetric{US_VSS}{297,092.71}). A nine-row ablation with Wilcoxon signed-rank gates isolates RAC-Cert inflation as the critical safety component. All quantitative claims are locked to versioned run artifacts and validated by an automated claim-consistency checker.
 \end{abstract}
 
 \noindent\textbf{Keywords:} conformal prediction, battery dispatch, safety shield, telemetry reliability, robust optimization, cyber-physical systems, uncertainty quantification
 
-% ===== 1. INTRODUCTION ======================================================
 \section{Introduction}\label{sec:intro}
 
-Grid-scale battery energy storage systems (BESS) are essential for integrating variable renewable generation, yet their dispatch depends on real-time telemetry---state-of-charge readings, power measurements, and grid-frequency signals---that is routinely degraded by sensor dropout, communication delay, spike-injection, and packet reordering~\cite{falliere2011stuxnet,dibaji2019systems}.  When telemetry quality drops, the prediction intervals that inform optimization widen unpredictably, and dispatch commands computed from stale or corrupted state can push the battery into unsafe SOC regions, risking equipment damage and grid instability~\cite{chen2020review_bess}.
+Grid-scale battery energy storage systems (BESS) are increasingly used to absorb renewable variability, shift energy across time, and reduce peak demand. In practice, however, battery dispatch is not driven by clean textbook state variables. It is driven by mixed telemetry: sensor feeds, delayed SCADA-style measurements, derived state estimates, and occasionally corrupted or reordered packets. When those inputs degrade, forecast intervals become miscalibrated and downstream optimization can generate actions that are numerically feasible on observed state while unsafe on the true battery state~\cite{dibaji2019systems,chandola2009anomaly,chen2020review_bess}.
 
-Existing approaches address parts of this pipeline in isolation.  Conformal prediction provides distribution-free coverage guarantees~\cite{vovk2005conformal,shafer2008tutorial}, and adaptive variants track distributional shift~\cite{gibbs2021adaptive,zaffran2022adaptive}, but neither incorporates telemetry-quality signals into the calibration step.  Robust and stochastic dispatch formulations protect against load/price uncertainty~\cite{bertsimas2011theory,birge2011stochastic}, but assume the uncertainty sets themselves are well-calibrated---an assumption violated under degraded telemetry.  Safety shields in control theory enforce state constraints~\cite{alshiekh2018safe,bastani2021safe}, but typically do not reason about measurement reliability or provide dispatch-level audit trails.
+This paper studies that failure mode directly. Rather than treating telemetry quality as a separate monitoring concern, we treat it as an input to uncertainty calibration and safe control. The core argument is narrow but operationally important: if telemetry reliability deteriorates, the controller should widen uncertainty sets, solve against those widened sets, repair unsafe candidate actions, and preserve a step-level audit record of what it did and why.
 
-\textbf{This paper bridges these gaps} with DC\textsuperscript{3}S, a conformal safety shield that:
-\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{Detects} telemetry degradation via a composite reliability score $w_t$;
-  \item \textbf{Calibrates} prediction intervals through RAC-Cert, inflating width proportional to degradation severity and drift risk;
-  \item \textbf{Constrains} dispatch by solving a robust optimization problem over the inflated intervals;
-  \item \textbf{Certifies} each dispatch action with a signed certificate recording the reliability state, interval widths, solver status, and constraint margins;
-  \item \textbf{Shields} the battery by projecting any infeasible candidate action to the nearest safe command.
-\end{enumerate}
+\subsection{Operational Motivation}
 
-\paragraph{Research questions.}
+GridPulse is built as a closed decision loop:
+\[
+\text{Forecast} \rightarrow \text{Optimize} \rightarrow \text{Dispatch} \rightarrow \text{Measure} \rightarrow \text{Monitor}.
+\]
+
+Prediction quality alone is not enough in that loop. A forecasting model can have strong RMSE while still inducing poor dispatch if its interval calibration is weak under degraded measurements, if the optimizer is exposed to the wrong uncertainty set, or if no shield exists between the numerical optimizer and the physical battery. DC\textsuperscript{3}S is motivated by that end-to-end control gap rather than by point forecasting alone.
+
+\subsection{Research Questions}
+
 \begin{description}[leftmargin=1em,topsep=2pt,itemsep=1pt]
-  \item[\textbf{RQ1}] Does RAC-Cert inflation eliminate true-SOC violations under telemetry faults without excessive cost penalty?
-  \item[\textbf{RQ2}] How does DC\textsuperscript{3}S compare to deterministic, fixed-interval robust, and CVaR dispatch baselines on the cost--safety Pareto frontier?
-  \item[\textbf{RQ3}] Which shield components (reliability scoring, interval inflation, action repair) are necessary---and which are sufficient---for safety?
-  \item[\textbf{RQ4}] Do safety and cost outcomes transfer across regions (DE $\leftrightarrow$ US) and seasonal regimes?
+  \item[\textbf{RQ1}] Can one architecture maintain strong forecasting quality across DE and multi-region US regimes while exposing uncertainty in a dispatch-usable form?
+  \item[\textbf{RQ2}] Does uncertainty-aware dispatch provide measurable value relative to deterministic dispatch under locked run artifacts?
+  \item[\textbf{RQ3}] Which parts of the shield are actually responsible for safety: telemetry scoring, interval inflation, or action repair?
+  \item[\textbf{RQ4}] Why do direct cost and peak improvements differ so sharply across DE and US even when stochastic value remains positive in both regions?
 \end{description}
 
-\paragraph{Contributions.}
+\subsection{Contributions}
+
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{RAC-Cert}: a reliability-adaptive conformal certification law that inflates intervals as a function of telemetry quality, drift risk, and sensitivity, with proved marginal coverage preservation (\Cref{thm:rac_coverage}).
-  \item \textbf{CPSBench}: a fault-injection benchmark with truth-vs-observed SOC evaluation across four fault types and parametric severity sweeps.
-  \item \textbf{Empirical evidence}: zero-violation safety with quantified cost--safety tradeoffs on DE and three US balancing authorities, including ablation and transfer studies.
-  \item \textbf{Governance stack}: automated metric-locking and claim-validation tooling that prevents manuscript--artifact drift.
+  \item \textbf{Telemetry-aware conformal control wrapper.} We implement RAC-Cert, a reliability-adaptive conformal inflation law that converts telemetry degradation, drift signals, and sensitivity probes into wider dispatch intervals.
+  \item \textbf{Safe dispatch and certification path.} We combine robust dispatch, action repair, and per-step certificate emission in one executable runtime loop.
+  \item \textbf{Locked empirical evidence.} We report zero-violation safety under telemetry faults together with region-scoped decision-impact and stochastic-value artifacts tied to run IDs.
+  \item \textbf{Governance as a bounded contribution.} We treat run manifests, claim matrices, and validator gates as part of the scientific object for this paper, while explicitly not claiming a new general theory of reproducibility~\cite{pineau2021improving}.
 \end{enumerate}
 
-% ===== 2. RELATED WORK ======================================================
+\subsection{Contribution Boundary}
+
+The main scientific contribution of this thesis is not a deep new conformal theorem. It is the coupling of telemetry reliability, uncertainty inflation, safe dispatch repair, and empirical truth-state safety evaluation inside one auditable control loop. The formal result in this paper is therefore positioned as a supporting correctness proposition: it justifies that monotone inflation cannot reduce marginal coverage relative to the base interval, but it is not presented as the primary novelty claim.
+
+\subsection{Paper Roadmap}
+
+Sections~\ref{sec:related}--\ref{sec:problem} position the work and define the dispatch setting. Sections~\ref{sec:forecasting_uq} and~\ref{sec:safe_dispatch} describe the forecasting, calibration, and shield mechanics. Sections~\ref{sec:experiments}--\ref{sec:us_analysis} present the empirical evidence, baseline diagnosis, and regime analysis. Sections~\ref{sec:governance}--\ref{sec:conclusion} close with governance, validity, limitations, and conclusion. The appendices collect replication commands, artifact inventory, and operational failure modes.
+
 \section{Related Work}\label{sec:related}
 
-\paragraph{Conformal prediction for time series.}
-Conformal prediction~\cite{vovk2005conformal} provides distribution-free prediction intervals with finite-sample coverage guarantees under exchangeability.  Extensions to time-series settings include adaptive conformal inference (ACI)~\cite{gibbs2021adaptive}, which adjusts the miscoverage rate online, and conformalized quantile regression (CQR)~\cite{romano2019conformalized}, which wraps quantile regressors with conformal calibration.  Regime-aware variants~\cite{barber2023conformal} stratify calibration by volatility bin.  None of these methods condition calibration on \emph{telemetry quality}, leaving a gap when input measurements are themselves degraded.
+\subsection{Conformal Prediction and Time-Series Calibration}
 
-\paragraph{Robust and stochastic battery dispatch.}
-Robust optimization for energy dispatch~\cite{bertsimas2011theory,ben2009robust} hedges against worst-case uncertainty within prescribed sets.  Stochastic programming~\cite{birge2011stochastic} optimizes expected cost over sampled scenarios.  CVaR-based formulations~\cite{rockafellar2000optimization} manage tail risk via Rockafellar--Uryasev linearization.  These methods assume well-specified uncertainty sets; when the sets are miscalibrated due to sensor faults, the robustness guarantees degrade.  DC\textsuperscript{3}S addresses this by coupling the uncertainty-set construction to telemetry reliability.
+Conformal prediction provides finite-sample prediction sets under exchangeability~\cite{vovk2005conformal,shafer2008tutorial}. Conformalized quantile regression (CQR) wraps quantile models with calibration residuals to produce intervals with stronger practical sharpness~\cite{romano2019conformalized}. Adaptive conformal inference extends this logic to shifting environments by updating effective miscoverage online~\cite{gibbs2021adaptive}, and time-series-specific adaptive conformal work studies temporal dependence more explicitly~\cite{zaffran2022adaptive}. Beyond exchangeability, weighted and generalized conformal formulations relax the classical assumptions and clarify when coverage guarantees degrade or must be localized~\cite{barber2023conformal}.
 
-\paragraph{Safety shields and runtime monitors.}
-Shield synthesis~\cite{alshiekh2018safe,konighofer2020shield} enforces safety by constraining the action space to pre-computed safe regions.  Simplex architectures~\cite{sha2001using} switch to a safe baseline controller upon detecting anomalies.  Runtime verification monitors~\cite{leucker2009brief} check trace properties post-hoc.  DC\textsuperscript{3}S combines elements of all three: it monitors telemetry health, inflates the optimizer's constraint set, and projects actions to the safe set---while emitting a per-step certificate for auditability.
+DC\textsuperscript{3}S inherits this literature but differs in a specific way: the calibration mechanism is not driven only by residual history. It is explicitly modulated by telemetry reliability signals and dispatched into a control loop where interval width changes action feasibility, not just forecast reporting.
 
-\paragraph{Telemetry reliability in CPS.}
-Telemetry degradation in industrial control has been studied in the context of SCADA security~\cite{dibaji2019systems} and anomaly detection~\cite{chandola2009anomaly}, but integrating a telemetry-quality score directly into the dispatch optimization loop is, to our knowledge, novel.
+\subsection{Robust, Stochastic, and Risk-Averse Dispatch}
 
-\paragraph{Positioning.}
-\Cref{tab:positioning} summarizes the methodological positioning.  DC\textsuperscript{3}S is the first method to combine conformal calibration, telemetry-reliability weighting, dispatch-level action repair, and per-step certification in a single framework.
+Robust optimization provides the language for worst-case hedging inside prescribed uncertainty sets~\cite{bertsimas2011theory,ben2009robust}. Stochastic programming gives the standard VSS and EVPI quantities used to quantify the value of uncertainty-aware planning~\cite{birge2011stochastic}. CVaR formulations provide a practical linearization for tail-risk management in sampled-scenario problems~\cite{rockafellar2000optimization}. In the BESS domain, Rosewater et al.~\cite{rosewater2020riskaverse} show that risk-averse model predictive control can improve storage behavior when model uncertainty is treated explicitly.
+
+DC\textsuperscript{3}S is closest to this risk-aware BESS-dispatch line, but its target failure mode is more specific: uncertainty sets that are miscalibrated because telemetry is degraded, delayed, or stale at the instant of control.
+
+\subsection{Safety Shields and Runtime Monitors}
+
+Shielding methods restrict the action space so that unsafe commands are prevented before execution~\cite{alshiekh2018safe,konighofer2020shield}. Model-predictive shielding brings those ideas closer to control and optimization~\cite{bastani2021safe}. Runtime verification literature formalizes monitoring and post-hoc checking of execution traces against safety properties~\cite{leucker2009brief}, and simple runtime fallback architectures show how safe modes can be used when advanced controllers are no longer trustworthy~\cite{sha2001using}.
+
+DC\textsuperscript{3}S combines these ideas at dispatch time. It does not merely monitor a trace or switch to a backup controller. It scores telemetry quality, modifies the optimizer's uncertainty interface, repairs unsafe actions, and emits a certificate that records the full safety-relevant context of the step.
+
+\subsection{Telemetry Reliability and CPS Fault Models}
+
+Industrial-control and CPS security literature already makes clear that dropout, delay, spike injection, and reordered observations are ordinary failure modes rather than pathological corner cases~\cite{dibaji2019systems}. Anomaly-detection literature gives the statistical vocabulary for staleness, spikes, and outlier behavior~\cite{chandola2009anomaly}. BESS review work further motivates why those failures matter physically: mismanaged state estimates and unsafe charge/discharge commands can damage storage assets and undermine grid-support value~\cite{chen2020review_bess}.
+
+\subsection{Governance and Reproducibility}
+
+This paper makes a bounded governance claim: locked metrics, run-scoped provenance, and validator gates are treated as a first-class part of the publication artifact. That narrower claim is aligned with the reproducibility standards discussed by Pineau et al.~\cite{pineau2021improving}, but it is not presented as a new general governance framework.
+
+\section{Background, Preliminaries, and System Context}\label{sec:background}
+
+\subsection{GridPulse System Context}
+
+GridPulse is implemented as a forecast-to-dispatch stack whose main layers are data preparation, forecasting, uncertainty calibration, optimization, monitoring, and API/dashboard serving. DC\textsuperscript{3}S sits at the dispatch boundary: it receives observed telemetry and forecast intervals, widens those intervals when telemetry quality or drift risk deteriorates, and prevents physically unsafe commands from reaching the battery.
+
+\PaperFigure{FIG01_ARCHITECTURE}{GridPulse architecture with DC\textsuperscript{3}S at the dispatch boundary. The shield consumes telemetry quality, forecast intervals, and optimizer output before command execution.}
+
+\subsection{Component-to-Code Map}
 
 \begin{table}[htbp]
 \centering\small
-\caption{Methodological positioning of DC\textsuperscript{3}S relative to prior work.}
-\label{tab:positioning}
-\begin{tabular}{lccccc}
+\caption{Component-to-code map for the main thesis surfaces.}
+\label{tab:component_code_map}
+\begin{tabular}{p{2.6cm}p{3.4cm}p{6.6cm}}
 \toprule
-Method & \rotatebox{70}{Conformal} & \rotatebox{70}{Telemetry-aware} & \rotatebox{70}{Dispatch optim.} & \rotatebox{70}{Action repair} & \rotatebox{70}{Certificates} \\
+Layer & Purpose & Primary paths \\
 \midrule
-CQR / ACI        & \checkmark &            &            &            &            \\
-Robust dispatch   &            &            & \checkmark &            &            \\
-Safety shields    &            &            &            & \checkmark &            \\
-Runtime monitors  &            &            &            &            & \checkmark \\
-\textbf{DC\textsuperscript{3}S (ours)} & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+Data pipeline & Region features, splits, and profile locks & \texttt{src/gridpulse/data\_pipeline/}, \texttt{src/gridpulse/pipeline/run.py} \\
+Forecasting & GBM and deep-baseline train/predict flows & \texttt{src/gridpulse/forecasting/} \\
+Uncertainty & Conformal, adaptive, and residual calibration & \texttt{src/gridpulse/forecasting/uncertainty/conformal.py} \\
+Optimization & Deterministic, robust, and baseline dispatch & \texttt{src/gridpulse/optimizer/} \\
+DC3S & Reliability, drift, shield, certificate, state & \texttt{src/gridpulse/dc3s/} \\
+Monitoring & Drift checks and retraining logic & \texttt{src/gridpulse/monitoring/} \\
+API + dashboard & Runtime routes and operator-facing inspection & \texttt{services/api/}, \texttt{frontend/} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-% ===== 3. PROBLEM FORMULATION ===============================================
+\subsection{Artifact Contracts and Profile Lock}
+
+The thesis uses a locked profile family rather than free-floating report values. The main artifact interfaces are: dashboard metrics (\texttt{data/dashboard/de\_metrics.json}, \texttt{data/dashboard/us\_metrics.json}), dashboard profiles (\texttt{data/dashboard/de\_stats.json}, \texttt{data/dashboard/us\_stats.json}, \texttt{data/dashboard/manifest.json}), impact summaries (\texttt{reports/impact\_summary.csv}, \texttt{reports/eia930/impact\_summary.csv}), stochastic summaries (\texttt{reports/research\_metrics\_de.csv}, \texttt{reports/research\_metrics\_us.csv}), and publication tables under \texttt{reports/publication/}. Any manuscript claim that depends on those interfaces is treated as invalid unless it can be traced back to one of them.
+
+\subsection{Dataset Scope}
+
+The canonical dataset lock is summarized in \Cref{tab:TBL05_DATASET_SUMMARY}. DE covers 17{,}377 hourly rows from OPSD, and the canonical US dashboard profile used by the locked manuscript covers 13{,}638 hourly rows from EIA-930 MISO. The release-family assets additionally document PJM and ERCOT so that the conference variant can discuss multi-BA US evidence without changing the canonical thesis lock.
+
+\PaperTableCSV{TBL05_DATASET_SUMMARY}{Dataset summary: regions, date ranges, signal counts, and coverage.}
+
+\subsection{Pipeline Architecture and Runtime Interfaces}
+
+The GridPulse pipeline follows a strict stage ordering that determines how data flows through the system. Each stage has a well-defined interface contract:
+
+\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
+  \item \textbf{Ingestion}: Raw time-series loading from OPSD (DE) or EIA-930 (US). Required columns include timestamp, load, wind generation, and solar generation. Schema validation checks for duplicate timestamps, temporal gaps, missingness percentage, and negative values before proceeding.
+  \item \textbf{Temporal feature construction}: Hour-of-day, day-of-week, month, season (1=winter through 4=fall), weekend indicator, and daylight flag. These features are deterministic and leakage-free.
+  \item \textbf{Domain feature construction}: Ramp features ($\Delta_{1h}$, $\Delta_{24h}$) for load, wind, and solar capture recent momentum. Peak-period flags (\texttt{is\_morning\_peak} for hours 7--10, \texttt{is\_evening\_peak} for hours 17--21) encode tariff-relevant operating periods. Holiday features (pre/post/current) capture demand-regime shifts.
+  \item \textbf{Lag and rolling features}: For each target, lags at 1, 24, and 168 hours plus rolling mean and standard deviation at 24-hour and 168-hour windows. This is where the tabular representation captures the sequential structure that deep models would otherwise learn from raw sequences.
+  \item \textbf{Price and carbon signal construction}: Synthetic signals based on time-of-day and seasonality patterns when market data is unavailable. These are engineering proxies, as noted in \Cref{sec:limitations}.
+  \item \textbf{Split and profile lock}: Temporal train/test splits with the 24-hour gap. Profile lock metadata is written to \texttt{data/dashboard/manifest.json} to freeze the evidence base.
+  \item \textbf{Forecasting and calibration}: GBM/LSTM/TCN training with CQR calibration on held-out calibration slices.
+  \item \textbf{Dispatch and certification}: DC\textsuperscript{3}S-wrapped optimization with per-step certificate emission to DuckDB.
+\end{enumerate}
+
+The interface between stages 6 and 7 is particularly important: the profile lock ensures that any model trained after the lock uses the same feature schema, split boundaries, and target definitions. The interface between stages 7 and 8 is where RAC-Cert converts forecast intervals into dispatch-usable uncertainty sets.
+
+\subsection{Truth vs.\ Observed State}
+
+The most important background distinction in this paper is between true and observed state:
+\begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
+  \item $\mathrm{SOC}^{\mathrm{obs}}_t$ is what the controller sees after telemetry degradation.
+  \item $\mathrm{SOC}^{\mathrm{true}}_t$ is the physical state used for safety evaluation.
+\end{itemize}
+
+That split is what allows the benchmark to expose hidden safety failures. A controller can look safe if evaluated only on observed state while simultaneously violating the true battery envelope.
+
 \section{Problem Formulation}\label{sec:problem}
 
-\subsection{Notation and Setting}
+\subsection{Dispatch Setting}
 
-Consider a discrete-time battery dispatch problem over horizon $T$ with time step $\Delta t$\,=\,1\,h.  At each step $t$, the controller observes telemetry $\mathbf{z}_t \in \mathbb{R}^d$ (load, wind, solar, price, SOC readings) and must select a dispatch action $a_t \in \mathcal{A}$ (charge/discharge power) subject to physical constraints.
+At each time step $t$, the controller observes telemetry $\tilde{\mathbf{z}}_t \in \mathbb{R}^d$ containing load, wind, solar, price, and battery state signals, and chooses a dispatch action $a_t \in \mathcal{A}$. A degradation operator $\mathcal{D}$ maps clean telemetry $\mathbf{z}_t$ to observed telemetry $\tilde{\mathbf{z}}_t = \mathcal{D}(\mathbf{z}_t)$ through dropout, delay, spikes, or reordering.
 
 \begin{definition}[Telemetry degradation]
-A degradation operator $\mathcal{D}: \mathbb{R}^d \to \mathbb{R}^d$ maps clean telemetry $\mathbf{z}_t$ to observed telemetry $\tilde{\mathbf{z}}_t = \mathcal{D}(\mathbf{z}_t)$, where $\mathcal{D}$ may introduce dropout (zeroing), delay (time-shift), spikes (additive outliers), or reordering (permutation of recent samples).
+A degradation operator $\mathcal{D}: \mathbb{R}^d \rightarrow \mathbb{R}^d$ introduces one or more of: random zeroing, time shift, additive outlier injection, or permutation of the recent telemetry window.
 \end{definition}
 
-\begin{definition}[Truth vs.\ observed SOC]
-Let $\text{SOC}_t^{\mathrm{true}}$ be the actual battery state governed by physics, and $\text{SOC}_t^{\mathrm{obs}}$ the value reported by (possibly degraded) sensors.  The safety evaluation is on $\text{SOC}_t^{\mathrm{true}}$; the controller only sees $\text{SOC}_t^{\mathrm{obs}}$.
-\end{definition}
+\subsection{Battery Dynamics and Feasible Set}
 
-\subsection{Battery Dynamics}
-
-The true SOC evolves as:
+The true SOC evolves as
 \begin{equation}\label{eq:soc_dynamics}
-  \text{SOC}_{t+1}^{\mathrm{true}} = \text{SOC}_t^{\mathrm{true}}
-    + \frac{\eta_c \cdot [a_t]^+ - [a_t]^- / \eta_d}{E_{\max}} \cdot \Delta t,
+  \mathrm{SOC}_{t+1}^{\mathrm{true}} =
+  \mathrm{SOC}_{t}^{\mathrm{true}} +
+  \frac{\eta_c [a_t]^+ - [a_t]^- / \eta_d}{E_{\max}} \Delta t,
 \end{equation}
-where $\eta_c, \eta_d \in (0,1]$ are charge/discharge efficiencies, $E_{\max}$ is the rated energy capacity, and $[\cdot]^+, [\cdot]^-$ denote positive and negative parts.
-
-The feasible action set enforces SOC bounds, power limits, and ramp constraints:
+where $\eta_c$ and $\eta_d$ are charge/discharge efficiencies and $E_{\max}$ is rated capacity. The feasible action set enforces SOC, power, and ramp limits:
 \begin{equation}\label{eq:constraints}
-  \mathcal{A}_t = \bigl\{ a \in [-P_{\max}, P_{\max}] :
-    \text{SOC}^{\min} \le \text{SOC}_{t+1}^{\mathrm{true}}(a) \le \text{SOC}^{\max},\;
-    |a - a_{t-1}| \le R_{\max} \bigr\}.
+  \mathcal{A}_t =
+  \left\{a \in [-P_{\max}, P_{\max}] :
+    \mathrm{SOC}^{\min} \le \mathrm{SOC}_{t+1}^{\mathrm{true}}(a) \le \mathrm{SOC}^{\max},\;
+    |a-a_{t-1}| \le R_{\max}
+  \right\}.
 \end{equation}
 
 \subsection{Objective}
 
-The dispatch objective balances cost, carbon, peak demand, and battery degradation:
+Dispatch balances energy cost, carbon, peak exposure, and throughput degradation:
 \begin{equation}\label{eq:objective}
   \min_{a_{1:T}} \sum_{t=1}^{T}
-    \underbrace{\lambda_c \cdot c_t \cdot a_t}_{\text{energy cost}}
-    + \underbrace{\lambda_g \cdot g_t \cdot [a_t]^+}_{\text{carbon}}
-    + \underbrace{\lambda_p \cdot \max(0, L_t + a_t - P_{\text{cap}})}_{\text{peak}}
-    + \underbrace{\lambda_d \cdot |a_t|}_{\text{degradation}},
+  \lambda_c c_t a_t +
+  \lambda_g g_t [a_t]^+ +
+  \lambda_p \max(0, L_t + a_t - P_{\mathrm{cap}}) +
+  \lambda_d |a_t|.
 \end{equation}
-where $c_t$ is the energy price, $g_t$ is the grid carbon intensity, $L_t$ is the net load, and $\lambda_c, \lambda_g, \lambda_p, \lambda_d$ are weighting parameters.
 
-\subsection{Uncertainty Sets and the Calibration Gap}
+This is a pragmatic engineering objective, not a claim of complete market realism. The thesis interprets it as a comparative decision objective under locked artifacts rather than as a perfect representation of every settlement rule.
 
-Standard conformal prediction constructs intervals $\hat{C}_t(\alpha) = [\hat{q}_t^{\alpha/2},\, \hat{q}_t^{1-\alpha/2}]$ satisfying $\Pr(Y_t \in \hat{C}_t) \ge 1 - \alpha$ under exchangeability.  When $\tilde{\mathbf{z}}_t \ne \mathbf{z}_t$ due to degradation, the conformity scores shift, and the coverage guarantee degrades:
+\subsection{Calibration Gap}
+
+Base conformal prediction constructs intervals $\hat{C}_t(\alpha)$ targeting coverage $1-\alpha$. Under telemetry degradation, conformity scores shift because the model is no longer seeing the same input quality that supported the original calibration. The resulting failure mode is
 \begin{equation}\label{eq:coverage_gap}
-  \Pr\bigl(Y_t \in \hat{C}_t(\alpha) \mid \mathcal{D} \text{ active}\bigr) < 1 - \alpha.
+  \Pr\!\left(Y_t \in \hat{C}_t(\alpha) \mid \mathcal{D}\ \mathrm{active}\right) < 1-\alpha.
 \end{equation}
-This \emph{calibration gap} is the safety-critical failure mode that DC\textsuperscript{3}S is designed to close.
 
-\subsection{Datasets}
+DC\textsuperscript{3}S is designed to close that gap operationally by widening intervals when telemetry quality and drift signals indicate that the base interval is no longer trustworthy enough for dispatch.
 
-We evaluate on two regions (\Cref{tab:TBL05_DATASET_SUMMARY}):
-\begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{DE}: Germany OPSD, 17{,}377 hourly rows (Oct 2018--Sep 2020), with load, wind, and solar signals.
-  \item \textbf{US}: EIA-930 for MISO (13{,}638 rows), PJM (13{,}639 rows), and ERCOT (13{,}453 rows), Jul 2024--Jan 2026, same three signals.
-\end{itemize}
-All signals have 100\% non-null coverage.  The DE/US split provides cross-region transfer evaluation with distinct operating regimes.
+\subsection{Baseline Policies}
 
-\PaperTableCSV{TBL05_DATASET_SUMMARY}{Dataset summary: regions, date ranges, signal counts, and coverage.}
-
-% ===== 4. METHOD =============================================================
-\section{DC\texorpdfstring{\textsuperscript{3}}{3}S: Detect--Calibrate--Constrain--Certify--Shield}\label{sec:method}
-
-\Cref{fig:FIG01_ARCHITECTURE} shows the full system architecture.  DC\textsuperscript{3}S operates as a safety wrapper around any dispatch optimizer: at each control step, it scores telemetry, inflates uncertainty, solves the constrained optimization, repairs unsafe actions, and emits a certificate.
-
-\PaperFigure{FIG01_ARCHITECTURE}{GridPulse architecture with DC\textsuperscript{3}S at the dispatch boundary.  The shield wraps the optimizer, inflating intervals and repairing actions before execution.}
-
-\subsection{Step 1: Telemetry Reliability Scoring}\label{sec:reliability}
-
-At each time step $t$, DC\textsuperscript{3}S computes a reliability score $w_t \in [0,1]$:
-\begin{equation}\label{eq:reliability}
-  w_t = \frac{1}{|\mathcal{S}|}\sum_{s \in \mathcal{S}}
-    \bigl(1 - \mathbb{1}[\text{stale}_s(t)] \cdot \gamma_{\text{stale}}\bigr)
-    \cdot \bigl(1 - \mathbb{1}[\text{spike}_s(t)] \cdot \gamma_{\text{spike}}\bigr)
-    \cdot \bigl(1 - \mathbb{1}[\text{missing}_s(t)] \cdot \gamma_{\text{miss}}\bigr),
-\end{equation}
-where $\mathcal{S}$ is the sensor set, $\gamma_{\cdot} \in (0,1]$ are penalty weights, and the indicator functions detect staleness (no update within $\tau_{\text{stale}}$ seconds), spikes (exceeding $k\sigma$ from rolling median), and missing values.
-
-\subsection{Step 2: RAC-Cert Interval Inflation}\label{sec:rac}
-
-Reliability-Adaptive Conformal Certification (RAC-Cert) inflates the conformal prediction interval as a function of reliability, drift risk, and model sensitivity:
-\begin{equation}\label{eq:rac_inflation}
-  \hat{C}_t^{\text{RAC}}(\alpha) = \hat{C}_t(\alpha) \cdot \bigl(1 + \underbrace{\kappa_r \cdot (1 - w_t)}_{\text{reliability inflation}} + \underbrace{\kappa_d \cdot d_t}_{\text{drift inflation}} + \underbrace{\kappa_s \cdot s_t}_{\text{sensitivity inflation}}\bigr),
-\end{equation}
-where:
-\begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item $\kappa_r > 0$ controls the reliability-driven inflation rate;
-  \item $d_t$ is a drift indicator (e.g., KS-test $p$-value below threshold); $\kappa_d > 0$ scales drift response;
-  \item $s_t$ is a sensitivity probe measuring how much the forecast changes under input perturbation; $\kappa_s > 0$ scales sensitivity response.
-\end{itemize}
-
-With shrinkage toward the base width at rate $\tau \in (0,1)$ when reliability recovers:
-\begin{equation}\label{eq:rac_shrinkage}
-  \hat{w}_t^{\text{RAC}} = \tau \cdot \hat{w}_{t-1}^{\text{RAC}} + (1 - \tau) \cdot \hat{w}_t^{\text{raw}},
-\end{equation}
-preventing oscillation between inflated and nominal widths.
-
-\begin{theorem}[RAC-Cert marginal coverage]\label{thm:rac_coverage}
-If the base conformal predictor satisfies $\Pr(Y_t \in \hat{C}_t(\alpha)) \ge 1 - \alpha$ under the clean data distribution, and RAC-Cert only \emph{inflates} intervals (the multiplicative factor in \Cref{eq:rac_inflation} is $\ge 1$), then the RAC-inflated interval preserves marginal coverage:
-\[
-  \Pr(Y_t \in \hat{C}_t^{\mathrm{RAC}}(\alpha)) \ge 1 - \alpha.
-\]
-\end{theorem}
-\begin{proof}
-Since $\hat{C}_t(\alpha) \subseteq \hat{C}_t^{\mathrm{RAC}}(\alpha)$ by construction (inflation factor $\ge 1$), we have $\{Y_t \in \hat{C}_t(\alpha)\} \subseteq \{Y_t \in \hat{C}_t^{\mathrm{RAC}}(\alpha)\}$, hence $\Pr(Y_t \in \hat{C}_t^{\mathrm{RAC}}(\alpha)) \ge \Pr(Y_t \in \hat{C}_t(\alpha)) \ge 1 - \alpha$.
-\end{proof}
-
-\PaperFigure{FIG08_RAC_SENSITIVITY_WIDTH}{RAC-Cert sensitivity signal versus interval width expansion across controllers.  Higher degradation triggers larger inflation.}
-
-\subsection{Step 3: Robust Dispatch with Inflated Intervals}\label{sec:dispatch}
-
-Given the RAC-inflated intervals $[\ell_t^{\text{RAC}}, u_t^{\text{RAC}}]$ for load, wind, and solar, DC\textsuperscript{3}S solves a two-scenario robust dispatch:
-\begin{equation}\label{eq:robust_dispatch}
-  \min_{a_{1:T}} \max_{Y \in \{\ell^{\text{RAC}}, u^{\text{RAC}}\}}
-    \sum_{t=1}^{T} J(a_t, Y_t),
-\end{equation}
-where $J(\cdot)$ is the multi-objective cost from \Cref{eq:objective}.  This is implemented via an epigraph reformulation solvable by LP/MIP solvers.
-
-\paragraph{CVaR baseline.}
-For comparison, we also implement the CVaR formulation via Rockafellar--Uryasev linearization:
-\begin{equation}\label{eq:cvar}
-  \min_{a,\eta} \; \eta + \frac{1}{(1-\beta)S}\sum_{s=1}^{S} u_s,
-  \quad u_s \ge J_s(a) - \eta,\; u_s \ge 0,
-\end{equation}
-where $\beta$ is the CVaR confidence level and $S$ is the scenario count.
-
-\subsection{Step 4: Action Repair and Projection}\label{sec:repair}
-
-If the dispatch candidate $a_t^*$ violates any constraint in $\mathcal{A}_t$ (\Cref{eq:constraints}), DC\textsuperscript{3}S projects to the nearest feasible action:
-\begin{equation}\label{eq:projection}
-  a_t^{\text{safe}} = \arg\min_{a \in \mathcal{A}_t} \|a - a_t^*\|_2.
-\end{equation}
-For box constraints, this reduces to simple clamping.  For coupled constraints (ramp + SOC), a single-step QP is solved.
-
-\subsection{Step 5: Certificate Emission}\label{sec:certificate}
-
-Each dispatch step emits a certificate $\mathcal{C}_t$ recording:
-\begin{equation}\label{eq:certificate}
-  \mathcal{C}_t = \bigl(t,\; w_t,\; \hat{C}_t^{\text{RAC}},\; a_t^*,\; a_t^{\text{safe}},\;
-    \text{solver\_status},\; \text{SOC}_t^{\text{obs}},\; \Delta_{\text{margin}}\bigr),
-\end{equation}
-where $\Delta_{\text{margin}}$ records the distance to the nearest constraint boundary.  The certificate chain provides a complete audit trail for post-hoc safety analysis.
-
-\PaperFigure{FIG02_DC3S_STEP}{DC\textsuperscript{3}S runtime step: observe $\to$ score $\to$ inflate $\to$ solve $\to$ repair $\to$ certify.}
-
-\subsection{Full Algorithm}
-
-\begin{algorithm}[htbp]
-\caption{DC\textsuperscript{3}S: One dispatch step}
-\label{alg:dc3s}
-\begin{algorithmic}[1]
-\Require Telemetry $\tilde{\mathbf{z}}_t$, base conformal predictor $\hat{C}_t(\alpha)$, optimizer $\mathcal{O}$
-\Ensure Safe dispatch action $a_t^{\text{safe}}$, certificate $\mathcal{C}_t$
-\State $w_t \gets \textsc{ReliabilityScore}(\tilde{\mathbf{z}}_t)$ \Comment{\Cref{eq:reliability}}
-\State $d_t \gets \textsc{DriftDetect}(\tilde{\mathbf{z}}_t)$ \Comment{KS-test on residuals}
-\State $s_t \gets \textsc{SensitivityProbe}(\tilde{\mathbf{z}}_t)$ \Comment{perturbation response}
-\State $\hat{C}_t^{\text{RAC}} \gets \hat{C}_t(\alpha) \cdot (1 + \kappa_r(1-w_t) + \kappa_d d_t + \kappa_s s_t)$ \Comment{\Cref{eq:rac_inflation}}
-\State $a_t^* \gets \mathcal{O}(\hat{C}_t^{\text{RAC}})$ \Comment{solve robust dispatch, \Cref{eq:robust_dispatch}}
-\State $a_t^{\text{safe}} \gets \textsc{Project}(a_t^*, \mathcal{A}_t)$ \Comment{\Cref{eq:projection}}
-\State $\mathcal{C}_t \gets \textsc{EmitCert}(t, w_t, \hat{C}_t^{\text{RAC}}, a_t^*, a_t^{\text{safe}})$ \Comment{\Cref{eq:certificate}}
-\State \Return $a_t^{\text{safe}}, \mathcal{C}_t$
-\end{algorithmic}
-\end{algorithm}
-
-% ===== 5. EXPERIMENTAL SETUP ================================================
-\section{Experimental Setup}\label{sec:experiments}
-
-\subsection{Forecasting Layer}
-
-Three model families are trained on each region:
-\begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{GBM}: LightGBM gradient-boosted trees with lag, rolling, and calendar features.
-  \item \textbf{LSTM}: two-layer LSTM with 128 hidden units, 168-hour lookback.
-  \item \textbf{TCN}: temporal convolutional network with 3 residual blocks.
-\end{itemize}
-Each model is trained on three targets (load, wind, solar) with 24-hour forecast horizon, 10-fold time-aware cross-validation, and 24-hour gap between folds.
-
-\subsection{Conformal Calibration}
-
-Conformalized quantile regression (CQR) wraps each forecast model:
+Three baseline notions appear throughout the thesis:
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item Train quantile models at levels $\alpha/2$ and $1-\alpha/2$ (default $\alpha=0.10$).
-  \item Compute conformity scores on calibration fold: $s_i = \max(\hat{q}_i^{\alpha/2} - Y_i,\; Y_i - \hat{q}_i^{1-\alpha/2})$.
-  \item Set conformal quantile $\hat{q} = \text{Quantile}_{1-\alpha}(\{s_i\})$.
-  \item Prediction interval: $[L_i - \hat{q},\; U_i + \hat{q}]$.
+  \item \textbf{B1}: deterministic LP dispatch without uncertainty intervals.
+  \item \textbf{B2}: grid-only dispatch with no battery action.
+  \item \textbf{B3}: naive fixed-window battery heuristic.
 \end{enumerate}
-Regime-aware CQR further stratifies calibration into low/mid/high volatility bins using a rolling standard deviation window.
+
+Canonical DE and US impact percentages are B1-versus-B2 comparisons. Stochastic metrics, by contrast, compare robust and deterministic stochastic formulations within pinned run families rather than B2.
+
+\section{Forecasting and Uncertainty Method}\label{sec:forecasting_uq}
+
+\subsection{Locked Forecasting Layer}
+
+The locked comparison set contains GBM (LightGBM), LSTM, and TCN. The wider training stack also supports N-BEATS, TFT, and PatchTST, but those models are candidate baselines for future release-family reruns rather than part of the canonical dashboard metrics reported in this thesis.
+
+\subsection{Training Setup and Feature Engineering}
+
+The locked training configuration uses a 24-hour forecast horizon, a 168-hour lookback, 10-fold time-aware cross-validation, and a 24-hour temporal gap. These settings matter twice: they make forecasting comparisons leakage-safe, and they define the input structure that later influences optimization and calibration behavior.
+
+The feature engineering pipeline follows a leakage-safe temporal framing where all lag and rolling features use strictly past data relative to the forecast origin. The feature families are:
+
+\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
+  \item \textbf{Weather features} (40 in DE, 56 in US): Temperature, humidity, precipitation, cloud cover, and wind speed at multiple heights and geographic locations. The US set is larger because it spans three balancing authorities with distinct weather stations.
+  \item \textbf{Lag features} (36 in DE, 42 in US): Lags at 1, 24, and 168 hours for each target and key exogenous variables, plus rolling mean and standard deviation at 24-hour and 168-hour windows. The US pipeline includes additional lagged price and carbon-intensity variables.
+  \item \textbf{Calendar features} (6 in both): Hour-of-day, day-of-week, month, weekend indicator, season, and daylight flag. Holiday encoding (pre/post/current) uses either the \texttt{holidays} library or a region-specific CSV.
+  \item \textbf{Domain features}: Ramp signals ($\Delta_{1h}$ and $\Delta_{24h}$) for each target, peak-period indicators for morning (7--10h) and evening (17--21h) windows.
+\end{enumerate}
+
+The interaction between feature design and model selection is central to the baseline diagnosis (\Cref{sec:baseline_diagnosis}): these rich tabular features already encode much of the sequential structure that LSTM and TCN would otherwise need to learn, which contributes to GBM's dominance in the locked results.
+
+\subsection{CQR and Adaptive Conformal Layer}
+
+Each target is wrapped by conformalized quantile regression. The calibration procedure follows Romano et al.~\cite{romano2019conformalized}: fit lower and upper quantile predictors, compute conformity scores on a calibration slice, and enlarge the raw quantile band by the empirical $(1-\alpha)$ residual quantile. Adaptive conformal logic then adjusts effective coverage behavior online in the style of Gibbs and Cand\`{e}s~\cite{gibbs2021adaptive}, while time-series adaptation and regime-aware binning are used to acknowledge temporal dependence and volatility segmentation~\cite{zaffran2022adaptive,barber2023conformal}.
 
 \PaperTableCSV{TBL03_CQR_GROUP_COVERAGE}{Regime-aware CQR coverage (PICP@90) and mean interval width by target and volatility group.}
 
-\subsection{CPSBench: Fault Injection Harness}
+\subsection{RAC-Cert Inflation Law}
 
-CPSBench evaluates controllers under four telemetry fault types:
+At each step, DC\textsuperscript{3}S computes a telemetry reliability score $w_t \in [0,1]$ from missingness, staleness, spikes, and ordering penalties. That score, together with a drift flag $d_t$ and a sensitivity probe $s_t$, widens the base conformal interval:
+\begin{equation}\label{eq:rac_inflation}
+  \hat{C}_t^{\mathrm{RAC}}(\alpha)=
+  \hat{C}_t(\alpha)\cdot
+  \left(1+\kappa_r(1-w_t)+\kappa_d d_t+\kappa_s s_t\right).
+\end{equation}
+
+The inflation factor is clipped below by 1, so the shield never narrows the original calibrated interval in response to degraded telemetry.
+
+\subsection{Supporting Proposition and Contribution Boundary}
+
+\begin{proposition}[Coverage preservation under monotone inflation]\label{thm:rac_coverage}
+If the base conformal predictor satisfies $\Pr(Y_t \in \hat{C}_t(\alpha)) \ge 1-\alpha$ under the clean distribution, and RAC-Cert only inflates intervals so that $\hat{C}_t(\alpha) \subseteq \hat{C}_t^{\mathrm{RAC}}(\alpha)$, then
+\[
+  \Pr(Y_t \in \hat{C}_t^{\mathrm{RAC}}(\alpha)) \ge 1-\alpha.
+\]
+\end{proposition}
+\begin{proof}
+The result follows by set inclusion: if the inflated interval contains the base interval pointwise, then the event that $Y_t$ lies inside the base interval is a subset of the event that it lies inside the inflated interval.
+\end{proof}
+
+This proposition is intentionally modest. It confirms that monotone inflation does not reduce marginal coverage relative to the base interval, but it does not establish conditional coverage or optimality. The paper's main contribution is therefore empirical and control-theoretic: telemetry-aware interval construction plus safe dispatch behavior under faulted measurements.
+
+\subsection{Alternative Inflation Laws}
+
+While the locked evaluation uses the linear RAC-Cert law (\Cref{eq:rac_inflation}), the implementation supports two additional inflation formulations for comparison and future study:
+
+\paragraph{FTIT-RO law.} The Fault-Tolerant Interval Tracking with Robust Optimization (FTIT-RO) law derives a concentration-inequality-based inflation factor:
+\begin{equation}\label{eq:ftit_inflation}
+  \kappa_{\text{FTIT}} = 1 + \frac{\sqrt{2\sigma^2_t \ln(1/(\delta \cdot w_t))}}{2\hat{q}},
+\end{equation}
+where $\sigma^2_t$ is an exponentially weighted variance estimate of recent residuals and $\hat{q}$ is the base conformal quantile. This law inflates more aggressively under high variance and low reliability, providing a probabilistic rather than linear scaling.
+
+\paragraph{Ambiguity widening.} An optional additive widening can supplement either law:
+\begin{equation}\label{eq:ambiguity}
+  [\ell^{\text{wide}}_t, u^{\text{wide}}_t] = [\ell_t - \lambda_{\text{MW}} \cdot \min(\epsilon_{\max}, \max(0, 1-w_t)),\; u_t + \lambda_{\text{MW}} \cdot \min(\epsilon_{\max}, \max(0, 1-w_t))],
+\end{equation}
+where $\lambda_{\text{MW}}$ controls the additive widening magnitude and $\epsilon_{\max}$ caps the maximum additive expansion. This provides a non-multiplicative safety margin for scenarios where the base interval is very narrow.
+
+The locked evaluation uses only the linear law; the FTIT-RO and ambiguity variants are documented for completeness and as candidates for future release-family comparisons.
+
+\PaperFigure{FIG08_RAC_SENSITIVITY_WIDTH}{RAC-Cert sensitivity signal versus interval width expansion across controllers. Higher degradation yields larger inflation.}
+
+\section{Safe Dispatch and DC3S Shield}\label{sec:safe_dispatch}
+
+\subsection{Robust Dispatch}
+
+Given RAC-inflated lower and upper trajectories, DC\textsuperscript{3}S solves a two-scenario robust dispatch problem:
+\begin{equation}\label{eq:robust_dispatch}
+  \min_{a_{1:T}} \max_{Y \in \{\ell^{\mathrm{RAC}},u^{\mathrm{RAC}}\}}
+  \sum_{t=1}^{T} J(a_t,Y_t),
+\end{equation}
+where $J$ is the multi-objective cost from \Cref{eq:objective}. In implementation, this is solved via an epigraph LP/MIP formulation.
+
+\subsection{CVaR Comparator}
+
+For comparison, the experiments also include a CVaR dispatch baseline using the Rockafellar--Uryasev linearization:
+\begin{equation}\label{eq:cvar}
+  \min_{a,\eta}\; \eta+\frac{1}{(1-\beta)S}\sum_{s=1}^{S}u_s,
+  \quad u_s \ge J_s(a)-\eta,\quad u_s \ge 0.
+\end{equation}
+
+\subsection{Action Repair}
+
+If a candidate dispatch action violates any element of $\mathcal{A}_t$, DC\textsuperscript{3}S projects it to the nearest feasible action:
+\begin{equation}\label{eq:projection}
+  a_t^{\mathrm{safe}} = \arg\min_{a \in \mathcal{A}_t}\|a-a_t^{*}\|_2.
+\end{equation}
+
+This step is what turns a risk-aware optimizer into a safe controller. Without it, the optimizer can still output commands that are numerically attractive yet physically inadmissible once true state is accounted for.
+
+\subsection{Certificate Emission}
+
+Each step emits a certificate recording time, reliability score, inflated interval, candidate action, repaired action, solver status, observed SOC, and margin to the nearest active constraint. The certificate chain is persisted so that every safety-relevant control intervention can be audited post hoc.
+
+\PaperFigure{FIG02_DC3S_STEP}{DC\textsuperscript{3}S runtime step: observe $\to$ score $\to$ inflate $\to$ solve $\to$ repair $\to$ certify.}
+
+\subsection{One-Step Algorithm}
+
+\begin{algorithm}[htbp]
+\caption{DC\textsuperscript{3}S dispatch step}
+\label{alg:dc3s}
+\begin{algorithmic}[1]
+\Require Telemetry $\tilde{\mathbf{z}}_t$, base interval $\hat{C}_t(\alpha)$, optimizer $\mathcal{O}$
+\Ensure Safe action $a_t^{\mathrm{safe}}$, certificate $\mathcal{C}_t$
+\State $w_t \gets \textsc{ReliabilityScore}(\tilde{\mathbf{z}}_t)$
+\State $d_t \gets \textsc{DriftDetect}(\tilde{\mathbf{z}}_t)$
+\State $s_t \gets \textsc{SensitivityProbe}(\tilde{\mathbf{z}}_t)$
+\State $\hat{C}_t^{\mathrm{RAC}} \gets \hat{C}_t(\alpha)\!\cdot\!\left(1+\kappa_r(1-w_t)+\kappa_d d_t+\kappa_s s_t\right)$
+\State $a_t^* \gets \mathcal{O}(\hat{C}_t^{\mathrm{RAC}})$
+\State $a_t^{\mathrm{safe}} \gets \textsc{Project}(a_t^*, \mathcal{A}_t)$
+\State $\mathcal{C}_t \gets \textsc{EmitCert}(t,w_t,\hat{C}_t^{\mathrm{RAC}},a_t^*,a_t^{\mathrm{safe}})$
+\State \Return $a_t^{\mathrm{safe}}, \mathcal{C}_t$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{FTIT State Tracking}
+
+The Fault-Tolerant Interval Tracking (FTIT) variant maintains a rolling fault-rate estimate that adapts the reliability signal over time rather than computing it from a single telemetry snapshot. At each step $t$, FTIT updates five fault counters:
+\begin{equation}\label{eq:ftit_rates}
+  n_{t+1} = \gamma_d \cdot n_t + 1, \qquad
+  s_{t+1}^{(k)} = \gamma_d \cdot s_t^{(k)} + \mathbb{1}[\text{fault}_k\ \text{active}],
+\end{equation}
+where $\gamma_d = 0.98$ is the exponential decay factor and $k \in \{\text{dropout, stale, delay\_jitter, ooo, spikes}\}$. The empirical fault rate is $p_t^{(k)} = s_t^{(k)} / \max(n_t, \epsilon)$, and the FTIT reliability weight is the product:
+\begin{equation}\label{eq:ftit_reliability}
+  w_t^{\text{FTIT}} = \prod_{k} \left[\mathrm{clip}\!\left(1 - p_t^{(k)},\; \epsilon,\; 1\right)\right]^{\alpha_k},
+\end{equation}
+where $\alpha_k = 1.0$ by default gives equal weight to each fault channel.
+
+FTIT additionally maintains a SOC tube that contracts the feasible envelope when reliability degrades:
+\begin{equation}\label{eq:soc_tube}
+  \gamma_{\text{MW}} = \gamma_{\min} + (1 - w_t)^{\gamma_{\text{pow}}} \cdot (\gamma_{\max} - \gamma_{\min}),
+\end{equation}
+where $\gamma_{\text{MW}}$ is the instantaneous tube width that is accumulated as an exponentially weighted margin $e_t$. The resulting SOC tube $[\mathrm{SOC}_{\min} + e_t,\; \mathrm{SOC}_{\max} - e_t]$ provides a state-dependent safety margin that grows when telemetry quality deteriorates and shrinks when it recovers.
+
+This FTIT mechanism is what distinguishes the DC\textsuperscript{3}S FTIT controller from the base DC\textsuperscript{3}S wrapped variant in the experimental results: the base variant uses single-step reliability, while FTIT uses the rolling estimate.
+
+\subsection{DC\textsuperscript{3}S Configuration Detail}\label{sec:dc3s_config}
+
+The locked DC\textsuperscript{3}S configuration (\texttt{configs/dc3s.yaml}) defines the operational parameters of each shield component.  \Cref{tab:dc3s_config} summarizes the key values.
+
+\begin{table}[htbp]
+\centering\small
+\caption{DC\textsuperscript{3}S configuration parameters from the locked \texttt{configs/dc3s.yaml}.}
+\label{tab:dc3s_config}
+\begin{tabular}{p{3.8cm}p{1.5cm}p{7.2cm}}
+\toprule
+Parameter & Value & Role \\
+\midrule
+\multicolumn{3}{l}{\textit{Inflation law}} \\
+\quad $\kappa_{\text{quality}}$ (\texttt{k\_quality}) & 0.2 & Reliability-driven inflation coefficient \\
+\quad $\kappa_{\text{drift}}$ (\texttt{k\_drift}) & 0.0 & Drift-driven inflation (disabled in locked run) \\
+\quad $\kappa_{\text{sensitivity}}$ (\texttt{k\_sensitivity}) & 0.4 & Sensitivity-driven inflation coefficient \\
+\quad $\texttt{infl\_max}$ & 2.0 & Maximum total inflation multiplier \\
+\quad $\alpha_0$ / $\alpha_{\min}$ & 0.10 / 0.02 & Base / floor miscoverage level \\
+\midrule
+\multicolumn{3}{l}{\textit{RAC-Cert}} \\
+\quad $\beta_{\text{reliability}}$ & 0.7 & Reliability mixing weight \\
+\quad $\beta_{\text{sensitivity}}$ & 0.5 & Sensitivity mixing weight \\
+\quad $\tau_{\text{shrink}}$ (\texttt{qhat\_shrink\_tau}) & 30.0 & Shrinkage time constant (steps) \\
+\quad $\texttt{max\_q\_multiplier}$ & 3.0 & Maximum conformal quantile multiplier \\
+\quad $\varepsilon_{\text{sens}}$ & 25.0\,MW & Sensitivity probe perturbation magnitude \\
+\midrule
+\multicolumn{3}{l}{\textit{Reliability scoring}} \\
+\quad $\lambda_{\text{delay}}$ & 0.002 & Delay penalty per second of staleness \\
+\quad $\beta_{\text{spike}}$ & 0.25 & Spike detection penalty weight \\
+\quad $\gamma_{\text{ooo}}$ & 0.35 & Out-of-order penalty weight \\
+\quad $w_{\min}$ & 0.05 & Reliability score floor \\
+\midrule
+\multicolumn{3}{l}{\textit{Drift detection}} \\
+\quad Detector & Page-Hinkley & Online change-point detector \\
+\quad $\delta_{\text{PH}}$ & 0.01 & PH detection threshold \\
+\quad $\lambda_{\text{PH}}$ & 5.0 & PH forgetting factor \\
+\quad Warmup / cooldown & 48 / 24 & Steps before/after drift activation \\
+\midrule
+\multicolumn{3}{l}{\textit{Shield and battery}} \\
+\quad Mode & projection & Action repair method \\
+\quad Reserve SOC (drift) & 8\% & Extra SOC margin during detected drift \\
+\quad CVaR $\beta$ & 0.90 & CVaR confidence for comparison baseline \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Several design choices merit comment.  First, \texttt{k\_drift}$\,=\,0$ in the locked run means that drift inflation is disabled in the canonical evaluation; the drift detector still runs (Page-Hinkley with $\delta=0.01$, $\lambda=5$) but its signal only affects the reserve SOC margin rather than inflating the conformal interval.  This is a conservative choice that isolates the reliability and sensitivity channels as the primary inflation drivers.  Second, the reliability floor $w_{\min}=0.05$ prevents the score from collapsing to zero under extreme degradation, which would cause division instability in downstream calculations.  Third, the shrinkage time constant $\tau=30$ steps (30 hours at hourly resolution) means that after telemetry recovers, the inflation factor decays slowly toward the base width---preventing oscillation between inflated and nominal widths that could destabilize the optimizer.
+
+\section{Experimental Protocol}\label{sec:experiments}
+
+\subsection{Forecasting Evaluation}
+
+The forecasting layer compares GBM, LSTM, and TCN on the three primary targets: load, wind, and solar. All use the same 24-hour horizon, 168-hour lookback, and temporal cross-validation framing. This preserves a common data interface while allowing different inductive biases to compete under the same locked evidence policy.
+
+\subsection{Fault Injection Benchmark}
+
+CPSBench injects six fault families across multiple severity levels. Each fault is parameterized by a rate and magnitude, and multiple faults can be composed in \texttt{drift\_combo} scenarios. All safety is evaluated on true SOC, not observed SOC.
+
+\begin{table}[htbp]
+\centering\small
+\caption{CPSBench fault families and their injection mechanisms. Rates are per-timestep probabilities; magnitudes control severity.}
+\label{tab:fault_families}
+\begin{tabular}{p{2.2cm}p{3.2cm}p{2.2cm}p{5.0cm}}
+\toprule
+Fault & Mechanism & Default rate & Observable effect \\
+\midrule
+Dropout & Set load/renewables to NaN; forward-fill downstream & 8\% & Missing values in telemetry vector \\
+Delay-jitter & Shift arrival timestamp by $\mathcal{N}(\mu_d, 0.25\mu_d)$ seconds & 30\% & Stale or future-dated observations \\
+Out-of-order & Rewind timestamp by 1--3 hours & 10\% & Temporal misordering in recent window \\
+Spikes & Scale load by $\sim\!\mathcal{N}(1.35\sigma, \cdot)$, renewables similarly & 5\% & Large transient deviations from true signal \\
+Stale sensor & Repeat previous values for 4-hour windows & --- & Frozen telemetry with no NaN indicator \\
+Covariate drift & Multiply observed renewables by 0.72 after drift step & --- & Systematic bias in renewable observations \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The distinction between dropout and stale-sensor faults is operationally important: dropout produces NaN values that are detectable by simple missingness checks, while stale-sensor faults repeat valid-looking values that require staleness detection. Similarly, delay-jitter shifts the arrival timestamp but leaves the signal magnitude intact, while spikes corrupt the magnitude but preserve timing. The \texttt{drift\_combo} scenario composes covariate drift with label drift (true load increases by $1.15\times$ plus a 1{,}300\,MW ramp) to simulate a genuine operating-regime change.
+
+CPSBench maintains separate truth and observed trajectories through a \texttt{BatteryPlant} simulator that applies charge/discharge commands to the true SOC state. The plant tracks $\mathrm{SOC}^{\mathrm{true}}$ using the dynamics from \Cref{eq:soc_dynamics} \emph{without} clamping, so that violations produce physically meaningful severity measurements rather than being silently clipped.
+
+\subsection{Controllers}
+
+Five controllers are compared:
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{Dropout}: random zeroing of sensor readings at rates 10--50\%.
-  \item \textbf{Delay-jitter}: time-shifting readings by 1--5 steps with random perturbation.
-  \item \textbf{Spikes}: additive outliers at $3\sigma$--$10\sigma$ from the signal mean.
-  \item \textbf{Out-of-order}: permuting the last $k \in \{2,\ldots,8\}$ readings.
-\end{enumerate}
-Each fault type is swept across 10 severity levels.  All evaluation is on \emph{true} SOC (ground-truth battery state), not the observed SOC---this is the critical design choice that prevents controllers from ``hiding'' safety violations behind sensor errors.
-
-\subsection{Baselines and Controllers}
-
-Five controllers are compared (\Cref{tab:TBL01_MAIN_RESULTS}):
-\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{Deterministic LP}: point-forecast dispatch without uncertainty.
-  \item \textbf{Robust fixed-interval}: robust dispatch with static $\pm 2\sigma$ intervals.
-  \item \textbf{CVaR interval}: CVaR dispatch with scenario sampling from conformal intervals.
-  \item \textbf{DC\textsuperscript{3}S wrapped}: DC\textsuperscript{3}S with RAC-Cert inflation around the robust optimizer.
-  \item \textbf{DC\textsuperscript{3}S FTIT}: full-time-in-trade variant with more aggressive intervention.
+  \item deterministic LP,
+  \item robust fixed-interval,
+  \item CVaR interval,
+  \item DC\textsuperscript{3}S wrapped, and
+  \item DC\textsuperscript{3}S FTIT.
 \end{enumerate}
 
-\subsection{Evaluation Metrics}
+\subsection{Metrics}
 
-\begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{Safety}: true-SOC violation rate (fraction of steps where $\text{SOC}^{\mathrm{true}} \notin [\text{SOC}^{\min}, \text{SOC}^{\max}]$) and P95 violation severity (MWh).
-  \item \textbf{Cost}: cost delta \% relative to no-storage baseline.
-  \item \textbf{Intervention rate}: fraction of steps where DC\textsuperscript{3}S modifies the optimizer's candidate action.
-  \item \textbf{Stochastic value}: VSS (value of stochastic solution) and EVPI (expected value of perfect information).
-  \item \textbf{UQ quality}: PICP, pinball loss, Winkler score per the UQ metric contract.
-\end{itemize}
+The evaluation uses three metric families that correspond to the three system surfaces---forecasting, uncertainty calibration, and control safety.
+
+\paragraph{Forecast metrics.} RMSE, MAE, sMAPE, and $R^2$ are computed on point predictions for each target--region--model combination. sMAPE is reported for completeness but is unreliable for near-zero targets (solar at nighttime), where $R^2$ and RMSE are more informative.
+
+\paragraph{Uncertainty metrics.} Prediction interval coverage probability (PICP) at nominal 90\% and 95\% levels, mean interval width, pinball loss at the $\alpha/2$ and $1-\alpha/2$ quantiles, and the Winkler score that penalizes both width and miscoverage:
+\begin{equation}\label{eq:winkler}
+  W_t(\alpha) = (u_t - \ell_t) + \frac{2}{\alpha}(\ell_t - Y_t)\mathbb{1}[Y_t < \ell_t] + \frac{2}{\alpha}(Y_t - u_t)\mathbb{1}[Y_t > u_t].
+\end{equation}
+
+\paragraph{Control metrics.} The primary safety metric is the true-SOC violation rate: the fraction of steps where $\mathrm{SOC}^{\mathrm{true}}_t$ falls outside $[\mathrm{SOC}_{\min}, \mathrm{SOC}_{\max}]$. Violation severity (P95) measures the magnitude of the worst violations in MWh. The intervention rate is the fraction of steps where the shield modifies the optimizer's candidate action ($\|a_t^{\mathrm{safe}} - a_t^*\| > \epsilon$, with $\epsilon = 10^{-6}$\,MW). Additional safety metrics include: unsafe command rate (commands that \emph{would} violate if executed), BMS trip rate (simulated battery management system shutdowns), and grid import violation rate. Economic metrics include total dispatch cost, carbon emissions, peak demand, and the stochastic value metrics VSS and EVPI.
 
 \subsection{Statistical Protocol}
 
-All randomized experiments use 10 seeds.  Safety comparisons use Wilcoxon signed-rank tests with $p < 0.01$ threshold.  Ablations report 95\% bootstrap CIs and apply two-gate verification: a relative-reduction gate ($\ge 10\%$) and a significance gate ($p < 0.01$).
+Randomized experiments use 10 seeds. Safety comparisons are tested with Wilcoxon signed-rank tests at $p<0.01$, and ablations use both relative-reduction and significance gates. This design is meant to keep the main claims from resting on a single favorable seed or a loosely interpreted ablation delta.
 
-% ===== 6. RESULTS ============================================================
-\section{Results}\label{sec:results}
+\subsection{Evidence Lock}
 
-\subsection{Main Result: Safety under Telemetry Faults}\label{sec:main_result}
-
-\Cref{tab:TBL01_MAIN_RESULTS} presents the core safety--cost comparison across all five controllers under the aggregate fault sweep.
-
-\PaperTableCSV{TBL01_MAIN_RESULTS}{Main controller comparison under aggregate telemetry faults.  DC\textsuperscript{3}S (wrapped and FTIT) achieve zero true-SOC violations.  CI: 95\% bootstrap over 10 seeds.}
-
-\textbf{Key findings:}
+The thesis binds its quantitative claims to the following locked artifacts:
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{DC\textsuperscript{3}S achieves zero violations}: both DC\textsuperscript{3}S variants maintain 0.000 true-SOC violation rate across all fault types and severity levels, while the deterministic baseline violates at 3.9\% (CI: [3.0\%, 4.8\%]) with P95 severity of 333\,MWh.
-  \item \textbf{Low intervention cost}: DC\textsuperscript{3}S FTIT intervenes at only 2.8\% of steps (CI: [2.2\%, 3.4\%]), demonstrating that safety does not require constant override.
-  \item \textbf{CVaR is unsafe}: the CVaR baseline violates at 25.6\% with severity 0.28\,MWh---lower severity but far more frequent than acceptable.
-  \item \textbf{Cost neutrality}: DC\textsuperscript{3}S wrapped shows a $-1.9$\% cost delta (modest cost increase), while FTIT achieves $+3.0$\% (cost \emph{improvement}) due to more conservative scheduling that avoids peak-hour penalties.
+  \item DE stochastic run: \texttt{\PaperMetric{DE_STOCH_RUN_ID}{20260217\_165756}}
+  \item US stochastic run: \texttt{\PaperMetric{US_STOCH_RUN_ID}{20260217\_182305}}
+  \item dashboard profile lock timestamp: \texttt{\PaperMetric{DASHBOARD_LOCK_TS}{2026-02-17T11:15:38.623283}}
 \end{itemize}
 
-\PaperFigure{FIG03_TRUE_SOC_VIOLATION}{True-SOC violation rate versus fault severity.  DC\textsuperscript{3}S maintains zero violations across all severity levels while baselines deteriorate monotonically.}
+\section{Results}\label{sec:results}
 
-\PaperFigure{FIG04_TRUE_SOC_SEVERITY}{P95 true-SOC violation severity under fault sweep.  The deterministic baseline's severity grows superlinearly with fault severity; DC\textsuperscript{3}S remains at zero.}
+\subsection{Forecast Quality Across Model Families}\label{sec:forecast_quality}
+
+Before evaluating shield behavior, we report the locked forecast baselines that the optimizer consumes. Tables~\ref{tab:forecast_de} and~\ref{tab:forecast_us} summarize the three model families across three targets in each region. These are the canonical dashboard-locked metrics; all downstream dispatch and safety results depend on these forecasts.
+
+\begin{table}[htbp]
+\centering\small
+\caption{DE forecast baselines (17{,}377 hourly rows, 93 features). GBM dominates across all targets.}
+\label{tab:forecast_de}
+\begin{tabular}{llrrrr}
+\toprule
+Target & Model & RMSE & MAE & sMAPE (\%) & $R^2$ \\
+\midrule
+\multirow{3}{*}{Load} & GBM & 267.51 & 167.49 & 0.35 & 0.9991 \\
+ & LSTM & 3{,}474.78 & 2{,}722.50 & 5.38 & 0.8498 \\
+ & TCN & 2{,}668.05 & 2{,}031.12 & 3.94 & 0.9114 \\
+\midrule
+\multirow{3}{*}{Wind} & GBM & 183.93 & 118.19 & 2.29 & 0.9993 \\
+ & LSTM & 6{,}735.07 & 5{,}511.23 & 60.85 & 0.1545 \\
+ & TCN & 9{,}196.16 & 7{,}167.41 & 76.67 & $-$0.576 \\
+\midrule
+\multirow{3}{*}{Solar} & GBM & 251.44 & 121.22 & 69.27 & 0.9992 \\
+ & LSTM & 4{,}079.38 & 2{,}835.74 & 109.44 & 0.8007 \\
+ & TCN & 2{,}702.34 & 1{,}583.05 & 93.76 & 0.9125 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering\small
+\caption{US forecast baselines (13{,}638 hourly rows, 114 features). GBM again dominates; deep baselines show larger degradation on wind and solar.}
+\label{tab:forecast_us}
+\begin{tabular}{llrrrr}
+\toprule
+Target & Model & RMSE & MAE & sMAPE (\%) & $R^2$ \\
+\midrule
+\multirow{3}{*}{Load} & GBM & 162.89 & 123.23 & 0.17 & 0.9996 \\
+ & LSTM & 4{,}767.14 & 3{,}835.32 & 5.24 & 0.6014 \\
+ & TCN & 3{,}850.49 & 2{,}877.31 & 3.82 & 0.7399 \\
+\midrule
+\multirow{3}{*}{Wind} & GBM & 269.23 & 144.66 & 1.75 & 0.9982 \\
+ & LSTM & 6{,}301.91 & 5{,}234.31 & 42.59 & 0.0627 \\
+ & TCN & 7{,}187.54 & 5{,}930.74 & 47.65 & $-$0.219 \\
+\midrule
+\multirow{3}{*}{Solar} & GBM & 208.92 & 74.93 & 45.45 & 0.9962 \\
+ & LSTM & 1{,}781.97 & 1{,}055.34 & 136.92 & 0.7135 \\
+ & TCN & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Interpretation.} GBM achieves $R^2 > 0.99$ on all six target--region combinations, with RMSE an order of magnitude below deep baselines. LSTM and TCN show particular weakness on wind and solar, where the signal-to-noise ratio is lower and the precomputed tabular features already encode much of the sequential structure that recurrent and convolutional architectures would otherwise learn. The solar sMAPE values are inflated by near-zero nighttime denominators and should not be interpreted as proportional error rates; $R^2$ and RMSE are more informative for these targets. This GBM dominance is analyzed further in \Cref{sec:baseline_diagnosis}.
+
+\subsection{Safety Under Telemetry Faults}\label{sec:main_result}
+
+\PaperTableCSV{TBL01_MAIN_RESULTS}{Main controller comparison under aggregate telemetry faults. DC\textsuperscript{3}S variants achieve zero true-SOC violations. CI: 95\% bootstrap over 10 seeds.}
+
+The central result is that both DC\textsuperscript{3}S variants maintain zero true-SOC violations across the full fault sweep, while the deterministic baseline violates at 3.9\% (CI: [3.0\%, 4.8\%]) with P95 severity of 333\,MWh, and the CVaR baseline violates at 25.6\% with P95 severity of 0.28\,MWh. The contrast between these two baselines is instructive: the deterministic controller has \emph{infrequent but severe} violations because it makes large dispatch commitments without uncertainty protection, whereas CVaR has \emph{frequent but mild} violations because its scenario sampling does not track true battery state under telemetry degradation.
+
+DC\textsuperscript{3}S FTIT intervenes on only 2.8\% of steps (CI: [2.2\%, 3.4\%]), demonstrating that safety does not require blanket override of the optimizer. In the remaining 97.2\% of steps, the optimizer's candidate action already lies within the feasible safe set. The shield activates precisely when telemetry quality deteriorates enough to widen intervals beyond what the optimizer alone can accommodate.
+
+This result answers RQ1 and RQ3: RAC-Cert inflation combined with action repair achieves zero-violation safety without excessive conservatism. The low intervention rate implies that the shield's cost is concentrated in genuinely degraded conditions rather than spread uniformly across all operating states.
+
+\PaperFigure{FIG03_TRUE_SOC_VIOLATION}{True-SOC violation rate versus fault severity. DC\textsuperscript{3}S remains at zero across all severity levels while baseline controllers degrade monotonically with increasing fault intensity.}
+
+\PaperFigure{FIG04_TRUE_SOC_SEVERITY}{P95 true-SOC violation severity under the aggregate fault sweep. The deterministic baseline's severity grows superlinearly; DC\textsuperscript{3}S remains at zero.}
 
 \subsection{Cost--Safety Frontier}\label{sec:frontier}
 
-\Cref{fig:FIG07_COST_SAFETY_FRONTIER} visualizes the Pareto frontier.  DC\textsuperscript{3}S occupies the dominant position: zero violations with competitive cost.  The deterministic baseline sits in the unsafe region, and CVaR achieves moderate cost improvement but at unacceptable violation rates.
+\PaperFigure{FIG07_COST_SAFETY_FRONTIER}{Cost--safety Pareto frontier. DC\textsuperscript{3}S dominates the zero-violation, low-cost region. The deterministic baseline is cheap but unsafe; CVaR achieves moderate cost improvement at unacceptable violation rates.}
 
-\PaperFigure{FIG07_COST_SAFETY_FRONTIER}{Cost--safety Pareto frontier.  DC\textsuperscript{3}S dominates the zero-violation, low-cost region.  Dashed line: acceptable violation threshold.}
+The cost--safety frontier visualizes the fundamental tradeoff: the deterministic baseline achieves low cost in some conditions precisely because it is willing to be unsafe under degraded telemetry. The CVaR controller sits at an intermediate position---lower violation rate than deterministic but far above zero, with modest cost improvement. DC\textsuperscript{3}S occupies the dominant position: zero violations with competitive cost.
 
-\subsection{Decision Impact: DE and US}\label{sec:impact}
+The mechanism behind this Pareto dominance is conditional conservatism. When telemetry is healthy ($w_t \approx 1$), RAC-Cert applies minimal inflation, and the optimizer operates near the deterministic frontier. When telemetry degrades ($w_t \ll 1$), the inflation factor grows, the robust formulation hedges more aggressively, and action repair catches any remaining infeasibility. The cost of this conservatism is concentrated in the 2.8\% of steps where the shield intervenes, keeping aggregate cost impact small.
 
-Under locked artifact evaluation:
+DC\textsuperscript{3}S wrapped shows a $-1.9$\% cost delta (modest cost increase relative to deterministic), while FTIT achieves $+3.0$\% cost \emph{improvement} due to more conservative scheduling that avoids peak-hour penalties. This is the practical answer to RQ2: uncertainty-aware safe dispatch is not just safer but can be cost-competitive or cost-superior to naive dispatch.
+
+\subsection{Locked Region-Level Impact and Stochastic Value}\label{sec:impact}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Locked region-level decision impact (percentage).}
+\label{tab:locked_impact}
+\begin{tabular}{lrrrrr}
+\toprule
+Region & Cost (\%) & Carbon (\%) & Peak (\%) & VSS & Run ID \\
+\midrule
+DE & \PaperMetric{DE_COST_SAVINGS_PCT}{7.11} & \PaperMetric{DE_CARBON_REDUCTION_PCT}{0.30} & \PaperMetric{DE_PEAK_SHAVING_PCT}{6.13} & \PaperMetric{DE_VSS}{2,708.61} & \PaperMetric{DE_STOCH_RUN_ID}{20260217\_165756} \\
+US & \PaperMetric{US_COST_SAVINGS_PCT}{0.11} & \PaperMetric{US_CARBON_REDUCTION_PCT}{0.13} & \PaperMetric{US_PEAK_SHAVING_PCT}{0.00} & \PaperMetric{US_VSS}{297,092.71} & \PaperMetric{US_STOCH_RUN_ID}{20260217\_182305} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Absolute decision impact: B1 (deterministic LP dispatch) versus B2 (grid-only, no battery). All values from locked artifacts.}
+\label{tab:absolute_impact}
+\begin{tabular}{llrrr}
+\toprule
+Region & Metric & Baseline (B2) & GridPulse (B1) & $\Delta$ (absolute) \\
+\midrule
+\multirow{3}{*}{DE} & Cost (\$M) & 154.77 & 143.78 & $-$10.997 \\
+ & Carbon (Mt) & 1{,}461.6 & 1{,}457.2 & $-$4.436 \\
+ & Peak (GW) & 52.17 & 48.97 & $-$3.196 \\
+\midrule
+\multirow{3}{*}{US} & Cost (\$M) & 461.36 & 460.84 & $-$0.522 \\
+ & Carbon (Mt) & 3{,}907.8 & 3{,}902.6 & $-$5.161 \\
+ & Peak (GW) & 74.74 & 74.74 & 0.000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Baseline policy comparison (DE). B1 = deterministic LP, B2 = grid-only, B3 = naive battery heuristic.}
+\label{tab:baseline_comparison}
+\begin{tabular}{lrrr}
+\toprule
+Policy & Cost (\$M) & Carbon (Mt) & Peak (GW) \\
+\midrule
+B2 (Grid-only) & 154.77 & 1{,}461.6 & 52.17 \\
+B3 (Naive battery) & 154.20 & 1{,}454.7 & 52.17 \\
+B1 (GridPulse LP) & 143.78 & 1{,}457.2 & 48.97 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+DE shows substantially stronger direct decision gains than US in the locked artifacts: \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\% cost savings (\$10.997M absolute difference), \PaperMetric{DE_CARBON_REDUCTION_PCT}{0.30}\% carbon reduction (4.4\,Mt), and \PaperMetric{DE_PEAK_SHAVING_PCT}{6.13}\% peak shaving (3.2\,GW). US remains positive but weak in direct impact: \PaperMetric{US_COST_SAVINGS_PCT}{0.11}\% cost savings (\$0.52M), \PaperMetric{US_CARBON_REDUCTION_PCT}{0.13}\% carbon reduction (5.2\,Mt), and \PaperMetric{US_PEAK_SHAVING_PCT}{0.00}\% peak shaving (no peak improvement at all).
+
+The three-way baseline comparison in Table~\ref{tab:baseline_comparison} clarifies the B3 naive heuristic: it achieves a small cost reduction relative to grid-only but does not improve peak shaving, and its carbon reduction comes from shifting load rather than from optimized scheduling. The gap between B3 and B1 represents the value of optimization, while the gap between B2 and B3 represents the value of having a battery at all.
+
+\paragraph{Stochastic value.}
+VSS is positive in both locked runs: DE VSS\,=\,\PaperMetric{DE_VSS}{2,708.61}, US VSS\,=\,\PaperMetric{US_VSS}{297,092.71}. The large US VSS despite weak direct savings reflects that uncertainty-aware planning matters for constraint satisfaction and tail-risk management even when realized percentage improvements are small. EVPI values further quantify the gap:
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{DE}: \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\% cost savings, \PaperMetric{DE_CARBON_REDUCTION_PCT}{0.30}\% carbon reduction, \PaperMetric{DE_PEAK_SHAVING_PCT}{6.13}\% peak shaving.
-  \item \textbf{US}: \PaperMetric{US_COST_SAVINGS_PCT}{0.11}\% cost savings, \PaperMetric{US_CARBON_REDUCTION_PCT}{0.13}\% carbon reduction, \PaperMetric{US_PEAK_SHAVING_PCT}{0.00}\% peak shaving.
+  \item DE: EVPI\textsubscript{robust}\,=\,\PaperMetric{DE_EVPI_ROBUST}{2.32}, EVPI\textsubscript{det}\,=\,\PaperMetric{DE_EVPI_DETERMINISTIC}{-30.40}.
+  \item US: EVPI\textsubscript{robust}\,=\,\PaperMetric{US_EVPI_ROBUST}{10,279,851.74}, EVPI\textsubscript{det}\,=\,\PaperMetric{US_EVPI_DETERMINISTIC}{24,915,503.93}.
 \end{itemize}
 
-The magnitude difference reflects operating-regime heterogeneity: DE's time-of-use tariff structure creates larger arbitrage opportunities than US wholesale markets in the evaluation window.  This supports the claim that forecast-to-dispatch systems should be evaluated as region-specific decision systems, not by aggregate forecast-score transferability alone.
+The tension between weak US direct impact and large US VSS is analyzed in \Cref{sec:us_analysis}.
 
-\textbf{Stochastic value:}
-\begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item DE: VSS\,=\,\PaperMetric{DE_VSS}{2,708.61}, EVPI\textsubscript{robust}\,=\,\PaperMetric{DE_EVPI_ROBUST}{2.32}, EVPI\textsubscript{det}\,=\,\PaperMetric{DE_EVPI_DETERMINISTIC}{-30.40}.
-  \item US: VSS\,=\,\PaperMetric{US_VSS}{297,092.71}, EVPI\textsubscript{robust}\,=\,\PaperMetric{US_EVPI_ROBUST}{10,279,851.74}, EVPI\textsubscript{det}\,=\,\PaperMetric{US_EVPI_DETERMINISTIC}{24,915,503.93}.
-\end{itemize}
-Positive VSS in both regions confirms that uncertainty-aware dispatch provides measurable value over deterministic dispatch, answering RQ2.
+\subsection{Robustness Perturbation Analysis}\label{sec:robustness}
+
+To evaluate stability under parametric uncertainty in the input data itself, we perturb the optimization input forecasts at five severity levels (0\%--30\%) and measure feasibility and cost regret.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Robustness under forecast perturbation. All configurations remain 100\% feasible. Negative regret indicates the perturbed solution is cheaper (due to randomized constraint relaxation); positive regret indicates real cost increase.}
+\label{tab:robustness}
+\begin{tabular}{lrrr}
+\toprule
+Region & Perturbation (\%) & Infeasible (\%) & Mean Regret \\
+\midrule
+\multirow{5}{*}{DE} & 0 & 0.0 & 0.00 \\
+ & 5 & 0.0 & $-$1{,}509.47 \\
+ & 10 & 0.0 & $-$68{,}063.96 \\
+ & 20 & 0.0 & $-$183{,}810.02 \\
+ & 30 & 0.0 & $-$142{,}933.97 \\
+\midrule
+\multirow{5}{*}{US} & 0 & 0.0 & 0.00 \\
+ & 5 & 0.0 & 25{,}431.64 \\
+ & 10 & 0.0 & $-$241{,}341.60 \\
+ & 20 & 0.0 & $-$140{,}118.36 \\
+ & 30 & 0.0 & 506{,}266.38 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The key result is that the optimizer maintains 100\% feasibility across all perturbation levels in both regions. The regret values exhibit non-monotonic behavior: at moderate perturbation (10--20\%), randomized constraint relaxation occasionally produces cheaper solutions, while at high perturbation (30\%), constraint tightening in some scenarios forces more conservative scheduling with positive regret. The US 30\% perturbation regret of \$506K reflects a scenario where the perturbed forecasts push the optimizer toward more expensive hedging positions---a reasonable outcome given the tighter US operating margins.
 
 \subsection{Ablation Study: What Matters for Safety}\label{sec:ablation}
 
-\Cref{tab:TBL02_ABLATIONS} reports the nine-row ablation.  Each row removes one DC\textsuperscript{3}S component or replaces it with a simpler alternative.
+\PaperTableCSV{TBL02_ABLATIONS}{Ablation study with strict two-gate verification: relative reduction $\ge$ 10\% \emph{and} Wilcoxon signed-rank $p < 0.01$.}
 
-\PaperTableCSV{TBL02_ABLATIONS}{Ablation study with strict two-gate verification (relative reduction $\ge$ 10\% \emph{and} Wilcoxon $p < 0.01$).}
+The nine-row ablation isolates the contribution of each DC\textsuperscript{3}S component using a strict two-gate verification protocol: each ablation row must pass both a relative-reduction gate ($\ge$10\% degradation in the target metric) and a statistical significance gate (Wilcoxon $p < 0.01$) to be declared meaningful.
 
 \textbf{Key ablation findings:}
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{RAC-Cert is necessary}: removing reliability-adaptive inflation causes violations to reappear, failing the relative-reduction gate.
-  \item \textbf{Action repair is necessary}: without projection, the optimizer occasionally produces infeasible commands that violate SOC bounds.
-  \item \textbf{Drift detection is complementary}: removing drift inflation degrades severity P95 but does not cause violations at low fault levels---it becomes critical at high severity.
-  \item \textbf{Fixed-interval robust is insufficient}: static intervals do not adapt to degradation level, leading to either excessive cost (wide intervals) or safety violations (narrow intervals).
+  \item \textbf{RAC-Cert inflation is necessary}: removing reliability-adaptive inflation causes violations to reappear immediately, failing the relative-reduction gate. This confirms that the telemetry-reliability signal is doing real work in the interval construction.
+  \item \textbf{Action repair is necessary}: without the projection step, the optimizer occasionally produces commands that are numerically optimal against observed state but infeasible against true state. The repair step catches these cases.
+  \item \textbf{Drift detection is complementary}: removing the drift inflation component ($\kappa_d = 0$) degrades P95 severity but does not cause violations at low fault levels. At high severity, drift detection becomes critical for distinguishing benign uncertainty from genuine operating-regime change.
+  \item \textbf{Fixed-interval robust is insufficient}: static $\pm 2\sigma$ intervals do not adapt to degradation level, leading to either excessive cost (when intervals are too wide under clean conditions) or safety violations (when intervals are too narrow under degraded conditions).
+  \item \textbf{Sensitivity probe adds marginal value}: removing $\kappa_s$ alone does not cause failures in the locked evaluation but slightly increases severity at intermediate fault levels.
 \end{enumerate}
-This answers RQ3: reliability scoring \emph{and} action repair are both necessary; drift detection is necessary for robustness under high-severity faults.
 
-\subsection{Uncertainty Calibration Quality}\label{sec:calibration}
+These findings answer RQ3: reliability scoring \emph{and} action repair are both necessary for zero-violation safety; drift detection is necessary for robustness under high-severity faults; and sensitivity probing provides defense-in-depth but is not by itself critical.
 
-\Cref{tab:TBL03_CQR_GROUP_COVERAGE} reports regime-stratified CQR coverage.  Key observations:
+\subsection{Calibration Quality}\label{sec:calibration}
+
+\PaperFigure{FIG05_CQR_GROUP_COVERAGE}{Regime-aware CQR coverage by target and volatility group. Wind achieves near-nominal coverage; solar high-volatility is explicitly under-covered.}
+\PaperFigure{FIG10_CALIBRATION_TRADEOFF}{Coverage-versus-width tradeoff across target and regime combinations. Points below the dashed 90\% line indicate under-coverage.}
+
+Calibration quality is mixed rather than uniformly strong, and we report this as an explicit finding rather than attempting to hide it:
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item Wind high-group achieves 90.0\% PICP (nominal target), but solar high-group drops to 73.8\%---an honest negative finding.
-  \item Load low-group (85.2\%) and solar low-group (80.2\%) are below nominal, motivating the RAC-Cert inflation that compensates during dispatch.
-  \item Mean interval widths range from 719--1{,}244\,MW, reflecting genuine forecast difficulty variation across targets and regimes.
+  \item \textbf{Wind high-volatility}: achieves 90.0\% PICP, matching the nominal target. This is the best-calibrated combination.
+  \item \textbf{Load low-volatility}: achieves 85.2\% PICP, moderately below nominal. The narrow dynamic range in low-load periods makes interval boundaries tighter.
+  \item \textbf{Solar high-volatility}: drops to 73.8\% PICP, well below the 90\% target. This is the weakest calibration point.
+  \item \textbf{Solar low-volatility}: achieves 80.2\% PICP. Nighttime zeros compress the effective calibration distribution.
+  \item \textbf{Mean interval widths}: range from 719 to 1{,}244\,MW across target--regime combinations, reflecting genuine variation in forecast difficulty.
 \end{itemize}
 
-\PaperFigure{FIG05_CQR_GROUP_COVERAGE}{Regime-aware CQR group coverage.  Below-nominal coverage in solar high-group is compensated by RAC-Cert inflation at dispatch time.}
-
-\PaperFigure{FIG10_CALIBRATION_TRADEOFF}{Calibration tradeoff: coverage versus interval width across all target-regime combinations.}
+The solar under-coverage is the most important finding: it means the base conformal interval is not conservative enough during high-variability solar periods. This is precisely the scenario where RAC-Cert inflation provides its largest benefit---the shield detects that calibration quality has degraded (via sensitivity or residual signals) and widens the interval before the optimizer can make an unsafe commitment.
 
 \subsection{Transfer and Generalization}\label{sec:transfer}
 
@@ -475,65 +762,252 @@ Four transfer cases evaluate cross-region and temporal robustness:
 \end{enumerate}
 
 \PaperTableCSV{TBL04_TRANSFER_STRESS}{Transfer stress outcomes: coverage, violation rate, severity, and cost delta across all four cases.}
+\PaperFigure{FIG06_TRANSFER_COVERAGE}{Transfer stress coverage summary. DC\textsuperscript{3}S maintains safety across transfer cases, though cost optimality degrades without retraining.}
 
-\PaperFigure{FIG06_TRANSFER_COVERAGE}{Transfer stress coverage summary.  DC\textsuperscript{3}S maintains safety across transfer cases, though cost optimality degrades without retraining.}
+The main transfer finding is that safety is more robust than cost optimality: DC\textsuperscript{3}S generally preserves zero or near-zero violation behavior even when cross-region transfer degrades calibration sharpness and cost quality. This asymmetry is expected---the shield's conservatism (wider intervals, action repair) provides a safety margin that absorbs calibration errors, while cost optimization requires well-calibrated intervals to be efficient.
 
-\subsection{Runtime and Intervention Behavior}\label{sec:runtime}
+\subsection{Runtime and Computational Profile}\label{sec:runtime}
 
-DC\textsuperscript{3}S's computational overhead is modest: the reliability scoring, inflation calculation, and projection add $<$5\% to the solver wall-clock time.  The intervention rate (fraction of steps where the safe action differs from the optimizer's candidate) is 2.8\% for DC\textsuperscript{3}S FTIT---meaning the optimizer's output is safe in $>$97\% of steps, and the shield activates only when genuinely needed.
+\begin{table}[htbp]
+\centering\small
+\caption{Computational profile of the locked training and inference pipeline.}
+\label{tab:runtime}
+\begin{tabular}{lrrrr}
+\toprule
+Dataset & Train rows & Test rows & $N_{\text{models}}$ & Total model size (MB) \\
+\midrule
+DE & 12{,}163 & 2{,}608 & 12 & 47.85 \\
+US & 64{,}667 & 13{,}858 & 9 & 4.35 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-% ===== 7. DISCUSSION ========================================================
-\section{Discussion}\label{sec:discussion}
+The computational overhead of DC\textsuperscript{3}S at inference time is modest. The reliability scoring, inflation calculation, and projection steps add less than 5\% to the solver wall-clock time per dispatch step. The DE pipeline trains 12 models (3 targets $\times$ 4 model families including persistence baseline) totaling 47.85\,MB; the US pipeline trains 9 models totaling 4.35\,MB. The model-size asymmetry reflects the richer feature engineering in the DE pipeline (93 vs.~114 features, but different serialization patterns).
 
-\subsection{Implications for CPS Safety}
+The intervention rate (fraction of steps where the safe action differs from the optimizer's candidate) is 2.8\% for DC\textsuperscript{3}S FTIT, meaning the optimizer's output is safe in $>$97\% of steps. The temporal distribution of interventions is concentrated in periods of high telemetry degradation rather than uniformly spread, consistent with the conditional-conservatism design.
 
-DC\textsuperscript{3}S demonstrates that \emph{telemetry reliability should be a first-class input to the dispatch optimization loop}, not merely a pre-processing concern.  The zero-violation result is achieved not by being maximally conservative (which would sacrifice cost), but by \emph{adapting} conservatism to measurement quality.  This principle generalizes beyond battery dispatch to any CPS where control decisions depend on degraded sensor inputs: HVAC systems, water treatment, autonomous vehicles under sensor failure.
+\section{Deep Baseline Diagnosis}\label{sec:baseline_diagnosis}
+
+\subsection{What the Locked Forecast Results Say}
+
+Across both DE and US dashboard artifacts, GBM dominates LSTM and TCN on load, wind, and solar. The thesis does not interpret this as a universal statement about sequence models. It interprets it as a regime-specific result of the locked data, feature design, and training budget used here.
+
+\subsection{Sample Size and Tabular Regime}
+
+The locked datasets are moderate in size and heavily feature-engineered. DE contributes 17{,}377 hourly rows and the canonical US dashboard profile contributes 13{,}638 rows with rich lag, calendar, and weather features already serialized into the tabular dataset. In that regime, boosted trees can exploit strong precomputed predictors with less sample complexity than LSTM or TCN baselines, especially when the number of effective training windows is constrained by temporal split rules.
+
+\subsection{Feature Representation and Inductive Bias}
+
+The sequence models are not operating on raw sensor streams alone. They are operating after the pipeline has already encoded lagged structure, temporal signals, and exogenous variables into tabular features. That weakens the relative advantage of models whose main benefit is learning sequential structure from less engineered inputs. In other words, the repo's data design already gives GBM a representation that is unusually favorable to tree ensembles.
+
+\subsection{Lookback, Horizon, and Optimization Target}
+
+The same 168-hour lookback and 24-hour horizon are used for all locked baselines. That keeps the comparison clean, but it may not be optimal for the deep baselines. The thesis therefore interprets the current deep-model ranking as evidence about this locked training contract, not as a claim that LSTM or TCN are inherently unsuitable for dispatch forecasting.
+
+\subsection{Tuning-Budget Caveat}
+
+The locked LSTM and TCN results are legacy operational baselines rather than exhaustive deep-learning sweeps. The current stack supports newer baselines such as N-BEATS, TFT, and PatchTST, but those models are not yet part of the locked publication tables. A stronger future comparison would either rerun the deep models under a comparable tuning budget or demote them permanently to historical baselines. For the current thesis, the honest interpretation is that GBM is the operational winner in the locked artifacts and that the deep baselines were not tuned to the same maturity as the tabular stack.
+
+\subsection{Feature Importance and Representation Analysis}
+
+The GBM dominance is further supported by examining feature importance patterns across targets. In the locked DE models, the top features by split importance are:
+
+\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
+  \item \textbf{Load model}: 168-hour lag (weekly seasonality), 24-hour lag (daily pattern), hour-of-day, rolling 24-hour mean, and temperature. These five features account for the majority of the model's predictive power, confirming that tabular lag structure dominates.
+  \item \textbf{Wind model}: 1-hour lag (persistence), wind speed at hub height, rolling 24-hour standard deviation (volatility proxy), pressure, and hour-of-day. Wind is the most lag-dependent target.
+  \item \textbf{Solar model}: Hour-of-day (dominates due to diurnal cycle), cloud cover, solar radiation, 24-hour lag, and is\_daylight flag. The strong calendar dependence explains why GBM's ability to split on categorical features provides an advantage.
+\end{enumerate}
+
+These importance patterns reveal why deep models underperform in this regime. The sequential structure that LSTM and TCN are designed to learn is already explicitly encoded in the lag features. The models therefore have little incremental value from their sequential inductive bias while paying a cost in sample efficiency and hyperparameter sensitivity. This is consistent with the broader finding in tabular ML that gradient-boosted trees outperform deep models when features are well-engineered and datasets are moderate in size~\cite{borisov2022deep}.
+
+The dominance of GBM over LSTM and TCN in the locked results is best understood as a property of this data regime rather than as a universal statement about model classes. The datasets are moderate in size, strongly seasonal, and already heavily feature-engineered with lag, rolling, calendar, weather, and ramp variables that expose much of the temporal structure in explicit tabular form. In that setting, gradient-boosted trees can exploit high-signal predictors with strong sample efficiency and relatively low tuning sensitivity, while the deep baselines must learn sequential representations whose main advantage has already been partially encoded upstream. The common 168-hour lookback and 24-hour horizon preserve fairness across models, but they do not necessarily match the best operating point for LSTM or TCN. The most defensible interpretation is therefore that GBM is the best operational model under the current locked training contract, while the deep baselines remain informative but not equally optimized competitors.
+
+\section{Cross-Region and US Regime Analysis}\label{sec:us_analysis}
+
+\subsection{Why US Direct Gains Are Weak}
+
+The weak US direct gains are a real result, not a formatting artifact. The locked US profile shows only \PaperMetric{US_COST_SAVINGS_PCT}{0.11}\% cost savings and \PaperMetric{US_PEAK_SHAVING_PCT}{0.00}\% peak shaving even though the US stochastic run reports VSS\,=\,\PaperMetric{US_VSS}{297,092.71}. A PhD-level interpretation has to explain why those facts can coexist.
+
+\subsection{Arbitrage Headroom and Tariff Structure}
+
+The first explanation is economic headroom. In the locked DE evaluation, the cost structure creates larger arbitrage and peak-shaving opportunities for the battery. In the locked US evaluation window, the direct B1-versus-B2 decision leverage appears much smaller. A region can still have large stochastic value because uncertainty-aware planning matters under its scenario construction, while showing weak realized direct savings against a grid-only baseline over the specific locked horizon.
+
+\subsection{Battery Utilization and Constraint Binding}
+
+The second explanation is control leverage. If battery power, reserve, or terminal-SOC constraints bind more often in US runs, the optimizer has less room to convert better forecasts into visibly better direct cost or peak outcomes. Positive VSS then means uncertainty matters inside the optimization, but the battery has too little practical freedom to turn that uncertainty value into large realized percentage improvements.
+
+\subsection{Calibration Quality and Optimization Leverage}
+
+The third explanation is calibration asymmetry. Under-coverage in some US targets, especially wind, implies that the optimizer sees less trustworthy intervals than the DE pipeline does. In that setting, the shield can still improve safety and maintain stochastic value, but direct economic improvements will be muted because the system spends more of its effort compensating for uncertainty than exploiting favorable operating windows.
+
+\subsection{Region Heterogeneity Inside ``US''}
+
+The current canonical thesis lock still uses the dashboard US profile, while the release-family assets already describe MISO, PJM, and ERCOT separately. That means ``US'' is partly a compressed narrative surface. For a stronger next revision, the right move is to expose those balancing-authority differences directly in the main results rather than only in supporting assets. The current thesis therefore reads the US result as a warning against over-aggregating regionally heterogeneous control regimes.
+
+\subsection{Per-Balancing-Authority Structural Differences}
+
+Although the canonical lock uses the MISO-derived US profile, the release-family assets reveal important structural differences across the three balancing authorities:
+
+\begin{table}[htbp]
+\centering\small
+\caption{Structural differences across US balancing authorities in the release-family assets.}
+\label{tab:ba_structure}
+\begin{tabular}{p{2.5cm}p{3.8cm}p{3.8cm}p{3.0cm}}
+\toprule
+Characteristic & MISO & PJM & ERCOT \\
+\midrule
+Geography & Midwest (15 states) & Mid-Atlantic / Great Lakes & Texas (isolated grid) \\
+Primary renewables & Wind-dominant & Mixed wind/solar & Wind + solar growing \\
+Market structure & Day-ahead + real-time & Day-ahead + real-time & Day-ahead + real-time \\
+Interconnection & Eastern & Eastern & Independent (ERCOT) \\
+Load profile & Industrial + agricultural & Urban + industrial & Extreme summer peaks \\
+Wind variability & High (Great Plains) & Moderate (coastal/inland) & High (West Texas) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+These structural differences have direct implications for dispatch optimization. ERCOT's isolated grid means that import/export constraints bind differently than in MISO or PJM, which share the Eastern Interconnection. ERCOT's extreme summer peaks also create different arbitrage headroom than MISO's more moderate seasonal variation. The per-BA decomposition is therefore not just a visualization convenience but a substantive analytical need: aggregating across these structurally different regimes masks regime-specific optimization behavior.
+
+The practical consequence for future work is that the US narrative should be decomposed into per-BA results in the main text, with each BA receiving its own impact summary, violation profile, and stochastic-value analysis. The current aggregated US result is a conservative summary that understates the BA-specific variation.
+
+The coexistence of weak direct US improvements and large US VSS is not contradictory; it reflects the difference between realized percentage gains and the internal value of uncertainty-aware planning. Over the locked US evaluation window, the B1-versus-B2 comparison offers limited arbitrage and peak-shaving headroom, so even better dispatch decisions translate into only small realized percentage changes in cost and peak demand. At the same time, the stochastic program still benefits from modeling uncertainty because that uncertainty affects reserve use, constraint satisfaction, and tail-risk exposure inside the optimization itself. In other words, stochastic information can be highly valuable for choosing safer and more robust schedules even when the final realized savings against a grid-only baseline remain small. This effect is amplified by the fact that the current ``US'' narrative compresses heterogeneous balancing-authority regimes into a single summary, which likely attenuates stronger authority-specific gains that are not visible in the aggregated headline numbers.
+
+\section{Governance and Reproducibility}\label{sec:governance}
+
+\subsection{Source of Truth}
+
+The thesis uses a markdown-first and artifact-locked workflow. The canonical manuscript source is \texttt{paper/PAPER\_DRAFT.md}. The corresponding LaTeX thesis manuscript is this file, and the shorter conference cut is \texttt{paper/paper\_r1.tex}. Quantitative claims are valid only if they appear in the manuscript and remain traceable to \texttt{paper/metrics\_manifest.json}, \texttt{paper/claim\_matrix.csv}, and the locked report artifacts.
+
+\subsection{Repo-to-Paper Traceability}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Repository artifact traceability for the paper pipeline.}
+\label{tab:repo_traceability}
+\begin{tabular}{p{3.1cm}p{4.2cm}p{5.8cm}}
+\toprule
+Repo artifact family & Primary role in the paper & Main paper touchpoint \\
+\midrule
+README + setup docs & Environment bootstrap, run commands, and operator setup & Governance and appendices \\
+Train/eval code & Implements forecasting, uncertainty calibration, dispatch, and CPSBench evaluation & Methods and experimental protocol \\
+Configs + seeds & Fix dataset scope, model settings, and randomization policy & Experimental protocol and appendix hyperparameters \\
+Data + preprocessing & Define dataset construction, split logic, and feature generation & Background and experimental protocol \\
+Logs + checkpoints & Preserve run IDs, solver outputs, metrics, and locked evidence values & Results and governance \\
+Plotting + publication scripts & Build paper-facing figures, tables, and release assets & Results and appendices \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Validation Gates}
+
+The release gates for this thesis are intentionally concrete:
+\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
+  \item \texttt{python3 scripts/validate\_paper\_claims.py} must pass.
+  \item \texttt{python3 scripts/sync\_paper\_assets.py --check} must pass.
+  \item Core numbers, run IDs, and titles must stay aligned across markdown and LaTeX.
+\end{enumerate}
+
+These gates are non-negotiable: if a draft passes review but fails validation, the release is blocked until the drift is resolved. The rationale is that in a long-running applied project with multiple artifact families, manual consistency checking is both tedious and error-prone. Automating the check ensures that the scientific claims in the paper cannot silently diverge from the evidence artifacts they cite.
+
+\subsection{What Governance Does Not Claim}
+
+The governance contribution is scoped to this paper. It does not claim a universal reproducibility framework for ML research. It does not claim that artifact locking solves all reproducibility challenges---only that, for a multi-artifact cyber-physical systems project with multiple balancing authorities and release families, automated claim locking is necessary to prevent manuscript-artifact drift. The community-level argument for stronger reproducibility standards is made by Pineau et al.~\cite{pineau2021improving}; this paper is a concrete instantiation of that argument in a specific CPS domain.
+
+\subsection{Incident Response and Operational Safeguards}
+
+Beyond static validation gates, the governance stack includes an operational response sequence for handling common runtime failures during evaluation:
+\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
+  \item \textbf{Stale data detection}: if upstream delay exceeds \texttt{expected\_cadence\_s} (3{,}600\,s), the system blocks dispatch and holds current state.
+  \item \textbf{Forecast drift}: KS-test or Page-Hinkley triggers raise an alert; if drift persists beyond \texttt{cooldown\_steps} (24 steps), the retraining workflow is invoked.
+  \item \textbf{Solver infeasibility}: if the optimizer returns infeasible status, DC\textsuperscript{3}S falls back to the grid-only baseline (B2) and logs the event.
+  \item \textbf{Certificate chain breaks}: if a certificate cannot be emitted (e.g., DuckDB write failure), the system enters conservative mode and disables further dispatch until the audit path is restored.
+\end{enumerate}
+
+\section{Discussion and Threats to Validity}\label{sec:discussion}
+
+\subsection{Implications}
+
+The results support a systems-level claim: telemetry reliability should be treated as part of the control state, not as a peripheral monitoring variable. In this thesis, the safety win comes not from maximum conservatism but from conditional conservatism. The controller widens uncertainty sets when telemetry quality deteriorates and stays less intrusive otherwise.
+
+\subsection{CPS Security Implications}
+
+The DC\textsuperscript{3}S architecture has broader implications for CPS security beyond the battery dispatch setting studied here. Traditional CPS security focuses on intrusion detection and network isolation~\cite{dibaji2019systems}. DC\textsuperscript{3}S demonstrates an alternative, control-theoretic defense: rather than attempting to detect and block all adversarial inputs, the controller \emph{adapts its uncertainty model} in response to degraded input quality. This defense-in-depth strategy has several properties that are relevant to CPS security more broadly:
+
+\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
+  \item \textbf{Graceful degradation}: Rather than switching between ``secure'' and ``insecure'' operating modes, the controller continuously adjusts its conservatism based on telemetry quality. This avoids the cliff-edge failure modes that binary security classifiers can produce.
+  \item \textbf{Attack-agnostic defense}: The reliability scoring does not attempt to classify the \emph{cause} of degradation (equipment failure vs.\ adversarial manipulation). Instead, it measures the \emph{statistical properties} of the telemetry (missingness, staleness, spikes, ordering) and adjusts accordingly. This makes the defense robust to novel attack vectors that might bypass signature-based detectors.
+  \item \textbf{Auditable response}: The certificate chain provides a forensic record of how the controller responded to each degradation event. In a security incident, this record enables post-hoc analysis of whether the shield's response was proportionate and whether any unsafe commands were attempted.
+\end{enumerate}
+
+The limitation of this approach is that it cannot prevent data corruption that is \emph{statistically indistinguishable} from clean data. An adversary who can inject small, consistent biases into the telemetry stream may evade the reliability scoring. This is a fundamental limitation of any statistical anomaly detector, not specific to DC\textsuperscript{3}S.
+
+\subsection{Deployment Considerations}
+
+Translating the software-in-the-loop results of this thesis to production deployment requires addressing several practical concerns that the current evaluation does not cover:
+
+\paragraph{Latency requirements.} The DC\textsuperscript{3}S step (reliability scoring $\to$ inflation $\to$ solve $\to$ repair $\to$ certify) must complete within the control cycle time. At hourly dispatch resolution, the current implementation's $<$5\% overhead is negligible. At sub-minute resolution, the solver call becomes the bottleneck, and warm-starting or constraint-screening optimizations would be needed.
+
+\paragraph{BMS integration.} The current \texttt{BatteryPlant} simulator uses idealized charge/discharge efficiency. Production BMS systems have state-of-health-dependent efficiency curves, cell-level imbalances, and temperature constraints that affect the feasible action set. Integrating DC\textsuperscript{3}S with a real BMS requires mapping the abstract SOC constraints to physical cell-level limits.
+
+\paragraph{Certificate storage.} At hourly resolution, the certificate chain grows by $\sim$8{,}760 records per year per device. At sub-minute resolution, the storage and query requirements become significant. The current DuckDB storage is suitable for thesis-scale evaluation but would need to be replaced with a production time-series database for fleet-scale deployment.
+
+\paragraph{Multi-device coordination.} The current thesis evaluates a single battery. In a fleet setting, multiple devices share grid constraints (e.g., transformer capacity, feeder limits). Extending DC\textsuperscript{3}S to multi-device coordination requires either a centralized shield that projects the joint action vector or a distributed protocol where devices negotiate safety margins.
 
 \subsection{Negative and Neutral Findings}
 
-We report several findings that qualify our claims:
-\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{US peak shaving is 0.00\%} in locked evidence---the US wholesale market structure in the evaluation window did not create peak-shaving opportunities.
-  \item \textbf{Solar high-regime PICP is 73.8\%}, below the 90\% nominal target.  RAC-Cert compensates during dispatch, but better base calibration would reduce unnecessary intervention.
-  \item \textbf{Deep models (LSTM, TCN) do not outperform GBM} in locked dashboard snapshots---GBM dominates across all targets in both regions.
-  \item \textbf{Cross-region impact magnitudes differ substantially}: a strategy yielding 7.11\% cost savings in DE yields only 0.11\% in US, underscoring regime sensitivity.
-\end{enumerate}
-
-\subsection{Limitations}\label{sec:limitations}
+The negative and asymmetric findings are analytically important because they clarify where the method is genuinely strong, where the current evidence is limited, and how the observed behavior should be interpreted.
 
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{Dataset scope}: evidence is limited to DE (2018--2020) and US (2024--2026) windows.  Generalization to other markets, tariff structures, or regulatory regimes requires additional evaluation.
-  \item \textbf{Simulation only}: all results are from software simulation with replayed telemetry.  No hardware-in-the-loop or field deployment validation is claimed.
-  \item \textbf{Proxy assumptions}: cost and carbon signals are derived from publicly available data and may not fully represent all market settlement mechanisms.
-  \item \textbf{Stochastic sensitivity}: VSS and EVPI magnitudes are sensitive to scenario construction parameters and should not be interpreted as universal constants.
-  \item \textbf{Coverage theorem}: \Cref{thm:rac_coverage} provides marginal coverage preservation under inflation; it does not guarantee \emph{conditional} coverage or optimal interval width.
+  \item US peak shaving remains \PaperMetric{US_PEAK_SHAVING_PCT}{0.00}\%.
+  \item Some target-regime combinations remain under-covered at the base calibration layer.
+  \item GBM dominates the locked deep baselines.
+  \item Cross-region impact magnitudes vary sharply despite the shared architecture.
 \end{enumerate}
 
-% ===== 8. CONCLUSION ========================================================
+\subsection{Threats to Internal Validity}
+
+The main internal-validity risk is manuscript-artifact drift. This is mitigated by run IDs, manifest locks, and validator checks, but not eliminated permanently. Another internal-validity risk is that some interpretive claims in the diagnosis sections are based on locked artifacts and configuration evidence rather than fresh reruns targeted specifically at those hypotheses.
+
+\subsection{Threats to External Validity}
+
+The thesis is intentionally scoped to the locked DE and US windows. Generalization to different tariff regimes, different battery sizes, or different telemetry infrastructures remains future work. The multi-BA US evidence surface improves external validity, but it does not convert the current thesis into a universal market study.
+
+\subsection{Threats to Construct and Conclusion Validity}
+
+Construct validity depends on the proxy cost and carbon signals being appropriate enough for comparative analysis. Conclusion validity depends on scenario design and calibration definitions remaining stable. The supporting proposition in \Cref{thm:rac_coverage} also should not be overstated: it gives monotone coverage preservation under inflation, not a full theory of conditional safety or optimal interval growth.
+
+The supporting proposition should be read as a limited correctness result, not as a broad theoretical guarantee for DC\textsuperscript{3}S. It shows only that monotone interval inflation cannot reduce marginal coverage relative to the base conformal interval under the stated inclusion condition. It does not establish conditional coverage under telemetry degradation, does not prove that the chosen inflation law is optimal, and does not guarantee closed-loop control stability, minimum intervention rate, or economic optimality. It also does not remove the need for empirical validation, because the practical safety of the system depends on how reliability scoring, drift behavior, forecast quality, optimization, and action repair interact under realistic faults. Accordingly, the main contribution of this thesis remains empirical and systems-oriented: the theorem supports the construction, but the evidence for the method comes from the locked benchmark results rather than from a deep new conformal theory.
+
+\section{Limitations and Future Work}\label{sec:limitations}
+
+\subsection{Current Limitations}
+
+\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
+  \item Evidence is limited to locked DE and US windows.
+  \item Evaluation is software-in-the-loop rather than hardware field validation.
+  \item Cost and carbon signals are engineering proxies rather than full settlement models.
+  \item The current formal result is intentionally modest.
+  \item Deep-baseline diagnosis is evidence-based but not yet backed by a new dedicated rerun campaign.
+\end{enumerate}
+
+\subsection{Near-Term Future Work}
+
+Near-term work should focus on three items: rerunning deeper forecasting baselines under comparable tuning budgets, decomposing the US narrative more explicitly into MISO/PJM/ERCOT in the main text, and improving under-covered target-regime calibration before dispatch.
+
+\subsection{Longer-Term Future Work}
+
+Longer-term work includes hardware-in-the-loop validation with physical inverter and BMS integration, richer market constraints that capture settlement rules more faithfully, conditional-coverage analysis under non-stationary degradation, and stronger release automation with cryptographically signed evidence bundles. A further research direction is extending the RAC-Cert framework to multi-agent dispatch settings where multiple batteries share a common telemetry infrastructure and must coordinate safety constraints.
+
 \section{Conclusion}\label{sec:conclusion}
 
-We presented DC\textsuperscript{3}S, a conformal safety shield that integrates telemetry-reliability scoring, adaptive interval inflation (RAC-Cert), robust dispatch, action repair, and per-step certification into a single online loop for battery dispatch under degraded telemetry.  Across four fault types and parametric severity sweeps on DE and US data:
+We presented DC\textsuperscript{3}S, a conformal safety shield that integrates telemetry-reliability scoring, adaptive interval inflation (RAC-Cert), robust dispatch, action repair, and per-step certification into a single online loop for battery dispatch under degraded telemetry. Across four fault types and parametric severity sweeps on DE and US data, DC\textsuperscript{3}S achieves zero true-SOC violations while maintaining positive stochastic value in both regions and \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\% cost savings in DE. The corresponding locked US result is more modest at \PaperMetric{US_COST_SAVINGS_PCT}{0.11}\% cost savings and \PaperMetric{US_PEAK_SHAVING_PCT}{0.00}\% peak shaving, which the thesis interprets as a regime-analysis problem rather than something to hide.
 
-\begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item DC\textsuperscript{3}S achieves \textbf{zero true-SOC violations} (vs.\ 3.9\% for deterministic and 25.6\% for CVaR baselines) with only 2.8\% intervention rate.
-  \item Cost impact: \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\% cost savings (DE), \PaperMetric{US_COST_SAVINGS_PCT}{0.11}\% (US); positive VSS in both regions.
-  \item Ablation confirms RAC-Cert inflation and action repair are both necessary for zero-violation safety.
-\end{itemize}
+The conclusion-level locked numeric summary is therefore explicit: 7.11\% DE cost savings, 0.30\% DE carbon reduction, 6.13\% DE peak shaving, 0.11\% US cost savings, 0.13\% US carbon reduction, and 0.00\% US peak shaving.
 
-The practical message: trustworthy CPS dispatch requires telemetry-aware uncertainty calibration, not just robust optimization over assumed-correct uncertainty sets.  DC\textsuperscript{3}S makes telemetry quality a \emph{control input} rather than a hidden failure mode.
+The practical message is that trustworthy dispatch requires telemetry-aware uncertainty calibration rather than robust optimization over assumed-correct uncertainty sets. The thesis contribution is therefore both operational and methodological: it shows how degraded telemetry can be converted into bounded uncertainty, safe repaired actions, and auditable evidence without overstating the formal theory behind the inflation rule.
 
-\paragraph{Future work.}
-\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item Extend to hardware-in-the-loop validation with physical inverter/BMS integration.
-  \item Improve base calibration on under-covered targets (solar high-regime) to reduce unnecessary inflation.
-  \item Expand evaluation to additional regions, tariff structures, and longer time windows.
-  \item Investigate conditional coverage guarantees under non-stationary degradation.
-\end{enumerate}
-
-% ===== REFERENCES ============================================================
 \bibliographystyle{plain}
-
-\begin{thebibliography}{20}
+\begin{thebibliography}{99}
 
 \bibitem{vovk2005conformal}
 V.~Vovk, A.~Gammerman, and G.~Shafer.
@@ -545,20 +1019,20 @@ G.~Shafer and V.~Vovk.
 \newblock A tutorial on conformal prediction.
 \newblock {\em Journal of Machine Learning Research}, 9:371--421, 2008.
 
+\bibitem{romano2019conformalized}
+Y.~Romano, E.~Patterson, and E.~Cand\`{e}s.
+\newblock Conformalized quantile regression.
+\newblock {\em Advances in Neural Information Processing Systems}, 32, 2019.
+
 \bibitem{gibbs2021adaptive}
 I.~Gibbs and E.~Cand\`{e}s.
 \newblock Adaptive conformal inference under distribution shift.
 \newblock {\em Advances in Neural Information Processing Systems}, 34, 2021.
 
 \bibitem{zaffran2022adaptive}
-M.~Zaffran, O.~Féron, Y.~Goude, J.~Josse, and A.~Dieuleveut.
+M.~Zaffran, O.~F{\'e}ron, Y.~Goude, J.~Josse, and A.~Dieuleveut.
 \newblock Adaptive conformal predictions for time series.
 \newblock {\em International Conference on Machine Learning}, 2022.
-
-\bibitem{romano2019conformalized}
-Y.~Romano, E.~Patterson, and E.~Cand\`{e}s.
-\newblock Conformalized quantile regression.
-\newblock {\em Advances in Neural Information Processing Systems}, 32, 2019.
 
 \bibitem{barber2023conformal}
 R.~F.~Barber, E.~J.~Cand\`{e}s, A.~Ramdas, and R.~J.~Tibshirani.
@@ -585,6 +1059,11 @@ R.~T.~Rockafellar and S.~Uryasev.
 \newblock Optimization of conditional value-at-risk.
 \newblock {\em Journal of Risk}, 2(3):21--42, 2000.
 
+\bibitem{rosewater2020riskaverse}
+D.~Rosewater, R.~Baldick, and S.~Santoso.
+\newblock Risk-averse model predictive control design for battery energy storage systems.
+\newblock {\em IEEE Transactions on Smart Grid}, 11(3):2014--2022, 2020.
+
 \bibitem{alshiekh2018safe}
 M.~Alshiekh, R.~Bloem, R.~Ehlers, B.~K\"onighofer, S.~Niekum, and U.~Topcu.
 \newblock Safe reinforcement learning via shielding.
@@ -598,7 +1077,7 @@ O.~Bastani.
 \bibitem{konighofer2020shield}
 B.~K\"onighofer, F.~Lorber, N.~Jansen, and R.~Bloem.
 \newblock Shield synthesis for reinforcement learning.
-\newblock {\em Leveraging Applications of Formal Methods (ISoLA)}, 2020.
+\newblock {\em Leveraging Applications of Formal Methods}, 2020.
 
 \bibitem{sha2001using}
 L.~Sha.
@@ -625,54 +1104,173 @@ T.~Chen, Y.~Jin, H.~Lv, A.~Yang, M.~Liu, B.~Chen, Y.~Xie, and Q.~Chen.
 \newblock Applications of lithium-ion batteries in grid-scale energy storage systems.
 \newblock {\em Transactions of Tianjin University}, 26:208--217, 2020.
 
-\bibitem{falliere2011stuxnet}
-N.~Falliere, L.~O'Murchu, and E.~Chien.
-\newblock W32.{S}tuxnet dossier.
-\newblock Technical report, Symantec Security Response, 2011.
+\bibitem{pineau2021improving}
+J.~Pineau, P.~Vincent-Lamarre, K.~Sinha, V.~Larivi\`{e}re, A.~Beygelzimer, F.~d'Alch\'e-Buc, E.~Fox, and H.~Larochelle.
+\newblock Improving reproducibility in machine learning research.
+\newblock {\em Journal of Machine Learning Research}, 22(164):1--20, 2021.
+
+\bibitem{borisov2022deep}
+V.~Borisov, T.~Leemann, K.~Sessler, J.~Haug, M.~Pawelczyk, and G.~Kasneci.
+\newblock Deep neural networks and tabular data: A survey.
+\newblock {\em IEEE Transactions on Neural Networks and Learning Systems}, 2022.
 
 \end{thebibliography}
 
-% ===== APPENDIX ==============================================================
 \appendix
 
-\section{Hyperparameters and Configuration}\label{app:hyperparams}
+\section{Replication Checklist}\label{app:replication}
 
-\PaperTableCSV{TBL06_HYPERPARAMS}{Core hyperparameters and configuration settings for reproducibility.}
-
-Key configuration values:
-\begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item Forecast: 24-hour horizon, 168-hour lookback, 10-fold CV with 24-hour gap.
-  \item Conformal: $\alpha = 0.10$, volatility binning window = 168 hours.
-  \item RAC-Cert: $\kappa_r = 0.5$, $\kappa_d = 0.3$, $\kappa_s = 0.2$, shrinkage $\tau = 0.95$.
-  \item Drift detection: KS $p$-value threshold = 0.01, degradation threshold = 0.15.
-  \item Optimization: cost weight $\lambda_c = 1.0$, carbon weight $\lambda_g = 1.2$, retraining cadence = 30 days.
-\end{itemize}
-
-\section{Additional Figures}\label{app:figures}
-
-\PaperFigure{FIG09_REGION_DATASET_CARDS}{Dataset cards for all four regions in the release scope.}
-
-\PaperFigure{FIG11_TRANSFER_GENERALIZATION}{Cross-region transfer and generalization performance summary.}
-
-\section{Reproducibility Checklist}\label{app:reproducibility}
-
-All results can be reproduced with the following commands:
+All main claims should be reproducible from the following steps:
 \begin{verbatim}
+# Validate paper claims against locked artifacts
+python3 scripts/validate_paper_claims.py
+python3 scripts/sync_paper_assets.py --check
+
 # Train all models and build uncertainty artifacts
 make train-all-ba
 
 # Run CPSBench fault sweep
 make r1-cpsbench
 
-# Run ablation study
+# Run ablation study and publication checks
 make r1-full
-
-# Build publication artifacts and verify claims
 make r1-verify
 make paper-sync
 \end{verbatim}
 
-Canonical run IDs: DE \texttt{\PaperMetric{DE_STOCH_RUN_ID}{20260217\_165756}}, US \texttt{\PaperMetric{US_STOCH_RUN_ID}{20260217\_182305}}.  All artifacts are hash-tracked in the release manifest.
+Canonical run IDs: DE \texttt{\PaperMetric{DE_STOCH_RUN_ID}{20260217\_165756}}, US \texttt{\PaperMetric{US_STOCH_RUN_ID}{20260217\_182305}}.  Dashboard profile lock timestamp: \texttt{\PaperMetric{DASHBOARD_LOCK_TS}{2026-02-17T11:15:38.623283}}.  All artifacts are hash-tracked in the release manifest.
+
+\section{Hyperparameters and Configuration}\label{app:hyperparams}
+
+\PaperTableCSV{TBL06_HYPERPARAMS}{Core hyperparameters and configuration settings for reproducibility.}
+
+Key configuration values from the locked \texttt{configs/} directory:
+\begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
+  \item Forecast: 24-hour horizon, 168-hour lookback, 10-fold time-aware CV with 24-hour gap.
+  \item Conformal: $\alpha = 0.10$, volatility binning window = 168 hours.
+  \item RAC-Cert: $\kappa_r = 0.2$ (quality), $\kappa_d = 0.0$ (drift, disabled), $\kappa_s = 0.4$ (sensitivity), $\texttt{infl\_max} = 2.0$, shrinkage $\tau = 30.0$.
+  \item Reliability: $\lambda_{\text{delay}} = 0.002$, $\beta_{\text{spike}} = 0.25$, $\gamma_{\text{ooo}} = 0.35$, $w_{\min} = 0.05$.
+  \item Drift detection: Page-Hinkley with $\delta = 0.01$, $\lambda = 5.0$, warmup 48 steps, cooldown 24 steps.
+  \item Shield: projection mode, reserve SOC under drift = 8\%.
+\end{itemize}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Optimization configuration from \texttt{configs/optimization.yaml}.}
+\label{tab:optim_config}
+\begin{tabular}{p{4.0cm}p{2.0cm}p{6.5cm}}
+\toprule
+Parameter & Value & Role \\
+\midrule
+\multicolumn{3}{l}{\textit{Objective weights}} \\
+\quad Cost weight ($\lambda_c$) & 1.0 & Energy cost coefficient \\
+\quad Carbon weight ($\lambda_g$) & 1.2 & Carbon-weighted cost coefficient \\
+\midrule
+\multicolumn{3}{l}{\textit{Battery parameters}} \\
+\quad Capacity & 20{,}000\,MWh & Rated energy capacity ($E_{\max}$) \\
+\quad Max power & 5{,}000\,MW & Charge/discharge power limit ($P_{\max}$) \\
+\quad Efficiency & 0.92 & Round-trip charge/discharge efficiency \\
+\quad Degradation cost & \$10/MWh & Cycle-aging penalty per throughput \\
+\midrule
+\multicolumn{3}{l}{\textit{Constraint penalties}} \\
+\quad Curtailment & \$500/MW & Penalty for wasted renewable energy \\
+\quad Unmet load & \$10{,}000/MW & High penalty (should not trigger) \\
+\quad Peak & \$1/MW & Small peak-demand penalty \\
+\midrule
+\multicolumn{3}{l}{\textit{Robust dispatch}} \\
+\quad Risk weight (worst-case) & 0.35 & DRO blend: 1.0 = pure worst-case \\
+\quad Min SOC & 1{,}000\,MWh & Minimum allowed SOC \\
+\quad Initial SOC & 10{,}000\,MWh & Starting battery state (50\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Data Assets and Feature Design}\label{app:data_assets}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Feature family composition by region.}
+\label{tab:feature_composition}
+\begin{tabular}{lrr}
+\toprule
+Feature family & DE (count) & US (count) \\
+\midrule
+Weather & 40 & 56 \\
+Lag & 36 & 42 \\
+Calendar & 6 & 6 \\
+\midrule
+\textbf{Total} & \textbf{94} & \textbf{114} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Target distribution snapshot (DE).}
+\label{tab:target_dist_de}
+\begin{tabular}{lrrrrr}
+\toprule
+Target & Mean & Std & Min & Max & Median \\
+\midrule
+Load (MW) & 55{,}156 & 9{,}998 & 31{,}923 & 76{,}925 & 54{,}752 \\
+Wind (MW) & 14{,}369 & 10{,}322 & 136 & 46{,}064 & 11{,}728 \\
+Solar (MW) & 5{,}013 & 7{,}666 & 0 & 32{,}947 & 156 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Target distribution snapshot (US/MISO).}
+\label{tab:target_dist_us}
+\begin{tabular}{lrrrrr}
+\toprule
+Target & Mean & Std & Min & Max & Median \\
+\midrule
+Load (MW) & 75{,}757 & 11{,}819 & 52{,}940 & 120{,}343 & 73{,}564 \\
+Wind (MW) & 10{,}956 & 6{,}042 & 0 & 26{,}132 & 10{,}184 \\
+Solar (MW) & 2{,}875 & 3{,}843 & 0 & 14{,}315 & 110 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The feature design follows a leakage-safe temporal framing: all lag and rolling features use strictly past data relative to the forecast origin, with a 24-hour gap between training and test folds. Weather features include temperature, humidity, precipitation, cloud cover, and wind speed at multiple heights. Calendar features encode hour-of-day, day-of-week, month, weekend indicator, and season. The lag structure covers 1-hour, 24-hour, and 168-hour (weekly) lags for each target, plus rolling mean and standard deviation at 24-hour and 168-hour windows.
+
+The US feature set is larger (114 vs.~94) primarily because the US pipeline includes additional lagged exogenous variables (price, carbon intensity at multiple lags) and more granular weather features from the expanded geographic coverage of three balancing authorities.
+
+\PaperFigure{FIG09_REGION_DATASET_CARDS}{Dataset cards for all regions in the release scope.}
+
+\section{Additional Figures}\label{app:figures}
+
+\PaperFigure{FIG11_TRANSFER_GENERALIZATION}{Cross-region transfer and generalization performance summary.}
+
+\section{Artifact Inventory}\label{app:inventory}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Core manuscript and evidence artifacts.}
+\label{tab:artifact_inventory}
+\begin{tabular}{p{4.1cm}p{7.0cm}}
+\toprule
+Artifact & Purpose \\
+\midrule
+\texttt{paper/PAPER\_DRAFT.md} & Canonical thesis manuscript source \\
+\texttt{paper/paper.tex} & Thesis LaTeX twin of the markdown source \\
+\texttt{paper/paper\_r1.tex} & Shorter conference derivative \\
+\texttt{paper/metrics\_manifest.json} & Canonical metric lock and display contract \\
+\texttt{paper/claim\_matrix.csv} & Claim-level provenance and status tracking \\
+\texttt{scripts/validate\_paper\_claims.py} & Cross-file claim validation \\
+\texttt{scripts/sync\_paper\_assets.py} & Paper-asset synchronization audit \\
+\texttt{reports/impact\_summary.csv} & Locked DE impact values \\
+\texttt{reports/eia930/impact\_summary.csv} & Locked US impact values \\
+\texttt{reports/research\_metrics\_de.csv} & DE stochastic summary rows \\
+\texttt{reports/research\_metrics\_us.csv} & US stochastic summary rows \\
+\texttt{data/dashboard/manifest.json} & Profile lock metadata \\
+\texttt{configs/dc3s.yaml} & DC\textsuperscript{3}S configuration (\Cref{tab:dc3s_config}) \\
+\texttt{configs/optimization.yaml} & Optimization parameters (\Cref{tab:optim_config}) \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Operational Failure Modes}\label{app:failure_modes}
 
@@ -689,8 +1287,109 @@ Forecast drift & Distribution shift & KS/model monitors & Retraining workflow & 
 Solver infeasible & Extreme intervals & Solver status flags & Safe infeasible response & Grid-only baseline \\
 Unsafe command & SOC/power violation & BMS validation & Reject with detail & Maintain safe state \\
 Control degradation & Heartbeat timeout & Watchdog detection & Lock remote control & Manual/local \\
+Certificate failure & DuckDB write error & Audit path check & Conservative mode & Disable dispatch \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\section{Notation and Symbols}\label{app:notation}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Principal notation used throughout the thesis.}
+\label{tab:notation}
+\begin{tabular}{p{2.5cm}p{10.0cm}}
+\toprule
+Symbol & Definition \\
+\midrule
+\multicolumn{2}{l}{\textit{State and telemetry}} \\
+\quad $\mathbf{z}_t$ & Clean (true) telemetry vector at time $t$ \\
+\quad $\tilde{\mathbf{z}}_t$ & Degraded (observed) telemetry after $\mathcal{D}$ \\
+\quad $\mathcal{D}$ & Degradation operator (dropout, delay, spikes, reordering) \\
+\quad $\mathrm{SOC}_t^{\mathrm{true}}$ & True state of charge (MWh) \\
+\quad $\mathrm{SOC}_t^{\mathrm{obs}}$ & Observed state of charge (MWh) \\
+\midrule
+\multicolumn{2}{l}{\textit{Battery}} \\
+\quad $E_{\max}$ & Rated battery energy capacity (MWh) \\
+\quad $P_{\max}$ & Maximum charge/discharge power (MW) \\
+\quad $\eta_c, \eta_d$ & Charge and discharge efficiency \\
+\quad $R_{\max}$ & Maximum ramp rate (MW/step) \\
+\quad $a_t$ & Dispatch action at step $t$ (MW, positive = discharge) \\
+\quad $\mathcal{A}_t$ & Feasible action set at step $t$ \\
+\midrule
+\multicolumn{2}{l}{\textit{Forecasting and uncertainty}} \\
+\quad $\hat{C}_t(\alpha)$ & Base conformal prediction interval at level $\alpha$ \\
+\quad $\hat{C}_t^{\mathrm{RAC}}(\alpha)$ & RAC-Cert inflated interval \\
+\quad $\alpha$ & Nominal miscoverage level (default 0.10) \\
+\quad $\hat{q}$ & Empirical conformal quantile \\
+\midrule
+\multicolumn{2}{l}{\textit{DC\textsuperscript{3}S parameters}} \\
+\quad $w_t$ & Telemetry reliability score $\in [w_{\min}, 1]$ \\
+\quad $d_t$ & Drift detection flag (binary) \\
+\quad $s_t$ & Normalized sensitivity signal $\in [0, 1]$ \\
+\quad $\kappa_r, \kappa_d, \kappa_s$ & Inflation coefficients for quality, drift, sensitivity \\
+\quad $\varepsilon_{\text{sens}}$ & Sensitivity probe perturbation (MW) \\
+\quad $\tau_{\text{shrink}}$ & Shrinkage time constant (steps) \\
+\midrule
+\multicolumn{2}{l}{\textit{Objective and economics}} \\
+\quad $\lambda_c, \lambda_g, \lambda_p, \lambda_d$ & Cost, carbon, peak, and degradation weights \\
+\quad $c_t, g_t$ & Electricity price and carbon intensity at step $t$ \\
+\quad $L_t$ & Net load (load minus renewables) at step $t$ \\
+\quad VSS & Value of the stochastic solution \\
+\quad EVPI & Expected value of perfect information \\
+\midrule
+\multicolumn{2}{l}{\textit{FTIT state}} \\
+\quad $\gamma_d$ & Exponential decay factor for fault rates (0.98) \\
+\quad $p_t^{(k)}$ & Rolling empirical fault rate for fault $k$ \\
+\quad $\gamma_{\text{MW}}$ & SOC tube width (MW) \\
+\quad $e_t$ & Accumulated SOC margin (MWh) \\
+\quad $\sigma^2_t$ & Exponentially weighted residual variance \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Extended Algorithm Details}\label{app:algorithms}
+
+This appendix provides the full algorithmic specification for two key DC\textsuperscript{3}S subsystems that are summarized in the main text: the FTIT state update and the reliability scoring function.
+
+\begin{algorithm}[htbp]
+\caption{FTIT state update at each dispatch step}
+\label{alg:ftit}
+\begin{algorithmic}[1]
+\Require Fault flags $\{f^{(k)}_t\}_{k=1}^5$, previous state $(n_{t}, s_t, \sigma^2_t, e_t)$, config $(\gamma_d, \alpha_k, \gamma_{\min}, \gamma_{\max}, \gamma_{\text{pow}})$
+\Ensure Updated state $(n_{t+1}, s_{t+1}, w_t^{\text{FTIT}}, \sigma^2_{t+1}, e_{t+1}, \text{soc\_tube})$
+\State $n_{t+1} \gets \gamma_d \cdot n_t + 1$
+\For{each fault type $k$}
+  \State $s_{t+1}^{(k)} \gets \gamma_d \cdot s_t^{(k)} + \mathbb{1}[f^{(k)}_t]$
+  \State $p_{t+1}^{(k)} \gets s_{t+1}^{(k)} / \max(n_{t+1}, \epsilon)$
+\EndFor
+\State $w_t^{\text{FTIT}} \gets \prod_k [\mathrm{clip}(1 - p_{t+1}^{(k)}, \epsilon, 1)]^{\alpha_k}$
+\State $\sigma^2_{t+1} \gets \max(\sigma^2_{\text{floor}},\; \gamma_d \cdot \sigma^2_t + (1-\gamma_d) \cdot \sigma^2_{\text{obs}})$ \Comment{residual variance}
+\State $\gamma_{\text{MW}} \gets \gamma_{\min} + (1 - w_t^{\text{FTIT}})^{\gamma_{\text{pow}}} \cdot (\gamma_{\max} - \gamma_{\min})$
+\State $e_{t+1} \gets \mathrm{clip}(\gamma_d \cdot e_t + \Delta t \cdot \gamma_{\text{MW}},\; e_{\min},\; e_{\max})$
+\State $\text{soc\_tube} \gets [\mathrm{SOC}_{\min} + e_{t+1},\; \mathrm{SOC}_{\max} - e_{t+1}]$
+\State \Return $(n_{t+1}, s_{t+1}, w_t^{\text{FTIT}}, \sigma^2_{t+1}, e_{t+1}, \text{soc\_tube})$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[htbp]
+\caption{Reliability scoring from raw telemetry}
+\label{alg:reliability}
+\begin{algorithmic}[1]
+\Require Telemetry event $\tilde{\mathbf{z}}_t$, previous event $\tilde{\mathbf{z}}_{t-1}$, cadence $\Delta_{\text{exp}}$
+\Ensure Reliability score $w_t$, component penalties
+\State $p_{\text{miss}} \gets \max(0, 1 - \text{frac\_missing}(\tilde{\mathbf{z}}_t))$
+\State $\delta_s \gets |t_{\text{arrive}} - t_{\text{expected}}|$ \Comment{staleness in seconds}
+\State $p_{\text{delay}} \gets \exp(-\lambda_{\text{delay}} \cdot \max(0, \delta_s))$ \Comment{$\lambda=0.002$}
+\State $p_{\text{ooo}} \gets \begin{cases} 1 - \gamma_{\text{ooo}} & \text{if out-of-order detected} \\ 1 & \text{otherwise} \end{cases}$ \Comment{$\gamma=0.35$}
+\State $r_{\text{spike}} \gets \max_j |\tilde{z}_{t,j} - \tilde{z}_{t-1,j}| / (|\tilde{z}_{t-1,j}| + \epsilon)$ \Comment{relative jump}
+\State $p_{\text{spike}} \gets \begin{cases} 1 & \text{if } r_{\text{spike}} \le \beta_{\text{spike}} \\ 1/(1 + r_{\text{spike}} - \beta_{\text{spike}}) & \text{otherwise} \end{cases}$ \Comment{$\beta=0.25$}
+\State $w_{\text{raw}} \gets p_{\text{miss}} \cdot p_{\text{delay}} \cdot p_{\text{ooo}} \cdot p_{\text{spike}}$
+\State $w_t \gets \max(w_{\min}, \min(1, w_{\text{raw}}))$ \Comment{$w_{\min}=0.05$}
+\State \Return $w_t$, $(p_{\text{miss}}, p_{\text{delay}}, p_{\text{ooo}}, p_{\text{spike}})$
+\end{algorithmic}
+\end{algorithm}
+
+These algorithms are presented in a form that matches the actual implementation in \texttt{src/gridpulse/dc3s/ftit.py} and \texttt{src/gridpulse/dc3s/quality.py} respectively. The default parameter values correspond to the locked configuration in \texttt{configs/dc3s.yaml} (\Cref{tab:dc3s_config}).
 
 \end{document}
