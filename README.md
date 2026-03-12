@@ -11,6 +11,7 @@ GridPulse is an end-to-end cyber-physical control system for safe battery dispat
 
 ## Table of Contents
 - [Reproducing the Paper](#reproducing-the-paper)
+- [Canonical Research Workflow](#canonical-research-workflow)
 - [Architecture](#architecture)
 - [Safety under Telemetry Degradation (CPSBench-IoT)](#safety-under-telemetry-degradation-cpsbench-iot)
 - [Baseline Economic Impact (Unfaulted Regime)](#baseline-economic-impact-unfaulted-regime)
@@ -24,17 +25,41 @@ The repository enforces artifact-locked reproducibility for publication-facing m
 ```bash
 # 1. Setup environment
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-
-# 2. Reproduce CPSBench-IoT publication artifacts
-make cpsbench
-
-# 3. Run software-in-the-loop IoT simulation
-make iot-sim
-
-# 4. Run one-step DC3S projection and audit certificate flow
-make dc3s-demo
+pip install -r requirements.lock.txt
+pip install -e .
 ```
+
+The canonical research stack is built around the existing Python scripts and Make targets. Avoid mixing legacy helper flows when producing paper-facing outputs.
+
+## Canonical Research Workflow
+
+Use a single release-family ID for training, CPSBench, publication artifacts, and paper sync:
+
+```bash
+# Example release family
+export RELEASE_ID=R1_20260312T000000Z
+
+# 1. Candidate training and acceptance gates
+make r1-diagnostic RELEASE_ID=$RELEASE_ID
+make r1-full RELEASE_ID=$RELEASE_ID PROFILE=standard
+make r1-cpsbench RELEASE_ID=$RELEASE_ID
+make r1-verify RELEASE_ID=$RELEASE_ID
+
+# 2. Promote only after a successful verify stage
+make r1-promote RELEASE_ID=$RELEASE_ID
+
+# 3. Build publication artifacts and refresh paper assets
+make publication-artifact RELEASE_ID=$RELEASE_ID
+make paper-sync
+make paper-refresh
+```
+
+Primary entrypoints:
+- `scripts/train_dataset.py` for per-dataset candidate or canonical runs
+- `scripts/run_r1_release.py` for release-family orchestration
+- `scripts/build_publication_artifact.py --release-id <id>` for publication packaging
+- `scripts/sync_paper_assets.py --check` and `scripts/validate_paper_claims.py` for paper gating
+- `scripts/final_publish_audit.py` for final GO/NO-GO release auditing
 %%{init: {
   'theme': 'base',
   'themeVariables': {
@@ -220,7 +245,7 @@ If you use DC³S, CPSBench-IoT, or the GridPulse architecture in your research, 
 @techreport{niroula2026gridpulse,
   title={Safe Streaming Control under Telemetry Degradation via Drift-Calibrated Conformal Shields},
   author={Niroula, Pratik},
-  institution={Minnesota State University, Mankato},
+  institution={University of Minnesota, Twin Cities},
   year={2026},
   month={Feb}
 }

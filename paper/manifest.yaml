@@ -108,7 +108,8 @@ configs:
 notes:
   metric_policy: "Numeric claims in prose should use \\PaperMetric keys and default to locked values until retraining refreshes metrics_values.tex."
   refresh_flow:
-    - "python scripts/build_publication_artifact.py --out-dir reports/publication"
+    - "python scripts/build_publication_artifact.py --release-id <RELEASE_ID> --out-dir reports/publication"
+    - "python scripts/sync_paper_assets.py --check"
     - "python scripts/build_conference_assets.py --out-dir reports/publication --dataset-summary reports/publication/tables/table1_dataset_summary.csv"
     - "bash scripts/export_paper_assets.sh"
     - "python scripts/build_paper_table_tex.py"

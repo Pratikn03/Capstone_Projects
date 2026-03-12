@@ -37,6 +37,67 @@ PAPER_ASSET_PATHS = [
 ]
 
 
+def _check_release_manifest_contract() -> list[dict[str, Any]]:
+    manifest_path = REPO_ROOT / "reports" / "publication" / "release_manifest.json"
+    if not manifest_path.exists():
+        return [{"check": "release_manifest", "error": "reports/publication/release_manifest.json not found"}]
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return [{"check": "release_manifest", "error": "release_manifest.json is invalid JSON"}]
+
+    issues: list[dict[str, Any]] = []
+    release_id = payload.get("release_id")
+    if not release_id:
+        issues.append({"check": "release_manifest", "error": "release_manifest.json missing top-level release_id"})
+
+    source_runs = payload.get("source_runs")
+    if not isinstance(source_runs, dict) or not source_runs:
+        issues.append({"check": "release_manifest", "error": "release_manifest.json missing source_runs provenance"})
+    else:
+        mismatched: list[str] = []
+        for dataset, info in source_runs.items():
+            if not isinstance(info, dict):
+                mismatched.append(dataset)
+                continue
+            if info.get("release_id") != release_id:
+                mismatched.append(dataset)
+        if mismatched:
+            issues.append({
+                "check": "release_manifest",
+                "error": f"source_runs entries do not match release_id={release_id}: {sorted(mismatched)}",
+            })
+
+    paper_assets = payload.get("paper_assets")
+    if not isinstance(paper_assets, dict) or not paper_assets:
+        issues.append({"check": "release_manifest", "error": "release_manifest.json missing paper_assets mapping"})
+    else:
+        missing_mapping: list[str] = []
+        missing_source_artifacts: list[str] = []
+        for token, info in paper_assets.items():
+            if not isinstance(info, dict):
+                missing_mapping.append(str(token))
+                continue
+            if not info.get("source_artifact") or not info.get("build_command"):
+                missing_mapping.append(str(token))
+                continue
+            source_artifact = REPO_ROOT / str(info["source_artifact"])
+            if not source_artifact.exists():
+                missing_source_artifacts.append(f"{token}:{info['source_artifact']}")
+        if missing_mapping:
+            issues.append({
+                "check": "release_manifest",
+                "error": f"paper_assets entries missing source_artifact/build_command: {sorted(missing_mapping)}",
+            })
+        if missing_source_artifacts:
+            issues.append({
+                "check": "release_manifest",
+                "error": f"paper_assets source artifacts not found: {sorted(missing_source_artifacts)}",
+            })
+
+    return issues
+
+
 def _check_file_for_stale(filepath: Path, stale_variants: list[str]) -> list[dict[str, Any]]:
     if not filepath.exists():
         return []
@@ -187,6 +248,7 @@ def run_checks() -> list[dict[str, Any]]:
     all_issues.extend(_check_picp_headline())
     all_issues.extend(_check_metrics_completeness())
     all_issues.extend(_check_uq_contract_consistency())
+    all_issues.extend(_check_release_manifest_contract())
 
     return all_issues
 

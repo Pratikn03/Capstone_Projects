@@ -1,0 +1,47 @@
+name: Full Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_id:
+        description: "Release family ID (for example: R1_20260312T000000Z)"
+        required: true
+        type: string
+      profile:
+        description: "Training profile for the full run"
+        required: true
+        default: "standard"
+        type: choice
+        options:
+          - standard
+          - aggressive
+
+jobs:
+  full-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.lock.txt
+          pip install -e .
+      - name: Stage 1 diagnostic
+        run: python scripts/run_r1_release.py --stage diagnostic --release-id "${{ inputs.release_id }}"
+      - name: Stage 2 full
+        run: python scripts/run_r1_release.py --stage full --release-id "${{ inputs.release_id }}" --profile "${{ inputs.profile }}"
+      - name: Stage 3 CPSBench
+        run: python scripts/run_r1_release.py --stage cpsbench --release-id "${{ inputs.release_id }}"
+      - name: Stage 4 verify
+        run: python scripts/run_r1_release.py --stage verify --release-id "${{ inputs.release_id }}"
+      - name: Build publication artifact
+        run: python scripts/build_publication_artifact.py --release-id "${{ inputs.release_id }}" --out-dir reports/publication
+      - name: Final publish audit
+        run: python scripts/final_publish_audit.py --config configs/publish_audit.yaml --skip-retrain
+      - name: Validate paper claims
+        run: python scripts/validate_paper_claims.py
+      - name: Check paper asset sync
+        run: python scripts/sync_paper_assets.py --check

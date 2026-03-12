@@ -1,1 +1,5 @@
+#
+# Compatibility shim only.
+# The canonical dependency authority for research and CI is requirements.lock.txt.
+#
 -r requirements.lock.txt

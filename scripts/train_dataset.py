@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 import shutil
@@ -443,14 +444,20 @@ def _write_run_context(
     models: str | None = None,
 ) -> None:
     run_layout.registry_dir.mkdir(parents=True, exist_ok=True)
+    release_id = _derive_release_id(run_layout.run_id)
     context = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "release_id": release_id,
         "dataset": cfg.name,
         "display_name": cfg.display_name,
         "profile": profile,
         "requested_models": models,
+        "mode": run_layout.mode,
         "run_mode": run_layout.mode,
         "run_id": run_layout.run_id,
+        "git_commit": _git_commit(),
+        "config_path": cfg.config_file,
+        "config_hash": _config_hash(cfg),
         "features_path": cfg.features_path,
         "splits_path": cfg.splits_path,
         "models_dir": str(run_layout.models_dir),
@@ -460,8 +467,100 @@ def _write_run_context(
         "expected_targets": preflight.get("expected_targets", []),
         "expected_model_types": preflight.get("expected_model_types", []),
         "preflight_analysis": str(run_layout.reports_dir / "preflight_dataset_analysis.json"),
+        "preflight_path": str(run_layout.reports_dir / "preflight_dataset_analysis.json"),
+        "feature_manifest_path": str(run_layout.data_manifest_output),
+        "selection_summary_path": str(run_layout.selection_output_dir / f"tuning_summary_{cfg.name.lower()}.json"),
+        "artifacts": {
+            "models_dir": str(run_layout.models_dir),
+            "reports_dir": str(run_layout.reports_dir),
+            "uncertainty_dir": str(run_layout.uncertainty_dir),
+            "backtests_dir": str(run_layout.backtests_dir),
+            "publication_dir": str(run_layout.publication_dir),
+        },
+        "targets": preflight.get("expected_targets", []),
+        "accepted": None,
+        "promoted_at": None,
     }
     (run_layout.registry_dir / "run_context.json").write_text(json.dumps(context, indent=2), encoding="utf-8")
+    _write_run_manifest(run_layout.registry_dir / "run_manifest.json", context)
+
+
+def _write_run_manifest(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def _read_run_manifest(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _git_commit() -> str:
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            cwd=str(REPO_ROOT),
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except Exception:
+        return "unknown"
+
+
+def _config_hash(cfg: DatasetConfig) -> str:
+    config_path = REPO_ROOT / cfg.config_file
+    if not config_path.exists():
+        return "missing"
+    return hashlib.sha256(config_path.read_bytes()).hexdigest()
+
+
+def _derive_release_id(run_id: str) -> str:
+    return run_id[:-5] if run_id.endswith("_diag") else run_id
+
+
+def _update_run_manifest(
+    cfg: DatasetConfig,
+    run_layout: RunLayout,
+    *,
+    accepted: bool | None = None,
+    promoted_at: str | None = None,
+) -> None:
+    manifest_path = run_layout.registry_dir / "run_manifest.json"
+    payload = _read_run_manifest(manifest_path)
+    if not payload:
+        return
+    payload.setdefault("release_id", _derive_release_id(run_layout.run_id))
+    payload.setdefault("run_id", run_layout.run_id)
+    payload.setdefault("dataset", cfg.name)
+    payload.setdefault("mode", run_layout.mode)
+    payload.setdefault("profile", payload.get("profile"))
+    payload.setdefault("git_commit", _git_commit())
+    payload.setdefault("config_path", cfg.config_file)
+    payload.setdefault("config_hash", _config_hash(cfg))
+    payload.setdefault("feature_manifest_path", str(run_layout.data_manifest_output))
+    payload.setdefault("preflight_path", str(run_layout.reports_dir / "preflight_dataset_analysis.json"))
+    payload.setdefault(
+        "artifacts",
+        {
+            "models_dir": str(run_layout.models_dir),
+            "reports_dir": str(run_layout.reports_dir),
+            "uncertainty_dir": str(run_layout.uncertainty_dir),
+            "backtests_dir": str(run_layout.backtests_dir),
+            "publication_dir": str(run_layout.publication_dir),
+        },
+    )
+    payload.setdefault("targets", payload.get("expected_targets", []))
+    payload["selection_summary_path"] = str(run_layout.selection_output_dir / f"tuning_summary_{cfg.name.lower()}.json")
+    if accepted is not None:
+        payload["accepted"] = bool(accepted)
+    if promoted_at is not None:
+        payload["promoted_at"] = promoted_at
+    _write_run_manifest(manifest_path, payload)
 
 
 def run_command(cmd: list[str], description: str, timeout_seconds: float | None = None) -> bool:
@@ -816,9 +915,11 @@ def _promote_candidate_run(cfg: DatasetConfig, run_layout: RunLayout, evaluation
 
     publish_dir = REPO_ROOT / "reports" / "publish"
     publish_dir.mkdir(parents=True, exist_ok=True)
+    promoted_at = datetime.now(timezone.utc).isoformat()
     promotion_record = {
-        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "generated_at_utc": promoted_at,
         "dataset": cfg.name,
+        "release_id": _derive_release_id(run_layout.run_id),
         "source_run_id": run_layout.run_id,
         "source_reports_dir": str(run_layout.reports_dir),
         "source_models_dir": str(run_layout.models_dir),
@@ -829,6 +930,7 @@ def _promote_candidate_run(cfg: DatasetConfig, run_layout: RunLayout, evaluation
             "backtests_dir": str(canonical_backtests_dir),
         },
         "accepted": bool(evaluation.get("accepted", False)),
+        "promoted_at": promoted_at,
     }
     (run_layout.registry_dir / "promotion_record.json").write_text(
         json.dumps(promotion_record, indent=2),
@@ -838,6 +940,7 @@ def _promote_candidate_run(cfg: DatasetConfig, run_layout: RunLayout, evaluation
         json.dumps(promotion_record, indent=2),
         encoding="utf-8",
     )
+    _update_run_manifest(cfg, run_layout, accepted=bool(evaluation.get("accepted", False)), promoted_at=promoted_at)
 
 
 def _load_json(path: Path) -> dict:
@@ -1074,6 +1177,7 @@ def train_dataset(
         evaluation=evaluation,
         output_dir=run_layout.selection_output_dir,
     )
+    _update_run_manifest(cfg, run_layout, accepted=bool(evaluation.get("accepted", False)))
     if not bool(evaluation.get("accepted", False)):
         print(f"⚠️  Acceptance gates not met for {cfg.display_name}. See {run_layout.selection_output_dir}.")
     elif run_layout.is_candidate and promote_on_accept:

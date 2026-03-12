@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
@@ -27,11 +25,11 @@ jobs:
       - name: Mypy
         run: mypy src
       - name: Run tests
-        run: pytest -q
-      - name: Release Check Full
-        run: python scripts/release_check.py --full
-      - name: Final Publish Audit
-        run: python scripts/final_publish_audit.py --config configs/publish_audit.yaml --skip-retrain
+        run: pytest -q -m "not slow and not integration" --no-cov
+      - name: Validate Paper Claims
+        run: python scripts/validate_paper_claims.py
+      - name: Check Paper Asset Sync
+        run: python scripts/sync_paper_assets.py --check
       - name: Build package
         run: python -m build
 

@@ -19,6 +19,133 @@
     "table_cqr_distributional_compare.csv": "109ddca26cce0463eefafdcb8c151b059564de07f9daeb0258123211a122383d",
     "transfer_stress.csv": "a115182eb6b615ae0b0a8cfcaa72aed9ededa612535b5f360d0dce9de8f184b6"
   },
+  "release_id": "R1_20260312T044018Z",
+  "source_runs": {
+    "DE": {
+      "release_id": "R1_20260312T044018Z",
+      "run_id": "R1_20260312T044018Z_diag",
+      "manifest_path": "artifacts/runs/de/R1_20260312T044018Z_diag/registry/run_context.json",
+      "reports_dir": "reports/runs/de/R1_20260312T044018Z_diag",
+      "models_dir": "artifacts/runs/de/R1_20260312T044018Z_diag/models",
+      "accepted": true
+    },
+    "US_MISO": {
+      "release_id": "R1_20260312T044018Z",
+      "run_id": "R1_20260312T044018Z_diag",
+      "manifest_path": "artifacts/runs/us_miso/R1_20260312T044018Z_diag/registry/run_context.json",
+      "reports_dir": "reports/runs/us_miso/R1_20260312T044018Z_diag",
+      "models_dir": "artifacts/runs/us_miso/R1_20260312T044018Z_diag/models",
+      "accepted": true
+    },
+    "US_PJM": {
+      "release_id": "R1_20260312T044018Z",
+      "run_id": "R1_20260312T044018Z_diag",
+      "manifest_path": "artifacts/runs/us_pjm/R1_20260312T044018Z_diag/registry/run_context.json",
+      "reports_dir": "reports/runs/us_pjm/R1_20260312T044018Z_diag",
+      "models_dir": "artifacts/runs/us_pjm/R1_20260312T044018Z_diag/models",
+      "accepted": true
+    },
+    "US_ERCOT": {
+      "release_id": "R1_20260312T044018Z",
+      "run_id": "R1_20260312T044018Z_diag",
+      "manifest_path": "artifacts/runs/us_ercot/R1_20260312T044018Z_diag/registry/run_context.json",
+      "reports_dir": "reports/runs/us_ercot/R1_20260312T044018Z_diag",
+      "models_dir": "artifacts/runs/us_ercot/R1_20260312T044018Z_diag/models",
+      "accepted": true
+    }
+  },
+  "paper_assets": {
+    "FIG01_ARCHITECTURE": {
+      "paper_path": "paper/assets/figures/fig01_architecture.png",
+      "source_artifact": "reports/figures/architecture.png",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "FIG02_DC3S_STEP": {
+      "paper_path": "paper/assets/figures/fig02_dc3s_step.png",
+      "source_artifact": "reports/publication/figures/fig11_dispatch_comparison.png",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "FIG03_TRUE_SOC_VIOLATION": {
+      "paper_path": "paper/assets/figures/fig03_true_soc_violation_vs_dropout.png",
+      "source_artifact": "reports/publication/fig_true_soc_violation_vs_dropout.png",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "FIG04_TRUE_SOC_SEVERITY": {
+      "paper_path": "paper/assets/figures/fig04_true_soc_severity_p95_vs_dropout.png",
+      "source_artifact": "reports/publication/fig_true_soc_severity_p95_vs_dropout.png",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "FIG05_CQR_GROUP_COVERAGE": {
+      "paper_path": "paper/assets/figures/fig05_cqr_group_coverage.png",
+      "source_artifact": "reports/publication/fig_cqr_group_coverage.png",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "FIG06_TRANSFER_COVERAGE": {
+      "paper_path": "paper/assets/figures/fig06_transfer_coverage.png",
+      "source_artifact": "reports/publication/fig_transfer_coverage.png",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "FIG07_COST_SAFETY_FRONTIER": {
+      "paper_path": "paper/assets/figures/fig07_cost_safety_frontier.png",
+      "source_artifact": "reports/publication/fig_cost_safety_pareto.png",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "FIG08_RAC_SENSITIVITY_WIDTH": {
+      "paper_path": "paper/assets/figures/fig08_rac_sensitivity_vs_width.png",
+      "source_artifact": "reports/publication/fig_rac_sensitivity_vs_width.png",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "FIG09_REGION_DATASET_CARDS": {
+      "paper_path": "paper/assets/figures/fig09_region_dataset_cards.png",
+      "source_artifact": "reports/publication/fig_region_dataset_cards.png",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "FIG10_CALIBRATION_TRADEOFF": {
+      "paper_path": "paper/assets/figures/fig10_calibration_tradeoff.png",
+      "source_artifact": "reports/publication/fig_calibration_tradeoff.png",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "FIG11_TRANSFER_GENERALIZATION": {
+      "paper_path": "paper/assets/figures/fig11_transfer_generalization.png",
+      "source_artifact": "reports/publication/fig_transfer_generalization.png",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "TBL01_MAIN_RESULTS": {
+      "paper_path": "paper/assets/tables/tbl01_main_results.csv",
+      "source_artifact": "reports/publication/dc3s_main_table.csv",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "TBL02_ABLATIONS": {
+      "paper_path": "paper/assets/tables/tbl02_ablations.csv",
+      "source_artifact": "reports/publication/table2_ablations.csv",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "TBL03_CQR_GROUP_COVERAGE": {
+      "paper_path": "paper/assets/tables/tbl03_cqr_group_coverage.csv",
+      "source_artifact": "reports/publication/cqr_group_coverage.csv",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "TBL04_TRANSFER_STRESS": {
+      "paper_path": "paper/assets/tables/tbl04_transfer_stress.csv",
+      "source_artifact": "reports/publication/transfer_stress.csv",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "TBL05_DATASET_SUMMARY": {
+      "paper_path": "paper/assets/tables/tbl05_dataset_summary.csv",
+      "source_artifact": "reports/publication/tables/table1_dataset_summary.csv",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "TBL06_HYPERPARAMS": {
+      "paper_path": "paper/assets/tables/tbl06_hyperparams.csv",
+      "source_artifact": "configs/train_forecast.yaml",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    },
+    "TBL07_DATASET_CARDS": {
+      "paper_path": "paper/assets/tables/tbl07_dataset_cards.csv",
+      "source_artifact": "reports/publication/dataset_cards.csv",
+      "build_command": "bash scripts/export_paper_assets.sh"
+    }
+  },
   "command": "manual canonicalized publication pipeline (train_regime_cqr + run_suite + run_ablations + transfer + pareto + verify)",
   "controllers_present": [
     "cvar_interval",

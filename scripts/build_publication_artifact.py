@@ -67,6 +67,29 @@ REQUIRED_PUBLICATION = (
     "release_manifest.json",
 )
 
+RELEASE_DATASETS = ("DE", "US_MISO", "US_PJM", "US_ERCOT")
+
+PAPER_ASSET_SOURCE_MAP = {
+    "FIG01_ARCHITECTURE": {"source_artifact": "reports/figures/architecture.png", "build_command": "bash scripts/export_paper_assets.sh"},
+    "FIG02_DC3S_STEP": {"source_artifact": "reports/publication/figures/fig11_dispatch_comparison.png", "build_command": "bash scripts/export_paper_assets.sh"},
+    "FIG03_TRUE_SOC_VIOLATION": {"source_artifact": "reports/publication/fig_true_soc_violation_vs_dropout.png", "build_command": "bash scripts/export_paper_assets.sh"},
+    "FIG04_TRUE_SOC_SEVERITY": {"source_artifact": "reports/publication/fig_true_soc_severity_p95_vs_dropout.png", "build_command": "bash scripts/export_paper_assets.sh"},
+    "FIG05_CQR_GROUP_COVERAGE": {"source_artifact": "reports/publication/fig_cqr_group_coverage.png", "build_command": "bash scripts/export_paper_assets.sh"},
+    "FIG06_TRANSFER_COVERAGE": {"source_artifact": "reports/publication/fig_transfer_coverage.png", "build_command": "bash scripts/export_paper_assets.sh"},
+    "FIG07_COST_SAFETY_FRONTIER": {"source_artifact": "reports/publication/fig_cost_safety_pareto.png", "build_command": "bash scripts/export_paper_assets.sh"},
+    "FIG08_RAC_SENSITIVITY_WIDTH": {"source_artifact": "reports/publication/fig_rac_sensitivity_vs_width.png", "build_command": "bash scripts/export_paper_assets.sh"},
+    "FIG09_REGION_DATASET_CARDS": {"source_artifact": "reports/publication/fig_region_dataset_cards.png", "build_command": "bash scripts/export_paper_assets.sh"},
+    "FIG10_CALIBRATION_TRADEOFF": {"source_artifact": "reports/publication/fig_calibration_tradeoff.png", "build_command": "bash scripts/export_paper_assets.sh"},
+    "FIG11_TRANSFER_GENERALIZATION": {"source_artifact": "reports/publication/fig_transfer_generalization.png", "build_command": "bash scripts/export_paper_assets.sh"},
+    "TBL01_MAIN_RESULTS": {"source_artifact": "reports/publication/dc3s_main_table.csv", "build_command": "bash scripts/export_paper_assets.sh"},
+    "TBL02_ABLATIONS": {"source_artifact": "reports/publication/table2_ablations.csv", "build_command": "bash scripts/export_paper_assets.sh"},
+    "TBL03_CQR_GROUP_COVERAGE": {"source_artifact": "reports/publication/cqr_group_coverage.csv", "build_command": "bash scripts/export_paper_assets.sh"},
+    "TBL04_TRANSFER_STRESS": {"source_artifact": "reports/publication/transfer_stress.csv", "build_command": "bash scripts/export_paper_assets.sh"},
+    "TBL05_DATASET_SUMMARY": {"source_artifact": "reports/publication/tables/table1_dataset_summary.csv", "build_command": "bash scripts/export_paper_assets.sh"},
+    "TBL06_HYPERPARAMS": {"source_artifact": "configs/train_forecast.yaml", "build_command": "bash scripts/export_paper_assets.sh"},
+    "TBL07_DATASET_CARDS": {"source_artifact": "reports/publication/dataset_cards.csv", "build_command": "bash scripts/export_paper_assets.sh"},
+}
+
 
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Build full publication artifact package")
@@ -74,7 +97,8 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--horizon", type=int, default=96)
     p.add_argument("--seeds", nargs="*", type=int, default=None)
     p.add_argument("--scenarios", nargs="*", default=None)
-    p.add_argument("--release-family", default=None)
+    p.add_argument("--release-id", default=None)
+    p.add_argument("--release-family", default=None, help=argparse.SUPPRESS)
     return p.parse_args()
 
 
@@ -84,6 +108,73 @@ def _load_uncertainty_cfg() -> dict[str, Any]:
         return {}
     payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     return payload if isinstance(payload, dict) else {}
+
+
+def _load_json(path: Path) -> dict[str, Any]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return payload if isinstance(payload, dict) else {}
+
+
+def _load_release_source_runs(release_id: str) -> dict[str, dict[str, Any]]:
+    source_runs: dict[str, dict[str, Any]] = {}
+    for dataset in RELEASE_DATASETS:
+        dataset_lower = dataset.lower()
+        manifest_path = REPO_ROOT / "artifacts" / "runs" / dataset_lower / release_id / "registry" / "run_manifest.json"
+        if not manifest_path.exists():
+            raise FileNotFoundError(
+                f"Missing candidate run manifest for {dataset}: {manifest_path}. "
+                "Build publication artifacts only from a verified single release family."
+            )
+        payload = _load_json(manifest_path)
+        manifest_release_id = str(payload.get("release_id", ""))
+        if manifest_release_id != release_id:
+            raise ValueError(
+                f"Run manifest {manifest_path} belongs to release_id={manifest_release_id!r}, expected {release_id!r}"
+            )
+        if payload.get("accepted") is not True:
+            raise ValueError(f"Run manifest {manifest_path} is not accepted.")
+        artifacts = payload.get("artifacts", {}) if isinstance(payload.get("artifacts"), dict) else {}
+        source_runs[dataset] = {
+            "release_id": manifest_release_id,
+            "run_id": payload.get("run_id"),
+            "manifest_path": str(manifest_path.relative_to(REPO_ROOT)),
+            "reports_dir": artifacts.get("reports_dir"),
+            "models_dir": artifacts.get("models_dir"),
+            "uncertainty_dir": artifacts.get("uncertainty_dir"),
+            "backtests_dir": artifacts.get("backtests_dir"),
+            "selection_summary_path": payload.get("selection_summary_path"),
+            "accepted": payload.get("accepted"),
+        }
+    return source_runs
+
+
+def _ensure_cpsbench_release_source(release_id: str) -> str:
+    cpsbench_dir = REPO_ROOT / "reports" / "runs" / "cpsbench" / release_id
+    if not cpsbench_dir.exists():
+        raise FileNotFoundError(
+            f"Missing CPSBench source directory for release_id={release_id}: {cpsbench_dir}"
+        )
+    return str(cpsbench_dir.relative_to(REPO_ROOT))
+
+
+def _build_paper_asset_manifest(out_dir: Path) -> dict[str, dict[str, str]]:
+    manifest_path = REPO_ROOT / "paper" / "manifest.yaml"
+    payload = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
+    paper_assets: dict[str, dict[str, str]] = {}
+    for section in ("figures", "tables"):
+        section_payload = payload.get(section, {}) if isinstance(payload.get(section), dict) else {}
+        for token, entry in section_payload.items():
+            path = entry.get("path") if isinstance(entry, dict) else None
+            mapping = PAPER_ASSET_SOURCE_MAP.get(token, {})
+            source_artifact = str(mapping.get("source_artifact", ""))
+            if source_artifact.startswith("reports/publication/"):
+                source_artifact = str(out_dir / source_artifact.removeprefix("reports/publication/"))
+            paper_assets[token] = {
+                "paper_path": str(path or ""),
+                "source_artifact": source_artifact,
+                "build_command": str(mapping.get("build_command", "")),
+            }
+    return paper_assets
 
 
 def _load_dc3s_cfg() -> dict[str, Any]:
@@ -493,11 +584,14 @@ def _load_metrics_manifest_scope() -> dict[str, Any]:
 def _write_release_manifest(
     *,
     out_dir: Path,
+    release_id: str,
     seeds: list[int],
     scenarios: list[str],
     horizon: int,
     command: str,
-    release_family: str | None,
+    source_runs: dict[str, dict[str, Any]],
+    cpsbench_source_dir: str,
+    paper_assets: dict[str, dict[str, str]],
     conference_figure_inventory: dict[str, Any] | None,
 ) -> dict[str, Any]:
     try:
@@ -521,13 +615,17 @@ def _write_release_manifest(
         if "controller" in main_df.columns:
             controller_list = sorted(str(value) for value in main_df["controller"].dropna().unique().tolist())
     manifest = {
+        "release_id": release_id,
         "git_commit": commit,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "release_family": release_family or metrics_scope.get("release_family", {}),
+        "release_family": release_id,
         "command": command,
         "seeds": seeds,
         "scenarios": scenarios,
         "horizon": int(horizon),
+        "source_runs": source_runs,
+        "benchmark_sources": {"cpsbench": cpsbench_source_dir},
+        "paper_assets": paper_assets,
         "artifact_hashes_sha256": artifact_hashes,
         "paper_metric_policy": metrics_scope.get("metric_policy", {}),
         "paper_run_ids": metrics_scope.get("run_ids", {}),
@@ -544,9 +642,15 @@ def main() -> None:
     args = _parse_args()
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    release_id = args.release_id or args.release_family
+    if not release_id:
+        raise SystemExit("build_publication_artifact.py requires --release-id for normalized release-family builds")
 
     seeds = list(args.seeds or list(range(10)))
     scenarios = list(args.scenarios or DEFAULT_SCENARIOS)
+    source_runs = _load_release_source_runs(release_id)
+    cpsbench_source_dir = _ensure_cpsbench_release_source(release_id)
+    paper_assets = _build_paper_asset_manifest(out_dir)
 
     unc_cfg = _load_uncertainty_cfg()
     split_paths = _resolve_split_paths(unc_cfg)
@@ -588,13 +692,17 @@ def main() -> None:
 
     release_manifest = _write_release_manifest(
         out_dir=out_dir,
+        release_id=release_id,
         seeds=seeds,
         scenarios=scenarios,
         horizon=int(args.horizon),
         command="python3 scripts/build_publication_artifact.py "
+        + f"--release-id {release_id} "
         + f"--out-dir {out_dir} --horizon {int(args.horizon)} --seeds {' '.join(str(s) for s in seeds)} "
         + f"--scenarios {' '.join(str(s) for s in scenarios)}",
-        release_family=args.release_family,
+        source_runs=source_runs,
+        cpsbench_source_dir=cpsbench_source_dir,
+        paper_assets=paper_assets,
         conference_figure_inventory=conference_figure_inventory.get("summary", {}),
     )
     _verify_outputs(out_dir)
