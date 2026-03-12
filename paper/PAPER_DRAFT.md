@@ -7,7 +7,7 @@
 ## Abstract
 DC³S addresses battery dispatch under degraded mixed telemetry by coupling telemetry-reliability scoring, conformal interval inflation, and safety-constrained action repair in one online loop. This release does not rely on a legacy non-nominal PICP headline from a single drift scenario. Instead, calibration is reported with standard interval metrics (PICP@90, PICP@95, mean interval width, pinball loss, and Winkler score), and safety is evaluated on truth-state SOC together with power, ramp, import-cap, and solver-feasibility outcomes. The resulting tradeoff is explicit rather than hidden: when telemetry quality degrades, DC³S widens uncertainty sets, repairs infeasible actions, and exposes the cost-carbon-safety frontier through auditable dispatch certificates.
 
-This paper presents DC³S as a telemetry-reliability-weighted conformal safety shield for battery dispatch across Germany (OPSD) and multiple US balancing-authority studies derived from EIA-930. The deployment target is mixed telemetry rather than IoT-only sensing: the method is designed for operator stacks that blend field devices, SCADA-style feeds, and delayed or degraded measurements. The contribution is not a new battery objective alone, but a calibrated control wrapper plus benchmark and governance stack that converts degraded telemetry into bounded uncertainty and executable safe actions. Publication-facing quantitative claims remain locked to repository artifacts, run IDs, release-family manifests, and validator checks so manuscript updates do not drift from source data.
+This paper presents DC³S as a telemetry-reliability-weighted conformal safety shield for battery dispatch across Germany (OPSD) and an expanded US evidence surface derived from EIA-930. The current locked quantitative claims are anchored to the canonical US dashboard profile used by the manuscript manifest, while the release-family asset set additionally documents MISO, PJM, and ERCOT dataset cards for the next retraining cycle. The deployment target is mixed telemetry rather than IoT-only sensing: the method is designed for operator stacks that blend field devices, SCADA-style feeds, and delayed or degraded measurements. The contribution is not a new battery objective alone, but a calibrated control wrapper plus benchmark and governance stack that converts degraded telemetry into bounded uncertainty and executable safe actions. Publication-facing quantitative claims remain locked to repository artifacts, run IDs, release-family manifests, and validator checks so manuscript updates do not drift from source data.
 
 ## Keywords
 Machine Learning, Energy Forecasting, Battery Dispatch, Robust Optimization, Conformal Prediction, Stochastic Programming, MLOps, Grid Operations
@@ -52,7 +52,7 @@ Each question is answered with locked in-repo evidence. This manuscript intentio
 ### 1.4 Contributions
 1. A production-oriented multi-layer GridPulse implementation with forecast, optimization, monitoring, and serving layers.
 2. A conformal + adaptive interval workflow integrated into robust dispatch evaluation.
-3. A release-family metric lock with explicit run IDs, dataset cards, and reproducible evidence paths across DE and multi-region US evidence.
+3. A release-family metric lock with explicit run IDs, dataset cards, and reproducible evidence paths across DE and the expanded US evidence surface.
 4. A publication governance mechanism (`metrics_manifest`, claim matrix, validator script) that prevents legacy-claim regression.
 
 Contribution boundaries are stated explicitly. This thesis does not claim complete market realism for all settlement regimes, universal transferability across all operators, or causal policy-level effects. It claims an operationally integrated and evidence-governed system with reproducible DE/US outcomes under the locked artifacts.
@@ -94,7 +94,7 @@ The layering is intentionally conservative: each layer writes explicit artifacts
 | Layer | Purpose | Primary paths |
 |---|---|---|
 | Data pipeline | Build/validate region features and splits | `src/gridpulse/data_pipeline/`, `src/gridpulse/pipeline/run.py` |
-| Forecasting | GBM/LSTM/TCN train + predict | `src/gridpulse/forecasting/` |
+| Forecasting | GBM plus deep-baseline train + predict | `src/gridpulse/forecasting/` |
 | Uncertainty | Conformal + adaptive interval logic | `src/gridpulse/forecasting/uncertainty/conformal.py` |
 | Optimization | Deterministic MILP and robust dispatch | `src/gridpulse/optimizer/lp_dispatch.py`, `src/gridpulse/optimizer/robust_dispatch.py` |
 | Monitoring | Drift detection and retraining decisions | `src/gridpulse/monitoring/` |
@@ -228,10 +228,9 @@ Because this thesis is decision-oriented, leakage prevention is not only a forec
 ### 4.1 Forecasting Method
 
 #### 4.1.1 Model Families
-GridPulse trains three model families per target:
-1. **GBM (LightGBM)**: operational primary model in current locked dashboards.
-2. **LSTM**: sequence deep model for long temporal dependence.
-3. **TCN**: convolutional sequence model with dilated temporal receptive fields.
+GridPulse currently has two forecast-model layers relevant to this manuscript:
+1. **Locked comparison set:** GBM (LightGBM), LSTM, and TCN, which populate the current dashboard metrics and the forecast tables reported in this manuscript.
+2. **Extended R1 pipeline support:** N-BEATS, TFT, and PatchTST, which are implemented in the training stack for candidate-run retraining but are not yet promoted into the locked publication forecast tables.
 
 #### 4.1.2 Training Setup
 Configured horizon/lookback settings from `configs/train_forecast.yaml` and `configs/train_forecast_eia930.yaml`:
@@ -242,7 +241,7 @@ Configured horizon/lookback settings from `configs/train_forecast.yaml` and `con
 
 Implementation detail that matters for reproducibility:
 1. DE and US both keep GBM as enabled baseline model with LightGBM hyperparameter blocks in config.
-2. Deep model blocks are present for LSTM and TCN in both configs, but parameterization differs by region configuration profile.
+2. The locked comparison set retains LSTM and TCN, while the current configs also define N-BEATS, TFT, and PatchTST candidate baselines for release-family reruns.
 3. Cross-validation behavior is explicitly controlled by config values rather than implicit defaults.
 4. Training artifacts are persisted into region-specific output paths (`artifacts/models` and `artifacts/models_eia930` pathways through configs/scripts).
 
@@ -354,7 +353,7 @@ The implemented interval inflation law is linear and bounded:
 
 The reliability module (`quality.py`) computes `w_t` from missingness, delay, out-of-order behavior, and spike penalties. Drift logic (`drift.py`) uses Page-Hinkley updates on residual magnitude `r_t = |y_t - y_hat_t|` with configured warmup and cooldown controls.
 
-**Coverage statement (informal).** The DC3S inflation rule is intended to tie per-step miscoverage to the effective reliability-adjusted level `delta * w_t`, so low-reliability telemetry widens intervals rather than silently preserving nominal width. Informally, this means the method targets stricter uncertainty inflation when telemetry quality falls, while still relying on adaptive conformal logic for running-average coverage control rather than claiming a pointwise theorem for every step. This should be read as a method sketch, not a formal proof: the relevant background is adaptive/running-average conformal inference [Citation placeholder: Gibbs & Candès, JMLR 2024], weighted conformal ideas for non-uniform validity [Citation placeholder: Barber, Candès, Ramdas, Tibshirani, Annals of Statistics 2023], and the subgaussian tail-bound intuition used in the inflation heuristic [Citation placeholder: Vershynin, 2018].
+**Coverage statement (informal).** The DC3S inflation rule should be read as an engineering control heuristic grounded in adaptive conformal intuition, not as a new finite-sample coverage theorem. The claim made in this manuscript is empirical: lower telemetry reliability increases interval width and controller conservatism, while running-coverage behavior is evaluated through the reported calibration tables and CPSBench fault sweeps rather than assumed to hold pointwise at every step.
 
 Safety shielding (`shield.py`) supports two modes:
 1. `projection`: deterministic clipping against SOC, power, and ramp constraints.
@@ -484,7 +483,7 @@ Source: `data/dashboard/de_metrics.json`, `data/dashboard/us_metrics.json`.
 | solar_mw | LSTM | 4,079.38 | 2,835.74 | 109.44 | 0.8007 |
 | solar_mw | TCN | 2,702.34 | 1,583.05 | 93.76 | 0.9125 |
 
-#### 6.1.2 United States (US)
+#### 6.1.2 United States (canonical locked dashboard profile)
 | Target | Model | RMSE | MAE | sMAPE (%) | R2 |
 |---|---|---:|---:|---:|---:|
 | load_mw | GBM | 162.89 | 123.23 | 0.17 | 0.9996 |
@@ -503,6 +502,7 @@ Thesis-level interpretation:
 1. The GBM advantage is broad across load, wind, and solar in both regions for the locked evaluation artifacts.
 2. Deep models remain analytically useful but are not operational leaders in this snapshot.
 3. Because decisions are downstream of forecasts, model ranking should be interpreted together with optimization impact and not as an isolated leaderboard.
+The current forecast result tables use the canonical dashboard profile in which `US` maps to the locked US evidence row used by the paper manifest. Expanded US dataset cards for `US_MISO`, `US_PJM`, and `US_ERCOT` are already generated in the publication assets, but their full forecast-comparison tables will be promoted only after a full release-family retrain.
 
 ### 6.2 GBM Residual and Coverage Diagnostics (90% Intervals)
 | Region | Target | Residual q10 | Residual q50 | Residual q90 | PICP (%) |
@@ -1072,7 +1072,7 @@ This appendix gives longer thesis-writing blocks that can be pasted into chapter
 GridPulse is designed around a decision-first interpretation of machine learning in energy systems. Rather than ending at point prediction, the system carries uncertainty information into optimization, enforces dispatch feasibility under battery and grid constraints, and evaluates outcomes against explicit baselines. This architecture creates a measurable bridge between model behavior and operational value. The thesis therefore evaluates not only forecast quality, but the integrity of the full decision chain from feature engineering to published claims.
 
 ### F2. Long-Form Method Block
-The forecasting layer trains LightGBM, LSTM, and TCN families under time-aware configurations with a 24-hour horizon and 168-hour lookback. Uncertainty is represented using conformal intervals with adaptive behavior in code-level implementations. Deterministic optimization uses a mixed-integer structure with cost, carbon, degradation, curtailment, unmet-load, and peak terms. Robust optimization uses a two-scenario epigraph formulation over lower and upper load bounds. Safety constraints are enforced in serving pathways before control actions can be accepted.
+The forecasting layer currently reports locked LightGBM, LSTM, and TCN comparisons while the implementation also supports N-BEATS, TFT, and PatchTST candidate baselines for future release-family reruns. Uncertainty is represented using conformal intervals with adaptive behavior in code-level implementations. Deterministic optimization uses a mixed-integer structure with cost, carbon, degradation, curtailment, unmet-load, and peak terms. Robust optimization uses a two-scenario epigraph formulation over lower and upper load bounds. Safety constraints are enforced in serving pathways before control actions can be accepted.
 
 ### F3. Long-Form Results Block
 Under the locked artifact policy, DE impact is 7.11% cost savings, 0.30% carbon reduction, and 6.13% peak shaving. US impact is 0.11% cost savings, 0.13% carbon reduction, and 0.00% peak shaving. Canonical stochastic evidence is tied to DE run 20260217_165756 and US run 20260217_182305, both marked feasible in run-summary rows. Positive VSS is observed in both regions, with large magnitude differences across datasets. These differences motivate region-scoped interpretation rather than universal-effect claims.
