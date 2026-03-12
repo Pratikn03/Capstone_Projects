@@ -2,28 +2,65 @@
   "artifact_hashes_sha256": {
     "ambiguity_calibration_summary.json": "49494b142698fcc58527697cf606b21f659e035c8aec1739c12e4c9d085951d7",
     "cost_safety_pareto.csv": "a329765d7015d78ca9e5f03fe23a582220c55fd67990e753ccdf1f49efbf021a",
-    "cqr_calibration_summary.json": "68b5f1e4eff3e75955d66b7a024b15b8d3f468317e0ce90114eea7675dd0d47b",
-    "cqr_group_coverage.csv": "63a459abd257c1b824d094dd3ab83f98fe0b0dc6474fb041f6a1c730100df49e",
-    "dc3s_fault_breakdown.csv": "6e79ab12a8aaababd45f1742a899256b3d504e60cab04e1432047088ad87c964",
-    "dc3s_main_table.csv": "fc79c173e48f845526257b19c931cd6c3e30dcac846965588f1bdecda05c1841",
+    "cqr_calibration_summary.json": "79bc1da4338f7569f7d243b9049633e18817882e2fc4d96634357b651e243515",
+    "cqr_group_coverage.csv": "17ea8fae1152f7ee7826433ca69ba10baa23b23674bbf69e1d55f66493f3645d",
+    "dc3s_fault_breakdown.csv": "5994481628fdca133893398ffba64a1aaf730b39d5a883379ef191e48942d62a",
+    "dc3s_main_table.csv": "37906340fa529789104231931b790890899d21488f45d012c75e36767a804132",
     "fig_cost_safety_pareto.png": "3b9f846e6ecbd4cf89d772acb829dc9bed8e146c3a943b08777a0c5de6b85c6a",
-    "fig_cqr_group_coverage.png": "4d652f6739e7812f762ded26af9e841c0af6cbe77d1212bd2e0304e99c5d3d74",
-    "fig_distributional_vs_cqr.png": "04c0dfb06f20561987c3c1c7af84a7cfea74bd86b553dfd1a57f85a5519f4129",
+    "fig_cqr_group_coverage.png": "20753475262cf2f160085e294d94bfb27ea5a432920f960c461ab1259702589b",
+    "fig_distributional_vs_cqr.png": "ee709b8524eb48291f8f87bd8254616cb0b191f516d55c02fe8ce40879ca3d72",
     "fig_rac_sensitivity_vs_width.png": "bfb1391ee35f43215f8c5146d855c52e5a4ab302238c694c3bdba301479440f9",
-    "fig_true_soc_severity_p95_vs_dropout.png": "3b6251dcf5463d5a6c9f767183e12972da5ec139e1e9d9ce3a7d21b256505a7c",
-    "fig_true_soc_violation_vs_dropout.png": "9a70464d695460451f804e6867d4c6dab4b7358ae02734e23f83de221569d0a9",
+    "fig_true_soc_severity_p95_vs_dropout.png": "e632cbdb71aefe5cb53e6cd52d7541ade394c3c2e29f31b6ac2c428af2eb0a2d",
+    "fig_true_soc_violation_vs_dropout.png": "8630704ee24e0379ec3e0eb85108549c81e10c30d701757d62f2a2e893373f78",
     "rac_cert_summary.json": "ab68f8a192e3b595a33572e667cca5b7f837632a74966ee457c077d62a854220",
-    "release_manifest.json": "6e93c3376c6b73fddddc385b2ac7decd17f2050cf7094990ad26fe11494dab87",
-    "stats_summary.json": "b2ab005f7d37ed9bc12616bbcd568a1c25d1bfcc5aa477b334576c7251cde00f",
-    "table2_ablations.csv": "e9fc0dd78ede420949512651834a65369524eee1877b4598591514ebbdb3480e",
+    "stats_summary.json": "6d7c99bfd8541f762d319d457183c2ed57760ccac0789338068fe2696c8c3a58",
+    "table2_ablations.csv": "c64fa0274c1e94c35e19d84264e76576fada9aa36df39d306f0f708c927afd0f",
     "table5_transfer.csv": "a115182eb6b615ae0b0a8cfcaa72aed9ededa612535b5f360d0dce9de8f184b6",
-    "table_cqr_distributional_compare.csv": "89f4f0724814206869ae31b1b3348c54e21f535b1c5a35449a3d3c8d1632d22a",
+    "table_cqr_distributional_compare.csv": "109ddca26cce0463eefafdcb8c151b059564de07f9daeb0258123211a122383d",
     "transfer_stress.csv": "a115182eb6b615ae0b0a8cfcaa72aed9ededa612535b5f360d0dce9de8f184b6"
   },
   "command": "manual canonicalized publication pipeline (train_regime_cqr + run_suite + run_ablations + transfer + pareto + verify)",
-  "generated_at_utc": "2026-02-26T10:26:49.593877+00:00",
-  "git_commit": "e2df1e533b3771aaad002198a5942aa61769a878",
+  "controllers_present": [
+    "cvar_interval",
+    "dc3s_ftit",
+    "dc3s_wrapped",
+    "deterministic_lp",
+    "robust_fixed_interval"
+  ],
+  "dataset_profiles": {
+    "de": {
+      "calendar_feature_count": 6,
+      "columns": 98,
+      "date_end_utc": "2020-09-30T23:00:00+00:00",
+      "date_start_utc": "2018-10-07T23:00:00+00:00",
+      "feature_count": 94,
+      "lag_feature_count": 36,
+      "rows": 17377,
+      "weather_feature_count": 40
+    },
+    "us": {
+      "calendar_feature_count": 6,
+      "columns": 118,
+      "date_end_utc": "2026-01-20T11:00:00+00:00",
+      "date_start_utc": "2024-07-01T06:00:00+00:00",
+      "feature_count": 114,
+      "lag_feature_count": 42,
+      "rows": 13638,
+      "weather_feature_count": 56
+    }
+  },
+  "generated_at_utc": "2026-03-11T18:23:38.652540+00:00",
+  "git_commit": "61f9d83ea0b01cd3a258330d4d2968e3faca61b0",
   "horizon": 8,
+  "paper_metric_policy": {
+    "description": "Use latest dataset-scoped artifacts as of 2026-02-17: DE stochastic run 20260217_165756 and US stochastic run 20260217_182305; impact from latest impact_summary files.",
+    "master_manuscript": "paper/PAPER_DRAFT.md",
+    "name": "dataset_scoped_latest"
+  },
+  "paper_run_ids": {
+    "de_stochastic": "20260217_165756",
+    "us_stochastic": "20260217_182305"
+  },
   "scenarios": [
     "nominal",
     "dropout"

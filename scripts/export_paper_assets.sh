@@ -54,6 +54,9 @@ copy_or_die "reports/publication/fig_cost_safety_pareto.png" "paper/assets/figur
 copy_or_die "reports/publication/fig_rac_sensitivity_vs_width.png" "paper/assets/figures/fig08_rac_sensitivity_vs_width.png"
 
 # Tables
+"$PYTHON_BIN" "scripts/build_dataset_summary_table.py" --output "reports/publication/tables/table1_dataset_summary.csv"
+"$PYTHON_BIN" "scripts/build_conference_assets.py" --out-dir "reports/publication" --dataset-summary "reports/publication/tables/table1_dataset_summary.csv"
+
 copy_first_available "paper/assets/tables/tbl01_main_results.csv" \
   "reports/publication/table1_main.csv" \
   "reports/publication/dc3s_main_table.csv"
@@ -61,6 +64,7 @@ copy_or_die "reports/publication/table2_ablations.csv" "paper/assets/tables/tbl0
 copy_or_die "reports/publication/cqr_group_coverage.csv" "paper/assets/tables/tbl03_cqr_group_coverage.csv"
 copy_or_die "reports/publication/transfer_stress.csv" "paper/assets/tables/tbl04_transfer_stress.csv"
 copy_or_die "reports/publication/tables/table1_dataset_summary.csv" "paper/assets/tables/tbl05_dataset_summary.csv"
+copy_or_die "reports/publication/dataset_cards.csv" "paper/assets/tables/tbl07_dataset_cards.csv"
 
 "$PYTHON_BIN" - <<'PY'
 from pathlib import Path
@@ -127,6 +131,7 @@ copy_first_available "paper/assets/data/data_manifest.json" \
   "paper/metrics_manifest.json"
 copy_or_die "reports/publication/stats_summary.json" "paper/assets/data/metrics_snapshot.json"
 copy_or_die "paper/claim_matrix.csv" "paper/assets/data/claim_matrix.csv"
+copy_or_die "reports/publication/conference_figure_inventory.json" "paper/assets/data/conference_figure_inventory.json"
 
 # Config snapshots
 copy_or_die "configs/train_forecast.yaml" "paper/assets/configs/train_forecast_de.yaml"
@@ -134,5 +139,12 @@ copy_or_die "configs/train_forecast_eia930.yaml" "paper/assets/configs/train_for
 copy_or_die "configs/dc3s_ablations.yaml" "paper/assets/configs/dc3s_ablations.yaml"
 copy_or_die "configs/dc3s.yaml" "paper/assets/configs/dc3s.yaml"
 copy_or_die "configs/uncertainty.yaml" "paper/assets/configs/uncertainty.yaml"
+
+# Supplemental conference assets
+copy_or_die "reports/publication/fig_region_dataset_cards.png" "paper/assets/figures/fig09_region_dataset_cards.png"
+copy_or_die "reports/publication/fig_calibration_tradeoff.png" "paper/assets/figures/fig10_calibration_tradeoff.png"
+copy_or_die "reports/publication/fig_transfer_generalization.png" "paper/assets/figures/fig11_transfer_generalization.png"
+
+"$PYTHON_BIN" "scripts/build_paper_table_tex.py"
 
 echo "Exported curated paper assets under paper/assets/."
