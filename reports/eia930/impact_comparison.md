@@ -3,32 +3,32 @@
 This report compares dispatch outcomes for the same 7‑day forecast window (selected from the test split).
 
 - Horizon: 168 hours (7 days)
-- Window index: 432–600
+- Window index: 744–912
 - Forecast source: test split (proxy for day‑ahead forecast)
 - Config: `configs/optimization.yaml`
 
 ## Policy Comparison
 | Policy | Cost (USD) | Carbon (kg) | Carbon Cost (USD) |
 |---|---:|---:|---:|
-| Grid‑only baseline | 461,364,890.00 | 3,907,803,618.32 | 195,390,180.92 |
-| Naive battery | 462,821,035.03 | 3,911,194,390.28 | 195,559,719.51 |
-| Peak‑shaving heuristic | 461,540,022.90 | 3,908,660,249.57 | 195,433,012.48 |
-| Price‑greedy (MPC‑style) | 460,068,067.28 | 3,925,065,173.59 | 196,253,258.68 |
-| GridPulse (forecast‑optimized) | 460,842,677.76 | 3,902,642,369.72 | 195,132,118.49 |
-| Oracle upper bound (perfect forecast) | 460,842,677.76 | 3,902,642,369.72 | 195,132,118.49 |
+| Grid‑only baseline | 520,523,500.00 | 4,470,300,483.57 | 223,515,024.18 |
+| Naive battery | 520,517,360.81 | 4,475,197,184.82 | 223,759,859.24 |
+| Peak‑shaving heuristic | 521,914,354.45 | 4,478,499,171.75 | 223,924,958.59 |
+| Price‑greedy (MPC‑style) | 519,021,033.38 | 4,487,898,905.56 | 224,394,945.28 |
+| GridPulse (forecast‑optimized) | 519,973,304.08 | 4,465,273,594.63 | 223,263,679.73 |
+| Oracle upper bound (perfect forecast) | 519,973,304.08 | 4,465,273,594.63 | 223,263,679.73 |
 
 ## Savings vs Baseline (GridPulse vs Grid‑only)
-- Cost savings: 522,212.24 (0.11%)
-- Carbon reduction: 5,161,248.60 kg (0.13%)
+- Cost savings: 550,195.92 (0.11%)
+- Carbon reduction: 5,026,888.95 kg (0.11%)
 
 - Carbon source used for optimization: average
 
 ## Savings vs Naive Battery (GridPulse vs Naive)
-- Cost savings: 1,978,357.27 (0.43%)
-- Carbon reduction: 8,552,020.55 kg (0.22%)
+- Cost savings: 544,056.73 (0.10%)
+- Carbon reduction: 9,923,590.20 kg (0.22%)
 
 ## Oracle Gap (GridPulse vs Perfect‑Forecast Upper Bound)
-- Oracle cost: 460,842,677.76
+- Oracle cost: 519,973,304.08
 - Gap vs oracle: 0.00
 
 ## Dispatch Comparison
