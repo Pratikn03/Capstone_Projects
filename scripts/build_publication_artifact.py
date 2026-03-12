@@ -27,7 +27,14 @@ if str(REPO_ROOT / "src") not in sys.path:
 from gridpulse.cpsbench_iot.runner import run_suite, run_single
 from gridpulse.cpsbench_iot.scenarios import DEFAULT_SCENARIOS
 from gridpulse.dc3s.calibration import calibrate_ambiguity_lambda
+from scripts.build_conference_assets import (
+    build_calibration_tradeoff,
+    build_dataset_cards,
+    build_figure_inventory as build_conference_figure_inventory,
+    build_transfer_generalization,
+)
 from scripts.build_cost_safety_pareto import build_cost_safety_pareto
+from scripts.build_dataset_summary_table import build_dataset_summary_rows
 from scripts.run_ablations import run_dc3s_ablation_matrix
 from scripts.train_distributional_load import train_distributional_load
 from scripts.train_regime_cqr import train_regime_cqr_artifacts
@@ -52,6 +59,11 @@ REQUIRED_PUBLICATION = (
     "ambiguity_calibration_summary.json",
     "cost_safety_pareto.csv",
     "fig_cost_safety_pareto.png",
+    "dataset_cards.csv",
+    "fig_region_dataset_cards.png",
+    "fig_calibration_tradeoff.png",
+    "fig_transfer_generalization.png",
+    "conference_figure_inventory.json",
     "release_manifest.json",
 )
 
@@ -62,6 +74,7 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--horizon", type=int, default=96)
     p.add_argument("--seeds", nargs="*", type=int, default=None)
     p.add_argument("--scenarios", nargs="*", default=None)
+    p.add_argument("--release-family", default=None)
     return p.parse_args()
 
 
@@ -400,6 +413,15 @@ def _build_transfer_stress(out_dir: Path, seeds: list[int], horizon: int) -> dic
     }
 
 
+def _build_dataset_summary_table(out_dir: Path) -> dict[str, Any]:
+    rows = build_dataset_summary_rows()
+    table_dir = out_dir / "tables"
+    table_dir.mkdir(parents=True, exist_ok=True)
+    table_path = table_dir / "table1_dataset_summary.csv"
+    pd.DataFrame(rows).to_csv(table_path, index=False)
+    return {"rows": int(len(rows)), "path": str(table_path)}
+
+
 def _verify_outputs(out_dir: Path) -> None:
     missing: list[str] = []
     for name in REQUIRED_PUBLICATION:
@@ -435,6 +457,10 @@ def _verify_outputs(out_dir: Path) -> None:
     stats_blob = json.dumps(stats, sort_keys=True)
     if "/tmp/" in stats_blob:
         raise RuntimeError("stats_summary.json contains /tmp paths")
+    figure_inventory = json.loads((out_dir / "conference_figure_inventory.json").read_text(encoding="utf-8"))
+    summary = figure_inventory.get("summary", {}) if isinstance(figure_inventory.get("summary"), dict) else {}
+    if not bool(summary.get("ready", False)):
+        raise RuntimeError("conference_figure_inventory.json reports missing required conference figures")
 
 
 def _sha256_file(path: Path) -> str:
@@ -445,6 +471,25 @@ def _sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def _load_metrics_manifest_scope() -> dict[str, Any]:
+    path = REPO_ROOT / "paper" / "metrics_manifest.json"
+    if not path.exists():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        return {}
+    return {
+        "metric_policy": payload.get("metric_policy", {}),
+        "run_ids": payload.get("run_ids", {}),
+        "dataset_profiles": payload.get("dataset_profiles", {}),
+        "release_family": (
+            payload.get("metric_policy", {}).get("release_family", {})
+            if isinstance(payload.get("metric_policy"), dict)
+            else {}
+        ),
+    }
+
+
 def _write_release_manifest(
     *,
     out_dir: Path,
@@ -452,6 +497,8 @@ def _write_release_manifest(
     scenarios: list[str],
     horizon: int,
     command: str,
+    release_family: str | None,
+    conference_figure_inventory: dict[str, Any] | None,
 ) -> dict[str, Any]:
     try:
         commit = (
@@ -461,17 +508,32 @@ def _write_release_manifest(
         commit = "unknown"
     artifact_hashes: dict[str, str] = {}
     for name in REQUIRED_PUBLICATION:
+        if name == "release_manifest.json":
+            continue
         p = out_dir / name
         if p.exists() and p.is_file():
             artifact_hashes[name] = _sha256_file(p)
+    metrics_scope = _load_metrics_manifest_scope()
+    controller_list: list[str] = []
+    main_table_path = out_dir / "dc3s_main_table.csv"
+    if main_table_path.exists():
+        main_df = pd.read_csv(main_table_path)
+        if "controller" in main_df.columns:
+            controller_list = sorted(str(value) for value in main_df["controller"].dropna().unique().tolist())
     manifest = {
         "git_commit": commit,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "release_family": release_family or metrics_scope.get("release_family", {}),
         "command": command,
         "seeds": seeds,
         "scenarios": scenarios,
         "horizon": int(horizon),
         "artifact_hashes_sha256": artifact_hashes,
+        "paper_metric_policy": metrics_scope.get("metric_policy", {}),
+        "paper_run_ids": metrics_scope.get("run_ids", {}),
+        "dataset_profiles": metrics_scope.get("dataset_profiles", {}),
+        "controllers_present": controller_list,
+        "conference_figure_inventory": conference_figure_inventory or {},
     }
     manifest_path = out_dir / "release_manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
@@ -518,6 +580,11 @@ def main() -> None:
     transfer_summary = _build_transfer_stress(out_dir, seeds=seeds, horizon=int(args.horizon))
     pareto_summary = build_cost_safety_pareto(main_table_path=out_dir / "dc3s_main_table.csv", out_dir=out_dir)
     rac_summary = _build_rac_diagnostics(out_dir)
+    dataset_summary = _build_dataset_summary_table(out_dir)
+    dataset_cards = build_dataset_cards(dataset_summary_path=out_dir / "tables" / "table1_dataset_summary.csv", out_dir=out_dir)
+    calibration_tradeoff = build_calibration_tradeoff(out_dir=out_dir)
+    transfer_generalization = build_transfer_generalization(out_dir=out_dir)
+    conference_figure_inventory = build_conference_figure_inventory(out_dir=out_dir)
 
     release_manifest = _write_release_manifest(
         out_dir=out_dir,
@@ -527,6 +594,8 @@ def main() -> None:
         command="python3 scripts/build_publication_artifact.py "
         + f"--out-dir {out_dir} --horizon {int(args.horizon)} --seeds {' '.join(str(s) for s in seeds)} "
         + f"--scenarios {' '.join(str(s) for s in scenarios)}",
+        release_family=args.release_family,
+        conference_figure_inventory=conference_figure_inventory.get("summary", {}),
     )
     _verify_outputs(out_dir)
 
@@ -540,6 +609,11 @@ def main() -> None:
         "rac_diagnostics": rac_summary,
         "transfer": transfer_summary,
         "pareto": pareto_summary,
+        "dataset_summary_table": dataset_summary,
+        "dataset_cards": dataset_cards,
+        "calibration_tradeoff": calibration_tradeoff,
+        "transfer_generalization": transfer_generalization,
+        "conference_figure_inventory": conference_figure_inventory,
         "release_manifest": release_manifest,
         "required_outputs": [str(out_dir / x) for x in REQUIRED_PUBLICATION],
     }

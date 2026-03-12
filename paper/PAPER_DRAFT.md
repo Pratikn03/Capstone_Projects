@@ -1,13 +1,13 @@
-# DC³S: Telemetry-Reliability-Weighted Conformal Safety Shield for Battery Dispatch under IoT Sensor Faults
+# DC³S: Telemetry-Reliability-Weighted Conformal Safety Shield for Battery Dispatch under Degraded Mixed Telemetry
 
 **Author:** Pratik Niroula  
 **Affiliation:** MNSU CIT (Major), Math (Minor)  
 **Date:** February 19, 2026
 
 ## Abstract
-DC³S addresses battery dispatch under unreliable IoT telemetry by coupling telemetry-reliability scoring, conformal interval inflation, and safety-constrained action repair in one online loop. In the drift_combo CPSBench scenario, DC³S raises mean PICP@90 to 38.3% from 33.8% for deterministic dispatch, while holding intervention rate at 0.00%. This calibration gain is achieved with wider mean intervals (2249.64 vs 666.98) and an expected cost of USD 61,310,572.02, which is USD 160,899.55 above robust_fixed_interval. The resulting tradeoff is explicit rather than hidden: when telemetry quality degrades, DC³S buys coverage and eliminates observed violation events by widening uncertainty sets and repairing actions against safety constraints.
+DC³S addresses battery dispatch under degraded mixed telemetry by coupling telemetry-reliability scoring, conformal interval inflation, and safety-constrained action repair in one online loop. This release does not rely on a legacy non-nominal PICP headline from a single drift scenario. Instead, calibration is reported with standard interval metrics (PICP@90, PICP@95, mean interval width, pinball loss, and Winkler score), and safety is evaluated on truth-state SOC together with power, ramp, import-cap, and solver-feasibility outcomes. The resulting tradeoff is explicit rather than hidden: when telemetry quality degrades, DC³S widens uncertainty sets, repairs infeasible actions, and exposes the cost-carbon-safety frontier through auditable dispatch certificates.
 
-This paper presents DC³S as a telemetry-reliability-weighted conformal safety shield for battery dispatch under sensor faults such as dropout, delay jitter, stale readings, out-of-order packets, and spikes. The method combines online fault scoring, drift-aware uncertainty inflation, dispatch optimization, and certificate-backed audit persistence within the GridPulse stack. The contribution is not a new battery objective alone, but a calibrated control wrapper that converts degraded telemetry into bounded uncertainty and executable safe actions. Publication-facing quantitative claims remain locked to repository artifacts, run IDs, and validator checks so manuscript updates do not drift from source data. The result is a decision-system framing in which calibration, cost, intervention behavior, and governance are evaluated together under faulted operating conditions.
+This paper presents DC³S as a telemetry-reliability-weighted conformal safety shield for battery dispatch across Germany (OPSD) and multiple US balancing-authority studies derived from EIA-930. The deployment target is mixed telemetry rather than IoT-only sensing: the method is designed for operator stacks that blend field devices, SCADA-style feeds, and delayed or degraded measurements. The contribution is not a new battery objective alone, but a calibrated control wrapper plus benchmark and governance stack that converts degraded telemetry into bounded uncertainty and executable safe actions. Publication-facing quantitative claims remain locked to repository artifacts, run IDs, release-family manifests, and validator checks so manuscript updates do not drift from source data.
 
 ## Keywords
 Machine Learning, Energy Forecasting, Battery Dispatch, Robust Optimization, Conformal Prediction, Stochastic Programming, MLOps, Grid Operations
@@ -34,7 +34,7 @@ The problem addressed in this thesis is integrated decision quality, not isolate
 This framing moves the optimization target from "minimize one model metric" to "optimize a constrained cyber-physical workflow under uncertainty." In that workflow, a low forecast error can still yield poor decisions if interval calibration, solver behavior, or control-plane safety are weak.
 
 ### 1.3 Research Questions
-1. Can one architecture maintain high forecasting performance across DE and US datasets with different regimes?
+1. Can one architecture maintain high forecasting performance across DE and multi-region US datasets with different regimes?
 2. Does uncertainty-aware dispatch provide measurable value relative to deterministic dispatch?
 3. How large is decision impact (cost/carbon/peak) under dataset-scoped latest artifacts?
 4. Can run-scoped governance prevent cross-document metric contradictions?
@@ -52,7 +52,7 @@ Each question is answered with locked in-repo evidence. This manuscript intentio
 ### 1.4 Contributions
 1. A production-oriented multi-layer GridPulse implementation with forecast, optimization, monitoring, and serving layers.
 2. A conformal + adaptive interval workflow integrated into robust dispatch evaluation.
-3. A dataset-scoped latest metric lock with explicit run IDs and reproducible evidence paths.
+3. A release-family metric lock with explicit run IDs, dataset cards, and reproducible evidence paths across DE and multi-region US evidence.
 4. A publication governance mechanism (`metrics_manifest`, claim matrix, validator script) that prevents legacy-claim regression.
 
 Contribution boundaries are stated explicitly. This thesis does not claim complete market realism for all settlement regimes, universal transferability across all operators, or causal policy-level effects. It claims an operationally integrated and evidence-governed system with reproducible DE/US outcomes under the locked artifacts.
@@ -674,10 +674,12 @@ Before approving any numeric edit:
 ## 8. Claim Traceability and Editorial Governance
 
 ### 8.1 Claim Status Definitions
-- **Verified**: directly traceable to locked artifact(s).
-- **Conflicting**: disagrees with canonical policy or other locked values.
-- **Unsupported**: no in-repo evidence found.
-- **Needs Citation**: plausible but requires external published source.
+- **Verified**: directly traceable to locked artifact(s) used in the active release manuscript.
+- **Historical**: retained only as a record of pre-lock wording or superseded values.
+- **Inactive**: retained for future work but not present in the active release manuscript.
+- **Conflicting**: active manuscript wording disagrees with canonical policy or other locked values.
+- **Unsupported**: active manuscript wording has no in-repo evidence.
+- **Needs Citation**: active manuscript wording is plausible but requires an external published source.
 
 Claim statuses are operational controls. A status changes only when evidence or citation coverage changes; wording-only edits are insufficient.
 

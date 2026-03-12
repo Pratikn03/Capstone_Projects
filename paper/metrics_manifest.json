@@ -3,8 +3,13 @@
   "generated_at_utc": "2026-02-19T00:00:00Z",
   "metric_policy": {
     "name": "dataset_scoped_latest",
-    "description": "Use latest dataset-scoped artifacts as of 2026-02-17: DE stochastic run 20260217_165756 and US stochastic run 20260217_182305; impact from latest impact_summary files.",
-    "master_manuscript": "paper/PAPER_DRAFT.md"
+    "description": "Canonical manuscript values remain pinned to the latest frozen dataset-scoped artifacts as of 2026-02-17 while the conference-main R1 release family is rebuilt in candidate runs.",
+    "master_manuscript": "paper/PAPER_DRAFT.md",
+    "release_family": {
+      "name": "conference_main_r1_transition",
+      "status": "pending_rebuild",
+      "notes": "Do not replace canonical run_ids until DE plus multi-region US candidate runs pass release gates."
+    }
   },
   "sources": {
     "de_impact": {
