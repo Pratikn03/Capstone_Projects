@@ -1,4 +1,10 @@
-target,group,bin,picp_90,mean_width,sample_count
-load_mw,low,0,0.867446,1400.418976,513
-load_mw,med,1,0.816092,1247.121245,261
-load_mw,high,2,0.887691,836.839593,1763
+target,regime,picp_group_90,width_group_mean,n
+load_mw,low,0.852381,1244.838584,840
+load_mw,mid,0.883333,937.421883,840
+load_mw,high,0.910714,1028.215886,840
+wind_mw,low,0.976190,719.719141,840
+wind_mw,mid,0.934524,811.954083,840
+wind_mw,high,0.900000,969.921806,840
+solar_mw,low,0.802381,891.551155,840
+solar_mw,mid,0.822485,1016.613362,845
+solar_mw,high,0.737725,1206.156144,835

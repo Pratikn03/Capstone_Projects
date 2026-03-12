@@ -1,3 +1,10 @@
+dataset:
+  key: US_MISO
+  label: USA (EIA-930 MISO)
+  source: EIA-930
+  balancing_authority: MISO
+  region_group: US
+
 task:
   horizon_hours: 24
   lookback_hours: 168
@@ -95,6 +102,63 @@ models:
         patience: 15
         min_delta: 0.0001
       gradient_clip: 1.0
+  dl_nbeats:
+    kind: nbeats
+    enabled: true
+    params:
+      hidden_dim: 384
+      num_blocks: 4
+      dropout: 0.1
+      epochs: 120
+      batch_size: 128
+      learning_rate: 0.0005
+      weight_decay: 1e-5
+      warmup_epochs: 5
+      gradient_clip: 1.0
+      early_stopping:
+        enabled: true
+        patience: 18
+        min_delta: 0.0001
+  dl_tft:
+    kind: tft
+    enabled: true
+    params:
+      d_model: 128
+      n_heads: 4
+      num_layers: 2
+      dim_feedforward: 256
+      dropout: 0.1
+      epochs: 120
+      batch_size: 128
+      learning_rate: 0.0005
+      weight_decay: 1e-5
+      warmup_epochs: 5
+      gradient_clip: 1.0
+      early_stopping:
+        enabled: true
+        patience: 18
+        min_delta: 0.0001
+  dl_patchtst:
+    kind: patchtst
+    enabled: true
+    params:
+      patch_len: 24
+      stride: 12
+      d_model: 128
+      n_heads: 4
+      num_layers: 2
+      dim_feedforward: 256
+      dropout: 0.1
+      epochs: 120
+      batch_size: 128
+      learning_rate: 0.0005
+      weight_decay: 1e-5
+      warmup_epochs: 5
+      gradient_clip: 1.0
+      early_stopping:
+        enabled: true
+        patience: 18
+        min_delta: 0.0001
 
 artifacts:
   out_dir: artifacts/models_eia930

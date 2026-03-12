@@ -1,0 +1,17 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Dataset-card inventory for the conference release family.}
+\label{tab:TBL07_DATASET_CARDS}
+\begin{tabular}{lllrlllrrrlll}
+\toprule
+dataset\_key & dataset\_label & country & rows & date\_start & date\_end & targets & min\_coverage\_pct & feature\_count & columns & source & weather\_source & carbon\_source \\
+\midrule
+DE & Germany (OPSD) & DE & 17377 & 2018-10-07 & 2020-09-30 & load\_mw,solar\_mw,wind\_mw & 100.000000 & 94 & 98 & OPSD + SMARD & NaN & NaN \\
+US\_ERCOT & USA (EIA-930 ERCOT) & US & 13453 & 2024-07-01 & 2026-01-20 & load\_mw,solar\_mw,wind\_mw & 100.000000 & 62 & 62 & EIA-930 ERCOT & Open-Meteo archive API & proxy\_generation\_mix \\
+US\_MISO & USA (EIA-930 MISO) & US & 13638 & 2024-07-01 & 2026-01-20 & load\_mw,solar\_mw,wind\_mw & 100.000000 & 114 & 118 & EIA-930 MISO & NaN & NaN \\
+US\_PJM & USA (EIA-930 PJM) & US & 13639 & 2024-07-01 & 2026-01-20 & load\_mw,solar\_mw,wind\_mw & 100.000000 & 62 & 62 & EIA-930 PJM & Open-Meteo archive API & proxy\_generation\_mix \\
+\bottomrule
+\end{tabular}
+
+\end{table}
