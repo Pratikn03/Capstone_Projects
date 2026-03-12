@@ -227,7 +227,7 @@ All signals have 100\% non-null coverage.  The DE/US split provides cross-region
 \PaperTableCSV{TBL05_DATASET_SUMMARY}{Dataset summary: regions, date ranges, signal counts, and coverage.}
 
 % ===== 4. METHOD =============================================================
-\section{DC\texorpdfstring{\textsuperscript{3}}{3}S: Detect--Calibrate--Constrain--Certify--Shield}\label{sec:method}
+\section{DC\textsuperscript{3}S: Detect--Calibrate--Constrain--Certify--Shield}\label{sec:method}
 
 \Cref{fig:FIG01_ARCHITECTURE} shows the full system architecture.  DC\textsuperscript{3}S operates as a safety wrapper around any dispatch optimizer: at each control step, it scores telemetry, inflates uncertainty, solves the constrained optimization, repairs unsafe actions, and emits a certificate.
 
@@ -375,7 +375,7 @@ Five controllers are compared (\Cref{tab:TBL01_MAIN_RESULTS}):
   \item \textbf{Robust fixed-interval}: robust dispatch with static $\pm 2\sigma$ intervals.
   \item \textbf{CVaR interval}: CVaR dispatch with scenario sampling from conformal intervals.
   \item \textbf{DC\textsuperscript{3}S wrapped}: DC\textsuperscript{3}S with RAC-Cert inflation around the robust optimizer.
-  \item \textbf{DC\textsuperscript{3}S FTIT}: full-time-in-trade variant with more aggressive intervention.
+  \item \textbf{DC\textsuperscript{3}S FTIT}: full-time-in-trade variant with aggressive intervention.
 \end{enumerate}
 
 \subsection{Evaluation Metrics}
