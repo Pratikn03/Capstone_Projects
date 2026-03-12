@@ -1,8 +1,11 @@
 \begin{table}[htbp]
 \centering
-\small
+\scriptsize
 \caption{Main safety and cost outcomes under telemetry faults.}
 \label{tab:TBL01_MAIN_RESULTS}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.96}
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lrrrrrrrrrr}
 \toprule
 controller & true\_soc\_violation\_rate\_mean & true\_soc\_violation\_rate\_ci\_low & true\_soc\_violation\_rate\_ci\_high & true\_soc\_violation\_severity\_p95\_mean & true\_soc\_violation\_severity\_p95\_ci\_low & true\_soc\_violation\_severity\_p95\_ci\_high & intervention\_rate\_mean & intervention\_rate\_ci\_low & intervention\_rate\_ci\_high & cost\_delta\_pct\_mean \\
@@ -15,4 +18,5 @@ robust\_fixed\_interval & 0.255754 & 0.174206 & 0.336508 & 0.280106 & 0.233700 &
 \bottomrule
 \end{tabular}
 
+}
 \end{table}

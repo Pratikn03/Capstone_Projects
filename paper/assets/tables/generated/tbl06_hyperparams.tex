@@ -1,18 +1,21 @@
 \begin{table}[htbp]
 \centering
-\small
+\scriptsize
 \caption{Core training and RAC-Cert hyperparameters.}
 \label{tab:TBL06_HYPERPARAMS}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.96}
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llll}
 \toprule
 group & key & value & source \\
 \midrule
-train\_forecast\_de & horizon\_hours & NaN & configs/train\_forecast.yaml \\
-train\_forecast\_de & lookback\_hours & NaN & configs/train\_forecast.yaml \\
+train\_forecast\_de & horizon\_hours & --- & configs/train\_forecast.yaml \\
+train\_forecast\_de & lookback\_hours & --- & configs/train\_forecast.yaml \\
 train\_forecast\_de & cross\_validation.n\_folds & 10 & configs/train\_forecast.yaml \\
 train\_forecast\_de & cross\_validation.gap & 24 & configs/train\_forecast.yaml \\
-train\_forecast\_us & horizon\_hours & NaN & configs/train\_forecast\_eia930.yaml \\
-train\_forecast\_us & lookback\_hours & NaN & configs/train\_forecast\_eia930.yaml \\
+train\_forecast\_us & horizon\_hours & --- & configs/train\_forecast\_eia930.yaml \\
+train\_forecast\_us & lookback\_hours & --- & configs/train\_forecast\_eia930.yaml \\
 train\_forecast\_us & cross\_validation.n\_folds & 10 & configs/train\_forecast\_eia930.yaml \\
 train\_forecast\_us & cross\_validation.gap & 24 & configs/train\_forecast\_eia930.yaml \\
 dc3s\_rac & sensitivity\_probe & heuristic & configs/dc3s.yaml \\
@@ -28,4 +31,5 @@ regime\_cqr & quantile\_backend\_policy & strict & configs/uncertainty.yaml \\
 \bottomrule
 \end{tabular}
 
+}
 \end{table}

@@ -8,7 +8,7 @@ gates pass.
 Stages
 ------
 diagnostic  – GBM-first fast runs for DE + US_MISO + US_PJM + US_ERCOT
-full        – Full baseline comparison (GBM + N-BEATS + TFT + PatchTST)
+full        – Full six-model baseline comparison
 cpsbench    – Run CPSBench severity sweeps with the R1 controller set
 verify      – Check all datasets pass acceptance + UQ contract
 promote     – Copy verified artifacts into canonical paths and update
@@ -30,6 +30,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PYTHON_BIN = sys.executable or "python3"
@@ -52,6 +53,44 @@ def _run(cmd: list[str], description: str) -> bool:
     except subprocess.CalledProcessError:
         print(f"  ❌ FAILED: {description}")
         return False
+
+
+def _load_json(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _resolve_repo_path(value: str | Path | None) -> Path | None:
+    if value is None:
+        return None
+    path = Path(value)
+    if path.is_absolute():
+        return path
+    return REPO_ROOT / path
+
+
+def _manifest_path_for(dataset: str, run_id: str) -> Path:
+    return REPO_ROOT / "artifacts" / "runs" / dataset.lower() / run_id / "registry" / "run_manifest.json"
+
+
+def _load_preflight(manifest: dict[str, Any]) -> dict[str, Any]:
+    preflight_path = _resolve_repo_path(manifest.get("preflight_path"))
+    if preflight_path is None:
+        return {}
+    return _load_json(preflight_path)
+
+
+def _write_manifest_acceptance(manifest_path: Path, *, accepted: bool) -> None:
+    payload = _load_json(manifest_path)
+    if not payload:
+        return
+    payload["accepted"] = bool(accepted)
+    manifest_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
 # ── Stages ────────────────────────────────────────────────────────────────────
@@ -81,7 +120,7 @@ def stage_diagnostic(release_id: str) -> dict[str, bool]:
 
 
 def stage_full(release_id: str, profile: str = "standard") -> dict[str, bool]:
-    """Stage 2 – Full baseline comparison with all models."""
+    """Stage 2 – Full six-model baseline comparison."""
     print(f"\n{'═'*60}")
     print(f"  STAGE 2: FULL BASELINE  release={release_id}  profile={profile}")
     print(f"{'═'*60}\n")
@@ -96,6 +135,7 @@ def stage_full(release_id: str, profile: str = "standard") -> dict[str, bool]:
                 "--dataset", ds,
                 "--candidate-run",
                 "--run-id", release_id,
+                "--models", "gbm,lstm,tcn,nbeats,tft,patchtst",
                 "--tune",
                 *extra,
             ],
@@ -130,40 +170,120 @@ def stage_verify(release_id: str) -> dict[str, dict]:
     all_pass = True
 
     for ds in R1_DATASETS:
-        ds_lower = ds.lower()
-        reports_dir = REPO_ROOT / "reports" / "runs" / ds_lower / release_id
-        manifest_path = REPO_ROOT / "artifacts" / "runs" / ds_lower / release_id / "registry" / "run_manifest.json"
-        summary_path = reports_dir / "publish" if reports_dir.exists() else reports_dir
-
-        # Check tuning summary
-        summary_file = None
-        for candidate in [
-            summary_path / f"tuning_summary_{ds_lower}.json",
-            reports_dir / f"tuning_summary_{ds_lower}.json",
-        ]:
-            if candidate.exists():
-                summary_file = candidate
-                break
-
-        detail: dict = {
+        manifest_path = _manifest_path_for(ds, release_id)
+        detail: dict[str, Any] = {
             "dataset": ds,
             "passed": False,
             "manifest_path": str(manifest_path),
         }
-        if summary_file is not None:
-            try:
-                data = json.loads(summary_file.read_text(encoding="utf-8"))
-                detail["accepted"] = data.get("accepted", False)
-                detail["targets"] = [
-                    {"target": t.get("target"), "accepted": t.get("accepted")}
-                    for t in data.get("targets", [])
-                ]
-                detail["passed"] = bool(data.get("accepted", False))
-            except (json.JSONDecodeError, OSError) as exc:
-                detail["error"] = str(exc)
-        else:
-            detail["error"] = f"No tuning summary found under {reports_dir}"
+        manifest = _load_json(manifest_path)
+        if not manifest:
+            detail["error"] = f"Missing or invalid run manifest: {manifest_path}"
+            verification[ds] = detail
+            all_pass = False
+            print(f"  ❌ {ds}: {detail['error']}")
+            continue
 
+        if str(manifest.get("release_id", "")) != release_id:
+            detail["error"] = (
+                f"Manifest release_id={manifest.get('release_id')!r} does not match {release_id!r}"
+            )
+            verification[ds] = detail
+            all_pass = False
+            print(f"  ❌ {ds}: {detail['error']}")
+            continue
+
+        artifacts = manifest.get("artifacts", {}) if isinstance(manifest.get("artifacts"), dict) else {}
+        reports_dir = _resolve_repo_path(artifacts.get("reports_dir"))
+        models_dir = _resolve_repo_path(artifacts.get("models_dir"))
+        uncertainty_dir = _resolve_repo_path(artifacts.get("uncertainty_dir"))
+        backtests_dir = _resolve_repo_path(artifacts.get("backtests_dir"))
+        artifacts_dir = manifest_path.parents[1]
+        summary_path = _resolve_repo_path(manifest.get("selection_summary_path"))
+        preflight = _load_preflight(manifest)
+        targets = preflight.get("expected_targets", manifest.get("targets", []))
+        model_types = preflight.get("expected_model_types", [])
+        uncertainty_targets = preflight.get("expected_targets", manifest.get("targets", []))
+
+        detail.update(
+            {
+                "run_id": manifest.get("run_id"),
+                "summary_path": str(summary_path) if summary_path is not None else None,
+                "reports_dir": str(reports_dir) if reports_dir is not None else None,
+                "models_dir": str(models_dir) if models_dir is not None else None,
+                "uncertainty_dir": str(uncertainty_dir) if uncertainty_dir is not None else None,
+                "backtests_dir": str(backtests_dir) if backtests_dir is not None else None,
+                "targets": [],
+            }
+        )
+
+        missing_paths = [
+            name
+            for name, path in (
+                ("reports_dir", reports_dir),
+                ("models_dir", models_dir),
+                ("uncertainty_dir", uncertainty_dir),
+                ("backtests_dir", backtests_dir),
+                ("summary_path", summary_path),
+            )
+            if path is None or not path.exists()
+        ]
+        if missing_paths:
+            detail["error"] = f"Missing required verification paths: {missing_paths}"
+            _write_manifest_acceptance(manifest_path, accepted=False)
+            verification[ds] = detail
+            all_pass = False
+            print(f"  ❌ {ds}: {detail['error']}")
+            continue
+
+        if not isinstance(targets, list) or not targets or not isinstance(model_types, list) or not model_types:
+            detail["error"] = "Preflight analysis is missing expected_targets or expected_model_types"
+            _write_manifest_acceptance(manifest_path, accepted=False)
+            verification[ds] = detail
+            all_pass = False
+            print(f"  ❌ {ds}: {detail['error']}")
+            continue
+
+        verify_cmd = [
+            PYTHON_BIN,
+            "scripts/verify_training_outputs.py",
+            "--models-dir",
+            str(models_dir),
+            "--reports-dir",
+            str(reports_dir),
+            "--artifacts-dir",
+            str(artifacts_dir),
+            "--uncertainty-dir",
+            str(uncertainty_dir),
+            "--backtests-dir",
+            str(backtests_dir),
+            "--targets",
+            *[str(target) for target in targets],
+            "--uncertainty-targets",
+            *[str(target) for target in uncertainty_targets],
+            "--model-types",
+            *[str(model_type) for model_type in model_types],
+        ]
+        detail["verify_command"] = " ".join(verify_cmd)
+        verify_ok = _run(verify_cmd, f"Artifact verification for {ds}")
+
+        summary_payload = _load_json(summary_path)
+        if summary_payload:
+            detail["accepted"] = bool(summary_payload.get("accepted", False))
+            detail["targets"] = [
+                {"target": row.get("target"), "accepted": row.get("accepted")}
+                for row in summary_payload.get("targets", [])
+                if isinstance(row, dict)
+            ]
+        else:
+            detail["accepted"] = False
+            detail["error"] = f"Invalid selection summary JSON: {summary_path}"
+
+        detail["passed"] = bool(verify_ok and detail.get("accepted", False))
+        if not detail["passed"] and "error" not in detail:
+            detail["error"] = "Training outputs failed verification or acceptance gates"
+
+        _write_manifest_acceptance(manifest_path, accepted=detail["passed"])
         verification[ds] = detail
         if not detail["passed"]:
             all_pass = False

@@ -1,0 +1,47 @@
+\begin{table}[htbp]
+\centering\small
+\caption{Final DE and US baseline comparison across the six promoted model families under a shared split, horizon, lookback, and metric contract. PICP@90 and interval width are shown where the pipeline produces model-specific uncertainty outputs.}
+\label{tab:baseline_comparison_all}
+\begin{tabular}{lllrrrrrr}
+\toprule
+Region & Target & Model & RMSE & MAE & sMAPE (\%) & $R^2$ & PICP@90 (\%) & Width (MW) \\
+\midrule
+DE & Load & \textbf{GBM} & 305.12 & 187.87 & 0.39 & 0.9988 & 88.2 & 1070.2 \\
+DE & Load & LSTM & --- & --- & --- & --- & --- & --- \\
+DE & Load & TCN & --- & --- & --- & --- & --- & --- \\
+DE & Load & N-BEATS & --- & --- & --- & --- & --- & --- \\
+DE & Load & TFT & --- & --- & --- & --- & --- & --- \\
+DE & Load & PatchTST & --- & --- & --- & --- & --- & --- \\
+DE & Wind & \textbf{GBM} & 219.11 & 129.36 & 2.41 & 0.9991 & 93.7 & 833.9 \\
+DE & Wind & LSTM & --- & --- & --- & --- & --- & --- \\
+DE & Wind & TCN & --- & --- & --- & --- & --- & --- \\
+DE & Wind & N-BEATS & --- & --- & --- & --- & --- & --- \\
+DE & Wind & TFT & --- & --- & --- & --- & --- & --- \\
+DE & Wind & PatchTST & --- & --- & --- & --- & --- & --- \\
+DE & Solar & \textbf{GBM} & 240.35 & 117.32 & 69.24 & 0.9993 & 78.8 & 1037.7 \\
+DE & Solar & LSTM & --- & --- & --- & --- & --- & --- \\
+DE & Solar & TCN & --- & --- & --- & --- & --- & --- \\
+DE & Solar & N-BEATS & --- & --- & --- & --- & --- & --- \\
+DE & Solar & TFT & --- & --- & --- & --- & --- & --- \\
+DE & Solar & PatchTST & --- & --- & --- & --- & --- & --- \\
+US & Load & \textbf{GBM} & 183.37 & 140.64 & 0.18 & 0.9993 & --- & --- \\
+US & Load & LSTM & 4413.57 & 3416.17 & 4.46 & 0.6111 & --- & --- \\
+US & Load & TCN & 6219.55 & 4734.46 & 6.29 & 0.2277 & --- & --- \\
+US & Load & N-BEATS & --- & --- & --- & --- & --- & --- \\
+US & Load & TFT & --- & --- & --- & --- & --- & --- \\
+US & Load & PatchTST & --- & --- & --- & --- & --- & --- \\
+US & Wind & \textbf{GBM} & 357.10 & 210.72 & 2.65 & 0.9972 & --- & --- \\
+US & Wind & LSTM & 6699.71 & 5729.83 & 46.19 & 0.0561 & --- & --- \\
+US & Wind & TCN & 6934.90 & 5963.55 & 47.30 & -0.0114 & --- & --- \\
+US & Wind & N-BEATS & --- & --- & --- & --- & --- & --- \\
+US & Wind & TFT & --- & --- & --- & --- & --- & --- \\
+US & Wind & PatchTST & --- & --- & --- & --- & --- & --- \\
+US & Solar & \textbf{GBM} & 229.99 & 82.14 & 53.09 & 0.9947 & --- & --- \\
+US & Solar & LSTM & 1700.87 & 1161.31 & 137.83 & 0.7185 & --- & --- \\
+US & Solar & TCN & 1444.49 & 754.76 & 124.37 & 0.7970 & --- & --- \\
+US & Solar & N-BEATS & --- & --- & --- & --- & --- & --- \\
+US & Solar & TFT & --- & --- & --- & --- & --- & --- \\
+US & Solar & PatchTST & --- & --- & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}

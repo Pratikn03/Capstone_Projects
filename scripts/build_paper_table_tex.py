@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
 
 import pandas as pd
@@ -14,18 +13,198 @@ def repo_to_paper_rel(path: Path, repo_root: Path, paper_dir: Path) -> str:
     return str(abs_path.relative_to(paper_dir.resolve()))
 
 
-def write_table_tex(token: str, csv_path: Path, title: str, out_path: Path) -> None:
-    df = pd.read_csv(csv_path)
-    tabular = df.to_latex(index=False, escape=True)
-    content = (
-        "\\begin{table}[htbp]\n"
-        "\\centering\n"
-        "\\small\n"
-        f"\\caption{{{title}}}\n"
-        f"\\label{{tab:{token}}}\n"
-        f"{tabular}\n"
-        "\\end{table}\n"
+def _tex_escape(value: object) -> str:
+    rendered = "" if value is None else str(value)
+    return (
+        rendered.replace("\\", r"\textbackslash{}")
+        .replace("&", r"\&")
+        .replace("%", r"\%")
+        .replace("_", r"\_")
+        .replace("#", r"\#")
     )
+
+
+def _is_missing(value: object) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, float):
+        return value != value
+    text = str(value).strip()
+    return text == "" or text.lower() == "nan"
+
+
+def _fmt(value: object, precision: int = 2, pct: bool = False) -> str:
+    if _is_missing(value):
+        return "---"
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return _tex_escape(value)
+    if pct:
+        return f"{number:.{precision}f}"
+    return f"{number:.{precision}f}"
+
+
+def _boolish(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    text = str(value).strip().lower()
+    return text in {"1", "true", "yes", "y"}
+
+
+def _read_csv(csv_path: Path) -> pd.DataFrame:
+    return pd.read_csv(csv_path)
+
+
+def _table_wrapper(*, title: str, label: str, tabular: list[str], size: str = r"\small") -> str:
+    lines = [
+        r"\begin{table}[htbp]",
+        r"\centering",
+        size,
+        rf"\caption{{{title}}}",
+        rf"\label{{tab:{label}}}",
+    ]
+    lines.extend(tabular)
+    lines.append(r"\end{table}")
+    return "\n".join(lines) + "\n"
+
+
+def _render_generic_table(token: str, csv_path: Path, title: str) -> str:
+    df = _read_csv(csv_path).fillna("---")
+    tabular = df.to_latex(index=False, escape=True, na_rep="---")
+    return _table_wrapper(
+        title=title,
+        label=token,
+        tabular=[
+            r"\setlength{\tabcolsep}{4pt}",
+            r"\renewcommand{\arraystretch}{0.96}",
+            r"\resizebox{\linewidth}{!}{%",
+            tabular,
+            r"}",
+        ],
+        size=r"\scriptsize",
+    )
+
+
+def _render_tbl08(token: str, csv_path: Path, title: str) -> str:
+    df = pd.read_csv(csv_path, dtype=str).fillna("---")
+    lines = [
+        r"\setlength{\tabcolsep}{3pt}",
+        r"\renewcommand{\arraystretch}{0.95}",
+        r"\resizebox{\linewidth}{!}{%",
+        r"\begin{tabular}{lllrrrrrr}",
+        r"\toprule",
+        r"Region & Target & Model & RMSE & MAE & sMAPE (\%) & $R^2$ & P90 & Width \\",
+        r"\midrule",
+    ]
+    for _, row in df.iterrows():
+        model = _tex_escape(row["Model"])
+        if model == "GBM":
+            model = r"\textbf{GBM}"
+        lines.append(
+            f"{_tex_escape(row['Region'])} & {_tex_escape(row['Target'])} & {model} & "
+            f"{_tex_escape(row['RMSE'])} & {_tex_escape(row['MAE'])} & "
+            f"{_tex_escape(row['sMAPE (%)'])} & {_tex_escape(row['R2'])} & "
+            f"{_tex_escape(row['PICP@90 (%)'])} & {_tex_escape(row['Interval Width (MW)'])} \\\\"
+        )
+    lines.extend(
+        [
+            r"\bottomrule",
+            r"\end{tabular}%",
+            r"}",
+        ]
+    )
+    return _table_wrapper(title=title, label=token, tabular=lines, size=r"\scriptsize")
+
+
+def _render_tbl03(token: str, csv_path: Path, title: str) -> str:
+    df = _read_csv(csv_path).copy()
+    if "group" in df.columns:
+        df["group"] = df["group"].replace({"mid": "med"})
+    lines = [
+        r"\setlength{\tabcolsep}{5pt}",
+        r"\renewcommand{\arraystretch}{0.98}",
+        r"\begin{tabular}{llrrr}",
+        r"\toprule",
+        r"Target & Regime & PICP@90 (\%) & Width (MW) & $n$ \\",
+        r"\midrule",
+    ]
+    for _, row in df.iterrows():
+        lines.append(
+            f"{_tex_escape(str(row.get('target', '')).replace('_mw', '').title())} & "
+            f"{_tex_escape(str(row.get('group', '')).upper())} & "
+            f"{_fmt((row.get('picp_90') or 0) * 100, precision=1, pct=True)} & "
+            f"{_fmt(row.get('mean_width'), precision=1)} & "
+            f"{int(row.get('sample_count', 0))} \\\\"
+        )
+    lines.extend([r"\bottomrule", r"\end{tabular}"])
+    return _table_wrapper(title=title, label=token, tabular=lines)
+
+
+def _render_tbl02(token: str, csv_path: Path, title: str) -> str:
+    df = _read_csv(csv_path).copy()
+    keep_columns = [
+        "analysis_scope",
+        "fault_dimension",
+        "n_pairs",
+        "true_soc_violation_rate_baseline_mean",
+        "true_soc_violation_rate_dc3s_mean",
+        "true_soc_violation_rate_rel_reduction",
+        "true_soc_violation_rate_wilcoxon_p",
+        "true_soc_violation_severity_p95_baseline_mean",
+        "true_soc_violation_severity_p95_dc3s_mean",
+        "true_soc_violation_severity_p95_rel_reduction",
+        "true_soc_violation_severity_p95_wilcoxon_p",
+        "passes_all_thresholds",
+    ]
+    condensed = df[keep_columns].copy()
+    condensed["analysis_scope"] = condensed["analysis_scope"].replace(
+        {
+            "primary_aggregate_fault_sweep": "primary",
+            "secondary_fault_dimension": "secondary",
+        }
+    )
+    condensed["fault_dimension"] = condensed["fault_dimension"].replace({"delay_jitter": "delay"})
+    lines = [
+        r"\setlength{\tabcolsep}{2.5pt}",
+        r"\renewcommand{\arraystretch}{0.94}",
+        r"\resizebox{\linewidth}{!}{%",
+        r"\begin{tabular}{llrrrrrrrrrc}",
+        r"\toprule",
+        r"Scope & Fault & $n$ & Viol. base & Viol. DC3S & Viol. red. & $p_v$ & Sev. base & Sev. DC3S & Sev. red. & $p_s$ & Pass \\",
+        r"\midrule",
+    ]
+    for _, row in condensed.iterrows():
+        lines.append(
+            f"{_tex_escape(row['analysis_scope'])} & "
+            f"{_tex_escape(row['fault_dimension'])} & "
+            f"{int(row['n_pairs'])} & "
+            f"{_fmt(row['true_soc_violation_rate_baseline_mean'], precision=2)} & "
+            f"{_fmt(row['true_soc_violation_rate_dc3s_mean'], precision=2)} & "
+            f"{_fmt(float(row['true_soc_violation_rate_rel_reduction']) * 100, precision=1, pct=True)} & "
+            f"{_fmt(row['true_soc_violation_rate_wilcoxon_p'], precision=3)} & "
+            f"{_fmt(row['true_soc_violation_severity_p95_baseline_mean'], precision=2)} & "
+            f"{_fmt(row['true_soc_violation_severity_p95_dc3s_mean'], precision=2)} & "
+            f"{_fmt(float(row['true_soc_violation_severity_p95_rel_reduction']) * 100, precision=1, pct=True)} & "
+            f"{_fmt(row['true_soc_violation_severity_p95_wilcoxon_p'], precision=3)} & "
+            f"{'yes' if _boolish(row['passes_all_thresholds']) else 'no'} \\\\"
+        )
+    lines.extend([r"\bottomrule", r"\end{tabular}%", r"}"])
+    return _table_wrapper(title=title, label=token, tabular=lines, size=r"\scriptsize")
+
+
+def render_table_tex(token: str, csv_path: Path, title: str) -> str:
+    if token == "TBL08_FORECAST_BASELINES":
+        return _render_tbl08(token, csv_path, title)
+    if token == "TBL02_ABLATIONS":
+        return _render_tbl02(token, csv_path, title)
+    if token == "TBL03_CQR_GROUP_COVERAGE":
+        return _render_tbl03(token, csv_path, title)
+    return _render_generic_table(token, csv_path, title)
+
+
+def write_table_tex(token: str, csv_path: Path, title: str, out_path: Path) -> None:
+    content = render_table_tex(token, csv_path, title)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(content, encoding="utf-8")
 
@@ -41,11 +220,11 @@ def main() -> int:
     paper_dir = repo_root / args.paper_dir
 
     if not manifest_path.exists():
-        print(f"ERROR: manifest not found: {manifest_path}", file=sys.stderr)
+        print(f"ERROR: manifest not found: {manifest_path}")
         return 1
 
-    with manifest_path.open("r", encoding="utf-8") as f:
-        manifest = yaml.safe_load(f) or {}
+    with manifest_path.open("r", encoding="utf-8") as fh:
+        manifest = yaml.safe_load(fh) or {}
 
     figures = manifest.get("figures") or {}
     tables = manifest.get("tables") or {}
@@ -61,7 +240,7 @@ def main() -> int:
     for token, entry in tables.items():
         csv_path = repo_root / entry["path"]
         if not csv_path.exists():
-            print(f"ERROR: table csv missing for {token}: {csv_path}", file=sys.stderr)
+            print(f"ERROR: table csv missing for {token}: {csv_path}")
             return 1
         title = entry.get("title", token)
         out_tex = generated_dir / f"{csv_path.stem}.tex"

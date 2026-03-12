@@ -65,6 +65,7 @@ copy_or_die "reports/publication/cqr_group_coverage.csv" "paper/assets/tables/tb
 copy_or_die "reports/publication/transfer_stress.csv" "paper/assets/tables/tbl04_transfer_stress.csv"
 copy_or_die "reports/publication/tables/table1_dataset_summary.csv" "paper/assets/tables/tbl05_dataset_summary.csv"
 copy_or_die "reports/publication/dataset_cards.csv" "paper/assets/tables/tbl07_dataset_cards.csv"
+copy_or_die "reports/publication/baseline_comparison_all.csv" "paper/assets/tables/tbl08_forecast_baselines.csv"
 
 "$PYTHON_BIN" - <<'PY'
 from pathlib import Path
@@ -146,5 +147,6 @@ copy_or_die "reports/publication/fig_calibration_tradeoff.png" "paper/assets/fig
 copy_or_die "reports/publication/fig_transfer_generalization.png" "paper/assets/figures/fig11_transfer_generalization.png"
 
 "$PYTHON_BIN" "scripts/build_paper_table_tex.py"
+"$PYTHON_BIN" "scripts/update_paper_metrics.py"
 
 echo "Exported curated paper assets under paper/assets/."
