@@ -12,6 +12,7 @@ import requests
 import yaml
 
 from iot.edge_agent.drivers.http_gateway import HTTPGatewayDriver
+from iot.edge_agent.drivers.modbus_tcp import ModbusTCPDriver
 
 
 class GridPulseApiClient:
@@ -76,10 +77,48 @@ def _extract_action(command_payload: dict[str, Any]) -> tuple[float, float]:
     return float(command.get("charge_mw", 0.0)), float(command.get("discharge_mw", 0.0))
 
 
+def _gateway_cfg(iot_cfg: dict[str, Any]) -> dict[str, Any]:
+    driver_cfg = iot_cfg.get("driver", {}) if isinstance(iot_cfg.get("driver", {}), dict) else {}
+    if isinstance(driver_cfg.get("http_gateway"), dict):
+        return dict(driver_cfg["http_gateway"])
+    legacy = iot_cfg.get("gateway", {}) if isinstance(iot_cfg.get("gateway", {}), dict) else {}
+    return dict(legacy)
+
+
+def _build_driver(iot_cfg: dict[str, Any]) -> Any:
+    driver_cfg = iot_cfg.get("driver", {}) if isinstance(iot_cfg.get("driver", {}), dict) else {}
+    kind = str(driver_cfg.get("kind", "http_gateway")).strip() or "http_gateway"
+    if kind == "http_gateway":
+        gateway_cfg = _gateway_cfg(iot_cfg)
+        gateway_token_env = str(gateway_cfg.get("auth_token_env", "GRIDPULSE_GATEWAY_TOKEN"))
+        gateway_token = os.getenv(gateway_token_env, gateway_cfg.get("auth_token", None))
+        return HTTPGatewayDriver(
+            base_url=str(gateway_cfg.get("base_url", "http://localhost:9001")),
+            telemetry_path=str(gateway_cfg.get("telemetry_path", "/telemetry/latest")),
+            command_path=str(gateway_cfg.get("command_path", "/command/apply")),
+            timeout_s=float(gateway_cfg.get("timeout_s", 5.0)),
+            retries=int(gateway_cfg.get("retries", 2)),
+            auth_header=gateway_cfg.get("auth_header"),
+            auth_token=gateway_token,
+        )
+    if kind == "modbus_tcp":
+        modbus_cfg = driver_cfg.get("modbus_tcp", {}) if isinstance(driver_cfg.get("modbus_tcp", {}), dict) else {}
+        return ModbusTCPDriver(
+            host=str(modbus_cfg.get("host", "127.0.0.1")),
+            port=int(modbus_cfg.get("port", 502)),
+            unit_id=int(modbus_cfg.get("unit_id", 1)),
+            timeout_s=float(modbus_cfg.get("timeout_s", 3.0)),
+            register_map=dict(modbus_cfg.get("register_map", {})),
+            command_registers=dict(modbus_cfg.get("command_registers", {})),
+            write_mode=str(modbus_cfg.get("write_mode", "single_register")),
+        )
+    raise RuntimeError(f"Unsupported IoT driver.kind: {kind}")
+
+
 def run_one_iteration(
     *,
     api: GridPulseApiClient,
-    driver: HTTPGatewayDriver,
+    driver: Any,
     device_id: str,
     zone_id: str,
     mode: str,
@@ -173,7 +212,7 @@ def run_one_iteration(
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run GridPulse edge-agent loop against HTTP gateway")
+    parser = argparse.ArgumentParser(description="Run GridPulse edge-agent loop against the configured IoT driver")
     parser.add_argument("--config", default="configs/iot.yaml")
     parser.add_argument("--mode", choices=["shadow", "active"], default=None)
     parser.add_argument("--iterations", type=int, default=None)
@@ -190,7 +229,6 @@ def main() -> None:
     cfg = _load_iot_cfg(args.config)
     defaults = cfg.get("defaults", {}) if isinstance(cfg.get("defaults", {}), dict) else {}
     api_cfg = cfg.get("api", {}) if isinstance(cfg.get("api", {}), dict) else {}
-    gateway_cfg = cfg.get("gateway", {}) if isinstance(cfg.get("gateway", {}), dict) else {}
 
     mode = args.mode or str(defaults.get("mode", "shadow"))
     iterations = int(args.iterations if args.iterations is not None else defaults.get("iterations", 24))
@@ -206,23 +244,12 @@ def main() -> None:
     if not api_key:
         raise RuntimeError(f"Missing GridPulse API key. Provide --api-key or set {api_key_env}.")
 
-    gateway_token_env = str(gateway_cfg.get("auth_token_env", "GRIDPULSE_GATEWAY_TOKEN"))
-    gateway_token = os.getenv(gateway_token_env, gateway_cfg.get("auth_token", None))
-
     api = GridPulseApiClient(
         base_url=str(args.api_base_url or api_cfg.get("base_url", "http://localhost:8000")),
         api_key=api_key,
         timeout_s=float(api_cfg.get("timeout_s", 10.0)),
     )
-    driver = HTTPGatewayDriver(
-        base_url=str(gateway_cfg.get("base_url", "http://localhost:9001")),
-        telemetry_path=str(gateway_cfg.get("telemetry_path", "/telemetry/latest")),
-        command_path=str(gateway_cfg.get("command_path", "/command/apply")),
-        timeout_s=float(gateway_cfg.get("timeout_s", 5.0)),
-        retries=int(gateway_cfg.get("retries", 2)),
-        auth_header=gateway_cfg.get("auth_header"),
-        auth_token=gateway_token,
-    )
+    driver = _build_driver(cfg)
 
     acked = 0
     nacked = 0

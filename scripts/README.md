@@ -7,7 +7,9 @@ Command-line scripts for training, evaluation, publication packaging, and releas
 The normalized research workflow is anchored to these entrypoints:
 - `train_dataset.py`: canonical per-dataset training and candidate-run acceptance
 - `run_r1_release.py`: canonical release-family orchestrator (`diagnostic`, `full`, `cpsbench`, `verify`, `promote`)
+- `build_baseline_comparison_table.py --release-id <id>`: canonical forecasting-table rebuild for the thesis headline regions
 - `build_publication_artifact.py --release-id <id>`: canonical publication artifact build
+- `post_training_paper_update.py --release-id <id>`: canonical final paper-freeze flow for one verified release family
 - `sync_paper_assets.py --check`: paper-asset freshness and provenance audit
 - `validate_paper_claims.py`: hard manuscript claim gate
 - `final_publish_audit.py`: final release GO/NO-GO audit
@@ -31,9 +33,12 @@ Legacy/internal scripts may still exist for compatibility, but they should not b
 | Script | Purpose |
 |--------|---------|
 | `build_reports.py` | Generate evaluation reports |
+| `build_baseline_comparison_table.py` | Rebuild the promoted six-model forecasting table from one release family |
 | `build_publication_artifact.py` | Build a manifest-locked publication package for one `release_id` |
+| `compute_reliability_group_coverage.py` | Build reliability-binned conformal coverage artifacts for research analysis |
 | `build_stats_tables.py` | Statistical significance tables |
 | `build_paper_table_tex.py` | Convert manifest-mapped CSV tables into LaTeX table fragments + token lookup |
+| `post_training_paper_update.py` | Freeze thesis/conference PDFs, render review PNGs, and record PDF hashes in the publication manifest |
 | `build_forecast_interval_report.py` | Uncertainty quantification report |
 | `statistical_tests.py` | Diebold-Mariano tests |
 | `shap_importance.py` | SHAP feature importance analysis |
@@ -66,6 +71,9 @@ Legacy/internal scripts may still exist for compatibility, but they should not b
 | `export_paper_assets.sh` | Export curated paper assets from raw publication outputs |
 | `sync_paper_assets.py` | Check paper assets against the locked release manifest and stale-value rules |
 | `validate_paper_claims.py` | Validate locked manuscript numbers, run IDs, and claim-matrix status |
+| `summarize_chil_run.py` | Summarize IoT/API/certificate outputs into a CHIL-style JSON report |
+| `export_pilot_bundle.py` | Export a future-pilot telemetry/decision/ACK/certificate bundle |
+| `validate_pilot_bundle.py` | Validate bundle schema, linkage, and timestamp ordering |
 | `run_publish_audit_isolated.sh` | Run full publish audit in isolated `/tmp` workspace clone |
 | `check_api_health.py` | API health verification |
 | `validate_configs.py` | Configuration validation |
@@ -128,6 +136,7 @@ python scripts/run_r1_release.py --stage full --release-id "$RELEASE_ID" --profi
 python scripts/run_r1_release.py --stage cpsbench --release-id "$RELEASE_ID"
 python scripts/run_r1_release.py --stage verify --release-id "$RELEASE_ID"
 python scripts/build_publication_artifact.py --release-id "$RELEASE_ID" --out-dir reports/publication
+python scripts/post_training_paper_update.py --release-id "$RELEASE_ID"
 python scripts/validate_paper_claims.py
 python scripts/sync_paper_assets.py --check
 python scripts/final_publish_audit.py --config configs/publish_audit.yaml --skip-retrain
@@ -180,3 +189,11 @@ This runs:
 3. `scripts/update_paper_metrics.py`
 4. `scripts/verify_paper_manifest.py`
 5. 2-pass `pdflatex` compile for `paper/paper.tex`
+
+For the final submission freeze, use the release-scoped canonical flow instead of `make paper-refresh`:
+
+```bash
+make paper-freeze RELEASE_ID=FINAL_20260312T000000Z
+```
+
+This performs the paper-refresh steps, compiles both `paper.tex` and `paper_r1.tex`, renders review PNGs, copies immutable frozen PDFs under `reports/publication/frozen/<RELEASE_ID>/`, and records PDF hashes in `reports/publication/release_manifest.json`.

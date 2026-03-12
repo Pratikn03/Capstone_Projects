@@ -21,6 +21,12 @@ from .rac_cert import (
     compute_inflation,
     normalize_sensitivity,
 )
+from .safety_filter_theory import (
+    reliability_error_bound,
+    tightened_soc_bounds,
+    check_tightened_soc_invariance,
+    safety_filter_projection_summary,
+)
 
 __all__ = [
     "compute_reliability",
@@ -44,4 +50,8 @@ __all__ = [
     "compute_q_multiplier",
     "compute_inflation",
     "normalize_sensitivity",
+    "reliability_error_bound",
+    "tightened_soc_bounds",
+    "check_tightened_soc_invariance",
+    "safety_filter_projection_summary",
 ]

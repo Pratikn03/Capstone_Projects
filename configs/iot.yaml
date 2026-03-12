@@ -4,6 +4,31 @@ iot:
     timeout_s: 10
     api_key_env: "GRIDPULSE_IOT_API_KEY"
     api_key: ""
+  driver:
+    kind: "http_gateway"
+    http_gateway:
+      base_url: "http://localhost:9001"
+      telemetry_path: "/telemetry/latest"
+      command_path: "/command/apply"
+      timeout_s: 5
+      retries: 2
+      auth_header: ""
+      auth_token_env: "GRIDPULSE_GATEWAY_TOKEN"
+      auth_token: ""
+    modbus_tcp:
+      host: "127.0.0.1"
+      port: 502
+      unit_id: 1
+      timeout_s: 3
+      write_mode: "single_register"
+      register_map:
+        load_mw: { address: 0, count: 1, scale: 1.0 }
+        renewables_mw: { address: 1, count: 1, scale: 1.0 }
+        soc_mwh: { address: 2, count: 1, scale: 0.1 }
+        timestamp_s: { address: 3, count: 1, scale: 1.0 }
+      command_registers:
+        charge_mw: { address: 100, count: 1, scale: 0.1 }
+        discharge_mw: { address: 101, count: 1, scale: 0.1 }
   gateway:
     base_url: "http://localhost:9001"
     telemetry_path: "/telemetry/latest"
