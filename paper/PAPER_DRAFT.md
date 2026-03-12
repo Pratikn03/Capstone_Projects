@@ -1,1119 +1,410 @@
-# DC³S: Telemetry-Reliability-Weighted Conformal Safety Shield for Battery Dispatch under Degraded Mixed Telemetry
+# DC3S: Telemetry-Reliability-Weighted Conformal Safety Shield for Battery Dispatch under Degraded Mixed Telemetry
 
 **Author:** Pratik Niroula  
-**Affiliation:** MNSU CIT (Major), Math (Minor)  
-**Date:** February 19, 2026
+**Affiliation:** Minnesota State University, Mankato; CIT (Major), Mathematics (Minor)
+**Date:** March 12, 2026
 
 ## Abstract
-DC³S addresses battery dispatch under degraded mixed telemetry by coupling telemetry-reliability scoring, conformal interval inflation, and safety-constrained action repair in one online loop. This release does not rely on a legacy non-nominal PICP headline from a single drift scenario. Instead, calibration is reported with standard interval metrics (PICP@90, PICP@95, mean interval width, pinball loss, and Winkler score), and safety is evaluated on truth-state SOC together with power, ramp, import-cap, and solver-feasibility outcomes. The resulting tradeoff is explicit rather than hidden: when telemetry quality degrades, DC³S widens uncertainty sets, repairs infeasible actions, and exposes the cost-carbon-safety frontier through auditable dispatch certificates.
-
-This paper presents DC³S as a telemetry-reliability-weighted conformal safety shield for battery dispatch across Germany (OPSD) and an expanded US evidence surface derived from EIA-930. The current locked quantitative claims are anchored to the canonical US dashboard profile used by the manuscript manifest, while the release-family asset set additionally documents MISO, PJM, and ERCOT dataset cards for the next retraining cycle. The deployment target is mixed telemetry rather than IoT-only sensing: the method is designed for operator stacks that blend field devices, SCADA-style feeds, and delayed or degraded measurements. The contribution is not a new battery objective alone, but a calibrated control wrapper plus benchmark and governance stack that converts degraded telemetry into bounded uncertainty and executable safe actions. Publication-facing quantitative claims remain locked to repository artifacts, run IDs, release-family manifests, and validator checks so manuscript updates do not drift from source data.
+Battery storage dispatch under degraded telemetry exposes a critical safety gap: when sensor readings are delayed, dropped, or corrupted, uncertainty estimates become miscalibrated and optimization solvers issue unsafe commands. We introduce DC3S (Detect-Calibrate-Constrain-Certify-Shield), a conformal safety shield that scores telemetry reliability at each control step, inflates prediction intervals via a Reliability-Adaptive Conformal Certification (RAC-Cert) law, projects candidate dispatch actions into the feasible safe set, and emits an auditable certificate. Evaluated on a CPSBench harness covering four fault dimensions (dropout, delay-jitter, spikes, out-of-order) across Germany (OPSD, 17,377 rows) and three US balancing authorities (EIA-930 MISO/PJM/ERCOT, about 13,500 rows each), DC3S achieves **zero true-SOC violations** with a 2.8% intervention rate while the deterministic baseline violates at 3.9% with P95 severity of 333 MWh. Cost-side, DC3S-wrapped dispatch yields 7.11% cost savings, 0.30% carbon reduction, and 6.13% peak shaving on DE; stochastic value of the stochastic solution is positive in both regions (DE VSS = 2,708.61, US VSS = 297,092.71). A nine-row ablation with Wilcoxon signed-rank gates isolates RAC-Cert inflation as the critical safety component. All quantitative claims are locked to versioned run artifacts and validated by an automated claim-consistency checker.
 
 ## Keywords
-Machine Learning, Energy Forecasting, Battery Dispatch, Robust Optimization, Conformal Prediction, Stochastic Programming, MLOps, Grid Operations
+Conformal Prediction, Battery Dispatch, Safety Shield, Telemetry Reliability, Robust Optimization, Cyber-Physical Systems, Uncertainty Quantification
 
 ## 1. Introduction
 
 ### 1.1 Operational Motivation
-Prediction-only systems stop before operational action. In grid operations, this is not sufficient: an operator needs dispatch decisions that satisfy physical constraints under uncertain demand and renewable generation. GridPulse is built as a closed decision loop:
+Grid-scale battery storage is now expected to support renewable integration, peak management, and flexible dispatch under noisy operational conditions. In practice, however, battery dispatch is driven by mixed telemetry rather than pristine state information: delayed measurements, stale SCADA-style feeds, packet reordering, and occasional spikes or dropouts are ordinary operational conditions, not edge cases. Under those conditions, prediction intervals can become miscalibrated and optimization solvers can issue commands that look feasible on observed state while violating the true battery envelope.
+
+GridPulse is built as a closed decision loop:
 
 `Forecast -> Optimize -> Dispatch -> Measure -> Monitor`
 
-This loop is implemented across model training, uncertainty calibration, optimization, monitoring, and API/dashboard delivery, with explicit governance to prevent metric drift across manuscript versions.
+The thesis studies the safety gap at the boundary between uncertainty estimation and control. The problem is not only to forecast well, but to decide safely when telemetry quality is degraded.
 
-In practice, this architecture addresses a common implementation failure in applied ML projects: high model quality in isolation with weak operational accountability once predictions are handed off. GridPulse explicitly binds model outputs to dispatch feasibility, safety guards, and measurable economic/carbon outcomes so that "good forecast metrics" and "good operational decisions" are assessed together.
+### 1.2 Research Questions
+1. Can one architecture maintain strong forecasting quality across DE and multi-region US regimes while exposing uncertainty in a dispatch-usable form?
+2. Does uncertainty-aware dispatch provide measurable value relative to deterministic dispatch under locked artifacts?
+3. Which shield components are actually responsible for safety: telemetry scoring, interval inflation, or action repair?
+4. Why do direct cost and peak gains differ so sharply across DE and US even when stochastic value remains positive in both regions?
 
-### 1.2 Problem Statement
-The problem addressed in this thesis is integrated decision quality, not isolated prediction error. The system must:
-1. Produce accurate short-horizon forecasts for load, wind, and solar.
-2. Quantify forecast uncertainty in a form usable by dispatch optimization.
-3. Compute physically feasible battery/grid actions under cost and carbon objectives.
-4. Demonstrate measurable decision impact against baseline policies.
-5. Maintain reproducible claim traceability across markdown, LaTeX, and release documents.
+### 1.3 Contributions
+1. A telemetry-aware conformal control wrapper that converts reliability, drift, and sensitivity signals into widened dispatch intervals.
+2. A safe-dispatch runtime that combines robust optimization, action repair, and step-level certification.
+3. Locked empirical evidence showing zero-violation safety under telemetry faults together with pinned DE and US run artifacts.
+4. A bounded governance contribution in which manifests, claim matrices, and validator gates are treated as part of the scientific object for this paper.
 
-This framing moves the optimization target from "minimize one model metric" to "optimize a constrained cyber-physical workflow under uncertainty." In that workflow, a low forecast error can still yield poor decisions if interval calibration, solver behavior, or control-plane safety are weak.
+### 1.4 Contribution Boundary
+The main scientific contribution is not a deep new conformal theorem. It is the coupling of telemetry reliability, uncertainty inflation, safe dispatch repair, and truth-state safety evaluation inside one auditable control loop. The formal RAC-Cert result in this manuscript is therefore presented as a supporting correctness proposition rather than as the primary novelty claim.
 
-### 1.3 Research Questions
-1. Can one architecture maintain high forecasting performance across DE and multi-region US datasets with different regimes?
-2. Does uncertainty-aware dispatch provide measurable value relative to deterministic dispatch?
-3. How large is decision impact (cost/carbon/peak) under dataset-scoped latest artifacts?
-4. Can run-scoped governance prevent cross-document metric contradictions?
+### 1.5 Paper Roadmap
+Section 2 positions the work in the literature. Sections 3 and 4 define the system context and dispatch problem. Sections 5 and 6 describe the forecasting, calibration, and shield mechanics. Sections 7 through 10 present the evidence, baseline diagnosis, and cross-region analysis. Sections 11 through 14 close with governance, validity, limitations, and conclusion. Section 15 lists references, followed by appendices.
 
-Each question is answered with locked in-repo evidence. This manuscript intentionally avoids claims requiring untracked notebooks, ad hoc local reruns, or post hoc manual calculations that are not serialized in the evidence paths declared in Section 5 and Section 7.
+## 2. Related Work
 
-### 1.3.1 Tight RQ -> Hypothesis -> Test -> Result Map
-| RQ | Hypothesis | Test protocol | Locked result | Decision |
-|---|---|---|---|---|
-| RQ1 | A shared architecture can maintain strong forecasting quality across DE/US regimes. | Train/evaluate DE and US under the same temporal framing (24-hour horizon, 168-hour lookback, 10-fold CV, 24-hour gap); compare RMSE/MAE/sMAPE/R2 in dashboard metric artifacts. | GBM is the strongest family across locked DE/US targets; representative load RMSE values are 267.51 (DE) and 162.89 (US). | Supported (within locked DE/US scope). |
-| RQ2 | Uncertainty-aware stochastic dispatch provides measurable value relative to deterministic stochastic formulation. | Read locked run-summary rows in `reports/research_metrics_de.csv` and `reports/research_metrics_us.csv`; evaluate VSS/EVPI under pinned run IDs. | VSS is positive in both locked runs: DE 2,708.61 (`20260217_165756`) and US 297,092.71 (`20260217_182305`). | Supported for stochastic value; impact percentages are reported separately as deterministic B1 vs B2. |
-| RQ3 | Dataset-scoped latest locking yields measurable, reproducible region-level impact magnitudes. | Extract latest dataset-scoped rows from `reports/impact_summary.csv` (DE) and `reports/eia930/impact_summary.csv` (US) using manifest rounding rules. | DE: 7.11% cost, 0.30% carbon, 6.13% peak. US: 0.11% cost, 0.13% carbon, 0.00% peak. | Supported. |
-| RQ4 | Run-scoped governance prevents cross-document metric contradictions at release time. | Enforce manifest/claim/validator contract across outputs: `paper/metrics_manifest.json`, `paper/claim_matrix.csv`, `scripts/validate_paper_claims.py`. | Publication claims are run-ID scoped and validator-gated; canonical values cannot change without synchronized source and claim updates. | Supported as an empirical process-control property. |
+### 2.1 Conformal Prediction and Time-Series Calibration
+Classical conformal prediction (Vovk, Gammerman, and Shafer, 2005; Shafer and Vovk, 2008) provides the base coverage logic used by this thesis. Conformalized quantile regression (Romano, Patterson, and Candès, 2019) is the direct calibration template used in the forecasting layer. Adaptive conformal inference under distribution shift (Gibbs and Candès, 2021) and adaptive conformal prediction for time series (Zaffran et al., 2022) motivate the online and temporal components of the uncertainty layer. Weighted and generalized conformal approaches beyond exchangeability (Barber et al., 2023) are relevant because the thesis explicitly acknowledges that distributional assumptions weaken under degraded telemetry.
 
-### 1.4 Contributions
-1. A production-oriented multi-layer GridPulse implementation with forecast, optimization, monitoring, and serving layers.
-2. A conformal + adaptive interval workflow integrated into robust dispatch evaluation.
-3. A release-family metric lock with explicit run IDs, dataset cards, and reproducible evidence paths across DE and the expanded US evidence surface.
-4. A publication governance mechanism (`metrics_manifest`, claim matrix, validator script) that prevents legacy-claim regression.
+### 2.2 Robust, Stochastic, and Risk-Aware Dispatch
+The dispatch layer draws directly on robust optimization (Bertsimas, Brown, and Caramanis, 2011; Ben-Tal, El Ghaoui, and Nemirovski, 2009), stochastic programming (Birge and Louveaux, 2011), and CVaR linearization (Rockafellar and Uryasev, 2000). In the BESS domain, Rosewater, Baldick, and Santoso (2020) are the closest direct comparator because they study risk-averse model predictive control for battery energy storage under uncertainty.
 
-Contribution boundaries are stated explicitly. This thesis does not claim complete market realism for all settlement regimes, universal transferability across all operators, or causal policy-level effects. It claims an operationally integrated and evidence-governed system with reproducible DE/US outcomes under the locked artifacts.
+### 2.3 Safety Shields and Runtime Monitoring
+Shielding work in safe reinforcement learning (Alshiekh et al., 2018; Kőnighofer et al., 2020) and model-predictive shielding (Bastani, 2021) motivates the projection-and-repair step. Runtime verification (Leucker and Schallhart, 2009) and simple runtime safety architectures (Sha, 2001) motivate the certificate and audit interpretation of the control path.
 
-### 1.4.1 Scientific Novelty Beyond Integration
-Most prior work treats forecasting, uncertainty, dispatch, and reporting as loosely coupled stages. This thesis makes three method-level claims beyond engineering integration:
-1. **RAC-Cert as a control-coupled conformal method:** interval width is adapted by telemetry reliability, drift state, and dispatch sensitivity, then enforced through shielded repair and certificate persistence, coupling uncertainty construction directly to control risk.
-2. **Truth-vs-observed safety semantics:** safety is evaluated on `SOC_true` while control actions are chosen from degraded `SOC_obs`, exposing hidden violation risk under telemetry faults that is masked by observed-state-only evaluation.
-3. **Governance as an experimental object:** claim validity is machine-checkable through manifest-locked sources, claim-level provenance, and validator gates, making reproducibility a testable release condition rather than a narrative claim.
+### 2.4 Telemetry Reliability and CPS Fault Models
+The telemetry fault vocabulary used here—dropout, delay, spikes, and reordered observations—follows the systems-and-control view of CPS security and reliability (Dibaji et al., 2019) together with classical anomaly-detection framing (Chandola, Banerjee, and Kumar, 2009). The physical importance of safe BESS dispatch is grounded in grid-scale storage reviews such as Chen et al. (2020).
 
-These novelty claims are evaluated only within the locked DE/US evidence scope and are not asserted as universal guarantees across all grids.
+### 2.5 Reproducibility and Governance
+The governance layer is deliberately narrow. It is informed by reproducibility work such as Pineau et al. (2021), but it is not claimed as a universal framework. The thesis only claims that for this project, claim locking and validator gates are necessary to prevent manuscript-artifact drift.
 
-### 1.5 Thesis Scope and Reading Guide
-To support future editing, this draft is organized so each section can be expanded or trimmed independently:
-1. Sections 2-4 define implementation and methods with code-level anchors.
-2. Sections 5-8 define evidence policy and claim governance.
-3. Section 6 contains the canonical quantitative results.
-4. Sections 9-13 interpret findings, limits, and roadmap.
-5. Appendices provide replication commands, artifact inventory, and copy-ready writing guidance.
+## 3. Background, Preliminaries, and System Context
 
-If manuscript length must be reduced later, keep Sections 6, 7, and 14 intact first; those contain the metric-locked claims that must remain synchronized across formats.
+### 3.1 GridPulse System Context
+GridPulse is implemented as a forecast-to-dispatch stack whose main layers are data preparation, forecasting, uncertainty calibration, optimization, monitoring, and API/dashboard serving. DC3S sits between uncertainty estimation and command execution. It receives observed telemetry and calibrated intervals, widens those intervals when quality deteriorates, solves or wraps a dispatch action, repairs the action if necessary, and emits a certificate for audit.
 
-## 2. System Architecture and Implementation
-
-### 2.1 Decision Loop and Layering
-GridPulse is implemented as an eight-layer pipeline consistent with repository modules and docs (`docs/ARCHITECTURE.md`):
-1. Data ingestion and feature generation.
-2. Forecast model training/inference.
-3. Uncertainty interval calibration.
-4. Anomaly detection.
-5. Dispatch optimization (deterministic + robust).
-6. Impact and stochastic evaluation.
-7. Monitoring and retraining logic.
-8. API + dashboard serving.
-
-The layering is intentionally conservative: each layer writes explicit artifacts consumed by the next layer instead of relying on implicit in-memory contracts. This supports auditability and simplifies failure isolation. For example, optimizer-level anomalies can be traced back to concrete forecast and interval artifacts instead of inferred from logs alone.
-
-### 2.2 Component-to-Code Map
+### 3.2 Component-to-Code Map
 | Layer | Purpose | Primary paths |
 |---|---|---|
-| Data pipeline | Build/validate region features and splits | `src/gridpulse/data_pipeline/`, `src/gridpulse/pipeline/run.py` |
-| Forecasting | GBM plus deep-baseline train + predict | `src/gridpulse/forecasting/` |
-| Uncertainty | Conformal + adaptive interval logic | `src/gridpulse/forecasting/uncertainty/conformal.py` |
-| Optimization | Deterministic MILP and robust dispatch | `src/gridpulse/optimizer/lp_dispatch.py`, `src/gridpulse/optimizer/robust_dispatch.py` |
-| Monitoring | Drift detection and retraining decisions | `src/gridpulse/monitoring/` |
-| Safety | BMS-style limits and watchdog health | `src/gridpulse/safety/` |
-| API serving | Forecast/optimize/monitor/anomaly endpoints | `services/api/main.py`, `services/api/routers/` |
-| Frontend | Operator dashboard and regional views | `frontend/` |
-
-The code map is publication-relevant because this thesis claims implementation-level contributions, not only conceptual workflows. All functional claims in this manuscript should be traceable to these modules or their direct dependencies.
-
-### 2.3 Runtime Interfaces
-FastAPI includes routes for forecast, intervals, anomaly, optimization, and monitoring:
-- `/forecast`
-- `/forecast/with-intervals`
-- `/anomaly`
-- `/optimize`
-- `/monitor`
-- `/monitor/model-info`
-- `/dc3s/step`
-- `/dc3s/audit/{command_id}`
-- `/health`, `/ready`, `/metrics`
-
-Operational control routes also exist (`/system/health`, `/system/heartbeat`, `/control/dispatch`) with API-key scope checks and safety validation in `services/api/main.py`.
-
-Endpoint behavior is scoped as follows:
-1. Forecasting routes provide point forecasts and interval outputs.
-2. Optimization routes expose deterministic and robust dispatch pathways.
-3. Monitoring routes return drift and retraining state plus research metric snapshots.
-4. Control routes are guarded by scope checks and runtime safety checks (watchdog and BMS validation).
-
-Existing runtime endpoints remain unchanged; these interfaces are additive extensions for Section 1-3 implementation coverage.
+| Data pipeline | Region features, splits, and profile locks | `src/gridpulse/data_pipeline/`, `src/gridpulse/pipeline/run.py` |
+| Forecasting | GBM and deep-baseline training/inference | `src/gridpulse/forecasting/` |
+| Uncertainty | Conformal and adaptive interval logic | `src/gridpulse/forecasting/uncertainty/conformal.py` |
+| Optimization | Deterministic, robust, and baseline dispatch | `src/gridpulse/optimizer/` |
+| DC3S | Reliability, drift, shield, certificate, and state | `src/gridpulse/dc3s/` |
+| Monitoring | Drift checks and retraining logic | `src/gridpulse/monitoring/` |
+| API and dashboard | Runtime routes and operator-facing inspection | `services/api/`, `frontend/` |
 
-### 2.4 Artifact Handoff Contracts
-Primary artifact contracts used by this manuscript:
-1. Forecast/dashboard metrics: `data/dashboard/de_metrics.json`, `data/dashboard/us_metrics.json`.
-2. Dataset profiles: `data/dashboard/de_stats.json`, `data/dashboard/us_stats.json`, `data/dashboard/manifest.json`.
-3. Decision impact: `reports/impact_summary.csv`, `reports/eia930/impact_summary.csv`.
-4. Stochastic metrics: `reports/research_metrics_de.csv`, `reports/research_metrics_us.csv`.
-5. Robustness diagnostics: `reports/publication/tables/table6_robustness.csv`.
+### 3.3 Artifact Contracts and Profile Lock
+The thesis uses a locked artifact family rather than free-floating report values. The main publication interfaces are:
+1. `data/dashboard/de_metrics.json` and `data/dashboard/us_metrics.json`
+2. `data/dashboard/de_stats.json`, `data/dashboard/us_stats.json`, and `data/dashboard/manifest.json`
+3. `reports/impact_summary.csv` and `reports/eia930/impact_summary.csv`
+4. `reports/research_metrics_de.csv` and `reports/research_metrics_us.csv`
+5. publication tables and figures under `reports/publication/`
+
+### 3.4 Dataset Scope
+The canonical profile lock is:
+1. DE (OPSD): 17,377 hourly rows
+2. US dashboard profile: 13,638 hourly rows for the canonical manuscript lock
+3. release-family supporting assets: US_MISO, US_PJM, and US_ERCOT dataset cards
+
+This means the thesis preserves a single locked dashboard story for canonical quantitative claims while acknowledging the broader multi-BA release family in the surrounding analysis.
+
+### 3.5 Truth vs. Observed State
+The most important preliminaries distinction is between observed and true state:
+1. `SOC_obs` is what the controller sees after telemetry degradation
+2. `SOC_true` is the physical state used for safety evaluation
+
+This is what allows the benchmark to expose hidden safety failures that would disappear if evaluation were done only on observed state.
+
+## 4. Problem Formulation
+
+### 4.1 Dispatch Setting
+At each step `t`, the controller observes telemetry `z_t` containing load, wind, solar, price, and battery-state signals, possibly degraded by dropout, delay, spikes, or reordering. It then chooses a dispatch action `a_t` inside a feasible set constrained by SOC, power, and ramp limits.
+
+### 4.2 Battery Dynamics and Feasible Set
+The true battery state evolves under charge/discharge efficiency and capacity constraints. The feasible set enforces:
+1. SOC lower and upper bounds
+2. battery power limits
+3. ramp constraints relative to the previous action
+
+The thesis evaluates safety on `SOC_true`, not on the degraded observed state.
+
+### 4.3 Objective
+The dispatch objective combines:
+1. energy cost
+2. carbon-weighted cost
+3. peak-demand penalty
+4. battery-throughput degradation penalty
+
+This is a comparative engineering objective used to evaluate decision quality under locked artifacts. It is not presented as a complete representation of all market settlement rules.
+
+### 4.4 Calibration Gap
+Base conformal prediction constructs intervals targeting a nominal coverage level. Under degraded telemetry, the conformity-score distribution shifts and the base intervals can become too narrow for safe control. This failure mode is the calibration gap addressed by DC3S.
+
+### 4.5 Baseline Policies
+Three baseline notions appear throughout the thesis:
+1. `B1`: deterministic LP dispatch without uncertainty intervals
+2. `B2`: grid-only dispatch with no battery action
+3. `B3`: naive fixed-window battery heuristic
+
+Canonical DE and US impact percentages are always interpreted as B1-vs-B2 comparisons. Stochastic metrics come from pinned robust-versus-deterministic run summaries rather than B2.
+
+## 5. Forecasting and Uncertainty Method
+
+### 5.1 Locked Forecasting Layer
+The locked comparison set contains GBM (LightGBM), LSTM, and TCN. The broader training stack already supports N-BEATS, TFT, and PatchTST, but those models are candidate baselines for future release-family reruns rather than part of the canonical dashboard tables.
+
+### 5.2 Training Setup
+The locked training configuration uses:
+1. 24-hour forecast horizon
+2. 168-hour lookback
+3. 10-fold time-aware cross-validation
+4. 24-hour temporal gap
+
+These settings matter twice: they make the forecasting comparison leakage-safe, and they define the representation contract later consumed by optimization and calibration.
+
+### 5.3 CQR and Adaptive Conformal Layer
+The uncertainty layer follows conformalized quantile regression: lower and upper quantile models are calibrated on a held-out slice, then expanded by an empirical residual quantile. Adaptive conformal logic updates effective coverage behavior online. Regime-aware calibration bins the time series by volatility so the paper can inspect where the base calibration is near nominal and where it is not.
+
+### 5.4 RAC-Cert Inflation Law
+RAC-Cert widens the base conformal interval according to:
+1. telemetry reliability score `w_t`
+2. drift signal `d_t`
+3. sensitivity probe `s_t`
+
+The inflation factor is clipped below by 1, so the shield never narrows the base interval in response to degraded telemetry.
+
+### 5.5 Supporting Proposition and Contribution Boundary
+**Supporting proposition.** If the base conformal predictor satisfies marginal coverage under the clean distribution, and RAC-Cert only inflates intervals so that the inflated interval contains the base interval, then marginal coverage cannot decrease under that inflation.
+
+This is intentionally presented as a supporting correctness result rather than a deep theoretical contribution. The thesis novelty is the control coupling and empirical truth-state safety evidence, not the set-inclusion argument itself.
+
+## 6. Safe Dispatch and DC3S Shield
+
+### 6.1 Robust Dispatch
+Given the RAC-inflated lower and upper trajectories for load, wind, and solar, DC3S solves a two-scenario robust dispatch problem over those widened bounds.
+
+### 6.2 CVaR Comparator
+For comparison, the experiments also include a CVaR baseline using the standard Rockafellar-Uryasev linearization. This helps separate telemetry-aware safe control from generic tail-risk optimization.
+
+### 6.3 Action Repair
+If the optimizer proposes an action that violates SOC, power, or ramp constraints, DC3S projects it back into the feasible set. This step is what turns a risk-aware optimizer into a safe controller.
+
+### 6.4 Certificate Emission and Audit
+Each step emits a certificate containing:
+1. time index
+2. reliability score
+3. inflated interval
+4. candidate action
+5. repaired safe action
+6. solver status
+7. observed SOC
+8. distance to the nearest active constraint
+
+This certificate chain is what makes the shield auditable rather than merely conservative.
+
+### 6.5 One-Step Runtime Flow
+The runtime order is:
+1. observe telemetry
+2. score reliability
+3. detect drift and sensitivity
+4. inflate intervals
+5. solve dispatch
+6. repair unsafe actions
+7. emit certificate
 
-These contracts are treated as public interfaces between offline pipelines and publication outputs. If any contract path or schema changes, `paper/metrics_manifest.json` and `paper/claim_matrix.csv` must be updated in the same revision.
-
-### 2.5 Deployment and Runtime Modes
-GridPulse supports both research and operational execution patterns:
-1. Offline batch mode for training, evaluation, and report generation.
-2. API service mode (`services/api/main.py`) for live forecast/optimization requests.
-3. Dashboard mode (`frontend/`) for operator-facing visualization and inspection.
-
-The manuscript does not assume uninterrupted real-time operation for all components. Instead, it documents explicit fallbacks (for example, baseline dispatch when optimization is infeasible) and health checks that allow safe degradation.
-
-### 2.6 End-to-End Request Lifecycle
-An operational request path can be summarized in six steps:
-1. Load latest feature window and resolve requested target(s).
-2. Retrieve model bundle and produce forecast vectors.
-3. Optionally attach conformal intervals where calibration artifacts exist.
-4. Solve deterministic or robust dispatch with configured constraints.
-5. Return action plan plus cost/carbon summaries when available.
-6. Record monitoring signals and maintain control-plane heartbeats.
-
-This lifecycle is central to thesis reproducibility because it ties observed outcomes to deterministic processing stages with explicit files, routes, and solver statuses.
-
-### 2.7 Section 1-3 Implementation Update (Publish Blockers, Streaming, DC3S)
-Section 1 (immediate publish blockers) was implemented by replacing frontend chat tool mock outputs with backend-derived FastAPI calls in `frontend/src/app/api/chat/tool-executors.ts`. Production tool paths now resolve through `/forecast`, `/forecast/with-intervals`, `/optimize`, `/optimize/baseline`, `/monitor`, `/anomaly`, `/health`, `/ready`, and `/monitor/model-info`, and tool execution explicitly fails on backend errors instead of returning fabricated fallback payloads. Deployment/runtime hygiene changes were also applied: dashboard container/service ports were normalized to `3000`, dashboard deploy workflow Dockerfile targeting was corrected, local absolute report paths were removed, and tracked coverage artifacts were removed and ignored for reproducibility hygiene.
-
-Section 2 (streaming correctness) was implemented with a new CLI module `src/gridpulse/streaming/run_consumer.py` supporting:
-`python -m gridpulse.streaming.run_consumer --config configs/streaming.yaml --max-messages <N>`.
-This loader maps YAML config into streaming `AppConfig`, instantiates `StreamingIngestConsumer`, and closes resources cleanly. Persistence behavior was made explicit via public `write_event(...)` in `src/gridpulse/streaming/consumer.py` and integrated in `src/gridpulse/streaming/worker.py` after schema validation. The expected persistence artifact is `data/interim/streaming.duckdb` with table `telemetry_events`.
-
-Section 3 (DC3S) was implemented with new config `configs/dc3s.yaml`, DC3S modules in `src/gridpulse/dc3s/` (`quality.py`, `drift.py`, `calibration.py`, `shield.py`, `certificate.py`, `state.py`), and FastAPI router endpoints in `services/api/routers/dc3s.py`: `POST /dc3s/step` and `GET /dc3s/audit/{command_id}`. The step endpoint returns proposed and shield-repaired safe actions, uncertainty payloads, and certificate identifiers; audit retrieval returns persisted certificate JSON. The `heuristic` controller mode is intentionally not implemented in this phase and is explicitly rejected at runtime.
-
-Frontend live-ops behavior for this flow is now explicitly implemented in `frontend/src/app/(dashboard)/page.tsx`, `frontend/src/lib/api/dc3s-client.ts`, `frontend/src/components/dashboard/DC3SLiveCard.tsx`, and `frontend/src/app/api/dc3s/audit/[commandId]/route.ts`. The dashboard initializes DC3S polling at 15 seconds, allows operator selection of auto-refresh (`Off`, `5s`, `10s`, `15s`, `30s`, `60s`), and supports manual refresh. The card displays the active `command_id` and exposes a direct audit link that opens `/api/dc3s/audit/{commandId}`; the Next.js route encodes the ID and proxies to FastAPI `/dc3s/audit/{commandId}` with explicit error propagation.
-
-## 3. Data Assets, Scope, and Feature Design
-
-### 3.1 Dataset Policy Lock (Canonical)
-This manuscript uses the dashboard profile lock generated at `2026-02-17T11:15:38.623283` (`data/dashboard/manifest.json`).
-
-| Region | Dataset Label | Rows (hourly) | Columns | Engineered Features | Start (UTC) | End (UTC) | Approx Days |
-|---|---|---:|---:|---:|---|---|---:|
-| DE | Germany (OPSD) | 17,377 | 98 | 94 | 2018-10-07 23:00 | 2020-09-30 23:00 | 724.04 |
-| US | USA (EIA-930 MISO) | 13,638 | 118 | 114 | 2024-07-01 06:00 | 2026-01-20 11:00 | 568.25 |
-
-The lock is a governance boundary, not only a descriptive snapshot. Any value outside this scope may still be analytically useful, but it cannot be published as a canonical thesis claim without manifest-level reconciliation.
-
-### 3.2 Signal and Target Definitions
-Target variables in both regions are:
-- `load_mw`
-- `wind_mw`
-- `solar_mw`
-
-Region-specific context:
-- DE includes `price_eur_mwh` and `carbon_kg_per_mwh` in the profile.
-- US includes generation-mix channels (`coal_mw`, `gas_mw`, `nuclear_mw`, `hydro_mw`) and `price_usd_mwh` / `carbon_kg_per_mwh` features.
-
-This target alignment enables cross-region architectural comparisons while still preserving dataset-specific feature context. In other words, model families and pipeline stages are shared, but feature spaces remain region-aware.
-
-### 3.3 Feature Family Composition
-| Region | Weather Features | Lag Features | Calendar Features | Total Features |
-|---|---:|---:|---:|---:|
-| DE | 40 | 36 | 6 | 94 |
-| US | 56 | 42 | 6 | 114 |
+## 7. Experimental Protocol
+
+### 7.1 Forecasting Evaluation
+The forecasting layer compares GBM, LSTM, and TCN on the three primary targets: load, wind, and solar. All models use the same 24-hour horizon, 168-hour lookback, and temporal cross-validation framing.
 
-The US profile has a broader weather feature footprint and generation-mix context, which can affect uncertainty calibration and optimization behavior. This is one structural reason cross-region magnitude differences should be interpreted cautiously.
+### 7.2 Fault Injection Benchmark
+CPSBench injects four telemetry fault families:
+1. dropout
+2. delay-jitter
+3. spikes
+4. out-of-order telemetry
 
-### 3.4 Target Distribution Snapshot
-Values below are from `targets_summary` in dashboard stats files.
+All safety is evaluated on true SOC rather than observed SOC.
 
-| Region | Target | Mean (MW) | Std (MW) | Min (MW) | Max (MW) | Median (MW) | Non-zero (%) |
-|---|---|---:|---:|---:|---:|---:|---:|
-| DE | load_mw | 55,156.42 | 9,998.06 | 31,923.0 | 76,925.0 | 54,752.0 | 100.0 |
-| DE | wind_mw | 14,368.98 | 10,321.58 | 136.0 | 46,064.0 | 11,728.0 | 100.0 |
-| DE | solar_mw | 5,013.16 | 7,665.92 | 0.0 | 32,947.0 | 156.0 | 56.8 |
-| US | load_mw | 75,757.21 | 11,819.46 | 52,940.0 | 120,343.0 | 73,564.0 | 100.0 |
-| US | wind_mw | 10,955.94 | 6,041.83 | 0.0 | 26,132.0 | 10,183.5 | 100.0 |
-| US | solar_mw | 2,875.42 | 3,842.56 | 0.0 | 14,315.0 | 110.0 | 94.6 |
-
-### 3.5 Missingness and Data Quality
-`missing_pct` is empty in both dashboard stats JSON files, indicating no unresolved missingness in the locked feature profiles used for this manuscript snapshot.
-
-Data quality interpretation in this thesis is therefore focused on distributional behavior and calibration quality rather than imputation-heavy preprocessing effects in the locked profile artifacts.
-
-### 3.6 Scope Boundaries and Legacy Drift
-This thesis explicitly excludes non-locked legacy profile claims. In particular, previously circulated row/count/date-range claims from older report families are treated as non-canonical unless reconciled to the dashboard profile lock above.
-
-### 3.7 Leakage-Safe Temporal Framing
-The training configuration defines a 24-hour forecast horizon and 168-hour lookback with time-aware cross-validation and an explicit gap (`cross_validation.n_folds = 10`, `cross_validation.gap = 24`) in both DE and US forecast configs. This enforces temporal ordering and reduces leakage risk when comparing model families.
-
-Because this thesis is decision-oriented, leakage prevention is not only a forecasting requirement. Leakage in upstream forecasting would directly contaminate optimization and impact estimates, so temporal separation is treated as an end-to-end validity condition.
-
-## 4. Methods
+### 7.3 Controllers
+Five controllers are compared:
+1. deterministic LP
+2. robust fixed-interval
+3. CVaR interval
+4. DC3S wrapped
+5. DC3S FTIT
 
-### 4.1 Forecasting Method
-
-#### 4.1.1 Model Families
-GridPulse currently has two forecast-model layers relevant to this manuscript:
-1. **Locked comparison set:** GBM (LightGBM), LSTM, and TCN, which populate the current dashboard metrics and the forecast tables reported in this manuscript.
-2. **Extended R1 pipeline support:** N-BEATS, TFT, and PatchTST, which are implemented in the training stack for candidate-run retraining but are not yet promoted into the locked publication forecast tables.
-
-#### 4.1.2 Training Setup
-Configured horizon/lookback settings from `configs/train_forecast.yaml` and `configs/train_forecast_eia930.yaml`:
-- Forecast horizon: 24 hours.
-- Lookback: 168 hours.
-- Time-aware cross-validation enabled in config (10 folds with 24-hour gap).
-- Seed control and optional multi-seed training are defined in configs.
-
-Implementation detail that matters for reproducibility:
-1. DE and US both keep GBM as enabled baseline model with LightGBM hyperparameter blocks in config.
-2. The locked comparison set retains LSTM and TCN, while the current configs also define N-BEATS, TFT, and PatchTST candidate baselines for release-family reruns.
-3. Cross-validation behavior is explicitly controlled by config values rather than implicit defaults.
-4. Training artifacts are persisted into region-specific output paths (`artifacts/models` and `artifacts/models_eia930` pathways through configs/scripts).
-
-Runtime training controls are explicit in the CLI contract (`src/gridpulse/forecasting/train.py`, `scripts/train_dataset.py`). `--tune` force-enables Optuna tuning, `--no-tune` disables tuning even when YAML enables it, `--ensemble` trains multi-seed GBM members from config seeds, `--max-seeds` caps ensemble size, `--n-trials` overrides Optuna trial count, and `--top-pct` overrides top-trial aggregation percentile. In tuned runs, selected parameters and tuning metadata are serialized in saved bundles; in ensemble runs, per-seed metrics, seed list, and `ensemble_models` are persisted so inference and reporting remain run-reproducible.
-
-#### 4.1.3 Forecast Metrics
-Primary metrics: RMSE, MAE, sMAPE, R2. MAPE is recorded but can become numerically unstable when targets have many near-zero periods (especially solar and some wind segments), so interpretation prioritizes sMAPE and absolute metrics.
-
-Metric interpretation policy in this thesis:
-1. RMSE and MAE are primary for magnitude-sensitive operational quality.
-2. sMAPE is used for relative comparability across targets with different scales.
-3. R2 is included as explanatory fit context, not as a standalone decision metric.
-4. MAPE is treated as supplementary and interpreted carefully for near-zero regimes.
-
-#### 4.1.4 Forecast Inference Contract
-API-level forecast inference (`services/api/routers/forecast.py`) follows a strict contract:
-1. Load feature matrix from configured path.
-2. Resolve model bundle by target through explicit/fallback mapping.
-3. Emit next-horizon predictions with generated timestamp and metadata.
-4. Surface missing-model states explicitly in API response metadata.
-
-This contract is relevant for reproducibility because missing artifacts are not silently imputed; they are surfaced as explicit missing-target notes.
-Resolution behavior is deterministic: the router first checks explicit per-target model paths from config, then applies ordered fallback search (`lstm`, `tcn`, `gbm`) under `artifacts/models`. For GBM bundles containing `ensemble_models`, inference averages member predictions; for single-model bundles, it uses the single estimator path. Quantiles are served from explicit quantile models when present, otherwise from residual quantile offsets embedded in the bundle.
-
-### 4.2 Uncertainty: Conformal + Adaptive Intervals
-Conformal calibration (alpha = 0.10 nominal) is implemented in `src/gridpulse/forecasting/uncertainty/conformal.py` with horizon-wise residual quantiles and rolling updates.
-
-Core interval form:
-- Lower bound: `y_hat - q`
-- Upper bound: `y_hat + q`
-
-Where `q` is a calibrated residual quantile (global or horizon-wise). Adaptive conformal logic updates alpha/scale behavior online while preserving bounded controls. Coverage is evaluated with PICP, and width with MPIW.
-
-The implementation includes two linked mechanisms:
-1. `ConformalInterval` computes interval widths from residual quantiles.
-2. `AdaptiveConformal` updates effective alpha using bounded step logic (gamma-driven updates) when misses occur.
-
-Default conformal config values in code include `alpha = 0.10`, `rolling = true`, and `rolling_window = 720`, which are operationally meaningful because interval behavior can evolve with recent residual behavior rather than remaining static.
-
-### 4.3 Deterministic Dispatch Optimization
-Deterministic dispatch in `src/gridpulse/optimizer/lp_dispatch.py` solves a mixed-integer linear objective with battery charge/discharge, grid import, curtailment, unmet load penalty, and SOC dynamics. Objective terms include:
-1. Energy cost.
-2. Carbon-weighted cost proxy.
-3. Battery degradation throughput penalty.
-4. Optional peak-shaving penalty.
-
-Key constraints:
-- Power balance.
-- SOC recursion.
-- SOC bounds.
-- Charge/discharge power limits.
-- Grid import capacity.
-
-The deterministic objective can be summarized as:
-
-```text
-min sum_t [
-  (cost_weight * price_t + carbon_weight * carbon_cost_t) * grid_t
-  + degradation_cost * (charge_t + discharge_t)
-  + curtailment_penalty * curtail_t
-  + unmet_load_penalty * unmet_t
-] + peak_penalty * peak
-```
-
-Key implementation choices from config and code:
-1. Piecewise battery efficiency regimes (`efficiency_regime_a`, `efficiency_regime_b`) with SOC split gating.
-2. Optional interval-aware risk binding through `risk.mode = worst_case_interval` and bound selectors.
-3. Explicit high penalties for unmet load and curtailment to preserve physical realism in solved plans.
-
-Default deterministic optimization config (`configs/optimization.yaml`) includes `objective.cost_weight = 1.0`, `objective.carbon_weight = 1.2`, battery capacity `20,000 MWh`, battery max power `5,000 MW`, and grid import cap `100,000 MW`.
-
-### 4.4 Robust Dispatch Optimization
-Robust dispatch in `src/gridpulse/optimizer/robust_dispatch.py` uses a two-scenario min-max LP over lower/upper load bounds with scenario-coupled epigraph objective. The objective mixes:
-1. Worst-case scenario cost weight.
-2. Average scenario cost weight.
-3. Throughput degradation penalty.
-
-Robust feasibility is explicitly returned with solver status, scenario costs, and operational plan outputs.
-
-Robust objective form:
-
-```text
-min [
-  risk_weight_worst_case * z
-  + (1 - risk_weight_worst_case) * average_scenario_grid_cost
-  + degradation_cost_per_mwh * throughput
-]
-subject to:
-  z >= scenario_cost_lower
-  z >= scenario_cost_upper
-```
-
-Important implementation behaviors:
-1. Charge/discharge decisions are shared across scenarios, while grid import and SOC are scenario-indexed.
-2. Non-optimal solve termination returns an explicit infeasible-safe payload instead of partial unsafe actions.
-3. Solver availability is checked before solve, and status is returned in publication-facing artifacts.
-
-### 4.5 DC3S: Drift-Calibrated Conformal Safety Shield
-DC3S is implemented in `src/gridpulse/dc3s/` and exposed through `POST /dc3s/step` and `GET /dc3s/audit/{command_id}` in `services/api/routers/dc3s.py`. It composes telemetry quality weighting, drift detection, uncertainty inflation, safe action repair, and certificate-grade audit persistence.
-
-The implemented interval inflation law is linear and bounded:
-1. Base half-width is conformal quantile `q`.
-2. Reliability floor is applied as `w_t <- max(w_t, min_w)`.
-3. Inflation factor:
-`infl = clip(1 + k_q * (1 - w_t) + k_d * 1[drift], 1, infl_max)`.
-4. Final interval:
-`lower = y_hat - q * infl`,
-`upper = y_hat + q * infl`.
-
-The reliability module (`quality.py`) computes `w_t` from missingness, delay, out-of-order behavior, and spike penalties. Drift logic (`drift.py`) uses Page-Hinkley updates on residual magnitude `r_t = |y_t - y_hat_t|` with configured warmup and cooldown controls.
-
-**Coverage statement (informal).** The DC3S inflation rule should be read as an engineering control heuristic grounded in adaptive conformal intuition, not as a new finite-sample coverage theorem. The claim made in this manuscript is empirical: lower telemetry reliability increases interval width and controller conservatism, while running-coverage behavior is evaluated through the reported calibration tables and CPSBench fault sweeps rather than assumed to hold pointwise at every step.
-
-Safety shielding (`shield.py`) supports two modes:
-1. `projection`: deterministic clipping against SOC, power, and ramp constraints.
-2. `robust_resolve`: attempt robust optimization under interval bounds, then project as final guard.
-
-Certification (`certificate.py`) computes `model_hash` and `config_hash`, supports optional `prev_hash` chaining, and stores signed payload structure to DuckDB. Runtime online state (`state.py`) persists per `(zone, device, target)` keys including drift state, last inflation, latest telemetry/action context, and audit linkage pointers.
-
-### 4.6 Monitoring and Retraining Controls
-Monitoring logic (`services/api/routers/monitor.py`, `src/gridpulse/monitoring/`) includes:
-- KS-based data drift checks (`ks_drift`).
-- Model drift based on performance degradation thresholds.
-- Retraining decision logic with cadence and new-data conditions.
-
-Default monitoring thresholds are configured in `configs/monitoring.yaml`.
-
-Configured defaults in the lock snapshot:
-1. `data_drift.p_value_threshold = 0.01`.
-2. `model_drift.metric = mape`.
-3. `model_drift.degradation_threshold = 0.15`.
-4. `retraining.cadence_days = 30`.
-5. `retraining.min_new_data_days = 14`.
-
-These controls establish decision rules for when to retrain and when to keep current models, preventing ad hoc retraining that can invalidate comparability across evaluation windows.
-
-### 4.7 Safety and Operational Controls
-Safety controls include:
-1. BMS constraint checking for dispatch commands.
-2. Watchdog heartbeat and islanding protection.
-3. API scope verification for read/write operations.
-4. Health and readiness endpoints for runtime gating.
-
-`/control/dispatch` is protected by a three-step sequence in code:
-1. API scope authorization (`verify_scope("write", api_key)`).
-2. Watchdog islanding check (reject if isolated).
-3. BMS validation of charge/discharge/SOC bounds.
-
-This layered gate is part of the thesis contribution because it makes optimization outputs operationally enforceable rather than advisory.
-
-### 4.8 Reproducibility Controls
-Run manifests, pinned artifact paths, and non-mutating claim checks are core reproducibility controls for this thesis:
-- `paper/metrics_manifest.json`
-- `paper/claim_matrix.csv`
-- `scripts/validate_paper_claims.py`
-
-These controls are used as release gates, not passive documentation. A manuscript edit is considered incomplete unless the validator passes and claim rows remain traceable to canonical sources.
-
-### 4.9 Method Assumptions and Boundary Conditions
-This thesis assumes:
-1. Hourly dispatch horizon and timestep consistency.
-2. Price/carbon proxies are suitable for comparative decision analysis in the locked windows.
-3. Forecast uncertainty is represented by interval bounds rather than full probabilistic distributions.
-4. Battery and grid constraints in config are sufficient to produce physically plausible dispatch plans.
-
-These are engineering assumptions, not universal truths; they should be revisited for different markets or finer control cadences.
-
-### 4.10 Baselines and Comparator Policies
-This manuscript uses three explicit baseline policies for decision comparisons:
-1. **B1 (Deterministic LP, no uncertainty intervals)**: implemented in `src/gridpulse/optimizer/lp_dispatch.py` via `optimize_dispatch(...)` with point forecasts and without `load_interval` / `renewables_interval`. It uses battery + grid constraints and is the optimization policy reported as GridPulse in canonical impact artifacts.
-2. **B2 (Grid-only, no battery)**: implemented in `src/gridpulse/optimizer/baselines.py` as `grid_only_dispatch(...)`. It sets `battery_charge_mw = 0` and `battery_discharge_mw = 0`, and serves net deficit from grid import. This is the denominator baseline for canonical DE/US impact percentages.
-3. **B3 (Naive battery heuristic)**: implemented in `src/gridpulse/optimizer/baselines.py` as `naive_battery_dispatch(...)`, with a fixed rule that charges at 00-05 and discharges at 17-21.
-
-Runtime disambiguation: while API `/optimize` may default to robust mode in service context, publication impact percentages in this thesis are produced from offline deterministic `optimize_dispatch(...)` (B1) versus grid-only baseline (B2).
-
-## 5. Experimental Protocol
-
-### 5.1 Evidence-Lock Policy
-All publication-facing numeric claims in this draft must map to canonical values in `paper/metrics_manifest.json`. `paper/PAPER_DRAFT.md` is the authority file for writing, with synchronization rules defined in `paper/sync_rules.md`.
-
-The evidence-lock policy is intentionally strict because this project has multiple report families and historical drafts. Without a lock, metric drift can occur even when each individual number is locally valid in some artifact.
-
-### 5.2 Canonical Source and Run Selection
-| Claim Domain | Source | Selection Rule | Locked ID / Time |
-|---|---|---|---|
-| DE decision impact | `reports/impact_summary.csv` | latest dataset-scoped record | snapshot used in manifest |
-| US decision impact | `reports/eia930/impact_summary.csv` | latest dataset-scoped record | snapshot used in manifest |
-| DE stochastic metrics | `reports/research_metrics_de.csv` | row_type = run_summary | run `20260217_165756`, `2026-02-17T16:57:56.736552` |
-| US stochastic metrics | `reports/research_metrics_us.csv` | row_type = run_summary | run `20260217_182305`, `2026-02-17T18:23:06.287827` |
-| Dataset profile | `data/dashboard/*_stats.json` + manifest | dashboard lock only | `2026-02-17T11:15:38.623283` |
-
-### 5.3 Rounding and Formatting Rules
-From `paper/metrics_manifest.json`:
-1. Percent metrics: `round(value * 100, 2)`.
-2. Monetary, mass, and power values: two-decimal display where reported.
-3. Large stochastic values: thousands separators plus two decimals.
-
-Rounding is part of the claim contract. If raw values change in source files, manuscript updates must be generated from raw values and then rounded by these explicit rules, never by manual ad hoc formatting.
-
-### 5.4 Cross-Region Comparability Rules
-1. Compare methods and governance processes across DE/US.
-2. Do not assume equal effect sizes across regions.
-3. Use region-scoped source artifacts and run IDs for all stochastic statements.
-
-In practice, this means "same pipeline, different evidence contexts." The thesis compares architecture-level behavior while preserving region-specific dataset scope and run provenance.
-
-### 5.5 Consistency Gates
-The draft is considered publication-safe only when:
-1. `python scripts/validate_paper_claims.py` passes.
-2. Required run IDs appear exactly in markdown and LaTeX.
-3. No banned legacy percentages or placeholder tokens appear.
-4. All core claims are mapped in `paper/claim_matrix.csv`.
-
-### 5.6 Reconciliation Procedure for Conflicts
-When a conflicting value is found:
-1. Locate claim text and claim ID in `paper/claim_matrix.csv`.
-2. Identify canonical source and extraction rule from `paper/metrics_manifest.json`.
-3. Replace manuscript value with canonical display value derived from rounding policy.
-4. Re-run `scripts/validate_paper_claims.py`.
-5. Mirror the same correction in LaTeX/DOCX sync outputs.
-
-This procedure prevents "partial fixes" where one format is corrected while another remains stale.
-
-## 6. Results
-
-### 6.1 Forecast Quality Across Model Families
-Source: `data/dashboard/de_metrics.json`, `data/dashboard/us_metrics.json`.
-
-#### 6.1.1 Germany (DE)
-| Target | Model | RMSE | MAE | sMAPE (%) | R2 |
-|---|---|---:|---:|---:|---:|
-| load_mw | GBM | 267.51 | 167.49 | 0.35 | 0.9991 |
-| load_mw | LSTM | 3,474.78 | 2,722.50 | 5.38 | 0.8498 |
-| load_mw | TCN | 2,668.05 | 2,031.12 | 3.94 | 0.9114 |
-| wind_mw | GBM | 183.93 | 118.19 | 2.29 | 0.9993 |
-| wind_mw | LSTM | 6,735.07 | 5,511.23 | 60.85 | 0.1545 |
-| wind_mw | TCN | 9,196.16 | 7,167.41 | 76.67 | -0.5763 |
-| solar_mw | GBM | 251.44 | 121.22 | 69.27 | 0.9992 |
-| solar_mw | LSTM | 4,079.38 | 2,835.74 | 109.44 | 0.8007 |
-| solar_mw | TCN | 2,702.34 | 1,583.05 | 93.76 | 0.9125 |
-
-#### 6.1.2 United States (canonical locked dashboard profile)
-| Target | Model | RMSE | MAE | sMAPE (%) | R2 |
-|---|---|---:|---:|---:|---:|
-| load_mw | GBM | 162.89 | 123.23 | 0.17 | 0.9996 |
-| load_mw | LSTM | 4,767.14 | 3,835.32 | 5.24 | 0.6014 |
-| load_mw | TCN | 3,850.49 | 2,877.31 | 3.82 | 0.7399 |
-| wind_mw | GBM | 269.23 | 144.66 | 1.75 | 0.9982 |
-| wind_mw | LSTM | 6,301.91 | 5,234.31 | 42.59 | 0.0627 |
-| wind_mw | TCN | 7,187.54 | 5,930.74 | 47.65 | -0.2192 |
-| solar_mw | GBM | 208.92 | 74.93 | 45.45 | 0.9962 |
-| solar_mw | LSTM | 1,781.97 | 1,055.34 | 136.92 | 0.7135 |
-| solar_mw | TCN | 1,743.66 | 965.08 | 131.50 | 0.7257 |
-
-Interpretation: GBM is the strongest performer in the locked operational snapshots for both regions and all targets.
-
-Thesis-level interpretation:
-1. The GBM advantage is broad across load, wind, and solar in both regions for the locked evaluation artifacts.
-2. Deep models remain analytically useful but are not operational leaders in this snapshot.
-3. Because decisions are downstream of forecasts, model ranking should be interpreted together with optimization impact and not as an isolated leaderboard.
-The current forecast result tables use the canonical dashboard profile in which `US` maps to the locked US evidence row used by the paper manifest. Expanded US dataset cards for `US_MISO`, `US_PJM`, and `US_ERCOT` are already generated in the publication assets, but their full forecast-comparison tables will be promoted only after a full release-family retrain.
-
-### 6.2 GBM Residual and Coverage Diagnostics (90% Intervals)
-| Region | Target | Residual q10 | Residual q50 | Residual q90 | PICP (%) |
-|---|---|---:|---:|---:|---:|
-| DE | load_mw | -321.56 | -11.61 | 254.52 | 95.17 |
-| DE | wind_mw | -293.49 | -42.68 | 221.95 | 88.15 |
-| DE | solar_mw | -165.27 | 0.40 | 336.66 | 87.00 |
-| US | load_mw | -240.08 | 1.00 | 223.77 | 87.39 |
-| US | wind_mw | -146.14 | -3.96 | 122.64 | 80.50 |
-| US | solar_mw | -105.40 | -0.14 | 186.94 | 90.47 |
-
-Interpretation: coverage is close to nominal for some targets and lower for others, motivating region/target-specific uncertainty calibration tuning.
-
-Coverage pattern notes:
-1. DE load coverage exceeds nominal (conservative intervals in this slice).
-2. US wind coverage is materially below nominal, indicating under-coverage risk.
-3. Solar coverage differs by region and likely reflects different generation profiles and feature regimes.
-
-### 6.2A Baselines and Comparator Mapping
-| Result section/table | Numerator policy | Denominator/comparator policy | Source artifact |
-|---|---|---|---|
-| Decision Impact (Canonical Percent Outcomes) | B1 (deterministic LP, no uncertainty intervals) | B2 (grid-only, no battery) | `reports/impact_summary.csv`; `reports/eia930/impact_summary.csv` |
-| Decision Impact (Absolute Values) | B1 (deterministic LP, no uncertainty intervals) | B2 (grid-only, no battery) | `reports/impact_summary.csv`; `reports/eia930/impact_summary.csv` |
-| Stochastic Value Metrics (Canonical Run IDs) | robust vs deterministic stochastic formulations | deterministic/robust run-family comparator (not B2 denominator) | `reports/research_metrics_de.csv`; `reports/research_metrics_us.csv` |
-
-### 6.2B Baseline Absolute Policy Outcomes (DE/US)
-Source files:
-- `reports/impact_comparison.json` (DE)
-- `reports/eia930/impact_comparison.json` (US)
-
-Table uses existing serialized artifacts only (`baseline` = B2, `naive` = B3, `optimized_forecast` = B1) and applies two-decimal display rounding.
-
-| Region | Policy ID | Policy name | Cost (USD) | Carbon (kg) | Peak (MW) |
-|---|---|---|---:|---:|---:|
-| DE | B2 | Grid-only (no battery) | 154,773,462.72 | 1,461,641,243.28 | 52,165.00 |
-| DE | B3 | Naive battery heuristic | 154,200,945.64 | 1,454,657,899.03 | 52,165.00 |
-| DE | B1 | Deterministic LP (no uncertainty intervals) | 143,776,429.88 | 1,457,205,025.31 | 48,969.37 |
-| US | B2 | Grid-only (no battery) | 461,364,890.00 | 3,907,803,618.32 | 74,741.00 |
-| US | B3 | Naive battery heuristic | 462,821,035.03 | 3,911,194,390.28 | 70,929.00 |
-| US | B1 | Deterministic LP (no uncertainty intervals) | 460,842,677.76 | 3,902,642,369.72 | 74,741.00 |
-
-### 6.3 Decision Impact (Canonical Percent Outcomes)
-| Region | Cost Savings | Carbon Reduction | Peak Shaving |
-|---|---:|---:|---:|
-| DE | **7.11%** | **0.30%** | **6.13%** |
-| US | **0.11%** | **0.13%** | **0.00%** |
-
-Source files:
-- `reports/impact_summary.csv`
-- `reports/eia930/impact_summary.csv`
-
-All reported DE/US impact percentages are computed as B1 vs B2.
-
-Decision-impact reading guidance:
-1. Percent values are the canonical publication claims.
-2. The absolute table below should be used to explain scale.
-3. DE and US should not be treated as directly interchangeable market contexts.
-
-### 6.4 Decision Impact (Absolute Values)
-| Region | Baseline Cost (USD) | GridPulse Cost (USD) | Cost Delta (USD) | Baseline Carbon (kg) | GridPulse Carbon (kg) | Carbon Delta (kg) | Baseline Peak (MW) | GridPulse Peak (MW) | Peak Delta (MW) |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| DE | 154,773,462.72 | 143,776,429.88 | 10,997,032.84 | 1,461,641,243.28 | 1,457,205,025.31 | 4,436,217.97 | 52,165.00 | 48,969.37 | 3,195.63 |
-| US | 461,364,890.00 | 460,842,677.76 | 522,212.24 | 3,907,803,618.32 | 3,902,642,369.72 | 5,161,248.60 | 74,741.00 | 74,741.00 | 0.00 |
-
-Absolute impacts are critical for thesis writing because they show that a small percentage in a large system can still correspond to substantial absolute deltas.
-
-### 6.5 Stochastic Value Metrics (Canonical Run IDs)
-| Region | Run ID | Timestamp (UTC) | EVPI_robust | EVPI_deterministic | VSS | Robust Feasible | Solver Status |
-|---|---|---|---:|---:|---:|---|---|
-| DE | `20260217_165756` | 2026-02-17T16:57:56.736552 | 2.32 | -30.40 | 2,708.61 | True | summary |
-| US | `20260217_182305` | 2026-02-17T18:23:06.287827 | 10,279,851.74 | 24,915,503.93 | 297,092.71 | True | summary |
-
-Additional run-summary context:
-
-| Region | Mean Dynamic Interval Width | Mean Base Interval Width | Mean Stressed Interval Width | FACI Scale Lower | FACI Scale Upper |
-|---|---:|---:|---:|---:|---:|
-| DE | 653.57 | 657.11 | not reported in DE schema | 0.0648 | 1.0000 |
-| US | 649.20 | 415.60 | 1,233.49 | 0.1035 | 1.5965 |
-
-US run summary also includes operational control fields (same run row):
-- Operational grid cap (MW): 69,844.27
-- Reserve SOC (MWh): 2,000.00
-- Terminal SOC target (MWh): 4,450.43
-- Load stress additive (MW): 1,257.02
-- Stress interval multiplier: 1.90
-
-Interpretation for writing:
-1. Both runs are feasible and explicitly tied to run IDs and timestamps.
-2. DE run shows modest EVPI magnitudes with positive VSS.
-3. US run shows very large EVPI magnitudes and positive VSS, indicating strong sensitivity to uncertainty and scenario setup.
-4. These values are run-scoped and should always be written with run IDs.
-
-### 6.6 Robustness Perturbation Summary
-Source: `reports/publication/tables/table6_robustness.csv`.
-
-| Dataset | Perturbation (%) | Infeasible (%) | Mean Regret |
-|---|---:|---:|---:|
-| DE | 0.0 | 0.0 | 0.00 |
-| DE | 5.0 | 0.0 | -1,509.47 |
-| DE | 10.0 | 0.0 | -68,063.96 |
-| DE | 20.0 | 0.0 | -183,810.02 |
-| DE | 30.0 | 0.0 | -142,933.97 |
-| US | 0.0 | 0.0 | 0.00 |
-| US | 5.0 | 0.0 | 25,431.64 |
-| US | 10.0 | 0.0 | -241,341.60 |
-| US | 20.0 | 0.0 | -140,118.36 |
-| US | 30.0 | 0.0 | 506,266.38 |
-
-All listed perturbation points remain feasible in this summary table.
-
-Regret sign caution:
-1. Negative regret values can appear depending on comparator definitions and scenario realization.
-2. Regret magnitude should be interpreted with consistent metric definitions from the source table, not redefined ad hoc in text.
-
-### 6.7 Cross-Region Interpretation
-1. Both regions show positive VSS under canonical runs, indicating stochastic/robust value exists in both settings.
-2. Magnitude differs strongly by region, implying scenario design and market regime sensitivity.
-3. DE shows stronger direct percent decision impact in the locked snapshot.
-4. US shows smaller percent impact in cost/peak, but large stochastic value magnitudes in canonical run summary metrics.
-
-This pattern supports a key thesis argument: forecast-to-dispatch systems should be evaluated as region-specific decision systems, not benchmarked only by aggregate forecast score transferability.
-
-### 6.8 Copy-Ready Core Claims
-Use these exact statements in publication sections to avoid drift:
-1. DE cost savings: 7.11%; DE carbon reduction: 0.30%; DE peak shaving: 6.13%.
-2. US cost savings: 0.11%; US carbon reduction: 0.13%; US peak shaving: 0.00%.
-3. DE stochastic run: 20260217_165756 (EVPI_robust 2.32; EVPI_deterministic -30.40; VSS 2,708.61).
-4. US stochastic run: 20260217_182305 (EVPI_robust 10,279,851.74; EVPI_deterministic 24,915,503.93; VSS 297,092.71).
-5. Metric policy is dataset-scoped latest; this manuscript is not a single common-run freeze.
-
-### 6.9 Negative and Neutral Findings (Do Not Omit)
-To keep the thesis technically honest, the following points should remain explicit:
-1. US peak shaving in the locked impact source is `0.00%`.
-2. Several interval coverage values are below 90% nominal target.
-3. Deep model families are not top-ranked in the locked dashboard snapshots.
-4. Cross-region impact magnitude varies significantly despite shared architecture.
-
-## 7. Metrics Source of Truth and Run IDs
-
-### 7.1 Locked Sources
-| Claim Group | Canonical Source | Selection |
+### 7.4 Metrics
+The main metrics are:
+1. true-SOC violation rate
+2. P95 violation severity
+3. intervention rate
+4. cost delta
+5. VSS and EVPI
+6. PICP, pinball loss, and Winkler score
+
+### 7.5 Statistical Protocol
+Randomized experiments use 10 seeds. Safety comparisons use Wilcoxon signed-rank tests at `p < 0.01`. Ablations use both relative-reduction and significance gates.
+
+### 7.6 Evidence Lock and Run Selection
+The thesis binds its main stochastic claims to:
+1. DE run `20260217_165756`
+2. US run `20260217_182305`
+3. dashboard profile lock timestamp `2026-02-17T11:15:38.623283`
+
+## 8. Results
+
+### 8.1 Safety Under Telemetry Faults
+The central result is that both DC3S variants maintain zero true-SOC violations across the fault sweep, while the deterministic baseline violates at 3.9% and the CVaR baseline violates at 25.6%. DC3S FTIT intervenes on only 2.8% of steps, showing that safety does not require constant override.
+
+### 8.2 Locked Region-Level Impact and Stochastic Value
+| Region | Cost Savings | Carbon Reduction | Peak Shaving | VSS | Run ID |
+|---|---:|---:|---:|---:|---|
+| DE | 7.11% | 0.30% | 6.13% | 2,708.61 | `20260217_165756` |
+| US | 0.11% | 0.13% | 0.00% | 297,092.71 | `20260217_182305` |
+
+The DE result is materially stronger than the locked US result in direct decision impact, even though stochastic value remains positive in both regions.
+
+### 8.3 Ablation
+The ablation shows that:
+1. RAC-Cert inflation is necessary
+2. action repair is also necessary
+3. drift detection matters most under higher-severity faults
+4. fixed static intervals are not enough
+
+### 8.4 Calibration Quality
+Calibration is mixed rather than uniformly strong. Wind high-volatility coverage is near nominal, while solar high-volatility coverage remains below target. This is an explicit negative finding and one reason the shield needs to adapt interval width at runtime.
+
+### 8.5 Transfer and Runtime Behavior
+Transfer experiments show that safety is more robust than cost optimality. Runtime overhead remains modest, with reliability scoring, interval inflation, and action repair adding less than 5% to solver wall-clock time.
+
+## 9. Deep Baseline Diagnosis
+
+### 9.1 What the Locked Forecast Results Say
+Across both DE and US dashboard artifacts, GBM dominates LSTM and TCN on load, wind, and solar. The thesis does not interpret this as a universal statement about sequence models. It interprets it as a regime-specific result of the locked data, feature design, and training budget.
+
+### 9.2 Sample Size and Tabular Regime
+The locked datasets are moderate in size and heavily feature-engineered. In that regime, boosted trees can exploit strong precomputed predictors with less sample complexity than the deep baselines, especially after the temporal split policy reduces the number of effective training windows.
+
+### 9.3 Feature Representation and Inductive Bias
+The deep models are not operating on raw sensor streams alone. They are operating after the pipeline has already encoded lagged structure, calendar variables, and exogenous weather signals into the tabular dataset. That reduces the relative advantage of architectures whose main strength is learning sequential structure from less engineered inputs.
+
+### 9.4 Lookback, Horizon, and Tuning Caveats
+The same 168-hour lookback and 24-hour horizon are used for all locked baselines. That keeps the comparison clean, but it may not be optimal for LSTM and TCN. The current deep-model results are also legacy operational baselines rather than exhaustive deep-learning sweeps. The honest thesis interpretation is therefore: GBM is the operational winner in the locked evidence, and the deep baselines were not tuned to the same maturity as the tabular stack.
+
+## 10. Cross-Region and US Regime Analysis
+
+### 10.1 Why US Direct Gains Are Weak
+The weak US direct gains are real, not a formatting artifact. The locked US result is 0.11% cost savings and 0.00% peak shaving even though the pinned stochastic run reports VSS = 297,092.71.
+
+### 10.2 Arbitrage Headroom and Tariff Structure
+The first explanation is economic headroom. The locked DE setting presents larger direct arbitrage and peak-management opportunities than the locked US setting. A region can still have large stochastic value because uncertainty matters inside the optimization, while showing weak realized direct gains against a grid-only baseline over the specific evaluation window.
+
+### 10.3 Battery Utilization and Constraint Binding
+The second explanation is control leverage. If reserve, terminal-SOC, or power-cap constraints bind more often in the US runs, the optimizer has less freedom to convert better forecasts into visibly larger direct gains.
+
+### 10.4 Calibration and Optimization Leverage
+The third explanation is calibration asymmetry. Under-coverage in some US targets reduces the economic leverage of uncertainty-aware optimization because the system spends more of its effort compensating for uncertainty quality than exploiting favorable operating windows.
+
+### 10.5 Multi-BA Interpretation
+The thesis lock still uses the canonical US dashboard profile, while release-family assets already describe MISO, PJM, and ERCOT separately. That means “US” is partly a compressed narrative surface. A stronger next revision would expose those balancing-authority differences in the main results rather than only in supporting assets.
+
+## 11. Governance and Reproducibility
+
+### 11.1 Source of Truth
+The canonical manuscript source is `paper/PAPER_DRAFT.md`. The corresponding LaTeX thesis manuscript is `paper/paper.tex`, and the shorter conference derivative is `paper/paper_r1.tex`. Quantitative claims are valid only if they remain traceable to `paper/metrics_manifest.json`, `paper/claim_matrix.csv`, and the locked report artifacts.
+
+### 11.2 Repo-to-Paper Traceability
+| Repo artifact family | Primary role in the paper | Main paper touchpoint |
 |---|---|---|
-| DE impact metrics | `reports/impact_summary.csv` | dataset-scoped latest |
-| US impact metrics | `reports/eia930/impact_summary.csv` | dataset-scoped latest |
-| DE stochastic metrics | `reports/research_metrics_de.csv` | `run_id = 20260217_165756`, `row_type = run_summary` |
-| US stochastic metrics | `reports/research_metrics_us.csv` | `run_id = 20260217_182305`, `row_type = run_summary` |
-| Dataset profile claims | `data/dashboard/de_stats.json`, `data/dashboard/us_stats.json`, `data/dashboard/manifest.json` | dashboard profile lock |
+| README + setup docs | Environment bootstrap, run commands, and operator setup | Governance and appendices |
+| Train/eval code | Forecasting, uncertainty, dispatch, and CPSBench evaluation | Methods and experimental protocol |
+| Configs + seeds | Dataset scope, model settings, and randomization policy | Experimental protocol and appendices |
+| Data + preprocessing | Dataset construction, split logic, and feature generation | Background and experimental protocol |
+| Logs + checkpoints | Run IDs, solver outputs, metrics, and locked evidence values | Results and governance |
+| Plotting + publication scripts | Figures, tables, and paper-facing release assets | Results and appendices |
 
-### 7.2 Rule for Any Future Metric Update
-A metric can be changed in manuscript text only if all conditions are met:
-1. Value is updated in `paper/metrics_manifest.json` with source path and run ID.
-2. Claim row exists/updates in `paper/claim_matrix.csv`.
-3. `scripts/validate_paper_claims.py` passes after edit.
-4. Markdown and LaTeX versions retain matching core values.
+### 11.3 Validation Gates
+The release gates for this thesis are concrete:
+1. `python3 scripts/validate_paper_claims.py`
+2. `python3 scripts/sync_paper_assets.py --check`
+3. title, core numbers, and run IDs must remain aligned across markdown and LaTeX
 
-This rule applies to percentages, absolute values, run IDs, timestamps, and any sentence that embeds quantitative evidence. Editorial convenience is not a valid reason to bypass the update chain.
+### 11.4 What Governance Does Not Claim
+The governance layer is scoped to this paper. It does not claim a universal reproducibility framework for ML research. It claims that, for a multi-artifact cyber-physical systems project, automated claim locking is necessary to keep the method story and the evidence story synchronized.
 
-### 7.3 Non-Policy Sources
-Publication table exports and legacy markdown reports are secondary evidence only. They may be used for narrative context after explicit reconciliation, but not as primary numeric sources for locked claims.
+## 12. Discussion and Threats to Validity
 
-### 7.4 Metrics Change-Control Checklist
-Before approving any numeric edit:
-1. Confirm source artifact path exists and is versioned.
-2. Confirm row/field selection rule is unambiguous.
-3. Regenerate display value from raw value using manifest rounding rules.
-4. Verify the same metric is synchronized in abstract, results, and conclusion.
-5. Re-run `scripts/validate_paper_claims.py` and archive pass output in revision notes.
+### 12.1 Implications
+The results support a systems-level claim: telemetry reliability should be treated as part of the control state, not as a peripheral monitoring variable. The safety win comes not from maximum conservatism but from conditional conservatism.
 
-## 8. Claim Traceability and Editorial Governance
+### 12.2 Negative and Neutral Findings
+1. US peak shaving remains 0.00%.
+2. Some target-regime combinations remain under-covered.
+3. GBM dominates the locked deep baselines.
+4. Cross-region impact magnitudes vary sharply despite the shared architecture.
 
-### 8.1 Claim Status Definitions
-- **Verified**: directly traceable to locked artifact(s) used in the active release manuscript.
-- **Historical**: retained only as a record of pre-lock wording or superseded values.
-- **Inactive**: retained for future work but not present in the active release manuscript.
-- **Conflicting**: active manuscript wording disagrees with canonical policy or other locked values.
-- **Unsupported**: active manuscript wording has no in-repo evidence.
-- **Needs Citation**: active manuscript wording is plausible but requires an external published source.
+### 12.3 Internal Validity
+The main internal-validity risk is manuscript-artifact drift. The validator and claim matrix reduce that risk, but they do not eliminate it forever. Another internal-validity risk is that the diagnosis sections are based on locked artifacts and configuration evidence rather than new targeted reruns.
 
-Claim statuses are operational controls. A status changes only when evidence or citation coverage changes; wording-only edits are insufficient.
+### 12.4 External Validity
+The thesis is intentionally scoped to the locked DE and US windows. Generalization to different markets, battery sizes, or telemetry infrastructures remains future work.
 
-### 8.2 Traceability Fields Required per Claim
-Each claim row in `paper/claim_matrix.csv` should include:
-1. `claim_id`
-2. `status`
-3. `category`
-4. `claim_text`
-5. `source_file`
-6. `source_locator`
-7. `run_id` when applicable
-8. `timestamp_utc` when applicable
-9. `rounding_rule`
+### 12.5 Construct and Conclusion Validity
+Construct validity depends on the proxy cost and carbon signals being appropriate enough for comparative analysis. Conclusion validity depends on scenario design and calibration definitions remaining stable. The RAC-Cert proposition also should not be overstated: it gives monotone coverage preservation under inflation, not a complete theory of conditional safety.
 
-### 8.3 Publication Rule
-Publication-facing sections should retain only:
-1. Verified claims.
-2. External claims with explicit citations.
+## 13. Limitations and Future Work
 
-Conflicting/unsupported claims should be removed or rewritten before release export.
+### 13.1 Current Limitations
+1. Evidence is limited to locked DE and US windows.
+2. Evaluation is software-in-the-loop rather than hardware field validation.
+3. Cost and carbon signals are engineering proxies.
+4. The formal result is intentionally modest.
+5. The deep-baseline diagnosis is evidence-based but not yet backed by a new dedicated rerun campaign.
 
-### 8.4 Editing Workflow
-1. Edit `paper/PAPER_DRAFT.md` only.
-2. Run claim validator.
-3. Sync `paper/paper.tex` from markdown master rules.
-4. Sync DOCX last and record any environment limitation.
+### 13.2 Near-Term Future Work
+Near-term work should focus on:
+1. rerunning deeper forecasting baselines under comparable tuning budgets
+2. decomposing the US narrative more explicitly into MISO/PJM/ERCOT in the main text
+3. improving under-covered target-regime calibration before dispatch
 
-### 8.5 Reviewer and Advisor Workflow
-Recommended review loop for future revisions:
-1. Reviewer flags text spans or claim IDs.
-2. Author resolves each item against `claim_matrix` and manifest source.
-3. Any unresolved numeric conflict blocks release.
-4. Validator pass output is attached to the revision package.
-
-## 9. Discussion
-
-### 9.1 Strongly Supported Findings
-1. The DE and US impact percentages above are directly reproducible from canonical impact CSVs.
-2. The DE and US stochastic values above are directly reproducible from canonical run-summary rows.
-3. Forecast model ranking in dashboard artifacts favors GBM for the locked snapshots.
-4. Governance controls materially reduce manuscript drift risk.
-
-The strongest supported thesis claim is the combination of measurable decision outcomes and explicit provenance enforcement. This manuscript treats those two properties as inseparable.
-
-### 9.2 Why Cross-Region Results Differ
-Likely drivers include:
-1. Different data windows and distributions.
-2. Different operational constraints and stress/control settings.
-3. Different feature spaces and generation mix dynamics.
-4. Different scale of system-level costs and uncertainty realizations.
-
-This implies deployment should be region-tuned. A strategy that yields high percentage gains in one setting may remain valuable in another while showing smaller direct percentages.
-
-### 9.3 Non-Overclaim Boundary
-This manuscript does not claim universal superiority across all markets. It reports locked evidence for the stated DE/US windows and explicitly separates verified local findings from global claims requiring citation.
-
-### 9.4 Engineering Significance
-The main engineering contribution is integration plus governance:
-- Integrated forecast-to-dispatch pipeline.
-- Artifact-locked evidence policy.
-- Automated cross-file consistency checks before publication.
-
-### 9.5 Practical Operator Interpretation
-Operationally, GridPulse behaves as a guarded decision-support system:
-1. Healthy forecast and interval artifacts trigger optimization-led dispatch planning.
-2. Infeasible or degraded states trigger explicit safe fallbacks.
-3. Control-plane watchdog and BMS checks enforce dispatch safety before execution.
-
-This framing links thesis evidence to practical operational deployment behavior.
-Operationally, the stack is ready for software deployment pathways and controlled integration tests, but hardware field validation remains pending in the current evidence lock.
-
-## 10. Threats to Validity
-
-### 10.1 Internal Validity
-Risk: mixed source families can reintroduce contradictory metrics.  
-Mitigation: manifest lock + validator + claim matrix.
-
-### 10.2 External Validity
-Risk: findings may not generalize to other regions/time periods.  
-Mitigation: keep claims region-scoped; extend datasets in future work.
-
-### 10.3 Construct Validity
-Risk: price/carbon proxies may not represent every market rule in detail.  
-Mitigation: document proxy assumptions and avoid over-broad causal claims.
-
-### 10.4 Conclusion Validity
-Risk: stochastic value magnitude is sensitive to run/scenario specification.  
-Mitigation: report explicit run IDs and discourage metric mixing across run families.
-
-### 10.5 Residual Risk Prioritization
-Priority order for next validity improvements:
-1. Keep metric-source synchronization strict across markdown, LaTeX, and DOCX.
-2. Improve interval calibration on under-covered targets.
-3. Expand external validity with additional regions and time windows.
-4. Close all citation gaps for non-repository claims.
-
-## 11. Operational Safety and Failure Modes
-
-### 11.1 Failure-Mode Table
-| Failure Mode | Trigger | Detection | Mitigation | Fallback |
-|---|---|---|---|---|
-| Missing/stale feature data | upstream delay or schema break | `/ready`, data checks, missing file checks | block forecast/optimize calls until fresh data available | serve health warning, skip optimization |
-| Forecast drift | distribution shift in live windows | KS/model drift checks in monitor pipeline | retraining decision logic | temporary conservative dispatch mode |
-| Optimization infeasibility | extreme constraints or malformed intervals | solver status + feasibility flags | return safe infeasible payload, investigate constraints | grid-only baseline dispatch |
-| Unsafe dispatch command | SOC/power constraint violation | BMS validation in control route | reject command with explicit error | keep current safe operating state |
-| Control-plane degradation | missed heartbeat / watchdog timeout | watchdog islanding behavior | lock remote control | manual/local control only |
-| API auth misuse | invalid scope/key | API security middleware | deny operation | read-only status endpoints |
-
-### 11.2 Incident Response Sequence
-1. Detect (health/monitoring/solver flags).
-2. Contain (reject unsafe commands or switch to baseline).
-3. Diagnose (artifact/log inspection with run IDs).
-4. Recover (retrain, reconfigure, or rollback models).
-5. Record (update governance artifacts and incident notes).
-
-### 11.3 Governance Safeguards
-1. Source-of-truth lock for manuscript claims.
-2. Explicit banned legacy metrics in validator.
-3. Claim matrix with status enforcement.
-
-### 11.4 Config-Level Safety Snapshot
-Selected defaults in locked configs:
-1. KS drift threshold `p_value_threshold = 0.01`.
-2. Model drift threshold `degradation_threshold = 0.15` on configured metric.
-3. Retraining cadence `30` days with minimum new-data rule in config.
-4. Deterministic objective weights: cost `1.0`, carbon `1.2`.
-5. High unmet-load and curtailment penalties to discourage unsafe optimization shortcuts.
-
-## 12. Limitations
-
-### 12.1 Dataset and Coverage Limits
-1. Evidence is restricted to the locked DE/US windows listed in Section 3.
-2. Broader climate/market regimes remain outside this current lock.
-
-These limits are intentional for traceability. Scope expansion should happen only with a corresponding manifest and claim-matrix update.
-
-### 12.2 Modeling and Optimization Limits
-1. Scenario and stress design choices influence stochastic magnitudes.
-2. Proxy cost/carbon assumptions may differ from real settlement mechanisms.
-
-Robust objective weighting and interval-construction choices can shift tradeoff behavior; therefore results should be interpreted as evidence for this configured system, not as universal constants.
-
-### 12.3 Documentation Synchronization Limits
-Programmatic DOCX sync is currently constrained in this shell environment:
-1. system `python3` lacks `python-docx`.
-2. the `.venv` Python launcher is not currently usable here.
-
-### 12.4 Citation Limits
-Some broader operational/societal statements require external literature or official source citation before publication.
-
-Claims without internal artifact evidence should remain clearly marked as requiring citation until sources are added.
-
-### 12.5 IoT Validation Boundary (Deployment-Readiness, Non-Field Evidence)
-IoT-related validation reported in this manuscript is software-in-the-loop/API/streaming-smoke evidence, not completed hardware field commissioning evidence.
-1. Streaming checks rely on replayed telemetry and broker-consumer pipeline execution.
-2. DC3S live checks are API-level evaluations driven by simulated/replayed telemetry inputs.
-3. No physical inverter/BMS edge commissioning logs or field-trial artifacts are claimed in this revision.
-
-Therefore, deployment-readiness claims are limited to software stack correctness and observability, not hardware-operational certification.
-
-## 13. Future Work
-
-### 13.1 Near-Term (Next Revision Cycle)
-1. Unify all report generators so dashboard and publication tables derive from one locked pipeline.
-2. Add stricter section-level linting for unsupported claim phrases.
-3. Improve uncertainty calibration for under-covered target/region combinations.
-
-Near-term success condition: no unresolved claim conflicts and consistent core metrics across markdown and LaTeX outputs.
-
-### 13.2 Mid-Term
-1. Extend stochastic scenario design with explicit sensitivity studies.
-2. Add more regions and tariff/carbon regimes for external-validity testing.
-3. Improve model registry lineage and release metadata binding.
-
-Mid-term success condition: cross-region comparisons with fully serialized scenario assumptions and reproducible run-level evidence.
-
-### 13.3 Long-Term
-1. Transition from artifact checks to signed evidence bundles.
-2. Integrate richer operational economics and market constraints.
-3. Deploy continuous publication-quality reporting with deterministic synchronization.
-
-Long-term success condition: end-to-end signed provenance from data extraction to publication-ready manuscript artifacts.
+### 13.3 Longer-Term Future Work
+Longer-term work includes hardware-in-the-loop validation, richer market constraints, conditional-coverage analysis under degradation, and stronger release automation with signed evidence bundles.
 
 ## 14. Conclusion
-GridPulse demonstrates a decision-grade ML system that connects forecasting, uncertainty, optimization, and governance. Under the dataset-scoped latest lock (February 17, 2026 artifacts), DE impact is 7.11% cost savings, 0.30% carbon reduction, and 6.13% peak shaving; US impact is 0.11% cost savings, 0.13% carbon reduction, and 0.00% peak shaving. Canonical stochastic values come from DE run `20260217_165756` and US run `20260217_182305`, with positive VSS in both regions (`2,708.61` and `297,092.71`, respectively). The thesis-level contribution is therefore both algorithmic and operational: measurable decision outcomes plus a reproducible governance framework that keeps claims stable across manuscript iterations.
+We presented DC3S, a conformal safety shield that integrates telemetry-reliability scoring, adaptive interval inflation (RAC-Cert), robust dispatch, action repair, and per-step certification into a single online loop for battery dispatch under degraded telemetry. Across four fault types and parametric severity sweeps on DE and US data, DC3S achieves zero true-SOC violations while maintaining positive stochastic value in both regions and 7.11% cost savings in DE. The corresponding locked US result is more modest at 0.11% cost savings and 0.00% peak shaving, which the thesis interprets as a regime-analysis problem rather than something to hide.
 
-The central practical message is that trustworthy decision systems require both technical performance and claim governance. GridPulse shows that forecast quality, uncertainty quantification, optimization feasibility, and publication traceability can be engineered as one coherent system.
-Current IoT validation evidence in this manuscript is non-field and should be interpreted as software stack readiness rather than completed hardware-operational certification.
+The practical message is that trustworthy dispatch requires telemetry-aware uncertainty calibration rather than robust optimization over assumed-correct uncertainty sets. The thesis contribution is therefore both operational and methodological: it shows how degraded telemetry can be converted into bounded uncertainty, safe repaired actions, and auditable evidence without overstating the formal theory behind the inflation rule.
 
 ## 15. References
-
-### 15.1 Internal Artifact References
-- `paper/metrics_manifest.json`
-- `paper/claim_matrix.csv`
-- `paper/accuracy_audit.md`
-- `paper/rewrite_pack.md`
-- `paper/sync_rules.md`
-- `scripts/validate_paper_claims.py`
-- `frontend/src/app/api/chat/tool-executors.ts`
-- `services/api/routers/monitor.py`
-- `src/gridpulse/streaming/run_consumer.py`
-- `src/gridpulse/streaming/consumer.py`
-- `src/gridpulse/streaming/worker.py`
-- `configs/dc3s.yaml`
-- `src/gridpulse/dc3s/`
-- `services/api/routers/dc3s.py`
-- `data/dashboard/manifest.json`
-- `data/dashboard/de_stats.json`
-- `data/dashboard/us_stats.json`
-- `data/dashboard/de_metrics.json`
-- `data/dashboard/us_metrics.json`
-- `reports/impact_summary.csv`
-- `reports/eia930/impact_summary.csv`
-- `reports/impact_comparison.json`
-- `reports/eia930/impact_comparison.json`
-- `reports/research_metrics_de.csv`
-- `reports/research_metrics_us.csv`
-- `reports/publication/tables/table6_robustness.csv`
-- `docs/ARCHITECTURE.md`
-- `docs/TRAINING_PIPELINE.md`
-- `docs/EVALUATION.md`
-
-### 15.2 External Method Literature (Maintain in Publication Export)
-Keep explicit citations for:
-1. Conformal prediction and adaptive conformal inference.
-2. Robust/stochastic optimization for power systems.
-3. Forecast model classes used (GBM, LSTM, TCN) where method background is discussed.
-
-### 15.3 External Factual Claims Requiring Citation
-Any non-repository factual statement (policy, workforce, market forecasts, environmental lifecycle values) must cite a reliable external source before publication.
+1. Vovk, V., Gammerman, A., and Shafer, G. *Algorithmic Learning in a Random World*. Springer, 2005.
+2. Shafer, G., and Vovk, V. “A Tutorial on Conformal Prediction.” *Journal of Machine Learning Research*, 2008.
+3. Romano, Y., Patterson, E., and Candès, E. “Conformalized Quantile Regression.” *NeurIPS*, 2019.
+4. Gibbs, I., and Candès, E. “Adaptive Conformal Inference Under Distribution Shift.” *NeurIPS*, 2021.
+5. Zaffran, M., Féron, O., Goude, Y., Josse, J., and Dieuleveut, A. “Adaptive Conformal Predictions for Time Series.” *ICML*, 2022.
+6. Barber, R. F., Candès, E. J., Ramdas, A., and Tibshirani, R. J. “Conformal Prediction Beyond Exchangeability.” *Annals of Statistics*, 2023.
+7. Bertsimas, D., Brown, D. B., and Caramanis, C. “Theory and Applications of Robust Optimization.” *SIAM Review*, 2011.
+8. Ben-Tal, A., El Ghaoui, L., and Nemirovski, A. *Robust Optimization*. Princeton University Press, 2009.
+9. Birge, J. R., and Louveaux, F. *Introduction to Stochastic Programming*. Springer, 2011.
+10. Rockafellar, R. T., and Uryasev, S. “Optimization of Conditional Value-at-Risk.” *Journal of Risk*, 2000.
+11. Rosewater, D., Baldick, R., and Santoso, S. “Risk-Averse Model Predictive Control Design for Battery Energy Storage Systems.” *IEEE Transactions on Smart Grid*, 2020.
+12. Alshiekh, M., Bloem, R., Ehlers, R., Kőnighofer, B., Niekum, S., and Topcu, U. “Safe Reinforcement Learning via Shielding.” *AAAI*, 2018.
+13. Bastani, O. “Safe Reinforcement Learning with Nonlinear Dynamics via Model Predictive Shielding.” *ACC*, 2021.
+14. Kőnighofer, B., Lorber, F., Jansen, N., and Bloem, R. “Shield Synthesis for Reinforcement Learning.” *ISoLA*, 2020.
+15. Sha, L. “Using Simplicity to Control Complexity.” *IEEE Software*, 2001.
+16. Leucker, M., and Schallhart, C. “A Brief Account of Runtime Verification.” *Journal of Logic and Algebraic Programming*, 2009.
+17. Dibaji, S. M., Pirani, M., Flamholz, D. B., Annaswamy, A. M., Johansson, K. H., and Chakrabortty, A. “A Systems and Control Perspective of CPS Security.” *Annual Reviews in Control*, 2019.
+18. Chandola, V., Banerjee, A., and Kumar, V. “Anomaly Detection: A Survey.” *ACM Computing Surveys*, 2009.
+19. Chen, T., Jin, Y., Lv, H., Yang, A., Liu, M., Chen, B., Xie, Y., and Chen, Q. “Applications of Lithium-Ion Batteries in Grid-Scale Energy Storage Systems.” *Transactions of Tianjin University*, 2020.
+20. Pineau, J., Vincent-Lamarre, P., Sinha, K., Larivière, V., Beygelzimer, A., d'Alché-Buc, F., Fox, E., and Larochelle, H. “Improving Reproducibility in Machine Learning Research.” *Journal of Machine Learning Research*, 2021.
 
 ## Appendix A. Replication Checklist
-1. Validate manuscript claims against manifest and claim matrix:
-```bash
-python scripts/validate_paper_claims.py
-```
-2. Compile LaTeX manuscript:
-```bash
-cd paper
-pdflatex paper.tex
-```
-3. Confirm core canonical strings exist in markdown and LaTeX:
-- `7.11%`
-- `0.11%`
-- `20260217_165756`
-- `20260217_182305`
-- `2,708.61`
-- `297,092.71`
-4. Confirm no banned legacy percentages or placeholder tokens are present.
-5. Confirm every publication numeric claim maps to a row in `paper/claim_matrix.csv`.
+1. Run `python3 scripts/validate_paper_claims.py`
+2. Run `python3 scripts/sync_paper_assets.py --check`
+3. Build the LaTeX manuscripts from `paper.tex` and `paper_r1.tex`
+4. Verify that the canonical numbers and run IDs appear consistently across markdown and LaTeX
 
 ## Appendix B. Artifact Inventory
 | Artifact | Purpose |
 |---|---|
-| `paper/PAPER_DRAFT.md` | Master manuscript source |
-| `paper/paper.tex` | LaTeX export manuscript |
-| `paper/metrics_manifest.json` | Canonical metric lock and validation regex |
-| `paper/claim_matrix.csv` | Claim-level provenance and status |
-| `paper/accuracy_audit.md` | Accuracy and conflict audit log |
-| `paper/rewrite_pack.md` | Extended section guidance bank |
-| `paper/sync_rules.md` | Markdown->LaTeX->DOCX synchronization contract |
-| `scripts/validate_paper_claims.py` | Automated non-mutating consistency checker |
-| `data/dashboard/*` | Dataset profiles and dashboard metrics |
-| `reports/impact_summary.csv` | Canonical DE impact outcomes |
-| `reports/eia930/impact_summary.csv` | Canonical US impact outcomes |
-| `reports/research_metrics_de.csv` | DE stochastic runs |
-| `reports/research_metrics_us.csv` | US stochastic runs |
-| `reports/publication/tables/table6_robustness.csv` | Robustness perturbation summary |
+| `paper/PAPER_DRAFT.md` | Canonical thesis manuscript source |
+| `paper/paper.tex` | Thesis LaTeX twin of the markdown source |
+| `paper/paper_r1.tex` | Shorter conference derivative |
+| `paper/metrics_manifest.json` | Canonical metric lock and display contract |
+| `paper/claim_matrix.csv` | Claim-level provenance and status tracking |
+| `scripts/validate_paper_claims.py` | Cross-file claim validation |
+| `scripts/sync_paper_assets.py` | Paper-asset synchronization audit |
+| `reports/impact_summary.csv` | Locked DE impact values |
+| `reports/eia930/impact_summary.csv` | Locked US impact values |
+| `reports/research_metrics_de.csv` | DE stochastic summary rows |
+| `reports/research_metrics_us.csv` | US stochastic summary rows |
 
-## Appendix C. Section-by-Section Writing Bank (Copy-Ready)
-Use this appendix when expanding or trimming sections.
-
-### C1. Introduction
-Required facts:
-1. Forecast-only systems are insufficient for operations.
-2. GridPulse decision loop and region scope.
-3. Evidence-lock policy date and source concept.
-
-Required figures/tables:
-1. Architecture figure (`reports/figures/architecture.png` or `.svg`).
-
-Optional details:
-1. Production context and deployment pathways.
-
-External citation required:
-1. Industry-wide background claims about renewable volatility and operator workflows.
-
-### C2. Data Assets and Scope
-Required facts:
-1. DE/US rows, date ranges, and feature counts from dashboard stats.
-2. Distinction between columns and engineered features.
-3. Scope boundary against legacy profile claims.
-
-Required tables:
-1. Dataset profile table.
-2. Feature family composition table.
-
-Optional details:
-1. Target distribution table (mean/std/min/max/non-zero).
-
-External citation required:
-1. Dataset provider descriptions (OPSD, EIA-930) if discussed beyond internal files.
-
-### C3. Methods
-Required facts:
-1. Model families and horizon setup.
-2. Conformal interval logic and calibration target.
-3. Deterministic and robust optimization intents and constraints.
-4. Monitoring and safety pathways.
-
-Required tables/figures:
-1. Objective/constraint summary table.
-2. Optional equation block for EVPI/VSS definitions.
-
-Optional details:
-1. Endpoint contracts and module-level implementation map.
-
-External citation required:
-1. Foundational method references (conformal, robust optimization, sequence models).
-
-### C4. Results
-Required facts:
-1. Forecast metrics by target and model (DE and US).
-2. Coverage and residual diagnostics.
-3. Canonical DE/US impact percentages.
-4. Canonical stochastic values and run IDs.
-5. Robustness perturbation summary.
-
-Required tables:
-1. Forecast comparison tables.
-2. Impact percent table.
-3. Absolute impact table.
-4. Stochastic run table.
-
-Optional details:
-1. Additional figures from `reports/figures/` (dispatch, SOC, tradeoff, interval width).
-
-External citation required:
-1. None for repository-derived numeric outcomes.
-
-### C5. Governance Sections
-Required facts:
-1. Source-of-truth paths and run IDs.
-2. Claim status model and publication rule.
-3. Validation command and release gates.
-
-Required tables:
-1. Source-of-truth mapping table.
-2. Claim-status summary snapshot.
-
-Optional details:
-1. Governance timeline and reviewer sign-off logs.
-
-External citation required:
-1. None unless claiming formal compliance against external standards.
-
-### C6. Safety, Validity, and Limitations
-Required facts:
-1. Concrete failure modes and mitigations.
-2. Internal/external/construct/conclusion validity boundaries.
-3. Current environment limitations for DOCX sync.
-
-Required table:
-1. Failure-mode table (trigger, detection, mitigation, fallback).
-
-Optional details:
-1. SLA/SLO targets from production-readiness docs if included in thesis scope.
-
-External citation required:
-1. Policy/regulatory requirements if explicitly stated.
-
-## Appendix D. Claims Requiring Citation Before Publication
-Claims in these categories need explicit external source support or removal:
-1. Global market-size forecasts and long-horizon policy projections.
-2. Named-operator staffing/organizational metrics.
-3. Environmental footprint values not derived by reproducible in-repo method.
-4. Universal superiority claims beyond locked DE/US evidence.
-
-## Appendix E. Synchronization and Release Notes
-1. Manuscript authority remains `paper/PAPER_DRAFT.md`.
-2. `paper/paper.tex` must preserve identical title, abstract core metrics, and conclusion core metrics.
-3. DOCX synchronization is run last and must record tooling constraints in release notes when automation is unavailable.
-4. Final release gate requires passing `scripts/validate_paper_claims.py` and no unresolved claim-status conflicts in publication sections.
-
-## Appendix F. Full-Detail Authoring Blocks (Use/Trim as Needed)
-This appendix gives longer thesis-writing blocks that can be pasted into chapter drafts and then edited for style.
-
-### F1. Long-Form Intro Block
-GridPulse is designed around a decision-first interpretation of machine learning in energy systems. Rather than ending at point prediction, the system carries uncertainty information into optimization, enforces dispatch feasibility under battery and grid constraints, and evaluates outcomes against explicit baselines. This architecture creates a measurable bridge between model behavior and operational value. The thesis therefore evaluates not only forecast quality, but the integrity of the full decision chain from feature engineering to published claims.
-
-### F2. Long-Form Method Block
-The forecasting layer currently reports locked LightGBM, LSTM, and TCN comparisons while the implementation also supports N-BEATS, TFT, and PatchTST candidate baselines for future release-family reruns. Uncertainty is represented using conformal intervals with adaptive behavior in code-level implementations. Deterministic optimization uses a mixed-integer structure with cost, carbon, degradation, curtailment, unmet-load, and peak terms. Robust optimization uses a two-scenario epigraph formulation over lower and upper load bounds. Safety constraints are enforced in serving pathways before control actions can be accepted.
-
-### F3. Long-Form Results Block
-Under the locked artifact policy, DE impact is 7.11% cost savings, 0.30% carbon reduction, and 6.13% peak shaving. US impact is 0.11% cost savings, 0.13% carbon reduction, and 0.00% peak shaving. Canonical stochastic evidence is tied to DE run 20260217_165756 and US run 20260217_182305, both marked feasible in run-summary rows. Positive VSS is observed in both regions, with large magnitude differences across datasets. These differences motivate region-scoped interpretation rather than universal-effect claims.
-
-### F4. Long-Form Governance Block
-The manuscript is governed by a source-of-truth contract in which every publication-facing numeric claim must map to `paper/metrics_manifest.json` and have an entry in `paper/claim_matrix.csv`. Claim status categories distinguish verified evidence from conflicts and citation-risk statements. Validation is automated through `scripts/validate_paper_claims.py`, which checks required canonical strings and blocks known legacy contradictions. This governance layer is necessary because multiple historical report families coexist in the repository.
-
-### F5. Long-Form Limitation Block
-Evidence in this thesis is intentionally restricted to locked DE and US windows from dashboard profile artifacts. While this improves traceability, it limits direct external generalization. In addition, optimization outcomes depend on proxy price/carbon assumptions and scenario/interval settings that may differ across market designs. Therefore, results should be read as reproducible outcomes for the documented pipeline configuration and dataset scope, not as universal constants.
-
-### F6. Long-Form Future Work Block
-Future work should focus on unifying report-generation pathways, improving uncertainty calibration where coverage is below nominal, expanding region and tariff coverage, and strengthening release automation with signed evidence bundles. This progression preserves the thesis core principle: model advances and manuscript claims must evolve together under explicit provenance controls.
-
-### F7. Keep/Trim Guidance for Final Submission
-If page limits require reduction:
-1. Keep Sections 6, 7, 8, and 14 unchanged.
-2. Keep all run IDs and canonical percentages unchanged.
-3. Trim descriptive implementation prose before trimming governance text.
-4. Do not trim limitations that clarify scope and citation boundaries.
-
-## Appendix G. Project-to-Paper Coverage Map
-This appendix maps implemented project surfaces to manuscript coverage so review can distinguish fully documented areas from areas that are currently summarized.
-
-Coverage status definitions:
-1. **Full**: implementation paths and operational behavior are explicitly described in the paper.
-2. **Partial**: core behavior is described, but implementation/runtime details are summarized.
-
-| Project Surface | Primary Implementation Paths | Current Paper Coverage | Status | Notes |
+## Appendix C. Operational Failure Modes
+| Failure Mode | Trigger | Detection | Mitigation | Fallback |
 |---|---|---|---|---|
-| Forecast training orchestration, splits, tuning | `src/gridpulse/forecasting/train.py`, `configs/train_forecast.yaml`, `configs/train_forecast_eia930.yaml`, `scripts/train_dataset.py` | Sections 3.7, 4.1 | Full | Runtime control flags (`--tune`, `--no-tune`, `--ensemble`, `--max-seeds`, `--n-trials`, `--top-pct`), serialization of tuning metadata, and ensemble member persistence are now explicitly documented. |
-| Forecast inference and bundle resolution | `services/api/routers/forecast.py`, `src/gridpulse/forecasting/predict.py` | Sections 2.3, 4.1.4 | Full | Explicit target-path resolution, ordered fallback search, ensemble averaging behavior, quantile serving order, and missing-target signaling are now documented. |
-| Streaming ingestion and persistence | `src/gridpulse/streaming/run_consumer.py`, `src/gridpulse/streaming/consumer.py`, `src/gridpulse/streaming/worker.py`, `configs/streaming.yaml` | Sections 2.7, 12.5 | Full | CLI path, config load path, and DuckDB table contract are explicitly documented. |
-| DC3S uncertainty shield and audit chain | `src/gridpulse/dc3s/`, `services/api/routers/dc3s.py`, `configs/dc3s.yaml` | Sections 2.3, 2.7, 4.5, 12.5 | Full | Endpoint contracts, implemented inflation law, shield modes, hash chain, and state/audit behavior are documented. |
-| Monitoring and retraining | `services/api/routers/monitor.py`, `src/gridpulse/monitoring/`, `configs/monitoring.yaml` | Section 4.6 | Full | Drift thresholds, cadence, and decision logic are explicitly documented. |
-| Safety and control-plane enforcement | `src/gridpulse/safety/`, `services/api/main.py` (`/control/dispatch`) | Sections 4.7, 11 | Full | Authorization, watchdog, and BMS gate sequence is documented. |
-| Frontend operator workflow and live DC3S UX | `frontend/src/app/(dashboard)/page.tsx`, `frontend/src/components/dashboard/DC3SLiveCard.tsx`, `frontend/src/lib/api/dc3s-client.ts`, `frontend/src/app/api/dc3s/audit/[commandId]/route.ts` | Sections 2.2, 2.7 | Full | Dashboard polling default, operator-selectable auto-refresh cadence, manual refresh, command-id-linked audit quick link, and proxy/error behavior are explicitly documented. |
-| Claim governance and release gates | `paper/metrics_manifest.json`, `paper/claim_matrix.csv`, `scripts/validate_paper_claims.py` | Sections 5, 7, 8 | Full | Source lock, reconciliation, and publication gating are explicitly documented. |
-
-### G1. Full-Coverage Update (Completed)
-This revision closes the previously partial surfaces:
-1. Section 4.1 now documents runtime training controls and their reproducibility implications.
-2. Section 4.1.4 now documents explicit fallback/ensemble/quantile inference resolution mechanics.
-3. Section 2.7 now documents frontend live-ops controls, auto-refresh cadence selection, and command-linked audit navigation.
-4. Baseline policy definitions and impact-table numerator/denominator mapping are now explicit for B1/B2/B3.
+| Missing or stale data | Upstream delay | Readiness checks | Block unsafe dispatch | Hold current state |
+| Forecast drift | Distribution shift | KS/model monitors | Retraining workflow | Conservative mode |
+| Solver infeasible | Extreme intervals | Solver status flags | Safe infeasible response | Grid-only baseline |
+| Unsafe command | SOC/power violation | BMS validation | Reject with detail | Maintain safe state |
+| Control degradation | Heartbeat timeout | Watchdog detection | Lock remote control | Manual/local control |
+ 

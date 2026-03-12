@@ -3,7 +3,7 @@
 %        Battery Dispatch under Degraded Mixed Telemetry
 %  R1 Conference Submission Draft
 % =============================================================================
-\documentclass[11pt,a4paper]{article}
+\documentclass[11pt,a4paper,twocolumn]{article}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -23,8 +23,7 @@
 \usepackage{cleveref}
 
 % ---------- Title ----------------------------------------------------------
-\title{DC\textsuperscript{3}S: Telemetry-Reliability-Weighted Conformal Safety Shield\\
-       for Battery Dispatch under Degraded Mixed Telemetry}
+\title{DC3S: Telemetry-Reliability-Weighted Conformal Safety Shield for Battery Dispatch under Degraded Mixed Telemetry}
 \author{Pratik Niroula\\
         Minnesota State University, Mankato\\
         CIT (Major), Mathematics (Minor)\\
@@ -100,7 +99,7 @@ Battery storage dispatch under degraded telemetry exposes a critical safety gap:
 % ===== 1. INTRODUCTION ======================================================
 \section{Introduction}\label{sec:intro}
 
-Grid-scale battery energy storage systems (BESS) are essential for integrating variable renewable generation, yet their dispatch depends on real-time telemetry---state-of-charge readings, power measurements, and grid-frequency signals---that is routinely degraded by sensor dropout, communication delay, spike-injection, and packet reordering~\cite{falliere2011stuxnet,dibaji2019systems}.  When telemetry quality drops, the prediction intervals that inform optimization widen unpredictably, and dispatch commands computed from stale or corrupted state can push the battery into unsafe SOC regions, risking equipment damage and grid instability~\cite{chen2020review_bess}.
+Grid-scale battery energy storage systems (BESS) are essential for integrating variable renewable generation, yet their dispatch depends on real-time telemetry---state-of-charge readings, power measurements, and grid-frequency signals---that is routinely degraded by sensor dropout, communication delay, spike injection, and packet reordering in cyber-physical power systems~\cite{dibaji2019systems,chandola2009anomaly}. When telemetry quality drops, the prediction intervals that inform optimization widen unpredictably, and dispatch commands computed from stale or corrupted state can push the battery into unsafe SOC regions, risking equipment damage and grid instability~\cite{chen2020review_bess}.
 
 Existing approaches address parts of this pipeline in isolation.  Conformal prediction provides distribution-free coverage guarantees~\cite{vovk2005conformal,shafer2008tutorial}, and adaptive variants track distributional shift~\cite{gibbs2021adaptive,zaffran2022adaptive}, but neither incorporates telemetry-quality signals into the calibration step.  Robust and stochastic dispatch formulations protect against load/price uncertainty~\cite{bertsimas2011theory,birge2011stochastic}, but assume the uncertainty sets themselves are well-calibrated---an assumption violated under degraded telemetry.  Safety shields in control theory enforce state constraints~\cite{alshiekh2018safe,bastani2021safe}, but typically do not reason about measurement reliability or provide dispatch-level audit trails.
 
@@ -123,29 +122,32 @@ Existing approaches address parts of this pipeline in isolation.  Conformal pred
 
 \paragraph{Contributions.}
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{RAC-Cert}: a reliability-adaptive conformal certification law that inflates intervals as a function of telemetry quality, drift risk, and sensitivity, with proved marginal coverage preservation (\Cref{thm:rac_coverage}).
+  \item \textbf{RAC-Cert}: a reliability-adaptive conformal certification law that inflates intervals as a function of telemetry quality, drift risk, and sensitivity, together with a supporting coverage-preservation proposition under monotone inflation (\Cref{thm:rac_coverage}).
   \item \textbf{CPSBench}: a fault-injection benchmark with truth-vs-observed SOC evaluation across four fault types and parametric severity sweeps.
   \item \textbf{Empirical evidence}: zero-violation safety with quantified cost--safety tradeoffs on DE and three US balancing authorities, including ablation and transfer studies.
-  \item \textbf{Governance stack}: automated metric-locking and claim-validation tooling that prevents manuscript--artifact drift.
+  \item \textbf{Governance stack}: automated metric-locking and claim-validation tooling that prevents manuscript--artifact drift, reported as an explicit reproducibility contribution rather than background process~\cite{pineau2021improving}.
 \end{enumerate}
 
 % ===== 2. RELATED WORK ======================================================
 \section{Related Work}\label{sec:related}
 
 \paragraph{Conformal prediction for time series.}
-Conformal prediction~\cite{vovk2005conformal} provides distribution-free prediction intervals with finite-sample coverage guarantees under exchangeability.  Extensions to time-series settings include adaptive conformal inference (ACI)~\cite{gibbs2021adaptive}, which adjusts the miscoverage rate online, and conformalized quantile regression (CQR)~\cite{romano2019conformalized}, which wraps quantile regressors with conformal calibration.  Regime-aware variants~\cite{barber2023conformal} stratify calibration by volatility bin.  None of these methods condition calibration on \emph{telemetry quality}, leaving a gap when input measurements are themselves degraded.
+Conformal prediction~\cite{vovk2005conformal,shafer2008tutorial} provides distribution-free prediction intervals with finite-sample coverage guarantees under exchangeability. Extensions to operational time-series settings include conformalized quantile regression (CQR)~\cite{romano2019conformalized}, adaptive conformal inference under shift~\cite{gibbs2021adaptive}, adaptive conformal prediction for time series~\cite{zaffran2022adaptive}, and conformal methods beyond exchangeability~\cite{barber2023conformal}. DC\textsuperscript{3}S inherits this foundation but departs from prior work by conditioning interval inflation on telemetry quality rather than on residual behavior alone.
 
 \paragraph{Robust and stochastic battery dispatch.}
-Robust optimization for energy dispatch~\cite{bertsimas2011theory,ben2009robust} hedges against worst-case uncertainty within prescribed sets.  Stochastic programming~\cite{birge2011stochastic} optimizes expected cost over sampled scenarios.  CVaR-based formulations~\cite{rockafellar2000optimization} manage tail risk via Rockafellar--Uryasev linearization.  These methods assume well-specified uncertainty sets; when the sets are miscalibrated due to sensor faults, the robustness guarantees degrade.  DC\textsuperscript{3}S addresses this by coupling the uncertainty-set construction to telemetry reliability.
+Robust optimization for energy dispatch~\cite{bertsimas2011theory,ben2009robust} hedges against worst-case uncertainty within prescribed sets. Stochastic programming~\cite{birge2011stochastic} optimizes expected cost over sampled scenarios, and CVaR-based formulations manage tail risk via Rockafellar--Uryasev linearization~\cite{rockafellar2000optimization}. In the BESS literature, Rosewater et al.~\cite{rosewater2020riskaverse} show that risk-averse model predictive control can improve storage dispatch robustness when model uncertainty is acknowledged explicitly. DC\textsuperscript{3}S is closer to this line of work than to generic storage scheduling papers, but targets a different failure mode: telemetry-induced miscalibration of uncertainty sets inside a dispatch loop that must remain safe under degraded measurements.
 
 \paragraph{Safety shields and runtime monitors.}
-Shield synthesis~\cite{alshiekh2018safe,konighofer2020shield} enforces safety by constraining the action space to pre-computed safe regions.  Simplex architectures~\cite{sha2001using} switch to a safe baseline controller upon detecting anomalies.  Runtime verification monitors~\cite{leucker2009brief} check trace properties post-hoc.  DC\textsuperscript{3}S combines elements of all three: it monitors telemetry health, inflates the optimizer's constraint set, and projects actions to the safe set---while emitting a per-step certificate for auditability.
+Shield synthesis~\cite{alshiekh2018safe,konighofer2020shield} enforces safety by constraining the action space to precomputed safe regions. Model-predictive shielding~\cite{bastani2021safe} further tightens this connection between optimization and runtime safety. Simplex architectures~\cite{sha2001using} switch to a safe baseline controller upon detecting anomalies, while runtime verification monitors~\cite{leucker2009brief} check execution traces against safety properties. DC\textsuperscript{3}S combines these ideas at dispatch time: it monitors telemetry health, inflates the optimizer's admissible uncertainty set, repairs unsafe candidate actions, and emits a certificate that can be audited after execution.
 
 \paragraph{Telemetry reliability in CPS.}
-Telemetry degradation in industrial control has been studied in the context of SCADA security~\cite{dibaji2019systems} and anomaly detection~\cite{chandola2009anomaly}, but integrating a telemetry-quality score directly into the dispatch optimization loop is, to our knowledge, novel.
+Telemetry degradation in industrial control has been studied in the context of CPS security~\cite{dibaji2019systems} and anomaly detection~\cite{chandola2009anomaly}, but these works stop short of turning telemetry reliability into a control input for storage dispatch. DC\textsuperscript{3}S uses the same threat and anomaly vocabulary---dropout, delay, spikes, stale or reordered observations---but pushes it into uncertainty calibration and action repair rather than treating it as a separate monitoring layer.
+
+\paragraph{Reproducibility and release governance.}
+Because this paper makes an explicit governance claim, the release process is positioned relative to the reproducibility standards discussed by Pineau et al.~\cite{pineau2021improving}. The goal is narrow: not to claim a new general theory of artifact governance, but to make run IDs, locked metrics, and manuscript validation part of the scientific object for this paper.
 
 \paragraph{Positioning.}
-\Cref{tab:positioning} summarizes the methodological positioning.  DC\textsuperscript{3}S is the first method to combine conformal calibration, telemetry-reliability weighting, dispatch-level action repair, and per-step certification in a single framework.
+\Cref{tab:positioning} summarizes the methodological positioning. DC\textsuperscript{3}S combines conformal calibration, telemetry-reliability weighting, dispatch-level action repair, and per-step certification in one framework. That combination, rather than any single ingredient in isolation, is the methodological point of departure from prior work.
 
 \begin{table}[htbp]
 \centering\small
@@ -164,10 +166,17 @@ Runtime monitors  &            &            &            &            & \checkma
 \end{tabular}
 \end{table}
 
-% ===== 3. PROBLEM FORMULATION ===============================================
-\section{Problem Formulation}\label{sec:problem}
+\section{Background and Problem Formulation}\label{sec:background}
 
-\subsection{Notation and Setting}
+\subsection{System Architecture}\label{sec:system}
+
+GridPulse is implemented as a closed forecast-to-dispatch stack with DC\textsuperscript{3}S inserted at the boundary between uncertainty estimation and control execution. Forecast models produce point and interval predictions for load, wind, and solar; the optimizer consumes those predictions to compute candidate battery actions; the shield then scores telemetry quality, widens uncertainty bounds when necessary, repairs unsafe actions, and records an auditable certificate. This architecture makes the safety argument operational rather than purely theoretical because the same control step produces both a dispatch command and the evidence needed to inspect it later.
+
+\PaperFigure{FIG01_ARCHITECTURE}{GridPulse architecture with DC\textsuperscript{3}S at the dispatch boundary. The shield wraps the optimizer, inflating intervals and repairing actions before execution.}
+
+This section plays two roles. First, it provides the background and preliminaries needed to read the formal problem statement and the later control sections. Second, it anchors the method in the actual repo-managed forecasting, optimization, monitoring, and reporting stack used to generate the evidence in this paper. DC\textsuperscript{3}S is therefore not evaluated as an isolated theorem or toy controller; it is evaluated inside an executable system whose artifacts remain tied to versioned outputs rather than drifting across manuscript revisions.
+
+\subsection{Notation and Setting}\label{sec:problem}
 
 Consider a discrete-time battery dispatch problem over horizon $T$ with time step $\Delta t$\,=\,1\,h.  At each step $t$, the controller observes telemetry $\mathbf{z}_t \in \mathbb{R}^d$ (load, wind, solar, price, SOC readings) and must select a dispatch action $a_t \in \mathcal{A}$ (charge/discharge power) subject to physical constraints.
 
@@ -226,14 +235,12 @@ All signals have 100\% non-null coverage.  The DE/US split provides cross-region
 
 \PaperTableCSV{TBL05_DATASET_SUMMARY}{Dataset summary: regions, date ranges, signal counts, and coverage.}
 
-% ===== 4. METHOD =============================================================
-\section{DC\textsuperscript{3}S: Detect--Calibrate--Constrain--Certify--Shield}\label{sec:method}
+% ===== 4. THE DC3S METHOD ===================================================
+\section{The \texorpdfstring{DC\textsuperscript{3}S}{DC3S} Method}\label{sec:method}
 
-\Cref{fig:FIG01_ARCHITECTURE} shows the full system architecture.  DC\textsuperscript{3}S operates as a safety wrapper around any dispatch optimizer: at each control step, it scores telemetry, inflates uncertainty, solves the constrained optimization, repairs unsafe actions, and emits a certificate.
+DC\textsuperscript{3}S operates on a narrow premise: if telemetry quality deteriorates, interval construction should become more conservative before optimization is allowed to act on those signals.  This section formalizes the five-step pipeline---reliability scoring, interval inflation, robust dispatch, action repair, and certificate emission---that translates degradation evidence into safe dispatch commands.
 
-\PaperFigure{FIG01_ARCHITECTURE}{GridPulse architecture with DC\textsuperscript{3}S at the dispatch boundary.  The shield wraps the optimizer, inflating intervals and repairing actions before execution.}
-
-\subsection{Step 1: Telemetry Reliability Scoring}\label{sec:reliability}
+\subsection{Telemetry Reliability Scoring}\label{sec:reliability}
 
 At each time step $t$, DC\textsuperscript{3}S computes a reliability score $w_t \in [0,1]$:
 \begin{equation}\label{eq:reliability}
@@ -244,7 +251,7 @@ At each time step $t$, DC\textsuperscript{3}S computes a reliability score $w_t 
 \end{equation}
 where $\mathcal{S}$ is the sensor set, $\gamma_{\cdot} \in (0,1]$ are penalty weights, and the indicator functions detect staleness (no update within $\tau_{\text{stale}}$ seconds), spikes (exceeding $k\sigma$ from rolling median), and missing values.
 
-\subsection{Step 2: RAC-Cert Interval Inflation}\label{sec:rac}
+\subsection{RAC-Cert Interval Inflation}\label{sec:rac}
 
 Reliability-Adaptive Conformal Certification (RAC-Cert) inflates the conformal prediction interval as a function of reliability, drift risk, and model sensitivity:
 \begin{equation}\label{eq:rac_inflation}
@@ -263,19 +270,21 @@ With shrinkage toward the base width at rate $\tau \in (0,1)$ when reliability r
 \end{equation}
 preventing oscillation between inflated and nominal widths.
 
-\begin{theorem}[RAC-Cert marginal coverage]\label{thm:rac_coverage}
+\begin{proposition}[RAC-Cert marginal coverage under monotone inflation]\label{thm:rac_coverage}
 If the base conformal predictor satisfies $\Pr(Y_t \in \hat{C}_t(\alpha)) \ge 1 - \alpha$ under the clean data distribution, and RAC-Cert only \emph{inflates} intervals (the multiplicative factor in \Cref{eq:rac_inflation} is $\ge 1$), then the RAC-inflated interval preserves marginal coverage:
 \[
   \Pr(Y_t \in \hat{C}_t^{\mathrm{RAC}}(\alpha)) \ge 1 - \alpha.
 \]
-\end{theorem}
+\end{proposition}
 \begin{proof}
 Since $\hat{C}_t(\alpha) \subseteq \hat{C}_t^{\mathrm{RAC}}(\alpha)$ by construction (inflation factor $\ge 1$), we have $\{Y_t \in \hat{C}_t(\alpha)\} \subseteq \{Y_t \in \hat{C}_t^{\mathrm{RAC}}(\alpha)\}$, hence $\Pr(Y_t \in \hat{C}_t^{\mathrm{RAC}}(\alpha)) \ge \Pr(Y_t \in \hat{C}_t(\alpha)) \ge 1 - \alpha$.
 \end{proof}
 
 \PaperFigure{FIG08_RAC_SENSITIVITY_WIDTH}{RAC-Cert sensitivity signal versus interval width expansion across controllers.  Higher degradation triggers larger inflation.}
 
-\subsection{Step 3: Robust Dispatch with Inflated Intervals}\label{sec:dispatch}
+After RAC-Cert inflation, DC\textsuperscript{3}S passes the widened uncertainty set to the optimizer, verifies feasibility, repairs unsafe candidate actions when necessary, and records the evidence for that decision.  This stage is where conformal uncertainty becomes a control object.
+
+\subsection{Robust Dispatch with Inflated Intervals}\label{sec:dispatch}
 
 Given the RAC-inflated intervals $[\ell_t^{\text{RAC}}, u_t^{\text{RAC}}]$ for load, wind, and solar, DC\textsuperscript{3}S solves a two-scenario robust dispatch:
 \begin{equation}\label{eq:robust_dispatch}
@@ -292,7 +301,7 @@ For comparison, we also implement the CVaR formulation via Rockafellar--Uryasev 
 \end{equation}
 where $\beta$ is the CVaR confidence level and $S$ is the scenario count.
 
-\subsection{Step 4: Action Repair and Projection}\label{sec:repair}
+\subsection{Action Repair and Projection}\label{sec:repair}
 
 If the dispatch candidate $a_t^*$ violates any constraint in $\mathcal{A}_t$ (\Cref{eq:constraints}), DC\textsuperscript{3}S projects to the nearest feasible action:
 \begin{equation}\label{eq:projection}
@@ -300,7 +309,7 @@ If the dispatch candidate $a_t^*$ violates any constraint in $\mathcal{A}_t$ (\C
 \end{equation}
 For box constraints, this reduces to simple clamping.  For coupled constraints (ramp + SOC), a single-step QP is solved.
 
-\subsection{Step 5: Certificate Emission}\label{sec:certificate}
+\subsection{Certificate Emission}\label{sec:certificate}
 
 Each dispatch step emits a certificate $\mathcal{C}_t$ recording:
 \begin{equation}\label{eq:certificate}
@@ -480,10 +489,42 @@ Four transfer cases evaluate cross-region and temporal robustness:
 
 \subsection{Runtime and Intervention Behavior}\label{sec:runtime}
 
-DC\textsuperscript{3}S's computational overhead is modest: the reliability scoring, inflation calculation, and projection add $<$5\% to the solver wall-clock time.  The intervention rate (fraction of steps where the safe action differs from the optimizer's candidate) is 2.8\% for DC\textsuperscript{3}S FTIT---meaning the optimizer's output is safe in $>$97\% of steps, and the shield activates only when genuinely needed.
+DC\textsuperscript{3}S's computational overhead is modest: the reliability scoring, inflation calculation, and projection add $<$5\% to the solver wall-clock time. The intervention rate (fraction of steps where the safe action differs from the optimizer's candidate) is 2.8\% for DC\textsuperscript{3}S FTIT---meaning the optimizer's output is safe in $>$97\% of steps, and the shield activates only when genuinely needed.
 
-% ===== 7. DISCUSSION ========================================================
-\section{Discussion}\label{sec:discussion}
+% ===== 7. GOVERNANCE ========================================================
+\section{Governance and Reproducibility}\label{sec:governance}
+
+The paper's quantitative claims are locked to versioned artifacts rather than free-text manuscript statements. The locked DE and US impact summaries, the canonical stochastic run IDs, and the dashboard profile manifest are treated as publication interfaces. A claim is therefore valid only if it can be traced to a source artifact, a deterministic extraction rule, and a validator pass. This is the narrow sense in which governance is claimed as a contribution: reproducibility is embedded into the release procedure for this paper, consistent with the community push for stronger ML reproducibility norms~\cite{pineau2021improving}.
+
+\paragraph{Run-scoped evidence.}
+The release process binds the manuscript to dataset-scoped report files, pinned run IDs, and a claim matrix. This prevents a common failure mode in long-running applied ML projects: a paper draft continues to circulate after the underlying evaluation artifacts have changed. In this draft, DE and US stochastic results are always reported with their run IDs, and region-level impact percentages are always read from the locked artifact family rather than recomputed manually.
+
+\paragraph{What is and is not claimed.}
+The governance contribution is operational, not philosophical. We do not claim a new general reproducibility framework for ML. We claim that for this particular CPS paper, metric locking, run provenance, and non-mutating consistency checks are necessary to keep the method story and the evidence story aligned.
+
+\paragraph{Repository artifact traceability.}
+\Cref{tab:repo_traceability} makes the repo-to-paper mapping explicit. It mirrors the paper structure used by this draft: the method section is implemented by train/eval code, experiments consume configs, seeds, and preprocessed data, results are derived from logs and checkpoints, and the paper figures and tables are generated by plotting and publication scripts.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Repository artifact traceability for the paper pipeline.}
+\label{tab:repo_traceability}
+\begin{tabular}{p{3.1cm}p{4.2cm}p{5.8cm}}
+\toprule
+Repo artifact family & Primary role in the paper & Main paper touchpoint \\
+\midrule
+README + setup docs & Environment bootstrap, run commands, and operator setup & Governance and reproducibility; appendix checklist \\
+Train/eval code & Implements forecasting, uncertainty calibration, dispatch, and CPSBench evaluation & Method and experimental setup \\
+Configs + seeds & Fixes dataset scope, model settings, calibration settings, and randomized runs & Experimental setup and appendix hyperparameters \\
+Data + preprocessing & Defines dataset construction, split logic, and feature generation & Background/preliminaries and experimental setup \\
+Logs + checkpoints & Preserve run IDs, solver outputs, metrics, and locked evidence values & Results and governance/reproducibility \\
+Plotting + publication scripts & Build figures, tables, and paper-facing assets from locked artifacts & Results and appendices \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===== 8. DISCUSSION =======================================================
+\section{Discussion and Threats to Validity}\label{sec:discussion}
 
 \subsection{Implications for CPS Safety}
 
@@ -499,17 +540,17 @@ We report several findings that qualify our claims:
   \item \textbf{Cross-region impact magnitudes differ substantially}: a strategy yielding 7.11\% cost savings in DE yields only 0.11\% in US, underscoring regime sensitivity.
 \end{enumerate}
 
-\subsection{Limitations}\label{sec:limitations}
+\subsection{Threats to Validity and Limitations}\label{sec:limitations}
 
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
   \item \textbf{Dataset scope}: evidence is limited to DE (2018--2020) and US (2024--2026) windows.  Generalization to other markets, tariff structures, or regulatory regimes requires additional evaluation.
   \item \textbf{Simulation only}: all results are from software simulation with replayed telemetry.  No hardware-in-the-loop or field deployment validation is claimed.
   \item \textbf{Proxy assumptions}: cost and carbon signals are derived from publicly available data and may not fully represent all market settlement mechanisms.
   \item \textbf{Stochastic sensitivity}: VSS and EVPI magnitudes are sensitive to scenario construction parameters and should not be interpreted as universal constants.
-  \item \textbf{Coverage theorem}: \Cref{thm:rac_coverage} provides marginal coverage preservation under inflation; it does not guarantee \emph{conditional} coverage or optimal interval width.
+  \item \textbf{Supporting proposition}: \Cref{thm:rac_coverage} provides marginal coverage preservation under inflation; it does not guarantee \emph{conditional} coverage or optimal interval width.
 \end{enumerate}
 
-% ===== 8. CONCLUSION ========================================================
+% ===== 9. CONCLUSION =======================================================
 \section{Conclusion}\label{sec:conclusion}
 
 We presented DC\textsuperscript{3}S, a conformal safety shield that integrates telemetry-reliability scoring, adaptive interval inflation (RAC-Cert), robust dispatch, action repair, and per-step certification into a single online loop for battery dispatch under degraded telemetry.  Across four fault types and parametric severity sweeps on DE and US data:
@@ -533,7 +574,7 @@ The practical message: trustworthy CPS dispatch requires telemetry-aware uncerta
 % ===== REFERENCES ============================================================
 \bibliographystyle{plain}
 
-\begin{thebibliography}{20}
+\begin{thebibliography}{99}
 
 \bibitem{vovk2005conformal}
 V.~Vovk, A.~Gammerman, and G.~Shafer.
@@ -585,6 +626,11 @@ R.~T.~Rockafellar and S.~Uryasev.
 \newblock Optimization of conditional value-at-risk.
 \newblock {\em Journal of Risk}, 2(3):21--42, 2000.
 
+\bibitem{rosewater2020riskaverse}
+D.~Rosewater, R.~Baldick, and S.~Santoso.
+\newblock Risk-averse model predictive control design for battery energy storage systems.
+\newblock {\em IEEE Transactions on Smart Grid}, 11(3):2014--2022, 2020.
+
 \bibitem{alshiekh2018safe}
 M.~Alshiekh, R.~Bloem, R.~Ehlers, B.~K\"onighofer, S.~Niekum, and U.~Topcu.
 \newblock Safe reinforcement learning via shielding.
@@ -625,10 +671,10 @@ T.~Chen, Y.~Jin, H.~Lv, A.~Yang, M.~Liu, B.~Chen, Y.~Xie, and Q.~Chen.
 \newblock Applications of lithium-ion batteries in grid-scale energy storage systems.
 \newblock {\em Transactions of Tianjin University}, 26:208--217, 2020.
 
-\bibitem{falliere2011stuxnet}
-N.~Falliere, L.~O'Murchu, and E.~Chien.
-\newblock W32.{S}tuxnet dossier.
-\newblock Technical report, Symantec Security Response, 2011.
+\bibitem{pineau2021improving}
+J.~Pineau, P.~Vincent-Lamarre, K.~Sinha, V.~Larivi\`ere, A.~Beygelzimer, F.~d'Alch\'e-Buc, E.~Fox, and H.~Larochelle.
+\newblock Improving reproducibility in machine learning research.
+\newblock {\em Journal of Machine Learning Research}, 22(164):1--20, 2021.
 
 \end{thebibliography}
 
