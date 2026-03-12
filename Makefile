@@ -1,9 +1,10 @@
 .PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact paper-assets paper-verify paper-compile paper-refresh
 
 PYTHON ?= $(if $(wildcard .venv/bin/python3),.venv/bin/python3,python3)
+PROFILE ?= standard
 
 setup:
-	$(PYTHON) -m venv .venv && . .venv/bin/activate && .venv/bin/pip install -r requirements.txt
+	$(PYTHON) -m venv .venv && . .venv/bin/activate && .venv/bin/pip install -r requirements.lock.txt
 	cd frontend && npm install
 
 lint:
@@ -238,7 +239,10 @@ cpsbench:
 	.venv/bin/python3 scripts/run_cpsbench.py
 
 publication-artifact:
-	.venv/bin/python3 scripts/build_publication_artifact.py --out-dir reports/publication --horizon 96 --seeds 0 1 2 3 4 5 6 7 8 9
+ifndef RELEASE_ID
+	$(error RELEASE_ID is not set. Usage: make publication-artifact RELEASE_ID=R1_20260312T000000Z)
+endif
+	$(PYTHON) scripts/build_publication_artifact.py --release-id $(RELEASE_ID) --out-dir reports/publication --horizon 96 --seeds 0 1 2 3 4 5 6 7 8 9
 
 paper-assets:
 	bash scripts/export_paper_assets.sh
@@ -302,23 +306,23 @@ pre-release: ci release_check
 
 # R1 diagnostic: single-seed quick check across all BAs
 r1-diagnostic:
-	PYTHONPATH=src $(PYTHON) scripts/run_r1_release.py --stage diagnostic
+	PYTHONPATH=src $(PYTHON) scripts/run_r1_release.py --stage diagnostic $(if $(RELEASE_ID),--release-id $(RELEASE_ID),)
 
 # R1 full: multi-seed training across DE + US BAs
 r1-full:
-	PYTHONPATH=src $(PYTHON) scripts/run_r1_release.py --stage full
+	PYTHONPATH=src $(PYTHON) scripts/run_r1_release.py --stage full --profile $(PROFILE) $(if $(RELEASE_ID),--release-id $(RELEASE_ID),)
 
 # R1 CPSBench: severity sweeps with MPC baseline
 r1-cpsbench:
-	PYTHONPATH=src $(PYTHON) scripts/run_r1_release.py --stage cpsbench
+	PYTHONPATH=src $(PYTHON) scripts/run_r1_release.py --stage cpsbench $(if $(RELEASE_ID),--release-id $(RELEASE_ID),)
 
 # R1 verify: lint + test + paper asset sync
 r1-verify:
-	PYTHONPATH=src $(PYTHON) scripts/run_r1_release.py --stage verify
+	PYTHONPATH=src $(PYTHON) scripts/run_r1_release.py --stage verify $(if $(RELEASE_ID),--release-id $(RELEASE_ID),)
 
 # R1 promote: promote candidate artifacts
 r1-promote:
-	PYTHONPATH=src $(PYTHON) scripts/run_r1_release.py --stage promote
+	PYTHONPATH=src $(PYTHON) scripts/run_r1_release.py --stage promote $(if $(RELEASE_ID),--release-id $(RELEASE_ID),)
 
 # R1 full pipeline end-to-end
 r1-all: r1-diagnostic r1-full r1-cpsbench r1-verify r1-promote
@@ -334,7 +338,7 @@ transfer-study:
 
 # Train all BAs with full model suite
 train-all-ba:
-	PYTHONPATH=src $(PYTHON) scripts/train_dataset.py --dataset DE --profile full
-	PYTHONPATH=src $(PYTHON) scripts/train_dataset.py --dataset US_MISO --profile full
-	PYTHONPATH=src $(PYTHON) scripts/train_dataset.py --dataset US_PJM --profile full
-	PYTHONPATH=src $(PYTHON) scripts/train_dataset.py --dataset US_ERCOT --profile full
+	PYTHONPATH=src $(PYTHON) scripts/train_dataset.py --dataset DE --profile $(PROFILE)
+	PYTHONPATH=src $(PYTHON) scripts/train_dataset.py --dataset US_MISO --profile $(PROFILE)
+	PYTHONPATH=src $(PYTHON) scripts/train_dataset.py --dataset US_PJM --profile $(PROFILE)
+	PYTHONPATH=src $(PYTHON) scripts/train_dataset.py --dataset US_ERCOT --profile $(PROFILE)

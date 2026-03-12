@@ -1,23 +1,37 @@
 # GridPulse Scripts
 
-Command-line scripts for training, evaluation, deployment, and maintenance tasks.
+Command-line scripts for training, evaluation, publication packaging, and release maintenance.
+
+## Canonical Workflow
+
+The normalized research workflow is anchored to these entrypoints:
+- `train_dataset.py`: canonical per-dataset training and candidate-run acceptance
+- `run_r1_release.py`: canonical release-family orchestrator (`diagnostic`, `full`, `cpsbench`, `verify`, `promote`)
+- `build_publication_artifact.py --release-id <id>`: canonical publication artifact build
+- `sync_paper_assets.py --check`: paper-asset freshness and provenance audit
+- `validate_paper_claims.py`: hard manuscript claim gate
+- `final_publish_audit.py`: final release GO/NO-GO audit
+
+Legacy/internal scripts may still exist for compatibility, but they should not be used as the primary publication workflow.
 
 ## Script Categories
 
 ### Training & Model Management
 | Script | Purpose |
 |--------|---------|
-| `train_multi_dataset.py` | Train models on DE/US datasets |
+| `train_multi_dataset.py` | Legacy/internal multi-dataset helper retained for transition compatibility |
 | `run_ablations.py` | Run feature ablation studies |
 | `register_models.py` | Register models + conformal artifacts in local registry JSON |
 | `promote_model.py` | Promote model to production |
 | `retrain_if_needed.py` | Conditional retraining based on drift |
 | `train_dataset.py` | Unified dataset training with standard/aggressive profiles |
+| `run_r1_release.py` | Release-family orchestration across DE + US balancing authorities |
 
 ### Evaluation & Reports
 | Script | Purpose |
 |--------|---------|
 | `build_reports.py` | Generate evaluation reports |
+| `build_publication_artifact.py` | Build a manifest-locked publication package for one `release_id` |
 | `build_stats_tables.py` | Statistical significance tables |
 | `build_paper_table_tex.py` | Convert manifest-mapped CSV tables into LaTeX table fragments + token lookup |
 | `build_forecast_interval_report.py` | Uncertainty quantification report |
@@ -50,6 +64,8 @@ Command-line scripts for training, evaluation, deployment, and maintenance tasks
 | `refresh_data_delta.py` | Hybrid delta refresh and dedup checks |
 | `backfill_dc3s_typed_columns.py` | Backfill typed DC3S audit columns from payload JSON |
 | `export_paper_assets.sh` | Export curated paper assets from raw publication outputs |
+| `sync_paper_assets.py` | Check paper assets against the locked release manifest and stale-value rules |
+| `validate_paper_claims.py` | Validate locked manuscript numbers, run IDs, and claim-matrix status |
 | `run_publish_audit_isolated.sh` | Run full publish audit in isolated `/tmp` workspace clone |
 | `check_api_health.py` | API health verification |
 | `validate_configs.py` | Configuration validation |
@@ -66,13 +82,19 @@ Command-line scripts for training, evaluation, deployment, and maintenance tasks
 ## Usage
 
 ```bash
-# Run with Python
-python scripts/train_multi_dataset.py
+# Canonical install
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.lock.txt
+pip install -e .
 
-# Or via Makefile targets
-make train
-make ablations
-make stats-tables
+# Canonical release workflow
+export RELEASE_ID=R1_20260312T000000Z
+make r1-diagnostic RELEASE_ID=$RELEASE_ID
+make r1-full RELEASE_ID=$RELEASE_ID PROFILE=standard
+make r1-cpsbench RELEASE_ID=$RELEASE_ID
+make r1-verify RELEASE_ID=$RELEASE_ID
+make publication-artifact RELEASE_ID=$RELEASE_ID
+make paper-sync
 ```
 
 ## Environment
@@ -100,13 +122,15 @@ Canonical training configs:
 Suggested end-to-end sequence:
 
 ```bash
-python scripts/train_dataset.py --dataset DE --profile aggressive --max-runtime-hours 6
-python scripts/train_dataset.py --dataset US --profile aggressive --max-runtime-hours 6
-python scripts/run_cpsbench.py --out-dir reports/publication
-python scripts/run_ablations.py --dc3s --output reports/publication --scenario drift_combo --horizon 96 --seeds 0 1 2 3 4 5 6 7 8 9
-python scripts/build_reports.py --features data/processed/features.parquet --splits data/processed/splits --models-dir artifacts/models --reports-dir reports
+export RELEASE_ID=R1_20260312T000000Z
+python scripts/run_r1_release.py --stage diagnostic --release-id "$RELEASE_ID"
+python scripts/run_r1_release.py --stage full --release-id "$RELEASE_ID" --profile aggressive
+python scripts/run_r1_release.py --stage cpsbench --release-id "$RELEASE_ID"
+python scripts/run_r1_release.py --stage verify --release-id "$RELEASE_ID"
+python scripts/build_publication_artifact.py --release-id "$RELEASE_ID" --out-dir reports/publication
 python scripts/validate_paper_claims.py
-python scripts/final_publish_audit.py --config configs/publish_audit.yaml --max-runtime-hours 6 --iot-steps 72 --baseline-ref origin/main
+python scripts/sync_paper_assets.py --check
+python scripts/final_publish_audit.py --config configs/publish_audit.yaml --skip-retrain
 ```
 
 ## One-Command Reproducibility
@@ -114,7 +138,7 @@ python scripts/final_publish_audit.py --config configs/publish_audit.yaml --max-
 Build the full admissions artifact package (Tasks 1-4) with one command:
 
 ```bash
-make publication-artifact
+make publication-artifact RELEASE_ID=R1_20260312T000000Z
 ```
 
 This writes/refreshes:
@@ -144,7 +168,7 @@ This writes/refreshes:
 
 ## Paper Asset Refresh Workflow
 
-Manifest-driven paper refresh (training-later safe):
+Manifest-driven paper refresh (run only after a successful `build_publication_artifact.py --release-id ...`):
 
 ```bash
 make paper-refresh

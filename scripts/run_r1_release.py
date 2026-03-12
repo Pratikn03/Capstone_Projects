@@ -132,6 +132,7 @@ def stage_verify(release_id: str) -> dict[str, dict]:
     for ds in R1_DATASETS:
         ds_lower = ds.lower()
         reports_dir = REPO_ROOT / "reports" / "runs" / ds_lower / release_id
+        manifest_path = REPO_ROOT / "artifacts" / "runs" / ds_lower / release_id / "registry" / "run_manifest.json"
         summary_path = reports_dir / "publish" if reports_dir.exists() else reports_dir
 
         # Check tuning summary
@@ -144,7 +145,11 @@ def stage_verify(release_id: str) -> dict[str, dict]:
                 summary_file = candidate
                 break
 
-        detail: dict = {"dataset": ds, "passed": False}
+        detail: dict = {
+            "dataset": ds,
+            "passed": False,
+            "manifest_path": str(manifest_path),
+        }
         if summary_file is not None:
             try:
                 data = json.loads(summary_file.read_text(encoding="utf-8"))
@@ -189,6 +194,19 @@ def stage_promote(release_id: str) -> bool:
     print(f"\n{'═'*60}")
     print(f"  STAGE 5: PROMOTE  release={release_id}")
     print(f"{'═'*60}\n")
+    verification_path = REPO_ROOT / "reports" / "runs" / f"{release_id}_verification.json"
+    if not verification_path.exists():
+        print(f"  ❌ Missing verification report: {verification_path}")
+        print("  Run stage_verify successfully before promotion.")
+        return False
+    try:
+        verification = json.loads(verification_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        print(f"  ❌ Invalid verification report: {exc}")
+        return False
+    if not bool(verification.get("all_pass", False)):
+        print("  ❌ Verification report indicates failed acceptance gates. Promotion blocked.")
+        return False
     all_ok = True
     for ds in R1_DATASETS:
         ok = _run(
@@ -245,8 +263,8 @@ def main() -> int:
     elif args.stage == "cpsbench":
         return 0 if stage_cpsbench(rid) else 1
     elif args.stage == "verify":
-        stage_verify(rid)
-        return 0
+        result = stage_verify(rid)
+        return 0 if all(detail.get("passed", False) for detail in result.values()) else 1
     elif args.stage == "promote":
         return 0 if stage_promote(rid) else 1
     elif args.stage == "all":
@@ -258,9 +276,10 @@ def main() -> int:
         if not all(r2.values()):
             print("  ❌ Full baseline failures")
             return 1
-        stage_cpsbench(rid)
-        stage_verify(rid)
-        return 0
+        if not stage_cpsbench(rid):
+            return 1
+        verified = stage_verify(rid)
+        return 0 if all(detail.get("passed", False) for detail in verified.values()) else 1
     return 1
 
 
