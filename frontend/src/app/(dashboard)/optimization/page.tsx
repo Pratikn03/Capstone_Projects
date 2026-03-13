@@ -4,6 +4,7 @@ import { DispatchChart } from '@/components/ai/tools/DispatchChart';
 import { BatterySOCChart } from '@/components/ai/tools/BatterySOCChart';
 import { CarbonCostPanel } from '@/components/ai/tools/CarbonCostPanel';
 import { Panel } from '@/components/ui/Panel';
+import { StatusBanner } from '@/components/ui/StatusBanner';
 import { useRegion } from '@/components/ui/RegionContext';
 import { useDatasetData } from '@/lib/api/dataset-client';
 import { useReportsData } from '@/lib/api/reports-client';
@@ -39,6 +40,11 @@ export default function OptimizationPage() {
   const baselineCost = realImpact?.baseline_cost_usd ?? null;
   const gridpulseCost = realImpact?.gridpulse_cost_usd ?? null;
   const costSaved = baselineCost !== null && gridpulseCost !== null ? baselineCost - gridpulseCost : null;
+  const statusMessages = [
+    dataset.error ? `Dataset view error: ${dataset.error}` : null,
+    !dispatchData.length ? 'No extracted dispatch trace is available; optimization charts are waiting for real artifacts.' : null,
+    !realImpact ? 'Impact cards are using report-level fallbacks when available.' : null,
+  ].filter((message): message is string => Boolean(message));
 
   return (
     <div className="p-6 space-y-6">
@@ -59,6 +65,8 @@ export default function OptimizationPage() {
           )}
         </div>
       </div>
+
+      <StatusBanner title="Optimization Status" messages={statusMessages} />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <DispatchChart

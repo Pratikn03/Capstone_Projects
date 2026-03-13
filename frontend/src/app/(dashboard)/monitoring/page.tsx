@@ -3,7 +3,7 @@
 import { MLOpsMonitor } from '@/components/charts/MLOpsMonitor';
 import { ArchitectureDiagram } from '@/components/charts/ArchitectureDiagram';
 import { Panel } from '@/components/ui/Panel';
-import { mockDriftData } from '@/lib/api/mock-data';
+import { StatusBanner } from '@/components/ui/StatusBanner';
 import { useReportsData } from '@/lib/api/reports-client';
 import { useRegion } from '@/components/ui/RegionContext';
 import { useDatasetData, type DriftPoint } from '@/lib/api/dataset-client';
@@ -15,9 +15,9 @@ export default function MonitoringPage() {
   const formatMaybe = (value: number | undefined, digits: number) => (value === undefined ? 'N/A' : value.toFixed(digits));
   const regionLabel = region === 'US' ? 'USA' : 'Germany';
 
-  // Use real monitoring data from extracted JSON, fallback to mock
+  // Use real monitoring data from extracted JSON only.
   const realMonitoring = dataset.monitoring;
-  const drift: DriftPoint[] = realMonitoring?.drift_timeline ?? mockDriftData(30);
+  const drift: DriftPoint[] = realMonitoring?.drift_timeline ?? [];
 
   // Prefer real dataset metrics, then reports metrics
   const realMetrics = dataset.metrics.length ? dataset.metrics : [];
@@ -27,6 +27,11 @@ export default function MonitoringPage() {
 
   // Real model registry
   const registry = dataset.registry;
+  const statusMessages = [
+    dataset.error ? `Dataset view error: ${dataset.error}` : null,
+    !realMonitoring ? 'No monitoring artifact is available for this region, so the drift timeline is empty.' : null,
+    !registry.length ? 'No model registry artifacts were found for this region.' : null,
+  ].filter((message): message is string => Boolean(message));
 
   return (
     <div className="p-6 space-y-6">
@@ -43,6 +48,8 @@ export default function MonitoringPage() {
           </div>
         )}
       </div>
+
+      <StatusBanner title="Monitoring Status" messages={statusMessages} />
 
       <MLOpsMonitor data={drift} />
 

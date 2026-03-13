@@ -1,7 +1,7 @@
 'use client';
 
 import { Globe, Clock, Bell, User, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRegion } from './RegionContext';
 
 const regions = [
@@ -12,15 +12,23 @@ const regions = [
 export function TopBar() {
   const { region, setRegion } = useRegion();
   const [showRegions, setShowRegions] = useState(false);
+  const [nowUtc, setNowUtc] = useState(() => new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC');
   const currentRegion = regions.find((r) => r.id === region) || regions[0];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNowUtc(new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC');
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   return (
     <header className="h-14 flex items-center justify-between px-6 border-b border-white/6 bg-grid-dark/80 backdrop-blur-sm sticky top-0 z-20">
       {/* Left: Status + Region */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300">
-          <span className="w-2 h-2 rounded-full bg-energy-primary animate-pulse" />
-          LIVE
+          <span className="w-2 h-2 rounded-full bg-energy-info animate-pulse" />
+          RESEARCH UI
         </div>
 
         {/* Region Selector */}
@@ -55,10 +63,10 @@ export function TopBar() {
 
         {/* Model Badge */}
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-energy-primary-dim border border-energy-primary/20 text-xs text-energy-primary">
-          Model: GBM
+          Shield: DC3S
         </div>
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-xs text-slate-300">
-          Horizon: 24h
+          Data: Artifact + Live
         </div>
       </div>
 
@@ -66,7 +74,7 @@ export function TopBar() {
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1.5 text-xs text-slate-400">
           <Clock className="w-3.5 h-3.5" />
-          <span className="font-mono">2026-02-07 05:46 UTC</span>
+          <span className="font-mono">{nowUtc}</span>
         </div>
 
         <button className="relative p-2 rounded-lg hover:bg-white/5 transition-colors">
