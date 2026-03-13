@@ -7,6 +7,7 @@ import { useReportsData } from '@/lib/api/reports-client';
 import { useDatasetData } from '@/lib/api/dataset-client';
 import { useRegion } from '@/components/ui/RegionContext';
 import { Panel } from '@/components/ui/Panel';
+import { StatusBanner } from '@/components/ui/StatusBanner';
 import { formatCurrency } from '@/lib/utils';
 
 export default function CarbonPage() {
@@ -28,6 +29,11 @@ export default function CarbonPage() {
     ? baselineCarbon / (dataset.stats.rows || 1) / 1000  // rough estimate kgCO2/MWh
     : null;
   const regionLabel = region === 'US' ? 'USA (EIA-930)' : 'Germany (OPSD)';
+  const statusMessages = [
+    dataset.error ? `Dataset view error: ${dataset.error}` : null,
+    !realImpact ? 'Carbon impact metrics are falling back to report-level summaries where available.' : null,
+    !pareto.length ? 'No Pareto frontier artifact is available for this region.' : null,
+  ].filter((message): message is string => Boolean(message));
 
   return (
     <div className="p-6 space-y-6">
@@ -52,6 +58,8 @@ export default function CarbonPage() {
           ))}
         </div>
       </div>
+
+      <StatusBanner title="Carbon View Status" messages={statusMessages} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <KPICard

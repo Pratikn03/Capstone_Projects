@@ -3,6 +3,7 @@
 import { AnomalyTimeline } from '@/components/charts/AnomalyTimeline';
 import { AnomalyList } from '@/components/charts/AnomalyList';
 import { Panel } from '@/components/ui/Panel';
+import { StatusBanner } from '@/components/ui/StatusBanner';
 import { useRegion } from '@/components/ui/RegionContext';
 import { useDatasetData } from '@/lib/api/dataset-client';
 
@@ -19,6 +20,11 @@ export default function AnomaliesPage() {
     residual_mw: z.residual_mw,
   }));
   const regionLabel = region === 'US' ? 'USA' : 'Germany';
+  const statusMessages = [
+    dataset.error ? `Dataset view error: ${dataset.error}` : null,
+    !zScores.length ? 'No anomaly time-series artifact is available for this region.' : null,
+    !anomalies.length ? 'No anomaly event log entries were found for this region.' : null,
+  ].filter((message): message is string => Boolean(message));
 
   return (
     <div className="p-6 space-y-6">
@@ -35,6 +41,8 @@ export default function AnomaliesPage() {
           </div>
         )}
       </div>
+
+      <StatusBanner title="Anomaly View Status" messages={statusMessages} />
 
       <AnomalyTimeline data={zScores} />
 

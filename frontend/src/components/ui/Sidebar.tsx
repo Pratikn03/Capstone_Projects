@@ -30,7 +30,7 @@ const navItems = [
 ];
 
 const bottomItems = [
-  { href: '/', label: 'Settings', icon: Settings },
+  { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export function Sidebar() {
