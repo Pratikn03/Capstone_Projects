@@ -1,5 +1,5 @@
 dataset_key,dataset_label,country,rows,date_start,date_end,targets,min_coverage_pct,feature_count,columns,source,weather_source,carbon_source
-DE,Germany (OPSD),DE,17377,2018-10-07,2020-09-30,"load_mw,solar_mw,wind_mw",100.0,94,98,OPSD + SMARD,,
+DE,Germany (OPSD),DE,17377,2018-10-07,2020-09-30,"load_mw,solar_mw,wind_mw",100.0,94,98,OPSD + SMARD,Open-Meteo archive API,SMARD generation mix
 US_ERCOT,USA (EIA-930 ERCOT),US,13453,2024-07-01,2026-01-20,"load_mw,solar_mw,wind_mw",100.0,62,62,EIA-930 ERCOT,Open-Meteo archive API,proxy_generation_mix
-US_MISO,USA (EIA-930 MISO),US,13638,2024-07-01,2026-01-20,"load_mw,solar_mw,wind_mw",100.0,114,118,EIA-930 MISO,,
+US_MISO,USA (EIA-930 MISO),US,13638,2024-07-01,2026-01-20,"load_mw,solar_mw,wind_mw",100.0,114,118,EIA-930 MISO,Open-Meteo archive API,proxy_generation_mix
 US_PJM,USA (EIA-930 PJM),US,13639,2024-07-01,2026-01-20,"load_mw,solar_mw,wind_mw",100.0,62,62,EIA-930 PJM,Open-Meteo archive API,proxy_generation_mix

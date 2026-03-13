@@ -1232,12 +1232,13 @@ def _run_research_step(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="GridPulse pipeline orchestrator")
+    ALL_STEPS = ["data", "train", "anomaly", "reports", "monitor", "research", "benchmark"]
     parser.add_argument(
         "--steps",
-        default="data,train,reports,research",
-        help="Comma-separated steps: data,train,reports,research",
+        default="data,train,anomaly,reports,monitor,research,benchmark",
+        help="Comma-separated steps: " + ",".join(ALL_STEPS),
     )
-    parser.add_argument("--all", action="store_true", help="Run all steps (data,train,reports,research)")
+    parser.add_argument("--all", action="store_true", help="Run all steps")
     parser.add_argument("--force", action="store_true", help="Force re-run even if cache is unchanged")
     parser.add_argument("--run-id", default=None, help="Override run id (default: timestamp)")
     parser.add_argument(
@@ -1263,11 +1264,29 @@ def main() -> None:
         default="de,us",
         help="Comma-separated research datasets to process: de,us",
     )
+    parser.add_argument(
+        "--benchmark-horizon",
+        type=int,
+        default=168,
+        help="CPSBench-IoT benchmark horizon (default: 168)",
+    )
+    parser.add_argument(
+        "--benchmark-seeds",
+        nargs="*",
+        type=int,
+        default=None,
+        help="Override benchmark seeds, e.g. --benchmark-seeds 11 22 33",
+    )
+    parser.add_argument(
+        "--disable-alerts",
+        action="store_true",
+        help="Disable monitoring webhook alerts",
+    )
     args = parser.parse_args()
 
     repo_root = _repo_root()
     steps = (
-        ["data", "train", "reports", "research"]
+        ALL_STEPS
         if args.all
         else [s.strip() for s in args.steps.split(",") if s.strip()]
     )
@@ -1358,12 +1377,60 @@ def main() -> None:
             register_models(repo_root / "artifacts" / "models", repo_root / "artifacts" / "registry" / "models.json", run_id=run_id)
         cache["train_hash"] = train_hash
 
+    # ── ANOMALY ─────────────────────────────────────────────
+    anomaly_cfg_path = repo_root / "configs" / "anomaly.yaml"
+    anomaly_model_path = repo_root / "artifacts" / "models" / "anomaly_detector.pkl"
+    if "anomaly" in steps:
+        if not features_path.exists():
+            raise FileNotFoundError("Missing data/processed/features.parquet. Run data step first.")
+        anomaly_inputs = [features_path]
+        if anomaly_cfg_path.exists():
+            anomaly_inputs.append(anomaly_cfg_path)
+        anomaly_hash = _hash_paths(anomaly_inputs, repo_root)
+        if not args.force and cache.get("anomaly_hash") == anomaly_hash and anomaly_model_path.exists():
+            log.info("Anomaly step skipped (cache hit)")
+        else:
+            anomaly_cmd = [
+                sys.executable, "-m", "gridpulse.anomaly.train",
+                "--train-data", "data/processed/splits/train.parquet",
+                "--out", str(anomaly_model_path),
+            ]
+            if anomaly_cfg_path.exists():
+                anomaly_cmd += ["--config", str(anomaly_cfg_path)]
+            _run(anomaly_cmd, log)
+        cache["anomaly_hash"] = anomaly_hash
+
     if "reports" in steps:
         if not args.force and cache.get("reports_hash") == cache.get("train_hash"):
             log.info("Reports step skipped (cache hit)")
         else:
             _run([sys.executable, "scripts/build_reports.py"], log)
         cache["reports_hash"] = cache.get("train_hash")
+
+    # ── MONITOR ─────────────────────────────────────────────
+    monitoring_cfg_path = repo_root / "configs" / "monitoring.yaml"
+    monitoring_result: dict[str, Any] = {}
+    if "monitor" in steps:
+        monitor_inputs = [monitoring_cfg_path]
+        models_dir = repo_root / "artifacts" / "models"
+        if models_dir.exists():
+            for pkl in sorted(models_dir.glob("gbm_*_load_mw.pkl"))[:1]:
+                monitor_inputs.append(pkl)
+        splits_dir = repo_root / "data" / "processed" / "splits"
+        if (splits_dir / "test.parquet").exists():
+            monitor_inputs.append(splits_dir / "test.parquet")
+        monitor_hash = _hash_paths(monitor_inputs, repo_root)
+        if not args.force and cache.get("monitor_hash") == monitor_hash:
+            log.info("Monitor step skipped (cache hit)")
+        else:
+            monitor_cmd = [sys.executable, "scripts/run_monitoring.py"]
+            if args.disable_alerts:
+                monitor_cmd.append("--disable-alerts")
+            _run(monitor_cmd, log)
+            summary_path = repo_root / "reports" / "monitoring_summary.json"
+            if summary_path.exists():
+                monitoring_result = json.loads(summary_path.read_text(encoding="utf-8"))
+        cache["monitor_hash"] = monitor_hash
 
     if "research" in steps:
         uncertainty_cfg = _load_yaml(uncertainty_cfg_path)
@@ -1447,6 +1514,34 @@ def main() -> None:
         )
         cache["research_last_run_id"] = run_id
 
+    # ── BENCHMARK ──────────────────────────────────────────
+    benchmark_result: dict[str, Any] = {}
+    if "benchmark" in steps:
+        benchmark_out = repo_root / "reports" / "publication"
+        cpsbench_script = repo_root / "scripts" / "run_cpsbench.py"
+        if not cpsbench_script.exists():
+            raise FileNotFoundError(f"Missing benchmark script: {cpsbench_script}")
+        bench_inputs = [cpsbench_script]
+        runner_module = repo_root / "src" / "gridpulse" / "cpsbench_iot" / "runner.py"
+        if runner_module.exists():
+            bench_inputs.append(runner_module)
+        bench_hash = _hash_paths(bench_inputs, repo_root)
+        if not args.force and cache.get("benchmark_hash") == bench_hash and benchmark_out.exists():
+            log.info("Benchmark step skipped (cache hit)")
+        else:
+            bench_cmd = [
+                sys.executable, str(cpsbench_script),
+                "--out-dir", str(benchmark_out),
+                "--horizon", str(args.benchmark_horizon),
+            ]
+            if args.benchmark_seeds:
+                bench_cmd += ["--seeds"] + [str(s) for s in args.benchmark_seeds]
+            _run(bench_cmd, log)
+            manifest_path = benchmark_out / "benchmark_manifest.json"
+            if manifest_path.exists():
+                benchmark_result = json.loads(manifest_path.read_text(encoding="utf-8"))
+        cache["benchmark_hash"] = bench_hash
+
     # snapshot outputs
     _snapshot_artifacts(repo_root, run_dir, log)
     _snapshot_configs(repo_root, run_dir)
@@ -1467,16 +1562,21 @@ def main() -> None:
         "data_cfg_hash": cache.get("data_cfg_hash"),
         "features_hash": cache.get("features_hash"),
         "train_hash": cache.get("train_hash"),
+        "anomaly_hash": cache.get("anomaly_hash"),
         "reports_hash": cache.get("reports_hash"),
+        "monitor_hash": cache.get("monitor_hash"),
         "research_hash": cache.get("research_hash"),
         "research_hash_de": cache.get("research_hash_de"),
         "research_hash_us": cache.get("research_hash_us"),
+        "benchmark_hash": cache.get("benchmark_hash"),
         "signals_hash": cache.get("signals_hash"),
         "research_rows_written": research_rows_written_total,
         "research_rows_written_de": int(research_results.get("de", {}).get("rows_written", 0)),
         "research_rows_written_us": int(research_results.get("us", {}).get("rows_written", 0)),
         "research_output_csv": next(iter(research_outputs.values()), None),
         "research_outputs": research_outputs,
+        "monitoring": monitoring_result,
+        "benchmark": benchmark_result,
         "steps": steps,
     }
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")

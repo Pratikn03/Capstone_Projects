@@ -88,30 +88,50 @@ def _render_generic_table(token: str, csv_path: Path, title: str) -> str:
 
 def _render_tbl08(token: str, csv_path: Path, title: str) -> str:
     df = pd.read_csv(csv_path, dtype=str).fillna("---")
+    target_order = ["Load", "Wind", "Solar"]
+    model_order = ["GBM", "N-BEATS", "PatchTST", "TFT"]
+    filtered = df[
+        (df["Region"] == "DE")
+        & (df["Target"].isin(target_order))
+        & (df["Model"].isin(model_order))
+    ].copy()
+    filtered["Target"] = pd.Categorical(filtered["Target"], categories=target_order, ordered=True)
+    filtered["Model"] = pd.Categorical(filtered["Model"], categories=model_order, ordered=True)
+    filtered = filtered.sort_values(["Target", "Model"])
     lines = [
-        r"\setlength{\tabcolsep}{3pt}",
+        r"\setlength{\tabcolsep}{4pt}",
         r"\renewcommand{\arraystretch}{0.95}",
-        r"\resizebox{\linewidth}{!}{%",
         r"\begin{tabular}{lllrrrrrr}",
         r"\toprule",
-        r"Region & Target & Model & RMSE & MAE & sMAPE (\%) & $R^2$ & P90 & Width \\",
+        r"\textbf{Region} & \textbf{Target} & \textbf{Model} & \textbf{RMSE} & \textbf{MAE} & \textbf{sMAPE (\%)} & $\mathbf{R^2}$ & \textbf{PICP@90} & \textbf{Width (MW)} \\",
         r"\midrule",
     ]
-    for _, row in df.iterrows():
+    current_target: str | None = None
+    for _, row in filtered.iterrows():
+        target = str(row["Target"])
+        if current_target is not None and target != current_target:
+            lines.append(r"\midrule")
+        current_target = target
         model = _tex_escape(row["Model"])
         if model == "GBM":
             model = r"\textbf{GBM}"
+
+        def maybe_bold(value: str) -> str:
+            escaped = _tex_escape(value)
+            if str(row["Model"]) == "GBM" and escaped != "---":
+                return rf"\textbf{{{escaped}}}"
+            return escaped
+
         lines.append(
             f"{_tex_escape(row['Region'])} & {_tex_escape(row['Target'])} & {model} & "
-            f"{_tex_escape(row['RMSE'])} & {_tex_escape(row['MAE'])} & "
-            f"{_tex_escape(row['sMAPE (%)'])} & {_tex_escape(row['R2'])} & "
+            f"{maybe_bold(str(row['RMSE']))} & {maybe_bold(str(row['MAE']))} & "
+            f"{maybe_bold(str(row['sMAPE (%)']))} & {maybe_bold(str(row['R2']))} & "
             f"{_tex_escape(row['PICP@90 (%)'])} & {_tex_escape(row['Interval Width (MW)'])} \\\\"
         )
     lines.extend(
         [
             r"\bottomrule",
-            r"\end{tabular}%",
-            r"}",
+            r"\end{tabular}",
         ]
     )
     return _table_wrapper(title=title, label=token, tabular=lines, size=r"\scriptsize")
@@ -139,6 +159,42 @@ def _render_tbl03(token: str, csv_path: Path, title: str) -> str:
         )
     lines.extend([r"\bottomrule", r"\end{tabular}"])
     return _table_wrapper(title=title, label=token, tabular=lines)
+
+
+def _render_tbl04(token: str, csv_path: Path, title: str) -> str:
+    df = pd.read_csv(csv_path, dtype=str).fillna("---")
+    region_order = ["DE", "US"]
+    stress_order = ["Nominal", "Dropout", "Drift combo"]
+    controller_order = ["DC3S", "Deterministic"]
+    df["Region"] = pd.Categorical(df["Region"], categories=region_order, ordered=True)
+    df["Stress"] = pd.Categorical(df["Stress"], categories=stress_order, ordered=True)
+    df["Controller"] = pd.Categorical(df["Controller"], categories=controller_order, ordered=True)
+    df = df.sort_values(["Region", "Stress", "Controller"])
+    lines = [
+        r"\setlength{\tabcolsep}{4pt}",
+        r"\renewcommand{\arraystretch}{0.96}",
+        r"\begin{tabular}{lllrrrrr}",
+        r"\toprule",
+        r"\textbf{Region} & \textbf{Stress} & \textbf{Controller} & \textbf{PICP@90 (\%)} & \textbf{Width (MW)} & \textbf{Viol. Rate (\%)} & \textbf{Severity P95 (MWh)} & \textbf{Cost $\Delta$ (\%)} \\",
+        r"\midrule",
+    ]
+    current_region: str | None = None
+    for _, row in df.iterrows():
+        region = str(row["Region"])
+        if current_region is not None and region != current_region:
+            lines.append(r"\midrule")
+        current_region = region
+        controller = _tex_escape(str(row["Controller"]))
+        if controller == "DC3S":
+            controller = r"\textbf{DC3S}"
+        lines.append(
+            f"{_tex_escape(region)} & {_tex_escape(str(row['Stress']))} & {controller} & "
+            f"{_tex_escape(str(row['PICP@90 (%)']))} & {_tex_escape(str(row['Width (MW)']))} & "
+            f"{_tex_escape(str(row['Viol. Rate (%)']))} & {_tex_escape(str(row['Severity P95 (MWh)']))} & "
+            f"{_tex_escape(str(row['Cost Delta (%)']))} \\\\"
+        )
+    lines.extend([r"\bottomrule", r"\end{tabular}"])
+    return _table_wrapper(title=title, label=token, tabular=lines, size=r"\scriptsize")
 
 
 def _render_tbl02(token: str, csv_path: Path, title: str) -> str:
@@ -196,6 +252,8 @@ def _render_tbl02(token: str, csv_path: Path, title: str) -> str:
 def render_table_tex(token: str, csv_path: Path, title: str) -> str:
     if token == "TBL08_FORECAST_BASELINES":
         return _render_tbl08(token, csv_path, title)
+    if token == "TBL04_TRANSFER_STRESS":
+        return _render_tbl04(token, csv_path, title)
     if token == "TBL02_ABLATIONS":
         return _render_tbl02(token, csv_path, title)
     if token == "TBL03_CQR_GROUP_COVERAGE":

@@ -25,21 +25,29 @@ DATASET_META = {
         "stats_path": REPO_ROOT / "data" / "dashboard" / "de_stats.json",
         "provenance_path": REPO_ROOT / "data" / "processed" / "dataset_provenance.json",
         "source": "OPSD + SMARD",
+        "weather_source": "Open-Meteo archive API",
+        "carbon_source": "SMARD generation mix",
     },
     "US_MISO": {
         "stats_path": REPO_ROOT / "data" / "dashboard" / "us_stats.json",
         "provenance_path": REPO_ROOT / "data" / "processed" / "us_eia930" / "dataset_provenance.json",
         "source": "EIA-930 MISO",
+        "weather_source": "Open-Meteo archive API",
+        "carbon_source": "proxy_generation_mix",
     },
     "US_PJM": {
         "stats_path": REPO_ROOT / "data" / "dashboard" / "us_pjm_stats.json",
         "provenance_path": REPO_ROOT / "data" / "processed" / "us_eia930_pjm" / "dataset_provenance.json",
         "source": "EIA-930 PJM",
+        "weather_source": "Open-Meteo archive API",
+        "carbon_source": "proxy_generation_mix",
     },
     "US_ERCOT": {
         "stats_path": REPO_ROOT / "data" / "dashboard" / "us_ercot_stats.json",
         "provenance_path": REPO_ROOT / "data" / "processed" / "us_eia930_ercot" / "dataset_provenance.json",
         "source": "EIA-930 ERCOT",
+        "weather_source": "Open-Meteo archive API",
+        "carbon_source": "proxy_generation_mix",
     },
 }
 
@@ -79,8 +87,8 @@ def build_dataset_cards(dataset_summary_path: Path, out_dir: Path) -> dict[str, 
                 "feature_count": stats.get("total_features") or stats.get("feature_count") or provenance.get("columns"),
                 "columns": stats.get("columns") or provenance.get("columns"),
                 "source": meta.get("source"),
-                "weather_source": provenance.get("weather_source"),
-                "carbon_source": provenance.get("carbon_source"),
+                "weather_source": provenance.get("weather_source") or meta.get("weather_source") or "n/a",
+                "carbon_source": provenance.get("carbon_source") or meta.get("carbon_source") or "n/a",
             }
         )
 

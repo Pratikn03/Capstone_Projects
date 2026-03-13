@@ -1,22 +1,24 @@
 \begin{table}[htbp]
 \centering
 \small
-\caption{Regime-group CQR coverage and interval width summary.}
+\caption{Regime-aware CQR coverage and interval width by target and volatility group.}
 \label{tab:TBL03_CQR_GROUP_COVERAGE}
 \setlength{\tabcolsep}{5pt}
-\renewcommand{\arraystretch}{0.98}
+\renewcommand{\arraystretch}{1.05}
 \begin{tabular}{llrrr}
 \toprule
 Target & Regime & PICP@90 (\%) & Width (MW) & $n$ \\
 \midrule
 Load & LOW & 85.2 & 1244.8 & 840 \\
-Load & MED & 88.3 & 937.4 & 840 \\
-Load & HIGH & 91.1 & 1028.2 & 840 \\
-Wind & LOW & 97.6 & 719.7 & 840 \\
-Wind & MED & 93.5 & 812.0 & 840 \\
-Wind & HIGH & 90.0 & 969.9 & 840 \\
+Load & MID & 88.3 & 937.4 & 840 \\
+Load & HIGH & \textbf{91.1} & 1028.2 & 840 \\
+\midrule
+Wind & LOW & \textbf{97.6} & 719.7 & 840 \\
+Wind & MID & \textbf{93.5} & 812.0 & 840 \\
+Wind & HIGH & \textbf{90.0} & 969.9 & 840 \\
+\midrule
 Solar & LOW & 80.2 & 891.6 & 840 \\
-Solar & MED & 82.2 & 1016.6 & 845 \\
+Solar & MID & 82.2 & 1016.6 & 845 \\
 Solar & HIGH & 73.8 & 1206.2 & 835 \\
 \bottomrule
 \end{tabular}

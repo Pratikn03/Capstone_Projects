@@ -95,13 +95,16 @@ cfg_train_us = read_yaml(root / 'configs/train_forecast_eia930.yaml')
 cfg_dc3s = read_yaml(root / 'configs/dc3s.yaml')
 cfg_unc = read_yaml(root / 'configs/uncertainty.yaml')
 
-add_row('train_forecast_de', 'horizon_hours', cfg_train_de.get('horizon_hours'), 'configs/train_forecast.yaml')
-add_row('train_forecast_de', 'lookback_hours', cfg_train_de.get('lookback_hours'), 'configs/train_forecast.yaml')
+task_de = cfg_train_de.get('task') or {}
+task_us = cfg_train_us.get('task') or {}
+
+add_row('train_forecast_de', 'horizon_hours', task_de.get('horizon_hours', cfg_train_de.get('horizon_hours')), 'configs/train_forecast.yaml')
+add_row('train_forecast_de', 'lookback_hours', task_de.get('lookback_hours', cfg_train_de.get('lookback_hours')), 'configs/train_forecast.yaml')
 add_row('train_forecast_de', 'cross_validation.n_folds', (cfg_train_de.get('cross_validation') or {}).get('n_folds'), 'configs/train_forecast.yaml')
 add_row('train_forecast_de', 'cross_validation.gap', (cfg_train_de.get('cross_validation') or {}).get('gap'), 'configs/train_forecast.yaml')
 
-add_row('train_forecast_us', 'horizon_hours', cfg_train_us.get('horizon_hours'), 'configs/train_forecast_eia930.yaml')
-add_row('train_forecast_us', 'lookback_hours', cfg_train_us.get('lookback_hours'), 'configs/train_forecast_eia930.yaml')
+add_row('train_forecast_us', 'horizon_hours', task_us.get('horizon_hours', cfg_train_us.get('horizon_hours')), 'configs/train_forecast_eia930.yaml')
+add_row('train_forecast_us', 'lookback_hours', task_us.get('lookback_hours', cfg_train_us.get('lookback_hours')), 'configs/train_forecast_eia930.yaml')
 add_row('train_forecast_us', 'cross_validation.n_folds', (cfg_train_us.get('cross_validation') or {}).get('n_folds'), 'configs/train_forecast_eia930.yaml')
 add_row('train_forecast_us', 'cross_validation.gap', (cfg_train_us.get('cross_validation') or {}).get('gap'), 'configs/train_forecast_eia930.yaml')
 

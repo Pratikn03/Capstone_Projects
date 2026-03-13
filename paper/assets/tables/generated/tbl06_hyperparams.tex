@@ -1,35 +1,35 @@
 \begin{table}[htbp]
 \centering
-\scriptsize
+\small
 \caption{Core training and RAC-Cert hyperparameters.}
 \label{tab:TBL06_HYPERPARAMS}
 \setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{0.96}
-\resizebox{\linewidth}{!}{%
+\renewcommand{\arraystretch}{1.0}
 \begin{tabular}{llll}
 \toprule
-group & key & value & source \\
+Group & Parameter & Value & Source \\
 \midrule
-train\_forecast\_de & horizon\_hours & --- & configs/train\_forecast.yaml \\
-train\_forecast\_de & lookback\_hours & --- & configs/train\_forecast.yaml \\
+train\_forecast\_de & horizon\_hours & 24 & configs/train\_forecast.yaml \\
+train\_forecast\_de & lookback\_hours & 168 & configs/train\_forecast.yaml \\
 train\_forecast\_de & cross\_validation.n\_folds & 10 & configs/train\_forecast.yaml \\
 train\_forecast\_de & cross\_validation.gap & 24 & configs/train\_forecast.yaml \\
-train\_forecast\_us & horizon\_hours & --- & configs/train\_forecast\_eia930.yaml \\
-train\_forecast\_us & lookback\_hours & --- & configs/train\_forecast\_eia930.yaml \\
+\midrule
+train\_forecast\_us & horizon\_hours & 24 & configs/train\_forecast\_eia930.yaml \\
+train\_forecast\_us & lookback\_hours & 168 & configs/train\_forecast\_eia930.yaml \\
 train\_forecast\_us & cross\_validation.n\_folds & 10 & configs/train\_forecast\_eia930.yaml \\
 train\_forecast\_us & cross\_validation.gap & 24 & configs/train\_forecast\_eia930.yaml \\
+\midrule
 dc3s\_rac & sensitivity\_probe & heuristic & configs/dc3s.yaml \\
 dc3s\_rac & sens\_eps\_mw & 25.0 & configs/dc3s.yaml \\
 dc3s\_rac & sens\_norm\_ref & 0.5 & configs/dc3s.yaml \\
 dc3s\_rac & beta\_reliability & 0.7 & configs/dc3s.yaml \\
 dc3s\_rac & beta\_sensitivity & 0.5 & configs/dc3s.yaml \\
 dc3s\_rac & k\_sensitivity & 0.4 & configs/dc3s.yaml \\
+\midrule
 regime\_cqr & enabled & True & configs/uncertainty.yaml \\
 regime\_cqr & n\_bins & 3 & configs/uncertainty.yaml \\
 regime\_cqr & vol\_window & 24 & configs/uncertainty.yaml \\
 regime\_cqr & quantile\_backend\_policy & strict & configs/uncertainty.yaml \\
 \bottomrule
 \end{tabular}
-
-}
 \end{table}
