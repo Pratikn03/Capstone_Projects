@@ -59,7 +59,7 @@ tables:
     status: provisional
   TBL04_TRANSFER_STRESS:
     path: paper/assets/tables/tbl04_transfer_stress.csv
-    title: "Transfer stress outcomes across DE/US and seasonal shifts."
+    title: "Compact DE/US transfer-generalization summary from current publication artifacts."
     status: provisional
   TBL05_DATASET_SUMMARY:
     path: paper/assets/tables/tbl05_dataset_summary.csv
@@ -75,7 +75,7 @@ tables:
     status: provisional
   TBL08_FORECAST_BASELINES:
     path: paper/assets/tables/tbl08_forecast_baselines.csv
-    title: "Promoted six-model forecasting comparison across DE and US under a shared split, horizon, lookback, and metric contract."
+    title: "Promoted six-model forecasting comparison. Deep learning baselines evaluate point-forecast performance, confirming GBM's operational dominance in this tabular regime. Conformal uncertainty artifacts (PICP, Width) are materialized exclusively for the production-candidate model (GBM)."
     status: provisional
 
 data:

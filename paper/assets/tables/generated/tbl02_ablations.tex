@@ -1,25 +1,27 @@
 \begin{table}[htbp]
 \centering
-\scriptsize
-\caption{Ablation study with strict gate fields and statistical tests.}
+\small
+\caption{Ablation study: DC$^3$S violation-rate reduction vs.\ baselines under telemetry faults. Two-gate verification: relative reduction $\ge10$\% \emph{and} Wilcoxon signed-rank $p < 0.01$.}
 \label{tab:TBL02_ABLATIONS}
-\setlength{\tabcolsep}{2.5pt}
-\renewcommand{\arraystretch}{0.94}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.05}
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{llrrrrrrrrrc}
+\begin{tabular}{llrrrrrrc}
 \toprule
-Scope & Fault & $n$ & Viol. base & Viol. DC3S & Viol. red. & $p_v$ & Sev. base & Sev. DC3S & Sev. red. & $p_s$ & Pass \\
+Scope & Fault & $n$ & Base Rate & DC$^3$S Rate & Rel.\ Red.\ (\%) & $W$ stat & $p$-value & Pass \\
 \midrule
-primary & all & 160 & 0.25 & 0.23 & 8.0 & 0.000 & 0.25 & 0.23 & 8.0 & 0.000 & no \\
-secondary & delay & 40 & 0.25 & 0.23 & 8.0 & 0.000 & 0.25 & 0.23 & 8.0 & 0.000 & no \\
-secondary & dropout & 40 & 0.25 & 0.23 & 8.0 & 0.000 & 0.25 & 0.23 & 8.0 & 0.000 & no \\
-secondary & out\_of\_order & 40 & 0.25 & 0.23 & 8.0 & 0.000 & 0.25 & 0.23 & 8.0 & 0.000 & no \\
-secondary & spikes & 40 & 0.25 & 0.23 & 8.0 & 0.000 & 0.25 & 0.23 & 8.0 & 0.000 & no \\
-secondary\_scenario & aggregate & 10 & 0.35 & 0.30 & 14.3 & 0.002 & 0.35 & 0.30 & 14.3 & 0.002 & yes \\
-secondary\_scenario & aggregate & 10 & 0.25 & 0.30 & -20.0 & 0.002 & 0.25 & 0.30 & -20.0 & 0.002 & no \\
-secondary\_scenario & aggregate & 10 & 0.35 & 0.30 & 14.3 & 0.002 & 0.35 & 0.30 & 14.3 & 0.002 & yes \\
-secondary\_scenario & aggregate & 10 & 0.25 & 0.30 & -20.0 & 0.002 & 0.25 & 0.30 & -20.0 & 0.002 & no \\
+primary & all & 160 & 0.250 & 0.230 & +8.0 & 0.0 & $<$0.001 & $\times$ \\
+\midrule
+secondary & delay\_jitter & 40 & 0.250 & 0.230 & +8.0 & 0.0 & $<$0.001 & $\times$ \\
+secondary & dropout & 40 & 0.250 & 0.230 & +8.0 & 0.0 & $<$0.001 & $\times$ \\
+secondary & out\_of\_order & 40 & 0.250 & 0.230 & +8.0 & 0.0 & $<$0.001 & $\times$ \\
+secondary & spikes & 40 & 0.250 & 0.230 & +8.0 & 0.0 & $<$0.001 & $\times$ \\
+\midrule
+sec.\ scenario & all (vs.\ deterministic\_lp) & 10 & 0.350 & 0.300 & +14.3 & 0.0 & 0.002 & \checkmark \\
+sec.\ scenario & all (vs.\ robust\_fixed\_interval) & 10 & 0.250 & 0.300 & -20.0 & 0.0 & 0.002 & $\times$ \\
+sec.\ scenario & all (vs.\ deterministic\_lp) & 10 & 0.350 & 0.300 & +14.3 & 0.0 & 0.002 & \checkmark \\
+sec.\ scenario & all (vs.\ robust\_fixed\_interval) & 10 & 0.250 & 0.300 & -20.0 & 0.0 & 0.002 & $\times$ \\
 \bottomrule
-\end{tabular}%
+\end{tabular}
 }
 \end{table}

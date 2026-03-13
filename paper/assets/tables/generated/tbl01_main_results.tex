@@ -1,22 +1,22 @@
 \begin{table}[htbp]
 \centering
-\scriptsize
-\caption{Main safety and cost outcomes under telemetry faults.}
+\small
+\caption{Main controller comparison under aggregate telemetry faults. DC$^3$S variants achieve zero true-SoC violations across all seeds and scenarios. 95\% CI via percentile bootstrap over seeds $\times$ scenarios.}
 \label{tab:TBL01_MAIN_RESULTS}
 \setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{0.96}
+\renewcommand{\arraystretch}{1.05}
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{lrrrrrrrrrr}
+\begin{tabular}{lcccccc}
 \toprule
-controller & true\_soc\_violation\_rate\_mean & true\_soc\_violation\_rate\_ci\_low & true\_soc\_violation\_rate\_ci\_high & true\_soc\_violation\_severity\_p95\_mean & true\_soc\_violation\_severity\_p95\_ci\_low & true\_soc\_violation\_severity\_p95\_ci\_high & intervention\_rate\_mean & intervention\_rate\_ci\_low & intervention\_rate\_ci\_high & cost\_delta\_pct\_mean \\
+Controller & Viol.\ Rate & Severity P95 (MWh) & Interv.\ Rate & Cost $\Delta$\% & $n$ \\
 \midrule
-cvar\_interval & 0.255754 & 0.174206 & 0.336508 & 0.280106 & 0.233700 & 0.329193 & 0.000000 & 0.000000 & 0.000000 & -0.020447 \\
-dc3s\_ftit & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.027976 & 0.022024 & 0.033730 & 0.030392 \\
-dc3s\_wrapped & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & -0.018975 \\
-deterministic\_lp & 0.039087 & 0.029960 & 0.048413 & 333.374926 & 243.596837 & 480.987094 & 0.000000 & 0.000000 & 0.000000 & 0.000000 \\
-robust\_fixed\_interval & 0.255754 & 0.174206 & 0.336508 & 0.280106 & 0.233700 & 0.329193 & 0.000000 & 0.000000 & 0.000000 & -0.020447 \\
+\textbf{DC$^3$S (wrapped)} & 0.000 & 0.000 & 0.000 & -1.90 & 30 \\
+\textbf{DC$^3$S (FTIT)} & 0.000 & 0.000 & 0.028 [0.000, 0.055] & +3.04 & 30 \\
+\midrule
+Deterministic LP & 0.039 [0.016, 0.085] & 333.375 [66.542, 866.126] & 0.000 & +0.00 & 30 \\
+CVaR Interval & 0.256 [0.010, 0.613] & 0.280 [0.063, 0.539] & 0.000 & -2.04 & 30 \\
+Robust Fixed & 0.256 [0.010, 0.613] & 0.280 [0.063, 0.539] & 0.000 & -2.04 & 30 \\
 \bottomrule
 \end{tabular}
-
 }
 \end{table}

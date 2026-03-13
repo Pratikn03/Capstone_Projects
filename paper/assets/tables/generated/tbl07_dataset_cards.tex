@@ -1,21 +1,20 @@
 \begin{table}[htbp]
 \centering
-\scriptsize
-\caption{Dataset-card inventory for the conference release family.}
+\small
+\caption{Dataset-card inventory for the four evaluation regions.}
 \label{tab:TBL07_DATASET_CARDS}
 \setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{0.96}
+\renewcommand{\arraystretch}{1.10}
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{lllrlllrrrlll}
+\begin{tabular}{llrrlrll}
 \toprule
-dataset\_key & dataset\_label & country & rows & date\_start & date\_end & targets & min\_coverage\_pct & feature\_count & columns & source & weather\_source & carbon\_source \\
+\textbf{Dataset} & \textbf{Country} & \textbf{Rows} & \textbf{Features} & \textbf{Period} & \textbf{Coverage (\%)} & \textbf{Source} & \textbf{Carbon Source} \\
 \midrule
-DE & Germany (OPSD) & DE & 17377 & 2018-10-07 & 2020-09-30 & load\_mw,solar\_mw,wind\_mw & 100.000000 & 94 & 98 & OPSD + SMARD & --- & --- \\
-US\_ERCOT & USA (EIA-930 ERCOT) & US & 13453 & 2024-07-01 & 2026-01-20 & load\_mw,solar\_mw,wind\_mw & 100.000000 & 62 & 62 & EIA-930 ERCOT & Open-Meteo archive API & proxy\_generation\_mix \\
-US\_MISO & USA (EIA-930 MISO) & US & 13638 & 2024-07-01 & 2026-01-20 & load\_mw,solar\_mw,wind\_mw & 100.000000 & 114 & 118 & EIA-930 MISO & --- & --- \\
-US\_PJM & USA (EIA-930 PJM) & US & 13639 & 2024-07-01 & 2026-01-20 & load\_mw,solar\_mw,wind\_mw & 100.000000 & 62 & 62 & EIA-930 PJM & Open-Meteo archive API & proxy\_generation\_mix \\
+Germany (OPSD) & DE & 17,377 & 94 & 2018-10-07 -- 2020-09-30 & 100.0 & OPSD + SMARD & SMARD generation mix \\
+USA (EIA-930 ERCOT) & US & 13,453 & 62 & 2024-07-01 -- 2026-01-20 & 100.0 & EIA-930 ERCOT & proxy\_generation\_mix \\
+USA (EIA-930 MISO) & US & 13,638 & 114 & 2024-07-01 -- 2026-01-20 & 100.0 & EIA-930 MISO & proxy\_generation\_mix \\
+USA (EIA-930 PJM) & US & 13,639 & 62 & 2024-07-01 -- 2026-01-20 & 100.0 & EIA-930 PJM & proxy\_generation\_mix \\
 \bottomrule
 \end{tabular}
-
 }
 \end{table}

@@ -1,206 +1,366 @@
-# GridPulse: Safe Streaming Control under Telemetry Degradation via DC³S
+# GridPulse
 
-GridPulse is an end-to-end cyber-physical control system for safe battery dispatch under degraded IoT telemetry. It introduces DC³S (Drift-Calibrated Conformal Safety Shield) and implements a safety-gated decision loop: **Forecast -> Optimize -> DC3S Shield -> Dispatch -> Audit**.
+GridPulse is a research-to-runtime codebase for safe battery dispatch under degraded telemetry. It combines forecasting, uncertainty quantification, optimization, safety shielding, closed-loop cyber-physical evaluation, publication-grade artifact generation, and manuscript claim locking in one repository.
 
-## Core Contributions
-- **DC³S Method**: A reliability-weighted safety shield that inflates conformal uncertainty intervals online using telemetry reliability (`w_t`) and drift signals.
-- **CPSBench-IoT**: A reproducible benchmark suite for evaluating controller behavior under deterministic telemetry faults.
-- **Runtime Validation**: Sub-10ms model/solver runtime on benchmark hardware is observed in software-in-the-loop profiling (`reports/runtime_benchmark.json`); field hardware commissioning remains pending in the current evidence lock.
-- **Strict MLOps Governance**: 21 trained models across Germany OPSD and US EIA-930, with publication-facing claims locked through `paper/metrics_manifest.json` and validator tooling.
-- **Explicit Guarantee Contract**: Runtime guarantee checks and assumptions are versioned and auditable (`docs/ASSUMPTIONS_AND_GUARANTEES.md`, certificate `assumptions_version`).
+The central method is **DC3S**: a telemetry-reliability-weighted conformal safety shield that:
+- scores telemetry quality at each control step,
+- inflates uncertainty when reliability deteriorates,
+- repairs unsafe optimizer actions before execution,
+- emits auditable per-step safety certificates.
 
-## Table of Contents
-- [Reproducing the Paper](#reproducing-the-paper)
-- [Canonical Research Workflow](#canonical-research-workflow)
-- [Architecture](#architecture)
-- [Safety under Telemetry Degradation (CPSBench-IoT)](#safety-under-telemetry-degradation-cpsbench-iot)
-- [Baseline Economic Impact (Unfaulted Regime)](#baseline-economic-impact-unfaulted-regime)
-- [Trained Models & Dashboard](#trained-models--dashboard)
-- [Citation](#citation)
-- [License](#license)
+This repository also includes **CPSBench**, a fault-injection benchmark that separates **true state** from **observed state** so hidden safety failures become measurable rather than silently masked by degraded telemetry.
 
-## Reproducing the Paper
-The repository enforces artifact-locked reproducibility for publication-facing metrics and tables.
+## What This Repository Contains
+
+- A full forecasting and dispatch stack for Germany (OPSD) and US balancing-authority data derived from EIA-930.
+- A DC3S runtime path with guarantee checks, certificate logging, and safety-gated action repair.
+- CPSBench scenarios for dropout, delay-jitter, spikes, out-of-order observations, stale-sensor behavior, and drift-style faults.
+- A release-family workflow for training, verification, publication artifacts, and paper freeze.
+- Locked manuscript infrastructure: metrics manifest, claim matrix, validation scripts, and paper asset sync checks.
+- Additive research-hardening tools for multi-country OPSD ingestion, reliability-conditioned conformal analysis, CHIL/pilot bundle tooling, and protocol-ready edge drivers.
+
+## Research Scope
+
+The current thesis and conference drafts make one main scientific claim:
+
+> battery dispatch controllers can appear safe on observed telemetry while violating physical battery limits on true state under degraded measurements, and DC3S closes that hidden gap without blanket conservatism.
+
+The locked paper evidence currently centers on:
+- **hidden safety gap**: deterministic dispatch can violate true SOC under degraded telemetry,
+- **DC3S safety result**: zero true-SOC violations with low intervention burden in the locked benchmark setup,
+- **decision impact**: locked DE and US region-level cost, carbon, and peak outcomes,
+- **governance**: publication claims are tied to source artifacts and validator gates.
+
+Hardware validation, PHIL, and field pilots are **not** part of the current submission scope. The repository contains future-pilot infrastructure, but real-device validation remains future work.
+
+## Locked Paper Snapshot
+
+The current paper-facing thesis PDF is [`paper/paper.pdf`](paper/paper.pdf). The conference variant is generated from `paper/paper_r1.tex`.
+
+At a high level, the locked thesis reports:
+- deterministic dispatch can violate true SOC under telemetry faults while still appearing safe on observed state,
+- DC3S closes that hidden gap with conditional conservatism rather than blanket override,
+- DE locked impact: **7.11%** cost savings, **0.30%** carbon reduction, **6.13%** peak shaving,
+- positive stochastic value in both DE and US locked runs,
+- all publication-facing claims are validator-gated.
+
+For exact numbers, use the manuscript and locked artifact interfaces instead of copying values from this README:
+- `paper/metrics_manifest.json`
+- `paper/claim_matrix.csv`
+- `reports/publication/release_manifest.json`
+- `scripts/validate_paper_claims.py`
+
+## Repository Layout
+
+```text
+.
+├── src/gridpulse/              Core Python package
+│   ├── data_pipeline/          Dataset normalization and feature generation
+│   ├── forecasting/            GBM + deep forecasting models and UQ tooling
+│   ├── optimizer/              Deterministic, robust, and CVaR dispatch
+│   ├── dc3s/                   Shield logic, FTIT, guarantee checks, theory helpers
+│   ├── cpsbench_iot/           Truth-vs-observed benchmark harness
+│   ├── monitoring/             Drift and health monitoring
+│   └── safety/                 BMS-style safety checks
+├── services/api/              FastAPI service layer
+├── frontend/                  Next.js dashboard
+├── iot/                       Closed-loop simulator and edge-agent code
+├── scripts/                   Canonical training, release, publication, and paper tooling
+├── paper/                     Thesis, conference draft, and paper assets
+├── reports/                   Generated evaluation, publication, and run outputs
+├── configs/                   Training, DC3S, optimization, IoT, and release configs
+├── docs/                      Architecture, evaluation, guarantees, and dataset docs
+├── tests/                     Unit and workflow regression coverage
+└── deploy/                    Deployment examples and service manifests
+```
+
+## Quick Start
+
+### Requirements
+
+- Python **3.11**
+- `pip`
+- `make`
+- Node.js for the dashboard
+- LaTeX tools only if you want to compile the papers locally
+
+### Install
 
 ```bash
-# 1. Setup environment
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.lock.txt
 pip install -e .
 ```
 
-The canonical research stack is built around the existing Python scripts and Make targets. Avoid mixing legacy helper flows when producing paper-facing outputs.
+### Fast Local Run
 
-## Canonical Research Workflow
-
-Use a single release-family ID for training, CPSBench, publication artifacts, and paper sync:
+Backend:
 
 ```bash
-# Example release family
-export RELEASE_ID=R1_20260312T000000Z
-
-# 1. Candidate training and acceptance gates
-make r1-diagnostic RELEASE_ID=$RELEASE_ID
-make r1-full RELEASE_ID=$RELEASE_ID PROFILE=standard
-make r1-cpsbench RELEASE_ID=$RELEASE_ID
-make r1-verify RELEASE_ID=$RELEASE_ID
-
-# 2. Promote only after a successful verify stage
-make r1-promote RELEASE_ID=$RELEASE_ID
-
-# 3. Build publication artifacts and refresh paper assets
-make publication-artifact RELEASE_ID=$RELEASE_ID
-make paper-sync
-make paper-refresh
-
-# 4. Freeze the final thesis + conference PDFs for that release family
-make paper-freeze RELEASE_ID=$RELEASE_ID
-```
-
-Primary entrypoints:
-- `scripts/train_dataset.py` for per-dataset candidate or canonical runs
-- `scripts/run_r1_release.py` for release-family orchestration
-- `scripts/build_baseline_comparison_table.py --release-id <id>` for the promoted six-model forecasting table
-- `scripts/build_publication_artifact.py --release-id <id>` for publication packaging
-- `scripts/post_training_paper_update.py --release-id <id>` for the final release-scoped PDF freeze
-- `scripts/sync_paper_assets.py --check` and `scripts/validate_paper_claims.py` for paper gating
-- `scripts/final_publish_audit.py` for final GO/NO-GO release auditing
-
-Additional research-hardening entrypoints:
-- `python -m gridpulse.data_pipeline.build_features --in data/raw --out data/processed --country DE` for country-aware OPSD ingestion (`FR`, `ES`, and other OPSD country codes use the same normalized schema)
-- `python scripts/compute_reliability_group_coverage.py ...` for reliability-binned conformal analysis
-- `python scripts/summarize_chil_run.py ...` and `python scripts/export_pilot_bundle.py ...` for future-pilot evidence packaging
-
-These research-hardening tools are additive. They do not change the locked release-family publication path unless explicitly invoked. Hardware validation remains future work in the current paper scope.
-
-## Architecture
-```mermaid
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#1a1b26',
-    'primaryTextColor': '#c0caf5',
-    'primaryBorderColor': '#7aa2f7',
-    'lineColor': '#7aa2f7',
-    'secondaryColor': '#24283b',
-    'tertiaryColor': '#1a1b26',
-    'fontFamily': 'Inter, system-ui, sans-serif',
-    'fontSize': '14px'
-  }
-}}%%
-
-flowchart TB
-  subgraph sources["DATA & TELEMETRY"]
-    direction LR
-    A1["OPSD Germany<br/>Load · Wind · Solar"]
-    A2["EIA-930 USA<br/>MISO Demand"]
-    A3["IoT Edge Sensors<br/>(Subject to Faults)"]
-  end
-
-  subgraph pipeline["DATA PIPELINE"]
-    direction TB
-    B["Ingestion & Validation"]
-    C["Feature Engineering"]
-    B --> C
-  end
-
-  subgraph ml["ML ENGINE"]
-    direction TB
-    E["LightGBM / LSTM / TCN<br/>21 Trained Models"]
-    G["Base Conformal Bounds<br/>90% Nominal Coverage"]
-    E --> G
-  end
-
-  subgraph ops["DC³S CYBER-PHYSICAL CONTROL"]
-    direction TB
-    I["LP Optimizer<br/>Proposes Dispatch Action"]
-    S["DC³S Safety Shield<br/>Telemetry Weight (w_t) + Drift"]
-    A["Certificate Auditor<br/>Tamper-Evident Hash Chain"]
-    I -->|a* proposed| S
-    S -->|a_safe repaired| A
-  end
-
-  subgraph serve["SERVING & UX"]
-    direction TB
-    K["FastAPI Backend<br/>/dc3s/step · /iot/telemetry · /monitor/*"]
-    L["Next.js 15 Dashboard<br/>Live Audit & Monitoring"]
-    K --> L
-  end
-
-  sources --> pipeline
-  pipeline --> ml
-  ml --> ops
-  ops --> serve
-
-  style sources fill:#1e3a5f,stroke:#7aa2f7,stroke-width:2px,color:#c0caf5
-  style pipeline fill:#1e3a5f,stroke:#9ece6a,stroke-width:2px,color:#c0caf5
-  style ml fill:#1e3a5f,stroke:#bb9af7,stroke-width:2px,color:#c0caf5
-  style ops fill:#3a1e1e,stroke:#f7768e,stroke-width:3px,color:#c0caf5
-  style serve fill:#1e3a5f,stroke:#7dcfff,stroke-width:2px,color:#c0caf5
-```
-
-## Safety under Telemetry Degradation (CPSBench-IoT)
-In current locked CPSBench artifacts, all controllers remain at 0.0 violation rate under configured scenarios, while DC³S provides certified safety gating and lower intervention burden than naive clipping.
-
-Dropout scenario shown below uses the currently configured CPSBench dropout setting (`src/gridpulse/cpsbench_iot/scenarios.py`, 8%).
-
-| Controller | Dropout Violation Rate | Severity (MWh) | Intervention Rate |
-|---|---:|---:|---:|
-| `deterministic_lp` | 0.0% | 0.0 | 0.00% |
-| `robust_fixed_interval` | 0.0% | 0.0 | 0.00% |
-| `dc3s_wrapped` | 0.0% | 0.0 | 1.31% |
-| `naive_safe_clip` | 0.0% | 0.0 | 5.36% |
-
-Source: `reports/publication/dc3s_main_table.csv`.
-
-## Baseline Economic Impact (Unfaulted Regime)
-Results are locked under the dataset-scoped publication policy in `paper/metrics_manifest.json`.
-
-### Germany (OPSD) - 17,377 hourly observations x 98 features
-| Model | Target | RMSE (MW) | MAE (MW) | R² | 90% Coverage |
-|---|---|---:|---:|---:|---:|
-| GBM | load_mw | 271.2 | 161.1 | 0.9991 | 95.2% |
-| GBM | wind_mw | 127.1 | 87.3 | 0.9997 | 92.4% |
-| GBM | solar_mw | 269.6 | 129.5 | 0.9991 | 89.4% |
-
-Decision Impact: **7.11% cost savings** · **0.30% carbon reduction** · **6.13% peak shaving**
-
-### USA (EIA-930 / MISO) - 13,638 hourly observations x 118 features
-| Model | Target | RMSE (MW) | MAE (MW) | R² | 90% Coverage |
-|---|---|---:|---:|---:|---:|
-| GBM | load_mw | 139.8 | 104.2 | 0.9997 | 87.4% |
-| GBM | wind_mw | 239.6 | 109.4 | 0.9986 | 80.5% |
-| GBM | solar_mw | 212.9 | 76.2 | 0.9961 | 90.5% |
-
-Decision Impact: **0.11% cost savings** · **0.13% carbon reduction** · **0.00% peak shaving**
-
-## Trained Models & Dashboard
-GridPulse runs 21 trained ML models (LightGBM, LSTM, TCN) across DE/US profiles. The Next.js 15 dashboard consumes FastAPI endpoints to display forecasts, uncertainty intervals, and DC3S audit telemetry in near real-time.
-
-To run backend and UI:
-
-```bash
-# Terminal 1
 make api
+```
 
-# Terminal 2
+Frontend:
+
+```bash
 make frontend
 ```
 
-Open `http://localhost:3000`.
+Then open `http://localhost:3000`.
+
+## Canonical Workflow
+
+GridPulse uses a **release-family** workflow. One `RELEASE_ID` should span candidate training, CPSBench, publication artifacts, and paper freeze.
+
+### 1. Run a release family
+
+```bash
+export RELEASE_ID=FINAL_20260312T120000Z
+export PROFILE=standard
+
+make r1-full RELEASE_ID=$RELEASE_ID PROFILE=$PROFILE
+make r1-cpsbench RELEASE_ID=$RELEASE_ID
+make r1-verify RELEASE_ID=$RELEASE_ID
+```
+
+### 2. Freeze paper outputs
+
+```bash
+make paper-freeze RELEASE_ID=$RELEASE_ID
+```
+
+### 3. Promote only after verify passes
+
+```bash
+make r1-promote RELEASE_ID=$RELEASE_ID
+```
+
+## Primary Entry Points
+
+These are the canonical scripts for research and publication work:
+
+- `scripts/train_dataset.py`
+  - Per-dataset training, candidate-run acceptance, and promotion-aware output layout.
+- `scripts/run_r1_release.py`
+  - Release-family orchestration for `diagnostic`, `full`, `cpsbench`, `verify`, and `promote`.
+- `scripts/build_publication_artifact.py`
+  - Builds one manifest-locked publication package from a single `release_id`.
+- `scripts/post_training_paper_update.py`
+  - Final paper-freeze path for the verified release family.
+- `scripts/sync_paper_assets.py --check`
+  - Verifies that paper assets match locked publication outputs.
+- `scripts/validate_paper_claims.py`
+  - Hard claim gate across markdown, LaTeX, manifests, and tracked values.
+- `scripts/final_publish_audit.py`
+  - Final release audit and GO/NO-GO surface.
+
+## Data and Dataset Scope
+
+### Current dataset families
+
+- **DE / OPSD**
+  - hourly load, wind, and solar signals for Germany
+- **US / EIA-930**
+  - canonical thesis lock uses MISO
+  - supporting release-family evidence also includes PJM and ERCOT
+
+### Multi-country OPSD support
+
+The OPSD feature builder now supports country-aware normalization:
+
+```bash
+python -m gridpulse.data_pipeline.build_features \
+  --in data/raw \
+  --out data/processed \
+  --country DE
+```
+
+The same normalized output schema is used downstream:
+- `timestamp`
+- `load_mw`
+- `wind_mw`
+- `solar_mw`
+- optional `price_eur_mwh`
+
+See:
+- `DATA.md`
+- `docs/ADDING_DATASETS.md`
+
+## Forecasting, Uncertainty, and Control
+
+### Forecasting layer
+
+The main forecasting surface is a six-model comparison:
+- GBM
+- LSTM
+- TCN
+- N-BEATS
+- TFT
+- PatchTST
+
+The locked thesis headline regions are DE and canonical US/MISO. The shared contract is:
+- 24-hour forecast horizon
+- 168-hour lookback
+- time-aware CV
+- 24-hour temporal gap
+- shared feature framing
+- shared point-metric evaluation contract
+
+### Uncertainty layer
+
+The production paper path uses conformal and adaptive interval tooling already wired into the reporting and publication stack.
+
+The repo also contains an additive research path for **reliability-conditioned conformal analysis**:
+- `src/gridpulse/forecasting/uncertainty/reliability_mondrian.py`
+- `scripts/compute_reliability_group_coverage.py`
+
+This research path is optional and does **not** replace the locked production publication workflow unless explicitly invoked.
+
+### Control and safety layer
+
+DC3S sits between forecast intervals and command execution. Its responsibilities are:
+- telemetry reliability scoring,
+- interval inflation,
+- drift-aware safety tightening,
+- infeasible-action repair,
+- auditable certificate emission.
+
+Key implementation surfaces:
+- `src/gridpulse/dc3s/`
+- `src/gridpulse/safety/`
+- `services/api/routers/dc3s.py`
+- `docs/ASSUMPTIONS_AND_GUARANTEES.md`
+
+## CPSBench and IoT Surfaces
+
+### CPSBench
+
+CPSBench evaluates controllers against a truth-vs-observed split so hidden safety failures are measurable:
+- `src/gridpulse/cpsbench_iot/`
+- `make r1-cpsbench`
+
+### Closed-loop IoT simulation
+
+The repo includes a closed-loop simulator and edge-agent path:
+
+```bash
+make iot-sim
+```
+
+Relevant paths:
+- `iot/simulator/run_closed_loop.py`
+- `iot/edge_agent/run_agent.py`
+- `configs/iot.yaml`
+
+### Edge drivers
+
+The edge agent supports:
+- `http_gateway` (default)
+- `modbus_tcp` (protocol-ready, implemented for future integration work)
+
+This driver work is present for future-readiness only. It is **not** evidence of completed hardware validation.
+
+## Paper and Publication Workflow
+
+### Canonical manuscript files
+
+- `paper/PAPER_DRAFT.md`
+  - canonical thesis source
+- `paper/paper.tex`
+  - thesis LaTeX twin
+- `paper/paper_r1.tex`
+  - shorter conference derivative
+
+### Canonical paper checks
+
+```bash
+python3 scripts/validate_paper_claims.py
+python3 scripts/sync_paper_assets.py --check
+```
+
+### Compile papers locally
+
+```bash
+cd paper
+latexmk -pdf paper.tex
+latexmk -pdf paper_r1.tex
+```
+
+### Final freeze
+
+```bash
+make paper-freeze RELEASE_ID=$RELEASE_ID
+```
+
+This freeze path:
+- rebuilds paper-facing tables and figures from the chosen release family,
+- compiles thesis and conference PDFs,
+- renders review images,
+- writes immutable frozen copies under `reports/publication/frozen/<RELEASE_ID>/`,
+- records PDF hashes in the publication manifest.
+
+## Documentation Guide
+
+Start here if you are orienting yourself in the repo:
+
+- `docs/README.md`
+- `docs/ARCHITECTURE.md`
+- `docs/EVALUATION.md`
+- `docs/ASSUMPTIONS_AND_GUARANTEES.md`
+- `docs/ADDING_DATASETS.md`
+- `services/api/README.md`
+- `frontend/README.md`
+- `docker/README.md`
+- `deploy/README.md`
+- `PRODUCTION_GUIDE.md`
+
+## Research-Hardening Tools
+
+These tools exist to strengthen generality, theory, or future pilot-readiness without changing the current locked submission scope:
+
+- multi-country OPSD normalization
+- reliability-binned conformal analysis
+- CHIL-style run summarization
+- pilot-bundle export and validation
+- protocol-ready Modbus TCP driver
+- SOC-tube / safety-filter theory helpers
+
+These are additive tools. They are **not** required to reproduce the current thesis lock.
+
+## Boundaries and Non-Goals
+
+This repository does **not** currently claim:
+- hardware-validated edge deployment,
+- PHIL or field-pilot evidence,
+- universal market realism across all tariff and settlement regimes,
+- universal transferability across all grids and telemetry stacks,
+- deep-model dominance as a general result outside the current data regime.
+
+Those are either future work or separate research tracks.
+
+## Professional Usage Guidance
+
+If you are using this repo for serious research or release work:
+- treat `README.md`, `paper/metrics_manifest.json`, and `scripts/README.md` as workflow entry points,
+- prefer the release-family commands over ad hoc script chains,
+- do not mix artifacts from different `RELEASE_ID`s,
+- do not bypass `validate_paper_claims.py` or `sync_paper_assets.py --check`,
+- do not treat local PDFs or scratch outputs as canonical evidence unless they are tied to a release manifest.
 
 ## Citation
-If you use DC³S, CPSBench-IoT, or the GridPulse architecture in your research, cite:
+
+If you reference GridPulse, DC3S, or CPSBench in academic work, cite the manuscript that matches the release you are using. A placeholder project citation is:
 
 ```bibtex
 @techreport{niroula2026gridpulse,
-  title={Safe Streaming Control under Telemetry Degradation via Drift-Calibrated Conformal Shields},
+  title={DC3S: Telemetry-Reliability-Weighted Conformal Safety Shield for Battery Dispatch under Degraded Mixed Telemetry},
   author={Niroula, Pratik},
   institution={Minnesota State University, Mankato},
-  year={2026},
-  month={Feb}
+  year={2026}
 }
 ```
 
 ## License
+
 MIT

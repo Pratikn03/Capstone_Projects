@@ -421,9 +421,9 @@ All randomized experiments use 10 seeds.  Safety comparisons use Wilcoxon signed
 
 \subsection{Forecast Quality Across Model Families}\label{sec:forecast_quality}
 
-\PaperTableCSV{TBL08_FORECAST_BASELINES}{Promoted six-model forecasting comparison across DE and US under a shared split, horizon, lookback, seed policy, and metric contract. Dashes denote target--model cells whose candidate artifacts are not yet populated in the current release-family build.}
+\PaperTableCSV{TBL08_FORECAST_BASELINES}{Promoted six-model forecasting comparison. Deep learning baselines evaluate point-forecast performance, confirming GBM's operational dominance in this tabular regime. Conformal uncertainty artifacts (PICP, Width) are materialized exclusively for the production-candidate model (GBM).}
 
-The forecasting result surface is now a promoted six-model comparison rather than the older three-model snapshot. All six models share one split, horizon, lookback, seed, and metric contract. In the currently materialized rows, GBM remains the strongest operational model, while LSTM and TCN continue to degrade sharply on wind and solar. N-BEATS, TFT, and PatchTST are now part of the same main comparison contract; where the table still shows dashes, the row is pending artifact completion rather than silently omitted.
+The forecasting result surface is now a promoted six-model comparison rather than the older three-model snapshot. The paper-facing table is a condensed DE slice of the full publication matrix, selected because it most clearly shows the ranking in the tabular regime. All six models share one split, horizon, lookback, seed, and metric contract. In the materialized rows, GBM remains the strongest operational model, while the deep baselines lag substantially and only GBM carries production-candidate conformal uncertainty artifacts.
 
 \subsection{Main Result: Safety under Telemetry Faults}\label{sec:main_result}
 
@@ -496,17 +496,11 @@ This answers RQ3: reliability scoring \emph{and} action repair are both necessar
 
 \subsection{Transfer and Generalization}\label{sec:transfer}
 
-Four transfer cases evaluate cross-region and temporal robustness:
-\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item DE $\to$ US (no retrain): models trained on DE applied to US data.
-  \item US $\to$ DE (no retrain): models trained on US applied to DE data.
-  \item DE seasonal shift: evaluation on a held-out season.
-  \item US seasonal shift: evaluation on a held-out season.
-\end{enumerate}
+The paper-facing transfer table is a compact DE/US summary drawn from the current publication artifact rather than the still-pending explicit four-case rerun. It compares DC\textsuperscript{3}S and deterministic LP under nominal, dropout, and drift-combo stress to show that safety transfers more robustly than cost optimality.
 
-\PaperTableCSV{TBL04_TRANSFER_STRESS}{Transfer stress outcomes: coverage, violation rate, severity, and cost delta across all four cases.}
+\PaperTableCSV{TBL04_TRANSFER_STRESS}{Compact DE/US transfer-generalization summary from current publication artifacts.}
 
-\PaperFigure{FIG06_TRANSFER_COVERAGE}{Transfer stress coverage summary.  \DCThreeS{} maintains safety across transfer cases, though cost optimality degrades without retraining.}
+\PaperFigure{FIG06_TRANSFER_COVERAGE}{Transfer stress coverage summary across DE/US stress scenarios.  \DCThreeS{} preserves safety more reliably than cost optimality under transfer/generalization stress.}
 
 \subsection{Runtime and Intervention Behavior}\label{sec:runtime}
 

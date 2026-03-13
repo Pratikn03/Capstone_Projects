@@ -46,6 +46,24 @@ build/
 *.egg
 *.whl
 
+# LaTeX / manuscript build outputs
+/paper.aux
+/paper.fdb_latexmk
+/paper.fls
+/paper.out
+/paper.pdf
+/paper_r1.aux
+/paper_r1.fdb_latexmk
+/paper_r1.fls
+/paper_r1.out
+/paper_r1.pdf
+paper/*.aux
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.out
+paper/paper_r1.pdf
+paper/~$*.docx
+
 # Logs
 *.log
 logs/

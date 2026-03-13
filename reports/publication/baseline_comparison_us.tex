@@ -1,31 +1,36 @@
 \begin{table}[htbp]
-\centering\small
-\caption{US forecast baseline comparison: all six model families under identical splits, horizon, and lookback settings.}
+\centering
+\scriptsize
+\caption{US forecast baseline comparison across the six promoted model families under identical splits, horizon, and lookback settings.}
 \label{tab:baseline_comparison_us}
-\begin{tabular}{llrrrrrrr}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{0.95}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llrrrrrr}
 \toprule
-Target & Model & RMSE & MAE & sMAPE (\%) & $R^2$ & PICP@90 (\%) & Width (MW) \\
+Target & Model & RMSE & MAE & sMAPE (\%) & $R^2$ & P90 & Width \\
 \midrule
-\multirow{6}{*}{Load} & \textbf{GBM} & 183.37 & 140.64 & 0.18 & 0.9993 & --- & --- \\
+\multirow{6}{*}{Load} & \textbf{GBM} & 183.37 & 140.64 & 0.18 & 0.9993 & 82.6 & 1986.8 \\
  & LSTM & 4413.57 & 3416.17 & 4.46 & 0.6111 & --- & --- \\
  & TCN & 6219.55 & 4734.46 & 6.29 & 0.2277 & --- & --- \\
  & N-BEATS & --- & --- & --- & --- & --- & --- \\
  & TFT & --- & --- & --- & --- & --- & --- \\
  & PatchTST & --- & --- & --- & --- & --- & --- \\
 \midrule
-\multirow{6}{*}{Wind} & \textbf{GBM} & 357.10 & 210.72 & 2.65 & 0.9972 & --- & --- \\
+\multirow{6}{*}{Wind} & \textbf{GBM} & 357.10 & 210.72 & 2.65 & 0.9972 & 40.6 & 324.9 \\
  & LSTM & 6699.71 & 5729.83 & 46.19 & 0.0561 & --- & --- \\
  & TCN & 6934.90 & 5963.55 & 47.30 & -0.0114 & --- & --- \\
  & N-BEATS & --- & --- & --- & --- & --- & --- \\
  & TFT & --- & --- & --- & --- & --- & --- \\
  & PatchTST & --- & --- & --- & --- & --- & --- \\
 \midrule
-\multirow{6}{*}{Solar} & \textbf{GBM} & 229.99 & 82.14 & 53.09 & 0.9947 & --- & --- \\
+\multirow{6}{*}{Solar} & \textbf{GBM} & 229.99 & 82.14 & 53.09 & 0.9947 & 86.5 & 687.0 \\
  & LSTM & 1700.87 & 1161.31 & 137.83 & 0.7185 & --- & --- \\
  & TCN & 1444.49 & 754.76 & 124.37 & 0.7970 & --- & --- \\
  & N-BEATS & --- & --- & --- & --- & --- & --- \\
  & TFT & --- & --- & --- & --- & --- & --- \\
  & PatchTST & --- & --- & --- & --- & --- & --- \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}

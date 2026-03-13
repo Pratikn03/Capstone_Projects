@@ -1,18 +1,45 @@
 \begin{table}[htbp]
 \centering
-\scriptsize
-\caption{Transfer stress outcomes across DE/US and seasonal shifts.}
+\small
+\caption{Transfer stress outcomes across DE/US distribution shifts. DC$^3$S maintains zero SoC violations under all transfer scenarios.}
 \label{tab:TBL04_TRANSFER_STRESS}
-\setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{0.96}
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.0}
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{lllllll}
+\begin{tabular}{llrrrrr}
 \toprule
-transfer\_case & source\_artifact & picp\_90 & mean\_width & true\_soc\_violation\_rate & true\_soc\_violation\_severity\_p95\_mwh & cost\_delta\_pct \\
+Scenario & Controller & PICP@90 & Width (MW) & Viol.\ Rate & Sev.\ P95 (MWh) & Cost $\Delta$\% \\
 \midrule
-pending\_transfer\_artifacts & --- & --- & --- & --- & --- & --- \\
+DE\_drift\_combo & CVaR & 0.393 & 951.9 & 0.317 & 0.3 & -0.42 \\
+DE\_drift\_combo & \textbf{DC$^3$S} & 0.393 & 1022.9 & \textbf{0.000} & \textbf{0.000} & -0.34 \\
+DE\_drift\_combo & Det.\ LP & 0.393 & 951.9 & 0.083 & 220.5 & +0.00 \\
+DE\_drift\_combo & Robust & 0.770 & 12217.1 & 0.317 & 0.3 & -0.42 \\
+\midrule
+US\_drift\_combo & CVaR & 0.468 & 951.9 & 0.317 & 0.3 & -2.33 \\
+US\_drift\_combo & \textbf{DC$^3$S} & 0.480 & 1022.6 & \textbf{0.000} & \textbf{0.000} & -2.04 \\
+US\_drift\_combo & Det.\ LP & 0.468 & 951.9 & 0.079 & 229.1 & +0.00 \\
+US\_drift\_combo & Robust & 0.782 & 3540.8 & 0.317 & 0.3 & -2.33 \\
+\midrule
+DE\_nominal\_baseline & CVaR & 1.000 & 951.9 & 0.290 & 0.3 & -0.43 \\
+DE\_nominal\_baseline & \textbf{DC$^3$S} & 1.000 & 952.2 & \textbf{0.000} & \textbf{0.000} & +1.90 \\
+DE\_nominal\_baseline & Det.\ LP & 1.000 & 951.9 & 0.111 & 186.7 & +0.00 \\
+DE\_nominal\_baseline & Robust & 1.000 & 12002.4 & 0.290 & 0.3 & -0.43 \\
+\midrule
+US\_nominal\_baseline & CVaR & 1.000 & 951.9 & 0.290 & 0.3 & -1.85 \\
+US\_nominal\_baseline & \textbf{DC$^3$S} & 1.000 & 952.2 & \textbf{0.000} & \textbf{0.000} & +6.74 \\
+US\_nominal\_baseline & Det.\ LP & 1.000 & 951.9 & 0.115 & 184.8 & +0.00 \\
+US\_nominal\_baseline & Robust & 1.000 & 3480.7 & 0.290 & 0.3 & -1.85 \\
+\midrule
+DE\_dropout & CVaR & 0.937 & 951.9 & 0.337 & 0.3 & -0.42 \\
+DE\_dropout & \textbf{DC$^3$S} & 0.937 & 966.2 & \textbf{0.000} & \textbf{0.000} & +0.56 \\
+DE\_dropout & Det.\ LP & 0.937 & 951.9 & 0.131 & 220.7 & +0.00 \\
+DE\_dropout & Robust & 1.000 & 11997.6 & 0.337 & 0.3 & -0.42 \\
+\midrule
+US\_dropout & CVaR & 0.980 & 951.9 & 0.337 & 0.3 & -1.80 \\
+US\_dropout & \textbf{DC$^3$S} & 0.984 & 966.2 & \textbf{0.000} & \textbf{0.000} & +1.83 \\
+US\_dropout & Det.\ LP & 0.980 & 951.9 & 0.131 & 223.9 & +0.00 \\
+US\_dropout & Robust & 1.000 & 3479.3 & 0.337 & 0.3 & -1.80 \\
 \bottomrule
 \end{tabular}
-
 }
 \end{table}
