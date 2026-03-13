@@ -48,12 +48,14 @@ function CustomTooltip({ active, payload }: any) {
 }
 
 export function CarbonCostPanel({ data, zoneId, summary }: CarbonCostPanelProps) {
-  const costSavingsPct = summary?.cost_savings_pct ?? 17.4;
+  const costSavingsPct = summary?.cost_savings_pct ?? null;
   const costSavingsUsd = summary?.cost_savings_usd ?? null;
-  const carbonReductionPct = summary?.carbon_reduction_pct ?? 32.6;
-  const carbonTons = summary?.carbon_reduction_kg ? summary.carbon_reduction_kg / 1000 : 47.8;
-  const peakShavingPct = summary?.peak_shaving_pct ?? 19.5;
-  const peakShavingMw = summary?.peak_shaving_mw ?? 5000;
+  const carbonReductionPct = summary?.carbon_reduction_pct ?? null;
+  const carbonTons = summary?.carbon_reduction_kg ? summary.carbon_reduction_kg / 1000 : null;
+  const peakShavingPct = summary?.peak_shaving_pct ?? null;
+  const peakShavingMw = summary?.peak_shaving_mw ?? null;
+  const formatMaybe = (value: number | null | undefined, formatter: (value: number) => string) =>
+    typeof value === 'number' && Number.isFinite(value) ? formatter(value) : 'N/A';
 
   return (
     <motion.div
@@ -75,21 +77,21 @@ export function CarbonCostPanel({ data, zoneId, summary }: CarbonCostPanelProps)
       {/* KPI row */}
       <div className="grid grid-cols-3 gap-4 px-5 pt-4">
         <div className="text-center p-3 rounded-lg bg-white/3">
-          <div className="text-lg font-bold text-energy-primary stat-value">{formatPercent(costSavingsPct)}</div>
+          <div className="text-lg font-bold text-energy-primary stat-value">{formatMaybe(costSavingsPct, formatPercent)}</div>
           <div className="text-[10px] text-slate-500 mt-0.5">Cost Savings</div>
           <div className="text-xs text-slate-400 font-mono">
-            {costSavingsUsd !== null ? formatCurrency(costSavingsUsd, 'USD') : '€23,500'}
+            {costSavingsUsd !== null ? formatCurrency(costSavingsUsd, 'USD') : 'N/A'}
           </div>
         </div>
         <div className="text-center p-3 rounded-lg bg-white/3">
-          <div className="text-lg font-bold text-energy-primary stat-value">{formatPercent(carbonReductionPct)}</div>
+          <div className="text-lg font-bold text-energy-primary stat-value">{formatMaybe(carbonReductionPct, formatPercent)}</div>
           <div className="text-[10px] text-slate-500 mt-0.5">Carbon Reduction</div>
-          <div className="text-xs text-slate-400 font-mono">{carbonTons.toFixed(1)} tCO₂</div>
+          <div className="text-xs text-slate-400 font-mono">{formatMaybe(carbonTons, (value) => `${value.toFixed(1)} tCO₂`)}</div>
         </div>
         <div className="text-center p-3 rounded-lg bg-white/3">
-          <div className="text-lg font-bold text-energy-info stat-value">{formatPercent(peakShavingPct)}</div>
+          <div className="text-lg font-bold text-energy-info stat-value">{formatMaybe(peakShavingPct, formatPercent)}</div>
           <div className="text-[10px] text-slate-500 mt-0.5">Peak Shaving</div>
-          <div className="text-xs text-slate-400 font-mono">{formatMW(peakShavingMw)}</div>
+          <div className="text-xs text-slate-400 font-mono">{formatMaybe(peakShavingMw, formatMW)}</div>
         </div>
       </div>
 

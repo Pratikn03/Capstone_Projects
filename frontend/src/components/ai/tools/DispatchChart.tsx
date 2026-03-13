@@ -60,7 +60,7 @@ export function DispatchChart({
   const allowBaseline = Boolean(baseline && baseline.length) && showBaseline;
   const [mode, setMode] = useState<'optimized' | 'baseline'>(allowBaseline ? defaultMode : 'optimized');
   const chartData = mode === 'baseline' && baseline ? baseline : optimized;
-  const peakLoad = Math.max(...chartData.map((d) => d.load_mw));
+  const peakLoad = chartData.length ? Math.max(...chartData.map((d) => d.load_mw)) : 0;
   const baselineMatches = useMemo(() => {
     if (!allowBaseline || !baseline || baseline.length !== optimized.length) return false;
     const keys: Array<keyof DispatchData> = [
@@ -117,67 +117,70 @@ export function DispatchChart({
             </span>
           )}
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-energy-primary/10 text-energy-primary border border-energy-primary/20">
-            {mode === 'optimized' ? 'Live Telemetry' : 'Baseline Mode'}
+            {mode === 'optimized' ? 'Optimized Dispatch' : 'Baseline Comparison'}
           </span>
           <span className="text-[10px] text-slate-500">
-            Peak: {peakLoad.toLocaleString()} MW
+            Peak: {peakLoad ? `${peakLoad.toLocaleString()} MW` : 'N/A'}
           </span>
         </div>
       </div>
 
       <div className="px-5 py-4 h-[320px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-            <defs>
-              <linearGradient id="gradSolar" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#fbbf24" stopOpacity={0.6} />
-                <stop offset="95%" stopColor="#fbbf24" stopOpacity={0.05} />
-              </linearGradient>
-              <linearGradient id="gradWind" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.6} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05} />
-              </linearGradient>
-              <linearGradient id="gradGas" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.5} />
-                <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
-              </linearGradient>
-              <linearGradient id="gradBattery" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#a855f7" stopOpacity={0.5} />
-                <stop offset="95%" stopColor="#a855f7" stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
+        {chartData.length ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gradSolar" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#fbbf24" stopOpacity={0.6} />
+                  <stop offset="95%" stopColor="#fbbf24" stopOpacity={0.05} />
+                </linearGradient>
+                <linearGradient id="gradWind" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.6} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05} />
+                </linearGradient>
+                <linearGradient id="gradGas" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.5} />
+                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
+                </linearGradient>
+                <linearGradient id="gradBattery" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#a855f7" stopOpacity={0.5} />
+                  <stop offset="95%" stopColor="#a855f7" stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-            <XAxis dataKey="timestamp" stroke="#64748b" tick={{ fontSize: 10 }} tickFormatter={formatTime} />
-            <YAxis stroke="#64748b" tick={{ fontSize: 10 }} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend
-              wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
-              formatter={(v: string) => <span className="text-slate-300">{v}</span>}
-            />
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+              <XAxis dataKey="timestamp" stroke="#64748b" tick={{ fontSize: 10 }} tickFormatter={formatTime} />
+              <YAxis stroke="#64748b" tick={{ fontSize: 10 }} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend
+                wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
+                formatter={(v: string) => <span className="text-slate-300">{v}</span>}
+              />
 
-            {/* Stacked generation */}
-            <Area type="monotone" dataKey="generation_gas" stackId="gen" stroke="#ef4444" fill="url(#gradGas)" name="Gas / Thermal" />
-            <Area type="monotone" dataKey="generation_wind" stackId="gen" stroke="#3b82f6" fill="url(#gradWind)" name="Wind" />
-            <Area type="monotone" dataKey="generation_solar" stackId="gen" stroke="#fbbf24" fill="url(#gradSolar)" name="Solar" />
-            <Area type="monotone" dataKey="battery_dispatch" stackId="gen" stroke="#a855f7" fill="url(#gradBattery)" name="Battery" />
-
-            {/* Load line overlay */}
-            <Area
-              type="monotone" dataKey="load_mw" stroke="#f1f5f9" fill="none"
-              strokeWidth={2} strokeDasharray="6 3" name="Net Load"
-            />
-
-            {/* Peak reference */}
-            <ReferenceLine y={peakLoad * 1.05} stroke="#ef444480" strokeDasharray="4 4" label="" />
-          </AreaChart>
-        </ResponsiveContainer>
+              <Area type="monotone" dataKey="generation_gas" stackId="gen" stroke="#ef4444" fill="url(#gradGas)" name="Gas / Thermal" />
+              <Area type="monotone" dataKey="generation_wind" stackId="gen" stroke="#3b82f6" fill="url(#gradWind)" name="Wind" />
+              <Area type="monotone" dataKey="generation_solar" stackId="gen" stroke="#fbbf24" fill="url(#gradSolar)" name="Solar" />
+              <Area type="monotone" dataKey="battery_dispatch" stackId="gen" stroke="#a855f7" fill="url(#gradBattery)" name="Battery" />
+              <Area
+                type="monotone" dataKey="load_mw" stroke="#f1f5f9" fill="none"
+                strokeWidth={2} strokeDasharray="6 3" name="Net Load"
+              />
+              <ReferenceLine y={peakLoad * 1.05} stroke="#ef444480" strokeDasharray="4 4" label="" />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex h-full items-center justify-center text-xs text-slate-500">
+            No dispatch trace available for this view.
+          </div>
+        )}
       </div>
 
       <div className="px-5 pb-3 text-[11px] text-slate-500">
-        {mode === 'optimized'
-          ? 'Optimization shifts charging to solar peaks and discharges during evening ramps to reduce thermal output.'
-          : 'Baseline dispatch meets net load without battery support or carbon-aware scheduling.'}
+        {chartData.length
+          ? mode === 'optimized'
+            ? 'Optimization shifts charging to solar peaks and discharges during evening ramps to reduce thermal output.'
+            : 'Baseline dispatch meets net load without battery support or carbon-aware scheduling.'
+          : 'Waiting for dispatch artifacts or API responses.'}
       </div>
     </motion.div>
   );

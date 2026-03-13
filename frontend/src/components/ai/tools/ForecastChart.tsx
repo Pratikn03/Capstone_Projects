@@ -5,8 +5,7 @@ import {
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
-import { mockForecastWithPI, type ForecastWithPI } from '@/lib/api/mock-data';
+import type { ForecastWithPI } from '@/lib/api/mock-data';
 
 interface ForecastChartProps {
   data?: ForecastWithPI[];
@@ -15,6 +14,7 @@ interface ForecastChartProps {
   metrics?: {
     rmse?: number;
     coverage_90?: number;
+    model?: string;
   };
 }
 
@@ -54,13 +54,13 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 export function ForecastChart({ data: dataProp, target, zoneId, metrics }: ForecastChartProps) {
-  const [showModel, setShowModel] = useState<'GBM' | 'LSTM' | 'TCN'>('GBM');
-  const data = dataProp?.length ? dataProp : mockForecastWithPI(target, 48);
+  const data = dataProp?.length ? dataProp : [];
   const color = targetColors[target] || '#10b981';
   const name = targetNames[target] || target;
   const horizonHours = data.length;
   const coverage = metrics?.coverage_90;
   const rmse = metrics?.rmse;
+  const modelLabel = metrics?.model;
 
   return (
     <motion.div
@@ -77,84 +77,70 @@ export function ForecastChart({ data: dataProp, target, zoneId, metrics }: Forec
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-energy-info/10 text-energy-info border border-energy-info/20">
             90% PI
           </span>
-          <span className="text-[10px] text-slate-500">Horizon: {horizonHours}h</span>
+          <span className="text-[10px] text-slate-500">Horizon: {horizonHours || 0}h</span>
         </div>
 
-        {/* Model toggle */}
-        <div className="flex items-center gap-1 p-0.5 rounded-lg bg-white/5">
-          {(['GBM', 'LSTM', 'TCN'] as const).map((m) => (
-            <button
-              key={m}
-              onClick={() => setShowModel(m)}
-              className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all ${
-                showModel === m
-                  ? 'bg-energy-primary/20 text-energy-primary'
-                  : 'text-slate-500 hover:text-slate-300'
-              }`}
-            >
-              {m}
-            </button>
-          ))}
+        <div className="text-[10px] text-slate-500">
+          {modelLabel ? `Active metric row: ${modelLabel}` : 'Artifact forecast trace'}
         </div>
       </div>
 
       <div className="px-5 py-4 h-[320px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-            <defs>
-              <linearGradient id={`grad90_${target}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={color} stopOpacity={0.15} />
-                <stop offset="95%" stopColor={color} stopOpacity={0.02} />
-              </linearGradient>
-              <linearGradient id={`grad50_${target}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={color} stopOpacity={0.25} />
-                <stop offset="95%" stopColor={color} stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
+        {data.length ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <defs>
+                <linearGradient id={`grad90_${target}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={color} stopOpacity={0.15} />
+                  <stop offset="95%" stopColor={color} stopOpacity={0.02} />
+                </linearGradient>
+                <linearGradient id={`grad50_${target}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={color} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={color} stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-            <XAxis dataKey="timestamp" stroke="#64748b" tick={{ fontSize: 10 }} tickFormatter={formatTime} />
-            <YAxis stroke="#64748b" tick={{ fontSize: 10 }} tickFormatter={(v: number) => `${(v / 1000).toFixed(1)}k`} />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+              <XAxis dataKey="timestamp" stroke="#64748b" tick={{ fontSize: 10 }} tickFormatter={formatTime} />
+              <YAxis stroke="#64748b" tick={{ fontSize: 10 }} tickFormatter={(v: number) => `${(v / 1000).toFixed(1)}k`} />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
 
-            {/* 90% prediction interval */}
-            <Area
-              type="monotone" dataKey="upper_90" stroke="none"
-              fill={`url(#grad90_${target})`} name="90% PI Upper"
-              legendType="none"
-            />
-            <Area
-              type="monotone" dataKey="lower_90" stroke="none"
-              fill={`url(#grad90_${target})`} name="90% PI Lower"
-              legendType="none"
-            />
-
-            {/* 50% prediction interval */}
-            <Area
-              type="monotone" dataKey="upper_50" stroke="none"
-              fill={`url(#grad50_${target})`} name="50% PI"
-              legendType="none"
-            />
-            <Area
-              type="monotone" dataKey="lower_50" stroke="none"
-              fill="transparent" name=""
-              legendType="none"
-            />
-
-            {/* Actual */}
-            <Area
-              type="monotone" dataKey="actual" stroke="#94a3b8" fill="none"
-              strokeWidth={1} strokeDasharray="4 3" name="Actual"
-            />
-
-            {/* Forecast */}
-            <Area
-              type="monotone" dataKey="forecast" stroke={color} fill="none"
-              strokeWidth={2} name={`${name} Forecast (${showModel})`}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+              <Area
+                type="monotone" dataKey="upper_90" stroke="none"
+                fill={`url(#grad90_${target})`} name="90% PI Upper"
+                legendType="none"
+              />
+              <Area
+                type="monotone" dataKey="lower_90" stroke="none"
+                fill={`url(#grad90_${target})`} name="90% PI Lower"
+                legendType="none"
+              />
+              <Area
+                type="monotone" dataKey="upper_50" stroke="none"
+                fill={`url(#grad50_${target})`} name="50% PI"
+                legendType="none"
+              />
+              <Area
+                type="monotone" dataKey="lower_50" stroke="none"
+                fill="transparent" name=""
+                legendType="none"
+              />
+              <Area
+                type="monotone" dataKey="actual" stroke="#94a3b8" fill="none"
+                strokeWidth={1} strokeDasharray="4 3" name="Actual"
+              />
+              <Area
+                type="monotone" dataKey="forecast" stroke={color} fill="none"
+                strokeWidth={2} name={`${name} Forecast`}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex h-full items-center justify-center text-xs text-slate-500">
+            No forecast trace available for this view.
+          </div>
+        )}
       </div>
 
       {/* Coverage badge */}
@@ -173,7 +159,7 @@ export function ForecastChart({ data: dataProp, target, zoneId, metrics }: Forec
           </span>
         </span>
         <span>•</span>
-        <span>Coverage verified with conformal prediction</span>
+        <span>{data.length ? 'Coverage verified with conformal prediction' : 'Chart hidden until artifact data is available'}</span>
       </div>
     </motion.div>
   );

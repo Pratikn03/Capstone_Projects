@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 
-import { mockForecastMetrics } from './mock-data';
 import type { ReportsApiResponse } from './report-types';
 
 export function useReportsData() {
@@ -41,7 +40,7 @@ export function useReportsData() {
 
   return {
     reports: data?.reports ?? [],
-    metrics: data?.metrics?.length ? data.metrics : mockForecastMetrics(),
+    metrics: data?.metrics ?? [],
     metricsBacktest: data?.metrics_backtest ?? [],
     impact: data?.impact ?? null,
     robustness: data?.robustness ?? null,

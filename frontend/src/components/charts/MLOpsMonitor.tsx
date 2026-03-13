@@ -37,8 +37,8 @@ function CustomTooltip({ active, payload }: any) {
 
 export function MLOpsMonitor({
   data,
-  lastTrained = '2026-02-07',
-  modelVersion = 'v2.3.0-50ep',
+  lastTrained = 'Locked artifacts',
+  modelVersion = 'Registry-backed',
 }: MLOpsMonitorProps) {
   const hasDrift = data.some((d) => d.is_drift);
   const latestKS = data[data.length - 1]?.ks_statistic ?? 0;
@@ -125,9 +125,9 @@ export function MLOpsMonitor({
 
       {/* Dataset lineage */}
       <div className="px-5 pb-3 flex items-center gap-4 text-[10px] text-slate-600">
-        <span>Datasets: OPSD Germany, EIA-930 USA</span>
+        <span>Sources: dashboard extracts and report artifacts</span>
         <span>•</span>
-        <span>Models: GBM • LSTM • TCN (50 epochs, CosineAnnealingLR)</span>
+        <span>Tracks drift, RMSE, and retraining signals from the current repo state</span>
       </div>
     </motion.div>
   );

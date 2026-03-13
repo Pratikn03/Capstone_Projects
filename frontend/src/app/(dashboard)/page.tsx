@@ -12,9 +12,7 @@ import { AnomalyTimeline } from '@/components/charts/AnomalyTimeline';
 import { AnomalyList } from '@/components/charts/AnomalyList';
 import { MLOpsMonitor } from '@/components/charts/MLOpsMonitor';
 import { DC3SLiveCard } from '@/components/dashboard/DC3SLiveCard';
-import {
-  mockDriftData,
-} from '@/lib/api/mock-data';
+import { StatusBanner } from '@/components/ui/StatusBanner';
 import { useDispatchCompare } from '@/lib/api/dispatch-client';
 import { useDc3sLive } from '@/lib/api/dc3s-client';
 import { useReportsData } from '@/lib/api/reports-client';
@@ -41,8 +39,7 @@ export default function DashboardPage() {
   }));
   const pareto = dataset.pareto;
 
-  // Use real monitoring data, fallback to mock
-  const driftData: DriftPoint[] = dataset.monitoring?.drift_timeline ?? mockDriftData(30);
+  const driftData: DriftPoint[] = dataset.monitoring?.drift_timeline ?? [];
 
   const regionBundle = regions[region];
   const metricsActive = regionBundle?.metrics?.length ? regionBundle.metrics : metrics;
@@ -86,9 +83,18 @@ export default function DashboardPage() {
     value === null || value === undefined ? 'N/A' : formatPercent(value);
   const formatMaybeCurrency = (value: number | null | undefined) =>
     value === null || value === undefined ? 'N/A' : formatCurrency(value, 'USD');
+  const statusMessages = [
+    dataset.error ? `Dataset view error: ${dataset.error}` : null,
+    !realStats ? 'Dataset extracts are unavailable; cards and charts may be empty.' : null,
+    !dataset.monitoring ? 'Monitoring panel is showing no drift timeline because no monitoring artifact was found.' : null,
+    dispatch.meta.source !== 'fastapi' ? 'Dispatch comparison is not connected to the live FastAPI optimization route.' : null,
+    !regions[region]?.metrics?.length && !metrics.length ? 'Report metrics are unavailable for this region.' : null,
+  ].filter((message): message is string => Boolean(message));
 
   return (
     <div className="p-6 space-y-6">
+      <StatusBanner title="Dashboard Status" messages={statusMessages} />
+
       {/* ─── Dataset Badge ─── */}
       {realStats && (
         <div className="flex items-center gap-3 text-xs text-slate-500">
@@ -151,7 +157,11 @@ export default function DashboardPage() {
           data={forecastData.length ? forecastData : undefined}
           target="load_mw"
           zoneId={region}
-          metrics={bestLoadMetric ? { rmse: bestLoadMetric.rmse, coverage_90: bestLoadMetric.coverage_90 } : undefined}
+          metrics={
+            bestLoadMetric
+              ? { rmse: bestLoadMetric.rmse, coverage_90: bestLoadMetric.coverage_90, model: bestLoadMetric.model }
+              : undefined
+          }
         />
         <DispatchChart
           optimized={
