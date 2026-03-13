@@ -48,6 +48,7 @@ export function BatterySOCChart({ schedule, metrics }: BatterySOCChartProps) {
     charge: s.power_mw < 0 ? Math.abs(s.power_mw) : 0,
     discharge: s.power_mw > 0 ? s.power_mw : 0,
   }));
+  const capacityLabel = schedule[0]?.capacity_mwh ? `${schedule[0].capacity_mwh.toLocaleString()} MWh` : 'No schedule';
 
   return (
     <motion.div
@@ -60,7 +61,7 @@ export function BatterySOCChart({ schedule, metrics }: BatterySOCChartProps) {
         <div className="flex items-center gap-3">
           <h3 className="text-sm font-semibold text-white">Battery State of Charge</h3>
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-battery/10 text-battery border border-battery/20">
-            {schedule[0]?.capacity_mwh?.toLocaleString()} MWh
+            {capacityLabel}
           </span>
         </div>
         <div className="flex items-center gap-3 text-xs">
@@ -70,39 +71,42 @@ export function BatterySOCChart({ schedule, metrics }: BatterySOCChartProps) {
       </div>
 
       <div className="px-5 py-4 h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-            <defs>
-              <linearGradient id="gradSOC" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#a855f7" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#a855f7" stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
+        {chartData.length ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="gradSOC" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#a855f7" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#a855f7" stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-            <XAxis dataKey="timestamp" stroke="#64748b" tick={{ fontSize: 10 }} tickFormatter={formatTime} />
-            <YAxis yAxisId="soc" stroke="#a855f7" tick={{ fontSize: 10 }} domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} />
-            <YAxis yAxisId="power" orientation="right" stroke="#64748b" tick={{ fontSize: 10 }} tickFormatter={(v: number) => `${(v/1000).toFixed(1)}k`} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+              <XAxis dataKey="timestamp" stroke="#64748b" tick={{ fontSize: 10 }} tickFormatter={formatTime} />
+              <YAxis yAxisId="soc" stroke="#a855f7" tick={{ fontSize: 10 }} domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} />
+              <YAxis yAxisId="power" orientation="right" stroke="#64748b" tick={{ fontSize: 10 }} tickFormatter={(v: number) => `${(v/1000).toFixed(1)}k`} />
 
-            <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
 
-            {/* SOC constraint lines */}
-            <ReferenceLine yAxisId="soc" y={90} stroke="#a855f780" strokeDasharray="4 4" />
-            <ReferenceLine yAxisId="soc" y={15} stroke="#ef444480" strokeDasharray="4 4" />
+              <ReferenceLine yAxisId="soc" y={90} stroke="#a855f780" strokeDasharray="4 4" />
+              <ReferenceLine yAxisId="soc" y={15} stroke="#ef444480" strokeDasharray="4 4" />
 
-            {/* Charge/Discharge bars */}
-            <Bar yAxisId="power" dataKey="charge" fill="#10b981" opacity={0.6} name="Charging" radius={[2, 2, 0, 0]} />
-            <Bar yAxisId="power" dataKey="discharge" fill="#f59e0b" opacity={0.6} name="Discharging" radius={[2, 2, 0, 0]} />
+              <Bar yAxisId="power" dataKey="charge" fill="#10b981" opacity={0.6} name="Charging" radius={[2, 2, 0, 0]} />
+              <Bar yAxisId="power" dataKey="discharge" fill="#f59e0b" opacity={0.6} name="Discharging" radius={[2, 2, 0, 0]} />
 
-            {/* SOC line */}
-            <Area
-              yAxisId="soc" type="monotone" dataKey="soc_percent"
-              stroke="#a855f7" fill="url(#gradSOC)" strokeWidth={2.5}
-              name="SOC"
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+              <Area
+                yAxisId="soc" type="monotone" dataKey="soc_percent"
+                stroke="#a855f7" fill="url(#gradSOC)" strokeWidth={2.5}
+                name="SOC"
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex h-full items-center justify-center text-xs text-slate-500">
+            No battery schedule available for this view.
+          </div>
+        )}
       </div>
 
       {/* Metrics bar */}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ForecastChart } from '@/components/ai/tools/ForecastChart';
 import { Panel } from '@/components/ui/Panel';
+import { StatusBanner } from '@/components/ui/StatusBanner';
 import { useRegion } from '@/components/ui/RegionContext';
 import { useReportsData } from '@/lib/api/reports-client';
 import { useDatasetData } from '@/lib/api/dataset-client';
@@ -39,6 +40,12 @@ export default function ForecastingPage() {
     realTargetMetrics.length
       ? realTargetMetrics
       : metricsActive.filter((m) => m.target === selectedTarget);
+  const statusMessages = [
+    dataset.error ? `Dataset view error: ${dataset.error}` : null,
+    !forecastData.length ? 'No extracted forecast trace is available for the selected region/target.' : null,
+    !realTargetMetrics.length && displayMetrics.length ? 'Model table is using report-level metrics rather than dataset-level extracted metrics.' : null,
+    !displayMetrics.length ? 'No model metrics are available for the selected target.' : null,
+  ].filter((message): message is string => Boolean(message));
 
   return (
     <div className="p-6 space-y-6">
@@ -83,6 +90,8 @@ export default function ForecastingPage() {
         </div>
       </div>
 
+      <StatusBanner title="Forecasting Status" messages={statusMessages} />
+
       {/* Dataset info badge */}
       {dataset.stats && (
         <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -100,7 +109,11 @@ export default function ForecastingPage() {
         data={forecastData.length ? forecastData : undefined}
         target={selectedTarget}
         zoneId={region}
-        metrics={bestMetric ? { rmse: bestMetric.rmse, coverage_90: bestMetric.coverage_90 } : undefined}
+        metrics={
+          bestMetric
+            ? { rmse: bestMetric.rmse, coverage_90: bestMetric.coverage_90, model: bestMetric.model }
+            : undefined
+        }
       />
 
       {/* Metrics table */}

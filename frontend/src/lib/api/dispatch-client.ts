@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 
-import { mockDispatchForecast } from './mock-data';
 import type { DispatchCompareResponse, DispatchSeriesPoint } from './dispatch-types';
 
 export function useDispatchCompare(region = 'DE', horizon = 24) {
-  const fallback = mockDispatchForecast(region, horizon).data as DispatchSeriesPoint[];
   const [data, setData] = useState<DispatchCompareResponse>({
-    optimized: fallback,
+    optimized: [],
     baseline: undefined,
     meta: { source: 'missing', horizon_hours: horizon },
   });
@@ -23,7 +21,7 @@ export function useDispatchCompare(region = 'DE', horizon = 24) {
           throw new Error(`Dispatch API error: ${res.status}`);
         }
         const payload = (await res.json()) as DispatchCompareResponse;
-        if (active && payload.optimized.length) {
+        if (active) {
           setData(payload);
         }
       } catch (err) {
