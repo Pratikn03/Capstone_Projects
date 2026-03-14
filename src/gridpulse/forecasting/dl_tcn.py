@@ -133,6 +133,7 @@ class TCNForecaster(nn.Module):
         dilation_base: int = 2,
         use_skip_connections: bool = False,
         horizon: int = 24,
+        n_quantiles: int = 1,
     ):
         """Enhanced TCN with skip connections and configurable dilation.
         
@@ -150,6 +151,7 @@ class TCNForecaster(nn.Module):
             raise ValueError("num_channels must be a non-empty list")
             
         self.horizon = horizon
+        self.n_quantiles = max(1, int(n_quantiles))
         
         # Input projection
         self.input_proj = nn.Conv1d(n_features, n_features, 1)
@@ -170,7 +172,7 @@ class TCNForecaster(nn.Module):
             nn.Conv1d(num_channels[-1], num_channels[-1], 1),
             nn.GELU(),
             nn.Dropout(dropout),
-            nn.Conv1d(num_channels[-1], 1, 1),
+            nn.Conv1d(num_channels[-1], self.n_quantiles, 1),
         )
 
     def forward(self, x):
@@ -186,5 +188,7 @@ class TCNForecaster(nn.Module):
         
         # TCN encoding
         y = self.tcn(x)
-        y = self.head(y)  # (B, 1, T)
+        y = self.head(y)
+        if self.n_quantiles > 1:
+            return y.transpose(1, 2)  # (B, T, Q)
         return y.squeeze(1)  # (B, T)

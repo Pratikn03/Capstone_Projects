@@ -196,6 +196,55 @@ def _sanitize(obj):
     return obj
 
 
+def _normalize_quantile_levels(quantiles) -> list[float]:
+    if isinstance(quantiles, list):
+        return [float(q) for q in quantiles]
+    return []
+
+
+def _extract_prediction_outputs(
+    pred_seq: np.ndarray,
+    *,
+    horizon: int,
+    quantile_levels: list[float],
+) -> tuple[np.ndarray, dict[str, np.ndarray]]:
+    arr = np.asarray(pred_seq, dtype=float)
+    n_quantiles = len(quantile_levels)
+    if n_quantiles > 1:
+        if arr.ndim == 2:
+            if arr.shape[1] % n_quantiles != 0:
+                raise ValueError(f"Cannot reshape prediction array with shape {arr.shape} into quantiles")
+            arr = arr.reshape(arr.shape[0], -1, n_quantiles)
+        elif arr.ndim != 3:
+            raise ValueError(f"Expected 2D/3D quantile prediction array, got {arr.ndim}D")
+        if arr.shape[-1] != n_quantiles:
+            if arr.shape[1] == n_quantiles:
+                arr = np.transpose(arr, (0, 2, 1))
+            else:
+                raise ValueError(f"Quantile prediction array shape {arr.shape} does not match {n_quantiles} quantiles")
+        arr = np.sort(arr[:, -horizon:, :], axis=-1)
+        median_idx = int(np.argmin(np.abs(np.asarray(quantile_levels, dtype=float) - 0.5)))
+        point = arr[:, :, median_idx]
+        quantile_map = {str(q): arr[:, :, idx] for idx, q in enumerate(quantile_levels)}
+        return point, quantile_map
+    if arr.ndim == 3 and arr.shape[-1] == 1:
+        arr = arr[..., 0]
+    return arr[:, -horizon:], {}
+
+
+def _load_model_uncertainty_meta(unc_dir: Path, target: str, model_key: str) -> dict | None:
+    candidates = [unc_dir / f"{model_key}_{target}_conformal.json"]
+    if model_key == "gbm":
+        candidates.append(unc_dir / f"{target}_conformal.json")
+    for path in candidates:
+        if path.exists():
+            payload = _load_json_file(path)
+            meta = payload.get("meta", {}) if isinstance(payload.get("meta"), dict) else {}
+            if meta:
+                return meta
+    return None
+
+
 def _compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, target: str) -> dict:
     # Core evaluation metrics used in markdown reports and plots.
     out = {
@@ -244,6 +293,8 @@ def _build_torch_model(bundle: dict):
     feat_cols = bundle.get("feature_cols", [])
     params = bundle.get("model_params", {})
     horizon = int(bundle.get("horizon", params.get("horizon", 24)))
+    quantile_levels = _normalize_quantile_levels(bundle.get("quantile_levels"))
+    n_quantiles = max(1, int(bundle.get("n_quantiles", len(quantile_levels) or 1)))
     if model_type == "lstm":
         model = LSTMForecaster(
             n_features=len(feat_cols),
@@ -251,6 +302,10 @@ def _build_torch_model(bundle: dict):
             num_layers=int(params.get("num_layers", 2)),
             dropout=float(params.get("dropout", 0.1)),
             horizon=horizon,
+            bidirectional=bool(params.get("bidirectional", False)),
+            attention=bool(params.get("attention", False)),
+            residual=bool(params.get("residual", False)),
+            n_quantiles=n_quantiles,
         )
     elif model_type == "tcn":
         model = TCNForecaster(
@@ -259,6 +314,9 @@ def _build_torch_model(bundle: dict):
             kernel_size=int(params.get("kernel_size", 3)),
             dropout=float(params.get("dropout", 0.1)),
             horizon=horizon,
+            dilation_base=int(params.get("dilation_base", 2)),
+            use_skip_connections=bool(params.get("use_skip_connections", False)),
+            n_quantiles=n_quantiles,
         )
     elif model_type == "nbeats":
         model = NBEATSForecaster(
@@ -268,6 +326,7 @@ def _build_torch_model(bundle: dict):
             hidden_dim=int(params.get("hidden_dim", 512)),
             num_blocks=int(params.get("num_blocks", 4)),
             dropout=float(params.get("dropout", 0.1)),
+            n_quantiles=n_quantiles,
         )
     elif model_type == "tft":
         model = TFTForecaster(
@@ -278,6 +337,7 @@ def _build_torch_model(bundle: dict):
             num_layers=int(params.get("num_layers", 2)),
             dropout=float(params.get("dropout", 0.1)),
             dim_feedforward=int(params.get("dim_feedforward", 256)),
+            n_quantiles=n_quantiles,
         )
     elif model_type == "patchtst":
         model = PatchTSTForecaster(
@@ -291,6 +351,7 @@ def _build_torch_model(bundle: dict):
             num_layers=int(params.get("num_layers", 2)),
             dropout=float(params.get("dropout", 0.1)),
             dim_feedforward=int(params.get("dim_feedforward", 256)),
+            n_quantiles=n_quantiles,
         )
     else:
         raise ValueError(f"Unknown torch model_type: {model_type}")
@@ -306,6 +367,7 @@ def _eval_seq_model(bundle: dict, df: pd.DataFrame) -> dict | None:
     target = bundle.get("target")
     lookback = int(bundle.get("lookback", 168))
     horizon = int(bundle.get("horizon", 24))
+    quantile_levels = _normalize_quantile_levels(bundle.get("quantile_levels"))
     if not feat_cols or target is None:
         return None
     # Use the same scalers saved in the bundle (prevents train/test mismatch).
@@ -338,7 +400,11 @@ def _eval_seq_model(bundle: dict, df: pd.DataFrame) -> dict | None:
         for xb, yb in dl:
             pred_seq = model(xb).numpy()
             # Use the full horizon window for evaluation.
-            pred_hz = pred_seq[:, -horizon:]
+            pred_hz, _ = _extract_prediction_outputs(
+                pred_seq,
+                horizon=horizon,
+                quantile_levels=quantile_levels,
+            )
             preds.append(pred_hz.reshape(-1))
             trues.append(yb.numpy().reshape(-1))
     y_true = np.concatenate(trues)
@@ -603,10 +669,8 @@ def refresh_metrics_from_models(ctx: ReportContext) -> dict:
                     **metrics["targets"][target].get("gbm", {}),
                     **m,
                 }
-                conformal_path = unc_dir / f"{target}_conformal.json"
-                if conformal_path.exists():
-                    payload = _load_json_file(conformal_path)
-                    meta = payload.get("meta", {}) if isinstance(payload.get("meta"), dict) else {}
+                meta = _load_model_uncertainty_meta(unc_dir, target, "gbm")
+                if meta:
                     metrics["targets"][target]["gbm"]["uncertainty"] = {
                         "picp_90": meta.get("picp_90", meta.get("global_coverage")),
                         "picp_95": meta.get("picp_95"),
@@ -629,6 +693,18 @@ def refresh_metrics_from_models(ctx: ReportContext) -> dict:
                         **metrics["targets"][target].get(kind, {}),
                         **m,
                     }
+                    meta = _load_model_uncertainty_meta(unc_dir, target, kind)
+                    if meta:
+                        metrics["targets"][target][kind]["uncertainty"] = {
+                            "picp_90": meta.get("picp_90", meta.get("global_coverage")),
+                            "picp_95": meta.get("picp_95"),
+                            "mean_interval_width": meta.get("mean_interval_width", meta.get("global_mean_width")),
+                            "pinball_loss_q05": meta.get("pinball_loss_q05"),
+                            "pinball_loss_q50": meta.get("pinball_loss_q50"),
+                            "pinball_loss_q95": meta.get("pinball_loss_q95"),
+                            "pinball_loss_mean": meta.get("pinball_loss_mean"),
+                            "winkler_score_90": meta.get("winkler_score_90"),
+                        }
 
     report_path.write_text(json.dumps(_sanitize(metrics), indent=2), encoding="utf-8")
     return metrics

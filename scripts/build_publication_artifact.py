@@ -563,8 +563,8 @@ def _verify_outputs(out_dir: Path) -> None:
     if "NaN" in baseline_text:
         raise RuntimeError("baseline_comparison_all.csv contains NaN; missing values must render as ---")
     baseline_status = json.loads(baseline_status_path.read_text(encoding="utf-8"))
-    if not bool(baseline_status.get("thesis_headline_point_metrics_complete", False)):
-        raise RuntimeError("baseline_comparison_status.json reports incomplete DE/US_MISO point metrics")
+    if not bool(baseline_status.get("full_table_complete", False)):
+        raise RuntimeError("baseline_comparison_status.json reports an incomplete six-model DE/US forecast table")
 
 
 def _sha256_file(path: Path) -> str:

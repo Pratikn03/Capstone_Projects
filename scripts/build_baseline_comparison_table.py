@@ -116,6 +116,16 @@ def load_conformal(uncertainty_dir: Path, target: str) -> dict[str, float | None
     }
 
 
+def load_model_conformal(uncertainty_dir: Path, model_key: str, target: str) -> dict[str, float | None]:
+    path = uncertainty_dir / f"{model_key}_{target}_conformal.json"
+    data = load_json(path)
+    meta = data.get("meta", {}) if isinstance(data.get("meta"), dict) else {}
+    return {
+        "picp": meta.get("picp_90", meta.get("global_coverage")),
+        "width": meta.get("mean_interval_width", meta.get("global_mean_width")),
+    }
+
+
 def load_model_uncertainty(
     *,
     target_data: dict[str, Any],
@@ -131,6 +141,9 @@ def load_model_uncertainty(
                 "picp": uncertainty.get("picp_90", uncertainty.get("global_coverage")),
                 "width": uncertainty.get("mean_interval_width", uncertainty.get("global_mean_width")),
             }
+    model_conformal = load_model_conformal(uncertainty_dir, model_key, target)
+    if not _is_missing(model_conformal.get("picp")) or not _is_missing(model_conformal.get("width")):
+        return model_conformal
     if model_key == "gbm":
         return load_conformal(uncertainty_dir, target)
     return {"picp": None, "width": None}
@@ -202,15 +215,21 @@ def _region_status(region: str, rows: list[dict[str, Any]]) -> dict[str, Any]:
     expected_rows = len(TARGETS) * len(MODEL_ORDER)
     point_complete = 0
     gbm_uq_complete = 0
+    uq_complete = 0
     missing_point_rows: list[str] = []
+    missing_uq_rows: list[str] = []
     for row in rows:
         point_ok = all(not _is_missing(row[column]) for column in POINT_COLUMNS)
         if point_ok:
             point_complete += 1
         else:
             missing_point_rows.append(f"{row['Target']}:{row['Model']}")
+        uq_ok = all(not _is_missing(row[column]) for column in UQ_COLUMNS)
+        if uq_ok:
+            uq_complete += 1
+        else:
+            missing_uq_rows.append(f"{row['Target']}:{row['Model']}")
         if row["Model"] == "GBM":
-            uq_ok = all(not _is_missing(row[column]) for column in UQ_COLUMNS)
             if uq_ok:
                 gbm_uq_complete += 1
     return {
@@ -218,9 +237,13 @@ def _region_status(region: str, rows: list[dict[str, Any]]) -> dict[str, Any]:
         "expected_rows": expected_rows,
         "point_complete_rows": point_complete,
         "point_metrics_complete": point_complete == expected_rows,
+        "all_model_uq_complete_rows": uq_complete,
+        "all_model_uq_complete": uq_complete == expected_rows,
         "gbm_uq_complete_rows": gbm_uq_complete,
         "gbm_uq_complete": gbm_uq_complete == len(TARGETS),
         "missing_point_rows": missing_point_rows,
+        "missing_uq_rows": missing_uq_rows,
+        "full_table_complete": point_complete == expected_rows and uq_complete == expected_rows,
     }
 
 
@@ -395,8 +418,14 @@ def build_tables(
     status["thesis_headline_point_metrics_complete"] = bool(
         status["regions"]["DE"]["point_metrics_complete"] and status["regions"]["US"]["point_metrics_complete"]
     )
+    status["all_model_uq_complete"] = bool(
+        status["regions"]["DE"]["all_model_uq_complete"] and status["regions"]["US"]["all_model_uq_complete"]
+    )
     status["gbm_uq_complete"] = bool(
         status["regions"]["DE"]["gbm_uq_complete"] and status["regions"]["US"]["gbm_uq_complete"]
+    )
+    status["full_table_complete"] = bool(
+        status["regions"]["DE"]["full_table_complete"] and status["regions"]["US"]["full_table_complete"]
     )
     status_path = out_dir / "baseline_comparison_status.json"
     status_path.write_text(json.dumps(status, indent=2), encoding="utf-8")
@@ -444,8 +473,8 @@ def main() -> int:
         )
 
     print(json.dumps(status, indent=2))
-    if not status.get("thesis_headline_point_metrics_complete", False):
-        print("WARNING: thesis headline rows are still incomplete.")
+    if not status.get("full_table_complete", False):
+        print("WARNING: the six-model DE/US forecast table is still incomplete.")
         return 1
     return 0
 

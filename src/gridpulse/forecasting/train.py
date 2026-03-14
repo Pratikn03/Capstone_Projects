@@ -416,6 +416,133 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, target: str) -> dict
     return out
 
 
+def _normalize_quantile_levels(quantiles: list[float] | None) -> list[float]:
+    return [float(q) for q in (quantiles or [])]
+
+
+def _median_quantile_index(quantile_levels: list[float]) -> int:
+    if not quantile_levels:
+        return 0
+    arr = np.asarray(quantile_levels, dtype=float)
+    return int(np.argmin(np.abs(arr - 0.5)))
+
+
+def _model_artifact_key(model_type: str) -> str:
+    return "gbm" if str(model_type).startswith("gbm") else str(model_type)
+
+
+def _extract_tensor_forecast(pred_seq: torch.Tensor, horizon: int, quantile_levels: list[float] | None = None) -> torch.Tensor:
+    levels = _normalize_quantile_levels(quantile_levels)
+    n_quantiles = len(levels)
+    if n_quantiles > 1:
+        if pred_seq.dim() == 2:
+            if pred_seq.shape[1] % n_quantiles != 0:
+                raise ValueError(f"Cannot reshape prediction tensor with shape {tuple(pred_seq.shape)} into quantiles")
+            pred_seq = pred_seq.view(pred_seq.shape[0], -1, n_quantiles)
+        elif pred_seq.dim() != 3:
+            raise ValueError(f"Expected 2D/3D quantile prediction tensor, got {pred_seq.dim()}D")
+        if pred_seq.shape[-1] != n_quantiles:
+            if pred_seq.shape[1] == n_quantiles:
+                pred_seq = pred_seq.transpose(1, 2)
+            else:
+                raise ValueError(
+                    f"Quantile prediction tensor shape {tuple(pred_seq.shape)} does not match {n_quantiles} quantiles"
+                )
+        pred_hz = pred_seq[:, -horizon:, :]
+        pred_hz, _ = torch.sort(pred_hz, dim=-1)
+        return pred_hz
+    if pred_seq.dim() == 3 and pred_seq.shape[-1] == 1:
+        pred_seq = pred_seq[..., 0]
+    return pred_seq[:, -horizon:]
+
+
+def _extract_numpy_forecast(
+    pred_seq: np.ndarray,
+    horizon: int,
+    quantile_levels: list[float] | None = None,
+) -> tuple[np.ndarray, dict[str, np.ndarray]]:
+    levels = _normalize_quantile_levels(quantile_levels)
+    n_quantiles = len(levels)
+    arr = np.asarray(pred_seq, dtype=float)
+    if n_quantiles > 1:
+        if arr.ndim == 2:
+            if arr.shape[1] % n_quantiles != 0:
+                raise ValueError(f"Cannot reshape prediction array with shape {arr.shape} into quantiles")
+            arr = arr.reshape(arr.shape[0], -1, n_quantiles)
+        elif arr.ndim != 3:
+            raise ValueError(f"Expected 2D/3D quantile prediction array, got {arr.ndim}D")
+        if arr.shape[-1] != n_quantiles:
+            if arr.shape[1] == n_quantiles:
+                arr = np.transpose(arr, (0, 2, 1))
+            else:
+                raise ValueError(f"Quantile prediction array shape {arr.shape} does not match {n_quantiles} quantiles")
+        arr = np.sort(arr[:, -horizon:, :], axis=-1)
+        median_idx = _median_quantile_index(levels)
+        point = arr[:, :, median_idx]
+        quantile_map = {str(q): arr[:, :, idx] for idx, q in enumerate(levels)}
+        return point, quantile_map
+    if arr.ndim == 3 and arr.shape[-1] == 1:
+        arr = arr[..., 0]
+    point = arr[:, -horizon:]
+    return point, {}
+
+
+def _pinball_loss(pred_hz: torch.Tensor, y_true: torch.Tensor, quantile_levels: list[float]) -> torch.Tensor:
+    q = torch.as_tensor(quantile_levels, dtype=pred_hz.dtype, device=pred_hz.device).view(1, 1, -1)
+    target = y_true.unsqueeze(-1)
+    err = target - pred_hz
+    return torch.maximum((q - 1.0) * err, q * err).mean()
+
+
+def _build_conformal_payload(
+    *,
+    target: str,
+    model_key: str,
+    calibration_source: str,
+    split_boundaries: dict[str, Any],
+    method: str,
+    y_true_cal: np.ndarray,
+    y_true_test: np.ndarray,
+    y_pred_cal: np.ndarray | None = None,
+    y_pred_test: np.ndarray | None = None,
+    q_lo_cal: np.ndarray | None = None,
+    q_hi_cal: np.ndarray | None = None,
+    q_lo_test: np.ndarray | None = None,
+    q_hi_test: np.ndarray | None = None,
+    quantile_lo_key: str | None = None,
+    quantile_hi_key: str | None = None,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "target": target,
+        "model": model_key,
+        "artifact_model_key": _model_artifact_key(model_key),
+        "calibration_source": calibration_source,
+        "split_boundaries": split_boundaries,
+        "method": method,
+        "y_true_cal": y_true_cal,
+        "y_true_test": y_true_test,
+    }
+    if method == "cqr":
+        payload.update(
+            {
+                "quantile_lo_key": quantile_lo_key,
+                "quantile_hi_key": quantile_hi_key,
+                "q_lo_cal": q_lo_cal,
+                "q_hi_cal": q_hi_cal,
+                "q_lo_test": q_lo_test,
+                "q_hi_test": q_hi_test,
+            }
+        )
+    else:
+        payload.update(
+            {
+                "y_pred_cal": y_pred_cal,
+                "y_pred_test": y_pred_test,
+            }
+        )
+    return payload
+
+
 def fit_sequence_model(
     model, 
     train_dl, 
@@ -428,6 +555,7 @@ def fit_sequence_model(
     patience: int = 15,
     warmup_epochs: int = 5,
     grad_clip: float = 1.0,
+    quantile_levels: list[float] | None = None,
 ):
     """Training loop for sequence models with early stopping and warmup.
     
@@ -454,6 +582,8 @@ def fit_sequence_model(
         return 0.5 * (1 + np.cos(np.pi * progress))
     
     scheduler = torch.optim.lr_scheduler.LambdaLR(opt, warmup_cosine_schedule)
+    levels = _normalize_quantile_levels(quantile_levels)
+    use_quantile_loss = len(levels) > 1
     loss_fn = torch.nn.MSELoss()
     best_val = float("inf")
     best_state = None
@@ -467,8 +597,11 @@ def fit_sequence_model(
             yb = yb.to(device)
             # Model outputs a full sequence; evaluate only forecast horizon.
             pred_seq = model(xb)
-            pred_hz = pred_seq[:, -horizon:]
-            loss = loss_fn(pred_hz, yb)
+            pred_hz = _extract_tensor_forecast(pred_seq, horizon, levels if use_quantile_loss else None)
+            if use_quantile_loss:
+                loss = _pinball_loss(pred_hz, yb, levels)
+            else:
+                loss = loss_fn(pred_hz, yb)
             opt.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=grad_clip)
@@ -484,8 +617,11 @@ def fit_sequence_model(
                 xb = xb.to(device)
                 yb = yb.to(device)
                 pred_seq = model(xb)
-                pred_hz = pred_seq[:, -horizon:]
-                val_losses.append(loss_fn(pred_hz, yb).item())
+                pred_hz = _extract_tensor_forecast(pred_seq, horizon, levels if use_quantile_loss else None)
+                if use_quantile_loss:
+                    val_losses.append(_pinball_loss(pred_hz, yb, levels).item())
+                else:
+                    val_losses.append(loss_fn(pred_hz, yb).item())
 
         val_loss = float(np.mean(val_losses)) if val_losses else float("inf")
         
@@ -523,6 +659,7 @@ def train_lstm_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "c
     lr = float(cfg.get("learning_rate", cfg.get("lr", 1e-3)))
     weight_decay = float(cfg.get("weight_decay", 1e-5))
     grad_clip = float(cfg.get("gradient_clip", 1.0))
+    quantile_levels = _normalize_quantile_levels(cfg.get("quantile_levels"))
     
     # Enhanced LSTM options
     bidirectional = bool(cfg.get("bidirectional", False))
@@ -550,12 +687,14 @@ def train_lstm_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "c
         bidirectional=bidirectional,
         attention=attention,
         residual=residual,
+        n_quantiles=max(1, len(quantile_levels)),
     ).to(device)
     model = fit_sequence_model(
         model, train_dl, val_dl, 
         epochs=epochs, lr=lr, horizon=horizon, device=device,
         weight_decay=weight_decay, patience=patience, 
         warmup_epochs=warmup_epochs, grad_clip=grad_clip,
+        quantile_levels=quantile_levels,
     )
     return model
 
@@ -572,6 +711,7 @@ def train_tcn_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cp
     lr = float(cfg.get("learning_rate", cfg.get("lr", 1e-3)))
     weight_decay = float(cfg.get("weight_decay", 1e-5))
     grad_clip = float(cfg.get("gradient_clip", 1.0))
+    quantile_levels = _normalize_quantile_levels(cfg.get("quantile_levels"))
     
     # Enhanced TCN options
     dilation_base = int(cfg.get("dilation_base", 2))
@@ -597,12 +737,14 @@ def train_tcn_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cp
         dilation_base=dilation_base,
         use_skip_connections=use_skip_connections,
         horizon=horizon,
+        n_quantiles=max(1, len(quantile_levels)),
     ).to(device)
     model = fit_sequence_model(
         model, train_dl, val_dl, 
         epochs=epochs, lr=lr, horizon=horizon, device=device,
         weight_decay=weight_decay, patience=patience, 
         warmup_epochs=warmup_epochs, grad_clip=grad_clip,
+        quantile_levels=quantile_levels,
     )
     return model
 
@@ -619,6 +761,7 @@ def train_nbeats_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = 
     lr = float(cfg.get("learning_rate", cfg.get("lr", 1e-3)))
     weight_decay = float(cfg.get("weight_decay", 1e-5))
     grad_clip = float(cfg.get("gradient_clip", 1.0))
+    quantile_levels = _normalize_quantile_levels(cfg.get("quantile_levels"))
 
     es_cfg = cfg.get("early_stopping", {})
     patience = int(es_cfg.get("patience", 15)) if isinstance(es_cfg, dict) else 15
@@ -637,6 +780,7 @@ def train_nbeats_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = 
         hidden_dim=hidden_dim,
         num_blocks=num_blocks,
         dropout=dropout,
+        n_quantiles=max(1, len(quantile_levels)),
     ).to(device)
     model = fit_sequence_model(
         model,
@@ -650,6 +794,7 @@ def train_nbeats_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = 
         patience=patience,
         warmup_epochs=warmup_epochs,
         grad_clip=grad_clip,
+        quantile_levels=quantile_levels,
     )
     return model
 
@@ -668,6 +813,7 @@ def train_tft_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cp
     lr = float(cfg.get("learning_rate", cfg.get("lr", 1e-3)))
     weight_decay = float(cfg.get("weight_decay", 1e-5))
     grad_clip = float(cfg.get("gradient_clip", 1.0))
+    quantile_levels = _normalize_quantile_levels(cfg.get("quantile_levels"))
 
     es_cfg = cfg.get("early_stopping", {})
     patience = int(es_cfg.get("patience", 15)) if isinstance(es_cfg, dict) else 15
@@ -687,6 +833,7 @@ def train_tft_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cp
         num_layers=num_layers,
         dropout=dropout,
         dim_feedforward=dim_feedforward,
+        n_quantiles=max(1, len(quantile_levels)),
     ).to(device)
     model = fit_sequence_model(
         model,
@@ -700,6 +847,7 @@ def train_tft_model(X_train, y_train, X_val, y_val, cfg: dict, device: str = "cp
         patience=patience,
         warmup_epochs=warmup_epochs,
         grad_clip=grad_clip,
+        quantile_levels=quantile_levels,
     )
     return model
 
@@ -720,6 +868,7 @@ def train_patchtst_model(X_train, y_train, X_val, y_val, cfg: dict, device: str 
     lr = float(cfg.get("learning_rate", cfg.get("lr", 1e-3)))
     weight_decay = float(cfg.get("weight_decay", 1e-5))
     grad_clip = float(cfg.get("gradient_clip", 1.0))
+    quantile_levels = _normalize_quantile_levels(cfg.get("quantile_levels"))
 
     es_cfg = cfg.get("early_stopping", {})
     patience = int(es_cfg.get("patience", 15)) if isinstance(es_cfg, dict) else 15
@@ -742,6 +891,7 @@ def train_patchtst_model(X_train, y_train, X_val, y_val, cfg: dict, device: str 
         num_layers=num_layers,
         dropout=dropout,
         dim_feedforward=dim_feedforward,
+        n_quantiles=max(1, len(quantile_levels)),
     ).to(device)
     model = fit_sequence_model(
         model,
@@ -755,27 +905,74 @@ def train_patchtst_model(X_train, y_train, X_val, y_val, cfg: dict, device: str 
         patience=patience,
         warmup_epochs=warmup_epochs,
         grad_clip=grad_clip,
+        quantile_levels=quantile_levels,
     )
     return model
 
 
-def collect_seq_preds(model, X: np.ndarray, y: np.ndarray, lookback: int, horizon: int, device: str, batch_size: int):
-    """Collect sequential predictions for evaluation."""
+def collect_seq_output_bundle(
+    model,
+    X: np.ndarray,
+    y: np.ndarray,
+    lookback: int,
+    horizon: int,
+    device: str,
+    batch_size: int,
+    quantile_levels: list[float] | None = None,
+) -> dict[str, Any] | None:
+    """Collect sequential point and optional quantile predictions for evaluation."""
     ds = TimeSeriesWindowDataset(X, y, SeqConfig(lookback=lookback, horizon=horizon))
     if len(ds) == 0:
-        return None, None
+        return None
     dl = DataLoader(ds, batch_size=batch_size, shuffle=False)
     preds = []
+    quantile_preds: dict[str, list[np.ndarray]] = {str(q): [] for q in _normalize_quantile_levels(quantile_levels)}
     trues = []
     model.eval()
     with torch.no_grad():
         for xb, yb in dl:
             xb = xb.to(device)
             pred_seq = model(xb).cpu().numpy()
-            pred_hz = pred_seq[:, -horizon:]
-            preds.append(pred_hz.reshape(-1))
+            point_pred, quantiles = _extract_numpy_forecast(pred_seq, horizon, quantile_levels)
+            preds.append(point_pred.reshape(-1))
+            for q_key, q_values in quantiles.items():
+                quantile_preds.setdefault(q_key, []).append(q_values.reshape(-1))
             trues.append(yb.numpy().reshape(-1))
-    return np.concatenate(trues), np.concatenate(preds)
+    output: dict[str, Any] = {
+        "y_true": np.concatenate(trues),
+        "point_pred": np.concatenate(preds),
+        "quantiles": {},
+    }
+    for q_key, parts in quantile_preds.items():
+        if parts:
+            output["quantiles"][q_key] = np.concatenate(parts)
+    return output
+
+
+def collect_seq_preds(
+    model,
+    X: np.ndarray,
+    y: np.ndarray,
+    lookback: int,
+    horizon: int,
+    device: str,
+    batch_size: int,
+    quantile_levels: list[float] | None = None,
+):
+    """Collect sequential point predictions for evaluation."""
+    payload = collect_seq_output_bundle(
+        model,
+        X,
+        y,
+        lookback,
+        horizon,
+        device,
+        batch_size,
+        quantile_levels=quantile_levels,
+    )
+    if payload is None:
+        return None, None
+    return payload["y_true"], payload["point_pred"]
 
 
 def evaluate_seq_model(model, X, y, lookback, horizon, device, batch_size, target: str, y_scaler: StandardScaler | None = None):
@@ -787,6 +984,147 @@ def evaluate_seq_model(model, X, y, lookback, horizon, device, batch_size, targe
         y_true = y_scaler.inverse_transform(y_true.reshape(-1, 1)).reshape(-1)
         y_pred = y_scaler.inverse_transform(y_pred.reshape(-1, 1)).reshape(-1)
     return compute_metrics(y_true, y_pred, target)
+
+
+def _resolve_conformal_split_arrays(
+    *,
+    y_val: np.ndarray,
+    y_test: np.ndarray,
+    y_cal: np.ndarray | None,
+    uncertainty_cfg: dict[str, Any],
+) -> tuple[str, np.ndarray, np.ndarray, str, str]:
+    cal_split = str(uncertainty_cfg.get("calibration_split", "val")).lower()
+    calibration_source = "val"
+    calibration_label = "val"
+    test_label = "test"
+    cal_true = y_val
+    test_true = y_test
+    if cal_split == "test":
+        cal_true = y_test
+        test_true = y_val
+        calibration_source = "test"
+        calibration_label = "test"
+        test_label = "val"
+    elif cal_split == "calibration":
+        if y_cal is not None and len(y_cal) > 0:
+            cal_true = y_cal
+            calibration_source = "calibration"
+            calibration_label = "calibration"
+        else:
+            calibration_source = "val_fallback_missing_calibration"
+            calibration_label = "val"
+    return calibration_source, cal_true, test_true, calibration_label, test_label
+
+
+def _inverse_scaled_array(values: np.ndarray, scaler: StandardScaler | None) -> np.ndarray:
+    arr = np.asarray(values, dtype=float)
+    if scaler is None:
+        return arr
+    return scaler.inverse_transform(arr.reshape(-1, 1)).reshape(-1)
+
+
+def _inverse_scaled_quantiles(
+    quantiles: dict[str, np.ndarray],
+    scaler: StandardScaler | None,
+) -> dict[str, np.ndarray]:
+    return {str(q): _inverse_scaled_array(values, scaler) for q, values in quantiles.items()}
+
+
+def _append_conformal_payload_from_outputs(
+    *,
+    conformal_payloads: list[dict[str, Any]],
+    target: str,
+    model_key: str,
+    horizon: int,
+    split_boundaries: dict[str, Any],
+    uncertainty_cfg: dict[str, Any],
+    quantile_levels: list[float],
+    val_outputs: dict[str, Any],
+    test_outputs: dict[str, Any],
+    cal_outputs: dict[str, Any] | None = None,
+) -> None:
+    conf_meta_cfg = uncertainty_cfg.get("conformal", {}) if isinstance(uncertainty_cfg.get("conformal"), dict) else {}
+    conf_method = str(conf_meta_cfg.get("method", "residual")).lower()
+    calibration_source, _cal_true_unused, _test_true_unused, calibration_label, test_label = _resolve_conformal_split_arrays(
+        y_val=np.asarray(val_outputs["y_true"], dtype=float),
+        y_test=np.asarray(test_outputs["y_true"], dtype=float),
+        y_cal=np.asarray(cal_outputs["y_true"], dtype=float) if cal_outputs is not None else None,
+        uncertainty_cfg=uncertainty_cfg,
+    )
+    bundle_map = {
+        "val": val_outputs,
+        "test": test_outputs,
+        "calibration": cal_outputs,
+    }
+    cal_bundle = bundle_map.get(calibration_label)
+    test_bundle = bundle_map.get(test_label)
+    if cal_bundle is None or test_bundle is None:
+        return
+    cal_true = np.asarray(cal_bundle["y_true"], dtype=float)
+    test_true = np.asarray(test_bundle["y_true"], dtype=float)
+    cal_pred = np.asarray(cal_bundle["point_pred"], dtype=float)
+    test_pred = np.asarray(test_bundle["point_pred"], dtype=float)
+    cal = _reshape_horizon(cal_true, cal_pred, horizon)
+    test = _reshape_horizon(test_true, test_pred, horizon)
+    if cal is None or test is None:
+        return
+    if conf_method == "cqr":
+        q_keys = sorted({str(float(q)) for q in quantile_levels}, key=lambda x: float(x))
+        if len(q_keys) < 2:
+            raise RuntimeError(f"CQR configured for target={target} but quantile outputs are unavailable for model={model_key}.")
+        lo_key, hi_key = q_keys[0], q_keys[-1]
+        raw_quantiles = (
+            cal_bundle.get("quantiles", {}).get(lo_key),
+            cal_bundle.get("quantiles", {}).get(hi_key),
+            test_bundle.get("quantiles", {}).get(lo_key),
+            test_bundle.get("quantiles", {}).get(hi_key),
+        )
+        if any(value is None for value in raw_quantiles):
+            raise RuntimeError(
+                f"CQR configured for target={target} but missing quantile outputs for model={model_key} "
+                f"calibration_source={calibration_source}."
+            )
+        cal_q_lo_arr = np.asarray(raw_quantiles[0], dtype=float)
+        cal_q_hi_arr = np.asarray(raw_quantiles[1], dtype=float)
+        test_q_lo_arr = np.asarray(raw_quantiles[2], dtype=float)
+        test_q_hi_arr = np.asarray(raw_quantiles[3], dtype=float)
+        cal_q_lo = _reshape_horizon(cal_true, cal_q_lo_arr, horizon)
+        cal_q_hi = _reshape_horizon(cal_true, cal_q_hi_arr, horizon)
+        test_q_lo = _reshape_horizon(test_true, test_q_lo_arr, horizon)
+        test_q_hi = _reshape_horizon(test_true, test_q_hi_arr, horizon)
+        if cal_q_lo is None or cal_q_hi is None or test_q_lo is None or test_q_hi is None:
+            raise RuntimeError(f"CQR reshape failed for target={target}, model={model_key} due horizon alignment.")
+        conformal_payloads.append(
+            _build_conformal_payload(
+                target=target,
+                model_key=model_key,
+                calibration_source=calibration_source,
+                split_boundaries=split_boundaries,
+                method="cqr",
+                y_true_cal=cal[0],
+                y_true_test=test[0],
+                q_lo_cal=cal_q_lo[1],
+                q_hi_cal=cal_q_hi[1],
+                q_lo_test=test_q_lo[1],
+                q_hi_test=test_q_hi[1],
+                quantile_lo_key=lo_key,
+                quantile_hi_key=hi_key,
+            )
+        )
+    else:
+        conformal_payloads.append(
+            _build_conformal_payload(
+                target=target,
+                model_key=model_key,
+                calibration_source=calibration_source,
+                split_boundaries=split_boundaries,
+                method="residual",
+                y_true_cal=cal[0],
+                y_true_test=test[0],
+                y_pred_cal=cal[1],
+                y_pred_test=test[1],
+            )
+        )
 
 
 def main():
@@ -962,7 +1300,7 @@ def main():
     uncertainty_cfg = _load_uncertainty_cfg()
     uncertainty_enabled = bool(uncertainty_cfg.get("enabled", False))
     uncertainty_targets = _parse_uncertainty_targets(uncertainty_cfg, targets)
-    conformal_payloads: dict[str, dict] = {}
+    conformal_payloads: list[dict[str, Any]] = []
 
     # Optional model/target filters to avoid retraining everything.
     model_filter = None
@@ -1092,38 +1430,24 @@ def main():
                         if X_cal is not None and len(X_cal) > 0:
                             quantile_predictions[str(q)]["calibration"] = np.asarray(q_model.predict(X_cal), dtype=float)
 
-                if uncertainty_enabled and target in uncertainty_targets and target not in conformal_payloads:
+                if uncertainty_enabled and target in uncertainty_targets:
                     conf_meta_cfg = uncertainty_cfg.get("conformal", {}) if isinstance(uncertainty_cfg.get("conformal"), dict) else {}
                     conf_method = str(conf_meta_cfg.get("method", "residual")).lower()
-                    cal_split = str(uncertainty_cfg.get("calibration_split", "val")).lower()
-                    calibration_source = "val"
-                    if cal_split == "test":
-                        cal_true = y_test
-                        cal_pred = gbm_pred_test
-                        test_true = y_val
-                        test_pred = gbm_pred_val
-                        calibration_source = "test"
-                    elif cal_split == "calibration":
-                        if gbm_pred_cal is not None and y_cal is not None and len(y_cal) > 0:
-                            cal_true = y_cal
-                            cal_pred = gbm_pred_cal
-                            calibration_source = "calibration"
-                        else:
-                            print(
-                                f"Warning: target={target} requested calibration split but calibration set is empty; "
-                                "falling back to validation split."
+                    calibration_source, cal_true, test_true, calibration_label, test_label = _resolve_conformal_split_arrays(
+                        y_val=y_val,
+                        y_test=y_test,
+                        y_cal=y_cal,
+                        uncertainty_cfg=uncertainty_cfg,
+                    )
+                    if calibration_label == "calibration":
+                        if gbm_pred_cal is None:
+                            raise RuntimeError(
+                                f"CQR configured for target={target} but calibration predictions are unavailable."
                             )
-                            cal_true = y_val
-                            cal_pred = gbm_pred_val
-                            calibration_source = "val_fallback_missing_calibration"
-                        test_true = y_test
-                        test_pred = gbm_pred_test
+                        cal_pred = gbm_pred_cal
                     else:
-                        cal_true = y_val
-                        cal_pred = gbm_pred_val
-                        test_true = y_test
-                        test_pred = gbm_pred_test
-                        calibration_source = "val"
+                        cal_pred = gbm_pred_val if calibration_label == "val" else gbm_pred_test
+                    test_pred = gbm_pred_test if test_label == "test" else gbm_pred_val
 
                     cal = _reshape_horizon(cal_true, cal_pred, horizon)
                     test = _reshape_horizon(test_true, test_pred, horizon)
@@ -1137,23 +1461,10 @@ def main():
                                 "Enable models.quantile_gbm in training config."
                             )
                         lo_key, hi_key = q_keys[0], q_keys[-1]
-                        cal_q_lo_src = quantile_predictions[lo_key].get("calibration" if calibration_source.startswith("calibration") else calibration_source.replace("_fallback_missing_calibration", "val"))
-                        cal_q_hi_src = quantile_predictions[hi_key].get("calibration" if calibration_source.startswith("calibration") else calibration_source.replace("_fallback_missing_calibration", "val"))
-                        if calibration_source == "test":
-                            cal_q_lo_src = quantile_predictions[lo_key].get("test")
-                            cal_q_hi_src = quantile_predictions[hi_key].get("test")
-                            test_q_lo_src = quantile_predictions[lo_key].get("val")
-                            test_q_hi_src = quantile_predictions[hi_key].get("val")
-                        elif calibration_source.startswith("calibration"):
-                            cal_q_lo_src = quantile_predictions[lo_key].get("calibration")
-                            cal_q_hi_src = quantile_predictions[hi_key].get("calibration")
-                            test_q_lo_src = quantile_predictions[lo_key].get("test")
-                            test_q_hi_src = quantile_predictions[hi_key].get("test")
-                        else:
-                            cal_q_lo_src = quantile_predictions[lo_key].get("val")
-                            cal_q_hi_src = quantile_predictions[hi_key].get("val")
-                            test_q_lo_src = quantile_predictions[lo_key].get("test")
-                            test_q_hi_src = quantile_predictions[hi_key].get("test")
+                        cal_q_lo_src = quantile_predictions[lo_key].get(calibration_label)
+                        cal_q_hi_src = quantile_predictions[hi_key].get(calibration_label)
+                        test_q_lo_src = quantile_predictions[lo_key].get(test_label)
+                        test_q_hi_src = quantile_predictions[hi_key].get(test_label)
 
                         if cal_q_lo_src is None or cal_q_hi_src is None or test_q_lo_src is None or test_q_hi_src is None:
                             raise RuntimeError(
@@ -1166,33 +1477,37 @@ def main():
                         test_q_hi = _reshape_horizon(test_true, np.asarray(test_q_hi_src, dtype=float), horizon)
                         if cal_q_lo is None or cal_q_hi is None or test_q_lo is None or test_q_hi is None:
                             raise RuntimeError(f"CQR reshape failed for target={target} due horizon alignment.")
-                        conformal_payloads[target] = {
-                            "target": target,
-                            "model": f"gbm_{model_kind}",
-                            "calibration_source": calibration_source,
-                            "split_boundaries": split_boundaries,
-                            "method": "cqr",
-                            "quantile_lo_key": lo_key,
-                            "quantile_hi_key": hi_key,
-                            "y_true_cal": cal[0],
-                            "q_lo_cal": cal_q_lo[1],
-                            "q_hi_cal": cal_q_hi[1],
-                            "y_true_test": test[0],
-                            "q_lo_test": test_q_lo[1],
-                            "q_hi_test": test_q_hi[1],
-                        }
+                        conformal_payloads.append(
+                            _build_conformal_payload(
+                                target=target,
+                                model_key=f"gbm_{model_kind}",
+                                calibration_source=calibration_source,
+                                split_boundaries=split_boundaries,
+                                method="cqr",
+                                y_true_cal=cal[0],
+                                y_true_test=test[0],
+                                q_lo_cal=cal_q_lo[1],
+                                q_hi_cal=cal_q_hi[1],
+                                q_lo_test=test_q_lo[1],
+                                q_hi_test=test_q_hi[1],
+                                quantile_lo_key=lo_key,
+                                quantile_hi_key=hi_key,
+                            )
+                        )
                     else:
-                        conformal_payloads[target] = {
-                            "target": target,
-                            "model": f"gbm_{model_kind}",
-                            "calibration_source": calibration_source,
-                            "split_boundaries": split_boundaries,
-                            "method": "residual",
-                            "y_true_cal": cal[0],
-                            "y_pred_cal": cal[1],
-                            "y_true_test": test[0],
-                            "y_pred_test": test[1],
-                        }
+                        conformal_payloads.append(
+                            _build_conformal_payload(
+                                target=target,
+                                model_key=f"gbm_{model_kind}",
+                                calibration_source=calibration_source,
+                                split_boundaries=split_boundaries,
+                                method="residual",
+                                y_true_cal=cal[0],
+                                y_true_test=test[0],
+                                y_pred_cal=cal[1],
+                                y_pred_test=test[1],
+                            )
+                        )
 
                 import pickle
                 with open(art_dir / f"{gbm_metrics['model']}_{target}.pkl", "wb") as f:
@@ -1260,13 +1575,37 @@ def main():
                 model = train_lstm_model(X_train_s, y_train_s, X_val_s, y_val_s, {
                     "lookback": lookback_default,
                     "horizon": horizon,
+                    "quantile_levels": quantiles,
                     **params,
                 }, device=device)
                 batch_size = int(params.get("batch_size", 256))
-                y_true_val_s, y_pred_val_s = collect_seq_preds(model, X_val_s, y_val_s, lookback_default, horizon, device, batch_size)
-                if y_true_val_s is not None:
-                    y_true_val = y_scaler.inverse_transform(y_true_val_s.reshape(-1, 1)).reshape(-1)
-                    y_pred_val = y_scaler.inverse_transform(y_pred_val_s.reshape(-1, 1)).reshape(-1)
+                val_outputs_s = collect_seq_output_bundle(
+                    model,
+                    X_val_s,
+                    y_val_s,
+                    lookback_default,
+                    horizon,
+                    device,
+                    batch_size,
+                    quantile_levels=quantiles,
+                )
+                cal_outputs_s = None
+                if X_cal is not None and y_cal is not None and len(X_cal) > 0:
+                    X_cal_s = x_scaler.transform(X_cal)
+                    y_cal_s = y_scaler.transform(y_cal.reshape(-1, 1)).reshape(-1)
+                    cal_outputs_s = collect_seq_output_bundle(
+                        model,
+                        X_cal_s,
+                        y_cal_s,
+                        lookback_default,
+                        horizon,
+                        device,
+                        batch_size,
+                        quantile_levels=quantiles,
+                    )
+                if val_outputs_s is not None:
+                    y_true_val = _inverse_scaled_array(val_outputs_s["y_true"], y_scaler)
+                    y_pred_val = _inverse_scaled_array(val_outputs_s["point_pred"], y_scaler)
                     lstm_q = residual_quantiles(y_true_val, y_pred_val, quantiles)
                 else:
                     lstm_q = {}
@@ -1282,19 +1621,63 @@ def main():
                         "hidden_size": int(params.get("hidden_size", 128)),
                         "num_layers": int(params.get("num_layers", 2)),
                         "dropout": float(params.get("dropout", 0.1)),
+                        "bidirectional": bool(params.get("bidirectional", False)),
+                        "attention": bool(params.get("attention", False)),
+                        "residual": bool(params.get("residual", False)),
                         "horizon": int(horizon),
                     },
                     "quantiles": quantiles,
+                    "quantile_levels": quantiles,
+                    "n_quantiles": len(quantiles),
                     "residual_quantiles": lstm_q,
                     "x_scaler": x_scaler.to_dict(),
                     "y_scaler": y_scaler.to_dict(),
                 }, art_dir / f"lstm_{target}.pt")
 
-                y_true_test_s, y_pred_test_s = collect_seq_preds(model, X_test_s, y_test_s, lookback_default, horizon, device, batch_size)
-                if y_true_test_s is not None:
-                    y_true_test = y_scaler.inverse_transform(y_true_test_s.reshape(-1, 1)).reshape(-1)
-                    y_pred_test = y_scaler.inverse_transform(y_pred_test_s.reshape(-1, 1)).reshape(-1)
+                test_outputs_s = collect_seq_output_bundle(
+                    model,
+                    X_test_s,
+                    y_test_s,
+                    lookback_default,
+                    horizon,
+                    device,
+                    batch_size,
+                    quantile_levels=quantiles,
+                )
+                if test_outputs_s is not None:
+                    y_true_test = _inverse_scaled_array(test_outputs_s["y_true"], y_scaler)
+                    y_pred_test = _inverse_scaled_array(test_outputs_s["point_pred"], y_scaler)
                     lstm_metrics = compute_metrics(y_true_test, y_pred_test, target)
+                    test_outputs = {
+                        "y_true": y_true_test,
+                        "point_pred": y_pred_test,
+                        "quantiles": _inverse_scaled_quantiles(test_outputs_s["quantiles"], y_scaler),
+                    }
+                    val_outputs = {
+                        "y_true": y_true_val,
+                        "point_pred": y_pred_val,
+                        "quantiles": _inverse_scaled_quantiles(val_outputs_s["quantiles"], y_scaler) if val_outputs_s is not None else {},
+                    }
+                    cal_outputs = None
+                    if cal_outputs_s is not None:
+                        cal_outputs = {
+                            "y_true": _inverse_scaled_array(cal_outputs_s["y_true"], y_scaler),
+                            "point_pred": _inverse_scaled_array(cal_outputs_s["point_pred"], y_scaler),
+                            "quantiles": _inverse_scaled_quantiles(cal_outputs_s["quantiles"], y_scaler),
+                        }
+                    if val_outputs_s is not None and uncertainty_enabled and target in uncertainty_targets:
+                        _append_conformal_payload_from_outputs(
+                            conformal_payloads=conformal_payloads,
+                            target=target,
+                            model_key="lstm",
+                            horizon=horizon,
+                            split_boundaries=split_boundaries,
+                            uncertainty_cfg=uncertainty_cfg,
+                            quantile_levels=quantiles,
+                            val_outputs=val_outputs,
+                            test_outputs=test_outputs,
+                            cal_outputs=cal_outputs,
+                        )
                 else:
                     lstm_metrics = {"rmse": None, "mae": None, "mape": None, "smape": None}
                 target_res["lstm"] = {**lstm_metrics, "residual_quantiles": lstm_q}
@@ -1324,13 +1707,37 @@ def main():
                 model = train_tcn_model(X_train_s, y_train_s, X_val_s, y_val_s, {
                     "lookback": lookback_default,
                     "horizon": horizon,
+                    "quantile_levels": quantiles,
                     **params,
                 }, device=device)
                 batch_size = int(params.get("batch_size", 256))
-                y_true_val_s, y_pred_val_s = collect_seq_preds(model, X_val_s, y_val_s, lookback_default, horizon, device, batch_size)
-                if y_true_val_s is not None:
-                    y_true_val = y_scaler.inverse_transform(y_true_val_s.reshape(-1, 1)).reshape(-1)
-                    y_pred_val = y_scaler.inverse_transform(y_pred_val_s.reshape(-1, 1)).reshape(-1)
+                val_outputs_s = collect_seq_output_bundle(
+                    model,
+                    X_val_s,
+                    y_val_s,
+                    lookback_default,
+                    horizon,
+                    device,
+                    batch_size,
+                    quantile_levels=quantiles,
+                )
+                cal_outputs_s = None
+                if X_cal is not None and y_cal is not None and len(X_cal) > 0:
+                    X_cal_s = x_scaler.transform(X_cal)
+                    y_cal_s = y_scaler.transform(y_cal.reshape(-1, 1)).reshape(-1)
+                    cal_outputs_s = collect_seq_output_bundle(
+                        model,
+                        X_cal_s,
+                        y_cal_s,
+                        lookback_default,
+                        horizon,
+                        device,
+                        batch_size,
+                        quantile_levels=quantiles,
+                    )
+                if val_outputs_s is not None:
+                    y_true_val = _inverse_scaled_array(val_outputs_s["y_true"], y_scaler)
+                    y_pred_val = _inverse_scaled_array(val_outputs_s["point_pred"], y_scaler)
                     tcn_q = residual_quantiles(y_true_val, y_pred_val, quantiles)
                 else:
                     tcn_q = {}
@@ -1346,18 +1753,61 @@ def main():
                         "num_channels": list(params.get("num_channels", [32, 32, 32])),
                         "kernel_size": int(params.get("kernel_size", 3)),
                         "dropout": float(params.get("dropout", 0.1)),
+                        "dilation_base": int(params.get("dilation_base", 2)),
+                        "use_skip_connections": bool(params.get("use_skip_connections", False)),
                     },
                     "quantiles": quantiles,
+                    "quantile_levels": quantiles,
+                    "n_quantiles": len(quantiles),
                     "residual_quantiles": tcn_q,
                     "x_scaler": x_scaler.to_dict(),
                     "y_scaler": y_scaler.to_dict(),
                 }, art_dir / f"tcn_{target}.pt")
 
-                y_true_test_s, y_pred_test_s = collect_seq_preds(model, X_test_s, y_test_s, lookback_default, horizon, device, batch_size)
-                if y_true_test_s is not None:
-                    y_true_test = y_scaler.inverse_transform(y_true_test_s.reshape(-1, 1)).reshape(-1)
-                    y_pred_test = y_scaler.inverse_transform(y_pred_test_s.reshape(-1, 1)).reshape(-1)
+                test_outputs_s = collect_seq_output_bundle(
+                    model,
+                    X_test_s,
+                    y_test_s,
+                    lookback_default,
+                    horizon,
+                    device,
+                    batch_size,
+                    quantile_levels=quantiles,
+                )
+                if test_outputs_s is not None:
+                    y_true_test = _inverse_scaled_array(test_outputs_s["y_true"], y_scaler)
+                    y_pred_test = _inverse_scaled_array(test_outputs_s["point_pred"], y_scaler)
                     tcn_metrics = compute_metrics(y_true_test, y_pred_test, target)
+                    test_outputs = {
+                        "y_true": y_true_test,
+                        "point_pred": y_pred_test,
+                        "quantiles": _inverse_scaled_quantiles(test_outputs_s["quantiles"], y_scaler),
+                    }
+                    val_outputs = {
+                        "y_true": y_true_val,
+                        "point_pred": y_pred_val,
+                        "quantiles": _inverse_scaled_quantiles(val_outputs_s["quantiles"], y_scaler) if val_outputs_s is not None else {},
+                    }
+                    cal_outputs = None
+                    if cal_outputs_s is not None:
+                        cal_outputs = {
+                            "y_true": _inverse_scaled_array(cal_outputs_s["y_true"], y_scaler),
+                            "point_pred": _inverse_scaled_array(cal_outputs_s["point_pred"], y_scaler),
+                            "quantiles": _inverse_scaled_quantiles(cal_outputs_s["quantiles"], y_scaler),
+                        }
+                    if val_outputs_s is not None and uncertainty_enabled and target in uncertainty_targets:
+                        _append_conformal_payload_from_outputs(
+                            conformal_payloads=conformal_payloads,
+                            target=target,
+                            model_key="tcn",
+                            horizon=horizon,
+                            split_boundaries=split_boundaries,
+                            uncertainty_cfg=uncertainty_cfg,
+                            quantile_levels=quantiles,
+                            val_outputs=val_outputs,
+                            test_outputs=test_outputs,
+                            cal_outputs=cal_outputs,
+                        )
                 else:
                     tcn_metrics = {"rmse": None, "mae": None, "mape": None, "smape": None}
                 target_res["tcn"] = {**tcn_metrics, "residual_quantiles": tcn_q}
@@ -1388,14 +1838,37 @@ def main():
                     y_train_s,
                     X_val_s,
                     y_val_s,
-                    {"lookback": lookback_default, "horizon": horizon, **params},
+                    {"lookback": lookback_default, "horizon": horizon, "quantile_levels": quantiles, **params},
                     device=device,
                 )
                 batch_size = int(params.get("batch_size", 256))
-                y_true_val_s, y_pred_val_s = collect_seq_preds(model, X_val_s, y_val_s, lookback_default, horizon, device, batch_size)
-                if y_true_val_s is not None:
-                    y_true_val = y_scaler.inverse_transform(y_true_val_s.reshape(-1, 1)).reshape(-1)
-                    y_pred_val = y_scaler.inverse_transform(y_pred_val_s.reshape(-1, 1)).reshape(-1)
+                val_outputs_s = collect_seq_output_bundle(
+                    model,
+                    X_val_s,
+                    y_val_s,
+                    lookback_default,
+                    horizon,
+                    device,
+                    batch_size,
+                    quantile_levels=quantiles,
+                )
+                cal_outputs_s = None
+                if X_cal is not None and y_cal is not None and len(X_cal) > 0:
+                    X_cal_s = x_scaler.transform(X_cal)
+                    y_cal_s = y_scaler.transform(y_cal.reshape(-1, 1)).reshape(-1)
+                    cal_outputs_s = collect_seq_output_bundle(
+                        model,
+                        X_cal_s,
+                        y_cal_s,
+                        lookback_default,
+                        horizon,
+                        device,
+                        batch_size,
+                        quantile_levels=quantiles,
+                    )
+                if val_outputs_s is not None:
+                    y_true_val = _inverse_scaled_array(val_outputs_s["y_true"], y_scaler)
+                    y_pred_val = _inverse_scaled_array(val_outputs_s["point_pred"], y_scaler)
                     model_q = residual_quantiles(y_true_val, y_pred_val, quantiles)
                 else:
                     model_q = {}
@@ -1415,16 +1888,57 @@ def main():
                         "horizon": int(horizon),
                     },
                     "quantiles": quantiles,
+                    "quantile_levels": quantiles,
+                    "n_quantiles": len(quantiles),
                     "residual_quantiles": model_q,
                     "x_scaler": x_scaler.to_dict(),
                     "y_scaler": y_scaler.to_dict(),
                 }, art_dir / f"nbeats_{target}.pt")
 
-                y_true_test_s, y_pred_test_s = collect_seq_preds(model, X_test_s, y_test_s, lookback_default, horizon, device, batch_size)
-                if y_true_test_s is not None:
-                    y_true_test = y_scaler.inverse_transform(y_true_test_s.reshape(-1, 1)).reshape(-1)
-                    y_pred_test = y_scaler.inverse_transform(y_pred_test_s.reshape(-1, 1)).reshape(-1)
+                test_outputs_s = collect_seq_output_bundle(
+                    model,
+                    X_test_s,
+                    y_test_s,
+                    lookback_default,
+                    horizon,
+                    device,
+                    batch_size,
+                    quantile_levels=quantiles,
+                )
+                if test_outputs_s is not None:
+                    y_true_test = _inverse_scaled_array(test_outputs_s["y_true"], y_scaler)
+                    y_pred_test = _inverse_scaled_array(test_outputs_s["point_pred"], y_scaler)
                     model_metrics = compute_metrics(y_true_test, y_pred_test, target)
+                    test_outputs = {
+                        "y_true": y_true_test,
+                        "point_pred": y_pred_test,
+                        "quantiles": _inverse_scaled_quantiles(test_outputs_s["quantiles"], y_scaler),
+                    }
+                    val_outputs = {
+                        "y_true": y_true_val,
+                        "point_pred": y_pred_val,
+                        "quantiles": _inverse_scaled_quantiles(val_outputs_s["quantiles"], y_scaler) if val_outputs_s is not None else {},
+                    }
+                    cal_outputs = None
+                    if cal_outputs_s is not None:
+                        cal_outputs = {
+                            "y_true": _inverse_scaled_array(cal_outputs_s["y_true"], y_scaler),
+                            "point_pred": _inverse_scaled_array(cal_outputs_s["point_pred"], y_scaler),
+                            "quantiles": _inverse_scaled_quantiles(cal_outputs_s["quantiles"], y_scaler),
+                        }
+                    if val_outputs_s is not None and uncertainty_enabled and target in uncertainty_targets:
+                        _append_conformal_payload_from_outputs(
+                            conformal_payloads=conformal_payloads,
+                            target=target,
+                            model_key="nbeats",
+                            horizon=horizon,
+                            split_boundaries=split_boundaries,
+                            uncertainty_cfg=uncertainty_cfg,
+                            quantile_levels=quantiles,
+                            val_outputs=val_outputs,
+                            test_outputs=test_outputs,
+                            cal_outputs=cal_outputs,
+                        )
                 else:
                     model_metrics = {"rmse": None, "mae": None, "mape": None, "smape": None}
                 target_res["nbeats"] = {**model_metrics, "residual_quantiles": model_q}
@@ -1455,14 +1969,37 @@ def main():
                     y_train_s,
                     X_val_s,
                     y_val_s,
-                    {"lookback": lookback_default, "horizon": horizon, **params},
+                    {"lookback": lookback_default, "horizon": horizon, "quantile_levels": quantiles, **params},
                     device=device,
                 )
                 batch_size = int(params.get("batch_size", 256))
-                y_true_val_s, y_pred_val_s = collect_seq_preds(model, X_val_s, y_val_s, lookback_default, horizon, device, batch_size)
-                if y_true_val_s is not None:
-                    y_true_val = y_scaler.inverse_transform(y_true_val_s.reshape(-1, 1)).reshape(-1)
-                    y_pred_val = y_scaler.inverse_transform(y_pred_val_s.reshape(-1, 1)).reshape(-1)
+                val_outputs_s = collect_seq_output_bundle(
+                    model,
+                    X_val_s,
+                    y_val_s,
+                    lookback_default,
+                    horizon,
+                    device,
+                    batch_size,
+                    quantile_levels=quantiles,
+                )
+                cal_outputs_s = None
+                if X_cal is not None and y_cal is not None and len(X_cal) > 0:
+                    X_cal_s = x_scaler.transform(X_cal)
+                    y_cal_s = y_scaler.transform(y_cal.reshape(-1, 1)).reshape(-1)
+                    cal_outputs_s = collect_seq_output_bundle(
+                        model,
+                        X_cal_s,
+                        y_cal_s,
+                        lookback_default,
+                        horizon,
+                        device,
+                        batch_size,
+                        quantile_levels=quantiles,
+                    )
+                if val_outputs_s is not None:
+                    y_true_val = _inverse_scaled_array(val_outputs_s["y_true"], y_scaler)
+                    y_pred_val = _inverse_scaled_array(val_outputs_s["point_pred"], y_scaler)
                     model_q = residual_quantiles(y_true_val, y_pred_val, quantiles)
                 else:
                     model_q = {}
@@ -1483,16 +2020,57 @@ def main():
                         "horizon": int(horizon),
                     },
                     "quantiles": quantiles,
+                    "quantile_levels": quantiles,
+                    "n_quantiles": len(quantiles),
                     "residual_quantiles": model_q,
                     "x_scaler": x_scaler.to_dict(),
                     "y_scaler": y_scaler.to_dict(),
                 }, art_dir / f"tft_{target}.pt")
 
-                y_true_test_s, y_pred_test_s = collect_seq_preds(model, X_test_s, y_test_s, lookback_default, horizon, device, batch_size)
-                if y_true_test_s is not None:
-                    y_true_test = y_scaler.inverse_transform(y_true_test_s.reshape(-1, 1)).reshape(-1)
-                    y_pred_test = y_scaler.inverse_transform(y_pred_test_s.reshape(-1, 1)).reshape(-1)
+                test_outputs_s = collect_seq_output_bundle(
+                    model,
+                    X_test_s,
+                    y_test_s,
+                    lookback_default,
+                    horizon,
+                    device,
+                    batch_size,
+                    quantile_levels=quantiles,
+                )
+                if test_outputs_s is not None:
+                    y_true_test = _inverse_scaled_array(test_outputs_s["y_true"], y_scaler)
+                    y_pred_test = _inverse_scaled_array(test_outputs_s["point_pred"], y_scaler)
                     model_metrics = compute_metrics(y_true_test, y_pred_test, target)
+                    test_outputs = {
+                        "y_true": y_true_test,
+                        "point_pred": y_pred_test,
+                        "quantiles": _inverse_scaled_quantiles(test_outputs_s["quantiles"], y_scaler),
+                    }
+                    val_outputs = {
+                        "y_true": y_true_val,
+                        "point_pred": y_pred_val,
+                        "quantiles": _inverse_scaled_quantiles(val_outputs_s["quantiles"], y_scaler) if val_outputs_s is not None else {},
+                    }
+                    cal_outputs = None
+                    if cal_outputs_s is not None:
+                        cal_outputs = {
+                            "y_true": _inverse_scaled_array(cal_outputs_s["y_true"], y_scaler),
+                            "point_pred": _inverse_scaled_array(cal_outputs_s["point_pred"], y_scaler),
+                            "quantiles": _inverse_scaled_quantiles(cal_outputs_s["quantiles"], y_scaler),
+                        }
+                    if val_outputs_s is not None and uncertainty_enabled and target in uncertainty_targets:
+                        _append_conformal_payload_from_outputs(
+                            conformal_payloads=conformal_payloads,
+                            target=target,
+                            model_key="tft",
+                            horizon=horizon,
+                            split_boundaries=split_boundaries,
+                            uncertainty_cfg=uncertainty_cfg,
+                            quantile_levels=quantiles,
+                            val_outputs=val_outputs,
+                            test_outputs=test_outputs,
+                            cal_outputs=cal_outputs,
+                        )
                 else:
                     model_metrics = {"rmse": None, "mae": None, "mape": None, "smape": None}
                 target_res["tft"] = {**model_metrics, "residual_quantiles": model_q}
@@ -1523,14 +2101,37 @@ def main():
                     y_train_s,
                     X_val_s,
                     y_val_s,
-                    {"lookback": lookback_default, "horizon": horizon, **params},
+                    {"lookback": lookback_default, "horizon": horizon, "quantile_levels": quantiles, **params},
                     device=device,
                 )
                 batch_size = int(params.get("batch_size", 256))
-                y_true_val_s, y_pred_val_s = collect_seq_preds(model, X_val_s, y_val_s, lookback_default, horizon, device, batch_size)
-                if y_true_val_s is not None:
-                    y_true_val = y_scaler.inverse_transform(y_true_val_s.reshape(-1, 1)).reshape(-1)
-                    y_pred_val = y_scaler.inverse_transform(y_pred_val_s.reshape(-1, 1)).reshape(-1)
+                val_outputs_s = collect_seq_output_bundle(
+                    model,
+                    X_val_s,
+                    y_val_s,
+                    lookback_default,
+                    horizon,
+                    device,
+                    batch_size,
+                    quantile_levels=quantiles,
+                )
+                cal_outputs_s = None
+                if X_cal is not None and y_cal is not None and len(X_cal) > 0:
+                    X_cal_s = x_scaler.transform(X_cal)
+                    y_cal_s = y_scaler.transform(y_cal.reshape(-1, 1)).reshape(-1)
+                    cal_outputs_s = collect_seq_output_bundle(
+                        model,
+                        X_cal_s,
+                        y_cal_s,
+                        lookback_default,
+                        horizon,
+                        device,
+                        batch_size,
+                        quantile_levels=quantiles,
+                    )
+                if val_outputs_s is not None:
+                    y_true_val = _inverse_scaled_array(val_outputs_s["y_true"], y_scaler)
+                    y_pred_val = _inverse_scaled_array(val_outputs_s["point_pred"], y_scaler)
                     model_q = residual_quantiles(y_true_val, y_pred_val, quantiles)
                 else:
                     model_q = {}
@@ -1554,16 +2155,57 @@ def main():
                         "horizon": int(horizon),
                     },
                     "quantiles": quantiles,
+                    "quantile_levels": quantiles,
+                    "n_quantiles": len(quantiles),
                     "residual_quantiles": model_q,
                     "x_scaler": x_scaler.to_dict(),
                     "y_scaler": y_scaler.to_dict(),
                 }, art_dir / f"patchtst_{target}.pt")
 
-                y_true_test_s, y_pred_test_s = collect_seq_preds(model, X_test_s, y_test_s, lookback_default, horizon, device, batch_size)
-                if y_true_test_s is not None:
-                    y_true_test = y_scaler.inverse_transform(y_true_test_s.reshape(-1, 1)).reshape(-1)
-                    y_pred_test = y_scaler.inverse_transform(y_pred_test_s.reshape(-1, 1)).reshape(-1)
+                test_outputs_s = collect_seq_output_bundle(
+                    model,
+                    X_test_s,
+                    y_test_s,
+                    lookback_default,
+                    horizon,
+                    device,
+                    batch_size,
+                    quantile_levels=quantiles,
+                )
+                if test_outputs_s is not None:
+                    y_true_test = _inverse_scaled_array(test_outputs_s["y_true"], y_scaler)
+                    y_pred_test = _inverse_scaled_array(test_outputs_s["point_pred"], y_scaler)
                     model_metrics = compute_metrics(y_true_test, y_pred_test, target)
+                    test_outputs = {
+                        "y_true": y_true_test,
+                        "point_pred": y_pred_test,
+                        "quantiles": _inverse_scaled_quantiles(test_outputs_s["quantiles"], y_scaler),
+                    }
+                    val_outputs = {
+                        "y_true": y_true_val,
+                        "point_pred": y_pred_val,
+                        "quantiles": _inverse_scaled_quantiles(val_outputs_s["quantiles"], y_scaler) if val_outputs_s is not None else {},
+                    }
+                    cal_outputs = None
+                    if cal_outputs_s is not None:
+                        cal_outputs = {
+                            "y_true": _inverse_scaled_array(cal_outputs_s["y_true"], y_scaler),
+                            "point_pred": _inverse_scaled_array(cal_outputs_s["point_pred"], y_scaler),
+                            "quantiles": _inverse_scaled_quantiles(cal_outputs_s["quantiles"], y_scaler),
+                        }
+                    if val_outputs_s is not None and uncertainty_enabled and target in uncertainty_targets:
+                        _append_conformal_payload_from_outputs(
+                            conformal_payloads=conformal_payloads,
+                            target=target,
+                            model_key="patchtst",
+                            horizon=horizon,
+                            split_boundaries=split_boundaries,
+                            uncertainty_cfg=uncertainty_cfg,
+                            quantile_levels=quantiles,
+                            val_outputs=val_outputs,
+                            test_outputs=test_outputs,
+                            cal_outputs=cal_outputs,
+                        )
                 else:
                     model_metrics = {"rmse": None, "mae": None, "mape": None, "smape": None}
                 target_res["patchtst"] = {**model_metrics, "residual_quantiles": model_q}
@@ -1576,21 +2218,19 @@ def main():
         report["targets"][target] = target_res
 
     if uncertainty_enabled and conformal_payloads:
-        multi = len(conformal_payloads) > 1
-        if args.backtests_dir:
-            backtests_dir = Path(args.backtests_dir)
-            cal_template = str(backtests_dir / "{target}_calibration.npz")
-            test_template = str(backtests_dir / "{target}_test.npz")
-        else:
-            cal_template = str(uncertainty_cfg.get("calibration_npz", "artifacts/backtests/calibration.npz"))
-            test_template = str(uncertainty_cfg.get("test_npz", "artifacts/backtests/test.npz"))
+        backtests_dir = Path(args.backtests_dir or uncertainty_cfg.get("backtests_dir", "artifacts/backtests"))
+        backtests_dir.mkdir(parents=True, exist_ok=True)
         conf_cfg = ConformalConfig(**(uncertainty_cfg.get("conformal", {}) or {}))
         artifacts_dir = Path(args.uncertainty_artifacts_dir or uncertainty_cfg.get("artifacts_dir", "artifacts/uncertainty"))
+        artifacts_dir.mkdir(parents=True, exist_ok=True)
         
         print("\nConformal Prediction Intervals:")
-        for target, payload in conformal_payloads.items():
-            cal_path = _format_uncertainty_path(cal_template, target, "calibration", multi)
-            test_path = _format_uncertainty_path(test_template, target, "test", multi)
+        for payload in conformal_payloads:
+            target = str(payload["target"])
+            model_key = str(payload.get("artifact_model_key") or _model_artifact_key(str(payload.get("model", ""))))
+            report_model_key = _model_artifact_key(str(payload.get("model", "")))
+            cal_path = backtests_dir / f"{model_key}_{target}_calibration.npz"
+            test_path = backtests_dir / f"{model_key}_{target}_test.npz"
             cal_path.parent.mkdir(parents=True, exist_ok=True)
             test_path.parent.mkdir(parents=True, exist_ok=True)
             method = str(payload.get("method", conf_cfg.method)).lower()
@@ -1629,10 +2269,11 @@ def main():
                     per_horizon=True,
                 )
             
-            conformal_path = artifacts_dir / f"{payload['target']}_conformal.json"
+            conformal_path = artifacts_dir / f"{model_key}_{target}_conformal.json"
             meta = {
                 "target": payload["target"],
                 "model": payload["model"],
+                "artifact_model_key": model_key,
                 "method": method,
                 "horizon": horizon,
                 "calibration_source": payload.get("calibration_source", "val"),
@@ -1652,12 +2293,35 @@ def main():
                 "per_horizon_mpiw": interval_metrics.get("per_horizon_mpiw", {}),
             }
             
-            print(f"  {target}: Coverage={interval_metrics['global_coverage']:.3f}, Width={interval_metrics['global_mean_width']:.2f}")
+            print(
+                f"  {model_key}:{target}: Coverage={interval_metrics['global_coverage']:.3f}, "
+                f"Width={interval_metrics['global_mean_width']:.2f}"
+            )
             save_conformal(conformal_path, ci, meta=meta)
+            if model_key == "gbm":
+                legacy_conformal_path = artifacts_dir / f"{target}_conformal.json"
+                save_conformal(legacy_conformal_path, ci, meta=meta)
+                if method == "cqr":
+                    np.savez(
+                        backtests_dir / f"{target}_calibration.npz",
+                        y_true=payload["y_true_cal"],
+                        q_lo=payload["q_lo_cal"],
+                        q_hi=payload["q_hi_cal"],
+                    )
+                    np.savez(
+                        backtests_dir / f"{target}_test.npz",
+                        y_true=payload["y_true_test"],
+                        q_lo=payload["q_lo_test"],
+                        q_hi=payload["q_hi_test"],
+                    )
+                else:
+                    np.savez(backtests_dir / f"{target}_calibration.npz", y_true=payload["y_true_cal"], y_pred=payload["y_pred_cal"])
+                    np.savez(backtests_dir / f"{target}_test.npz", y_true=payload["y_true_test"], y_pred=payload["y_pred_test"])
+
             target_report = report["targets"].setdefault(target, {})
-            gbm_report = target_report.get("gbm")
-            if isinstance(gbm_report, dict):
-                gbm_report["uncertainty"] = {
+            model_report = target_report.get(report_model_key)
+            if isinstance(model_report, dict):
+                model_report["uncertainty"] = {
                     "picp_90": interval_metrics.get("picp_90"),
                     "picp_95": interval_metrics.get("picp_95"),
                     "mean_interval_width": interval_metrics.get("mean_interval_width"),

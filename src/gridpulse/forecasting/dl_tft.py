@@ -15,9 +15,11 @@ class TFTForecaster(nn.Module):
         num_layers: int = 2,
         dropout: float = 0.1,
         dim_feedforward: int = 256,
+        n_quantiles: int = 1,
     ) -> None:
         super().__init__()
         self.horizon = int(horizon)
+        self.n_quantiles = max(1, int(n_quantiles))
         self.input_proj = nn.Linear(n_features, d_model)
         self.input_norm = nn.LayerNorm(d_model)
         encoder_layer = nn.TransformerEncoderLayer(
@@ -41,7 +43,7 @@ class TFTForecaster(nn.Module):
             nn.Linear(d_model, d_model),
             nn.GELU(),
             nn.Dropout(dropout),
-            nn.Linear(d_model, horizon),
+            nn.Linear(d_model, self.horizon * self.n_quantiles),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -49,4 +51,7 @@ class TFTForecaster(nn.Module):
         h = self.encoder(h)
         query = self.query.expand(h.shape[0], -1, -1)
         pooled, _ = self.attn_pool(query, h, h, need_weights=False)
-        return self.head(pooled.squeeze(1))
+        output = self.head(pooled.squeeze(1))
+        if self.n_quantiles > 1:
+            return output.view(output.shape[0], self.horizon, self.n_quantiles)
+        return output

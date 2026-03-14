@@ -36,180 +36,28 @@ import os
 import shutil
 import subprocess
 import sys
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 import yaml
 
+# Support both `python scripts/train_dataset.py` (cwd=scripts/) and
+# `import scripts.train_dataset` (cwd=repo root, used by tests).
+_scripts_dir = str(Path(__file__).resolve().parent)
+if _scripts_dir not in sys.path:
+    sys.path.insert(0, _scripts_dir)
+
+from _dataset_registry import (  # noqa: E402
+    AGGRESSIVE_DEFAULTS,
+    DATASET_REGISTRY,
+    DatasetConfig,
+    REPO_ROOT,
+    RunLayout,
+    iter_trainable_dataset_keys as _iter_trainable_dataset_keys,
+)
+
 PYTHON_BIN = sys.executable or "python3"
-REPO_ROOT = Path(__file__).resolve().parents[1]
-
-
-# =============================================================================
-# DATASET REGISTRY - Add new datasets here
-# =============================================================================
-
-@dataclass
-class DatasetConfig:
-    """Configuration for a registered dataset."""
-    name: str                           # Short name (DE, US, etc.)
-    display_name: str                   # Full name for logging
-    config_file: str                    # Path to training config YAML
-    features_path: str                  # Path to features.parquet
-    splits_path: str                    # Path to splits directory
-    models_dir: str                     # Path to model artifacts directory
-    reports_dir: str                    # Path to reports output
-    uncertainty_dir: str                # Path to conformal artifacts directory
-    backtests_dir: str                  # Path to calibration/test artifact directory
-    
-    # Feature pipeline settings
-    raw_data_path: str                  # Path to raw data
-    feature_module: str                 # Module to build features
-    
-    # Optional settings
-    ba_code: Optional[str] = None       # Balancing authority (for US)
-    start_date: Optional[str] = None    # Date filter start
-    end_date: Optional[str] = None      # Date filter end
-    alias_of: Optional[str] = None      # Backward-compatible dataset alias
-
-
-def _us_dataset(
-    *,
-    key: str,
-    display_name: str,
-    config_file: str,
-    processed_dir: str,
-    models_dir: str,
-    reports_dir: str,
-    uncertainty_dir: str,
-    backtests_dir: str,
-    ba_code: str,
-    alias_of: str | None = None,
-) -> DatasetConfig:
-    return DatasetConfig(
-        name=key,
-        display_name=display_name,
-        config_file=config_file,
-        features_path=f"{processed_dir}/features.parquet",
-        splits_path=f"{processed_dir}/splits",
-        models_dir=models_dir,
-        reports_dir=reports_dir,
-        uncertainty_dir=uncertainty_dir,
-        backtests_dir=backtests_dir,
-        raw_data_path="data/raw/us_eia930",
-        feature_module="gridpulse.data_pipeline.build_features_eia930",
-        ba_code=ba_code,
-        alias_of=alias_of,
-    )
-
-
-# Dataset registry - single source of truth for all datasets
-DATASET_REGISTRY: dict[str, DatasetConfig] = {
-    "DE": DatasetConfig(
-        name="DE",
-        display_name="German OPSD",
-        config_file="configs/train_forecast.yaml",
-        features_path="data/processed/features.parquet",
-        splits_path="data/processed/splits",
-        models_dir="artifacts/models",
-        reports_dir="reports",
-        uncertainty_dir="artifacts/uncertainty",
-        backtests_dir="artifacts/backtests",
-        raw_data_path="data/raw",
-        feature_module="gridpulse.data_pipeline.build_features",
-    ),
-    "US_MISO": _us_dataset(
-        key="US_MISO",
-        display_name="US EIA-930 (MISO)",
-        config_file="configs/train_forecast_eia930.yaml",
-        processed_dir="data/processed/us_eia930",
-        models_dir="artifacts/models_eia930",
-        reports_dir="reports/eia930",
-        uncertainty_dir="artifacts/uncertainty/eia930",
-        backtests_dir="artifacts/backtests/eia930",
-        ba_code="MISO",
-    ),
-    "US_PJM": _us_dataset(
-        key="US_PJM",
-        display_name="US EIA-930 (PJM)",
-        config_file="configs/train_forecast_eia930_pjm.yaml",
-        processed_dir="data/processed/us_eia930_pjm",
-        models_dir="artifacts/models_eia930_pjm",
-        reports_dir="reports/eia930_pjm",
-        uncertainty_dir="artifacts/uncertainty/eia930_pjm",
-        backtests_dir="artifacts/backtests/eia930_pjm",
-        ba_code="PJM",
-    ),
-    "US_ERCOT": _us_dataset(
-        key="US_ERCOT",
-        display_name="US EIA-930 (ERCOT)",
-        config_file="configs/train_forecast_eia930_ercot.yaml",
-        processed_dir="data/processed/us_eia930_ercot",
-        models_dir="artifacts/models_eia930_ercot",
-        reports_dir="reports/eia930_ercot",
-        uncertainty_dir="artifacts/uncertainty/eia930_ercot",
-        backtests_dir="artifacts/backtests/eia930_ercot",
-        ba_code="ERCO",
-    ),
-    # Backward-compatible alias for the historical single-region US pipeline.
-    "US": _us_dataset(
-        key="US_MISO",
-        display_name="US EIA-930 (MISO)",
-        config_file="configs/train_forecast_eia930.yaml",
-        processed_dir="data/processed/us_eia930",
-        models_dir="artifacts/models_eia930",
-        reports_dir="reports/eia930",
-        uncertainty_dir="artifacts/uncertainty/eia930",
-        backtests_dir="artifacts/backtests/eia930",
-        ba_code="MISO",
-        alias_of="US_MISO",
-    ),
-}
-
-AGGRESSIVE_DEFAULTS = {
-    "DE": {"n_trials": 220, "top_pct": 0.20, "max_seeds": 8},
-    "US_MISO": {"n_trials": 260, "top_pct": 0.20, "max_seeds": 5},
-    "US_PJM": {"n_trials": 260, "top_pct": 0.20, "max_seeds": 5},
-    "US_ERCOT": {"n_trials": 260, "top_pct": 0.20, "max_seeds": 5},
-}
-
-
-def _iter_trainable_dataset_keys() -> list[str]:
-    keys: list[str] = []
-    seen: set[str] = set()
-    for registry_key, cfg in DATASET_REGISTRY.items():
-        canonical = cfg.alias_of or cfg.name
-        if canonical in seen:
-            continue
-        seen.add(canonical)
-        keys.append(registry_key)
-    return keys
-
-
-@dataclass
-class RunLayout:
-    """Resolved output paths for a canonical or candidate training run."""
-
-    mode: str
-    run_id: str
-    dataset: str
-    artifacts_root: Path
-    models_dir: Path
-    uncertainty_dir: Path
-    backtests_dir: Path
-    registry_dir: Path
-    reports_dir: Path
-    publication_dir: Path
-    validation_report: Path
-    data_manifest_output: Path
-    walk_forward_report: Path
-    selection_output_dir: Path
-
-    @property
-    def is_candidate(self) -> bool:
-        return self.mode == "candidate"
 
 
 # =============================================================================
@@ -1223,8 +1071,8 @@ def list_datasets() -> None:
         print()
 
 
-def main() -> int:
-    """Main entry point."""
+def _build_parser() -> argparse.ArgumentParser:
+    """Build CLI argument parser for train_dataset."""
     parser = argparse.ArgumentParser(
         description="Unified training script for GridPulse datasets",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -1237,120 +1085,33 @@ Examples:
   python scripts/train_dataset.py --list              # Show available datasets
         """,
     )
-    
-    parser.add_argument(
-        "--dataset", "-d",
-        choices=list(DATASET_REGISTRY.keys()) + ["ALL"],
-        help="Dataset to train (DE, US, etc.)",
-    )
-    parser.add_argument(
-        "--all", "-a",
-        action="store_true",
-        help="Train all registered datasets",
-    )
-    parser.add_argument(
-        "--list", "-l",
-        action="store_true",
-        help="List available datasets",
-    )
-    parser.add_argument(
-        "--tune", "-t",
-        action="store_true",
-        help="Enable Optuna hyperparameter tuning",
-    )
-    parser.add_argument(
-        "--models",
-        default=None,
-        help="Optional comma-separated model filter passed to training, e.g. gbm or gbm,lstm",
-    )
-    parser.add_argument(
-        "--no-tune",
-        action="store_true",
-        help="Disable tuning even if YAML has tuning.enabled=true",
-    )
-    parser.add_argument(
-        "--no-cv",
-        action="store_true",
-        help="Disable cross-validation even if YAML enables it",
-    )
-    parser.add_argument(
-        "--ensemble",
-        action="store_true",
-        help="Train multi-seed GBM ensembles using config.seeds",
-    )
-    parser.add_argument(
-        "--max-seeds",
-        type=int,
-        default=None,
-        help="Optional cap for ensemble seed count",
-    )
-    parser.add_argument(
-        "--n-trials",
-        type=int,
-        default=None,
-        help="Override Optuna trial count for this run",
-    )
-    parser.add_argument(
-        "--top-pct",
-        type=float,
-        default=None,
-        help="Use top percent of trials for param aggregation (e.g. 0.30 or 0.001)",
-    )
-    parser.add_argument(
-        "--profile",
-        choices=["standard", "aggressive"],
-        default="standard",
-        help="Training profile. aggressive forces tune+ensemble and higher trial budgets.",
-    )
-    parser.add_argument(
-        "--max-runtime-hours",
-        type=float,
-        default=None,
-        help="Optional timeout for each training invocation.",
-    )
-    parser.add_argument(
-        "--target-metrics-file",
-        default=None,
-        help="Optional baseline metrics JSON for acceptance comparison.",
-    )
-    parser.add_argument(
-        "--reports", "-r",
-        action="store_true",
-        default=True,
-        help="Generate evaluation reports (default: True)",
-    )
-    parser.add_argument(
-        "--no-reports",
-        action="store_true",
-        help="Skip report generation",
-    )
-    parser.add_argument(
-        "--rebuild",
-        action="store_true",
-        help="Rebuild features even if they exist",
-    )
-    parser.add_argument(
-        "--reports-only",
-        action="store_true",
-        help="Only generate reports (skip training)",
-    )
-    parser.add_argument(
-        "--candidate-run",
-        action="store_true",
-        help="Write outputs into isolated artifacts/runs/... and reports/runs/... directories",
-    )
-    parser.add_argument(
-        "--run-id",
-        default=None,
-        help="Optional run identifier for candidate outputs",
-    )
-    parser.add_argument(
-        "--promote-on-accept",
-        action="store_true",
-        help="Promote candidate outputs into canonical paths only after acceptance gates pass",
-    )
-    
-    args = parser.parse_args()
+    parser.add_argument("--dataset", "-d", choices=list(DATASET_REGISTRY.keys()) + ["ALL"], help="Dataset to train (DE, US, etc.)")
+    parser.add_argument("--all", "-a", action="store_true", help="Train all registered datasets")
+    parser.add_argument("--list", "-l", action="store_true", help="List available datasets")
+    parser.add_argument("--tune", "-t", action="store_true", help="Enable Optuna hyperparameter tuning")
+    parser.add_argument("--models", default=None, help="Optional comma-separated model filter, e.g. gbm or gbm,lstm")
+    parser.add_argument("--no-tune", action="store_true", help="Disable tuning even if YAML has tuning.enabled=true")
+    parser.add_argument("--no-cv", action="store_true", help="Disable cross-validation even if YAML enables it")
+    parser.add_argument("--ensemble", action="store_true", help="Train multi-seed GBM ensembles using config.seeds")
+    parser.add_argument("--max-seeds", type=int, default=None, help="Optional cap for ensemble seed count")
+    parser.add_argument("--n-trials", type=int, default=None, help="Override Optuna trial count for this run")
+    parser.add_argument("--top-pct", type=float, default=None, help="Use top percent of trials for param aggregation")
+    parser.add_argument("--profile", choices=["standard", "aggressive"], default="standard", help="Training profile")
+    parser.add_argument("--max-runtime-hours", type=float, default=None, help="Optional timeout for each training invocation")
+    parser.add_argument("--target-metrics-file", default=None, help="Optional baseline metrics JSON for acceptance comparison")
+    parser.add_argument("--reports", "-r", action="store_true", default=True, help="Generate evaluation reports (default: True)")
+    parser.add_argument("--no-reports", action="store_true", help="Skip report generation")
+    parser.add_argument("--rebuild", action="store_true", help="Rebuild features even if they exist")
+    parser.add_argument("--reports-only", action="store_true", help="Only generate reports (skip training)")
+    parser.add_argument("--candidate-run", action="store_true", help="Write outputs into isolated artifacts/runs/... and reports/runs/... directories")
+    parser.add_argument("--run-id", default=None, help="Optional run identifier for candidate outputs")
+    parser.add_argument("--promote-on-accept", action="store_true", help="Promote candidate outputs into canonical paths only after acceptance gates pass")
+    return parser
+
+
+def main() -> int:
+    """Main entry point."""
+    args = _build_parser().parse_args()
     
     # Handle --list
     if args.list:
@@ -1362,7 +1123,7 @@ Examples:
     
     # Require either --dataset or --all
     if not args.dataset and not args.all:
-        parser.print_help()
+        _build_parser().print_help()
         print("\n❌ Error: Specify --dataset <NAME> or --all")
         return 1
     
