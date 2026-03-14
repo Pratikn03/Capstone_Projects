@@ -1,0 +1,23 @@
+% Generated from reports/publication/streaming_validation_summary.json (release R1_DEPLOY_20260314)
+\begin{table}[htbp]
+\centering\small
+\caption{Governed streaming-validation summary (deterministic replay, release \texttt{R1\_DEPLOY\_20260314}).
+  This is a software replay validation of the ingest path, not a live deployment claim.}
+\label{tab:streaming_validation}
+\begin{tabular}{l l}
+\toprule
+Field & Value \\
+\midrule
+Messages ingested        & 168 \\
+First timestamp          & 2025-01-01\;00:00 UTC \\
+Last timestamp           & 2025-01-07\;23:00 UTC \\
+Validation failures      & 0 \\
+Monotonic ordering       & \checkmark \\
+Checkpoint present       & \checkmark \\
+Cadence (s)              & 3{,}600 \\
+Cadence tolerance (s)    & 120 \\
+Schema                   & \texttt{OPSDTelemetryEvent} \\
+Replay mode              & deterministic synthetic \\
+\bottomrule
+\end{tabular}
+\end{table}

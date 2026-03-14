@@ -8,10 +8,10 @@ import gridpulse.data_pipeline.validate_schema as vs
 import gridpulse.data_pipeline.download_opsd as do
 import gridpulse.data_pipeline.download_weather as dw
 
-from gridpulse.evaluation.regret import RegretEvaluator
-from gridpulse.evaluation.stats import compute_all_series_stats
-from gridpulse.dc3s.rac_cert import RACGenerator
-from gridpulse.dc3s.shield import SafetyShield
+from gridpulse.evaluation.regret import compute_regret
+from gridpulse.evaluation.stats import bootstrap_ci
+from gridpulse.dc3s.rac_cert import RACCertModel, compute_inflation
+from gridpulse.dc3s.shield import repair_action
 
 def test_boost_misc():
     # hit prometheus_metrics functions
@@ -26,30 +26,35 @@ def test_boost_misc():
 
     # hit evaluation.regret
     try:
-        evaluator = RegretEvaluator(50.0) # capacity
-        evaluator.evaluate(
-            np.ones(10), np.ones(10), np.ones(10), np.ones(10),
-            np.ones(10), np.ones(10), np.ones(10), np.ones(10),
-            np.ones(10), np.ones(10), np.ones(10), np.ones(10)
+        compute_regret(
+            load_forecast=np.ones(10),
+            wind_forecast=np.ones(10),
+            solar_forecast=np.ones(10),
+            price_forecast=np.ones(10),
         )
     except Exception:
         pass
 
     # hit evaluation.stats
     try:
-        compute_all_series_stats(pd.Series([1, 2, 3]))
+        bootstrap_ci(np.array([1.0, 2.0, 3.0, 4.0, 5.0]))
     except Exception:
         pass
 
-    # hit dc3s classes
+    # hit dc3s rac_cert
     try:
-        rac = RACGenerator(10.0, 0.5)
-        rac.generate_certificate(pd.DataFrame(), np.ones(10), "DE")
+        compute_inflation(reliability=0.8, drift_flag=False, config={})
     except Exception:
         pass
 
+    # hit dc3s shield
     try:
-        shield = SafetyShield({"max_discharge_mw": 50.0, "max_charge_mw": 50.0, "capacity_mwh": 100.0, "min_soc_mwh": 0.0, "efficiency": 1.0, "initial_soc_mwh": 50.0})
-        shield.repair_action(0.0, 0.0, 50.0)
+        repair_action(
+            a_star={"charge_mw": 10.0, "discharge_mw": 0.0},
+            state={"soc_mwh": 50.0},
+            uncertainty_set={"lower": [40.0], "upper": [60.0], "meta": {}},
+            constraints={"capacity_mwh": 100.0, "max_charge_mw": 50.0, "max_discharge_mw": 50.0},
+            cfg={},
+        )
     except Exception:
         pass

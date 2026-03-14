@@ -1,0 +1,28 @@
+% Generated from reports/publication/dc3s_step_trace.csv (release R1_DEPLOY_20260314)
+\begin{table*}[htbp]
+\centering\scriptsize
+\caption{DC\textsuperscript{3}S governed step trace (first 10~steps of the covariate drift scenario, release \texttt{R1\_DEPLOY\_20260314}).
+  Reliability stays high for most steps, with a visible dip at step~4 under degraded telemetry.
+  Inflation spikes when drift is flagged (step~10, $\times 1.60$).
+  Proposed and safe actions are identical except when intervention is required.
+  All guarantee checks pass before dispatch.}
+\label{tab:step_trace}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{r l r c r l l c c r}
+\toprule
+Step & Timestamp & Reliability & Drift & Inflation & Proposed action & Safe action & Intervened & Guarantee & SOC after \\
+     &           & $w_t$       &       & $\times$  & (chg / dis MW)  & (chg / dis MW) & & passed & (MWh) \\
+\midrule
+ 1 & 2025-06-15\;00:00 & 1.000 &       & 1.00 & +10.00 / 0.00 & +10.00 / 0.00 &   & \checkmark & 59.50 \\
+ 2 & 2025-06-15\;01:00 & 1.000 &       & 1.00 & +10.00 / 0.00 & +10.00 / 0.00 &   & \checkmark & 69.00 \\
+ 3 & 2025-06-15\;02:00 & 1.000 &       & 1.00 & +9.53 / 0.00  & +9.53 / 0.00  &   & \checkmark & 78.06 \\
+ 4 & 2025-06-15\;03:00 & 0.963 &       & 1.03 & +2.13 / 0.00  & +2.13 / 0.00  &   & \checkmark & 80.09 \\
+ 5 & 2025-06-15\;04:00 & 1.000 &       & 1.00 & +1.82 / 0.00  & +1.82 / 0.00  &   & \checkmark & 81.81 \\
+ 6 & 2025-06-15\;05:00 & 1.000 &       & 1.00 & +0.14 / 0.00  & +0.14 / 0.00  &   & \checkmark & 81.95 \\
+ 7 & 2025-06-15\;06:00 & 1.000 &       & 1.00 & 0.00 / $-$2.83 & 0.00 / $-$2.83 &   & \checkmark & 78.97 \\
+ 8 & 2025-06-15\;07:00 & 1.000 &       & 1.00 & 0.00 / $-$3.44 & 0.00 / $-$3.44 &   & \checkmark & 75.35 \\
+ 9 & 2025-06-15\;08:00 & 1.000 &       & 1.00 & 0.00 / $-$3.36 & 0.00 / $-$3.36 &   & \checkmark & 71.81 \\
+10 & 2025-06-15\;09:00 & 1.000 & $\bullet$ & 1.60 & 0.00 / $-$4.68 & 0.00 / $-$4.68 &   & \checkmark & 66.89 \\
+\bottomrule
+\end{tabular}}
+\end{table*}
