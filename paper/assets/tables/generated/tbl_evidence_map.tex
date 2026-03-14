@@ -1,0 +1,17 @@
+\begin{table*}[htbp]
+\centering\small
+\caption{Deployment evidence map: code surface $\to$ governed artifact $\to$ manuscript claim.}
+\label{tab:evidence_map}
+\resizebox{\textwidth}{!}{\begin{tabular}{llll}
+\toprule
+Surface & Code & Artifact & Paper claim \\
+\midrule
+  Latency benchmark & \texttt{scripts/benchmark\_dc3s\_steps.py} & \texttt{dc3s\_latency\_summary.csv} & Runtime profile (\S\ref{sec:runtime}) \\
+  Streaming validation & \texttt{src/gridpulse/streaming/consumer.py} & \texttt{streaming\_validation\_summary.json} & Streaming extension (\S\ref{sec:limitations}) \\
+  Step trace & \texttt{src/gridpulse/dc3s/\{shield,calibration\}.py} & \texttt{dc3s\_step\_trace.csv} & Operational trace (\S\ref{sec:operational_trace}) \\
+  Shadow-mode run & \texttt{iot/edge\_agent/run\_agent.py} & \texttt{shadow\_mode\_summary.json} & Deployment (\S\ref{sec:discussion}) \\
+  Runtime safety contracts & \texttt{src/gridpulse/dc3s/coverage\_theorem.py} & Runtime assertions & Safety guarantee (\S\ref{sec:assumptions}) \\
+  Calibration governance & \texttt{.../reliability\_mondrian.py} & \texttt{reliability\_group\_coverage.csv} & Calibration (\S\ref{sec:calibration}) \\
+\bottomrule
+\end{tabular}}
+\end{table*}

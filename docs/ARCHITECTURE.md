@@ -1,207 +1,306 @@
-# GridPulse System Architecture
+# GridPulse / DC³S — System Architecture
+
+> **Version**: March 2026 · Generated diagram: `reports/figures/architecture.png`
 
 ## Overview
 
-GridPulse implements a **Level-4 Decision System** architecture where predictions feed directly into an optimization engine, and outcomes are measured against baselines. This document describes the complete system flow, component responsibilities, and data contracts between layers.
+GridPulse implements a **Level-4 Decision System** architecture where forecasts feed directly into a distributionally-robust optimization engine and a runtime safety shield (DC³S) governs every dispatch action.  Outcomes are measured against baselines and recorded in auditable, release-scoped artifacts.  This document describes the nine-layer system, component responsibilities, data contracts, and cross-layer flows.
 
 ## Architectural Principles
 
-1. **Decision-Grade Output**: Every forecast produces actionable dispatch commands
-2. **Uncertainty-Aware**: Conformal prediction intervals propagate through optimization
-3. **Baseline-Compared**: All impact metrics are computed against grid-only and naive policies
-4. **Reproducible**: Deterministic seeds, version locks, and run manifests
-5. **Region-Agnostic**: Same pipeline processes OPSD (Germany) and EIA-930 (US) data
+1. **Decision-grade output** — every forecast produces actionable dispatch commands
+2. **Uncertainty-aware** — CQR conformal intervals propagate through DRO optimization and DC³S inflation
+3. **Safety-shielded** — DC³S scores telemetry reliability at each step and conditionally widens the uncertainty set, repairs infeasible actions, and emits per-step certificates
+4. **Baseline-compared** — all impact metrics are computed against grid-only and naive battery policies
+5. **Reproducible** — deterministic seeds, version locks, run manifests, and release-scoped governance
+6. **Region-agnostic** — same pipeline processes OPSD (Germany) and EIA-930 (US, 3 BAs)
+7. **Layered defense** — inspired by Sha's simplex architecture: optimizer (complex) → projection (simple safety net) → guarantee checks (deterministic guard)
 
 ---
 
-## System Flow Diagram
+## Layer Map
+
+| Layer | Name | Key modules | Primary output |
+|:-----:|------|-------------|----------------|
+| L1 | Data Sources & Ingestion | `data_pipeline/`, `pipeline/` | `data/processed/*.parquet` |
+| L2 | Feature Engineering & Splitting | `pipeline/`, `forecasting/datasets.py` | `features.parquet`, `splits/` |
+| L3 | Forecasting Engine | `forecasting/` (6 families) | `artifacts/models/*.pkl, *.pt` |
+| L4 | Uncertainty & Calibration | `forecasting/uncertainty/`, `dc3s/calibration.py`, `dc3s/rac_cert.py` | `artifacts/uncertainty/*.json` |
+| L5 | Optimization & Dispatch | `optimizer/` | `artifacts/dispatch_plans/*.json` |
+| L6 | DC³S Safety Shield | `dc3s/` | Certificates, safe dispatch actions |
+| L7 | IoT · Edge · Streaming | `iot/`, `streaming/`, `cpsbench_iot/` | Validated events, ACK/NACK |
+| L8 | Monitoring · Anomaly · Governance | `monitoring/`, `anomaly/`, `registry/` | `reports/monitoring_*.json`, release manifests |
+| L9 | Serving (API + Dashboard) | `services/api/`, `frontend/` | REST endpoints, operator UI |
+
+---
+
+## L1 — Data Sources & Ingestion
+
+### Sources
+
+| Source | Granularity | Variables |
+|--------|:-----------:|-----------|
+| OPSD Germany | hourly | load, wind, solar, price (€/MWh) |
+| EIA-930 USA | hourly | demand, generation mix (MISO · ERCOT · PJM) |
+| Open-Meteo | hourly | temperature, wind speed, cloud cover, solar radiation |
+| Carbon factors | static | DE-avg, MISO, ERCOT, PJM (kgCO₂/MWh) |
+
+### Validation gates
+
+- Schema enforcement: required columns and dtypes
+- Timestamp alignment to hourly cadence
+- Range checks (non-negative load, physical bounds)
+- Missing-value imputation: forward-fill, then linear interpolation
+
+**Output**: `data/processed/*.parquet`
+
+---
+
+## L2 — Feature Engineering & Splitting
+
+### Feature families (98 DE / 118 US)
+
+| Family | Examples |
+|--------|----------|
+| Temporal | `hour`, `day_of_week`, `month`, `is_weekend`, `is_holiday` |
+| Lags | t−1, t−2, t−24, t−48, t−168 |
+| Rolling statistics | `mean_24h`, `std_24h`, `mean_168h`, `std_168h` |
+| Cyclical encoding | `sin_hour`, `cos_hour`, `sin_dow`, `cos_dow` |
+| Weather | temperature, humidity, wind speed, solar irradiance |
+
+### Time-series split
+
+| Partition | Share | Note |
+|-----------|:-----:|------|
+| Train | 70% | chronological |
+| Validation | 15% | used for conformal calibration |
+| Test | 15% | held-out evaluation |
+| Gap | 24 h | between each split to prevent leakage |
+
+**Output**: `data/processed/features.parquet`, `data/processed/splits/`
+
+---
+
+## L3 — Forecasting Engine
+
+Six model families, three targets (`load_mw`, `wind_mw`, `solar_mw`), 24-h horizon.
+
+| Model | Type | Key hyperparameters | File format |
+|-------|------|---------------------|:-----------:|
+| **LightGBM** [PROD] | Gradient-boosted trees | 1 000 trees · depth 12 · lr 0.03 · 256 leaves | `.pkl` |
+| LSTM | Recurrent (deep seq) | 3 layers · 256 hidden · dropout 0.3 · 100 epochs | `.pt` |
+| TCN | Temporal CNN | 4 channels · kernel 5 · dropout 0.3 · 100 epochs | `.pt` |
+| N-BEATS | Block-structured MLP | stacks · blocks · lookback 168 | `.pt` |
+| TFT | Attention + gating | variable selection · multi-horizon | `.pt` |
+| PatchTST | Patch-based Transformer | patch length · heads · channel-independent | `.pt` |
+
+- **Walk-forward evaluation** with sMAPE, RMSE, MAE, R², daylight-MAPE (solar).
+- Only the production-candidate model (GBM) is calibrated and enters the dispatch pipeline.
+- Model registry: `src/gridpulse/registry/model_store.py` — `promote()` performs atomic staging → production copy.
+
+**Output**: `artifacts/models/`
+
+---
+
+## L4 — Uncertainty Quantification & Calibration
+
+### Pipeline
+
+1. **CQR calibration** — compute nonconformity scores on the validation set at α = 0.10 (90% nominal coverage)
+2. **FACI online adaptation** — adjust interval width based on recent realised coverage
+3. **Per-horizon metrics** — PICP and MPIW for each forecast hour h₁ … h₂₄
+4. **RAC-Cert inflation** — map telemetry reliability score to monotone interval widening (conditional conservatism); bridges measurement quality → uncertainty set
+5. **Mondrian binning** — group-conditional coverage audit across reliability quantile bins
+
+### Theoretical grounding
+
+- **Theorem (RAC coverage)**: monotone inflation preserves marginal coverage
+- **Theorem (conditional coverage)**: Mondrian partitioning yields group-conditional guarantees
+- **Theorem (safety margin)**: safety-margin monotonicity under inflation
+- **Corollary (zero violation)**: sufficiency condition for zero constraint violations
+
+**Output**: `artifacts/uncertainty/*_conformal.json`
+
+---
+
+## L5 — Optimization Engine (DRO via Pyomo + HiGHS)
+
+### Formulation
+
+| Component | Detail |
+|-----------|--------|
+| Decision variables | P_ch[t], P_dis[t], G[s,t], SoC[s,t], z (epigraph) |
+| Objective | min z + λ_deg Σ(P_ch + P_dis) |
+| Energy balance | P_dis − P_ch + G ≥ Load − Renewables |
+| SoC dynamics | SoC[t+1] = SoC[t] + η_ch · P_ch − P_dis / η_dis |
+| Bounds | SoC_min ≤ SoC ≤ SoC_max, 0 ≤ G ≤ G_max |
+| Scenario coupling | z ≥ cost(lower), z ≥ cost(upper) |
+
+### Baselines
+
+- **Grid-only**: no battery, all demand from grid
+- **Naive battery**: charge overnight, discharge during evening peak
+
+### Impact metrics
+
+- Cost savings %, carbon reduction %, peak shaving %
+- EVPI (value of perfect information), VSS (value of stochastic solution)
+
+**Output**: `artifacts/dispatch_plans/*.json`, `reports/impact_summary.csv`
+
+---
+
+## L6 — DC³S Safety Shield (online dispatch loop)
+
+The core contribution.  Runs at each dispatch step in < 0.04 ms P95.
+
+### Step pipeline
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              DATA SOURCES                                    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  OPSD Germany          EIA-930 USA           Open-Meteo Weather             │
-│  • Load (MW)           • MISO Demand         • Temperature                  │
-│  • Wind (MW)           • Generation Mix      • Wind Speed                   │
-│  • Solar (MW)          • Interchange         • Cloud Cover                  │
-│  • Price (€/MWh)       • Balancing Area      • Solar Radiation              │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         DATA PIPELINE (Layer 1)                              │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  1. Ingestion & Validation                                                   │
-│     • Schema enforcement (required columns, dtypes)                          │
-│     • Timestamp alignment to hourly cadence                                  │
-│     • Missing value imputation (forward-fill, interpolation)                 │
-│                                                                              │
-│  2. Feature Engineering                                                      │
-│     • Temporal: hour, day_of_week, month, is_weekend, is_holiday            │
-│     • Lags: t-1, t-2, t-24, t-48, t-168 (1 week)                            │
-│     • Rolling: mean_24h, std_24h, mean_168h, std_168h                       │
-│     • Cyclical: sin/cos encoding for hour and day_of_week                   │
-│     • Weather: temperature, humidity, wind_speed (if available)              │
-│                                                                              │
-│  3. Time-Series Splits                                                       │
-│     • Train: 70% (chronological)                                             │
-│     • Validation: 15%                                                        │
-│     • Test: 15%                                                              │
-│     • Gap: 24h between splits to prevent leakage                             │
-│                                                                              │
-│  Output: data/processed/features.parquet, data/processed/splits/             │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       FORECASTING ENGINE (Layer 2)                           │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Model Types:                                                                │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐              │
-│  │   LightGBM      │  │     LSTM        │  │      TCN        │              │
-│  │   (Primary)     │  │   (Deep Seq)    │  │   (Deep Conv)   │              │
-│  ├─────────────────┤  ├─────────────────┤  ├─────────────────┤              │
-│  │ • 1000 trees    │  │ • 3 layers      │  │ • 4 channels    │              │
-│  │ • lr=0.03       │  │ • 256 hidden    │  │ • kernel=5      │              │
-│  │ • depth=12      │  │ • dropout=0.3   │  │ • dropout=0.3   │              │
-│  │ • leaves=256    │  │ • 100 epochs    │  │ • 100 epochs    │              │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘              │
-│                                                                              │
-│  Targets: load_mw, wind_mw, solar_mw, price_eur_mwh                         │
-│  Horizon: 24 hours                                                           │
-│  Metrics: RMSE, MAE, sMAPE, R², Daylight-MAPE (solar)                       │
-│                                                                              │
-│  Output: artifacts/models/*.txt (GBM), artifacts/models/*.pt (DL)           │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      UNCERTAINTY LAYER (Layer 3)                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Conformal Prediction (ICP + FACI Adaptation):                               │
-│  • Calibration: Compute nonconformity scores on validation set               │
-│  • Prediction: Generate [lower, upper] bounds at α=0.10 (90% coverage)      │
-│  • Adaptation: FACI updates interval width based on recent coverage          │
-│                                                                              │
-│  Per-Horizon Metrics:                                                        │
-│  • PICP: Coverage probability per forecast hour (h1...h24)                   │
-│  • MPIW: Mean interval width per forecast hour                               │
-│                                                                              │
-│  Output: artifacts/uncertainty/*_conformal.json                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      ANOMALY DETECTION (Layer 4)                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Detection Methods:                                                          │
-│  • Residual Z-Score: |residual| > 3σ triggers alert                         │
-│  • Isolation Forest: Multi-feature outlier detection                         │
-│  • Cadence Check: Missing or delayed data points                             │
-│                                                                              │
-│  Actions:                                                                    │
-│  • Flag unreliable intervals for operator review                             │
-│  • Exclude anomalous periods from optimization input                         │
-│  • Log events to reports/anomaly_report.md                                   │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      OPTIMIZATION ENGINE (Layer 5)                           │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Robust Dispatch (DRO via Pyomo + HiGHS):                                    │
-│                                                                              │
-│  Decision Variables:                                                         │
-│  • P_ch[t]: Battery charge power (MW)                                        │
-│  • P_dis[t]: Battery discharge power (MW)                                    │
-│  • G[s,t]: Grid import per scenario (MW)                                     │
-│  • SoC[s,t]: State of charge per scenario (MWh)                              │
-│  • z: Epigraph variable for worst-case cost                                  │
-│                                                                              │
-│  Objective: min z + λ_deg * Σ(P_ch + P_dis)                                  │
-│                                                                              │
-│  Constraints:                                                                │
-│  • Energy balance: P_dis - P_ch + G >= Load - Renewables                    │
-│  • SoC dynamics: SoC[t+1] = SoC[t] + η_ch*P_ch - P_dis/η_dis                │
-│  • Bounds: SoC_min ≤ SoC ≤ SoC_max, 0 ≤ G ≤ G_max                           │
-│  • Scenario coupling: z ≥ cost(lower), z ≥ cost(upper)                       │
-│                                                                              │
-│  Configuration: configs/optimization.yaml                                    │
-│  Output: artifacts/dispatch_plans/*.json                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       EVALUATION LAYER (Layer 6)                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Baseline Comparison:                                                        │
-│  • Grid-Only: No battery, all demand from grid                               │
-│  • Naive Battery: Charge overnight, discharge evening peak                   │
-│                                                                              │
-│  Impact Metrics:                                                             │
-│  • Cost Savings %: (baseline_cost - optimized_cost) / baseline_cost         │
-│  • Carbon Reduction %: Same formula for carbon emissions                     │
-│  • Peak Shaving %: Reduction in max grid import                              │
-│                                                                              │
-│  Stochastic Metrics:                                                         │
-│  • EVPI: Value of perfect load information                                   │
-│  • VSS: Value of robust vs deterministic solution                            │
-│                                                                              │
-│  Output: reports/impact_summary.csv, reports/frozen_metrics_snapshot.json   │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       MONITORING LAYER (Layer 7)                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Data Drift Detection:                                                       │
-│  • Kolmogorov-Smirnov test per feature (p < 0.05 triggers alert)            │
-│  • Population Stability Index (PSI)                                          │
-│                                                                              │
-│  Model Drift Detection:                                                      │
-│  • Rolling RMSE comparison vs calibration baseline                           │
-│  • Alert if degradation > 10%                                                │
-│                                                                              │
-│  DC3S Health Detection:                                                      │
-│  • Intervention rate, low-reliability rate, drift-flag rate, inflation p95  │
-│  • Sustained-window triggering persisted in reports/monitoring_state.json    │
-│                                                                              │
-│  Retraining Triggers:                                                        │
-│  • Scheduled: Weekly full retrain                                            │
-│  • Drift-based: Automatic if KS p-value < threshold                          │
-│  • DC3S-based: intervention spikes, reliability degradation, drift persistence│
-│                                                                              │
-│  Output: reports/monitoring_summary.json, reports/monitoring_report.md      │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        SERVING LAYER (Layer 8)                               │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  FastAPI Backend (services/api/):                                            │
-│  • GET  /health          - Liveness check                                    │
-│  • GET  /ready           - Readiness with model count                        │
-│  • GET  /metrics         - Prometheus metrics                                │
-│  • POST /forecast        - Generate forecast for region/target               │
-│  • POST /optimize        - Run dispatch optimization                         │
-│  • POST /dc3s/step       - Safety-gated dispatch with certificate issuance   │
-│  • GET  /monitor         - Drift + DC3S health + retraining decision         │
-│  • GET  /monitor/dc3s    - DC3S health-only view                             │
-│  • GET  /anomaly/recent  - Recent anomaly events                             │
-│                                                                              │
-│  Next.js 15 Dashboard (frontend/):                                           │
-│  • Overview: KPIs, dispatch chart, model registry                            │
-│  • Forecasting: Forecast vs actual, model comparison                         │
-│  • Optimization: Dispatch plan, battery SOC, cost impact                     │
-│  • Carbon: Emissions breakdown, baseline comparison                          │
-│  • Anomalies: Z-score timeline, event log                                    │
-│  • Monitoring: Drift metrics, active model versions                          │
-│  • Reports: Formal evaluation, publication figures                           │
-│  • Data Explorer: Dataset statistics, time series                            │
-│                                                                              │
-│  Region Toggle: DE / US switch in navigation bar                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+observe → quality-score → drift-detect → RAC-Cert inflate
+       → robust solve → action repair → post-check → certify
 ```
+
+| Stage | Module | Purpose |
+|-------|--------|---------|
+| Observe | `dc3s/state.py` | Ingest telemetry: load, renewables, SoC |
+| Quality score | `dc3s/quality.py` | Detect missing, stale, spike, reorder events → reliability weight w_t |
+| Drift detect | `dc3s/drift.py` | KS stat + EWM online update → drift risk flag |
+| RAC-Cert inflate | `dc3s/rac_cert.py` | Reliability → interval width; conditional conservatism |
+| Robust solve | `optimizer/robust_dispatch.py` | DRO against widened uncertainty set |
+| Action repair | `dc3s/shield.py` | Project infeasible actions onto safe set (SoC, rate bounds) |
+| Post-check | `dc3s/guarantee_checks.py` | SoC feasibility, charge-rate limits, FTIT tube containment |
+| Certify | `dc3s/certificate.py` | Hash-chained per-step certificate with margins and reasons |
+
+### Certificate schema
+
+Each step emits an auditable certificate containing:
+- `certificate_id`, `command_id`, `timestamp`
+- `reliability_weight`, `drift_flag`, `inflation_factor`
+- `proposed_action`, `safe_action`, `was_repaired`
+- `soc_margin_mwh`, `rate_margin_mw`
+- `guarantee_pass` (boolean), `reasons[]`
+- `hash` (SHA-256 chain link)
+
+---
+
+## L7 — IoT · Edge Agent · Streaming
+
+### Edge agent (`iot/edge_agent/`)
+
+- Shadow mode: `shadow_mode=true`, `applied=false` — logs recommendations without actuating
+- Device contract (`iot/DEVICE_CONTRACT.md`): cadence 1 event/h ± 120 s, TTL 30 s, ACK/NACK semantics
+- Authentication: `X-GridPulse-Key` header with read/write scopes
+
+### Streaming consumer (`src/gridpulse/streaming/`)
+
+| Component | Purpose |
+|-----------|---------|
+| Kafka/Redpanda consumer | Ingest JSON telemetry events |
+| Pydantic schema | `OPSDTelemetryEvent` validation |
+| Temporal + range checks | Cadence enforcement, dropout detection, delta outlier checks |
+| Checkpoint | Exactly-once semantics every 200 messages |
+| Sink | DuckDB or Parquet, validated and time-ordered |
+
+### CPSBench-IoT (`src/gridpulse/cpsbench_iot/`)
+
+Repeatable stress-testing under five fault scenarios × five seeds:
+1. `scenarios.generate_episode()` → deterministic `x_true`, faulted `x_obs`, `event_log`
+2. Four baseline adapters: deterministic LP, robust fixed-interval, naive safe-clip, DC³S-wrapped
+3. `metrics.compute_all_metrics()` → forecast, control, and trace metrics
+4. Publication artifacts: `dc3s_main_table.csv`, `dc3s_fault_breakdown.csv`, `calibration_plot.png`
+
+### IoT router surface (`/iot/*`)
+
+| Endpoint | Method | Purpose |
+|----------|:------:|---------|
+| `/iot/telemetry` | POST | Persist telemetry, compute reliability w_t |
+| `/iot/command/next` | GET | Dequeue queued command (or hold) |
+| `/iot/ack` | POST | Persist ACK/NACK linked to command/certificate |
+| `/iot/state` | GET | Latest telemetry + command + ACK |
+| `/iot/audit/{id}` | GET | Certificate retrieval from DC³S audit store |
+| `/iot/control/reset-hold` | POST | Clear timeout hold for a device |
+
+### Closed-loop simulation
+
+```
+telemetry → /iot/telemetry → /dc3s/step(enqueue_iot=true)
+          → /iot/command/next → apply → /iot/ack
+```
+
+Validates command traceability, safety gating, and certificate completeness without changing production endpoint contracts.
+
+---
+
+## L8 — Monitoring · Anomaly Detection · Governance
+
+### Drift detection
+
+| Method | Trigger |
+|--------|---------|
+| Kolmogorov-Smirnov per feature | p < 0.05 |
+| Population Stability Index (PSI) | PSI > threshold |
+| Rolling RMSE vs calibration baseline | degradation > 10% |
+
+### DC³S health
+
+- Intervention rate, low-reliability rate, drift-flag rate, inflation P95
+- Sustained-window triggering (persisted in `reports/monitoring_state.json`)
+
+### Anomaly detection
+
+- Residual z-score: |residual| > 3σ → alert
+- Isolation forest: multi-feature outlier detection
+- Cadence check: missing or delayed data points
+
+### Retraining triggers
+
+| Type | Condition |
+|------|-----------|
+| Scheduled | Weekly full retrain |
+| Drift-based | KS p-value < threshold |
+| DC³S-based | Intervention spikes, reliability degradation, drift persistence |
+
+### Governance
+
+- Release manifests with model hashes and artifact checksums
+- Deployment evidence map: code path → governed artifact → manuscript claim
+- Four validation gates: artifact completeness, metric bounds, evidence map, promotion review
+
+**Output**: `reports/monitoring_summary.json`, `reports/monitoring_report.md`
+
+---
+
+## L9 — Serving Layer (API + Dashboard)
+
+### FastAPI backend (`services/api/`)
+
+| Endpoint | Method | Purpose |
+|----------|:------:|---------|
+| `/health` | GET | Liveness check |
+| `/ready` | GET | Readiness with model count |
+| `/metrics` | GET | Prometheus metrics |
+| `/forecast` | POST | Generate forecast for region/target |
+| `/optimize` | POST | Run dispatch optimization |
+| `/dc3s/step` | POST | Safety-gated dispatch + certificate issuance |
+| `/monitor` | GET | Drift + DC³S health + retrain decision |
+| `/monitor/dc3s` | GET | DC³S health-only view |
+| `/anomaly/recent` | GET | Recent anomaly events |
+
+### Next.js 15 dashboard (`frontend/`)
+
+Eight pages: Overview · Forecasting · Optimization · Carbon · Anomalies · Monitoring · Reports · Data Explorer.  Region toggle (DE / US) in navigation bar.
+
+### Infrastructure
+
+| Mode | Components |
+|------|-----------|
+| `docker-compose.yml` | FastAPI + PostgreSQL + Redis |
+| `docker-compose.streaming.yml` | + Kafka/Redpanda |
+| `docker-compose.full.yml` | + Prometheus + Grafana + frontend |
+| `deploy/k8s/` | K8s manifests with health checks, ConfigMap |
+| `deploy/aws/` | ECS task definitions, EventBridge retrain |
+| `deploy/systemd/` | Bare-metal units with retrain timers |
 
 ---
 
@@ -209,25 +308,28 @@ GridPulse implements a **Level-4 Decision System** architecture where prediction
 
 | Directory | Contents |
 |-----------|----------|
-| `configs/` | YAML configuration for training, optimization, monitoring |
+| `configs/` | YAML configuration for training, optimisation, monitoring |
 | `data/processed/` | Feature-engineered Parquet files |
-| `data/processed/splits/` | Train/val/test splits |
+| `data/processed/splits/` | Train / validation / test splits |
 | `data/dashboard/` | Pre-computed JSON for frontend |
-| `artifacts/models/` | Trained model files (GBM .txt, DL .pt) |
+| `data/audit/` | DuckDB audit stores (IoT loop, certificates) |
+| `artifacts/models/` | Trained model files (GBM `.pkl`, DL `.pt`) |
 | `artifacts/uncertainty/` | Conformal calibration parameters |
-| `artifacts/dispatch_plans/` | Optimization output schedules |
+| `artifacts/dispatch_plans/` | Optimisation output schedules |
+| `artifacts/registry/` | Promoted model copies |
 | `reports/` | Evaluation reports, figures, model cards |
 | `reports/figures/` | Publication-ready plots (300 DPI PNG) |
+| `reports/publication/` | Governed deployment evidence artifacts |
 
 ---
 
 ## Data Contracts
 
-### Feature Store Schema
+### Feature store schema
 ```
 timestamp: datetime64[ns]
 load_mw: float64
-wind_mw: float64  
+wind_mw: float64
 solar_mw: float64
 price_eur_mwh: float64
 hour: int8
@@ -236,10 +338,10 @@ is_weekend: int8
 load_lag_1: float64
 load_lag_24: float64
 load_rolling_mean_24h: float64
-... (98 features for DE, 118 for US)
+… (98 features for DE, 118 for US)
 ```
 
-### Forecast Output Schema
+### Forecast output schema
 ```json
 {
   "timestamp": "2026-02-17T12:00:00Z",
@@ -253,14 +355,14 @@ load_rolling_mean_24h: float64
 }
 ```
 
-### Dispatch Plan Schema
+### Dispatch plan schema
 ```json
 {
   "timestamp": "2026-02-17T12:00:00Z",
-  "battery_charge_mw": [0, 0, 25, ...],
-  "battery_discharge_mw": [15, 20, 0, ...],
-  "grid_import_mw": [42100, 43200, ...],
-  "soc_mwh": [50, 35, 15, 40, ...],
+  "battery_charge_mw": [0, 0, 25],
+  "battery_discharge_mw": [15, 20, 0],
+  "grid_import_mw": [42100, 43200],
+  "soc_mwh": [50, 35, 15, 40],
   "total_cost_eur": 128450.32,
   "feasible": true
 }
@@ -268,78 +370,12 @@ load_rolling_mean_24h: float64
 
 ---
 
-## CPSBench-IoT Benchmark Block
+## Regenerating the architecture diagram
 
-GridPulse now includes a CPSBench-IoT harness under `src/gridpulse/cpsbench_iot/` for repeatable stress-testing of controller behavior under telemetry faults and drift.
+```bash
+.venv/bin/python3 scripts/generate_architecture_diagram.py
+```
 
-### CPSBench Data Flow
-
-1. `scenarios.generate_episode(...)` creates deterministic `x_true`, faulted `x_obs`, and `event_log`.
-2. Baseline adapters execute:
-   - deterministic LP dispatch,
-   - robust fixed-interval dispatch,
-   - naive safe-clip battery rule,
-   - DC3S-wrapped controller.
-3. `metrics.compute_all_metrics(...)` computes forecast, control, and trace metrics.
-4. `runner.run_suite(...)` writes publication outputs to `reports/publication/`.
-
-### CPSBench Publication Artifacts
-
-- `reports/publication/dc3s_main_table.csv`
-- `reports/publication/dc3s_fault_breakdown.csv`
-- `reports/publication/calibration_plot.png`
-- `reports/publication/violation_vs_cost_curve.png`
-- `reports/publication/dc3s_run_summary.json`
-
-Determinism guarantees:
-
-- scenario generator uses local `numpy.random.Generator(seed)`,
-- outputs are sorted by `(scenario, seed, controller)`,
-- CSV float formatting is fixed to `%.6f`.
-
----
-
-## IoT Closed-Loop Block
-
-The closed-loop IoT validation path is additive and runs through in-process FastAPI endpoints.
-
-### Router Surface (`/iot/*`)
-
-- `POST /iot/telemetry`: persists telemetry, computes reliability weight `w_t`, updates device state.
-- `GET /iot/command/next`: dequeues (or peeks) queued command; returns `status=hold` when timeout hold is active.
-- `POST /iot/ack`: persists ACK/NACK linked to command/certificate.
-- `GET /iot/state`: returns latest telemetry + last command + last ACK.
-- `GET /iot/audit/{command_id}`: proxies certificate retrieval from DC3S audit store.
-- `POST /iot/control/reset-hold`: clears timeout hold state for a device.
-
-All `/iot/*` endpoints are API-key scoped (`read`/`write`) via `X-GridPulse-Key`.
-
-### IoT Persistence
-
-Default DuckDB file: `data/audit/iot_loop.duckdb`
-
-Tables:
-
-- `iot_telemetry`
-- `iot_command_queue`
-- `iot_ack`
-- `iot_device_state`
-
-Queue lifecycle extensions:
-
-- queued commands include `expires_at` (TTL, default 30 seconds),
-- stale queued/dispatched commands are marked `timeout`,
-- timeout activates per-device hold (`hold_active`, `hold_reason`, `hold_since_utc`) in state table.
-
-### Closed-Loop Simulation Path
-
-Implemented in `iot/simulator/run_closed_loop.py`:
-
-`telemetry -> /iot/telemetry -> /dc3s/step(enqueue_iot=true) -> /iot/command/next -> apply -> /iot/ack`
-
-`/dc3s/step` now supports additive queue fields:
-
-- request: `enqueue_iot`, `queue_ttl_seconds`
-- response: `queued`, `queue_status`
-
-This path validates command traceability, safety gating, and certificate completeness without changing existing production endpoint contracts.
+Writes:
+- `reports/figures/architecture.png` + `.svg`
+- `paper/assets/figures/fig01_architecture.png` + `.svg`

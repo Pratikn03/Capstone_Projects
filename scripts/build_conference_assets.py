@@ -257,8 +257,9 @@ def build_transfer_generalization(out_dir: Path) -> dict[str, Any]:
 def build_figure_inventory(out_dir: Path) -> dict[str, Any]:
     figures = {
         "architecture": [
-            REPO_ROOT / "reports" / "publication" / "figures" / "fig01_geographic_scope.png",
             REPO_ROOT / "reports" / "figures" / "architecture.png",
+            REPO_ROOT / "paper" / "assets" / "figures" / "fig01_architecture.png",
+            REPO_ROOT / "reports" / "publication" / "figures" / "fig01_geographic_scope.png",
         ],
         "dc3s_runtime_flow": [
             REPO_ROOT / "reports" / "publication" / "figures" / "fig11_dispatch_comparison.png",

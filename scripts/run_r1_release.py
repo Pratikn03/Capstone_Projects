@@ -20,6 +20,7 @@ Usage
     python scripts/run_r1_release.py --stage full     --release-id R1_20260312
     python scripts/run_r1_release.py --stage cpsbench  --release-id R1_20260312
     python scripts/run_r1_release.py --stage verify    --release-id R1_20260312
+    python scripts/run_r1_release.py --stage deployment --release-id R1_20260312
     python scripts/run_r1_release.py --stage promote   --release-id R1_20260312
 """
 from __future__ import annotations
@@ -309,8 +310,22 @@ def stage_verify(release_id: str) -> dict[str, dict]:
     return verification
 
 
+def stage_deployment(release_id: str) -> bool:
+    """Stage 5 – Generate deployment evidence artifacts."""
+    print(f"\n{'═'*60}")
+    print(f"  STAGE 5: DEPLOYMENT EVIDENCE  release={release_id}")
+    print(f"{'═'*60}\n")
+    return _run(
+        [
+            PYTHON_BIN, "scripts/generate_deployment_evidence.py",
+            "--release-id", release_id,
+        ],
+        f"Deployment evidence → reports/runs/deployment/{release_id}/",
+    )
+
+
 def stage_promote(release_id: str) -> bool:
-    """Stage 5 – Promote verified release into canonical paths."""
+    """Stage 6 – Promote verified release into canonical paths."""
     print(f"\n{'═'*60}")
     print(f"  STAGE 5: PROMOTE  release={release_id}")
     print(f"{'═'*60}\n")
@@ -364,7 +379,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="R1 Release Family Orchestrator")
     parser.add_argument(
         "--stage",
-        choices=["diagnostic", "full", "cpsbench", "verify", "promote", "all"],
+        choices=["diagnostic", "full", "cpsbench", "verify", "deployment", "promote", "all"],
         required=True,
     )
     parser.add_argument("--release-id", default=None)
@@ -385,6 +400,8 @@ def main() -> int:
     elif args.stage == "verify":
         result = stage_verify(rid)
         return 0 if all(detail.get("passed", False) for detail in result.values()) else 1
+    elif args.stage == "deployment":
+        return 0 if stage_deployment(rid) else 1
     elif args.stage == "promote":
         return 0 if stage_promote(rid) else 1
     elif args.stage == "all":

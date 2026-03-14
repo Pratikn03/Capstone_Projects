@@ -1,10 +1,11 @@
-\begin{table}[htbp]
+\begin{table*}[htbp]
 \centering
 \small
 \caption{Core training and RAC-Cert hyperparameters.}
 \label{tab:TBL06_HYPERPARAMS}
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.0}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{llll}
 \toprule
 Group & Parameter & Value & Source \\
@@ -32,4 +33,5 @@ regime\_cqr & vol\_window & 24 & configs/uncertainty.yaml \\
 regime\_cqr & quantile\_backend\_policy & strict & configs/uncertainty.yaml \\
 \bottomrule
 \end{tabular}
-\end{table}
+}
+\end{table*}%

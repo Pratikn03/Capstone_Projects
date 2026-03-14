@@ -1,4 +1,4 @@
-\begin{table}[htbp]
+\begin{table*}[htbp]
 \centering
 \small
 \caption{Transfer stress outcomes across DE/US distribution shifts. DC$^3$S maintains zero SoC violations under all transfer scenarios.}
@@ -10,36 +10,42 @@
 \toprule
 Scenario & Controller & PICP@90 & Width (MW) & Viol.\ Rate & Sev.\ P95 (MWh) & Cost $\Delta$\% \\
 \midrule
-DE\_drift\_combo & CVaR & 0.393 & 951.9 & 0.317 & 0.3 & -0.42 \\
-DE\_drift\_combo & \textbf{DC$^3$S} & 0.393 & 1022.9 & \textbf{0.000} & \textbf{0.000} & -0.34 \\
-DE\_drift\_combo & Det.\ LP & 0.393 & 951.9 & 0.083 & 220.5 & +0.00 \\
-DE\_drift\_combo & Robust & 0.770 & 12217.1 & 0.317 & 0.3 & -0.42 \\
+DE\_season\_shift & aci\_conformal & 0.970 & 686.1 & \textbf{0.000} & \textbf{0.000} & +2.68 \\
+DE\_season\_shift & CVaR & 0.947 & 502.9 & 0.172 & 0.2 & -1.41 \\
+DE\_season\_shift & dc3s\_ftit & 0.967 & 816.7 & \textbf{0.000} & \textbf{0.000} & +4.41 \\
+DE\_season\_shift & \textbf{DC$^3$S} & 0.948 & 525.6 & \textbf{0.000} & \textbf{0.000} & +0.50 \\
+DE\_season\_shift & Det.\ LP & 0.947 & 502.9 & 0.067 & 236.0 & +0.00 \\
+DE\_season\_shift & Robust & 0.947 & 502.9 & 0.172 & 0.2 & -1.41 \\
+DE\_season\_shift & scenario\_mpc & 0.997 & 8225.7 & \textbf{0.000} & \textbf{0.000} & -1.41 \\
+DE\_season\_shift & scenario\_robust & 0.978 & 972.3 & \textbf{0.000} & \textbf{0.000} & -1.41 \\
 \midrule
-US\_drift\_combo & CVaR & 0.468 & 951.9 & 0.317 & 0.3 & -2.33 \\
-US\_drift\_combo & \textbf{DC$^3$S} & 0.480 & 1022.6 & \textbf{0.000} & \textbf{0.000} & -2.04 \\
-US\_drift\_combo & Det.\ LP & 0.468 & 951.9 & 0.079 & 229.1 & +0.00 \\
-US\_drift\_combo & Robust & 0.782 & 3540.8 & 0.317 & 0.3 & -2.33 \\
+DE\_to\_US\_no\_retrain & aci\_conformal & 0.970 & 760.0 & \textbf{0.000} & \textbf{0.000} & +2.28 \\
+DE\_to\_US\_no\_retrain & CVaR & 0.947 & 502.9 & 0.149 & 0.1 & -1.09 \\
+DE\_to\_US\_no\_retrain & dc3s\_ftit & 0.965 & 862.1 & \textbf{0.000} & \textbf{0.000} & +2.71 \\
+DE\_to\_US\_no\_retrain & \textbf{DC$^3$S} & 0.947 & 525.3 & \textbf{0.000} & \textbf{0.000} & -0.32 \\
+DE\_to\_US\_no\_retrain & Det.\ LP & 0.947 & 502.9 & 0.057 & 255.1 & +0.00 \\
+DE\_to\_US\_no\_retrain & Robust & 0.947 & 502.9 & 0.149 & 0.1 & -1.09 \\
+DE\_to\_US\_no\_retrain & scenario\_mpc & 0.997 & 9429.7 & \textbf{0.000} & \textbf{0.000} & -1.09 \\
+DE\_to\_US\_no\_retrain & scenario\_robust & 0.980 & 1085.9 & \textbf{0.000} & \textbf{0.000} & -1.09 \\
 \midrule
-DE\_nominal\_baseline & CVaR & 1.000 & 951.9 & 0.290 & 0.3 & -0.43 \\
-DE\_nominal\_baseline & \textbf{DC$^3$S} & 1.000 & 952.2 & \textbf{0.000} & \textbf{0.000} & +1.90 \\
-DE\_nominal\_baseline & Det.\ LP & 1.000 & 951.9 & 0.111 & 186.7 & +0.00 \\
-DE\_nominal\_baseline & Robust & 1.000 & 12002.4 & 0.290 & 0.3 & -0.43 \\
+US\_season\_shift & aci\_conformal & 0.970 & 654.6 & \textbf{0.000} & \textbf{0.000} & +2.70 \\
+US\_season\_shift & CVaR & 0.948 & 502.9 & 0.296 & 152.4 & -1.44 \\
+US\_season\_shift & dc3s\_ftit & 0.964 & 772.5 & \textbf{0.000} & \textbf{0.000} & +5.01 \\
+US\_season\_shift & \textbf{DC$^3$S} & 0.949 & 525.8 & \textbf{0.000} & \textbf{0.000} & +0.01 \\
+US\_season\_shift & Det.\ LP & 0.948 & 502.9 & 0.088 & 257.9 & +0.00 \\
+US\_season\_shift & Robust & 0.948 & 502.9 & 0.296 & 152.4 & -1.44 \\
+US\_season\_shift & scenario\_mpc & 0.997 & 7751.9 & \textbf{0.000} & \textbf{0.000} & -1.02 \\
+US\_season\_shift & scenario\_robust & 0.979 & 910.1 & \textbf{0.000} & \textbf{0.000} & -1.02 \\
 \midrule
-US\_nominal\_baseline & CVaR & 1.000 & 951.9 & 0.290 & 0.3 & -1.85 \\
-US\_nominal\_baseline & \textbf{DC$^3$S} & 1.000 & 952.2 & \textbf{0.000} & \textbf{0.000} & +6.74 \\
-US\_nominal\_baseline & Det.\ LP & 1.000 & 951.9 & 0.115 & 184.8 & +0.00 \\
-US\_nominal\_baseline & Robust & 1.000 & 3480.7 & 0.290 & 0.3 & -1.85 \\
-\midrule
-DE\_dropout & CVaR & 0.937 & 951.9 & 0.337 & 0.3 & -0.42 \\
-DE\_dropout & \textbf{DC$^3$S} & 0.937 & 966.2 & \textbf{0.000} & \textbf{0.000} & +0.56 \\
-DE\_dropout & Det.\ LP & 0.937 & 951.9 & 0.131 & 220.7 & +0.00 \\
-DE\_dropout & Robust & 1.000 & 11997.6 & 0.337 & 0.3 & -0.42 \\
-\midrule
-US\_dropout & CVaR & 0.980 & 951.9 & 0.337 & 0.3 & -1.80 \\
-US\_dropout & \textbf{DC$^3$S} & 0.984 & 966.2 & \textbf{0.000} & \textbf{0.000} & +1.83 \\
-US\_dropout & Det.\ LP & 0.980 & 951.9 & 0.131 & 223.9 & +0.00 \\
-US\_dropout & Robust & 1.000 & 3479.3 & 0.337 & 0.3 & -1.80 \\
+US\_to\_DE\_no\_retrain & aci\_conformal & 0.970 & 572.0 & \textbf{0.000} & \textbf{0.000} & +3.88 \\
+US\_to\_DE\_no\_retrain & CVaR & 0.949 & 502.9 & 0.179 & 304.6 & -1.71 \\
+US\_to\_DE\_no\_retrain & dc3s\_ftit & 0.963 & 685.2 & \textbf{0.000} & \textbf{0.000} & +6.90 \\
+US\_to\_DE\_no\_retrain & \textbf{DC$^3$S} & 0.949 & 525.8 & \textbf{0.000} & \textbf{0.000} & +0.37 \\
+US\_to\_DE\_no\_retrain & Det.\ LP & 0.949 & 502.9 & 0.077 & 432.4 & +0.00 \\
+US\_to\_DE\_no\_retrain & Robust & 0.949 & 502.9 & 0.179 & 304.6 & -1.71 \\
+US\_to\_DE\_no\_retrain & scenario\_mpc & 0.997 & 6731.1 & \textbf{0.000} & \textbf{0.000} & -0.67 \\
+US\_to\_DE\_no\_retrain & scenario\_robust & 0.982 & 792.9 & \textbf{0.000} & \textbf{0.000} & -0.67 \\
 \bottomrule
 \end{tabular}
 }
-\end{table}
+\end{table*}

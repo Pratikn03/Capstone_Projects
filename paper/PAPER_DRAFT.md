@@ -12,10 +12,18 @@ Conformal Prediction, Battery Dispatch, Safety Shield, Telemetry Reliability, Ro
 
 ## 1. Introduction
 
-### 1.1 Operational Motivation
-Grid-scale battery dispatch is driven by mixed telemetry — delayed SCADA measurements, stale sensor feeds, packet reordering, spikes, and dropouts are ordinary operating conditions, not edge cases. The critical consequence is one that the existing BESS dispatch literature has not measured: **a controller can be observationally safe (feasible on degraded observed state) while physically unsafe (violating true battery limits) at the same time.** This hidden safety failure is not a theoretical concern — we measure it at 3.9% violation rate and 333 MWh P95 severity on real grid data.
+Grid-scale battery energy storage systems (BESS) are increasingly central to grid decarbonization, load balancing, and frequency regulation. Their effective deployment depends on dispatch controllers that decide, at each time step, how much power to charge or discharge based on forecasted load, renewable generation, and electricity prices. The prevailing assumption in the dispatch literature is that the controller observes the true state of the battery — its state of charge (SOC), power output, and degradation level — and can therefore verify constraint satisfaction in real time. This assumption is wrong.
 
-GridPulse is a closed dispatch loop — Forecast → Optimize → Dispatch → Measure → Monitor — and DC3S closes the safety gap at the uncertainty-to-control boundary.
+In practice, grid-scale battery dispatch is driven by mixed telemetry — delayed SCADA measurements, stale sensor feeds, packet reordering, spikes, and dropouts are ordinary operating conditions, not edge cases. The critical consequence is one that the existing BESS dispatch literature has not measured: **a controller can be observationally safe (feasible on degraded observed state) while physically unsafe (violating true battery limits) at the same time.** This hidden safety failure is not a theoretical concern — we measure it at 3.9% violation rate and 333 MWh P95 severity on real grid data.
+
+The core insight of this work is that the measurement channel between the physical battery and the dispatch controller is not a passive conduit — it is an active source of safety risk. When telemetry degrades, the controller's model of the world diverges from reality. Standard robust optimization addresses uncertainty in *future* load and generation scenarios, but it cannot correct for uncertainty in *current* state measurement. This observation motivates a fundamentally different approach: treating telemetry reliability as a first-class input to the controller's uncertainty calibration and safety machinery.
+
+DC3S (Degradation-Conditioned Conformal Dispatch Safety Shield) is a response to this specific failure mode. Rather than treating telemetry quality as a peripheral monitoring variable, we treat it as a first-class input to uncertainty calibration and safe control. The controller widens uncertainty sets when reliability deteriorates, solves against the widened sets, repairs unsafe candidate actions, and emits a step-level audit record — all within a single online control cycle. The design philosophy is *conditional conservatism*: the shield should be as permissive as measurement quality allows and as conservative as measurement quality demands.
+
+### 1.1 Operational Motivation
+GridPulse is a closed dispatch loop — Forecast → Optimize → Dispatch → Measure → Monitor. Each stage depends on information from the previous one, and the quality of that information degrades as it passes through physical sensor networks, communication links, and data aggregation pipelines. The hidden safety gap lives at the Optimize→Dispatch boundary: the optimizer computes a mathematically optimal action based on forecasts and observed state, but what reaches the physical battery may be optimal for the *wrong* state if the telemetry feeding the optimizer has drifted from reality.
+
+A forecasting model can have strong RMSE while still inducing unsafe dispatch if its interval calibration weakens under degraded measurements and no shield exists between the optimizer and the physical battery. The problem is not that the forecast is bad — it is that the forecast is *evaluated* and *calibrated* under assumptions about telemetry quality that may not hold at runtime. DC3S closes that gap by making the controller aware of when those assumptions break down.
 
 ### 1.2 Research Questions
 1. How large is the gap between observed-state safety and true-state safety in battery dispatch under realistic telemetry faults, and is it consistent across regions?
@@ -167,7 +175,15 @@ For comparison, the experiments also include a CVaR baseline using the standard 
 ### 6.3 Action Repair
 If the optimizer proposes an action that violates SOC, power, or ramp constraints, DC3S projects it back into the feasible set. This step is what turns a risk-aware optimizer into a safe controller.
 
-### 6.4 Certificate Emission and Audit
+### 6.4 Post-Repair Guarantee Checks
+Projection is not the final runtime guard. After repair, DC3S evaluates a deterministic guarantee layer before the action can be certified or queued for execution. The implemented checks enforce three one-step invariants:
+1. no simultaneous charge and discharge
+2. power bounds remain satisfied
+3. the implied next SOC remains inside the admissible envelope
+
+These checks do not define a second controller and do not re-optimize the action. They are a runtime correctness layer that validates the repaired action against explicit physical invariants and records pass/fail reasons for audit.
+
+### 6.5 Certificate Emission and Audit
 Each step emits a certificate containing:
 1. time index
 2. reliability score
@@ -178,9 +194,9 @@ Each step emits a certificate containing:
 7. observed SOC
 8. distance to the nearest active constraint
 
-This certificate chain is what makes the shield auditable rather than merely conservative.
+The persisted payload also carries model/config hashes, intervention reasons, guarantee-check status, and FTIT tube state. This certificate chain is what makes the shield auditable rather than merely conservative.
 
-### 6.5 One-Step Runtime Flow
+### 6.6 One-Step Runtime Flow
 The runtime order is:
 1. observe telemetry
 2. score reliability
@@ -270,7 +286,15 @@ The ablation shows that:
 Calibration is mixed rather than uniformly strong. Wind high-volatility coverage is near nominal, while solar high-volatility coverage remains below target. This is an explicit negative finding and one reason the shield needs to adapt interval width at runtime.
 
 ### 8.5 Transfer and Runtime Behavior
-Transfer experiments show that safety is more robust than cost optimality. Runtime overhead remains modest, with reliability scoring, interval inflation, and action repair adding less than 5% to solver wall-clock time.
+Transfer experiments show that safety is more robust than cost optimality. Runtime overhead is governed by the locked latency benchmark (`dc3s_latency_summary.csv`, release `R1_DEPLOY_20260314`): the full DC3S step completes in 0.033 ms mean (0.035 ms P95, 10,000 iterations, single-threaded). At hourly dispatch resolution the shield overhead is negligible.
+
+| Component | Mean (ms) | P95 (ms) |
+| --- | ---: | ---: |
+| Reliability scoring | 0.020 | 0.024 |
+| Drift update (Page-Hinkley) | 0.000 | 0.000 |
+| Uncertainty set build | 0.010 | 0.013 |
+| Action repair (projection) | 0.002 | 0.002 |
+| Full DC3S step | 0.033 | 0.035 |
 
 ## 9. Deep Baseline Diagnosis
 
@@ -321,11 +345,29 @@ The canonical manuscript source is `paper/PAPER_DRAFT.md`. The corresponding LaT
 | Logs + checkpoints | Run IDs, solver outputs, metrics, and locked evidence values | Results and governance |
 | Plotting + publication scripts | Figures, tables, and paper-facing release assets | Results and appendices |
 
+### 11.2.1 Deployment Evidence
+
+Six deployment-facing surfaces are generated as governed artifacts under a single release ID (`R1_DEPLOY_20260314`) and recorded in `deployment_evidence_manifest.json`:
+
+| Surface | Code | Artifact | Paper claim |
+| --- | --- | --- | --- |
+| Latency benchmark | `scripts/benchmark_dc3s_steps.py` | `dc3s_latency_summary.csv` | Runtime profile (§8.5): per-step latency < 1 ms |
+| Streaming validation | `src/gridpulse/streaming/consumer.py` | `streaming_validation_summary.json` | Streaming extension (§13.2): validated ingest path |
+| Step trace | `src/gridpulse/dc3s/{shield,calibration,quality,drift}.py` | `dc3s_step_trace.csv` | Operational trace (§8.6): governed 12-step record |
+| Shadow-mode run | `iot/edge_agent/run_agent.py` | `shadow_mode_summary.json` | IoT deployment (§12): closed-loop shadow validation |
+| Runtime safety contracts | `src/gridpulse/dc3s/coverage_theorem.py` | `coverage_theorem.py` (runtime assertions) | Safety guarantee (§5.7): verify_inflation_geq_one() |
+| Calibration governance | `src/gridpulse/forecasting/uncertainty/reliability_mondrian.py` | `reliability_group_coverage.csv` | Calibration (§8.4): group-conditional coverage audit |
+
+The deployment-evidence stage runs as `python scripts/run_r1_release.py --stage deployment` after the existing `full` and `cpsbench` stages but before promotion. All artifacts are deterministic (fixed seeds) and hash-locked in the release manifest.
+
 ### 11.3 Validation Gates
 The release gates for this thesis are concrete:
 1. `python3 scripts/validate_paper_claims.py`
 2. `python3 scripts/sync_paper_assets.py --check`
 3. title, core numbers, and run IDs must remain aligned across markdown and LaTeX
+4. `python3 scripts/generate_deployment_evidence.py` must produce all six artifact families
+
+The certificate stream also supports lightweight operational health monitoring. In the current implementation, sliding-window summaries of certificate fields are used to track intervention-rate spikes, low-reliability-rate spikes, persistent drift activation, and inflation P95 excursions. Sustained breaches of those thresholds can trigger alerts and feed retraining decisions, making the audit path useful not only for post-hoc forensics but also for online operational triage.
 
 ### 11.4 What Governance Does Not Claim
 The governance layer is scoped to this paper. It does not claim a universal reproducibility framework for ML research. It claims that, for a multi-artifact cyber-physical systems project, automated claim locking is necessary to keep the method story and the evidence story synchronized.
@@ -361,16 +403,31 @@ Construct validity depends on the proxy cost and carbon signals being appropriat
 ### 13.2 Near-Term Future Work
 Near-term work should focus on:
 1. decomposing the US narrative more explicitly into MISO/PJM/ERCOT in the main text
-2. improving under-covered target-regime calibration before dispatch
-3. adding a clean deployment-facing latency/runtime benchmark and a publication-grade case trace showing telemetry degradation, interval widening, action repair, and safe dispatch behavior over time
+2. improving under-covered target-regime calibration before dispatch (the governed reliability-group coverage audit in this release provides the diagnostic baseline for that work)
+3. extending the governed streaming validation to live Kafka/Redpanda operation under realistic latency, out-of-order delivery, and backpressure conditions
+
+**Streaming validation.** The ingest path is validated in this release via a deterministic 168-event replay through the consumer's schema, range, and cadence rules (`streaming_validation_summary.json`, release `R1_DEPLOY_20260314`). All events pass; temporal ordering is monotonic; checkpoint persistence is confirmed. Live-mode validation remains future work.
+
+**Shadow-mode validation.** The edge-agent shadow-mode contract is validated via a governed 24-step closed-loop run (`shadow_mode_summary.json`, release `R1_DEPLOY_20260314`): 24 commands observed, 24 ACKs, 0 NACKs, `applied=false` confirmed on every step, 100% certificate completeness.
+
+**Governed calibration audit.** The reliability-group coverage analysis is promoted into a governed artifact (`reliability_group_coverage.csv/json`, release `R1_DEPLOY_20260314`). The audit partitions calibration samples into 10 quantile bins by reliability score and reports per-bin PICP. This is a diagnostic surface, not a replacement for the locked CQR+RAC-Cert path.
 
 ### 13.3 Longer-Term Future Work
 Longer-term work includes hardware-in-the-loop validation, richer market constraints, conditional-coverage analysis under degradation, and stronger release automation with signed evidence bundles. Those hardware-facing stages remain intentionally deferred beyond the present thesis freeze.
 
 ## 14. Conclusion
-We presented DC3S, a conformal safety shield that integrates telemetry-reliability scoring, adaptive interval inflation (RAC-Cert), robust dispatch, action repair, and per-step certification into a single online loop for battery dispatch under degraded telemetry. Across four fault types and parametric severity sweeps on DE and US data, DC3S achieves zero true-SOC violations while maintaining positive stochastic value in both regions and 7.11% cost savings in DE. The corresponding locked US result is more modest at 0.11% cost savings and 0.00% peak shaving, which the thesis interprets as a regime-analysis problem rather than something to hide.
 
-The practical message is that trustworthy dispatch requires telemetry-aware uncertainty calibration rather than robust optimization over assumed-correct uncertainty sets. The thesis contribution is therefore both operational and methodological: it shows how degraded telemetry can be converted into bounded uncertainty, safe repaired actions, and auditable evidence without overstating the formal theory behind the inflation rule.
+Battery dispatch controllers can appear safe when evaluated on observed state while simultaneously violating physical battery limits on true state — a hidden failure mode that standard evaluation protocols do not expose. This paper quantifies that gap at 3.9% true-SOC violation rate (P95 severity 333 MWh) for deterministic dispatch under realistic telemetry faults, and shows that it is invisible to observed-state evaluation. We introduced CPSBench to make this gap measurable, and DC3S to close it.
+
+**Thesis statement.** The central thesis of this work is that *telemetry reliability must be treated as a first-class input to uncertainty calibration in any safety-critical dispatch system*. The measurement channel between the physical battery and the controller is not a passive pipe — it is an active, time-varying source of epistemic uncertainty that can silently invalidate the controller's safety guarantees. DC3S operationalizes this principle by coupling reliability scoring, conformal interval inflation, robust dispatch, and feasible-set projection into a single online control loop. The result is a controller whose conservatism is proportional to measurement quality: maximally permissive when sensors are healthy, maximally protective when they degrade.
+
+DC3S achieves zero true-SOC violations at a 2.8% intervention rate — the shield is surgically conservative, not blanket conservative. It activates only when telemetry reliability deteriorates, leaving 97.2% of dispatch steps unmodified. Cost-side results confirm that safety and economic performance are not fundamentally at odds: DC3S delivers 7.11% cost savings, 0.30% carbon reduction, and 6.13% peak shaving on the locked DE evaluation, with positive stochastic value in both DE (VSS = 2,708.61) and US (VSS = 297,092.71) regions. US direct gains are modest (0.11% cost, 0.00% peak) — a regime-dependent result that reflects tighter operating margins and compressed arbitrage headroom across the three US balancing authorities, not a failure of the approach.
+
+The promoted six-model forecasting comparison points in one clear direction: GBM remains the strongest operational model under a fair equal-budget protocol on these moderate-sized, feature-rich grid datasets. The practical implication for BESS practitioners is clear: invest in feature engineering before model architecture on data of this type.
+
+**The core message.** Trustworthy grid-scale dispatch requires treating telemetry reliability as a first-class input to uncertainty calibration. The measurement channel is not an implementation detail — it is a safety-critical component. When that channel degrades, the controller's uncertainty model must degrade with it, not remain frozen at calibration-time assumptions. DC3S operationalizes this principle in a single online loop with per-step auditable evidence. The hidden safety gap is real, measurable in software-in-the-loop evaluation, and closeable — validating these findings on physical battery hardware is the natural next step.
+
+**Broader implications.** The observed-state safety illusion is not unique to battery dispatch. Any cyber-physical system where a controller makes decisions based on sensor readings that may lag or drift from physical reality is susceptible to the same class of hidden violations. The DC3S pattern — reliability-conditioned uncertainty inflation followed by feasible-set projection — is transferable to other CPS domains including HVAC dispatch, water treatment, and autonomous vehicle motion planning, wherever measurement uncertainty and safety constraints coexist.
 
 ## 15. References
 1. Vovk, V., Gammerman, A., and Shafer, G. *Algorithmic Learning in a Random World*. Springer, 2005.
@@ -414,6 +471,19 @@ The practical message is that trustworthy dispatch requires telemetry-aware unce
 | `reports/eia930/impact_summary.csv` | Locked US impact values |
 | `reports/research_metrics_de.csv` | DE stochastic summary rows |
 | `reports/research_metrics_us.csv` | US stochastic summary rows |
+
+### Certificate Schema and Audit Chain
+| Field group | Meaning | Audit / safety role |
+|---|---|---|
+| `command_id`, `certificate_id`, `created_at` | Unique dispatch event identity and timestamp | Orders events and anchors step-level traceability |
+| `prev_hash`, `certificate_hash` | Hash-chain linkage across certificates | Makes the audit trail tamper-evident and sequential |
+| `model_hash`, `config_hash` | Hashes of model artifacts and active configuration | Pins each dispatch step to the exact model/config state |
+| `proposed_action`, `safe_action`, `dispatch_plan` | Optimizer output, repaired action, and plan context | Records what the optimizer wanted and what the shield allowed |
+| `reliability`, `drift`, `reliability_w`, `inflation`, `uncertainty` | Telemetry-quality and interval-inflation context | Explains why conservatism changed at that step |
+| `intervened`, `intervention_reason` | Whether repair or fallback occurred and why | Supports intervention-rate analysis and incident diagnosis |
+| `guarantee_checks_passed`, `guarantee_fail_reasons` | Post-repair deterministic invariant results | Verifies that the emitted action satisfies runtime safety checks |
+| `gamma_mw`, `e_t_mwh`, `soc_tube_lower_mwh`, `soc_tube_upper_mwh` | FTIT tube width and tightened SOC envelope | Captures the reliability-conditioned safety margin actually enforced |
+| `true_soc_violation_after_apply`, `assumptions_version` | Post-apply evaluation flag and assumption contract version | Separates runtime decision logging from evaluation semantics |
 
 ## Appendix C. Operational Failure Modes
 | Failure Mode | Trigger | Detection | Mitigation | Fallback |
