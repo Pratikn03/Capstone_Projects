@@ -50,6 +50,7 @@ class LSTMForecaster(nn.Module):
         bidirectional: bool = False,
         attention: bool = False,
         residual: bool = False,
+        n_quantiles: int = 1,
     ):
         """Enhanced LSTM with optional bidirectional, attention, and residual connections.
         
@@ -68,6 +69,8 @@ class LSTMForecaster(nn.Module):
         self.attention = attention
         self.residual = residual
         self.hidden_size = hidden_size
+        self.horizon = int(horizon)
+        self.n_quantiles = max(1, int(n_quantiles))
         
         # Input projection with layer norm
         self.input_proj = nn.Linear(n_features, hidden_size)
@@ -105,7 +108,7 @@ class LSTMForecaster(nn.Module):
             nn.Linear(lstm_out_size, hidden_size),
             nn.GELU(),
             nn.Dropout(dropout),
-            nn.Linear(hidden_size, horizon),
+            nn.Linear(hidden_size, self.horizon * self.n_quantiles),
         )
 
     def forward(self, x):
@@ -133,4 +136,6 @@ class LSTMForecaster(nn.Module):
         # Take last timestep and project to horizon
         last_step = lstm_out[:, -1, :]
         y = self.head(last_step)
+        if self.n_quantiles > 1:
+            return y.view(y.shape[0], self.horizon, self.n_quantiles)
         return y

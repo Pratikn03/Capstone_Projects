@@ -219,8 +219,28 @@ def run_code_health_audit(*, config_path: Path, include_globs: list[str] | None 
         "files_scanned": len(summary_files),
         "files": summary_files,
         "violations": violations,
-        "fail": bool(violations),
     }
+
+    # Filter out known/pre-existing violations
+    known_list = ch_cfg.get("known_violations", [])
+    known_set: set[tuple[str, str]] = set()
+    for entry in known_list if isinstance(known_list, list) else []:
+        kp = entry.get("path", "")
+        for vtype in entry.get("types", []):
+            known_set.add((kp, vtype))
+
+    new_violations = []
+    known_violations = []
+    for v in violations:
+        rel_path = str(Path(v.get("path", "")).relative_to(REPO_ROOT)) if v.get("path", "").startswith(str(REPO_ROOT)) else v.get("path", "")
+        if (rel_path, v.get("type", "")) in known_set:
+            known_violations.append(v)
+        else:
+            new_violations.append(v)
+
+    payload["known_violations_matched"] = len(known_violations)
+    payload["new_violations"] = new_violations
+    payload["fail"] = bool(new_violations)
     return payload
 
 

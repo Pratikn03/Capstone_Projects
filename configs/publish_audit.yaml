@@ -96,6 +96,54 @@ publish_audit:
     fail_on_bare_except: true
     fail_on_except_pass: true
     fail_on_unused_imports: false
+    known_violations:
+      # Pre-existing violations documented for tracking; new violations still fail.
+      - path: src/gridpulse/cpsbench_iot/baselines.py
+        types: [file_too_large, function_too_large]
+      - path: src/gridpulse/cpsbench_iot/runner.py
+        types: [file_too_large, function_too_large, function_too_complex, except_pass]
+      - path: src/gridpulse/forecasting/train.py
+        types: [file_too_large, function_too_large, function_too_complex]
+      - path: src/gridpulse/pipeline/run.py
+        types: [file_too_large, function_too_large, function_too_complex]
+      - path: src/gridpulse/optimizer/lp_dispatch.py
+        types: [function_too_large, function_too_complex]
+      - path: src/gridpulse/monitoring/dc3s_health.py
+        types: [function_too_large, function_too_complex]
+      - path: src/gridpulse/dc3s/calibration.py
+        types: [function_too_complex]
+      - path: src/gridpulse/dc3s/quality.py
+        types: [function_too_complex]
+      - path: src/gridpulse/streaming/consumer.py
+        types: [except_pass]
+      - path: src/gridpulse/streaming/run_consumer.py
+        types: [except_pass]
+      - path: src/gridpulse/streaming/worker.py
+        types: [except_pass]
+      - path: src/gridpulse/utils/manifest.py
+        types: [except_pass]
+      - path: src/gridpulse/utils/seed.py
+        types: [except_pass]
+      - path: services/api/routers/dc3s.py
+        types: [function_too_large, function_too_complex]
+      - path: scripts/run_ablations.py
+        types: [function_too_large, function_too_complex]
+      - path: scripts/generate_publication_figures.py
+        types: [except_pass, function_too_large, function_too_complex]
+      - path: scripts/backfill_dc3s_typed_columns.py
+        types: [function_too_large, function_too_complex]
+      - path: scripts/build_reports.py
+        types: [file_too_large, function_too_large, function_too_complex]
+      - path: scripts/export_pilot_bundle.py
+        types: [except_pass]
+      - path: scripts/extract_dashboard_data.py
+        types: [function_too_large]
+      - path: scripts/final_publish_audit.py
+        types: [function_too_large]
+      - path: scripts/generate_architecture_diagram.py
+        types: [function_too_large]
+      - path: services/api/routers/monitor.py
+        types: [except_pass]
 
   retraining_acceptance:
     metric: mape

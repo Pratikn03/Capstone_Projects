@@ -421,9 +421,9 @@ All randomized experiments use 10 seeds.  Safety comparisons use Wilcoxon signed
 
 \subsection{Forecast Quality Across Model Families}\label{sec:forecast_quality}
 
-\PaperTableCSV{TBL08_FORECAST_BASELINES}{Promoted six-model forecasting comparison. Deep learning baselines evaluate point-forecast performance, confirming GBM's operational dominance in this tabular regime. Conformal uncertainty artifacts (PICP, Width) are materialized exclusively for the production-candidate model (GBM).}
+\PaperTableCSV{TBL08_FORECAST_BASELINES}{Promoted six-model forecasting comparison across DE and US. All six model families (GBM, LSTM, TCN, N-BEATS, TFT, PatchTST) receive CQR-calibrated 90\% conformal prediction intervals. GBM achieves the narrowest intervals due to its superior point-forecast accuracy in this tabular regime.}
 
-The forecasting result surface is now a promoted six-model comparison rather than the older three-model snapshot. The paper-facing table is a condensed DE slice of the full publication matrix, selected because it most clearly shows the ranking in the tabular regime. All six models share one split, horizon, lookback, seed, and metric contract. In the materialized rows, GBM remains the strongest operational model, while the deep baselines lag substantially and only GBM carries production-candidate conformal uncertainty artifacts.
+The promoted forecasting comparison examines all six model families under a shared feature framing and training budget. The paper-facing table shows DE results. GBM dominates on all three targets; deep models lag substantially, confirming the tabular-regime effect. Critically, all six model families now receive CQR-calibrated 90\% conformal prediction intervals from the same held-out calibration split, enabling a fair cross-model UQ comparison. GBM's narrower intervals reflect its superior point-forecast accuracy. Only GBM intervals enter the operational DC\textsuperscript{3}S dispatch pipeline, since GBM is the production-candidate forecaster; deep-model intervals are reported for completeness.
 
 \subsection{Main Result: Safety under Telemetry Faults}\label{sec:main_result}
 

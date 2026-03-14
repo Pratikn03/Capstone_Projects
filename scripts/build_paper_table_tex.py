@@ -88,8 +88,10 @@ def _render_generic_table(token: str, csv_path: Path, title: str) -> str:
 
 def _render_tbl08(token: str, csv_path: Path, title: str) -> str:
     df = pd.read_csv(csv_path, dtype=str).fillna("---")
+    # Normalize column names to be case-insensitive
+    df.columns = [c.strip() for c in df.columns]
     target_order = ["Load", "Wind", "Solar"]
-    model_order = ["GBM", "N-BEATS", "PatchTST", "TFT"]
+    model_order = ["GBM", "LSTM", "TCN", "N-BEATS", "TFT", "PatchTST"]
     filtered = df[
         (df["Region"] == "DE")
         & (df["Target"].isin(target_order))
@@ -162,10 +164,64 @@ def _render_tbl03(token: str, csv_path: Path, title: str) -> str:
 
 
 def _render_tbl04(token: str, csv_path: Path, title: str) -> str:
+    """Render TBL04 transfer-generalization table from the actual publication CSV.
+
+    The CSV has columns: transfer_case, source_artifact, picp_90, mean_width,
+    true_soc_violation_rate, true_soc_violation_severity_p95_mwh, cost_delta_pct.
+    """
     df = pd.read_csv(csv_path, dtype=str).fillna("---")
+    # Normalize column names (strip whitespace)
+    df.columns = [c.strip() for c in df.columns]
+
+    # If the CSV has the expected structure, render a nice table.
+    if "transfer_case" in df.columns and "source_artifact" in df.columns:
+        # Keep a curated subset of columns.
+        display_cols = [
+            "transfer_case",
+            "source_artifact",
+            "picp_90",
+            "mean_width",
+            "true_soc_violation_rate",
+            "true_soc_violation_severity_p95_mwh",
+            "cost_delta_pct",
+        ]
+        display_cols = [c for c in display_cols if c in df.columns]
+        df_disp = df[display_cols].copy()
+        header_map = {
+            "transfer_case": "Transfer Case",
+            "source_artifact": "Controller",
+            "picp_90": "PICP@90",
+            "mean_width": "Width (MW)",
+            "true_soc_violation_rate": "Viol. Rate",
+            "true_soc_violation_severity_p95_mwh": "Sev. P95 (MWh)",
+            "cost_delta_pct": "Cost \\Delta (\\%)",
+        }
+        headers = " & ".join(f"\\textbf{{{header_map.get(c, c)}}}" for c in display_cols) + r" \\"
+        col_spec = "l" * len(display_cols)
+        lines = [
+            r"\setlength{\tabcolsep}{4pt}",
+            r"\renewcommand{\arraystretch}{0.96}",
+            r"\resizebox{\linewidth}{!}{%",
+            rf"\begin{{tabular}}{{{col_spec}}}",
+            r"\toprule",
+            headers,
+            r"\midrule",
+        ]
+        for _, row in df_disp.iterrows():
+            row_cells = " & ".join(_tex_escape(str(row[c])) for c in display_cols)
+            lines.append(row_cells + r" \\")
+        lines.extend([r"\bottomrule", r"\end{tabular}%", r"}"])
+        return _table_wrapper(title=title, label=token, tabular=lines, size=r"\scriptsize")
+
+    # Fallback: the CSV has Region/Stress/Controller structure (older format).
     region_order = ["DE", "US"]
     stress_order = ["Nominal", "Dropout", "Drift combo"]
     controller_order = ["DC3S", "Deterministic"]
+    # Normalize column names case-insensitively.
+    col_map = {c.lower(): c for c in df.columns}
+    for expected in ("Region", "Stress", "Controller"):
+        if expected not in df.columns and expected.lower() in col_map:
+            df = df.rename(columns={col_map[expected.lower()]: expected})
     df["Region"] = pd.Categorical(df["Region"], categories=region_order, ordered=True)
     df["Stress"] = pd.Categorical(df["Stress"], categories=stress_order, ordered=True)
     df["Controller"] = pd.Categorical(df["Controller"], categories=controller_order, ordered=True)
@@ -189,12 +245,13 @@ def _render_tbl04(token: str, csv_path: Path, title: str) -> str:
             controller = r"\textbf{DC3S}"
         lines.append(
             f"{_tex_escape(region)} & {_tex_escape(str(row['Stress']))} & {controller} & "
-            f"{_tex_escape(str(row['PICP@90 (%)']))} & {_tex_escape(str(row['Width (MW)']))} & "
-            f"{_tex_escape(str(row['Viol. Rate (%)']))} & {_tex_escape(str(row['Severity P95 (MWh)']))} & "
-            f"{_tex_escape(str(row['Cost Delta (%)']))} \\\\"
+            f"{_tex_escape(str(row.get('PICP@90 (%)', '---')))} & {_tex_escape(str(row.get('Width (MW)', '---')))} & "
+            f"{_tex_escape(str(row.get('Viol. Rate (%)', '---')))} & {_tex_escape(str(row.get('Severity P95 (MWh)', '---')))} & "
+            f"{_tex_escape(str(row.get('Cost Delta (%)', '---')))} \\\\"
         )
     lines.extend([r"\bottomrule", r"\end{tabular}"])
     return _table_wrapper(title=title, label=token, tabular=lines, size=r"\scriptsize")
+
 
 
 def _render_tbl02(token: str, csv_path: Path, title: str) -> str:

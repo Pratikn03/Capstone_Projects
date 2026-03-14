@@ -16,6 +16,51 @@ from gridpulse.forecasting.dl_tcn import TCNForecaster
 from gridpulse.utils.scaler import StandardScaler
 
 
+def _normalize_quantile_levels(quantiles: Any) -> list[float]:
+    if isinstance(quantiles, list):
+        return [float(q) for q in quantiles]
+    return []
+
+
+def _median_quantile_index(quantile_levels: list[float]) -> int:
+    if not quantile_levels:
+        return 0
+    arr = np.asarray(quantile_levels, dtype=float)
+    return int(np.argmin(np.abs(arr - 0.5)))
+
+
+def _extract_prediction_outputs(
+    pred_seq: np.ndarray,
+    *,
+    horizon: int,
+    quantile_levels: list[float],
+) -> tuple[np.ndarray, dict[str, np.ndarray]]:
+    arr = np.asarray(pred_seq, dtype=float)
+    n_quantiles = len(quantile_levels)
+    if n_quantiles > 1:
+        if arr.ndim == 2:
+            if arr.shape[1] % n_quantiles != 0:
+                raise ValueError(f"Cannot reshape prediction array with shape {arr.shape} into quantiles")
+            arr = arr.reshape(arr.shape[0], -1, n_quantiles)
+        elif arr.ndim != 3:
+            raise ValueError(f"Expected 2D/3D quantile prediction array, got {arr.ndim}D")
+        if arr.shape[-1] != n_quantiles:
+            if arr.shape[1] == n_quantiles:
+                arr = np.transpose(arr, (0, 2, 1))
+            else:
+                raise ValueError(f"Quantile prediction array shape {arr.shape} does not match {n_quantiles} quantiles")
+        arr = np.sort(arr[:, -horizon:, :], axis=-1)
+        median_idx = _median_quantile_index(quantile_levels)
+        point = arr[:, :, median_idx]
+        quantile_map = {str(q): arr[:, :, idx] for idx, q in enumerate(quantile_levels)}
+        return point, quantile_map
+
+    if arr.ndim == 3 and arr.shape[-1] == 1:
+        arr = arr[..., 0]
+    point = arr[:, -horizon:]
+    return point, {}
+
+
 def load_model_bundle(path: str | Path) -> Dict[str, Any]:
     """Load a serialized model bundle (GBM pickle or Torch checkpoint)."""
     path = Path(path)
@@ -38,6 +83,8 @@ def _build_torch_model(bundle: Dict[str, Any]):
     model_type = bundle.get("model_type")
     feat_cols = bundle.get("feature_cols", [])
     params = bundle.get("model_params", {})
+    quantile_levels = _normalize_quantile_levels(bundle.get("quantile_levels"))
+    n_quantiles = max(1, int(bundle.get("n_quantiles", len(quantile_levels) or 1)))
     if model_type == "lstm":
         model = LSTMForecaster(
             n_features=len(feat_cols),
@@ -45,6 +92,10 @@ def _build_torch_model(bundle: Dict[str, Any]):
             num_layers=int(params.get("num_layers", 2)),
             dropout=float(params.get("dropout", 0.1)),
             horizon=int(bundle.get("horizon", params.get("horizon", 24))),
+            bidirectional=bool(params.get("bidirectional", False)),
+            attention=bool(params.get("attention", False)),
+            residual=bool(params.get("residual", False)),
+            n_quantiles=n_quantiles,
         )
     elif model_type == "tcn":
         model = TCNForecaster(
@@ -53,6 +104,9 @@ def _build_torch_model(bundle: Dict[str, Any]):
             kernel_size=int(params.get("kernel_size", 3)),
             dropout=float(params.get("dropout", 0.1)),
             horizon=int(bundle.get("horizon", params.get("horizon", 24))),
+            dilation_base=int(params.get("dilation_base", 2)),
+            use_skip_connections=bool(params.get("use_skip_connections", False)),
+            n_quantiles=n_quantiles,
         )
     elif model_type == "nbeats":
         model = NBEATSForecaster(
@@ -62,6 +116,7 @@ def _build_torch_model(bundle: Dict[str, Any]):
             hidden_dim=int(params.get("hidden_dim", 512)),
             num_blocks=int(params.get("num_blocks", 4)),
             dropout=float(params.get("dropout", 0.1)),
+            n_quantiles=n_quantiles,
         )
     elif model_type == "tft":
         model = TFTForecaster(
@@ -72,6 +127,7 @@ def _build_torch_model(bundle: Dict[str, Any]):
             num_layers=int(params.get("num_layers", 2)),
             dropout=float(params.get("dropout", 0.1)),
             dim_feedforward=int(params.get("dim_feedforward", 256)),
+            n_quantiles=n_quantiles,
         )
     elif model_type == "patchtst":
         model = PatchTSTForecaster(
@@ -85,6 +141,7 @@ def _build_torch_model(bundle: Dict[str, Any]):
             num_layers=int(params.get("num_layers", 2)),
             dropout=float(params.get("dropout", 0.1)),
             dim_feedforward=int(params.get("dim_feedforward", 256)),
+            n_quantiles=n_quantiles,
         )
     else:
         raise ValueError(f"Unknown torch model_type: {model_type}")
@@ -143,22 +200,39 @@ def predict_next_24h(features_df: pd.DataFrame, model_bundle: Dict[str, Any], ho
             raise ValueError("Not enough rows in features_df for sequence lookback")
         X = _maybe_scale_X(X, model_bundle)
         model = _build_torch_model(model_bundle)
+        quantile_levels = _normalize_quantile_levels(model_bundle.get("quantile_levels"))
         with torch.no_grad():
             xb = torch.from_numpy(X[-lookback:].astype(np.float32)).unsqueeze(0)
-            pred_seq = model(xb).numpy()[0]
-            pred = pred_seq[-horizon:]
+            pred_seq = model(xb).numpy()
+            pred_arr, quantile_arrs = _extract_prediction_outputs(
+                pred_seq,
+                horizon=horizon,
+                quantile_levels=quantile_levels,
+            )
+            pred = pred_arr[0]
         pred = _maybe_inverse_y(pred, model_bundle)
+        if quantile_arrs:
+            quantile_preds = {
+                str(q): _maybe_inverse_y(values[0], model_bundle).tolist()
+                for q, values in quantile_arrs.items()
+            }
+        else:
+            quantile_preds = {}
     else:
         raise ValueError(f"Unknown model_type: {model_type}")
 
     # Prefer explicit quantile models when available; otherwise use residual offsets.
-    quantile_preds: dict[str, list[float]] = {}
-    quantile_models = model_bundle.get("quantile_models")
-    if quantile_models:
-        for q, q_model in quantile_models.items():
-            q_pred = q_model.predict(X[-horizon:])
-            quantile_preds[str(q)] = q_pred.tolist()
-    else:
+    if model_type == "gbm":
+        quantile_preds = {}
+        quantile_models = model_bundle.get("quantile_models")
+        if quantile_models:
+            for q, q_model in quantile_models.items():
+                q_pred = q_model.predict(X[-horizon:])
+                quantile_preds[str(q)] = q_pred.tolist()
+        else:
+            quantiles = model_bundle.get("residual_quantiles", {})
+            quantile_preds = {str(q): (pred + float(delta)).tolist() for q, delta in quantiles.items()}
+    elif not quantile_preds:
         quantiles = model_bundle.get("residual_quantiles", {})
         quantile_preds = {str(q): (pred + float(delta)).tolist() for q, delta in quantiles.items()}
 

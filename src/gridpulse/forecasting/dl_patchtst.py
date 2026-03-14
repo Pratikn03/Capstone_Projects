@@ -20,10 +20,12 @@ class PatchTSTForecaster(nn.Module):
         num_layers: int = 2,
         dropout: float = 0.1,
         dim_feedforward: int = 256,
+        n_quantiles: int = 1,
     ) -> None:
         super().__init__()
         self.lookback = int(lookback)
         self.horizon = int(horizon)
+        self.n_quantiles = max(1, int(n_quantiles))
         self.patch_len = max(1, int(patch_len))
         self.stride = max(1, int(stride))
         n_patches = max(1, math.floor((self.lookback - self.patch_len) / self.stride) + 1)
@@ -45,7 +47,7 @@ class PatchTSTForecaster(nn.Module):
             nn.Linear(d_model, d_model),
             nn.GELU(),
             nn.Dropout(dropout),
-            nn.Linear(d_model, horizon),
+            nn.Linear(d_model, self.horizon * self.n_quantiles),
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -59,4 +61,7 @@ class PatchTSTForecaster(nn.Module):
         pos = self.pos_embed[:, : h.shape[1], :]
         h = self.encoder(h + pos)
         pooled = h.mean(dim=1)
-        return self.head(pooled)
+        output = self.head(pooled)
+        if self.n_quantiles > 1:
+            return output.view(output.shape[0], self.horizon, self.n_quantiles)
+        return output

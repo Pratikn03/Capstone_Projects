@@ -80,18 +80,18 @@
         "drift": false
       },
       "is_holiday": {
-        "ks_stat": 0.023678368823481066,
-        "p_value": 0.999963816607781,
+        "ks_stat": 0.0,
+        "p_value": 1.0,
         "drift": false
       },
       "is_pre_holiday": {
-        "ks_stat": 0.023678368823481066,
-        "p_value": 0.999963816607781,
+        "ks_stat": 0.0,
+        "p_value": 1.0,
         "drift": false
       },
       "is_post_holiday": {
-        "ks_stat": 0.023678368823481066,
-        "p_value": 0.999963816607781,
+        "ks_stat": 0.0,
+        "p_value": 1.0,
         "drift": false
       },
       "carbon_kg_per_mwh": {
@@ -282,44 +282,38 @@
       "rmse": 305.1209624375309,
       "mape": 0.003911572495132256
     },
-    "baseline_mape": 0.003932067586089694,
+    "baseline_mape": 0.003911572495132256,
     "decision": {
       "drift": false,
-      "ratio": -0.005212293661976448
+      "ratio": 0.0
     }
   },
   "retraining": {
     "retrain": true,
     "reasons": [
-      "data_drift",
-      "dc3s_intervention_spike"
+      "data_drift"
     ],
-    "last_trained_days_ago": 6
+    "last_trained_days_ago": 24
   },
   "dc3s_health": {
     "window_hours": 24,
-    "commands_total": 257,
+    "commands_total": 44,
     "intervention_rate": 1.0,
-    "low_reliability_rate": 0.03501945525291829,
+    "low_reliability_rate": 0.0,
     "drift_flag_rate": 0.0,
     "inflation_p95": 1.0,
-    "triggered_flags": [
-      "intervention_rate"
-    ],
-    "triggered": true,
-    "insufficient_data": false,
+    "triggered_flags": [],
+    "triggered": false,
+    "insufficient_data": true,
     "sustained_windows": 3,
     "sustained_breach_counts": {
-      "intervention_rate": 12,
+      "intervention_rate": 0,
       "low_reliability_rate": 0,
       "drift_flag_rate": 0,
       "inflation_p95": 0
     },
     "top_intervention_reasons": [
       "projection_clip"
-    ],
-    "raw_breach_flags": [
-      "intervention_rate"
     ]
   }
 }

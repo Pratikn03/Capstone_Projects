@@ -55,9 +55,12 @@ def print_section(title: str) -> None:
     print(f"{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.RESET}\n")
 
 
+_DL_MODEL_KEYS = {"lstm", "tcn", "nbeats", "tft", "patchtst"}
+
+
 class ArtifactChecker:
     """Validates training artifacts and reports."""
-    
+
     def __init__(self, verbose: bool = False):
         self.verbose = verbose
         self.errors: list[str] = []
@@ -223,31 +226,93 @@ class ArtifactChecker:
         uncertainty_dir: Path,
         backtests_dir: Path,
         targets: list[str],
+        model_types: list[str],
     ) -> None:
-        """Check conformal prediction artifacts."""
+        """Check conformal prediction artifacts.
+
+        For the GBM model (required), checks both the per-model
+        ``gbm_{target}_conformal.json`` and the legacy ``{target}_conformal.json``.
+        For deep-learning models (optional, only present when a model was enabled
+        in the training run), missing artifacts produce warnings rather than errors.
+        """
         print_section("Conformal Prediction Artifacts")
-        
+
+        expected_model_keys = sorted({self._report_key_for_model_type(mt) for mt in model_types})
+        dl_keys = [k for k in expected_model_keys if k not in {"gbm"}]
+
         for target in targets:
-            # Conformal interval JSON
-            conf_path = uncertainty_dir / f"{target}_conformal.json"
-            self.check_json_valid(conf_path, f"Conformal {target}", ["config", "meta"])
-            
-            # Calibration and test NPZ files
+            # ------------------------------------------------------------------
+            # GBM per-model conformal JSON (required — hard fail on missing).
+            # ------------------------------------------------------------------
+            gbm_conf = uncertainty_dir / f"gbm_{target}_conformal.json"
+            if gbm_conf.exists():
+                self.check_json_valid(gbm_conf, f"GBM conformal {target}", ["config", "meta"])
+            else:
+                # Fallback to legacy name before failing.
+                legacy_conf = uncertainty_dir / f"{target}_conformal.json"
+                if legacy_conf.exists():
+                    self.check_json_valid(legacy_conf, f"GBM conformal {target} (legacy)", ["config", "meta"])
+                else:
+                    self._fail(f"Missing GBM conformal JSON for target '{target}': {gbm_conf}")
+
+            # GBM NPZ pairs (required).
             for suffix in ("calibration", "test"):
-                npz_path = backtests_dir / f"{target}_{suffix}.npz"
+                # Accept either namespaced or legacy path.
+                npz_namespaced = backtests_dir / f"gbm_{target}_{suffix}.npz"
+                npz_legacy = backtests_dir / f"{target}_{suffix}.npz"
+                npz_path = npz_namespaced if npz_namespaced.exists() else npz_legacy
                 if npz_path.exists():
                     try:
                         data = np.load(npz_path)
-                        required_arrays = {"y_true", "y_pred"} if "y_pred" in data.files else {"y_true", "q_lo", "q_hi"}
-                        if required_arrays.issubset(set(data.files)):
-                            print_ok(f"{suffix.title()} data {target}: {npz_path}")
+                        required = {"y_true", "y_pred"} if "y_pred" in data.files else {"y_true", "q_lo", "q_hi"}
+                        if required.issubset(set(data.files)):
+                            print_ok(f"GBM {suffix} NPZ {target}: {npz_path}")
                             self.checks_passed += 1
                         else:
-                            self._fail(f"{suffix.title()} NPZ missing arrays {sorted(required_arrays)}: {npz_path}")
+                            self._fail(f"GBM {suffix} NPZ missing arrays {sorted(required)}: {npz_path}")
                     except Exception as e:
-                        self._fail(f"Invalid NPZ {npz_path}: {e}")
+                        self._fail(f"Invalid GBM NPZ {npz_path}: {e}")
                 else:
-                    self._fail(f"Missing {suffix} NPZ for target '{target}': {npz_path}")
+                    self._fail(f"Missing GBM {suffix} NPZ for target '{target}': {npz_legacy}")
+
+            # ------------------------------------------------------------------
+            # DL model conformal artifacts (optional — warn on missing).
+            # ------------------------------------------------------------------
+            for model_key in dl_keys:
+                dl_conf = uncertainty_dir / f"{model_key}_{target}_conformal.json"
+                if dl_conf.exists():
+                    self.check_json_valid(dl_conf, f"{model_key.upper()} conformal {target}", ["config", "meta"])
+                    for suffix in ("calibration", "test"):
+                        npz_path = backtests_dir / f"{model_key}_{target}_{suffix}.npz"
+                        if npz_path.exists():
+                            try:
+                                data = np.load(npz_path)
+                                required = (
+                                    {"y_true", "y_pred"} if "y_pred" in data.files
+                                    else {"y_true", "q_lo", "q_hi"}
+                                )
+                                if required.issubset(set(data.files)):
+                                    print_ok(f"{model_key.upper()} {suffix} NPZ {target}: {npz_path}")
+                                    self.checks_passed += 1
+                                else:
+                                    self._fail(
+                                        f"{model_key.upper()} {suffix} NPZ missing arrays "
+                                        f"{sorted(required)}: {npz_path}"
+                                    )
+                            except Exception as e:
+                                self._fail(f"Invalid {model_key.upper()} NPZ {npz_path}: {e}")
+                        else:
+                            print_warn(
+                                f"{model_key.upper()} {suffix} NPZ not found for '{target}' (optional): {npz_path}"
+                            )
+                            self.warnings.append(f"Missing {model_key} {suffix} NPZ for {target}")
+                else:
+                    print_warn(
+                        f"{model_key.upper()} conformal JSON not found for '{target}' (optional, "
+                        f"only produced when model is enabled): {dl_conf}"
+                    )
+                    self.warnings.append(f"Missing {model_key} conformal artifact for {target}")
+
     
     def verify_training_run(
         self,
@@ -303,6 +368,7 @@ class ArtifactChecker:
             uncertainty_dir=uncertainty_dir,
             backtests_dir=backtests_dir,
             targets=uncertainty_targets,
+            model_types=model_types,
         )
         
         # Check manifests

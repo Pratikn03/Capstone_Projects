@@ -89,7 +89,7 @@ def test_render_special_tables_are_compact(tmp_path: Path) -> None:
         ]
     ).to_csv(tbl08_csv, index=False)
     tbl08_tex = paper_tables.render_table_tex("TBL08_FORECAST_BASELINES", tbl08_csv, "Forecast")
-    assert r"\resizebox{\linewidth}{!}" in tbl08_tex
+    assert r"\scriptsize" in tbl08_tex
     assert "NaN" not in tbl08_tex
 
     tbl02_csv = tmp_path / "tbl02.csv"

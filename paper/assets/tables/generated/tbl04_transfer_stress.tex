@@ -1,51 +1,48 @@
-\begin{table*}[htbp]
+\begin{table}[htbp]
 \centering
-\small
-\caption{Transfer stress outcomes across DE/US distribution shifts. DC$^3$S maintains zero SoC violations under all transfer scenarios.}
+\scriptsize
+\caption{Compact DE/US transfer-generalization summary from current publication artifacts.}
 \label{tab:TBL04_TRANSFER_STRESS}
-\setlength{\tabcolsep}{3.5pt}
-\renewcommand{\arraystretch}{1.0}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.96}
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{llrrrrr}
+\begin{tabular}{lllllll}
 \toprule
-Scenario & Controller & PICP@90 & Width (MW) & Viol.\ Rate & Sev.\ P95 (MWh) & Cost $\Delta$\% \\
+\textbf{Transfer Case} & \textbf{Controller} & \textbf{PICP@90} & \textbf{Width (MW)} & \textbf{Viol. Rate} & \textbf{Sev. P95 (MWh)} & \textbf{Cost \Delta (\%)} \\
 \midrule
-DE\_season\_shift & aci\_conformal & 0.970 & 686.1 & \textbf{0.000} & \textbf{0.000} & +2.68 \\
-DE\_season\_shift & CVaR & 0.947 & 502.9 & 0.172 & 0.2 & -1.41 \\
-DE\_season\_shift & dc3s\_ftit & 0.967 & 816.7 & \textbf{0.000} & \textbf{0.000} & +4.41 \\
-DE\_season\_shift & \textbf{DC$^3$S} & 0.948 & 525.6 & \textbf{0.000} & \textbf{0.000} & +0.50 \\
-DE\_season\_shift & Det.\ LP & 0.947 & 502.9 & 0.067 & 236.0 & +0.00 \\
-DE\_season\_shift & Robust & 0.947 & 502.9 & 0.172 & 0.2 & -1.41 \\
-DE\_season\_shift & scenario\_mpc & 0.997 & 8225.7 & \textbf{0.000} & \textbf{0.000} & -1.41 \\
-DE\_season\_shift & scenario\_robust & 0.978 & 972.3 & \textbf{0.000} & \textbf{0.000} & -1.41 \\
-\midrule
-DE\_to\_US\_no\_retrain & aci\_conformal & 0.970 & 760.0 & \textbf{0.000} & \textbf{0.000} & +2.28 \\
-DE\_to\_US\_no\_retrain & CVaR & 0.947 & 502.9 & 0.149 & 0.1 & -1.09 \\
-DE\_to\_US\_no\_retrain & dc3s\_ftit & 0.965 & 862.1 & \textbf{0.000} & \textbf{0.000} & +2.71 \\
-DE\_to\_US\_no\_retrain & \textbf{DC$^3$S} & 0.947 & 525.3 & \textbf{0.000} & \textbf{0.000} & -0.32 \\
-DE\_to\_US\_no\_retrain & Det.\ LP & 0.947 & 502.9 & 0.057 & 255.1 & +0.00 \\
-DE\_to\_US\_no\_retrain & Robust & 0.947 & 502.9 & 0.149 & 0.1 & -1.09 \\
-DE\_to\_US\_no\_retrain & scenario\_mpc & 0.997 & 9429.7 & \textbf{0.000} & \textbf{0.000} & -1.09 \\
-DE\_to\_US\_no\_retrain & scenario\_robust & 0.980 & 1085.9 & \textbf{0.000} & \textbf{0.000} & -1.09 \\
-\midrule
-US\_season\_shift & aci\_conformal & 0.970 & 654.6 & \textbf{0.000} & \textbf{0.000} & +2.70 \\
-US\_season\_shift & CVaR & 0.948 & 502.9 & 0.296 & 152.4 & -1.44 \\
-US\_season\_shift & dc3s\_ftit & 0.964 & 772.5 & \textbf{0.000} & \textbf{0.000} & +5.01 \\
-US\_season\_shift & \textbf{DC$^3$S} & 0.949 & 525.8 & \textbf{0.000} & \textbf{0.000} & +0.01 \\
-US\_season\_shift & Det.\ LP & 0.948 & 502.9 & 0.088 & 257.9 & +0.00 \\
-US\_season\_shift & Robust & 0.948 & 502.9 & 0.296 & 152.4 & -1.44 \\
-US\_season\_shift & scenario\_mpc & 0.997 & 7751.9 & \textbf{0.000} & \textbf{0.000} & -1.02 \\
-US\_season\_shift & scenario\_robust & 0.979 & 910.1 & \textbf{0.000} & \textbf{0.000} & -1.02 \\
-\midrule
-US\_to\_DE\_no\_retrain & aci\_conformal & 0.970 & 572.0 & \textbf{0.000} & \textbf{0.000} & +3.88 \\
-US\_to\_DE\_no\_retrain & CVaR & 0.949 & 502.9 & 0.179 & 304.6 & -1.71 \\
-US\_to\_DE\_no\_retrain & dc3s\_ftit & 0.963 & 685.2 & \textbf{0.000} & \textbf{0.000} & +6.90 \\
-US\_to\_DE\_no\_retrain & \textbf{DC$^3$S} & 0.949 & 525.8 & \textbf{0.000} & \textbf{0.000} & +0.37 \\
-US\_to\_DE\_no\_retrain & Det.\ LP & 0.949 & 502.9 & 0.077 & 432.4 & +0.00 \\
-US\_to\_DE\_no\_retrain & Robust & 0.949 & 502.9 & 0.179 & 304.6 & -1.71 \\
-US\_to\_DE\_no\_retrain & scenario\_mpc & 0.997 & 6731.1 & \textbf{0.000} & \textbf{0.000} & -0.67 \\
-US\_to\_DE\_no\_retrain & scenario\_robust & 0.982 & 792.9 & \textbf{0.000} & \textbf{0.000} & -0.67 \\
+DE\_season\_shift & aci\_conformal & 0.969792 & 686.056771 & 0.000000 & 0.000000 & 0.026782 \\
+DE\_season\_shift & cvar\_interval & 0.947222 & 502.889113 & 0.171528 & 0.196942 & -0.014065 \\
+DE\_season\_shift & dc3s\_ftit & 0.967361 & 816.705670 & 0.000000 & 0.000000 & 0.044092 \\
+DE\_season\_shift & dc3s\_wrapped & 0.947917 & 525.641434 & 0.000000 & 0.000000 & 0.004971 \\
+DE\_season\_shift & deterministic\_lp & 0.947222 & 502.889113 & 0.067014 & 235.983009 & 0.000000 \\
+DE\_season\_shift & robust\_fixed\_interval & 0.947222 & 502.889113 & 0.171528 & 0.196942 & -0.014065 \\
+DE\_season\_shift & scenario\_mpc & 0.996875 & 8225.739453 & 0.000000 & 0.000000 & -0.014061 \\
+DE\_season\_shift & scenario\_robust & 0.977778 & 972.305550 & 0.000000 & 0.000000 & -0.014061 \\
+DE\_to\_US\_no\_retrain & aci\_conformal & 0.969792 & 759.965259 & 0.000000 & 0.000000 & 0.022758 \\
+DE\_to\_US\_no\_retrain & cvar\_interval & 0.947222 & 502.889113 & 0.148958 & 0.135827 & -0.010909 \\
+DE\_to\_US\_no\_retrain & dc3s\_ftit & 0.965278 & 862.087800 & 0.000000 & 0.000000 & 0.027086 \\
+DE\_to\_US\_no\_retrain & dc3s\_wrapped & 0.947222 & 525.319112 & 0.000000 & 0.000000 & -0.003234 \\
+DE\_to\_US\_no\_retrain & deterministic\_lp & 0.947222 & 502.889113 & 0.056597 & 255.050662 & 0.000000 \\
+DE\_to\_US\_no\_retrain & robust\_fixed\_interval & 0.947222 & 502.889113 & 0.148958 & 0.135827 & -0.010909 \\
+DE\_to\_US\_no\_retrain & scenario\_mpc & 0.997222 & 9429.726580 & 0.000000 & 0.000000 & -0.010907 \\
+DE\_to\_US\_no\_retrain & scenario\_robust & 0.979514 & 1085.858081 & 0.000000 & 0.000000 & -0.010907 \\
+US\_season\_shift & aci\_conformal & 0.969792 & 654.608514 & 0.000000 & 0.000000 & 0.026974 \\
+US\_season\_shift & cvar\_interval & 0.948264 & 502.889113 & 0.295833 & 152.383001 & -0.014390 \\
+US\_season\_shift & dc3s\_ftit & 0.963889 & 772.531781 & 0.000000 & 0.000000 & 0.050144 \\
+US\_season\_shift & dc3s\_wrapped & 0.948611 & 525.804711 & 0.000000 & 0.000000 & 0.000064 \\
+US\_season\_shift & deterministic\_lp & 0.948264 & 502.889113 & 0.088194 & 257.935111 & 0.000000 \\
+US\_season\_shift & robust\_fixed\_interval & 0.948264 & 502.889113 & 0.295833 & 152.383001 & -0.014390 \\
+US\_season\_shift & scenario\_mpc & 0.996875 & 7751.913268 & 0.000000 & 0.000000 & -0.010219 \\
+US\_season\_shift & scenario\_robust & 0.979167 & 910.098830 & 0.000000 & 0.000000 & -0.010219 \\
+US\_to\_DE\_no\_retrain & aci\_conformal & 0.969792 & 571.966507 & 0.000000 & 0.000000 & 0.038769 \\
+US\_to\_DE\_no\_retrain & cvar\_interval & 0.948611 & 502.889113 & 0.179167 & 304.585743 & -0.017143 \\
+US\_to\_DE\_no\_retrain & dc3s\_ftit & 0.962500 & 685.210494 & 0.000000 & 0.000000 & 0.068980 \\
+US\_to\_DE\_no\_retrain & dc3s\_wrapped & 0.948611 & 525.812739 & 0.000000 & 0.000000 & 0.003676 \\
+US\_to\_DE\_no\_retrain & deterministic\_lp & 0.948611 & 502.889113 & 0.077083 & 432.409094 & 0.000000 \\
+US\_to\_DE\_no\_retrain & robust\_fixed\_interval & 0.948611 & 502.889113 & 0.179167 & 304.585743 & -0.017143 \\
+US\_to\_DE\_no\_retrain & scenario\_mpc & 0.996528 & 6731.056651 & 0.000000 & 0.000000 & -0.006749 \\
+US\_to\_DE\_no\_retrain & scenario\_robust & 0.982292 & 792.905592 & 0.000000 & 0.000000 & -0.006749 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
 }
-\end{table*}
+\end{table}
