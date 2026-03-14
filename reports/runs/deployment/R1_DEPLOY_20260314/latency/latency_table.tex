@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+\centering\small
+\caption{DC\textsuperscript{3}S per-step latency profile (10000 iterations, single-threaded).}
+\label{tab:dc3s_latency}
+\begin{tabular}{lrr}
+\toprule
+Component & Mean (ms) & P95 (ms) \\
+\midrule
+  Reliability scoring & 0.020 & 0.024 \\
+  Drift update (Page-Hinkley) & 0.000 & 0.000 \\
+  Uncertainty set build & 0.010 & 0.013 \\
+  Action repair (projection) & 0.002 & 0.002 \\
+  Full DC3S step & 0.033 & 0.035 \\
+\bottomrule
+\end{tabular}
+\end{table}
