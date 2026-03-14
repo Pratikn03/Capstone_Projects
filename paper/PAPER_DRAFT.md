@@ -38,7 +38,7 @@ A forecasting model can have strong RMSE while still inducing unsafe dispatch if
 4. **Conditional conservatism result.** DC3S achieves zero true-SOC violations at a 2.8% intervention rate across all fault conditions. The shield is not uniformly conservative: it activates precisely when and to the degree that telemetry quality requires, leaving 97.2% of steps unmodified.
 
 ### 1.4 Contribution Boundary
-The central scientific contribution is the discovery and empirical characterization of the hidden safety failure mode, together with the first end-to-end architecture that closes it in an auditable control loop. The formal proposition in this paper — that monotone interval inflation preserves marginal coverage — is a correctness condition for the RAC-Cert construction, not the primary novelty claim. The novelty is the problem identification, the CPSBench framework that makes it measurable, and the conditional-conservatism result that shows it can be closed without economic sacrifice.
+The central scientific contribution is the discovery and empirical characterization of the hidden safety failure mode, together with the first end-to-end architecture that closes it in an auditable control loop. The bounded formal layer is there to support the empirical story, not replace it: the RAC-Cert coverage result explains why monotone inflation does not weaken the base coverage guarantee, the reliability-binned result motivates the governed calibration audit, and the FTIT tube result explains why the tightened SOC margin can prevent the true-state failures measured in the benchmark. The novelty remains the problem identification, the CPSBench framework that makes it measurable, and the conditional-conservatism result showing that the gap can be closed without blanket conservatism.
 
 ### 1.5 Paper Roadmap
 Section 2 positions the work in the literature. Sections 3 and 4 define the system context and dispatch problem. Sections 5 and 6 describe the forecasting, calibration, and shield mechanics. Sections 7 through 10 present the evidence, baseline diagnosis, and cross-region analysis. Sections 11 through 14 close with governance, validity, limitations, and conclusion. Section 15 lists references, followed by appendices.
@@ -265,7 +265,7 @@ The main forecasting result table is no longer the older three-model GBM/LSTM/TC
 This table is built from one shared evaluation contract rather than mixed historical comparisons. It is intentionally operational: all six models share the same split policy, forecast horizon, lookback, seed policy, feature framing, and evaluation rules so that differences reflect model behavior under one forecasting regime rather than different data access. When a row still shows `---`, that row is pending artifact completion in the current release-family build and should be read as incomplete rather than negative evidence.
 
 ### 8.1 Safety Under Telemetry Faults
-The central result is that both DC3S variants maintain zero true-SOC violations across the fault sweep, while the deterministic baseline violates at 3.9% and the CVaR baseline violates at 25.6%. DC3S FTIT intervenes on only 2.8% of steps, showing that safety does not require constant override.
+The central result is that both DC3S variants maintain zero true-SOC violations across the fault sweep, while the deterministic baseline violates at 3.9% and the CVaR baseline violates at 25.6%. The safety gain is not only binary: relative to deterministic dispatch, DC3S removes a hidden risk surface that is both nontrivial in frequency and severe in magnitude, with 333 MWh P95 violation severity. DC3S FTIT intervenes on only 2.8% of steps, showing that safety does not require constant override.
 
 ### 8.2 Locked Region-Level Impact and Stochastic Value
 | Region | Cost Savings | Carbon Reduction | Peak Shaving | VSS | Run ID |
@@ -273,7 +273,7 @@ The central result is that both DC3S variants maintain zero true-SOC violations 
 | DE | 7.11% | 0.30% | 6.13% | 2,708.61 | `20260217_165756` |
 | US | 0.11% | 0.13% | 0.00% | 297,092.71 | `20260217_182305` |
 
-The DE result is materially stronger than the locked US result in direct decision impact, even though stochastic value remains positive in both regions.
+The DE result is materially stronger than the locked US result in direct decision impact, even though stochastic value remains positive in both regions. That heterogeneity is part of the finding: the method should be read as regime-dependent rather than uniform, and the single locked `US` row compresses balancing-authority differences that are already visible in the broader release-family assets.
 
 ### 8.3 Ablation
 The ablation shows that:
@@ -283,10 +283,10 @@ The ablation shows that:
 4. fixed static intervals are not enough
 
 ### 8.4 Calibration Quality
-Calibration is mixed rather than uniformly strong. Wind high-volatility coverage is near nominal, while solar high-volatility coverage remains below target. This is an explicit negative finding and one reason the shield needs to adapt interval width at runtime.
+Calibration is mixed rather than uniformly strong. Wind high-volatility coverage is near nominal, while solar high-volatility coverage remains below target. This is an explicit negative finding and one reason the shield needs to adapt interval width at runtime. The governed reliability-group audit adds a second, release-scoped view: in the current release, per-bin coverage stays at the nominal target while interval width narrows monotonically as reliability improves, making the reliability-conditioned width pattern visible without changing the locked runtime controller path.
 
 ### 8.5 Transfer and Runtime Behavior
-Transfer experiments show that safety is more robust than cost optimality. Runtime overhead is governed by the locked latency benchmark (`dc3s_latency_summary.csv`, release `R1_DEPLOY_20260314`): the full DC3S step completes in 0.033 ms mean (0.035 ms P95, 10,000 iterations, single-threaded). At hourly dispatch resolution the shield overhead is negligible.
+Transfer experiments show that safety is more robust than cost optimality. That asymmetry should be read as regime-dependent rather than universal: the safety mechanism transfers more cleanly than the exact economic upside. Runtime overhead is governed by the locked latency benchmark (`dc3s_latency_summary.csv`, release `R1_DEPLOY_20260314`): the full DC3S step completes in 0.033 ms mean (0.035 ms P95, 10,000 iterations, single-threaded). At hourly dispatch resolution the shield overhead is negligible.
 
 | Component | Mean (ms) | P95 (ms) |
 | --- | ---: | ---: |
@@ -296,7 +296,7 @@ Transfer experiments show that safety is more robust than cost optimality. Runti
 | Action repair (projection) | 0.002 | 0.002 |
 | Full DC3S step | 0.033 | 0.035 |
 
-The manuscript also renders a governed 10-row step-trace table (`dc3s_step_trace.csv`, release `R1_DEPLOY_20260314`) in the operational-trace section. It is meant to be read as a guided trace rather than a raw log: reliability stays high until telemetry quality drops, inflation rises once drift is confirmed, and the guarantee checks remain passing before dispatch.
+The manuscript also renders a governed 10-row step-trace table (`dc3s_step_trace.csv`, release `R1_DEPLOY_20260314`) in the operational-trace section. It is meant to be read as a guided trace rather than a raw log: reliability stays high until telemetry quality drops, inflation rises once drift is confirmed, proposed and safe actions diverge only when intervention is needed, and the guarantee checks remain passing before dispatch.
 
 ## 9. Deep Baseline Diagnosis
 
@@ -424,7 +424,7 @@ Battery dispatch controllers can appear safe when evaluated on observed state wh
 
 **Thesis statement.** The central claim is that *telemetry reliability must be treated as a first-class input to uncertainty calibration in any safety-critical dispatch system*. The measurement channel between the physical battery and the controller is not a passive pipe; it is a time-varying source of epistemic uncertainty that can silently invalidate safety guarantees. DC3S operationalizes that idea by coupling reliability scoring, conformal interval inflation, robust dispatch, and feasible-set projection inside one online loop. The controller therefore becomes more conservative in proportion to measurement quality: permissive when the signal is trustworthy and protective when it is not.
 
-DC3S achieves zero true-SOC violations at a 2.8% intervention rate, so the shield is selective rather than blanket conservative. It activates only when telemetry reliability deteriorates, leaving 97.2% of dispatch steps unmodified. The cost-side evidence shows that this added safety does not erase decision value: on the locked DE evaluation, DC3S delivers 7.11% cost savings, 0.30% carbon reduction, and 6.13% peak shaving, while stochastic value remains positive in both DE (VSS = 2,708.61) and US (VSS = 297,092.71) regions. US direct gains are modest (0.11% cost, 0.00% peak), which appears to reflect tighter operating margins and compressed arbitrage headroom across the three US balancing authorities rather than a failure of the approach.
+DC3S achieves zero true-SOC violations at a 2.8% intervention rate, so the shield is selective rather than blanket conservative. It activates only when telemetry reliability deteriorates, leaving 97.2% of dispatch steps unmodified. The cost-side evidence shows that this added safety does not erase decision value: on the locked DE evaluation, DC3S delivers 7.11% cost savings, 0.30% carbon reduction, and 6.13% peak shaving, while stochastic value remains positive in both DE (VSS = 2,708.61) and US (VSS = 297,092.71) regions. US direct gains are modest (0.11% cost, 0.00% peak), which appears to reflect tighter operating margins and compressed arbitrage headroom across the three US balancing authorities rather than a failure of the approach. Taken together, the results suggest that the safety-certified dispatch layer can still express operator preferences over cost, carbon, and peak, but the visible payoff remains regime-dependent rather than uniform.
 
 The promoted six-model forecasting comparison points in one practical direction: on these moderate-sized, feature-rich grid datasets, GBM remains the strongest operational model under the locked equal-budget protocol. For practitioners, the message is simple: on data of this kind, feature engineering matters more than architectural complexity.
 
