@@ -113,6 +113,10 @@ def _create_minimal_repo(tmp_path: Path, *, with_models: bool = True, n_rows: in
             (repo / "artifacts" / "models" / f"gbm_lightgbm_{target}.pkl").write_bytes(b"dummy")
             (repo / "artifacts" / "models_eia930" / f"gbm_lightgbm_{target}.pkl").write_bytes(b"dummy")
 
+    # Pipeline expects scripts/run_cpsbench.py to exist for the benchmark step
+    (repo / "scripts").mkdir(parents=True, exist_ok=True)
+    (repo / "scripts" / "run_cpsbench.py").write_text("# stub\n", encoding="utf-8")
+
     return repo
 
 
