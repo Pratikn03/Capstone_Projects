@@ -11,13 +11,13 @@ You selected: **ECS Fargate**, **weekly refresh + retrain**, **SLO 99.9% uptime*
 - Persistent storage (EFS or S3 sync) for `data/`, `artifacts/`, `reports/`  
 
 ## Secrets Manager
-Create one secret (JSON) named `gridpulse/prod`:
+Create one secret (JSON) named `orius/prod`:
 ```json
 {
   "ELECTRICITYMAPS_TOKEN": "xxx",
   "WATTTIME_USERNAME": "xxx",
   "WATTTIME_PASSWORD": "xxx",
-  "GRIDPULSE_ALERT_WEBHOOK": "https://..."
+  "ORIUS_ALERT_WEBHOOK": "https://..."
 }
 ```
 

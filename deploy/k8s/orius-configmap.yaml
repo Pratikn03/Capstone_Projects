@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orius-config
+data:
+  ORIUS_LOG_LEVEL: "INFO"
+  ORIUS_LOG_FORMAT: "text"
+  ORIUS_FEATURES_PATH: "data/processed/features.parquet"
+  ORIUS_MODELS_DIR: "artifacts/models"
+

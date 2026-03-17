@@ -1,0 +1,10 @@
+[Unit]
+Description=ORIUS Scheduled Retraining
+After=network.target
+
+[Service]
+Type=oneshot
+User=orius
+WorkingDirectory=/opt/orius
+EnvironmentFile=/etc/orius/orius.env
+ExecStart=/opt/orius/.venv/bin/python scripts/retrain_if_needed.py --refresh

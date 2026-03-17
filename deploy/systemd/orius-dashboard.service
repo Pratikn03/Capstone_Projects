@@ -1,0 +1,17 @@
+[Unit]
+Description=ORIUS Frontend (Next.js)
+After=network.target
+
+[Service]
+Type=simple
+User=orius
+WorkingDirectory=/opt/orius
+EnvironmentFile=/etc/orius/orius.env
+Environment=PORT=3000
+Environment=HOSTNAME=0.0.0.0
+ExecStart=/usr/bin/npm --prefix /opt/orius/frontend run start
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

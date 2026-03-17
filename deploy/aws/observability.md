@@ -15,5 +15,5 @@ Suggested alarms:
 - 5xx errors > 1 for 5 minutes  
 - HealthyHostCount < 1  
 
-Connect alerts to SNS and forward to Slack via `GRIDPULSE_ALERT_WEBHOOK` if desired.
+Connect alerts to SNS and forward to Slack via `ORIUS_ALERT_WEBHOOK` if desired.
 

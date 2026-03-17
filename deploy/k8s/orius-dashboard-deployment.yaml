@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gridpulse-dashboard
+  name: orius-dashboard
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: gridpulse-dashboard
+      app: orius-dashboard
   template:
     metadata:
       labels:
-        app: gridpulse-dashboard
+        app: orius-dashboard
     spec:
       containers:
         - name: dashboard
-          image: gridpulse-dashboard:latest
+          image: orius-dashboard:latest
           ports:
             - containerPort: 3000
           envFrom:
             - configMapRef:
-                name: gridpulse-config
+                name: orius-config
           readinessProbe:
             httpGet:
               path: /
