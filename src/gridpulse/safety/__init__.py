@@ -1,1 +1,0 @@
-"""Safety modules for GridPulse."""
