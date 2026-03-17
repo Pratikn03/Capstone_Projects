@@ -3,11 +3,11 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gridpulse"
+name = "orius"
 version = "0.1.0"
-description = "GridPulse: Autonomous Energy Intelligence & Optimization Platform"
+description = "ORIUS: Autonomous Energy Intelligence & Optimization Platform"
 readme = "README.md"
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.11"
 authors = [{ name = "Pratik Niroula" }]
 license = { text = "MIT" }
 keywords = [

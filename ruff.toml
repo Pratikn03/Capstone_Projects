@@ -11,7 +11,7 @@ max-complexity = 40
 [lint.per-file-ignores]
 "scripts/**/*.py" = ["T20", "S603", "S607"]
 "tests/**/*.py" = ["T20", "S101"]
-"src/gridpulse/forecasting/train.py" = ["T20", "C901"]
+"src/orius/forecasting/train.py" = ["T20", "C901"]
 
 [format]
 quote-style = "double"
