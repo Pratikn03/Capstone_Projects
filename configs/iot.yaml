@@ -2,7 +2,7 @@ iot:
   api:
     base_url: "http://localhost:8000"
     timeout_s: 10
-    api_key_env: "GRIDPULSE_IOT_API_KEY"
+    api_key_env: "ORIUS_IOT_API_KEY"
     api_key: ""
   driver:
     kind: "http_gateway"
@@ -13,7 +13,7 @@ iot:
       timeout_s: 5
       retries: 2
       auth_header: ""
-      auth_token_env: "GRIDPULSE_GATEWAY_TOKEN"
+      auth_token_env: "ORIUS_GATEWAY_TOKEN"
       auth_token: ""
     modbus_tcp:
       host: "127.0.0.1"
@@ -36,7 +36,7 @@ iot:
     timeout_s: 5
     retries: 2
     auth_header: ""
-    auth_token_env: "GRIDPULSE_GATEWAY_TOKEN"
+    auth_token_env: "ORIUS_GATEWAY_TOKEN"
     auth_token: ""
   defaults:
     device_id: "edge-device-001"

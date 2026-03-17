@@ -8,7 +8,7 @@ publish_audit:
 
   scope:
     include:
-      - src/gridpulse/**
+      - src/orius/**
       - services/api/**
       - scripts/**
       - configs/**
@@ -98,31 +98,31 @@ publish_audit:
     fail_on_unused_imports: false
     known_violations:
       # Pre-existing violations documented for tracking; new violations still fail.
-      - path: src/gridpulse/cpsbench_iot/baselines.py
+      - path: src/orius/cpsbench_iot/baselines.py
         types: [file_too_large, function_too_large]
-      - path: src/gridpulse/cpsbench_iot/runner.py
+      - path: src/orius/cpsbench_iot/runner.py
         types: [file_too_large, function_too_large, function_too_complex, except_pass]
-      - path: src/gridpulse/forecasting/train.py
+      - path: src/orius/forecasting/train.py
         types: [file_too_large, function_too_large, function_too_complex]
-      - path: src/gridpulse/pipeline/run.py
+      - path: src/orius/pipeline/run.py
         types: [file_too_large, function_too_large, function_too_complex]
-      - path: src/gridpulse/optimizer/lp_dispatch.py
+      - path: src/orius/optimizer/lp_dispatch.py
         types: [function_too_large, function_too_complex]
-      - path: src/gridpulse/monitoring/dc3s_health.py
+      - path: src/orius/monitoring/dc3s_health.py
         types: [function_too_large, function_too_complex]
-      - path: src/gridpulse/dc3s/calibration.py
+      - path: src/orius/dc3s/calibration.py
         types: [function_too_complex]
-      - path: src/gridpulse/dc3s/quality.py
+      - path: src/orius/dc3s/quality.py
         types: [function_too_complex]
-      - path: src/gridpulse/streaming/consumer.py
+      - path: src/orius/streaming/consumer.py
         types: [except_pass]
-      - path: src/gridpulse/streaming/run_consumer.py
+      - path: src/orius/streaming/run_consumer.py
         types: [except_pass]
-      - path: src/gridpulse/streaming/worker.py
+      - path: src/orius/streaming/worker.py
         types: [except_pass]
-      - path: src/gridpulse/utils/manifest.py
+      - path: src/orius/utils/manifest.py
         types: [except_pass]
-      - path: src/gridpulse/utils/seed.py
+      - path: src/orius/utils/seed.py
         types: [except_pass]
       - path: services/api/routers/dc3s.py
         types: [function_too_large, function_too_complex]
