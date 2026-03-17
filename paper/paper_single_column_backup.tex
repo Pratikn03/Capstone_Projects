@@ -101,7 +101,7 @@ DC\textsuperscript{3}S is a response to this specific failure mode. Rather than 
 
 \subsection{Operational Motivation}
 
-GridPulse is built as a closed decision loop:
+ORIUS is built as a closed decision loop:
 \[
 \text{Forecast} \rightarrow \text{Optimize} \rightarrow \text{Dispatch} \rightarrow \text{Measure} \rightarrow \text{Monitor}.
 \]
@@ -174,11 +174,11 @@ Taken together, the related work reveals a consistent blind spot. Prior robust, 
 
 \section{Background, Preliminaries, and System Context}\label{sec:background}
 
-\subsection{GridPulse System Context}
+\subsection{ORIUS System Context}
 
-GridPulse is implemented as a forecast-to-dispatch stack whose main layers are data preparation, forecasting, uncertainty calibration, optimization, monitoring, and API/dashboard serving. DC\textsuperscript{3}S sits at the dispatch boundary: it receives observed telemetry and forecast intervals, widens those intervals when telemetry quality or drift risk deteriorates, and prevents physically unsafe commands from reaching the battery.
+ORIUS is implemented as a forecast-to-dispatch stack whose main layers are data preparation, forecasting, uncertainty calibration, optimization, monitoring, and API/dashboard serving. DC\textsuperscript{3}S sits at the dispatch boundary: it receives observed telemetry and forecast intervals, widens those intervals when telemetry quality or drift risk deteriorates, and prevents physically unsafe commands from reaching the battery.
 
-\PaperFigure{FIG01_ARCHITECTURE}{GridPulse architecture with \DCThreeS{} at the dispatch boundary. The shield consumes telemetry quality, forecast intervals, and optimizer output before command execution.}
+\PaperFigure{FIG01_ARCHITECTURE}{ORIUS architecture with \DCThreeS{} at the dispatch boundary. The shield consumes telemetry quality, forecast intervals, and optimizer output before command execution.}
 
 \subsection{Component-to-Code Map}
 
@@ -190,16 +190,16 @@ GridPulse is implemented as a forecast-to-dispatch stack whose main layers are d
 \toprule
 Layer & Purpose & Primary paths \\
 \midrule
-Data pipeline & Region features, splits, and profile locks & \path{src/gridpulse/data_pipeline/}, \path{src/gridpulse/pipeline/run.py} \\
-Forecasting & GBM and deep-baseline train/predict flows & \path{src/gridpulse/forecasting/} \\
-Uncertainty & Conformal, adaptive, residual, and reliability-binned calibration & \path{src/gridpulse/forecasting/uncertainty/conformal.py}, \path{src/gridpulse/forecasting/uncertainty/reliability_mondrian.py} \\
-Optimization & Deterministic, robust, and baseline dispatch & \path{src/gridpulse/optimizer/} \\
-DC3S & Reliability, drift, shield, certificate, state & \path{src/gridpulse/dc3s/} \\
-Monitoring & Drift checks and retraining logic & \path{src/gridpulse/monitoring/} \\
+Data pipeline & Region features, splits, and profile locks & \path{src/orius/data_pipeline/}, \path{src/orius/pipeline/run.py} \\
+Forecasting & GBM and deep-baseline train/predict flows & \path{src/orius/forecasting/} \\
+Uncertainty & Conformal, adaptive, residual, and reliability-binned calibration & \path{src/orius/forecasting/uncertainty/conformal.py}, \path{src/orius/forecasting/uncertainty/reliability_mondrian.py} \\
+Optimization & Deterministic, robust, and baseline dispatch & \path{src/orius/optimizer/} \\
+DC3S & Reliability, drift, shield, certificate, state & \path{src/orius/dc3s/} \\
+Monitoring & Drift checks and retraining logic & \path{src/orius/monitoring/} \\
 API + dashboard & Runtime routes and operator-facing inspection & \path{services/api/}, \path{frontend/} \\
-Anomaly detection & Multivariate and residual anomaly flagging & \path{src/gridpulse/anomaly/} \\
-Streaming & Real-time Kafka/Redpanda telemetry ingestion & \path{src/gridpulse/streaming/} \\
-Registry & Model versioning and atomic promotion & \path{src/gridpulse/registry/} \\
+Anomaly detection & Multivariate and residual anomaly flagging & \path{src/orius/anomaly/} \\
+Streaming & Real-time Kafka/Redpanda telemetry ingestion & \path{src/orius/streaming/} \\
+Registry & Model versioning and atomic promotion & \path{src/orius/registry/} \\
 IoT & Edge agent, device contract, closed-loop simulator & \path{iot/} \\
 \bottomrule
 \end{tabular}
@@ -229,7 +229,7 @@ The canonical dataset lock is summarized in \Cref{tab:TBL05_DATASET_SUMMARY}. DE
 
 \subsection{Pipeline Architecture and Runtime Interfaces}
 
-The GridPulse pipeline follows a strict stage ordering that determines how data flows through the system. Each stage has a well-defined interface contract:
+The ORIUS pipeline follows a strict stage ordering that determines how data flows through the system. Each stage has a well-defined interface contract:
 
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
   \item \textbf{Ingestion}: Raw time-series loading from OPSD (DE) or EIA-930 (US). Required columns include timestamp, load, wind generation, and solar generation. Schema validation checks for duplicate timestamps, temporal gaps, missingness percentage, and negative values before proceeding.
@@ -243,7 +243,7 @@ The GridPulse pipeline follows a strict stage ordering that determines how data 
 \end{enumerate}
 
 \paragraph{IoT device contract.}
-For edge deployment scenarios, the pipeline extends to IoT devices through a formal device contract (\texttt{iot/DEVICE\_CONTRACT.md}) that specifies the telemetry, command, and acknowledgment protocol. Telemetry payloads carry timestamp, \texttt{load\_mw}, \texttt{renewables\_mw}, and \texttt{soc\_mwh} at a configurable cadence (default: 1 event/hour, tolerance $\pm$120\,s). Commands are queued with stable IDs and carry a safe action (charge/discharge MW), a status field (queued/dispatched/timeout/hold), and a 30-second TTL. Devices respond with ACK (applied) or NACK (rejected/clipped) semantics. A \emph{shadow mode} (\texttt{shadow\_mode=true, applied=false}) allows non-disruptive monitoring where the shield's recommendation is logged without overriding the existing controller. Each command carries a \texttt{certificate\_id} linking it to the DC\textsuperscript{3}S audit trail. Authentication uses an \texttt{X-GridPulse-Key} header with read/write scopes.
+For edge deployment scenarios, the pipeline extends to IoT devices through a formal device contract (\texttt{iot/DEVICE\_CONTRACT.md}) that specifies the telemetry, command, and acknowledgment protocol. Telemetry payloads carry timestamp, \texttt{load\_mw}, \texttt{renewables\_mw}, and \texttt{soc\_mwh} at a configurable cadence (default: 1 event/hour, tolerance $\pm$120\,s). Commands are queued with stable IDs and carry a safe action (charge/discharge MW), a status field (queued/dispatched/timeout/hold), and a 30-second TTL. Devices respond with ACK (applied) or NACK (rejected/clipped) semantics. A \emph{shadow mode} (\texttt{shadow\_mode=true, applied=false}) allows non-disruptive monitoring where the shield's recommendation is logged without overriding the existing controller. Each command carries a \texttt{certificate\_id} linking it to the DC\textsuperscript{3}S audit trail. Authentication uses an \texttt{X-ORIUS-Key} header with read/write scopes.
 
 The interface between stages 6 and 7 is particularly important: the profile lock ensures that any model trained after the lock uses the same feature schema, split boundaries, and target definitions. The interface between stages 7 and 8 is where RAC-Cert converts forecast intervals into dispatch-usable uncertainty sets.
 
@@ -384,7 +384,7 @@ The locked comparison set contains all six forecasting baselines: GBM (LightGBM)
 
 \subsection{Anomaly Detection Pipeline}
 
-The telemetry reliability scorer in DC\textsuperscript{3}S consumes anomaly detection signals from a two-layer detection pipeline implemented in \texttt{src/gridpulse/anomaly/}.
+The telemetry reliability scorer in DC\textsuperscript{3}S consumes anomaly detection signals from a two-layer detection pipeline implemented in \texttt{src/orius/anomaly/}.
 
 \paragraph{Layer 1: Residual-based rules.}
 A rolling $z$-score detector (\texttt{residual\_rules.py}) monitors forecast residuals over a 168-hour (weekly) sliding window. At each step, the local mean $\mu_t$ and standard deviation $\sigma_t$ are recomputed, and a residual is flagged anomalous if $|r_t - \mu_t| / (\sigma_t + \epsilon) \ge 3.0$, corresponding to a $\pm 3\sigma$ control limit. This catches univariate extreme residuals---for example, a sudden 3$\sigma$ load spike caused by a sensor fault.
@@ -749,7 +749,7 @@ The evaluation uses three metric families that correspond to the three system su
 
 \paragraph{Control metrics.} The primary safety metric is the true-SOC violation rate: the fraction of steps where $\mathrm{SOC}^{\mathrm{true}}_t$ falls outside $[\mathrm{SOC}_{\min}, \mathrm{SOC}_{\max}]$. Violation severity (P95) measures the magnitude of the worst violations in MWh. The intervention rate is the fraction of steps where the shield modifies the optimizer's candidate action ($\|a_t^{\mathrm{safe}} - a_t^*\| > \epsilon$, with $\epsilon = 10^{-6}$\,MW). Additional safety metrics include: unsafe command rate (commands that \emph{would} violate if executed), BMS trip rate (simulated battery management system shutdowns), and grid import violation rate. Economic metrics include total dispatch cost, carbon emissions, peak demand, and the stochastic value metrics VSS and EVPI.
 
-\paragraph{Regret metric.} To quantify the cost of imperfect information, we compute \emph{dispatch regret}: the difference between the cost of the deployed policy and the cost of an oracle policy with perfect foresight. Formally, $\text{Regret} = \sum_t J(a_t^{\text{policy}}, Y_t) - \sum_t J(a_t^{\text{oracle}}, Y_t)$, where the oracle solves the same optimization problem with access to the realized load, wind, and solar values. The oracle also incorporates battery degradation costs (\$10/MWh throughput) and terminal SOC penalties. Regret is computed in two modes: deterministic (oracle uses point forecasts) and robust (oracle uses conformal intervals), isolating the cost of uncertainty from the cost of forecast error. The \texttt{src/gridpulse/evaluation/regret.py} module solves both deterministic and robust dispatch problems and computes realized cost breakdowns including grid cost, degradation, unmet load penalty, and terminal SOC penalty. Regret values are reported in the robustness perturbation analysis (\Cref{tab:robustness}).
+\paragraph{Regret metric.} To quantify the cost of imperfect information, we compute \emph{dispatch regret}: the difference between the cost of the deployed policy and the cost of an oracle policy with perfect foresight. Formally, $\text{Regret} = \sum_t J(a_t^{\text{policy}}, Y_t) - \sum_t J(a_t^{\text{oracle}}, Y_t)$, where the oracle solves the same optimization problem with access to the realized load, wind, and solar values. The oracle also incorporates battery degradation costs (\$10/MWh throughput) and terminal SOC penalties. Regret is computed in two modes: deterministic (oracle uses point forecasts) and robust (oracle uses conformal intervals), isolating the cost of uncertainty from the cost of forecast error. The \texttt{src/orius/evaluation/regret.py} module solves both deterministic and robust dispatch problems and computes realized cost breakdowns including grid cost, degradation, unmet load penalty, and terminal SOC penalty. Regret values are reported in the robustness perturbation analysis (\Cref{tab:robustness}).
 
 \subsection{Statistical Protocol}
 
@@ -838,7 +838,7 @@ US & \PaperMetric{US_COST_SAVINGS_PCT}{0.11} & \PaperMetric{US_CARBON_REDUCTION_
 \label{tab:absolute_impact}
 \begin{tabular}{llrrr}
 \toprule
-Region & Metric & Baseline (B2) & GridPulse (B1) & $\Delta$ (absolute) \\
+Region & Metric & Baseline (B2) & ORIUS (B1) & $\Delta$ (absolute) \\
 \midrule
 \multirow{3}{*}{DE} & Cost (\$M) & 154.77 & 143.78 & $-$10.997 \\
  & Carbon (Mt) & 1{,}461.6 & 1{,}457.2 & $-$4.436 \\
@@ -861,7 +861,7 @@ Policy & Cost (\$M) & Carbon (Mt) & Peak (GW) \\
 \midrule
 B2 (Grid-only) & 154.77 & 1{,}461.6 & 52.17 \\
 B3 (Naive battery) & 154.20 & 1{,}454.7 & 52.17 \\
-B1 (GridPulse LP) & 143.78 & 1{,}457.2 & 48.97 \\
+B1 (ORIUS LP) & 143.78 & 1{,}457.2 & 48.97 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1035,7 +1035,7 @@ In the promoted six-model comparison (\Cref{tab:TBL08_FORECAST_BASELINES}), GBM 
 
 \subsection{Why: The Tabular Regime Effect}
 
-The key structural fact is that the GridPulse feature pipeline already encodes the temporal structure that deep sequence models are designed to learn---weekly and daily lags, rolling statistics, calendar signals, ramp features, and peak-period indicators. DE contributes 17{,}377 hourly rows and the US profile contributes 13{,}638 rows with rich lag, calendar, and weather features serialized into the tabular matrix. When a 168-hour lag feature is already in the input, an LSTM, TFT, or PatchTST has nothing left to learn from the sequence that GBM cannot exploit directly from the tabular representation. Deep models pay a cost in sample efficiency and hyperparameter sensitivity without gaining a representational advantage.
+The key structural fact is that the ORIUS feature pipeline already encodes the temporal structure that deep sequence models are designed to learn---weekly and daily lags, rolling statistics, calendar signals, ramp features, and peak-period indicators. DE contributes 17{,}377 hourly rows and the US profile contributes 13{,}638 rows with rich lag, calendar, and weather features serialized into the tabular matrix. When a 168-hour lag feature is already in the input, an LSTM, TFT, or PatchTST has nothing left to learn from the sequence that GBM cannot exploit directly from the tabular representation. Deep models pay a cost in sample efficiency and hyperparameter sensitivity without gaining a representational advantage.
 
 \subsection{Implications for Practitioners}
 
@@ -1168,7 +1168,7 @@ This paper uses a markdown-first and artifact-locked workflow. The canonical man
 \subsection{Repo-to-Paper Traceability}
 
 \paragraph{Model registry and promotion.}
-Trained model artifacts are versioned through a lightweight file-based registry (\texttt{src/gridpulse/registry/model\_store.py}). The \texttt{promote()} function performs an atomic copy from a staging directory to the production model path using \texttt{shutil.copy2}, preserving file metadata (timestamps, permissions) for audit traceability. A CLI wrapper (\texttt{src/gridpulse/registry/promote.py}) exposes this as a single-command promotion step suitable for CI/CD integration. This mechanism ensures that only explicitly promoted models are consumed by the dispatch pipeline, preventing accidental use of intermediate or debugging artifacts. The promotion history is recorded in the release manifest alongside model hashes.
+Trained model artifacts are versioned through a lightweight file-based registry (\texttt{src/orius/registry/model\_store.py}). The \texttt{promote()} function performs an atomic copy from a staging directory to the production model path using \texttt{shutil.copy2}, preserving file metadata (timestamps, permissions) for audit traceability. A CLI wrapper (\texttt{src/orius/registry/promote.py}) exposes this as a single-command promotion step suitable for CI/CD integration. This mechanism ensures that only explicitly promoted models are consumed by the dispatch pipeline, preventing accidental use of intermediate or debugging artifacts. The promotion history is recorded in the release manifest alongside model hashes.
 
 \begin{table}[htbp]
 \centering\small
@@ -1304,7 +1304,7 @@ The theorems should be read as correctness conditions for the safety shield's co
 Near-term work should focus on three items: decomposing the US narrative more explicitly into MISO/PJM/ERCOT in the main text, improving under-covered target-regime calibration before dispatch, and adding a deployment-facing latency/runtime benchmark together with a publication-grade case trace showing telemetry degradation, interval widening, action repair, and safe dispatch behavior over time.
 
 \paragraph{Real-time streaming extension.}
-The current evaluation uses batch-mode dispatch on historical data. A streaming extension is already prototyped in \texttt{src/gridpulse/streaming/}: a Kafka/Redpanda consumer ingests JSON telemetry events with schema validation against an \texttt{OPSDTelemetryEvent} Pydantic model, performs temporal cadence enforcement (dropout detection), range and delta checks for outlier detection, and writes validated events to DuckDB or Parquet with exactly-once checkpoint semantics (every 200 messages). Extending the locked evaluation to streaming mode would validate DC\textsuperscript{3}S under realistic ingestion latency, out-of-order delivery, and backpressure conditions.
+The current evaluation uses batch-mode dispatch on historical data. A streaming extension is already prototyped in \texttt{src/orius/streaming/}: a Kafka/Redpanda consumer ingests JSON telemetry events with schema validation against an \texttt{OPSDTelemetryEvent} Pydantic model, performs temporal cadence enforcement (dropout detection), range and delta checks for outlier detection, and writes validated events to DuckDB or Parquet with exactly-once checkpoint semantics (every 200 messages). Extending the locked evaluation to streaming mode would validate DC\textsuperscript{3}S under realistic ingestion latency, out-of-order delivery, and backpressure conditions.
 
 \subsection{Longer-Term Future Work}
 
@@ -1750,6 +1750,6 @@ This appendix provides the full algorithmic specification for two key DC\textsup
 \end{algorithmic}
 \end{algorithm}
 
-These algorithms are presented in a form that matches the actual implementation in \texttt{src/gridpulse/dc3s/ftit.py} and \texttt{src/gridpulse/dc3s/quality.py} respectively. The default parameter values correspond to the locked configuration in \texttt{configs/dc3s.yaml} (\Cref{tab:dc3s_config}).
+These algorithms are presented in a form that matches the actual implementation in \texttt{src/orius/dc3s/ftit.py} and \texttt{src/orius/dc3s/quality.py} respectively. The default parameter values correspond to the locked configuration in \texttt{configs/dc3s.yaml} (\Cref{tab:dc3s_config}).
 
 \end{document}

@@ -1,0 +1,54 @@
+% ORIUS Universal Domain Physical Safety Framework
+% Generated for paper inclusion
+
+% Table 1: Domain State Schema
+\begin{table}[t]
+\centering
+\caption{Domain state schema for ORIUS universal framework.}
+\label{tab:universal-state}
+\begin{tabular}{llll}
+\toprule
+\textbf{Domain} & \textbf{State Fields} & \textbf{Unit} & \textbf{Description} \\
+\midrule
+Energy & soc\_mwh, load\_mw, renewables\_mw & MWh, MW & Battery SOC, grid load \\
+AV & position\_m, speed\_mps, speed\_limit\_mps, lead\_position\_m & m, m/s & Longitudinal kinematics \\
+Industrial & temp\_c, pressure\_mbar, humidity\_pct, power\_mw & °C, mbar, \%, MW & Process variables \\
+Healthcare & hr\_bpm, spo2\_pct, respiratory\_rate & bpm, \%, /min & Vital signs \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% Table 2: Safety Predicates
+\begin{table}[t]
+\centering
+\caption{Safety predicates per domain.}
+\label{tab:universal-safety}
+\begin{tabular}{lll}
+\toprule
+\textbf{Domain} & \textbf{Safety Predicate} & \textbf{Config Key} \\
+\midrule
+Energy & SOC $\in$ [min\_soc, max\_soc]; charge/discharge mutual exclusion & min\_soc\_mwh \\
+AV & $v \leq v_{\max}$; $x_{\mathrm{lead}} - x \geq d_{\min}(v)$ & speed\_limit\_mps \\
+Industrial & temp $\in$ [T$_{\min}$, T$_{\max}$]; power $\in$ [0, P$_{\max}$] & power\_max\_mw \\
+Healthcare & hr $\in$ [hr$_{\min}$, hr$_{\max}$]; SpO$_2$ $\geq$ spo2$_{\min}$ & spo2\_min\_pct \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% Table 3: Pipeline Stages
+\begin{table}[t]
+\centering
+\caption{Universal DC3S pipeline stages.}
+\label{tab:universal-pipeline}
+\begin{tabular}{clll}
+\toprule
+\textbf{Stage} & \textbf{Name} & \textbf{Adapter Method} & \textbf{Output} \\
+\midrule
+1 & Detect & compute\_oqe & $w_t$, flags \\
+2 & Calibrate & build\_uncertainty\_set & $\mathcal{U}_t$, meta \\
+3 & Constrain & tighten\_action\_set & $\mathcal{A}_t$ \\
+4 & Shield & repair\_action & safe\_action, repair\_meta \\
+5 & Certify & emit\_certificate & certificate \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,7 +1,7 @@
 transfer_case,source_artifact,picp_90,mean_width,true_soc_violation_rate,true_soc_violation_severity_p95_mwh,cost_delta_pct
 DE_season_shift,aci_conformal,0.969792,686.056771,0.000000,0.000000,0.026782
 DE_season_shift,cvar_interval,0.947222,502.889113,0.171528,0.196942,-0.014065
-DE_season_shift,dc3s_ftit,0.967361,816.705670,0.000000,0.000000,0.044092
+DE_season_shift,dc3s_ftit,0.967708,886.297300,0.000000,0.000000,0.044092
 DE_season_shift,dc3s_wrapped,0.947917,525.641434,0.000000,0.000000,0.004971
 DE_season_shift,deterministic_lp,0.947222,502.889113,0.067014,235.983009,0.000000
 DE_season_shift,robust_fixed_interval,0.947222,502.889113,0.171528,0.196942,-0.014065
@@ -9,7 +9,7 @@ DE_season_shift,scenario_mpc,0.996875,8225.739453,0.000000,0.000000,-0.014061
 DE_season_shift,scenario_robust,0.977778,972.305550,0.000000,0.000000,-0.014061
 DE_to_US_no_retrain,aci_conformal,0.969792,759.965259,0.000000,0.000000,0.022758
 DE_to_US_no_retrain,cvar_interval,0.947222,502.889113,0.148958,0.135827,-0.010909
-DE_to_US_no_retrain,dc3s_ftit,0.965278,862.087800,0.000000,0.000000,0.027086
+DE_to_US_no_retrain,dc3s_ftit,0.966319,931.679429,0.000000,0.000000,0.027086
 DE_to_US_no_retrain,dc3s_wrapped,0.947222,525.319112,0.000000,0.000000,-0.003234
 DE_to_US_no_retrain,deterministic_lp,0.947222,502.889113,0.056597,255.050662,0.000000
 DE_to_US_no_retrain,robust_fixed_interval,0.947222,502.889113,0.148958,0.135827,-0.010909
@@ -17,7 +17,7 @@ DE_to_US_no_retrain,scenario_mpc,0.997222,9429.726580,0.000000,0.000000,-0.01090
 DE_to_US_no_retrain,scenario_robust,0.979514,1085.858081,0.000000,0.000000,-0.010907
 US_season_shift,aci_conformal,0.969792,654.608514,0.000000,0.000000,0.026974
 US_season_shift,cvar_interval,0.948264,502.889113,0.295833,152.383001,-0.014390
-US_season_shift,dc3s_ftit,0.963889,772.531781,0.000000,0.000000,0.050144
+US_season_shift,dc3s_ftit,0.964236,842.123410,0.000000,0.000000,0.050144
 US_season_shift,dc3s_wrapped,0.948611,525.804711,0.000000,0.000000,0.000064
 US_season_shift,deterministic_lp,0.948264,502.889113,0.088194,257.935111,0.000000
 US_season_shift,robust_fixed_interval,0.948264,502.889113,0.295833,152.383001,-0.014390
@@ -25,7 +25,7 @@ US_season_shift,scenario_mpc,0.996875,7751.913268,0.000000,0.000000,-0.010219
 US_season_shift,scenario_robust,0.979167,910.098830,0.000000,0.000000,-0.010219
 US_to_DE_no_retrain,aci_conformal,0.969792,571.966507,0.000000,0.000000,0.038769
 US_to_DE_no_retrain,cvar_interval,0.948611,502.889113,0.179167,304.585743,-0.017143
-US_to_DE_no_retrain,dc3s_ftit,0.962500,685.210494,0.000000,0.000000,0.068980
+US_to_DE_no_retrain,dc3s_ftit,0.964583,754.802124,0.000000,0.000000,0.068980
 US_to_DE_no_retrain,dc3s_wrapped,0.948611,525.812739,0.000000,0.000000,0.003676
 US_to_DE_no_retrain,deterministic_lp,0.948611,502.889113,0.077083,432.409094,0.000000
 US_to_DE_no_retrain,robust_fixed_interval,0.948611,502.889113,0.179167,304.585743,-0.017143

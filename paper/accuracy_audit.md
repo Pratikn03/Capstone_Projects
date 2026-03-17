@@ -1,4 +1,4 @@
-# GridPulse Paper Accuracy Audit
+# ORIUS Paper Accuracy Audit
 
 ## Scope
 This audit reconciles manuscript claims across:

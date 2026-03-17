@@ -5,7 +5,7 @@
 **Date:** March 12, 2026
 
 ## Abstract
-Battery dispatch controllers can look feasible on observed sensor state while simultaneously violating physical battery limits on true state when telemetry degrades — a hidden safety failure that standard evaluation protocols do not expose. We study this gap under four realistic fault conditions and find that deterministic dispatch violates true state-of-charge limits at **3.9% of steps with P95 severity of 333 MWh**, even while observed-state evaluation reports zero violations. The thesis responds to that failure mode in three parts. First, **CPSBench** maintains separate truth and observed battery trajectories so that true-state safety becomes measurable rather than implicit. Second, **DC3S** (Detect–Calibrate–Constrain–Certify–Shield) converts telemetry reliability into adaptive uncertainty inflation (RAC-Cert), solves dispatch against the widened uncertainty set, repairs infeasible actions by projection, and emits a per-step auditable certificate. Third, we show a **conditional conservatism** result: DC3S reaches zero true-SOC violations with a 2.8% intervention rate, so the shield becomes more conservative only when telemetry quality demands it. Cost-side, DC3S-wrapped dispatch yields 7.11% cost savings, 0.30% carbon reduction, and 6.13% peak shaving on Germany (OPSD, 17,377 rows); stochastic value remains positive in both DE and US regions (VSS = 2,708.61 and 297,092.71 respectively) across three US balancing authorities (EIA-930 MISO/PJM/ERCOT). All quantitative claims are tied to versioned run artifacts and checked against the locked release evidence.
+Battery dispatch controllers can look feasible on observed sensor state while simultaneously violating physical battery limits on true state when telemetry degrades — a hidden safety failure that standard evaluation protocols do not expose. We study this gap under realistic battery fault conditions and find that deterministic dispatch violates true state-of-charge limits at **3.9% of steps with P95 severity of 333 MWh**, even while observed-state evaluation reports zero violations. The manuscript responds to that failure mode in three layers. First, **CPSBench** maintains separate truth and observed battery trajectories so that true-state safety becomes measurable rather than implicit. Second, **DC3S** (Detect–Calibrate–Constrain–Certify–Shield) converts telemetry reliability into adaptive uncertainty inflation (RAC-Cert), solves dispatch against the widened uncertainty set, repairs infeasible actions by projection, and emits a per-step auditable certificate. Third, the full battery manuscript hardens that core with subgroup calibration, asset-preservation proxies, blackout and safe-landing behavior, fleet composition, active probing, and a controller-in-the-loop runtime rehearsal. Cost-side, DC3S-wrapped dispatch yields 7.11% cost savings, 0.30% carbon reduction, and 6.13% peak shaving on Germany (OPSD, 17,377 rows); stochastic value remains positive in both DE and US regions (VSS = 2,708.61 and 297,092.71 respectively) across three US balancing authorities (EIA-930 MISO/PJM/ERCOT). The current package includes runtime-rehearsal evidence but stops short of claiming full physical deployment or production-hardware validation. All quantitative claims are tied to versioned run artifacts and checked against the locked release evidence.
 
 ## Keywords
 Conformal Prediction, Battery Dispatch, Safety Shield, Telemetry Reliability, Robust Optimization, Cyber-Physical Systems, Uncertainty Quantification
@@ -21,7 +21,7 @@ The central insight is that the measurement channel between the physical battery
 DC3S (Degradation-Conditioned Conformal Dispatch Safety Shield) is built around that failure mode. Rather than relegating telemetry quality to a monitoring dashboard, the controller uses it to widen uncertainty sets, solve against the widened sets, repair unsafe candidate actions, and emit a step-level audit record within the same online control cycle. The guiding principle is *conditional conservatism*: the shield should stay permissive when the measurements are trustworthy and become more protective only when the measurement channel weakens.
 
 ### 1.1 Operational Motivation
-GridPulse is a closed dispatch loop — Forecast → Optimize → Dispatch → Measure → Monitor. Each stage depends on information from the previous one, and the quality of that information degrades as it passes through physical sensor networks, communication links, and data aggregation pipelines. The hidden safety gap lives at the Optimize→Dispatch boundary: the optimizer computes a mathematically optimal action based on forecasts and observed state, but what reaches the physical battery may be optimal for the *wrong* state if the telemetry feeding the optimizer has drifted from reality.
+ORIUS is a closed dispatch loop — Forecast → Optimize → Dispatch → Measure → Monitor. Each stage depends on information from the previous one, and the quality of that information degrades as it passes through physical sensor networks, communication links, and data aggregation pipelines. The hidden safety gap lives at the Optimize→Dispatch boundary: the optimizer computes a mathematically optimal action based on forecasts and observed state, but what reaches the physical battery may be optimal for the *wrong* state if the telemetry feeding the optimizer has drifted from reality.
 
 A forecasting model can have strong RMSE while still inducing unsafe dispatch if its interval calibration weakens under degraded measurements and no shield exists between the optimizer and the physical battery. The problem is not that the forecast is bad — it is that the forecast is *evaluated* and *calibrated* under assumptions about telemetry quality that may not hold at runtime. DC3S closes that gap by making the controller aware of when those assumptions break down.
 
@@ -41,7 +41,7 @@ A forecasting model can have strong RMSE while still inducing unsafe dispatch if
 The central scientific contribution is the discovery and empirical characterization of the hidden safety failure mode, together with the first end-to-end architecture that closes it in an auditable control loop. The bounded formal layer is there to support the empirical story, not replace it: the RAC-Cert coverage result explains why monotone inflation does not weaken the base coverage guarantee, the reliability-binned result motivates the governed calibration audit, and the FTIT tube result explains why the tightened SOC margin can prevent the true-state failures measured in the benchmark. The novelty remains the problem identification, the CPSBench framework that makes it measurable, and the conditional-conservatism result showing that the gap can be closed without blanket conservatism.
 
 ### 1.5 Paper Roadmap
-Section 2 positions the work in the literature. Sections 3 and 4 define the system context and dispatch problem. Sections 5 and 6 describe the forecasting, calibration, and shield mechanics. Sections 7 through 10 present the evidence, baseline diagnosis, and cross-region analysis. Sections 11 through 14 close with governance, validity, limitations, and conclusion. Section 15 lists references, followed by appendices.
+Section 2 positions the work in the literature. Sections 3 and 4 define the system context and dispatch problem. Sections 5 and 6 describe the forecasting, calibration, and shield mechanics. Sections 7 through 10 present the core empirical evidence, baseline diagnosis, and cross-region analysis. Section 11 now restores the long-form battery theorem block. Sections 12 through 20 cover governance, hardening, benchmark formalization, scope, and deployment discipline. The closing sections then discuss validity, limitations, and the battery-only conclusion, followed by a larger appendix stack.
 
 ## 2. Related Work
 
@@ -62,18 +62,18 @@ The governance layer is deliberately narrow. It is informed by reproducibility w
 
 ## 3. Background, Preliminaries, and System Context
 
-### 3.1 GridPulse System Context
-GridPulse is implemented as a forecast-to-dispatch stack whose main layers are data preparation, forecasting, uncertainty calibration, optimization, monitoring, and API/dashboard serving. DC3S sits between uncertainty estimation and command execution. It receives observed telemetry and calibrated intervals, widens those intervals when quality deteriorates, solves or wraps a dispatch action, repairs the action if necessary, and emits a certificate for audit.
+### 3.1 ORIUS System Context
+ORIUS is implemented as a forecast-to-dispatch stack whose main layers are data preparation, forecasting, uncertainty calibration, optimization, monitoring, and API/dashboard serving. DC3S sits between uncertainty estimation and command execution. It receives observed telemetry and calibrated intervals, widens those intervals when quality deteriorates, solves or wraps a dispatch action, repairs the action if necessary, and emits a certificate for audit.
 
 ### 3.2 Component-to-Code Map
 | Layer | Purpose | Primary paths |
 |---|---|---|
-| Data pipeline | Region features, splits, and profile locks | `src/gridpulse/data_pipeline/`, `src/gridpulse/pipeline/run.py` |
-| Forecasting | GBM and deep-baseline training/inference | `src/gridpulse/forecasting/` |
-| Uncertainty | Conformal and adaptive interval logic | `src/gridpulse/forecasting/uncertainty/conformal.py` |
-| Optimization | Deterministic, robust, and baseline dispatch | `src/gridpulse/optimizer/` |
-| DC3S | Reliability, drift, shield, certificate, and state | `src/gridpulse/dc3s/` |
-| Monitoring | Drift checks and retraining logic | `src/gridpulse/monitoring/` |
+| Data pipeline | Region features, splits, and profile locks | `src/orius/data_pipeline/`, `src/orius/pipeline/run.py` |
+| Forecasting | GBM and deep-baseline training/inference | `src/orius/forecasting/` |
+| Uncertainty | Conformal and adaptive interval logic | `src/orius/forecasting/uncertainty/conformal.py` |
+| Optimization | Deterministic, robust, and baseline dispatch | `src/orius/optimizer/` |
+| DC3S | Reliability, drift, shield, certificate, and state | `src/orius/dc3s/` |
+| Monitoring | Drift checks and retraining logic | `src/orius/monitoring/` |
 | API and dashboard | Runtime routes and operator-facing inspection | `services/api/`, `frontend/` |
 
 ### 3.3 Artifact Contracts and Profile Lock
@@ -304,7 +304,7 @@ The manuscript also renders a governed 10-row step-trace table (`dc3s_step_trace
 GBM dominates the currently materialized deep-baseline rows on load, wind, and solar forecasting in both DE and US regimes under a fair comparison contract. LSTM and TCN provide the clearest completed comparison today, while N-BEATS, TFT, and PatchTST are already part of the same promoted reporting surface but still have pending artifact rows. This is a finding about the data regime, not a tuning failure.
 
 ### 9.2 Why: The Tabular Regime Effect
-The key structural fact is that the GridPulse feature pipeline already encodes the temporal structure that deep sequence models are designed to learn — weekly and daily lags, rolling statistics, calendar signals, ramp features, and domain-specific peak indicators. When a 168-hour lag feature is already in the input matrix, an LSTM has nothing left to learn from the sequence that GBM cannot exploit directly from the tabular representation. Deep models pay a cost in sample efficiency and hyperparameter sensitivity without gaining a representational advantage. This effect is consistent with the broader tabular ML literature (Borisov et al., 2022).
+The key structural fact is that the ORIUS feature pipeline already encodes the temporal structure that deep sequence models are designed to learn — weekly and daily lags, rolling statistics, calendar signals, ramp features, and domain-specific peak indicators. When a 168-hour lag feature is already in the input matrix, an LSTM has nothing left to learn from the sequence that GBM cannot exploit directly from the tabular representation. Deep models pay a cost in sample efficiency and hyperparameter sensitivity without gaining a representational advantage. This effect is consistent with the broader tabular ML literature (Borisov et al., 2022).
 
 ### 9.3 Implications for Practitioners
 The practical implication is actionable: **invest in feature engineering before investing in model architecture**. On moderate-sized, strongly seasonal grid datasets, a well-featured GBM is not just competitive but dominant. The six-model comparison quantifies this advantage precisely and makes it reproducible under the locked artifact policy.
@@ -332,12 +332,23 @@ The third explanation is calibration asymmetry. Under-coverage in some US target
 ### 10.5 Multi-BA Interpretation
 The thesis lock still uses the canonical US dashboard profile, while release-family assets already describe MISO, PJM, and ERCOT separately. That means “US” is partly a compressed narrative surface. A stronger next revision would expose those balancing-authority differences in the main results rather than only in supporting assets.
 
-## 11. Governance and Reproducibility
+## 11. Battery Theorem Validation
 
-### 11.1 Source of Truth
+### 11.1 Assumptions, Notation, and Proof Discipline
+The long-form paper now imports the fuller theorem scaffolding from the thesis build. In LaTeX, `paper/paper.tex` carries a dedicated theorem-validation block through `paper/longform/theorem_block_longform.tex`, which imports the long-form chapter surfaces for assumptions, notation, theorem dependencies, and proof-discipline explanations.
+
+### 11.2 OASG, Safety Preservation, Core Bound, and No Free Safety
+The long-form LaTeX manuscript now includes the battery theorem ladder more faithfully: OASG existence, safety preservation under the shield, the ORIUS core bound, and the No Free Safety result all appear as thesis-derived sections in the primary paper build rather than only as compressed theorem summaries.
+
+### 11.3 Temporal and Behavioral Extensions
+The paper also now carries the longer treatment of certificate horizon, expiration, half-life, fallback existence, and graceful degradation through the imported temporal-extension chapter. This means `paper.pdf` now includes the fuller theorem narrative that previously lived only in the thesis build.
+
+## 12. Governance and Reproducibility
+
+### 12.1 Source of Truth
 The canonical manuscript source is `paper/PAPER_DRAFT.md`. The corresponding LaTeX thesis manuscript is `paper/paper.tex`, and the shorter conference derivative is `paper/paper_r1.tex`. Quantitative claims are valid only if they remain traceable to `paper/metrics_manifest.json`, `paper/claim_matrix.csv`, and the locked report artifacts.
 
-### 11.2 Repo-to-Paper Traceability
+### 12.2 Repo-to-Paper Traceability
 | Repo artifact family | Primary role in the paper | Main paper touchpoint |
 |---|---|---|
 | README + setup docs | Environment bootstrap, run commands, and operator setup | Governance and appendices |
@@ -347,22 +358,22 @@ The canonical manuscript source is `paper/PAPER_DRAFT.md`. The corresponding LaT
 | Logs + checkpoints | Run IDs, solver outputs, metrics, and locked evidence values | Results and governance |
 | Plotting + publication scripts | Figures, tables, and paper-facing release assets | Results and appendices |
 
-### 11.2.1 Deployment Evidence
+### 12.2.1 Deployment Evidence
 
 The deployment-facing evidence is organized as six release-scoped artifact families under a single release ID (`R1_DEPLOY_20260314`) and recorded in `deployment_evidence_manifest.json`:
 
 | Surface | Code | Artifact | Paper claim |
 | --- | --- | --- | --- |
 | Latency benchmark | `scripts/benchmark_dc3s_steps.py` | `dc3s_latency_summary.csv` | Runtime profile (§8.5): per-step latency < 1 ms |
-| Streaming validation | `src/gridpulse/streaming/consumer.py` | `streaming_validation_summary.json` | Streaming extension (§13.2): validated ingest path |
-| Step trace | `src/gridpulse/dc3s/{shield,calibration,quality,drift}.py` | `dc3s_step_trace.csv` | Operational trace (§8.6): governed 12-step record |
+| Streaming validation | `src/orius/streaming/consumer.py` | `streaming_validation_summary.json` | Streaming extension (§13.2): validated ingest path |
+| Step trace | `src/orius/dc3s/{shield,calibration,quality,drift}.py` | `dc3s_step_trace.csv` | Operational trace (§8.6): governed 12-step record |
 | Shadow-mode run | `iot/edge_agent/run_agent.py` | `shadow_mode_summary.json` | IoT deployment (§12): closed-loop shadow validation |
-| Runtime safety contracts | `src/gridpulse/dc3s/coverage_theorem.py` | `coverage_theorem.py` (runtime assertions) | Safety guarantee (§5.7): verify_inflation_geq_one() |
-| Calibration governance | `src/gridpulse/forecasting/uncertainty/reliability_mondrian.py` | `reliability_group_coverage.csv` | Calibration (§8.4): group-conditional coverage audit |
+| Runtime safety contracts | `src/orius/dc3s/coverage_theorem.py` | `coverage_theorem.py` (runtime assertions) | Safety guarantee (§5.7): verify_inflation_geq_one() |
+| Calibration governance | `src/orius/forecasting/uncertainty/reliability_mondrian.py` | `reliability_group_coverage.csv` | Calibration (§8.4): group-conditional coverage audit |
 
 In the release workflow, the deployment-evidence stage runs as `python scripts/run_r1_release.py --stage deployment` after `full` and `cpsbench` but before promotion. The outputs are deterministic (fixed seeds) and hash-locked in the release manifest so that the deployment discussion stays tied to the same evidence discipline as the main results.
 
-### 11.3 Validation Gates
+### 12.3 Validation Gates
 The release gates for this thesis are concrete:
 1. `python3 scripts/validate_paper_claims.py`
 2. `python3 scripts/sync_paper_assets.py --check`
@@ -371,43 +382,107 @@ The release gates for this thesis are concrete:
 
 The certificate stream also supports lightweight operational health monitoring. In the current implementation, sliding-window summaries of certificate fields track intervention-rate spikes, low-reliability-rate spikes, persistent drift activation, and inflation P95 excursions. Sustained breaches can trigger alerts and feed retraining decisions, so the audit trail serves online triage as well as post-hoc forensics.
 
-### 11.4 What Governance Does Not Claim
+### 12.4 What Governance Does Not Claim
 The governance layer is scoped to this paper. It does not claim a universal reproducibility framework for ML research. It claims that, for a multi-artifact cyber-physical systems project, automated claim locking is necessary to keep the method story and the evidence story synchronized.
 
-## 12. Discussion and Threats to Validity
+## 13. Battery Aging and Asset Preservation
 
-### 12.1 Implications
+### 13.1 Why Aging Belongs in the Safety Story
+Hidden true-state violations are not only control mistakes; they are physically damaging battery events. The consolidated manuscript now treats battery aging as a bounded downstream consequence of hidden SOC excursions rather than leaving it as background motivation.
+
+### 13.2 Locked Asset-Preservation Proxy
+The battery hardening package now includes `reports/aging/asset_preservation_proxy_table.csv`, which translates avoided true-state violation severity into an annual fade proxy and a ten-year avoided depreciation surface. The exact dollar values remain proxy-based, but the manuscript now ties safety preservation to an auditable asset-preservation artifact family.
+
+## 14. Blackout Behavior and Safe Landing
+
+### 14.1 Frozen-Certificate Blackout Study
+The blackout study in `reports/blackout/blackout_study.csv` shows that the current battery implementation can hold a benign frozen safe action through 1-, 4-, 12-, 24-, and 48-hour blackout horizons with zero true-state violations. This is better read as a safe-hold result than as a fully identified certificate half-life law.
+
+### 14.2 Graceful Degradation
+The graceful degradation trace shows reliability dropping while interval width widens sharply, making the operational meaning of conditional conservatism visible: the controller becomes more protective as the telemetry channel weakens rather than blindly persisting with stale aggressive commands.
+
+## 15. Hardware-Facing Runtime Rehearsal
+
+### 15.1 Locked Runtime Path
+The manuscript now includes a controller-in-the-loop runtime rehearsal through the edge-agent path. The locked HIL package records 96 audited steps, 0 true-state violations, 96 interventions, and 100% certificate completeness across nominal and dropout scenarios.
+
+### 15.2 Bound of the Claim
+This is not yet a full production-hardware HIL proof. It is a runtime execution rehearsal that extends the safety case one layer beyond offline benchmark replay while remaining explicit that physical inverter and BMS integration are still future work.
+
+## 16. ORIUS-Bench Battery Track
+
+### 16.1 Benchmark Contract
+ORIUS-Bench now appears in the paper as battery-domain infrastructure rather than only as an implicit evaluation harness. The battery schema table defines the controller API, fault schema, metric schema, and artifact lineage fields used by the benchmark.
+
+### 16.2 Leaderboard and Rank Reversal
+The battery leaderboard and rank-reversal artifacts show that nominal controller ranking and degraded-sensing ranking are not the same problem. In particular, safety-aware controllers rise once true-state safety rather than nominal cost ranking becomes the main criterion.
+
+## 17. Battery-Fleet Composition
+
+### 17.1 Two-Battery Shared-Transformer Study
+The consolidated manuscript now includes a bounded fleet extension through `reports/fleet/fleet_composition_two_battery.csv` and `reports/fleet/two_battery_composition_metrics.csv`. The locked study records repeated shared-transformer stress, bounded curtailment, and non-trivial useful work preservation.
+
+### 17.2 What This Means
+The composition story is still battery-only and deliberately narrow, but it moves the paper beyond single-device safety into auditable multi-battery coordination under shared infrastructure pressure.
+
+## 18. Adversarial Robustness and Active Probing
+
+### 18.1 Locked Detection Surface
+The current adversarial evidence is a spoofing-detection audit rather than a complete controller-versus-attacker theory. The locked probing package reports 300 evaluated events, 48 true positives, 6 false positives, 4 false negatives, 0.889 precision, and 0.923 recall.
+
+### 18.2 Bounded Claim
+The paper now claims that the battery implementation includes a meaningful active-probing detection path. It does not claim adversarial completeness.
+
+## 19. What the Battery Manuscript Proves
+
+### 19.1 Established Battery Claim
+The battery-domain claim is now explicit: under degraded battery telemetry, a controller can be observationally safe while physically unsafe, and ORIUS closes that gap through reliability-aware uncertainty inflation, safe action repair, and auditable runtime control.
+
+### 19.2 What Remains Outside the Current Evidence
+The manuscript does not claim universal deployment safety, heterogeneous multi-asset guarantees, adversarial completeness, or full production-hardware deployment. The battery result is strong because it is deep and bounded, not because it quietly widens its scope.
+
+## 20. Deployment Path and Verification Discipline
+
+### 20.1 Deployment Path
+The practical sequence remains: benchmark replay, runtime rehearsal, fuller HIL, then supervised deployment. Each layer must stay tied to manifests, artifacts, and bounded claims.
+
+### 20.2 Verification Discipline
+Every major battery claim should preserve four invariants: a regenerating script path, a stable output artifact, a manifest or coverage-register entry, and an explicit non-claim boundary.
+
+## 21. Discussion and Threats to Validity
+
+### 21.1 Implications
 The results support a systems-level claim: telemetry reliability should be treated as part of the control state, not as a peripheral monitoring variable. The safety win comes not from maximum conservatism but from conditional conservatism.
 
-### 12.2 Negative and Neutral Findings
+### 21.2 Negative and Neutral Findings
 1. US peak shaving remains 0.00%.
 2. Some target-regime combinations remain under-covered.
 3. GBM dominates the locked deep baselines.
 4. Cross-region impact magnitudes vary sharply despite the shared architecture.
 
-### 12.3 Internal Validity
+### 21.3 Internal Validity
 The main internal-validity risk is manuscript-artifact drift. The validator and claim matrix reduce that risk, but they do not eliminate it forever. Another internal-validity risk is that the diagnosis sections are based on locked artifacts and configuration evidence rather than new targeted reruns.
 
-### 12.4 External Validity
-The thesis is intentionally scoped to the locked DE and US windows. Generalization to different markets, battery sizes, or telemetry infrastructures remains future work.
+### 21.4 External Validity
+The manuscript is intentionally scoped to the locked DE and US windows plus the battery-only hardening extensions added later in the paper. Generalization to different markets, battery sizes, telemetry infrastructures, or non-battery domains remains future work.
 
-### 12.5 Construct and Conclusion Validity
+### 21.5 Construct and Conclusion Validity
 Construct validity depends on the proxy cost and carbon signals being appropriate enough for comparative analysis. Conclusion validity depends on scenario design and calibration definitions remaining stable. The RAC-Cert proposition also should not be overstated: it gives monotone coverage preservation under inflation, not a complete theory of conditional safety.
 
-## 13. Limitations and Future Work
+## 22. Limitations and Future Work
 
-### 13.1 Current Limitations
+### 22.1 Current Limitations
 1. Evidence is limited to locked DE and US windows.
-2. Evaluation is software-in-the-loop rather than hardware field validation; CHIL, HIL, and field pilots are explicit future work and are not claimed in the current evidence base.
+2. The manuscript now includes a controller-in-the-loop runtime rehearsal, but not full production-hardware HIL or field deployment.
 3. Cost and carbon signals are engineering proxies.
 4. The formal result is intentionally modest.
 5. The forecasting comparison is materially stronger than the older three-model draft because the main paper surface now uses a six-model contract, but the architecture ranking is still bounded to the present data regime and current artifact state.
-### 13.2 Near-Term Future Work
+### 22.2 Near-Term Future Work
 Near-term work should focus on:
 1. decomposing the US narrative more explicitly into MISO/PJM/ERCOT in the main text
 2. improving under-covered target-regime calibration before dispatch (the governed reliability-group coverage audit in this release provides the diagnostic baseline for that work)
 3. extending the governed deployment-evidence track to richer runtime scenarios including multi-device operation and longer evaluation windows
-4. broader operational evaluation bounded to software and runtime evidence rather than field deployment claims
+4. upgrading the current runtime rehearsal into fuller battery HIL with external telemetry transport and relay behavior
 
 **Streaming validation.** The ingest path is validated in this release via a deterministic 168-event replay through the consumer's schema, range, and cadence rules (`streaming_validation_summary.json`, release `R1_DEPLOY_20260314`). All events pass; temporal ordering is monotonic; checkpoint persistence is confirmed. The manuscript renders this as a compact summary table (Table: streaming validation). Live-mode validation remains future work.
 
@@ -415,10 +490,10 @@ Near-term work should focus on:
 
 **Governed calibration audit.** The reliability-group coverage analysis is promoted into a governed artifact (`reliability_group_coverage.csv/json`, release `R1_DEPLOY_20260314`). The audit partitions calibration samples into 10 quantile bins by reliability score and reports per-bin PICP. The manuscript renders this as a visible 10-bin table (Table: reliability-group coverage). This is a governed diagnostic audit that improves interpretability of under-coverage patterns without changing the locked runtime CQR+RAC-Cert calibration path.
 
-### 13.3 Longer-Term Future Work
+### 22.3 Longer-Term Future Work
 Longer-term work includes hardware-in-the-loop validation, richer market constraints, conditional-coverage analysis under degradation, and stronger release automation with signed evidence bundles. Those hardware-facing stages remain intentionally deferred beyond the present thesis freeze.
 
-## 14. Conclusion
+## 23. Conclusion
 
 Battery dispatch controllers can appear safe when evaluated on observed state while simultaneously violating physical battery limits on true state — a hidden failure mode that standard evaluation protocols do not expose. This thesis quantifies that gap at 3.9% true-SOC violation rate (P95 severity 333 MWh) for deterministic dispatch under realistic telemetry faults and shows why observed-state evaluation alone misses it. CPSBench makes the gap measurable, and DC3S shows how to close it.
 
@@ -428,11 +503,11 @@ DC3S achieves zero true-SOC violations at a 2.8% intervention rate, so the shiel
 
 The promoted six-model forecasting comparison points in one practical direction: on these moderate-sized, feature-rich grid datasets, GBM remains the strongest operational model under the locked equal-budget protocol. For practitioners, the message is simple: on data of this kind, feature engineering matters more than architectural complexity.
 
-**The core message.** Trustworthy grid-scale dispatch requires the uncertainty model to degrade when the measurement channel degrades. In that sense, telemetry is not an implementation detail but part of the control problem itself. DC3S turns that idea into a single online loop with per-step auditable evidence. Within the present software-in-the-loop boundary, the hidden safety gap is both measurable and closeable; the next step is to test how far the same pattern survives on physical battery hardware.
+**The core message.** Trustworthy grid-scale dispatch requires the uncertainty model to degrade when the measurement channel degrades. In that sense, telemetry is not an implementation detail but part of the control problem itself. DC3S turns that idea into a single online loop with per-step auditable evidence. Within the present battery evidence boundary, the hidden safety gap is both measurable and closeable; the hardening layers added in this manuscript show that the same logic extends into asset preservation, blackout handling, fleet coordination, active probing, and runtime rehearsal without abandoning the battery-only claim discipline.
 
-**Broader implications.** The observed-state safety illusion is not unique to battery dispatch. Any cyber-physical system that acts on sensor readings that may lag or drift from physical reality is exposed to the same class of hidden violations. The DC3S pattern — reliability-conditioned uncertainty inflation followed by feasible-set projection — should therefore be read as a reusable systems idea for CPS settings such as HVAC dispatch, water treatment, and autonomous vehicle motion planning, wherever measurement uncertainty and hard safety constraints meet.
+**Scope boundary.** This consolidated paper is intentionally a battery-first manuscript, not a universal deployment claim. What it proves is that the ORIUS logic now has a full battery-domain reference implementation with a hardened evidence surface and explicit theorem-to-code-to-artifact lineage. What it does not prove is universal cross-domain validation, adversarial completeness, or production-hardware deployment safety.
 
-## 15. References
+## 24. References
 1. Vovk, V., Gammerman, A., and Shafer, G. *Algorithmic Learning in a Random World*. Springer, 2005.
 2. Shafer, G., and Vovk, V. “A Tutorial on Conformal Prediction.” *Journal of Machine Learning Research*, 2008.
 3. Romano, Y., Patterson, E., and Candès, E. “Conformalized Quantile Regression.” *NeurIPS*, 2019.
@@ -496,4 +571,21 @@ The promoted six-model forecasting comparison points in one practical direction:
 | Solver infeasible | Extreme intervals | Solver status flags | Safe infeasible response | Grid-only baseline |
 | Unsafe command | SOC/power violation | BMS validation | Reject with detail | Maintain safe state |
 | Control degradation | Heartbeat timeout | Watchdog detection | Lock remote control | Manual/local control |
- 
+
+## Appendix D. Notation Sheet
+The long-form LaTeX paper now imports the thesis notation appendix so the primary manuscript includes the fuller ORIUS symbol register for telemetry objects, uncertainty objects, battery parameters, metrics, and tuning constants.
+
+## Appendix E. Assumption Register
+The long-form paper also imports the thesis assumption register, including the A1-A8 master table and the chapter-by-chapter assumption usage map that supports the theorem block.
+
+## Appendix F. Full Proofs
+`paper.pdf` now includes the thesis proof appendix for the imported battery theorem ladder. The Markdown twin records that this proof material is part of the primary LaTeX manuscript even though the detailed derivations remain LaTeX-first.
+
+## Appendix G. Extended Battery Result Tables
+The long-form paper imports the extended-results appendix so the primary manuscript now carries fuller controller comparison, regional impact, and fault-profile tables than the earlier compressed paper build.
+
+## Appendix H. Hardware-in-the-Loop Bill of Materials and Safety
+The long-form appendix stack now includes the HIL bill of materials, safety classification, risk assessment, and operator checklist carried over from the thesis appendix.
+
+## Appendix I. Sweep and Latency Measurement Protocols
+The primary LaTeX manuscript now includes the longer sweep and latency protocol appendix documenting the hyperparameter grid, latency measurement method, CLI invocations, and output-artifact expectations used by the battery thesis.

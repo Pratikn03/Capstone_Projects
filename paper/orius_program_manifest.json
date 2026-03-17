@@ -1,0 +1,136 @@
+{
+  "manifest_version": "1.0.0",
+  "created_at_utc": "2026-03-16T00:00:00Z",
+  "purpose": "ORIUS program manifest for Papers 2-6 extensions",
+  "truth_surfaces": {
+    "metrics_manifest": "paper/metrics_manifest.json",
+    "claim_matrix": "paper/claim_matrix.csv",
+    "validate_script": "scripts/validate_paper_claims.py",
+    "sync_script": "scripts/sync_paper_assets.py",
+    "impact_de": "reports/impact_summary.csv",
+    "impact_us": "reports/eia930/impact_summary.csv",
+    "research_de": "reports/research_metrics_de.csv",
+    "research_us": "reports/research_metrics_us.csv",
+    "config_dc3s": "configs/dc3s.yaml",
+    "config_optimization": "configs/optimization.yaml"
+  },
+  "locked_replication_flow": [
+    "python3 scripts/validate_paper_claims.py",
+    "python3 scripts/verify_theorem_anchors.py",
+    "python3 scripts/run_universal_orius_validation.py",
+    "python3 scripts/sync_paper_assets.py --check",
+    "make train-all-ba",
+    "make r1-cpsbench",
+    "make r1-full && make r1-verify && make paper-sync",
+    "python3 scripts/run_orius_full_check.py"
+  ],
+  "phases": {
+    "phase0": {
+      "name": "Freeze battery foundation",
+      "status": "completed",
+      "artifacts": ["artifacts/paper1_lock/", "artifacts/canonical_runs/"]
+    },
+    "phase1": {
+      "name": "Paper 2: Runtime validity horizon engine",
+      "status": "completed",
+      "modules": ["src/orius/dc3s/half_life.py", "src/orius/dc3s/reachability.py"]
+    },
+    "phase2": {
+      "name": "Paper 3: Graceful degradation planner",
+      "status": "completed",
+      "modules": ["src/orius/dc3s/graceful.py", "src/orius/optimizer/fallback_dispatch.py"]
+    },
+    "phase3": {
+      "name": "Paper 4: ORIUS-Bench release infrastructure",
+      "status": "completed",
+      "package": "src/orius/orius_bench/",
+      "modules": [
+        "src/orius/orius_bench/adapter.py",
+        "src/orius/orius_bench/controller_api.py",
+        "src/orius/orius_bench/fault_engine.py",
+        "src/orius/orius_bench/metrics_engine.py",
+        "src/orius/orius_bench/export.py",
+        "src/orius/orius_bench/battery_track.py",
+        "src/orius/orius_bench/navigation_track.py"
+      ],
+      "tests": ["tests/test_orius_bench.py"],
+      "scripts": ["scripts/run_orius_bench_release.py"],
+      "test_count": 34
+    },
+    "phase4": {
+      "name": "Paper 5: Multi-agent shared-constraint safety",
+      "status": "completed",
+      "package": "src/orius/multi_agent/",
+      "modules": [
+        "src/orius/multi_agent/plant.py",
+        "src/orius/multi_agent/protocol.py",
+        "src/orius/multi_agent/margin_allocation.py",
+        "src/orius/multi_agent/scenarios.py"
+      ],
+      "tests": ["tests/test_multi_agent.py"],
+      "scripts": ["scripts/run_multi_agent_counterexample.py"],
+      "test_count": 14
+    },
+    "phase5": {
+      "name": "Paper 6: CertOS runtime layer",
+      "status": "completed",
+      "package": "src/orius/certos/",
+      "modules": [
+        "src/orius/certos/runtime.py",
+        "src/orius/certos/certificate_engine.py",
+        "src/orius/certos/audit_ledger.py",
+        "src/orius/certos/recovery_manager.py",
+        "src/orius/certos/belief_engine.py",
+        "src/orius/certos/reliability_engine.py",
+        "src/orius/certos/shift_engine.py",
+        "src/orius/certos/reachability_engine.py",
+        "src/orius/certos/safe_action_filter.py",
+        "src/orius/certos/graceful_planner.py"
+      ],
+      "tests": ["tests/test_certos.py"],
+      "scripts": ["scripts/run_certos_lifecycle.py"],
+      "test_count": 25
+    },
+    "phase6": {
+      "name": "Edge/HIL evidence layer",
+      "status": "completed",
+      "modules": ["iot/edge_agent/agent.py", "iot/edge_agent/drivers/sim.py", "iot/simulator/run_closed_loop.py"],
+      "tests": ["tests/test_iot_edge_evidence.py"],
+      "scripts": ["scripts/run_fault_packet_drop_table.py"],
+      "test_count": 13
+    },
+    "phase7": {
+      "name": "Manuscript and release unification",
+      "status": "completed"
+    },
+    "phase8": {
+      "name": "Universal Framework (five thesis domains)",
+      "status": "completed",
+      "package": "src/orius/universal_framework/",
+      "modules": [
+        "src/orius/universal_framework/pipeline.py",
+        "src/orius/universal_framework/domain_registry.py",
+        "src/orius/universal_framework/industrial_adapter.py",
+        "src/orius/universal_framework/healthcare_adapter.py",
+        "src/orius/universal_framework/aerospace_adapter.py"
+      ],
+      "tests": ["tests/test_universal_framework.py"],
+      "scripts": ["scripts/run_multi_domain_framework.py"],
+      "test_count": 6
+    }
+  },
+  "cold_start_reproducibility": {
+    "clone": "git clone <repo> && cd orius",
+    "setup": "python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.lock.txt",
+    "paper2_blackout": "python scripts/run_certificate_half_life_blackout.py --seeds 0 --horizons 0 1 4",
+    "paper3_graceful": "python -m pytest tests/test_graceful_degradation.py -v --no-cov",
+    "paper4_bench": "python scripts/run_orius_bench_release.py --seeds 3 --horizon 48",
+    "paper5_multi_agent": "python scripts/run_multi_agent_counterexample.py",
+    "paper6_certos": "python scripts/run_certos_lifecycle.py",
+    "iot_evidence": "python -m pytest tests/test_iot_edge_evidence.py -v --no-cov",
+    "universal_framework": "python scripts/run_multi_domain_framework.py --out reports/multi_domain",
+    "universal_orius_validation": "python scripts/run_universal_orius_validation.py --seeds 3 --horizon 48",
+    "orius_full_check": "python scripts/run_orius_full_check.py",
+    "all_new_tests": "python -m pytest tests/test_certificate_half_life_p2.py tests/test_conformal_reachability.py tests/test_graceful_degradation.py tests/test_orius_bench.py tests/test_multi_agent.py tests/test_certos.py tests/test_iot_edge_evidence.py tests/test_universal_framework.py -v --no-cov"
+  }
+}
