@@ -1,0 +1,340 @@
+
+\chapter{DC3S: The Battery Adapter}
+\label{ch:dc3s-adapter}
+
+The Detect--Calibrate--Constrain--Shield--Certify Safety System (DC3S) is the
+runtime adapter that sits at the Optimize--Dispatch boundary
+(Chapter~\ref{ch:orius-context}) and translates degraded observations
+into safety-guaranteed actions.  This chapter specifies the runtime objects,
+derives each stage of the pipeline, and narrates a complete control step from
+telemetry ingestion to certificate issuance.
+
+% ----------------------------------------------------------------
+\section{Why a Runtime Shield Is Needed}
+
+Chapter~\ref{ch:forecasting} showed that CQR intervals under-cover
+conditionally: wind coverage drops to 39--49\% in the low-reliability group,
+and load coverage falls 8--20 percentage points below nominal.  A dispatch
+controller that trusts these intervals without adjustment will issue actions
+that violate SOC constraints on the true (unobserved) trajectory at rates far
+exceeding the design budget~$\alpha$.
+
+A runtime shield is needed because:
+\begin{enumerate}
+  \item Forecast calibration is a \emph{batch} property; telemetry degradation
+    is a \emph{streaming} property.  No static calibration fold can anticipate
+    the specific fault pattern at step~$t$.
+  \item The observation quality at step~$t$ is \emph{known} to the controller
+    (via packet-loss counters, staleness timers, and drift detectors) but is
+    \emph{not used} by standard conformal methods.
+  \item The SOC dynamics are \emph{coupled}: an unsafe action at $t$ may
+    render all future actions infeasible.  The shield must prevent the
+    first violation, not merely reduce its frequency.
+\end{enumerate}
+
+% ----------------------------------------------------------------
+\section{Runtime Objects}
+\label{sec:runtime-objects}
+
+Table~\ref{tab:runtime-objects} defines the variables maintained by DC3S at
+each control step.
+
+\begin{table}[ht]
+\centering
+\caption{DC3S runtime objects at step~$t$.}
+\label{tab:runtime-objects}
+\begin{tabular}{cll}
+\toprule
+\textbf{Symbol} & \textbf{Name} & \textbf{Description} \\
+\midrule
+$z_t$            & True state          & Actual plant state (load, renew., SOC);
+                                         unobserved at runtime \\
+$\tilde{z}_t$    & Observed state      & Telemetry-degraded plant state seen by
+                                         controller \\
+$o_t$            & Observation vector  & Raw sensor packet (may contain NaN,
+                                         delays, spikes) \\
+$x_t$            & Feature vector      & Engineered features derived from
+                                         $\tilde{z}_{1:t}$ \\
+$w_t$            & Reliability score   & $\in [0,1]$; OQE output quantifying
+                                         observation quality \\
+$d_t$            & Drift flag          & $\in \{0,1\}$; Page--Hinkley detector
+                                         output \\
+$s_t$            & Stale count         & Non-negative integer; consecutive steps
+                                         since last fresh reading \\
+$C_t(\alpha)$    & Base interval       & CQR prediction interval at
+                                         miscoverage~$\alpha$ \\
+$C_t^{\mathrm{RAC}}(\alpha)$ & Inflated interval &
+                   Reliability-adaptive conformal interval \\
+$\mathcal{A}_t$  & Safe-action set     & Feasible actions under inflated
+                                         uncertainty \\
+$a_t^\star$      & Candidate action    & Optimiser output \\
+$a_t^{\mathrm{safe}}$ & Safe action    & Projected action $\in \mathcal{A}_t$ \\
+$\mathcal{C}_t$  & Certificate         & Step-level audit record \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------
+\section{Detect: Telemetry Reliability Scoring (OQE)}
+\label{sec:detect}
+
+The Observation Quality Estimator (OQE) computes the reliability score
+$w_t \in [0, 1]$ from three sub-scores:
+
+\begin{equation}
+\label{eq:oqe}
+  w_t = w_t^{\mathrm{fresh}} \cdot w_t^{\mathrm{range}} \cdot w_t^{\mathrm{consist}},
+\end{equation}
+where:
+\begin{description}
+  \item[$w_t^{\mathrm{fresh}}$] Freshness score: $\exp(-\lambda_f \cdot s_t)$,
+    decaying exponentially with the stale count~$s_t$.
+  \item[$w_t^{\mathrm{range}}$] Range plausibility: 1 if all channels are
+    within physical bounds, decayed proportionally to the number of
+    out-of-range channels.
+  \item[$w_t^{\mathrm{consist}}$] Temporal consistency: based on the
+    Mahalanobis distance of the current reading from a short rolling window,
+    penalising spikes and discontinuities.
+\end{description}
+
+The OQE computation is stateless given the rolling buffer and runs in
+$<0.03$\,ms median latency
+(Table~\ref{tab:dc3s-latency}, \texttt{reports/publication/dc3s\_latency\_summary.csv}).
+
+% ----------------------------------------------------------------
+\section{Calibrate: Reliability-Adaptive Interval Inflation}
+\label{sec:calibrate}
+
+The base CQR interval $C_t(\alpha)$ is inflated to compensate for the
+conditional under-coverage revealed in Chapter~\ref{ch:forecasting}.  The
+\emph{RAC-Cert} (Reliability-Adaptive Conformal Certificate) formula is:
+
+\begin{equation}
+\label{eq:rac-cert}
+\boxed{
+  C_t^{\mathrm{RAC}}(\alpha) \;=\;
+  C_t(\alpha) \;\cdot\;
+  \bigl[\,1 + \kappa_r\,(1 - w_t)
+             + \kappa_d\,d_t
+             + \kappa_s\,s_t\,\bigr]
+}
+\end{equation}
+
+where:
+\begin{description}
+  \item[$\kappa_r$] Reliability sensitivity: scales the inflation with the
+    complement of the reliability score.  Default $\kappa_r = 0.5$.
+  \item[$\kappa_d$] Drift sensitivity: additive inflation when the
+    Page--Hinkley detector fires.  Default $\kappa_d = 0.3$.
+  \item[$\kappa_s$] Staleness sensitivity: linear inflation per stale step.
+    Default $\kappa_s = 0.05$.
+\end{description}
+
+The multiplicative form ensures that under nominal conditions
+($w_t = 1$, $d_t = 0$, $s_t = 0$) the inflated interval collapses to the
+base interval, imposing zero additional conservatism.
+
+\paragraph{Inflation diagnostics.}
+The locked evidence in \texttt{reports/publication/dc3s\_main\_table.csv}
+reports the mean and P95 of the RAC inflation factor across all scenarios
+and seeds.  Under the \texttt{drift\_combo} scenario the mean inflation
+is approximately $1.02$, rising to $1.05$ at the P95 level, confirming that
+the adaptive layer adds modest width only when observation quality genuinely
+degrades.
+
+% ----------------------------------------------------------------
+\section{Constrain: Safe-Action Sets Under Widened Uncertainty}
+\label{sec:constrain}
+
+Given the inflated interval $C_t^{\mathrm{RAC}}(\alpha)$ with half-width
+$q_t^{\mathrm{RAC}}$, the safe-action set is constructed by tightening
+the SOC bounds (cf.\ Equation~\eqref{eq:tightened-bounds},
+Chapter~\ref{ch:battery-dynamics}):
+
+\begin{equation}
+\label{eq:safe-action-set}
+  \mathcal{A}_t = \Bigl\{\,(P^{+}, P^{-}) \;\Big|\;
+    E_{\min} + q_t^{\mathrm{RAC}} \;\le\; \hat{E}_{t+1}(P^{+}, P^{-})
+    \;\le\; E_{\max} - q_t^{\mathrm{RAC}},\;
+    \text{power and ramp constraints hold}\,\Bigr\},
+\end{equation}
+where $\hat{E}_{t+1}(P^{+}, P^{-})$ is the one-step-ahead SOC estimate
+under the candidate action and the observed initial SOC~$\tilde{E}_t$.
+
+If $q_t^{\mathrm{RAC}}$ is large enough that $\mathcal{A}_t = \emptyset$,
+the controller reverts to a safe-standby action
+$(P^{+} = 0, P^{-} = 0)$, which is always feasible.
+
+% ----------------------------------------------------------------
+\section{Shield: Projection and Repair}
+\label{sec:shield}
+
+If the candidate action $a_t^\star$ lies outside $\mathcal{A}_t$, the shield
+projects it to the nearest safe action:
+
+\begin{equation}
+\label{eq:repair}
+\boxed{
+  a_t^{\mathrm{safe}} = \argmin_{a \in \mathcal{A}_t}
+    \|a - a_t^\star\|_2
+}
+\end{equation}
+
+Because $\mathcal{A}_t$ is a convex polytope (intersection of linear
+half-spaces from power bounds, ramp limits, and tightened SOC bounds), the
+projection is a quadratic programme solvable in closed form for the
+single-step case or via an efficient QP solver for the multi-step horizon.
+
+The \emph{intervention rate} (IR) is the fraction of steps where
+$a_t^{\mathrm{safe}} \neq a_t^\star$:
+\[
+  \mathrm{IR} = \frac{1}{T} \sum_{t=1}^{T}
+    \mathbf{1}\!\bigl[a_t^{\mathrm{safe}} \neq a_t^\star\bigr].
+\]
+
+The locked benchmark results show that DC3S achieves IR~$\approx 2{-}8\%$
+under degraded scenarios while maintaining TSVR~$= 0\%$, confirming that the
+economic cost of safety is modest.
+
+% ----------------------------------------------------------------
+\section{FTIT State Tube}
+\label{sec:ftit}
+
+The Fault-Tolerant Invariant Tube (FTIT) provides a secondary safety layer
+that does not depend on interval calibration.  FTIT propagates worst-case
+SOC bounds forward over a $k$-step horizon:
+
+\begin{equation}
+\label{eq:ftit}
+\begin{aligned}
+  \overline{E}_{t+k} &= \hat{E}_t + \delta_{\max}
+    + k\,\eta^{+}\,P_{\max}^{+}\,\Delta t, \\
+  \underline{E}_{t+k} &= \hat{E}_t - \delta_{\max}
+    - k\,P_{\max}^{-}/\eta^{-}\,\Delta t,
+\end{aligned}
+\end{equation}
+where $\delta_{\max}$ is the maximum SOC estimation error consistent with
+the current reliability score.  Any action that would cause either bound to
+exit $[E_{\min}, E_{\max}]$ within the $k$-step tube is rejected.
+
+The FTIT acts as a hard backstop: even if the RAC-Cert inflation is
+insufficient (e.g.\ due to a novel fault type not captured by the
+sensitivity parameters), the tube prevents multi-step SOC excursions.
+
+% ----------------------------------------------------------------
+\section{Certify: Step-Level Audit Records}
+\label{sec:certify}
+
+At the conclusion of each control step, DC3S emits a certificate
+$\mathcal{C}_t$ containing:
+
+\begin{table}[ht]
+\centering
+\caption{DC3S certificate fields.}
+\label{tab:certificate-fields}
+\begin{tabular}{ll}
+\toprule
+\textbf{Field} & \textbf{Content} \\
+\midrule
+\texttt{step}                    & Time-step index \\
+\texttt{timestamp}               & UTC timestamp \\
+\texttt{reliability\_w}          & Observation quality score $w_t$ \\
+\texttt{drift\_flag}             & Page--Hinkley drift indicator $d_t$ \\
+\texttt{inflation}               & RAC-Cert multiplier \\
+\texttt{proposed\_charge\_mw}    & Candidate charge power $P_t^{+\star}$ \\
+\texttt{proposed\_discharge\_mw} & Candidate discharge power $P_t^{-\star}$ \\
+\texttt{safe\_charge\_mw}        & Repaired charge power \\
+\texttt{safe\_discharge\_mw}     & Repaired discharge power \\
+\texttt{intervened}              & Boolean: was the action repaired? \\
+\texttt{intervention\_reason}    & Reason string (SOC, ramp, BMS) \\
+\texttt{guarantee\_passed}       & Boolean: all invariants satisfied? \\
+\texttt{soc\_after\_mwh}         & Estimated SOC after action \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A trace of certificate records for a representative episode is stored in
+\texttt{reports/publication/dc3s\_step\_trace.csv}.  The certificate
+stream is the primary input to the monitoring stage
+(Chapter~\ref{ch:orius-context}) and to the half-life analysis
+(Chapter~\ref{ch:cert-half-life-blackout}).
+
+% ----------------------------------------------------------------
+\section{DC3S Latency Profile}
+
+Real-time dispatch requires that the DC3S pipeline complete within the
+control cycle (typically 1\,s for sub-hourly, 60\,s for hourly).
+Table~\ref{tab:dc3s-latency} reports the component-level latency from the
+locked benchmark.
+
+\begin{table}[ht]
+\centering
+\caption{DC3S component latency (ms).  Source:
+\texttt{reports/publication/dc3s\_latency\_summary.csv}.}
+\label{tab:dc3s-latency}
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Component} & \textbf{Mean} & \textbf{Median} & \textbf{P95} &
+  \textbf{P99} & \textbf{Max} \\
+\midrule
+Reliability scoring          & 0.026 & 0.021 & 0.043 & 0.130 & 0.712 \\
+Drift update (Page--Hinkley) & 0.000 & 0.000 & 0.001 & 0.001 & 0.160 \\
+Uncertainty set build        & 0.012 & 0.011 & 0.011 & 0.047 & 0.724 \\
+Action repair (projection)   & 0.002 & 0.002 & 0.002 & 0.003 & 0.210 \\
+\midrule
+\textbf{Full DC3S step}      & 0.042 & 0.037 & 0.041 & 0.193 & 2.416 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The full DC3S step completes in under 0.2\,ms at P99, well within the
+budget for any practical control cycle.  The maximum of 2.4\,ms occurs
+during JIT warm-up on the first step and is not representative of
+steady-state performance.
+
+% ----------------------------------------------------------------
+\section{Complete Runtime Narrative}
+\label{sec:runtime-narrative}
+
+A single DC3S control step proceeds as follows:
+
+\begin{enumerate}
+  \item \textbf{Receive observation} $o_t$ from the telemetry gateway.
+    If the packet is missing (dropout), carry forward the last valid reading
+    and increment~$s_t$.
+
+  \item \textbf{Detect.}  Compute $w_t = w_t^{\mathrm{fresh}} \cdot
+    w_t^{\mathrm{range}} \cdot w_t^{\mathrm{consist}}$ via OQE.
+    Run the Page--Hinkley test on the residual stream to set~$d_t$.
+
+  \item \textbf{Calibrate.}  Inflate the base CQR interval:
+    $C_t^{\mathrm{RAC}}(\alpha) = C_t(\alpha) \cdot
+    [1 + \kappa_r(1-w_t) + \kappa_d\,d_t + \kappa_s\,s_t]$.
+
+  \item \textbf{Constrain.}  Construct the safe-action set $\mathcal{A}_t$
+    by tightening SOC bounds with the inflated half-width.  Verify the
+    FTIT tube; if the tube is violated, further restrict $\mathcal{A}_t$.
+
+  \item \textbf{Shield.}  If $a_t^\star \notin \mathcal{A}_t$, project:
+    $a_t^{\mathrm{safe}} = \argmin_{a \in \mathcal{A}_t} \|a - a_t^\star\|_2$.
+    Otherwise $a_t^{\mathrm{safe}} = a_t^\star$.
+
+  \item \textbf{Certify.}  Emit the certificate $\mathcal{C}_t$ recording
+    all runtime variables, the intervention decision, and the
+    guarantee-check outcome.  Forward $a_t^{\mathrm{safe}}$ to the BMS.
+\end{enumerate}
+
+% ----------------------------------------------------------------
+\section{Chapter Summary}
+
+This chapter specified the DC3S battery adapter: a five-stage runtime shield
+(Detect, Calibrate, Constrain, Shield, Certify) that intercepts dispatch
+actions at the Optimize--Dispatch boundary.  The OQE reliability
+scorer~\eqref{eq:oqe} quantifies observation quality; the RAC-Cert
+formula~\eqref{eq:rac-cert} inflates intervals adaptively; the safe-action
+set~\eqref{eq:safe-action-set} tightens SOC bounds accordingly; and the
+projection repair~\eqref{eq:repair} moves unsafe actions to the nearest
+feasible point.  The FTIT tube provides a calibration-free safety backstop.
+The full pipeline completes in under 0.2\,ms at P99, and step-level
+certificates create a complete audit trail.  Empirical validation is
+presented in Chapter~\ref{ch:cpsbench}.

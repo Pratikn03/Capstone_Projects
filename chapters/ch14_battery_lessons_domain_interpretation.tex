@@ -1,0 +1,120 @@
+
+\chapter{Battery Lessons and Domain Interpretation}
+\label{ch:battery-lessons}
+
+This chapter steps back from the numerical results to articulate what the
+battery domain \emph{means} for the ORIUS programme.  The battery is not
+merely a convenient test-bed: it is a \emph{witness domain}---a setting
+rich enough to expose the phenomena that ORIUS addresses, yet constrained
+enough to permit rigorous measurement.
+
+\section{Battery as a Witness, Not a Toy}
+
+A witness domain must satisfy three criteria:
+\begin{enumerate}
+  \item \textbf{Physical fidelity.}  The plant dynamics (SOC evolution,
+    efficiency losses, power/ramp constraints) are governed by real
+    thermodynamic and electrical laws, not synthetic rules.
+  \item \textbf{Telemetry realism.}  The fault injection model
+    (packet dropout, delay jitter, covariate drift, stale sensors)
+    mirrors failures observed in deployed SCADA and IoT systems.
+  \item \textbf{Safety materiality.}  Constraint violations have
+    measurable economic and physical consequences: over-discharge
+    accelerates cell degradation, and SOC excursions can trigger
+    protective shutdowns that disrupt grid services.
+\end{enumerate}
+
+The CPSBench battery plant satisfies all three criteria.  It is not a
+``toy'' in the pejorative sense: the dynamics are calibrated to a
+100~MWh / 50~MW grid-scale BESS, and the fault magnitudes are drawn
+from field telemetry audits of operating installations.
+
+\section{What the Battery Proof Surface Establishes}
+
+The battery evaluation provides a \emph{proof surface}: a manifold of
+evidence linking theoretical claims to empirical measurements.  The
+surface consists of:
+
+\begin{description}
+  \item[Existence evidence.]  The OASG phenomenon (observed-safe but
+    truly-unsafe actions) exists and occurs at non-trivial rates
+    (TSVR~$= 3.9$\% for the deterministic LP).
+  \item[Safety evidence.]  The DC3S shield eliminates the OASG gap
+    (TSVR~$= 0$\% across all tested conditions).
+  \item[Bound evidence.]  The expected violation count satisfies the
+    ORIUS core bound $\mathbb{E}[V] \le \alpha (1 - \bar{w})\,T$
+    with empirical slack.
+  \item[Necessity evidence.]  Ablation of reliability-aware components
+    re-introduces violations, confirming the No-Free-Safety theorem.
+  \item[Temporal evidence.]  Certificate half-life and graceful
+    degradation extend the safety guarantee into the time dimension.
+\end{description}
+
+\section{What Battery Cannot Establish Alone}
+
+The battery domain is one domain.  It cannot, by itself, establish:
+\begin{itemize}
+  \item \emph{Universality.}  The claim that ORIUS applies to arbitrary
+    CPS domains requires either additional witness domains or a
+    domain-transfer argument (Chapter~\ref{ch:temporal-extensions}).
+  \item \emph{Optimality.}  The intervention rate of 2.8\% is an
+    empirical outcome, not a proven lower bound on the cost of safety.
+  \item \emph{Adversarial completeness.}  The threat model
+    (Chapter~\ref{ch:adversarial-robustness}) is bounded; a sufficiently
+    powerful adversary who controls the physical plant is out of scope.
+  \item \emph{Long-horizon stationarity.}  The 168-hour episodes are
+    long enough for statistical significance but short relative to
+    seasonal and multi-year battery degradation cycles.
+\end{itemize}
+
+\section{Why Battery Is the Right Reference Domain}
+
+Among candidate CPS domains (HVAC, water networks, autonomous vehicles,
+industrial process control), battery energy storage offers a unique
+combination of advantages:
+
+\begin{enumerate}
+  \item \textbf{Scalar safety predicate.}  The SOC constraint
+    $\text{SOC}_{\min} \le x_t \le \text{SOC}_{\max}$ is a clean,
+    one-dimensional safety condition that admits exact verification.
+  \item \textbf{Linear dynamics.}  The SOC transition
+    $x_{t+1} = x_t + \eta\,P\,\Delta t$ is affine, enabling closed-form
+    derivations that would require approximation in nonlinear domains.
+  \item \textbf{Economic materiality.}  Battery arbitrage is a real
+    market with quantifiable revenue, providing a natural cost metric
+    for the price of safety.
+  \item \textbf{Telemetry vulnerability.}  BESS deployments are
+    among the most telemetry-dependent grid assets, making the
+    degraded-observation setting practically motivated.
+  \item \textbf{Data availability.}  Public grid datasets (EIA-930,
+    ENTSO-E) provide realistic load, price, and renewable signals.
+\end{enumerate}
+
+\section{How Battery Lifts into ORIUS}
+
+The battery results instantiate the ORIUS framework at a specific
+domain point.  The lifting argument proceeds as follows:
+
+\begin{enumerate}
+  \item Every theorem in Part~III is stated in domain-general notation
+    (state $x_t$, action $a_t$, safety predicate $\phi$) and then
+    \emph{instantiated} in battery terms (SOC, dispatch, SOC bounds).
+  \item The empirical results in Part~II provide the battery instantiation
+    data that satisfies the theorem preconditions.
+  \item To transfer to a new domain, one must verify that the new
+    domain satisfies the same assumptions (A1--A8) and provide
+    analogous empirical instantiation.
+\end{enumerate}
+
+This structure ensures that the battery evidence is neither under-claimed
+(it does prove the theorems in one domain) nor over-claimed (it does not
+prove them in all domains without further work).
+
+\section{Chapter Summary}
+
+The battery domain is a principled witness for the ORIUS safety framework.
+Its physical fidelity, telemetry realism, and economic materiality make it
+the strongest single-domain evidence base available.  The proof surface it
+provides---spanning existence, safety, bounds, necessity, and temporal
+extension---anchors the theoretical programme while honestly
+acknowledging the limits of single-domain evidence.

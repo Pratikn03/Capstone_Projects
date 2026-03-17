@@ -1,0 +1,71 @@
+% =============================================================================
+% Appendix H: Four-Reviewer Audit Protocol
+% ORIUS/DC3S Battery-Safety Thesis
+% =============================================================================
+\chapter{Four-Reviewer Audit Protocol}
+\label{app:four-reviewer-audit}
+
+This appendix defines a structured audit protocol for the ORIUS/DC3S battery-safety thesis. Four independent reviewers assess distinct dimensions of the manuscript and its supporting evidence. The protocol ensures that empirical claims, theoretical rigor, reproducibility, and exposition quality are each verified by a designated reviewer before final submission.
+
+\section{Role Assignments}
+
+\begin{description}
+\item[R1 --- Empirical Correctness] Verifies that locked results match reported values, CSV integrity is preserved, and figure-to-data correspondence holds. Focus: \texttt{reports/publication/*.csv}, \texttt{dc3s\_main\_table\_ci.csv}, baseline lock manifests.
+\item[R2 --- Theorem and Proof Rigor] Verifies theorem statements, proof steps, assumption usage, and mathematical notation consistency. Focus: ch15--ch19, appendices with full proofs.
+\item[R3 --- Reproducibility] Verifies that scripts run, configs are complete, and environment is documented. Focus: \texttt{scripts/}, \texttt{configs/}, \texttt{requirements.txt}, run instructions.
+\item[R4 --- Exposition Quality] Verifies claim scope accuracy, notation consistency, and clarity of limitations. Focus: abstract, introduction, conclusion, and claim-to-evidence linkage.
+\end{description}
+
+\section{Audit Checklist}
+
+Table~\ref{tab:four-reviewer-checklist} lists the audit items. Each reviewer marks their column with \checkmark (pass), $\times$ (fail), or --- (not applicable). Status is aggregated as \textbf{Pass}, \textbf{Fail}, or \textbf{Deferred}.
+
+\begin{table}[htbp]
+\centering
+\caption{Four-Reviewer Audit Checklist}
+\label{tab:four-reviewer-checklist}
+\small
+\begin{tabular}{@{}p{4.2cm}ccccp{1.8cm}@{}}
+\toprule
+\textbf{Item} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{Status} \\
+\midrule
+Locked CSV integrity (checksums, no overwrite) & $\bullet$ & --- & --- & --- & \\
+Figure-to-data correspondence (each figure traces to CSV) & $\bullet$ & --- & --- & $\bullet$ & \\
+Numerical claim traceability (every \% or MWh to row/column) & $\bullet$ & --- & --- & $\bullet$ & \\
+Theorem statement completeness (premise, conclusion, domain) & --- & $\bullet$ & --- & --- & \\
+Proof step validity (each step justified by assumption or prior) & --- & $\bullet$ & --- & --- & \\
+Assumption register consistency (A1--A8 used correctly) & --- & $\bullet$ & --- & --- & \\
+Script runnability (all \texttt{scripts/*.py} execute without error) & --- & --- & $\bullet$ & --- & \\
+Config file completeness (\texttt{configs/dc3s.yaml}, sweep configs) & --- & --- & $\bullet$ & --- & \\
+Environment reproducibility (Python version, deps, seed policy) & --- & --- & $\bullet$ & --- & \\
+Notation consistency (symbols defined once, used uniformly) & --- & $\bullet$ & --- & $\bullet$ & \\
+Claim scope accuracy (no overgeneralization beyond battery domain) & --- & --- & --- & $\bullet$ & \\
+Limitation statements (stated for each major result) & --- & --- & --- & $\bullet$ & \\
+Certificate field audit (per-step fields match code output) & $\bullet$ & --- & $\bullet$ & --- & \\
+Run ID policy adherence (locked artifacts have run\_id) & $\bullet$ & --- & $\bullet$ & --- & \\
+Cross-reference validity (figures, tables, theorems cited correctly) & $\bullet$ & $\bullet$ & --- & $\bullet$ & \\
+\bottomrule
+\end{tabular}
+\medskip
+\footnotesize
+R1 = Empirical correctness; R2 = Theorem/proof rigor; R3 = Reproducibility; R4 = Exposition quality. $\bullet$ = reviewer responsible; --- = not applicable.
+\end{table}
+
+\section{Procedure}
+
+\begin{enumerate}
+\item \textbf{Kickoff}: Author provides (a) thesis PDF, (b) \texttt{reports/publication/} tarball, (c) \texttt{scripts/} and \texttt{configs/} snapshot, (d) baseline lock manifest.
+\item \textbf{Parallel review}: Each reviewer completes their column in Table~\ref{tab:four-reviewer-checklist} within two weeks.
+\item \textbf{Reconciliation}: Failures are documented with specific line numbers, file paths, and suggested fixes. Deferred items require explicit justification.
+\item \textbf{Re-audit}: After fixes, only failed items are re-checked. Full pass is required for submission.
+\end{enumerate}
+
+\section{Pass Criteria}
+
+A manuscript passes the four-reviewer audit if:
+\begin{itemize}
+\item No R1 failures (empirical correctness is non-negotiable).
+\item No R2 failures on theorems T1--T4 (core battery theorems).
+\item No R3 failures on scripts listed in Appendix~\ref{app:sweep-latency} (sensitivity sweep, latency benchmark).
+\item At most one R4 failure, with a written waiver and mitigation plan.
+\end{itemize}

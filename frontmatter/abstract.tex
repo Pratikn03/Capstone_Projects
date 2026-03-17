@@ -1,0 +1,35 @@
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+This dissertation develops a battery-first version of ORIUS (Observation--Reality Integrity
+for Battery Safety), a framework for safe action under degraded observation in physical
+AI systems.  The central claim is that a controller can appear safe on observed state while
+being physically unsafe on true state when the observation channel degrades.  In the battery
+domain, this hidden failure takes the form of dispatch decisions that appear feasible under
+observed state of charge while violating the true battery envelope.
+
+The dissertation uses grid-scale battery dispatch as the first complete validation surface
+because the state, constraints, and telemetry pathways are interpretable, physically meaningful,
+and experimentally reproducible.  The battery-domain architecture centres on \dcs{}, a
+runtime layer placed at the optimise-to-dispatch boundary.  \dcs{} scores telemetry quality,
+inflates uncertainty when reliability weakens, constrains the safe action set, repairs unsafe
+candidate actions, and emits auditable runtime certificates.  The evaluation framework,
+CPSBench, maintains separate truth and observed trajectories so that hidden safety failure
+becomes measurable rather than implicit.
+
+Under degraded telemetry, a quality-ignorant deterministic controller produces a true-state
+violation rate (TSVR) of 3.9\% with P95 severity of 333.4~MWh, while appearing perfectly
+safe in observed state.  DC3S eliminates all true-state violations (TSVR = 0\%) with
+an intervention rate of only 2.8\%, demonstrating that the observation--action safety gap
+(OASG) is both real and closable.
+
+Beyond the core empirical result, the dissertation establishes a four-theorem ladder
+(OASG existence, one-step safety preservation, the ORIUS core safety bound, and no-free-safety
+necessity), extends the battery validation to fault-performance stress tests, latency
+benchmarking, conditional coverage audits, hyperparameter stability analysis,
+hardware-in-the-loop trials, certificate half-life studies, graceful degradation protocols,
+battery-fleet compositional safety, and adversarial robustness via active probing.
+
+The battery domain is the only locked validation surface in this dissertation.
+The framework may later support other physical domains through domain adapters, but those
+extensions remain outside the current evidence boundary.

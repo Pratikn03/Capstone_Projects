@@ -1,0 +1,132 @@
+% ORIUS Thesis Preamble
+% Required packages and custom environments
+
+% --- Typography and encoding ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% --- Mathematics ---
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
+
+% --- Tables ---
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{multirow}
+
+% --- Figures and graphics ---
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric}
+
+% --- Algorithms ---
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+
+% --- Code listings ---
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  tabsize=2,
+}
+
+% --- Hyperlinks and references ---
+\usepackage[colorlinks=true,linkcolor=blue!60!black,citecolor=green!50!black,urlcolor=blue!70!black]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+% --- Bibliography ---
+\usepackage[numbers,sort&compress]{natbib}
+
+% --- Page layout ---
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% --- Miscellaneous ---
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{soul}
+\usepackage{appendix}
+\usepackage{pifont}
+
+% =====================================================================
+% Custom theorem environments
+% =====================================================================
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}{Assumption}
+\newtheorem{example}[theorem]{Example}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% =====================================================================
+% ORIUS-specific macros
+% =====================================================================
+
+% State and observation objects
+\newcommand{\zt}{z_t}                    % clean telemetry
+\newcommand{\ztt}{\tilde{z}_t}           % degraded telemetry
+\newcommand{\ot}{o_t}                    % observed state
+\newcommand{\xt}{x_t}                    % true physical state
+\newcommand{\wt}{w_t}                    % observation quality score
+\newcommand{\dt}{d_t}                    % drift evidence
+\renewcommand{\st}{s_t}                  % sensitivity/staleness (overrides soul package \st)
+
+% Uncertainty and action objects
+\newcommand{\Chat}{\hat{C}_t}            % base conformal interval
+\newcommand{\Crac}{\hat{C}_t^{\mathrm{RAC}}} % reliability-adaptive interval
+\newcommand{\Ut}{U_t}                    % uncertainty set
+\newcommand{\astar}{a_t^{*}}             % candidate action
+\newcommand{\asafe}{a_t^{\mathrm{safe}}} % repaired safe action
+\newcommand{\Aset}{\mathcal{A}_t}        % tightened safe action set
+
+% DC3S stages
+\newcommand{\dcs}{DC3S}
+\newcommand{\oqe}{OQE}
+\newcommand{\rui}{RUI}
+\newcommand{\rac}{RAC-Cert}
+\newcommand{\saf}{SAF}
+
+% Battery parameters
+\newcommand{\SOC}{\mathrm{SOC}}
+\newcommand{\Emax}{E_{\max}}
+\newcommand{\Pmax}{P_{\max}}
+\newcommand{\Rmax}{R_{\max}}
+\newcommand{\etac}{\eta_c}
+\newcommand{\etad}{\eta_d}
+
+% Metrics
+\newcommand{\TSVR}{\mathrm{TSVR}}
+\newcommand{\IR}{\mathrm{IR}}
+\newcommand{\OASG}{\mathrm{OASG}}
+\newcommand{\PICP}{\mathrm{PICP}}
+
+% Convenience
+\newcommand{\ie}{i.e.}
+\newcommand{\eg}{e.g.}
+\newcommand{\cf}{cf.}
+\newcommand{\wrt}{w.r.t.}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator{\Prob}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+
+% Figure path
+\graphicspath{{reports/publication/}{reports/hil/}{reports/figures/}{paper/assets/figures/}}

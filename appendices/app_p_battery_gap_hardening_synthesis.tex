@@ -1,0 +1,59 @@
+% =============================================================================
+% Appendix P: Battery Gap Hardening Synthesis
+% ORIUS/DC3S Battery-Safety Thesis
+% =============================================================================
+\chapter{Battery Gap Hardening Synthesis}
+\label{app:battery-gap-hardening}
+
+This appendix summarizes all hardening activities performed during thesis development. Each gap is tracked by ID, description, chapter linkage, script/artifact, and status.
+
+\section{Hardening Checklist}
+
+Table~\ref{tab:gap-hardening} provides the complete hardening checklist. Status values: \textbf{Done} (artifact generated and locked), \textbf{Partial} (artifact exists but not fully locked or validated), \textbf{Planned} (documented but not yet executed).
+
+\begin{table}[htbp]
+\centering
+\caption{Battery Gap Hardening Checklist}
+\label{tab:gap-hardening}
+\small
+\begin{tabular}{@{}clp{3.2cm}ll@{}}
+\toprule
+\textbf{Gap ID} & \textbf{Description} & \textbf{Chapter} & \textbf{Script / Artifact} & \textbf{Status} \\
+\midrule
+G1 & 48h operational trace generation & Ch.\ 13 & \texttt{generate\_48h\_trace.py} $\rightarrow$ \texttt{48h\_trace.csv}, \texttt{fig\_48h\_trace.png} & Done \\
+G2 & Fault performance table & Ch.\ 19--20 & \texttt{build\_fault\_performance\_table.py} $\rightarrow$ \texttt{fault\_performance\_table.csv} & Done \\
+G3 & Latency p99 (and mean/median/p95/max) & Ch.\ 21 & \texttt{benchmark\_dc3s\_steps.py} $\rightarrow$ \texttt{dc3s\_latency\_summary.csv} & Done \\
+G4 & HIL evidence (step log, certificate audit, SOC trace) & Ch.\ 22 & \texttt{generate\_hil\_evidence.py} $\rightarrow$ \texttt{hil\_step\_log.csv}, \texttt{hil\_certificate\_audit.csv}, \texttt{fig\_hil\_soc\_trace.png} & Done \\
+G5 & Hyperparameter sweep (alpha, ph\_lambda, kpen) & Ch.\ 23 & \texttt{run\_sensitivity\_sweeps.py} $\rightarrow$ \texttt{hyperparameter\_surfaces.csv}, \texttt{hyperparameter\_surface.png} & Done \\
+G6 & Blackout study (certificate half-life) & Ch.\ 28 & \texttt{run\_blackout\_study.py} $\rightarrow$ \texttt{blackout\_half\_life.csv}, \texttt{blackout\_half\_life.png} & Done \\
+G7 & Safe landing / graceful degradation trace & Ch.\ 29 & \texttt{generate\_priority2\_artifacts.py} $\rightarrow$ \texttt{graceful\_degradation\_trace.csv}, \texttt{graceful\_degradation\_trace.png} & Done \\
+G8 & Fleet composition (two-battery constraints) & Ch.\ 31 & Extension script $\rightarrow$ \texttt{fleet\_composition\_two\_battery.csv} & Done \\
+G9 & Adversarial robustness / active probing & Ch.\ 32 & Extension script $\rightarrow$ \texttt{active\_probing\_spoofing\_detection.csv} & Done \\
+G10 & Conditional coverage (reliability-group PICP) & Ch.\ 19 & \texttt{compute\_reliability\_group\_coverage.py} $\rightarrow$ \texttt{reliability\_group\_coverage.csv} & Done \\
+G11 & Regional decomposition (transfer, dataset cards) & Ch.\ 17--18 & \texttt{run\_transfer\_stress.py}, \texttt{cross\_region\_transfer.py} $\rightarrow$ \texttt{fig\_transfer\_coverage.png}, \texttt{fig\_11\_transfer\_generalization.png} & Done \\
+G12 & Aging-aware calibration outputs & Extension & \texttt{aging\_calibration\_outputs.csv} & Done \\
+G13 & Battery leaderboard & Extension & \texttt{battery\_leaderboard.csv} & Done \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Artifact Locations}
+
+All hardening artifacts reside under \texttt{reports/publication/} unless otherwise noted:
+
+\begin{itemize}
+\item \textbf{Part I--IV}: \texttt{48h\_trace.csv}, \texttt{dc3s\_main\_table\_ci.csv}, \texttt{claim\_evidence\_matrix.csv}
+\item \textbf{Part V}: \texttt{fault\_performance\_table.csv}, \texttt{dc3s\_latency\_summary.csv}, \texttt{hyperparameter\_surfaces.csv}, \texttt{part5\_hardening\_lock\_manifest.json}
+\item \textbf{HIL}: \texttt{reports/hil/hil\_step\_log.csv}, \texttt{reports/hil/hil\_certificate\_audit.csv}, \texttt{reports/hil/fig\_hil\_soc\_trace.png}
+\item \textbf{Part VI}: \texttt{blackout\_half\_life.csv}, \texttt{graceful\_degradation\_trace.csv}, \texttt{fleet\_composition\_two\_battery.csv}, \texttt{active\_probing\_spoofing\_detection.csv}, \texttt{aging\_calibration\_outputs.csv}, \texttt{battery\_leaderboard.csv}
+\end{itemize}
+
+\section{Lock Manifests}
+
+The following manifests document locked artifact sets:
+
+\begin{itemize}
+\item \texttt{reports/publication/part5\_hardening\_lock\_manifest.json}: Part V (fault table, latency, HIL, hyperparameter sweep)
+\item \texttt{reports/publication/part6\_extension\_lock\_manifest.json}: Part VI (blackout, graceful degradation, fleet, probing, aging, leaderboard)
+\item \texttt{reports/publication/final\_lock\_manifest\_full\_thesis.json}: Full thesis package
+\end{itemize}

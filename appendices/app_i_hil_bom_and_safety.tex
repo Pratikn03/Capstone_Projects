@@ -1,0 +1,99 @@
+% =============================================================================
+% Appendix I: Hardware-in-the-Loop Bill of Materials and Safety
+% ORIUS/DC3S Battery-Safety Thesis
+% =============================================================================
+\chapter{Hardware-in-the-Loop Bill of Materials and Safety}
+\label{app:hil-bom-safety}
+
+This appendix documents the hardware-in-the-loop (HIL) setup used for DC3S validation in the ORIUS battery-safety thesis. The HIL environment provides a controlled interface between the DC3S software stack and a battery simulator, enabling repeatable testing without physical battery hardware.
+
+\section{Bill of Materials}
+
+Table~\ref{tab:hil-bom} lists the components of the HIL setup. The architecture follows a software-in-the-loop pattern extended with a Modbus TCP interface for future hardware integration.
+
+\begin{table}[htbp]
+\centering
+\caption{HIL Bill of Materials}
+\label{tab:hil-bom}
+\begin{tabular}{@{}lllp{4.5cm}@{}}
+\toprule
+\textbf{Component} & \textbf{Part / Software} & \textbf{Version} & \textbf{Function} \\
+\midrule
+Edge gateway & Raspberry Pi 4B (4\,GB RAM) & Model B rev 1.4 & Host for API server, telemetry aggregation \\
+Battery simulator & SimBatteryDriver (software) & 1.0 & Simulates SOC dynamics, fault injection \\
+Modbus TCP interface & pymodbus & 3.x & Protocol bridge for SCADA-style I/O \\
+API server & FastAPI & 0.100+ & REST API for dispatch commands, telemetry ingest \\
+Telemetry channel & WebSocket / HTTP & --- & Real-time SOC, power, fault flags \\
+Certificate store & SQLite / JSON file & --- & Per-step certificate persistence \\
+Operating system & Raspberry Pi OS (64-bit) & Bookworm & Base system \\
+Python runtime & CPython & 3.10+ & ORIUS / DC3S execution \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Safety Classification}
+
+The HIL setup is a \emph{simulation environment} and does not control physical battery hardware. Table~\ref{tab:hil-safety-class} summarizes the safety classification per IEC 61508.
+
+\begin{table}[htbp]
+\centering
+\caption{HIL Safety Classification (IEC 61508)}
+\label{tab:hil-safety-class}
+\begin{tabular}{@{}llp{5cm}@{}}
+\toprule
+\textbf{Element} & \textbf{SIL} & \textbf{Rationale} \\
+\midrule
+SimBatteryDriver & N/A (non-safety) & Software simulator; no physical hazard \\
+Modbus TCP interface & N/A & Protocol layer; no safety function \\
+DC3S shield (software) & SIL 0 (development) & Not certified for safety-critical deployment \\
+Raspberry Pi 4B & SIL 0 & Consumer hardware; not designed for industrial safety \\
+Full HIL loop & Development / test only & No connection to physical BESS in this thesis \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\emph{Important}: This thesis does not claim SIL 1--4 compliance. The HIL setup is for research validation only. Deployment to physical grid-scale BESS would require a separate safety lifecycle per IEC 61508 and applicable grid codes.
+
+\section{Risk Assessment}
+
+Table~\ref{tab:hil-risk} summarizes risks specific to the simulation environment.
+
+\begin{table}[htbp]
+\centering
+\caption{HIL Simulation Environment Risk Assessment}
+\label{tab:hil-risk}
+\begin{tabular}{@{}lllp{3.5cm}@{}}
+\toprule
+\textbf{Hazard} & \textbf{Likelihood} & \textbf{Severity} & \textbf{Mitigation} \\
+\midrule
+Software crash during run & Low & Low & Logging, checkpointing; no physical impact \\
+Incorrect simulator parameters & Medium & Low & Config validation, unit tests \\
+Network disconnection (if remote) & Low & Low & Local execution preferred \\
+Data corruption in certificate store & Low & Low & Checksums, append-only logs \\
+Operator error (wrong config) & Medium & Low & Checklist, config review \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Operator Safety Checklist}
+
+Before each HIL session, the operator must confirm:
+
+\begin{enumerate}
+\item \textbf{No physical battery connected}: The setup uses SimBatteryDriver only. No BESS hardware is attached to the Modbus or API interfaces.
+\item \textbf{Config sanity}: \texttt{configs/dc3s.yaml} and scenario parameters are reviewed. Fault schedules match intended test (e.g., dropout rate, drift parameters).
+\item \textbf{Logging enabled}: Certificate and step logs are written to \texttt{reports/hil/}. Disk space is sufficient.
+\item \textbf{Environment isolation}: No production or field systems are on the same network segment as the HIL host.
+\item \textbf{Emergency stop}: If physical hardware were ever connected, an E-stop procedure would be documented. For the current software-only setup, ``stop script'' suffices.
+\end{enumerate}
+
+\section{Evidence Artifacts}
+
+HIL evidence produced for this thesis includes:
+\begin{itemize}
+\item \texttt{reports/hil/hil\_step\_log.csv} --- Per-step certificate and action log.
+\item \texttt{reports/hil/hil\_certificate\_audit.csv} --- Certificate field consistency audit.
+\item \texttt{reports/hil/fig\_hil\_soc\_trace.png} --- SOC trace under fault injection.
+\end{itemize}
+
+These artifacts support Chapter~27 (Hardware-in-the-Loop Validation) and the CertOS deployment discussion.

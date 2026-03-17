@@ -1,0 +1,100 @@
+
+\chapter{Conclusion}
+\label{ch:conclusion}
+
+\section{The Central Message}
+
+Physical AI controllers routinely make decisions based on observations they
+have no reason to trust.  A telemetry packet arrives late, or not at all,
+or carrying a stale reading---and the controller evaluates its safety
+constraints against a state the plant may never have occupied.  The
+resulting Observation-Action Safety Gap is invisible to any evaluation
+protocol that checks constraints only on the observed trajectory.
+
+This dissertation has shown, in the battery dispatch domain, that the gap
+is real, measurable, and dangerous.  More importantly, it has shown that
+the gap is \emph{closable}.  The ORIUS principle---make observation
+reliability part of the control state, inflate uncertainty in proportion to
+unreliability, and project actions onto the tightened feasible set---eliminates
+true-state violations without replacing the upstream optimiser or requiring
+a new plant model.
+
+Under degraded observation, safety cannot be taken for granted.  ORIUS makes
+observation reliability a first-class quantity in the control loop, not an
+afterthought logged for post-hoc analysis.
+
+\section{What the Battery Domain Taught Us}
+
+Grid-scale battery dispatch was chosen as the first proving ground because
+it combines hard state constraints, high action-to-state sensitivity, and
+network-mediated telemetry.  The experimental campaign yielded several
+lessons that extend beyond batteries:
+
+\begin{enumerate}
+  \item \textbf{Hidden violations are common.}  Under 20\% dropout, a
+    deterministic LP violates true-state SOC bounds at 3.9--4.2\% of
+    steps while reporting full feasibility.  The controller believes it
+    is safe; the plant disagrees.
+  \item \textbf{Conformal prediction is the right uncertainty language.}
+    Distribution-free coverage guarantees allow the safety layer to operate
+    without a parametric model of telemetry faults.  The CQR intervals
+    adapt to the empirical residual distribution, including heavy tails
+    induced by sensor drift.
+  \item \textbf{Reliability-adaptive inflation is the key mechanism.}
+    A conformal interval of fixed width is either too wide when telemetry
+    is good (excessive conservatism) or too narrow when telemetry is
+    degraded (missed violations).  Scaling width by $1/w_t$ tracks the
+    actual risk, concentrating intervention in the episodes that need it.
+  \item \textbf{The cost of safety is modest.}  Intervention rates of
+    2.8--3.1\% under the canonical fault scenario translate to fewer than
+    three corrections per hundred dispatch intervals---a negligible
+    operational burden for the elimination of all hidden violations.
+\end{enumerate}
+
+\section{Why Observation Reliability Belongs Inside Control}
+
+Classical control treats observation noise as an exogenous disturbance to
+be filtered, not a quantity the controller should reason about.  This
+separation is justified when the noise model is accurate and stationary.
+In modern CPS, neither condition holds: telemetry faults are non-stationary,
+packet-level, and correlated with system load.  Treating reliability as
+external means the controller cannot tighten its actions when observation
+quality degrades, and it cannot relax them when quality is high.
+
+ORIUS brings reliability inside the loop.  The OQE score $w_t$ is updated
+at every step from raw telemetry features.  It feeds directly into the
+uncertainty inflator, which sets the width of the safe-action region.  The
+controller's conservatism is therefore \emph{proportional to its ignorance}:
+when it knows little, it acts cautiously; when it knows much, it acts
+freely.  This proportionality is the architectural insight of the
+dissertation, and it is domain-independent.
+
+\section{What ORIUS Can Become}
+
+The battery result proves the concept.  The adapter architecture
+(Chapter~\ref{ch:battery-to-orius}) provides the blueprint for
+generalisation.  If the ORIUS community delivers on the roadmap of
+Chapter~\ref{ch:roadmap}---a second domain, a public benchmark,
+a deployable runtime---the result is a certification layer that any
+cyber-physical controller can use, regardless of its internal optimisation
+logic.
+
+This is not a small ambition.  It requires that the conformal coverage
+guarantee survives domain transfer, that the adapter interface is
+expressive enough for nonlinear plants with high-dimensional state, and
+that the runtime meets hard real-time constraints on embedded hardware.
+Each of these is a non-trivial research or engineering challenge.  But
+the structural foundations---domain-abstract scoring, distribution-free
+uncertainty, worst-case projection---are in place.
+
+\section{Final Remarks}
+
+This dissertation began with a question: what happens when a controller
+cannot trust its own eyes?  The answer, demonstrated rigorously in one
+domain and argued structurally for others, is that safety must be
+\emph{earned} at every time step by measuring observation quality,
+quantifying the resulting uncertainty, and restricting actions to those
+that remain safe under the worst case.
+
+The battery domain was the right place to start.  It will not be the
+last place ORIUS is needed.

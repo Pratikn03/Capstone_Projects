@@ -1,0 +1,104 @@
+% =============================================================================
+% Appendix J: Sweep and Latency Measurement Protocols
+% ORIUS/DC3S Battery-Safety Thesis
+% =============================================================================
+\chapter{Sweep and Latency Measurement Protocols}
+\label{app:sweep-latency}
+
+This appendix documents the exact protocols used for hyperparameter sensitivity sweeps, latency benchmarking, and fault severity sweeps in the ORIUS/DC3S battery-safety thesis. All procedures are reproducible via the referenced scripts.
+
+\section{Hyperparameter Sweep Protocol}
+
+\subsection{Grid Parameters}
+
+The sensitivity sweep varies three DC3S hyperparameters over a full factorial grid:
+
+\begin{itemize}
+\item \texttt{alpha0}: Nominal miscoverage rate; values \texttt{0.05}, \texttt{0.10}, \texttt{0.15}.
+\item \texttt{ph\_lambda}: Page-Hinkley drift detector sensitivity; values \texttt{3.0}, \texttt{5.0}, \texttt{7.0}.
+\item \texttt{kappa\_drift\_penalty}: Drift penalty in $\kappa$-inflation; values \texttt{0.3}, \texttt{0.5}, \texttt{0.7}.
+\end{itemize}
+
+This yields $3 \times 3 \times 3 = 27$ grid points. Each point is run over scenarios \texttt{drift\_combo} and \texttt{dropout}, with seeds \texttt{11}, \texttt{22}, \texttt{33}, \texttt{44}, \texttt{55}, for a total of $27 \times 2 \times 5 = 270$ scenario-seed combinations per grid point.
+
+\subsection{CLI Commands}
+
+The sweep is executed via:
+
+\begin{verbatim}
+python scripts/run_sensitivity_sweeps.py \
+  --out-dir reports/publication \
+  --horizon 168 \
+  --scenarios drift_combo,dropout \
+  --seeds 11,22,33,44,55 \
+  --alpha0 0.05,0.10,0.15 \
+  --ph-lambda 3.0,5.0,7.0 \
+  --kappa-drift-penalty 0.3,0.5,0.7 \
+  --n-bootstrap 1000 \
+  --confidence 0.95
+\end{verbatim}
+
+\subsection{Output Artifacts}
+
+\begin{itemize}
+\item \texttt{reports/publication/sensitivity\_grid.csv} --- Full grid results (all rows).
+\item \texttt{reports/publication/sensitivity\_summary\_ci.csv} --- Bootstrap confidence intervals by \texttt{(scenario, controller, alpha0, ph\_lambda, kappa\_drift\_penalty)}.
+\item \texttt{reports/publication/sweeps/configs/} --- Per-grid-point YAML configs (e.g., \texttt{tmp\_dc3s\_alpha0=0.05\_\_ph\_lambda=3\_\_kpen=0.3.yaml}).
+\item \texttt{reports/publication/sweeps/runs/<tag>/} --- Per-run outputs: \texttt{dc3s\_main\_table.csv}, \texttt{dc3s\_fault\_breakdown.csv}, \texttt{calibration\_plot.png}, \texttt{violation\_vs\_cost\_curve.png}.
+\end{itemize}
+
+\subsection{Config Override Mechanism}
+
+Each grid point sets \texttt{GRIDPULSE\_DC3S\_CONFIG} to the corresponding YAML path. The base config \texttt{configs/dc3s.yaml} is loaded and overridden with the grid values before each run.
+
+\section{Latency Benchmark Protocol}
+
+\subsection{Measurement Method}
+
+The latency benchmark uses Python's \texttt{time.perf\_counter\_ns()} for high-resolution timing. Each component is measured as follows:
+
+\begin{enumerate}
+\item \textbf{Warmup}: Execute the callable \texttt{warmup} times (default 200) without recording. This reduces cold-cache effects.
+\item \textbf{Measurement}: Execute the callable \texttt{iterations} times (default 10,000), recording elapsed nanoseconds per call.
+\item \textbf{Statistics}: Compute mean, median, p95, p99, and max in milliseconds.
+\end{enumerate}
+
+\subsection{CLI Command}
+
+\begin{verbatim}
+python scripts/benchmark_dc3s_steps.py \
+  --iterations 10000 \
+  --warmup 200 \
+  --out reports/dc3s_latency_benchmark.json
+\end{verbatim}
+
+\subsection{Benchmarked Components}
+
+\begin{itemize}
+\item \texttt{compute\_reliability} --- OQE reliability scoring.
+\item \texttt{page\_hinkley\_update} --- Drift detector update.
+\item \texttt{build\_uncertainty\_set} --- Linear inflation (RAC-Cert).
+\item \texttt{build\_uncertainty\_set\_kappa} --- $\kappa$-inflation variant (if available).
+\item \texttt{repair\_action} --- Shield projection.
+\item \texttt{full\_step\_linear} --- Full DC3S step (linear inflation).
+\item \texttt{full\_step\_kappa} --- Full DC3S step ($\kappa$ inflation).
+\end{itemize}
+
+\subsection{Output Artifacts}
+
+\begin{itemize}
+\item \texttt{reports/dc3s\_latency\_benchmark.json} --- Full JSON with per-component stats and environment metadata.
+\item \texttt{reports/publication/dc3s\_latency\_summary.csv} --- CSV summary for tables (component, mean\_ms, median\_ms, p95\_ms, p99\_ms, max\_ms).
+\end{itemize}
+
+\section{Fault Severity Sweep}
+
+The fault severity sweep varies dropout rate (or other fault intensity) to produce violation-rate and severity curves. It is integrated into the CPSBench runner via \texttt{include\_fault\_sweep=True}. For the main sensitivity sweep, \texttt{include\_fault\_sweep=False} is used to keep runtime manageable.
+
+Fault sweep outputs include:
+\begin{itemize}
+\item \texttt{fig\_true\_soc\_violation\_vs\_dropout.png} --- Violation rate vs.\ dropout.
+\item \texttt{fig\_true\_soc\_severity\_p95\_vs\_dropout.png} --- P95 severity vs.\ dropout.
+\end{itemize}
+
+These are generated by the CPSBench pipeline when fault sweep is enabled.

@@ -1,0 +1,208 @@
+
+\chapter{Data, Telemetry, and Dataset Scope}
+\label{ch:data-telemetry}
+
+Every empirical claim in this dissertation rests on two locked dataset
+surfaces: the Germany OPSD archive and the United States EIA-930 feed.  This
+chapter documents the signals, their provenance, the telemetry pathways
+through which they enter the ORIUS loop, and the fault modes that make
+degraded observation an ordinary operating condition rather than an edge case.
+
+% ----------------------------------------------------------------
+\section{Germany and United States Dataset Surface}
+
+The ORIUS evaluation spans two geographically and regulatorily distinct
+power systems.
+
+\paragraph{Germany (OPSD).}
+The Open Power System Data platform aggregates hourly generation, load, and
+day-ahead price series from ENTSO-E and the German TSOs.  The locked dataset
+covers 2018-10-07 to 2020-09-30 (17\,377 hourly rows), with four primary
+targets: \texttt{load\_mw}, \texttt{wind\_mw}, \texttt{solar\_mw}, and
+\texttt{price\_eur\_mwh}.  Weather covariates (temperature, irradiance, wind
+speed) are sourced from the Open-Meteo archive API and joined on UTC
+timestamp.  The full feature matrix contains 94 engineered columns after
+calendar encoding and lag construction.
+
+\paragraph{United States (EIA-930).}
+The U.S.\ Energy Information Administration Form~930 provides hourly
+demand and net generation by source for each balancing authority.  Three
+regions are retained:
+
+\begin{table}[ht]
+\centering
+\caption{Dataset cards for the locked evaluation surfaces.  Source:
+\texttt{reports/publication/dataset\_cards.csv}.}
+\label{tab:dataset-cards}
+\begin{tabular}{llrrrl}
+\toprule
+\textbf{Key} & \textbf{Region} & \textbf{Rows} & \textbf{Features} &
+  \textbf{Coverage} & \textbf{Period} \\
+\midrule
+DE       & Germany (OPSD)    & 17\,377 & 94  & 100\% & 2018-10 to 2020-09 \\
+US\_ERCOT & USA (EIA-930)    & 13\,453 & 62  & 100\% & 2024-07 to 2026-01 \\
+US\_MISO  & USA (EIA-930)    & 13\,638 & 114 & 100\% & 2024-07 to 2026-01 \\
+US\_PJM   & USA (EIA-930)    & 13\,639 & 62  & 100\% & 2024-07 to 2026-01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Weather covariates for US regions are likewise obtained from Open-Meteo.
+Carbon intensity is estimated from the SMARD generation mix (DE) or a
+proxy generation-mix model (US).
+
+% ----------------------------------------------------------------
+\section{Forecast Targets and Operational Channels}
+
+Each dataset surface exposes three operational forecast targets:
+
+\begin{description}
+  \item[\texttt{load\_mw}] Net system load (total demand minus behind-the-meter
+    solar), measured at the transmission level.  This is the primary signal for
+    arbitrage scheduling.
+  \item[\texttt{wind\_mw}] Aggregate onshore and offshore wind generation.
+    Wind exhibits high variance and heavy tails, particularly during storm
+    fronts, making calibration challenging.
+  \item[\texttt{solar\_mw}] Aggregate photovoltaic generation.  Solar follows a
+    deterministic diurnal envelope modulated by cloud cover; residual
+    uncertainty is sharply bimodal (clear vs.\ overcast).
+\end{description}
+
+A fourth target, \texttt{price\_eur\_mwh} (DE only), drives the economic
+objective in the dispatch optimiser.  For US regions, a simplified tariff
+schedule or locational marginal price proxy is used.
+
+All targets are sampled at hourly resolution and aligned to UTC.  The forecast
+horizon is $H = 48$\,h with a stride of 1\,h, yielding a rolling-origin
+evaluation with 168 test windows per week.
+
+% ----------------------------------------------------------------
+\section{Observed Telemetry Versus Truth Trajectory}
+
+A central design choice in ORIUS is the separation of \emph{truth state}
+and \emph{observed state}.  At every control step~$t$:
+
+\begin{itemize}
+  \item The \textbf{truth trajectory} $\{z_t\}$ records what actually happened
+    at the plant: the true SOC, the true net load, the true renewable
+    generation.  This trajectory is never available to the controller in real
+    time; it is logged by the CPSBench harness for post-hoc evaluation.
+  \item The \textbf{observed trajectory} $\{\tilde{z}_t\}$ is what the
+    controller actually sees after telemetry faults have been applied.  It may
+    contain dropped readings (NaN), delayed values, sensor spikes, stale
+    repetitions, or drifted baselines.
+\end{itemize}
+
+The gap $\|z_t - \tilde{z}_t\|$ is the observation error.  All safety metrics
+(TSVR, severity) are computed on the truth trajectory, while the controller's
+decisions are computed on the observed trajectory.  This dual-trajectory
+architecture is the foundation of the CPSBench evaluation protocol
+(Chapter~\ref{ch:cpsbench}).
+
+% ----------------------------------------------------------------
+\section{Missingness, Corruption, and Signal Degradation}
+
+Telemetry faults fall into six categories, each modelled by a corresponding
+CPSBench fault injector:
+
+\begin{table}[ht]
+\centering
+\caption{Telemetry fault taxonomy and operational causes.}
+\label{tab:fault-taxonomy}
+\begin{tabular}{lll}
+\toprule
+\textbf{Fault type} & \textbf{Mechanism} & \textbf{Field cause} \\
+\midrule
+Dropout       & Packet loss (NaN)       & Cellular dropout, gateway reboot \\
+Delay jitter  & Arrival-time shift      & Network congestion, buffering \\
+Spike         & Multiplicative outlier  & Sensor transient, ADC overflow \\
+Stale sensor  & Frozen reading          & Firmware hang, watchdog failure \\
+Drift         & Slow baseline shift     & Sensor ageing, calibration decay \\
+Reorder       & Out-of-sequence packets & UDP path diversity, queue inversion \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+These fault types are not mutually exclusive.  The \texttt{drift\_combo}
+scenario in CPSBench applies all six simultaneously at configurable severity,
+representing a worst-case but operationally plausible field condition.
+
+% ----------------------------------------------------------------
+\section{Why Telemetry Faults Are Ordinary, Not Edge Cases}
+
+Field data from commercial BESS installations suggests that telemetry
+degradation is the norm rather than the exception:
+
+\begin{itemize}
+  \item Cellular uplinks in rural wind-farm sites experience 2--8\% packet
+    loss during normal operation, rising to 15--25\% during severe weather.
+  \item SCADA gateway reboots occur 1--3 times per month, each causing a
+    30--90\,s telemetry blackout.
+  \item Sensor drift in current transducers accumulates at 0.1--0.5\% of
+    full-scale per year, enough to bias SOC estimates by 2--5\,MWh on a
+    100\,MW/400\,MWh system within six months.
+  \item Firmware updates on BMS controllers occasionally freeze individual
+    cell-group readings for minutes until the watchdog timer resets the
+    reporting thread.
+\end{itemize}
+
+A safety framework that assumes clean telemetry is therefore unsafe by
+construction.  The ORIUS evaluation treats faulted telemetry as the
+\emph{default} operating condition and clean telemetry as a special case
+(the \texttt{nominal} scenario with zero fault injection).
+
+% ----------------------------------------------------------------
+\section{Artifact Contracts and Profile Lock}
+
+Each dataset surface is frozen at a specific commit hash and validated by a
+reproducibility contract:
+
+\begin{enumerate}
+  \item \textbf{Row-count invariant.}  The ingestion pipeline asserts that
+    the row count matches the locked value in
+    \texttt{reports/publication/dataset\_cards.csv}.
+  \item \textbf{Column schema.}  The feature matrix schema (column names,
+    dtypes, nullable flags) is checked against a frozen JSON schema at
+    pipeline entry.
+  \item \textbf{Target coverage.}  All three forecast targets must have
+    100\% non-null coverage in the locked period.  Any gap causes the pipeline
+    to abort with a traceable error.
+  \item \textbf{Hash verification.}  The SHA-256 hash of the serialised
+    Parquet file is compared to the locked value before any model training or
+    evaluation proceeds.
+\end{enumerate}
+
+These contracts ensure that no drift in upstream data sources can silently
+invalidate the empirical results.
+
+% ----------------------------------------------------------------
+\section{Scope Boundary}
+
+The dataset scope of this dissertation is intentionally bounded:
+
+\begin{itemize}
+  \item \textbf{Included:} hourly bulk-power system signals (load, wind,
+    solar, price) for four regions across two continents.
+  \item \textbf{Excluded:} sub-hourly (5-min, 1-min) data, distribution-level
+    signals, behind-the-meter solar, demand response, and frequency regulation
+    signals.
+  \item \textbf{Rationale:} the hourly resolution matches the natural
+    arbitrage cycle of 2--4\,h duration storage and aligns with the temporal
+    granularity of conformal calibration windows.
+\end{itemize}
+
+Extending the framework to sub-hourly resolution is discussed in
+Chapter~\ref{ch:orius-bench-battery} as part of the benchmark roadmap.
+
+% ----------------------------------------------------------------
+\section{Chapter Summary}
+
+This chapter documented the two dataset surfaces (Germany OPSD and US EIA-930)
+that underpin every empirical result, the three forecast targets (\texttt{load\_mw},
+\texttt{wind\_mw}, \texttt{solar\_mw}), and the six telemetry fault types that
+degrade observations between the plant and the controller.  The dual-trajectory
+architecture---truth state versus observed state---was introduced as the
+foundation for safety evaluation.  Artifact contracts and hash-locked profiles
+ensure reproducibility.  Telemetry faults are treated as ordinary operating
+conditions, not edge cases, motivating the observation-aware machinery
+developed in the following chapters.

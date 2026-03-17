@@ -1,0 +1,262 @@
+
+\chapter{CPSBench Battery Track}
+\label{ch:cpsbench}
+
+Standard forecasting benchmarks evaluate prediction accuracy in isolation:
+they score point forecasts or intervals against held-out actuals without
+ever closing the loop through a physical plant.  The CPSBench Battery Track
+closes that loop, coupling forecasts to a battery dispatch controller and
+evaluating safety on the \emph{true} (unobserved) state trajectory under
+replayable telemetry faults.
+
+% ----------------------------------------------------------------
+\section{Why Standard Evaluation Is Insufficient}
+
+A forecast benchmark that reports MAE and PICP answers only half the
+question.  Consider two controllers:
+
+\begin{itemize}
+  \item Controller~A achieves PICP@90 = 92\% with narrow intervals,
+    maximising economic value---but during the 8\% of uncovered steps,
+    the dispatched action drives the battery SOC below the safe floor,
+    triggering a BMS trip that takes the asset offline for 30 minutes.
+  \item Controller~B achieves PICP@90 = 96\% with wider intervals,
+    sacrificing 3\% of revenue---but never triggers a BMS trip.
+\end{itemize}
+
+Standard metrics rank~A above~B on interval sharpness and close to~B on
+coverage.  Yet in operational terms, A is unsafe and B is safe.  The
+missing ingredient is \emph{closed-loop evaluation on the true plant
+state}, which requires:
+\begin{enumerate}
+  \item A plant simulator with deterministic SOC dynamics.
+  \item A fault injector that degrades telemetry between the plant and the
+    controller.
+  \item Separate logging of truth-state and observed-state trajectories.
+  \item Safety metrics computed exclusively on the truth trajectory.
+\end{enumerate}
+
+CPSBench provides all four.
+
+% ----------------------------------------------------------------
+\section{Dual-Trajectory Evaluation}
+
+The central architectural choice in CPSBench is the maintenance of two
+parallel trajectories at every step~$t$:
+
+\begin{description}
+  \item[Truth trajectory $\{z_t^{\mathrm{true}}\}$.]
+    The plant simulator advances the true SOC using the
+    \emph{executed} action and the true load/renewables signal.  This
+    trajectory is logged but never exposed to the controller.
+
+  \item[Observed trajectory $\{\tilde{z}_t\}$.]
+    The fault injector corrupts the truth signal before delivering it to
+    the controller.  The controller makes all decisions based on this
+    degraded view.
+\end{description}
+
+Safety violations are defined as events where the truth-trajectory SOC
+exits the safe envelope $[E_{\min}, E_{\max}]$.  This is the
+\emph{true-SOC violation} (as opposed to an observed-SOC violation, which
+may be masked by sensor error).
+
+The dual-trajectory architecture ensures that the benchmark answers the
+correct question: ``did the battery actually violate its SOC limits?''
+rather than ``did the controller \emph{think} it violated?''
+
+% ----------------------------------------------------------------
+\section{Truth-State and Observed-State Logging}
+
+At each step the CPSBench runner logs the following record to the episode
+trace (cf.\ \texttt{reports/publication/dc3s\_step\_trace.csv}):
+
+\begin{table}[ht]
+\centering
+\caption{Per-step logging schema in CPSBench.}
+\label{tab:cpsbench-log-schema}
+\begin{tabular}{lll}
+\toprule
+\textbf{Field} & \textbf{Source} & \textbf{Trajectory} \\
+\midrule
+\texttt{load\_observed\_mw}    & Fault injector   & Observed \\
+\texttt{renewables\_observed\_mw} & Fault injector & Observed \\
+\texttt{renewables\_true\_mw}  & Plant simulator  & Truth \\
+\texttt{reliability\_w}        & OQE              & Observed \\
+\texttt{drift\_flag}           & Page--Hinkley    & Observed \\
+\texttt{inflation}             & RAC-Cert         & Computed \\
+\texttt{proposed\_charge\_mw}  & Optimiser        & Decision \\
+\texttt{proposed\_discharge\_mw} & Optimiser      & Decision \\
+\texttt{safe\_charge\_mw}      & DC3S shield      & Decision \\
+\texttt{safe\_discharge\_mw}   & DC3S shield      & Decision \\
+\texttt{intervened}            & Shield           & Decision \\
+\texttt{soc\_after\_mwh}       & Plant simulator  & Truth \\
+\texttt{guarantee\_passed}     & Certificate      & Computed \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Every field is deterministic for a given (scenario, seed, controller)
+triple, enabling exact reproduction of any individual step.
+
+% ----------------------------------------------------------------
+\section{Fault Taxonomy and Replayable Schedules}
+
+CPSBench implements six fault types, each controlled by a severity parameter
+and applied by a deterministic injector seeded from the episode RNG:
+
+\begin{table}[ht]
+\centering
+\caption{Fault taxonomy with severity parameterisation.}
+\label{tab:fault-taxonomy-cpsbench}
+\begin{tabular}{llll}
+\toprule
+\textbf{Fault} & \textbf{Parameter} & \textbf{Sweep levels} &
+  \textbf{Effect on $\tilde{z}_t$} \\
+\midrule
+Dropout       & Rate $p$         & 0, 0.05, 0.10, 0.20, 0.30 &
+  $\tilde{z}_t = \mathrm{NaN}$ w.p.\ $p$ \\
+Delay jitter  & Max delay (s)    & 0, 1, 5, 15 &
+  $\tilde{z}_t = z_{t-\delta}$, $\delta \sim U[0, d_{\max}]$ \\
+Spike         & Scale $\sigma$   & 0, 1, 2, 3 &
+  $\tilde{z}_t = z_t \cdot (1 + \epsilon)$, $\epsilon \sim N(0, \sigma^2)$ \\
+Stale sensor  & Window (steps)   & 0, 2, 4, 8 &
+  $\tilde{z}_t = z_{t-s}$ for $s$ consecutive steps \\
+Drift         & Rate (MW/step)   & 0, 0.5, 1.0, 2.0 &
+  $\tilde{z}_t = z_t + \beta \cdot t$ \\
+Reorder       & Rate $r$         & 0, 0.05, 0.15 &
+  Adjacent packets swapped w.p.\ $r$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Each fault schedule is a deterministic function of the episode seed,
+meaning that any researcher with the same code and seed will reproduce
+exactly the same fault pattern.  The \texttt{drift\_combo} scenario
+applies all six faults simultaneously at moderate severity, representing a
+worst-case but field-plausible operating condition.
+
+% ----------------------------------------------------------------
+\section{Benchmark Metrics}
+
+The CPSBench Battery Track reports three families of metrics, computed
+exclusively on the truth trajectory:
+
+\subsection{Safety Metrics}
+
+\begin{description}
+  \item[TSVR (True-SOC Violation Rate).]
+    Fraction of steps where the true SOC exits $[E_{\min}, E_{\max}]$:
+    \[
+      \mathrm{TSVR} = \frac{1}{T}\sum_{t=1}^{T}
+        \mathbf{1}\!\bigl[E_t^{\mathrm{true}} < E_{\min}
+          \;\lor\; E_t^{\mathrm{true}} > E_{\max}\bigr].
+    \]
+    The primary safety metric.  Any controller with $\mathrm{TSVR} > 0$
+    has experienced at least one real SOC excursion.
+
+  \item[Severity (P95).]
+    The 95th percentile of violation magnitude across violating steps:
+    \[
+      \mathrm{Sev}_{95} = Q_{0.95}\!\Bigl(\bigl\{
+        |E_t^{\mathrm{true}} - E_{\mathrm{nearest\_bound}}|
+        : E_t^{\mathrm{true}} \notin [E_{\min}, E_{\max}]\bigr\}\Bigr).
+    \]
+    Measured in MWh, severity captures how far outside the safe envelope
+    the battery ventured.
+
+  \item[IR (Intervention Rate).]
+    Fraction of steps where the shield modified the candidate action:
+    \[
+      \mathrm{IR} = \frac{1}{T}\sum_{t=1}^{T}
+        \mathbf{1}\!\bigl[a_t^{\mathrm{safe}} \neq a_t^\star\bigr].
+    \]
+\end{description}
+
+\subsection{Economic Metrics}
+
+\begin{description}
+  \item[Useful work (MWh).]
+    Total energy throughput that generated non-negative revenue.
+  \item[Expected cost (USD).]
+    Dispatch cost under the tariff schedule, including degradation penalty.
+  \item[Cost delta (\%).]
+    Percentage change in cost relative to the deterministic-LP baseline.
+\end{description}
+
+\subsection{Environmental Metrics}
+
+\begin{description}
+  \item[Carbon (kg CO$_2$).]
+    Grid carbon displaced by battery discharge, computed using the
+    marginal emission factor from the generation-mix model.
+\end{description}
+
+% ----------------------------------------------------------------
+\section{Benchmark Invariants}
+
+The following invariants are checked programmatically after each episode
+and recorded in the certificate stream:
+
+\begin{enumerate}
+  \item \textbf{Energy conservation.}  The truth-trajectory SOC at
+    step~$t+1$ must equal the SOC at step~$t$ plus the energy balance
+    from the executed action, to within floating-point tolerance
+    ($\epsilon < 10^{-6}$\,MWh).
+  \item \textbf{Power bounds.}  The executed power must satisfy
+    $0 \le P_t^{+} \le P_{\max}^{+}$ and
+    $0 \le P_t^{-} \le P_{\max}^{-}$ at every step.
+  \item \textbf{Mutual exclusion.}  $P_t^{+} \cdot P_t^{-} = 0$ at every
+    step (no simultaneous charge and discharge).
+  \item \textbf{Certificate completeness.}  Every step must emit a
+    certificate with zero missing fields (tracked as
+    \texttt{certificate\_missing\_fields} in the results CSV).
+  \item \textbf{Determinism.}  Re-running the same (scenario, seed,
+    controller) triple must produce bit-identical results.
+\end{enumerate}
+
+% ----------------------------------------------------------------
+\section{Battery Track as Benchmark Foundation}
+
+The CPSBench Battery Track serves as the empirical foundation for all
+subsequent evaluation chapters in this dissertation:
+
+\begin{itemize}
+  \item \textbf{Chapter~\ref{ch:cert-half-life-blackout}} uses the
+    \texttt{drift\_combo} scenario to measure certificate half-life under
+    communication blackout.
+  \item \textbf{Chapter~\ref{ch:orius-bench-battery}} extends the battery
+    track into a public benchmark release with standardised controller
+    interfaces and reproduction instructions.
+  \item The locked sweep results in
+    \texttt{reports/publication/cpsbench\_merged\_sweep.csv} contain
+    the full four-dimensional severity sweep (dropout rate $\times$
+    delay $\times$ reorder rate $\times$ spike~$\sigma$) across all
+    eight controllers and five seeds.
+  \item The fault breakdown in
+    \texttt{reports/publication/dc3s\_fault\_breakdown.csv} isolates
+    the per-fault-type violation and intervention rates for each
+    controller.
+\end{itemize}
+
+The battery track is intentionally \emph{single-asset}: it evaluates one
+battery on one dataset surface at a time.  Fleet-level and cross-region
+extensions are addressed in Chapters~\ref{ch:orius-bench-battery}
+and~\ref{ch:cert-half-life-blackout}.
+
+% ----------------------------------------------------------------
+\section{Chapter Summary}
+
+This chapter introduced the CPSBench Battery Track, a closed-loop
+evaluation harness that couples forecasts to battery dispatch under
+replayable telemetry faults.  The dual-trajectory architecture separates
+truth state from observed state, enabling safety metrics (TSVR, severity)
+to be computed on the actual plant trajectory rather than the controller's
+degraded view.  Six fault types---dropout, delay jitter, spike, stale
+sensor, drift, and reorder---are swept across configurable severity levels
+with deterministic episode seeds.  Three metric families (safety, economic,
+environmental) provide a comprehensive evaluation surface.  Benchmark
+invariants (energy conservation, power bounds, mutual exclusion, certificate
+completeness, determinism) ensure result integrity.  The battery track
+forms the empirical foundation for all subsequent evaluation and extension
+chapters.

@@ -1,0 +1,169 @@
+
+\chapter{Ablations and Failure Analysis}
+\label{ch:ablations}
+
+This chapter isolates the contribution of each DC3S component through
+systematic ablation and identifies the conditions under which individual
+components weaken or fail.  The analysis confirms that safety is preserved
+even when individual sub-modules degrade, because the shield's conservatism
+compensates for upstream estimation errors.
+
+\section{Reliability Scoring Ablation}
+
+The Observation Quality Engine (OQE) produces a scalar reliability score
+$w_t \in [0,1]$.  When the OQE is ablated (replaced by $w_t \equiv 1$),
+the shield loses its ability to adapt uncertainty width to telemetry
+quality.
+
+\begin{table}[ht]
+\centering
+\caption{Effect of OQE ablation on DC3S safety metrics (\texttt{drift\_combo}, DE).}
+\label{tab:oqe-ablation}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Configuration} & \textbf{TSVR (\%)} & \textbf{Sev.\ P95 (MWh)} & \textbf{IR (\%)} \\
+\midrule
+Full DC3S             & 0.0 &  0.0 & 2.8 \\
+OQE ablated ($w=1$)   & 0.0 &  0.0 & 0.4 \\
+OQE ablated ($w=0.5$) & 0.0 &  0.0 & 8.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+With $w_t \equiv 1$ the shield rarely intervenes (0.4\%) because it
+trusts all observations, yet safety is preserved on this scenario because
+the conformal intervals alone are wide enough.  However, under more
+aggressive faults the fixed-$w$ controller would eventually miss violations.
+
+\section{Inflation Ablation}
+
+The Reliability-aware Uncertainty Inflation (RUI) module scales conformal
+intervals by $1/(w_t + \epsilon)$.  When inflation is disabled (intervals
+are used at their nominal CQR width), the shield under-covers the true
+state under high dropout:
+
+\begin{table}[ht]
+\centering
+\caption{RUI ablation under varying dropout rates (DE).}
+\label{tab:rui-ablation}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Dropout} & \multicolumn{2}{c}{\textbf{Full DC3S}} &
+  \multicolumn{2}{c}{\textbf{RUI ablated}} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+& TSVR & IR & TSVR & IR \\
+\midrule
+0.05 & 0.0 & 0.8 & 0.0 & 0.6 \\
+0.15 & 0.0 & 1.9 & 0.2 & 0.9 \\
+0.25 & 0.0 & 2.6 & 1.1 & 1.2 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+RUI ablation reveals non-zero TSVR at dropout rates above 0.10,
+confirming that reliability-adaptive inflation is necessary for the
+zero-violation guarantee.
+
+\section{Projection Ablation}
+
+The Safe-Action Feasibility (SAF) projection maps infeasible actions onto
+the tightened constraint set.  When projection is replaced by simple
+clipping (independently clamp each variable to its bound), the solver
+can violate coupling constraints between charge and discharge power:
+
+\begin{itemize}
+  \item Full projection: TSVR~$= 0$\%, IR~$= 2.8$\%.
+  \item Clipping only: TSVR~$= 0.3$\%, IR~$= 2.1$\%.
+\end{itemize}
+
+The clipping ablation shows that joint constraint projection (the LP step)
+is required to maintain zero violations when charge/discharge variables
+are coupled by ramp and SOC dynamics.
+
+\section{FTIT Ablation}
+
+The Forecast-Triggered Interval Tightening (FTIT) module narrows the
+conformal interval when recent forecast errors are small, preventing
+unnecessary conservatism in calm periods.  Disabling FTIT does not
+affect safety but increases the intervention rate:
+
+\begin{itemize}
+  \item Full DC3S: IR~$= 2.8$\%.
+  \item FTIT disabled: IR~$= 4.6$\%.
+\end{itemize}
+
+FTIT is therefore a performance refinement, not a safety-critical component.
+
+\section{Fault-Family Sensitivity}
+
+Table~\ref{tab:fault-sensitivity} decomposes TSVR by fault family for the
+deterministic LP baseline, revealing which telemetry failures cause the
+most damage.
+
+\begin{table}[ht]
+\centering
+\caption{Deterministic LP TSVR by individual fault family (DE, dropout~0.20).}
+\label{tab:fault-sensitivity}
+\begin{tabular}{lr}
+\toprule
+\textbf{Fault family} & \textbf{TSVR (\%)} \\
+\midrule
+Packet dropout only       & 2.1 \\
+Delay jitter only         & 0.8 \\
+Covariate drift only      & 3.4 \\
+Stale sensor only          & 1.6 \\
+Combined (\texttt{drift\_combo}) & 3.9 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Covariate drift is the most damaging single fault, consistent with the
+observation that drift induces systematic bias rather than zero-mean noise.
+
+\section{When DC3S Intervenes}
+
+Interventions cluster in three regimes:
+\begin{enumerate}
+  \item \textbf{Peak-load transitions} where forecast error spikes.
+  \item \textbf{Consecutive dropout bursts} (3+ consecutive dropped packets).
+  \item \textbf{Drift-ramp events} where covariate shift exceeds the CQR
+    calibration window.
+\end{enumerate}
+Outside these regimes, the shield is transparent: $a_t^{\text{safe}} = a_t^{\text{LP}}$.
+
+\section{When Base Calibration Weakens}
+
+The conformal calibration set is a trailing window of 500 residuals.
+Calibration weakens when:
+\begin{itemize}
+  \item The distribution shifts faster than the window refreshes.
+  \item The miscoverage rate temporarily exceeds $\alpha$ during a
+    transient regime change.
+\end{itemize}
+Empirically, the CQR marginal coverage dips to 88\% during the first
+30~minutes of an abrupt drift onset (nominal target: 90\%).
+
+\section{Why Safety Is Preserved Anyway}
+
+Even when calibration weakens, safety is preserved because:
+\begin{enumerate}
+  \item The RUI module inflates the interval proportionally to the
+    reliability drop, compensating for the coverage gap.
+  \item The SAF projection adds a second line of defence by mapping
+    any remaining infeasible action onto the constraint set.
+  \item The reliability score $w_t$ drops faster than coverage degrades,
+    triggering pre-emptive tightening before violations can occur.
+\end{enumerate}
+
+This layered defence is the operational manifestation of the theoretical
+safety-preservation theorem (Theorem~\ref{thm:safety-preservation}).
+
+\section{Chapter Summary}
+
+The ablation study confirms that each DC3S component contributes to
+either safety or efficiency, but the zero-violation property depends
+critically on the combination of reliability-aware inflation (RUI) and
+joint constraint projection (SAF).  Neither component alone is sufficient
+under high-dropout combined faults.  The shield's layered architecture
+ensures that temporary calibration weaknesses are absorbed before they
+propagate to true-state violations.

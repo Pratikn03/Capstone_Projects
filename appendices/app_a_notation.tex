@@ -1,0 +1,152 @@
+% =============================================================================
+% Appendix A: Notation Sheet
+% ORIUS/DC3S Battery-Safety Thesis
+% =============================================================================
+\chapter{Notation Sheet}
+\label{app:notation}
+
+This appendix collects every symbol used in the ORIUS battery-safety
+framework.  Symbols are grouped by role: telemetry and state variables,
+quality and drift indicators, uncertainty and action objects, battery
+plant parameters, metrics, and tuning constants.
+
+\section{Telemetry and State Variables}
+
+\begin{longtable}{@{}clp{8.2cm}@{}}
+\caption{Telemetry and state symbols.}\label{tab:notation-state}\\
+\toprule
+\textbf{Symbol} & \textbf{Domain} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\emph{(continued)}}\\
+\toprule
+\textbf{Symbol} & \textbf{Domain} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+$\zt$         & $\R^n$     & Clean (ground-truth) telemetry vector at step $t$. \\
+$\ztt$        & $\R^n$     & Degraded telemetry vector after dropout, delay, or drift. \\
+$\ot$         & $\R^n$     & Observed state passed to the controller. \\
+$\xt$         & $\R^n$     & True (latent) physical state; not directly accessible. \\
+$\hat{x}_t$   & $\R^n$     & State estimate reconstructed from $\ztt$. \\
+$\xi_t$       & $\R^n$     & Observation error: $\xi_t = \hat{x}_t - \xt$. \\
+$\epsilon_t$  & $\R$       & One-step model (dynamics) prediction error. \\
+\end{longtable}
+
+\section{Quality, Drift, and Sensitivity Indicators}
+
+\begin{longtable}{@{}clp{8.2cm}@{}}
+\caption{Quality and detector symbols.}\label{tab:notation-quality}\\
+\toprule
+\textbf{Symbol} & \textbf{Domain} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\emph{(continued)}}\\
+\toprule \textbf{Symbol} & \textbf{Domain} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+$\wt$  & $[0,1]$    & Observation-quality (reliability) score.  Aggregates freshness, consistency, and drift evidence. \\
+$\dt$  & $\{0,1\}$  & Drift-detected flag from the Page--Hinkley detector. \\
+$\st$  & $\R_+$     & Sensitivity / staleness indicator; large $\st$ implies stale data. \\
+\end{longtable}
+
+\section{Uncertainty and Action Objects}
+
+\begin{longtable}{@{}clp{8.2cm}@{}}
+\caption{Uncertainty-set and action symbols.}\label{tab:notation-action}\\
+\toprule
+\textbf{Symbol} & \textbf{Domain} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\multicolumn{3}{c}{\emph{(continued)}}\\
+\toprule \textbf{Symbol} & \textbf{Domain} & \textbf{Description} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+$\Chat$  & interval   & Base conformal prediction interval at coverage $1-\alpha$. \\
+$\Crac$  & interval   & Reliability-adaptive conformal interval after RUI inflation. \\
+$\Ut$    & set        & Uncertainty set for robust dispatch: $\Ut = [\hat{x}_t - m_t,\;\hat{x}_t + m_t]$. \\
+$m_t$    & $\R_+$     & Half-width (margin) of the uncertainty set: $m_t = q_t/(w_t + \epsilon)$. \\
+$\astar$ & $\R^m$     & Candidate action proposed by the base controller. \\
+$\asafe$ & $\R^m$     & Repaired action after DC3S safety projection. \\
+$\Aset$  & set        & Tightened safe-action set under reliability-aware constraints. \\
+$\phi(\cdot)$ & $\{0,1\}$ & Safety predicate: $\phi(x)=1$ iff $x$ satisfies all constraints. \\
+\end{longtable}
+
+\section{Battery Plant Parameters}
+
+\begin{longtable}{@{}clp{8.2cm}@{}}
+\caption{Battery plant parameters.}\label{tab:notation-battery}\\
+\toprule
+\textbf{Symbol} & \textbf{Domain} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\bottomrule
+\endfoot
+$\SOC_t$   & $[0, \Emax]$  & State of charge at step $t$ (MWh). \\
+$\Emax$    & $\R_+$        & Rated energy capacity (MWh). \\
+$\Pmax$    & $\R_+$        & Maximum charge/discharge power (MW). \\
+$\Rmax$    & $\R_+$        & Maximum ramp rate (MW/step). \\
+$\etac$    & $(0,1]$       & Charging efficiency. \\
+$\etad$    & $(0,1]$       & Discharging efficiency. \\
+$\Delta t$ & $\R_+$        & Dispatch interval length (hours). \\
+\end{longtable}
+
+\section{Metrics}
+
+\begin{longtable}{@{}clp{8.2cm}@{}}
+\caption{Evaluation metrics.}\label{tab:notation-metrics}\\
+\toprule
+\textbf{Symbol} & \textbf{Domain} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\bottomrule
+\endfoot
+$\TSVR$ & $[0,1]$ & True-SOC Violation Rate: fraction of steps with $\SOC_t \notin [\SOC_{\min}, \SOC_{\max}]$. \\
+$\IR$    & $[0,1]$ & Intervention Rate: fraction of steps where DC3S repairs the action. \\
+$\OASG$ & $[0,1]$ & Observed-safe / Actually-unsafe State Gap rate. \\
+$\PICP$ & $[0,1]$ & Prediction-Interval Coverage Probability. \\
+\end{longtable}
+
+\section{Tuning Constants and Greek Letters}
+
+\begin{longtable}{@{}clp{8.2cm}@{}}
+\caption{Tuning constants and thresholds.}\label{tab:notation-tuning}\\
+\toprule
+\textbf{Symbol} & \textbf{Domain} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\bottomrule
+\endfoot
+$\alpha$      & $(0,1)$  & Conformal miscoverage level (target: 0.10). \\
+$\kappa_r$    & $\R_+$   & Reliability decay rate in the OQE score. \\
+$\kappa_d$    & $\R_+$   & Drift penalty coefficient. \\
+$\kappa_s$    & $\R_+$   & Staleness penalty coefficient. \\
+$w_{\min}$    & $(0,1)$  & Quality-score floor to prevent division by zero. \\
+$q_t$         & $\R_+$   & Conformal quantile at step $t$. \\
+$\epsilon$    & $\R_+$   & Small constant in margin denominator: $m_t = q_t/(w_t + \epsilon)$. \\
+\end{longtable}
+
+\section{Set Notation and Operators}
+
+\begin{longtable}{@{}cp{10.5cm}@{}}
+\caption{Set notation and mathematical operators.}\label{tab:notation-ops}\\
+\toprule
+\textbf{Symbol} & \textbf{Description} \\
+\midrule
+\endfirsthead
+\bottomrule
+\endfoot
+$\R, \R_+$           & Real numbers; non-negative reals. \\
+$\mathcal{U}$        & Power- and ramp-feasible action set (before safety tightening). \\
+$\Prob[\cdot]$       & Probability measure. \\
+$\E[\cdot]$          & Expectation operator. \\
+$\argmin, \argmax$   & Argument of the minimum / maximum. \\
+$\mathbf{1}[\cdot]$  & Indicator function. \\
+$|\cdot|$            & Absolute value or set cardinality, depending on context. \\
+$\|\cdot\|$          & Euclidean norm unless otherwise stated. \\
+\end{longtable}

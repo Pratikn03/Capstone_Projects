@@ -1,0 +1,79 @@
+% =============================================================================
+% Appendix K: Blueprint Coverage Matrix
+% ORIUS/DC3S Battery-Safety Thesis
+% Requires: \usepackage{longtable} in parent document
+% =============================================================================
+\chapter{Blueprint Coverage Matrix}
+\label{app:blueprint-coverage}
+
+This appendix maps each thesis chapter (ch01--ch32) to the conference paper section, implementing code modules, locked artifacts, and status. The matrix supports traceability from manuscript claims to evidence.
+
+\section{Coverage Matrix}
+
+\begin{small}
+\begin{longtable}{@{}p{1.2cm}p{2.8cm}p{2.2cm}p{3.2cm}p{1.8cm}@{}}
+\caption{Thesis Chapter to Paper, Code, and Artifact Mapping} \label{tab:blueprint-matrix} \\
+\toprule
+\textbf{Ch} & \textbf{Paper Section} & \textbf{Code Module} & \textbf{Locked Artifact} & \textbf{Status} \\
+\midrule
+\endfirsthead
+
+\multicolumn{5}{c}{\tablename\ \thetable{} --- continued} \\
+\toprule
+\textbf{Ch} & \textbf{Paper Section} & \textbf{Code Module} & \textbf{Locked Artifact} & \textbf{Status} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{5}{r}{\textit{Continued on next page}} \\
+\endfoot
+
+\bottomrule
+\endlastfoot
+
+ch01 & Introduction & --- & --- & Done \\
+ch02 & Related Work & --- & --- & Done \\
+ch03 & Problem Formulation & \texttt{dc3s/state.py} & --- & Done \\
+ch04 & Problem Formulation & \texttt{cpsbench\_iot/scenarios.py} & \texttt{dc3s\_main\_table\_ci.csv} & Done \\
+ch05 & System Context & \texttt{streaming/}, \texttt{optimizer/} & --- & Done \\
+ch06 & Data \& Methods & \texttt{forecasting/}, \texttt{data/} & \texttt{dataset\_cards.csv} & Done \\
+ch07 & Battery Model & \texttt{cpsbench\_iot/plant.py}, \texttt{optimizer/lp\_dispatch.py} & --- & Done \\
+ch08 & Forecasting & \texttt{forecasting/}, \texttt{uncertainty/cqr.py} & \texttt{dc3s\_main\_table\_ci.csv} & Done \\
+ch09 & DC3S Pipeline & \texttt{dc3s/quality.py}, \texttt{rac\_cert.py}, \texttt{shield.py} & --- & Done \\
+ch10 & CPSBench & \texttt{cpsbench\_iot/runner.py}, \texttt{scenarios.py} & \texttt{dc3s\_main\_table.csv} & Done \\
+ch11 & Main Results & Results & \texttt{dc3s\_main\_table\_ci.csv}, \texttt{impact\_summary.csv} & Done \\
+ch12 & Ablations & \texttt{cpsbench\_iot/baselines.py} & \texttt{dc3s\_ablation\_table.csv} & Done \\
+ch13 & Case Studies & \texttt{scripts/generate\_48h\_trace.py} & \texttt{48h\_trace.csv}, \texttt{fig\_48h\_trace.png} & Done \\
+ch14 & Lessons & --- & --- & Done \\
+ch15 & (Appendix) & --- & \texttt{assumption\_register.md} & Done \\
+ch16 & (Theorem 1) & \texttt{cpsbench\_iot/plant.py} & \texttt{dc3s\_main\_table\_ci.csv} & Done \\
+ch17 & (Theorem 2) & \texttt{dc3s/guarantee\_checks.py}, \texttt{shield.py} & \texttt{dc3s\_main\_table\_ci.csv} & Done \\
+ch18 & (Theorem 3) & \texttt{dc3s/coverage\_theorem.py} & \texttt{reliability\_group\_coverage.csv} & Done \\
+ch19 & (Theorem 4) & \texttt{cpsbench\_iot/baselines.py} & \texttt{dc3s\_main\_table\_ci.csv} & Done \\
+ch20 & (Extensions) & \texttt{dc3s/certificate.py} & --- & Partial \\
+ch21 & Fault Performance & \texttt{cpsbench\_iot/runner.py} & \texttt{fault\_performance\_table.csv}, \texttt{dc3s\_fault\_breakdown.csv} & Done \\
+ch22 & Latency & \texttt{scripts/benchmark\_dc3s\_steps.py} & \texttt{dc3s\_latency\_summary.csv} & Done \\
+ch23 & Hyperparameter Surface & \texttt{scripts/run\_sensitivity\_sweeps.py} & \texttt{sensitivity\_grid.csv}, \texttt{sensitivity\_summary\_ci.csv} & Done \\
+ch24 & Conditional Coverage & \texttt{dc3s/} & \texttt{cqr\_group\_coverage.csv}, \texttt{reliability\_group\_coverage.csv} & Done \\
+ch25 & Regional Transfer & \texttt{data/}, \texttt{forecasting/} & \texttt{transfer\_stress.csv}, \texttt{cross\_region\_transfer.csv} & Done \\
+ch26 & Asset Preservation & \texttt{monitoring/} & \texttt{aging\_calibration\_outputs.csv} & Partial \\
+ch27 & HIL Validation & \texttt{scripts/generate\_hil\_evidence.py} & \texttt{hil\_certificate\_audit.csv}, \texttt{hil\_step\_log.csv} & Partial \\
+ch28 & Certificate Half-Life & \texttt{cpsbench\_iot/} (blackout fault) & \texttt{blackout\_half\_life.csv}, \texttt{blackout\_study.csv} & Done \\
+ch29 & Graceful Degradation & \texttt{dc3s/shield.py} (fallback) & \texttt{graceful\_degradation\_trace.csv} & Done \\
+ch30 & ORIUS Bench & \texttt{scripts/run\_cpsbench.py} & \texttt{battery\_leaderboard.csv}, \texttt{cpsbench\_merged\_sweep.csv} & Done \\
+ch31 & Fleet Composition & \texttt{cpsbench\_iot/plant.py} (extended) & \texttt{fleet\_composition\_two\_battery.csv} & Done \\
+ch32 & Adversarial Probing & \texttt{dc3s/rac\_cert.py} & \texttt{active\_probing\_spoofing\_detection.csv} & Done \\
+\end{longtable}
+\end{small}
+
+\section{Status Legend}
+
+\begin{description}
+\item[Done] Chapter complete; code and artifacts locked and verified.
+\item[Partial] Chapter written; some artifacts or code links pending.
+\item[Missing] Chapter or evidence not yet produced.
+\end{description}
+
+\section{Paper Section Reference}
+
+The conference paper (IEEE two-column format) sections map roughly as follows: Introduction (ch01--ch02), Problem Formulation (ch03--ch04), Methods (ch05--ch10), Results (ch11--ch14). Theorems T1--T4 appear in the paper's theoretical section and map to ch16--ch19. Extension results (ch21--ch32) appear in the paper's evaluation and discussion sections where space permits.

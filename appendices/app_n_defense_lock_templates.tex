@@ -1,0 +1,77 @@
+% =============================================================================
+% Appendix N: Defense Lock Templates
+% ORIUS/DC3S Battery-Safety Thesis
+% =============================================================================
+\chapter{Defense Lock Templates}
+\label{app:defense-lock-templates}
+
+This appendix provides templates for thesis defense preparation: an elevator pitch, anticipated examiner questions with prepared responses, and a slide structure outline.
+
+\section{Three-Minute Elevator Pitch}
+\label{sec:elevator-pitch}
+
+\textbf{Opening (30 sec).} Grid-scale battery energy storage systems (BESS) are increasingly deployed for arbitrage and grid services. Safe operation requires controllers to respect state-of-charge limits under forecast uncertainty and telemetry degradation. Today's baselines either ignore quality or use fixed margins; neither scales to real-world fault scenarios.
+
+\textbf{Problem (45 sec).} We formalize the \emph{observed-action safe gap} (OASG): actions that appear safe from degraded telemetry can violate true physical constraints. We prove that quality-ignorant controllers fail under admissible fault sequences (Theorem~4). Empirically, deterministic LP and robust-fixed-interval baselines exhibit 3--34\% violation rates under dropout and drift, while DC3S achieves zero true-state violation by coupling reliability-aware conformal uncertainty with a runtime shield.
+
+\textbf{Solution (60 sec).} The ORIUS/DC3S framework combines: (1) reliability-adaptive conformal prediction that inflates intervals when telemetry degrades, preserving coverage $\geq 1-\alpha$ (Theorem~2); (2) a projection-based shield that repairs unsafe actions to feasible safe actions; (3) per-step certificates with hash chaining for auditability. We prove monotonicity: higher reliability $w_t$ yields tighter margins (Theorem~3). All results are battery-only, 1-hour dispatch, with locked empirical evidence in \texttt{reports/publication/}.
+
+\textbf{Closing (45 sec).} The thesis does not claim formal verification, real-time sub-second guarantees, or safety under arbitrary adversaries. It demonstrates that a principled, empirically validated framework can close the OASG for BESS dispatch under bounded faults. Reproducibility is enforced via locked seeds and scripts in \texttt{scripts/}.
+
+\section{Anticipated Examiner Questions and Responses}
+\label{sec:anticipated-questions}
+
+\begin{enumerate}
+\item \textbf{Why battery-only? Why not generalize to other CPS (e.g., robotics, autonomous vehicles)?} \\
+\textit{Response:} The thesis scope is deliberately bounded to grid-scale BESS with 1-hour dispatch horizons. Battery dynamics, SOC constraints, and arbitrage objectives are domain-specific. Generalization to other CPS would require new dynamics models, constraint sets, and fault taxonomies. The ORIUS architecture (reliability-aware uncertainty, shield, certificates) is designed to be extensible, but empirical validation is battery-only. Future work could adapt the framework to other domains with explicit assumption re-registration.
+
+\item \textbf{How would you generalize to other cyber-physical systems?} \\
+\textit{Response:} The core components---reliability-aware conformal prediction, projection-based shielding, and per-step certificates---are domain-agnostic. Generalization requires: (1) a plant model with explicit dynamics and safe-set constraints; (2) a fault taxonomy and telemetry degradation model; (3) calibration of inflation parameters for the new domain. The assumption register (A1--A8) would need to be re-validated per domain.
+
+\item \textbf{What happens if the assumptions fail (e.g., unbounded telemetry error, no feasible repair)?} \\
+\textit{Response:} Assumption failure invalidates the guarantees. A2 (bounded telemetry error) is enforced via quality floor $w_{\min}$ and inflation caps; if telemetry degrades beyond the design envelope, the framework degrades gracefully by inflating more aggressively. A3 (feasible safe repair) is enforced by the shield; if no safe action exists (e.g., SOC already violated), the fallback policy applies. The thesis documents these limits explicitly and does not claim safety under arbitrary adversarial conditions.
+
+\item \textbf{How does this compare to formal verification (e.g., model checking, theorem proving)?} \\
+\textit{Response:} Formal verification provides mathematical guarantees over a model; we provide empirical guarantees over a benchmark. Our approach is complementary: we use conformal prediction for distribution-free coverage and runtime shielding for constraint enforcement. We do not prove correctness of the plant model or controller logic symbolically. Formal verification could be layered on top for critical sub-components (e.g., shield projection) in future work.
+
+\item \textbf{What are the scalability limits (e.g., number of batteries, horizon length)?} \\
+\textit{Response:} The CPSBench runner and DC3S pipeline scale to multi-battery fleets; we report fleet composition results in \texttt{fleet\_composition\_two\_battery.csv}. Horizon length is fixed at 1 hour in this thesis. Longer horizons would require multi-step forecasting and potentially different conformal calibration. Computational latency is reported in \texttt{dc3s\_latency\_summary.csv} (mean, p95, p99); the shield and certificate generation add modest overhead.
+
+\item \textbf{Is this industrially deployment-ready?} \\
+\textit{Response:} No. The thesis demonstrates a research framework validated in simulation and HIL. Deployment to physical grid-scale BESS would require: (1) IEC 61508 or equivalent safety lifecycle; (2) certification of the software stack; (3) integration with utility SCADA and market systems; (4) operational procedures for certificate audit and incident response. The HIL setup is explicitly classified as development/test only (Appendix~\ref{app:hil-bom-safety}).
+
+\item \textbf{How do you handle distribution shift or non-stationarity?} \\
+\textit{Response:} We use a Page-Hinkley drift detector to flag distribution shift; when drift is detected, inflation increases via the $k_{\text{drift}}$ term. Coverage guarantees assume asymptotic exchangeability; we empirically verify PICP on held-out test folds. For severe non-stationarity, recalibration would be required. The thesis does not claim guarantees under arbitrary distribution shift.
+
+\item \textbf{What is the intervention rate vs.\ violation rate trade-off?} \\
+\textit{Response:} DC3S achieves zero violation by accepting non-zero intervention. The trade-off is tunable via $\alpha$, $k_{\text{quality}}$, and shield parameters. We report intervention rates in the main results table. ``No free safety'' (Theorem~4) states that zero violation requires some intervention under faults; the exact rate depends on scenario severity and parameter choices.
+
+\item \textbf{How reproducible are the results?} \\
+\textit{Response:} All scripts in \texttt{scripts/} use locked seeds. Locked CSVs in \texttt{reports/publication/} are the source of truth for reported numbers. The reproducibility contract (Appendix~\ref{app:claim-scope-citation}) specifies that all results are reproducible from \texttt{scripts/} with the documented environment. A \texttt{reproducibility\_lock.json} hash verification is part of the final lock procedure.
+\end{enumerate}
+
+\section{Slide Structure Outline (20 Slides)}
+\label{sec:slide-structure}
+
+\begin{enumerate}
+\item \textbf{Title slide}: ORIUS/DC3S Battery-Safety Framework
+\item \textbf{Motivation}: Grid-scale BESS growth, safety under uncertainty
+\item \textbf{Problem}: Observed-action safe gap (OASG); observed-safe $\neq$ true-safe
+\item \textbf{Theorem 1}: OASG existence; empirical violation rates
+\item \textbf{Theorem 2}: Coverage preservation under reliability-adaptive inflation
+\item \textbf{Theorem 3}: Safety-margin monotonicity ($w_t \uparrow \Rightarrow$ margin $\downarrow$)
+\item \textbf{Theorem 4}: No free safety; intervention vs.\ violation trade-off
+\item \textbf{DC3S architecture}: Reliability $\rightarrow$ inflation $\rightarrow$ shield $\rightarrow$ certificate
+\item \textbf{Calibration}: Conformal prediction, RAC, inflation law
+\item \textbf{Shield}: Projection repair, guarantee checks
+\item \textbf{Certificates}: Per-step fields, hash chaining, audit trail
+\item \textbf{Main results}: Violation rates (DC3S vs.\ baselines), coverage, intervention
+\item \textbf{Fault performance}: Dropout, drift, nominal breakdown
+\item \textbf{Latency}: Mean, p95, p99; real-time feasibility
+\item \textbf{HIL validation}: Setup, BOM, safety classification
+\item \textbf{Extensions}: Blackout half-life, graceful degradation, fleet composition
+\item \textbf{Limitations}: Battery-only, 1-hour dispatch, no formal verification
+\item \textbf{Reproducibility}: Locked seeds, scripts, CSVs
+\item \textbf{Contributions}: Theorems T1--T4, framework, empirical validation
+\item \textbf{Conclusion and future work}
+\end{enumerate}

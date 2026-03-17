@@ -1,0 +1,113 @@
+% =============================================================================
+% Appendix L: Artifact, Figure, and Table Index
+% ORIUS/DC3S Battery-Safety Thesis
+% Requires: \usepackage{longtable} in parent document
+% =============================================================================
+\chapter{Artifact, Figure, and Table Index}
+\label{app:artifact-index}
+
+This appendix enumerates publication artifacts in \texttt{reports/publication/}, their contents, and which chapter, figure, or table references them.
+
+\section{CSV Artifacts}
+
+\begin{small}
+\begin{longtable}{@{}p{3.8cm}p{4.2cm}p{3.2cm}@{}}
+\caption{CSV Artifact Index} \label{tab:artifact-csv} \\
+\toprule
+\textbf{File Path} & \textbf{Contents} & \textbf{Chapter / Fig / Tab} \\
+\midrule
+\endfirsthead
+
+\multicolumn{3}{c}{\tablename\ \thetable{} --- continued} \\
+\toprule
+\textbf{File Path} & \textbf{Contents} & \textbf{Chapter / Fig / Tab} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{3}{r}{\textit{Continued on next page}} \\
+\endfoot
+
+\bottomrule
+\endlastfoot
+
+\texttt{dc3s\_main\_table.csv} & Main DC3S results: scenario, controller, picp\_90, violation\_rate, cost, intervention\_rate & ch11, Tab~1 \\
+\texttt{dc3s\_main\_table\_ci.csv} & Bootstrap CI for main metrics & ch11, Tab~1 \\
+\texttt{dc3s\_fault\_breakdown.csv} & Per-fault-type performance breakdown & ch21, fault analysis \\
+\texttt{fault\_performance\_table.csv} & Fault performance pivot/summary & ch21 \\
+\texttt{48h\_trace.csv} & 48-hour operational trace (SOC, power, certificate) & ch13, Fig~48h trace \\
+\texttt{sensitivity\_grid.csv} & Full hyperparameter sweep grid & ch23 \\
+\texttt{sensitivity\_summary\_ci.csv} & Sweep bootstrap CIs & ch23 \\
+\texttt{dc3s\_latency\_summary.csv} & Per-component latency (mean, p95, p99, max) & ch22, Tab~latency \\
+\texttt{blackout\_half\_life.csv} & Certificate half-life under SCADA blackout & ch28 \\
+\texttt{blackout\_study.csv} & Blackout study summary & ch28 \\
+\texttt{graceful\_degradation\_trace.csv} & Safe-landing trace under fault & ch29 \\
+\texttt{fleet\_composition\_two\_battery.csv} & Two-battery fleet composition results & ch31 \\
+\texttt{active\_probing\_spoofing\_detection.csv} & Active probing / spoofing detection results & ch32 \\
+\texttt{aging\_calibration\_outputs.csv} & Aging proxy calibration outputs & ch26 \\
+\texttt{battery\_leaderboard.csv} & CPSBench battery track leaderboard & ch30 \\
+\texttt{cpsbench\_merged\_sweep.csv} & Merged CPSBench sweep results & ch30 \\
+\texttt{cqr\_group\_coverage.csv} & CQR group coverage by reliability bin & ch24 \\
+\texttt{claim\_evidence\_matrix.csv} & Claim-to-evidence mapping & Appendix \\
+\texttt{dataset\_cards.csv} & Dataset cards (DE OPSD, US EIA-930) & ch06 \\
+\texttt{transfer\_stress.csv} & Cross-region transfer stress & ch25 \\
+\end{longtable}
+\end{small}
+
+\section{Figure Artifacts}
+
+\begin{small}
+\begin{longtable}{@{}p{3.8cm}p{4.2cm}p{3.2cm}@{}}
+\caption{Figure Artifact Index} \label{tab:artifact-fig} \\
+\toprule
+\textbf{File Path} & \textbf{Contents} & \textbf{Chapter / Fig} \\
+\midrule
+\endfirsthead
+
+\multicolumn{3}{c}{\tablename\ \thetable{} --- continued} \\
+\toprule
+\textbf{File Path} & \textbf{Contents} & \textbf{Chapter / Fig} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{3}{r}{\textit{Continued on next page}} \\
+\endfoot
+
+\bottomrule
+\endlastfoot
+
+\texttt{fig\_48h\_trace.png} & 48-hour SOC and power trace & ch13, Fig~48h \\
+\texttt{fig\_true\_soc\_violation\_vs\_dropout.png} & Violation rate vs.\ dropout & ch11, fault sweep \\
+\texttt{fig\_true\_soc\_severity\_p95\_vs\_dropout.png} & P95 severity vs.\ dropout & ch11, fault sweep \\
+\texttt{fig\_calibration\_tradeoff.png} & Calibration vs.\ width tradeoff & ch08, calibration \\
+\texttt{fig\_coverage\_width.png} & Coverage-width tradeoff & ch24 \\
+\texttt{fig\_coverage\_width\_tradeoff.png} & Coverage-width tradeoff (alt) & ch24 \\
+\texttt{fig\_cost\_safety\_pareto.png} & Cost-safety Pareto frontier & ch11 \\
+\texttt{fig\_cqr\_group\_coverage.png} & CQR group coverage & ch24 \\
+\texttt{fig\_transfer\_coverage.png} & Transfer coverage & ch25 \\
+\texttt{fig\_transfer\_generalization.png} & Transfer generalization & ch25 \\
+\texttt{fig\_region\_dataset\_cards.png} & Region dataset cards & ch06 \\
+\texttt{fig\_violation\_rate.png} & Violation rate by scenario & ch11 \\
+\texttt{fig\_violation\_severity\_p95.png} & P95 severity by scenario & ch11 \\
+\texttt{fig\_sweep\_heatmap\_ir.png} & Sweep heatmap (intervention rate) & ch23 \\
+\texttt{fig\_sweep\_heatmap\_tsvr.png} & Sweep heatmap (TSVR) & ch23 \\
+\texttt{fig\_blackout\_halflife.png} & Blackout half-life plot & ch28 \\
+\texttt{graceful\_degradation\_trace.png} & Graceful degradation trace & ch29 \\
+\texttt{hyperparameter\_surface.png} & Hyperparameter surface & ch23 \\
+\texttt{blackout\_half\_life.png} & Blackout half-life (alt) & ch28 \\
+\texttt{calibration\_plot.png} & Calibration plot & ch08 \\
+\texttt{violation\_vs\_cost\_curve.png} & Violation vs.\ cost curve & ch11 \\
+\end{longtable}
+\end{small}
+
+\section{Additional Artifacts}
+
+\begin{itemize}
+\item \texttt{baseline\_lock\_manifest.json}, \texttt{final\_lock\_manifest.json} --- Lock manifests for reproducibility.
+\item \texttt{conference\_figure\_inventory.json} --- Figure-to-file mapping for paper.
+\item \texttt{deployment\_evidence\_manifest.json}, \texttt{deployment\_evidence\_map.json} --- Deployment evidence linkage.
+\item \texttt{stats\_summary.json} --- Aggregate statistics for paper metrics.
+\end{itemize}
+
+All paths are relative to the repository root. The \texttt{reports/publication/sweeps/} subdirectory contains per-run outputs (e.g., \texttt{runs/alpha0=0.05\_\_ph\_lambda=3\_\_kpen=0.3/}) with \texttt{dc3s\_main\_table.csv}, \texttt{dc3s\_fault\_breakdown.csv}, \texttt{calibration\_plot.png}, and \texttt{violation\_vs\_cost\_curve.png} for each grid point.

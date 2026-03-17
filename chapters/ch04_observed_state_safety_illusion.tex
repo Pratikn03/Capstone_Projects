@@ -1,0 +1,283 @@
+
+\chapter{The Observed-State Safety Illusion}
+\label{ch:safety-illusion}
+
+A battery controller that checks constraints only against its own
+observations will, by construction, never detect a violation it cannot
+see.  This chapter formalises the \emph{observed-state safety illusion},
+shows how it arises in the ORIUS dispatch loop, explains why neither
+better forecasting nor tighter optimisation can resolve it, and introduces
+the dual-trajectory evaluation paradigm that makes the illusion visible.
+
+\section{From Partial Observability to Safety Illusion}
+
+Partial observability is a well-studied concept in control theory and
+reinforcement learning.  A partially observable Markov decision process
+(POMDP) acknowledges that the agent sees a noisy or incomplete projection
+of the true state and plans accordingly, typically via belief-state
+updates.  The safety illusion arises when the agent \emph{does not plan
+accordingly}---when the controller treats its observation as ground truth
+and evaluates constraints against it without accounting for observation
+quality.
+
+In a POMDP with a well-calibrated belief, the agent maintains a
+distribution over true states and can compute the worst-case constraint
+satisfaction probability.  In practice, battery dispatch controllers do
+not maintain belief distributions; they receive a point estimate
+$\hat{x}_t$ from the SCADA system and optimise against it.  The gap
+between the POMDP ideal and the deployed reality is the source of the
+illusion.
+
+\section{Why the Illusion Arises in the ORIUS Loop}
+
+\subsection{The Optimise-to-Dispatch Boundary}
+
+As described in Chapter~\ref{ch:problem-formulation}, the ORIUS loop
+has a clear boundary between the optimiser and the dispatcher.  The
+optimiser solves~\eqref{eq:dispatch-obj} on the observed state and
+produces a candidate action~$a_t^{\star}$.  The dispatcher (in the
+baseline case) forwards this action to the plant without modification.
+
+Both the optimiser and the baseline dispatcher operate on
+$\hat{x}_t$.  The safety constraints
+\[
+  \mathrm{SOC}_{\min} \;\le\;
+  \widehat{\mathrm{SOC}}_t + \frac{\eta_c [a_t]^{+} - [a_t]^{-}/\eta_d}{E_{\max}} \cdot \Delta t
+  \;\le\; \mathrm{SOC}_{\max}
+\]
+are checked on the observed SOC.  If $\widehat{\mathrm{SOC}}_t$ over- or
+under-estimates the true SOC, the constraint check is meaningless with
+respect to physical safety.
+
+\subsection{Why Good Forecasting Does Not Solve It}
+
+A natural objection is: ``Improve the forecast, and the observation error
+disappears.''  This is incorrect for a fundamental reason.  The forecast
+model predicts future load, solar, and wind \emph{given current
+observations}.  If the current observation is itself degraded---a stale
+SOC reading, a dropped load packet---the forecast inherits the error.  A
+perfect forecast model with imperfect inputs produces imperfect outputs.
+
+More precisely, the forecast model learns $\mathbb{E}[Y_{t+h} \mid
+\hat{X}_t]$, not $\mathbb{E}[Y_{t+h} \mid X_t]$.  When
+$\hat{X}_t \ne X_t$, the conditional expectation is evaluated at the wrong
+conditioning point.  The resulting action is optimal for a state the plant
+does not occupy.
+
+\section{Formal Statement of the Illusion}
+\label{sec:formal-illusion}
+
+\begin{definition}[Observed-State Safety Illusion]
+\label{def:safety-illusion}
+Let $\hat{x}_t$ be the observed state, $x_t$ the true state, and
+$a_t$ the dispatched action.  The \emph{observed-state safety illusion}
+at time~$t$ is the conjunction of three conditions:
+\begin{enumerate}
+  \item \textbf{Observed safety:}
+    $a_t \in \mathcal{A}(\hat{x}_t)$---the action satisfies all
+    constraints when evaluated on the observation.
+  \item \textbf{True-state violation:}
+    $a_t \notin \mathcal{A}(x_t)$---the action violates at least one
+    constraint when evaluated on the truth.
+  \item \textbf{Undetectability:}
+    The controller has no mechanism to detect condition~(2) from its
+    available information $\hat{x}_t$ alone.
+\end{enumerate}
+\end{definition}
+
+Condition~(3) distinguishes the illusion from a detectable fault.  If the
+controller could infer that $\hat{x}_t$ is unreliable (e.g., via an OQE
+score), it could compensate.  The illusion is \emph{silent}: the
+controller proceeds with full confidence in a physically unsafe action.
+
+\begin{theorem}[Existence of the illusion under dropout]
+\label{thm:illusion-existence}
+Under the fault model of Section~\ref{sec:fault-model} with dropout
+rate $\rho > 0$ and last-value hold imputation, there exists a time
+step~$t$ and a deterministic LP dispatch action~$a_t$ such that the
+observed-state safety illusion (Definition~\ref{def:safety-illusion})
+holds with positive probability.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Consider a discharge phase where
+$\mathrm{SOC}_t^{\mathrm{true}} = \mathrm{SOC}_{\min} + \epsilon$ for
+small $\epsilon > 0$.  If the most recent $k$ SOC readings were dropped
+and the last-value hold reports
+$\widehat{\mathrm{SOC}}_t = \mathrm{SOC}_{\min} + \epsilon + k \cdot
+\delta$ (the SOC at the time of the last successful reading, before $k$
+discharge steps each consuming $\delta$), then the LP observes a
+comfortable margin and dispatches a further discharge~$a_t < 0$.  The
+true SOC after this action is
+$\mathrm{SOC}_{t+1}^{\mathrm{true}} = \mathrm{SOC}_{\min} + \epsilon -
+|a_t| \cdot \Delta t / (E_{\max} \cdot \eta_d) < \mathrm{SOC}_{\min}$
+for $|a_t|$ exceeding $\epsilon \cdot E_{\max} \cdot \eta_d / \Delta t$.
+The action satisfies observed constraints, violates true constraints, and
+the LP cannot detect the violation---all three conditions hold.
+\end{proof}
+
+\section{Battery-Domain Realisation Under Telemetry Faults}
+\label{sec:battery-narrative}
+
+\subsection{A Simple Battery Narrative}
+
+Consider a 100~MWh / 50~MW battery operating over 168~hours (one week)
+under the \texttt{dropout\_only} scenario at $\rho = 0.20$.
+
+\begin{enumerate}
+  \item \textbf{Hour 0--24.}  Telemetry is clean.  The deterministic LP
+    dispatches charge during solar surplus and discharge during evening
+    peak.  Observed and true SOC tracks are indistinguishable.
+  \item \textbf{Hour 25.}  A dropout burst begins: five consecutive SOC
+    readings are missing.  The last-value hold freezes
+    $\widehat{\mathrm{SOC}}$ at 55\%.
+  \item \textbf{Hour 26--28.}  The LP continues discharging against the
+    frozen observation.  True SOC falls from 55\% to 38\% to 24\%.  The
+    observed SOC remains at 55\%.
+  \item \textbf{Hour 29.}  The LP dispatches a 40~MW discharge, believing
+    SOC is 55\%.  True SOC drops to 16\%, breaching the 20\% floor.
+    Observed SOC still shows 55\%.  The illusion is complete.
+  \item \textbf{Hour 30.}  Telemetry recovers.  The LP observes SOC at
+    16\% and abruptly curtails dispatch, but the damage---an SOC
+    excursion below the safety floor---has already occurred.
+\end{enumerate}
+
+This narrative is not hypothetical.  The CPSBench harness reproduces it
+deterministically (seed 42, \texttt{dropout\_only}, $\rho = 0.20$), and
+the true-state violation is recorded in the TSVR metric.
+
+\section{Why Standard Evaluation Misses the Problem}
+\label{sec:standard-eval-fails}
+
+Standard battery dispatch evaluation protocols report:
+
+\begin{itemize}
+  \item Revenue or regret (economic performance).
+  \item Observed SOC constraint violations (observed safety).
+  \item Forecast accuracy (MAPE, RMSE, CRPS).
+\end{itemize}
+
+None of these metrics involve the \emph{true} SOC trajectory.  A
+controller that achieves zero observed violations can simultaneously have
+a high true-state violation rate.  The evaluation is complicit in the
+illusion: it checks safety on the same degraded observation that caused
+the unsafe action.
+
+\begin{proposition}[Insufficiency of observed-state evaluation]
+\label{prop:obs-eval-insufficient}
+For any $\mathrm{TSVR} > 0$, there exists a controller-scenario pair
+with $\mathrm{OSVR} = 0$ and the given $\mathrm{TSVR}$.  Observed-state
+evaluation is therefore \emph{insufficient} to certify physical safety.
+\end{proposition}
+
+\begin{proof}
+Take any controller $\pi$ and any fault scenario with dropout rate
+$\rho > 0$.  Since $\pi$ evaluates constraints on $\hat{x}_t$ and the
+telemetry operator preserves observed-state feasibility by construction
+(the hold value is always within bounds), $\mathrm{OSVR} = 0$.  By
+Theorem~\ref{thm:illusion-existence}, there exists a step where $a_t$
+violates true-state constraints, so $\mathrm{TSVR} > 0$.
+\end{proof}
+
+\section{CPSBench and Dual-Trajectory Evaluation}
+\label{sec:cpsbench-dual}
+
+To break the illusion, we introduce the \emph{dual-trajectory} evaluation
+paradigm implemented in the CPSBench harness.  At each step~$t$, the
+harness maintains two parallel state machines:
+
+\begin{enumerate}
+  \item \textbf{Observed trajectory.}  The SOC evolution computed from
+    the action~$a_t$ and the observed state~$\hat{x}_t$, using the
+    dynamics~\eqref{eq:soc-dynamics} with $\widehat{\mathrm{SOC}}_t$ as
+    the initial condition.
+  \item \textbf{True trajectory.}  The SOC evolution computed from the
+    \emph{same} action~$a_t$ but with the true
+    state~$\mathrm{SOC}_t^{\mathrm{true}}$ as the initial condition.
+\end{enumerate}
+
+The true trajectory is never visible to the controller; it is maintained
+solely for evaluation.  This separation is critical: the controller
+cannot ``cheat'' by observing the truth, and the evaluator cannot be
+fooled by the observation.
+
+\begin{definition}[True-State Violation Rate (TSVR)]
+\label{def:tsvr}
+\[
+  \mathrm{TSVR} \;=\; \frac{1}{T} \sum_{t=1}^{T}
+  \mathbf{1}\!\Bigl[\,
+    \mathrm{SOC}_{t}^{\mathrm{true}} < \mathrm{SOC}_{\min}
+    \;\;\text{or}\;\;
+    \mathrm{SOC}_{t}^{\mathrm{true}} > \mathrm{SOC}_{\max}
+  \,\Bigr].
+\]
+\end{definition}
+
+\begin{definition}[Intervention Rate (IR)]
+\label{def:ir}
+\[
+  \mathrm{IR} \;=\; \frac{1}{T} \sum_{t=1}^{T}
+  \mathbf{1}\!\bigl[\,a_t^{\mathrm{safe}} \ne a_t^{\star}\,\bigr],
+\]
+where $a_t^{\star}$ is the optimiser's proposed action and
+$a_t^{\mathrm{safe}}$ is the action actually dispatched after the
+DC3S shield.
+\end{definition}
+
+The dual-trajectory architecture enables unambiguous attribution: every
+true-state violation is traceable to a specific action, a specific
+observation error, and a specific gap between $\hat{x}_t$ and $x_t$.
+
+\section{Why the Illusion Demands a Runtime Shield}
+\label{sec:shield-motivation}
+
+The illusion cannot be resolved at the optimiser level for two reasons:
+
+\begin{enumerate}
+  \item \textbf{Information asymmetry.}  The optimiser has access only to
+    $\hat{x}_t$.  Without a reliability signal, it cannot distinguish
+    clean telemetry from degraded telemetry.  Any fixed margin it
+    applies will be either too conservative (wasting revenue when
+    telemetry is clean) or too aggressive (missing violations when
+    telemetry degrades).
+  \item \textbf{Separation of concerns.}  The optimiser's objective is
+    economic; the safety layer's objective is physical.  Mixing the two
+    creates Pareto conflicts that are better resolved by a dedicated
+    post-optimiser shield.  The shield can adapt its tightening in
+    real time based on the OQE score, something a batch optimiser
+    solved minutes ago cannot do.
+\end{enumerate}
+
+The DC3S shield resolves the illusion by introducing an
+\emph{observation-quality-aware} constraint tightening that operates at
+the dispatch boundary.  The shield does not replace the optimiser; it
+corrects the optimiser's blind spot.
+
+\begin{theorem}[Informal safety guarantee of DC3S]
+\label{thm:dc3s-informal}
+If the OQE score~$w_t$ is a lower bound on the true reliability (i.e.,
+$w_t \le I(X_t; \hat{X}_t) / H(X_t)$ in a normalised sense), and the
+conformal calibration set satisfies approximate exchangeability, then the
+DC3S shield achieves
+\[
+  \mathrm{TSVR} \;\le\; \alpha + o(1),
+\]
+where $\alpha$ is the conformal miscoverage level and the $o(1)$ term
+vanishes as the calibration set grows.
+\end{theorem}
+
+The formal version of this theorem, with precise assumptions and a
+complete proof, is developed in subsequent chapters.
+
+\section{Chapter Summary}
+
+The observed-state safety illusion is the mechanism by which the OASG
+operates in practice: a controller evaluates constraints on a degraded
+observation, concludes the system is safe, and dispatches an action that
+is physically unsafe.  The illusion is invisible to any evaluation
+protocol that checks constraints on the observed trajectory only.  The
+dual-trajectory architecture of CPSBench makes the illusion visible, and
+the DC3S runtime shield makes it preventable.  The remainder of the
+dissertation develops the shield, proves its guarantees, and validates
+them empirically across US and German grid data under the full fault model
+of Chapter~\ref{ch:problem-formulation}.

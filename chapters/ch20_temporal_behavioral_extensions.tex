@@ -1,0 +1,325 @@
+
+\chapter{Temporal and Behavioral Extensions in Battery}
+\label{ch:temporal-extensions}
+
+This chapter extends the per-step safety results of
+Chapters~\ref{ch:theorem-safety}--\ref{ch:no-free-safety} into the
+temporal and behavioral dimensions.  Within the authoritative battery
+theorem register, this chapter contributes Theorems~T5--T8: certificate
+validity horizon, certificate expiration bound, feasible fallback
+existence, and graceful degradation dominance.  The certificate half-life
+result remains a corollary, and safe-budget monotonicity remains a
+proposition.
+
+%% ---------------------------------------------------------------
+%%  Part 1: Temporal extension
+%% ---------------------------------------------------------------
+
+\section{Certificate Object and Validity Horizon}
+
+\begin{definition}[Safety certificate]
+\label{def:certificate}
+A \emph{safety certificate} $\mathcal{C}_t$ issued at step~$t$ is a
+tuple
+\[
+  \mathcal{C}_t \;=\;
+  \bigl(\,a_t^{\text{safe}},\;
+  [\hat{x}_t^{\text{lo}},\, \hat{x}_t^{\text{hi}}],\;
+  w_t,\;
+  \tau_t\,\bigr),
+\]
+where $a_t^{\text{safe}} \in \mathcal{A}_t$ is the certified safe action,
+$[\hat{x}_t^{\text{lo}}, \hat{x}_t^{\text{hi}}]$ is the inflated
+conformal interval, $w_t$ is the reliability score, and
+$\tau_t$ is the validity horizon (number of future steps for which
+the certificate remains valid).
+\end{definition}
+
+The validity horizon $\tau_t$ answers the question: \emph{for how many
+steps after issuance can the certified action be trusted?}
+
+\section{Forward-Tube Construction}
+
+To analyse certificate validity beyond step~$t$, we construct the
+\emph{forward tube}: the set of states reachable from the certified
+action under worst-case drift.
+
+\begin{definition}[Forward tube]
+\label{def:forward-tube}
+Given certificate $\mathcal{C}_t$ and one-step drift bound
+$\sigma_d$ (sub-Gaussian parameter), the forward tube at horizon
+$\Delta \ge 0$ is
+\[
+  \mathcal{F}_{t+\Delta} \;=\;
+  \bigl[\,\hat{x}_t^{\text{lo}} + \Delta(a_t^{\text{safe}}) -
+  \sigma_d\sqrt{\Delta},\;\;
+  \hat{x}_t^{\text{hi}} + \Delta(a_t^{\text{safe}}) +
+  \sigma_d\sqrt{\Delta}\,\bigr].
+\]
+\end{definition}
+
+The tube widens at rate $\sigma_d\sqrt{\Delta}$ because the unobserved
+state drift accumulates as a sub-Gaussian random walk.
+
+\section{Main Temporal Theorems}
+
+\subsection{Certificate Validity Horizon}
+
+\begin{theorem}[Certificate validity horizon]
+\label{thm:cert-horizon}
+Under Assumptions A1, A2, A4, A5, A6, and A7, the certificate
+$\mathcal{C}_t$ guarantees true-state safety for $\Delta$ steps after
+issuance provided that the forward tube remains within the constraint
+set:
+\[
+  \mathcal{F}_{t+\Delta} \;\subseteq\;
+  [\text{SOC}_{\min},\, \text{SOC}_{\max}].
+\]
+The maximum such $\Delta$ is the validity horizon:
+\[
+  \tau_t \;=\; \max\,\bigl\{\,\Delta \ge 0 \;:\;
+  \mathcal{F}_{t+\Delta} \subseteq
+  [\text{SOC}_{\min},\, \text{SOC}_{\max}]\,\bigr\}.
+\]
+\end{theorem}
+
+\begin{proof}
+At step $t + \Delta$, the true state $x_{t+\Delta}$ lies within
+$\mathcal{F}_{t+\Delta}$ with probability $\ge 1 - \alpha$
+by the sub-Gaussian tail bound and the conformal coverage guarantee at
+issuance time.  If $\mathcal{F}_{t+\Delta}$ is entirely within the
+constraint set, then $x_{t+\Delta}$ satisfies $\phi(x_{t+\Delta}) = 1$
+with probability $\ge 1 - \alpha$.  The validity horizon is the largest
+$\Delta$ for which this containment holds.
+\end{proof}
+
+\subsection{Certificate Expiration Bound}
+
+\begin{theorem}[Certificate expiration bound]
+\label{thm:cert-expiration}
+The validity horizon satisfies the lower bound
+\[
+  \tau_t \;\ge\;
+  \left\lfloor\,\frac{(\delta_{\text{bnd},t})^2}
+  {\sigma_d^2}\,\right\rfloor,
+\]
+where $\delta_{\text{bnd},t} = \min(x_t^{\text{lo}} - \text{SOC}_{\min},\,
+\text{SOC}_{\max} - x_t^{\text{hi}})$ is the distance from the issued
+certificate interval to the nearest constraint boundary.
+\end{theorem}
+
+\begin{proof}
+The forward tube reaches a constraint boundary when
+$\sigma_d\sqrt{\Delta} = \delta_{\text{bnd},t}$, giving
+$\Delta = \delta_{\text{bnd},t}^2 / \sigma_d^2$.  Since $\Delta$ must
+be an integer, the floor provides the bound.
+\end{proof}
+
+\subsection{Certificate Half-Life Corollary}
+
+\begin{corollary}[Certificate half-life]
+\label{cor:half-life}
+The certificate half-life $\tau_{1/2}$---the horizon at which the
+safety probability drops below $(1 - \alpha)/2$---satisfies
+\[
+  \tau_{1/2} \;\ge\;
+  \frac{q_{\mathrm{eff},t}^2}
+  {2\,\sigma_d^2\,\ln\!\bigl(\tfrac{2}{1}\bigr)}
+  \;=\;
+  \frac{q_{\mathrm{eff},t}^2}{2\,\sigma_d^2\,\ln 2},
+\]
+where $q_{\mathrm{eff},t} = q_t / (w_t + \epsilon)$ is the
+reliability-inflated half-width.
+\end{corollary}
+
+\begin{proof}
+The safety probability at horizon $\Delta$ is
+$1 - 2\exp(-q_{\mathrm{eff},t}^2 / (2\sigma_d^2\Delta))$ by the
+sub-Gaussian tail bound.  Setting this equal to $(1 - \alpha)/2$
+and solving for $\Delta$ yields the half-life expression.
+\end{proof}
+
+\section{Temporal Summary Table}
+
+\begin{table}[ht]
+\centering
+\caption{Temporal extension results: validity horizon, expiration bound,
+  and half-life under representative conditions
+  ($\sigma_d = 1.55$~MW, $q_{\text{eff}} = 8.2$~MWh, $\alpha = 0.10$).}
+\label{tab:temporal-summary}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Quantity} & \textbf{Analytical bound} & \textbf{Empirical estimate} \\
+\midrule
+Validity horizon $\tau_t$ & $\ge 28$ steps (4.7~h) & 32 steps (5.3~h) \\
+Expiration bound & $\ge 28$ steps & --- \\
+Half-life $\tau_{1/2}$ & $\ge 32$ h & $\approx 36$~h \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The empirical estimates (from Chapter~\ref{ch:cert-half-life-blackout})
+exceed the analytical bounds, confirming that the theory is conservative.
+
+%% ---------------------------------------------------------------
+%%  Part 2: Behavioral extension
+%% ---------------------------------------------------------------
+
+\section{Fallback and Graceful Degradation}
+
+When the reliability score drops below the minimum threshold
+$w_{\min}$, the DC3S shield transitions from normal operation to
+a \emph{fallback policy}.  This section formalises the fallback's
+existence and its dominance over uncontrolled degradation.
+
+\subsection{Feasible Fallback Existence}
+
+\begin{theorem}[Feasible fallback existence]
+\label{thm:fallback-existence}
+Under Assumptions A1, A3, A4, and A8, for any state $x_t$ satisfying
+$\phi(x_t) = 1$, the fallback policy $\pi_{\text{fb}}$ produces a
+safe action:
+\[
+  a_t^{\text{fb}} = \pi_{\text{fb}}(x_t) \in \mathcal{A}_t
+  \quad\text{and}\quad
+  \phi(x_{t+1}) = 1.
+\]
+In the battery domain, $\pi_{\text{fb}}$ is the zero-dispatch policy
+$(P_t^{\text{chg}} = 0, P_t^{\text{dis}} = 0)$, which preserves SOC
+up to model error.
+\end{theorem}
+
+\begin{proof}
+Under zero dispatch, $x_{t+1} = x_t + \epsilon_t$ with
+$|\epsilon_t| \le \epsilon_{\text{model}}$.  Since
+$x_t \in [\text{SOC}_{\min}, \text{SOC}_{\max}]$ and
+$\epsilon_{\text{model}}$ is small relative to the constraint margins,
+$x_{t+1}$ remains feasible.  Assumption~A3 guarantees the existence
+of at least one such safe action, and zero dispatch is always one.
+\end{proof}
+
+\subsection{Graceful Degradation Dominance}
+
+\begin{theorem}[Graceful degradation dominance]
+\label{thm:graceful-dominance}
+Under Assumptions A1--A5 and A8, the graceful degradation protocol
+(monotonic power reduction toward the safe zone) strictly dominates
+the uncontrolled strategy (continue dispatching without adaptation)
+in terms of worst-case violation count:
+\[
+  V^{\text{graceful}} \;\le\; V^{\text{uncontrolled}}
+\]
+for every admissible fault sequence, with strict inequality whenever
+the uncontrolled strategy incurs at least one violation.
+\end{theorem}
+
+\begin{proof}
+The graceful degradation protocol reduces dispatch magnitude
+monotonically, shrinking the SOC excursion at each step.  Since the
+safe zone $\mathcal{X}_{\text{safe}}$ is an absorbing set under the
+landing controller (Proposition~\ref{prop:landing-convergence} in
+Chapter~\ref{ch:graceful-degradation}), the SOC converges to the
+interior and no further violations can occur after landing.
+
+The uncontrolled strategy, by contrast, continues to dispatch at full
+power.  Under the admissible fault sequence, the accumulated
+observation error pushes the true SOC across the boundary at the
+same rate as in the No Free Safety construction
+(Theorem~\ref{thm:no-free-safety}).  Hence
+$V^{\text{uncontrolled}} \ge 1 > 0 = V^{\text{graceful}}$.
+\end{proof}
+
+\subsection{Safe-Budget Monotonicity}
+
+\begin{proposition}[Safe-budget monotonicity]
+\label{prop:budget-monotonicity}
+Define the \emph{safe budget} at step~$t$ as the maximum energy
+(MWh) that can be dispatched while remaining safe:
+\[
+  B_t^{\text{safe}} = \max_{a \in \mathcal{A}_t}
+  \bigl|P_t^{\text{dis}} - P_t^{\text{chg}}\bigr| \cdot \Delta t.
+\]
+Under the graceful degradation protocol,
+$B_t^{\text{safe}}$ is non-increasing during the landing phase:
+\[
+  B_{t+1}^{\text{safe}} \;\le\; B_t^{\text{safe}}
+  \quad\text{for all } t \ge t_{\text{land}}.
+\]
+\end{proposition}
+
+\begin{proof}
+During landing, the reliability score is below $w_{\min}$ and the
+uncertainty interval widens at each step (since no fresh calibration
+data is incorporated).  The tightened action set $\mathcal{A}_t$
+shrinks monotonically, and therefore the safe budget decreases.
+\end{proof}
+
+\section{Behavioral Comparison Table}
+
+\begin{table}[ht]
+\centering
+\caption{Behavioral comparison: graceful degradation versus alternatives.}
+\label{tab:behavioral-comparison}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Strategy} & \textbf{TSVR} & \textbf{Landing time} &
+  \textbf{Revenue loss} & \textbf{Grid disruption} \\
+\midrule
+Uncontrolled (LP continues) & $> 0$ & N/A & Low & High \\
+Hard stop (immediate halt) & 0 & 0 & High & Medium \\
+Graceful degradation & 0 & $T_L$ steps & Medium & Low \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Graceful degradation occupies the Pareto-optimal position: zero
+violations, bounded landing time, moderate revenue impact, and
+minimal grid disruption.
+
+\section{Artifact-Backed Figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.85\textwidth]{reports/publication/fig_coverage_width_tradeoff.png}
+\caption{Coverage--width tradeoff under temporal extension.  As the
+  certificate ages (horizontal axis), the coverage probability decreases
+  while the interval width increases.  The half-life (vertical dashed
+  line) marks the crossover point.}
+\label{fig:temporal-evidence}
+\end{figure}
+
+\section{What This Chapter Does Not Prove}
+
+\begin{enumerate}
+  \item The certificate validity horizon is a \emph{lower bound} on
+    the true safe horizon; the actual safe horizon may be longer
+    because drift is typically sub-maximal.
+  \item The half-life corollary assumes sub-Gaussian drift; heavy-tailed
+    drift distributions would require a different tail bound and would
+    yield a shorter half-life.
+  \item The graceful degradation dominance result compares to an
+    \emph{uncontrolled} baseline.  A more sophisticated adaptive
+    controller that is not quality-ignorant but uses a different
+    inflation rule might also achieve zero violations with lower
+    revenue loss.
+  \item The safe-budget monotonicity holds only during the landing
+    phase; during normal operation, the budget fluctuates with $w_t$.
+  \item Multi-asset (fleet) temporal certificates are not covered here;
+    compositional temporal extension is deferred to
+    Chapter~\ref{ch:compositional-safety-fleets}.
+\end{enumerate}
+
+\section{Chapter Summary}
+
+This chapter extends the ORIUS safety guarantee from per-step claims
+to temporal and behavioral horizons.  Three temporal results---certificate
+validity horizon (Theorem~\ref{thm:cert-horizon}), expiration bound
+(Theorem~\ref{thm:cert-expiration}), and half-life corollary
+(Corollary~\ref{cor:half-life})---quantify how long a safety certificate
+remains valid after issuance.  Three behavioral results---fallback
+existence (Theorem~\ref{thm:fallback-existence}), graceful degradation
+dominance (Theorem~\ref{thm:graceful-dominance}), and safe-budget
+monotonicity (Proposition~\ref{prop:budget-monotonicity})---formalise
+the landing protocol and prove it is strictly safer than uncontrolled
+dispatch.  Together, these extensions complete the theorem ladder
+initiated in Chapter~\ref{ch:theorem-oasg}.

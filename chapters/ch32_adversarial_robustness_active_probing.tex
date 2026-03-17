@@ -1,0 +1,99 @@
+\chapter{Adversarial Robustness and Active Probing}
+\label{ch:adversarial-robustness}
+
+This chapter keeps the adversarial story grounded in the battery artifacts
+that are actually locked in the repo.  The current evidence package is a
+spoofing-detection audit rather than a full controller-versus-controller
+competition under malicious sensing.
+
+\section{Battery Threat Model}
+
+The battery-specific adversary considered here tries to make the controller
+trust a telemetry stream that looks statistically healthy while drifting away
+from the true plant state.  In practice that means:
+
+\begin{enumerate}
+  \item replaying or smoothing readings so the battery appears stable,
+  \item spoofing load-sensitive inputs so the dispatch policy overcommits, and
+  \item hiding the attack inside otherwise plausible packet behavior.
+\end{enumerate}
+
+The point of active probing is to break that illusion by asking the plant for
+a small physical response that a forged telemetry stream cannot mimic forever.
+
+\section{Locked Detection Package}
+
+The current battery outputs are:
+
+\begin{itemize}
+  \item \texttt{reports/probing/spoofing\_attack\_results.csv}, which stores
+    the attack-detection confusion counts, and
+  \item \texttt{reports/probing/probing\_detection\_quality.png}, which turns
+    the main detection metrics into a chapter-facing figure.
+\end{itemize}
+
+These are generated from the underlying publication artifact
+\texttt{reports/publication/active\_probing\_spoofing\_detection.csv}.
+
+\section{Detection Results}
+
+The locked spoofing-detection audit reports 300 evaluated events with a
+threshold of 0.6, producing:
+
+\begin{itemize}
+  \item 48 true positives,
+  \item 6 false positives,
+  \item 4 false negatives,
+  \item 242 true negatives,
+  \item 0.889 precision, and
+  \item 0.923 recall.
+\end{itemize}
+
+\begin{table}[ht]
+\centering
+\caption{Locked active-probing detection results for the battery threat model.}
+\label{tab:spoof-results}
+\begin{tabular}{lr}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Events evaluated & 300 \\
+Threshold & 0.60 \\
+True positives & 48 \\
+False positives & 6 \\
+False negatives & 4 \\
+True negatives & 242 \\
+Precision & 0.889 \\
+Recall & 0.923 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Battery-Operational Meaning}
+
+For the battery book, these numbers mean the probing layer is doing useful
+work: it catches most spoofing events while keeping false alarms bounded.
+That matters because every false alarm tightens the battery unnecessarily,
+while every missed detection risks preserving a hidden observation-action
+safety gap.
+
+\section{Bounded Claim}
+
+This chapter now makes the narrower and more honest claim supported by the
+locked artifacts:
+
+\begin{itemize}
+  \item The battery implementation includes an active-probing detection path.
+  \item That detection path achieves high recall and strong precision on the
+    current spoofing audit.
+  \item The chapter does \emph{not} yet prove adversarial completeness or a
+    full safety frontier against all attack strategies.
+\end{itemize}
+
+\section{Summary}
+
+The adversarial extension is no longer just conceptual.  The repo now
+contains a locked battery spoofing-detection package with explicit confusion
+counts, precision, recall, and a chapter-facing figure.  That gives the
+battery thesis a real active-probing evidence surface while keeping the claim
+appropriately bounded to what has actually been implemented and measured.

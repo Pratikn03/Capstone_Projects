@@ -1,0 +1,125 @@
+\chapter{Hardware-in-the-Loop Validation}
+\label{ch:hil}
+
+This chapter documents the \emph{hardware-facing validation package} now
+locked in the repository.  The current evidence is not a claim of full
+field deployment.  It is a controller-in-the-loop rehearsal that exercises
+the edge-agent path, certificate logging, and fault-handling interface under
+the same battery-domain safety logic used elsewhere in the thesis.
+
+\section{Why This Layer Matters}
+
+The battery thesis has already shown, in CPSBench, that hidden
+true-state violations appear under degraded telemetry and that DC3S can
+eliminate them.  The next question is operational rather than theoretical:
+does the end-to-end runtime still emit actionable commands, preserve the
+certificate trail, and remain safe when the control loop is driven through
+the edge-agent API rather than through an offline benchmark harness?
+
+\section{Locked Runtime Path}
+
+The current locked evidence package uses the following runtime objects:
+
+\begin{description}
+  \item[Controller runtime] FastAPI \texttt{TestClient} wrapped by the
+    ORIUS edge agent.
+  \item[Battery driver] \texttt{SimBatteryDriver}, which exposes the same
+    control interface used by the edge agent.
+  \item[Fault protocol] Nominal and dropout scenarios, each run for
+    48 steps from a shared seed (\texttt{seed = 42}).
+\end{description}
+
+These configuration facts are recorded directly in
+\texttt{reports/hil/hil\_hardware\_table.csv}.
+
+\section{Scenario Coverage}
+
+The regenerated HIL package spans two scenarios:
+
+\begin{itemize}
+  \item \textbf{Nominal}: 48 steps, 0 violations, 48 interventions,
+    100\% certificate completeness.
+  \item \textbf{Dropout}: 48 steps, 0 violations, 48 interventions,
+    100\% certificate completeness.
+\end{itemize}
+
+Together they yield 96 audited steps, 0 true-state violations, and 100\%
+certificate completeness, as recorded in
+\texttt{reports/hil/hil\_summary.json}.
+
+\section{Step Log and SOC Trace}
+
+The per-step command path is logged in
+\texttt{reports/hil/hil\_step\_log.csv}, while the aggregate trace is rendered
+in \texttt{reports/hil/fig\_hil\_soc\_trace.png}.  The operational meaning is
+simple: once the controller approaches the lower SOC boundary, the shield
+repeatedly projects aggressive discharge proposals back to safe near-zero
+actions.  That behavior is exactly what the battery thesis claims should
+happen under safety tightening, and the HIL package shows it on the live
+runtime path rather than only in benchmark replay.
+
+\section{Certificate Audit}
+
+The certificate chain in
+\texttt{reports/hil/hil\_certificate\_audit.csv} shows a complete record of
+safe action, proposed action, and audit identity for every step.  The
+derived timing table in \texttt{reports/hil/hil\_timing\_table.csv} reports:
+
+\begin{itemize}
+  \item 96 total audited steps,
+  \item 96 interventions,
+  \item 0 violations, and
+  \item 100\% certificate completeness.
+\end{itemize}
+
+This is the battery-operational consequence of the HIL layer: every command
+that would have stressed the battery near its lower bound was repaired before
+execution, and every repaired command remained traceable.
+
+\section{Evidence Package}
+
+\begin{table}[ht]
+\centering
+\caption{Locked HIL evidence package for the battery thesis.}
+\label{tab:hil-evidence}
+\begin{tabular}{lll}
+\toprule
+\textbf{Artefact} & \textbf{File} & \textbf{Role} \\
+\midrule
+Scenario summary & \texttt{hil\_summary.json} & Run-level lock \\
+Step log & \texttt{hil\_step\_log.csv} & Per-step audit trail \\
+Certificate audit & \texttt{hil\_certificate\_audit.csv} & Completeness check \\
+SOC trace & \texttt{fig\_hil\_soc\_trace.png} & Operational behavior \\
+Runtime table & \texttt{hil\_hardware\_table.csv} & Interface inventory \\
+Timing table & \texttt{hil\_timing\_table.csv} & Aggregate metrics \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{What This Chapter Establishes}
+
+The current HIL package establishes three battery-specific facts:
+
+\begin{enumerate}
+  \item The edge-agent execution path preserves the same safety logic used in
+    the benchmarked DC3S loop.
+  \item The certificate chain remains complete under both nominal and dropout
+    conditions.
+  \item The battery remains within the safe envelope throughout the audited
+    runtime trace.
+\end{enumerate}
+
+It does \emph{not} yet establish external-hardware timing on a production
+controller, relay-trip behavior on a physical BMS, or field deployment
+robustness.  Those remain the next battery-hardening layer rather than a
+completed claim.
+
+\section{Summary}
+
+The HIL chapter now matches the locked battery evidence package rather than
+an earlier aspirational setup.  The current artifact set shows a 96-step,
+two-scenario, certificate-complete runtime rehearsal with zero true-state
+violations.  For the battery book, that means the safety argument now extends
+one layer beyond offline benchmark replay and into the executable controller
+path, while remaining honest about the fact that full physical HIL is still
+future work.

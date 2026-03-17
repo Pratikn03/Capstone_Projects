@@ -1,0 +1,263 @@
+
+\chapter{Forecasting and Calibration}
+\label{ch:forecasting}
+
+Dispatch safety begins with forecast quality: an optimiser can only be as
+reliable as the prediction intervals it conditions on.  This chapter
+describes the six model families evaluated in ORIUS, the training
+protocol designed to prevent temporal leakage, the conformal prediction
+layer that converts point forecasts into calibrated intervals, and the
+structural calibration weaknesses that motivate the adaptive inflation
+in DC3S.
+
+% ----------------------------------------------------------------
+\section{Forecast Targets}
+
+Three operational targets are forecast at hourly resolution over a
+48-step rolling horizon ($H = 48$):
+
+\begin{enumerate}
+  \item \texttt{load\_mw} --- net system load (MW).
+  \item \texttt{wind\_mw} --- aggregate wind generation (MW).
+  \item \texttt{solar\_mw} --- aggregate PV generation (MW).
+\end{enumerate}
+
+A fourth target, \texttt{price\_eur\_mwh}, is forecast for the Germany
+surface only and used in the dispatch objective
+(Section~\ref{sec:dispatch-objective}, Chapter~\ref{ch:battery-dynamics}).
+All targets are standardised to zero mean and unit variance before model
+ingestion; predictions are de-standardised before interval construction.
+
+% ----------------------------------------------------------------
+\section{Model Families}
+\label{sec:model-families}
+
+Six model families span the spectrum from gradient-boosted trees to
+attention-based deep architectures:
+
+\begin{table}[ht]
+\centering
+\caption{Forecast model families and key hyper-parameters.}
+\label{tab:model-families}
+\begin{tabular}{llll}
+\toprule
+\textbf{Family} & \textbf{Type} & \textbf{Key hyper-params} &
+  \textbf{Notes} \\
+\midrule
+GBM        & Gradient-boosted trees & depth, lr, rounds &
+  Strongest on locked DE dataset \\
+LSTM       & Recurrent (gated)      & hidden, layers, dropout &
+  Baseline sequential model \\
+TCN        & Temporal convolution   & kernel, dilation, channels &
+  Parallelisable alternative to LSTM \\
+N-BEATS    & Basis-expansion blocks & stacks, width, sharing &
+  Interpretable decomposition \\
+TFT        & Temporal fusion        & heads, hidden, quantiles &
+  Multi-horizon with variable selection \\
+PatchTST   & Patch-based transformer& patch len, heads, depth &
+  Channel-independent patching \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{GBM (LightGBM).}
+Gradient Boosted Machines trained via LightGBM achieve the lowest MAE on
+the locked Germany surface for load and wind targets.  The model ingests
+94 engineered features including calendar dummies, rolling statistics, and
+weather forecasts.  Quantile regression heads at $\tau \in
+\{0.025, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.975\}$ are trained
+independently, providing native prediction intervals before conformal
+calibration.
+
+\paragraph{LSTM.}
+A two-layer LSTM with 128 hidden units and 10\% dropout serves as the
+recurrent baseline.  Input sequences of 168\,h (one week) are consumed to
+produce a 48-step ahead forecast.  The LSTM captures temporal dependencies
+but is prone to over-smoothing during rapid ramp events.
+
+\paragraph{TCN.}
+A Temporal Convolutional Network with dilated causal convolutions
+(kernel size~7, 4 dilation layers) provides a parallelisable alternative
+to the LSTM.  TCN achieves comparable accuracy but trains 3--5$\times$
+faster due to the absence of sequential hidden-state propagation.
+
+\paragraph{N-BEATS.}
+The Neural Basis Expansion Analysis architecture decomposes the forecast
+into trend and seasonality stacks using learnable polynomial and Fourier
+basis functions.  The interpretable variant is used, with 3 trend stacks
+(polynomial degree~3) and 3 seasonality stacks (harmonics~5).
+
+\paragraph{TFT.}
+The Temporal Fusion Transformer combines variable selection, gated residual
+connections, and multi-head attention for multi-horizon quantile forecasting.
+TFT is the only architecture in the family that natively produces
+probabilistic forecasts without a separate quantile-regression head.
+
+\paragraph{PatchTST.}
+The Patch Time-Series Transformer segments the input sequence into
+non-overlapping patches of length~16, embeds each patch, and applies a
+standard transformer encoder with 4 heads and 3 layers.
+Channel-independent processing avoids cross-variable leakage and reduces
+parameter count.
+
+% ----------------------------------------------------------------
+\section{Training Protocol and Leakage Control}
+\label{sec:training-protocol}
+
+Temporal leakage is the primary threat to forecast evaluation integrity.
+The following protocol prevents it:
+
+\begin{enumerate}
+  \item \textbf{Expanding-window split.}  Training data grows monotonically;
+    the test window is always strictly future.  No shuffle split is permitted.
+  \item \textbf{Embargo gap.}  A 48-hour embargo separates the end of the
+    training window from the start of the test window, ensuring that no
+    feature derived from a lagged target can leak future information.
+  \item \textbf{Walk-forward evaluation.}  The test set is divided into
+    non-overlapping 168-hour (one-week) windows.  Metrics are computed per
+    window and then aggregated (mean, P95).
+  \item \textbf{Feature freeze.}  The feature engineering pipeline is frozen
+    before model training begins.  No feature is constructed using information
+    from the test period.
+  \item \textbf{Seed locking.}  All random seeds (NumPy, PyTorch, LightGBM)
+    are fixed at 42 for the primary run, with reproducibility verified across
+    seeds $\{11, 22, 33, 44\}$.
+\end{enumerate}
+
+% ----------------------------------------------------------------
+\section{Conformal Prediction Intervals}
+\label{sec:conformal}
+
+Point forecasts are converted to prediction intervals using Conformalized
+Quantile Regression (CQR), following the split-conformal framework:
+
+\begin{enumerate}
+  \item Train quantile regressors at levels $\alpha/2$ and $1 - \alpha/2$
+    on the training fold to obtain $\hat{q}_{\alpha/2}(x)$ and
+    $\hat{q}_{1-\alpha/2}(x)$.
+  \item On a held-out calibration fold of size~$n$, compute the conformity
+    scores:
+    \begin{equation}
+    \label{eq:cqr-scores}
+      s_i = \max\!\bigl(\hat{q}_{\alpha/2}(x_i) - y_i,\;
+                        y_i - \hat{q}_{1-\alpha/2}(x_i)\bigr),
+      \quad i = 1, \ldots, n.
+    \end{equation}
+  \item Let $\hat{q}$ be the $\lceil (1-\alpha)(n+1) \rceil / n$
+    quantile of $\{s_1, \ldots, s_n\}$.
+  \item The prediction interval for a new point~$x_{n+1}$ is:
+    \begin{equation}
+    \label{eq:cqr-interval}
+      C(x_{n+1}) = \bigl[\hat{q}_{\alpha/2}(x_{n+1}) - \hat{q},\;
+                         \hat{q}_{1-\alpha/2}(x_{n+1}) + \hat{q}\bigr].
+    \end{equation}
+\end{enumerate}
+
+CQR provides a finite-sample marginal coverage guarantee:
+$\Pr[y_{n+1} \in C(x_{n+1})] \ge 1 - \alpha$, assuming exchangeability
+of the calibration and test data.
+
+% ----------------------------------------------------------------
+\section{Marginal Coverage}
+
+On the locked Germany surface, the GBM + CQR pipeline achieves
+PICP@90 $= 100\%$ and PICP@95 $= 100\%$ for load (marginal coverage).
+Wind and solar targets also achieve marginal coverage above the nominal
+level.  These aggregate numbers, however, mask conditional failures.
+
+% ----------------------------------------------------------------
+\section{Reliability-Conditioned Under-Coverage}
+
+When coverage is stratified by the DC3S reliability score~$w_t$
+(Chapter~\ref{ch:dc3s-adapter}), the picture changes substantially.
+Table~\ref{tab:cqr-group-coverage} reproduces the locked group-coverage
+results.
+
+\begin{table}[ht]
+\centering
+\caption{CQR group coverage at 90\% nominal level, stratified by
+reliability group.  Source:
+\texttt{reports/publication/cqr\_group\_coverage.csv}.}
+\label{tab:cqr-group-coverage}
+\begin{tabular}{llrr}
+\toprule
+\textbf{Target} & \textbf{Group} & \textbf{PICP@90} &
+  \textbf{Mean width (MW)} \\
+\midrule
+load\_mw  & low  & 0.802 & 2\,147 \\
+load\_mw  & mid  & 0.825 & 2\,305 \\
+load\_mw  & high & 0.807 & 2\,345 \\
+\midrule
+wind\_mw  & low  & 0.488 & 464 \\
+wind\_mw  & mid  & 0.396 & 285 \\
+wind\_mw  & high & 0.410 & 381 \\
+\midrule
+solar\_mw & low  & 0.903 & 796 \\
+solar\_mw & mid  & 0.887 & 869 \\
+solar\_mw & high & 0.816 & 853 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Wind intervals are catastrophically under-covered in all three groups
+(39--49\% vs.\ 90\% nominal), confirming that marginal guarantees do not
+transfer to conditional subsets.  Load intervals under-cover by 8--20
+percentage points; solar intervals are closest to nominal but still
+under-cover in the high-variability group.
+
+% ----------------------------------------------------------------
+\section{Solar and Wind Calibration Weaknesses}
+\label{sec:calibration-weaknesses}
+
+Two structural factors drive the calibration gap:
+
+\paragraph{Wind non-stationarity.}
+Wind generation exhibits regime switches (storm fronts, lulls) that
+violate the exchangeability assumption underlying CQR.  The calibration
+fold, drawn from a single contiguous period, may not contain sufficient
+representation of extreme regimes, leading to narrow intervals that
+fail during the test period.
+
+\paragraph{Solar bimodality.}
+Solar generation has a deterministic diurnal envelope (sunrise--sunset)
+overlaid with a stochastic cloud-cover component.  During nighttime hours,
+the true generation is identically zero, making any nonzero interval
+width wasteful.  During daytime, cloud transients produce heavy-tailed
+residuals that require wide intervals.  A single set of conformity
+scores cannot efficiently cover both regimes simultaneously.
+
+% ----------------------------------------------------------------
+\section{Why Calibration Alone Cannot Close the Gap}
+
+The group-coverage results demonstrate a fundamental limitation:
+\emph{post-hoc conformal calibration on a static calibration fold cannot
+guarantee conditional coverage under distribution shift or telemetry
+degradation.}
+
+Three pathways to closing the gap are pursued in subsequent chapters:
+
+\begin{enumerate}
+  \item \textbf{Reliability-adaptive inflation} (DC3S, Chapter~\ref{ch:dc3s-adapter}):
+    the interval width is inflated in real time as a function of the
+    observation quality score~$w_t$, the drift flag~$d_t$, and the stale
+    count~$s_t$, compensating for the conditional under-coverage.
+  \item \textbf{Fault-tolerant invariant tube} (FTIT, Chapter~\ref{ch:dc3s-adapter}):
+    a robust state tube propagates worst-case SOC bounds forward, providing
+    a safety backstop that does not depend on interval calibration.
+  \item \textbf{Online conformal update} (ACI baseline, Chapter~\ref{ch:cpsbench}):
+    the conformal quantile is updated online using the most recent
+    residuals, partially adapting to distribution shift but without
+    observation-quality feedback.
+\end{enumerate}
+
+% ----------------------------------------------------------------
+\section{Chapter Summary}
+
+This chapter described the six forecast model families (GBM, LSTM, TCN,
+N-BEATS, TFT, PatchTST), the leakage-controlled training protocol, and the
+CQR conformal calibration layer.  Marginal coverage meets or exceeds the
+nominal level on all targets, but reliability-stratified analysis reveals
+severe conditional under-coverage, particularly for wind (39--49\% vs.\ 90\%
+nominal).  Solar calibration is weakened by diurnal bimodality, and wind by
+regime non-stationarity.  These structural calibration failures motivate the
+observation-aware adaptive inflation developed in the next chapter.

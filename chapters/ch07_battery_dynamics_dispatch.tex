@@ -1,0 +1,270 @@
+
+\chapter{Battery Dynamics and Dispatch Problem}
+\label{ch:battery-dynamics}
+
+This chapter formalises the state-space model of a grid-scale battery energy
+storage system (BESS), derives the dispatch optimisation programme, and
+shows how observation uncertainty enlarges the feasible set in ways that
+classical deterministic formulations cannot capture.
+
+% ----------------------------------------------------------------
+\section{Battery State Variables}
+
+The BESS plant is characterised by the following state and parameter
+variables at each hourly time step~$t$:
+
+\begin{table}[ht]
+\centering
+\caption{Battery state and parameter variables.}
+\label{tab:battery-vars}
+\begin{tabular}{cll}
+\toprule
+\textbf{Symbol} & \textbf{Name} & \textbf{Units / Range} \\
+\midrule
+$E_t$          & State of charge (energy)      & MWh, $[0, E_{\max}]$ \\
+$P_t^{+}$     & Charge power                  & MW,  $[0, P_{\max}^{+}]$ \\
+$P_t^{-}$     & Discharge power               & MW,  $[0, P_{\max}^{-}]$ \\
+$\eta^{+}$    & Charge efficiency              & dimensionless, $(0,1]$ \\
+$\eta^{-}$    & Discharge efficiency           & dimensionless, $(0,1]$ \\
+$E_{\max}$    & Nameplate energy capacity      & MWh \\
+$P_{\max}$    & Rated power (symmetric)        & MW \\
+$R_{\max}$    & Maximum ramp rate              & MW\,h$^{-1}$ \\
+$\mathrm{SOC}_t$ & Normalised SOC, $E_t / E_{\max}$ & $[0, 1]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For the ORIUS reference plant the nameplate parameters are
+$E_{\max} = 10\,000$\,MWh, $P_{\max} = 200$\,MW, $\eta^{+} = \eta^{-} = 0.95$,
+and $R_{\max} = P_{\max}$ (no additional ramp constraint beyond rated power).
+Soft SOC margins are enforced at $[\mathrm{SOC}_{\min}, \mathrm{SOC}_{\max}]
+= [0.05, 0.95]$; hard BMS trips occur at $[0.0, 1.0]$.
+
+% ----------------------------------------------------------------
+\section{SOC Dynamics}
+\label{sec:soc-dynamics}
+
+The energy balance over one time step ($\Delta t = 1$\,h) is:
+\begin{equation}
+\label{eq:soc-dynamics}
+  E_{t+1} = E_t + \eta^{+}\,P_t^{+}\,\Delta t
+                 - \frac{P_t^{-}}{\eta^{-}}\,\Delta t.
+\end{equation}
+In normalised form:
+\begin{equation}
+\label{eq:soc-normalised}
+  \mathrm{SOC}_{t+1} = \mathrm{SOC}_t
+    + \frac{\eta^{+}\,P_t^{+} - P_t^{-}/\eta^{-}}{E_{\max}}\,\Delta t.
+\end{equation}
+This is a deterministic, linear transition---the stochasticity enters through
+the \emph{observation} of $E_t$ (which may be stale or corrupted) and through
+the forecast of external signals that drive the optimiser's choice of
+$(P_t^{+}, P_t^{-})$.
+
+% ----------------------------------------------------------------
+\section{Power, Ramp-Rate, and SOC Constraints}
+\label{sec:constraints}
+
+The feasible action set at time~$t$ is defined by the following constraints:
+
+\paragraph{Power bounds.}
+\begin{equation}
+\label{eq:power-bounds}
+  0 \le P_t^{+} \le P_{\max}^{+}, \qquad
+  0 \le P_t^{-} \le P_{\max}^{-}.
+\end{equation}
+
+\paragraph{Mutual exclusion.}
+Simultaneous charge and discharge is prohibited:
+\begin{equation}
+\label{eq:mutual-exclusion}
+  P_t^{+} \cdot P_t^{-} = 0.
+\end{equation}
+In the LP relaxation this is enforced via a binary indicator or by solving
+separate charge and discharge sub-problems and selecting the dominant mode.
+
+\paragraph{Ramp-rate limits.}
+\begin{equation}
+\label{eq:ramp-limits}
+  |P_t^{+} - P_{t-1}^{+}| \le R_{\max}\,\Delta t, \qquad
+  |P_t^{-} - P_{t-1}^{-}| \le R_{\max}\,\Delta t.
+\end{equation}
+
+\paragraph{SOC bounds.}
+\begin{equation}
+\label{eq:soc-bounds}
+  E_{\min} \le E_{t+1} \le E_{\max},
+\end{equation}
+where $E_{\min} = \mathrm{SOC}_{\min} \cdot E_{\max}$ and similarly for the
+upper bound.  Substituting the dynamics~\eqref{eq:soc-dynamics}:
+\begin{equation}
+\label{eq:soc-bounds-expanded}
+  E_{\min} - E_t \;\le\;
+    \eta^{+}\,P_t^{+}\,\Delta t - \frac{P_t^{-}}{\eta^{-}}\,\Delta t
+  \;\le\; E_{\max} - E_t.
+\end{equation}
+
+% ----------------------------------------------------------------
+\section{Candidate, Safe, and Executed Actions}
+
+Three action vectors are distinguished at each control step:
+
+\begin{description}
+  \item[$a_t^\star = (P_t^{+\star}, P_t^{-\star})$:]
+    The \emph{candidate action} produced by the dispatch optimiser, maximising
+    expected economic value subject to the forecast distribution and the
+    \emph{observed} SOC~$\tilde{E}_t$.
+
+  \item[$a_t^{\mathrm{safe}} = (P_t^{+,\mathrm{safe}}, P_t^{-,\mathrm{safe}})$:]
+    The \emph{safe action} produced by the DC3S shield
+    (Chapter~\ref{ch:dc3s-adapter}).  This is the nearest feasible point to
+    $a_t^\star$ within the tightened safe-action set~$\mathcal{A}_t$.
+
+  \item[$a_t^{\mathrm{exec}}$:]
+    The \emph{executed action} sent to the BMS.  Under nominal operation
+    $a_t^{\mathrm{exec}} = a_t^{\mathrm{safe}}$; under BMS override
+    $a_t^{\mathrm{exec}}$ may be further clipped by hardware limits.
+\end{description}
+
+The \emph{intervention rate} (IR) measures the fraction of steps where
+$a_t^{\mathrm{safe}} \neq a_t^\star$, quantifying the economic cost of
+safety enforcement.
+
+% ----------------------------------------------------------------
+\section{Dispatch Objective}
+\label{sec:dispatch-objective}
+
+The deterministic dispatch LP over a rolling horizon~$H$ is:
+\begin{equation}
+\label{eq:dispatch-lp}
+\begin{aligned}
+  \max_{P_{t:t+H}^{+},\, P_{t:t+H}^{-}} \quad &
+    \sum_{\tau=t}^{t+H-1}
+    \bigl[\,\hat{\pi}_\tau\,(P_\tau^{-} - P_\tau^{+})
+           - c_{\mathrm{deg}}\,(P_\tau^{+} + P_\tau^{-})\,\bigr]\,\Delta t \\
+  \text{s.t.} \quad &
+    E_{\tau+1} = E_\tau + \eta^{+}\,P_\tau^{+}\,\Delta t
+                       - P_\tau^{-}/\eta^{-}\,\Delta t,
+      \quad \forall\,\tau, \\
+  & E_{\min} \le E_{\tau+1} \le E_{\max},
+      \quad \forall\,\tau, \\
+  & 0 \le P_\tau^{+} \le P_{\max}^{+},\;
+    0 \le P_\tau^{-} \le P_{\max}^{-},
+      \quad \forall\,\tau, \\
+  & |P_\tau^{+} - P_{\tau-1}^{+}| \le R_{\max}\,\Delta t,
+      \quad \forall\,\tau, \\
+  & |P_\tau^{-} - P_{\tau-1}^{-}| \le R_{\max}\,\Delta t,
+      \quad \forall\,\tau, \\
+  & E_t = \tilde{E}_t \quad (\text{initial condition from observation}).
+\end{aligned}
+\end{equation}
+Here $\hat{\pi}_\tau$ is the forecast price, $c_{\mathrm{deg}}$ is a
+degradation penalty per MWh throughput, and the initial SOC~$\tilde{E}_t$ is
+the \emph{observed} (possibly degraded) state.
+
+The objective trades revenue (buy low, sell high) against degradation cost.
+Only the first action $(P_t^{+\star}, P_t^{-\star})$ is committed; the
+remainder is discarded and re-solved at $t+1$ (receding-horizon control).
+
+% ----------------------------------------------------------------
+\section{Uncertainty and Feasible Set Under Degraded Observation}
+
+When the observation $\tilde{E}_t$ is degraded, the initial-condition
+constraint $E_t = \tilde{E}_t$ in~\eqref{eq:dispatch-lp} becomes uncertain.
+Let $\hat{E}_t$ denote the controller's best estimate and
+$\delta_t = E_t - \hat{E}_t$ the estimation error.  The true SOC after action
+is:
+\begin{equation}
+\label{eq:soc-uncertain}
+  E_{t+1}^{\mathrm{true}} = (\hat{E}_t + \delta_t)
+    + \eta^{+}\,P_t^{+}\,\Delta t - \frac{P_t^{-}}{\eta^{-}}\,\Delta t.
+\end{equation}
+For the SOC bounds to hold with probability at least $1 - \alpha$, the
+constraint must be tightened by the conformal prediction half-width~$q_t$:
+\begin{equation}
+\label{eq:tightened-bounds}
+  E_{\min} + q_t \;\le\; E_{t+1}^{\mathrm{est}} \;\le\; E_{\max} - q_t,
+\end{equation}
+where $q_t$ is the reliability-inflated interval half-width from RAC-Cert
+(Chapter~\ref{ch:dc3s-adapter}).  This tightening shrinks the feasible set
+and reduces the economic value of the dispatch, but guarantees safety
+against observation error.
+
+% ----------------------------------------------------------------
+\section{Calibration Gap and Uncertainty Mismatch}
+
+Even with conformal intervals, a \emph{calibration gap} arises when marginal
+coverage differs from conditional coverage across reliability groups.  The
+locked CQR group-coverage results
+(\texttt{reports/publication/cqr\_group\_coverage.csv}) reveal that wind
+intervals achieve only 39--49\% coverage in the low and high reliability
+groups despite 90\% nominal marginal coverage.  Solar intervals are better
+calibrated (82--90\%) but still exhibit under-coverage at the high-variability
+group.
+
+This calibration gap means that the tightened bounds
+in~\eqref{eq:tightened-bounds} are \emph{insufficiently tight} during periods
+of poor observation quality, motivating the adaptive inflation law in DC3S
+(Section~\ref{sec:dispatch-objective} cross-references
+Chapter~\ref{ch:dc3s-adapter}).
+
+% ----------------------------------------------------------------
+\section{Baseline Policies}
+
+The ORIUS evaluation includes eight dispatch controllers spanning four
+design philosophies:
+
+\begin{enumerate}
+  \item \textbf{Deterministic LP} (\texttt{deterministic\_lp}):
+    solves~\eqref{eq:dispatch-lp} on point forecasts with no interval
+    awareness.
+  \item \textbf{Robust fixed-interval} (\texttt{robust\_fixed\_interval}):
+    worst-case robust LP using fixed (non-adaptive) prediction intervals.
+  \item \textbf{CVaR interval} (\texttt{cvar\_interval}):
+    CVaR-optimised scenario dispatch over quantile forecasts.
+  \item \textbf{ACI conformal} (\texttt{aci\_conformal}):
+    adaptive conformal inference baseline with online width adjustment.
+  \item \textbf{Scenario robust} (\texttt{scenario\_robust}):
+    scenario-based robust optimisation over sampled forecast paths.
+  \item \textbf{Scenario MPC} (\texttt{scenario\_mpc}):
+    receding-horizon model predictive control with scenario tree.
+  \item \textbf{DC3S wrapped} (\texttt{dc3s\_wrapped}):
+    full DC3S shield with linear reliability inflation.
+  \item \textbf{DC3S FTIT} (\texttt{dc3s\_ftit}):
+    DC3S with fault-tolerant invariant tube extension.
+\end{enumerate}
+
+Results across these controllers are reported in
+Chapter~\ref{ch:dc3s-adapter} and the benchmark track
+(Chapter~\ref{ch:cpsbench}).
+
+% ----------------------------------------------------------------
+\section{Scope Boundary}
+
+The dispatch model in this dissertation is a \emph{single-asset, energy-only}
+formulation:
+
+\begin{itemize}
+  \item \textbf{Included:} energy arbitrage, SOC management, degradation
+    penalty, safety constraints.
+  \item \textbf{Excluded:} ancillary services (frequency regulation, spinning
+    reserve), multi-asset portfolio dispatch, network constraints, and
+    market-clearing co-optimisation.
+\end{itemize}
+
+The single-asset scope is sufficient to demonstrate the observation-quality
+feedback mechanism; extension to fleet-level dispatch is discussed in
+Chapter~\ref{ch:orius-bench-battery}.
+
+% ----------------------------------------------------------------
+\section{Chapter Summary}
+
+This chapter formalised the battery state-space model, the SOC dynamics
+equation~\eqref{eq:soc-dynamics}, the power/ramp/SOC constraint set, and the
+deterministic dispatch LP~\eqref{eq:dispatch-lp}.  Three action types---candidate,
+safe, and executed---were distinguished to precisely locate the safety
+intervention point.  The effect of degraded observation on the feasible set
+was derived, showing that the conformal half-width must tighten the SOC bounds
+and that calibration gaps in wind and solar intervals motivate adaptive
+inflation.  Eight baseline controllers spanning deterministic, robust,
+conformal, and shielded design philosophies were enumerated.
