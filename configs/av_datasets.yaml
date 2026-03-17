@@ -1,0 +1,32 @@
+# AV datasets for ORIUS vehicles extension (prototype only)
+# See orius-plan/AV_DATASETS.md for usage
+
+paths:
+  raw: data/av/raw
+  processed: data/av/processed
+  default_output: data/av/processed/av_trajectories_orius.csv
+
+sources:
+  ngsim:
+    kaggle_dataset: nigelwilliams/ngsim-vehicle-trajectory-data-us-101
+    resolution_s: 0.1
+    description: US highway (US-101), 0.1s
+  hee:
+    repo: https://github.com/boschresearch/hee_dataset
+    description: Bosch Highway Eagle Eye, ~12k trajectories
+  highd:
+    url: https://levelxdata.com
+    description: German highway, drone-recorded (manual request)
+  synthetic:
+    n_vehicles: 50
+    steps_per_vehicle: 200
+    dt_s: 0.1
+
+orius_columns:
+  - vehicle_id
+  - step
+  - position_m
+  - speed_mps
+  - speed_limit_mps
+  - lead_position_m
+  - ts_utc

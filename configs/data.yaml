@@ -39,5 +39,5 @@ storage:
   sql:
     enabled: false
     engine: duckdb
-    path: ${paths.processed}/gridpulse.duckdb
+    path: ${paths.processed}/orius.duckdb
     table: features

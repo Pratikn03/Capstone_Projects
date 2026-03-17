@@ -1,4 +1,4 @@
-# GridPulse Configuration Files
+# ORIUS Configuration Files
 
 YAML configuration files for all system components.
 
@@ -47,7 +47,7 @@ Configs support environment variable expansion:
 
 ```yaml
 api:
-  key: ${GRIDPULSE_API_KEY}
+  key: ${ORIUS_API_KEY}
   host: ${API_HOST:-localhost}
 ```
 

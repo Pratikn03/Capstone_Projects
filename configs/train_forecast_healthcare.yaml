@@ -1,0 +1,64 @@
+# Healthcare domain training config
+dataset:
+  key: HEALTHCARE
+  label: Healthcare Vital Signs (BIDMC/synthetic)
+  source: ORIUS
+  region_group: multi-domain
+
+task:
+  horizon_hours: 0.001  # ~3.6s
+  lookback_hours: 0.1
+  quantiles: [0.1, 0.5, 0.9]
+  targets: [hr_bpm]
+
+seed: 42
+seeds: [42, 123]
+
+cross_validation:
+  enabled: false
+  n_folds: 5
+  strategy: time_series
+  gap: 1
+
+data:
+  processed_path: data/healthcare/processed/features.parquet
+  timestamp_col: timestamp
+
+splits:
+  train_ratio: 0.70
+  calibration_ratio: 0.05
+  val_ratio: 0.10
+  gap_hours: 0
+
+models:
+  baseline_gbm:
+    kind: lightgbm
+    enabled: true
+    params:
+      n_estimators: 200
+      learning_rate: 0.05
+      max_depth: 6
+      num_leaves: 32
+      min_child_samples: 20
+      subsample: 0.8
+      colsample_bytree: 0.8
+      verbosity: -1
+  quantile_gbm:
+    kind: lightgbm
+    enabled: true
+    params:
+      n_estimators: 150
+      learning_rate: 0.05
+      max_depth: 6
+      num_leaves: 32
+      verbosity: -1
+  dl_lstm:
+    enabled: false
+  dl_tcn:
+    enabled: false
+  dl_nbeats:
+    enabled: false
+  dl_patchtst:
+    enabled: false
+  dl_tft:
+    enabled: false

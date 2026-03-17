@@ -218,7 +218,7 @@ tuning:
 tracking:
   enabled: true
   tool: mlflow # or wandb
-  experiment_name: gridpulse_forecast
+  experiment_name: orius_forecast
   log_models: true
   log_system_metrics: true
 
