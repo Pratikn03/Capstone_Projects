@@ -1,7 +1,7 @@
 /**
- * k6 Load Testing Script for GridPulse API
- * 
- * This script tests the GridPulse API under various load conditions
+ * k6 Load Testing Script for ORIUS API
+ *
+ * This script tests the ORIUS API under various load conditions
  * to ensure performance meets production requirements.
  * 
  * Run with: k6 run tests/load/k6_load_test.js
@@ -201,7 +201,7 @@ export default function () {
     const metricsRes = http.get(`${BASE_URL}/metrics`);
     check(metricsRes, {
       'metrics status is 200': (r) => r.status === 200,
-      'metrics contains gridpulse': (r) => r.body.includes('gridpulse_'),
+      'metrics contains orius': (r) => r.body.includes('orius_'),
     });
   });
 

@@ -14,4 +14,4 @@ def test_publication_builder_requires_rac_outputs() -> None:
 
 def test_publication_builder_sets_rac_strict_env() -> None:
     source = Path("scripts/build_publication_artifact.py").read_text(encoding="utf-8")
-    assert "GRIDPULSE_REQUIRE_RAC_CERT" in source
+    assert "ORIUS_REQUIRE_RAC_CERT" in source
