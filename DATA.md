@@ -16,7 +16,7 @@ This repository **does not include raw datasets**. You are responsible for downl
 - **Where to place raw files:** `data/raw/us_eia930/` (zipped CSVs)
 - **How to prepare:** run:
   ```bash
-  python -m gridpulse.data_pipeline.build_features_eia930 --in data/raw/us_eia930 --out data/processed/us_eia930 --ba MISO
+  python -m orius.data_pipeline.build_features_eia930 --in data/raw/us_eia930 --out data/processed/us_eia930 --ba MISO
   ```
 
 ### C) Weather (Optional)
@@ -24,7 +24,7 @@ This repository **does not include raw datasets**. You are responsible for downl
 - **Usage:** optional feature enrichment
  - **Download:**
    ```bash
-   python -m gridpulse.data_pipeline.download_weather --out data/raw --start 2015-01-01 --end 2020-09-30
+   python -m orius.data_pipeline.download_weather --out data/raw --start 2015-01-01 --end 2020-09-30
    ```
    The default hourly list includes temperature, humidity, precipitation, cloud cover, wind speed/gusts, pressure, radiation, and snow depth.
 
@@ -45,7 +45,7 @@ This repository **does not include raw datasets**. You are responsible for downl
   - `moer_kg_per_mwh` (optional marginal emissions)
 - **How to use:**
   ```bash
-  python -m gridpulse.data_pipeline.build_features --in data/raw --out data/processed \
+  python -m orius.data_pipeline.build_features --in data/raw --out data/processed \
     --signals data/raw/price_carbon_signals.csv
   ```
   Signals are merged by timestamp and take precedence over the OPSD price column.
@@ -69,7 +69,7 @@ This repository **does not include raw datasets**. You are responsible for downl
 ## 4) Reproducible Downloads (Optional)
 If you use the built‑in downloader:
 ```bash
-python -m gridpulse.data_pipeline.download_opsd --out data/raw
+python -m orius.data_pipeline.download_opsd --out data/raw
 ```
 
 ## 5) Notes

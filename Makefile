@@ -1,4 +1,4 @@
-.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact paper-assets paper-verify paper-compile paper-refresh paper-freeze
+.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick thesis-pipeline-verify iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze
 
 PYTHON ?= $(if $(wildcard .venv/bin/python3),.venv/bin/python3,python3)
 PROFILE ?= standard
@@ -8,15 +8,15 @@ setup:
 	cd frontend && npm install
 
 lint:
-	PYTHONPYCACHEPREFIX=/tmp/gridpulse_pycache $(PYTHON) -m compileall src services scripts
+	PYTHONPYCACHEPREFIX=/tmp/orius_pycache $(PYTHON) -m compileall src services scripts
 
 # Release-focused static hygiene checks (unused imports/locals)
 lint-release:
 	@if [ -x .venv/bin/ruff ]; then \
 		./.venv/bin/ruff check \
-			src/gridpulse/dc3s/rac_cert.py \
-			src/gridpulse/dc3s/calibration.py \
-			src/gridpulse/cpsbench_iot/runner.py \
+			src/orius/dc3s/rac_cert.py \
+			src/orius/dc3s/calibration.py \
+			src/orius/cpsbench_iot/runner.py \
 			scripts/build_publication_artifact.py \
 			scripts/run_ablations.py \
 			scripts/train_regime_cqr.py \
@@ -52,7 +52,7 @@ verify-training:
 
 # Run CV evaluation (time-series cross-validation)
 cv-eval:
-	$(PYTHON) -m gridpulse.forecasting.train --config configs/train_forecast.yaml --enable-cv
+	$(PYTHON) -m orius.forecasting.train --config configs/train_forecast.yaml --enable-cv
 
 api:
 	PYTHONPATH=src $(PYTHON) -m uvicorn services.api.main:app --reload --port 8000
@@ -69,15 +69,15 @@ extract-data:
 	$(PYTHON) scripts/extract_dashboard_data.py
 
 pipeline:
-	$(PYTHON) -m gridpulse.pipeline.run --all
+	$(PYTHON) -m orius.pipeline.run --all
 
 data: pipeline
 
 train:
-	$(PYTHON) -m gridpulse.forecasting.train_baseline --features data/processed/features.parquet --splits data/processed/splits --target load_mw
-	$(PYTHON) -m gridpulse.forecasting.train_baseline --features data/processed/features.parquet --splits data/processed/splits --target wind_mw
-	$(PYTHON) -m gridpulse.forecasting.train_baseline --features data/processed/features.parquet --splits data/processed/splits --target solar_mw
-	$(PYTHON) -m gridpulse.forecasting.train --config configs/train_forecast.yaml
+	$(PYTHON) -m orius.forecasting.train_baseline --features data/processed/features.parquet --splits data/processed/splits --target load_mw
+	$(PYTHON) -m orius.forecasting.train_baseline --features data/processed/features.parquet --splits data/processed/splits --target wind_mw
+	$(PYTHON) -m orius.forecasting.train_baseline --features data/processed/features.parquet --splits data/processed/splits --target solar_mw
+	$(PYTHON) -m orius.forecasting.train --config configs/train_forecast.yaml
 
 reports:
 	$(PYTHON) scripts/build_reports.py
@@ -86,7 +86,7 @@ reports-us:
 	$(PYTHON) scripts/build_reports.py --features data/processed/us_eia930/features.parquet --splits data/processed/us_eia930/splits --models-dir artifacts/models_eia930 --reports-dir reports/eia930
 
 train-us:
-	$(PYTHON) -m gridpulse.forecasting.train --config configs/train_forecast_eia930.yaml
+	$(PYTHON) -m orius.forecasting.train --config configs/train_forecast_eia930.yaml
 
 shap-importance:
 	$(PYTHON) scripts/shap_importance.py
@@ -206,7 +206,7 @@ stack-logs:
 
 # View observability dashboards
 grafana:
-	@echo "Opening Grafana at http://localhost:3001 (admin/gridpulse)"
+	@echo "Opening Grafana at http://localhost:3001 (admin/orius)"
 	open http://localhost:3001 || xdg-open http://localhost:3001 || echo "Visit: http://localhost:3001"
 
 # View Prometheus targets
@@ -216,7 +216,7 @@ prometheus:
 
 # Run streaming worker (requires Kafka running)
 streaming-worker:
-	PYTHONPATH=src $(PYTHON) -m gridpulse.streaming.worker
+	PYTHONPATH=src $(PYTHON) -m orius.streaming.worker
 
 # ============================================================
 # Advanced Baselines (93/100 Enhancement)
@@ -224,11 +224,11 @@ streaming-worker:
 
 # Train all advanced baselines (Prophet, N-BEATS, AutoML)
 train-baselines:
-	PYTHONPATH=src $(PYTHON) -c "from gridpulse.forecasting.advanced_baselines import train_all_baselines; train_all_baselines('data/processed/features.parquet')"
+	PYTHONPATH=src $(PYTHON) -c "from orius.forecasting.advanced_baselines import train_all_baselines; train_all_baselines('data/processed/features.parquet')"
 
 # Evaluate baselines against production models
 eval-baselines:
-	PYTHONPATH=src $(PYTHON) -c "from gridpulse.forecasting.advanced_baselines import evaluate_baselines; print(evaluate_baselines('data/processed/splits/test.parquet').to_markdown())"
+	PYTHONPATH=src $(PYTHON) -c "from orius.forecasting.advanced_baselines import evaluate_baselines; print(evaluate_baselines('data/processed/splits/test.parquet').to_markdown())"
 
 # ============================================================
 # Production Release Workflow
@@ -268,6 +268,19 @@ endif
 dc3s-demo:
 	.venv/bin/python3 scripts/run_dc3s_demo.py
 
+# ORIUS full pipeline check (imports, config, DC3S demo, CPSBench, locked evidence)
+orius-check:
+	.venv/bin/python3 scripts/run_orius_full_check.py
+
+# Thesis-level pipeline verification: theorems + full ORIUS + AV training
+thesis-pipeline-verify: orius-check
+	$(PYTHON) scripts/verify_theorem_anchors.py
+	@echo "Thesis pipeline verification complete: theorems + ORIUS + training"
+
+# ORIUS quick check (skip CPSBench, ~10s)
+orius-check-quick:
+	.venv/bin/python3 scripts/run_orius_full_check.py --quick
+
 iot-sim:
 	.venv/bin/python3 iot/simulator/run_closed_loop.py
 
@@ -297,6 +310,40 @@ publish-audit:
 
 publish-audit-isolated:
 	bash scripts/run_publish_audit_isolated.sh --config configs/publish_audit.yaml --run-hooks --baseline-ref origin/main --max-runtime-hours 6 --iot-steps 72
+
+# Compare agent artifact zip vs repo thesis (theorem set, structure, evidence)
+analyze-artifact:
+	$(PYTHON) scripts/analyze_agent_artifact.py
+
+# Download AV datasets for ORIUS vehicles extension (synthetic by default)
+av-datasets:
+	$(PYTHON) scripts/download_av_datasets.py --source synthetic
+
+# Download Industrial datasets (CCPP or synthetic)
+industrial-datasets:
+	$(PYTHON) scripts/download_industrial_datasets.py --source synthetic
+
+# Download Healthcare datasets (BIDMC or synthetic)
+healthcare-datasets:
+	$(PYTHON) scripts/download_healthcare_datasets.py --source synthetic
+
+# Download Aerospace synthetic (no real dataset yet)
+aerospace-datasets:
+	$(PYTHON) scripts/download_aerospace_datasets.py
+
+# Download all multi-domain datasets (AV + Industrial + Healthcare + Aerospace)
+multi-domain-datasets: av-datasets industrial-datasets healthcare-datasets aerospace-datasets
+
+# Build features for all multi-domain datasets (run after multi-domain-datasets)
+multi-domain-build:
+	PYTHONPATH=src $(PYTHON) scripts/build_features_multi_domain.py
+
+# Train a multi-domain dataset: make train-dataset DATASET=AV
+# Supported: AV, INDUSTRIAL, HEALTHCARE, AEROSPACE
+
+# Generate ORIUS universal framework figure
+universal-framework-figure:
+	$(PYTHON) scripts/build_universal_framework_figure.py
 
 # Full CI check (coverage + lint + integration)
 ci: lint lint-release test-cov test-integration
@@ -337,6 +384,14 @@ r1-all: r1-diagnostic r1-full r1-cpsbench r1-verify r1-promote
 # Paper asset sync check
 paper-sync:
 	PYTHONPATH=src $(PYTHON) scripts/sync_paper_assets.py --check
+
+# ORIUS Paper 1 lock: snapshot battery evidence (run once when freezing)
+paper1-lock-snapshot:
+	$(PYTHON) scripts/snapshot_paper1_lock.py
+
+# ORIUS Paper 1 lock: verify no drift from locked values
+paper1-lock-check:
+	$(PYTHON) scripts/check_paper1_lock_drift.py
 
 # Transfer study (cross-region evaluation)
 transfer-study:

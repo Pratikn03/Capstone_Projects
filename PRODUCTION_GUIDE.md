@@ -1,4 +1,4 @@
-# GridPulse Production Deployment Guide
+# ORIUS Production Deployment Guide
 
 ## Quick Start Checklist
 
@@ -26,8 +26,8 @@ curl http://localhost:3000
 
 1. **Configure secrets in AWS Secrets Manager:**
    ```bash
-   aws secretsmanager create-secret --name gridpulse/prod \
-     --secret-string '{"GRIDPULSE_ENV":"production"}'
+   aws secretsmanager create-secret --name orius/prod \
+     --secret-string '{"ORIUS_ENV":"production"}'
    ```
 
 2. **Deploy ECS services:**
@@ -53,8 +53,8 @@ curl http://localhost:3000
 kubectl apply -f deploy/k8s/
 
 # Verify
-kubectl get pods -l app=gridpulse
-kubectl port-forward svc/gridpulse-api 8000:8000
+kubectl get pods -l app=orius
+kubectl port-forward svc/orius-api 8000:8000
 ```
 
 ### Option 4: systemd (On-Premise)
@@ -65,21 +65,21 @@ sudo cp deploy/systemd/*.service /etc/systemd/system/
 sudo systemctl daemon-reload
 
 # Start services
-sudo systemctl enable --now gridpulse-api
-sudo systemctl enable --now gridpulse-dashboard
-sudo systemctl enable --now gridpulse-refresh.timer
+sudo systemctl enable --now orius-api
+sudo systemctl enable --now orius-dashboard
+sudo systemctl enable --now orius-refresh.timer
 ```
 
 ## Environment Variables
 
-Create `/etc/gridpulse/gridpulse.env`:
+Create `/etc/orius/orius.env`:
 
 ```bash
-GRIDPULSE_ENV=production
-GRIDPULSE_LOG_FORMAT=json
-GRIDPULSE_MODELS_DIR=/opt/gridpulse/artifacts/models
-GRIDPULSE_DATA_DIR=/opt/gridpulse/data
-GRIDPULSE_ALERT_WEBHOOK=https://hooks.slack.com/xxx
+ORIUS_ENV=production
+ORIUS_LOG_FORMAT=json
+ORIUS_MODELS_DIR=/opt/orius/artifacts/models
+ORIUS_DATA_DIR=/opt/orius/data
+ORIUS_ALERT_WEBHOOK=https://hooks.slack.com/xxx
 ```
 
 ## Production Monitoring
@@ -149,7 +149,7 @@ models:
 ### API won't start
 ```bash
 # Check logs
-journalctl -u gridpulse-api -f
+journalctl -u orius-api -f
 
 # Verify models exist
 ls -la artifacts/models/*.pkl

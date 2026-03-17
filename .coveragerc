@@ -1,4 +1,4 @@
-# Coverage.py configuration for GridPulse
+# Coverage.py configuration for ORIUS
 # https://coverage.readthedocs.io/en/latest/config.html
 
 [run]
@@ -7,7 +7,7 @@ branch = True
 
 # Source packages to measure
 source = 
-    gridpulse
+    orius
     services
 
 # Directories to omit from measurement
@@ -29,8 +29,8 @@ data_file = .coverage
 [paths]
 # Map paths for combined coverage from different environments
 source =
-    src/gridpulse
-    */site-packages/gridpulse
+    src/orius
+    */site-packages/orius
 
 [report]
 # Minimum coverage percentage for success
@@ -84,7 +84,7 @@ precision = 2
 directory = reports/coverage
 
 # Title for HTML report
-title = GridPulse Coverage Report
+title = ORIUS Coverage Report
 
 [xml]
 # Output file for XML report (for CI tools)

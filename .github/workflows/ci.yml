@@ -30,6 +30,8 @@ jobs:
         run: python scripts/validate_paper_claims.py
       - name: Check Paper Asset Sync
         run: python scripts/sync_paper_assets.py --check
+      - name: Paper 1 Lock Drift Check
+        run: python scripts/check_paper1_lock_drift.py
       - name: Build package
         run: python -m build
 

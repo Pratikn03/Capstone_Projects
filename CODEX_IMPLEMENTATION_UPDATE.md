@@ -1,4 +1,4 @@
-# CODEX IMPLEMENTATION UPDATE — GridPulse → DC³S + CPSBench-IoT + Closed-Loop IoT Validation
+# CODEX IMPLEMENTATION UPDATE — ORIUS → DC³S + CPSBench-IoT + Closed-Loop IoT Validation
 **Audience:** Codex / coding agent implementing changes in this repo.  
 **Repo root:** `Capstone_Projects-main/`  
 **Primary deliverable:** DC³S (Drift-Calibrated Conformal Safety Shield) + CPSBench-IoT benchmark + closed-loop IoT validation.
@@ -37,7 +37,7 @@ Currently, tool `execute` functions return hardcoded objects.
 
 ### 1.2 Fix local absolute paths in reports
 **File:** `reports/formal_evaluation_report.md`  
-Line contains: `![](/Users/pratik_n/Downloads/gridpulse/reports/figures/multi_horizon_backtest.png)`
+Line contains: `![](/Users/pratik_n/Downloads/orius/reports/figures/multi_horizon_backtest.png)`
 
 **Change:** Replace with repo-relative path:
 `![](figures/multi_horizon_backtest.png)`
@@ -56,8 +56,8 @@ Line contains: `![](/Users/pratik_n/Downloads/gridpulse/reports/figures/multi_ho
 
 ### 1.4 Fix dashboard port mismatches (8501 → 3000)
 **Files:**
-- `deploy/k8s/gridpulse-dashboard-deployment.yaml` (containerPort + probes)
-- `deploy/k8s/gridpulse-dashboard-service.yaml` (targetPort)
+- `deploy/k8s/orius-dashboard-deployment.yaml` (containerPort + probes)
+- `deploy/k8s/orius-dashboard-service.yaml` (targetPort)
 - `deploy/aws/ecs-task-def-dashboard.json` (containerPort mapping)
 
 **Change:** Set to **3000** everywhere.
@@ -72,15 +72,15 @@ References `docker/Dockerfile.app` which does not exist.
 
 ## 2) Streaming correctness (release smoke must work)
 
-### 2.1 Add missing module `gridpulse.streaming.run_consumer`
+### 2.1 Add missing module `orius.streaming.run_consumer`
 **Script expects:**
 `scripts/release_check.sh` runs:
-`python -m gridpulse.streaming.run_consumer --config configs/streaming.yaml --max-messages 500`
+`python -m orius.streaming.run_consumer --config configs/streaming.yaml --max-messages 500`
 
-**Add new file:** `src/gridpulse/streaming/run_consumer.py`  
+**Add new file:** `src/orius/streaming/run_consumer.py`  
 Implementation:
 - Parse args: `--config`, `--max-messages`
-- Load yaml config into `AppConfig` (use existing `gridpulse.streaming.consumer` config classes)
+- Load yaml config into `AppConfig` (use existing `orius.streaming.consumer` config classes)
 - Instantiate `StreamingIngestConsumer(app_config)`
 - Run `.run(max_messages=...)` or loop consumer to process `max_messages` then exit cleanly.
 
@@ -88,7 +88,7 @@ Implementation:
 - `bash scripts/release_check.sh` reaches step (2) and does not error on missing module.
 
 ### 2.2 Make streaming worker persist validated messages
-**File:** `src/gridpulse/streaming/worker.py`  
+**File:** `src/orius/streaming/worker.py`  
 Currently validates but does not write to DuckDB.
 
 **Change:**
@@ -133,7 +133,7 @@ dc3s:
 ```
 
 ### 3.2 New package
-**Add folder:** `src/gridpulse/dc3s/`
+**Add folder:** `src/orius/dc3s/`
 
 Files to create:
 
@@ -149,7 +149,7 @@ Files to create:
 - Include warmup/cooldown behavior.
 
 #### `calibration.py`
-- DC³S uses existing conformal intervals (from `gridpulse.forecasting.uncertainty.conformal`).
+- DC³S uses existing conformal intervals (from `orius.forecasting.uncertainty.conformal`).
 - Provide:
   - `inflate_interval(lower, upper, inflation)` OR `inflate_q(q, inflation)`
   - `build_uncertainty_set(yhat, q, w_t, drift_flag, cfg) -> (lower, upper, meta)`
@@ -219,7 +219,7 @@ Return stored certificate JSON.
 ## 4) Add CPSBench-IoT (benchmark signal)
 
 ### 4.1 New package
-**Add:** `src/gridpulse/cpsbench_iot/`
+**Add:** `src/orius/cpsbench_iot/`
 
 Required modules:
 
@@ -252,7 +252,7 @@ Trace:
 - DC³S wrapper around any controller (calls your `dc3s` components)
 
 #### `runner.py`
-- CLI-friendly runner: `python -m gridpulse.cpsbench_iot.runner --scenario ... --seed ...`
+- CLI-friendly runner: `python -m orius.cpsbench_iot.runner --scenario ... --seed ...`
 - Write outputs to `reports/publication/`:
   - `dc3s_main_table.csv`
   - `dc3s_fault_breakdown.csv`
