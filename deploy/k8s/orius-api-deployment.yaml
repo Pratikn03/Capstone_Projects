@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gridpulse-api
+  name: orius-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: gridpulse-api
+      app: orius-api
   template:
     metadata:
       labels:
-        app: gridpulse-api
+        app: orius-api
     spec:
       containers:
         - name: api
-          image: gridpulse-api:latest
+          image: orius-api:latest
           ports:
             - containerPort: 8000
           envFrom:
             - configMapRef:
-                name: gridpulse-config
+                name: orius-config
           readinessProbe:
             httpGet:
               path: /ready

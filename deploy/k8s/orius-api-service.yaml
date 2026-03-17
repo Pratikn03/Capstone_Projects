@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: gridpulse-api
+  name: orius-api
 spec:
   selector:
-    app: gridpulse-api
+    app: orius-api
   ports:
     - name: http
       port: 8000

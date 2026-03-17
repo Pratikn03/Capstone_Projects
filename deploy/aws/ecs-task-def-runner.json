@@ -1,5 +1,5 @@
 {
-  "family": "gridpulse-runner",
+  "family": "orius-runner",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "512",
@@ -13,21 +13,21 @@
       "essential": true,
       "command": ["python", "scripts/retrain_if_needed.py", "--refresh"],
       "environment": [
-        { "name": "GRIDPULSE_LOG_LEVEL", "value": "INFO" },
-        { "name": "GRIDPULSE_LOG_FORMAT", "value": "json" }
+        { "name": "ORIUS_LOG_LEVEL", "value": "INFO" },
+        { "name": "ORIUS_LOG_FORMAT", "value": "json" }
       ],
       "secrets": [
         { "name": "ELECTRICITYMAPS_TOKEN", "valueFrom": "<SECRET_ARN>:ELECTRICITYMAPS_TOKEN::" },
         { "name": "WATTTIME_USERNAME", "valueFrom": "<SECRET_ARN>:WATTTIME_USERNAME::" },
         { "name": "WATTTIME_PASSWORD", "valueFrom": "<SECRET_ARN>:WATTTIME_PASSWORD::" },
-        { "name": "GRIDPULSE_ALERT_WEBHOOK", "valueFrom": "<SECRET_ARN>:GRIDPULSE_ALERT_WEBHOOK::" }
+        { "name": "ORIUS_ALERT_WEBHOOK", "valueFrom": "<SECRET_ARN>:ORIUS_ALERT_WEBHOOK::" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "<LOG_GROUP>",
           "awslogs-region": "<AWS_REGION>",
-          "awslogs-stream-prefix": "gridpulse-runner"
+          "awslogs-stream-prefix": "orius-runner"
         }
       }
     }
