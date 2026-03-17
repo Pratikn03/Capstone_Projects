@@ -1,16 +1,16 @@
 # Production Readiness Summary
 
-Project: GridPulse
+Project: ORIUS
 
 ## Phase 1 — Production Hardening
 - **Config validation**: `scripts/validate_configs.py` validates `configs/*.yaml` with pydantic schemas.  
 - **.env.example**: new template for secrets and runtime settings (`.env` is git‑ignored).  
-- **Structured logging**: `GRIDPULSE_LOG_FORMAT=json` enables JSON logs across scripts + API.  
+- **Structured logging**: `ORIUS_LOG_FORMAT=json` enables JSON logs across scripts + API.  
 - **Health/Readiness probes**: `/health` and `/ready` endpoints for API; compose + k8s probes wire in.  
 - **Retries for downloads**: OPSD/SMARD/Open‑Meteo/ElectricityMaps/WattTime use shared retryable HTTP sessions.  
 
 ## Phase 2 — Operations
-- **Monitoring + alerting**: `scripts/run_monitoring.py` writes `reports/monitoring_summary.json` and can alert via `GRIDPULSE_ALERT_WEBHOOK`.  
+- **Monitoring + alerting**: `scripts/run_monitoring.py` writes `reports/monitoring_summary.json` and can alert via `ORIUS_ALERT_WEBHOOK`.  
 - **Scheduled retraining**: `scripts/retrain_if_needed.py --refresh` retrains only when drift triggers.  
 - **Artifact registry**: `scripts/register_models.py` writes `artifacts/registry/models.json`.  
 - **Rollback**: set explicit model paths in `configs/forecast.yaml` to pin/rollback to a previous bundle.  

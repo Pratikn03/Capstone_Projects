@@ -41,9 +41,9 @@ then Guarantee 2 holds with probability at least \(1-\alpha\) under A1–A3.
 
 ## Evidence Link
 The benchmark used to validate violations on \(SOC^{true}\) is:
-- `src/gridpulse/cpsbench_iot/plant.py`
-- `src/gridpulse/cpsbench_iot/telemetry_soc.py`
-- `src/gridpulse/cpsbench_iot/runner.py`
+- `src/orius/cpsbench_iot/plant.py`
+- `src/orius/cpsbench_iot/telemetry_soc.py`
+- `src/orius/cpsbench_iot/runner.py`
 
 Publication outputs:
 - `reports/publication/dc3s_main_table.csv`

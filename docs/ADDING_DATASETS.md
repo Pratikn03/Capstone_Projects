@@ -1,4 +1,4 @@
-# Adding New Datasets to GridPulse
+# Adding New Datasets to ORIUS
 
 This guide explains how to add a new dataset to the unified training pipeline.
 
@@ -45,7 +45,7 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         splits_path="data/processed/ercot/splits",
         reports_dir="reports/ercot",
         raw_data_path="data/raw/ercot",
-        feature_module="gridpulse.data_pipeline.build_features_eia930",
+        feature_module="orius.data_pipeline.build_features_eia930",
         ba_code="ERCO",  # EIA-930 BA code
     ),
 }

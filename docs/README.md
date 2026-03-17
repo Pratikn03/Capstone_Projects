@@ -1,6 +1,6 @@
-# GridPulse Documentation
+# ORIUS Documentation
 
-Comprehensive documentation for the GridPulse forecasting platform.
+Comprehensive documentation for the ORIUS forecasting platform.
 
 ## Index
 

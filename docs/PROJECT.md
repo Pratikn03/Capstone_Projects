@@ -1,12 +1,12 @@
-# GridPulse: Autonomous Energy Intelligence & Optimization Platform  
+# ORIUS: Autonomous Energy Intelligence & Optimization Platform  
 *A decision‑grade system that turns energy forecasts into feasible, measurable dispatch actions.*
 
 ## 1) Executive Summary  
-GridPulse is an end‑to‑end energy intelligence platform built to address a core weakness in modern grid operations: **forecasting alone does not create actionable decisions**. As renewable penetration grows, grid variability increases and operators must continuously choose how to balance demand, renewables, and storage under both **cost** and **carbon** constraints. GridPulse combines **time‑series forecasting**, **anomaly detection**, and **optimization** into a single pipeline that converts raw data into **dispatch plans** for battery energy storage systems (BESS).
+ORIUS is an end‑to‑end energy intelligence platform built to address a core weakness in modern grid operations: **forecasting alone does not create actionable decisions**. As renewable penetration grows, grid variability increases and operators must continuously choose how to balance demand, renewables, and storage under both **cost** and **carbon** constraints. ORIUS combines **time‑series forecasting**, **anomaly detection**, and **optimization** into a single pipeline that converts raw data into **dispatch plans** for battery energy storage systems (BESS).
 
-Unlike traditional “predict‑only” pipelines, GridPulse closes the loop. It ingests power system data (and optional weather data), produces short‑horizon probabilistic forecasts, detects anomalous conditions, and **optimizes grid/battery actions** using linear programming. The platform also provides monitoring, retraining hooks, and a Next.js operator dashboard. The end result is a system that is not just technically sophisticated, but operationally meaningful: predictions → decisions → measurable outcomes.
+Unlike traditional “predict‑only” pipelines, ORIUS closes the loop. It ingests power system data (and optional weather data), produces short‑horizon probabilistic forecasts, detects anomalous conditions, and **optimizes grid/battery actions** using linear programming. The platform also provides monitoring, retraining hooks, and a Next.js operator dashboard. The end result is a system that is not just technically sophisticated, but operationally meaningful: predictions → decisions → measurable outcomes.
 
-GridPulse is designed as a modular, production‑ready architecture. It includes reproducible data pipelines, configurable model training, evaluation reports, and an API layer suitable for integration with real‑world operator tooling. The project demonstrates full‑stack applied ML engineering: from raw data to a decision product.
+ORIUS is designed as a modular, production‑ready architecture. It includes reproducible data pipelines, configurable model training, evaluation reports, and an API layer suitable for integration with real‑world operator tooling. The project demonstrates full‑stack applied ML engineering: from raw data to a decision product.
 
 ---
 
@@ -20,12 +20,12 @@ Electrical grids are becoming increasingly volatile. The integration of wind and
 
 Forecasting demand and supply is necessary but not sufficient. Grid operators also need to know **what to do** next: how much to draw from the grid, when to charge/discharge storage, and how to reduce carbon impact without violating constraints.
 
-GridPulse solves this by **coupling forecasts with an optimization engine** that generates feasible dispatch plans. The optimization is cost‑ and carbon‑aware, and the platform provides baseline comparisons to measure impact.
+ORIUS solves this by **coupling forecasts with an optimization engine** that generates feasible dispatch plans. The optimization is cost‑ and carbon‑aware, and the platform provides baseline comparisons to measure impact.
 
 ---
 
 ## 3) Project Objectives  
-GridPulse is structured around six core objectives:
+ORIUS is structured around six core objectives:
 
 1. **Build a reliable data pipeline** for power system time‑series.  
 2. **Forecast load and renewables** using both ML and DL models.  
@@ -38,7 +38,7 @@ GridPulse is structured around six core objectives:
 
 ## 4) Data Sources & Inputs  
 
-GridPulse supports multiple datasets, each used to demonstrate robustness across regions.
+ORIUS supports multiple datasets, each used to demonstrate robustness across regions.
 
 ### Primary Dataset: OPSD Germany (Hourly)  
 **Source:** Open Power System Data (OPSD)  
@@ -72,7 +72,7 @@ This keeps the project open‑source compliant and professional.
 
 ## 5) System Architecture (Level‑4 Decision Loop)
 
-GridPulse is built as a **Level‑4 decision system**: predictions → decisions → measurable impact → monitoring.
+ORIUS is built as a **Level‑4 decision system**: predictions → decisions → measurable impact → monitoring.
 
 ```
 [ Raw Grid + Weather Data ]
@@ -143,7 +143,7 @@ Outputs are stored in Parquet for fast access.
 
 ## 7) Forecasting Layer  
 
-GridPulse uses a **comparative modeling strategy**:
+ORIUS uses a **comparative modeling strategy**:
 
 ### Model A: Gradient Boosting (GBM)  
 - LightGBM / XGBoost  
@@ -172,7 +172,7 @@ GridPulse uses a **comparative modeling strategy**:
 
 ## 8) Anomaly Detection  
 
-Forecasts are not always trustworthy. GridPulse includes a **safety layer**:
+Forecasts are not always trustworthy. ORIUS includes a **safety layer**:
 
 - **Residual‑based alerts:** if forecast error exceeds a dynamic threshold  
 - **Isolation Forest:** detects multi‑feature anomalies  
@@ -185,7 +185,7 @@ This layer is lightweight but critical for operational reliability.
 
 ## 9) Optimization & Decision Engine  
 
-The decision engine is the core of GridPulse. It solves a linear program that determines:
+The decision engine is the core of ORIUS. It solves a linear program that determines:
 
 - Grid import (MW)  
 - Battery charge/discharge (MW)  
@@ -216,7 +216,7 @@ The system includes baseline policies to measure impact:
 - **Grid‑only baseline**  
 - **Naive battery** (optional)
 
-Impact metrics are computed by comparing GridPulse vs baseline:
+Impact metrics are computed by comparing ORIUS vs baseline:
 
 - Cost savings %  
 - Carbon reduction %  
@@ -234,7 +234,7 @@ Note: actual savings depend on **price and carbon signals**. If those are missin
 
 ## 11) Monitoring & Governance  
 
-GridPulse includes monitoring logic to track:
+ORIUS includes monitoring logic to track:
 
 - **Data drift:** distribution changes vs training  
 - **Model drift:** metric degradation  
@@ -268,7 +268,7 @@ Together, these layers demonstrate real‑world usability.
 
 ## 13) Reproducibility  
 
-GridPulse emphasizes reproducibility and auditability:
+ORIUS emphasizes reproducibility and auditability:
 
 - Fixed seeds for Python/NumPy/PyTorch  
 - Pipeline cache with hash tracking  
@@ -296,7 +296,7 @@ This is designed for both **technical audit** and **public presentation**.
 
 ## 15) Limitations & Honest Boundaries  
 
-GridPulse is intentionally **honest about claims**:
+ORIUS is intentionally **honest about claims**:
 
 - Impact metrics are only meaningful when price/carbon signals exist.  
 - Forecasting performance varies by dataset and target.  
@@ -311,7 +311,7 @@ These limitations are documented to maintain credibility.
 
 Level‑4 systems do not just predict. They **decide**, evaluate decisions against a baseline, and prove measurable improvements.
 
-GridPulse qualifies because it includes:
+ORIUS qualifies because it includes:
 
 - Prediction → optimization → measurable impact  
 - Baseline comparison  
@@ -338,6 +338,6 @@ These are optional and not required for the project’s current goals.
 
 ## 18) Conclusion  
 
-GridPulse is a complete, decision‑grade energy intelligence system. It goes beyond forecasting to produce **feasible, measurable, and auditable dispatch actions**. It demonstrates end‑to‑end ML engineering skills: data pipelines, model training, evaluation, optimization, monitoring, and product delivery.
+ORIUS is a complete, decision‑grade energy intelligence system. It goes beyond forecasting to produce **feasible, measurable, and auditable dispatch actions**. It demonstrates end‑to‑end ML engineering skills: data pipelines, model training, evaluation, optimization, monitoring, and product delivery.
 
 The project is structured to be **competition‑ready**, **hire‑ready**, and **publishable**, with clear documentation, reproducible scripts, and a professional product interface. Most importantly, it does not over‑claim results — it provides a rigorous path to generating verified impact metrics.
