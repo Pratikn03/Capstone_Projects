@@ -1,4 +1,4 @@
-"""Run edge-agent loop against real HTTP gateway and GridPulse API."""
+"""Run edge-agent loop against real HTTP gateway and ORIUS API."""
 from __future__ import annotations
 
 import argparse
@@ -15,8 +15,8 @@ from iot.edge_agent.drivers.http_gateway import HTTPGatewayDriver
 from iot.edge_agent.drivers.modbus_tcp import ModbusTCPDriver
 
 
-class GridPulseApiClient:
-    """Thin HTTP client for GridPulse API calls with scoped API key headers."""
+class ORIUSApiClient:
+    """Thin HTTP client for ORIUS API calls with scoped API key headers."""
 
     def __init__(self, *, base_url: str, api_key: str, timeout_s: float = 10.0, session: requests.Session | None = None) -> None:
         self.base_url = base_url.rstrip("/")
@@ -36,7 +36,7 @@ class GridPulseApiClient:
         payload: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         url = f"{self.base_url}{path if path.startswith('/') else '/' + path}"
-        headers = {"X-GridPulse-Key": self.api_key}
+        headers = {"X-ORIUS-Key": self.api_key}
         resp = self.session.request(
             method=method.upper(),
             url=url,
@@ -46,10 +46,10 @@ class GridPulseApiClient:
             timeout=self.timeout_s,
         )
         if resp.status_code >= 400:
-            raise RuntimeError(f"GridPulse API {method.upper()} {url} failed: {resp.status_code} {resp.text}")
+            raise RuntimeError(f"ORIUS API {method.upper()} {url} failed: {resp.status_code} {resp.text}")
         body = resp.json()
         if not isinstance(body, dict):
-            raise RuntimeError(f"GridPulse API {method.upper()} {url} returned non-object JSON")
+            raise RuntimeError(f"ORIUS API {method.upper()} {url} returned non-object JSON")
         return body
 
     def post(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -90,7 +90,7 @@ def _build_driver(iot_cfg: dict[str, Any]) -> Any:
     kind = str(driver_cfg.get("kind", "http_gateway")).strip() or "http_gateway"
     if kind == "http_gateway":
         gateway_cfg = _gateway_cfg(iot_cfg)
-        gateway_token_env = str(gateway_cfg.get("auth_token_env", "GRIDPULSE_GATEWAY_TOKEN"))
+        gateway_token_env = str(gateway_cfg.get("auth_token_env", "ORIUS_GATEWAY_TOKEN"))
         gateway_token = os.getenv(gateway_token_env, gateway_cfg.get("auth_token", None))
         return HTTPGatewayDriver(
             base_url=str(gateway_cfg.get("base_url", "http://localhost:9001")),
@@ -117,7 +117,7 @@ def _build_driver(iot_cfg: dict[str, Any]) -> Any:
 
 def run_one_iteration(
     *,
-    api: GridPulseApiClient,
+    api: ORIUSApiClient,
     driver: Any,
     device_id: str,
     zone_id: str,
@@ -212,7 +212,7 @@ def run_one_iteration(
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run GridPulse edge-agent loop against the configured IoT driver")
+    parser = argparse.ArgumentParser(description="Run ORIUS edge-agent loop against the configured IoT driver")
     parser.add_argument("--config", default="configs/iot.yaml")
     parser.add_argument("--mode", choices=["shadow", "active"], default=None)
     parser.add_argument("--iterations", type=int, default=None)
@@ -239,12 +239,12 @@ def main() -> None:
     controller = str(defaults.get("controller", "deterministic"))
     horizon = int(defaults.get("horizon", 24))
 
-    api_key_env = str(api_cfg.get("api_key_env", "GRIDPULSE_IOT_API_KEY"))
+    api_key_env = str(api_cfg.get("api_key_env", "ORIUS_IOT_API_KEY"))
     api_key = str(args.api_key or os.getenv(api_key_env) or api_cfg.get("api_key", "")).strip()
     if not api_key:
-        raise RuntimeError(f"Missing GridPulse API key. Provide --api-key or set {api_key_env}.")
+        raise RuntimeError(f"Missing ORIUS API key. Provide --api-key or set {api_key_env}.")
 
-    api = GridPulseApiClient(
+    api = ORIUSApiClient(
         base_url=str(args.api_base_url or api_cfg.get("base_url", "http://localhost:8000")),
         api_key=api_key,
         timeout_s=float(api_cfg.get("timeout_s", 10.0)),
