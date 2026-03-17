@@ -1,0 +1,5 @@
+policy,gdq,tsvr,useful_work_mwh,retained_cost_frac,descent_stability,violations
+blind_persistence,0.487500,0.000000,2000.000000,0.500000,0.975000,0
+hard_shutdown,0.000000,0.000000,0.000000,0.000000,1.000000,0
+ramp_down,0.226219,0.000000,950.000000,0.237500,0.952500,0
+optimized_graceful,0.249703,0.000000,1050.000000,0.262500,0.951250,0

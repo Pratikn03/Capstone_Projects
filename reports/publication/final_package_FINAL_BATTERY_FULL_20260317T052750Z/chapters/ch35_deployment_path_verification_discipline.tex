@@ -1,0 +1,52 @@
+\chapter{Deployment Path and Verification Discipline}
+\label{ch:deployment-path-verification}
+
+The battery thesis closes with a deployment path that is operationally
+serious but still evidence-bounded.  The goal is not to announce deployment.
+The goal is to specify how battery deployment would proceed without breaking
+the claim discipline of the rest of the book.
+
+\section{Verification Before Expansion}
+
+The correct next sequence is:
+
+\begin{enumerate}
+  \item preserve the locked battery core claims and manifests,
+  \item regenerate every late-chapter artifact through named wrapper scripts,
+  \item run manuscript validators and classify failures honestly, and
+  \item only then widen the runtime path toward stronger HIL and physical
+    deployment.
+\end{enumerate}
+
+\section{Battery Deployment Path}
+
+For the battery domain, the practical deployment ladder is:
+
+\begin{enumerate}
+  \item benchmark replay with observed versus true trajectory separation,
+  \item controller-in-the-loop runtime rehearsal with complete certificates,
+  \item hardware-in-the-loop with real telemetry transport and relay behavior,
+  \item supervised pilot operation with bounded fallback policies, and
+  \item wider deployment only after those layers remain manifest-traceable.
+\end{enumerate}
+
+\section{Verification Discipline}
+
+Every stage should preserve four invariants:
+
+\begin{itemize}
+  \item a named script path that can regenerate the output,
+  \item a run-scoped artifact with stable location,
+  \item a manifest entry tying the artifact to a chapter claim, and
+  \item an explicit statement of what the result does \emph{not} prove.
+\end{itemize}
+
+This discipline is part of the battery contribution.  The thesis is not only
+about a safer dispatch policy; it is also about a verifiable way to connect
+runtime safety claims to evidence.
+
+\section{Summary}
+
+The battery deployment path is therefore incremental and auditable.  Each new
+layer must inherit the same theorem-to-code-to-artifact traceability that
+governs the current battery package.

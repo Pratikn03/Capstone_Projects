@@ -1,0 +1,9 @@
+schema_group,field,dtype,description
+controller_api,controller,string,Controller identifier
+controller_api,safe_action_mw,float,Safety-repaired action power
+fault_schema,fault_dimension,string,Fault type category
+fault_schema,severity,string,Fault severity bucket
+metric_schema,true_soc_violation_rate,float,Physical violation rate
+metric_schema,intervention_rate,float,Safety intervention rate
+artifact_schema,run_id,string,Execution lineage id
+artifact_schema,source_script,string,Script that generated artifact

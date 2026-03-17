@@ -1,0 +1,96 @@
+\chapter{Certificate Half-Life and Communication Blackout}
+\label{ch:cert-half-life-blackout}
+
+This chapter records the battery blackout study exactly as it is now locked
+in the repository.  The current result is more conservative than an earlier
+drafted half-life narrative: the frozen safe action collapses to a zero-power
+hold, so the battery remains safe throughout the tested blackout horizons.
+That is still useful operationally, because it shows what the present
+certificate logic does under severe communication loss.
+
+\section{Why Blackout Stress Matters}
+
+Battery controllers do not always lose safety because of a bad optimisation
+decision.  They can also lose safety because communication disappears after a
+safe action has already been issued.  In a blackout, the operational question
+is not ``what action is optimal now?'' but rather ``how long can the last
+safe action be trusted before the plant must settle into a conservative
+holding mode?''
+
+\section{Current Experimental Protocol}
+
+The locked script \texttt{scripts/run\_blackout\_study.py} performs the
+following battery-domain stress test:
+
+\begin{enumerate}
+  \item Generate a \texttt{drift\_combo} episode with the DC3S loop active.
+  \item Advance the controller to a freeze point where a safe action has been
+    certified.
+  \item Hold the certified action fixed for blackout horizons of
+    1, 4, 12, 24, and 48 hours.
+  \item Evaluate the true-state battery trajectory for violations during the
+    blackout.
+\end{enumerate}
+
+The resulting artifact is \texttt{reports/blackout/blackout\_study.csv}.
+
+\section{Locked Results}
+
+Table~\ref{tab:blackout-study} reproduces the actual locked study.
+
+\begin{table}[ht]
+\centering
+\caption{Locked battery blackout study from \texttt{blackout\_study.csv}.}
+\label{tab:blackout-study}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Blackout (h)} & \textbf{TSVR (\%)} & \textbf{Sev.\ P95 (MWh)} & \textbf{Coverage} \\
+\midrule
+  0  & 0.0 & 0.00 &   0\% \\
+  1  & 0.0 & 0.00 & 100\% \\
+  4  & 0.0 & 0.00 & 100\% \\
+ 12  & 0.0 & 0.00 & 100\% \\
+ 24  & 0.0 & 0.00 & 100\% \\
+ 48  & 0.0 & 0.00 & 100\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The battery-operational interpretation is that the frozen certified action in
+this run is effectively a safe hold: no charge, no discharge, no SOC
+boundary crossing.  The certificate therefore behaves less like a decaying
+aggressive dispatch and more like a safe-landing action that remains benign
+throughout the tested blackout window.
+
+\section{What the Current Result Does and Does Not Show}
+
+This locked result establishes a bounded claim:
+
+\begin{itemize}
+  \item The present battery implementation can enter a conservative frozen
+    action that remains safe for at least 48 blackout hours in the tested run.
+  \item The current study does \emph{not} yet identify a finite empirical
+    half-life, because no safety breakdown occurred within the measured
+    horizon.
+  \item The study therefore supports the safe-landing narrative of
+    Chapter~\ref{ch:graceful-degradation} more strongly than a
+    calibrated certificate-expiration law.
+\end{itemize}
+
+\section{Operational Consequence}
+
+For the battery domain, this is still an important control result.  When
+telemetry disappears entirely, the present DC3S stack has an auditable path
+to a benign hold action rather than blindly persisting with a stale,
+high-impact dispatch.  In asset terms, that means the blackout policy favors
+state preservation over speculative useful work once the measurement channel
+goes dark.
+
+\section{Summary}
+
+The blackout chapter now matches the locked evidence.  The current battery
+package shows a 48-hour safe hold under frozen certification, with zero
+true-state violations throughout the measured horizon.  That is a strong
+battery-safe-landing result, but it should not be overstated as a fully
+identified certificate half-life law until future runs produce a meaningful
+decay surface.

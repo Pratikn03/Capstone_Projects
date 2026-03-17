@@ -1,0 +1,2 @@
+controller,precision,recall,tp,fp,fn,tn,detected,detection_latency_hours_upper_bound
+dc3s_active_probing,0.8888888888888888,0.9230769230769232,48,6,4,242,True,13

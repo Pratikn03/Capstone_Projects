@@ -1,0 +1,4 @@
+component,value
+controller_runtime,FastAPI TestClient + EdgeAgent sim
+battery_driver,SimBatteryDriver
+fault_protocol,nominal/dropout/spike

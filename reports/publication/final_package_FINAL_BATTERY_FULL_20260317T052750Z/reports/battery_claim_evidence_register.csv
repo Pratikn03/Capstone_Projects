@@ -1,0 +1,10 @@
+theorem_or_scope,chapter,token,code_or_script,artifact_path,status,code_exists,artifact_exists
+T1,ch16,THM_T1,src/gridpulse/cpsbench_iot/scenarios.py,reports/publication/dc3s_main_table_ci.csv,locked,True,True
+T2,ch17,THM_T2,src/gridpulse/dc3s/guarantee_checks.py,reports/publication/dc3s_main_table_ci.csv,locked,True,True
+T3,ch18,THM_T3,src/gridpulse/dc3s/coverage_theorem.py,reports/publication/reliability_group_coverage_phase3.csv,locked,True,True
+T4,ch19,THM_T4,src/gridpulse/cpsbench_iot/baselines.py,reports/publication/fault_performance_table.csv,locked,True,True
+A1-A8,ch15,ASM_REGISTER,configs/dc3s.yaml,orius-plan/assumption_register.md,locked,True,True
+TRACE_48H,ch13,FIG_TRACE_48H,scripts/generate_48h_trace.py,reports/publication/48h_trace_final_de.csv,locked,True,True
+HIL,ch27,FIG_HIL,scripts/generate_hil_evidence.py,reports/hil/hil_summary.json,locked,True,True
+BLACKOUT,ch28,FIG_BLACKOUT,scripts/run_blackout_study.py,reports/publication/blackout_study.csv,locked,True,True
+PROBING,ch32,TBL_PROBING,reports/publication/adversarial_probing_robustness_table.csv,reports/publication/adversarial_probe_trace.csv,partial_proxy,True,True

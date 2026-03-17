@@ -1,0 +1,9 @@
+controller,nominal_rank_score,degraded_rank_score,nominal_rank,degraded_rank,rank_shift
+aci_conformal,114365740.40855934,0.0,6.0,1.0,5.0
+dc3s_ftit,114510699.19318153,0.0,8.0,1.0,7.0
+dc3s_wrapped,114401679.4337036,0.0,7.0,1.0,6.0
+scenario_mpc,114346551.17276862,0.0,4.0,1.0,3.0
+scenario_robust,114346551.17276862,0.0,4.0,1.0,3.0
+deterministic_lp,114338186.2028428,0.12986096666666666,3.0,6.0,-3.0
+cvar_interval,114327876.36295754,0.19166656666666665,1.0,7.0,-6.0
+robust_fixed_interval,114327876.36295754,0.19166656666666665,1.0,7.0,-6.0

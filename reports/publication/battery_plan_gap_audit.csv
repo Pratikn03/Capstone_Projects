@@ -1,0 +1,13 @@
+item,status,evidence_or_path,note
+fault-performance table,complete,reports/publication/fault_performance_table.csv,locked fault table exists
+48-hour dropout/fault trace,complete,reports/publication/48h_trace_final_de.csv,final trace artifacts exist
+runtime latency micro-benchmark,complete,reports/publication/dc3s_latency_summary.csv,latency table exists with p99/max
+HIL evidence,complete,reports/hil/hil_summary.json,HIL package regenerated and locked
+conditional-coverage subgroup results,complete,reports/publication/reliability_group_coverage_phase3.csv,phase3 subgroup audit exists
+hyperparameter sweep surfaces,complete,reports/publication/hyperparameter_surfaces.csv,surface CSV and figure exist
+per-BA decomposition strengthening,complete,reports/publication/per_ba_dispatch_impact.csv,canonical per-BA publication package now exists for MISO/PJM/ERCOT
+real-price rerun,complete,reports/publication/real_price_grounding_runs.csv,canonical regional grounding package now captures accepted DE and US real-price runs
+battery aging/asset-preservation calibration,partial,reports/aging/asset_preservation_proxy_table.csv,proxy/design outputs exist; not a full aging calibration pipeline
+fleet composition runs,complete,reports/publication/fleet_composition_two_battery.csv,fleet outputs and metrics exist
+active probing/spoofing runs,complete,reports/probing/spoofing_attack_results.csv,bounded spoofing-audit package and wrapper are both present
+wrapper script family from command list,complete,scripts/,named wrappers exist for transfer aging probing blackout HIL fleet and subgroup surfaces
