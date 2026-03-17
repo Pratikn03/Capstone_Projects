@@ -1,2 +1,2 @@
 transfer_case,source_artifact,picp_90,mean_width,true_soc_violation_rate,true_soc_violation_severity_p95_mwh,cost_delta_pct
-pending_transfer_artifacts,,,,,,
+DE_to_US_zero_shot,cross_region_transfer.csv,0.369,1021.62,0.000,0.000,-0.003

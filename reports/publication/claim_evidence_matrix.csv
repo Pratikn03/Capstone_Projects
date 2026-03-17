@@ -1,0 +1,21 @@
+claim_id,claim_text,evidence_path,evidence_type,status,exists
+central_claim,deterministic unsafe vs dc3s safe,reports/publication/dc3s_main_table_ci.csv,csv_row:deterministic_lp_vs_dc3s,locked,True
+theorem_t1,oasg existence,src/gridpulse/cpsbench_iot/scenarios.py,code_path,implemented,True
+theorem_t2,one-step safety preservation,src/gridpulse/dc3s/guarantee_checks.py,code_path,implemented,True
+theorem_t3,coverage monotonicity plus empirical core-bound audit,src/gridpulse/dc3s/coverage_theorem.py,code_path,implemented,True
+theorem_t4,no free safety,src/gridpulse/cpsbench_iot/baselines.py,code_path,implemented,True
+theorem_t5,certificate validity horizon,src/gridpulse/dc3s/temporal_theorems.py,code_path,implemented,True
+theorem_t6,certificate expiration bound,src/gridpulse/dc3s/temporal_theorems.py,code_path,implemented,True
+theorem_t7,feasible fallback existence,src/gridpulse/dc3s/temporal_theorems.py,code_path,implemented,True
+theorem_t8,graceful degradation dominance,src/gridpulse/dc3s/temporal_theorems.py,code_path,implemented,True
+priority1_fault_table,fault performance table,reports/publication/fault_performance_table.csv,artifact_file,generated,True
+priority1_trace,48h operational trace,reports/publication/48h_trace.csv,artifact_file,generated,True
+priority1_latency,latency p99 table,reports/publication/dc3s_latency_summary.csv,artifact_file,generated,True
+priority1_hil,software hil summary,reports/hil/closed_loop_nominal_48h_summary.json,artifact_file,generated,True
+priority2_surfaces,hyperparameter surfaces,reports/publication/hyperparameter_surfaces.csv,artifact_file,generated,True
+priority2_half_life,blackout half-life,reports/publication/blackout_half_life.csv,artifact_file,generated,True
+priority2_graceful,graceful degradation trace,reports/publication/graceful_degradation_trace.csv,artifact_file,generated,True
+priority3_leaderboard,battery leaderboard,reports/publication/battery_leaderboard.csv,artifact_file,generated,True
+priority3_fleet,fleet composition,reports/publication/fleet_composition_two_battery.csv,artifact_file,generated,True
+priority3_probing,bounded active probing audit,reports/probing/spoofing_attack_results.csv,artifact_file,generated,True
+priority3_aging,aging proxy calibration outputs,reports/aging/asset_preservation_proxy_table.csv,artifact_file,generated,True

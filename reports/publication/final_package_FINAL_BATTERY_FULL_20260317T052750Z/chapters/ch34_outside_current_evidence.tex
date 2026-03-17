@@ -1,0 +1,45 @@
+\chapter{What Remains Outside the Current Evidence}
+\label{ch:outside-current-evidence}
+
+The battery book is stronger when it is explicit about what has \emph{not}
+been shown.  This chapter records the outer boundary of the current evidence
+package so the thesis does not borrow credibility from work that has not yet
+been executed.
+
+\section{Not Claimed}
+
+The current package does not claim:
+
+\begin{enumerate}
+  \item universal deployment safety across all cyber-physical domains,
+  \item full physical hardware validation on a production battery stack,
+  \item adversarial completeness against every possible spoofing strategy,
+  \item heterogeneous multi-asset composition guarantees, or
+  \item a final certificate-expiration law beyond the conservative blackout
+    hold behavior now locked in Chapter~\ref{ch:cert-half-life-blackout}.
+\end{enumerate}
+
+\section{Still Partial}
+
+Several thesis-hardening layers exist in meaningful but still bounded form:
+
+\begin{itemize}
+  \item Aging and asset preservation are represented through proxy tables and
+    calibration design rather than long-horizon field degradation data.
+  \item Fleet composition is implemented for the two-battery shared-transformer
+    case, not for a broader heterogeneous fleet.
+  \item The HIL chapter now has an auditable runtime rehearsal, but not a full
+    external-bench package with independent device timing and relay shutdown.
+\end{itemize}
+
+\section{Why This Boundary Matters}
+
+The battery thesis is meant to be hard to challenge because it is internally
+coherent, not because it quietly widens its scope.  By naming what remains
+outside the current evidence, the thesis protects the core battery result from
+being diluted by larger claims that the present repo does not yet support.
+
+\section{Summary}
+
+The current evidence package is deep, but it is intentionally not universal.
+That is the correct scientific posture for a battery-first ORIUS thesis.

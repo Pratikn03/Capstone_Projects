@@ -1,0 +1,6 @@
+token,script_path,output_file,run_id,chapter_claim,exists
+FIG_FAULT_TABLE,scripts/build_fault_performance_table.py,reports/publication/fault_performance_table.csv,P1_BENCH_20260317T040115Z,ch21 fault stress claim,True
+FIG_48H_TRACE_DE,scripts/generate_48h_trace.py,reports/publication/fig_48h_trace_final_de.png,P1_BENCH_20260317T040115Z,ch14 operational trace DE,True
+FIG_48H_TRACE_US,scripts/generate_48h_trace.py,reports/publication/fig_48h_trace_final_us.png,P1_BENCH_20260317T040115Z,ch14 operational trace US,True
+TBL_48H_TRACE_DE,scripts/generate_48h_trace.py,reports/publication/48h_trace_final_de.csv,P1_BENCH_20260317T040115Z,ch13 trace columns and interventions,True
+TBL_48H_TRACE_US,scripts/generate_48h_trace.py,reports/publication/48h_trace_final_us.csv,P1_BENCH_20260317T040115Z,ch13 trace columns and interventions,True

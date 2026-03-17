@@ -1,0 +1,10 @@
+target,group,picp_90,mean_width,sample_count
+load_mw,low,0.962264,5014.245330,424
+load_mw,mid,0.926887,5167.175006,424
+load_mw,high,0.919811,6468.490084,424
+wind_mw,low,0.832547,331.499992,424
+wind_mw,mid,0.870283,309.967805,424
+wind_mw,high,0.773585,320.104613,424
+solar_mw,low,0.865566,319.215826,424
+solar_mw,mid,0.832547,321.866536,424
+solar_mw,high,0.818396,319.402431,424

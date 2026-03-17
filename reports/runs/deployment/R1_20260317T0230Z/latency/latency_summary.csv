@@ -1,0 +1,6 @@
+component,mean_ms,p95_ms
+Reliability scoring,0.0190,0.0267
+Drift update (Page-Hinkley),0.0003,0.0004
+Uncertainty set build,0.0091,0.0095
+Action repair (projection),0.0017,0.0018
+Full DC3S step,0.0316,0.0363

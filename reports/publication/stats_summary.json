@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-14T19:26:38.598741",
+  "generated_at": "2026-03-17T16:33:40.137895",
   "scenarios": [
     "dropout",
     "drift_combo"
@@ -202,6 +202,6 @@
       }
     }
   },
-  "table2_ablations": "/private/var/folders/pk/ksqc41pj60q3589gfwhqz5tw0000gn/T/pytest-of-pratik_n/pytest-41/test_run_dc3s_ablation_matrix_1/ablation_out/table2_ablations.csv",
+  "table2_ablations": "/private/var/folders/pk/ksqc41pj60q3589gfwhqz5tw0000gn/T/pytest-of-pratik_n/pytest-8/test_run_dc3s_ablation_matrix_1/ablation_out/table2_ablations.csv",
   "overall_pass": false
 }

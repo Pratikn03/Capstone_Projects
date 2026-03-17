@@ -1,0 +1,41 @@
+\chapter{Conclusion}
+\label{ch:conclusion-battery}
+
+The central lesson of this battery thesis is straightforward: when telemetry
+degrades, a controller can satisfy its observed constraints while violating
+the real battery envelope.  That hidden gap is measurable, operationally
+meaningful, and correctable.
+
+\section{Battery Outcome}
+
+The current ORIUS battery package now combines:
+
+\begin{itemize}
+  \item a battery-domain formulation of the hidden safety problem,
+  \item a DC3S runtime that turns telemetry quality into conservative action
+    adjustment,
+  \item a hardened artifact surface across benchmark, latency, calibration,
+    aging, blackout, fleet, probing, and HIL layers, and
+  \item a chapter-by-chapter manuscript structure aligned to those artifacts.
+\end{itemize}
+
+\section{Why The Result Matters}
+
+For battery operation, the consequence is practical rather than rhetorical.
+Unsafe dispatch is no longer something inferred only after damage appears.
+It becomes something the controller can anticipate, bound, repair, and audit
+step by step.  That is the contribution of ORIUS in the battery domain.
+
+\section{Final Boundary}
+
+This thesis does not conclude that every physical AI system is now solved.
+It concludes that the battery domain provides a complete reference
+instantiation of the ORIUS logic and that this reference instantiation is now
+implemented as code, artifacts, and chapter-level evidence rather than as an
+aspirational outline.
+
+\section{Closing Statement}
+
+The battery thesis therefore ends where it should: with a locked,
+traceable, battery-first framework that is ready for harder validation
+layers, not with an overextended universal claim.

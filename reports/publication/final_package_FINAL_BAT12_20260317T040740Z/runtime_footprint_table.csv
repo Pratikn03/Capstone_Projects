@@ -1,0 +1,6 @@
+metric,value,source
+solver_infeasibility_rate,0.0,reports/hil/hil_summary.json
+hil_total_steps,96,reports/hil/hil_summary.json
+hil_total_violations,0,reports/hil/hil_summary.json
+overall_cert_completeness,1.0,reports/hil/hil_summary.json
+memory_proxy_note,python process footprint tracked externally; use p95 latency+hil stability as footprint proxy,phase2 policy

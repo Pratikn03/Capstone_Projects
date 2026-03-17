@@ -1,0 +1,77 @@
+dc3s:
+  assumptions_version: dc3s-assumptions-v1
+  law: linear
+  inflation_law: linear
+  alpha0: 0.05
+  alpha_min: 0.02
+  k_quality: 0.2
+  k_drift: 0.0
+  k_sensitivity: 0.4
+  infl_max: 2.0
+  beta_reliability: 0.7
+  beta_sensitivity: 0.5
+  cooldown_smoothing: 0.0
+  kappa_drift_penalty: 0.3
+  ambiguity:
+    lambda_mw: 0.0
+    learn_lambda_from_quantile: false
+    lambda_quantile: 0.95
+    lambda_scale: 1.0
+    lambda_min_mw: 0.0
+    min_w: 0.05
+    max_extra: 1.0
+  rac_cert:
+    enabled: true
+    beta_reliability: 0.7
+    beta_sensitivity: 0.5
+    k_sensitivity: 0.4
+    sensitivity_probe: heuristic
+    sens_eps_mw: 25.0
+    sens_norm_ref: 0.5
+    qhat_shrink_tau: 30.0
+    max_q_multiplier: 3.0
+  expected_cadence_s: 3600
+  reliability:
+    lambda_delay: 0.002
+    spike_beta: 0.25
+    ooo_gamma: 0.35
+    min_w: 0.05
+  ftit:
+    decay: 0.98
+    decay_e: 0.95
+    dt_hours: 1.0
+    stale_k: 3
+    stale_tol: 1.0e-09
+    alpha_dropout: 1.0
+    alpha_stale_sensor: 1.0
+    alpha_delay_jitter: 1.0
+    alpha_out_of_order: 1.0
+    alpha_spikes: 1.0
+    gamma_min_mw: 0.0
+    gamma_max_mw: null
+    gamma_power: 1.0
+    e_min_mwh: 0.0
+    e_max_mwh: null
+    sigma2_init: 1.0
+    sigma2_decay: 0.95
+    sigma2_floor: 1.0e-06
+    delta: 0.05
+    eps_interval: 1.0e-06
+  drift:
+    detector: page_hinkley
+    ph_delta: 0.01
+    ph_lambda: 5.0
+    warmup_steps: 48
+    cooldown_steps: 24
+  shield:
+    mode: projection
+    reserve_soc_pct_drift: 0.08
+    cvar:
+      beta: 0.9
+      n_scenarios: 20
+      risk_weight_cvar: 1.0
+      scenario_seed: 0
+  audit:
+    duckdb_path: data/audit/dc3s_audit.duckdb
+    table_name: dispatch_certificates
+    state_table_name: dc3s_online_state

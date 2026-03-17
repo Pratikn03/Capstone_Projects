@@ -1,2 +1,2 @@
 transfer_case,source_artifact,global_coverage,global_mean_width
-pending_transfer_artifacts,,,
+DE_to_US_zero_shot,cross_region_transfer.csv,0.369,1021.62

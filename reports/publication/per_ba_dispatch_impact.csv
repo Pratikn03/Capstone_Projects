@@ -1,0 +1,4 @@
+balancing_authority,release_id,run_id,cost_savings_pct,carbon_reduction_pct,peak_shaving_pct,carbon_source,impact_summary_path
+ERCOT,R1_20260312T044018Z,R1_20260312T044018Z_diag,0.190677,0.282154,0.000000,average,reports/runs/us_ercot/R1_20260312T044018Z_diag/impact_summary.csv
+MISO,R1_20260312T044018Z,R1_20260312T044018Z_diag,0.105700,0.112451,0.000000,average,reports/runs/us_miso/R1_20260312T044018Z_diag/impact_summary.csv
+PJM,R1_20260312T044018Z,R1_20260312T044018Z_diag,14.263183,-0.572210,0.000000,average,reports/runs/us_pjm/R1_20260312T044018Z_diag/impact_summary.csv

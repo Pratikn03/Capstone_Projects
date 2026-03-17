@@ -1,0 +1,2 @@
+total_steps,joint_over_limit_steps,max_curtailed_mw,fairness_dispatch_ratio_b1_over_b2,useful_work_preserved_mwh,degradation_allocation_proxy_b1_pct
+96,56,10.0,1.399999999999807,4513.969528893013,58.3333333333216

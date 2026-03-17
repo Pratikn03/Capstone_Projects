@@ -1,0 +1,13 @@
+item,status,evidence_or_path,note
+fault-performance table,complete,reports/publication/fault_performance_table.csv,locked fault table exists
+48-hour dropout/fault trace,complete,reports/publication/48h_trace_final_de.csv,final trace artifacts exist
+runtime latency micro-benchmark,complete,reports/publication/dc3s_latency_summary.csv,latency table exists with p99/max
+HIL evidence,complete,reports/hil/hil_summary.json,HIL package regenerated and locked
+conditional-coverage subgroup results,complete,reports/publication/reliability_group_coverage_phase3.csv,phase3 subgroup audit exists
+hyperparameter sweep surfaces,complete,reports/publication/hyperparameter_surfaces.csv,surface CSV and figure exist
+per-BA decomposition strengthening,partial,reports/publication/release_manifest.json,regional evidence exists but no dedicated per-BA strengthening wrapper/chapter-specific output
+real-price rerun,partial,reports/publication/release_manifest.json,regional/price artifacts exist but no explicit dedicated rerun package
+battery aging/asset-preservation calibration,partial,reports/publication/asset_preservation_proxy_table.csv,proxy/design outputs exist; not a full aging calibration pipeline
+fleet composition runs,complete,reports/publication/fleet_composition_two_battery.csv,fleet outputs and metrics exist
+active probing/spoofing runs,partial,reports/publication/adversarial_probing_robustness_table.csv,"battery threat/probing artifacts exist, but dedicated run wrappers absent"
+wrapper script family from command list,missing,scripts/,many named wrappers absent

@@ -3,7 +3,7 @@ DE_to_US_no_retrain,nominal,0.0,nominal,11,deterministic_lp,1.000000,502.889113,
 DE_to_US_no_retrain,nominal,0.0,nominal,11,robust_fixed_interval,1.000000,502.889113,0.010417,0.037160,-0.002200
 DE_to_US_no_retrain,nominal,0.0,nominal,11,cvar_interval,1.000000,502.889113,0.010417,0.037160,-0.002200
 DE_to_US_no_retrain,nominal,0.0,nominal,11,dc3s_wrapped,1.000000,525.366768,0.000000,0.000000,-0.002198
-DE_to_US_no_retrain,nominal,0.0,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.002198
+DE_to_US_no_retrain,nominal,0.0,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.002198
 DE_to_US_no_retrain,nominal,0.0,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.023382
 DE_to_US_no_retrain,nominal,0.0,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.002199
 DE_to_US_no_retrain,nominal,0.0,nominal,11,scenario_mpc,1.000000,9427.404864,0.000000,0.000000,-0.002199
@@ -11,7 +11,7 @@ DE_to_US_no_retrain,nominal,0.0,nominal,22,deterministic_lp,1.000000,502.889113,
 DE_to_US_no_retrain,nominal,0.0,nominal,22,robust_fixed_interval,1.000000,502.889113,0.000000,0.000000,-0.013113
 DE_to_US_no_retrain,nominal,0.0,nominal,22,cvar_interval,1.000000,502.889113,0.000000,0.000000,-0.013113
 DE_to_US_no_retrain,nominal,0.0,nominal,22,dc3s_wrapped,1.000000,524.703025,0.000000,0.000000,-0.013113
-DE_to_US_no_retrain,nominal,0.0,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.013113
+DE_to_US_no_retrain,nominal,0.0,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.013113
 DE_to_US_no_retrain,nominal,0.0,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.025936
 DE_to_US_no_retrain,nominal,0.0,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.013116
 DE_to_US_no_retrain,nominal,0.0,nominal,22,scenario_mpc,1.000000,9434.062240,0.000000,0.000000,-0.013116
@@ -19,7 +19,7 @@ DE_to_US_no_retrain,nominal,0.0,nominal,33,deterministic_lp,1.000000,502.889113,
 DE_to_US_no_retrain,nominal,0.0,nominal,33,robust_fixed_interval,1.000000,502.889113,0.260417,0.036475,-0.016499
 DE_to_US_no_retrain,nominal,0.0,nominal,33,cvar_interval,1.000000,502.889113,0.260417,0.036475,-0.016499
 DE_to_US_no_retrain,nominal,0.0,nominal,33,dc3s_wrapped,1.000000,525.056035,0.000000,0.000000,-0.016497
-DE_to_US_no_retrain,nominal,0.0,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.016497
+DE_to_US_no_retrain,nominal,0.0,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.016497
 DE_to_US_no_retrain,nominal,0.0,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.019866
 DE_to_US_no_retrain,nominal,0.0,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.016498
 DE_to_US_no_retrain,nominal,0.0,nominal,33,scenario_mpc,1.000000,9429.776812,0.000000,0.000000,-0.016498
@@ -27,7 +27,7 @@ DE_to_US_no_retrain,dropout,0.0,dropout,11,deterministic_lp,1.000000,502.889113,
 DE_to_US_no_retrain,dropout,0.0,dropout,11,robust_fixed_interval,1.000000,502.889113,0.010417,0.037160,-0.002200
 DE_to_US_no_retrain,dropout,0.0,dropout,11,cvar_interval,1.000000,502.889113,0.010417,0.037160,-0.002200
 DE_to_US_no_retrain,dropout,0.0,dropout,11,dc3s_wrapped,1.000000,525.366768,0.000000,0.000000,-0.002198
-DE_to_US_no_retrain,dropout,0.0,dropout,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.002198
+DE_to_US_no_retrain,dropout,0.0,dropout,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.002198
 DE_to_US_no_retrain,dropout,0.0,dropout,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.023382
 DE_to_US_no_retrain,dropout,0.0,dropout,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.002199
 DE_to_US_no_retrain,dropout,0.0,dropout,11,scenario_mpc,1.000000,9427.404864,0.000000,0.000000,-0.002199
@@ -35,7 +35,7 @@ DE_to_US_no_retrain,dropout,0.0,dropout,22,deterministic_lp,1.000000,502.889113,
 DE_to_US_no_retrain,dropout,0.0,dropout,22,robust_fixed_interval,1.000000,502.889113,0.000000,0.000000,-0.013113
 DE_to_US_no_retrain,dropout,0.0,dropout,22,cvar_interval,1.000000,502.889113,0.000000,0.000000,-0.013113
 DE_to_US_no_retrain,dropout,0.0,dropout,22,dc3s_wrapped,1.000000,524.703025,0.000000,0.000000,-0.013113
-DE_to_US_no_retrain,dropout,0.0,dropout,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.013113
+DE_to_US_no_retrain,dropout,0.0,dropout,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.013113
 DE_to_US_no_retrain,dropout,0.0,dropout,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.025936
 DE_to_US_no_retrain,dropout,0.0,dropout,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.013116
 DE_to_US_no_retrain,dropout,0.0,dropout,22,scenario_mpc,1.000000,9434.062240,0.000000,0.000000,-0.013116
@@ -43,7 +43,7 @@ DE_to_US_no_retrain,dropout,0.0,dropout,33,deterministic_lp,1.000000,502.889113,
 DE_to_US_no_retrain,dropout,0.0,dropout,33,robust_fixed_interval,1.000000,502.889113,0.260417,0.036475,-0.016499
 DE_to_US_no_retrain,dropout,0.0,dropout,33,cvar_interval,1.000000,502.889113,0.260417,0.036475,-0.016499
 DE_to_US_no_retrain,dropout,0.0,dropout,33,dc3s_wrapped,1.000000,525.056035,0.000000,0.000000,-0.016497
-DE_to_US_no_retrain,dropout,0.0,dropout,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.016497
+DE_to_US_no_retrain,dropout,0.0,dropout,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.016497
 DE_to_US_no_retrain,dropout,0.0,dropout,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.019866
 DE_to_US_no_retrain,dropout,0.0,dropout,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.016498
 DE_to_US_no_retrain,dropout,0.0,dropout,33,scenario_mpc,1.000000,9429.776812,0.000000,0.000000,-0.016498
@@ -51,7 +51,7 @@ DE_to_US_no_retrain,dropout,0.1,dropout,11,deterministic_lp,0.947917,502.889113,
 DE_to_US_no_retrain,dropout,0.1,dropout,11,robust_fixed_interval,0.947917,502.889113,0.000000,0.000000,-0.001804
 DE_to_US_no_retrain,dropout,0.1,dropout,11,cvar_interval,0.947917,502.889113,0.000000,0.000000,-0.001804
 DE_to_US_no_retrain,dropout,0.1,dropout,11,dc3s_wrapped,0.947917,525.188503,0.000000,0.000000,-0.001804
-DE_to_US_no_retrain,dropout,0.1,dropout,11,dc3s_ftit,0.937500,908.649316,0.000000,0.000000,0.026209
+DE_to_US_no_retrain,dropout,0.1,dropout,11,dc3s_ftit,0.947917,978.240945,0.000000,0.000000,0.026209
 DE_to_US_no_retrain,dropout,0.1,dropout,11,aci_conformal,0.906250,100.025208,0.000000,0.000000,0.023775
 DE_to_US_no_retrain,dropout,0.1,dropout,11,scenario_robust,0.968750,1961.593915,0.000000,0.000000,-0.001807
 DE_to_US_no_retrain,dropout,0.1,dropout,11,scenario_mpc,1.000000,9437.736109,0.000000,0.000000,-0.001807
@@ -59,7 +59,7 @@ DE_to_US_no_retrain,dropout,0.1,dropout,22,deterministic_lp,0.916667,502.889113,
 DE_to_US_no_retrain,dropout,0.1,dropout,22,robust_fixed_interval,0.916667,502.889113,0.000000,0.000000,-0.013108
 DE_to_US_no_retrain,dropout,0.1,dropout,22,cvar_interval,0.916667,502.889113,0.000000,0.000000,-0.013108
 DE_to_US_no_retrain,dropout,0.1,dropout,22,dc3s_wrapped,0.916667,524.170459,0.000000,0.000000,-0.013108
-DE_to_US_no_retrain,dropout,0.1,dropout,22,dc3s_ftit,0.927083,1446.599983,0.000000,0.000000,0.032950
+DE_to_US_no_retrain,dropout,0.1,dropout,22,dc3s_ftit,0.927083,1516.191612,0.000000,0.000000,0.032950
 DE_to_US_no_retrain,dropout,0.1,dropout,22,aci_conformal,0.906250,100.001458,0.000000,0.000000,0.025943
 DE_to_US_no_retrain,dropout,0.1,dropout,22,scenario_robust,0.927083,2152.780043,0.000000,0.000000,-0.013109
 DE_to_US_no_retrain,dropout,0.1,dropout,22,scenario_mpc,1.000000,9426.392191,0.000000,0.000000,-0.013109
@@ -67,7 +67,7 @@ DE_to_US_no_retrain,dropout,0.1,dropout,33,deterministic_lp,0.916667,502.889113,
 DE_to_US_no_retrain,dropout,0.1,dropout,33,robust_fixed_interval,0.916667,502.889113,0.260417,0.436880,-0.016512
 DE_to_US_no_retrain,dropout,0.1,dropout,33,cvar_interval,0.916667,502.889113,0.260417,0.436880,-0.016512
 DE_to_US_no_retrain,dropout,0.1,dropout,33,dc3s_wrapped,0.916667,524.766957,0.000000,0.000000,-0.016500
-DE_to_US_no_retrain,dropout,0.1,dropout,33,dc3s_ftit,0.947917,1273.226615,0.000000,0.000000,-0.014021
+DE_to_US_no_retrain,dropout,0.1,dropout,33,dc3s_ftit,0.947917,1342.818244,0.000000,0.000000,-0.014021
 DE_to_US_no_retrain,dropout,0.1,dropout,33,aci_conformal,0.906250,99.976875,0.000000,0.000000,0.019861
 DE_to_US_no_retrain,dropout,0.1,dropout,33,scenario_robust,0.958333,2183.616274,0.000000,0.000000,-0.016503
 DE_to_US_no_retrain,dropout,0.1,dropout,33,scenario_mpc,1.000000,9437.466827,0.000000,0.000000,-0.016503
@@ -75,7 +75,7 @@ DE_to_US_no_retrain,dropout,0.2,dropout,11,deterministic_lp,0.822917,502.889113,
 DE_to_US_no_retrain,dropout,0.2,dropout,11,robust_fixed_interval,0.822917,502.889113,0.218750,0.447392,-0.002213
 DE_to_US_no_retrain,dropout,0.2,dropout,11,cvar_interval,0.822917,502.889113,0.218750,0.447392,-0.002213
 DE_to_US_no_retrain,dropout,0.2,dropout,11,dc3s_wrapped,0.822917,526.323953,0.000000,0.000000,0.002103
-DE_to_US_no_retrain,dropout,0.2,dropout,11,dc3s_ftit,0.854167,2247.869750,0.000000,0.000000,0.086115
+DE_to_US_no_retrain,dropout,0.2,dropout,11,dc3s_ftit,0.854167,2317.461379,0.000000,0.000000,0.086115
 DE_to_US_no_retrain,dropout,0.2,dropout,11,aci_conformal,0.895833,3507.793819,0.000000,0.000000,0.023378
 DE_to_US_no_retrain,dropout,0.2,dropout,11,scenario_robust,0.916667,4302.600481,0.000000,0.000000,-0.002203
 DE_to_US_no_retrain,dropout,0.2,dropout,11,scenario_mpc,0.979167,9426.390322,0.000000,0.000000,-0.002203
@@ -83,7 +83,7 @@ DE_to_US_no_retrain,dropout,0.2,dropout,22,deterministic_lp,0.843750,502.889113,
 DE_to_US_no_retrain,dropout,0.2,dropout,22,robust_fixed_interval,0.843750,502.889113,0.218750,0.060862,-0.014610
 DE_to_US_no_retrain,dropout,0.2,dropout,22,cvar_interval,0.843750,502.889113,0.218750,0.060862,-0.014610
 DE_to_US_no_retrain,dropout,0.2,dropout,22,dc3s_wrapped,0.843750,523.450931,0.000000,0.000000,-0.008236
-DE_to_US_no_retrain,dropout,0.2,dropout,22,dc3s_ftit,0.885417,1688.377792,0.000000,0.000000,0.081088
+DE_to_US_no_retrain,dropout,0.2,dropout,22,dc3s_ftit,0.885417,1757.969421,0.000000,0.000000,0.081088
 DE_to_US_no_retrain,dropout,0.2,dropout,22,aci_conformal,0.895833,1814.588793,0.000000,0.000000,0.024443
 DE_to_US_no_retrain,dropout,0.2,dropout,22,scenario_robust,0.916667,2659.967516,0.000000,0.000000,-0.014609
 DE_to_US_no_retrain,dropout,0.2,dropout,22,scenario_mpc,1.000000,9427.641309,0.000000,0.000000,-0.014609
@@ -91,7 +91,7 @@ DE_to_US_no_retrain,dropout,0.2,dropout,33,deterministic_lp,0.822917,502.889113,
 DE_to_US_no_retrain,dropout,0.2,dropout,33,robust_fixed_interval,0.822917,502.889113,0.260417,0.353961,-0.019531
 DE_to_US_no_retrain,dropout,0.2,dropout,33,cvar_interval,0.822917,502.889113,0.260417,0.353961,-0.019531
 DE_to_US_no_retrain,dropout,0.2,dropout,33,dc3s_wrapped,0.822917,524.256194,0.000000,0.000000,-0.019524
-DE_to_US_no_retrain,dropout,0.2,dropout,33,dc3s_ftit,0.927083,2117.964096,0.000000,0.000000,0.021721
+DE_to_US_no_retrain,dropout,0.2,dropout,33,dc3s_ftit,0.927083,2187.555725,0.000000,0.000000,0.021721
 DE_to_US_no_retrain,dropout,0.2,dropout,33,aci_conformal,0.895833,1772.748471,0.000000,0.000000,0.016839
 DE_to_US_no_retrain,dropout,0.2,dropout,33,scenario_robust,0.947917,3294.832491,0.000000,0.000000,-0.019524
 DE_to_US_no_retrain,dropout,0.2,dropout,33,scenario_mpc,0.989583,9433.807210,0.000000,0.000000,-0.019524
@@ -99,7 +99,7 @@ DE_to_US_no_retrain,dropout,0.3,dropout,11,deterministic_lp,0.718750,502.889113,
 DE_to_US_no_retrain,dropout,0.3,dropout,11,robust_fixed_interval,0.718750,502.889113,0.218750,0.283895,-0.002205
 DE_to_US_no_retrain,dropout,0.3,dropout,11,cvar_interval,0.718750,502.889113,0.218750,0.283895,-0.002205
 DE_to_US_no_retrain,dropout,0.3,dropout,11,dc3s_wrapped,0.718750,525.572340,0.000000,0.000000,0.092677
-DE_to_US_no_retrain,dropout,0.3,dropout,11,dc3s_ftit,0.812500,3535.712427,0.000000,0.000000,0.134424
+DE_to_US_no_retrain,dropout,0.3,dropout,11,dc3s_ftit,0.822917,3605.304056,0.000000,0.000000,0.134424
 DE_to_US_no_retrain,dropout,0.3,dropout,11,aci_conformal,0.895833,4782.597430,0.000000,0.000000,0.023382
 DE_to_US_no_retrain,dropout,0.3,dropout,11,scenario_robust,0.906250,6220.599502,0.000000,0.000000,-0.002200
 DE_to_US_no_retrain,dropout,0.3,dropout,11,scenario_mpc,0.968750,9427.722101,0.000000,0.000000,-0.002200
@@ -107,7 +107,7 @@ DE_to_US_no_retrain,dropout,0.3,dropout,22,deterministic_lp,0.708333,502.889113,
 DE_to_US_no_retrain,dropout,0.3,dropout,22,robust_fixed_interval,0.708333,502.889113,0.010417,0.391739,-0.014599
 DE_to_US_no_retrain,dropout,0.3,dropout,22,cvar_interval,0.708333,502.889113,0.010417,0.391739,-0.014599
 DE_to_US_no_retrain,dropout,0.3,dropout,22,dc3s_wrapped,0.708333,524.038513,0.000000,0.000000,-0.014589
-DE_to_US_no_retrain,dropout,0.3,dropout,22,dc3s_ftit,0.833333,2590.482070,0.000000,0.000000,0.109397
+DE_to_US_no_retrain,dropout,0.3,dropout,22,dc3s_ftit,0.843750,2660.073699,0.000000,0.000000,0.109397
 DE_to_US_no_retrain,dropout,0.3,dropout,22,aci_conformal,0.895833,3698.050621,0.000000,0.000000,0.024460
 DE_to_US_no_retrain,dropout,0.3,dropout,22,scenario_robust,0.906250,3945.297154,0.000000,0.000000,-0.014591
 DE_to_US_no_retrain,dropout,0.3,dropout,22,scenario_mpc,1.000000,9418.272655,0.000000,0.000000,-0.014591
@@ -115,7 +115,7 @@ DE_to_US_no_retrain,dropout,0.3,dropout,33,deterministic_lp,0.718750,502.889113,
 DE_to_US_no_retrain,dropout,0.3,dropout,33,robust_fixed_interval,0.718750,502.889113,0.260417,0.519386,-0.016507
 DE_to_US_no_retrain,dropout,0.3,dropout,33,cvar_interval,0.718750,502.889113,0.260417,0.519386,-0.016507
 DE_to_US_no_retrain,dropout,0.3,dropout,33,dc3s_wrapped,0.718750,524.437633,0.000000,0.000000,-0.016493
-DE_to_US_no_retrain,dropout,0.3,dropout,33,dc3s_ftit,0.833333,3629.415465,0.000000,0.000000,0.048873
+DE_to_US_no_retrain,dropout,0.3,dropout,33,dc3s_ftit,0.833333,3699.007094,0.000000,0.000000,0.048873
 DE_to_US_no_retrain,dropout,0.3,dropout,33,aci_conformal,0.895833,4825.170096,0.000000,0.000000,0.019867
 DE_to_US_no_retrain,dropout,0.3,dropout,33,scenario_robust,0.937500,5854.455048,0.000000,0.000000,-0.016497
 DE_to_US_no_retrain,dropout,0.3,dropout,33,scenario_mpc,0.979167,9417.661262,0.000000,0.000000,-0.016497
@@ -123,7 +123,7 @@ DE_to_US_no_retrain,stale,0.0,nominal,11,deterministic_lp,1.000000,502.889113,0.
 DE_to_US_no_retrain,stale,0.0,nominal,11,robust_fixed_interval,1.000000,502.889113,0.010417,0.037160,-0.002200
 DE_to_US_no_retrain,stale,0.0,nominal,11,cvar_interval,1.000000,502.889113,0.010417,0.037160,-0.002200
 DE_to_US_no_retrain,stale,0.0,nominal,11,dc3s_wrapped,1.000000,525.366768,0.000000,0.000000,-0.002198
-DE_to_US_no_retrain,stale,0.0,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.002198
+DE_to_US_no_retrain,stale,0.0,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.002198
 DE_to_US_no_retrain,stale,0.0,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.023382
 DE_to_US_no_retrain,stale,0.0,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.002199
 DE_to_US_no_retrain,stale,0.0,nominal,11,scenario_mpc,1.000000,9427.404864,0.000000,0.000000,-0.002199
@@ -131,7 +131,7 @@ DE_to_US_no_retrain,stale,0.0,nominal,22,deterministic_lp,1.000000,502.889113,0.
 DE_to_US_no_retrain,stale,0.0,nominal,22,robust_fixed_interval,1.000000,502.889113,0.000000,0.000000,-0.013113
 DE_to_US_no_retrain,stale,0.0,nominal,22,cvar_interval,1.000000,502.889113,0.000000,0.000000,-0.013113
 DE_to_US_no_retrain,stale,0.0,nominal,22,dc3s_wrapped,1.000000,524.703025,0.000000,0.000000,-0.013113
-DE_to_US_no_retrain,stale,0.0,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.013113
+DE_to_US_no_retrain,stale,0.0,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.013113
 DE_to_US_no_retrain,stale,0.0,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.025936
 DE_to_US_no_retrain,stale,0.0,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.013116
 DE_to_US_no_retrain,stale,0.0,nominal,22,scenario_mpc,1.000000,9434.062240,0.000000,0.000000,-0.013116
@@ -139,7 +139,7 @@ DE_to_US_no_retrain,stale,0.0,nominal,33,deterministic_lp,1.000000,502.889113,0.
 DE_to_US_no_retrain,stale,0.0,nominal,33,robust_fixed_interval,1.000000,502.889113,0.260417,0.036475,-0.016499
 DE_to_US_no_retrain,stale,0.0,nominal,33,cvar_interval,1.000000,502.889113,0.260417,0.036475,-0.016499
 DE_to_US_no_retrain,stale,0.0,nominal,33,dc3s_wrapped,1.000000,525.056035,0.000000,0.000000,-0.016497
-DE_to_US_no_retrain,stale,0.0,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.016497
+DE_to_US_no_retrain,stale,0.0,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.016497
 DE_to_US_no_retrain,stale,0.0,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.019866
 DE_to_US_no_retrain,stale,0.0,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.016498
 DE_to_US_no_retrain,stale,0.0,nominal,33,scenario_mpc,1.000000,9429.776812,0.000000,0.000000,-0.016498
@@ -147,7 +147,7 @@ DE_to_US_no_retrain,stale,0.1,nominal,11,deterministic_lp,1.000000,502.889113,0.
 DE_to_US_no_retrain,stale,0.1,nominal,11,robust_fixed_interval,1.000000,502.889113,0.218750,0.197941,-0.002211
 DE_to_US_no_retrain,stale,0.1,nominal,11,cvar_interval,1.000000,502.889113,0.218750,0.197941,-0.002211
 DE_to_US_no_retrain,stale,0.1,nominal,11,dc3s_wrapped,1.000000,525.366768,0.000000,0.000000,0.002104
-DE_to_US_no_retrain,stale,0.1,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.002104
+DE_to_US_no_retrain,stale,0.1,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.002104
 DE_to_US_no_retrain,stale,0.1,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.023374
 DE_to_US_no_retrain,stale,0.1,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.002207
 DE_to_US_no_retrain,stale,0.1,nominal,11,scenario_mpc,1.000000,9427.404864,0.000000,0.000000,-0.002207
@@ -155,7 +155,7 @@ DE_to_US_no_retrain,stale,0.1,nominal,22,deterministic_lp,1.000000,502.889113,0.
 DE_to_US_no_retrain,stale,0.1,nominal,22,robust_fixed_interval,1.000000,502.889113,0.010417,0.111392,-0.013100
 DE_to_US_no_retrain,stale,0.1,nominal,22,cvar_interval,1.000000,502.889113,0.010417,0.111392,-0.013100
 DE_to_US_no_retrain,stale,0.1,nominal,22,dc3s_wrapped,1.000000,524.703025,0.000000,0.000000,-0.013096
-DE_to_US_no_retrain,stale,0.1,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.013096
+DE_to_US_no_retrain,stale,0.1,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.013096
 DE_to_US_no_retrain,stale,0.1,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.025954
 DE_to_US_no_retrain,stale,0.1,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.013098
 DE_to_US_no_retrain,stale,0.1,nominal,22,scenario_mpc,1.000000,9434.062240,0.000000,0.000000,-0.013098
@@ -163,7 +163,7 @@ DE_to_US_no_retrain,stale,0.1,nominal,33,deterministic_lp,1.000000,502.889113,0.
 DE_to_US_no_retrain,stale,0.1,nominal,33,robust_fixed_interval,1.000000,502.889113,0.739583,0.048655,-0.016502
 DE_to_US_no_retrain,stale,0.1,nominal,33,cvar_interval,1.000000,502.889113,0.739583,0.048655,-0.016502
 DE_to_US_no_retrain,stale,0.1,nominal,33,dc3s_wrapped,1.000000,525.056035,0.000000,0.000000,-0.015291
-DE_to_US_no_retrain,stale,0.1,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.015291
+DE_to_US_no_retrain,stale,0.1,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.015291
 DE_to_US_no_retrain,stale,0.1,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.019862
 DE_to_US_no_retrain,stale,0.1,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.016501
 DE_to_US_no_retrain,stale,0.1,nominal,33,scenario_mpc,1.000000,9429.776812,0.000000,0.000000,-0.016501
@@ -171,7 +171,7 @@ DE_to_US_no_retrain,stale,0.2,nominal,11,deterministic_lp,1.000000,502.889113,0.
 DE_to_US_no_retrain,stale,0.2,nominal,11,robust_fixed_interval,1.000000,502.889113,0.218750,0.075069,-0.003392
 DE_to_US_no_retrain,stale,0.2,nominal,11,cvar_interval,1.000000,502.889113,0.218750,0.075069,-0.003392
 DE_to_US_no_retrain,stale,0.2,nominal,11,dc3s_wrapped,1.000000,525.366768,0.000000,0.000000,0.000917
-DE_to_US_no_retrain,stale,0.2,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.000917
+DE_to_US_no_retrain,stale,0.2,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.000917
 DE_to_US_no_retrain,stale,0.2,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.022191
 DE_to_US_no_retrain,stale,0.2,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.003390
 DE_to_US_no_retrain,stale,0.2,nominal,11,scenario_mpc,1.000000,9427.404864,0.000000,0.000000,-0.003390
@@ -179,7 +179,7 @@ DE_to_US_no_retrain,stale,0.2,nominal,22,deterministic_lp,1.000000,502.889113,0.
 DE_to_US_no_retrain,stale,0.2,nominal,22,robust_fixed_interval,1.000000,502.889113,0.010417,0.126247,-0.012353
 DE_to_US_no_retrain,stale,0.2,nominal,22,cvar_interval,1.000000,502.889113,0.010417,0.126247,-0.012353
 DE_to_US_no_retrain,stale,0.2,nominal,22,dc3s_wrapped,1.000000,524.703025,0.000000,0.000000,-0.012349
-DE_to_US_no_retrain,stale,0.2,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.012349
+DE_to_US_no_retrain,stale,0.2,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.012349
 DE_to_US_no_retrain,stale,0.2,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.026701
 DE_to_US_no_retrain,stale,0.2,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.012351
 DE_to_US_no_retrain,stale,0.2,nominal,22,scenario_mpc,1.000000,9434.062240,0.000000,0.000000,-0.012351
@@ -187,7 +187,7 @@ DE_to_US_no_retrain,stale,0.2,nominal,33,deterministic_lp,1.000000,502.889113,0.
 DE_to_US_no_retrain,stale,0.2,nominal,33,robust_fixed_interval,1.000000,502.889113,0.260417,0.284597,-0.016509
 DE_to_US_no_retrain,stale,0.2,nominal,33,cvar_interval,1.000000,502.889113,0.260417,0.284597,-0.016509
 DE_to_US_no_retrain,stale,0.2,nominal,33,dc3s_wrapped,1.000000,525.056035,0.000000,0.000000,-0.016503
-DE_to_US_no_retrain,stale,0.2,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.016503
+DE_to_US_no_retrain,stale,0.2,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.016503
 DE_to_US_no_retrain,stale,0.2,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.019860
 DE_to_US_no_retrain,stale,0.2,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.016503
 DE_to_US_no_retrain,stale,0.2,nominal,33,scenario_mpc,1.000000,9429.776812,0.000000,0.000000,-0.016503
@@ -195,7 +195,7 @@ DE_to_US_no_retrain,delay,0,delay_jitter,11,deterministic_lp,1.000000,502.889113
 DE_to_US_no_retrain,delay,0,delay_jitter,11,robust_fixed_interval,1.000000,502.889113,0.010417,0.037160,-0.002200
 DE_to_US_no_retrain,delay,0,delay_jitter,11,cvar_interval,1.000000,502.889113,0.010417,0.037160,-0.002200
 DE_to_US_no_retrain,delay,0,delay_jitter,11,dc3s_wrapped,1.000000,525.366768,0.000000,0.000000,-0.002198
-DE_to_US_no_retrain,delay,0,delay_jitter,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.002198
+DE_to_US_no_retrain,delay,0,delay_jitter,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.002198
 DE_to_US_no_retrain,delay,0,delay_jitter,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.023382
 DE_to_US_no_retrain,delay,0,delay_jitter,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.002199
 DE_to_US_no_retrain,delay,0,delay_jitter,11,scenario_mpc,1.000000,9427.404864,0.000000,0.000000,-0.002199
@@ -203,7 +203,7 @@ DE_to_US_no_retrain,delay,0,delay_jitter,22,deterministic_lp,1.000000,502.889113
 DE_to_US_no_retrain,delay,0,delay_jitter,22,robust_fixed_interval,1.000000,502.889113,0.000000,0.000000,-0.013113
 DE_to_US_no_retrain,delay,0,delay_jitter,22,cvar_interval,1.000000,502.889113,0.000000,0.000000,-0.013113
 DE_to_US_no_retrain,delay,0,delay_jitter,22,dc3s_wrapped,1.000000,524.703025,0.000000,0.000000,-0.013113
-DE_to_US_no_retrain,delay,0,delay_jitter,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.013113
+DE_to_US_no_retrain,delay,0,delay_jitter,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.013113
 DE_to_US_no_retrain,delay,0,delay_jitter,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.025936
 DE_to_US_no_retrain,delay,0,delay_jitter,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.013116
 DE_to_US_no_retrain,delay,0,delay_jitter,22,scenario_mpc,1.000000,9434.062240,0.000000,0.000000,-0.013116
@@ -211,7 +211,7 @@ DE_to_US_no_retrain,delay,0,delay_jitter,33,deterministic_lp,1.000000,502.889113
 DE_to_US_no_retrain,delay,0,delay_jitter,33,robust_fixed_interval,1.000000,502.889113,0.260417,0.036475,-0.016499
 DE_to_US_no_retrain,delay,0,delay_jitter,33,cvar_interval,1.000000,502.889113,0.260417,0.036475,-0.016499
 DE_to_US_no_retrain,delay,0,delay_jitter,33,dc3s_wrapped,1.000000,525.056035,0.000000,0.000000,-0.016497
-DE_to_US_no_retrain,delay,0,delay_jitter,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.016497
+DE_to_US_no_retrain,delay,0,delay_jitter,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.016497
 DE_to_US_no_retrain,delay,0,delay_jitter,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.019866
 DE_to_US_no_retrain,delay,0,delay_jitter,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.016498
 DE_to_US_no_retrain,delay,0,delay_jitter,33,scenario_mpc,1.000000,9429.776812,0.000000,0.000000,-0.016498
@@ -219,7 +219,7 @@ DE_to_US_no_retrain,delay,high,delay_jitter,11,deterministic_lp,1.000000,502.889
 DE_to_US_no_retrain,delay,high,delay_jitter,11,robust_fixed_interval,1.000000,502.889113,0.000000,0.000000,-0.002201
 DE_to_US_no_retrain,delay,high,delay_jitter,11,cvar_interval,1.000000,502.889113,0.000000,0.000000,-0.002201
 DE_to_US_no_retrain,delay,high,delay_jitter,11,dc3s_wrapped,1.000000,529.121943,0.000000,0.000000,-0.002201
-DE_to_US_no_retrain,delay,high,delay_jitter,11,dc3s_ftit,1.000000,305.993637,0.000000,0.000000,0.199851
+DE_to_US_no_retrain,delay,high,delay_jitter,11,dc3s_ftit,1.000000,375.585267,0.000000,0.000000,0.199851
 DE_to_US_no_retrain,delay,high,delay_jitter,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.023375
 DE_to_US_no_retrain,delay,high,delay_jitter,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.002207
 DE_to_US_no_retrain,delay,high,delay_jitter,11,scenario_mpc,1.000000,9427.404864,0.000000,0.000000,-0.002207
@@ -227,7 +227,7 @@ DE_to_US_no_retrain,delay,high,delay_jitter,22,deterministic_lp,1.000000,502.889
 DE_to_US_no_retrain,delay,high,delay_jitter,22,robust_fixed_interval,1.000000,502.889113,0.218750,0.060862,-0.013286
 DE_to_US_no_retrain,delay,high,delay_jitter,22,cvar_interval,1.000000,502.889113,0.218750,0.060862,-0.013286
 DE_to_US_no_retrain,delay,high,delay_jitter,22,dc3s_wrapped,1.000000,528.680064,0.000000,0.000000,0.101501
-DE_to_US_no_retrain,delay,high,delay_jitter,22,dc3s_ftit,1.000000,306.041430,0.000000,0.000000,0.196097
+DE_to_US_no_retrain,delay,high,delay_jitter,22,dc3s_ftit,1.000000,375.633059,0.000000,0.000000,0.196097
 DE_to_US_no_retrain,delay,high,delay_jitter,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.025767
 DE_to_US_no_retrain,delay,high,delay_jitter,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.013284
 DE_to_US_no_retrain,delay,high,delay_jitter,22,scenario_mpc,1.000000,9434.062240,0.000000,0.000000,-0.013284
@@ -235,7 +235,7 @@ DE_to_US_no_retrain,delay,high,delay_jitter,33,deterministic_lp,1.000000,502.889
 DE_to_US_no_retrain,delay,high,delay_jitter,33,robust_fixed_interval,1.000000,502.889113,0.260417,0.381405,-0.019393
 DE_to_US_no_retrain,delay,high,delay_jitter,33,cvar_interval,1.000000,502.889113,0.260417,0.381405,-0.019393
 DE_to_US_no_retrain,delay,high,delay_jitter,33,dc3s_wrapped,1.000000,528.810904,0.000000,0.000000,-0.019385
-DE_to_US_no_retrain,delay,high,delay_jitter,33,dc3s_ftit,1.000000,305.976640,0.000000,0.000000,0.071338
+DE_to_US_no_retrain,delay,high,delay_jitter,33,dc3s_ftit,1.000000,375.568269,0.000000,0.000000,0.071338
 DE_to_US_no_retrain,delay,high,delay_jitter,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.016978
 DE_to_US_no_retrain,delay,high,delay_jitter,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.019385
 DE_to_US_no_retrain,delay,high,delay_jitter,33,scenario_mpc,1.000000,9429.776812,0.000000,0.000000,-0.019385
@@ -243,7 +243,7 @@ US_to_DE_no_retrain,nominal,0.0,nominal,11,deterministic_lp,1.000000,502.889113,
 US_to_DE_no_retrain,nominal,0.0,nominal,11,robust_fixed_interval,1.000000,502.889113,0.104167,0.184952,-0.023711
 US_to_DE_no_retrain,nominal,0.0,nominal,11,cvar_interval,1.000000,502.889113,0.104167,0.184952,-0.023711
 US_to_DE_no_retrain,nominal,0.0,nominal,11,dc3s_wrapped,1.000000,525.781251,0.000000,0.000000,-0.023701
-US_to_DE_no_retrain,nominal,0.0,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.023701
+US_to_DE_no_retrain,nominal,0.0,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.023701
 US_to_DE_no_retrain,nominal,0.0,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.014291
 US_to_DE_no_retrain,nominal,0.0,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.023705
 US_to_DE_no_retrain,nominal,0.0,nominal,11,scenario_mpc,1.000000,6728.854393,0.000000,0.000000,-0.023705
@@ -251,7 +251,7 @@ US_to_DE_no_retrain,nominal,0.0,nominal,22,deterministic_lp,1.000000,502.889113,
 US_to_DE_no_retrain,nominal,0.0,nominal,22,robust_fixed_interval,1.000000,502.889113,0.343750,0.144409,-0.005220
 US_to_DE_no_retrain,nominal,0.0,nominal,22,cvar_interval,1.000000,502.889113,0.343750,0.144409,-0.005220
 US_to_DE_no_retrain,nominal,0.0,nominal,22,dc3s_wrapped,1.000000,525.077156,0.000000,0.000000,0.042203
-US_to_DE_no_retrain,nominal,0.0,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.042203
+US_to_DE_no_retrain,nominal,0.0,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.042203
 US_to_DE_no_retrain,nominal,0.0,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.057686
 US_to_DE_no_retrain,nominal,0.0,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.005215
 US_to_DE_no_retrain,nominal,0.0,nominal,22,scenario_mpc,1.000000,6733.706378,0.000000,0.000000,-0.005215
@@ -259,7 +259,7 @@ US_to_DE_no_retrain,nominal,0.0,nominal,33,deterministic_lp,1.000000,502.889113,
 US_to_DE_no_retrain,nominal,0.0,nominal,33,robust_fixed_interval,1.000000,502.889113,0.104167,0.111109,-0.006525
 US_to_DE_no_retrain,nominal,0.0,nominal,33,cvar_interval,1.000000,502.889113,0.104167,0.111109,-0.006525
 US_to_DE_no_retrain,nominal,0.0,nominal,33,dc3s_wrapped,1.000000,525.784048,0.000000,0.000000,-0.005199
-US_to_DE_no_retrain,nominal,0.0,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.005199
+US_to_DE_no_retrain,nominal,0.0,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.005199
 US_to_DE_no_retrain,nominal,0.0,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.028553
 US_to_DE_no_retrain,nominal,0.0,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.006521
 US_to_DE_no_retrain,nominal,0.0,nominal,33,scenario_mpc,1.000000,6730.583101,0.000000,0.000000,-0.006521
@@ -267,7 +267,7 @@ US_to_DE_no_retrain,dropout,0.0,dropout,11,deterministic_lp,1.000000,502.889113,
 US_to_DE_no_retrain,dropout,0.0,dropout,11,robust_fixed_interval,1.000000,502.889113,0.104167,0.184952,-0.023711
 US_to_DE_no_retrain,dropout,0.0,dropout,11,cvar_interval,1.000000,502.889113,0.104167,0.184952,-0.023711
 US_to_DE_no_retrain,dropout,0.0,dropout,11,dc3s_wrapped,1.000000,525.781251,0.000000,0.000000,-0.023701
-US_to_DE_no_retrain,dropout,0.0,dropout,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.023701
+US_to_DE_no_retrain,dropout,0.0,dropout,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.023701
 US_to_DE_no_retrain,dropout,0.0,dropout,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.014291
 US_to_DE_no_retrain,dropout,0.0,dropout,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.023705
 US_to_DE_no_retrain,dropout,0.0,dropout,11,scenario_mpc,1.000000,6728.854393,0.000000,0.000000,-0.023705
@@ -275,7 +275,7 @@ US_to_DE_no_retrain,dropout,0.0,dropout,22,deterministic_lp,1.000000,502.889113,
 US_to_DE_no_retrain,dropout,0.0,dropout,22,robust_fixed_interval,1.000000,502.889113,0.343750,0.144409,-0.005220
 US_to_DE_no_retrain,dropout,0.0,dropout,22,cvar_interval,1.000000,502.889113,0.343750,0.144409,-0.005220
 US_to_DE_no_retrain,dropout,0.0,dropout,22,dc3s_wrapped,1.000000,525.077156,0.000000,0.000000,0.042203
-US_to_DE_no_retrain,dropout,0.0,dropout,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.042203
+US_to_DE_no_retrain,dropout,0.0,dropout,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.042203
 US_to_DE_no_retrain,dropout,0.0,dropout,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.057686
 US_to_DE_no_retrain,dropout,0.0,dropout,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.005215
 US_to_DE_no_retrain,dropout,0.0,dropout,22,scenario_mpc,1.000000,6733.706378,0.000000,0.000000,-0.005215
@@ -283,7 +283,7 @@ US_to_DE_no_retrain,dropout,0.0,dropout,33,deterministic_lp,1.000000,502.889113,
 US_to_DE_no_retrain,dropout,0.0,dropout,33,robust_fixed_interval,1.000000,502.889113,0.104167,0.111109,-0.006525
 US_to_DE_no_retrain,dropout,0.0,dropout,33,cvar_interval,1.000000,502.889113,0.104167,0.111109,-0.006525
 US_to_DE_no_retrain,dropout,0.0,dropout,33,dc3s_wrapped,1.000000,525.784048,0.000000,0.000000,-0.005199
-US_to_DE_no_retrain,dropout,0.0,dropout,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.005199
+US_to_DE_no_retrain,dropout,0.0,dropout,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.005199
 US_to_DE_no_retrain,dropout,0.0,dropout,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.028553
 US_to_DE_no_retrain,dropout,0.0,dropout,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.006521
 US_to_DE_no_retrain,dropout,0.0,dropout,33,scenario_mpc,1.000000,6730.583101,0.000000,0.000000,-0.006521
@@ -291,7 +291,7 @@ US_to_DE_no_retrain,dropout,0.1,dropout,11,deterministic_lp,0.947917,502.889113,
 US_to_DE_no_retrain,dropout,0.1,dropout,11,robust_fixed_interval,0.947917,502.889113,0.104167,0.431397,0.161094
 US_to_DE_no_retrain,dropout,0.1,dropout,11,cvar_interval,0.947917,502.889113,0.104167,0.431397,0.161094
 US_to_DE_no_retrain,dropout,0.1,dropout,11,dc3s_wrapped,0.947917,525.600352,0.000000,0.000000,0.161105
-US_to_DE_no_retrain,dropout,0.1,dropout,11,dc3s_ftit,0.947917,885.944996,0.000000,0.000000,0.181935
+US_to_DE_no_retrain,dropout,0.1,dropout,11,dc3s_ftit,0.958333,955.536625,0.000000,0.000000,0.181935
 US_to_DE_no_retrain,dropout,0.1,dropout,11,aci_conformal,0.906250,99.987708,0.000000,0.000000,0.199172
 US_to_DE_no_retrain,dropout,0.1,dropout,11,scenario_robust,0.968750,1429.636243,0.000000,0.000000,0.161105
 US_to_DE_no_retrain,dropout,0.1,dropout,11,scenario_mpc,1.000000,6736.383943,0.000000,0.000000,0.161105
@@ -299,7 +299,7 @@ US_to_DE_no_retrain,dropout,0.1,dropout,22,deterministic_lp,0.916667,502.889113,
 US_to_DE_no_retrain,dropout,0.1,dropout,22,robust_fixed_interval,0.916667,502.889113,0.000000,0.000000,-0.005204
 US_to_DE_no_retrain,dropout,0.1,dropout,22,cvar_interval,0.916667,502.889113,0.000000,0.000000,-0.005204
 US_to_DE_no_retrain,dropout,0.1,dropout,22,dc3s_wrapped,0.916667,524.535520,0.000000,0.000000,-0.005204
-US_to_DE_no_retrain,dropout,0.1,dropout,22,dc3s_ftit,0.927083,1114.429353,0.000000,0.000000,0.064988
+US_to_DE_no_retrain,dropout,0.1,dropout,22,dc3s_ftit,0.927083,1184.020982,0.000000,0.000000,0.064988
 US_to_DE_no_retrain,dropout,0.1,dropout,22,aci_conformal,0.906250,99.983958,0.000000,0.000000,0.057694
 US_to_DE_no_retrain,dropout,0.1,dropout,22,scenario_robust,0.947917,1568.975285,0.000000,0.000000,-0.005207
 US_to_DE_no_retrain,dropout,0.1,dropout,22,scenario_mpc,1.000000,6728.116343,0.000000,0.000000,-0.005207
@@ -307,7 +307,7 @@ US_to_DE_no_retrain,dropout,0.1,dropout,33,deterministic_lp,0.927083,502.889113,
 US_to_DE_no_retrain,dropout,0.1,dropout,33,robust_fixed_interval,0.927083,502.889113,0.104167,0.242696,-0.006541
 US_to_DE_no_retrain,dropout,0.1,dropout,33,cvar_interval,0.927083,502.889113,0.104167,0.242696,-0.006541
 US_to_DE_no_retrain,dropout,0.1,dropout,33,dc3s_wrapped,0.927083,525.527243,0.000000,0.000000,-0.005214
-US_to_DE_no_retrain,dropout,0.1,dropout,33,dc3s_ftit,0.947917,1109.789332,0.000000,0.000000,0.090417
+US_to_DE_no_retrain,dropout,0.1,dropout,33,dc3s_ftit,0.958333,1179.380961,0.000000,0.000000,0.090417
 US_to_DE_no_retrain,dropout,0.1,dropout,33,aci_conformal,0.906250,99.999375,0.000000,0.000000,0.028541
 US_to_DE_no_retrain,dropout,0.1,dropout,33,scenario_robust,0.947917,1591.449149,0.000000,0.000000,-0.006533
 US_to_DE_no_retrain,dropout,0.1,dropout,33,scenario_mpc,1.000000,6736.187688,0.000000,0.000000,-0.006533
@@ -315,7 +315,7 @@ US_to_DE_no_retrain,dropout,0.2,dropout,11,deterministic_lp,0.822917,502.889113,
 US_to_DE_no_retrain,dropout,0.2,dropout,11,robust_fixed_interval,0.822917,502.889113,0.343750,0.272948,-0.023763
 US_to_DE_no_retrain,dropout,0.2,dropout,11,cvar_interval,0.822917,502.889113,0.343750,0.272948,-0.023763
 US_to_DE_no_retrain,dropout,0.2,dropout,11,dc3s_wrapped,0.822917,526.603611,0.000000,0.000000,-0.021218
-US_to_DE_no_retrain,dropout,0.2,dropout,11,dc3s_ftit,0.854167,1829.315969,0.000000,0.000000,0.129311
+US_to_DE_no_retrain,dropout,0.2,dropout,11,dc3s_ftit,0.854167,1898.907598,0.000000,0.000000,0.129311
 US_to_DE_no_retrain,dropout,0.2,dropout,11,aci_conformal,0.895833,2449.131391,0.000000,0.000000,0.014301
 US_to_DE_no_retrain,dropout,0.2,dropout,11,scenario_robust,0.927083,3072.853040,0.000000,0.000000,-0.023754
 US_to_DE_no_retrain,dropout,0.2,dropout,11,scenario_mpc,0.979167,6731.878547,0.000000,0.000000,-0.023754
@@ -323,7 +323,7 @@ US_to_DE_no_retrain,dropout,0.2,dropout,22,deterministic_lp,0.843750,502.889113,
 US_to_DE_no_retrain,dropout,0.2,dropout,22,robust_fixed_interval,0.843750,502.889113,0.343750,0.391739,-0.010311
 US_to_DE_no_retrain,dropout,0.2,dropout,22,cvar_interval,0.843750,502.889113,0.343750,0.391739,-0.010311
 US_to_DE_no_retrain,dropout,0.2,dropout,22,dc3s_wrapped,0.843750,523.805796,0.000000,0.000000,0.037116
-US_to_DE_no_retrain,dropout,0.2,dropout,22,dc3s_ftit,0.885417,1204.890106,0.000000,0.000000,0.144614
+US_to_DE_no_retrain,dropout,0.2,dropout,22,dc3s_ftit,0.885417,1274.481736,0.000000,0.000000,0.144614
 US_to_DE_no_retrain,dropout,0.2,dropout,22,aci_conformal,0.895833,1322.480561,0.000000,0.000000,0.052600
 US_to_DE_no_retrain,dropout,0.2,dropout,22,scenario_robust,0.927083,1938.620393,0.000000,0.000000,-0.010298
 US_to_DE_no_retrain,dropout,0.2,dropout,22,scenario_mpc,1.000000,6729.026717,0.000000,0.000000,-0.010298
@@ -331,7 +331,7 @@ US_to_DE_no_retrain,dropout,0.2,dropout,33,deterministic_lp,0.843750,502.889113,
 US_to_DE_no_retrain,dropout,0.2,dropout,33,robust_fixed_interval,0.843750,502.889113,0.104167,0.448359,-0.007044
 US_to_DE_no_retrain,dropout,0.2,dropout,33,cvar_interval,0.843750,502.889113,0.104167,0.448359,-0.007044
 US_to_DE_no_retrain,dropout,0.2,dropout,33,dc3s_wrapped,0.843750,524.959729,0.000000,0.000000,-0.005710
-US_to_DE_no_retrain,dropout,0.2,dropout,33,dc3s_ftit,0.885417,1260.182686,0.000000,0.000000,0.150083
+US_to_DE_no_retrain,dropout,0.2,dropout,33,dc3s_ftit,0.895833,1329.774316,0.000000,0.000000,0.150083
 US_to_DE_no_retrain,dropout,0.2,dropout,33,aci_conformal,0.895833,1292.008236,0.000000,0.000000,0.028046
 US_to_DE_no_retrain,dropout,0.2,dropout,33,scenario_robust,0.968750,2401.318595,0.000000,0.000000,-0.007028
 US_to_DE_no_retrain,dropout,0.2,dropout,33,scenario_mpc,0.989583,6733.520509,0.000000,0.000000,-0.007028
@@ -339,7 +339,7 @@ US_to_DE_no_retrain,dropout,0.3,dropout,11,deterministic_lp,0.708333,502.889113,
 US_to_DE_no_retrain,dropout,0.3,dropout,11,robust_fixed_interval,0.708333,502.889113,0.104167,0.423239,-0.023169
 US_to_DE_no_retrain,dropout,0.3,dropout,11,cvar_interval,0.708333,502.889113,0.104167,0.423239,-0.023169
 US_to_DE_no_retrain,dropout,0.3,dropout,11,dc3s_wrapped,0.708333,525.937012,0.000000,0.000000,-0.023154
-US_to_DE_no_retrain,dropout,0.3,dropout,11,dc3s_ftit,0.791667,2540.704256,0.000000,0.000000,0.204866
+US_to_DE_no_retrain,dropout,0.3,dropout,11,dc3s_ftit,0.802083,2610.295886,0.000000,0.000000,0.204866
 US_to_DE_no_retrain,dropout,0.3,dropout,11,aci_conformal,0.895833,3485.603371,0.000000,0.000000,0.014840
 US_to_DE_no_retrain,dropout,0.3,dropout,11,scenario_robust,0.916667,4642.122773,0.000000,0.000000,-0.023156
 US_to_DE_no_retrain,dropout,0.3,dropout,11,scenario_mpc,0.947917,6740.626857,0.000000,0.000000,-0.023156
@@ -347,7 +347,7 @@ US_to_DE_no_retrain,dropout,0.3,dropout,22,deterministic_lp,0.708333,502.889113,
 US_to_DE_no_retrain,dropout,0.3,dropout,22,robust_fixed_interval,0.708333,502.889113,0.104167,0.288089,-0.005212
 US_to_DE_no_retrain,dropout,0.3,dropout,22,cvar_interval,0.708333,502.889113,0.104167,0.288089,-0.005212
 US_to_DE_no_retrain,dropout,0.3,dropout,22,dc3s_wrapped,0.708333,523.842461,0.000000,0.000000,-0.005201
-US_to_DE_no_retrain,dropout,0.3,dropout,22,dc3s_ftit,0.822917,1709.518728,0.000000,0.000000,0.187964
+US_to_DE_no_retrain,dropout,0.3,dropout,22,dc3s_ftit,0.833333,1779.110357,0.000000,0.000000,0.187964
 US_to_DE_no_retrain,dropout,0.3,dropout,22,aci_conformal,0.895833,2695.142458,0.000000,0.000000,0.057698
 US_to_DE_no_retrain,dropout,0.3,dropout,22,scenario_robust,0.916667,2875.386062,0.000000,0.000000,-0.005202
 US_to_DE_no_retrain,dropout,0.3,dropout,22,scenario_mpc,1.000000,6722.198715,0.000000,0.000000,-0.005202
@@ -355,7 +355,7 @@ US_to_DE_no_retrain,dropout,0.3,dropout,33,deterministic_lp,0.739583,502.889113,
 US_to_DE_no_retrain,dropout,0.3,dropout,33,robust_fixed_interval,0.739583,502.889113,0.104167,4565.712110,-0.162320
 US_to_DE_no_retrain,dropout,0.3,dropout,33,cvar_interval,0.739583,502.889113,0.104167,4565.712110,-0.162320
 US_to_DE_no_retrain,dropout,0.3,dropout,33,dc3s_wrapped,0.739583,525.581453,0.000000,0.000000,0.032652
-US_to_DE_no_retrain,dropout,0.3,dropout,33,dc3s_ftit,0.812500,2477.202925,0.000000,0.000000,0.150605
+US_to_DE_no_retrain,dropout,0.3,dropout,33,dc3s_ftit,0.822917,2546.794555,0.000000,0.000000,0.150605
 US_to_DE_no_retrain,dropout,0.3,dropout,33,aci_conformal,0.895833,3516.653149,0.000000,0.000000,0.034281
 US_to_DE_no_retrain,dropout,0.3,dropout,33,scenario_robust,0.947917,4266.806221,0.000000,0.000000,-0.006508
 US_to_DE_no_retrain,dropout,0.3,dropout,33,scenario_mpc,0.979167,6721.753123,0.000000,0.000000,-0.006508
@@ -363,7 +363,7 @@ US_to_DE_no_retrain,stale,0.0,nominal,11,deterministic_lp,1.000000,502.889113,0.
 US_to_DE_no_retrain,stale,0.0,nominal,11,robust_fixed_interval,1.000000,502.889113,0.104167,0.184952,-0.023711
 US_to_DE_no_retrain,stale,0.0,nominal,11,cvar_interval,1.000000,502.889113,0.104167,0.184952,-0.023711
 US_to_DE_no_retrain,stale,0.0,nominal,11,dc3s_wrapped,1.000000,525.781251,0.000000,0.000000,-0.023701
-US_to_DE_no_retrain,stale,0.0,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.023701
+US_to_DE_no_retrain,stale,0.0,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.023701
 US_to_DE_no_retrain,stale,0.0,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.014291
 US_to_DE_no_retrain,stale,0.0,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.023705
 US_to_DE_no_retrain,stale,0.0,nominal,11,scenario_mpc,1.000000,6728.854393,0.000000,0.000000,-0.023705
@@ -371,7 +371,7 @@ US_to_DE_no_retrain,stale,0.0,nominal,22,deterministic_lp,1.000000,502.889113,0.
 US_to_DE_no_retrain,stale,0.0,nominal,22,robust_fixed_interval,1.000000,502.889113,0.343750,0.144409,-0.005220
 US_to_DE_no_retrain,stale,0.0,nominal,22,cvar_interval,1.000000,502.889113,0.343750,0.144409,-0.005220
 US_to_DE_no_retrain,stale,0.0,nominal,22,dc3s_wrapped,1.000000,525.077156,0.000000,0.000000,0.042203
-US_to_DE_no_retrain,stale,0.0,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.042203
+US_to_DE_no_retrain,stale,0.0,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.042203
 US_to_DE_no_retrain,stale,0.0,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.057686
 US_to_DE_no_retrain,stale,0.0,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.005215
 US_to_DE_no_retrain,stale,0.0,nominal,22,scenario_mpc,1.000000,6733.706378,0.000000,0.000000,-0.005215
@@ -379,7 +379,7 @@ US_to_DE_no_retrain,stale,0.0,nominal,33,deterministic_lp,1.000000,502.889113,0.
 US_to_DE_no_retrain,stale,0.0,nominal,33,robust_fixed_interval,1.000000,502.889113,0.104167,0.111109,-0.006525
 US_to_DE_no_retrain,stale,0.0,nominal,33,cvar_interval,1.000000,502.889113,0.104167,0.111109,-0.006525
 US_to_DE_no_retrain,stale,0.0,nominal,33,dc3s_wrapped,1.000000,525.784048,0.000000,0.000000,-0.005199
-US_to_DE_no_retrain,stale,0.0,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.005199
+US_to_DE_no_retrain,stale,0.0,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.005199
 US_to_DE_no_retrain,stale,0.0,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.028553
 US_to_DE_no_retrain,stale,0.0,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.006521
 US_to_DE_no_retrain,stale,0.0,nominal,33,scenario_mpc,1.000000,6730.583101,0.000000,0.000000,-0.006521
@@ -387,7 +387,7 @@ US_to_DE_no_retrain,stale,0.1,nominal,11,deterministic_lp,1.000000,502.889113,0.
 US_to_DE_no_retrain,stale,0.1,nominal,11,robust_fixed_interval,1.000000,502.889113,0.343750,0.200916,-0.023957
 US_to_DE_no_retrain,stale,0.1,nominal,11,cvar_interval,1.000000,502.889113,0.343750,0.200916,-0.023957
 US_to_DE_no_retrain,stale,0.1,nominal,11,dc3s_wrapped,1.000000,525.781251,0.000000,0.000000,-0.021415
-US_to_DE_no_retrain,stale,0.1,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.021415
+US_to_DE_no_retrain,stale,0.1,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.021415
 US_to_DE_no_retrain,stale,0.1,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.014046
 US_to_DE_no_retrain,stale,0.1,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.023951
 US_to_DE_no_retrain,stale,0.1,nominal,11,scenario_mpc,1.000000,6728.854393,0.000000,0.000000,-0.023951
@@ -395,7 +395,7 @@ US_to_DE_no_retrain,stale,0.1,nominal,22,deterministic_lp,1.000000,502.889113,0.
 US_to_DE_no_retrain,stale,0.1,nominal,22,robust_fixed_interval,1.000000,502.889113,0.343750,0.144409,-0.005656
 US_to_DE_no_retrain,stale,0.1,nominal,22,cvar_interval,1.000000,502.889113,0.343750,0.144409,-0.005656
 US_to_DE_no_retrain,stale,0.1,nominal,22,dc3s_wrapped,1.000000,525.077156,0.000000,0.000000,0.005287
-US_to_DE_no_retrain,stale,0.1,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.005287
+US_to_DE_no_retrain,stale,0.1,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.005287
 US_to_DE_no_retrain,stale,0.1,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.057249
 US_to_DE_no_retrain,stale,0.1,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.005651
 US_to_DE_no_retrain,stale,0.1,nominal,22,scenario_mpc,1.000000,6733.706378,0.000000,0.000000,-0.005651
@@ -403,7 +403,7 @@ US_to_DE_no_retrain,stale,0.1,nominal,33,deterministic_lp,1.000000,502.889113,0.
 US_to_DE_no_retrain,stale,0.1,nominal,33,robust_fixed_interval,1.000000,502.889113,0.093750,4565.207331,-0.162316
 US_to_DE_no_retrain,stale,0.1,nominal,33,cvar_interval,1.000000,502.889113,0.093750,4565.207331,-0.162316
 US_to_DE_no_retrain,stale,0.1,nominal,33,dc3s_wrapped,1.000000,525.784048,0.000000,0.000000,-0.006520
-US_to_DE_no_retrain,stale,0.1,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.006520
+US_to_DE_no_retrain,stale,0.1,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.006520
 US_to_DE_no_retrain,stale,0.1,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.028554
 US_to_DE_no_retrain,stale,0.1,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.006521
 US_to_DE_no_retrain,stale,0.1,nominal,33,scenario_mpc,1.000000,6730.583101,0.000000,0.000000,-0.006521
@@ -411,7 +411,7 @@ US_to_DE_no_retrain,stale,0.2,nominal,11,deterministic_lp,1.000000,502.889113,0.
 US_to_DE_no_retrain,stale,0.2,nominal,11,robust_fixed_interval,1.000000,502.889113,0.093750,0.272948,-0.029015
 US_to_DE_no_retrain,stale,0.2,nominal,11,cvar_interval,1.000000,502.889113,0.093750,0.272948,-0.029015
 US_to_DE_no_retrain,stale,0.2,nominal,11,dc3s_wrapped,1.000000,525.781251,0.000000,0.000000,-0.029004
-US_to_DE_no_retrain,stale,0.2,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.029004
+US_to_DE_no_retrain,stale,0.2,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.029004
 US_to_DE_no_retrain,stale,0.2,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.008989
 US_to_DE_no_retrain,stale,0.2,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.029005
 US_to_DE_no_retrain,stale,0.2,nominal,11,scenario_mpc,1.000000,6728.854393,0.000000,0.000000,-0.029005
@@ -419,7 +419,7 @@ US_to_DE_no_retrain,stale,0.2,nominal,22,deterministic_lp,1.000000,502.889113,0.
 US_to_DE_no_retrain,stale,0.2,nominal,22,robust_fixed_interval,1.000000,502.889113,0.093750,0.121113,-0.005536
 US_to_DE_no_retrain,stale,0.2,nominal,22,cvar_interval,1.000000,502.889113,0.093750,0.121113,-0.005536
 US_to_DE_no_retrain,stale,0.2,nominal,22,dc3s_wrapped,1.000000,525.077156,0.000000,0.000000,-0.005531
-US_to_DE_no_retrain,stale,0.2,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.005531
+US_to_DE_no_retrain,stale,0.2,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.005531
 US_to_DE_no_retrain,stale,0.2,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.057367
 US_to_DE_no_retrain,stale,0.2,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.005533
 US_to_DE_no_retrain,stale,0.2,nominal,22,scenario_mpc,1.000000,6733.706378,0.000000,0.000000,-0.005533
@@ -427,7 +427,7 @@ US_to_DE_no_retrain,stale,0.2,nominal,33,deterministic_lp,1.000000,502.889113,0.
 US_to_DE_no_retrain,stale,0.2,nominal,33,robust_fixed_interval,1.000000,502.889113,0.093750,0.355149,-0.014697
 US_to_DE_no_retrain,stale,0.2,nominal,33,cvar_interval,1.000000,502.889113,0.093750,0.355149,-0.014697
 US_to_DE_no_retrain,stale,0.2,nominal,33,dc3s_wrapped,1.000000,525.784048,0.000000,0.000000,-0.014687
-US_to_DE_no_retrain,stale,0.2,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.014687
+US_to_DE_no_retrain,stale,0.2,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.014687
 US_to_DE_no_retrain,stale,0.2,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.020384
 US_to_DE_no_retrain,stale,0.2,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.014687
 US_to_DE_no_retrain,stale,0.2,nominal,33,scenario_mpc,1.000000,6730.583101,0.000000,0.000000,-0.014687
@@ -435,7 +435,7 @@ US_to_DE_no_retrain,delay,0,delay_jitter,11,deterministic_lp,1.000000,502.889113
 US_to_DE_no_retrain,delay,0,delay_jitter,11,robust_fixed_interval,1.000000,502.889113,0.104167,0.184952,-0.023711
 US_to_DE_no_retrain,delay,0,delay_jitter,11,cvar_interval,1.000000,502.889113,0.104167,0.184952,-0.023711
 US_to_DE_no_retrain,delay,0,delay_jitter,11,dc3s_wrapped,1.000000,525.781251,0.000000,0.000000,-0.023701
-US_to_DE_no_retrain,delay,0,delay_jitter,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.023701
+US_to_DE_no_retrain,delay,0,delay_jitter,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.023701
 US_to_DE_no_retrain,delay,0,delay_jitter,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.014291
 US_to_DE_no_retrain,delay,0,delay_jitter,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.023705
 US_to_DE_no_retrain,delay,0,delay_jitter,11,scenario_mpc,1.000000,6728.854393,0.000000,0.000000,-0.023705
@@ -443,7 +443,7 @@ US_to_DE_no_retrain,delay,0,delay_jitter,22,deterministic_lp,1.000000,502.889113
 US_to_DE_no_retrain,delay,0,delay_jitter,22,robust_fixed_interval,1.000000,502.889113,0.343750,0.144409,-0.005220
 US_to_DE_no_retrain,delay,0,delay_jitter,22,cvar_interval,1.000000,502.889113,0.343750,0.144409,-0.005220
 US_to_DE_no_retrain,delay,0,delay_jitter,22,dc3s_wrapped,1.000000,525.077156,0.000000,0.000000,0.042203
-US_to_DE_no_retrain,delay,0,delay_jitter,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.042203
+US_to_DE_no_retrain,delay,0,delay_jitter,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.042203
 US_to_DE_no_retrain,delay,0,delay_jitter,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.057686
 US_to_DE_no_retrain,delay,0,delay_jitter,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.005215
 US_to_DE_no_retrain,delay,0,delay_jitter,22,scenario_mpc,1.000000,6733.706378,0.000000,0.000000,-0.005215
@@ -451,7 +451,7 @@ US_to_DE_no_retrain,delay,0,delay_jitter,33,deterministic_lp,1.000000,502.889113
 US_to_DE_no_retrain,delay,0,delay_jitter,33,robust_fixed_interval,1.000000,502.889113,0.104167,0.111109,-0.006525
 US_to_DE_no_retrain,delay,0,delay_jitter,33,cvar_interval,1.000000,502.889113,0.104167,0.111109,-0.006525
 US_to_DE_no_retrain,delay,0,delay_jitter,33,dc3s_wrapped,1.000000,525.784048,0.000000,0.000000,-0.005199
-US_to_DE_no_retrain,delay,0,delay_jitter,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.005199
+US_to_DE_no_retrain,delay,0,delay_jitter,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.005199
 US_to_DE_no_retrain,delay,0,delay_jitter,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.028553
 US_to_DE_no_retrain,delay,0,delay_jitter,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.006521
 US_to_DE_no_retrain,delay,0,delay_jitter,33,scenario_mpc,1.000000,6730.583101,0.000000,0.000000,-0.006521
@@ -459,7 +459,7 @@ US_to_DE_no_retrain,delay,high,delay_jitter,11,deterministic_lp,1.000000,502.889
 US_to_DE_no_retrain,delay,high,delay_jitter,11,robust_fixed_interval,1.000000,502.889113,0.343750,0.457860,-0.029027
 US_to_DE_no_retrain,delay,high,delay_jitter,11,cvar_interval,1.000000,502.889113,0.343750,0.457860,-0.029027
 US_to_DE_no_retrain,delay,high,delay_jitter,11,dc3s_wrapped,1.000000,529.530601,0.000000,0.000000,-0.028722
-US_to_DE_no_retrain,delay,high,delay_jitter,11,dc3s_ftit,1.000000,305.993637,0.000000,0.000000,0.293650
+US_to_DE_no_retrain,delay,high,delay_jitter,11,dc3s_ftit,1.000000,375.585267,0.000000,0.000000,0.293650
 US_to_DE_no_retrain,delay,high,delay_jitter,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.008984
 US_to_DE_no_retrain,delay,high,delay_jitter,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.029011
 US_to_DE_no_retrain,delay,high,delay_jitter,11,scenario_mpc,1.000000,6728.854393,0.000000,0.000000,-0.029011
@@ -467,7 +467,7 @@ US_to_DE_no_retrain,delay,high,delay_jitter,22,deterministic_lp,1.000000,502.889
 US_to_DE_no_retrain,delay,high,delay_jitter,22,robust_fixed_interval,1.000000,502.889113,0.343750,0.391739,-0.008014
 US_to_DE_no_retrain,delay,high,delay_jitter,22,cvar_interval,1.000000,502.889113,0.343750,0.391739,-0.008014
 US_to_DE_no_retrain,delay,high,delay_jitter,22,dc3s_wrapped,1.000000,529.055305,0.000000,0.000000,0.002935
-US_to_DE_no_retrain,delay,high,delay_jitter,22,dc3s_ftit,1.000000,306.041430,0.000000,0.000000,0.344303
+US_to_DE_no_retrain,delay,high,delay_jitter,22,dc3s_ftit,1.000000,375.633059,0.000000,0.000000,0.344303
 US_to_DE_no_retrain,delay,high,delay_jitter,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.054898
 US_to_DE_no_retrain,delay,high,delay_jitter,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.008000
 US_to_DE_no_retrain,delay,high,delay_jitter,22,scenario_mpc,1.000000,6733.706378,0.000000,0.000000,-0.008000
@@ -475,7 +475,7 @@ US_to_DE_no_retrain,delay,high,delay_jitter,33,deterministic_lp,1.000000,502.889
 US_to_DE_no_retrain,delay,high,delay_jitter,33,robust_fixed_interval,1.000000,502.889113,0.104167,0.448359,-0.011780
 US_to_DE_no_retrain,delay,high,delay_jitter,33,cvar_interval,1.000000,502.889113,0.104167,0.448359,-0.011780
 US_to_DE_no_retrain,delay,high,delay_jitter,33,dc3s_wrapped,1.000000,529.548354,0.000000,0.000000,-0.010447
-US_to_DE_no_retrain,delay,high,delay_jitter,33,dc3s_ftit,1.000000,305.976640,0.000000,0.000000,0.145340
+US_to_DE_no_retrain,delay,high,delay_jitter,33,dc3s_ftit,1.000000,375.568269,0.000000,0.000000,0.145340
 US_to_DE_no_retrain,delay,high,delay_jitter,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.023308
 US_to_DE_no_retrain,delay,high,delay_jitter,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.011764
 US_to_DE_no_retrain,delay,high,delay_jitter,33,scenario_mpc,1.000000,6730.583101,0.000000,0.000000,-0.011764
@@ -483,7 +483,7 @@ DE_season_shift,nominal,0.0,nominal,11,deterministic_lp,1.000000,502.889113,0.06
 DE_season_shift,nominal,0.0,nominal,11,robust_fixed_interval,1.000000,502.889113,0.156250,0.117498,-0.002678
 DE_season_shift,nominal,0.0,nominal,11,cvar_interval,1.000000,502.889113,0.156250,0.117498,-0.002678
 DE_season_shift,nominal,0.0,nominal,11,dc3s_wrapped,1.000000,525.736406,0.000000,0.000000,0.023336
-DE_season_shift,nominal,0.0,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.023336
+DE_season_shift,nominal,0.0,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.023336
 DE_season_shift,nominal,0.0,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.028439
 DE_season_shift,nominal,0.0,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.002675
 DE_season_shift,nominal,0.0,nominal,11,scenario_mpc,1.000000,8224.289033,0.000000,0.000000,-0.002675
@@ -491,7 +491,7 @@ DE_season_shift,nominal,0.0,nominal,22,deterministic_lp,1.000000,502.889113,0.05
 DE_season_shift,nominal,0.0,nominal,22,robust_fixed_interval,1.000000,502.889113,0.156250,0.068803,-0.015917
 DE_season_shift,nominal,0.0,nominal,22,cvar_interval,1.000000,502.889113,0.156250,0.068803,-0.015917
 DE_season_shift,nominal,0.0,nominal,22,dc3s_wrapped,1.000000,525.150618,0.000000,0.000000,0.018031
-DE_season_shift,nominal,0.0,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.018031
+DE_season_shift,nominal,0.0,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.018031
 DE_season_shift,nominal,0.0,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.031477
 DE_season_shift,nominal,0.0,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.015916
 DE_season_shift,nominal,0.0,nominal,22,scenario_mpc,1.000000,8230.156550,0.000000,0.000000,-0.015916
@@ -499,7 +499,7 @@ DE_season_shift,nominal,0.0,nominal,33,deterministic_lp,1.000000,502.889113,0.06
 DE_season_shift,nominal,0.0,nominal,33,robust_fixed_interval,1.000000,502.889113,0.197917,0.245451,-0.020020
 DE_season_shift,nominal,0.0,nominal,33,cvar_interval,1.000000,502.889113,0.197917,0.245451,-0.020020
 DE_season_shift,nominal,0.0,nominal,33,dc3s_wrapped,1.000000,525.237169,0.000000,0.000000,-0.020012
-DE_season_shift,nominal,0.0,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.020012
+DE_season_shift,nominal,0.0,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.020012
 DE_season_shift,nominal,0.0,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.023996
 DE_season_shift,nominal,0.0,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.020014
 DE_season_shift,nominal,0.0,nominal,33,scenario_mpc,1.000000,8226.379564,0.000000,0.000000,-0.020014
@@ -507,7 +507,7 @@ DE_season_shift,dropout,0.0,dropout,11,deterministic_lp,1.000000,502.889113,0.06
 DE_season_shift,dropout,0.0,dropout,11,robust_fixed_interval,1.000000,502.889113,0.156250,0.117498,-0.002678
 DE_season_shift,dropout,0.0,dropout,11,cvar_interval,1.000000,502.889113,0.156250,0.117498,-0.002678
 DE_season_shift,dropout,0.0,dropout,11,dc3s_wrapped,1.000000,525.736406,0.000000,0.000000,0.023336
-DE_season_shift,dropout,0.0,dropout,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.023336
+DE_season_shift,dropout,0.0,dropout,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.023336
 DE_season_shift,dropout,0.0,dropout,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.028439
 DE_season_shift,dropout,0.0,dropout,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.002675
 DE_season_shift,dropout,0.0,dropout,11,scenario_mpc,1.000000,8224.289033,0.000000,0.000000,-0.002675
@@ -515,7 +515,7 @@ DE_season_shift,dropout,0.0,dropout,22,deterministic_lp,1.000000,502.889113,0.05
 DE_season_shift,dropout,0.0,dropout,22,robust_fixed_interval,1.000000,502.889113,0.156250,0.068803,-0.015917
 DE_season_shift,dropout,0.0,dropout,22,cvar_interval,1.000000,502.889113,0.156250,0.068803,-0.015917
 DE_season_shift,dropout,0.0,dropout,22,dc3s_wrapped,1.000000,525.150618,0.000000,0.000000,0.018031
-DE_season_shift,dropout,0.0,dropout,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.018031
+DE_season_shift,dropout,0.0,dropout,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.018031
 DE_season_shift,dropout,0.0,dropout,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.031477
 DE_season_shift,dropout,0.0,dropout,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.015916
 DE_season_shift,dropout,0.0,dropout,22,scenario_mpc,1.000000,8230.156550,0.000000,0.000000,-0.015916
@@ -523,7 +523,7 @@ DE_season_shift,dropout,0.0,dropout,33,deterministic_lp,1.000000,502.889113,0.06
 DE_season_shift,dropout,0.0,dropout,33,robust_fixed_interval,1.000000,502.889113,0.197917,0.245451,-0.020020
 DE_season_shift,dropout,0.0,dropout,33,cvar_interval,1.000000,502.889113,0.197917,0.245451,-0.020020
 DE_season_shift,dropout,0.0,dropout,33,dc3s_wrapped,1.000000,525.237169,0.000000,0.000000,-0.020012
-DE_season_shift,dropout,0.0,dropout,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.020012
+DE_season_shift,dropout,0.0,dropout,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.020012
 DE_season_shift,dropout,0.0,dropout,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.023996
 DE_season_shift,dropout,0.0,dropout,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.020014
 DE_season_shift,dropout,0.0,dropout,33,scenario_mpc,1.000000,8226.379564,0.000000,0.000000,-0.020014
@@ -531,7 +531,7 @@ DE_season_shift,dropout,0.1,dropout,11,deterministic_lp,0.947917,502.889113,0.04
 DE_season_shift,dropout,0.1,dropout,11,robust_fixed_interval,0.947917,502.889113,0.020833,0.200916,-0.005963
 DE_season_shift,dropout,0.1,dropout,11,cvar_interval,0.947917,502.889113,0.020833,0.200916,-0.005963
 DE_season_shift,dropout,0.1,dropout,11,dc3s_wrapped,0.947917,524.897396,0.000000,0.000000,-0.005956
-DE_season_shift,dropout,0.1,dropout,11,dc3s_ftit,0.979167,1283.779744,0.000000,0.000000,0.023256
+DE_season_shift,dropout,0.1,dropout,11,dc3s_ftit,0.979167,1353.371373,0.000000,0.000000,0.023256
 DE_season_shift,dropout,0.1,dropout,11,aci_conformal,0.906250,100.053958,0.000000,0.000000,0.025153
 DE_season_shift,dropout,0.1,dropout,11,scenario_robust,0.958333,1875.760954,0.000000,0.000000,-0.005961
 DE_season_shift,dropout,0.1,dropout,11,scenario_mpc,1.000000,8218.510546,0.000000,0.000000,-0.005961
@@ -539,7 +539,7 @@ DE_season_shift,dropout,0.1,dropout,22,deterministic_lp,0.916667,502.889113,0.07
 DE_season_shift,dropout,0.1,dropout,22,robust_fixed_interval,0.916667,502.889113,0.156250,0.577162,-0.019831
 DE_season_shift,dropout,0.1,dropout,22,cvar_interval,0.916667,502.889113,0.156250,0.577162,-0.019831
 DE_season_shift,dropout,0.1,dropout,22,dc3s_wrapped,0.916667,524.613618,0.000000,0.000000,0.014124
-DE_season_shift,dropout,0.1,dropout,22,dc3s_ftit,0.927083,1250.562484,0.000000,0.000000,0.036703
+DE_season_shift,dropout,0.1,dropout,22,dc3s_ftit,0.927083,1320.154114,0.000000,0.000000,0.036703
 DE_season_shift,dropout,0.1,dropout,22,aci_conformal,0.906250,99.990208,0.000000,0.000000,0.027573
 DE_season_shift,dropout,0.1,dropout,22,scenario_robust,0.927083,1897.365461,0.000000,0.000000,-0.019818
 DE_season_shift,dropout,0.1,dropout,22,scenario_mpc,1.000000,8223.396507,0.000000,0.000000,-0.019818
@@ -547,7 +547,7 @@ DE_season_shift,dropout,0.1,dropout,33,deterministic_lp,0.916667,502.889113,0.05
 DE_season_shift,dropout,0.1,dropout,33,robust_fixed_interval,0.916667,502.889113,0.156250,0.111109,-0.020019
 DE_season_shift,dropout,0.1,dropout,33,cvar_interval,0.916667,502.889113,0.156250,0.111109,-0.020019
 DE_season_shift,dropout,0.1,dropout,33,dc3s_wrapped,0.927083,524.988279,0.000000,0.000000,-0.020014
-DE_season_shift,dropout,0.1,dropout,33,dc3s_ftit,0.947917,1082.377594,0.000000,0.000000,-0.008491
+DE_season_shift,dropout,0.1,dropout,33,dc3s_ftit,0.947917,1151.969223,0.000000,0.000000,-0.008491
 DE_season_shift,dropout,0.1,dropout,33,aci_conformal,0.906250,99.965625,0.000000,0.000000,0.023994
 DE_season_shift,dropout,0.1,dropout,33,scenario_robust,0.958333,1924.543156,0.000000,0.000000,-0.020017
 DE_season_shift,dropout,0.1,dropout,33,scenario_mpc,1.000000,8233.157204,0.000000,0.000000,-0.020017
@@ -555,7 +555,7 @@ DE_season_shift,dropout,0.2,dropout,11,deterministic_lp,0.822917,502.889113,0.09
 DE_season_shift,dropout,0.2,dropout,11,robust_fixed_interval,0.822917,502.889113,0.020833,0.174205,-0.002681
 DE_season_shift,dropout,0.2,dropout,11,cvar_interval,0.822917,502.889113,0.020833,0.174205,-0.002681
 DE_season_shift,dropout,0.2,dropout,11,dc3s_wrapped,0.822917,526.747169,0.000000,0.000000,-0.002676
-DE_season_shift,dropout,0.2,dropout,11,dc3s_ftit,0.875000,2077.172651,0.000000,0.000000,0.110922
+DE_season_shift,dropout,0.2,dropout,11,dc3s_ftit,0.875000,2146.764280,0.000000,0.000000,0.110922
 DE_season_shift,dropout,0.2,dropout,11,aci_conformal,0.895833,3091.622614,0.000000,0.000000,0.028453
 DE_season_shift,dropout,0.2,dropout,11,scenario_robust,0.906250,3792.122458,0.000000,0.000000,-0.002678
 DE_season_shift,dropout,0.2,dropout,11,scenario_mpc,0.979167,8223.394860,0.000000,0.000000,-0.002678
@@ -563,7 +563,7 @@ DE_season_shift,dropout,0.2,dropout,22,deterministic_lp,0.843750,502.889113,0.09
 DE_season_shift,dropout,0.2,dropout,22,robust_fixed_interval,0.843750,502.889113,0.156250,0.280036,-0.015913
 DE_season_shift,dropout,0.2,dropout,22,cvar_interval,0.843750,502.889113,0.156250,0.280036,-0.015913
 DE_season_shift,dropout,0.2,dropout,22,dc3s_wrapped,0.843750,523.823376,0.000000,0.000000,0.019291
-DE_season_shift,dropout,0.2,dropout,22,dc3s_ftit,0.885417,1756.245903,0.000000,0.000000,0.098453
+DE_season_shift,dropout,0.2,dropout,22,dc3s_ftit,0.885417,1825.837532,0.000000,0.000000,0.098453
 DE_season_shift,dropout,0.2,dropout,22,aci_conformal,0.895833,1802.489998,0.000000,0.000000,0.031486
 DE_season_shift,dropout,0.2,dropout,22,scenario_robust,0.927083,2468.445982,0.000000,0.000000,-0.015907
 DE_season_shift,dropout,0.2,dropout,22,scenario_mpc,1.000000,8222.433397,0.000000,0.000000,-0.015907
@@ -571,7 +571,7 @@ DE_season_shift,dropout,0.2,dropout,33,deterministic_lp,0.822917,502.889113,0.09
 DE_season_shift,dropout,0.2,dropout,33,robust_fixed_interval,0.822917,502.889113,0.677083,0.284597,-0.020044
 DE_season_shift,dropout,0.2,dropout,33,cvar_interval,0.822917,502.889113,0.677083,0.284597,-0.020044
 DE_season_shift,dropout,0.2,dropout,33,dc3s_wrapped,0.822917,524.391994,0.000000,0.000000,-0.016468
-DE_season_shift,dropout,0.2,dropout,33,dc3s_ftit,0.927083,1993.745127,0.000000,0.000000,0.034408
+DE_season_shift,dropout,0.2,dropout,33,dc3s_ftit,0.927083,2063.336756,0.000000,0.000000,0.034408
 DE_season_shift,dropout,0.2,dropout,33,aci_conformal,0.895833,1562.429931,0.000000,0.000000,0.023973
 DE_season_shift,dropout,0.2,dropout,33,scenario_robust,0.916667,2903.920162,0.000000,0.000000,-0.020037
 DE_season_shift,dropout,0.2,dropout,33,scenario_mpc,0.989583,8229.931779,0.000000,0.000000,-0.020037
@@ -579,7 +579,7 @@ DE_season_shift,dropout,0.3,dropout,11,deterministic_lp,0.708333,502.889113,0.06
 DE_season_shift,dropout,0.3,dropout,11,robust_fixed_interval,0.708333,502.889113,0.145833,0.174515,-0.002676
 DE_season_shift,dropout,0.3,dropout,11,cvar_interval,0.708333,502.889113,0.145833,0.174515,-0.002676
 DE_season_shift,dropout,0.3,dropout,11,dc3s_wrapped,0.708333,525.877761,0.000000,0.000000,-0.002669
-DE_season_shift,dropout,0.3,dropout,11,dc3s_ftit,0.822917,3310.799483,0.000000,0.000000,0.166843
+DE_season_shift,dropout,0.3,dropout,11,dc3s_ftit,0.833333,3380.391112,0.000000,0.000000,0.166843
 DE_season_shift,dropout,0.3,dropout,11,aci_conformal,0.895833,4215.176683,0.000000,0.000000,0.028441
 DE_season_shift,dropout,0.3,dropout,11,scenario_robust,0.916667,5669.938582,0.000000,0.000000,-0.002674
 DE_season_shift,dropout,0.3,dropout,11,scenario_mpc,0.958333,8223.641511,0.000000,0.000000,-0.002674
@@ -587,7 +587,7 @@ DE_season_shift,dropout,0.3,dropout,22,deterministic_lp,0.708333,502.889113,0.05
 DE_season_shift,dropout,0.3,dropout,22,robust_fixed_interval,0.708333,502.889113,0.156250,0.160125,-0.019806
 DE_season_shift,dropout,0.3,dropout,22,cvar_interval,0.708333,502.889113,0.156250,0.160125,-0.019806
 DE_season_shift,dropout,0.3,dropout,22,dc3s_wrapped,0.708333,524.519196,0.000000,0.000000,0.014145
-DE_season_shift,dropout,0.3,dropout,22,dc3s_ftit,0.843750,2186.776193,0.000000,0.000000,0.139862
+DE_season_shift,dropout,0.3,dropout,22,dc3s_ftit,0.843750,2256.367822,0.000000,0.000000,0.139862
 DE_season_shift,dropout,0.3,dropout,22,aci_conformal,0.895833,3259.289862,0.000000,0.000000,0.027593
 DE_season_shift,dropout,0.3,dropout,22,scenario_robust,0.895833,3477.211051,0.000000,0.000000,-0.019798
 DE_season_shift,dropout,0.3,dropout,22,scenario_mpc,1.000000,8216.240306,0.000000,0.000000,-0.019798
@@ -595,7 +595,7 @@ DE_season_shift,dropout,0.3,dropout,33,deterministic_lp,0.729167,502.889113,0.11
 DE_season_shift,dropout,0.3,dropout,33,robust_fixed_interval,0.729167,502.889113,0.677083,0.571979,-0.020039
 DE_season_shift,dropout,0.3,dropout,33,cvar_interval,0.729167,502.889113,0.677083,0.571979,-0.020039
 DE_season_shift,dropout,0.3,dropout,33,dc3s_wrapped,0.739583,525.024979,0.000000,0.000000,0.116367
-DE_season_shift,dropout,0.3,dropout,33,dc3s_ftit,0.812500,3135.374456,0.000000,0.000000,0.073443
+DE_season_shift,dropout,0.3,dropout,33,dc3s_ftit,0.812500,3204.966085,0.000000,0.000000,0.073443
 DE_season_shift,dropout,0.3,dropout,33,aci_conformal,0.895833,4252.679245,0.000000,0.000000,0.024099
 DE_season_shift,dropout,0.3,dropout,33,scenario_robust,0.927083,5159.858686,0.000000,0.000000,-0.020025
 DE_season_shift,dropout,0.3,dropout,33,scenario_mpc,0.979167,8215.701451,0.000000,0.000000,-0.020025
@@ -603,7 +603,7 @@ DE_season_shift,stale,0.0,nominal,11,deterministic_lp,1.000000,502.889113,0.0625
 DE_season_shift,stale,0.0,nominal,11,robust_fixed_interval,1.000000,502.889113,0.156250,0.117498,-0.002678
 DE_season_shift,stale,0.0,nominal,11,cvar_interval,1.000000,502.889113,0.156250,0.117498,-0.002678
 DE_season_shift,stale,0.0,nominal,11,dc3s_wrapped,1.000000,525.736406,0.000000,0.000000,0.023336
-DE_season_shift,stale,0.0,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.023336
+DE_season_shift,stale,0.0,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.023336
 DE_season_shift,stale,0.0,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.028439
 DE_season_shift,stale,0.0,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.002675
 DE_season_shift,stale,0.0,nominal,11,scenario_mpc,1.000000,8224.289033,0.000000,0.000000,-0.002675
@@ -611,7 +611,7 @@ DE_season_shift,stale,0.0,nominal,22,deterministic_lp,1.000000,502.889113,0.0520
 DE_season_shift,stale,0.0,nominal,22,robust_fixed_interval,1.000000,502.889113,0.156250,0.068803,-0.015917
 DE_season_shift,stale,0.0,nominal,22,cvar_interval,1.000000,502.889113,0.156250,0.068803,-0.015917
 DE_season_shift,stale,0.0,nominal,22,dc3s_wrapped,1.000000,525.150618,0.000000,0.000000,0.018031
-DE_season_shift,stale,0.0,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.018031
+DE_season_shift,stale,0.0,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.018031
 DE_season_shift,stale,0.0,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.031477
 DE_season_shift,stale,0.0,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.015916
 DE_season_shift,stale,0.0,nominal,22,scenario_mpc,1.000000,8230.156550,0.000000,0.000000,-0.015916
@@ -619,7 +619,7 @@ DE_season_shift,stale,0.0,nominal,33,deterministic_lp,1.000000,502.889113,0.0625
 DE_season_shift,stale,0.0,nominal,33,robust_fixed_interval,1.000000,502.889113,0.197917,0.245451,-0.020020
 DE_season_shift,stale,0.0,nominal,33,cvar_interval,1.000000,502.889113,0.197917,0.245451,-0.020020
 DE_season_shift,stale,0.0,nominal,33,dc3s_wrapped,1.000000,525.237169,0.000000,0.000000,-0.020012
-DE_season_shift,stale,0.0,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.020012
+DE_season_shift,stale,0.0,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.020012
 DE_season_shift,stale,0.0,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.023996
 DE_season_shift,stale,0.0,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.020014
 DE_season_shift,stale,0.0,nominal,33,scenario_mpc,1.000000,8226.379564,0.000000,0.000000,-0.020014
@@ -627,7 +627,7 @@ DE_season_shift,stale,0.1,nominal,11,deterministic_lp,1.000000,502.889113,0.0312
 DE_season_shift,stale,0.1,nominal,11,robust_fixed_interval,1.000000,502.889113,0.000000,0.000000,-0.005956
 DE_season_shift,stale,0.1,nominal,11,cvar_interval,1.000000,502.889113,0.000000,0.000000,-0.005956
 DE_season_shift,stale,0.1,nominal,11,dc3s_wrapped,1.000000,525.736406,0.000000,0.000000,-0.005956
-DE_season_shift,stale,0.1,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.005956
+DE_season_shift,stale,0.1,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.005956
 DE_season_shift,stale,0.1,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.025156
 DE_season_shift,stale,0.1,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.005958
 DE_season_shift,stale,0.1,nominal,11,scenario_mpc,1.000000,8224.289033,0.000000,0.000000,-0.005958
@@ -635,7 +635,7 @@ DE_season_shift,stale,0.1,nominal,22,deterministic_lp,1.000000,502.889113,0.0729
 DE_season_shift,stale,0.1,nominal,22,robust_fixed_interval,1.000000,502.889113,0.156250,0.063461,-0.015901
 DE_season_shift,stale,0.1,nominal,22,cvar_interval,1.000000,502.889113,0.156250,0.063461,-0.015901
 DE_season_shift,stale,0.1,nominal,22,dc3s_wrapped,1.000000,525.150618,0.000000,0.000000,0.018049
-DE_season_shift,stale,0.1,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.018049
+DE_season_shift,stale,0.1,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.018049
 DE_season_shift,stale,0.1,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.031494
 DE_season_shift,stale,0.1,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.015899
 DE_season_shift,stale,0.1,nominal,22,scenario_mpc,1.000000,8230.156550,0.000000,0.000000,-0.015899
@@ -643,7 +643,7 @@ DE_season_shift,stale,0.1,nominal,33,deterministic_lp,1.000000,502.889113,0.1458
 DE_season_shift,stale,0.1,nominal,33,robust_fixed_interval,1.000000,502.889113,0.156250,0.313155,-0.020028
 DE_season_shift,stale,0.1,nominal,33,cvar_interval,1.000000,502.889113,0.156250,0.313155,-0.020028
 DE_season_shift,stale,0.1,nominal,33,dc3s_wrapped,1.000000,525.237169,0.000000,0.000000,-0.020019
-DE_season_shift,stale,0.1,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.020019
+DE_season_shift,stale,0.1,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.020019
 DE_season_shift,stale,0.1,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.023990
 DE_season_shift,stale,0.1,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.020020
 DE_season_shift,stale,0.1,nominal,33,scenario_mpc,1.000000,8226.379564,0.000000,0.000000,-0.020020
@@ -651,7 +651,7 @@ DE_season_shift,stale,0.2,nominal,11,deterministic_lp,1.000000,502.889113,0.0312
 DE_season_shift,stale,0.2,nominal,11,robust_fixed_interval,1.000000,502.889113,0.156250,0.423239,-0.002688
 DE_season_shift,stale,0.2,nominal,11,cvar_interval,1.000000,502.889113,0.156250,0.423239,-0.002688
 DE_season_shift,stale,0.2,nominal,11,dc3s_wrapped,1.000000,525.736406,0.000000,0.000000,0.025408
-DE_season_shift,stale,0.2,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.025408
+DE_season_shift,stale,0.2,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.025408
 DE_season_shift,stale,0.2,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.028437
 DE_season_shift,stale,0.2,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.002678
 DE_season_shift,stale,0.2,nominal,11,scenario_mpc,1.000000,8224.289033,0.000000,0.000000,-0.002678
@@ -659,7 +659,7 @@ DE_season_shift,stale,0.2,nominal,22,deterministic_lp,1.000000,502.889113,0.0625
 DE_season_shift,stale,0.2,nominal,22,robust_fixed_interval,1.000000,502.889113,0.062500,0.207390,-0.015907
 DE_season_shift,stale,0.2,nominal,22,cvar_interval,1.000000,502.889113,0.062500,0.207390,-0.015907
 DE_season_shift,stale,0.2,nominal,22,dc3s_wrapped,1.000000,525.150618,0.000000,0.000000,-0.015901
-DE_season_shift,stale,0.2,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.015901
+DE_season_shift,stale,0.2,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.015901
 DE_season_shift,stale,0.2,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.031489
 DE_season_shift,stale,0.2,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.015904
 DE_season_shift,stale,0.2,nominal,22,scenario_mpc,1.000000,8230.156550,0.000000,0.000000,-0.015904
@@ -667,7 +667,7 @@ DE_season_shift,stale,0.2,nominal,33,deterministic_lp,1.000000,502.889113,0.0520
 DE_season_shift,stale,0.2,nominal,33,robust_fixed_interval,1.000000,502.889113,0.020833,0.355149,-0.023683
 DE_season_shift,stale,0.2,nominal,33,cvar_interval,1.000000,502.889113,0.020833,0.355149,-0.023683
 DE_season_shift,stale,0.2,nominal,33,dc3s_wrapped,1.000000,525.237169,0.000000,0.000000,-0.023675
-DE_season_shift,stale,0.2,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.023675
+DE_season_shift,stale,0.2,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.023675
 DE_season_shift,stale,0.2,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.020332
 DE_season_shift,stale,0.2,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.023677
 DE_season_shift,stale,0.2,nominal,33,scenario_mpc,1.000000,8226.379564,0.000000,0.000000,-0.023677
@@ -675,7 +675,7 @@ DE_season_shift,delay,0,delay_jitter,11,deterministic_lp,1.000000,502.889113,0.0
 DE_season_shift,delay,0,delay_jitter,11,robust_fixed_interval,1.000000,502.889113,0.156250,0.117498,-0.002678
 DE_season_shift,delay,0,delay_jitter,11,cvar_interval,1.000000,502.889113,0.156250,0.117498,-0.002678
 DE_season_shift,delay,0,delay_jitter,11,dc3s_wrapped,1.000000,525.736406,0.000000,0.000000,0.023336
-DE_season_shift,delay,0,delay_jitter,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.023336
+DE_season_shift,delay,0,delay_jitter,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.023336
 DE_season_shift,delay,0,delay_jitter,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.028439
 DE_season_shift,delay,0,delay_jitter,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.002675
 DE_season_shift,delay,0,delay_jitter,11,scenario_mpc,1.000000,8224.289033,0.000000,0.000000,-0.002675
@@ -683,7 +683,7 @@ DE_season_shift,delay,0,delay_jitter,22,deterministic_lp,1.000000,502.889113,0.0
 DE_season_shift,delay,0,delay_jitter,22,robust_fixed_interval,1.000000,502.889113,0.156250,0.068803,-0.015917
 DE_season_shift,delay,0,delay_jitter,22,cvar_interval,1.000000,502.889113,0.156250,0.068803,-0.015917
 DE_season_shift,delay,0,delay_jitter,22,dc3s_wrapped,1.000000,525.150618,0.000000,0.000000,0.018031
-DE_season_shift,delay,0,delay_jitter,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.018031
+DE_season_shift,delay,0,delay_jitter,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.018031
 DE_season_shift,delay,0,delay_jitter,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.031477
 DE_season_shift,delay,0,delay_jitter,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.015916
 DE_season_shift,delay,0,delay_jitter,22,scenario_mpc,1.000000,8230.156550,0.000000,0.000000,-0.015916
@@ -691,7 +691,7 @@ DE_season_shift,delay,0,delay_jitter,33,deterministic_lp,1.000000,502.889113,0.0
 DE_season_shift,delay,0,delay_jitter,33,robust_fixed_interval,1.000000,502.889113,0.197917,0.245451,-0.020020
 DE_season_shift,delay,0,delay_jitter,33,cvar_interval,1.000000,502.889113,0.197917,0.245451,-0.020020
 DE_season_shift,delay,0,delay_jitter,33,dc3s_wrapped,1.000000,525.237169,0.000000,0.000000,-0.020012
-DE_season_shift,delay,0,delay_jitter,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.020012
+DE_season_shift,delay,0,delay_jitter,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.020012
 DE_season_shift,delay,0,delay_jitter,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.023996
 DE_season_shift,delay,0,delay_jitter,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.020014
 DE_season_shift,delay,0,delay_jitter,33,scenario_mpc,1.000000,8226.379564,0.000000,0.000000,-0.020014
@@ -699,7 +699,7 @@ DE_season_shift,delay,high,delay_jitter,11,deterministic_lp,1.000000,502.889113,
 DE_season_shift,delay,high,delay_jitter,11,robust_fixed_interval,1.000000,502.889113,0.156250,0.111412,-0.006476
 DE_season_shift,delay,high,delay_jitter,11,cvar_interval,1.000000,502.889113,0.156250,0.111412,-0.006476
 DE_season_shift,delay,high,delay_jitter,11,dc3s_wrapped,1.000000,529.490914,0.000000,0.000000,0.019531
-DE_season_shift,delay,high,delay_jitter,11,dc3s_ftit,1.000000,305.993637,0.000000,0.000000,0.243431
+DE_season_shift,delay,high,delay_jitter,11,dc3s_ftit,1.000000,375.585267,0.000000,0.000000,0.243431
 DE_season_shift,delay,high,delay_jitter,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.024640
 DE_season_shift,delay,high,delay_jitter,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.006474
 DE_season_shift,delay,high,delay_jitter,11,scenario_mpc,1.000000,8224.289033,0.000000,0.000000,-0.006474
@@ -707,7 +707,7 @@ DE_season_shift,delay,high,delay_jitter,22,deterministic_lp,1.000000,502.889113,
 DE_season_shift,delay,high,delay_jitter,22,robust_fixed_interval,1.000000,502.889113,0.041667,0.089364,-0.015906
 DE_season_shift,delay,high,delay_jitter,22,cvar_interval,1.000000,502.889113,0.041667,0.089364,-0.015906
 DE_season_shift,delay,high,delay_jitter,22,dc3s_wrapped,1.000000,529.117813,0.000000,0.000000,-0.015902
-DE_season_shift,delay,high,delay_jitter,22,dc3s_ftit,1.000000,306.041430,0.000000,0.000000,0.238192
+DE_season_shift,delay,high,delay_jitter,22,dc3s_ftit,1.000000,375.633059,0.000000,0.000000,0.238192
 DE_season_shift,delay,high,delay_jitter,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.031488
 DE_season_shift,delay,high,delay_jitter,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.015905
 DE_season_shift,delay,high,delay_jitter,22,scenario_mpc,1.000000,8230.156550,0.000000,0.000000,-0.015905
@@ -715,7 +715,7 @@ DE_season_shift,delay,high,delay_jitter,33,deterministic_lp,1.000000,502.889113,
 DE_season_shift,delay,high,delay_jitter,33,robust_fixed_interval,1.000000,502.889113,0.187500,0.083433,-0.033975
 DE_season_shift,delay,high,delay_jitter,33,cvar_interval,1.000000,502.889113,0.187500,0.083433,-0.033975
 DE_season_shift,delay,high,delay_jitter,33,dc3s_wrapped,1.000000,529.005375,0.000000,0.000000,-0.033972
-DE_season_shift,delay,high,delay_jitter,33,dc3s_ftit,1.000000,305.976640,0.000000,0.000000,0.102412
+DE_season_shift,delay,high,delay_jitter,33,dc3s_ftit,1.000000,375.568269,0.000000,0.000000,0.102412
 DE_season_shift,delay,high,delay_jitter,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.010032
 DE_season_shift,delay,high,delay_jitter,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.033973
 DE_season_shift,delay,high,delay_jitter,33,scenario_mpc,1.000000,8226.379564,0.000000,0.000000,-0.033973
@@ -723,7 +723,7 @@ US_season_shift,nominal,0.0,nominal,11,deterministic_lp,1.000000,502.889113,0.09
 US_season_shift,nominal,0.0,nominal,11,robust_fixed_interval,1.000000,502.889113,0.406250,0.206399,-0.019014
 US_season_shift,nominal,0.0,nominal,11,cvar_interval,1.000000,502.889113,0.406250,0.206399,-0.019014
 US_season_shift,nominal,0.0,nominal,11,dc3s_wrapped,1.000000,525.712185,0.000000,0.000000,0.010135
-US_season_shift,nominal,0.0,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.010135
+US_season_shift,nominal,0.0,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.010135
 US_season_shift,nominal,0.0,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.011426
 US_season_shift,nominal,0.0,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.019008
 US_season_shift,nominal,0.0,nominal,11,scenario_mpc,1.000000,7749.810820,0.000000,0.000000,-0.019008
@@ -731,7 +731,7 @@ US_season_shift,nominal,0.0,nominal,22,deterministic_lp,1.000000,502.889113,0.06
 US_season_shift,nominal,0.0,nominal,22,robust_fixed_interval,1.000000,502.889113,0.406250,0.111392,-0.004186
 US_season_shift,nominal,0.0,nominal,22,cvar_interval,1.000000,502.889113,0.406250,0.111392,-0.004186
 US_season_shift,nominal,0.0,nominal,22,dc3s_wrapped,1.000000,525.186574,0.000000,0.000000,0.001740
-US_season_shift,nominal,0.0,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.001740
+US_season_shift,nominal,0.0,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.001740
 US_season_shift,nominal,0.0,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.046256
 US_season_shift,nominal,0.0,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.004183
 US_season_shift,nominal,0.0,nominal,22,scenario_mpc,1.000000,7755.339826,0.000000,0.000000,-0.004183
@@ -739,7 +739,7 @@ US_season_shift,nominal,0.0,nominal,33,deterministic_lp,1.000000,502.889113,0.08
 US_season_shift,nominal,0.0,nominal,33,robust_fixed_interval,1.000000,502.889113,0.052083,0.046404,-0.005231
 US_season_shift,nominal,0.0,nominal,33,cvar_interval,1.000000,502.889113,0.052083,0.046404,-0.005231
 US_season_shift,nominal,0.0,nominal,33,dc3s_wrapped,1.000000,525.648886,0.000000,0.000000,-0.005226
-US_season_shift,nominal,0.0,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.005226
+US_season_shift,nominal,0.0,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.005226
 US_season_shift,nominal,0.0,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.025178
 US_season_shift,nominal,0.0,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.005231
 US_season_shift,nominal,0.0,nominal,33,scenario_mpc,1.000000,7751.780743,0.000000,0.000000,-0.005231
@@ -747,7 +747,7 @@ US_season_shift,dropout,0.0,dropout,11,deterministic_lp,1.000000,502.889113,0.09
 US_season_shift,dropout,0.0,dropout,11,robust_fixed_interval,1.000000,502.889113,0.406250,0.206399,-0.019014
 US_season_shift,dropout,0.0,dropout,11,cvar_interval,1.000000,502.889113,0.406250,0.206399,-0.019014
 US_season_shift,dropout,0.0,dropout,11,dc3s_wrapped,1.000000,525.712185,0.000000,0.000000,0.010135
-US_season_shift,dropout,0.0,dropout,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.010135
+US_season_shift,dropout,0.0,dropout,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.010135
 US_season_shift,dropout,0.0,dropout,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.011426
 US_season_shift,dropout,0.0,dropout,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.019008
 US_season_shift,dropout,0.0,dropout,11,scenario_mpc,1.000000,7749.810820,0.000000,0.000000,-0.019008
@@ -755,7 +755,7 @@ US_season_shift,dropout,0.0,dropout,22,deterministic_lp,1.000000,502.889113,0.06
 US_season_shift,dropout,0.0,dropout,22,robust_fixed_interval,1.000000,502.889113,0.406250,0.111392,-0.004186
 US_season_shift,dropout,0.0,dropout,22,cvar_interval,1.000000,502.889113,0.406250,0.111392,-0.004186
 US_season_shift,dropout,0.0,dropout,22,dc3s_wrapped,1.000000,525.186574,0.000000,0.000000,0.001740
-US_season_shift,dropout,0.0,dropout,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.001740
+US_season_shift,dropout,0.0,dropout,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.001740
 US_season_shift,dropout,0.0,dropout,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.046256
 US_season_shift,dropout,0.0,dropout,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.004183
 US_season_shift,dropout,0.0,dropout,22,scenario_mpc,1.000000,7755.339826,0.000000,0.000000,-0.004183
@@ -763,7 +763,7 @@ US_season_shift,dropout,0.0,dropout,33,deterministic_lp,1.000000,502.889113,0.08
 US_season_shift,dropout,0.0,dropout,33,robust_fixed_interval,1.000000,502.889113,0.052083,0.046404,-0.005231
 US_season_shift,dropout,0.0,dropout,33,cvar_interval,1.000000,502.889113,0.052083,0.046404,-0.005231
 US_season_shift,dropout,0.0,dropout,33,dc3s_wrapped,1.000000,525.648886,0.000000,0.000000,-0.005226
-US_season_shift,dropout,0.0,dropout,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.005226
+US_season_shift,dropout,0.0,dropout,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.005226
 US_season_shift,dropout,0.0,dropout,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.025178
 US_season_shift,dropout,0.0,dropout,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.005231
 US_season_shift,dropout,0.0,dropout,33,scenario_mpc,1.000000,7751.780743,0.000000,0.000000,-0.005231
@@ -771,7 +771,7 @@ US_season_shift,dropout,0.1,dropout,11,deterministic_lp,0.947917,502.889113,0.08
 US_season_shift,dropout,0.1,dropout,11,robust_fixed_interval,0.947917,502.889113,0.406250,0.431397,-0.021147
 US_season_shift,dropout,0.1,dropout,11,cvar_interval,0.947917,502.889113,0.406250,0.431397,-0.021147
 US_season_shift,dropout,0.1,dropout,11,dc3s_wrapped,0.947917,525.584123,0.000000,0.000000,-0.017668
-US_season_shift,dropout,0.1,dropout,11,dc3s_ftit,0.958333,990.683200,0.000000,0.000000,0.011998
+US_season_shift,dropout,0.1,dropout,11,dc3s_ftit,0.958333,1060.274829,0.000000,0.000000,0.011998
 US_season_shift,dropout,0.1,dropout,11,aci_conformal,0.906250,99.978958,0.000000,0.000000,0.009299
 US_season_shift,dropout,0.1,dropout,11,scenario_robust,0.979167,1629.120370,0.000000,0.000000,-0.021135
 US_season_shift,dropout,0.1,dropout,11,scenario_mpc,1.000000,7758.391005,0.000000,0.000000,-0.021135
@@ -779,7 +779,7 @@ US_season_shift,dropout,0.1,dropout,22,deterministic_lp,0.916667,502.889113,0.10
 US_season_shift,dropout,0.1,dropout,22,robust_fixed_interval,0.916667,502.889113,0.406250,0.362096,-0.004211
 US_season_shift,dropout,0.1,dropout,22,cvar_interval,0.916667,502.889113,0.406250,0.362096,-0.004211
 US_season_shift,dropout,0.1,dropout,22,dc3s_wrapped,0.916667,524.649573,0.000000,0.000000,0.040907
-US_season_shift,dropout,0.1,dropout,22,dc3s_ftit,0.927083,1271.382123,0.000000,0.000000,0.041371
+US_season_shift,dropout,0.1,dropout,22,dc3s_ftit,0.927083,1340.973752,0.000000,0.000000,0.041371
 US_season_shift,dropout,0.1,dropout,22,aci_conformal,0.906250,99.995208,0.000000,0.000000,0.046238
 US_season_shift,dropout,0.1,dropout,22,scenario_robust,0.937500,1787.902069,0.000000,0.000000,-0.004201
 US_season_shift,dropout,0.1,dropout,22,scenario_mpc,1.000000,7748.969786,0.000000,0.000000,-0.004201
@@ -787,7 +787,7 @@ US_season_shift,dropout,0.1,dropout,33,deterministic_lp,0.927083,502.889113,0.08
 US_season_shift,dropout,0.1,dropout,33,robust_fixed_interval,0.927083,502.889113,0.166667,0.130957,-0.005246
 US_season_shift,dropout,0.1,dropout,33,cvar_interval,0.927083,502.889113,0.166667,0.130957,-0.005246
 US_season_shift,dropout,0.1,dropout,33,dc3s_wrapped,0.927083,525.399996,0.000000,0.000000,0.022464
-US_season_shift,dropout,0.1,dropout,33,dc3s_ftit,0.947917,1265.589308,0.000000,0.000000,0.072080
+US_season_shift,dropout,0.1,dropout,33,dc3s_ftit,0.947917,1335.180937,0.000000,0.000000,0.072080
 US_season_shift,dropout,0.1,dropout,33,aci_conformal,0.906250,100.010625,0.000000,0.000000,0.025166
 US_season_shift,dropout,0.1,dropout,33,scenario_robust,0.958333,1813.511820,0.000000,0.000000,-0.005243
 US_season_shift,dropout,0.1,dropout,33,scenario_mpc,1.000000,7758.167365,0.000000,0.000000,-0.005243
@@ -795,7 +795,7 @@ US_season_shift,dropout,0.2,dropout,11,deterministic_lp,0.822917,502.889113,0.09
 US_season_shift,dropout,0.2,dropout,11,robust_fixed_interval,0.822917,502.889113,0.187500,0.272948,-0.030971
 US_season_shift,dropout,0.2,dropout,11,cvar_interval,0.822917,502.889113,0.187500,0.272948,-0.030971
 US_season_shift,dropout,0.2,dropout,11,dc3s_wrapped,0.822917,526.436670,0.000000,0.000000,-0.030962
-US_season_shift,dropout,0.2,dropout,11,dc3s_ftit,0.854167,2198.205455,0.000000,0.000000,0.092929
+US_season_shift,dropout,0.2,dropout,11,dc3s_ftit,0.854167,2267.797085,0.000000,0.000000,0.092929
 US_season_shift,dropout,0.2,dropout,11,aci_conformal,0.895833,3101.161588,0.000000,0.000000,-0.000500
 US_season_shift,dropout,0.2,dropout,11,scenario_robust,0.916667,3630.902053,0.000000,0.000000,-0.030964
 US_season_shift,dropout,0.2,dropout,11,scenario_mpc,0.979167,7745.109920,0.000000,0.000000,-0.030964
@@ -803,7 +803,7 @@ US_season_shift,dropout,0.2,dropout,22,deterministic_lp,0.843750,502.889113,0.08
 US_season_shift,dropout,0.2,dropout,22,robust_fixed_interval,0.843750,502.889113,0.406250,0.157529,-0.004180
 US_season_shift,dropout,0.2,dropout,22,cvar_interval,0.843750,502.889113,0.406250,0.157529,-0.004180
 US_season_shift,dropout,0.2,dropout,22,dc3s_wrapped,0.843750,523.941013,0.000000,0.000000,0.033846
-US_season_shift,dropout,0.2,dropout,22,dc3s_ftit,0.885417,1436.552554,0.000000,0.000000,0.116246
+US_season_shift,dropout,0.2,dropout,22,dc3s_ftit,0.885417,1506.144183,0.000000,0.000000,0.116246
 US_season_shift,dropout,0.2,dropout,22,aci_conformal,0.895833,1507.028023,0.000000,0.000000,0.046263
 US_season_shift,dropout,0.2,dropout,22,scenario_robust,0.906250,2209.125564,0.000000,0.000000,-0.004176
 US_season_shift,dropout,0.2,dropout,22,scenario_mpc,1.000000,7750.007189,0.000000,0.000000,-0.004176
@@ -811,7 +811,7 @@ US_season_shift,dropout,0.2,dropout,33,deterministic_lp,0.833333,502.889113,0.09
 US_season_shift,dropout,0.2,dropout,33,robust_fixed_interval,0.833333,502.889113,0.166667,0.285527,-0.005307
 US_season_shift,dropout,0.2,dropout,33,cvar_interval,0.833333,502.889113,0.166667,0.285527,-0.005307
 US_season_shift,dropout,0.2,dropout,33,dc3s_wrapped,0.843750,524.837109,0.000000,0.000000,-0.004238
-US_season_shift,dropout,0.2,dropout,33,dc3s_ftit,0.885417,1539.640496,0.000000,0.000000,0.120720
+US_season_shift,dropout,0.2,dropout,33,dc3s_ftit,0.885417,1609.232125,0.000000,0.000000,0.120720
 US_season_shift,dropout,0.2,dropout,33,aci_conformal,0.895833,1472.300199,0.000000,0.000000,0.025109
 US_season_shift,dropout,0.2,dropout,33,scenario_robust,0.958333,2736.386306,0.000000,0.000000,-0.005300
 US_season_shift,dropout,0.2,dropout,33,scenario_mpc,0.989583,7755.128022,0.000000,0.000000,-0.005300
@@ -819,7 +819,7 @@ US_season_shift,dropout,0.3,dropout,11,deterministic_lp,0.708333,502.889113,0.07
 US_season_shift,dropout,0.3,dropout,11,robust_fixed_interval,0.708333,502.889113,0.406250,0.022417,-0.021102
 US_season_shift,dropout,0.3,dropout,11,cvar_interval,0.708333,502.889113,0.406250,0.022417,-0.021102
 US_season_shift,dropout,0.3,dropout,11,dc3s_wrapped,0.708333,526.341316,0.000000,0.000000,-0.020865
-US_season_shift,dropout,0.3,dropout,11,dc3s_ftit,0.802083,3027.446014,0.000000,0.000000,0.165931
+US_season_shift,dropout,0.3,dropout,11,dc3s_ftit,0.802083,3097.037643,0.000000,0.000000,0.165931
 US_season_shift,dropout,0.3,dropout,11,aci_conformal,0.895833,3971.982940,0.000000,0.000000,0.009336
 US_season_shift,dropout,0.3,dropout,11,scenario_robust,0.906250,5289.860834,0.000000,0.000000,-0.021099
 US_season_shift,dropout,0.3,dropout,11,scenario_mpc,0.958333,7763.225953,0.000000,0.000000,-0.021099
@@ -827,7 +827,7 @@ US_season_shift,dropout,0.3,dropout,22,deterministic_lp,0.708333,502.889113,0.11
 US_season_shift,dropout,0.3,dropout,22,robust_fixed_interval,0.708333,502.889113,0.406250,0.205056,-0.004455
 US_season_shift,dropout,0.3,dropout,22,cvar_interval,0.708333,502.889113,0.406250,0.205056,-0.004455
 US_season_shift,dropout,0.3,dropout,22,dc3s_wrapped,0.708333,524.194311,0.000000,0.000000,0.001478
-US_season_shift,dropout,0.3,dropout,22,dc3s_ftit,0.833333,2101.746109,0.000000,0.000000,0.150441
+US_season_shift,dropout,0.3,dropout,22,dc3s_ftit,0.843750,2171.337738,0.000000,0.000000,0.150441
 US_season_shift,dropout,0.3,dropout,22,aci_conformal,0.895833,3180.431503,0.000000,0.000000,0.045994
 US_season_shift,dropout,0.3,dropout,22,scenario_robust,0.927083,3343.981340,0.000000,0.000000,-0.004446
 US_season_shift,dropout,0.3,dropout,22,scenario_mpc,1.000000,7738.160409,0.000000,0.000000,-0.004446
@@ -835,7 +835,7 @@ US_season_shift,dropout,0.3,dropout,33,deterministic_lp,0.739583,502.889113,0.12
 US_season_shift,dropout,0.3,dropout,33,robust_fixed_interval,0.739583,502.889113,0.156250,0.417771,-0.013319
 US_season_shift,dropout,0.3,dropout,33,cvar_interval,0.739583,502.889113,0.156250,0.417771,-0.013319
 US_season_shift,dropout,0.3,dropout,33,dc3s_wrapped,0.739583,525.436696,0.000000,0.000000,-0.013306
-US_season_shift,dropout,0.3,dropout,33,dc3s_ftit,0.822917,2920.371678,0.000000,0.000000,0.112702
+US_season_shift,dropout,0.3,dropout,33,dc3s_ftit,0.822917,2989.963308,0.000000,0.000000,0.112702
 US_season_shift,dropout,0.3,dropout,33,aci_conformal,0.895833,4007.361379,0.000000,0.000000,0.020001
 US_season_shift,dropout,0.3,dropout,33,scenario_robust,0.885417,4862.174531,0.000000,0.000000,-0.013308
 US_season_shift,dropout,0.3,dropout,33,scenario_mpc,0.979167,7741.718675,0.000000,0.000000,-0.013308
@@ -843,7 +843,7 @@ US_season_shift,stale,0.0,nominal,11,deterministic_lp,1.000000,502.889113,0.0937
 US_season_shift,stale,0.0,nominal,11,robust_fixed_interval,1.000000,502.889113,0.406250,0.206399,-0.019014
 US_season_shift,stale,0.0,nominal,11,cvar_interval,1.000000,502.889113,0.406250,0.206399,-0.019014
 US_season_shift,stale,0.0,nominal,11,dc3s_wrapped,1.000000,525.712185,0.000000,0.000000,0.010135
-US_season_shift,stale,0.0,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.010135
+US_season_shift,stale,0.0,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.010135
 US_season_shift,stale,0.0,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.011426
 US_season_shift,stale,0.0,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.019008
 US_season_shift,stale,0.0,nominal,11,scenario_mpc,1.000000,7749.810820,0.000000,0.000000,-0.019008
@@ -851,7 +851,7 @@ US_season_shift,stale,0.0,nominal,22,deterministic_lp,1.000000,502.889113,0.0625
 US_season_shift,stale,0.0,nominal,22,robust_fixed_interval,1.000000,502.889113,0.406250,0.111392,-0.004186
 US_season_shift,stale,0.0,nominal,22,cvar_interval,1.000000,502.889113,0.406250,0.111392,-0.004186
 US_season_shift,stale,0.0,nominal,22,dc3s_wrapped,1.000000,525.186574,0.000000,0.000000,0.001740
-US_season_shift,stale,0.0,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.001740
+US_season_shift,stale,0.0,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.001740
 US_season_shift,stale,0.0,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.046256
 US_season_shift,stale,0.0,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.004183
 US_season_shift,stale,0.0,nominal,22,scenario_mpc,1.000000,7755.339826,0.000000,0.000000,-0.004183
@@ -859,7 +859,7 @@ US_season_shift,stale,0.0,nominal,33,deterministic_lp,1.000000,502.889113,0.0833
 US_season_shift,stale,0.0,nominal,33,robust_fixed_interval,1.000000,502.889113,0.052083,0.046404,-0.005231
 US_season_shift,stale,0.0,nominal,33,cvar_interval,1.000000,502.889113,0.052083,0.046404,-0.005231
 US_season_shift,stale,0.0,nominal,33,dc3s_wrapped,1.000000,525.648886,0.000000,0.000000,-0.005226
-US_season_shift,stale,0.0,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.005226
+US_season_shift,stale,0.0,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.005226
 US_season_shift,stale,0.0,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.025178
 US_season_shift,stale,0.0,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.005231
 US_season_shift,stale,0.0,nominal,33,scenario_mpc,1.000000,7751.780743,0.000000,0.000000,-0.005231
@@ -867,7 +867,7 @@ US_season_shift,stale,0.1,nominal,11,deterministic_lp,1.000000,502.889113,0.0729
 US_season_shift,stale,0.1,nominal,11,robust_fixed_interval,1.000000,502.889113,0.406250,0.200916,-0.018752
 US_season_shift,stale,0.1,nominal,11,cvar_interval,1.000000,502.889113,0.406250,0.200916,-0.018752
 US_season_shift,stale,0.1,nominal,11,dc3s_wrapped,1.000000,525.712185,0.000000,0.000000,-0.018516
-US_season_shift,stale,0.1,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.018516
+US_season_shift,stale,0.1,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.018516
 US_season_shift,stale,0.1,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.011687
 US_season_shift,stale,0.1,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.018748
 US_season_shift,stale,0.1,nominal,11,scenario_mpc,1.000000,7749.810820,0.000000,0.000000,-0.018748
@@ -875,7 +875,7 @@ US_season_shift,stale,0.1,nominal,22,deterministic_lp,1.000000,502.889113,0.0625
 US_season_shift,stale,0.1,nominal,22,robust_fixed_interval,1.000000,502.889113,0.406250,0.113413,-0.004167
 US_season_shift,stale,0.1,nominal,22,cvar_interval,1.000000,502.889113,0.406250,0.113413,-0.004167
 US_season_shift,stale,0.1,nominal,22,dc3s_wrapped,1.000000,525.186574,0.000000,0.000000,0.001759
-US_season_shift,stale,0.1,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.001759
+US_season_shift,stale,0.1,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.001759
 US_season_shift,stale,0.1,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.046276
 US_season_shift,stale,0.1,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.004164
 US_season_shift,stale,0.1,nominal,22,scenario_mpc,1.000000,7755.339826,0.000000,0.000000,-0.004164
@@ -883,7 +883,7 @@ US_season_shift,stale,0.1,nominal,33,deterministic_lp,1.000000,502.889113,0.1250
 US_season_shift,stale,0.1,nominal,33,robust_fixed_interval,1.000000,502.889113,0.156250,0.451101,-0.005247
 US_season_shift,stale,0.1,nominal,33,cvar_interval,1.000000,502.889113,0.156250,0.451101,-0.005247
 US_season_shift,stale,0.1,nominal,33,dc3s_wrapped,1.000000,525.648886,0.000000,0.000000,-0.005234
-US_season_shift,stale,0.1,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.005234
+US_season_shift,stale,0.1,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.005234
 US_season_shift,stale,0.1,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.025174
 US_season_shift,stale,0.1,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.005236
 US_season_shift,stale,0.1,nominal,33,scenario_mpc,1.000000,7751.780743,0.000000,0.000000,-0.005236
@@ -891,7 +891,7 @@ US_season_shift,stale,0.2,nominal,11,deterministic_lp,1.000000,502.889113,0.0937
 US_season_shift,stale,0.2,nominal,11,robust_fixed_interval,1.000000,502.889113,0.406250,0.423239,-0.019183
 US_season_shift,stale,0.2,nominal,11,cvar_interval,1.000000,502.889113,0.406250,0.423239,-0.019183
 US_season_shift,stale,0.2,nominal,11,dc3s_wrapped,1.000000,525.712185,0.000000,0.000000,-0.018938
-US_season_shift,stale,0.2,nominal,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.018938
+US_season_shift,stale,0.2,nominal,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.018938
 US_season_shift,stale,0.2,nominal,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.011263
 US_season_shift,stale,0.2,nominal,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.019172
 US_season_shift,stale,0.2,nominal,11,scenario_mpc,1.000000,7749.810820,0.000000,0.000000,-0.019172
@@ -899,7 +899,7 @@ US_season_shift,stale,0.2,nominal,22,deterministic_lp,1.000000,502.889113,0.0729
 US_season_shift,stale,0.2,nominal,22,robust_fixed_interval,1.000000,502.889113,0.406250,0.014369,-0.004170
 US_season_shift,stale,0.2,nominal,22,cvar_interval,1.000000,502.889113,0.406250,0.014369,-0.004170
 US_season_shift,stale,0.2,nominal,22,dc3s_wrapped,1.000000,525.186574,0.000000,0.000000,0.001755
-US_season_shift,stale,0.2,nominal,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.001755
+US_season_shift,stale,0.2,nominal,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.001755
 US_season_shift,stale,0.2,nominal,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.046272
 US_season_shift,stale,0.2,nominal,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.004168
 US_season_shift,stale,0.2,nominal,22,scenario_mpc,1.000000,7755.339826,0.000000,0.000000,-0.004168
@@ -907,7 +907,7 @@ US_season_shift,stale,0.2,nominal,33,deterministic_lp,1.000000,502.889113,0.0625
 US_season_shift,stale,0.2,nominal,33,robust_fixed_interval,1.000000,502.889113,0.166667,0.448359,-0.005262
 US_season_shift,stale,0.2,nominal,33,cvar_interval,1.000000,502.889113,0.166667,0.448359,-0.005262
 US_season_shift,stale,0.2,nominal,33,dc3s_wrapped,1.000000,525.648886,0.000000,0.000000,-0.004194
-US_season_shift,stale,0.2,nominal,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.004194
+US_season_shift,stale,0.2,nominal,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.004194
 US_season_shift,stale,0.2,nominal,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.025160
 US_season_shift,stale,0.2,nominal,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.005250
 US_season_shift,stale,0.2,nominal,33,scenario_mpc,1.000000,7751.780743,0.000000,0.000000,-0.005250
@@ -915,7 +915,7 @@ US_season_shift,delay,0,delay_jitter,11,deterministic_lp,1.000000,502.889113,0.0
 US_season_shift,delay,0,delay_jitter,11,robust_fixed_interval,1.000000,502.889113,0.406250,0.206399,-0.019014
 US_season_shift,delay,0,delay_jitter,11,cvar_interval,1.000000,502.889113,0.406250,0.206399,-0.019014
 US_season_shift,delay,0,delay_jitter,11,dc3s_wrapped,1.000000,525.712185,0.000000,0.000000,0.010135
-US_season_shift,delay,0,delay_jitter,11,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.010135
+US_season_shift,delay,0,delay_jitter,11,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.010135
 US_season_shift,delay,0,delay_jitter,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.011426
 US_season_shift,delay,0,delay_jitter,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.019008
 US_season_shift,delay,0,delay_jitter,11,scenario_mpc,1.000000,7749.810820,0.000000,0.000000,-0.019008
@@ -923,7 +923,7 @@ US_season_shift,delay,0,delay_jitter,22,deterministic_lp,1.000000,502.889113,0.0
 US_season_shift,delay,0,delay_jitter,22,robust_fixed_interval,1.000000,502.889113,0.406250,0.111392,-0.004186
 US_season_shift,delay,0,delay_jitter,22,cvar_interval,1.000000,502.889113,0.406250,0.111392,-0.004186
 US_season_shift,delay,0,delay_jitter,22,dc3s_wrapped,1.000000,525.186574,0.000000,0.000000,0.001740
-US_season_shift,delay,0,delay_jitter,22,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,0.001740
+US_season_shift,delay,0,delay_jitter,22,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,0.001740
 US_season_shift,delay,0,delay_jitter,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.046256
 US_season_shift,delay,0,delay_jitter,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.004183
 US_season_shift,delay,0,delay_jitter,22,scenario_mpc,1.000000,7755.339826,0.000000,0.000000,-0.004183
@@ -931,7 +931,7 @@ US_season_shift,delay,0,delay_jitter,33,deterministic_lp,1.000000,502.889113,0.0
 US_season_shift,delay,0,delay_jitter,33,robust_fixed_interval,1.000000,502.889113,0.052083,0.046404,-0.005231
 US_season_shift,delay,0,delay_jitter,33,cvar_interval,1.000000,502.889113,0.052083,0.046404,-0.005231
 US_season_shift,delay,0,delay_jitter,33,dc3s_wrapped,1.000000,525.648886,0.000000,0.000000,-0.005226
-US_season_shift,delay,0,delay_jitter,33,dc3s_ftit,1.000000,305.906932,0.000000,0.000000,-0.005226
+US_season_shift,delay,0,delay_jitter,33,dc3s_ftit,1.000000,375.498561,0.000000,0.000000,-0.005226
 US_season_shift,delay,0,delay_jitter,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.025178
 US_season_shift,delay,0,delay_jitter,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.005231
 US_season_shift,delay,0,delay_jitter,33,scenario_mpc,1.000000,7751.780743,0.000000,0.000000,-0.005231
@@ -939,7 +939,7 @@ US_season_shift,delay,high,delay_jitter,11,deterministic_lp,1.000000,502.889113,
 US_season_shift,delay,high,delay_jitter,11,robust_fixed_interval,1.000000,502.889113,0.187500,0.119688,-0.016872
 US_season_shift,delay,high,delay_jitter,11,cvar_interval,1.000000,502.889113,0.187500,0.119688,-0.016872
 US_season_shift,delay,high,delay_jitter,11,dc3s_wrapped,1.000000,529.470656,0.000000,0.000000,-0.016868
-US_season_shift,delay,high,delay_jitter,11,dc3s_ftit,1.000000,305.993637,0.000000,0.000000,0.237508
+US_season_shift,delay,high,delay_jitter,11,dc3s_ftit,1.000000,375.585267,0.000000,0.000000,0.237508
 US_season_shift,delay,high,delay_jitter,11,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.013567
 US_season_shift,delay,high,delay_jitter,11,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.016869
 US_season_shift,delay,high,delay_jitter,11,scenario_mpc,1.000000,7749.810820,0.000000,0.000000,-0.016869
@@ -947,7 +947,7 @@ US_season_shift,delay,high,delay_jitter,22,deterministic_lp,1.000000,502.889113,
 US_season_shift,delay,high,delay_jitter,22,robust_fixed_interval,1.000000,502.889113,0.406250,0.592193,-0.004185
 US_season_shift,delay,high,delay_jitter,22,cvar_interval,1.000000,502.889113,0.406250,0.592193,-0.004185
 US_season_shift,delay,high,delay_jitter,22,dc3s_wrapped,1.000000,529.160666,0.000000,0.000000,0.001750
-US_season_shift,delay,high,delay_jitter,22,dc3s_ftit,1.000000,306.041430,0.000000,0.000000,0.278349
+US_season_shift,delay,high,delay_jitter,22,dc3s_ftit,1.000000,375.633059,0.000000,0.000000,0.278349
 US_season_shift,delay,high,delay_jitter,22,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.046267
 US_season_shift,delay,high,delay_jitter,22,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.004173
 US_season_shift,delay,high,delay_jitter,22,scenario_mpc,1.000000,7755.339826,0.000000,0.000000,-0.004173
@@ -955,7 +955,7 @@ US_season_shift,delay,high,delay_jitter,33,deterministic_lp,1.000000,502.889113,
 US_season_shift,delay,high,delay_jitter,33,robust_fixed_interval,1.000000,502.889113,0.166667,4565.384257,-0.130187
 US_season_shift,delay,high,delay_jitter,33,cvar_interval,1.000000,502.889113,0.166667,4565.384257,-0.130187
 US_season_shift,delay,high,delay_jitter,33,dc3s_wrapped,1.000000,529.403325,0.000000,0.000000,0.022159
-US_season_shift,delay,high,delay_jitter,33,dc3s_ftit,1.000000,305.976640,0.000000,0.000000,0.120802
+US_season_shift,delay,high,delay_jitter,33,dc3s_ftit,1.000000,375.568269,0.000000,0.000000,0.120802
 US_season_shift,delay,high,delay_jitter,33,aci_conformal,1.000000,99.905000,0.000000,0.000000,0.025192
 US_season_shift,delay,high,delay_jitter,33,scenario_robust,1.000000,0.000000,0.000000,0.000000,-0.005218
 US_season_shift,delay,high,delay_jitter,33,scenario_mpc,1.000000,7751.780743,0.000000,0.000000,-0.005218

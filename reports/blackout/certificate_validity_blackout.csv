@@ -1,0 +1,7 @@
+blackout_hours,cva,H_t_final,half_life,violations,useful_work_frac,renewal_lag_steps,tte_remaining_steps,tte_expired,reachability_coverage,first_violation_step,final_status,final_confidence
+0,1.0,4096,4096,0,1.0,0,4096,False,1.0,,valid,1.0
+1,1.0,4096,4096,0,1.0,0,4096,False,1.0,,valid,1.0
+4,1.0,4096,4096,0,1.0,0,4093,False,1.0,,valid,0.999492
+12,1.0,4096,4096,0,1.0,0,4085,False,1.0,,valid,0.99814
+24,1.0,4096,4096,0,1.0,14,4073,False,1.0,,valid,0.996115
+48,1.0,4096,4096,0,1.0,14,4049,False,1.0,,valid,0.992078

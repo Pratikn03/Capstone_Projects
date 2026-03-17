@@ -293,11 +293,11 @@
     "reasons": [
       "data_drift"
     ],
-    "last_trained_days_ago": 24
+    "last_trained_days_ago": 26
   },
   "dc3s_health": {
     "window_hours": 24,
-    "commands_total": 44,
+    "commands_total": 12,
     "intervention_rate": 1.0,
     "low_reliability_rate": 0.0,
     "drift_flag_rate": 0.0,

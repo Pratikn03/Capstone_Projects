@@ -1,0 +1,4 @@
+component,value,type
+controller_runtime,FastAPI TestClient + EdgeAgent sim,software_hil
+battery_driver,iot.edge_agent.drivers.sim.SimBatteryDriver,emulator
+fault_injection,nominal/dropout scenarios,protocol
