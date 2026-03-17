@@ -1,5 +1,5 @@
 """
-Locust Load Testing for GridPulse API
+Locust Load Testing for ORIUS API
 
 This module provides comprehensive load testing scenarios using Locust,
 allowing simulation of realistic user behavior and traffic patterns.
@@ -20,7 +20,7 @@ from locust import HttpUser, TaskSet, task, between, events, tag
 from locust.runners import MasterRunner
 
 # Configuration
-API_KEY = os.environ.get("GRIDPULSE_API_KEY", "test-api-key")
+API_KEY = os.environ.get("ORIUS_API_KEY", "test-api-key")
 
 
 # =============================================================================
@@ -279,9 +279,9 @@ class MonitoringTasks(TaskSet):
 # USER CLASSES
 # =============================================================================
 
-class GridPulseUser(HttpUser):
+class ORIUSUser(HttpUser):
     """
-    Standard GridPulse API user simulating typical operator behavior.
+    Standard ORIUS API user simulating typical operator behavior.
     
     This user performs a mix of forecasting, optimization, and monitoring
     tasks with realistic wait times between requests.
@@ -341,7 +341,7 @@ class MonitoringBot(HttpUser):
 def on_test_start(environment, **kwargs):
     """Called when load test starts."""
     print("=" * 60)
-    print("GridPulse Load Test Starting")
+    print("ORIUS Load Test Starting")
     print(f"Target Host: {environment.host}")
     print("=" * 60)
 
@@ -350,7 +350,7 @@ def on_test_start(environment, **kwargs):
 def on_test_stop(environment, **kwargs):
     """Called when load test stops."""
     print("=" * 60)
-    print("GridPulse Load Test Complete")
+    print("ORIUS Load Test Complete")
     if environment.stats.total.num_requests > 0:
         print(f"Total Requests: {environment.stats.total.num_requests}")
         print(f"Failure Rate: {environment.stats.total.fail_ratio * 100:.2f}%")

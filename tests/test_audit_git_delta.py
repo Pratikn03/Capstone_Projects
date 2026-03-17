@@ -15,7 +15,7 @@ def test_build_delta_report_scopes_and_counts(tmp_path, monkeypatch) -> None:
 publish_audit:
   scope:
     include:
-      - src/gridpulse/**
+      - src/orius/**
       - scripts/**
 """.strip(),
         encoding="utf-8",
@@ -29,9 +29,9 @@ publish_audit:
         if args == ["rev-parse", "--abbrev-ref", "HEAD"]:
             return "main"
         if args == ["diff", "--numstat", "--find-renames", "origin/main"]:
-            return "10\t2\tsrc/gridpulse/a.py\n-\t-\treports/figures/demo.gif"
+            return "10\t2\tsrc/orius/a.py\n-\t-\treports/figures/demo.gif"
         if args == ["diff", "--name-status", "--find-renames", "origin/main"]:
-            return "M\tsrc/gridpulse/a.py\nM\treports/figures/demo.gif"
+            return "M\tsrc/orius/a.py\nM\treports/figures/demo.gif"
         if args == ["status", "--porcelain"]:
             return "?? scripts/new_tool.py"
         return ""
@@ -49,7 +49,7 @@ publish_audit:
     assert summary["deleted_lines"] == 2
 
     files = {row["path"]: row for row in payload["files"]}
-    assert files["src/gridpulse/a.py"]["in_scope"] is True
+    assert files["src/orius/a.py"]["in_scope"] is True
     assert files["scripts/new_tool.py"]["status"] == "??"
     assert files["reports/figures/demo.gif"]["in_scope"] is False
 
@@ -58,7 +58,7 @@ def test_audit_git_delta_main_writes_outputs(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(git_delta, "REPO_ROOT", tmp_path)
     (tmp_path / "configs").mkdir(parents=True, exist_ok=True)
     (tmp_path / "configs" / "publish_audit.yaml").write_text(
-        "publish_audit:\n  scope:\n    include: [src/gridpulse/**]\n",
+        "publish_audit:\n  scope:\n    include: [src/orius/**]\n",
         encoding="utf-8",
     )
 
@@ -82,12 +82,12 @@ def test_audit_git_delta_main_writes_outputs(tmp_path, monkeypatch) -> None:
             },
             "files": [
                 {
-                    "path": "src/gridpulse/a.py",
+                    "path": "src/orius/a.py",
                     "status": "M",
                     "added_lines": 5,
                     "deleted_lines": 1,
                     "in_scope": True,
-                    "scope_match": "src/gridpulse/**",
+                    "scope_match": "src/orius/**",
                 }
             ],
         },

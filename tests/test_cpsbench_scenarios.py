@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from gridpulse.cpsbench_iot.scenarios import generate_episode
+from orius.cpsbench_iot.scenarios import generate_episode
 
 
 def test_generate_episode_nominal():

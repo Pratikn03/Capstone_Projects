@@ -1,7 +1,7 @@
 """Unit tests for DC3S telemetry reliability scoring."""
 from __future__ import annotations
 
-from gridpulse.dc3s.quality import compute_reliability
+from orius.dc3s.quality import compute_reliability
 
 
 def test_reliability_bounds_and_penalties():

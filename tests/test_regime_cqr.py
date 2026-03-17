@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from gridpulse.forecasting.uncertainty.cqr import RegimeCQR, RegimeCQRConfig, assign_bins, cqr_scores, rolling_volatility
+from orius.forecasting.uncertainty.cqr import RegimeCQR, RegimeCQRConfig, assign_bins, cqr_scores, rolling_volatility
 
 
 def test_regime_cqr_fit_predict_shapes_and_bins() -> None:

@@ -29,15 +29,15 @@ def _predict_target(*, target: str, horizon: int, features_df: pd.DataFrame, for
 def test_iot_closed_loop_smoke(monkeypatch, tmp_path):
     db_path = tmp_path / "iot_loop.duckdb"
     api_key = "iot-test-key"
-    monkeypatch.setenv("GRIDPULSE_IOT_DUCKDB_PATH", str(db_path))
-    monkeypatch.setenv("GRIDPULSE_API_KEYS", json.dumps({api_key: ["read", "write"]}))
+    monkeypatch.setenv("ORIUS_IOT_DUCKDB_PATH", str(db_path))
+    monkeypatch.setenv("ORIUS_API_KEYS", json.dumps({api_key: ["read", "write"]}))
     get_api_keys.cache_clear()
     monkeypatch.setattr(dc3s_router, "_load_features_df", lambda _cfg: pd.DataFrame({"price_eur_mwh": [60.0], "carbon_kg_per_mwh": [400.0]}))
     monkeypatch.setattr(dc3s_router, "_predict_target", _predict_target)
     monkeypatch.setattr(dc3s_router, "_resolve_conformal_q", lambda target, horizon: np.full(horizon, 4.0, dtype=float))
 
     client = TestClient(app)
-    headers = {"X-GridPulse-Key": api_key}
+    headers = {"X-ORIUS-Key": api_key}
     device_id = "iot-test-device"
     telemetry_payload = {
         "device_id": device_id,

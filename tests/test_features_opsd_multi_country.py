@@ -5,8 +5,8 @@ import sys
 import numpy as np
 import pandas as pd
 
-from gridpulse.data_pipeline import build_features as build_features_mod
-from gridpulse.data_pipeline.build_features import normalize_opsd_country_frame
+from orius.data_pipeline import build_features as build_features_mod
+from orius.data_pipeline.build_features import normalize_opsd_country_frame
 
 
 def _hourly_frame(rows: int = 240) -> pd.DataFrame:

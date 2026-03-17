@@ -20,11 +20,11 @@ Running Tests:
 
 See Also:
     - test_optimizer_constraints.py: More detailed constraint tests
-    - src/gridpulse/optimizer/lp_dispatch.py: The module being tested
+    - src/orius/optimizer/lp_dispatch.py: The module being tested
 """
 import numpy as np
 
-from gridpulse.optimizer import optimize_dispatch
+from orius.optimizer import optimize_dispatch
 
 
 def test_optimize_dispatch_shapes():

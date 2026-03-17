@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from gridpulse.optimizer import optimize_dispatch
+from orius.optimizer import optimize_dispatch
 
 
 def _base_cfg(initial_soc: float, degradation_cost: float = 0.0) -> dict:

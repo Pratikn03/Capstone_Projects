@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from gridpulse.cpsbench_iot.baselines import naive_safe_clip_dispatch
+from orius.cpsbench_iot.baselines import naive_safe_clip_dispatch
 
 
 def test_naive_safe_clip_dispatch():

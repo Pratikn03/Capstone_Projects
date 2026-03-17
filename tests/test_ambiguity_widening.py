@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from gridpulse.dc3s.ambiguity import AmbiguityConfig, widen_bounds
+from orius.dc3s.ambiguity import AmbiguityConfig, widen_bounds
 
 
 def test_widen_bounds_expands_more_when_reliability_drops() -> None:

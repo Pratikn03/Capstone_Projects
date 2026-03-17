@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from gridpulse.cpsbench_iot.runner import run_suite
+from orius.cpsbench_iot.runner import run_suite
 
 
 def test_rac_bounds_columns_present_for_all_controllers(tmp_path: Path) -> None:

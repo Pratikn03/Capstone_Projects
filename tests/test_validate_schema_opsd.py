@@ -5,7 +5,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-from gridpulse.data_pipeline import validate_schema as validate_schema_mod
+from orius.data_pipeline import validate_schema as validate_schema_mod
 
 
 def test_validate_schema_supports_non_de_country(monkeypatch, tmp_path) -> None:

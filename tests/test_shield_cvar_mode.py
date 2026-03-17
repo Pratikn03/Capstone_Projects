@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from gridpulse.dc3s.shield import repair_action
+from orius.dc3s.shield import repair_action
 
 
 def test_repair_action_cvar_mode_returns_safe_action_and_meta() -> None:

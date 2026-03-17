@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 import json
 
 import scripts.audit_figure_inventory as fig_audit
-from gridpulse.cpsbench_iot.runner import REQUIRED_OUTPUTS
+from orius.cpsbench_iot.runner import REQUIRED_OUTPUTS
 
 
 def _write(path, data: bytes) -> None:

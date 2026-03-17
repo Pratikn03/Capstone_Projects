@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from services.api.main import app
 import services.api.routers.forecast_intervals as intervals
-from gridpulse.forecasting.uncertainty.conformal import ConformalConfig, ConformalInterval
+from orius.forecasting.uncertainty.conformal import ConformalConfig, ConformalInterval
 
 
 def _setup_monkeypatch(monkeypatch, tmp_path: Path, horizon: int) -> None:

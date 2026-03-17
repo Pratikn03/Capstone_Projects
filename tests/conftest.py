@@ -1,5 +1,5 @@
 """
-PyTest Configuration and Fixtures for GridPulse Tests.
+PyTest Configuration and Fixtures for ORIUS Tests.
 
 This module provides comprehensive test fixtures for unit tests,
 integration tests, and performance tests.
@@ -175,7 +175,7 @@ def api_client():
     from fastapi.testclient import TestClient
     
     # Mock environment variables
-    with patch.dict(os.environ, {"GRIDPULSE_API_KEY": "test-key"}):
+    with patch.dict(os.environ, {"ORIUS_API_KEY": "test-key"}):
         from services.api.main import app
         yield TestClient(app)
 

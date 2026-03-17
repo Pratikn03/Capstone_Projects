@@ -1,5 +1,5 @@
 import pytest
-from gridpulse.iot.store import IoTLoopStore
+from orius.iot.store import IoTLoopStore
 
 @pytest.fixture
 def store(tmp_path):

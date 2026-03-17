@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from gridpulse.forecasting.train import _resolve_split_cfg
+from orius.forecasting.train import _resolve_split_cfg
 
 
 def test_resolve_split_cfg_defaults_calibration_ratio_zero() -> None:

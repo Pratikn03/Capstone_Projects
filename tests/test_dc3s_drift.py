@@ -1,7 +1,7 @@
 """Unit tests for DC3S Page-Hinkley drift detector."""
 from __future__ import annotations
 
-from gridpulse.dc3s.drift import PageHinkleyDetector
+from orius.dc3s.drift import PageHinkleyDetector
 
 
 def test_page_hinkley_triggers_and_cooldown():

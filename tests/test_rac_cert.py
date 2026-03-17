@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from gridpulse.dc3s.rac_cert import RACCertConfig, RACCertModel, compute_q_multiplier, normalize_sensitivity
+from orius.dc3s.rac_cert import RACCertConfig, RACCertModel, compute_q_multiplier, normalize_sensitivity
 
 
 def test_rac_cert_fit_and_predict_shapes() -> None:

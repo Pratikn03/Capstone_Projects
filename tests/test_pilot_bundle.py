@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from gridpulse.dc3s.certificate import make_certificate, store_certificate
-from gridpulse.iot.store import IoTLoopStore
+from orius.dc3s.certificate import make_certificate, store_certificate
+from orius.iot.store import IoTLoopStore
 from scripts.export_pilot_bundle import export_bundle
 from scripts.summarize_chil_run import summarize_run
 from scripts.validate_pilot_bundle import validate_bundle

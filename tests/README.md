@@ -1,6 +1,6 @@
-# GridPulse Tests
+# ORIUS Tests
 
-Pytest test suite for the GridPulse forecasting platform.
+Pytest test suite for the ORIUS forecasting platform.
 
 ## Test Categories
 
@@ -25,7 +25,7 @@ Pytest test suite for the GridPulse forecasting platform.
 pytest tests/ -v
 
 # Run with coverage
-pytest tests/ --cov=src/gridpulse --cov-report=html
+pytest tests/ --cov=src/orius --cov-report=html
 
 # Run specific test file
 pytest tests/test_optimizer.py -v

@@ -2,7 +2,7 @@
 
 ## Overview
 
-GridPulse includes comprehensive load testing infrastructure using both **k6** (JavaScript) and **Locust** (Python) for API performance validation.
+ORIUS includes comprehensive load testing infrastructure using both **k6** (JavaScript) and **Locust** (Python) for API performance validation.
 
 ## Quick Start
 
@@ -24,7 +24,7 @@ k6 run --vus 50 --duration 5m tests/load/k6_load_test.js
 k6 run --vus 100 --duration 10m tests/load/k6_load_test.js
 
 # Custom target
-k6 run -e BASE_URL=https://api.gridpulse.example.com tests/load/k6_load_test.js
+k6 run -e BASE_URL=https://api.orius.example.com tests/load/k6_load_test.js
 ```
 
 ### Locust (For Interactive Testing)

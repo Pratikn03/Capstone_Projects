@@ -3,9 +3,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from gridpulse.cpsbench_iot import baselines as cps_baselines
-from gridpulse.cpsbench_iot import runner as cps_runner
-from gridpulse.dc3s.calibration import build_uncertainty_set_kappa
+from orius.cpsbench_iot import baselines as cps_baselines
+from orius.cpsbench_iot import runner as cps_runner
+from orius.dc3s.calibration import build_uncertainty_set_kappa
 
 
 def _kappa_cfg(**overrides):

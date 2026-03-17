@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-from gridpulse.forecasting.predict import predict_next_24h
+from orius.forecasting.predict import predict_next_24h
 
 
 class DummyModel:

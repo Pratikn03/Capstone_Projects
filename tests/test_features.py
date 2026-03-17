@@ -1,7 +1,7 @@
 """
 Tests for Forecast Evaluation Metrics.
 
-This test suite validates the metric functions used throughout GridPulse
+This test suite validates the metric functions used throughout ORIUS
 for evaluating forecast accuracy. These metrics are critical for:
 
 - Model comparison during development
@@ -25,11 +25,11 @@ Running Tests:
     pytest tests/test_features.py -v
 
 See Also:
-    - src/gridpulse/utils/metrics.py: Module under test
+    - src/orius/utils/metrics.py: Module under test
 """
 import pandas as pd
 
-from gridpulse.utils.metrics import rmse
+from orius.utils.metrics import rmse
 
 
 def test_rmse_zero():

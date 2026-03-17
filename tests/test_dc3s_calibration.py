@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from gridpulse.dc3s.calibration import (
+from orius.dc3s.calibration import (
     build_uncertainty_set,
     calibrate_ambiguity_lambda,
     inflate_interval,

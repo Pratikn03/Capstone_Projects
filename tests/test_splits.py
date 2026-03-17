@@ -24,12 +24,12 @@ Running Tests:
     pytest tests/test_splits.py -v
 
 See Also:
-    - src/gridpulse/data_pipeline/split_time_series.py: Module under test
+    - src/orius/data_pipeline/split_time_series.py: Module under test
     - DATA.md: Documentation of data splits
 """
 import pandas as pd
 
-from gridpulse.data_pipeline.split_time_series import time_split
+from orius.data_pipeline.split_time_series import time_split
 
 
 def test_time_split_order():

@@ -1,7 +1,7 @@
 """Unit tests for DC3S safety shield repair behavior."""
 from __future__ import annotations
 
-from gridpulse.dc3s.shield import repair_action
+from orius.dc3s.shield import repair_action
 
 
 def test_projection_repair_enforces_soc_and_power_limits():
@@ -71,3 +71,61 @@ def test_projection_repair_respects_ftit_soc_max_override():
     )
     assert safe["charge_mw"] == 1.0
     assert meta["effective_max_soc_mwh"] == 80.0
+
+
+def test_safe_landing_mode_moves_soc_toward_interior_zone():
+    safe, meta = repair_action(
+        a_star={"charge_mw": 0.0, "discharge_mw": 30.0},
+        state={"current_soc_mwh": 92.0},
+        uncertainty_set={"meta": {"w_t": 0.03}, "lower": [1.0], "upper": [2.0]},
+        constraints={
+            "capacity_mwh": 100.0,
+            "min_soc_mwh": 10.0,
+            "max_soc_mwh": 95.0,
+            "max_power_mw": 50.0,
+            "max_charge_mw": 50.0,
+            "max_discharge_mw": 50.0,
+            "charge_efficiency": 1.0,
+            "discharge_efficiency": 1.0,
+            "time_step_hours": 1.0,
+        },
+        cfg={"shield": {"mode": "safe_landing", "safe_landing": {"safe_margin_pct": 0.10}}},
+    )
+    assert meta["mode"] == "safe_landing"
+    assert meta["intervention_reason"] == "safe_landing"
+    assert safe["charge_mw"] == 0.0
+    assert safe["discharge_mw"] > 0.0
+    assert meta["next_soc_mwh"] < meta["current_soc_mwh"]
+    assert meta["safe_zone_min_mwh"] <= meta["target_soc_mwh"] <= meta["safe_zone_max_mwh"]
+
+
+def test_safe_landing_auto_activates_under_low_reliability():
+    safe, meta = repair_action(
+        a_star={"charge_mw": 20.0, "discharge_mw": 0.0},
+        state={"current_soc_mwh": 15.0},
+        uncertainty_set={"meta": {"w_t": 0.05}, "lower": [1.0], "upper": [2.0]},
+        constraints={
+            "capacity_mwh": 100.0,
+            "min_soc_mwh": 10.0,
+            "max_soc_mwh": 90.0,
+            "max_power_mw": 50.0,
+            "max_charge_mw": 50.0,
+            "max_discharge_mw": 50.0,
+            "charge_efficiency": 1.0,
+            "discharge_efficiency": 1.0,
+            "time_step_hours": 1.0,
+        },
+        cfg={
+            "shield": {
+                "mode": "projection",
+                "safe_landing": {
+                    "auto_activate": True,
+                    "w_threshold": 0.10,
+                    "safe_margin_pct": 0.10,
+                },
+            }
+        },
+    )
+    assert meta["mode"] == "safe_landing"
+    assert safe["charge_mw"] > 0.0
+    assert safe["discharge_mw"] == 0.0

@@ -1,6 +1,6 @@
 import pytest
 
-from gridpulse.dc3s.state import DC3SStateStore
+from orius.dc3s.state import DC3SStateStore
 
 
 def test_dc3s_state_store_roundtrip(tmp_path):

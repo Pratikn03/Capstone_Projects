@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from gridpulse.cpsbench_iot.runner import REQUIRED_OUTPUTS, run_suite
+from orius.cpsbench_iot.runner import REQUIRED_OUTPUTS, run_suite
 
 
 def _assert_outputs(out_dir: Path) -> None:

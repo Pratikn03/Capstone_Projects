@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from gridpulse.cpsbench_iot.baselines import scenario_robust_dispatch
-from gridpulse.cpsbench_iot.scenarios import generate_episode
+from orius.cpsbench_iot.baselines import scenario_robust_dispatch
+from orius.cpsbench_iot.scenarios import generate_episode
 
 
 def test_scenario_robust_dispatch_smoke() -> None:

@@ -1,7 +1,7 @@
 """Unit tests for deterministic DC3S guarantee checks."""
 from __future__ import annotations
 
-from gridpulse.dc3s.guarantee_checks import (
+from orius.dc3s.guarantee_checks import (
     check_no_simultaneous_charge_discharge,
     check_power_bounds,
     check_soc_invariance,

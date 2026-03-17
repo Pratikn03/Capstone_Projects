@@ -26,7 +26,7 @@ class TestPrometheusMetrics:
     def test_metrics_module_import(self):
         """Test that our metrics module can be imported."""
         try:
-            from gridpulse.monitoring.prometheus_metrics import (
+            from orius.monitoring.prometheus_metrics import (
                 REQUESTS_TOTAL,
                 FORECAST_DURATION,
                 OPTIMIZATION_COST_SAVINGS,
@@ -40,7 +40,7 @@ class TestPrometheusMetrics:
     def test_request_counter_increment(self):
         """Test that request counter can be incremented."""
         try:
-            from gridpulse.monitoring.prometheus_metrics import REQUESTS_TOTAL
+            from orius.monitoring.prometheus_metrics import REQUESTS_TOTAL
             
             # Get initial value (may not be 0 if tests ran before)
             initial = REQUESTS_TOTAL.labels(
@@ -70,7 +70,7 @@ class TestPrometheusMetrics:
     def test_histogram_observation(self):
         """Test that histogram can record observations."""
         try:
-            from gridpulse.monitoring.prometheus_metrics import FORECAST_DURATION
+            from orius.monitoring.prometheus_metrics import FORECAST_DURATION
             
             # Record some observations
             FORECAST_DURATION.labels(
@@ -93,7 +93,7 @@ class TestPrometheusMetrics:
     def test_gauge_set_value(self):
         """Test that gauge can be set to a value."""
         try:
-            from gridpulse.monitoring.prometheus_metrics import BATTERY_SOC
+            from orius.monitoring.prometheus_metrics import BATTERY_SOC
             
             # Set battery SOC
             BATTERY_SOC.labels(battery_id="bess_1").set(0.75)
@@ -111,7 +111,7 @@ class TestMetricsDecorators:
     def test_track_request_metrics_decorator(self):
         """Test the track_request_metrics decorator."""
         try:
-            from gridpulse.monitoring.prometheus_metrics import track_request_metrics
+            from orius.monitoring.prometheus_metrics import track_request_metrics
             
             @track_request_metrics(endpoint="/api/test")
             def dummy_endpoint():
@@ -125,7 +125,7 @@ class TestMetricsDecorators:
     def test_track_forecast_metrics_decorator(self):
         """Test the track_forecast_metrics decorator."""
         try:
-            from gridpulse.monitoring.prometheus_metrics import track_forecast_metrics
+            from orius.monitoring.prometheus_metrics import track_forecast_metrics
             
             @track_forecast_metrics(model="test_model", target="load_mw")
             def dummy_forecast():
@@ -144,7 +144,7 @@ class TestMetricsUpdateFunctions:
     def test_update_cost_savings_metrics(self):
         """Test updating cost savings metrics."""
         try:
-            from gridpulse.monitoring.prometheus_metrics import (
+            from orius.monitoring.prometheus_metrics import (
                 update_cost_savings_metrics,
                 OPTIMIZATION_COST_SAVINGS,
             )
@@ -166,20 +166,20 @@ class TestMetricsUpdateFunctions:
     def test_update_streaming_metrics(self):
         """Test updating streaming metrics."""
         try:
-            from gridpulse.monitoring.prometheus_metrics import (
+            from orius.monitoring.prometheus_metrics import (
                 update_streaming_metrics,
                 KAFKA_CONSUMER_LAG,
             )
             
             update_streaming_metrics(
-                topic="gridpulse-telemetry",
+                topic="orius-telemetry",
                 partition=0,
                 lag=100
             )
             
             # Verify the gauge was set
             value = KAFKA_CONSUMER_LAG.labels(
-                topic="gridpulse-telemetry",
+                topic="orius-telemetry",
                 partition="0"
             )._value.get()
             assert value == 100
@@ -189,7 +189,7 @@ class TestMetricsUpdateFunctions:
     def test_update_drift_metrics(self):
         """Test updating drift detection metrics."""
         try:
-            from gridpulse.monitoring.prometheus_metrics import (
+            from orius.monitoring.prometheus_metrics import (
                 update_drift_metrics,
                 DRIFT_DETECTED,
             )
@@ -232,7 +232,7 @@ class TestMetricsEndpoint:
         """Test that custom metrics appear in output."""
         try:
             from prometheus_client import generate_latest
-            from gridpulse.monitoring.prometheus_metrics import REQUESTS_TOTAL
+            from orius.monitoring.prometheus_metrics import REQUESTS_TOTAL
             
             # Make sure we have at least one metric
             REQUESTS_TOTAL.labels(
@@ -244,7 +244,7 @@ class TestMetricsEndpoint:
             metrics_output = generate_latest().decode("utf-8")
             
             # Our custom metrics should appear
-            assert "gridpulse_requests_total" in metrics_output or "requests_total" in metrics_output
+            assert "orius_requests_total" in metrics_output or "requests_total" in metrics_output
         except ImportError:
             pytest.skip("prometheus_metrics module not available")
 
@@ -255,7 +255,7 @@ class TestMetricsLabels:
     def test_label_cardinality(self):
         """Test that label cardinality is controlled."""
         try:
-            from gridpulse.monitoring.prometheus_metrics import REQUESTS_TOTAL
+            from orius.monitoring.prometheus_metrics import REQUESTS_TOTAL
             
             # Should be able to create labels without issues
             for endpoint in ["/api/v1/forecast", "/api/v1/optimize", "/api/v1/anomaly"]:
@@ -274,7 +274,7 @@ class TestMetricsLabels:
     def test_missing_label_handling(self):
         """Test that missing labels raise appropriate errors."""
         try:
-            from gridpulse.monitoring.prometheus_metrics import REQUESTS_TOTAL
+            from orius.monitoring.prometheus_metrics import REQUESTS_TOTAL
             
             # Should raise error for missing label
             with pytest.raises((ValueError, TypeError)):
@@ -304,7 +304,7 @@ class TestMetricsIntegration:
         import random
         
         try:
-            from gridpulse.monitoring.prometheus_metrics import REQUESTS_TOTAL
+            from orius.monitoring.prometheus_metrics import REQUESTS_TOTAL
             
             errors = []
             

@@ -22,12 +22,12 @@ Running Tests:
     pytest tests/test_anomaly.py -v
 
 See Also:
-    - src/gridpulse/anomaly/detect.py: Main detection interface
-    - src/gridpulse/anomaly/detection.py: Isolation Forest class
+    - src/orius/anomaly/detect.py: Main detection interface
+    - src/orius/anomaly/detection.py: Isolation Forest class
 """
 import numpy as np
 
-from gridpulse.anomaly.detect import detect_anomalies
+from orius.anomaly.detect import detect_anomalies
 
 
 def test_detect_anomalies_basic():

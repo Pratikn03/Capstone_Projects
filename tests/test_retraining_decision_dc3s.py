@@ -1,7 +1,7 @@
 """Tests for retraining decision logic with DC3S health triggers."""
 from __future__ import annotations
 
-from gridpulse.monitoring.retraining import retraining_decision
+from orius.monitoring.retraining import retraining_decision
 
 
 def test_retraining_decision_adds_dc3s_reasons() -> None:
