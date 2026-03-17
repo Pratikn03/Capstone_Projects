@@ -1,6 +1,6 @@
-# GridPulse
+# ORIUS
 
-GridPulse is a research-to-runtime codebase for safe battery dispatch under degraded telemetry. It combines forecasting, uncertainty quantification, optimization, safety shielding, closed-loop cyber-physical evaluation, publication-grade artifact generation, and manuscript claim locking in one repository.
+ORIUS is a research-to-runtime framework for safe battery dispatch under degraded telemetry. It combines forecasting, uncertainty quantification, optimization, safety shielding, closed-loop cyber-physical evaluation, publication-grade artifact generation, and manuscript claim locking in one repository.
 
 The central method is **DC3S**: a telemetry-reliability-weighted conformal safety shield that:
 - scores telemetry quality at each control step,
@@ -12,7 +12,7 @@ This repository also includes **CPSBench**, a fault-injection benchmark that sep
 
 ## What This Repository Contains
 
-- A full forecasting and dispatch stack for Germany (OPSD) and US balancing-authority data derived from EIA-930.
+- A full forecasting and dispatch stack for Germany (OPSD) and US balancing-authority data derived from EIA-930, forming the reference implementation for the ORIUS framework.
 - A DC3S runtime path with guarantee checks, certificate logging, and safety-gated action repair.
 - CPSBench scenarios for dropout, delay-jitter, spikes, out-of-order observations, stale-sensor behavior, and drift-style faults.
 - A release-family workflow for training, verification, publication artifacts, and paper freeze.
@@ -32,6 +32,8 @@ The locked paper evidence currently centers on:
 - **governance**: publication claims are tied to source artifacts and validator gates.
 
 Hardware validation, PHIL, and field pilots are **not** part of the current submission scope. The repository contains future-pilot infrastructure, but real-device validation remains future work.
+
+**Vehicles prototype**: A `VehicleDomainAdapter` for 1D longitudinal control exists under `src/orius/vehicles/` as an exploratory extension. It is **not** part of the locked thesis or paper claims. All strong safety claims remain battery-only. See `orius-plan/vehicles-extension.md` and `reports/vehicles_prototype/` for prototype artifacts.
 
 ## Locked Paper Snapshot
 
@@ -54,7 +56,7 @@ For exact numbers, use the manuscript and locked artifact interfaces instead of 
 
 ```text
 .
-├── src/gridpulse/              Core Python package
+├── src/orius/                  Core Python package
 │   ├── data_pipeline/          Dataset normalization and feature generation
 │   ├── forecasting/            GBM + deep forecasting models and UQ tooling
 │   ├── optimizer/              Deterministic, robust, and CVaR dispatch
@@ -111,7 +113,7 @@ Then open `http://localhost:3000`.
 
 ## Canonical Workflow
 
-GridPulse uses a **release-family** workflow. One `RELEASE_ID` should span candidate training, CPSBench, publication artifacts, and paper freeze.
+ORIUS uses a **release-family** workflow. One `RELEASE_ID` should span candidate training, CPSBench, publication artifacts, and paper freeze.
 
 ### 1. Run a release family
 
@@ -170,7 +172,7 @@ These are the canonical scripts for research and publication work:
 The OPSD feature builder now supports country-aware normalization:
 
 ```bash
-python -m gridpulse.data_pipeline.build_features \
+python -m orius.data_pipeline.build_features \
   --in data/raw \
   --out data/processed \
   --country DE
@@ -212,7 +214,7 @@ The locked thesis headline regions are DE and canonical US/MISO. The shared cont
 The production paper path uses conformal and adaptive interval tooling already wired into the reporting and publication stack.
 
 The repo also contains an additive research path for **reliability-conditioned conformal analysis**:
-- `src/gridpulse/forecasting/uncertainty/reliability_mondrian.py`
+- `src/orius/forecasting/uncertainty/reliability_mondrian.py`
 - `scripts/compute_reliability_group_coverage.py`
 
 This research path is optional and does **not** replace the locked production publication workflow unless explicitly invoked.
@@ -227,8 +229,8 @@ DC3S sits between forecast intervals and command execution. Its responsibilities
 - auditable certificate emission.
 
 Key implementation surfaces:
-- `src/gridpulse/dc3s/`
-- `src/gridpulse/safety/`
+- `src/orius/dc3s/`
+- `src/orius/safety/`
 - `services/api/routers/dc3s.py`
 - `docs/ASSUMPTIONS_AND_GUARANTEES.md`
 
@@ -237,7 +239,7 @@ Key implementation surfaces:
 ### CPSBench
 
 CPSBench evaluates controllers against a truth-vs-observed split so hidden safety failures are measurable:
-- `src/gridpulse/cpsbench_iot/`
+- `src/orius/cpsbench_iot/`
 - `make r1-cpsbench`
 
 ### Closed-loop IoT simulation
@@ -350,17 +352,4 @@ If you are using this repo for serious research or release work:
 
 ## Citation
 
-If you reference GridPulse, DC3S, or CPSBench in academic work, cite the manuscript that matches the release you are using. A placeholder project citation is:
-
-```bibtex
-@techreport{niroula2026gridpulse,
-  title={DC3S: Telemetry-Reliability-Weighted Conformal Safety Shield for Battery Dispatch under Degraded Mixed Telemetry},
-  author={Niroula, Pratik},
-  institution={Minnesota State University, Mankato},
-  year={2026}
-}
-```
-
-## License
-
-MIT
+If you reference ORIUS, DC3S, or CPSBench in academic work, cite the manuscript that matches the submission (thesis or conference draft).
