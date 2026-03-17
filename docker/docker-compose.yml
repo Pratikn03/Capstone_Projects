@@ -9,8 +9,8 @@ services:
     env_file:
       - ../.env
     environment:
-      - GRIDPULSE_LOG_FORMAT=${GRIDPULSE_LOG_FORMAT:-text}
-      - GRIDPULSE_LOG_LEVEL=${GRIDPULSE_LOG_LEVEL:-INFO}
+      - ORIUS_LOG_FORMAT=${ORIUS_LOG_FORMAT:-text}
+      - ORIUS_LOG_LEVEL=${ORIUS_LOG_LEVEL:-INFO}
     volumes:
       - ../data:/app/data
       - ../artifacts:/app/artifacts

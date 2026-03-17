@@ -1,5 +1,5 @@
 # =============================================================================
-# GridPulse Full Production Stack
+# ORIUS Full Production Stack
 # Includes: API, Frontend, Prometheus, Grafana, Kafka/Redpanda, PostgreSQL
 # =============================================================================
 
@@ -18,14 +18,14 @@ services:
       - path: ../.env
         required: false
     environment:
-      - GRIDPULSE_LOG_FORMAT=${GRIDPULSE_LOG_FORMAT:-json}
-      - GRIDPULSE_LOG_LEVEL=${GRIDPULSE_LOG_LEVEL:-INFO}
-      - GRIDPULSE_METRICS_ENABLED=true
+      - ORIUS_LOG_FORMAT=${ORIUS_LOG_FORMAT:-json}
+      - ORIUS_LOG_LEVEL=${ORIUS_LOG_LEVEL:-INFO}
+      - ORIUS_METRICS_ENABLED=true
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_DB=gridpulse
-      - POSTGRES_USER=gridpulse
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-gridpulse123}
+      - POSTGRES_DB=orius
+      - POSTGRES_USER=orius
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-orius123}
       - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
     volumes:
       - ../data:/app/data
@@ -43,7 +43,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - gridpulse-net
+      - orius-net
     labels:
       - "prometheus.scrape=true"
       - "prometheus.port=8000"
@@ -64,7 +64,7 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
     restart: unless-stopped
     networks:
-      - gridpulse-net
+      - orius-net
 
   # ===========================================================================
   # DATABASE
@@ -72,24 +72,24 @@ services:
 
   postgres:
     image: postgres:15-alpine
-    container_name: gridpulse-postgres
+    container_name: orius-postgres
     environment:
-      - POSTGRES_DB=gridpulse
-      - POSTGRES_USER=gridpulse
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-gridpulse123}
+      - POSTGRES_DB=orius
+      - POSTGRES_USER=orius
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-orius123}
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gridpulse -d gridpulse"]
+      test: ["CMD-SHELL", "pg_isready -U orius -d orius"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
     networks:
-      - gridpulse-net
+      - orius-net
 
   # ===========================================================================
   # STREAMING (Kafka/Redpanda)
@@ -97,7 +97,7 @@ services:
 
   redpanda:
     image: redpandadata/redpanda:v24.1.1
-    container_name: gridpulse-redpanda
+    container_name: orius-redpanda
     command:
       - redpanda
       - start
@@ -134,11 +134,11 @@ services:
       retries: 5
     restart: unless-stopped
     networks:
-      - gridpulse-net
+      - orius-net
 
   redpanda-console:
     image: redpandadata/console:v2.4.3
-    container_name: gridpulse-console
+    container_name: orius-console
     entrypoint: /bin/sh
     command: -c "echo \"$$CONSOLE_CONFIG_FILE\" > /tmp/config.yml; /app/console"
     environment:
@@ -156,7 +156,7 @@ services:
       redpanda:
         condition: service_healthy
     networks:
-      - gridpulse-net
+      - orius-net
 
   # ===========================================================================
   # OBSERVABILITY STACK
@@ -164,7 +164,7 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.50.1
-    container_name: gridpulse-prometheus
+    container_name: orius-prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
@@ -184,14 +184,14 @@ services:
       retries: 3
     restart: unless-stopped
     networks:
-      - gridpulse-net
+      - orius-net
 
   grafana:
     image: grafana/grafana:10.3.3
-    container_name: gridpulse-grafana
+    container_name: orius-grafana
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-gridpulse123}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-orius123}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_HTTP_PORT=3001
       - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
@@ -210,11 +210,11 @@ services:
       retries: 3
     restart: unless-stopped
     networks:
-      - gridpulse-net
+      - orius-net
 
   alertmanager:
     image: prom/alertmanager:v0.27.0
-    container_name: gridpulse-alertmanager
+    container_name: orius-alertmanager
     command:
       - "--config.file=/etc/alertmanager/alertmanager.yml"
       - "--storage.path=/alertmanager"
@@ -225,12 +225,12 @@ services:
       - "9093:9093"
     restart: unless-stopped
     networks:
-      - gridpulse-net
+      - orius-net
 
   # Node Exporter for system metrics
   node-exporter:
     image: prom/node-exporter:v1.7.0
-    container_name: gridpulse-node-exporter
+    container_name: orius-node-exporter
     command:
       - "--path.rootfs=/host"
     volumes:
@@ -239,12 +239,12 @@ services:
       - "9100:9100"
     restart: unless-stopped
     networks:
-      - gridpulse-net
+      - orius-net
 
   # cAdvisor for container metrics
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.49.1
-    container_name: gridpulse-cadvisor
+    container_name: orius-cadvisor
     privileged: true
     volumes:
       - /:/rootfs:ro
@@ -256,7 +256,7 @@ services:
       - "8081:8080"
     restart: unless-stopped
     networks:
-      - gridpulse-net
+      - orius-net
 
   # ===========================================================================
   # STREAMING WORKER
@@ -266,14 +266,14 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.api
-    container_name: gridpulse-streaming-worker
-    command: ["python", "-m", "gridpulse.streaming.worker"]
+    container_name: orius-streaming-worker
+    command: ["python", "-m", "orius.streaming.worker"]
     env_file:
       - ../.env
     environment:
       - KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
-      - KAFKA_TOPIC=gridpulse-telemetry
-      - KAFKA_GROUP_ID=gridpulse-streaming-worker
+      - KAFKA_TOPIC=orius-telemetry
+      - KAFKA_GROUP_ID=orius-streaming-worker
       - DUCKDB_PATH=/app/data/streaming/events.duckdb
     volumes:
       - ../data:/app/data
@@ -283,7 +283,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - gridpulse-net
+      - orius-net
 
 # =============================================================================
 # VOLUMES
@@ -301,5 +301,5 @@ volumes:
 # =============================================================================
 
 networks:
-  gridpulse-net:
+  orius-net:
     driver: bridge

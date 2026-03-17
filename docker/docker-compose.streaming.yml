@@ -2,7 +2,7 @@ version: "3.8"
 services:
   redpanda:
     image: redpandadata/redpanda:latest
-    container_name: gridpulse-redpanda
+    container_name: orius-redpanda
     command:
       - redpanda
       - start
