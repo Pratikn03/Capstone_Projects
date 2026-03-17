@@ -1,0 +1,79 @@
+% =============================================================================
+% Appendix O: Claim Scope and Citation Policy
+% ORIUS/DC3S Battery-Safety Thesis
+% =============================================================================
+\chapter{Claim Scope and Citation Policy}
+\label{app:claim-scope-citation}
+
+This appendix explicitly delineates what the thesis claims versus what it does not claim, documents assumptions that limit generalizability, and defines the citation and reproducibility policies.
+
+\section{Scope of Validity}
+\label{sec:scope-validity}
+
+The thesis claims are valid under the following scope:
+
+\begin{itemize}
+\item \textbf{Domain}: Grid-scale battery energy storage systems (BESS) only. No claims extend to other cyber-physical systems (e.g., robotics, autonomous vehicles, industrial process control) without explicit re-validation.
+\item \textbf{Dispatch horizon}: 1-hour dispatch intervals. No claims for sub-hourly or real-time control.
+\item \textbf{Fault taxonomy}: The admissible fault set includes: (1) telemetry dropout (missing or stale observations), (2) telemetry drift (systematic bias), (3) nominal (no fault). Fault injection is controlled via \texttt{scenarios.py}; arbitrary or adversarial fault sequences are out of scope.
+\item \textbf{Plant model}: Single-cell or aggregate battery dynamics with SOC constraints; no thermal or aging dynamics in the core safety loop (aging-aware calibration is an extension).
+\item \textbf{Benchmark}: CPSBench (battery track) with configured scenarios; results are conditional on the benchmark design.
+\end{itemize}
+
+\section{Assumptions That Limit Generalizability}
+\label{sec:assumptions}
+
+The following assumptions (A1--A8) limit the scope of the guarantees:
+
+\begin{description}
+\item[A1 Bounded model error] Forecast residuals are bounded enough for calibrated intervals to remain meaningful. Violation: extreme forecast errors can break coverage.
+\item[A2 Bounded telemetry error] Observation degradation is tracked and bounded via quality floor $w_{\min}$ and inflation caps. Violation: unbounded telemetry error can invalidate safety.
+\item[A3 Feasible safe repair exists] When proposed action is unsafe, projection/repair can return a feasible safe action. Violation: if no safe action exists (e.g., SOC already violated), fallback applies.
+\item[A4 Known or identified dynamics] Controller and verifier use explicit battery dynamics model. Violation: model mismatch can cause violations.
+\item[A5 Monotone bounded uncertainty inflation] Inflation $\geq 1$ and $\leq \text{infl}_{\max}$. Violation: misconfiguration can break coverage.
+\item[A6 Bounded detector lag] Drift detection delay is controlled by detector parameters. Violation: slow detection can delay inflation response.
+\item[A7 Causal certificate update rule] Per-step certificate uses only present/past information, with hash chaining. Violation: future information would invalidate auditability.
+\item[A8 Admissible fallback policy] When uncertainty grows, a fallback safe policy remains available. Violation: no safe fallback implies potential violation.
+\end{description}
+
+\section{Claims NOT Made}
+\label{sec:claims-not-made}
+
+The thesis explicitly does \emph{not} claim:
+
+\begin{itemize}
+\item \textbf{Real-time guarantees for sub-second control}: The framework is validated for 1-hour dispatch. Sub-second latency and real-time guarantees are out of scope.
+\item \textbf{Formal verification}: No symbolic proof of correctness of the plant model, controller, or shield. Guarantees are empirical and distribution-free (conformal), not formally verified.
+\item \textbf{Safety under arbitrary adversaries}: Fault sequences are admissible and bounded. The thesis does not claim robustness against arbitrary adversarial attacks (e.g., spoofing detection is a prototype extension).
+\item \textbf{Industrial certification}: The HIL setup and software stack are not certified for safety-critical deployment (SIL 0 / development only).
+\item \textbf{Universal generalization}: Results are battery-only; generalization to other CPS requires new validation.
+\item \textbf{Optimality}: DC3S does not claim to maximize revenue or minimize cost; it claims safety (zero violation) under the stated assumptions.
+\end{itemize}
+
+\section{Citation Policy for Empirical Numbers}
+\label{sec:citation-policy}
+
+All empirical numbers reported in the thesis must be traceable to locked sources:
+
+\begin{enumerate}
+\item \textbf{Primary source}: \texttt{reports/publication/}. All locked CSV files (e.g., \texttt{dc3s\_main\_table\_ci.csv}, \texttt{dc3s\_latency\_summary.csv}, \texttt{fault\_performance\_table.csv}) are the canonical source for reported values.
+\item \textbf{No ad-hoc numbers}: Every percentage, violation rate, coverage metric, intervention rate, or latency metric must map to a specific row/column in a locked CSV.
+\item \textbf{Locked manifests}: \texttt{part5\_hardening\_lock\_manifest.json}, \texttt{part6\_extension\_lock\_manifest.json}, and \texttt{final\_lock\_manifest\_full\_thesis.json} document the locked artifact set.
+\item \textbf{Version control}: Locked artifacts are committed to the repository; overwriting without explicit version bump is prohibited.
+\end{enumerate}
+
+\section{Reproducibility Contract}
+\label{sec:reproducibility}
+
+The thesis commits to the following reproducibility contract:
+
+\begin{enumerate}
+\item \textbf{Scripts}: All results are reproducible from \texttt{scripts/} with the documented environment (Python 3.10+, dependencies in \texttt{requirements.txt}).
+\item \textbf{Locked seeds}: All stochastic scripts use fixed seeds (documented in script headers or config).
+
+\item \textbf{Configs}: \texttt{configs/dc3s.yaml}, \texttt{configs/optimization.yaml}, and sweep configs in \texttt{reports/publication/sweeps/configs/} are the source of parameter values for reproducibility.
+
+\item \textbf{Execution order}: For full reproduction, the following order is recommended: (1) training/calibration (if applicable), (2) CPSBench runs (\texttt{run\_cpsbench.py}), (3) table/figure generation (\texttt{build\_paper\_table\_tex.py}, \texttt{generate\_publication\_figures.py}), (4) validation (\texttt{verify\_paper\_manifest.py}).
+
+\item \textbf{Hash verification}: The final lock procedure uses \texttt{reproducibility\_lock.json} hash verification to ensure artifact integrity (see Appendix~\ref{app:editorial-integration-locking}).
+\end{enumerate}

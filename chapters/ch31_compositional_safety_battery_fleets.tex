@@ -1,0 +1,89 @@
+\chapter{Compositional Safety for Battery Fleets}
+\label{ch:compositional-safety-fleets}
+
+This chapter keeps the thesis inside the battery domain while pushing beyond
+the single-asset case.  The current locked extension is a two-battery shared
+transformer study, packaged through
+\texttt{reports/fleet/fleet\_composition\_two\_battery.csv} and
+\texttt{reports/fleet/two\_battery\_composition\_metrics.csv}.
+
+\section{Why Composition Matters}
+
+Two individually safe batteries can still create a fleet-level problem if
+they respond to local conditions without coordinating at the point of
+interconnection.  In battery terms, the risk is not only a local SOC breach;
+it is also aggregate export or curtailment pressure on the shared transformer.
+
+\section{Battery-Fleet View}
+
+The fleet extension keeps the ORIUS battery logic local to each unit:
+
+\begin{enumerate}
+  \item Each battery produces its own candidate safe action under degraded
+    telemetry.
+  \item The shared transformer then enforces a fleet-level envelope on the
+    combined dispatch.
+  \item Any excess is absorbed as coordinated curtailment rather than as an
+    unsafe aggregate command.
+\end{enumerate}
+
+This is the battery-operational meaning of composition: preserve local safety
+while making sure the shared export path never becomes the new hidden gap.
+
+\section{Locked Two-Battery Stress Output}
+
+The present wrapper-generated fleet metrics report:
+
+\begin{itemize}
+  \item 56 joint over-limit steps,
+  \item a maximum curtailment of 10.0\,MW, and
+  \item 4513.97\,MWh of useful work preserved.
+\end{itemize}
+
+These values come directly from
+\texttt{reports/fleet/two\_battery\_composition\_metrics.csv}.
+
+\begin{table}[ht]
+\centering
+\caption{Locked fleet-composition metrics from the current two-battery study.}
+\label{tab:fleet-results}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Metric} & \textbf{Value} & \textbf{Battery consequence} \\
+\midrule
+Joint over-limit steps & 56 & Shared export stress appears repeatedly \\
+Max curtailment (MW) & 10.0 & Coordination trims peak aggregate dispatch \\
+Useful work preserved (MWh) & 4513.97 & Safety does not force total shutdown \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Interpretation}
+
+The important battery result is not that the fleet chapter is ``finished'' as
+a full theorem-backed composition theory.  It is that the repo now contains a
+locked, chapter-facing composition run showing exactly where shared
+infrastructure stress emerges and how much useful work remains after
+coordination.  That closes a practical gap between single-battery safety and
+fleet operation without pretending that all composition questions are solved.
+
+\section{What Remains Open}
+
+The present fleet package is intentionally narrow:
+
+\begin{itemize}
+  \item It is a two-battery study, not a heterogeneous multi-asset proof.
+  \item It reports aggregate stress and preserved work, not a full fairness or
+    degradation-allocation frontier.
+  \item It motivates the quality-score gossip and coordinated fallback ideas,
+    but does not yet prove their optimality.
+\end{itemize}
+
+\section{Summary}
+
+The battery thesis now includes a real fleet-composition artifact rather than
+only a conceptual extension.  The locked two-battery study shows repeated
+shared-transformer stress, bounded curtailment, and non-trivial useful work
+preservation.  For the battery book, that is the correct claim: composition
+has moved from future-work rhetoric into an auditable battery extension, while
+still remaining narrower than a full universal coordination theory.

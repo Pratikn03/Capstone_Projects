@@ -1,0 +1,117 @@
+
+\chapter{What This Battery-First Thesis Proves and What It Leaves Open}
+\label{ch:what-proves}
+
+A dissertation that claims a general principle but validates it in one domain
+must be explicit about the boundary between proven and projected.  This
+chapter draws that boundary.
+
+\section{What Is Fully Validated in Battery}
+
+The following results are established by reproducible experiment on the
+locked CPSBench harness (seed~42, 168-hour episodes, four fault
+scenarios, two regions) and backed by formal proofs:
+
+\begin{enumerate}
+  \item \textbf{OASG existence.}  The Observation-Action Safety Gap is
+    measurably non-zero for all three baseline controllers (deterministic LP,
+    CQR-only, robust MPC) under dropout rates as low as~5\%.
+    Chapter~\ref{ch:main-results} reports TSVR of 3.9--4.2\% for the
+    deterministic LP at 20\% dropout.
+  \item \textbf{DC3S effectiveness.}  The DC3S shield achieves exactly
+    0\% TSVR across all tested dropout rates $d \in [0, 0.30]$, both
+    regions, and all fault combinations.
+  \item \textbf{Zero true-state violation rate.}  No single step in any
+    experiment produces a true-state SOC breach under DC3S protection.
+  \item \textbf{Formal safety bound.}  Theorem~\ref{thm:safety-preservation}
+    guarantees that, under exchangeability of the calibration residuals and
+    bounded observation error, the true-state violation probability is at
+    most $\alpha$ with confidence $1 - \delta$.  The empirical result is
+    strictly stronger: violation rate is zero, not merely bounded.
+  \item \textbf{Bounded intervention cost.}  The shield's intervention
+    rate remains below 3.1\% under \texttt{drift\_combo} and below
+    20\% even at extreme 30\% dropout.
+\end{enumerate}
+
+\section{What Is Partially Proved}
+
+Several claims are supported by evidence but carry caveats:
+
+\begin{enumerate}
+  \item \textbf{Conditional coverage.}  CQR group coverage
+    (Chapter~\ref{ch:conditional-coverage}) is validated on the four
+    tested fault families.  Coverage under \emph{out-of-distribution}
+    faults---sensor types or degradation modes not in the calibration
+    set---has not been empirically verified.
+  \item \textbf{Aging effects.}  The aging-aware recalibration
+    (Chapter~\ref{ch:temporal-extensions}) is demonstrated on synthetic
+    degradation curves.  Field data spanning multi-year battery aging
+    is not available in the current dataset.
+  \item \textbf{Certificate half-life.}  The blackout study
+    (Chapter~\ref{ch:cert-half-life-blackout}) characterises certificate
+    decay over a 96-hour horizon.  Longer horizons (weeks, months) are
+    extrapolated, not measured.
+  \item \textbf{Transfer across regions.}  The US--DE transfer stress
+    test (Chapter~\ref{ch:transfer-generalisation}) shows positive
+    results for two grid regions.  Generalisation to grids with
+    fundamentally different market structures (e.g., islanded
+    microgrids) is untested.
+\end{enumerate}
+
+\section{What Is Framework-Level but Not Yet Validated Universally}
+
+The ORIUS architecture makes structural claims that go beyond the battery
+domain.  These claims are \emph{plausible by construction} but not yet
+validated by experiment in a second domain:
+
+\begin{enumerate}
+  \item \textbf{Multi-domain portability.}  Chapter~\ref{ch:battery-to-orius}
+    argues that the adapter pattern generalises.  No non-battery adapter has
+    been implemented and tested.
+  \item \textbf{Multi-asset composition.}  The fleet-level shield
+    (Chapter~\ref{ch:compositional-safety-fleets}) is validated for a
+    two-battery fleet.  Composition across \emph{heterogeneous} asset
+    types (battery + solar inverter + load controller) is an open problem.
+  \item \textbf{Adversarial completeness.}  Active probing
+    (Chapter~\ref{ch:adversarial-robustness}) detects the tested spoofing
+    attack.  Completeness against all possible adversarial strategies is
+    not claimed and likely unachievable in general.
+\end{enumerate}
+
+\section{Why Battery-First Is the Correct Sequence}
+
+Starting from the battery domain is not a convenience---it is a research
+strategy.  Batteries offer hard state constraints (SOC bounds), high
+action-to-state sensitivity, and network-mediated telemetry: exactly the
+combination that makes the OASG both dangerous and measurable.  Proving
+the framework here means the hardest measurement problem is solved first.
+Domains with softer constraints or lower sensitivity are structurally
+easier and can be addressed with the same machinery.
+
+\section{What Second Domain Should Come Next}
+
+The most informative second domain is one that \emph{differs} from battery
+along the axes identified in Chapter~\ref{ch:battery-to-orius}: nonlinear
+dynamics, multi-dimensional state, and non-box constraints.  Building HVAC
+thermal management or autonomous vehicle lane-keeping would test
+whether the conformal region and projection oracle generalise beyond
+scalar-state, linear-dynamics plants.
+
+\section{How to Expand Without Rewriting the Core}
+
+The adapter architecture ensures that the ORIUS core library---OQE scoring,
+RAC inflation, certificate issuance, audit trail---is domain-independent
+code.  Adding a new domain means writing a new \texttt{DomainAdapter}
+implementation and a new CPSBench plant model, not forking the safety
+pipeline.  The core's test suite remains valid across all adapters,
+providing regression guarantees as the framework grows.
+
+\section{Chapter Summary}
+
+This thesis fully validates the ORIUS principle for the battery dispatch
+domain: the OASG exists, DC3S closes it, and the formal safety bound
+holds empirically.  It partially validates conditional coverage, aging
+recalibration, and regional transfer.  It argues but does not yet prove
+that the architecture generalises to other CPS domains.  Being explicit
+about this boundary is not a weakness of the battery-first strategy;
+it is the point.

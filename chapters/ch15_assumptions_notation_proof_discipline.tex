@@ -1,0 +1,213 @@
+
+\chapter{Assumptions, Notation, and Proof Discipline}
+\label{ch:assumptions}
+
+This chapter establishes the formal scaffolding for Part~III.  It fixes
+notation that is stable across all theorems, catalogues the eight
+standing assumptions, defines the proof dependency matrix, and sets the
+disciplinary standards that every subsequent proof must satisfy.
+
+\section{Stable Notation}
+
+Throughout Part~III, the following symbols have fixed meaning:
+
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+$x_t$ & True (plant-internal) state at step $t$ \\
+$\hat{x}_t$ & Observed (telemetry-delivered) state at step $t$ \\
+$a_t$ & Action (dispatch decision) at step $t$ \\
+$\phi(x_t)$ & Safety predicate: $\phi(x_t) = 1$ iff $x_t$ satisfies all constraints \\
+$w_t$ & Reliability score, $w_t \in [0,1]$ \\
+$\alpha$ & Conformal miscoverage level (nominal $\alpha = 0.10$) \\
+$q_t$ & Conformal quantile (half-width of the prediction interval) \\
+$\mathcal{A}_t$ & Tightened safe-action set at step $t$ \\
+$T$ & Episode horizon (number of steps) \\
+$V$ & Total violation count: $V = \sum_{t=1}^T \mathbf{1}[\lnot\,\phi(x_t)]$ \\
+$\bar{w}$ & Episode-average reliability: $\bar{w} = T^{-1}\sum_t w_t$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Battery instantiation.}
+In the battery domain, $x_t = \text{SOC}_t$ (MWh),
+$a_t = (P_t^{\text{chg}}, P_t^{\text{dis}})$ (MW), and
+$\phi(x_t) = \mathbf{1}[\text{SOC}_{\min} \le x_t \le \text{SOC}_{\max}]$.
+
+\section{Assumption IDs (A1--A8)}
+
+Each assumption is assigned a permanent identifier and stated in both
+domain-general and battery-specific form.
+
+\begin{assumption}[A1: Bounded model error]
+\label{assm:A1}
+The one-step prediction error $\|x_{t+1} - f(x_t, a_t)\|$ is bounded
+by a known constant $\epsilon_{\text{model}}$.
+\emph{Battery:} $|x_{t+1} - (x_t + \eta\,P_t\,\Delta t)| \le \epsilon_{\text{model}}$.
+\end{assumption}
+
+\begin{assumption}[A2: Bounded telemetry error]
+\label{assm:A2}
+The observation error $\|\hat{x}_t - x_t\|$ is bounded by a
+reliability-dependent function: $\|\hat{x}_t - x_t\| \le g(w_t)$,
+where $g$ is monotone decreasing.
+\end{assumption}
+
+\begin{assumption}[A3: Feasible safe repair]
+\label{assm:A3}
+For every state $x_t$ satisfying $\phi(x_t) = 1$, there exists at
+least one action $a_t \in \mathcal{A}_t$ such that $\phi(x_{t+1}) = 1$.
+\end{assumption}
+
+\begin{assumption}[A4: Known dynamics]
+\label{assm:A4}
+The transition function $f(x_t, a_t)$ is known to the controller up
+to the model error bounded in A1.
+\emph{Battery:} the SOC transition $x_{t+1} = x_t + \eta\,P_t\,\Delta t$
+is known with efficiency $\eta$ identified offline.
+\end{assumption}
+
+\begin{assumption}[A5: Monotone bounded uncertainty inflation]
+\label{assm:A5}
+The inflation function $\iota(w_t) = q_t / (w_t + \epsilon)$ is
+monotone decreasing in $w_t$ and bounded: $\iota(w_t) \le \bar{\iota}$
+for all $w_t \in [0,1]$.
+\end{assumption}
+
+\begin{assumption}[A6: Bounded detector lag]
+\label{assm:A6}
+The OQE reliability score $w_t$ reflects a telemetry fault within at
+most $\ell$ steps of fault onset: if a fault begins at step $t_f$,
+then $w_{t_f + \ell} \le w_{\text{alert}}$.
+\end{assumption}
+
+\begin{assumption}[A7: Causal certificate update]
+\label{assm:A7}
+The certificate $\mathcal{C}_t$ depends only on information available
+at or before step $t$: $\mathcal{C}_t = h(\hat{x}_{1:t}, a_{1:t-1})$.
+\end{assumption}
+
+\begin{assumption}[A8: Admissible fallback policy]
+\label{assm:A8}
+There exists a fallback policy $\pi_{\text{fb}}$ that, starting from any
+safe state, maintains $\phi(x_t) = 1$ for all future steps under worst-case
+bounded disturbance.
+\emph{Battery:} the zero-dispatch policy ($P_t = 0$) is always admissible
+because SOC is unchanged (up to model error).
+\end{assumption}
+
+\section{Proof Dependency Matrix}
+
+Table~\ref{tab:proof-deps} shows which assumptions each theorem requires.
+
+\begin{table}[ht]
+\centering
+\caption{Assumption dependencies of main theorems.}
+\label{tab:proof-deps}
+\begin{tabular}{lccccccccc}
+\toprule
+\textbf{Theorem} & \textbf{A1} & \textbf{A2} & \textbf{A3} & \textbf{A4}
+  & \textbf{A5} & \textbf{A6} & \textbf{A7} & \textbf{A8} \\
+\midrule
+OASG Existence       & \checkmark & \checkmark &            & \checkmark &            &            &            &            \\
+Safety Preservation  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark &            & \checkmark &            \\
+Core Bound           & \checkmark & \checkmark &            & \checkmark & \checkmark & \checkmark & \checkmark &            \\
+No Free Safety       &            & \checkmark &            &            &            &            &            &            \\
+Certificate Horizon  & \checkmark & \checkmark &            & \checkmark & \checkmark & \checkmark & \checkmark &            \\
+Graceful Degradation & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark &            &            & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Marginal Versus Conditional Coverage}
+
+A critical distinction throughout Part~III:
+\begin{description}
+  \item[Marginal coverage.] $\Pr[\,x_t \in \hat{C}_t\,] \ge 1 - \alpha$
+    averaged over the randomness of calibration and test points.
+    This is what CQR provides.
+  \item[Conditional coverage.] $\Pr[\,x_t \in \hat{C}_t \mid \hat{x}_t\,]
+    \ge 1 - \alpha$ for every observed value.  Conditional coverage is
+    strictly stronger and is \emph{not} guaranteed by CQR without
+    additional distributional assumptions.
+\end{description}
+
+The ORIUS theorems are stated under marginal coverage.  Where conditional
+coverage is needed (e.g., for the per-step risk lemma), we explicitly
+invoke the monotone inflation assumption~(A5) as a surrogate.
+
+\section{One-Step Versus Multi-Step Claims}
+
+The theorems in Chapters~\ref{ch:theorem-oasg}--\ref{ch:core-bound}
+operate on a \emph{per-step} basis: each step's safety is analysed
+conditionally on the current state.  The core bound
+(Chapter~\ref{ch:core-bound}) aggregates per-step risks into an
+episode-level expectation via linearity of expectation.
+
+Multi-step claims (certificate horizon, graceful degradation) require
+additional assumptions about temporal dependence; these are stated
+explicitly in Chapter~\ref{ch:temporal-extensions}.
+
+\section{The Theorem Ladder}
+
+The theorems form a logical ladder:
+
+\begin{enumerate}
+  \item \textbf{OASG Existence} (Chapter~\ref{ch:theorem-oasg}):
+    The problem is real---observed safety does not imply true safety.
+  \item \textbf{Safety Preservation} (Chapter~\ref{ch:theorem-safety}):
+    The shield solves the problem---true safety is restored.
+  \item \textbf{Core Bound} (Chapter~\ref{ch:core-bound}):
+    The solution has a quantifiable cost---expected violations are bounded.
+  \item \textbf{No Free Safety} (Chapter~\ref{ch:no-free-safety}):
+    The cost is unavoidable---ignoring observation quality breaks safety.
+  \item \textbf{Temporal Extensions} (Chapter~\ref{ch:temporal-extensions}):
+    The guarantee extends across time---certificates expire gracefully.
+\end{enumerate}
+
+Each rung depends on the ones below it, and no rung can be removed
+without breaking the chain.
+
+\section{Theorem-Writing Discipline}
+
+Every theorem in this dissertation follows a fixed template:
+
+\begin{enumerate}
+  \item \textbf{Statement}: formal claim with quantifiers.
+  \item \textbf{Assumptions used}: list of A-IDs.
+  \item \textbf{Proof}: complete derivation.
+  \item \textbf{Artifact link}: pointer to the empirical evidence that
+    instantiates the theorem in the battery domain.
+  \item \textbf{Scope disclaimer}: ``What this theorem does not prove.''
+\end{enumerate}
+
+\section{Common Theorem Failure Modes}
+
+To inoculate against reviewer objections, we catalogue failure modes
+that a careless proof might exhibit:
+
+\begin{enumerate}
+  \item \emph{Vacuous truth.}  If the assumption set is never satisfied,
+    the theorem is true but useless.  We verify non-vacuousness by
+    exhibiting the battery instantiation.
+  \item \emph{Circular dependence.}  Theorem~$X$ assumes the conclusion
+    of Theorem~$Y$, and vice versa.  The dependency matrix
+    (Table~\ref{tab:proof-deps}) prevents this.
+  \item \emph{Hidden conditional.}  A marginal claim is stated as if it
+    were conditional.  We use the marginal/conditional distinction
+    explicitly.
+  \item \emph{Infinite-sample limit.}  A result that holds only
+    asymptotically is presented as finite-sample.  All ORIUS bounds
+    are stated for finite~$T$.
+\end{enumerate}
+
+\section{Chapter Summary}
+
+This chapter provides the stable notational, assumptive, and
+methodological foundation for every proof in Part~III.  The eight
+assumptions (A1--A8) are individually justified in both domain-general
+and battery-specific terms, the proof dependency matrix prevents
+circular reasoning, and the theorem-writing discipline ensures that
+every claim is bounded by explicit scope disclaimers.

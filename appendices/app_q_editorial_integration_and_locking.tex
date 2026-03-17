@@ -1,0 +1,100 @@
+% =============================================================================
+% Appendix Q: Editorial Integration and Locking Protocol
+% ORIUS/DC3S Battery-Safety Thesis
+% =============================================================================
+\chapter{Editorial Integration and Locking Protocol}
+\label{app:editorial-integration-locking}
+
+This appendix defines the editorial workflow for integrating empirical results into the thesis: CSV-to-LaTeX mapping, figure pipeline, version control, pre-submission checklist, and final lock procedure.
+
+\section{CSV-to-LaTeX Table Mapping}
+\label{sec:csv-to-latex}
+
+Locked CSVs in \texttt{reports/publication/} are the source of truth for all numerical tables. The mapping is implemented by \texttt{scripts/build\_paper\_table\_tex.py}.
+
+\begin{itemize}
+\item \textbf{Input}: CSV path, table token (e.g., \texttt{tbl01\_main\_results}), caption.
+\item \textbf{Output}: LaTeX \texttt{\textbackslash begin\{table\}} ... \texttt{\textbackslash end\{table\}} blocks written to \texttt{paper/assets/tables/generated/}.
+\item \textbf{Convention}: Table tokens map to \texttt{tbl*.tex} filenames; the paper \texttt{.tex} file \texttt{\textbackslash input}s these generated files.
+\item \textbf{Escaping}: The script applies \texttt{\_tex\_escape()} for LaTeX special characters (\texttt{\&}, \texttt{\%}, \texttt{\_}, etc.).
+\item \textbf{Missing values}: Rendered as \texttt{---} in the output.
+\end{itemize}
+
+\section{Figure Generation Pipeline}
+\label{sec:figure-pipeline}
+
+Figures follow the pipeline: \texttt{scripts} $\rightarrow$ \texttt{reports/publication/*.png} $\rightarrow$ LaTeX \texttt{\textbackslash includegraphics}.
+
+\begin{enumerate}
+\item \textbf{Generation}: Scripts such as \texttt{generate\_48h\_trace.py}, \texttt{generate\_publication\_figures.py}, \texttt{run\_blackout\_study.py} produce PNG files in \texttt{reports/publication/} or \texttt{paper/assets/figures/}.
+\item \textbf{Sync}: \texttt{scripts/sync\_paper\_assets.py} copies or links figures from \texttt{reports/publication/} to \texttt{paper/assets/figures/} as needed.
+\item \textbf{LaTeX inclusion}: The paper uses \texttt{\textbackslash includegraphics[width=\textbackslash linewidth]\{assets/figures/fig\_*.png\}} (or equivalent) with paths relative to the paper directory.
+\item \textbf{Naming}: Figure filenames follow \texttt{fig\_*.png} convention; captions and labels are defined in the main \texttt{paper.tex} or chapter files.
+\end{enumerate}
+
+\section{Version Control Protocol}
+\label{sec:version-control}
+
+\begin{itemize}
+\item \textbf{Git tags for milestones}: Use annotated tags for thesis milestones, e.g., \texttt{thesis-draft-v1}, \texttt{thesis-pre-defense}, \texttt{thesis-final-submission}.
+\item \textbf{Locked artifact policy}: Once an artifact is locked (checksum in manifest), it should not be overwritten without a new version tag and manifest update.
+\item \textbf{Branch strategy}: \texttt{main} holds the canonical thesis; feature branches for experiments; merge only after validation.
+\item \textbf{Commit messages}: Include artifact IDs or table/figure tokens when committing changes to locked outputs.
+\end{itemize}
+
+\section{Pre-Submission Checklist (14 Items)}
+\label{sec:pre-submission-checklist}
+
+Before final submission, verify:
+
+\begin{enumerate}
+\item All figures render: every \texttt{\textbackslash includegraphics} path resolves and images display correctly.
+\item All tables compile: no missing columns, overflow, or LaTeX errors in generated tables.
+\item All cross-references resolve: \texttt{\textbackslash ref}, \texttt{\textbackslash cite}, \texttt{\textbackslash label} targets exist and produce correct numbers.
+\item Bibliography complete: all \texttt{\textbackslash cite} keys have corresponding entries in the bibliography file.
+\item Theorem/assumption labels: T1--T4, A1--A8 are defined and referenced consistently.
+\item Numerical consistency: every reported number in the text matches a locked CSV value.
+\item Appendix inclusion: all appendices (A--Q) are included in the document and compile.
+\item Spell-check and grammar: full pass on abstract, introduction, conclusion, and captions.
+\item PDF metadata: title, author, date set correctly.
+\item No TODO/FIXME: all placeholder text removed.
+\item Reproducibility scripts: \texttt{scripts/} directory is complete and documented.
+\item Config files: \texttt{configs/} are committed and match the locked run parameters.
+\item Lock manifests: \texttt{part5\_hardening\_lock\_manifest.json}, \texttt{part6\_extension\_lock\_manifest.json}, \texttt{final\_lock\_manifest\_full\_thesis.json} are present and consistent.
+\item Hash verification: \texttt{reproducibility\_lock.json} hashes match the current artifact set (see Section~\ref{sec:final-lock}).
+\end{enumerate}
+
+\section{Final Lock Procedure}
+\label{sec:final-lock}
+
+The final lock procedure ensures reproducibility and artifact integrity:
+
+\begin{enumerate}
+\item \textbf{Generate all artifacts}: Run the full pipeline (training, CPSBench, table/figure generation) with locked seeds.
+\item \textbf{Verify manifest}: Ensure all artifacts listed in \texttt{final\_lock\_manifest\_full\_thesis.json} exist and are unchanged.
+\item \textbf{Hash verification}: Compute SHA-256 (or equivalent) hashes for each locked CSV and critical PNG; store in \texttt{reproducibility\_lock.json}. A verification script compares current file hashes against the stored hashes and reports mismatches.
+\item \textbf{Package creation}: Create the final tarball \texttt{final\_battery\_only\_package\_FINAL\_<timestamp>.tar.gz} containing \texttt{reports/publication/}, \texttt{scripts/}, \texttt{configs/}, \texttt{paper/}, and lock manifests.
+\item \textbf{Git tag}: Apply \texttt{thesis-final-submission} (or equivalent) to the commit containing the locked state.
+\end{enumerate}
+
+\subsection{Reproducibility Lock JSON Schema}
+
+The \texttt{reproducibility\_lock.json} file contains:
+
+\begin{verbatim}
+{
+  "version": "1.0",
+  "timestamp": "ISO8601",
+  "artifacts": [
+    {
+      "path": "reports/publication/dc3s_main_table_ci.csv",
+      "sha256": "<hex digest>"
+    },
+    ...
+  ],
+  "scripts_verified": ["generate_48h_trace.py", ...],
+  "seed_policy": "locked"
+}
+\end{verbatim}
+
+A verification script (e.g., \texttt{scripts/verify\_paper\_manifest.py} or a dedicated \texttt{verify\_reproducibility\_lock.py}) recomputes hashes and compares against this file. Any mismatch indicates artifact drift and must be resolved before submission.

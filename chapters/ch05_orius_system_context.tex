@@ -1,0 +1,180 @@
+
+\chapter{ORIUS System Context}
+\label{ch:orius-context}
+
+Grid-scale battery energy storage systems (BESS) sit at the intersection of
+three economic forces: variable renewable generation that must be absorbed,
+load profiles that demand dispatchable power on sub-hourly timescales, and
+wholesale markets that price energy at volatile clearing rates.  This chapter
+positions the ORIUS framework within that operational context, traces the
+closed decision loop from forecast to measurement, and identifies the
+\emph{Optimize--Dispatch boundary} as the location where observation quality
+most directly threatens safety.
+
+% ----------------------------------------------------------------
+\section{Why Grid-Scale Batteries Matter}
+
+The penetration of wind and solar generation has transformed balancing-area
+operations.  In 2024 the ERCOT interconnection recorded negative real-time
+prices for 18\% of daytime hours, while evening ramp rates exceeded
+12\,GW\,h$^{-1}$ on 37 days.  Grid-scale batteries absorb these mismatches:
+they charge when marginal cost is low, discharge when it is high, and provide
+ancillary services (frequency regulation, spinning reserve) that stabilise the
+grid during transients.
+
+Three properties distinguish BESS from conventional peakers:
+\begin{enumerate}
+  \item \textbf{Bidirectional power flow.}  A 100\,MW / 400\,MWh installation
+    can charge or discharge at full rate within seconds, making it a
+    controllable load \emph{and} a controllable generator.
+  \item \textbf{State-of-charge coupling.}  Every dispatch decision at time~$t$
+    constrains the feasible set at time~$t+1$ through the SOC dynamics.  The
+    controller cannot treat time steps independently.
+  \item \textbf{Degradation risk.}  Deep cycling, high C-rates, and
+    over-voltage operation accelerate cell ageing.  Safety envelopes are
+    therefore both \emph{hard} (BMS trip thresholds) and \emph{soft}
+    (warranty-preserving SOC margins).
+\end{enumerate}
+
+These properties mean that dispatch quality depends not only on forecast
+accuracy but on the fidelity of the real-time observation that informs each
+control step.
+
+% ----------------------------------------------------------------
+\section{ORIUS as a Closed Decision Loop}
+
+The ORIUS system implements a five-stage closed loop:
+
+\[
+  \underbrace{\text{Forecast}}_{\hat{y}_{t+1:t+H}}
+  \;\longrightarrow\;
+  \underbrace{\text{Optimize}}_{a_t^\star}
+  \;\longrightarrow\;
+  \underbrace{\text{Dispatch}}_{a_t^{\mathrm{exec}}}
+  \;\longrightarrow\;
+  \underbrace{\text{Measure}}_{\tilde{z}_t}
+  \;\longrightarrow\;
+  \underbrace{\text{Monitor}}_{\mathcal{C}_t}
+  \;\longrightarrow\;
+  \text{(next cycle)}
+\]
+
+\begin{description}
+  \item[Forecast.]  A model family $\mathcal{F}$ produces point forecasts and
+    prediction intervals for load, wind, solar, and price over a rolling
+    horizon $H$ (typically 24--48\,h at hourly resolution).
+
+  \item[Optimize.]  A dispatch optimiser receives the forecast distribution
+    and the current SOC estimate, then solves a constrained programme to
+    produce a candidate action $a_t^\star = (\text{charge}_t,
+    \text{discharge}_t)$.
+
+  \item[Dispatch.]  The candidate action is checked against safety constraints
+    (SOC bounds, ramp limits, BMS thresholds).  If the action is feasible it
+    is forwarded to the battery management system; otherwise it is repaired to
+    the nearest safe action $a_t^{\mathrm{safe}}$.
+
+  \item[Measure.]  Operational telemetry $\tilde{z}_t$ returns from the plant:
+    actual SOC, terminal voltage, cell temperatures, grid-side power meter
+    readings.  This measurement may be delayed, dropped, corrupted, or stale.
+
+  \item[Monitor.]  A certificate $\mathcal{C}_t$ records the action taken, the
+    observation quality score, the interval width, and whether the step passed
+    all safety invariants.  The certificate feeds the next forecast cycle and
+    is archived for audit.
+\end{description}
+
+% ----------------------------------------------------------------
+\section{The Optimize--Dispatch Boundary as the True Risk Location}
+
+Not all stages of the loop carry equal risk.  A forecast error at
+$t + 12$\,h can be corrected by re-optimisation at $t + 1$; a measurement
+delay at the \emph{Measure} stage is visible to the \emph{Monitor} and can
+trigger a conservative hold.  The highest-risk transition is the
+\textbf{Optimize $\to$ Dispatch} boundary, for three reasons:
+
+\begin{enumerate}
+  \item \textbf{Commitment.}  Once the BMS receives a power setpoint, the
+    battery executes it within milliseconds.  The action is irreversible on the
+    control-cycle timescale.
+  \item \textbf{Observation dependence.}  The optimiser's candidate~$a_t^\star$
+    is conditioned on the most recent observation~$\tilde{z}_{t-1}$.  If that
+    observation is stale or corrupted, the candidate may lie outside the true
+    feasible set without any visible warning.
+  \item \textbf{Constraint coupling.}  An unsafe action at time~$t$ shifts the
+    SOC into a region that may render \emph{all} future actions infeasible
+    until a recovery period elapses (the ``SOC trap'').
+\end{enumerate}
+
+The DC3S adapter (Chapter~\ref{ch:dc3s-adapter}) is positioned precisely at
+this boundary: it intercepts~$a_t^\star$, inflates the uncertainty set to
+account for observation degradation, and projects the action into the
+tightened safe set before it reaches the BMS.
+
+% ----------------------------------------------------------------
+\section{Operational Telemetry Pathways}
+
+Telemetry in a grid-scale BESS traverses multiple communication layers before
+reaching the dispatch controller:
+
+\begin{enumerate}
+  \item \textbf{Cell-level sensors} (voltage, temperature, current) report to
+    the Battery Management System (BMS) over CAN bus at 1--10\,Hz.
+  \item \textbf{BMS aggregation} computes pack-level SOC, state-of-health
+    (SOH), and thermal limits, then publishes to the site SCADA at 1\,Hz.
+  \item \textbf{SCADA gateway} relays readings to the Energy Management System
+    (EMS) via Modbus/TCP or IEC~61850.  This link is typically on-site LAN
+    with sub-second latency.
+  \item \textbf{Cloud telemetry} streams from the EMS to the dispatch
+    controller (ORIUS) over cellular, fibre, or satellite uplink.  This
+    link is the primary source of packet loss, delay jitter, and reordering.
+  \item \textbf{Grid-side meters} (revenue meters, PMUs) provide independent
+    power and frequency measurements at 4\,s or sub-second resolution.
+\end{enumerate}
+
+Each hop introduces a distinct failure mode: CAN bus saturation at high
+C-rates, SCADA gateway reboot during firmware updates, cellular dropout during
+storms, and satellite latency during congestion.  The telemetry fault taxonomy
+used in CPSBench (Chapter~\ref{ch:cpsbench}) mirrors these real failure modes.
+
+% ----------------------------------------------------------------
+\section{Why Measurement Quality Enters the Control Problem}
+
+Classical dispatch formulations assume that the controller observes the true
+state~$z_t$ at each step.  In practice the controller observes a degraded
+version~$\tilde{z}_t$ that may differ from~$z_t$ in timing, magnitude, or
+completeness.  The gap between $z_t$ and $\tilde{z}_t$ has three consequences
+for safety:
+
+\begin{enumerate}
+  \item \textbf{SOC estimation error.}  If the reported SOC is stale by
+    $\Delta t$ steps, the true SOC has drifted by up to
+    $P_{\max} \cdot \Delta t / E_{\mathrm{cap}}$ in normalised units, where
+    $P_{\max}$ is the rated power and $E_{\mathrm{cap}}$ the nameplate energy.
+  \item \textbf{Forecast conditioning error.}  The most recent load and
+    renewables readings condition the next forecast window.  Corrupted readings
+    propagate into biased intervals, undermining conformal coverage guarantees.
+  \item \textbf{Constraint tightening mismatch.}  A robust optimiser that
+    tightens constraints based on \emph{assumed} interval width may
+    under-tighten if the true observation quality is worse than assumed, or
+    over-tighten if quality is better, sacrificing economic value.
+\end{enumerate}
+
+The central thesis of this dissertation is that measurement quality must be
+\emph{explicitly scored and fed back} into the uncertainty set at each control
+step.  The observation quality estimator (OQE, Chapter~\ref{ch:dc3s-adapter})
+and the reliability-adaptive conformal certificate (RAC-Cert) implement this
+feedback loop.
+
+% ----------------------------------------------------------------
+\section{Chapter Summary}
+
+This chapter established the ORIUS system as a five-stage closed decision
+loop---Forecast, Optimize, Dispatch, Measure, Monitor---operating over
+grid-scale battery storage.  The Optimize--Dispatch boundary was identified as
+the highest-risk transition because actions are irreversible, observation-dependent,
+and coupled through SOC dynamics.  Telemetry traverses multiple communication
+layers, each introducing distinct degradation modes.  Because measurement
+quality directly affects SOC estimation, forecast conditioning, and constraint
+tightening, it must enter the control formulation as a first-class variable.
+The remainder of Part~II develops the mathematical machinery to accomplish this.

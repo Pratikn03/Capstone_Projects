@@ -1,0 +1,144 @@
+% =============================================================================
+% Appendix D: Extended Battery Result Tables
+% ORIUS/DC3S Battery-Safety Thesis
+% =============================================================================
+\chapter{Extended Battery Result Tables}
+\label{app:extended-results}
+
+This appendix presents the full result tables that support the main-text
+summaries in Chapters~\ref{ch:main-results}--\ref{ch:battery-lessons}.
+Every number traces to a locked CSV in \texttt{reports/publication/}.
+
+\section{Extended Controller Comparison}
+
+Table~\ref{tab:extended-controller} reports every metric for all five
+controllers under the default fault profile (\texttt{drift\_combo},
+20\,\% dropout, DE region).
+
+\begin{table}[htbp]
+\centering
+\caption{Extended controller comparison (DE, drift\_combo, 20\,\% dropout).
+  Source: \texttt{dc3s\_main\_table.csv}.}
+\label{tab:extended-controller}
+\small
+\begin{tabular}{@{}lccccccc@{}}
+\toprule
+\textbf{Controller}
+  & \textbf{TSVR\,(\%)}
+  & \textbf{IR\,(\%)}
+  & \textbf{PICP\,(\%)}
+  & \textbf{Sev.\,$p_{95}$}
+  & \textbf{Revenue}
+  & \textbf{$\Delta$\,Rev.\,(\%)}
+  & \textbf{Latency\,(ms)} \\
+\midrule
+Det.\,LP        & 3.9 & 0.0  & ---  & 0.42 & 1.000 &  0.0 &  1.2 \\
+Robust Fixed    & 0.8 & 12.1 & ---  & 0.11 & 0.931 & $-6.9$ &  1.4 \\
+CVaR            & 1.2 & 8.4  & ---  & 0.18 & 0.952 & $-4.8$ &  2.1 \\
+DC3S            & 0.0 & 14.7 & 91.3 & 0.00 & 0.948 & $-5.2$ &  3.8 \\
+DC3S + FTIT     & 0.0 & 13.2 & 92.1 & 0.00 & 0.956 & $-4.4$ &  4.1 \\
+\bottomrule
+\end{tabular}
+\medskip
+
+\footnotesize
+Revenue is normalised to the Det.\,LP baseline.  Severity $p_{95}$ is the
+95th-percentile true-SOC violation magnitude (MWh, normalised by $\Emax$).
+Latency is median per-step wall-clock time.
+\end{table}
+
+\section{Metric Definitions}
+
+For completeness, the extended metrics reported above are:
+\begin{description}[style=nextline]
+  \item[TSVR] True-SOC Violation Rate (Appendix~\ref{app:notation}).
+  \item[IR] Intervention Rate: fraction of steps where the shield
+    modifies the candidate action.
+  \item[PICP] Prediction-Interval Coverage Probability of the conformal
+    interval on held-out data.
+  \item[Sev.\,$p_{95}$] 95th percentile of the violation severity
+    distribution; zero when TSVR\,$=$\,0.
+  \item[Revenue] Normalised arbitrage revenue over the evaluation
+    horizon.
+  \item[Latency] Median per-step wall-clock time including OQE,
+    uncertainty inflation, shield, and certificate emission.
+\end{description}
+
+\section{Regional Impact Breakdown}
+
+Table~\ref{tab:regional-impact} disaggregates the DC3S results by
+region (DE = Germany, US = CAISO/ERCOT composite).
+
+\begin{table}[htbp]
+\centering
+\caption{Regional impact breakdown for DC3S + FTIT.
+  Source: \texttt{dc3s\_main\_table.csv}, \texttt{48h\_trace\_final\_de.csv},
+  \texttt{48h\_trace\_final\_us.csv}.}
+\label{tab:regional-impact}
+\small
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+\textbf{Region}
+  & \textbf{TSVR\,(\%)}
+  & \textbf{IR\,(\%)}
+  & \textbf{PICP\,(\%)}
+  & \textbf{Sev.\,$p_{95}$}
+  & \textbf{$\Delta$\,Rev.\,(\%)}
+  & \textbf{Latency\,(ms)} \\
+\midrule
+DE (Germany)       & 0.0 & 13.2 & 92.1 & 0.00 & $-4.4$ & 4.1 \\
+US (CAISO/ERCOT)   & 0.0 & 15.8 & 90.7 & 0.00 & $-5.1$ & 4.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Fault-Profile Sensitivity}
+
+Table~\ref{tab:fault-profile-ext} shows TSVR and IR across fault
+families at the 20\,\% dropout level.
+
+\begin{table}[htbp]
+\centering
+\caption{DC3S + FTIT under individual fault families (DE, 20\,\% dropout).
+  Source: \texttt{fault\_performance\_table.csv}.}
+\label{tab:fault-profile-ext}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Fault family}
+  & \textbf{TSVR\,(\%)}
+  & \textbf{IR\,(\%)}
+  & \textbf{PICP\,(\%)}
+  & \textbf{Sev.\,$p_{95}$} \\
+\midrule
+dropout           & 0.0 & 11.4 & 93.2 & 0.00 \\
+delay\_jitter     & 0.0 & 10.1 & 92.8 & 0.00 \\
+spike             & 0.0 & 16.3 & 90.4 & 0.00 \\
+stale             & 0.0 & 12.7 & 91.6 & 0.00 \\
+drift             & 0.0 & 14.9 & 91.1 & 0.00 \\
+reorder           & 0.0 &  9.8 & 93.0 & 0.00 \\
+drift\_combo      & 0.0 & 13.2 & 92.1 & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Artifact Provenance}
+
+All figures referenced in the main text trace to the following locked
+artifacts in \texttt{reports/publication/}:
+
+\begin{itemize}
+  \item \texttt{fig\_true\_soc\_violation\_vs\_dropout.png} --- TSVR
+    vs.\ dropout rate (Figure~\ref{fig:oasg-evidence}).
+  \item \texttt{fig\_true\_soc\_severity\_p95\_vs\_dropout.png} ---
+    severity surface.
+  \item \texttt{fig\_calibration\_tradeoff.png} --- coverage--width
+    Pareto front.
+  \item \texttt{fig\_transfer\_coverage.png} --- transfer coverage.
+  \item \texttt{fig\_coverage\_width.png} --- coverage vs.\ interval
+    width.
+  \item \texttt{fig\_48h\_trace\_final\_de.png} --- 48\,h operational
+    trace (DE).
+  \item \texttt{fig\_48h\_trace\_final\_us.png} --- 48\,h operational
+    trace (US).
+\end{itemize}

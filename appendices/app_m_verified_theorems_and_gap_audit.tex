@@ -1,0 +1,171 @@
+% =============================================================================
+% Appendix M: Verified Theorems and Gap Audit
+% ORIUS/DC3S Battery-Safety Thesis
+% =============================================================================
+\chapter{Verified Theorems and Gap Audit}
+\label{app:verified-theorems-gap-audit}
+
+This appendix mirrors the authoritative battery-8 theorem register used by the
+proof appendix.  The canonical set is:
+\begin{enumerate}
+  \item OASG existence,
+  \item one-step safety preservation,
+  \item ORIUS core bound,
+  \item no free safety,
+  \item certificate validity horizon,
+  \item certificate expiration bound,
+  \item feasible fallback existence, and
+  \item graceful degradation dominance.
+\end{enumerate}
+The certificate half-life remains a corollary, and safe-budget monotonicity
+remains a proposition.
+
+\section{Theorem Statements}
+
+\subsection{Theorem 1: OASG Existence}
+\label{sec:thm-oasg}
+
+\textbf{Statement.} There exist scenarios where an action appears safe in observed state but is unsafe in true physical state. Formally: $\exists$ episodes with degraded telemetry such that $\text{observed-safe}(a \mid x_{\text{obs}}) \neq \text{true-safe}(a \mid x_{\text{true}})$.
+
+\textbf{Assumptions.} A2 (bounded telemetry error), A4 (known dynamics). Fault injection produces non-trivial $x_{\text{obs}} \neq x_{\text{true}}$ separation.
+
+\textbf{Proof status.} Structural: code explicitly separates observed and true state; empirical: violation rates under dropout/drift exceed nominal.
+
+\textbf{Code anchor.} \texttt{src/orius/cpsbench\_iot/}: \texttt{scenarios.py} (fault generation, $x_{\text{obs}}$, $x_{\text{true}}$, \texttt{event\_log}); \texttt{plant.py} (unclamped truth SOC in \texttt{BatteryPlant.step()}); \texttt{runner.py} (true-state violation computation).
+
+\subsection{Theorem 2: One-Step Safety Preservation}
+\label{sec:thm-safety-preservation}
+
+\textbf{Statement.} If the repaired action lies inside the tightened safe set
+and the current state lies inside the inflated certificate, then the next
+battery state remains safe.
+
+\textbf{Assumptions.} A1--A5, A7.
+
+\textbf{Proof status.} Formal chapter proof plus deterministic runtime
+guarantee checks.
+
+\textbf{Code anchor.} \texttt{src/orius/dc3s/guarantee\_checks.py} and
+\texttt{src/orius/dc3s/shield.py}.
+
+\subsection{Theorem 3: ORIUS Core Bound}
+\label{sec:thm-core-bound}
+
+\textbf{Statement.} The expected battery violation count satisfies
+$\mathbb{E}[V] \le \alpha(1-\bar{w})T$.
+
+\textbf{Assumptions.} A1--A5, A7.
+
+\textbf{Proof status.} Formal chapter proof plus explicit runtime helpers for
+computing and checking the empirical bound.
+
+\textbf{Code anchor.} \texttt{src/orius/dc3s/coverage\_theorem.py}.
+
+\subsection{Theorem 4: No Free Safety}
+\label{sec:thm-no-free}
+
+\textbf{Statement.} Any controller maintaining zero true-state violations must accept at least some intervention rate. There is no controller that achieves both zero violations and zero interventions under admissible fault sequences.
+
+\textbf{Assumptions.} A3 (feasible safe repair exists), A8 (admissible fallback policy). Quality-ignorant baselines lack reliability-aware inflation.
+
+\textbf{Proof status.} Conceptual: follows from T1 (OASG existence) and the necessity of repair when observed-safe $\neq$ true-safe. Empirical: DC3S achieves zero violation with non-zero intervention; baselines achieve non-zero violation.
+
+\textbf{Code anchor.} Supporting evidence in \texttt{baselines.py},
+\texttt{scenarios.py}, and \texttt{runner.py}.
+
+\subsection{Theorem 5: Certificate Validity Horizon}
+\label{sec:thm-cert-horizon}
+
+\textbf{Statement.} A battery certificate remains valid for the largest
+integer horizon whose forward tube remains inside the battery SOC bounds.
+
+\textbf{Assumptions.} A1, A2, A4--A7.
+
+\textbf{Proof status.} Formal chapter theorem with direct validation helper.
+
+\textbf{Code anchor.} \texttt{src/orius/dc3s/temporal\_theorems.py}
+(\texttt{forward\_tube()}, \texttt{certificate\_validity\_horizon()}).
+
+\subsection{Theorem 6: Certificate Expiration Bound}
+\label{sec:thm-cert-expiration}
+
+\textbf{Statement.} The battery certificate horizon is lower-bounded by the
+issuance-time distance to the nearest SOC boundary divided by the drift scale.
+
+\textbf{Assumptions.} A4--A7.
+
+\textbf{Proof status.} Formal chapter theorem with exact code implementation
+of the analytical lower bound.
+
+\textbf{Code anchor.} \texttt{src/orius/dc3s/temporal\_theorems.py}
+(\texttt{certificate\_expiration\_bound()}).
+
+\subsection{Theorem 7: Feasible Fallback Existence}
+\label{sec:thm-fallback}
+
+\textbf{Statement.} There exists a battery fallback action that preserves
+safety from an interior SOC state under bounded model error.
+
+\textbf{Assumptions.} A3, A4, A8.
+
+\textbf{Proof status.} Constructive battery fallback theorem.
+
+\textbf{Code anchor.} \texttt{src/orius/dc3s/temporal\_theorems.py}
+(\texttt{zero\_dispatch\_fallback()}, \texttt{certify\_fallback\_existence()}).
+
+\subsection{Theorem 8: Graceful Degradation Dominance}
+\label{sec:thm-graceful-dominance}
+
+\textbf{Statement.} The battery graceful-degradation controller incurs no more
+violations than the uncontrolled controller under the same admissible fault
+sequence, with strict improvement whenever the uncontrolled path violates.
+
+\textbf{Assumptions.} A1--A5, A8.
+
+\textbf{Proof status.} Formal chapter theorem with theorem-specific comparison
+helper and safe-landing implementation support.
+
+\textbf{Code anchor.} \texttt{src/orius/dc3s/temporal\_theorems.py}
+(\texttt{evaluate\_graceful\_degradation\_dominance()}) and
+\texttt{src/orius/dc3s/shield.py} (\texttt{safe\_landing} mode).
+
+\section{Gap Audit Table}
+
+Table~\ref{tab:theorem-gap-audit} summarizes the authoritative battery-8
+theorem set, whether the proof is complete, whether empirical validation
+exists, and whether the code matches the formal statement.
+
+\begin{table}[htbp]
+\centering
+\caption{Theorem Gap Audit}
+\label{tab:theorem-gap-audit}
+\small
+\begin{tabular}{@{}llllp{3.2cm}@{}}
+\toprule
+\textbf{Theorem} & \textbf{Proof complete} & \textbf{Empirical validation} & \textbf{Code matches statement} & \textbf{Notes} \\
+\midrule
+T1 OASG Existence & Structural & Yes & Yes & Observed-vs-true split is explicit in benchmark code and locked evidence \\
+T2 One-Step Safety Preservation & Yes & Yes & Yes & Shield + guarantee checks + unit tests anchor the theorem \\
+T3 ORIUS Core Bound & Yes & Yes & Yes & \texttt{coverage\_theorem.py} now computes and evaluates the bound explicitly \\
+T4 No Free Safety & Conceptual & Yes & Partial & Baseline comparison is empirical rather than a dedicated constructive test harness \\
+T5 Certificate Validity Horizon & Yes & Yes & Yes & Forward-tube helper and horizon computation added as theorem-specific anchors \\
+T6 Certificate Expiration Bound & Yes & Partial & Yes & Analytical lower bound is implemented; empirical chapter remains conservative \\
+T7 Feasible Fallback Existence & Yes & Partial & Yes & Constructive zero-dispatch fallback is validated for bounded-error interior states \\
+T8 Graceful Degradation Dominance & Yes & Partial & Yes & Comparison helper and safe-landing implementation exist; evidence remains bounded to current traces \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Locked Empirical Evidence}
+
+Battery theorem verification relies on a mixture of code anchors, tests, and
+locked outputs in \texttt{reports/publication/}:
+\begin{itemize}
+\item \texttt{dc3s\_main\_table\_ci.csv}: violation rates, PICP, scenario breakdown
+\item \texttt{reliability\_group\_coverage\_phase3.csv}: coverage by reliability bin
+\item \texttt{blackout\_study.csv}: certificate-safe-hold evidence for the temporal extension
+\item \texttt{graceful\_degradation\_trace.csv}: behavioral evidence for the landing controller
+\item \texttt{claim\_evidence\_matrix.csv}: claim-to-evidence linkage
+\end{itemize}
+
+The theorem-to-evidence map is maintained in \texttt{orius-plan/theorem\_to\_evidence\_map.md}.

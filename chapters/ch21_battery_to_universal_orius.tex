@@ -1,0 +1,123 @@
+
+\chapter{From Battery Adapter to Universal ORIUS}
+\label{ch:battery-to-orius}
+
+The preceding chapters proved a concrete result: the DC3S shield
+eliminates true-state SOC violations for a grid-scale battery under
+realistic telemetry faults.  This chapter asks whether that result is an
+accident of battery physics or a structural consequence of the ORIUS
+architecture.  We argue the latter.  Every pipeline component operates on
+abstractions with natural counterparts in other cyber-physical domains.
+The battery adapter is one instantiation; the ORIUS principle is the
+invariant.
+
+\section{Why the Battery Result Is Structurally General}
+
+The DC3S pipeline never inspects the internal dynamics of the battery
+plant.  It consumes five objects:
+
+\begin{enumerate}
+  \item An observation vector $z_t$ (telemetry readings at time $t$).
+  \item A scalar reliability score $w_t \in [w_{\min}, 1]$ summarising
+    telemetry quality.
+  \item A conformal prediction region $C_t^{\text{RAC}}$ over the true state,
+    inflated by $1/w_t$.
+  \item A feasible action set $\mathcal{A}_t$ defined by domain constraints.
+  \item A safe-action projection $a_t^{\text{safe}}$ that maps any candidate
+    action into $\mathcal{A}_t$ under the worst-case realisation of
+    $C_t^{\text{RAC}}$.
+\end{enumerate}
+
+None of these objects mention SOC, voltage, or Coulomb counting.  They are
+\emph{domain-general}: any CPS providing equivalent definitions can reuse
+the ORIUS pipeline without modification.
+
+\section{Mapping Battery Objects to the Universal Adapter}
+
+Table~\ref{tab:domain-mapping} makes the mapping explicit.
+
+\begin{table}[ht]
+\centering
+\caption{Battery-specific objects and their domain-general counterparts.}
+\label{tab:domain-mapping}
+\begin{tabular}{lll}
+\toprule
+\textbf{ORIUS symbol} & \textbf{Battery instantiation} & \textbf{General meaning} \\
+\midrule
+$z_t$                  & SCADA packet (SOC, V, I, load) & Raw telemetry vector \\
+$w_t$                  & OQE composite score            & Observation reliability \\
+$C_t^{\text{RAC}}$     & SOC conformal interval          & State uncertainty region \\
+$\mathcal{A}_t$        & Charge/discharge power bounds   & Constraint-feasible actions \\
+$a_t^{\text{safe}}$    & SOC-preserving dispatch          & Safety-projected action \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{What Changes by Domain}
+
+Porting ORIUS to a new domain requires replacing four domain-specific
+components:
+
+\begin{description}
+  \item[Plant dynamics.] The battery uses a linear SOC integrator;
+    a robotic arm requires nonlinear rigid-body dynamics.  The pipeline
+    is agnostic---it consumes the predicted state set, not the equations.
+  \item[State definition.] SOC is a scalar in $[0,1]$.  An autonomous
+    vehicle has a six-degree-of-freedom pose.  The conformal region
+    $C_t^{\text{RAC}}$ generalises to a set in $\mathbb{R}^n$.
+  \item[Constraint structure.] Battery constraints are box constraints
+    on SOC and power.  Other domains may have polytopic, conic, or
+    nonlinear constraints.  The safe-action filter requires only that
+    projection onto the feasible set is computationally tractable.
+  \item[Fault taxonomy.] Dropout, delay, drift, and stale-sensor faults
+    are battery-specific.  Each domain has its own fault families---GPS
+    multipath for vehicles, encoder drift for robots---but the OQE
+    scoring architecture applies unchanged.
+\end{description}
+
+\section{What Remains Invariant Across Domains}
+
+Four structural invariants transfer without modification:
+
+\begin{enumerate}
+  \item \textbf{OQE architecture.}  The feature vector changes; the
+    weighted scoring function and calibration procedure do not.
+  \item \textbf{RAC-Cert inflation.}  The conformal prediction interval
+    is domain-agnostic.  Reliability-adaptive width scaling
+    $\hat{q}_\alpha / w_t$ applies to any residual distribution.
+  \item \textbf{Repair projection.}  The safe-action filter projects
+    onto the feasible set under worst-case uncertainty.  The projection
+    operator changes with the constraint geometry; the principle of
+    worst-case projection does not.
+  \item \textbf{Certification logic.}  The certificate records
+    $(w_t, C_t^{\text{RAC}}, a_t^{\text{safe}}, \text{margin})$
+    regardless of what the symbols denote physically.
+\end{enumerate}
+
+\section{How to Port ORIUS to a New Domain}
+
+A practitioner deploys ORIUS on a new plant by implementing a
+\texttt{DomainAdapter}---the analogue of \texttt{BatteryDomainAdapter}.
+The adapter provides:
+
+\begin{enumerate}
+  \item A telemetry parser that produces $z_t$.
+  \item An OQE feature extractor for the domain's fault families.
+  \item A plant model (or learned surrogate) for conformal residual
+    calibration.
+  \item A constraint specification and projection oracle.
+\end{enumerate}
+
+The ORIUS core---OQE scoring, RAC inflation, certificate issuance---remains
+a shared library, tested once and reused rather than reimplemented per domain.
+
+\section{Chapter Summary}
+
+The battery result is structurally general because the DC3S pipeline
+operates on domain-abstract objects: observations, reliability scores,
+conformal regions, feasible sets, and projected actions.  What changes
+across domains is the plant-side adapter; what remains invariant is the
+safety architecture.  Porting ORIUS to a new domain reduces to
+implementing a \texttt{DomainAdapter}---a bounded engineering task, not a
+research contribution---provided the new domain satisfies the regularity
+conditions of Chapter~\ref{ch:problem-formulation}.

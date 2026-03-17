@@ -1,0 +1,124 @@
+% =============================================================================
+% Appendix E: Reliability-Group Coverage Audits
+% ORIUS/DC3S Battery-Safety Thesis
+% =============================================================================
+\chapter{Reliability-Group Coverage Audits}
+\label{app:reliability-audits}
+
+This appendix documents the stratified coverage audit that verifies
+the conformal guarantee holds \emph{within} each reliability bin, not
+only in aggregate.  The audit is a key defence against the scenario
+where aggregate PICP hides systematic under-coverage for low-reliability
+episodes.
+
+\section{Audit Logic}
+
+The reliability-bin stratification proceeds as follows:
+\begin{enumerate}
+  \item Partition all evaluation steps into $K$ bins by their OQE
+    reliability score $w_t$.  Default: $K=5$ with edges
+    $\{0.0,\;0.2,\;0.4,\;0.6,\;0.8,\;1.0\}$.
+  \item Within each bin $k$, compute the empirical coverage:
+    \[
+      \widehat{\mathrm{PICP}}_k
+        \;=\; \frac{1}{|B_k|}\sum_{t \in B_k}
+              \mathbf{1}\!\bigl[\,x_t \in \Crac\,\bigr],
+    \]
+    where $B_k = \{t : w_t \in [\ell_k, u_k)\}$.
+  \item Flag bin $k$ as \textbf{under-covered} if
+    $\widehat{\mathrm{PICP}}_k < 1 - \alpha - \delta_{\mathrm{audit}}$,
+    where $\delta_{\mathrm{audit}} = 0.05$ is the audit tolerance.
+  \item The audit \textbf{passes} if no bin is flagged.
+\end{enumerate}
+
+\noindent
+The tolerance $\delta_{\mathrm{audit}}$ accounts for finite-sample
+fluctuation in small bins and is calibrated via a Clopper--Pearson
+binomial interval at the 95\,\% level.
+
+\section{Illustrative Audit Table}
+
+Table~\ref{tab:coverage-by-bin} shows per-bin coverage for DC3S + FTIT
+under \texttt{drift\_combo} at 20\,\% dropout (DE region).
+
+\begin{table}[htbp]
+\centering
+\caption{Coverage by reliability bin (DE, drift\_combo, 20\,\% dropout).
+  Source: \texttt{cqr\_group\_coverage.csv}.}
+\label{tab:coverage-by-bin}
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Reliability bin}
+  & \textbf{$n$ steps}
+  & \textbf{$\widehat{\mathrm{PICP}}$\,(\%)}
+  & \textbf{Avg.\ width}
+  & \textbf{Flag} \\
+\midrule
+$[0.0,\;0.2)$  &  184 & 94.6 & 0.38 & --- \\
+$[0.2,\;0.4)$  &  271 & 93.0 & 0.29 & --- \\
+$[0.4,\;0.6)$  &  402 & 92.3 & 0.22 & --- \\
+$[0.6,\;0.8)$  &  518 & 91.7 & 0.17 & --- \\
+$[0.8,\;1.0]$  &  793 & 91.1 & 0.12 & --- \\
+\midrule
+\textbf{All}   & 2168 & 92.1 & 0.19 & \textbf{Pass} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+Key observations:
+\begin{itemize}
+  \item Coverage exceeds the $(1-\alpha) = 90\%$ target in every bin,
+    including the lowest-reliability bin $[0.0, 0.2)$.
+  \item Interval width increases as reliability decreases, confirming
+    that the RUI inflation module widens intervals when quality is
+    poor---the mechanism behind Theorem~C.2 (monotone inflation).
+  \item The lowest-reliability bin has the widest intervals and the
+    \emph{highest} coverage, verifying that the framework is
+    conservative precisely when uncertainty is greatest.
+\end{itemize}
+
+\section{Coverage--Width Trade-off}
+
+Figure~\ref{fig:coverage-width-audit} plots empirical coverage against
+average interval width across reliability bins, illustrating the
+monotone inflation property.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.78\textwidth]{fig_coverage_width.png}
+\caption{Coverage vs.\ interval width by reliability bin.  Lower
+  reliability $\Rightarrow$ wider intervals $\Rightarrow$ higher
+  coverage.  Source: \texttt{fig\_coverage\_width.png}.}
+\label{fig:coverage-width-audit}
+\end{figure}
+
+\section{CQR Group Coverage Visualisation}
+
+Figure~\ref{fig:cqr-group-audit} visualises the per-group coverage
+alongside the global target, confirming uniform coverage.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.78\textwidth]{fig_coverage_width_tradeoff.png}
+\caption{CQR group coverage across reliability bins.  All bins exceed
+  the 90\,\% target (dashed line).
+  Source: \texttt{fig\_coverage\_width\_tradeoff.png}.}
+\label{fig:cqr-group-audit}
+\end{figure}
+
+\section{Audit Protocol}
+
+The reliability-group audit is executed as part of the four-reviewer
+protocol (Appendix~\ref{app:four-reviewer-audit}, R1 checklist).  The
+procedure:
+\begin{enumerate}
+  \item Run \texttt{scripts/generate\_priority2\_artifacts.py} to
+    produce \texttt{cqr\_group\_coverage.csv}.
+  \item Verify that no bin is flagged in the output CSV.
+  \item Cross-check aggregate PICP against
+    \texttt{dc3s\_main\_table.csv}.
+  \item Record pass/fail in the audit checklist
+    (Table~\ref{tab:four-reviewer-checklist}).
+\end{enumerate}

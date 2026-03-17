@@ -1,0 +1,155 @@
+% =============================================================================
+% Appendix G: Battery Adapter Interface Specification
+% ORIUS/DC3S Battery-Safety Thesis
+% =============================================================================
+\chapter{Battery Adapter Interface Specification}
+\label{app:adapter-interface}
+
+This appendix specifies the \texttt{BatteryDomainAdapter} interface that
+bridges the domain-agnostic DC3S pipeline to the battery energy storage
+domain.  Every domain that instantiates ORIUS must implement these six
+methods; the battery adapter serves as the reference implementation.
+
+\section{Interface Overview}
+
+The adapter exposes six methods that map one-to-one onto the DC3S
+pipeline stages: Observe, Qualify, Inflate, Tighten, Repair, Certify.
+Table~\ref{tab:adapter-methods} summarises each method.
+
+\begin{table}[htbp]
+\centering
+\caption{\texttt{BatteryDomainAdapter} interface methods.}
+\label{tab:adapter-methods}
+\small
+\begin{tabular}{@{}p{3.0cm}p{3.0cm}p{3.0cm}p{4.0cm}@{}}
+\toprule
+\textbf{Method} & \textbf{Input} & \textbf{Output} & \textbf{Battery interpretation} \\
+\midrule
+\texttt{ingest\_telemetry}
+  & Raw BMS packet $\ztt$
+  & Parsed state vector $\ot$
+  & Extracts SOC, voltage, current, temperature from the degraded telemetry stream.
+\\[4pt]
+\texttt{compute\_oqe}
+  & $\ot$, history buffer
+  & Reliability score $\wt \in [0,1]$
+  & Aggregates freshness, consistency, and drift evidence into a scalar quality score.
+\\[4pt]
+\texttt{build\_uncertainty\_set}
+  & $\ot$, $\wt$, conformal quantile $q_t$
+  & Uncertainty set $\Ut$
+  & Constructs $[\hat{x}_t - m_t,\;\hat{x}_t + m_t]$ with $m_t = q_t/(w_t + \epsilon)$.
+\\[4pt]
+\texttt{tighten\_action\_set}
+  & $\Ut$, plant constraints
+  & Safe action set $\Aset$
+  & Shrinks the power/ramp feasible set by the margin $m_t$ on each SOC bound.
+\\[4pt]
+\texttt{repair\_action}
+  & Candidate $\astar$, $\Aset$
+  & Safe action $\asafe$
+  & Projects $\astar$ onto $\Aset$ via constrained QP; returns $\astar$ if already feasible.
+\\[4pt]
+\texttt{emit\_certificate}
+  & $\wt$, $m_t$, $\asafe$, prev.\ hash
+  & Certificate record
+  & Emits a hash-chained, per-step certificate with all DC3S fields for audit.
+\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Method Contracts}
+
+Each method satisfies the following contracts:
+
+\begin{description}[style=nextline]
+  \item[\texttt{ingest\_telemetry}]
+    \textbf{Pre:} raw packet is a byte-stream or structured dict.
+    \textbf{Post:} $\ot \in \R^n$ with all NaN/missing values imputed
+    by zero-order hold.
+    \textbf{Latency:} $< 0.1$\,ms.
+
+  \item[\texttt{compute\_oqe}]
+    \textbf{Pre:} $\ot$ is well-formed; history buffer has $\ge 1$ entry.
+    \textbf{Post:} $\wt \in [w_{\min}, 1.0]$; monotone in data quality.
+    \textbf{Latency:} $< 0.5$\,ms.
+
+  \item[\texttt{build\_uncertainty\_set}]
+    \textbf{Pre:} $\wt > 0$, $q_t > 0$.
+    \textbf{Post:} $\Ut$ is a non-empty interval; $m_t \le m_{\max}$.
+    \textbf{Latency:} $< 0.1$\,ms.
+
+  \item[\texttt{tighten\_action\_set}]
+    \textbf{Pre:} $\Ut$ is non-empty.
+    \textbf{Post:} $\Aset \subseteq \mathcal{U}$; $\Aset \neq \emptyset$
+    when $\phi(x_t) = 1$ (Assumption~A3).
+    \textbf{Latency:} $< 0.2$\,ms.
+
+  \item[\texttt{repair\_action}]
+    \textbf{Pre:} $\Aset \neq \emptyset$.
+    \textbf{Post:} $\asafe \in \Aset$;
+    $\|\asafe - \astar\|$ is minimised (projection).
+    \textbf{Latency:} $< 1.0$\,ms.
+
+  \item[\texttt{emit\_certificate}]
+    \textbf{Pre:} all upstream fields computed.
+    \textbf{Post:} certificate contains fields
+    \{\texttt{step}, \texttt{w\_t}, \texttt{margin}, \texttt{action},
+    \texttt{intervened}, \texttt{hash}, \texttt{prev\_hash}\}.
+    \textbf{Latency:} $< 0.3$\,ms.
+\end{description}
+
+\section{Pipeline Diagram}
+
+The six methods form a strict sequential pipeline within each dispatch
+step:
+
+\begin{center}
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners, minimum width=2.2cm, minimum height=0.7cm,
+              font=\small\ttfamily, fill=blue!8},
+  arr/.style={-{Stealth[length=5pt]}, thick},
+  node distance=0.35cm
+]
+\node[box] (a) {ingest};
+\node[box, right=of a] (b) {oqe};
+\node[box, right=of b] (c) {uncert};
+\node[box, right=of c] (d) {tighten};
+\node[box, right=of d] (e) {repair};
+\node[box, right=of e] (f) {certify};
+\draw[arr] (a) -- (b);
+\draw[arr] (b) -- (c);
+\draw[arr] (c) -- (d);
+\draw[arr] (d) -- (e);
+\draw[arr] (e) -- (f);
+\end{tikzpicture}
+\end{center}
+
+\section{How to Implement a New Domain Adapter}
+
+To extend ORIUS to a new CPS domain (e.g.\ HVAC, water treatment):
+
+\begin{enumerate}
+  \item \textbf{Subclass} \texttt{DomainAdapter} and implement the six
+    methods above with domain-specific parsing, quality scoring, and
+    constraint definitions.
+  \item \textbf{Define the safety predicate} $\phi(x)$ for the new
+    domain (e.g.\ temperature bounds for HVAC, chemical concentration
+    for water).
+  \item \textbf{Specify plant dynamics} $f(x, a)$ so that
+    \texttt{tighten\_action\_set} can compute forward-reachable states.
+  \item \textbf{Calibrate the conformal module} on domain-specific
+    forecast residuals to obtain $q_t$.
+  \item \textbf{Configure} \texttt{configs/dc3s.yaml} with
+    domain-appropriate thresholds ($w_{\min}$, $m_{\max}$, $\alpha$).
+  \item \textbf{Register} the adapter in the CPSBench runner so that
+    the evaluation harness discovers it automatically.
+\end{enumerate}
+
+\noindent
+The battery adapter in
+\texttt{src/orius/dc3s/} serves as the canonical reference.
+All six methods, their unit tests, and integration tests are documented
+in the code-level API reference
+(plan document \texttt{orius-plan/04-core-apis.md}).

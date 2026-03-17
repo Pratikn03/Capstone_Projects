@@ -1,0 +1,107 @@
+% =============================================================================
+% Appendix B: Assumption Register
+% ORIUS/DC3S Battery-Safety Thesis
+% =============================================================================
+\chapter{Assumption Register}
+\label{app:assumptions}
+
+This appendix provides the definitive register of every assumption
+invoked in the ORIUS battery-safety proofs.  Each assumption is stated
+in precise mathematical language, and a usage map records which
+theorem chapters depend on it.
+
+\section{How to Read This Register}
+
+Each assumption carries a mnemonic (A1--A8).  The \emph{formal statement}
+gives the mathematical predicate; the \emph{battery interpretation} maps
+it to physical quantities in the ORIUS plant.
+Before reading any proof in Chapters~\ref{ch:theorem-oasg}--\ref{ch:no-free-safety}
+or Appendix~\ref{app:proofs}, locate the \emph{Assumptions Used} section
+and verify each cited assumption here.
+
+\section{Master Table}
+
+\begin{table}[htbp]
+\centering
+\caption{Master assumption table (A1--A8).}
+\label{tab:assumption-master}
+\small
+\begin{tabular}{@{}clp{7.8cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Mnemonic} & \textbf{One-line statement} \\
+\midrule
+A1 & Bounded model error     & $|\epsilon_t| \le \epsilon_{\mathrm{model}}$ for all $t$. \\
+A2 & Bounded telemetry error & $|\hat{x}_t - x_t| \le g(w_t)$ for known bound $g$. \\
+A3 & Feasible safe repair    & $\Aset \neq \emptyset$ whenever $\phi(x_t) = 1$. \\
+A4 & Known dynamics          & Controller can compute $\Delta(a)$ exactly. \\
+A5 & Monotone bounded inflation & $m_t$ monotone decreasing in $w_t$; $m_t \le m_{\max}$. \\
+A6 & Bounded detector lag    & Drift detector flags within $\tau_{\max}$ steps. \\
+A7 & Causal certificate rule & $\mathrm{cert}_t = h(z_1, \ldots, z_t)$. \\
+A8 & Admissible fallback     & $\exists\;\pi_{\mathrm{fb}}$ with $\TSVR(\pi_{\mathrm{fb}}) = 0$. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Detailed Statements}
+
+\begin{assumption}[A1 --- Bounded model error]\label{assum:A1}
+$|x_{t+1} - f(x_t, a_t)| \le \epsilon_{\mathrm{model}}$ for all $t$, where $f$ is the nominal dynamics.
+\textbf{Battery:} SOC forecast residuals bounded; enforced by conformal calibration (\texttt{cqr.py}).
+\end{assumption}
+
+\begin{assumption}[A2 --- Bounded telemetry error]\label{assum:A2}
+$|\hat{x}_t - x_t| \le g(w_t)$, where $g\colon[0,1]\to\R_+$ is monotone decreasing, $g(1)=0$, $g(w_{\min})<\infty$.
+\textbf{Battery:} OQE score $w_t$ tracks degradation; quality floor $w_{\min}=0.05$, cap $m_{\max}$.
+\end{assumption}
+
+\begin{assumption}[A3 --- Feasible safe repair]\label{assum:A3}
+$\phi(x_t)=1 \Longrightarrow \Aset \neq \emptyset$.
+\textbf{Battery:} Projection repair in \texttt{shield.py} always finds a feasible power setpoint.
+\end{assumption}
+
+\begin{assumption}[A4 --- Known dynamics]\label{assum:A4}
+The controller computes $\Delta(a)=f(x,a)-x$ exactly.
+\textbf{Battery:} Linear efficiency model in \texttt{plant.py}: $\SOC_{t+1}=\SOC_t+(\etac P^{\mathrm{chg}}-\etad^{-1}P^{\mathrm{dis}})\Delta t$.
+\end{assumption}
+
+\begin{assumption}[A5 --- Monotone bounded inflation]\label{assum:A5}
+$\partial m_t/\partial w_t \le 0$ and $m_t \le m_{\max}$ for all $t$.
+\textbf{Battery:} Config caps: \texttt{infl\_max}, \texttt{rac\_cert.max\_q\_multiplier}.
+\end{assumption}
+
+\begin{assumption}[A6 --- Bounded detector lag]\label{assum:A6}
+$t_{\mathrm{flag}}-t_{\mathrm{onset}} \le \tau_{\max}$.
+\textbf{Battery:} Page--Hinkley detector in \texttt{drift.py}; config: \texttt{drift.ph\_delta}.
+\end{assumption}
+
+\begin{assumption}[A7 --- Causal certificate]\label{assum:A7}
+$\mathrm{cert}_t = h(z_1,\ldots,z_t)$; no future data used.
+\textbf{Battery:} Hash-chained certificates in \texttt{certificate.py}.
+\end{assumption}
+
+\begin{assumption}[A8 --- Admissible fallback]\label{assum:A8}
+$\exists\;\pi_{\mathrm{fb}}$ with $\TSVR(\pi_{\mathrm{fb}})=0$ under all admissible faults.
+\textbf{Battery:} Zero-dispatch, robust-fixed, and CVaR controllers serve as fallbacks.
+\end{assumption}
+
+\section{Assumption Usage Map by Chapter}
+
+\begin{table}[htbp]
+\centering
+\caption{Assumption usage map: \checkmark\,=\,required, ---\,=\,not used.}
+\label{tab:assumption-usage}
+\small
+\begin{tabular}{@{}lcccccccc@{}}
+\toprule
+\textbf{Chapter / Theorem} & \textbf{A1} & \textbf{A2} & \textbf{A3} & \textbf{A4} & \textbf{A5} & \textbf{A6} & \textbf{A7} & \textbf{A8} \\
+\midrule
+Ch.\,16: OASG Existence        & \checkmark & \checkmark & ---        & \checkmark & ---        & ---        & ---        & --- \\
+Ch.\,17: Safety Preservation   & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & ---        & \checkmark & --- \\
+Ch.\,18: Core Bound            & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & ---        & \checkmark & --- \\
+Ch.\,19: No Free Safety        & \checkmark & \checkmark & ---        & \checkmark & ---        & ---        & ---        & --- \\
+Ch.\,20: Temporal Extensions   & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & --- \\
+Ch.\,28: Certificate Half-Life & \checkmark & \checkmark & ---        & ---        & \checkmark & \checkmark & \checkmark & --- \\
+Ch.\,29: Graceful Degradation  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & ---        & ---        & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{table}

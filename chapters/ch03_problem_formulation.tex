@@ -1,0 +1,327 @@
+
+\chapter{Problem Formulation}
+\label{ch:problem-formulation}
+
+This chapter formalises the system model, telemetry fault model, battery
+dynamics, and safety constraints that underpin the ORIUS framework.  We
+state the research questions mathematically and delineate the scope
+boundary of the dissertation.
+
+\section{ORIUS System Context}
+\label{sec:orius-context}
+
+ORIUS is a renewable-aware battery dispatch platform that operates at
+the \emph{optimise-to-dispatch boundary}: an upstream forecast-and-optimise
+pipeline produces a candidate dispatch action~$a_t^{\star}$, and a
+downstream safety layer either certifies or corrects the action before it
+reaches the physical plant.  The system architecture comprises:
+
+\begin{enumerate}
+  \item \textbf{Forecast stage.}  CQR models predict load, solar, and
+    wind trajectories over a configurable horizon, producing both point
+    forecasts and conformal prediction intervals.
+  \item \textbf{Optimise stage.}  A deterministic LP (or a pluggable
+    alternative) maximises arbitrage revenue subject to SOC, power, and
+    ramp constraints evaluated on the \emph{observed} state.
+  \item \textbf{Dispatch stage (DC3S).}  The safety layer scores
+    observation quality, inflates uncertainty, tightens action bounds, and
+    issues a safety certificate for the final dispatched action.
+\end{enumerate}
+
+The boundary between stages~2 and~3 is the \emph{optimise-to-dispatch
+boundary}.  Everything upstream of this boundary operates on the observed
+state~$\hat{x}_t$; the safety layer's task is to ensure that the
+dispatched action is safe on the \emph{true} state~$x_t$ despite the gap
+between the two.
+
+\section{The Hidden Safety Gap}
+\label{sec:hidden-gap}
+
+We now state the core safety problem in the battery domain.
+
+\begin{definition}[Battery-domain OASG]
+\label{def:battery-oasg}
+Let $\mathrm{SOC}_t^{\mathrm{true}}$ denote the physical state of charge
+and $\widehat{\mathrm{SOC}}_t$ the value available to the controller.
+The \emph{battery-domain Observation-Action Safety Gap} at time~$t$ is the
+event
+\[
+  \mathcal{G}_t^{\mathrm{bat}} \;=\;
+  \Bigl\{\,a_t \in \mathcal{A}\!\bigl(\widehat{\mathrm{SOC}}_t\bigr)\Bigr\}
+  \;\cap\;
+  \Bigl\{\,a_t \notin \mathcal{A}\!\bigl(\mathrm{SOC}_t^{\mathrm{true}}\bigr)\Bigr\},
+\]
+where $\mathcal{A}(s)$ is the set of dispatch actions that keep the
+subsequent SOC within the feasible range $[\mathrm{SOC}_{\min},
+\mathrm{SOC}_{\max}]$.
+\end{definition}
+
+When $\mathcal{G}_t^{\mathrm{bat}}$ occurs, the controller has committed
+a \emph{physically unsafe} action while believing it to be safe.
+
+\section{State Objects and Telemetry Model}
+
+\subsection{True State}
+
+The true state at time~$t$ is the vector
+\[
+  x_t \;=\; \bigl(\mathrm{SOC}_t^{\mathrm{true}},\;
+  L_t^{\mathrm{true}},\; S_t^{\mathrm{true}},\; W_t^{\mathrm{true}}\bigr)
+  \;\in\; \mathcal{X} \subset \mathbb{R}^4,
+\]
+comprising the physical SOC and the true load, solar, and wind power at
+the grid connection point.
+
+\subsection{Observed State}
+
+The observed state is the output of the telemetry channel:
+\[
+  \hat{x}_t \;=\; \mathcal{T}(x_t,\, \xi_t),
+\]
+where $\mathcal{T}$ is a (possibly stochastic) telemetry operator and
+$\xi_t$ encodes the fault realisation at time~$t$ (dropout mask, delay
+value, spike indicator, staleness flag).
+
+\subsection{Observation Quality Score}
+\label{sec:oqe-formula}
+
+The Observation Quality Engine (OQE) computes a scalar reliability
+score from the telemetry features:
+\[
+  w_t \;=\; \max\!\bigl(w_{\min},\;
+    p_{\mathrm{miss},t} \cdot p_{\mathrm{delay},t}
+    \cdot p_{\mathrm{ooo},t} \cdot p_{\mathrm{spike},t}\bigr),
+\]
+where each penalty factor $p_{\cdot} \in [0, 1]$ reflects a specific
+fault channel:
+
+\begin{description}
+  \item[$p_{\mathrm{miss},t}$:] Fraction of expected readings that
+    arrived in the current window.  Full reception yields $p_{\mathrm{miss}} = 1$;
+    complete dropout yields $p_{\mathrm{miss}} = 0$.
+  \item[$p_{\mathrm{delay},t}$:] Penalty for readings whose timestamp
+    exceeds the freshness threshold: $p_{\mathrm{delay}} =
+    \exp(-\lambda_d \cdot \bar{\tau}_t)$, where $\bar{\tau}_t$ is the
+    mean delay in the window and $\lambda_d$ is a configurable decay rate.
+  \item[$p_{\mathrm{ooo},t}$:] Fraction of readings arriving in
+    chronological order.  Out-of-order arrivals indicate network jitter
+    or replay.
+  \item[$p_{\mathrm{spike},t}$:] Penalty for readings flagged as
+    transient spikes: $p_{\mathrm{spike}} = 1 - n_{\mathrm{spike}} /
+    n_{\mathrm{total}}$.
+\end{description}
+
+The floor $w_{\min} > 0$ ensures that the uncertainty inflator always
+produces a finite interval; the default value is $w_{\min} = 0.05$.
+
+\section{Fault Model}
+\label{sec:fault-model}
+
+We define the fault model as a tuple
+$\mathcal{F} = (\rho, \bar{\tau}, \pi_s, \pi_{\mathrm{stale}}, \sigma_d)$:
+
+\begin{itemize}
+  \item $\rho \in [0, 1]$: dropout rate (probability that a packet is
+    missing at any given step).
+  \item $\bar{\tau} \ge 0$: mean packet delay in multiples of the
+    decision interval $\Delta t$.
+  \item $\pi_s \in [0, 1]$: probability that a reading is a transient
+    spike.
+  \item $\pi_{\mathrm{stale}} \in [0, 1]$: probability that a sensor
+    output is frozen (stale).
+  \item $\sigma_d > 0$: standard deviation of the covariate drift between
+    calibration and deployment distributions.
+\end{itemize}
+
+The CPSBench harness (Chapter~\ref{ch:orius-bench-battery}) instantiates
+each fault channel independently and provides composite scenarios
+(e.g., \texttt{drift\_combo}) that activate all channels simultaneously.
+
+\section{Battery Dynamics and Feasible Action Set}
+\label{sec:battery-dynamics}
+
+\subsection{SOC Dynamics}
+
+The true SOC evolves according to:
+\begin{equation}
+\label{eq:soc-dynamics}
+  \mathrm{SOC}_{t+1}^{\mathrm{true}} \;=\;
+  \mathrm{SOC}_t^{\mathrm{true}}
+  \;+\; \frac{\eta_c\,[a_t]^{+} \;-\; [a_t]^{-}/\eta_d}{E_{\max}}
+  \;\cdot\; \Delta t,
+\end{equation}
+where:
+\begin{itemize}
+  \item $a_t \in \mathbb{R}$ is the dispatch action (positive = charge,
+    negative = discharge),
+  \item $[a_t]^{+} = \max(a_t, 0)$ and $[a_t]^{-} = \max(-a_t, 0)$
+    denote the charge and discharge components,
+  \item $\eta_c, \eta_d \in (0, 1]$ are the charge and discharge
+    round-trip efficiencies,
+  \item $E_{\max}$ is the battery energy capacity (MWh), and
+  \item $\Delta t$ is the decision interval (hours).
+\end{itemize}
+
+\subsection{Feasible Action Set}
+
+Given a SOC value~$s$, the feasible action set is:
+\begin{equation}
+\label{eq:feasible-set}
+  \mathcal{A}(s) \;=\; \Bigl\{\,a \in [-\bar{P},\, \bar{P}] \;:\;
+  \mathrm{SOC}_{\min} \;\le\;
+  s + \frac{\eta_c [a]^{+} - [a]^{-}/\eta_d}{E_{\max}} \cdot \Delta t
+  \;\le\; \mathrm{SOC}_{\max}\Bigr\},
+\end{equation}
+where $\bar{P}$ is the rated power limit (MW) and
+$[\mathrm{SOC}_{\min}, \mathrm{SOC}_{\max}]$ are the regulatory SOC
+bounds (typically 20\%--80\% for grid-scale lithium-ion systems).
+
+\section{Dispatch Objective}
+
+The upstream optimiser maximises expected arbitrage revenue over a
+rolling horizon~$H$:
+\begin{equation}
+\label{eq:dispatch-obj}
+  \max_{a_t, \ldots, a_{t+H-1}} \;\sum_{\tau=t}^{t+H-1}
+  \pi_\tau \cdot a_\tau \cdot \Delta t
+  \quad \text{s.t.} \quad
+  a_\tau \in \mathcal{A}\!\bigl(\widehat{\mathrm{SOC}}_\tau\bigr)
+  \;\;\forall\, \tau,
+\end{equation}
+where $\pi_\tau$ is the electricity price at step~$\tau$.  Note that the
+constraints are evaluated on the \emph{observed} SOC; the optimiser has
+no access to the true state.  The DC3S safety layer post-processes the
+solution to enforce constraints on the true state via uncertainty
+inflation.
+
+\section{The Calibration Gap Under Degradation}
+\label{sec:calibration-gap}
+
+Conformal prediction intervals are calibrated on a held-out calibration
+set collected under nominal telemetry conditions.  When deployment
+telemetry degrades, the residual distribution shifts:
+
+\begin{enumerate}
+  \item Dropout introduces a positive bias in the imputed SOC (stale
+    holds tend to overestimate SOC during discharge and underestimate
+    during charge).
+  \item Delay increases the variance of the residual because the
+    controller acts on outdated information.
+  \item Covariate drift invalidates the exchangeability assumption that
+    underpins the conformal guarantee.
+\end{enumerate}
+
+The RUI stage compensates by scaling the conformal half-width by
+$1/w_t$:
+\begin{equation}
+\label{eq:rui-inflation}
+  q_{\mathrm{eff},t} \;=\; \frac{q_{\alpha}}{w_t},
+\end{equation}
+where $q_{\alpha}$ is the nominal conformal quantile.  As $w_t$
+decreases, the effective half-width grows, widening the uncertainty set
+and tightening the safe-action filter.
+
+\section{Baseline Policies}
+\label{sec:baselines}
+
+We compare DC3S against three baseline dispatch policies:
+
+\begin{description}
+  \item[Deterministic LP.]  Solves~\eqref{eq:dispatch-obj} directly on
+    $\hat{x}_t$ with no uncertainty handling.
+  \item[Robust MPC.]  Maintains a fixed uncertainty tube
+    $[\hat{x}_t - \epsilon, \hat{x}_t + \epsilon]$ with hand-tuned
+    margin~$\epsilon$.  The tube does not adapt to observation quality.
+  \item[Stochastic risk-aware.]  Samples $N$ scenarios from historical
+    forecast errors and enforces CVaR constraints.  The scenario
+    distribution is not conditioned on telemetry quality.
+\end{description}
+
+All baselines operate on the observed state and do not maintain a
+true-state trajectory.  Their safety performance is therefore evaluated
+\emph{ex post} by the CPSBench dual-trajectory harness.
+
+\section{Research Questions Formalised}
+\label{sec:rqs-formal}
+
+We restate the research questions of Chapter~\ref{ch:introduction} in
+mathematical terms.
+
+\begin{description}
+  \item[\textbf{RQ1} (Existence of the OASG).]
+    Under fault model $\mathcal{F}$ with dropout rate $\rho > 0$, does
+    there exist a time step~$t$ such that the OASG
+    event~$\mathcal{G}_t^{\mathrm{bat}}$ (Definition~\ref{def:battery-oasg})
+    occurs for at least one baseline policy?
+  \item[\textbf{RQ2} (Closing the gap).]
+    Does DC3S achieve
+    $\mathrm{TSVR} = \frac{1}{T}\sum_{t=1}^T
+    \mathbf{1}[\mathcal{G}_t^{\mathrm{bat}}] = 0$
+    for all tested fault configurations, and at what intervention
+    rate~$\mathrm{IR}$?
+  \item[\textbf{RQ3} (Formal guarantee).]
+    Under Assumptions~\ref{assm:exchangeability}--\ref{assm:drift-bound}
+    (to be introduced in the proof chapters), does the coverage
+    inequality
+    \[
+      \Pr\!\bigl[\,\mathrm{SOC}_{t+1}^{\mathrm{true}}
+      \in [\mathrm{SOC}_{\min}, \mathrm{SOC}_{\max}]\,\bigr]
+      \;\ge\; 1 - \alpha
+    \]
+    hold for all $t$ under fault model $\mathcal{F}$?
+\end{description}
+
+\section{Scope Boundary}
+\label{sec:scope}
+
+The formal results in this dissertation are stated for the following
+scope:
+
+\begin{itemize}
+  \item \textbf{Domain.}  Grid-scale lithium-ion battery energy storage
+    (100~MWh / 50~MW reference plant).
+  \item \textbf{Decision granularity.}  Hourly dispatch ($\Delta t = 1$~h).
+  \item \textbf{Fault model.}  The five-channel model of
+    Section~\ref{sec:fault-model}, with dropout rates up to $\rho = 0.40$.
+  \item \textbf{Forecast horizon.}  Up to 48~hours (the maximum horizon
+    evaluated in the 48-hour trace studies).
+  \item \textbf{Plant model.}  Linear SOC dynamics~\eqref{eq:soc-dynamics}
+    with constant efficiencies.  Degradation effects (capacity fade,
+    resistance growth) are not modelled in the core pipeline but are
+    examined in the extension chapters.
+\end{itemize}
+
+Results outside this scope (sub-hourly dispatch, non-lithium chemistries,
+vehicle-to-grid applications) require re-calibration and are deferred to
+future work.
+
+\section{Dataset Scope}
+\label{sec:dataset-scope}
+
+All experiments use two public data sources:
+
+\begin{enumerate}
+  \item \textbf{EIA-930 (US).}  Hourly demand, net generation, and
+    interchange data for US balancing authorities.  We use the CISO
+    (California ISO) and MISO (Midcontinent ISO) regions as primary test
+    beds, with PJM, NYISO, and ERCOT for transfer-learning studies.
+  \item \textbf{ENTSO-E (Germany).}  Hourly load, solar, and wind data
+    from the German transmission system operators.  Used for
+    cross-geography generalisation experiments.
+\end{enumerate}
+
+Synthetic telemetry faults are injected by the CPSBench harness
+(Chapter~\ref{ch:orius-bench-battery}) on top of the real data,
+preserving the statistical properties of the underlying load and renewable
+signals.
+
+\section{Chapter Summary}
+
+This chapter has defined the ORIUS system architecture, the
+five-channel telemetry fault model, the SOC dynamics, the dispatch
+objective, and the observation quality engine.  The research questions
+have been formalised in terms of the OASG event and the true-state
+violation rate.  The scope boundary and dataset scope delimit the claims
+made in subsequent chapters.  Chapter~\ref{ch:safety-illusion} uses these
+definitions to demonstrate the observed-state safety illusion and motivate
+the dual-trajectory evaluation paradigm.

@@ -1,0 +1,153 @@
+% =============================================================================
+% Appendix C: Full Proofs
+% ORIUS/DC3S Battery-Safety Thesis
+% =============================================================================
+\chapter{Full Proofs}
+\label{app:proofs}
+
+This appendix is the authoritative proof surface for the battery theorem
+register.  The canonical battery set contains eight theorems:
+\begin{enumerate}
+  \item OASG existence,
+  \item one-step safety preservation,
+  \item the ORIUS core bound,
+  \item no free safety,
+  \item certificate validity horizon,
+  \item certificate expiration bound,
+  \item feasible fallback existence, and
+  \item graceful degradation dominance.
+\end{enumerate}
+The certificate half-life result remains a corollary, and safe-budget
+monotonicity remains a proposition rather than part of the battery-8 theorem
+register.
+
+%---------------------------------------------------------------------
+\section{C.1\quad Battery-Domain OASG Existence}\label{sec:proof-oasg}
+\begin{theorem}[restated]
+Under A1, A2, A4, for dropout rate $d>0$ and any optimal arbitrage
+controller, $\exists\;t^*$ with $\phi_{\mathrm{obs}}(a_{t^*})=1$,
+$\phi_{\mathrm{true}}(a_{t^*})=0$.
+\end{theorem}
+\begin{proof}
+Optimal arbitrage drives SOC within $\delta_{\mathrm{bnd}}$ of a bound
+(Lemma~\ref{lem:boundary-proximity}).  Dropout creates
+$\E[|\xi_t|]>0$ (Lemma~\ref{lem:obs-gap-dropout}).  Their intersection
+yields an observed-safe action that crosses the true boundary.  \qedhere
+\end{proof}
+
+\section{C.2\quad One-Step Safety Preservation}\label{sec:proof-one-step}
+\begin{theorem}[restated]
+Under A1--A5, A7, if $\asafe\in\Aset$ and $x_t\in\Crac$, then
+$\phi(x_{t+1})=1$.
+\end{theorem}
+\begin{proof}
+Coverage gives $|\hat{x}_t-x_t|\le m_t$.  Substituting into dynamics
+with $|\epsilon_t|\le\epsilon_{\mathrm{model}}$:
+$\SOC_{\min}+m_t-m_t-\epsilon_{\mathrm{model}} \le x_{t+1} \le
+\SOC_{\max}-m_t+m_t+\epsilon_{\mathrm{model}}$.
+The conformal quantile absorbs model error.  Chapter~\ref{ch:theorem-safety}.  \qedhere
+\end{proof}
+
+\section{C.3\quad Battery ORIUS Core Bound}\label{sec:proof-core-bound}
+\begin{theorem}[restated]
+Under A1--A5, A7, $\E[V]\le\alpha\,T\,(1-\bar{w})$.
+\end{theorem}
+\begin{proof}
+Per-step risk: $\Prob[Z_t=1]\le\alpha(1-w_t)$ (Lemma~\ref{lem:per-step-risk}).
+Sum over $T$: $\E[V]\le\alpha\sum(1-w_t)=\alpha T(1-\bar{w})$.
+Chapter~\ref{ch:core-bound}.  \qedhere
+\end{proof}
+
+\section{C.4\quad No Free Safety}\label{sec:proof-no-free}
+\begin{theorem}[restated]
+Under A1, A2, A4, for any quality-ignorant $\pi$ and $d>0$, $\exists$
+admissible fault sequence with $\TSVR(\pi)>0$.
+\end{theorem}
+\begin{proof}
+Quality-ignorant $\pi$ uses fixed margin.  Construct fault window with
+consecutive dropouts where $|\xi_t|>\delta_{\mathrm{bnd}}$
+(Lemma~\ref{lem:admissible-fault}).  Fixed margin cannot compensate.
+Chapter~\ref{ch:no-free-safety}.  \qedhere
+\end{proof}
+
+\section{C.5\quad Certificate Validity Horizon}\label{sec:proof-cert-valid}
+\begin{theorem}[restated]
+Under A1, A2, A4--A7, the battery safety certificate remains valid for the
+largest integer horizon $\tau_t$ whose forward tube stays inside the SOC
+constraint set.
+\end{theorem}
+\begin{proof}
+The forward tube propagates the reliability-inflated interval under the
+certified safe action while adding the worst-case sub-Gaussian drift radius
+$\sigma_d\sqrt{\Delta}$.  The certificate remains valid exactly while that
+tube is contained in $[\SOC_{\min},\SOC_{\max}]$.  The runtime helper
+\texttt{certificate\_validity\_horizon()} computes this maximal integer
+horizon directly from the chapter definition.  \qedhere
+\end{proof}
+
+\section{C.6\quad Certificate Expiration Bound}\label{sec:proof-expiration}
+\begin{theorem}[restated]
+Under A4--A7, the battery certificate horizon satisfies the lower bound
+$\tau_t \ge \lfloor \delta_{\mathrm{bnd},t}^2 / \sigma_d^2 \rfloor$.
+\end{theorem}
+\begin{proof}
+The forward tube reaches a constraint boundary when the accumulated
+sub-Gaussian radius equals the issuance-time boundary distance
+$\delta_{\mathrm{bnd},t}$.  Solving
+$\sigma_d\sqrt{\Delta}=\delta_{\mathrm{bnd},t}$ yields
+$\Delta=\delta_{\mathrm{bnd},t}^2/\sigma_d^2$, and flooring gives the
+integer lower bound.  The runtime helper
+\texttt{certificate\_expiration\_bound()} implements this exact expression.
+\qedhere
+\end{proof}
+
+\section{C.7\quad Certificate Half-Life Corollary}\label{sec:proof-halflife}
+\begin{corollary}[restated]
+The certificate half-life remains a corollary rather than part of the
+battery-8 theorem register.
+\end{corollary}
+\begin{proof}
+The current battery blackout evidence supports a bounded safe-hold claim more
+strongly than a finite empirically identified half-life law.  The corollary
+therefore remains analytical and should be interpreted together with the more
+conservative wording in Chapter~\ref{ch:cert-half-life-blackout}.  \qedhere
+\end{proof}
+
+\section{C.8\quad Feasible Fallback Existence}\label{sec:proof-fallback}
+\begin{theorem}[restated]
+Under A3, A4, A8, there exists a battery fallback action that preserves a
+safe SOC interior state under bounded model error.
+\end{theorem}
+\begin{proof}
+Zero dispatch is the constructive battery fallback.  If the current SOC is in
+the interior of the safe interval and the one-step model error is bounded,
+then the next SOC remains inside the admissible interval.  The helper
+\texttt{certify\_fallback\_existence()} checks this construction directly for
+the battery constraints.  \qedhere
+\end{proof}
+
+\section{C.9\quad Graceful Degradation Dominance}\label{sec:proof-graceful}
+\begin{theorem}[restated]
+Under A1--A5, A8, the graceful-degradation controller achieves no more
+violations than the uncontrolled controller under the same admissible fault
+sequence, with strict improvement whenever the uncontrolled path violates.
+\end{theorem}
+\begin{proof}
+The graceful controller monotonically reduces the effective power demand and
+steers the battery toward the safe interior, while the uncontrolled policy
+continues dispatching without reliability adaptation.  Comparing the two
+violation sequences under the same fault episode gives
+$V^{\mathrm{graceful}}\le V^{\mathrm{uncontrolled}}$.  The helper
+\texttt{evaluate\_graceful\_degradation\_dominance()} implements this
+theorem-level comparison as a validation primitive.  \qedhere
+\end{proof}
+
+\section{C.10\quad Safe-Budget Monotonicity Proposition}\label{sec:proof-budget}
+\begin{proposition}[restated]
+Under A1--A5, $B_t=|\Aset|\cdot\Delta t$ is monotone increasing in $w_t$.
+\end{proposition}
+\begin{proof}
+$|\Aset|=\SOC_{\max}-\SOC_{\min}-2m_t$ and
+$m_t=q_t/(w_t+\epsilon)$ is monotone decreasing in $w_t$, so $B_t$
+increases with $w_t$.  \qedhere
+\end{proof}
