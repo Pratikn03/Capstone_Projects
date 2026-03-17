@@ -1,0 +1,154 @@
+% =============================================================================
+% Appendix F: Fault Injection Specifications
+% ORIUS/DC3S Battery-Safety Thesis
+% =============================================================================
+\chapter{Fault Injection Specifications}
+\label{app:fault-specs}
+
+This appendix specifies the six fault families used throughout the
+CPSBench battery track (Chapter~\ref{ch:cpsbench}).  Each family
+models a distinct telemetry-degradation mechanism observed in real BMS
+and SCADA deployments.  The combined profile \texttt{drift\_combo}
+superimposes all six families in a single scenario.
+
+\section{Fault Families}
+
+Table~\ref{tab:fault-families} defines each fault family, its
+configurable parameters, the tested range, and the battery-domain
+interpretation.
+
+\begin{longtable}{@{}p{2.0cm}p{3.0cm}p{2.5cm}p{5.5cm}@{}}
+\caption{Battery fault families for CPSBench telemetry degradation.}
+\label{tab:fault-families}\\
+\toprule
+\textbf{Fault} & \textbf{Parameters} & \textbf{Range tested} & \textbf{Battery interpretation} \\
+\midrule
+\endfirsthead
+\multicolumn{4}{c}{\emph{(continued)}}\\
+\toprule
+\textbf{Fault} & \textbf{Parameters} & \textbf{Range tested} & \textbf{Battery interpretation} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+
+\texttt{dropout}
+  & drop\_rate $d$
+  & $d \in \{0.05,\allowbreak 0.10,\allowbreak 0.15,\allowbreak 0.20,\allowbreak 0.25,\allowbreak 0.30\}$
+  & Packet loss on the BMS$\to$EMS telemetry link.  Dropped readings are replaced by the last received value (zero-order hold).
+\\[4pt]
+
+\texttt{delay\_jitter}
+  & base delay $\tau_b$ (s), jitter $\sigma_\tau$ (s)
+  & $\tau_b \in \{1,\allowbreak 3,\allowbreak 5,\allowbreak 10\}$
+  & Variable network latency between BMS and the dispatch engine.  Delayed packets arrive out of order and are consumed at their arrival time.
+\\[4pt]
+
+\texttt{spike}
+  & magnitude $\mu_s$ (multiplier)
+  & $\mu_s \in \{2,\allowbreak 3,\allowbreak 4,\allowbreak 5\}$
+  & Transient sensor glitch producing a reading $\mu_s$ times the true value.  Models ADC saturation or electromagnetic interference on current/voltage sensors.
+\\[4pt]
+
+\texttt{stale}
+  & hold duration $h$ (steps)
+  & $h \in \{2,\allowbreak 4,\allowbreak 6,\allowbreak 8,\allowbreak 12\}$
+  & Sensor freeze: the telemetry value is held constant for $h$ consecutive steps.  Models BMS firmware hang or communication bus lock-up.
+\\[4pt]
+
+\texttt{drift}
+  & drift rate $\beta$ (per step)
+  & $\beta \in \{0.01,\allowbreak 0.02,\allowbreak 0.03,\allowbreak 0.05\}$
+  & Slow, linear bias accumulating as $\xi_t = \beta\,t$.  Models sensor calibration drift (e.g.\ current-sensor offset) or gradual SOH-induced SOC bias.
+\\[4pt]
+
+\texttt{reorder}
+  & buffer size $B$ (steps)
+  & $B \in \{2,\allowbreak 4,\allowbreak 6,\allowbreak 8\}$
+  & Out-of-order packet delivery: readings within a sliding window of $B$ steps are randomly permuted.  Models multi-path routing or priority-queue inversion on industrial networks.
+\\
+\end{longtable}
+
+\section{Combined Profile: \texttt{drift\_combo}}
+
+The \texttt{drift\_combo} profile activates all six fault families
+simultaneously at their mid-range parameter values with a configurable
+dropout rate $d$.  This is the default stress profile used in the main
+results (Chapter~\ref{ch:main-results}) and in the extended controller
+comparison (Appendix~\ref{app:extended-results}).
+
+\begin{table}[htbp]
+\centering
+\caption{\texttt{drift\_combo} default parameter values.}
+\label{tab:drift-combo-defaults}
+\small
+\begin{tabular}{@{}llr@{}}
+\toprule
+\textbf{Fault} & \textbf{Parameter} & \textbf{Default value} \\
+\midrule
+dropout        & $d$          & 0.20 \\
+delay\_jitter  & $\tau_b$     & 3\,s \\
+spike          & $\mu_s$      & 3$\times$ \\
+stale          & $h$          & 4 steps \\
+drift          & $\beta$      & 0.02\,/step \\
+reorder        & $B$          & 4 steps \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Fault Injection Implementation}
+
+Faults are injected by the CPSBench runner
+(\texttt{src/orius/cpsbench\_iot/runner.py}) between the plant's
+true-state output and the controller's observation input.  The
+injection pipeline:
+
+\begin{enumerate}
+  \item \textbf{Plant emits} clean telemetry $\zt$.
+  \item \textbf{Fault layer} transforms $\zt \to \ztt$ according to the
+    active fault families and their parameters.
+  \item \textbf{Controller receives} degraded telemetry $\ztt$ as its
+    observation $\ot$.
+  \item \textbf{DC3S OQE} computes $\wt$ from $\ztt$ (detecting the
+    degradation).
+\end{enumerate}
+
+\noindent
+Fault parameters are set in \texttt{configs/dc3s.yaml} under the
+\texttt{fault\_profile} key.  Each evaluation run logs the active
+profile and parameter snapshot in the certificate metadata for
+reproducibility.
+
+\section{Severity Mapping}
+
+Table~\ref{tab:fault-severity} maps each fault family to its
+primary impact on DC3S pipeline stages.
+
+\begin{table}[htbp]
+\centering
+\caption{Fault-to-pipeline severity mapping.}
+\label{tab:fault-severity}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Fault}
+  & \textbf{OQE $w_t$}
+  & \textbf{RUI $m_t$}
+  & \textbf{Shield IR}
+  & \textbf{Cert.\ validity} \\
+\midrule
+dropout        & $\downarrow\downarrow$   & $\uparrow\uparrow$   & $\uparrow$   & $\downarrow$   \\
+delay\_jitter  & $\downarrow$             & $\uparrow$            & $\uparrow$   & $\downarrow$   \\
+spike          & $\downarrow\downarrow$   & $\uparrow\uparrow$   & $\uparrow\uparrow$ & $\downarrow\downarrow$ \\
+stale          & $\downarrow$             & $\uparrow$            & $\uparrow$   & $\downarrow$   \\
+drift          & $\downarrow\downarrow$   & $\uparrow\uparrow$   & $\uparrow$   & $\downarrow\downarrow$ \\
+reorder        & $\downarrow$             & $\uparrow$            & $\uparrow$   & ---                     \\
+\bottomrule
+\end{tabular}
+\medskip
+
+\footnotesize
+$\downarrow$ = mild decrease; $\downarrow\downarrow$ = strong decrease;
+$\uparrow$ = mild increase; $\uparrow\uparrow$ = strong increase;
+--- = negligible effect.
+\end{table}
