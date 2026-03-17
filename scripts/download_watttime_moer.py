@@ -13,8 +13,8 @@ repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
-from gridpulse.utils.logging import get_logger
-from gridpulse.utils.net import get_session
+from orius.utils.logging import get_logger
+from orius.utils.net import get_session
 
 
 def _login(session, username: str, password: str) -> str:
@@ -61,7 +61,7 @@ def main() -> None:
     if not args.username or not args.password:
         raise RuntimeError("Set WATTTIME_USERNAME and WATTTIME_PASSWORD or pass --username/--password")
 
-    log = get_logger("gridpulse.download_watttime")
+    log = get_logger("orius.download_watttime")
     session = get_session(retries=args.retries, backoff=args.backoff)
 
     try:

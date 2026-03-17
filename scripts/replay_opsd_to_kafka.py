@@ -4,7 +4,7 @@ Replay OPSD (or your processed features) as Kafka events to simulate real-time s
 Example:
   python scripts/replay_opsd_to_kafka.py \
     --csv data/raw/time_series_60min_singleindex.csv \
-    --topic gridpulse.opsd.v1 \
+    --topic orius.opsd.v1 \
     --rate 50
 """
 import argparse
@@ -18,7 +18,7 @@ from kafka import KafkaProducer
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--csv", required=True)
-    ap.add_argument("--topic", default="gridpulse.opsd.v1")
+    ap.add_argument("--topic", default="orius.opsd.v1")
     ap.add_argument("--bootstrap", default="localhost:9092")
     ap.add_argument("--rate", type=float, default=20.0, help="rows/sec")
     ap.add_argument("--timestamp-col", default="utc_timestamp")

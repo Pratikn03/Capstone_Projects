@@ -14,8 +14,8 @@ repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
-from gridpulse.utils.logging import get_logger
-from gridpulse.utils.net import get_session
+from orius.utils.logging import get_logger
+from orius.utils.net import get_session
 
 
 SMARD_BASE = "https://www.smard.de/app/chart_data"
@@ -155,7 +155,7 @@ def main() -> None:
     ap.add_argument("--backoff", type=float, default=0.5, help="Retry backoff factor (seconds)")
     args = ap.parse_args()
 
-    log = get_logger("gridpulse.download_smard")
+    log = get_logger("orius.download_smard")
     session = get_session(retries=args.retries, backoff=args.backoff)
 
     start = _parse_time(args.start)

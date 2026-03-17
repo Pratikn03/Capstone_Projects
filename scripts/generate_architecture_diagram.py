@@ -1,5 +1,5 @@
 """
-Generate a publication-grade, full-page GridPulse / DC³S architecture diagram.
+Generate a publication-grade, full-page ORIUS / DC³S architecture diagram.
 
 Layout: three grouped swim-lane bands (Offline, Online, Operations) stacked
 vertically with clear cross-lane data-flow arrows.  Designed to fill one
@@ -124,7 +124,7 @@ def main() -> None:
 
     # ── Title ───────────────────────────────────────────────────────────
     ax.text(0.50, 0.985,
-            "GridPulse / DC³S  —  System Architecture",
+            "ORIUS / DC³S  —  System Architecture",
             ha="center", va="center", fontsize=16, fontweight="bold", color=TEXT)
     ax.text(0.50, 0.970,
             "Offline training produces promoted forecasting artifacts  ·  "

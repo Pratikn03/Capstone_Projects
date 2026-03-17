@@ -257,10 +257,10 @@ def generate_step_trace(release_dir: Path) -> dict[str, Any]:
     out_dir = release_dir / "trace"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    from gridpulse.dc3s.calibration import build_uncertainty_set
-    from gridpulse.dc3s.drift import PageHinkleyDetector
-    from gridpulse.dc3s.quality import compute_reliability
-    from gridpulse.dc3s.shield import repair_action
+    from orius.dc3s.calibration import build_uncertainty_set
+    from orius.dc3s.drift import PageHinkleyDetector
+    from orius.dc3s.quality import compute_reliability
+    from orius.dc3s.shield import repair_action
 
     np.random.seed(42)
     n_steps = 12
@@ -439,10 +439,10 @@ def generate_shadow_artifact(release_dir: Path) -> dict[str, Any]:
     out_dir = release_dir / "shadow"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    from gridpulse.dc3s.calibration import build_uncertainty_set
-    from gridpulse.dc3s.drift import PageHinkleyDetector
-    from gridpulse.dc3s.quality import compute_reliability
-    from gridpulse.dc3s.shield import repair_action
+    from orius.dc3s.calibration import build_uncertainty_set
+    from orius.dc3s.drift import PageHinkleyDetector
+    from orius.dc3s.quality import compute_reliability
+    from orius.dc3s.shield import repair_action
 
     np.random.seed(123)
     n_commands = 24
@@ -602,7 +602,7 @@ def generate_calibration_governance(release_dir: Path) -> dict[str, Any]:
     out_dir = release_dir / "calibration"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    from gridpulse.forecasting.uncertainty.reliability_mondrian import (
+    from orius.forecasting.uncertainty.reliability_mondrian import (
         ReliabilityMondrian,
         ReliabilityMondrianConfig,
     )
@@ -690,13 +690,13 @@ def generate_evidence_map(release_dir: Path) -> dict[str, Any]:
         },
         {
             "surface": "Streaming validation",
-            "code": "src/gridpulse/streaming/consumer.py",
+            "code": "src/orius/streaming/consumer.py",
             "artifact": "reports/publication/streaming_validation_summary.json",
             "claim": "Streaming extension (\\S\\ref{sec:limitations}): validated ingest path",
         },
         {
             "surface": "Step trace",
-            "code": "src/gridpulse/dc3s/{shield,calibration,quality,drift}.py",
+            "code": "src/orius/dc3s/{shield,calibration,quality,drift}.py",
             "artifact": "reports/publication/dc3s_step_trace.csv",
             "claim": "Operational trace (\\S\\ref{sec:operational_trace}): governed 12-step record",
         },
@@ -708,13 +708,13 @@ def generate_evidence_map(release_dir: Path) -> dict[str, Any]:
         },
         {
             "surface": "Runtime safety contracts",
-            "code": "src/gridpulse/dc3s/coverage_theorem.py",
-            "artifact": "src/gridpulse/dc3s/coverage_theorem.py (runtime assertions)",
+            "code": "src/orius/dc3s/coverage_theorem.py",
+            "artifact": "src/orius/dc3s/coverage_theorem.py (runtime assertions)",
             "claim": "Safety guarantee (\\S\\ref{sec:assumptions}): verify\\_inflation\\_geq\\_one()",
         },
         {
             "surface": "Calibration governance",
-            "code": "src/gridpulse/forecasting/uncertainty/reliability_mondrian.py",
+            "code": "src/orius/forecasting/uncertainty/reliability_mondrian.py",
             "artifact": "reports/publication/reliability_group_coverage.csv",
             "claim": "Calibration (\\S\\ref{sec:calibration}): group-conditional coverage audit",
         },

@@ -11,7 +11,7 @@ if str(repo_root) not in sys.path:
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
-from gridpulse.utils.registry import register_models
+from orius.utils.registry import register_models
 
 
 def main() -> None:

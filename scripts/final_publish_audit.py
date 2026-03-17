@@ -92,7 +92,7 @@ def _write_scope_manifest(out_dir: Path, publish_cfg: dict[str, Any]) -> dict[st
     scope_cfg = publish_cfg.get("scope", {}) if isinstance(publish_cfg.get("scope"), dict) else {}
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "in_scope": scope_cfg.get("include", ["src/gridpulse/**", "services/api/**", "scripts/**", "configs/**", "iot/**"]),
+        "in_scope": scope_cfg.get("include", ["src/orius/**", "services/api/**", "scripts/**", "configs/**", "iot/**"]),
         "non_blocking_out_of_scope": scope_cfg.get(
             "non_blocking_out_of_scope",
             ["frontend visual/style-only changes", "paper formatting/layout artifacts", "generated figures"],
@@ -308,7 +308,7 @@ def _load_json_file(path: Path) -> dict[str, Any]:
 
 
 def _resolve_iot_loop_db_path() -> Path:
-    env_path = os.environ.get("GRIDPULSE_IOT_DUCKDB_PATH")
+    env_path = os.environ.get("ORIUS_IOT_DUCKDB_PATH")
     if env_path:
         path = Path(env_path)
         return path if path.is_absolute() else REPO_ROOT / path
@@ -559,7 +559,7 @@ def main() -> None:
         (
             "compile_gate",
             [sys.executable, "-m", "compileall", "src", "services", "scripts"],
-            {**os.environ, "PYTHONPYCACHEPREFIX": "/tmp/gridpulse_pycache"},
+            {**os.environ, "PYTHONPYCACHEPREFIX": "/tmp/orius_pycache"},
             None,
         ),
     ]

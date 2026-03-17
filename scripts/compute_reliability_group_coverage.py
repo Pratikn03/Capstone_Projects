@@ -9,7 +9,7 @@ from typing import Any
 
 import pandas as pd
 
-from gridpulse.forecasting.uncertainty.reliability_mondrian import (
+from orius.forecasting.uncertainty.reliability_mondrian import (
     ReliabilityMondrian,
     ReliabilityMondrianConfig,
 )

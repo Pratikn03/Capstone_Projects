@@ -96,14 +96,16 @@ def main() -> None:
     # -------------------------------------------------------------------------
     if args.full:
         # Run the entire data pipeline from raw data to processed features
-        _run(
-            [sys.executable, "-m", "gridpulse.pipeline.run", "--all"], 
-            "data pipeline"
-        )
+        _run([sys.executable, "-m", "orius.pipeline.run", "--all"], "data pipeline")
         # Train models on the processed data
         _run(
-            [sys.executable, "-m", "gridpulse.forecasting.train", 
-             "--config", "configs/train_forecast.yaml"], 
+            [
+                sys.executable,
+                "-m",
+                "orius.forecasting.train",
+                "--config",
+                "configs/train_forecast.yaml",
+            ],
             "train"
         )
 

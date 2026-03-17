@@ -12,7 +12,7 @@ import subprocess
 import sys
 from typing import Any
 
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -24,9 +24,9 @@ if str(REPO_ROOT) not in sys.path:
 if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from gridpulse.cpsbench_iot.runner import run_suite, run_single
-from gridpulse.cpsbench_iot.scenarios import DEFAULT_SCENARIOS
-from gridpulse.dc3s.calibration import calibrate_ambiguity_lambda
+from orius.cpsbench_iot.runner import run_suite, run_single
+from orius.cpsbench_iot.scenarios import DEFAULT_SCENARIOS
+from orius.dc3s.calibration import calibrate_ambiguity_lambda
 from scripts.build_conference_assets import (
     build_calibration_tradeoff,
     build_dataset_cards,
@@ -394,8 +394,8 @@ def _calibrate_ambiguity_from_splits(
     summary_path = out_dir / "ambiguity_calibration_summary.json"
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
 
-    os.environ["GRIDPULSE_DC3S_LAMBDA_MW"] = str(lambda_mw)
-    os.environ["GRIDPULSE_DC3S_LEARN_LAMBDA"] = "false"
+    os.environ["ORIUS_DC3S_LAMBDA_MW"] = str(lambda_mw)
+    os.environ["ORIUS_DC3S_LEARN_LAMBDA"] = "false"
     return {"summary_path": str(summary_path), **summary}
 
 
@@ -675,8 +675,8 @@ def main() -> None:
         split_paths=split_paths,
         dc3s_cfg=_load_dc3s_cfg(),
     )
-    os.environ["GRIDPULSE_REQUIRE_REGIME_CQR"] = "true"
-    os.environ["GRIDPULSE_REQUIRE_RAC_CERT"] = "true"
+    os.environ["ORIUS_REQUIRE_REGIME_CQR"] = "true"
+    os.environ["ORIUS_REQUIRE_RAC_CERT"] = "true"
 
     cpsbench_summary = run_suite(
         scenarios=scenarios,

@@ -36,6 +36,23 @@ DATASET_PATHS: dict[str, dict[str, Any]] = {
         "features": Path("data/processed/us_eia930_ercot/features.parquet"),
         "splits_dir": Path("data/processed/us_eia930_ercot/splits"),
     },
+    # Multi-domain
+    "AV": {
+        "features": Path("data/av/processed/features.parquet"),
+        "splits_dir": Path("data/av/processed/splits"),
+    },
+    "INDUSTRIAL": {
+        "features": Path("data/industrial/processed/features.parquet"),
+        "splits_dir": Path("data/industrial/processed/splits"),
+    },
+    "HEALTHCARE": {
+        "features": Path("data/healthcare/processed/features.parquet"),
+        "splits_dir": Path("data/healthcare/processed/splits"),
+    },
+    "AEROSPACE": {
+        "features": Path("data/aerospace/processed/features.parquet"),
+        "splits_dir": Path("data/aerospace/processed/splits"),
+    },
 }
 
 
@@ -174,14 +191,21 @@ def build_manifest(datasets: list[str]) -> dict[str, Any]:
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build deterministic data identity manifest")
-    parser.add_argument("--dataset", choices=["DE", "US", "US_MISO", "US_PJM", "US_ERCOT", "ALL"], default="ALL")
+    parser.add_argument(
+        "--dataset",
+        choices=["DE", "US", "US_MISO", "US_PJM", "US_ERCOT", "AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE", "ALL"],
+        default="ALL",
+    )
     parser.add_argument("--output", default="data/dashboard/data_manifest.json")
     return parser.parse_args()
 
 
 def main() -> None:
     args = _parse_args()
-    datasets = ["DE", "US_MISO", "US_PJM", "US_ERCOT"] if args.dataset == "ALL" else [args.dataset]
+    if args.dataset == "ALL":
+        datasets = ["DE", "US_MISO", "US_PJM", "US_ERCOT", "AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE"]
+    else:
+        datasets = [args.dataset]
     datasets = ["US_MISO" if dataset == "US" else dataset for dataset in datasets]
     payload = build_manifest(datasets=datasets)
     output = Path(args.output)

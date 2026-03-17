@@ -6,7 +6,7 @@ import json
 import os
 from pathlib import Path
 
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 import matplotlib
 
 matplotlib.use("Agg")

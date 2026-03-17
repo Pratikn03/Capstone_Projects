@@ -14,7 +14,7 @@ if str(repo_root) not in sys.path:
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
-from gridpulse.optimizer.lp_dispatch import optimize_dispatch
+from orius.optimizer.lp_dispatch import optimize_dispatch
 
 
 def _load_features() -> pd.DataFrame | None:

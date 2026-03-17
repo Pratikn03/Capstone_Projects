@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -19,7 +19,7 @@ if str(REPO_ROOT / "src") not in sys.path:
 
 import numpy as np
 import pandas as pd
-from gridpulse.cpsbench_iot.runner import run_single
+from orius.cpsbench_iot.runner import run_single
 
 
 def run_transfer_stress(

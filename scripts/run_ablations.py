@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Ablation study runner for GridPulse.
+Ablation study runner for ORIUS.
 
 Compares different system configurations to quantify the impact of each component:
 1. Full system (uncertainty + anomaly filter + carbon penalty + optimization)
@@ -34,14 +34,14 @@ REPO = Path(__file__).resolve().parents[1]
 if str(REPO / "src") not in sys.path:
     sys.path.insert(0, str(REPO / "src"))
 
-from gridpulse.optimizer.robust_dispatch import (
+from orius.optimizer.robust_dispatch import (
     RobustDispatchConfig,
     optimize_robust_dispatch,
     evaluate_dispatch_robustness,
 )
-from gridpulse.evaluation.stats import compare_systems_statistically, bootstrap_ci
-from gridpulse.utils.seed import set_seed
-from gridpulse.cpsbench_iot.runner import run_suite as run_cpsbench_suite
+from orius.evaluation.stats import compare_systems_statistically, bootstrap_ci
+from orius.utils.seed import set_seed
+from orius.cpsbench_iot.runner import run_suite as run_cpsbench_suite
 
 
 def load_test_data(data_path: Path) -> dict[str, np.ndarray]:
@@ -847,7 +847,7 @@ def run_dc3s_ablation_matrix(
 
 def main():
     """CLI entrypoint."""
-    parser = argparse.ArgumentParser(description="Run GridPulse ablation study")
+    parser = argparse.ArgumentParser(description="Run ORIUS ablation study")
     parser.add_argument(
         "--dc3s",
         action="store_true",
@@ -913,7 +913,7 @@ def main():
         return
     
     print("=" * 60)
-    print("GridPulse Ablation Study")
+    print("ORIUS Ablation Study")
     print("=" * 60)
     
     # Run ablation study

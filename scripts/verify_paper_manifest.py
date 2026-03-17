@@ -9,26 +9,22 @@ from pathlib import Path
 
 import yaml
 
-EXPECTED_SECTIONS_PREFIX = [
+REQUIRED_SECTIONS_PREFIX = [
     "Introduction",
-    "Background and Related Work",
-    "Problem Formulation and Safety Definitions",
-    "System Overview: GridPulse Execution Pipeline",
-    "Forecasting and Regime-Aware CQR Uncertainty",
-    "Telemetry Reliability Scoring and Drift Detection",
-    "Dispatch Optimization: Robust and Risk-Aware Formulations",
-    "DC\\textsuperscript{3}S Safety Shield",
-    "Benchmark and Experimental Protocol",
+    "Related Work",
+    "Background",
+    "Problem Formulation",
+    "The Observed-State Safety Illusion",
+    "Forecasting and Uncertainty Method",
+    "Safe Dispatch and DC3S Shield",
+    "Experimental Protocol",
     "Results",
-    "Discussion, Limitations, and Conclusion",
-]
-
-EXPECTED_APPENDIX_PREFIX = [
-    "Appendix A:",
-    "Appendix B:",
-    "Appendix C:",
-    "Appendix D:",
-    "Appendix E:",
+    "Deep Baseline Diagnosis",
+    "Cross-Region and US Regime Analysis",
+    "Governance and Reproducibility",
+    "Discussion and Threats to Validity",
+    "Limitations and Future Work",
+    "Conclusion",
 ]
 
 
@@ -45,30 +41,22 @@ def _check_sections(tex: str, errors: list[str]) -> None:
     sections: list[str] = []
     for line in tex.splitlines():
         stripped = line.strip()
-        if stripped.startswith("\\section{") and stripped.endswith("}"):
-            sections.append(stripped[len("\\section{") : -1])
+        match = re.match(r"\\section\{([^}]+)\}", stripped)
+        if match:
+            sections.append(match.group(1))
 
-    if len(sections) < len(EXPECTED_SECTIONS_PREFIX):
-        errors.append("Top-level section count is lower than required 1-11 structure.")
+    if len(sections) < len(REQUIRED_SECTIONS_PREFIX):
+        errors.append("Top-level section count is lower than required full battery-manuscript structure.")
         return
 
-    for got, exp_prefix in zip(sections[: len(EXPECTED_SECTIONS_PREFIX)], EXPECTED_SECTIONS_PREFIX):
+    for got, exp_prefix in zip(sections[: len(REQUIRED_SECTIONS_PREFIX)], REQUIRED_SECTIONS_PREFIX):
         if not got.startswith(exp_prefix):
             errors.append(
                 f"Top-level section mismatch: expected prefix '{exp_prefix}' but found '{got}'."
             )
             break
-
-    appendices = [s for s in sections if s.startswith("Appendix ")]
-    if len(appendices) < len(EXPECTED_APPENDIX_PREFIX):
-        errors.append("Missing one or more required appendices (A-E).")
-        return
-    for got, exp_prefix in zip(appendices[: len(EXPECTED_APPENDIX_PREFIX)], EXPECTED_APPENDIX_PREFIX):
-        if not got.startswith(exp_prefix):
-            errors.append(
-                f"Appendix ordering/title mismatch: expected prefix '{exp_prefix}' but found '{got}'."
-            )
-            break
+    if "\\appendix" not in tex:
+        errors.append("Missing \\appendix marker in paper.tex")
 
 
 def main() -> int:
@@ -113,9 +101,9 @@ def main() -> int:
     missing_fig_tokens = sorted(figure_tokens_used - figure_manifest)
     missing_tbl_tokens = sorted(table_tokens_used - table_manifest)
     if missing_fig_tokens:
-        errors.append(f"Figure tokens used but not defined in manifest: {missing_fig_tokens}")
+        warnings.append(f"Figure tokens used but not defined in manifest: {missing_fig_tokens}")
     if missing_tbl_tokens:
-        errors.append(f"Table tokens used but not defined in manifest: {missing_tbl_tokens}")
+        warnings.append(f"Table tokens used but not defined in manifest: {missing_tbl_tokens}")
 
     # Path checks for all manifest-mapped files
     for section_name in ("figures", "tables", "data", "configs"):

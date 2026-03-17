@@ -6,7 +6,7 @@ import os
 import shutil
 from pathlib import Path
 
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -322,7 +322,7 @@ def build_fig09():
     for ax in flat_axes[len(rows):]:
         ax.axis("off")
 
-    fig.suptitle("GridPulse Dataset Cards", fontsize=16, fontweight="bold")
+    fig.suptitle("ORIUS Dataset Cards", fontsize=16, fontweight="bold")
     fig.tight_layout()
     fig.savefig(PUB / "fig_region_dataset_cards.png")
     plt.close(fig)

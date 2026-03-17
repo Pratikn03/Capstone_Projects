@@ -60,7 +60,7 @@ def _us_dataset(
         uncertainty_dir=uncertainty_dir,
         backtests_dir=backtests_dir,
         raw_data_path="data/raw/us_eia930",
-        feature_module="gridpulse.data_pipeline.build_features_eia930",
+        feature_module="orius.data_pipeline.build_features_eia930",
         ba_code=ba_code,
         alias_of=alias_of,
     )
@@ -79,7 +79,7 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         uncertainty_dir="artifacts/uncertainty",
         backtests_dir="artifacts/backtests",
         raw_data_path="data/raw",
-        feature_module="gridpulse.data_pipeline.build_features",
+        feature_module="orius.data_pipeline.build_features",
     ),
     "US_MISO": _us_dataset(
         key="US_MISO",
@@ -127,6 +127,59 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         ba_code="MISO",
         alias_of="US_MISO",
     ),
+    # Multi-domain (AV, Industrial, Healthcare, Aerospace)
+    "AV": DatasetConfig(
+        name="AV",
+        display_name="AV Trajectories",
+        config_file="configs/train_forecast_av.yaml",
+        features_path="data/av/processed/features.parquet",
+        splits_path="data/av/processed/splits",
+        models_dir="artifacts/models_av",
+        reports_dir="reports/av",
+        uncertainty_dir="artifacts/uncertainty/av",
+        backtests_dir="artifacts/backtests/av",
+        raw_data_path="data/av/processed",
+        feature_module="orius.data_pipeline.build_features_av",
+    ),
+    "INDUSTRIAL": DatasetConfig(
+        name="INDUSTRIAL",
+        display_name="Industrial Process",
+        config_file="configs/train_forecast_industrial.yaml",
+        features_path="data/industrial/processed/features.parquet",
+        splits_path="data/industrial/processed/splits",
+        models_dir="artifacts/models_industrial",
+        reports_dir="reports/industrial",
+        uncertainty_dir="artifacts/uncertainty/industrial",
+        backtests_dir="artifacts/backtests/industrial",
+        raw_data_path="data/industrial/processed",
+        feature_module="orius.data_pipeline.build_features_industrial",
+    ),
+    "HEALTHCARE": DatasetConfig(
+        name="HEALTHCARE",
+        display_name="Healthcare Vital Signs",
+        config_file="configs/train_forecast_healthcare.yaml",
+        features_path="data/healthcare/processed/features.parquet",
+        splits_path="data/healthcare/processed/splits",
+        models_dir="artifacts/models_healthcare",
+        reports_dir="reports/healthcare",
+        uncertainty_dir="artifacts/uncertainty/healthcare",
+        backtests_dir="artifacts/backtests/healthcare",
+        raw_data_path="data/healthcare/processed",
+        feature_module="orius.data_pipeline.build_features_healthcare",
+    ),
+    "AEROSPACE": DatasetConfig(
+        name="AEROSPACE",
+        display_name="Aerospace Flight",
+        config_file="configs/train_forecast_aerospace.yaml",
+        features_path="data/aerospace/processed/features.parquet",
+        splits_path="data/aerospace/processed/splits",
+        models_dir="artifacts/models_aerospace",
+        reports_dir="reports/aerospace",
+        uncertainty_dir="artifacts/uncertainty/aerospace",
+        backtests_dir="artifacts/backtests/aerospace",
+        raw_data_path="data/aerospace/processed",
+        feature_module="orius.data_pipeline.build_features_aerospace",
+    ),
 }
 
 AGGRESSIVE_DEFAULTS = {
@@ -134,6 +187,10 @@ AGGRESSIVE_DEFAULTS = {
     "US_MISO": {"n_trials": 260, "top_pct": 0.20, "max_seeds": 5},
     "US_PJM": {"n_trials": 260, "top_pct": 0.20, "max_seeds": 5},
     "US_ERCOT": {"n_trials": 260, "top_pct": 0.20, "max_seeds": 5},
+    "AV": {"n_trials": 50, "top_pct": 0.20, "max_seeds": 2},
+    "INDUSTRIAL": {"n_trials": 50, "top_pct": 0.20, "max_seeds": 2},
+    "HEALTHCARE": {"n_trials": 50, "top_pct": 0.20, "max_seeds": 2},
+    "AEROSPACE": {"n_trials": 50, "top_pct": 0.20, "max_seeds": 2},
 }
 
 

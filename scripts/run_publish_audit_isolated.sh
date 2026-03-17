@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STAMP="$(date -u +%Y%m%d_%H%M%S)"
-WORKDIR="${GRIDPULSE_AUDIT_WORKDIR:-/tmp/gridpulse_publish_audit_${STAMP}}"
+WORKDIR="${GRIDPULSE_AUDIT_WORKDIR:-/tmp/orius_publish_audit_${STAMP}}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 COPY_FULL="${GRIDPULSE_AUDIT_COPY_FULL:-0}"
 INCLUDE_HEAVY_DATA="${GRIDPULSE_AUDIT_INCLUDE_HEAVY_DATA:-0}"

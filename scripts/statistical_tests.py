@@ -33,11 +33,11 @@ REPO = Path(__file__).resolve().parents[1]
 if str(REPO / "src") not in sys.path:
     sys.path.insert(0, str(REPO / "src"))
 
-from gridpulse.utils.metrics import rmse, mae, r2_score
-from gridpulse.forecasting.dl_lstm import LSTMForecaster
-from gridpulse.forecasting.dl_tcn import TCNForecaster
-from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
-from gridpulse.utils.scaler import StandardScaler
+from orius.utils.metrics import rmse, mae, r2_score
+from orius.forecasting.dl_lstm import LSTMForecaster
+from orius.forecasting.dl_tcn import TCNForecaster
+from orius.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
+from orius.utils.scaler import StandardScaler
 
 import torch
 from torch.utils.data import DataLoader

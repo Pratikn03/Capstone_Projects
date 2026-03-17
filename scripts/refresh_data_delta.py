@@ -33,7 +33,7 @@ DATASETS = {
             Path("data/raw/opsd_de.csv"),
         ],
         "required_columns": {"timestamp", "load_mw", "wind_mw", "solar_mw"},
-        "refresh_cmd": [sys.executable, "-m", "gridpulse.data_pipeline.download_opsd", "--out", "data/raw"],
+        "refresh_cmd": [sys.executable, "-m", "orius.data_pipeline.download_opsd", "--out", "data/raw"],
     },
     "US": {
         "features": Path("data/processed/us_eia930/features.parquet"),
@@ -44,7 +44,7 @@ DATASETS = {
         "refresh_cmd": [
             sys.executable,
             "-m",
-            "gridpulse.data_pipeline.build_features_eia930",
+            "orius.data_pipeline.build_features_eia930",
             "--in",
             "data/raw/us_eia930",
             "--out",

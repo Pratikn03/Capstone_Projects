@@ -136,7 +136,9 @@ def _render_tbl08(token: str, csv_path: Path, title: str) -> str:
             r"\end{tabular}",
         ]
     )
-    return _table_wrapper(title=title, label=token, tabular=lines, size=r"\scriptsize")
+    # Extend caption: --- means n/a (conformal only for GBM)
+    full_title = title + r". \textit{--- = n/a; PICP@90 and Width only for GBM.}"
+    return _table_wrapper(title=full_title, label=token, tabular=lines, size=r"\scriptsize")
 
 
 def _render_tbl03(token: str, csv_path: Path, title: str) -> str:
@@ -194,7 +196,7 @@ def _render_tbl04(token: str, csv_path: Path, title: str) -> str:
             "mean_width": "Width (MW)",
             "true_soc_violation_rate": "Viol. Rate",
             "true_soc_violation_severity_p95_mwh": "Sev. P95 (MWh)",
-            "cost_delta_pct": "Cost \\Delta (\\%)",
+            "cost_delta_pct": "Cost $\\Delta$ (\\%)",
         }
         headers = " & ".join(f"\\textbf{{{header_map.get(c, c)}}}" for c in display_cols) + r" \\"
         col_spec = "l" * len(display_cols)
@@ -306,9 +308,36 @@ def _render_tbl02(token: str, csv_path: Path, title: str) -> str:
     return _table_wrapper(title=title, label=token, tabular=lines, size=r"\scriptsize")
 
 
+def _render_tbl09(token: str, csv_path: Path, title: str) -> str:
+    """Render TBL09 cross-domain OASG table from universal validation output."""
+    df = _read_csv(csv_path).fillna("---")
+    if df.empty:
+        return _table_wrapper(title=title, label=token, tabular=[r"\textit{No data}"])
+
+    lines = [
+        r"\setlength{\tabcolsep}{4pt}",
+        r"\renewcommand{\arraystretch}{0.98}",
+        r"\begin{tabular}{llrrr}",
+        r"\toprule",
+        r"\textbf{Domain} & \textbf{Faults} & \textbf{Baseline TSVR} & \textbf{ORIUS TSVR} & \textbf{Reduction (\%)} \\",
+        r"\midrule",
+    ]
+    for _, row in df.iterrows():
+        domain = _tex_escape(str(row.get("domain", "")))
+        faults = _tex_escape(str(row.get("primary_fault", "multi")))
+        base = _tex_escape(str(row.get("oasg_rate_baseline", "---")))
+        orius = _tex_escape(str(row.get("oasg_rate_orius", "---")))
+        red = _tex_escape(str(row.get("orius_reduction_pct", "---")))
+        lines.append(f"{domain} & {faults} & {base} & {orius} & {red} \\\\")
+    lines.extend([r"\bottomrule", r"\end{tabular}"])
+    return _table_wrapper(title=title, label=token, tabular=lines, size=r"\scriptsize")
+
+
 def render_table_tex(token: str, csv_path: Path, title: str) -> str:
     if token == "TBL08_FORECAST_BASELINES":
         return _render_tbl08(token, csv_path, title)
+    if token == "TBL09_CROSS_DOMAIN_OASG":
+        return _render_tbl09(token, csv_path, title)
     if token == "TBL04_TRANSFER_STRESS":
         return _render_tbl04(token, csv_path, title)
     if token == "TBL02_ABLATIONS":

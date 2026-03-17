@@ -60,7 +60,7 @@ def _load_cpsbench_required_outputs() -> list[str]:
         src = REPO_ROOT / "src"
         if str(src) not in sys.path:
             sys.path.insert(0, str(src))
-        from gridpulse.cpsbench_iot.runner import REQUIRED_OUTPUTS
+        from orius.cpsbench_iot.runner import REQUIRED_OUTPUTS
 
         return [str(x) for x in REQUIRED_OUTPUTS]
     except Exception:

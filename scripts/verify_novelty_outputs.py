@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Verify novelty outputs for GridPulse.
+Verify novelty outputs for ORIUS.
 
 Validates that all Advanced novelty components have generated required artifacts:
 1. Robust dispatch with uncertainty quantification
@@ -249,7 +249,7 @@ class NoveltyChecker:
 def main():
     """CLI entrypoint."""
     parser = argparse.ArgumentParser(
-        description="Verify GridPulse novelty outputs",
+        description="Verify ORIUS novelty outputs",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(

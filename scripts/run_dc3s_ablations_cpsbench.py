@@ -16,9 +16,9 @@ if str(REPO_ROOT) not in sys.path:
 if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from gridpulse.cpsbench_iot.baselines import dc3s_wrapped_dispatch
-from gridpulse.cpsbench_iot.metrics import compute_all_metrics
-from gridpulse.cpsbench_iot.scenarios import FAULT_COLUMNS, generate_episode
+from orius.cpsbench_iot.baselines import dc3s_wrapped_dispatch
+from orius.cpsbench_iot.metrics import compute_all_metrics
+from orius.cpsbench_iot.scenarios import FAULT_COLUMNS, generate_episode
 
 
 POLICY_ORDER = [

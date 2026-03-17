@@ -10,7 +10,7 @@ from typing import Any
 
 import matplotlib
 
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -154,7 +154,7 @@ def build_dataset_cards(dataset_summary_path: Path, out_dir: Path) -> dict[str, 
     for ax in flat_axes[n_cards:]:
         ax.axis("off")
 
-    fig.suptitle("GridPulse Conference Dataset Cards", fontsize=16, fontweight="bold")
+    fig.suptitle("ORIUS Conference Dataset Cards", fontsize=16, fontweight="bold")
     fig.tight_layout()
     fig.savefig(fig_path, dpi=220)
     plt.close(fig)

@@ -16,7 +16,7 @@ def main():
     price_curve = np.array([30, 25, 20, 15, 15, 20, 40, 60, 80, 70, 60, 50, 45, 40, 45, 55, 90, 120, 110, 80, 60, 50, 40, 35])
     grid_load = np.array([10, 10, 10, 10, 12, 15, 20, 25, 28, 30, 32, 35, 35, 34, 33, 35, 40, 45, 42, 38, 30, 25, 20, 15])
 
-    # GridPulse Logic (The "Level-4" behavior)
+    # ORIUS Logic (The "Level-4" behavior)
     # Charge (negative) when price is low, Discharge (positive) when price is high
     battery_flow = np.array([-5, -5, -5, -5, -5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 0, 0, 0])
 
@@ -45,7 +45,7 @@ def main():
     ax2.plot(hours, grid_load, color='gray', alpha=0.4, linewidth=2, label='Baseline Grid Load')
 
     # Plot 2: Optimized Load (The "After")
-    ax2.plot(hours, optimized_load, color=color, linewidth=3, label='GridPulse Optimized Load')
+    ax2.plot(hours, optimized_load, color=color, linewidth=3, label='ORIUS Optimized Load')
 
     # Highlight the "Arbitrage" (The Level-4 Magic)
     # Green area = Charging (Money saved later)
@@ -56,7 +56,7 @@ def main():
                      where=(battery_flow > 0), color='orange', alpha=0.5, label='Discharging (High Price)')
 
     # --- 3. POLISH ---
-    plt.title('GridPulse Decision Logic: Arbitrage Optimization', fontsize=16, fontweight='bold', pad=20)
+    plt.title('ORIUS Decision Logic: Arbitrage Optimization', fontsize=16, fontweight='bold', pad=20)
     
     # Combine legends
     lines_1, labels_1 = ax1.get_legend_handles_labels()

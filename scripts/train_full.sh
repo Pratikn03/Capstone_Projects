@@ -11,14 +11,14 @@ export PYTHONPATH=src
 export PYTHONHASHSEED="${PYTHONHASHSEED:-42}"
 
 if [ ! -f data/processed/features.parquet ]; then
-  $PYTHON_BIN -m gridpulse.data_pipeline.build_features --in data/raw --out data/processed
+  $PYTHON_BIN -m orius.data_pipeline.build_features --in data/raw --out data/processed
 fi
 
 if [ ! -d data/processed/splits ]; then
-  $PYTHON_BIN -m gridpulse.data_pipeline.split_time_series --in data/processed/features.parquet --out data/processed/splits
+  $PYTHON_BIN -m orius.data_pipeline.split_time_series --in data/processed/features.parquet --out data/processed/splits
 fi
 
-$PYTHON_BIN -m gridpulse.forecasting.train --config configs/train_forecast.yaml
+$PYTHON_BIN -m orius.forecasting.train --config configs/train_forecast.yaml
 $PYTHON_BIN scripts/build_reports.py
 $PYTHON_BIN scripts/build_forecast_interval_report.py
 $PYTHON_BIN scripts/build_decision_reports.py

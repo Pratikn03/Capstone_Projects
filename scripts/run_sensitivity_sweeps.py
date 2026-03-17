@@ -21,7 +21,7 @@ for path in (REPO_ROOT, SRC_ROOT):
         sys.path.insert(0, path_str)
 
 from bootstrap_ci import compute_ci_summary_df, write_ci_outputs
-from gridpulse.cpsbench_iot.runner import run_suite
+from orius.cpsbench_iot.runner import run_suite
 
 
 def _parse_csv_list(raw: str) -> list[str]:
@@ -140,7 +140,7 @@ def run_sensitivity_sweeps(
     runs_dir.mkdir(parents=True, exist_ok=True)
 
     seeds_str = ",".join(str(item) for item in seeds)
-    prior_env = os.environ.get("GRIDPULSE_DC3S_CONFIG")
+    prior_env = os.environ.get("ORIUS_DC3S_CONFIG")
     rows: list[pd.DataFrame] = []
     grid_points = 0
 
@@ -162,7 +162,7 @@ def run_sensitivity_sweeps(
             config_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
             run_dir = runs_dir / tag
-            os.environ["GRIDPULSE_DC3S_CONFIG"] = str(config_path)
+            os.environ["ORIUS_DC3S_CONFIG"] = str(config_path)
             try:
                 run_suite(
                     scenarios=scenarios,
@@ -173,9 +173,9 @@ def run_sensitivity_sweeps(
                 )
             finally:
                 if prior_env is None:
-                    os.environ.pop("GRIDPULSE_DC3S_CONFIG", None)
+                    os.environ.pop("ORIUS_DC3S_CONFIG", None)
                 else:
-                    os.environ["GRIDPULSE_DC3S_CONFIG"] = prior_env
+                    os.environ["ORIUS_DC3S_CONFIG"] = prior_env
 
             run_csv = run_dir / "dc3s_main_table.csv"
             df = pd.read_csv(run_csv)
@@ -188,9 +188,9 @@ def run_sensitivity_sweeps(
             rows.append(df)
     finally:
         if prior_env is None:
-            os.environ.pop("GRIDPULSE_DC3S_CONFIG", None)
+            os.environ.pop("ORIUS_DC3S_CONFIG", None)
         else:
-            os.environ["GRIDPULSE_DC3S_CONFIG"] = prior_env
+            os.environ["ORIUS_DC3S_CONFIG"] = prior_env
 
     if not rows:
         raise ValueError("No sweep rows were produced")

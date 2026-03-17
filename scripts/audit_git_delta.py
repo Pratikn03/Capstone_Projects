@@ -40,14 +40,14 @@ def _try_run_git(args: list[str]) -> str:
 
 def _load_scope_globs(config_path: Path) -> list[str]:
     if not config_path.exists():
-        return ["src/gridpulse/**", "services/api/**", "scripts/**", "configs/**", "iot/**"]
+        return ["src/orius/**", "services/api/**", "scripts/**", "configs/**", "iot/**"]
     payload = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
     if not isinstance(payload, dict):
-        return ["src/gridpulse/**", "services/api/**", "scripts/**", "configs/**", "iot/**"]
+        return ["src/orius/**", "services/api/**", "scripts/**", "configs/**", "iot/**"]
     publish = payload.get("publish_audit") if isinstance(payload.get("publish_audit"), dict) else {}
     scope = publish.get("scope") if isinstance(publish.get("scope"), dict) else {}
     includes = scope.get("include") if isinstance(scope.get("include"), list) else None
-    return [str(x) for x in includes] if includes else ["src/gridpulse/**", "services/api/**", "scripts/**", "configs/**", "iot/**"]
+    return [str(x) for x in includes] if includes else ["src/orius/**", "services/api/**", "scripts/**", "configs/**", "iot/**"]
 
 
 def _matches_scope(path: str, patterns: list[str]) -> tuple[bool, str]:

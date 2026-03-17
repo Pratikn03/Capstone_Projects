@@ -117,7 +117,7 @@ def main():
     # Check CPSBench runner
     print(f"\n--- CPSBench Quick Check ---")
     try:
-        from gridpulse.cpsbench_iot.runner import run_single
+        from orius.cpsbench_iot.runner import run_single
         print("  ✅ CPSBench runner importable")
     except Exception as e:
         print(f"  ❌ CPSBench import error: {e}")
