@@ -1,7 +1,7 @@
 figures:
   FIG01_ARCHITECTURE:
     path: paper/assets/figures/fig01_architecture.png
-    caption: "GridPulse execution pipeline and DC3S placement at the execution boundary."
+    caption: "ORIUS execution pipeline and DC3S placement at the execution boundary."
     status: locked
   FIG02_DC3S_STEP:
     path: paper/assets/figures/fig02_dc3s_step.png
@@ -43,6 +43,68 @@ figures:
     path: paper/assets/figures/fig11_transfer_generalization.png
     caption: "Cross-region transfer and generalization summary."
     status: provisional
+  FIG12_GEOGRAPHIC_SCOPE:
+    path: paper/assets/figures/fig12_geographic_scope.png
+    caption: "Geographic scope of the evaluation: DE (Germany/OPSD) and US (MISO, PJM, ERCOT balancing authorities)."
+    status: locked
+  FIG13_LOAD_RENEWABLE_PROFILES:
+    path: paper/assets/figures/fig13_load_renewable_profiles.png
+    caption: "Hourly load, wind, and solar generation profiles for DE and US regions."
+    status: locked
+  FIG58_GAP_DISTRIBUTION:
+    path: paper/assets/figures/fig58_gap_distribution.png
+    caption: "DE–US distribution comparison. Target variable distributions differ in scale, skewness, and zero-inflation."
+    status: locked
+  FIG_UNIVERSAL_FRAMEWORK:
+    path: paper/assets/figures/fig_universal_framework.png
+    caption: "ORIUS universal domain physical safety framework. Five-stage pipeline applies uniformly across domains."
+    status: locked
+  # Extended figures (synced from reports/ via sync_paper_figures.py)
+  FIG14_FORECAST_VS_ACTUAL: {path: paper/assets/figures/fig14_forecast_vs_actual.png, caption: "Forecast vs actual.", status: provisional}
+  FIG15_ROLLING_BACKTEST_RMSE: {path: paper/assets/figures/fig15_rolling_backtest_rmse.png, caption: "Rolling backtest RMSE.", status: provisional}
+  FIG16_ERROR_SEASONALITY: {path: paper/assets/figures/fig16_error_seasonality.png, caption: "Error seasonality.", status: provisional}
+  FIG17_CONFORMAL_INTERVALS: {path: paper/assets/figures/fig17_conformal_intervals.png, caption: "Conformal intervals.", status: provisional}
+  FIG18_COVERAGE_VS_HORIZON: {path: paper/assets/figures/fig18_coverage_vs_horizon.png, caption: "Coverage vs horizon.", status: provisional}
+  FIG19_ANOMALY_TIMELINE: {path: paper/assets/figures/fig19_anomaly_timeline.png, caption: "Anomaly timeline.", status: provisional}
+  FIG20_DISPATCH_COMPARISON: {path: paper/assets/figures/fig20_dispatch_comparison.png, caption: "Dispatch comparison.", status: provisional}
+  FIG21_SOC_TRAJECTORY: {path: paper/assets/figures/fig21_soc_trajectory.png, caption: "SOC trajectory.", status: provisional}
+  FIG22_COST_CARBON_TRADEOFF: {path: paper/assets/figures/fig22_cost_carbon_tradeoff.png, caption: "Cost-carbon tradeoff.", status: provisional}
+  FIG23_SAVINGS_SENSITIVITY: {path: paper/assets/figures/fig23_savings_sensitivity.png, caption: "Savings sensitivity.", status: provisional}
+  FIG24_REGRET_PERTURBATION: {path: paper/assets/figures/fig24_regret_perturbation.png, caption: "Regret perturbation.", status: provisional}
+  FIG25_DATA_DRIFT: {path: paper/assets/figures/fig25_data_drift.png, caption: "Data drift.", status: provisional}
+  FIG26_ABLATION_SENSITIVITY: {path: paper/assets/figures/fig26_ablation_sensitivity.png, caption: "Ablation sensitivity.", status: provisional}
+  FIG27_VIOLATION_VS_COST: {path: paper/assets/figures/fig27_violation_vs_cost.png, caption: "Violation vs cost.", status: provisional}
+  FIG28_DISTRIBUTIONAL_VS_CQR: {path: paper/assets/figures/fig28_distributional_vs_cqr.png, caption: "Distributional vs CQR.", status: provisional}
+  FIG29_CROSS_REGION_TRANSFER: {path: paper/assets/figures/fig29_cross_region_transfer.png, caption: "Cross-region transfer.", status: provisional}
+  FIG30_VIOLATION_RATE: {path: paper/assets/figures/fig30_violation_rate.png, caption: "Violation rate.", status: provisional}
+  FIG31_VIOLATION_SEVERITY_P95: {path: paper/assets/figures/fig31_violation_severity_p95.png, caption: "Violation severity P95.", status: provisional}
+  FIG32_SHAP_SUMMARY_LOAD: {path: paper/assets/figures/fig32_shap_summary_load.png, caption: "SHAP load.", status: provisional}
+  FIG33_SHAP_SUMMARY_WIND: {path: paper/assets/figures/fig33_shap_summary_wind.png, caption: "SHAP wind.", status: provisional}
+  FIG34_SHAP_SUMMARY_SOLAR: {path: paper/assets/figures/fig34_shap_summary_solar.png, caption: "SHAP solar.", status: provisional}
+  FIG35_FORECAST_VS_ACTUAL_LOAD: {path: paper/assets/figures/fig35_forecast_vs_actual_load.png, caption: "Forecast vs actual load.", status: provisional}
+  FIG36_FORECAST_VS_ACTUAL_WIND: {path: paper/assets/figures/fig36_forecast_vs_actual_wind.png, caption: "Forecast vs actual wind.", status: provisional}
+  FIG37_FORECAST_VS_ACTUAL_SOLAR: {path: paper/assets/figures/fig37_forecast_vs_actual_solar.png, caption: "Forecast vs actual solar.", status: provisional}
+  FIG38_MODEL_COMPARISON: {path: paper/assets/figures/fig38_model_comparison.png, caption: "Model comparison.", status: provisional}
+  FIG39_DISPATCH_COMPARE: {path: paper/assets/figures/fig39_dispatch_compare.png, caption: "Dispatch compare.", status: provisional}
+  FIG40_ARBITRAGE_OPTIMIZATION: {path: paper/assets/figures/fig40_arbitrage_optimization.png, caption: "Arbitrage optimization.", status: provisional}
+  FIG41_SOC_TRAJECTORY_DETAIL: {path: paper/assets/figures/fig41_soc_trajectory_detail.png, caption: "SOC trajectory detail.", status: provisional}
+  FIG42_PREDICTION_INTERVALS_LOAD: {path: paper/assets/figures/fig42_prediction_intervals_load.png, caption: "Prediction intervals load.", status: provisional}
+  FIG43_INTERVAL_WIDTH_BY_HORIZON: {path: paper/assets/figures/fig43_interval_width_by_horizon.png, caption: "Interval width by horizon.", status: provisional}
+  FIG44_DATA_DRIFT_KS: {path: paper/assets/figures/fig44_data_drift_ks.png, caption: "Data drift KS.", status: provisional}
+  FIG45_MODEL_DRIFT_METRIC: {path: paper/assets/figures/fig45_model_drift_metric.png, caption: "Model drift metric.", status: provisional}
+  FIG46_RESIDUAL_ZSCORE: {path: paper/assets/figures/fig46_residual_zscore.png, caption: "Residual z-score.", status: provisional}
+  FIG47_ERROR_DISTRIBUTION: {path: paper/assets/figures/fig47_error_distribution.png, caption: "Error distribution.", status: provisional}
+  FIG48_SEASONALITY_ERROR_HEATMAP: {path: paper/assets/figures/fig48_seasonality_error_heatmap.png, caption: "Seasonality error heatmap.", status: provisional}
+  FIG49_ROBUSTNESS_REGRET_BOXPLOT: {path: paper/assets/figures/fig49_robustness_regret_boxplot.png, caption: "Robustness regret boxplot.", status: provisional}
+  FIG50_ROBUSTNESS_INFEASIBLE_RATE: {path: paper/assets/figures/fig50_robustness_infeasible_rate.png, caption: "Robustness infeasible rate.", status: provisional}
+  FIG51_COVERAGE_BY_HORIZON: {path: paper/assets/figures/fig51_coverage_by_horizon.png, caption: "Coverage by horizon.", status: provisional}
+  FIG52_COST_CARBON_DETAIL: {path: paper/assets/figures/fig52_cost_carbon_detail.png, caption: "Cost-carbon detail.", status: provisional}
+  FIG53_CASE_STUDY_DISPATCH: {path: paper/assets/figures/fig53_case_study_dispatch.png, caption: "Case study dispatch.", status: provisional}
+  FIG54_CASE_STUDY_WEEK: {path: paper/assets/figures/fig54_case_study_week.png, caption: "Case study week.", status: provisional}
+  FIG55_MULTI_HORIZON_BACKTEST: {path: paper/assets/figures/fig55_multi_horizon_backtest.png, caption: "Multi-horizon backtest.", status: provisional}
+  FIG56_USA_DATA_QUALITY: {path: paper/assets/figures/fig56_usa_data_quality.png, caption: "USA data quality.", status: provisional}
+  FIG57_GAP_HOURLY_PROFILES: {path: paper/assets/figures/fig57_gap_hourly_profiles.png, caption: "Gap hourly profiles.", status: provisional}
+  FIG_MULTI_DOMAIN_VALIDATION: {path: paper/assets/figures/fig_multi_domain_validation.png, caption: "Multi-domain ORIUS validation: baseline vs. ORIUS TSVR.", status: locked}
 
 tables:
   TBL01_MAIN_RESULTS:
@@ -77,6 +139,10 @@ tables:
     path: paper/assets/tables/tbl08_forecast_baselines.csv
     title: "Promoted six-model forecasting comparison. Deep learning baselines evaluate point-forecast performance, confirming GBM's operational dominance in this tabular regime. Conformal uncertainty artifacts (PICP, Width) are materialized exclusively for the production-candidate model (GBM)."
     status: provisional
+  TBL09_CROSS_DOMAIN_OASG:
+    path: reports/universal_orius_validation/cross_domain_oasg_table.csv
+    title: "Cross-domain OASG validation. Six ORIUS-Bench tracks with fault episodes; baseline vs. ORIUS TSVR and reduction."
+    status: locked
 
 data:
   DATA_MANIFEST:
@@ -111,7 +177,18 @@ configs:
 
 notes:
   metric_policy: "Numeric claims in prose should use \\PaperMetric keys and default to locked values until retraining refreshes metrics_values.tex."
+  longform_structure:
+    - "paper/longform/theorem_block_longform.tex imports thesis chapters ch15-ch20 into the primary paper build."
+    - "paper/longform/hardening_block_longform.tex imports thesis chapters ch21-ch32 into the primary paper build."
+    - "paper/longform/closing_block_longform.tex imports thesis chapters ch33-ch36 into the primary paper build."
+    - "paper/longform/appendix_block_longform.tex imports selected thesis appendices into the primary paper build."
+  coverage_map: "reports/publication/paper_thesis_coverage_map.csv"
   refresh_flow:
+    - "python scripts/run_universal_orius_validation.py"
+    - "python scripts/generate_architecture_diagram.py --paper paper/assets/figures/fig01_architecture"
+    - "python scripts/generate_paper_figures_fig12_fig13_fig58.py"
+    - "python scripts/sync_paper_figures.py"
+    - "python scripts/generate_multi_domain_figure.py"
     - "python scripts/build_publication_artifact.py --release-id <RELEASE_ID> --out-dir reports/publication"
     - "python scripts/sync_paper_assets.py --check"
     - "python scripts/build_conference_assets.py --out-dir reports/publication --dataset-summary reports/publication/tables/table1_dataset_summary.csv"
