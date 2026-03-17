@@ -1,4 +1,4 @@
-# GridPulse Deployment
+# ORIUS Deployment
 
 Infrastructure-as-code and deployment configurations.
 
@@ -14,7 +14,7 @@ deploy/
 │   ├── service.yaml
 │   └── configmap.yaml
 └── systemd/          # Linux service files
-    └── gridpulse-api.service
+    └── orius-api.service
 ```
 
 ## Deployment Options
@@ -35,9 +35,9 @@ kubectl apply -f deploy/k8s/
 ### 3. Systemd (Bare Metal)
 
 ```bash
-sudo cp deploy/systemd/gridpulse-api.service /etc/systemd/system/
-sudo systemctl enable gridpulse-api
-sudo systemctl start gridpulse-api
+sudo cp deploy/systemd/orius-api.service /etc/systemd/system/
+sudo systemctl enable orius-api
+sudo systemctl start orius-api
 ```
 
 ### 4. AWS (Cloud)
@@ -51,7 +51,7 @@ See `deploy/aws/README.md` for:
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `GRIDPULSE_API_KEY` | API authentication key | Yes |
+| `ORIUS_API_KEY` | API authentication key | Yes |
 | `MODEL_PATH` | Path to trained models | Yes |
 | `LOG_LEVEL` | Logging verbosity | No |
 | `PROMETHEUS_PORT` | Metrics port | No |
