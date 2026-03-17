@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Build publication-ready statistical tables from GridPulse results.
+Build publication-ready statistical tables from ORIUS results.
 
 Generates LaTeX and CSV tables for:
 - Ablation study comparisons

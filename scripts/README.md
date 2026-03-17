@@ -1,4 +1,4 @@
-# GridPulse Scripts
+# ORIUS Scripts
 
 Command-line scripts for training, evaluation, publication packaging, and release maintenance.
 

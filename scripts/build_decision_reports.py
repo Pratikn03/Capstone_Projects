@@ -13,11 +13,11 @@ repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
-from gridpulse.forecasting.predict import load_model_bundle, predict_next_24h
-from gridpulse.forecasting.uncertainty.conformal import load_conformal
-from gridpulse.optimizer.baselines import grid_only_dispatch
-from gridpulse.optimizer.impact import impact_summary
-from gridpulse.optimizer.lp_dispatch import optimize_dispatch
+from orius.forecasting.predict import load_model_bundle, predict_next_24h
+from orius.forecasting.uncertainty.conformal import load_conformal
+from orius.optimizer.baselines import grid_only_dispatch
+from orius.optimizer.impact import impact_summary
+from orius.optimizer.lp_dispatch import optimize_dispatch
 
 
 def _load_cfg(path: str) -> dict:

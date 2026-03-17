@@ -12,7 +12,7 @@ repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
-from gridpulse.forecasting.uncertainty.conformal import ConformalConfig, ConformalInterval
+from orius.forecasting.uncertainty.conformal import ConformalConfig, ConformalInterval
 
 
 def _load_npz(path: Path) -> tuple[np.ndarray, np.ndarray]:

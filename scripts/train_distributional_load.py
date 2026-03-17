@@ -6,7 +6,7 @@ import json
 import os
 from pathlib import Path
 
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 import matplotlib
 
 matplotlib.use("Agg")
@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from gridpulse.forecasting.uncertainty.distributional import (
+from orius.forecasting.uncertainty.distributional import (
     NGBoostConfig,
     predict_ngboost_quantiles,
     summarize_interval_quality,

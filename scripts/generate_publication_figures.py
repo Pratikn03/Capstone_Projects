@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-GridPulse Publication Pack — Figure & Table Generator
+ORIUS Publication Pack — Figure & Table Generator
 =====================================================
 Generates all 19 publication-level figures (PNG >=300 DPI) and
 9 CSV tables listed in the Publication Pack checklist.
@@ -29,21 +29,21 @@ REPO = Path(__file__).resolve().parents[1]
 if str(REPO / "src") not in sys.path:
     sys.path.insert(0, str(REPO / "src"))
 
-from gridpulse.forecasting.baselines import persistence_24h
-from gridpulse.forecasting.predict import load_model_bundle
-from gridpulse.forecasting.dl_lstm import LSTMForecaster
-from gridpulse.forecasting.dl_tcn import TCNForecaster
-from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
-from gridpulse.forecasting.uncertainty.conformal import (
+from orius.forecasting.baselines import persistence_24h
+from orius.forecasting.predict import load_model_bundle
+from orius.forecasting.dl_lstm import LSTMForecaster
+from orius.forecasting.dl_tcn import TCNForecaster
+from orius.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
+from orius.forecasting.uncertainty.conformal import (
     ConformalConfig, ConformalInterval, save_conformal,
 )
-from gridpulse.optimizer.lp_dispatch import optimize_dispatch
-from gridpulse.optimizer.baselines import grid_only_dispatch, naive_battery_dispatch
-from gridpulse.optimizer.impact import impact_summary
-from gridpulse.anomaly.detect import detect_anomalies
-from gridpulse.monitoring.retraining import load_monitoring_config, compute_data_drift
-from gridpulse.utils.metrics import rmse, mae, mape, smape, daylight_mape
-from gridpulse.utils.scaler import StandardScaler
+from orius.optimizer.lp_dispatch import optimize_dispatch
+from orius.optimizer.baselines import grid_only_dispatch, naive_battery_dispatch
+from orius.optimizer.impact import impact_summary
+from orius.anomaly.detect import detect_anomalies
+from orius.monitoring.retraining import load_monitoring_config, compute_data_drift
+from orius.utils.metrics import rmse, mae, mape, smape, daylight_mape
+from orius.utils.scaler import StandardScaler
 
 import torch
 from torch.utils.data import DataLoader
@@ -791,7 +791,7 @@ def fig14(ctx, test_df):
             b.get_x() + b.get_width() / 2, b.get_height() + 0.3,
             f"{v:.1f}%", ha="center", va="bottom", fontsize=11, fontweight="bold",
         )
-    ax.set(ylabel="Improvement (%)", title="Fig 14. Impact Savings - GridPulse vs Baseline")
+    ax.set(ylabel="Improvement (%)", title="Fig 14. Impact Savings - ORIUS vs Baseline")
     ax.grid(axis="y", alpha=0.3)
     fig.savefig(ctx.figures / "impact_savings.png", dpi=DPI)
     plt.close(fig)
@@ -1008,7 +1008,7 @@ def build_reports(ctx, test_df, interval_df, rob_df):
 # ====================================================================
 def main():
     print("=" * 60)
-    print("GridPulse Publication Pack - Figure & Table Generator")
+    print("ORIUS Publication Pack - Figure & Table Generator")
     print("=" * 60)
     ctx = make_ctx()
     print("\nLoading data splits...")

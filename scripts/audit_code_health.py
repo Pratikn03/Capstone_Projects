@@ -20,7 +20,7 @@ if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
 DEFAULT_GLOBS = [
-    "src/gridpulse/**/*.py",
+    "src/orius/**/*.py",
     "services/api/**/*.py",
     "scripts/**/*.py",
     "iot/**/*.py",

@@ -44,8 +44,8 @@ repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
-from gridpulse.cpsbench_iot.runner import run_suite
-from gridpulse.dc3s.coverage_theorem import verify_inflation_geq_one
+from orius.cpsbench_iot.runner import run_suite
+from orius.dc3s.coverage_theorem import verify_inflation_geq_one
 
 
 # ---------------------------------------------------------------------------

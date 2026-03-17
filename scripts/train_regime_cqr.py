@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
 import matplotlib
 
 matplotlib.use("Agg")
@@ -15,9 +15,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm
-from gridpulse.forecasting.uncertainty.cqr import RegimeCQR, RegimeCQRConfig
-from gridpulse.dc3s.rac_cert import RACCertConfig, RACCertModel
+from orius.forecasting.ml_gbm import train_gbm, predict_gbm
+from orius.forecasting.uncertainty.cqr import RegimeCQR, RegimeCQRConfig
+from orius.dc3s.rac_cert import RACCertConfig, RACCertModel
 
 
 def _load_table(path: Path) -> pd.DataFrame:

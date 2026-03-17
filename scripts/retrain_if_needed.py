@@ -38,7 +38,7 @@ def main() -> None:
         return
 
     print("[retrain] running pipeline (train + reports)...")
-    subprocess.run([sys.executable, "-m", "gridpulse.pipeline.run", "--steps", "train,reports", "--force"], check=True)
+    subprocess.run([sys.executable, "-m", "orius.pipeline.run", "--steps", "train,reports", "--force"], check=True)
 
 
 if __name__ == "__main__":

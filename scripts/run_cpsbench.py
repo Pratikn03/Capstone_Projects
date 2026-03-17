@@ -15,8 +15,8 @@ repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
-from gridpulse.cpsbench_iot.runner import REQUIRED_OUTPUTS, run_suite
-from gridpulse.cpsbench_iot.scenarios import DEFAULT_SCENARIOS
+from orius.cpsbench_iot.runner import REQUIRED_OUTPUTS, run_suite
+from orius.cpsbench_iot.scenarios import DEFAULT_SCENARIOS
 
 
 DEFAULT_SEEDS = [11, 22, 33, 44, 55]

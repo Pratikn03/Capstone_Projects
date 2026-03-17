@@ -18,7 +18,7 @@ for path in (REPO_ROOT, SRC_ROOT):
     if path_str not in sys.path:
         sys.path.insert(0, path_str)
 
-from gridpulse.evaluation.stats import bootstrap_ci
+from orius.evaluation.stats import bootstrap_ci
 
 
 SCENARIO_ORDER = [

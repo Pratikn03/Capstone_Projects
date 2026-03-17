@@ -24,7 +24,7 @@ Adding New Datasets:
     2. Add entry to DATASET_REGISTRY below with paths
     3. Implement feature pipeline if needed (or reuse existing)
 
-Author: GridPulse Team
+Author: ORIUS Team
 """
 from __future__ import annotations
 
@@ -433,8 +433,8 @@ def run_command(cmd: list[str], description: str, timeout_seconds: float | None 
     existing_pythonpath = cmd_env.get("PYTHONPATH", "")
     cmd_env["PYTHONPATH"] = f"{src_path}{os.pathsep}{existing_pythonpath}" if existing_pythonpath else src_path
     cmd_env.setdefault("MPLBACKEND", "Agg")
-    cmd_env.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
-    cmd_env.setdefault("XDG_CACHE_HOME", "/tmp/xdg-cache-gridpulse")
+    cmd_env.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
+    cmd_env.setdefault("XDG_CACHE_HOME", "/tmp/xdg-cache-orius")
     cmd_env.setdefault("LOKY_MAX_CPU_COUNT", str(os.cpu_count() or 1))
 
     try:
@@ -520,7 +520,7 @@ def create_splits(cfg: DatasetConfig, force: bool = False) -> bool:
                 split_cfg = candidate
 
     cmd = [
-        PYTHON_BIN, "-m", "gridpulse.data_pipeline.split_time_series",
+        PYTHON_BIN, "-m", "orius.data_pipeline.split_time_series",
         "--in", cfg.features_path,
         "--out", cfg.splits_path,
         "--train-ratio", str(float(split_cfg.get("train_ratio", 0.70))),
@@ -539,12 +539,17 @@ def validate_features_schema(cfg: DatasetConfig, report_path: Path | None = None
     cmd = [
         PYTHON_BIN,
         "-m",
-        "gridpulse.data_pipeline.validate_schema",
+        "orius.data_pipeline.validate_schema",
         "--in",
         cfg.features_path,
         "--report",
         str(target_report),
     ]
+    # Multi-domain datasets use different target columns
+    train_cfg = _load_training_cfg(cfg)
+    targets = _configured_targets(train_cfg)
+    if targets and cfg.name in ("AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE"):
+        cmd.extend(["--required-cols", ",".join(targets)])
     return run_command(cmd, f"Validating features schema for {cfg.display_name}")
 
 
@@ -605,7 +610,7 @@ def train_models(
             effective_top_pct = float(defaults["top_pct"])
 
     cmd = [
-        PYTHON_BIN, "-m", "gridpulse.forecasting.train",
+        PYTHON_BIN, "-m", "orius.forecasting.train",
         "--config", cfg.config_file,
     ]
     if models:
@@ -671,6 +676,11 @@ def generate_reports(cfg: DatasetConfig, run_layout: RunLayout | None = None) ->
                 "--current-dataset", cfg.name,
             ]
         )
+        if cfg.name in ("AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE"):
+            train_cfg = _load_training_cfg(cfg)
+            targets = _configured_targets(train_cfg)
+            if targets:
+                cmd.extend(["--targets", ",".join(targets)])
     
     return run_command(cmd, f"Generating reports for {cfg.display_name}")
 
@@ -704,6 +714,11 @@ def verify_training_outputs(cfg: DatasetConfig, run_layout: RunLayout, *, models
     train_cfg = _load_training_cfg(cfg)
     targets = _configured_targets(train_cfg)
     uncertainty_targets = _configured_uncertainty_targets()
+    # Multi-domain datasets use their own targets; energy uses uncertainty.yaml targets
+    if cfg.name in ("AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE"):
+        uncertainty_targets = targets
+    else:
+        uncertainty_targets = uncertainty_targets or targets
     requested_models = {part.strip().lower() for part in models.split(",") if part.strip()} if models else None
     model_types = _configured_model_types(train_cfg, requested_models=requested_models)
     cmd = [
@@ -722,7 +737,7 @@ def verify_training_outputs(cfg: DatasetConfig, run_layout: RunLayout, *, models
         "--targets",
         *targets,
         "--uncertainty-targets",
-        *(uncertainty_targets or targets),
+        *uncertainty_targets,
         "--model-types",
         *model_types,
     ]
@@ -1074,7 +1089,7 @@ def list_datasets() -> None:
 def _build_parser() -> argparse.ArgumentParser:
     """Build CLI argument parser for train_dataset."""
     parser = argparse.ArgumentParser(
-        description="Unified training script for GridPulse datasets",
+        description="Unified training script for ORIUS datasets",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

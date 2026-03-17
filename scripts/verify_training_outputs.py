@@ -325,6 +325,7 @@ class ArtifactChecker:
         uncertainty_targets: list[str],
         model_types: list[str],
         check_cv: bool = False,
+        skip_conformal_checks: bool = False,
     ) -> bool:
         """
         Comprehensive verification of a training run.
@@ -363,13 +364,14 @@ class ArtifactChecker:
                 if cv_path.exists():
                     self.check_json_valid(cv_path, f"CV results {target}", ["n_splits"])
         
-        # Check conformal artifacts
-        self.check_conformal_artifacts(
-            uncertainty_dir=uncertainty_dir,
-            backtests_dir=backtests_dir,
-            targets=uncertainty_targets,
-            model_types=model_types,
-        )
+        # Check conformal artifacts (skip for multi-domain when not produced)
+        if not skip_conformal_checks:
+            self.check_conformal_artifacts(
+                uncertainty_dir=uncertainty_dir,
+                backtests_dir=backtests_dir,
+                targets=uncertainty_targets,
+                model_types=model_types,
+            )
         
         # Check manifests
         print_section("Run Manifests")
@@ -472,6 +474,11 @@ def main():
         help="Verify cross-validation results",
     )
     parser.add_argument(
+        "--skip-conformal-checks",
+        action="store_true",
+        help="Skip conformal/uncertainty artifact checks (for multi-domain when not produced)",
+    )
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="Verbose output",
@@ -491,6 +498,7 @@ def main():
         uncertainty_targets=args.uncertainty_targets or args.targets,
         model_types=args.model_types,
         check_cv=args.check_cv,
+        skip_conformal_checks=args.skip_conformal_checks,
     )
     
     if success:

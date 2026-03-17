@@ -31,7 +31,7 @@ if [ -f data/raw/time_series_60min_singleindex.csv ]; then
     echo "Skipping streaming smoke: docker daemon unavailable"
   else
     docker compose -f docker/docker-compose.streaming.yml up -d
-    "$PYTHON_BIN" -m gridpulse.streaming.run_consumer --config configs/streaming.yaml --max-messages 500 &
+    "$PYTHON_BIN" -m orius.streaming.run_consumer --config configs/streaming.yaml --max-messages 500 &
     CON_PID=$!
     "$PYTHON_BIN" scripts/replay_opsd_to_kafka.py --csv data/raw/time_series_60min_singleindex.csv --rate 200 || true
     sleep 2

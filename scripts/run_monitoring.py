@@ -15,18 +15,18 @@ if str(repo_root) not in sys.path:
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
-from gridpulse.monitoring.report import write_monitoring_report
-from gridpulse.monitoring.alerts import send_webhook
-from gridpulse.utils.logging import setup_logging
-from gridpulse.monitoring.dc3s_health import compute_dc3s_health, load_dc3s_audit_config, load_dc3s_health_config
-from gridpulse.monitoring.retraining import (
+from orius.monitoring.report import write_monitoring_report
+from orius.monitoring.alerts import send_webhook
+from orius.utils.logging import setup_logging
+from orius.monitoring.dc3s_health import compute_dc3s_health, load_dc3s_audit_config, load_dc3s_health_config
+from orius.monitoring.retraining import (
     load_monitoring_config,
     compute_data_drift,
     evaluate_model_drift,
     retraining_decision,
     compute_model_metrics_gbm,
 )
-from gridpulse.forecasting.predict import load_model_bundle
+from orius.forecasting.predict import load_model_bundle
 
 
 def _load_split() -> tuple[pd.DataFrame | None, pd.DataFrame | None]:
@@ -45,15 +45,15 @@ def _load_split() -> tuple[pd.DataFrame | None, pd.DataFrame | None]:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--alert-webhook", default=None, help="Override GRIDPULSE_ALERT_WEBHOOK for alerts")
+    parser.add_argument("--alert-webhook", default=None, help="Override ORIUS_ALERT_WEBHOOK for alerts")
     parser.add_argument("--disable-alerts", action="store_true", help="Disable alerting even if webhook is set")
     args = parser.parse_args()
 
     setup_logging()
     if args.alert_webhook:
-        os.environ["GRIDPULSE_ALERT_WEBHOOK"] = args.alert_webhook
+        os.environ["ORIUS_ALERT_WEBHOOK"] = args.alert_webhook
     if args.disable_alerts:
-        os.environ.pop("GRIDPULSE_ALERT_WEBHOOK", None)
+        os.environ.pop("ORIUS_ALERT_WEBHOOK", None)
     cfg = load_monitoring_config()
     dc3s_health_cfg = load_dc3s_health_config()
     dc3s_health = None
@@ -142,7 +142,7 @@ def _write_summary(payload: dict, out_path: str = "reports/monitoring_summary.js
 
 
 def _maybe_alert(payload: dict) -> None:
-    webhook = os.getenv("GRIDPULSE_ALERT_WEBHOOK")
+    webhook = os.getenv("ORIUS_ALERT_WEBHOOK")
     if not webhook:
         return
     data_drift = payload.get("data_drift", {}) or {}

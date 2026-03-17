@@ -19,13 +19,13 @@ if str(REPO_ROOT) not in sys.path:
 if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from gridpulse.dc3s.calibration import build_uncertainty_set
-from gridpulse.dc3s.drift import PageHinkleyDetector
-from gridpulse.dc3s.quality import compute_reliability
-from gridpulse.dc3s.shield import repair_action
+from orius.dc3s.calibration import build_uncertainty_set
+from orius.dc3s.drift import PageHinkleyDetector
+from orius.dc3s.quality import compute_reliability
+from orius.dc3s.shield import repair_action
 
 try:
-    from gridpulse.dc3s.calibration import build_uncertainty_set_kappa
+    from orius.dc3s.calibration import build_uncertainty_set_kappa
 except ImportError:  # pragma: no cover - kept for compatibility
     build_uncertainty_set_kappa = None
 
@@ -42,8 +42,20 @@ def _mean_ms(samples_ns: list[int]) -> float:
     return float(np.mean(np.asarray(samples_ns, dtype=np.float64)) / 1_000_000.0)
 
 
+def _median_ms(samples_ns: list[int]) -> float:
+    return float(np.median(np.asarray(samples_ns, dtype=np.float64)) / 1_000_000.0)
+
+
 def _p95_ms(samples_ns: list[int]) -> float:
     return float(np.quantile(np.asarray(samples_ns, dtype=np.float64), 0.95) / 1_000_000.0)
+
+
+def _p99_ms(samples_ns: list[int]) -> float:
+    return float(np.quantile(np.asarray(samples_ns, dtype=np.float64), 0.99) / 1_000_000.0)
+
+
+def _max_ms(samples_ns: list[int]) -> float:
+    return float(np.max(np.asarray(samples_ns, dtype=np.float64)) / 1_000_000.0)
 
 
 def _time_callable(fn: Callable[[], Any], iterations: int, warmup: int) -> dict[str, float]:
@@ -58,7 +70,10 @@ def _time_callable(fn: Callable[[], Any], iterations: int, warmup: int) -> dict[
 
     return {
         "mean": _mean_ms(samples_ns),
+        "median": _median_ms(samples_ns),
         "p95": _p95_ms(samples_ns),
+        "p99": _p99_ms(samples_ns),
+        "max": _max_ms(samples_ns),
     }
 
 
@@ -213,16 +228,41 @@ def _render_markdown_table(benchmarks: dict[str, dict[str, Any]]) -> str:
     lines = [
         "# DC3S Latency Benchmark",
         "",
-        "| Component | Mean (ms) | P95 (ms) |",
-        "| --- | ---: | ---: |",
+        "| Component | Mean (ms) | Median (ms) | P95 (ms) | P99 (ms) | Max (ms) |",
+        "| --- | ---: | ---: | ---: | ---: | ---: |",
     ]
     for label, key in rows:
         data = benchmarks.get(key, {})
         if data.get("available", True) is False:
-            lines.append(f"| {label} | N/A | N/A |")
+            lines.append(f"| {label} | N/A | N/A | N/A | N/A | N/A |")
             continue
-        lines.append(f"| {label} | {float(data['mean']):.3f} | {float(data['p95']):.3f} |")
+        lines.append(
+            f"| {label} | {float(data['mean']):.3f} | {float(data['median']):.3f} | "
+            f"{float(data['p95']):.3f} | {float(data['p99']):.3f} | {float(data['max']):.3f} |"
+        )
     return "\n".join(lines)
+
+
+def _write_latency_csv(benchmarks: dict[str, dict[str, Any]], out_path: Path) -> Path:
+    rows_map = [
+        ("compute_reliability_ms", "Reliability scoring"),
+        ("page_hinkley_update_ms", "Drift update (Page-Hinkley)"),
+        ("build_uncertainty_set_ms", "Uncertainty set build"),
+        ("repair_action_ms", "Action repair (projection)"),
+        ("full_step_linear_ms", "Full DC3S step"),
+    ]
+    lines = ["component,mean_ms,median_ms,p95_ms,p99_ms,max_ms"]
+    for key, label in rows_map:
+        row = benchmarks.get(key, {})
+        if not row or row.get("available", True) is False:
+            continue
+        lines.append(
+            f"{label},{float(row['mean']):.4f},{float(row['median']):.4f},"
+            f"{float(row['p95']):.4f},{float(row['p99']):.4f},{float(row['max']):.4f}"
+        )
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return out_path
 
 
 def run_benchmark(*, iterations: int, warmup: int, out_path: Path) -> dict[str, Any]:
@@ -322,6 +362,7 @@ def main() -> None:
         warmup=max(0, int(args.warmup)),
         out_path=Path(args.out),
     )
+    _write_latency_csv(payload["benchmarks"], REPO_ROOT / "reports/publication/dc3s_latency_summary.csv")
     print(_render_markdown_table(payload["benchmarks"]))
 
 

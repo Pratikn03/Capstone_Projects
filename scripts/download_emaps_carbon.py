@@ -14,8 +14,8 @@ repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
-from gridpulse.utils.logging import get_logger
-from gridpulse.utils.net import get_session
+from orius.utils.logging import get_logger
+from orius.utils.net import get_session
 
 
 def _parse_time(value: str) -> datetime:
@@ -59,7 +59,7 @@ def main() -> None:
     if not args.token:
         raise RuntimeError("Set ELECTRICITYMAPS_TOKEN or pass --token")
 
-    log = get_logger("gridpulse.download_emaps")
+    log = get_logger("orius.download_emaps")
     session = get_session(retries=args.retries, backoff=args.backoff)
 
     start = _parse_time(args.start)

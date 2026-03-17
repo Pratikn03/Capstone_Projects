@@ -222,13 +222,13 @@ def extract_impact(impact_csv_path: Path, region_id: str):
     return {
         "region": region_id,
         "baseline_cost_usd": safe_float("baseline_cost_usd"),
-        "gridpulse_cost_usd": safe_float("gridpulse_cost_usd"),
+        "orius_cost_usd": safe_float("orius_cost_usd"),
         "cost_savings_pct": safe_float("cost_savings_pct"),
         "baseline_carbon_kg": safe_float("baseline_carbon_kg"),
-        "gridpulse_carbon_kg": safe_float("gridpulse_carbon_kg"),
+        "orius_carbon_kg": safe_float("orius_carbon_kg"),
         "carbon_reduction_pct": safe_float("carbon_reduction_pct"),
         "baseline_peak_mw": safe_float("baseline_peak_mw"),
-        "gridpulse_peak_mw": safe_float("gridpulse_peak_mw"),
+        "orius_peak_mw": safe_float("orius_peak_mw"),
         "peak_shaving_pct": safe_float("peak_shaving_pct"),
     }
 
@@ -665,7 +665,7 @@ def extract_pareto_frontier(impact_json_path: Path, region_id: str):
 
 def main():
     print("═" * 60)
-    print("  GridPulse Dashboard Data Extraction")
+    print("  ORIUS Dashboard Data Extraction")
     print("═" * 60)
     
     # ─── Germany (OPSD) ───

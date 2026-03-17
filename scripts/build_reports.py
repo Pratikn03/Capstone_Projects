@@ -21,30 +21,30 @@ if str(repo_root / "src") not in sys.path:
     # Ensure local package imports resolve when running this script standalone.
     sys.path.insert(0, str(repo_root / "src"))
 
-from gridpulse.forecasting.baselines import persistence_24h
-from gridpulse.forecasting.ml_gbm import train_gbm, predict_gbm
-from gridpulse.forecasting.backtest import multi_horizon_metrics
-from gridpulse.forecasting.predict import load_model_bundle, predict_next_24h
-from gridpulse.forecasting.dl_lstm import LSTMForecaster
-from gridpulse.forecasting.dl_nbeats import NBEATSForecaster
-from gridpulse.forecasting.dl_patchtst import PatchTSTForecaster
-from gridpulse.forecasting.dl_tft import TFTForecaster
-from gridpulse.forecasting.dl_tcn import TCNForecaster
-from gridpulse.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
-from gridpulse.optimizer.lp_dispatch import optimize_dispatch
-from gridpulse.forecasting.uncertainty.conformal import load_conformal
-from gridpulse.optimizer.baselines import (
+from orius.forecasting.baselines import persistence_24h
+from orius.forecasting.ml_gbm import train_gbm, predict_gbm
+from orius.forecasting.backtest import multi_horizon_metrics
+from orius.forecasting.predict import load_model_bundle, predict_next_24h
+from orius.forecasting.dl_lstm import LSTMForecaster
+from orius.forecasting.dl_nbeats import NBEATSForecaster
+from orius.forecasting.dl_patchtst import PatchTSTForecaster
+from orius.forecasting.dl_tft import TFTForecaster
+from orius.forecasting.dl_tcn import TCNForecaster
+from orius.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
+from orius.optimizer.lp_dispatch import optimize_dispatch
+from orius.forecasting.uncertainty.conformal import load_conformal
+from orius.optimizer.baselines import (
     grid_only_dispatch,
     naive_battery_dispatch,
     peak_shaving_dispatch,
     greedy_price_dispatch,
 )
-from gridpulse.anomaly.detect import detect_anomalies
-from gridpulse.optimizer.impact import impact_summary
-from gridpulse.monitoring.retraining import load_monitoring_config, compute_data_drift
-from gridpulse.utils.metrics import rmse, mae, mape, smape, daylight_mape, r2_score
-from gridpulse.utils.scaler import StandardScaler
-from gridpulse.forecasting.baselines import moving_average
+from orius.anomaly.detect import detect_anomalies
+from orius.optimizer.impact import impact_summary
+from orius.monitoring.retraining import load_monitoring_config, compute_data_drift
+from orius.utils.metrics import rmse, mae, mape, smape, daylight_mape, r2_score
+from orius.utils.scaler import StandardScaler
+from orius.forecasting.baselines import moving_average
 
 
 @dataclass
@@ -58,6 +58,7 @@ class ReportContext:
     uncertainty_artifacts_dir: Path | None = None
     backtests_dir: Path | None = None
     current_dataset: str | None = None
+    targets: list[str] | None = None  # Override for multi-domain (e.g. speed_mps, power_mw)
 
 
 def ensure_dir(path: Path):
@@ -431,13 +432,30 @@ def load_split_data(ctx: ReportContext):
     return None, None
 
 
+def _report_targets(ctx: ReportContext) -> list[str]:
+    """Targets for reporting; use ctx.targets for multi-domain, else energy defaults."""
+    if ctx.targets:
+        return ctx.targets
+    return ["load_mw", "wind_mw", "solar_mw"]
+
+
+def _report_drop_cols(ctx: ReportContext) -> set[str]:
+    """Columns to drop from features; includes timestamp and all targets."""
+    return {"timestamp", "ts_utc", *_report_targets(ctx)}
+
+
 def build_multi_horizon(ctx: ReportContext):
     train_df, test_df = load_split_data(ctx)
     if train_df is None or test_df is None:
         return None
 
     horizons = [1, 3, 6, 12, 24]
-    targets = ["load_mw", "wind_mw", "solar_mw"]
+    targets = _report_targets(ctx)
+    drop_cols = _report_drop_cols(ctx)
+    # Only process targets that exist in the data
+    targets = [t for t in targets if t in test_df.columns]
+    if not targets:
+        return None
 
     result = {"horizons": horizons, "targets": {}}
     for target in targets:
@@ -449,9 +467,10 @@ def build_multi_horizon(ctx: ReportContext):
         baseline = multi_horizon_metrics(y_true, y_pred, horizons, target)
 
         # Quick GBM baseline for reference at multiple horizons.
-        X_train = train_df[[c for c in train_df.columns if c not in {"timestamp", "load_mw", "wind_mw", "solar_mw"}]].to_numpy()
+        feat_cols = [c for c in train_df.columns if c not in drop_cols and pd.api.types.is_numeric_dtype(train_df[c])]
+        X_train = train_df[feat_cols].to_numpy()
         y_train = train_df[target].to_numpy()
-        X_test = test_df[[c for c in test_df.columns if c not in {"timestamp", "load_mw", "wind_mw", "solar_mw"}]].to_numpy()
+        X_test = test_df[feat_cols].to_numpy()
         _, gbm = train_gbm(X_train, y_train, params={"n_estimators": 200, "learning_rate": 0.05, "random_state": 42})
         gbm_pred = predict_gbm(gbm, X_test)
         gbm = multi_horizon_metrics(test_df[target].to_numpy(), gbm_pred, horizons, target)
@@ -468,7 +487,8 @@ def plot_multi_horizon(ctx: ReportContext, report: dict):
     fig_dir = ctx.reports_dir / "figures"
     ensure_dir(fig_dir)
 
-    target = "load_mw"
+    targets_in_report = list(report.get("targets", {}).keys())
+    target = targets_in_report[0] if targets_in_report else "load_mw"
     data = report["targets"].get(target, {})
     horizons = report.get("horizons", [])
     if not horizons or not data:
@@ -502,42 +522,49 @@ def make_sample_figures(ctx: ReportContext):
     ensure_dir(fig_dir)
 
     if ctx.features_path.exists():
-        # Snapshot time‑series for quick visual sanity check.
         df = pd.read_parquet(ctx.features_path).sort_values("timestamp")
-        recent = df.tail(7 * 24)
-        fig, ax = plt.subplots(3, 1, figsize=(12, 6), sharex=True)
-        recent.plot(x="timestamp", y="load_mw", ax=ax[0], color="#1f77b4", title="Load (last 7 days)")
-        recent.plot(x="timestamp", y="wind_mw", ax=ax[1], color="#2ca02c", title="Wind (last 7 days)")
-        recent.plot(x="timestamp", y="solar_mw", ax=ax[2], color="#ff7f0e", title="Solar (last 7 days)")
-        plt.tight_layout()
-        fig.savefig(fig_dir / "forecast_sample.png", dpi=300, bbox_inches="tight")
+        targets = _report_targets(ctx)
+        targets = [t for t in targets if t in df.columns]
+        if targets:
+            n_plots = min(len(targets), 3)
+            fig, ax = plt.subplots(n_plots, 1, figsize=(12, 2 * n_plots), sharex=True)
+            if n_plots == 1:
+                ax = [ax]
+            colors = ["#1f77b4", "#2ca02c", "#ff7f0e"]
+            recent = df.tail(min(7 * 24, len(df)))
+            for i, t in enumerate(targets[:3]):
+                recent.plot(x="timestamp", y=t, ax=ax[i], color=colors[i % 3], title=f"{t} (sample)")
+            plt.tight_layout()
+            fig.savefig(fig_dir / "forecast_sample.png", dpi=300, bbox_inches="tight")
+            plt.close()
 
-    cfg_path = ctx.repo_root / "configs" / "optimization.yaml"
-    cfg = {}
-    if cfg_path.exists():
-        import yaml
-        # Sample dispatch uses the same config as production optimization.
-        cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
-    load = np.full(24, 8000.0)
-    renew = np.full(24, 3200.0)
-    plan = optimize_dispatch(load, renew, cfg)
-    df = pd.DataFrame({
-        "grid_mw": plan["grid_mw"],
-        "battery_charge_mw": plan["battery_charge_mw"],
-        "battery_discharge_mw": plan["battery_discharge_mw"],
-        "soc_mwh": plan["soc_mwh"],
-    })
-    fig, ax = plt.subplots(2, 1, figsize=(12, 5), sharex=True)
-    df[["grid_mw", "battery_charge_mw", "battery_discharge_mw"]].plot(ax=ax[0], title="Dispatch (sample)")
-    df[["soc_mwh"]].plot(ax=ax[1], title="Battery SOC (sample)")
-    plt.tight_layout()
-    fig.savefig(fig_dir / "dispatch_sample.png", dpi=300, bbox_inches="tight")
+    # Energy-only: battery dispatch optimization
+    if not ctx.targets:
+        cfg_path = ctx.repo_root / "configs" / "optimization.yaml"
+        cfg = {}
+        if cfg_path.exists():
+            cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+        load = np.full(24, 8000.0)
+        renew = np.full(24, 3200.0)
+        plan = optimize_dispatch(load, renew, cfg)
+        df = pd.DataFrame({
+            "grid_mw": plan["grid_mw"],
+            "battery_charge_mw": plan["battery_charge_mw"],
+            "battery_discharge_mw": plan["battery_discharge_mw"],
+            "soc_mwh": plan["soc_mwh"],
+        })
+        fig, ax = plt.subplots(2, 1, figsize=(12, 5), sharex=True)
+        df[["grid_mw", "battery_charge_mw", "battery_discharge_mw"]].plot(ax=ax[0], title="Dispatch (sample)")
+        df[["soc_mwh"]].plot(ax=ax[1], title="Battery SOC (sample)")
+        plt.tight_layout()
+        fig.savefig(fig_dir / "dispatch_sample.png", dpi=300, bbox_inches="tight")
+        plt.close()
 
     train_df, test_df = load_split_data(ctx)
     if train_df is not None and test_df is not None:
-        # Plot drift diagnostics on a short window to keep the figure compact.
-        current_df = test_df.tail(7 * 24)
-        feature_cols = [c for c in train_df.columns if c not in {"timestamp", "load_mw", "wind_mw", "solar_mw"}]
+        current_df = test_df.tail(min(7 * 24, len(test_df)))
+        drop_cols = _report_drop_cols(ctx)
+        feature_cols = [c for c in train_df.columns if c not in drop_cols and pd.api.types.is_numeric_dtype(train_df[c])]
         cfg = load_monitoring_config()
         drift = compute_data_drift(train_df, current_df, feature_cols, float(cfg.get("data_drift", {}).get("p_value_threshold", 0.01)))
         columns = list(drift.get("columns", {}).keys())[:10]
@@ -561,26 +588,28 @@ def make_demo_gif(ctx: ReportContext):
     if not ctx.features_path.exists():
         return None
 
-    # Small animated preview for the README (lightweight, no model required).
     df = pd.read_parquet(ctx.features_path).sort_values("timestamp")
     df = df.tail(72)
+    targets = _report_targets(ctx)
+    targets = [t for t in targets if t in df.columns]
+    if not targets:
+        return None
 
     fig, ax = plt.subplots(figsize=(6, 3))
-    line1, = ax.plot([], [], color="#1f77b4", label="load_mw")
-    line2, = ax.plot([], [], color="#2ca02c", label="wind_mw")
-    line3, = ax.plot([], [], color="#ff7f0e", label="solar_mw")
+    colors = ["#1f77b4", "#2ca02c", "#ff7f0e"]
+    lines = [ax.plot([], [], color=colors[i % 3], label=t)[0] for i, t in enumerate(targets[:3])]
 
     ax.set_xlim(0, len(df))
-    ax.set_ylim(0, max(df["load_mw"].max(), df["wind_mw"].max(), df["solar_mw"].max()) * 1.1)
-    ax.set_title("GridPulse Forecast Inputs (sample)")
+    ymax = max(df[t].max() for t in targets[:3]) * 1.1 if targets else 1.0
+    ax.set_ylim(0, ymax)
+    ax.set_title("ORIUS Forecast Inputs (sample)")
     ax.legend(loc="upper right", fontsize=8)
 
     def update(i):
         x = np.arange(i)
-        line1.set_data(x, df["load_mw"].values[:i])
-        line2.set_data(x, df["wind_mw"].values[:i])
-        line3.set_data(x, df["solar_mw"].values[:i])
-        return line1, line2, line3
+        for j, t in enumerate(targets[:3]):
+            lines[j].set_data(x, df[t].values[:i])
+        return lines
 
     anim = FuncAnimation(fig, update, frames=len(df), interval=100, blit=True)
     out_path = fig_dir / "demo.gif"
@@ -644,7 +673,9 @@ def refresh_metrics_from_models(ctx: ReportContext) -> dict:
     if test_df is None:
         return metrics
 
-    targets = ["load_mw", "wind_mw", "solar_mw"]
+    targets = [t for t in _report_targets(ctx) if t in test_df.columns]
+    if not targets:
+        return metrics
     unc_cfg = _load_uncertainty_cfg(ctx)
     unc_dir = _resolve_uncertainty_artifacts_dir(ctx, unc_cfg)
     seq_model_kinds = ["lstm", "tcn", "nbeats", "tft", "patchtst"]
@@ -715,7 +746,9 @@ def compute_baseline_metrics(ctx: ReportContext) -> dict:
     if test_df is None or test_df.empty:
         return {}
 
-    targets = ["load_mw", "wind_mw", "solar_mw"]
+    targets = [t for t in _report_targets(ctx) if t in test_df.columns]
+    if not targets:
+        return {}
     out: dict = {}
     for target in targets:
         y_true = test_df[target].to_numpy()
@@ -763,7 +796,7 @@ def plot_arbitrage_dispatch(ctx: ReportContext, hours: np.ndarray, price_curve: 
     ax2.plot(hours, grid_load, color='gray', alpha=0.4, linewidth=2, label='Baseline Grid Load')
 
     # Optimized grid import from LP dispatch.
-    ax2.plot(hours, optimized_load, color=color, linewidth=3, label='GridPulse Optimized Load')
+    ax2.plot(hours, optimized_load, color=color, linewidth=3, label='ORIUS Optimized Load')
 
     # Highlight arbitrage windows (charge at low price, discharge at high price).
     # Green area = Charging (Money saved later)
@@ -774,7 +807,7 @@ def plot_arbitrage_dispatch(ctx: ReportContext, hours: np.ndarray, price_curve: 
                      where=(np.array(battery_flow) > 0), color='orange', alpha=0.5, label='Discharging (High Price)')
 
     # Presentation polish for README‑ready output.
-    plt.title('GridPulse Decision Logic: Arbitrage Optimization', fontsize=16, fontweight='bold', pad=20)
+    plt.title('ORIUS Decision Logic: Arbitrage Optimization', fontsize=16, fontweight='bold', pad=20)
     lines_1, labels_1 = ax1.get_legend_handles_labels()
     lines_2, labels_2 = ax2.get_legend_handles_labels()
     ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc='upper left', frameon=True, shadow=True)
@@ -879,7 +912,7 @@ def build_impact_report(ctx: ReportContext):
     peak = peak_shaving_dispatch(load, renew, cfg, price_series=price, carbon_series=carbon_for_opt)
     greedy = greedy_price_dispatch(load, renew, cfg, price_series=price, carbon_series=carbon_for_opt)
 
-    # GridPulse uses forecast-driven dispatch when available.
+    # ORIUS uses forecast-driven dispatch when available.
     optimized = optimize_dispatch(f_load, f_renew, cfg, forecast_price=price, forecast_carbon_kg=carbon_for_opt)
     # Oracle upper bound: perfect-forecast dispatch using actuals.
     oracle = optimize_dispatch(load, renew, cfg, forecast_price=price, forecast_carbon_kg=carbon_for_opt)
@@ -935,7 +968,7 @@ def build_impact_report(ctx: ReportContext):
             return float(np.sum(np.asarray(plan["grid_mw"]) * moer))
         moer_summary = {
             "baseline_moer_kg": _moer_kg(baseline),
-            "gridpulse_moer_kg": _moer_kg(optimized),
+            "orius_moer_kg": _moer_kg(optimized),
             "oracle_moer_kg": _moer_kg(oracle),
         }
 
@@ -950,7 +983,7 @@ def build_impact_report(ctx: ReportContext):
     ensure_dir(fig_dir)
     fig, ax = plt.subplots(3, 1, figsize=(12, 7), sharex=True)
     ax[0].plot(baseline["grid_mw"], label="baseline grid", color="#1f77b4")
-    ax[0].plot(optimized["grid_mw"], label="gridpulse (forecast)", color="#ff7f0e")
+    ax[0].plot(optimized["grid_mw"], label="orius (forecast)", color="#ff7f0e")
     ax[0].plot(peak["grid_mw"], label="peak‑shaving", color="#9467bd")
     ax[0].plot(naive["grid_mw"], label="naive grid", color="#2ca02c")
     ax[0].set_title("Grid Import (MW)")
@@ -974,13 +1007,13 @@ def build_impact_report(ctx: ReportContext):
     # Impact summary CSV + savings plot for README automation.
     summary = {
         "baseline_cost_usd": impact.get("baseline_cost_usd"),
-        "gridpulse_cost_usd": impact.get("optimized_cost_usd"),
+        "orius_cost_usd": impact.get("optimized_cost_usd"),
         "cost_savings_pct": impact.get("cost_savings_pct"),
         "baseline_carbon_kg": impact.get("baseline_carbon_kg"),
-        "gridpulse_carbon_kg": impact.get("optimized_carbon_kg"),
+        "orius_carbon_kg": impact.get("optimized_carbon_kg"),
         "carbon_reduction_pct": impact.get("carbon_reduction_pct"),
         "baseline_peak_mw": baseline_peak,
-        "gridpulse_peak_mw": optimized_peak,
+        "orius_peak_mw": optimized_peak,
         "peak_shaving_pct": peak_shaving_pct,
         "oracle_cost_usd": oracle.get("expected_cost_usd"),
         "oracle_gap_pct": (
@@ -1038,7 +1071,7 @@ def build_impact_report(ctx: ReportContext):
         return f"{val:.{digits}f}%"
 
     lines = []
-    lines.append("# Impact Evaluation — Baseline vs GridPulse\n\n")
+    lines.append("# Impact Evaluation — Baseline vs ORIUS\n\n")
     lines.append("This report compares dispatch outcomes for the same 7‑day forecast window (selected from the test split).\n\n")
     lines.append(f"- Horizon: {horizon} hours (7 days)\n")
     lines.append(f"- Window index: {win_start}–{win_end}\n")
@@ -1055,7 +1088,7 @@ def build_impact_report(ctx: ReportContext):
     ]
     if price is not None:
         policies.append(("Price‑greedy (MPC‑style)", greedy))
-    policies.append(("GridPulse (forecast‑optimized)", optimized))
+    policies.append(("ORIUS (forecast‑optimized)", optimized))
     if risk_plan is not None:
         policies.append(("Risk‑aware (interval)", risk_plan))
     policies.append(("Oracle upper bound (perfect forecast)", oracle))
@@ -1065,23 +1098,23 @@ def build_impact_report(ctx: ReportContext):
         )
     lines.append("\n")
 
-    lines.append("## Savings vs Baseline (GridPulse vs Grid‑only)\n")
+    lines.append("## Savings vs Baseline (ORIUS vs Grid‑only)\n")
     lines.append(f"- Cost savings: {_fmt(impact.get('cost_savings_usd'))} ({_fmt_pct(impact.get('cost_savings_pct'))})\n")
     lines.append(f"- Carbon reduction: {_fmt(impact.get('carbon_reduction_kg'))} kg ({_fmt_pct(impact.get('carbon_reduction_pct'))})\n\n")
     lines.append(f"- Carbon source used for optimization: {carbon_source}\n\n")
 
-    lines.append("## Savings vs Naive Battery (GridPulse vs Naive)\n")
+    lines.append("## Savings vs Naive Battery (ORIUS vs Naive)\n")
     lines.append(f"- Cost savings: {_fmt(impact_naive.get('cost_savings_usd'))} ({_fmt_pct(impact_naive.get('cost_savings_pct'))})\n")
     lines.append(f"- Carbon reduction: {_fmt(impact_naive.get('carbon_reduction_kg'))} kg ({_fmt_pct(impact_naive.get('carbon_reduction_pct'))})\n\n")
 
-    lines.append("## Oracle Gap (GridPulse vs Perfect‑Forecast Upper Bound)\n")
+    lines.append("## Oracle Gap (ORIUS vs Perfect‑Forecast Upper Bound)\n")
     lines.append(f"- Oracle cost: {_fmt(oracle.get('expected_cost_usd'))}\n")
     lines.append(f"- Gap vs oracle: {_fmt(optimized.get('expected_cost_usd') - oracle.get('expected_cost_usd'))}\n\n")
 
     if moer_summary is not None:
         lines.append("## Marginal Emissions (MOER)\n")
         lines.append(f"- Baseline MOER kg: {_fmt(moer_summary.get('baseline_moer_kg'))}\n")
-        lines.append(f"- GridPulse MOER kg: {_fmt(moer_summary.get('gridpulse_moer_kg'))}\n")
+        lines.append(f"- ORIUS MOER kg: {_fmt(moer_summary.get('orius_moer_kg'))}\n")
         lines.append(f"- Oracle MOER kg: {_fmt(moer_summary.get('oracle_moer_kg'))}\n\n")
 
     lines.append("## Dispatch Comparison\n")
@@ -1319,7 +1352,7 @@ def build_case_study(ctx: ReportContext, days: int = 90) -> dict | None:
 
             fig2, ax2 = plt.subplots(figsize=(10, 3.5))
             ax2.plot(baseline["grid_mw"], label="baseline", color="#1f77b4")
-            ax2.plot(optimized["grid_mw"], label="gridpulse", color="#ff7f0e")
+            ax2.plot(optimized["grid_mw"], label="orius", color="#ff7f0e")
             ax2.set_title("Failure Day Dispatch (Grid Import)")
             ax2.legend()
             plt.tight_layout()
@@ -1405,7 +1438,7 @@ def build_formal_report(
     lines = []
     lines.append("# Formal Evaluation Report\n\n")
     lines.append("## Summary\n")
-    lines.append("This report summarizes forecasting performance, backtesting, and decision‑support outputs for GridPulse.\n\n")
+    lines.append("This report summarizes forecasting performance, backtesting, and decision‑support outputs for ORIUS.\n\n")
 
     if targets:
         lines.append("## Model Metrics (Test Split)\n")
@@ -1681,6 +1714,7 @@ def main():
     parser.add_argument("--uncertainty-artifacts-dir", default=None)
     parser.add_argument("--backtests-dir", default=None)
     parser.add_argument("--current-dataset", default=None)
+    parser.add_argument("--targets", default=None, help="Comma-separated targets for multi-domain (e.g. speed_mps,power_mw)")
     args = parser.parse_args()
 
     # Silence known LightGBM feature‑name warning for cleaner logs.
@@ -1690,6 +1724,9 @@ def main():
         category=UserWarning,
     )
 
+    targets = None
+    if args.targets:
+        targets = [t.strip() for t in args.targets.split(",") if t.strip()]
     ctx = ReportContext(
         repo_root=repo_root,
         features_path=repo_root / args.features,
@@ -1700,6 +1737,7 @@ def main():
         uncertainty_artifacts_dir=(repo_root / args.uncertainty_artifacts_dir) if args.uncertainty_artifacts_dir else None,
         backtests_dir=(repo_root / args.backtests_dir) if args.backtests_dir else None,
         current_dataset=str(args.current_dataset).upper() if args.current_dataset else None,
+        targets=targets,
     )
 
     # End‑to‑end report generation (figures + markdown + JSON summaries).
@@ -1713,10 +1751,12 @@ def main():
     plot_model_comparison(ctx, metrics)
     build_model_cards(ctx, metrics)
     build_formal_report(ctx, plot_path, metrics, baselines)
-    build_impact_report(ctx)
-    build_rolling_backtest(ctx)
-    build_case_study(ctx)
-    build_publication_uncertainty_artifacts(ctx)
+    # Energy-only: dispatch optimization, arbitrage, case study
+    if not ctx.targets:
+        build_impact_report(ctx)
+        build_rolling_backtest(ctx)
+        build_case_study(ctx)
+        build_publication_uncertainty_artifacts(ctx)
 
     print("Reports and figures generated.")
 

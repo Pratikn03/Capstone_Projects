@@ -32,6 +32,27 @@ ALLOWED_CLAIM_STATUSES = {
 ACTIVE_CLAIM_STATUSES = {"Verified", "Conflicting", "Unsupported", "Needs Citation"}
 RUN_ID_RE = re.compile(r"\b20\d{6}_\d{6}\b")
 
+# Verified claims with canonical_value must match metrics_manifest (the lock).
+# When claim_matrix is intentionally changed, validator fails.
+CLAIM_TO_MANIFEST_PATH: dict[str, str] = {
+    "C001": "canonical_metrics.de.impact.cost_savings_pct_display",
+    "C002": "canonical_metrics.de.impact.carbon_reduction_pct_display",
+    "C003": "canonical_metrics.de.impact.peak_shaving_pct_display",
+    "C004": "canonical_metrics.us.impact.cost_savings_pct_display",
+    "C005": "canonical_metrics.us.impact.carbon_reduction_pct_display",
+    "C006": "canonical_metrics.us.impact.peak_shaving_pct_display",
+    "C007": "canonical_metrics.de.stochastic.evpi_robust_display",
+    "C008": "canonical_metrics.de.stochastic.evpi_deterministic_display",
+    "C009": "canonical_metrics.de.stochastic.vss_display",
+    "C010": "canonical_metrics.us.stochastic.evpi_robust_display",
+    "C011": "canonical_metrics.us.stochastic.evpi_deterministic_display",
+    "C012": "canonical_metrics.us.stochastic.vss_display",
+    "C015": "dataset_profiles.de.rows",
+    "C016": "dataset_profiles.us.rows",
+    "C019": "dataset_profiles.de.feature_count",
+    "C020": "dataset_profiles.us.feature_count",
+}
+
 
 @dataclass
 class Finding:
@@ -171,6 +192,63 @@ def _check_title_alignment(findings: list[Finding], markdown_text: str, tex_text
             f"{markdown_path} <-> {tex_path}",
             "Title mismatch between markdown and LaTeX",
         ))
+
+
+def _get_nested(obj: dict, path: str) -> object:
+    for key in path.split("."):
+        obj = obj.get(key) if isinstance(obj, dict) else None
+        if obj is None:
+            return None
+    return obj
+
+
+def _normalize_canonical(a: object, b: object) -> tuple[str, str]:
+    """Normalize for comparison; handles int, float, and formatted strings."""
+    sa = str(a).strip() if a is not None else ""
+    sb = str(b).strip() if b is not None else ""
+    # Remove extra spaces in comma-separated numbers for consistency
+    sa = "".join(sa.split())
+    sb = "".join(sb.split())
+    return sa, sb
+
+
+def _check_canonical_value_lock(
+    findings: list[Finding],
+    manifest: dict,
+    claim_matrix_path: Path,
+    repo_root: Path,
+) -> None:
+    """Validate that Verified claims' canonical_value matches metrics_manifest (the lock).
+    Proves validator fails when a locked claim is intentionally changed."""
+    if not claim_matrix_path.exists():
+        return
+
+    with claim_matrix_path.open("r", encoding="utf-8", newline="") as fh:
+        reader = csv.DictReader(fh)
+        rows = list(reader)
+
+    for row in rows:
+        cid = (row.get("claim_id") or "").strip()
+        status = (row.get("status") or "").strip()
+        canonical_value = (row.get("canonical_value") or "").strip()
+        if status != "Verified" or not canonical_value or cid not in CLAIM_TO_MANIFEST_PATH:
+            continue
+
+        manifest_path = CLAIM_TO_MANIFEST_PATH[cid]
+        manifest_val = _get_nested(manifest, manifest_path)
+        if manifest_val is None:
+            continue
+
+        norm_claim, norm_manifest = _normalize_canonical(canonical_value, manifest_val)
+        if norm_claim != norm_manifest:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "canonical_value_lock",
+                    str(claim_matrix_path),
+                    f"Claim {cid} canonical_value '{canonical_value}' does not match locked manifest value '{manifest_val}' (path: {manifest_path})",
+                )
+            )
 
 
 def _check_claim_matrix(findings: list[Finding], claim_matrix_path: Path) -> None:
@@ -317,6 +395,8 @@ def main() -> None:
     _check_tex_inputs(findings, tex_text, tex_path)
     _check_title_alignment(findings, markdown_text, tex_text, markdown_path, tex_path)
     _check_claim_matrix(findings, claim_matrix_path)
+    repo_root = manifest_path.resolve().parents[1]
+    _check_canonical_value_lock(findings, manifest, claim_matrix_path, repo_root)
 
     _print_findings(findings)
 

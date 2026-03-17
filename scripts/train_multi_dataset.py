@@ -45,7 +45,7 @@ def main() -> None:
     """
     # Parse command-line arguments for flexible dataset configuration
     parser = argparse.ArgumentParser(
-        description="Train GridPulse models on German and US energy datasets"
+        description="Train ORIUS models on German and US energy datasets"
     )
     parser.add_argument(
         "--ba", 
@@ -71,21 +71,21 @@ def main() -> None:
     if not Path("data/processed/features.parquet").exists():
         # Validate raw data schema and generate quality report
         run([
-            "python", "-m", "gridpulse.data_pipeline.validate_schema",
+            "python", "-m", "orius.data_pipeline.validate_schema",
             "--in", "data/raw",
             "--report", "reports/data_quality_report.md"
         ])
         
         # Build engineered features (lag, rolling, calendar, etc.)
         run([
-            "python", "-m", "gridpulse.data_pipeline.build_features",
+            "python", "-m", "orius.data_pipeline.build_features",
             "--in", "data/raw",
             "--out", "data/processed"
         ])
         
         # Create temporal splits respecting time-series ordering
         run([
-            "python", "-m", "gridpulse.data_pipeline.split_time_series",
+            "python", "-m", "orius.data_pipeline.split_time_series",
             "--in", "data/processed/features.parquet",
             "--out", "data/processed/splits"
         ])
@@ -95,7 +95,7 @@ def main() -> None:
     # -------------------------------------------------------------------------
     # Build features for the specified balancing authority region
     eia_cmd = [
-        "python", "-m", "gridpulse.data_pipeline.build_features_eia930",
+        "python", "-m", "orius.data_pipeline.build_features_eia930",
         "--in", "data/raw/us_eia930",
         "--out", "data/processed/us_eia930",
         "--ba", args.ba
@@ -109,7 +109,7 @@ def main() -> None:
     
     # Create temporal splits for US data
     run([
-        "python", "-m", "gridpulse.data_pipeline.split_time_series",
+        "python", "-m", "orius.data_pipeline.split_time_series",
         "--in", "data/processed/us_eia930/features.parquet",
         "--out", "data/processed/us_eia930/splits"
     ])
@@ -119,13 +119,13 @@ def main() -> None:
     # -------------------------------------------------------------------------
     # Train on German dataset (load, solar, wind, price targets)
     run([
-        "python", "-m", "gridpulse.forecasting.train",
+        "python", "-m", "orius.forecasting.train",
         "--config", "configs/train_forecast.yaml"
     ])
     
     # Train on US dataset (load, solar, wind targets for the BA)
     run([
-        "python", "-m", "gridpulse.forecasting.train",
+        "python", "-m", "orius.forecasting.train",
         "--config", "configs/train_forecast_eia930.yaml"
     ])
 

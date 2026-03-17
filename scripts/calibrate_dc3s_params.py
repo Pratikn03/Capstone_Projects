@@ -34,8 +34,8 @@ repo_root = Path(__file__).resolve().parents[1]
 if str(repo_root / "src") not in sys.path:
     sys.path.insert(0, str(repo_root / "src"))
 
-from gridpulse.dc3s.calibration import build_uncertainty_set
-from gridpulse.dc3s.coverage_theorem import compute_empirical_coverage
+from orius.dc3s.calibration import build_uncertainty_set
+from orius.dc3s.coverage_theorem import compute_empirical_coverage
 
 
 # ---------------------------------------------------------------------------

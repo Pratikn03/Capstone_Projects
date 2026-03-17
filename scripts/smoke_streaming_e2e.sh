@@ -5,7 +5,7 @@ docker compose -f docker/docker-compose.streaming.yml up -d
 python -m pip install -q kafka-python duckdb pandas pydantic pyyaml
 
 # Start consumer in background
-python -m gridpulse.streaming.run_consumer --config configs/streaming.yaml &
+python -m orius.streaming.run_consumer --config configs/streaming.yaml &
 CONSUMER_PID=$!
 
 # Replay
