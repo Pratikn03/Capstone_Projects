@@ -15,7 +15,7 @@ def _set_api_keys_env() -> None:
         "operator-secret-456": ["read", "write"],
         "analyst-secret-789": ["read"],
     }
-    os.environ["GRIDPULSE_API_KEYS"] = json.dumps(keys)
+    os.environ["ORIUS_API_KEYS"] = json.dumps(keys)
     get_api_keys.cache_clear()
 
 

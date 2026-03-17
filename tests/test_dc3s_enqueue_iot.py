@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from fastapi.testclient import TestClient
 
-from gridpulse.iot.store import IoTLoopStore
+from orius.iot.store import IoTLoopStore
 from services.api.config import get_api_keys
 from services.api.main import app
 from services.api.routers import dc3s as dc3s_router
@@ -29,8 +29,8 @@ def _predict_target(*, target: str, horizon: int, features_df: pd.DataFrame, for
 def test_dc3s_enqueue_iot_toggle(monkeypatch, tmp_path):
     db_path = tmp_path / "iot_enqueue.duckdb"
     api_key = "enqueue-rw-key"
-    monkeypatch.setenv("GRIDPULSE_IOT_DUCKDB_PATH", str(db_path))
-    monkeypatch.setenv("GRIDPULSE_API_KEYS", json.dumps({api_key: ["read", "write"]}))
+    monkeypatch.setenv("ORIUS_IOT_DUCKDB_PATH", str(db_path))
+    monkeypatch.setenv("ORIUS_API_KEYS", json.dumps({api_key: ["read", "write"]}))
     get_api_keys.cache_clear()
 
     monkeypatch.setattr(
@@ -42,7 +42,7 @@ def test_dc3s_enqueue_iot_toggle(monkeypatch, tmp_path):
     monkeypatch.setattr(dc3s_router, "_resolve_conformal_q", lambda target, horizon: np.full(horizon, 4.0, dtype=float))
 
     client = TestClient(app)
-    headers = {"X-GridPulse-Key": api_key}
+    headers = {"X-ORIUS-Key": api_key}
     base_req = {
         "device_id": "enqueue-device",
         "zone_id": "DE",
