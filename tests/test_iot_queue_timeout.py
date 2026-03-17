@@ -6,7 +6,7 @@ import json
 import duckdb
 from fastapi.testclient import TestClient
 
-from gridpulse.iot.store import IoTLoopStore
+from orius.iot.store import IoTLoopStore
 from services.api.config import get_api_keys
 from services.api.main import app
 
@@ -14,10 +14,10 @@ from services.api.main import app
 def _setup(monkeypatch, tmp_path) -> tuple[TestClient, dict[str, str], str]:
     db_path = tmp_path / "iot_timeout.duckdb"
     key = "rw-timeout-key"
-    monkeypatch.setenv("GRIDPULSE_IOT_DUCKDB_PATH", str(db_path))
-    monkeypatch.setenv("GRIDPULSE_API_KEYS", json.dumps({key: ["read", "write"]}))
+    monkeypatch.setenv("ORIUS_IOT_DUCKDB_PATH", str(db_path))
+    monkeypatch.setenv("ORIUS_API_KEYS", json.dumps({key: ["read", "write"]}))
     get_api_keys.cache_clear()
-    return TestClient(app), {"X-GridPulse-Key": key}, str(db_path)
+    return TestClient(app), {"X-ORIUS-Key": key}, str(db_path)
 
 
 def test_queue_timeout_triggers_hold_and_reset(monkeypatch, tmp_path):

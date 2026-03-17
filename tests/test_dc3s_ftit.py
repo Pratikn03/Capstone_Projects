@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from gridpulse.dc3s.ftit import preview_fault_state, update
+from orius.dc3s.ftit import preview_fault_state, update
 
 
 def _constraints() -> dict[str, float]:

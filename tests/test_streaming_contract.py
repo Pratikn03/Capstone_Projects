@@ -1,5 +1,5 @@
 """Streaming schema contract tests."""
-from gridpulse.streaming.schemas import OPSDTelemetryEvent
+from orius.streaming.schemas import OPSDTelemetryEvent
 
 
 def test_opsd_contract_minimal():

@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from fastapi.testclient import TestClient
 
-from gridpulse.dc3s.state import DC3SStateStore
+from orius.dc3s.state import DC3SStateStore
 from services.api.main import app
 from services.api.routers import dc3s as dc3s_router
 

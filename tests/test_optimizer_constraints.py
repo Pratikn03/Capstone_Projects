@@ -1,7 +1,7 @@
 """Constraint checks for the dispatch optimizer."""
 import numpy as np
 
-from gridpulse.optimizer import optimize_dispatch
+from orius.optimizer import optimize_dispatch
 
 
 def test_optimizer_respects_bounds():

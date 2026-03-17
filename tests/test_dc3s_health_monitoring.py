@@ -6,8 +6,8 @@ import json
 
 import duckdb
 
-from gridpulse.dc3s.certificate import make_certificate, store_certificate
-from gridpulse.monitoring.dc3s_health import compute_dc3s_health
+from orius.dc3s.certificate import make_certificate, store_certificate
+from orius.monitoring.dc3s_health import compute_dc3s_health
 
 
 def _cert(command_id: str, *, intervened: bool, reliability_w: float, drift_flag: bool, inflation: float) -> dict:

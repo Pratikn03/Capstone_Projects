@@ -37,7 +37,7 @@ def test_retrain_if_needed_runs_pipeline_on_dc3s_trigger(tmp_path, monkeypatch) 
 
     assert calls, "Expected retraining pipeline command to run."
     assert calls[-1][0] == sys.executable
-    assert calls[-1][1:5] == ["-m", "gridpulse.pipeline.run", "--steps", "train,reports"]
+    assert calls[-1][1:5] == ["-m", "orius.pipeline.run", "--steps", "train,reports"]
 
 
 def test_retrain_if_needed_dry_run_reports_dc3s_decision(tmp_path, monkeypatch, capsys) -> None:

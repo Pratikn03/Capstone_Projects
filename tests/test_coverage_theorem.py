@@ -6,13 +6,13 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from gridpulse.dc3s.coverage_theorem import (
+from orius.dc3s.coverage_theorem import (
     assert_coverage_guarantee,
     compute_empirical_coverage,
     inflation_lower_bound,
     verify_inflation_geq_one,
 )
-from gridpulse.dc3s.calibration import build_uncertainty_set
+from orius.dc3s.calibration import build_uncertainty_set
 
 
 # ---------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 import pytest
 
-from gridpulse.cpsbench_iot.metrics import (
+from orius.cpsbench_iot.metrics import (
     compute_control_metrics,
     compute_forecast_metrics,
     compute_trace_metrics,

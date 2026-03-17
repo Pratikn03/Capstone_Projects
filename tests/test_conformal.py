@@ -20,13 +20,13 @@ Running Tests:
     pytest tests/test_conformal.py -v
 
 See Also:
-    - src/gridpulse/forecasting/uncertainty/conformal.py: Module under test
+    - src/orius/forecasting/uncertainty/conformal.py: Module under test
     - docs/EVALUATION.md: Discussion of uncertainty quantification
 """
 import numpy as np
 import pytest
 
-from gridpulse.forecasting.uncertainty.conformal import AdaptiveConformal, ConformalConfig, ConformalInterval
+from orius.forecasting.uncertainty.conformal import AdaptiveConformal, ConformalConfig, ConformalInterval
 
 
 def test_conformal_horizon_wise():

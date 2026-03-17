@@ -62,7 +62,7 @@ class TestProphetBaseline:
     def test_prophet_baseline_creation(self, sample_timeseries_data):
         """Test Prophet baseline can be created and trained."""
         try:
-            from gridpulse.forecasting.advanced_baselines import ProphetBaseline, ProphetConfig
+            from orius.forecasting.advanced_baselines import ProphetBaseline, ProphetConfig
         except ImportError:
             pytest.skip("advanced_baselines module not available")
         
@@ -78,7 +78,7 @@ class TestProphetBaseline:
     def test_prophet_baseline_fit_predict(self, sample_timeseries_data):
         """Test Prophet baseline can fit and predict."""
         try:
-            from gridpulse.forecasting.advanced_baselines import ProphetBaseline, ProphetConfig
+            from orius.forecasting.advanced_baselines import ProphetBaseline, ProphetConfig
         except ImportError:
             pytest.skip("advanced_baselines module not available")
         
@@ -116,7 +116,7 @@ class TestNBEATSBaseline:
     def test_nbeats_baseline_creation(self, sample_timeseries_data):
         """Test N-BEATS baseline can be created."""
         try:
-            from gridpulse.forecasting.advanced_baselines import NBEATSBaseline, NBEATSConfig
+            from orius.forecasting.advanced_baselines import NBEATSBaseline, NBEATSConfig
         except ImportError:
             pytest.skip("advanced_baselines module not available")
         
@@ -144,7 +144,7 @@ class TestAutoMLBaseline:
     def test_automl_baseline_creation(self, sample_timeseries_data):
         """Test AutoML baseline can be created."""
         try:
-            from gridpulse.forecasting.advanced_baselines import AutoMLBaseline, AutoMLConfig
+            from orius.forecasting.advanced_baselines import AutoMLBaseline, AutoMLConfig
         except ImportError:
             pytest.skip("advanced_baselines module not available")
         
@@ -163,7 +163,7 @@ class TestEnsembleBaseline:
     def test_ensemble_baseline_creation(self, sample_timeseries_data):
         """Test ensemble baseline can be created."""
         try:
-            from gridpulse.forecasting.advanced_baselines import (
+            from orius.forecasting.advanced_baselines import (
                 EnsembleBaseline,
                 ProphetBaseline,
                 ProphetConfig,

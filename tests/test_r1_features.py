@@ -17,7 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 # ============================================================
 class TestUQMetrics:
     def test_picp_perfect_coverage(self):
-        from gridpulse.evaluation.uq_metrics import compute_picp
+        from orius.evaluation.uq_metrics import compute_picp
 
         y = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
         lower = np.array([0.5, 1.5, 2.5, 3.5, 4.5])
@@ -25,7 +25,7 @@ class TestUQMetrics:
         assert compute_picp(y, lower, upper) == 1.0
 
     def test_picp_zero_coverage(self):
-        from gridpulse.evaluation.uq_metrics import compute_picp
+        from orius.evaluation.uq_metrics import compute_picp
 
         y = np.array([10.0, 20.0, 30.0])
         lower = np.array([0.0, 0.0, 0.0])
@@ -33,7 +33,7 @@ class TestUQMetrics:
         assert compute_picp(y, lower, upper) == 0.0
 
     def test_pinball_loss_symmetry(self):
-        from gridpulse.evaluation.uq_metrics import compute_pinball_loss
+        from orius.evaluation.uq_metrics import compute_pinball_loss
 
         y = np.array([5.0])
         # At quantile 0.5, over- and under-prediction should be symmetric
@@ -42,7 +42,7 @@ class TestUQMetrics:
         assert abs(loss_over - loss_under) < 1e-10
 
     def test_pinball_loss_asymmetry(self):
-        from gridpulse.evaluation.uq_metrics import compute_pinball_loss
+        from orius.evaluation.uq_metrics import compute_pinball_loss
 
         y = np.array([5.0])
         # At quantile 0.9, under-prediction is penalized more
@@ -51,7 +51,7 @@ class TestUQMetrics:
         assert loss_under > loss_over
 
     def test_winkler_score_no_penalty(self):
-        from gridpulse.evaluation.uq_metrics import compute_winkler_score
+        from orius.evaluation.uq_metrics import compute_winkler_score
 
         y = np.array([5.0])
         lower = np.array([4.0])
@@ -60,7 +60,7 @@ class TestUQMetrics:
         assert compute_winkler_score(y, lower, upper, alpha=0.1) == 2.0
 
     def test_winkler_score_penalty_below(self):
-        from gridpulse.evaluation.uq_metrics import compute_winkler_score
+        from orius.evaluation.uq_metrics import compute_winkler_score
 
         y = np.array([1.0])
         lower = np.array([4.0])
@@ -71,7 +71,7 @@ class TestUQMetrics:
         assert abs(compute_winkler_score(y, lower, upper, alpha=alpha) - expected) < 1e-10
 
     def test_compute_uq_contract_keys(self):
-        from gridpulse.evaluation.uq_metrics import compute_uq_contract
+        from orius.evaluation.uq_metrics import compute_uq_contract
 
         n = 100
         y = np.random.randn(n) * 10 + 100
@@ -93,7 +93,7 @@ class TestUQMetrics:
 # ============================================================
 class TestScenarioMPC:
     def test_scenario_mpc_dispatch_returns_expected_keys(self):
-        from gridpulse.cpsbench_iot.scenario_mpc import scenario_mpc_dispatch
+        from orius.cpsbench_iot.scenario_mpc import scenario_mpc_dispatch
 
         n = 24
         result = scenario_mpc_dispatch(
@@ -121,7 +121,7 @@ class TestScenarioMPC:
         assert "certificates" in result
 
     def test_scenario_mpc_soc_bounds(self):
-        from gridpulse.cpsbench_iot.scenario_mpc import scenario_mpc_dispatch
+        from orius.cpsbench_iot.scenario_mpc import scenario_mpc_dispatch
 
         n = 48
         result = scenario_mpc_dispatch(

@@ -7,7 +7,7 @@ import sys
 
 import pandas as pd
 
-from gridpulse.dc3s.certificate import make_certificate, store_certificate
+from orius.dc3s.certificate import make_certificate, store_certificate
 import scripts.run_monitoring as run_monitoring
 
 

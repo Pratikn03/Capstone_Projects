@@ -31,7 +31,7 @@ class _ShadowOnlyDriver:
 class _TestApiClient:
     def __init__(self, client: TestClient, api_key: str) -> None:
         self.client = client
-        self.headers = {"X-GridPulse-Key": api_key}
+        self.headers = {"X-ORIUS-Key": api_key}
 
     def post(self, path: str, payload: dict) -> dict:
         resp = self.client.post(path, json=payload, headers=self.headers)
@@ -57,8 +57,8 @@ def _predict_target(*, target: str, horizon: int, features_df: pd.DataFrame, for
 
 def test_shadow_mode_ack_payload(monkeypatch, tmp_path):
     api_key = "shadow-rw-key"
-    monkeypatch.setenv("GRIDPULSE_API_KEYS", json.dumps({api_key: ["read", "write"]}))
-    monkeypatch.setenv("GRIDPULSE_IOT_DUCKDB_PATH", str(tmp_path / "iot_shadow.duckdb"))
+    monkeypatch.setenv("ORIUS_API_KEYS", json.dumps({api_key: ["read", "write"]}))
+    monkeypatch.setenv("ORIUS_IOT_DUCKDB_PATH", str(tmp_path / "iot_shadow.duckdb"))
     get_api_keys.cache_clear()
     monkeypatch.setattr(
         dc3s_router,

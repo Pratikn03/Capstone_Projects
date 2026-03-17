@@ -5,8 +5,8 @@ import pytest
 from pathlib import Path
 import yaml
 
-from gridpulse.forecasting.train import main as train_main
-import gridpulse.pipeline.run as pr
+from orius.forecasting.train import main as train_main
+import orius.pipeline.run as pr
 
 class MockGBM(dict):
     def predict(self, X):
@@ -91,7 +91,7 @@ def test_boost_coverage_train_and_pipeline(tmp_path: Path, monkeypatch: pytest.M
     # 4. Mock subprocess.run and execute train.py main
     import subprocess
     
-    from gridpulse.forecasting import train as train_module
+    from orius.forecasting import train as train_module
     
     # Mock hardcoded config loader in train.py so it reads from our tmp repo
     def mock_load_uncertainty_cfg(path: str = "configs/uncertainty.yaml") -> dict:

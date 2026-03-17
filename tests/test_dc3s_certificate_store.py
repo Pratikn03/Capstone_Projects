@@ -5,7 +5,7 @@ import json
 
 import duckdb
 
-from gridpulse.dc3s.certificate import make_certificate, store_certificate
+from orius.dc3s.certificate import make_certificate, store_certificate
 
 
 def _build_certificate(command_id: str) -> dict:

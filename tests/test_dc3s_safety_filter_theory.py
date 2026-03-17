@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from gridpulse.dc3s.guarantee_checks import check_soc_invariance
-from gridpulse.dc3s.safety_filter_theory import (
+from orius.dc3s.guarantee_checks import check_soc_invariance
+from orius.dc3s.safety_filter_theory import (
     check_tightened_soc_invariance,
     reliability_error_bound,
     tightened_soc_bounds,

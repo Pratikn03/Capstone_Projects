@@ -5,7 +5,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from gridpulse.forecasting.uncertainty.reliability_mondrian import (
+from orius.forecasting.uncertainty.reliability_mondrian import (
     ReliabilityMondrian,
     ReliabilityMondrianConfig,
 )

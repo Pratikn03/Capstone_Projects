@@ -8,7 +8,7 @@ pytest.importorskip("pyomo.environ")
 
 import pyomo.environ as pyo
 
-import gridpulse.optimizer.robust_dispatch as rd
+import orius.optimizer.robust_dispatch as rd
 
 
 def _highs_available() -> bool:

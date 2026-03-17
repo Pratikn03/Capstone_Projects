@@ -15,8 +15,8 @@ def _configure_keys(monkeypatch, tmp_path) -> dict[str, list[str]]:
         "read-key": ["read"],
         "write-key": ["write"],
     }
-    monkeypatch.setenv("GRIDPULSE_API_KEYS", json.dumps(keys))
-    monkeypatch.setenv("GRIDPULSE_IOT_DUCKDB_PATH", str(tmp_path / "iot_auth.duckdb"))
+    monkeypatch.setenv("ORIUS_API_KEYS", json.dumps(keys))
+    monkeypatch.setenv("ORIUS_IOT_DUCKDB_PATH", str(tmp_path / "iot_auth.duckdb"))
     get_api_keys.cache_clear()
     return keys
 
@@ -49,9 +49,9 @@ def test_iot_scope_enforcement(monkeypatch, tmp_path):
     _configure_keys(monkeypatch, tmp_path)
     client = TestClient(app)
 
-    read_headers = {"X-GridPulse-Key": "read-key"}
-    write_headers = {"X-GridPulse-Key": "write-key"}
-    rw_headers = {"X-GridPulse-Key": "rw-key"}
+    read_headers = {"X-ORIUS-Key": "read-key"}
+    write_headers = {"X-ORIUS-Key": "write-key"}
+    rw_headers = {"X-ORIUS-Key": "rw-key"}
 
     write_with_read_scope = client.post("/iot/telemetry", json=_telemetry_payload("scope-d1"), headers=read_headers)
     read_with_write_scope = client.get("/iot/state", params={"device_id": "scope-d1"}, headers=write_headers)

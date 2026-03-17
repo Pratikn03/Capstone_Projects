@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 import yaml
 
-import gridpulse.pipeline.run as pr
+import orius.pipeline.run as pr
 
 
 def _write_yaml(path: Path, payload: dict) -> None:
@@ -311,7 +311,7 @@ def test_estimate_faci_scale_bounds_from_calibration_data(
             return arr - 10.0, arr + 10.0
 
     monkeypatch.setattr(
-        "gridpulse.forecasting.uncertainty.load_conformal",
+        "orius.forecasting.uncertainty.load_conformal",
         lambda path: _FakeConformal(),
     )
 

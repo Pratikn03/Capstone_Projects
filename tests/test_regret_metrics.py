@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import numpy as np
 import pytest
 
-import gridpulse.evaluation.regret as rg
+import orius.evaluation.regret as rg
 
 
 @dataclass

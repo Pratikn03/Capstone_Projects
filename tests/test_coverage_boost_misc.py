@@ -3,15 +3,15 @@ import pandas as pd
 import numpy as np
 
 # Just importing these triggers module-level variable definitions
-import gridpulse.monitoring.prometheus_metrics as pm
-import gridpulse.data_pipeline.validate_schema as vs
-import gridpulse.data_pipeline.download_opsd as do
-import gridpulse.data_pipeline.download_weather as dw
+import orius.monitoring.prometheus_metrics as pm
+import orius.data_pipeline.validate_schema as vs
+import orius.data_pipeline.download_opsd as do
+import orius.data_pipeline.download_weather as dw
 
-from gridpulse.evaluation.regret import compute_regret
-from gridpulse.evaluation.stats import bootstrap_ci
-from gridpulse.dc3s.rac_cert import RACCertModel, compute_inflation
-from gridpulse.dc3s.shield import repair_action
+from orius.evaluation.regret import compute_regret
+from orius.evaluation.stats import bootstrap_ci
+from orius.dc3s.rac_cert import RACCertModel, compute_inflation
+from orius.dc3s.shield import repair_action
 
 def test_boost_misc():
     # hit prometheus_metrics functions

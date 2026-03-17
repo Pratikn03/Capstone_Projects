@@ -3,31 +3,31 @@ import numpy as np
 from unittest.mock import MagicMock, patch
 import pytest
 
-from gridpulse.cpsbench_iot.baselines import (
+from orius.cpsbench_iot.baselines import (
     naive_safe_clip_dispatch,
     deterministic_lp_dispatch,
     robust_fixed_interval_dispatch
 )
-from gridpulse.optimizer.baselines import (
+from orius.optimizer.baselines import (
     grid_only_dispatch,
     naive_battery_dispatch,
     peak_shaving_dispatch,
     greedy_price_dispatch,
 )
-from gridpulse.data_pipeline.build_features import (
+from orius.data_pipeline.build_features import (
     add_price_carbon_features,
     add_time_features,
     add_domain_features,
     add_lags_rolls,
 )
-from gridpulse.forecasting.advanced_baselines import (
+from orius.forecasting.advanced_baselines import (
     ProphetBaseline, ProphetConfig,
     NBEATSBaseline, NBEATSConfig,
     AutoMLBaseline, AutoMLConfig
 )
-from gridpulse.forecasting.train_dl import train_epoch, validate
-from gridpulse.forecasting.train import train_lstm_model, train_tcn_model, fit_sequence_model
-from gridpulse.data_pipeline.build_features_eia930 import _normalize
+from orius.forecasting.train_dl import train_epoch, validate
+from orius.forecasting.train import train_lstm_model, train_tcn_model, fit_sequence_model
+from orius.data_pipeline.build_features_eia930 import _normalize
 import torch
 import pandas as pd
 import numpy as np
@@ -111,7 +111,7 @@ def test_bulk_baselines():
     # 5. forecasting.train_dl
     try:
         from torch.utils.data import DataLoader
-        from gridpulse.forecasting.dl_lstm import LSTMForecaster
+        from orius.forecasting.dl_lstm import LSTMForecaster
         model = LSTMForecaster(1, 10, 1, 0.1, 1)
         loader = DataLoader([(torch.ones(1, 1, 1), torch.ones(1, 1))])
         opt = torch.optim.Adam(model.parameters())

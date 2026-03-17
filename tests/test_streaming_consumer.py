@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 sys.modules['kafka'] = MagicMock()
 
 import pytest
-from gridpulse.streaming.consumer import (
+from orius.streaming.consumer import (
     StreamingIngestConsumer,
     AppConfig,
     ConsumerConfig,

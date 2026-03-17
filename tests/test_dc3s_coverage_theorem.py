@@ -1,9 +1,11 @@
 import numpy as np
 import pytest
 
-from gridpulse.dc3s.coverage_theorem import (
+from orius.dc3s.coverage_theorem import (
     assert_coverage_guarantee,
+    compute_expected_violation_bound,
     compute_empirical_coverage,
+    evaluate_empirical_core_bound,
     inflation_lower_bound,
     verify_inflation_geq_one,
 )
@@ -51,3 +53,21 @@ def test_assert_coverage_guarantee():
 def test_inflation_lower_bound():
     res = inflation_lower_bound(k_quality=1.5, k_drift=2.0)
     assert np.isclose(res, 1.0)
+
+
+def test_compute_expected_violation_bound():
+    summary = compute_expected_violation_bound([1.0, 0.8, 0.7], alpha=0.10)
+    assert summary["horizon"] == 3
+    assert np.isclose(summary["mean_reliability_w"], (1.0 + 0.8 + 0.7) / 3.0)
+    assert np.isclose(summary["bound_expected_violations"], 0.05)
+    assert np.isclose(summary["bound_tsvr"], 0.05 / 3.0)
+
+
+def test_evaluate_empirical_core_bound():
+    passing = evaluate_empirical_core_bound([0, 0, 0], [1.0, 0.8, 0.7], alpha=0.10)
+    assert passing["passed"] is True
+    assert np.isclose(passing["empirical_violation_count"], 0.0)
+
+    failing = evaluate_empirical_core_bound([1, 0, 0], [1.0, 0.8, 0.7], alpha=0.10)
+    assert failing["passed"] is False
+    assert np.isclose(failing["empirical_violation_count"], 1.0)

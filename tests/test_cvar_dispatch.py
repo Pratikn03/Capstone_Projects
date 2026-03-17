@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from gridpulse.optimizer.robust_dispatch import CVaRDispatchConfig, optimize_cvar_dispatch
+from orius.optimizer.robust_dispatch import CVaRDispatchConfig, optimize_cvar_dispatch
 
 
 def test_optimize_cvar_dispatch_schema_and_feasible_flag() -> None:
