@@ -1,5 +1,5 @@
 server:
-  name: gridpulse_api
+  name: orius_api
   host: "0.0.0.0"
   port: 8000
   workers: 4
@@ -23,7 +23,7 @@ monitoring:
 security:
   auth_enabled: true
   algorithm: "HS256"
-  # Set GRIDPULSE_API_KEYS to JSON or a YAML file path in production.
+  # Set ORIUS_API_KEYS to JSON or a YAML file path in production.
   api_keys: {}
 
 safety:
