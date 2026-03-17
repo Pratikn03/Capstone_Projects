@@ -15,7 +15,7 @@ In a separate shell, start the edge agent in shadow mode:
 
 ```bash
 source .venv/bin/activate
-export GRIDPULSE_IOT_API_KEY='<gridpulse_rw_key>'
+export ORIUS_IOT_API_KEY='<orius_rw_key>'
 python iot/edge_agent/run_agent.py --config configs/iot.yaml --mode shadow --iterations 24
 ```
 

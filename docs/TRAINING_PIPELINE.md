@@ -1,6 +1,6 @@
-# GridPulse Training Pipeline
+# ORIUS Training Pipeline
 
-This document describes the **production-ready** training pipeline implemented in GridPulse. All features ensure **leakage-safe**, **reproducible**, and **statistically rigorous** model training suitable for academic publication and production deployment.
+This document describes the **production-ready** training pipeline implemented in ORIUS. All features ensure **leakage-safe**, **reproducible**, and **statistically rigorous** model training suitable for academic publication and production deployment.
 
 ## Overview
 
@@ -39,12 +39,12 @@ X_test_scaled = scaler.transform(X_test)
 **Option B: sklearn Pipeline (Production-Grade GBM)**
 ```bash
 # Enable Pipeline for GBM (ensures leakage-safe preprocessing)
-python -m gridpulse.forecasting.train --config configs/train_forecast.yaml --use-pipeline
+python -m orius.forecasting.train --config configs/train_forecast.yaml --use-pipeline
 ```
 
 Implementation:
 ```python
-from gridpulse.forecasting.ml_gbm import train_gbm
+from orius.forecasting.ml_gbm import train_gbm
 
 model_kind, pipeline = train_gbm(
     X_train, y_train,
@@ -72,7 +72,7 @@ Fit models | Tune hyperparams | Final evaluation
 
 Enable with `--enable-cv`:
 ```bash
-python -m gridpulse.forecasting.train --config configs/train_forecast.yaml --enable-cv
+python -m orius.forecasting.train --config configs/train_forecast.yaml --enable-cv
 ```
 
 **How it works:**
@@ -105,7 +105,7 @@ Fold 5: [Train                          ] [Val]
 
 **API Usage:**
 ```python
-from gridpulse.forecasting.evaluate import time_series_cv_score
+from orius.forecasting.evaluate import time_series_cv_score
 
 cv_results = time_series_cv_score(
     X=X_train,
@@ -147,7 +147,7 @@ Automatically computed during training:
 
 ### Global Metrics (Always Computed)
 ```python
-from gridpulse.forecasting.uncertainty.conformal import ConformalInterval, ConformalConfig
+from orius.forecasting.uncertainty.conformal import ConformalInterval, ConformalConfig
 
 cfg = ConformalConfig(alpha=0.10, horizon_wise=True)
 ci = ConformalInterval(cfg)
@@ -206,7 +206,7 @@ Every training run creates a manifest capturing:
 ### Auto-Generated During Training
 
 ```bash
-python -m gridpulse.forecasting.train --config configs/train_forecast.yaml
+python -m orius.forecasting.train --config configs/train_forecast.yaml
 # Creates: artifacts/manifest_20260208_143527.json
 ```
 
@@ -246,7 +246,7 @@ python -m gridpulse.forecasting.train --config configs/train_forecast.yaml
 ### API Usage
 
 ```python
-from gridpulse.utils.manifest import create_run_manifest, compare_manifests
+from orius.utils.manifest import create_run_manifest, compare_manifests
 
 # Create manifest
 manifest = create_run_manifest(
@@ -335,13 +335,13 @@ make verify-training
 
 ### Basic Training (Standard)
 ```bash
-python -m gridpulse.forecasting.train --config configs/train_forecast.yaml
+python -m orius.forecasting.train --config configs/train_forecast.yaml
 ```
 
 ### Production-Grade Training (Full Suite)
 ```bash
 # Enable all Production-Grade features
-python -m gridpulse.forecasting.train \
+python -m orius.forecasting.train \
   --config configs/train_forecast.yaml \
   --enable-cv \
   --use-pipeline
@@ -353,7 +353,7 @@ python scripts/verify_training_outputs.py --verbose --check-cv
 ### Germany (OPSD) Pipeline
 ```bash
 # Full Production-Grade training
-python -m gridpulse.forecasting.train \
+python -m orius.forecasting.train \
   --config configs/train_forecast.yaml \
   --enable-cv --use-pipeline
 
@@ -364,7 +364,7 @@ make verify-training
 ### USA (EIA-930) Pipeline
 ```bash
 # Full Production-Grade training
-python -m gridpulse.forecasting.train \
+python -m orius.forecasting.train \
   --config configs/train_forecast_eia930.yaml \
   --enable-cv --use-pipeline
 
@@ -483,14 +483,14 @@ artifacts_dir: artifacts/uncertainty
 ## File Structure
 
 ```
-gridpulse/
-├── src/gridpulse/forecasting/
+orius/
+├── src/orius/forecasting/
 │   ├── train.py                      # Main training script (Production-Grade enhanced)
 │   ├── evaluate.py                   # NEW: TimeSeriesSplit CV
 │   ├── ml_gbm.py                     # NEW: Pipeline support
 │   └── uncertainty/
 │       └── conformal.py              # NEW: Per-horizon PICP/MPIW
-├── src/gridpulse/utils/
+├── src/orius/utils/
 │   ├── manifest.py                   # NEW: Run manifest tracking
 │   └── scaler.py                     # StandardScaler (train-only fit)
 ├── scripts/
@@ -537,6 +537,6 @@ When writing your paper, you can now cite:
 For issues or questions:
 - Check `scripts/verify_training_outputs.py` output
 - Review `artifacts/manifest_*.json` for run details
-- Compare manifests: `gridpulse.utils.manifest.compare_manifests()`
+- Compare manifests: `orius.utils.manifest.compare_manifests()`
 
 **All Production-Grade features are production-ready and tested.**

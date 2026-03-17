@@ -1,14 +1,14 @@
-# GridPulse Advanced Features
+# ORIUS Advanced Features
 
 **Decision-Grade and Publication-Ready**
 
-This document describes the advanced features that transform GridPulse from a forecasting system into a **decision-grade, scientifically rigorous energy dispatch platform** with publication-quality outputs.
+This document describes the advanced features that transform ORIUS from a forecasting system into a **decision-grade, scientifically rigorous energy dispatch platform** with publication-quality outputs.
 
 ---
 
 ## Overview
 
-GridPulse novelty features go beyond standard forecasting to provide:
+ORIUS novelty features go beyond standard forecasting to provide:
 
 1. **Uncertainty-Aware Dispatch**: Conformal + FACI adaptive intervals for robust decision-making
 2. **Ablation Studies**: Scientific proof that each component adds value
@@ -20,7 +20,7 @@ GridPulse novelty features go beyond standard forecasting to provide:
 
 ## 1. Robust Dispatch with Uncertainty Quantification
 
-### Module: `src/gridpulse/optimizer/robust_dispatch.py`
+### Module: `src/orius/optimizer/robust_dispatch.py`
 
 **Motivation**: Point forecasts are insufficient for critical decisions. We need:
 - Prediction intervals to capture forecast uncertainty
@@ -125,7 +125,7 @@ risk:
 
 ### Adaptive Conformal + Research Metrics Integration
 
-`src/gridpulse/pipeline/run.py` integrates:
+`src/orius/pipeline/run.py` integrates:
 - GBM point forecasts (`load_mw`, `wind_mw`, `solar_mw`)
 - FACI updates via `AdaptiveConformal.update()`
 - Robust dispatch using dynamic load intervals
@@ -213,7 +213,7 @@ statistical_tests:
 
 ## 3. Statistical Analysis Toolkit
 
-### Module: `src/gridpulse/evaluation/stats.py`
+### Module: `src/orius/evaluation/stats.py`
 
 **Motivation**: Scientific rigor requires proper statistical testing, not just point comparisons.
 
@@ -263,7 +263,7 @@ comparison = compare_systems_statistically(
 # Returns: DataFrame with mean±std, 95% CI, p-value, Cohen's d, cost reduction
 ```
 
-### Module: `src/gridpulse/evaluation/regret.py`
+### Module: `src/orius/evaluation/regret.py`
 
 **Regret Analysis** (vs oracle with perfect foresight):
 
@@ -378,7 +378,7 @@ python scripts/verify_novelty_outputs.py \
 ### Step 1: Train Models with Conformal Prediction
 ```bash
 # Train with quantile models for prediction intervals
-python -m gridpulse.forecasting.train --config configs/train_forecast.yaml
+python -m orius.forecasting.train --config configs/train_forecast.yaml
 ```
 
 ### Step 2: Run Ablation Study
@@ -438,7 +438,7 @@ make novelty-full
 
 ## Cross-Region Comparison
 
-GridPulse supports multi-region ablations (DE OPSD + US EIA-930):
+ORIUS supports multi-region ablations (DE OPSD + US EIA-930):
 
 ### Germany (OPSD)
 ```bash

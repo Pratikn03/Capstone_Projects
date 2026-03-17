@@ -1,10 +1,10 @@
-# GridPulse / DC³S — System Architecture
+# ORIUS / DC³S — System Architecture
 
 > **Version**: March 2026 · Generated diagram: `reports/figures/architecture.png`
 
 ## Overview
 
-GridPulse implements a **Level-4 Decision System** architecture where forecasts feed directly into a distributionally-robust optimization engine and a runtime safety shield (DC³S) governs every dispatch action.  Outcomes are measured against baselines and recorded in auditable, release-scoped artifacts.  This document describes the nine-layer system, component responsibilities, data contracts, and cross-layer flows.
+ORIUS implements a **Level-4 Decision System** architecture where forecasts feed directly into a distributionally-robust optimization engine and a runtime safety shield (DC³S) governs every dispatch action.  Outcomes are measured against baselines and recorded in auditable, release-scoped artifacts.  This document describes the nine-layer system, component responsibilities, data contracts, and cross-layer flows.
 
 ## Architectural Principles
 
@@ -96,7 +96,7 @@ Six model families, three targets (`load_mw`, `wind_mw`, `solar_mw`), 24-h horiz
 
 - **Walk-forward evaluation** with sMAPE, RMSE, MAE, R², daylight-MAPE (solar).
 - Only the production-candidate model (GBM) is calibrated and enters the dispatch pipeline.
-- Model registry: `src/gridpulse/registry/model_store.py` — `promote()` performs atomic staging → production copy.
+- Model registry: `src/orius/registry/model_store.py` — `promote()` performs atomic staging → production copy.
 
 **Output**: `artifacts/models/`
 
@@ -190,9 +190,9 @@ Each step emits an auditable certificate containing:
 
 - Shadow mode: `shadow_mode=true`, `applied=false` — logs recommendations without actuating
 - Device contract (`iot/DEVICE_CONTRACT.md`): cadence 1 event/h ± 120 s, TTL 30 s, ACK/NACK semantics
-- Authentication: `X-GridPulse-Key` header with read/write scopes
+- Authentication: `X-ORIUS-Key` header with read/write scopes
 
-### Streaming consumer (`src/gridpulse/streaming/`)
+### Streaming consumer (`src/orius/streaming/`)
 
 | Component | Purpose |
 |-----------|---------|
@@ -202,7 +202,7 @@ Each step emits an auditable certificate containing:
 | Checkpoint | Exactly-once semantics every 200 messages |
 | Sink | DuckDB or Parquet, validated and time-ordered |
 
-### CPSBench-IoT (`src/gridpulse/cpsbench_iot/`)
+### CPSBench-IoT (`src/orius/cpsbench_iot/`)
 
 Repeatable stress-testing under five fault scenarios × five seeds:
 1. `scenarios.generate_episode()` → deterministic `x_true`, faulted `x_obs`, `event_log`

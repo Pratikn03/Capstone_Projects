@@ -1,7 +1,7 @@
-# ChatGPT Deep Research Brief (GridPulse)
+# ChatGPT Deep Research Brief (ORIUS)
 
 ## Purpose
-Use this brief as the primary context file when asking ChatGPT to run deep research on GridPulse. It points to the latest canonical artifacts in this repository and highlights known evaluation caveats.
+Use this brief as the primary context file when asking ChatGPT to run deep research on ORIUS. It points to the latest canonical artifacts in this repository and highlights known evaluation caveats.
 
 ## Snapshot Date
 - Brief created: 2026-03-11 (America/Chicago)
@@ -50,7 +50,7 @@ Use this brief as the primary context file when asking ChatGPT to run deep resea
 
 ## Suggested Prompt Starter
 ```
-You are auditing the GridPulse repository for research-grade consistency.
+You are auditing the ORIUS repository for research-grade consistency.
 Treat these files as canonical evidence:
 1) reports/publication/release_manifest.json
 2) paper/metrics_manifest.json

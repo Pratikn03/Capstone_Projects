@@ -1,8 +1,8 @@
-# GridPulse Evaluation Framework
+# ORIUS Evaluation Framework
 
 ## Overview
 
-This document describes the comprehensive evaluation framework used to assess GridPulse forecasting accuracy, optimization effectiveness, and decision impact. All metrics are computed on held-out test data using time-based splits to prevent data leakage.
+This document describes the comprehensive evaluation framework used to assess ORIUS forecasting accuracy, optimization effectiveness, and decision impact. All metrics are computed on held-out test data using time-based splits to prevent data leakage.
 
 ---
 
@@ -394,7 +394,7 @@ This runs `python iot/simulator/run_closed_loop.py` and exercises:
 5. `POST /iot/ack`
 6. `GET /iot/audit/{command_id}`
 
-All `/iot/*` calls are authenticated with scoped API keys (`X-GridPulse-Key`).
+All `/iot/*` calls are authenticated with scoped API keys (`X-ORIUS-Key`).
 Queue timeout defaults to 30 seconds; expired commands activate per-device hold until reset via `POST /iot/control/reset-hold`.
 
 Expected nominal behavior:
@@ -414,7 +414,7 @@ This executes one `/dc3s/step` request and validates audit retrieval using the r
 For real-device shadow pilot (HTTP gateway):
 
 ```bash
-export GRIDPULSE_IOT_API_KEY='<gridpulse_rw_key>'
+export ORIUS_IOT_API_KEY='<orius_rw_key>'
 python iot/edge_agent/run_agent.py --config configs/iot.yaml --mode shadow --iterations 24
 ```
 

@@ -1,6 +1,6 @@
 # Model Training Optimization Guide
 
-This document provides specific, actionable recommendations for improving GridPulse model quality based on the current training configuration and observed performance gaps.
+This document provides specific, actionable recommendations for improving ORIUS model quality based on the current training configuration and observed performance gaps.
 
 ---
 
@@ -177,7 +177,7 @@ seeds: [42, 123, 456, 789, 2024]  # For ensemble
 ```bash
 # Train with 5 different seeds
 for seed in 42 123 456 789 2024; do
-    python -m gridpulse.forecasting.train \
+    python -m orius.forecasting.train \
         --config configs/train_forecast.yaml \
         --seed $seed \
         --output-suffix _seed${seed}
@@ -311,7 +311,7 @@ grid:
 
 ### Quick Training (Testing)
 ```bash
-python -m gridpulse.forecasting.train \
+python -m orius.forecasting.train \
     --config configs/train_forecast.yaml \
     --epochs 10 \
     --quick
@@ -319,7 +319,7 @@ python -m gridpulse.forecasting.train \
 
 ### Full Training (Production)
 ```bash
-python -m gridpulse.forecasting.train \
+python -m orius.forecasting.train \
     --config configs/train_forecast.yaml \
     --enable-cv \
     --use-pipeline \
@@ -328,7 +328,7 @@ python -m gridpulse.forecasting.train \
 
 ### Hyperparameter Search
 ```bash
-python -m gridpulse.forecasting.train \
+python -m orius.forecasting.train \
     --config configs/train_forecast.yaml \
     --tune \
     --n-trials 200 \
@@ -337,7 +337,7 @@ python -m gridpulse.forecasting.train \
 
 ### Deep Learning Only (Focus)
 ```bash
-python -m gridpulse.forecasting.train \
+python -m orius.forecasting.train \
     --config configs/train_dl.yaml \
     --target load_mw \
     --epochs 300 \
