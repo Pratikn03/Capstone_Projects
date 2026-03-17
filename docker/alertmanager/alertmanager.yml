@@ -1,6 +1,6 @@
 global:
   smtp_smarthost: 'localhost:25'
-  smtp_from: 'alertmanager@gridpulse.io'
+  smtp_from: 'alertmanager@orius.io'
   smtp_require_tls: false
 
 route:
@@ -31,7 +31,7 @@ receivers:
     # Uncomment to enable Slack notifications
     # slack_configs:
     #   - api_url: 'YOUR_SLACK_WEBHOOK_URL'
-    #     channel: '#gridpulse-alerts'
+    #     channel: '#orius-alerts'
     #     send_resolved: true
     #     title: '{{ .Status | toUpper }}{{ if eq .Status "firing" }} 🔥{{ else }} ✅{{ end }}'
     #     text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'

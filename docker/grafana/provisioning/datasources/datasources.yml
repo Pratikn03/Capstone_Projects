@@ -14,8 +14,8 @@ datasources:
   - name: PostgreSQL
     type: postgres
     url: postgres:5432
-    database: gridpulse
-    user: gridpulse
+    database: orius
+    user: orius
     secureJsonData:
       password: ${POSTGRES_PASSWORD}
     jsonData:

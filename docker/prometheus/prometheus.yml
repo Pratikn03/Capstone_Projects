@@ -1,11 +1,11 @@
-# Prometheus Configuration for GridPulse
+# Prometheus Configuration for ORIUS
 # Scrape interval: 15 seconds for real-time metrics
 
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    monitor: 'gridpulse-monitor'
+    monitor: 'orius-monitor'
 
 # Alerting configuration
 alerting:
@@ -19,8 +19,8 @@ rule_files:
 
 # Scrape configurations
 scrape_configs:
-  # GridPulse API metrics
-  - job_name: 'gridpulse-api'
+  # ORIUS API metrics
+  - job_name: 'orius-api'
     static_configs:
       - targets: ['api:8000']
     metrics_path: '/metrics'

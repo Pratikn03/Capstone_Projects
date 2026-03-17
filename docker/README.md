@@ -1,6 +1,6 @@
-# GridPulse Docker Configuration
+# ORIUS Docker Configuration
 
-Docker containerization for the GridPulse platform.
+Docker containerization for the ORIUS platform.
 
 ## Files
 
@@ -31,8 +31,8 @@ docker-compose logs -f api
 Lightweight FastAPI service for predictions:
 
 ```bash
-docker build -f Dockerfile.api -t gridpulse-api:latest .
-docker run -p 8000:8000 -e GRIDPULSE_API_KEY=secret gridpulse-api:latest
+docker build -f Dockerfile.api -t orius-api:latest .
+docker run -p 8000:8000 -e ORIUS_API_KEY=secret orius-api:latest
 ```
 
 ### Full Application (`Dockerfile.app`)
@@ -40,8 +40,8 @@ docker run -p 8000:8000 -e GRIDPULSE_API_KEY=secret gridpulse-api:latest
 Complete environment with all dependencies:
 
 ```bash
-docker build -f Dockerfile.app -t gridpulse:latest .
-docker run -it gridpulse:latest python scripts/train_multi_dataset.py
+docker build -f Dockerfile.app -t orius:latest .
+docker run -it orius:latest python scripts/train_multi_dataset.py
 ```
 
 ## Volumes
@@ -54,7 +54,7 @@ docker run -it gridpulse:latest python scripts/train_multi_dataset.py
 
 ## Networks
 
-Services communicate over a shared `gridpulse-net` bridge network.
+Services communicate over a shared `orius-net` bridge network.
 
 ## Resource Limits
 

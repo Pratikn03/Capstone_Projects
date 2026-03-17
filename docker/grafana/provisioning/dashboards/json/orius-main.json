@@ -46,7 +46,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(gridpulse_request_duration_seconds_bucket{job=\"gridpulse-api\"}[5m]))",
+          "expr": "histogram_quantile(0.95, rate(orius_request_duration_seconds_bucket{job=\"orius-api\"}[5m]))",
           "legendFormat": "p95 {{endpoint}}"
         }
       ]
@@ -70,7 +70,7 @@
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(gridpulse_requests_total{job=\"gridpulse-api\"}[1m])",
+          "expr": "rate(orius_requests_total{job=\"orius-api\"}[1m])",
           "legendFormat": "{{endpoint}} {{method}}"
         }
       ]
@@ -99,7 +99,7 @@
       "type": "gauge",
       "targets": [
         {
-          "expr": "1 - (rate(gridpulse_request_errors_total[5m]) / rate(gridpulse_requests_total[5m]))"
+          "expr": "1 - (rate(orius_request_errors_total[5m]) / rate(orius_requests_total[5m]))"
         }
       ]
     },
@@ -126,7 +126,7 @@
       "title": "Forecast MAPE",
       "type": "gauge",
       "targets": [
-        { "expr": "gridpulse_forecast_mape{target=\"load_mw\"}" }
+        { "expr": "orius_forecast_mape{target=\"load_mw\"}" }
       ]
     },
     {
@@ -152,7 +152,7 @@
       "title": "Battery SOC",
       "type": "gauge",
       "targets": [
-        { "expr": "gridpulse_battery_soc_mwh" }
+        { "expr": "orius_battery_soc_mwh" }
       ]
     },
     {
@@ -178,7 +178,7 @@
       "title": "Kafka Consumer Lag",
       "type": "gauge",
       "targets": [
-        { "expr": "gridpulse_kafka_consumer_lag" }
+        { "expr": "orius_kafka_consumer_lag" }
       ]
     },
     {
@@ -199,8 +199,8 @@
       "title": "Forecast vs Actual (Load)",
       "type": "timeseries",
       "targets": [
-        { "expr": "gridpulse_forecast_value{target=\"load_mw\"}", "legendFormat": "Forecast" },
-        { "expr": "gridpulse_actual_value{target=\"load_mw\"}", "legendFormat": "Actual" }
+        { "expr": "orius_forecast_value{target=\"load_mw\"}", "legendFormat": "Forecast" },
+        { "expr": "orius_actual_value{target=\"load_mw\"}", "legendFormat": "Actual" }
       ]
     },
     {
@@ -221,9 +221,9 @@
       "title": "Cost Metrics",
       "type": "timeseries",
       "targets": [
-        { "expr": "gridpulse_optimization_cost_baseline", "legendFormat": "Baseline Cost" },
-        { "expr": "gridpulse_optimization_cost_optimized", "legendFormat": "Optimized Cost" },
-        { "expr": "gridpulse_optimization_cost_savings", "legendFormat": "Savings" }
+        { "expr": "orius_optimization_cost_baseline", "legendFormat": "Baseline Cost" },
+        { "expr": "orius_optimization_cost_optimized", "legendFormat": "Optimized Cost" },
+        { "expr": "orius_optimization_cost_savings", "legendFormat": "Savings" }
       ]
     },
     {
@@ -244,8 +244,8 @@
       "title": "Memory Usage",
       "type": "timeseries",
       "targets": [
-        { "expr": "process_resident_memory_bytes{job=\"gridpulse-api\"}", "legendFormat": "RSS" },
-        { "expr": "process_virtual_memory_bytes{job=\"gridpulse-api\"}", "legendFormat": "Virtual" }
+        { "expr": "process_resident_memory_bytes{job=\"orius-api\"}", "legendFormat": "RSS" },
+        { "expr": "process_virtual_memory_bytes{job=\"orius-api\"}", "legendFormat": "Virtual" }
       ]
     },
     {
@@ -266,7 +266,7 @@
       "title": "Anomalies Detected",
       "type": "timeseries",
       "targets": [
-        { "expr": "increase(gridpulse_anomalies_detected_total[1h])", "legendFormat": "{{target}}" }
+        { "expr": "increase(orius_anomalies_detected_total[1h])", "legendFormat": "{{target}}" }
       ]
     },
     {
@@ -286,13 +286,13 @@
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["gridpulse", "energy", "forecasting"],
+  "tags": ["orius", "energy", "forecasting"],
   "templating": { "list": [] },
   "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "GridPulse Operations Dashboard",
-  "uid": "gridpulse-main",
+  "title": "ORIUS Operations Dashboard",
+  "uid": "orius-main",
   "version": 1,
   "weekStart": ""
 }

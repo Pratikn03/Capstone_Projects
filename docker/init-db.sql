@@ -232,13 +232,13 @@ GROUP BY region, DATE_TRUNC('day', plan_timestamp);
 -- Create read-only user for dashboards
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'gridpulse_readonly') THEN
-        CREATE ROLE gridpulse_readonly WITH LOGIN PASSWORD 'readonly123';
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'orius_readonly') THEN
+        CREATE ROLE orius_readonly WITH LOGIN PASSWORD 'readonly123';
     END IF;
 END
 $$;
 
-GRANT CONNECT ON DATABASE gridpulse TO gridpulse_readonly;
-GRANT USAGE ON SCHEMA public TO gridpulse_readonly;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO gridpulse_readonly;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO gridpulse_readonly;
+GRANT CONNECT ON DATABASE orius TO orius_readonly;
+GRANT USAGE ON SCHEMA public TO orius_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO orius_readonly;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO orius_readonly;

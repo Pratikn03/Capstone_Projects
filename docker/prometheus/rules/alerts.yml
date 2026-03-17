@@ -1,19 +1,19 @@
-# Alert rules for GridPulse
+# Alert rules for ORIUS
 groups:
-  - name: gridpulse_alerts
+  - name: orius_alerts
     rules:
       # API Health Alerts
       - alert: APIDown
-        expr: up{job="gridpulse-api"} == 0
+        expr: up{job="orius-api"} == 0
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: "GridPulse API is down"
-          description: "The GridPulse API has been unreachable for more than 1 minute."
+          summary: "ORIUS API is down"
+          description: "The ORIUS API has been unreachable for more than 1 minute."
 
       - alert: HighAPILatency
-        expr: histogram_quantile(0.95, rate(gridpulse_request_duration_seconds_bucket[5m])) > 2
+        expr: histogram_quantile(0.95, rate(orius_request_duration_seconds_bucket[5m])) > 2
         for: 5m
         labels:
           severity: warning
@@ -22,7 +22,7 @@ groups:
           description: "95th percentile latency is above 2 seconds for 5 minutes."
 
       - alert: HighErrorRate
-        expr: rate(gridpulse_request_errors_total[5m]) / rate(gridpulse_requests_total[5m]) > 0.05
+        expr: rate(orius_request_errors_total[5m]) / rate(orius_requests_total[5m]) > 0.05
         for: 5m
         labels:
           severity: warning
@@ -32,7 +32,7 @@ groups:
 
       # Forecasting Alerts
       - alert: ForecastDrift
-        expr: gridpulse_forecast_drift_score > 0.1
+        expr: orius_forecast_drift_score > 0.1
         for: 10m
         labels:
           severity: warning
@@ -41,7 +41,7 @@ groups:
           description: "Model drift score exceeds threshold, consider retraining."
 
       - alert: HighForecastError
-        expr: gridpulse_forecast_mape > 0.1
+        expr: orius_forecast_mape > 0.1
         for: 30m
         labels:
           severity: warning
@@ -51,7 +51,7 @@ groups:
 
       # Optimization Alerts
       - alert: OptimizationInfeasible
-        expr: increase(gridpulse_optimization_infeasible_total[1h]) > 5
+        expr: increase(orius_optimization_infeasible_total[1h]) > 5
         labels:
           severity: warning
         annotations:
@@ -59,7 +59,7 @@ groups:
           description: "More than 5 infeasible optimizations in the last hour."
 
       - alert: BatterySOCCritical
-        expr: gridpulse_battery_soc_mwh < 10
+        expr: orius_battery_soc_mwh < 10
         for: 5m
         labels:
           severity: critical
@@ -69,7 +69,7 @@ groups:
 
       # Streaming/Kafka Alerts
       - alert: KafkaConsumerLag
-        expr: gridpulse_kafka_consumer_lag > 1000
+        expr: orius_kafka_consumer_lag > 1000
         for: 10m
         labels:
           severity: warning
@@ -78,7 +78,7 @@ groups:
           description: "Consumer lag exceeds 1000 messages."
 
       - alert: StreamingProcessingDelay
-        expr: gridpulse_streaming_processing_delay_seconds > 60
+        expr: orius_streaming_processing_delay_seconds > 60
         for: 5m
         labels:
           severity: warning
@@ -97,7 +97,7 @@ groups:
           description: "Process memory usage exceeds 2GB."
 
       - alert: WatchdogTimeout
-        expr: gridpulse_watchdog_last_beat_seconds > 60
+        expr: orius_watchdog_last_beat_seconds > 60
         for: 1m
         labels:
           severity: critical
