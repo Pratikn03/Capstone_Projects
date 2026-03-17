@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'GridPulse — Smart Energy Management',
+  title: 'ORIUS — Smart Energy Management',
   description:
     'Next-generation energy management system with ML forecasting, battery dispatch optimization, and natural language query interface.',
 };

@@ -594,11 +594,11 @@ export async function loadImpactSummary(reportsDir = resolveReportsDir()): Promi
   const row = rows[0];
 
   const baselineCost = toNumber(row.baseline_cost_usd);
-  const gridCost = toNumber(row.gridpulse_cost_usd);
+  const gridCost = toNumber(row.orius_cost_usd);
   const baselineCarbon = toNumber(row.baseline_carbon_kg);
-  const gridCarbon = toNumber(row.gridpulse_carbon_kg);
+  const gridCarbon = toNumber(row.orius_carbon_kg);
   const baselinePeak = toNumber(row.baseline_peak_mw);
-  const gridPeak = toNumber(row.gridpulse_peak_mw);
+  const gridPeak = toNumber(row.orius_peak_mw);
 
   return {
     cost_savings_pct: toNumber(row.cost_savings_pct),

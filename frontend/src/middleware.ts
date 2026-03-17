@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 /**
- * GridPulse Middleware
+ * ORIUS Middleware
  * - Protects dashboard routes (requires auth in production)
  * - Adds security headers
  * - Handles tenant/region routing

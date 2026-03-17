@@ -1,5 +1,5 @@
 /**
- * Realistic mock data generators for GridPulse dashboard.
+ * Realistic mock data generators for ORIUS dashboard.
  * Used in demo mode when FastAPI backend is unavailable.
  * Data patterns mirror actual OPSD Germany + EIA-930 USA datasets.
  */

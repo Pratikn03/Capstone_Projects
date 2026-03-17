@@ -1,4 +1,4 @@
-# GridPulse IoT Device Contract
+# ORIUS IoT Device Contract
 
 This contract defines telemetry, command, and ACK/NACK payloads for the closed-loop IoT validation path.
 
@@ -7,7 +7,7 @@ This contract defines telemetry, command, and ACK/NACK payloads for the closed-l
 All `/iot/*` endpoints require header:
 
 ```text
-X-GridPulse-Key: <api-key>
+X-ORIUS-Key: <api-key>
 ```
 
 Scope policy:

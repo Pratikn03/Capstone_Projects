@@ -9,16 +9,16 @@ import pandas as pd
 
 from fastapi import APIRouter
 
-from gridpulse.forecasting.predict import load_model_bundle
-from gridpulse.monitoring.dc3s_health import compute_dc3s_health, load_dc3s_audit_config, load_dc3s_health_config
-from gridpulse.monitoring.retraining import (
+from orius.forecasting.predict import load_model_bundle
+from orius.monitoring.dc3s_health import compute_dc3s_health, load_dc3s_audit_config, load_dc3s_health_config
+from orius.monitoring.retraining import (
     load_monitoring_config,
     compute_data_drift,
     compute_model_metrics_gbm,
     evaluate_model_drift,
     retraining_decision,
 )
-from gridpulse.monitoring.report import write_monitoring_report
+from orius.monitoring.report import write_monitoring_report
 
 router = APIRouter()
 
@@ -361,7 +361,7 @@ def _load_dc3s_shield_summary() -> Dict[str, Any]:
     # Coverage theorem: check if module exists and can verify
     coverage_theorem_available = False
     try:
-        from gridpulse.dc3s.coverage_theorem import verify_inflation_geq_one  # noqa: F401
+        from orius.dc3s.coverage_theorem import verify_inflation_geq_one  # noqa: F401
         coverage_theorem_available = True
     except ImportError:
         pass

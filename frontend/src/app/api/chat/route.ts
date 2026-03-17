@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model: openai('gpt-4o'),
-    system: `You are GridPulse AI, an expert grid operator assistant for an energy management system.
+    system: `You are ORIUS AI, an expert grid operator assistant for an energy management system.
 You manage forecasting (load, wind, solar), battery dispatch optimization, carbon tracking, and anomaly detection.
 Available regions: Germany (DE) using OPSD data, USA (US) using EIA-930 data.
 Models: GBM (LightGBM), LSTM, TCN — all trained for 50 epochs with CosineAnnealingLR scheduler.

@@ -1,6 +1,6 @@
-# GridPulse API Service
+# ORIUS API Service
 
-RESTful API for the GridPulse energy forecasting and optimization platform.
+RESTful API for the ORIUS energy forecasting and optimization platform.
 
 ## Overview
 
@@ -50,7 +50,7 @@ gunicorn services.api.main:app -w 4 -k uvicorn.workers.UvicornWorker
 
 ## Authentication
 
-Set the `GRIDPULSE_API_KEY` environment variable for API key authentication.
+Set the `ORIUS_API_KEY` environment variable for API key authentication.
 
 ## Configuration
 

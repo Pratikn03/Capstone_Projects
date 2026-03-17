@@ -4,7 +4,7 @@ from fastapi.security.api_key import APIKeyHeader
 
 from services.api.config import get_api_keys
 
-API_KEY_NAME = "X-GridPulse-Key"
+API_KEY_NAME = "X-ORIUS-Key"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 
 

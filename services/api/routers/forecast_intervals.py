@@ -7,8 +7,8 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from gridpulse.forecasting.predict import predict_next_24h
-from gridpulse.forecasting.uncertainty.conformal import load_conformal
+from orius.forecasting.predict import predict_next_24h
+from orius.forecasting.uncertainty.conformal import load_conformal
 from services.api.config import load_uncertainty_config, get_conformal_path
 from services.api.routers.forecast import _load_cfg, _resolve_model_path, _cached_bundle
 

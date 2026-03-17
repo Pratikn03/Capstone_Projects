@@ -108,13 +108,13 @@ export type ModelRegistryEntry = {
 export type ImpactData = {
   region: string;
   baseline_cost_usd: number | null;
-  gridpulse_cost_usd: number | null;
+  orius_cost_usd: number | null;
   cost_savings_pct: number | null;
   baseline_carbon_kg: number | null;
-  gridpulse_carbon_kg: number | null;
+  orius_carbon_kg: number | null;
   carbon_reduction_pct: number | null;
   baseline_peak_mw: number | null;
-  gridpulse_peak_mw: number | null;
+  orius_peak_mw: number | null;
   peak_shaving_pct: number | null;
 };
 

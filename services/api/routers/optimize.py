@@ -8,9 +8,9 @@ import yaml
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from gridpulse.optimizer import optimize_dispatch
-from gridpulse.optimizer.baselines import grid_only_dispatch
-from gridpulse.optimizer.robust_dispatch import RobustDispatchConfig, optimize_robust_dispatch
+from orius.optimizer import optimize_dispatch
+from orius.optimizer.baselines import grid_only_dispatch
+from orius.optimizer.robust_dispatch import RobustDispatchConfig, optimize_robust_dispatch
 
 router = APIRouter()
 

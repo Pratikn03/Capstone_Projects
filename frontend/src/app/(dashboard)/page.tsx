@@ -63,16 +63,16 @@ export default function DashboardPage() {
   const costSavingsPct = realImpact?.cost_savings_pct ?? impactActive?.cost_savings_pct ?? null;
   const costSavingsRaw =
     realImpact
-      ? (realImpact.baseline_cost_usd ?? 0) - (realImpact.gridpulse_cost_usd ?? 0)
+      ? (realImpact.baseline_cost_usd ?? 0) - (realImpact.orius_cost_usd ?? 0)
       : impactActive?.cost_savings_usd ?? null;
   const carbonReductionPct = realImpact?.carbon_reduction_pct ?? impactActive?.carbon_reduction_pct ?? null;
-  const carbonKg = realImpact?.baseline_carbon_kg != null && realImpact?.gridpulse_carbon_kg != null
-    ? realImpact.baseline_carbon_kg - realImpact.gridpulse_carbon_kg
+  const carbonKg = realImpact?.baseline_carbon_kg != null && realImpact?.orius_carbon_kg != null
+    ? realImpact.baseline_carbon_kg - realImpact.orius_carbon_kg
     : (impactActive as Record<string, unknown>)?.carbon_reduction_kg as number | null ?? null;
   const carbonTons = carbonKg !== null && carbonKg !== undefined ? carbonKg / 1000 : null;
   const peakShavingPct = realImpact?.peak_shaving_pct ?? impactActive?.peak_shaving_pct ?? null;
-  const peakShavingMw = realImpact?.baseline_peak_mw != null && realImpact?.gridpulse_peak_mw != null
-    ? realImpact.baseline_peak_mw - realImpact.gridpulse_peak_mw
+  const peakShavingMw = realImpact?.baseline_peak_mw != null && realImpact?.orius_peak_mw != null
+    ? realImpact.baseline_peak_mw - realImpact.orius_peak_mw
     : (impactActive as Record<string, unknown>)?.peak_shaving_mw as number | null ?? null;
   const regionLabel = region === 'US' ? 'USA (EIA-930)' : 'Germany (OPSD)';
   const p95Regret = robustnessActive?.p95_regret ?? null;

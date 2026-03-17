@@ -1,7 +1,7 @@
 """
-FastAPI Application Entrypoint for GridPulse API Service.
+FastAPI Application Entrypoint for ORIUS API Service.
 
-This module defines the main FastAPI application that serves the GridPulse
+This module defines the main FastAPI application that serves the ORIUS
 energy forecasting and battery optimization platform. It provides:
 
 - **Forecasting endpoints**: Load, solar, wind, price predictions
@@ -29,8 +29,8 @@ Running the Server:
     gunicorn services.api.main:app -w 4 -k uvicorn.workers.UvicornWorker
 
 Environment Variables:
-    GRIDPULSE_API_KEY: API authentication key (required)
-    GRIDPULSE_LOG_LEVEL: Logging verbosity (default: INFO)
+    ORIUS_API_KEY: API authentication key (required)
+    ORIUS_LOG_LEVEL: Logging verbosity (default: INFO)
     
 See Also:
     - services/api/README.md: Full API documentation
@@ -41,9 +41,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Security, Response
 from pydantic import BaseModel
 
-from gridpulse.safety.bms import SafetyLayer, SafetyViolation
-from gridpulse.safety.watchdog import SystemWatchdog
-from gridpulse.utils.logging import setup_logging
+from orius.safety.bms import SafetyLayer, SafetyViolation
+from orius.safety.watchdog import SystemWatchdog
+from orius.utils.logging import setup_logging
 from services.api.config import get_bms_config, get_watchdog_timeout
 from services.api.health import readiness_check
 from services.api.routers import forecast, anomaly, optimize, monitor, dc3s, iot
@@ -53,7 +53,7 @@ from services.api.security import get_api_key, verify_scope
 # Prometheus metrics integration
 try:
     from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-    from gridpulse.monitoring.prometheus_metrics import REQUESTS_TOTAL
+    from orius.monitoring.prometheus_metrics import REQUESTS_TOTAL
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False
@@ -90,7 +90,7 @@ async def lifespan(app: FastAPI):
 # ============================================================================
 
 app = FastAPI(
-    title="GridPulse API",
+    title="ORIUS API",
     version="0.1.0",
     description="Energy forecasting and battery dispatch optimization API",
     lifespan=lifespan
