@@ -4,26 +4,35 @@
 %  Thesis Manuscript — IEEE-Style Two-Column Format
 %  (Canonical LaTeX Twin of PAPER_DRAFT.md)
 % =============================================================================
-\documentclass[10pt,a4paper,twocolumn]{article}
+\documentclass[11pt,a4paper]{article}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[margin=0.75in,columnsep=0.25in]{geometry}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[margin=1in]{geometry}
 \usepackage{booktabs}
-% \usepackage{longtable}  % disabled: incompatible with twocolumn
+\usepackage{longtable}
 \usepackage{array}
+\usepackage{tabularx}
 \usepackage[hypertexnames=false]{hyperref}
 \usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
 \usepackage{graphicx}
 \usepackage{enumitem}
 \usepackage{xcolor}
+\usepackage{float}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{multirow}
 \usepackage{subcaption}
 \usepackage{cleveref}
+\usepackage{setspace}
 
-\title{DC3S: Telemetry-Reliability-Weighted Conformal Safety Shield for Battery Dispatch under Degraded Mixed Telemetry}
+\onehalfspacing
+
+\title{DC3S: Telemetry-Reliability-Weighted Conformal Safety Shield for Battery Dispatch under Degraded Mixed Telemetry, with a Universal Multi-Domain Framework}
 \author{Pratik Niroula\\
         Minnesota State University, Mankato\\
         CIT (Major), Mathematics (Minor)\\
@@ -39,12 +48,12 @@
   \begin{figure}[htbp]
   \centering
   \@ifundefined{PaperFigurePath@#1}{%
-    \fbox{\parbox{0.9\linewidth}{\textbf{Missing figure token:} #1}}%
+    \fbox{\parbox{0.9\linewidth}{\textbf{Missing figure token:} \texttt{\detokenize{#1}}}}%
   }{%
     \IfFileExists{\csname PaperFigurePath@#1\endcsname}{%
       \includegraphics[width=0.9\linewidth]{\csname PaperFigurePath@#1\endcsname}%
     }{%
-      \fbox{\parbox{0.9\linewidth}{\textbf{Missing figure file for token #1:} \csname PaperFigurePath@#1\endcsname}}%
+      \fbox{\parbox{0.9\linewidth}{\textbf{Missing figure file for token } \texttt{\detokenize{#1}}}}%
     }%
   }%
   \caption{#2}
@@ -56,12 +65,12 @@
   \begin{figure*}[htbp]
   \centering
   \@ifundefined{PaperFigurePath@#1}{%
-    \fbox{\parbox{0.9\textwidth}{\textbf{Missing figure token:} #1}}%
+    \fbox{\parbox{0.9\textwidth}{\textbf{Missing figure token:} \texttt{\detokenize{#1}}}}%
   }{%
     \IfFileExists{\csname PaperFigurePath@#1\endcsname}{%
       \includegraphics[width=0.95\textwidth]{\csname PaperFigurePath@#1\endcsname}%
     }{%
-      \fbox{\parbox{0.9\textwidth}{\textbf{Missing figure file for token #1:} \csname PaperFigurePath@#1\endcsname}}%
+      \fbox{\parbox{0.9\textwidth}{\textbf{Missing figure file for token } \texttt{\detokenize{#1}}}}%
     }%
   }%
   \caption{#2}
@@ -73,12 +82,12 @@
   \begin{figure*}[!t]
   \centering
   \@ifundefined{PaperFigurePath@#1}{%
-    \fbox{\parbox{0.95\textwidth}{\textbf{Missing figure token:} #1}}%
+    \fbox{\parbox{0.95\textwidth}{\textbf{Missing figure token:} \texttt{\detokenize{#1}}}}%
   }{%
     \IfFileExists{\csname PaperFigurePath@#1\endcsname}{%
       \includegraphics[width=\textwidth,height=0.72\textheight,keepaspectratio]{\csname PaperFigurePath@#1\endcsname}%
     }{%
-      \fbox{\parbox{0.95\textwidth}{\textbf{Missing figure file for token #1:} \csname PaperFigurePath@#1\endcsname}}%
+      \fbox{\parbox{0.95\textwidth}{\textbf{Missing figure file for token } \texttt{\detokenize{#1}}}}%
     }%
   }%
   \caption{#2}
@@ -91,7 +100,7 @@
     \begin{table}[htbp]
     \centering
     \caption{#2}
-    \fbox{\parbox{0.9\linewidth}{\textbf{Missing table token:} #1}}
+    \fbox{\parbox{0.9\linewidth}{\textbf{Missing table token:} \texttt{\detokenize{#1}}}}
     \label{tab:#1}
     \end{table}
   }{%
@@ -101,7 +110,7 @@
       \begin{table}[htbp]
       \centering
       \caption{#2}
-      \fbox{\parbox{0.9\linewidth}{\textbf{Missing table file for token #1:} \csname PaperTablePath@#1\endcsname}}
+      \fbox{\parbox{0.9\linewidth}{\textbf{Missing table file for token } \texttt{\detokenize{#1}}}}
       \label{tab:#1}
       \end{table}
     }%
@@ -116,17 +125,85 @@
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{definition}{Definition}
 \newtheorem{corollary}{Corollary}
+\newtheorem{assumption}{Assumption}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+
+\providecommand{\zt}{z_t}
+\providecommand{\ztt}{\tilde{z}_t}
+\providecommand{\ot}{o_t}
+\providecommand{\xt}{x_t}
+\providecommand{\wt}{w_t}
+\providecommand{\dt}{d_t}
+\newcommand{\st}{s_t}
+\providecommand{\Chat}{\hat{C}_t}
+\providecommand{\Crac}{\hat{C}_t^{\mathrm{RAC}}}
+\providecommand{\Ut}{U_t}
+\providecommand{\astar}{a_t^{*}}
+\providecommand{\asafe}{a_t^{\mathrm{safe}}}
+\providecommand{\Aset}{\mathcal{A}_t}
+\providecommand{\dcs}{DC3S}
+\providecommand{\oqe}{OQE}
+\providecommand{\rui}{RUI}
+\providecommand{\rac}{RAC-Cert}
+\providecommand{\saf}{SAF}
+\providecommand{\SOC}{\mathrm{SOC}}
+\providecommand{\Emax}{E_{\max}}
+\providecommand{\Pmax}{P_{\max}}
+\providecommand{\Rmax}{R_{\max}}
+\providecommand{\etac}{\eta_c}
+\providecommand{\etad}{\eta_d}
+\providecommand{\TSVR}{\mathrm{TSVR}}
+\providecommand{\IR}{\mathrm{IR}}
+\providecommand{\OASG}{\mathrm{OASG}}
+\providecommand{\PICP}{\mathrm{PICP}}
+\providecommand{\ie}{i.e.}
+\providecommand{\eg}{e.g.}
+\providecommand{\cf}{cf.}
+\providecommand{\wrt}{w.r.t.}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator{\Prob}{\mathbb{P}}
+\providecommand{\E}{\mathbb{E}}
+\providecommand{\R}{\mathbb{R}}
+
+\graphicspath{{assets/figures/}{../paper/assets/figures/}{../reports/publication/}{../reports/hil/}{../reports/figures/}}
+
+\newcommand{\PaperImportStructuredFile}[1]{%
+  \begingroup
+  \let\PaperBaseSection\section
+  \let\PaperBaseSubsection\subsection
+  \let\PaperBaseSubsubsection\subsubsection
+  \let\PaperBaseIncludegraphics\includegraphics
+  \def\chapter##1{\PaperBaseSection{##1}}%
+  \def\section##1{\PaperBaseSubsection{##1}}%
+  \def\subsection##1{\PaperBaseSubsubsection{##1}}%
+  \renewcommand{\includegraphics}[2][]{%
+    \IfFileExists{##2}{%
+      \PaperBaseIncludegraphics[##1]{##2}%
+    }{%
+      \IfFileExists{../##2}{%
+        \PaperBaseIncludegraphics[##1]{../##2}%
+      }{%
+        \PaperBaseIncludegraphics[##1]{##2}%
+      }%
+    }%
+  }%
+  \csname input\endcsname{#1}%
+  \endgroup
+}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Battery dispatch controllers can look feasible on observed sensor state while simultaneously violating physical battery limits on true state when telemetry degrades---a hidden safety failure that standard evaluation protocols do not expose. We study this gap under four realistic fault conditions and find that deterministic dispatch violates true state-of-charge limits at \textbf{3.9\% of steps with P95 severity of 333\,MWh}, even while observed-state evaluation reports zero violations. The manuscript responds to that failure mode in three parts. First, \textbf{CPSBench} maintains separate truth and observed battery trajectories across dropout, delay-jitter, spikes, and out-of-order faults so that true-state safety becomes measurable rather than implicit. Second, \textbf{DC\textsuperscript{3}S} (Detect--Calibrate--Constrain--Certify--Shield) converts per-step telemetry reliability into adaptive uncertainty inflation (RAC-Cert), solves dispatch against the widened set, repairs infeasible actions by projection, and emits a per-step auditable certificate. Third, we show a \textbf{conditional conservatism} result: DC\textsuperscript{3}S reaches zero true-SOC violations with a 2.8\% intervention rate, meaning the shield becomes more conservative only when telemetry quality demands it. Cost-side results on Germany (OPSD, 17{,}377 rows) yield \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\% cost savings, \PaperMetric{DE_CARBON_REDUCTION_PCT}{0.30}\% carbon reduction, and \PaperMetric{DE_PEAK_SHAVING_PCT}{6.13}\% peak shaving; stochastic value remains positive in both DE and US regions (VSS\,=\,\PaperMetric{DE_VSS}{2,708.61} and \PaperMetric{US_VSS}{297,092.71}) across three US balancing authorities (EIA-930 MISO/PJM/ERCOT). All results are software-in-the-loop; hardware and field validation remain future work. Every quantitative claim is tied to versioned run artifacts and checked automatically against the release evidence.
+Battery dispatch controllers can look feasible on observed sensor state while simultaneously violating physical battery limits on true state when telemetry degrades---a hidden safety failure that standard evaluation protocols do not expose. We study this gap under realistic battery fault conditions and find that deterministic dispatch violates true state-of-charge limits at \textbf{3.9\% of steps with P95 severity of 333\,MWh}, even while observed-state evaluation reports zero violations. The manuscript responds to that failure mode in three layers. First, \textbf{CPSBench} maintains separate truth and observed battery trajectories so that true-state safety becomes measurable rather than implicit. Second, \textbf{DC\textsuperscript{3}S} (Detect--Calibrate--Constrain--Certify--Shield) converts per-step telemetry reliability into adaptive uncertainty inflation (RAC-Cert), solves dispatch against the widened set, repairs infeasible actions by projection, and emits a per-step auditable certificate. Third, the full battery manuscript hardens that core with subgroup calibration, asset-preservation proxies, blackout and safe-landing behavior, fleet composition, active probing, and a controller-in-the-loop runtime rehearsal. Cost-side results on Germany (OPSD, 17{,}377 rows) yield \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\% cost savings, \PaperMetric{DE_CARBON_REDUCTION_PCT}{0.30}\% carbon reduction, and \PaperMetric{DE_PEAK_SHAVING_PCT}{6.13}\% peak shaving; stochastic value remains positive in both DE and US regions (VSS\,=\,\PaperMetric{DE_VSS}{2,708.61} and \PaperMetric{US_VSS}{297,092.71}) across three US balancing authorities (EIA-930 MISO/PJM/ERCOT). The current package includes runtime-rehearsal evidence but stops short of claiming full physical deployment or production-hardware validation. We extend the battery-only DC\textsuperscript{3}S architecture to a \textbf{universal domain physical safety framework} spanning Energy (battery), AV (autonomous vehicles), Industrial (process control), and Healthcare (vital signs), with a shared five-stage pipeline (Detect--Calibrate--Constrain--Shield--Certify) and domain-specific adapters. Every quantitative claim is tied to versioned run artifacts and checked automatically against the release evidence.
 \end{abstract}
 
-\noindent\textbf{Keywords:} conformal prediction, battery dispatch, safety shield, telemetry reliability, robust optimization, cyber-physical systems, uncertainty quantification
+\noindent\textbf{Keywords:} conformal prediction, battery dispatch, safety shield, telemetry reliability, robust optimization, cyber-physical systems, uncertainty quantification, multi-domain framework, universal physical safety
 
 \section{Introduction}\label{sec:intro}
 
@@ -140,7 +217,7 @@ DC\textsuperscript{3}S (Degradation-Conditioned Conformal Dispatch Safety Shield
 
 \subsection{Operational Motivation}
 
-GridPulse is built as a closed decision loop:
+ORIUS is built as a closed decision loop:
 \[
 \text{Forecast} \!\to\! \text{Optimize} \!\to\! \text{Dispatch} \!\to\! \text{Measure} \!\to\! \text{Monitor}.
 \]
@@ -165,6 +242,7 @@ A forecasting model can have strong RMSE while still inducing unsafe dispatch if
   \item \textbf{CPSBench.} A multi-fault-dimension evaluation harness that maintains separate truth and observed battery trajectories across four fault types, enabling reproducible true-state safety evaluation. CPSBench is the framework that makes the hidden gap measurable and reproducible.
   \item \textbf{DC\textsuperscript{3}S architecture.} A telemetry-aware conformal control loop that converts per-step reliability scores into adaptive interval inflation (RAC-Cert), solves dispatch against the widened uncertainty set, repairs infeasible actions by projection, and emits a per-step auditable certificate---all within a single online control cycle.
   \item \textbf{Conditional conservatism result.} DC\textsuperscript{3}S achieves zero true-SOC violations at a 2.8\% intervention rate across all fault conditions. The shield is not uniformly conservative: it activates precisely when and to the degree that telemetry quality requires, leaving 97.2\% of steps unmodified.
+\item \textbf{Universal domain framework.} We extend DC\textsuperscript{3}S to a multi-domain physical safety framework (ORIUS) with adapters for Energy (battery), AV (autonomous vehicles), Industrial (process control), and Healthcare (vital signs), sharing the same five-stage pipeline and fault taxonomy across domains.
 \end{enumerate}
 
 \subsection{Contribution Boundary}
@@ -173,7 +251,7 @@ The central scientific contribution is the discovery and empirical characterizat
 
 \subsection{Paper Roadmap}
 
-Sections~\ref{sec:related}--\ref{sec:problem} position the work and define the dispatch setting. Sections~\ref{sec:forecasting_uq} and~\ref{sec:safe_dispatch} describe the forecasting, calibration, and shield mechanics. Sections~\ref{sec:experiments}--\ref{sec:us_analysis} present the empirical evidence, baseline diagnosis, and regime analysis. Sections~\ref{sec:governance}--\ref{sec:conclusion} close with governance, validity, limitations, and conclusion. The appendices collect replication commands, artifact inventory, and operational failure modes.
+Sections~\ref{sec:related}--\ref{sec:problem} position the work and define the dispatch setting. Sections~\ref{sec:forecasting_uq} and~\ref{sec:safe_dispatch} describe the forecasting, calibration, and shield mechanics. Sections~\ref{sec:experiments}--\ref{sec:us_analysis} present the core empirical evidence, baseline diagnosis, and regime analysis. Sections~\ref{sec:governance}--\ref{sec:deployment_discipline} extend the paper into the full battery hardening surface: governance, aging, blackout behavior, runtime rehearsal, benchmark formalization, fleet composition, adversarial probing, and final scope discipline. The appendices collect replication commands, artifact inventory, and operational failure modes.
 
 \section{Related Work}\label{sec:related}
 
@@ -217,11 +295,11 @@ Seen against this literature, the paper's originality lies in elevating the gap 
 
 \section{Background, Preliminaries, and System Context}\label{sec:background}
 
-\subsection{GridPulse System Context}
+\subsection{ORIUS System Context}
 
-GridPulse is implemented as a forecast-to-dispatch stack whose main layers are data preparation, forecasting, uncertainty calibration, optimization, monitoring, and API/dashboard serving. DC\textsuperscript{3}S sits at the dispatch boundary: it receives observed telemetry and forecast intervals, widens those intervals when telemetry quality or drift risk deteriorates, and prevents physically unsafe commands from reaching the battery.
+ORIUS is implemented as a forecast-to-dispatch stack whose main layers are data preparation, forecasting, uncertainty calibration, optimization, monitoring, and API/dashboard serving. DC\textsuperscript{3}S sits at the dispatch boundary: it receives observed telemetry and forecast intervals, widens those intervals when telemetry quality or drift risk deteriorates, and prevents physically unsafe commands from reaching the battery.
 
-\PaperFigureHero{FIG01_ARCHITECTURE}{GridPulse architecture with \DCThreeS{} at the dispatch boundary. Offline forecasting and calibration produce promoted model and interval artifacts; online DC\textsuperscript{3}S turns degraded telemetry into safe dispatch actions, certificates, and operator-visible audit records.}
+\PaperFigureHero{FIG01_ARCHITECTURE}{ORIUS architecture with \DCThreeS{} at the dispatch boundary. Offline forecasting and calibration produce promoted model and interval artifacts; online DC\textsuperscript{3}S turns degraded telemetry into safe dispatch actions, certificates, and operator-visible audit records.}
 
 \subsection{Component-to-Code Map}
 
@@ -233,16 +311,16 @@ GridPulse is implemented as a forecast-to-dispatch stack whose main layers are d
 \toprule
 Layer & Purpose & Primary paths \\
 \midrule
-Data pipeline & Region features, splits, and profile locks & \path{src/gridpulse/data_pipeline/}, \path{src/gridpulse/pipeline/run.py} \\
-Forecasting & GBM and deep-baseline train/predict flows & \path{src/gridpulse/forecasting/} \\
-Uncertainty & Conformal, adaptive, residual, and reliability-binned calibration & \path{src/gridpulse/forecasting/uncertainty/conformal.py}, \path{src/gridpulse/forecasting/uncertainty/reliability_mondrian.py} \\
-Optimization & Deterministic, robust, and baseline dispatch & \path{src/gridpulse/optimizer/} \\
-DC3S & Reliability, drift, shield, certificate, state & \path{src/gridpulse/dc3s/} \\
-Monitoring & Drift checks and retraining logic & \path{src/gridpulse/monitoring/} \\
+Data pipeline & Region features, splits, and profile locks & \path{src/orius/data_pipeline/}, \path{src/orius/pipeline/run.py} \\
+Forecasting & GBM and deep-baseline train/predict flows & \path{src/orius/forecasting/} \\
+Uncertainty & Conformal, adaptive, residual, and reliability-binned calibration & \path{src/orius/forecasting/uncertainty/conformal.py}, \path{src/orius/forecasting/uncertainty/reliability_mondrian.py} \\
+Optimization & Deterministic, robust, and baseline dispatch & \path{src/orius/optimizer/} \\
+DC3S & Reliability, drift, shield, certificate, state & \path{src/orius/dc3s/} \\
+Monitoring & Drift checks and retraining logic & \path{src/orius/monitoring/} \\
 API + dashboard & Runtime routes and operator-facing inspection & \path{services/api/}, \path{frontend/} \\
-Anomaly detection & Multivariate and residual anomaly flagging & \path{src/gridpulse/anomaly/} \\
-Streaming & Real-time Kafka/Redpanda telemetry ingestion & \path{src/gridpulse/streaming/} \\
-Registry & Model versioning and atomic promotion & \path{src/gridpulse/registry/} \\
+Anomaly detection & Multivariate and residual anomaly flagging & \path{src/orius/anomaly/} \\
+Streaming & Real-time Kafka/Redpanda telemetry ingestion & \path{src/orius/streaming/} \\
+Registry & Model versioning and atomic promotion & \path{src/orius/registry/} \\
 IoT & Edge agent, device contract, closed-loop simulator & \path{iot/} \\
 \bottomrule
 \end{tabular}
@@ -266,13 +344,34 @@ The canonical dataset lock is summarized in \Cref{tab:TBL05_DATASET_SUMMARY}. DE
 
 \PaperTableCSV{TBL05_DATASET_SUMMARY}{Dataset summary: regions, date ranges, signal counts, and coverage.}
 
+\paragraph{Dataset--framework traceability.}
+\Cref{tab:dataset_framework_trace} maps each locked dataset to its role in the pipeline and the primary evidence tables. DE and US\_MISO feed the canonical battery evaluation (TBL01, TBL04); PJM and ERCOT extend the release-family scope. The universal framework (\Cref{sec:universal}) uses synthetic telemetry for non-energy domains; ORIUS-Bench validation evidence is in \Cref{tab:TBL09_CROSS_DOMAIN_OASG}.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Dataset--framework traceability. Each dataset maps to pipeline stages and evidence tables.}
+\label{tab:dataset_framework_trace}
+\begin{tabular}{llll}
+\toprule
+\textbf{Dataset} & \textbf{Rows} & \textbf{Pipeline Stage} & \textbf{Evidence} \\
+\midrule
+DE (OPSD) & 17{,}377 & Forecast, DC3S, CPSBench & TBL01, TBL03, TBL05 \\
+US\_MISO & 13{,}638 & Forecast, DC3S, CPSBench & TBL04, TBL05, TBL08 \\
+US\_PJM & 13{,}639 & Forecast, transfer & TBL05, TBL07 \\
+US\_ERCOT & 13{,}453 & Forecast, transfer & TBL05, TBL07 \\
+\midrule
+\multicolumn{4}{l}{\textit{Universal (synthetic): battery, navigation, industrial, healthcare, aerospace, vehicle $\to$ TBL09}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \PaperFigure{FIG12_GEOGRAPHIC_SCOPE}{Geographic scope of the evaluation: DE (Germany/OPSD) and US (MISO, PJM, ERCOT balancing authorities). Shaded regions indicate data-coverage footprint.}
 
 \PaperFigure{FIG13_LOAD_RENEWABLE_PROFILES}{Hourly load, wind, and solar generation profiles for DE and US regions. The diurnal and seasonal structure visible in these profiles motivates the lag and calendar features used by the forecasting pipeline.}
 
 \subsection{Pipeline Architecture and Runtime Interfaces}
 
-The GridPulse pipeline follows a strict stage ordering that determines how data flows through the system. Each stage has a well-defined interface contract:
+The ORIUS pipeline follows a strict stage ordering that determines how data flows through the system. Each stage has a well-defined interface contract:
 
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
   \item \textbf{Ingestion}: Raw time-series loading from OPSD (DE) or EIA-930 (US). Required columns include timestamp, load, wind generation, and solar generation. Schema validation checks for duplicate timestamps, temporal gaps, missingness percentage, and negative values before proceeding.
@@ -286,7 +385,7 @@ The GridPulse pipeline follows a strict stage ordering that determines how data 
 \end{enumerate}
 
 \paragraph{IoT device contract.}
-For edge deployment scenarios, the pipeline extends to IoT devices through a formal device contract (\texttt{iot/DEVICE\_CONTRACT.md}) that specifies the telemetry, command, and acknowledgment protocol. Telemetry payloads carry timestamp, \texttt{load\_mw}, \texttt{renewables\_mw}, and \texttt{soc\_mwh} at a configurable cadence (default: 1 event/hour, tolerance $\pm$120\,s). Commands are queued with stable IDs and carry a safe action (charge/discharge MW), a status field (queued/dispatched/timeout/hold), and a 30-second TTL. Devices respond with ACK (applied) or NACK (rejected/clipped) semantics. A \emph{shadow mode} (\texttt{shadow\_mode=true, applied=false}) allows non-disruptive monitoring where the shield's recommendation is logged without overriding the existing controller. Each command carries a \texttt{certificate\_id} linking it to the DC\textsuperscript{3}S audit trail. Authentication uses an \texttt{X-GridPulse-Key} header with read/write scopes.
+For edge deployment scenarios, the pipeline extends to IoT devices through a formal device contract (\texttt{iot/DEVICE\_CONTRACT.md}) that specifies the telemetry, command, and acknowledgment protocol. Telemetry payloads carry timestamp, \texttt{load\_mw}, \texttt{renewables\_mw}, and \texttt{soc\_mwh} at a configurable cadence (default: 1 event/hour, tolerance $\pm$120\,s). Commands are queued with stable IDs and carry a safe action (charge/discharge MW), a status field (queued/dispatched/timeout/hold), and a 30-second TTL. Devices respond with ACK (applied) or NACK (rejected/clipped) semantics. A \emph{shadow mode} (\texttt{shadow\_mode=true, applied=false}) allows non-disruptive monitoring where the shield's recommendation is logged without overriding the existing controller. Each command carries a \texttt{certificate\_id} linking it to the DC\textsuperscript{3}S audit trail. Authentication uses an \texttt{X-ORIUS-Key} header with read/write scopes.
 
 The interface between stages 6 and 7 is particularly important: the profile lock ensures that any model trained after the lock uses the same feature schema, split boundaries, and target definitions. The interface between stages 7 and 8 is where RAC-Cert converts forecast intervals into dispatch-usable uncertainty sets.
 
@@ -442,7 +541,7 @@ The locked comparison set contains all six forecasting baselines: GBM (LightGBM)
 
 \subsection{Anomaly Detection Pipeline}
 
-The telemetry reliability scorer in DC\textsuperscript{3}S consumes anomaly detection signals from a two-layer detection pipeline implemented in \texttt{src/gridpulse/anomaly/}.
+The telemetry reliability scorer in DC\textsuperscript{3}S consumes anomaly detection signals from a two-layer detection pipeline implemented in \texttt{src/orius/anomaly/}.
 
 \paragraph{Layer 1: Residual-based rules.}
 A rolling $z$-score detector (\texttt{residual\_rules.py}) monitors forecast residuals over a 168-hour (weekly) sliding window. At each step, the local mean $\mu_t$ and standard deviation $\sigma_t$ are recomputed, and a residual is flagged anomalous if $|r_t - \mu_t| / (\sigma_t + \epsilon) \ge 3.0$, corresponding to a $\pm 3\sigma$ control limit. This catches univariate extreme residuals---for example, a sudden 3$\sigma$ load spike caused by a sensor fault.
@@ -575,6 +674,29 @@ The three theorems correspond to three layers of the empirical evidence:
   \item \textbf{\Cref{thm:conditional_coverage} $\leftrightarrow$ reliability-binned analysis}: the Mondrian partition motivates the diagnostic tool that identifies solar under-coverage at specific reliability levels.
   \item \textbf{\Cref{thm:safety_margin} + \Cref{cor:zero_violation} $\leftrightarrow$ \Cref{tab:TBL01_MAIN_RESULTS}}: the monotone margin construction explains why both DC\textsuperscript{3}S variants achieve zero violations while the deterministic LP incurs a 3.9\% [1.6\%, 8.5\%] violation rate and the CVaR/Robust baseline 25.6\% [1.0\%, 61.3\%]. The FTIT intervention rate of 2.8\% [0.0\%, 5.5\%] quantifies the bounded cost of the margin.
 \end{itemize}
+
+\paragraph{Theorem-to-register mapping (T1--T8).}
+The paper theorems map to the canonical battery-8 theorem register (thesis Appendix~M). Compact paper form: \Cref{thm:rac_coverage} $\equiv$ T3 (ORIUS Core Bound); \Cref{thm:safety_margin} and \Cref{cor:zero_violation} $\equiv$ T2 (One-Step Safety Preservation); \Cref{thm:conditional_coverage} is an auxiliary Mondrian diagnostic. The full longform block (\Cref{sec:theorem_validation_longform}) and thesis chapters ch16--ch20 state all eight theorems: T1 OASG Existence, T2 One-Step Safety Preservation, T3 ORIUS Core Bound, T4 No Free Safety, T5 Certificate Validity Horizon, T6 Certificate Expiration Bound, T7 Feasible Fallback Existence, T8 Graceful Degradation Dominance. \Cref{tab:theorem_register_code} maps each to its implementation anchor. The full evidence mapping is in \texttt{orius-plan/theorem\_to\_evidence\_map.md}.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Battery-8 theorem register: T1--T8 and implementation anchors.}
+\label{tab:theorem_register_code}
+\begin{tabular}{p{0.9cm}p{2.8cm}p{5.2cm}}
+\toprule
+\textbf{ID} & \textbf{Theorem} & \textbf{Code anchor} \\
+\midrule
+T1 & OASG Existence & \path{src/orius/cpsbench_iot/scenarios.py}, \path{plant.py}, \path{runner.py} (observed/true split, violation computation) \\
+T2 & One-Step Safety Preservation & \path{src/orius/dc3s/guarantee_checks.py}, \path{shield.py} \\
+T3 & ORIUS Core Bound & \path{src/orius/dc3s/coverage_theorem.py} \\
+T4 & No Free Safety & \path{src/orius/cpsbench_iot/baselines.py}, \path{scenarios.py}, \path{runner.py} (baseline comparison) \\
+T5 & Certificate Validity Horizon & \path{src/orius/dc3s/temporal_theorems.py}: \texttt{forward\_tube()}, \texttt{certificate\_validity\_horizon()} \\
+T6 & Certificate Expiration Bound & \path{src/orius/dc3s/temporal_theorems.py}: \texttt{certificate\_expiration\_bound()} \\
+T7 & Feasible Fallback Existence & \path{src/orius/dc3s/temporal_theorems.py}: \texttt{zero\_dispatch\_fallback()}, \texttt{certify\_fallback\_existence()} \\
+T8 & Graceful Degradation Dominance & \path{src/orius/dc3s/temporal_theorems.py}: \texttt{evaluate\_graceful\_degradation\_dominance()}; \path{graceful.py} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Alternative Inflation Laws}
 
@@ -819,7 +941,7 @@ The evaluation uses three metric families that correspond to the three system su
 
 \paragraph{Control metrics.} The primary safety metric is the true-SOC violation rate: the fraction of steps where $\mathrm{SOC}^{\mathrm{true}}_t$ falls outside $[\mathrm{SOC}_{\min}, \mathrm{SOC}_{\max}]$. Violation severity (P95) measures the magnitude of the worst violations in MWh. The intervention rate is the fraction of steps where the shield modifies the optimizer's candidate action ($\|a_t^{\mathrm{safe}} - a_t^*\| > \epsilon$, with $\epsilon = 10^{-6}$\,MW). Additional safety metrics include: unsafe command rate (commands that \emph{would} violate if executed), BMS trip rate (simulated battery management system shutdowns), and grid import violation rate. Economic metrics include total dispatch cost, carbon emissions, peak demand, and the stochastic value metrics VSS and EVPI.
 
-\paragraph{Regret metric.} To quantify the cost of imperfect information, we compute \emph{dispatch regret}: the difference between the cost of the deployed policy and the cost of an oracle policy with perfect foresight. Formally, $\text{Regret} = \sum_t J(a_t^{\text{policy}}, Y_t) - \sum_t J(a_t^{\text{oracle}}, Y_t)$, where the oracle solves the same optimization problem with access to the realized load, wind, and solar values. The oracle also incorporates battery degradation costs (\$10/MWh throughput) and terminal SOC penalties. Regret is computed in two modes: deterministic (oracle uses point forecasts) and robust (oracle uses conformal intervals), isolating the cost of uncertainty from the cost of forecast error. The \texttt{src/gridpulse/evaluation/regret.py} module solves both deterministic and robust dispatch problems and computes realized cost breakdowns including grid cost, degradation, unmet load penalty, and terminal SOC penalty. Regret values are reported in the robustness perturbation analysis (\Cref{tab:robustness}).
+\paragraph{Regret metric.} To quantify the cost of imperfect information, we compute \emph{dispatch regret}: the difference between the cost of the deployed policy and the cost of an oracle policy with perfect foresight. Formally, $\text{Regret} = \sum_t J(a_t^{\text{policy}}, Y_t) - \sum_t J(a_t^{\text{oracle}}, Y_t)$, where the oracle solves the same optimization problem with access to the realized load, wind, and solar values. The oracle also incorporates battery degradation costs (\$10/MWh throughput) and terminal SOC penalties. Regret is computed in two modes: deterministic (oracle uses point forecasts) and robust (oracle uses conformal intervals), isolating the cost of uncertainty from the cost of forecast error. The \texttt{src/orius/evaluation/regret.py} module solves both deterministic and robust dispatch problems and computes realized cost breakdowns including grid cost, degradation, unmet load penalty, and terminal SOC penalty. Regret values are reported in the robustness perturbation analysis (\Cref{tab:robustness}).
 
 \subsection{Statistical Protocol}
 
@@ -840,13 +962,13 @@ This paper binds its quantitative claims to the following locked artifacts:
 
 Before evaluating shield behavior, we report the promoted forecasting comparison that the optimizer consumes. \Cref{tab:TBL08_FORECAST_BASELINES} reports RMSE, MAE, sMAPE, $R^2$, PICP@90, and interval width for the full six-model $\times$ three-target $\times$ two-region matrix. This table constitutes the publication-facing six-model comparison contract; larger model or run counts reported elsewhere in the manuscript (e.g., the runtime table in \Cref{tab:runtime}) refer to the full release-family artifact surface---including per-target persistence baselines and region-specific calibration variants---not to additional model families beyond these six. The comparison is intentionally operational: all six models share the same split policy, forecast horizon, lookback, seed policy, feature framing, and evaluation rules so that performance differences reflect model behavior under a common forecasting regime rather than different data access or leakage exposure.
 
-\PaperTableCSV{TBL08_FORECAST_BASELINES}{Promoted six-model forecasting comparison across DE and US. All six model families (GBM, LSTM, TCN, N-BEATS, TFT, PatchTST) receive CQR-calibrated 90\% conformal prediction intervals. GBM achieves the narrowest intervals due to its superior point-forecast accuracy in this tabular regime.}
+\PaperTableCSV{TBL08_FORECAST_BASELINES}{Promoted six-model forecasting comparison. Deep learning baselines evaluate point-forecast performance, confirming GBM's operational dominance in this tabular regime. Conformal uncertainty artifacts (PICP, Width) are materialized exclusively for the production-candidate model (GBM).}
 
 \PaperFigure{FIG14_FORECAST_VS_ACTUAL}{Forecast versus actual values for all three targets across the test horizon. GBM tracks the ground truth closely; deviations are concentrated in high-volatility episodes.}
 
 \PaperFigureWide{FIG38_MODEL_COMPARISON}{Six-model forecasting comparison across regions and targets. GBM dominates in all target--region combinations, consistent with the tabular-regime effect discussed in \Cref{sec:baseline_diagnosis}.}
 
-\textbf{Interpretation.} The promoted comparison surface preserves one common baseline protocol across all six model families. GBM dominates across all target--region combinations, consistent with the well-documented advantage of gradient-boosted trees on moderate-sized tabular data with strong hand-engineered features~\cite{borisov2022deep}. LSTM and TCN remain substantially weaker on wind and solar, exhibiting negative $R^2$ in several cases (i.e., worse than predicting the mean), which confirms that raw sequence-to-sequence architectures do not automatically outperform tabular methods under the current feature contract. N-BEATS, TFT, and PatchTST show intermediate but clearly inferior performance. All six model families receive CQR-calibrated 90\% conformal prediction intervals, generated from the held-out calibration split using the same conformalized quantile regression procedure. GBM's superior point-forecast accuracy translates into the narrowest prediction intervals; deep models, where enabled, show materially wider intervals, consistent with their higher residual variance in this tabular regime. Only the GBM intervals enter the operational dispatch pipeline (DC\textsuperscript{3}S), since GBM is the production-candidate forecaster; the deep-model intervals are reported for completeness and to enable fair cross-model UQ comparison.
+\textbf{Interpretation.} The promoted comparison surface preserves one common baseline protocol across all six model families. GBM dominates across all target--region combinations, consistent with the well-documented advantage of gradient-boosted trees on moderate-sized tabular data with strong hand-engineered features~\cite{borisov2022deep}. LSTM and TCN remain substantially weaker on wind and solar, exhibiting negative $R^2$ in several cases (i.e., worse than predicting the mean), which confirms that raw sequence-to-sequence architectures do not automatically outperform tabular methods under the current feature contract. N-BEATS, TFT, and PatchTST show intermediate but still clearly inferior performance. PICP and interval width columns are blank for non-GBM models by design: conformal uncertainty artifacts are materialized exclusively for the production-candidate model (GBM), since only GBM enters the dispatch pipeline. Running conformal calibration on weaker point models would produce valid but operationally irrelevant intervals.
 
 \subsection{Safety Under Telemetry Faults}\label{sec:main_result}
 
@@ -908,7 +1030,7 @@ US & \PaperMetric{US_COST_SAVINGS_PCT}{0.11} & \PaperMetric{US_CARBON_REDUCTION_
 \label{tab:absolute_impact}
 \begin{tabular}{llrrr}
 \toprule
-Region & Metric & Baseline (B2) & GridPulse (B1) & $\Delta$ (absolute) \\
+Region & Metric & Baseline (B2) & ORIUS (B1) & $\Delta$ (absolute) \\
 \midrule
 \multirow{3}{*}{DE} & Cost (\$M) & 154.77 & 143.78 & $-$10.997 \\
  & Carbon (Mt) & 1{,}461.6 & 1{,}457.2 & $-$4.436 \\
@@ -931,7 +1053,7 @@ Policy & Cost (\$M) & Carbon (Mt) & Peak (GW) \\
 \midrule
 B2 (Grid-only) & 154.77 & 1{,}461.6 & 52.17 \\
 B3 (Naive battery) & 154.20 & 1{,}454.7 & 52.17 \\
-B1 (GridPulse LP) & 143.78 & 1{,}457.2 & 48.97 \\
+B1 (ORIUS LP) & 143.78 & 1{,}457.2 & 48.97 \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -1121,6 +1243,70 @@ Taken together, the trace shows what conditional conservatism looks like in oper
 
 \PaperFigure{FIG41_SOC_TRAJECTORY_DETAIL}{Detailed SOC trajectory comparison showing the divergence between observed-state and true-state SOC during telemetry degradation. \DCThreeS{}'s inflated intervals prevent the over-discharge that the deterministic controller commits.}
 
+\section{Universal Domain Framework}\label{sec:universal}
+
+The battery DC\textsuperscript{3}S architecture generalizes to a \textbf{universal domain physical safety framework} (ORIUS) that applies the same five-stage pipeline---Detect, Calibrate, Constrain, Shield, Certify---across five cyber-physical domains. This section describes the framework, domain adapters, and implementation status. Historical incidents---Air France 447 (pitot dropout), 737 MAX MCAS (sensor spike/drift), Tesla Autopilot (perception dropout), Texas City refinery (level sensor failure), and Uber ATG (sensor fusion failure)---illustrate the OASG across aviation, automotive, and industrial control; ORIUS addresses the common observation-reality integrity gap underlying these events.
+
+\subsection{Multi-Domain Architecture}
+
+\Cref{fig:FIG_UNIVERSAL_FRAMEWORK} illustrates the universal pipeline. Each domain provides a \emph{DomainAdapter} that implements: (1) telemetry ingestion, (2) reliability scoring (OQE), (3) uncertainty set construction, (4) action set tightening, (5) action repair (shield), and (6) certificate emission. The pipeline stages are identical across domains; only the state schema, safety predicates, and action spaces differ.
+
+\PaperFigureWide{FIG_UNIVERSAL_FRAMEWORK}{ORIUS universal domain physical safety framework. The five-stage pipeline (Detect$\to$Calibrate$\to$Constrain$\to$Shield$\to$Certify) applies uniformly; domain adapters for five domains (Energy, AV, Industrial, Healthcare/Surgical, Aerospace) provide domain-specific state, safety predicates, and repair logic.}
+
+\subsection{Domain State Schema and Safety Predicates}
+
+\Cref{tab:universal-state} defines the state schema per domain. Energy uses SOC, load, and renewables; AV uses longitudinal kinematics (position, speed, lead vehicle); Industrial uses process variables (temperature, pressure, power); Healthcare uses vital signs (heart rate, SpO$_2$, respiratory rate). \Cref{tab:universal-safety} summarizes the safety predicates. \Cref{tab:universal-pipeline} lists the pipeline stages and adapter methods.
+
+\input{assets/tables/generated/tbl_universal_framework.tex}
+
+\subsection{AV (Autonomous Vehicle) Adapter}
+
+The AV adapter implements 1D longitudinal control: position $x_t$, speed $v_t$, speed limit $v_{\max}(t)$, and optional lead-vehicle position $x^{\mathrm{lead}}_t$. Safety predicates are $v_t \leq v_{\max}(t)$ and $x^{\mathrm{lead}}_t - x_t \geq d_{\min}(v_t)$ when a lead vehicle is present. The action space is acceleration $a_t \in [a_{\min}, a_{\max}]$. Datasets include NGSIM (US highway), HEE (Bosch), and synthetic trajectories; see \texttt{orius-plan/AV\_DATASETS.md}.
+
+\subsection{Industrial Adapter}
+
+The Industrial adapter targets process control (e.g., combined-cycle power plants). State fields are temperature, pressure, humidity, and power output. Safety predicates enforce temperature and power bounds. The action space is power setpoint. Datasets include UCI CCPP and synthetic process data; see \texttt{orius-plan/INDUSTRIAL\_DATASETS.md}.
+
+\subsection{Healthcare and Surgical Robotics Adapter}
+
+The Healthcare adapter (including surgical robotics / telesurgery) monitors vital signs: heart rate (HR), SpO$_2$, and respiratory rate. For telesurgical systems, network latency creates a time-delayed control loop; the adapter widens force-constraint bounds in proportion to detected latency. Safety predicates enforce HR $\in$ [hr$_{\min}$, hr$_{\max}$], SpO$_2$ $\geq$ spo2$_{\min}$, and respiratory rate in a valid range. The action space includes alert levels. Datasets include PhysioNet BIDMC and synthetic vital signs; see \texttt{orius-plan/HEALTHCARE\_DATASETS.md}.
+
+\subsection{Aerospace Adapter}
+
+The Aerospace adapter targets avionics and flight control. State fields include airspeed, angle-of-attack, altitude, and sensor health (pitot heat status, AoA cross-check consistency, GPS satellite count). Safety predicates enforce flight-envelope limits. When sensor health degrades (e.g., pitot icing, GPS jamming), the uncertainty set expands and the safe action set contracts toward conservative commands. The adapter instantiates the OASG pattern observed in Air France 447 and 737 MAX MCAS.
+
+\subsection{Universal ORIUS Validation Evidence}\label{sec:universal_validation}
+
+The unified validation harness (\texttt{scripts/run\_universal\_orius\_validation.py}) runs all six ORIUS-Bench tracks---battery, navigation, industrial, healthcare, aerospace, vehicle---with fault episodes (bias, noise, stuck\_sensor, blackout) and aggregates TSVR (true-state violation rate) and OASG metrics. \Cref{tab:TBL09_CROSS_DOMAIN_OASG} reports the cross-domain OASG table from the locked validation run. All six domains pass the harness gate; battery and vehicle show non-zero baseline TSVR under faults, with ORIUS reducing or maintaining safety. The harness is part of the locked replication flow (\texttt{orius\_program\_manifest.json}) and produces \texttt{reports/universal\_orius\_validation/cross\_domain\_oasg\_table.csv}.
+
+\PaperTableCSV{TBL09_CROSS_DOMAIN_OASG}{Cross-domain OASG validation. Six ORIUS-Bench tracks with fault episodes; baseline vs.\ ORIUS TSVR and reduction.}
+
+\PaperFigure{FIG_MULTI_DOMAIN_VALIDATION}{Multi-domain ORIUS validation. Baseline (nominal) vs.\ ORIUS (DC3S) true-state violation rate across six domains under fault episodes.}
+
+\subsection{Implementation and Scope}
+
+The universal framework is implemented in \texttt{src/orius/universal\_framework/} with domain registry, pipeline (\texttt{run\_universal\_step}), and adapters for all five domains: Energy (Battery), AV, Industrial, Healthcare/Surgical, and Aerospace. The battery domain remains the primary validated surface with locked CPSBench evidence; the six ORIUS-Bench tracks (including vehicle) provide multi-domain validation evidence as in \Cref{tab:TBL09_CROSS_DOMAIN_OASG}. Locked evidence and theorem validation apply to the battery domain; multi-domain extensions are validated via the unified harness.
+
+\paragraph{Papers 2--6 module mapping.}
+The ORIUS program extends beyond the core DC\textsuperscript{3}S shield. \Cref{tab:papers26_modules} maps each extension paper to its implementation modules under \texttt{src/orius/}.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Papers 2--6 extension modules and implementation paths.}
+\label{tab:papers26_modules}
+\begin{tabular}{p{2.2cm}p{3.2cm}p{6.8cm}}
+\toprule
+Paper & Extension & Primary paths \\
+\midrule
+Paper 2 & Certificate half-life, reachability & \path{src/orius/dc3s/half_life.py}, \path{src/orius/dc3s/reachability.py} \\
+Paper 3 & Graceful degradation planner & \path{src/orius/dc3s/graceful.py}, \path{src/orius/optimizer/fallback_dispatch.py} \\
+Paper 4 & ORIUS-Bench evaluation harness & \path{src/orius/orius_bench/} (adapter, fault\_engine, metrics\_engine, battery\_track, navigation\_track) \\
+Paper 5 & Multi-agent shared-constraint safety & \path{src/orius/multi_agent/} (plant, protocol, margin\_allocation, scenarios) \\
+Paper 6 & CertOS runtime certificate lifecycle & \path{src/orius/certos/} (runtime, certificate\_engine, audit\_ledger, recovery\_manager, belief\_engine, graceful\_planner) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{Deep Baseline Diagnosis}\label{sec:baseline_diagnosis}
 
 \subsection{The Core Finding}
@@ -1129,7 +1315,7 @@ In the promoted six-model comparison (\Cref{tab:TBL08_FORECAST_BASELINES}), GBM 
 
 \subsection{Why: The Tabular Regime Effect}
 
-The key structural fact is that the GridPulse feature pipeline already encodes the temporal structure that deep sequence models are designed to learn---weekly and daily lags, rolling statistics, calendar signals, ramp features, and peak-period indicators. DE contributes 17{,}377 hourly rows and the US profile contributes 13{,}638 rows with rich lag, calendar, and weather features serialized into the tabular matrix. When a 168-hour lag feature is already in the input, an LSTM, TFT, or PatchTST has nothing left to learn from the sequence that GBM cannot exploit directly from the tabular representation. Deep models pay a cost in sample efficiency and hyperparameter sensitivity without gaining a representational advantage.
+The key structural fact is that the ORIUS feature pipeline already encodes the temporal structure that deep sequence models are designed to learn---weekly and daily lags, rolling statistics, calendar signals, ramp features, and peak-period indicators. DE contributes 17{,}377 hourly rows and the US profile contributes 13{,}638 rows with rich lag, calendar, and weather features serialized into the tabular matrix. When a 168-hour lag feature is already in the input, an LSTM, TFT, or PatchTST has nothing left to learn from the sequence that GBM cannot exploit directly from the tabular representation. Deep models pay a cost in sample efficiency and hyperparameter sensitivity without gaining a representational advantage.
 
 \subsection{Implications for Practitioners}
 
@@ -1253,6 +1439,8 @@ These structural differences have direct implications for dispatch optimization 
 
 The coexistence of weak aggregate US improvements and large US VSS is not contradictory; it reflects the difference between realized percentage gains and the internal value of uncertainty-aware planning. Over the locked US evaluation window, the B1-versus-B2 comparison offers limited arbitrage and peak-shaving headroom in MISO and ERCOT, so even better dispatch decisions translate into only small realized percentage changes. PJM's stronger results show that the architecture can realize large gains when market structure provides sufficient headroom. The stochastic program still benefits from modeling uncertainty in all three BAs because that uncertainty affects reserve use, constraint satisfaction, and tail-risk exposure---even when realized direct savings remain small.
 
+\input{longform/theorem_block_longform.tex}
+
 \section{Governance and Reproducibility}\label{sec:governance}
 
 \subsection{Source of Truth}
@@ -1262,7 +1450,7 @@ This paper uses a markdown-first and artifact-locked workflow. The canonical man
 \subsection{Repo-to-Paper Traceability}
 
 \paragraph{Model registry and promotion.}
-Trained model artifacts are versioned through a lightweight file-based registry (\texttt{src/gridpulse/registry/model\_store.py}). The \texttt{promote()} function performs an atomic copy from a staging directory to the production model path using \texttt{shutil.copy2}, preserving file metadata (timestamps, permissions) for audit traceability. A CLI wrapper (\texttt{src/gridpulse/registry/promote.py}) exposes this as a single-command promotion step suitable for CI/CD integration. This mechanism ensures that only explicitly promoted models are consumed by the dispatch pipeline, preventing accidental use of intermediate or debugging artifacts. The promotion history is recorded in the release manifest alongside model hashes.
+Trained model artifacts are versioned through a lightweight file-based registry (\texttt{src/orius/registry/model\_store.py}). The \texttt{promote()} function performs an atomic copy from a staging directory to the production model path using \texttt{shutil.copy2}, preserving file metadata (timestamps, permissions) for audit traceability. A CLI wrapper (\texttt{src/orius/registry/promote.py}) exposes this as a single-command promotion step suitable for CI/CD integration. This mechanism ensures that only explicitly promoted models are consumed by the dispatch pipeline, preventing accidental use of intermediate or debugging artifacts. The promotion history is recorded in the release manifest alongside model hashes.
 
 \begin{table*}[htbp]
 \centering\small
@@ -1335,6 +1523,9 @@ A Next.js/React frontend (\texttt{frontend/}) provides an operator-facing view o
 \paragraph{Containerized deployment.}
 Three Docker Compose configurations support progressively richer deployments: API-only (\texttt{docker-compose.yml}: FastAPI + PostgreSQL + Redis), streaming (\texttt{docker-compose.streaming.yml}: adds Kafka/Redpanda), and full stack (\texttt{docker-compose.full.yml}: adds Prometheus, Grafana, and the frontend). Kubernetes manifests (\texttt{deploy/k8s/}) and AWS ECS task definitions (\texttt{deploy/aws/}) provide cloud-native paths with health checks, ConfigMap-based configuration injection, and EventBridge-scheduled retraining. Systemd unit files (\texttt{deploy/systemd/}) support a simpler bare-metal path with automated retrain timers.
 
+\input{longform/hardening_block_longform.tex}
+\input{longform/closing_block_longform.tex}
+
 \section{Discussion and Threats to Validity}\label{sec:discussion}
 
 \subsection{Implications}
@@ -1384,7 +1575,7 @@ The main internal-validity risk is manuscript-artifact drift. This is mitigated 
 
 \subsection{Threats to External Validity}
 
-This paper is intentionally scoped to the locked DE and US windows. Generalization to different tariff regimes, different battery sizes, or different telemetry infrastructures remains future work. The multi-BA US evidence surface improves external validity, but it does not convert this paper into a universal market study.
+This paper is intentionally scoped to the locked DE and US windows plus the battery-only hardening extensions added later in the manuscript. Generalization to different tariff regimes, different battery sizes, different telemetry infrastructures, or non-battery domains remains future work. The multi-BA US evidence surface improves external validity, but it does not convert this paper into a universal market study.
 
 \subsection{Threats to Construct and Conclusion Validity}
 
@@ -1398,7 +1589,7 @@ The theorems should be read as correctness conditions for the safety shield's co
 
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
   \item Evidence is limited to locked DE and US windows.
-  \item Evaluation is software-in-the-loop rather than hardware field validation; CHIL, HIL, and field pilots remain explicit future work and are not claimed in the present evidence base. All safety and economic claims in this manuscript rest on artifact-locked simulation evidence; physical battery control, inverter integration, and BMS-level constraint enforcement are outside the current evidence lock.
+  \item The manuscript now includes a controller-in-the-loop runtime rehearsal, but not full production-hardware HIL or field deployment. Physical battery control, inverter integration, and BMS-level constraint enforcement remain outside the current evidence lock.
   \item Cost and carbon signals are engineering proxies rather than full settlement models.
   \item The formal results (\Cref{thm:rac_coverage,thm:conditional_coverage,thm:safety_margin}) formalize correctness of the RAC-Cert construction and safety-margin monotonicity but do not establish closed-loop stability or optimal inflation.
   \item The six-model forecasting comparison is bounded to the present data regime and artifact state. Larger datasets, weaker tabular preprocessing, or longer-context forecasting could shift the architecture ranking.
@@ -1406,10 +1597,10 @@ The theorems should be read as correctness conditions for the safety shield's co
 
 \subsection{Near-Term Future Work}
 
-Near-term work should focus on four items: (i)~decomposing the US narrative more explicitly into per-BA MISO/PJM/ERCOT results in the main text, (ii)~improving under-covered target-regime calibration before dispatch using the governed reliability-group coverage audit as the diagnostic baseline, (iii)~extending the governed deployment-evidence track to richer runtime scenarios including multi-device operation and longer evaluation windows, and (iv)~broader operational evaluation bounded to software and runtime evidence rather than field deployment claims.
+Near-term work should focus on four items: (i)~decomposing the US narrative more explicitly into per-BA MISO/PJM/ERCOT results in the main text, (ii)~improving under-covered target-regime calibration before dispatch using the governed reliability-group coverage audit as the diagnostic baseline, (iii)~extending the governed deployment-evidence track to richer runtime scenarios including multi-device operation and longer evaluation windows, and (iv)~upgrading the current runtime rehearsal into fuller battery HIL with external telemetry transport and relay behavior.
 
 \paragraph{Streaming validation.}
-The current evaluation uses batch-mode dispatch on historical data. A streaming extension is implemented in \texttt{src/gridpulse/streaming/}: a Kafka/Redpanda consumer ingests JSON telemetry events with schema validation against an \texttt{OPSDTelemetryEvent} Pydantic model, performs temporal cadence enforcement (dropout detection), range and delta checks for outlier detection, and writes validated events to DuckDB or Parquet with exactly-once checkpoint semantics (every 200 messages). A governed validation run (\texttt{streaming\_validation\_summary.json}, release \texttt{R1\_DEPLOY\_20260314}) replays 168~hourly events through the consumer's validation rules and confirms: all messages pass schema, range, and cadence validation; temporal ordering is monotonic; and the checkpoint mechanism persists correctly. This validates the ingest path end-to-end in software; extending the evaluation to live streaming under realistic ingestion latency, out-of-order delivery, and backpressure conditions remains future work. \Cref{tab:streaming_validation} summarizes the governed replay results.
+The current evaluation uses batch-mode dispatch on historical data. A streaming extension is implemented in \texttt{src/orius/streaming/}: a Kafka/Redpanda consumer ingests JSON telemetry events with schema validation against an \texttt{OPSDTelemetryEvent} Pydantic model, performs temporal cadence enforcement (dropout detection), range and delta checks for outlier detection, and writes validated events to DuckDB or Parquet with exactly-once checkpoint semantics (every 200 messages). A governed validation run (\texttt{streaming\_validation\_summary.json}, release \texttt{R1\_DEPLOY\_20260314}) replays 168~hourly events through the consumer's validation rules and confirms: all messages pass schema, range, and cadence validation; temporal ordering is monotonic; and the checkpoint mechanism persists correctly. This validates the ingest path end-to-end in software; extending the evaluation to live streaming under realistic ingestion latency, out-of-order delivery, and backpressure conditions remains future work. \Cref{tab:streaming_validation} summarizes the governed replay results.
 
 \input{assets/tables/generated/tbl_streaming_validation.tex}
 
@@ -1427,9 +1618,9 @@ DC\textsuperscript{3}S achieves zero true-SOC violations at a 2.8\% intervention
 
 The promoted six-model forecasting comparison points in one practical direction: on these moderate-sized, feature-rich grid datasets, GBM remains the strongest operational model under the locked equal-budget protocol. For practitioners, the message is simple: on data of this kind, feature engineering matters more than architectural complexity.
 
-\paragraph{The core message.} Trustworthy grid-scale dispatch requires the uncertainty model to degrade when the measurement channel degrades. In that sense, telemetry is not an implementation detail but part of the control problem itself. DC\textsuperscript{3}S turns that idea into a single online loop with per-step auditable evidence. Within the present software-in-the-loop boundary, the hidden safety gap is both measurable and closeable; the next step is to test how far the same pattern survives on physical battery hardware.
+\paragraph{The core message.} Trustworthy grid-scale dispatch requires the uncertainty model to degrade when the measurement channel degrades. In that sense, telemetry is not an implementation detail but part of the control problem itself. DC\textsuperscript{3}S turns that idea into a single online loop with per-step auditable evidence. Within the present battery evidence boundary, the hidden safety gap is both measurable and closeable; the hardening layers added in this manuscript show that the same logic extends into asset preservation, blackout handling, fleet coordination, active probing, and runtime rehearsal without abandoning the battery-only claim discipline.
 
-\paragraph{Broader implications.} The observed-state safety illusion is not unique to battery dispatch. Any cyber-physical system that acts on sensor readings that may lag or drift from physical reality is exposed to the same class of hidden violations. The DC\textsuperscript{3}S pattern --- reliability-conditioned uncertainty inflation followed by feasible-set projection --- should therefore be read as a reusable systems idea for CPS settings such as HVAC dispatch, water treatment, and autonomous vehicle motion planning, wherever measurement uncertainty and hard safety constraints meet.
+\paragraph{Scope boundary.} This consolidated paper is intentionally a battery-first manuscript, not a universal deployment claim. What it proves is that the ORIUS logic now has a full battery-domain reference implementation with a hardened evidence surface and explicit theorem-to-code-to-artifact lineage. What it does not prove is universal cross-domain validation, adversarial completeness, or production-hardware deployment safety.
 
 The conclusion-level locked numeric summary is therefore explicit: 7.11\% DE cost savings, 0.30\% DE carbon reduction, 6.13\% DE peak shaving, 0.11\% US cost savings, 0.13\% US carbon reduction, and 0.00\% US peak shaving.
 
@@ -1832,7 +2023,7 @@ This appendix provides the full algorithmic specification for two key DC\textsup
 \label{alg:ftit}
 \begin{algorithmic}[1]
 \Require Fault flags $\{f^{(k)}_t\}_{k=1}^5$, previous state $(n_{t}, s_t, \sigma^2_t, e_t)$, config $(\gamma_d, \alpha_k, \gamma_{\min}, \gamma_{\max}, \gamma_{\text{pow}})$
-\Ensure Updated state $(n_{t+1}, s_{t+1}, w_t^{\text{FTIT}}, \sigma^2_{t+1}, e_{t+1}, \text{soc\_tube})$
+\Ensure Updated state $(n_{t+1}, s_{t+1}, w_t^{\text{FTIT}}, \sigma^2_{t+1}, e_{t+1}, \mathrm{socTube})$
 \State $n_{t+1} \gets \gamma_d \cdot n_t + 1$
 \For{each fault type $k$}
   \State $s_{t+1}^{(k)} \gets \gamma_d \cdot s_t^{(k)} + \mathbb{1}[f^{(k)}_t]$
@@ -1842,8 +2033,8 @@ This appendix provides the full algorithmic specification for two key DC\textsup
 \State $\sigma^2_{t+1} \gets \max(\sigma^2_{\text{floor}},\; \gamma_d \cdot \sigma^2_t + (1-\gamma_d) \cdot \sigma^2_{\text{obs}})$ \Comment{residual variance}
 \State $\gamma_{\text{MW}} \gets \gamma_{\min} + (1 - w_t^{\text{FTIT}})^{\gamma_{\text{pow}}} \cdot (\gamma_{\max} - \gamma_{\min})$
 \State $e_{t+1} \gets \mathrm{clip}(\gamma_d \cdot e_t + \Delta t \cdot \gamma_{\text{MW}},\; e_{\min},\; e_{\max})$
-\State $\text{soc\_tube} \gets [\mathrm{SOC}_{\min} + e_{t+1},\; \mathrm{SOC}_{\max} - e_{t+1}]$
-\State \Return $(n_{t+1}, s_{t+1}, w_t^{\text{FTIT}}, \sigma^2_{t+1}, e_{t+1}, \text{soc\_tube})$
+\State $\mathrm{socTube} \gets [\mathrm{SOC}_{\min} + e_{t+1},\; \mathrm{SOC}_{\max} - e_{t+1}]$
+\State \Return $(n_{t+1}, s_{t+1}, w_t^{\text{FTIT}}, \sigma^2_{t+1}, e_{t+1}, \mathrm{socTube})$
 \end{algorithmic}
 \end{algorithm}
 
@@ -1853,8 +2044,8 @@ This appendix provides the full algorithmic specification for two key DC\textsup
 \begin{algorithmic}[1]
 \Require Telemetry event $\tilde{\mathbf{z}}_t$, previous event $\tilde{\mathbf{z}}_{t-1}$, cadence $\Delta_{\text{exp}}$
 \Ensure Reliability score $w_t$, component penalties
-\State $p_{\text{miss}} \gets \max(0, 1 - \text{frac\_missing}(\tilde{\mathbf{z}}_t))$
-\State $\delta_s \gets |t_{\text{arrive}} - t_{\text{expected}}|$ \Comment{staleness in seconds}
+\State $p_{\text{miss}} \gets \max(0, 1 - \mathrm{fracMissing}(\tilde{\mathbf{z}}_t))$
+\State $\delta_s \gets |t_{\mathrm{arrive}} - t_{\mathrm{expected}}|$ \Comment{staleness in seconds}
 \State $p_{\text{delay}} \gets \exp(-\lambda_{\text{delay}} \cdot \max(0, \delta_s))$ \Comment{$\lambda=0.002$}
 \State $p_{\text{ooo}} \gets \begin{cases} 1 - \gamma_{\text{ooo}} & \text{if out-of-order detected} \\ 1 & \text{otherwise} \end{cases}$ \Comment{$\gamma=0.35$}
 \State $r_{\text{spike}} \gets \max_j |\tilde{z}_{t,j} - \tilde{z}_{t-1,j}| / (|\tilde{z}_{t-1,j}| + \epsilon)$ \Comment{relative jump}
@@ -1865,6 +2056,8 @@ This appendix provides the full algorithmic specification for two key DC\textsup
 \end{algorithmic}
 \end{algorithm}
 
-These algorithms are presented in a form that matches the actual implementation in \texttt{src/gridpulse/dc3s/ftit.py} and \texttt{src/gridpulse/dc3s/quality.py} respectively. The default parameter values correspond to the locked configuration in \texttt{configs/dc3s.yaml} (\Cref{tab:dc3s_config}).
+These algorithms are presented in a form that matches the actual implementation in \texttt{src/orius/dc3s/ftit.py} and \texttt{src/orius/dc3s/quality.py} respectively. The default parameter values correspond to the locked configuration in \texttt{configs/dc3s.yaml} (\Cref{tab:dc3s_config}).
+
+\input{longform/appendix_block_longform.tex}
 
 \end{document}

@@ -5,29 +5,29 @@
 \citation{dibaji2019systems}
 \citation{chandola2009anomaly}
 \citation{chen2020review_bess}
-\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.2}\protected@file@percent }
-\newlabel{sec:intro}{{1}{1}{Introduction}{section.2}{}}
-\newlabel{sec:intro@cref}{{[section][1][]1}{[1][1][]1}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Operational Motivation}{1}{subsection.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{2}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{1}{2}{Introduction}{section.1}{}}
+\newlabel{sec:intro@cref}{{[section][1][]1}{[1][1][]2}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Operational Motivation}{2}{subsection.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Research Questions}{3}{subsection.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Contributions}{3}{subsection.4}\protected@file@percent }
 \citation{vovk2005conformal}
 \citation{shafer2008tutorial}
 \citation{romano2019conformalized}
 \citation{gibbs2021adaptive}
 \citation{zaffran2022adaptive}
 \citation{barber2023conformal}
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Research Questions}{2}{subsection.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Contributions}{2}{subsection.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.4}Contribution Boundary}{2}{subsection.10}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.5}Paper Roadmap}{2}{subsection.11}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{section.12}\protected@file@percent }
-\newlabel{sec:related}{{2}{2}{Related Work}{section.12}{}}
-\newlabel{sec:related@cref}{{[section][2][]2}{[1][2][]2}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Conformal Prediction and Time-Series Calibration}{2}{subsection.13}\protected@file@percent }
 \citation{bertsimas2011theory}
 \citation{ben2009robust}
 \citation{birge2011stochastic}
 \citation{rockafellar2000optimization}
 \citation{rosewater2020riskaverse}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4}Contribution Boundary}{4}{subsection.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.5}Paper Roadmap}{4}{subsection.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{4}{section.12}\protected@file@percent }
+\newlabel{sec:related}{{2}{4}{Related Work}{section.12}{}}
+\newlabel{sec:related@cref}{{[section][2][]2}{[1][4][]4}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Conformal Prediction and Time-Series Calibration}{4}{subsection.13}\protected@file@percent }
 \citation{alshiekh2018safe}
 \citation{konighofer2020shield}
 \citation{bastani2021safe}
@@ -42,294 +42,1219 @@
 \citation{rosewater2020riskaverse}
 \citation{bertsimas2011theory}
 \citation{birge2011stochastic}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Robust, Stochastic, and Risk-Averse Dispatch}{5}{subsection.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Safety Shields and Runtime Monitors}{5}{subsection.15}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Telemetry Reliability and CPS Fault Models}{5}{subsection.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Evaluation Protocols in BESS Dispatch: An Observed-State Blind Spot}{5}{subsection.17}\protected@file@percent }
 \citation{pineau2021improving}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Robust, Stochastic, and Risk-Averse Dispatch}{3}{subsection.14}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Safety Shields and Runtime Monitors}{3}{subsection.15}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Telemetry Reliability and CPS Fault Models}{3}{subsection.16}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Evaluation Protocols in BESS Dispatch: An Observed-State Blind Spot}{3}{subsection.17}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Governance and Reproducibility}{3}{subsection.18}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.7}Summary of the Novelty Gap}{4}{subsection.19}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Background, Preliminaries, and System Context}{4}{section.20}\protected@file@percent }
-\newlabel{sec:background}{{3}{4}{Background, Preliminaries, and System Context}{section.20}{}}
-\newlabel{sec:background@cref}{{[section][3][]3}{[1][4][]4}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}GridPulse System Context}{4}{subsection.21}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Component-to-Code Map}{4}{subsection.23}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Artifact Contracts and Profile Lock}{4}{subsection.25}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Dataset Scope}{4}{subsection.26}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Pipeline Architecture and Runtime Interfaces}{4}{subsection.30}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Component-to-code map for the main thesis surfaces.}}{5}{table.caption.24}\protected@file@percent }
-\newlabel{tab:component_code_map}{{1}{5}{Component-to-code map for the main thesis surfaces}{table.caption.24}{}}
-\newlabel{tab:component_code_map@cref}{{[table][1][]1}{[1][4][]5}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces GridPulse architecture with \DCThreeS  {} at the dispatch boundary. Offline forecasting and calibration produce promoted model and interval artifacts; online DC\textsuperscript  {3}S turns degraded telemetry into safe dispatch actions, certificates, and operator-visible audit records.}}{6}{figure.caption.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Governance and Reproducibility}{6}{subsection.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7}Summary of the Novelty Gap}{6}{subsection.19}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces ORIUS architecture with \DCThreeS  {} at the dispatch boundary. Offline forecasting and calibration produce promoted model and interval artifacts; online DC\textsuperscript  {3}S turns degraded telemetry into safe dispatch actions, certificates, and operator-visible audit records.}}{7}{figure.caption.22}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:FIG01_ARCHITECTURE}{{1}{6}{GridPulse architecture with \DCThreeS {} at the dispatch boundary. Offline forecasting and calibration produce promoted model and interval artifacts; online DC\textsuperscript {3}S turns degraded telemetry into safe dispatch actions, certificates, and operator-visible audit records}{figure.caption.22}{}}
-\newlabel{fig:FIG01_ARCHITECTURE@cref}{{[figure][1][]1}{[1][4][]6}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Dataset summary for publication protocol and benchmark scope.}}{6}{table.caption.27}\protected@file@percent }
-\newlabel{tab:TBL05_DATASET_SUMMARY}{{2}{6}{Dataset summary for publication protocol and benchmark scope}{table.caption.27}{}}
-\newlabel{tab:TBL05_DATASET_SUMMARY@cref}{{[table][2][]2}{[1][4][]6}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Geographic scope of the evaluation: DE (Germany/OPSD) and US (MISO, PJM, ERCOT balancing authorities). Shaded regions indicate data-coverage footprint.}}{6}{figure.caption.28}\protected@file@percent }
-\newlabel{fig:FIG12_GEOGRAPHIC_SCOPE}{{2}{6}{Geographic scope of the evaluation: DE (Germany/OPSD) and US (MISO, PJM, ERCOT balancing authorities). Shaded regions indicate data-coverage footprint}{figure.caption.28}{}}
-\newlabel{fig:FIG12_GEOGRAPHIC_SCOPE@cref}{{[figure][2][]2}{[1][4][]6}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Hourly load, wind, and solar generation profiles for DE and US regions. The diurnal and seasonal structure visible in these profiles motivates the lag and calendar features used by the forecasting pipeline.}}{6}{figure.caption.29}\protected@file@percent }
-\newlabel{fig:FIG13_LOAD_RENEWABLE_PROFILES}{{3}{6}{Hourly load, wind, and solar generation profiles for DE and US regions. The diurnal and seasonal structure visible in these profiles motivates the lag and calendar features used by the forecasting pipeline}{figure.caption.29}{}}
-\newlabel{fig:FIG13_LOAD_RENEWABLE_PROFILES@cref}{{[figure][3][]3}{[1][4][]6}{}{}{}}
-\@writefile{toc}{\contentsline {paragraph}{IoT device contract.}{6}{section*.39}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Truth vs.\ Observed State}{7}{subsection.40}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Problem Formulation}{7}{section.41}\protected@file@percent }
-\newlabel{sec:problem}{{4}{7}{Problem Formulation}{section.41}{}}
-\newlabel{sec:problem@cref}{{[section][4][]4}{[1][7][]7}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Dispatch Setting}{7}{subsection.42}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Battery Dynamics and Feasible Set}{7}{subsection.44}\protected@file@percent }
-\newlabel{eq:soc_dynamics}{{1}{7}{Battery Dynamics and Feasible Set}{equation.45}{}}
-\newlabel{eq:soc_dynamics@cref}{{[equation][1][]1}{[1][7][]7}{}{}{}}
-\newlabel{eq:constraints}{{2}{7}{Battery Dynamics and Feasible Set}{equation.46}{}}
-\newlabel{eq:constraints@cref}{{[equation][2][]2}{[1][7][]7}{}{}{}}
-\newlabel{eq:constraints_soc}{{3}{7}{Battery Dynamics and Feasible Set}{equation.47}{}}
-\newlabel{eq:constraints_soc@cref}{{[equation][3][]3}{[1][7][]7}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Objective}{7}{subsection.48}\protected@file@percent }
-\newlabel{eq:objective}{{4}{7}{Objective}{equation.49}{}}
-\newlabel{eq:objective@cref}{{[equation][4][]4}{[1][7][]7}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Calibration Gap}{7}{subsection.50}\protected@file@percent }
-\newlabel{eq:coverage_gap}{{5}{7}{Calibration Gap}{equation.51}{}}
-\newlabel{eq:coverage_gap@cref}{{[equation][5][]5}{[1][7][]7}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Baseline Policies}{7}{subsection.52}\protected@file@percent }
+\newlabel{fig:FIG01_ARCHITECTURE}{{1}{7}{ORIUS architecture with \DCThreeS {} at the dispatch boundary. Offline forecasting and calibration produce promoted model and interval artifacts; online DC\textsuperscript {3}S turns degraded telemetry into safe dispatch actions, certificates, and operator-visible audit records}{figure.caption.22}{}}
+\newlabel{fig:FIG01_ARCHITECTURE@cref}{{[figure][1][]1}{[1][7][]7}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Background, Preliminaries, and System Context}{7}{section.20}\protected@file@percent }
+\newlabel{sec:background}{{3}{7}{Background, Preliminaries, and System Context}{section.20}{}}
+\newlabel{sec:background@cref}{{[section][3][]3}{[1][7][]7}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}ORIUS System Context}{7}{subsection.21}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Component-to-code map for the main thesis surfaces.}}{8}{table.caption.24}\protected@file@percent }
+\newlabel{tab:component_code_map}{{1}{8}{Component-to-code map for the main thesis surfaces}{table.caption.24}{}}
+\newlabel{tab:component_code_map@cref}{{[table][1][]1}{[1][7][]8}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Component-to-Code Map}{9}{subsection.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Artifact Contracts and Profile Lock}{9}{subsection.25}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Dataset Scope}{9}{subsection.26}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Dataset summary for publication protocol and benchmark scope.}}{9}{table.caption.27}\protected@file@percent }
+\newlabel{tab:TBL05_DATASET_SUMMARY}{{2}{9}{Dataset summary for publication protocol and benchmark scope}{table.caption.27}{}}
+\newlabel{tab:TBL05_DATASET_SUMMARY@cref}{{[table][2][]2}{[1][9][]9}{}{}{}}
+\@writefile{toc}{\contentsline {paragraph}{Dataset--framework traceability.}{9}{section*.28}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Dataset--framework traceability. Each dataset maps to pipeline stages and evidence tables.}}{10}{table.caption.29}\protected@file@percent }
+\newlabel{tab:dataset_framework_trace}{{3}{10}{Dataset--framework traceability. Each dataset maps to pipeline stages and evidence tables}{table.caption.29}{}}
+\newlabel{tab:dataset_framework_trace@cref}{{[table][3][]3}{[1][9][]10}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Geographic scope of the evaluation: DE (Germany/OPSD) and US (MISO, PJM, ERCOT balancing authorities). Shaded regions indicate data-coverage footprint.}}{10}{figure.caption.30}\protected@file@percent }
+\newlabel{fig:FIG12_GEOGRAPHIC_SCOPE}{{2}{10}{Geographic scope of the evaluation: DE (Germany/OPSD) and US (MISO, PJM, ERCOT balancing authorities). Shaded regions indicate data-coverage footprint}{figure.caption.30}{}}
+\newlabel{fig:FIG12_GEOGRAPHIC_SCOPE@cref}{{[figure][2][]2}{[1][9][]10}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Hourly load, wind, and solar generation profiles for DE and US regions. The diurnal and seasonal structure visible in these profiles motivates the lag and calendar features used by the forecasting pipeline.}}{11}{figure.caption.31}\protected@file@percent }
+\newlabel{fig:FIG13_LOAD_RENEWABLE_PROFILES}{{3}{11}{Hourly load, wind, and solar generation profiles for DE and US regions. The diurnal and seasonal structure visible in these profiles motivates the lag and calendar features used by the forecasting pipeline}{figure.caption.31}{}}
+\newlabel{fig:FIG13_LOAD_RENEWABLE_PROFILES@cref}{{[figure][3][]3}{[1][9][]11}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Pipeline Architecture and Runtime Interfaces}{11}{subsection.32}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{IoT device contract.}{12}{section*.41}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Truth vs.\ Observed State}{12}{subsection.42}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Problem Formulation}{12}{section.43}\protected@file@percent }
+\newlabel{sec:problem}{{4}{12}{Problem Formulation}{section.43}{}}
+\newlabel{sec:problem@cref}{{[section][4][]4}{[1][12][]12}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Dispatch Setting}{12}{subsection.44}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Battery Dynamics and Feasible Set}{13}{subsection.46}\protected@file@percent }
+\newlabel{eq:soc_dynamics}{{1}{13}{Battery Dynamics and Feasible Set}{equation.47}{}}
+\newlabel{eq:soc_dynamics@cref}{{[equation][1][]1}{[1][13][]13}{}{}{}}
+\newlabel{eq:constraints}{{2}{13}{Battery Dynamics and Feasible Set}{equation.48}{}}
+\newlabel{eq:constraints@cref}{{[equation][2][]2}{[1][13][]13}{}{}{}}
+\newlabel{eq:constraints_soc}{{3}{13}{Battery Dynamics and Feasible Set}{equation.49}{}}
+\newlabel{eq:constraints_soc@cref}{{[equation][3][]3}{[1][13][]13}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Objective}{13}{subsection.50}\protected@file@percent }
+\newlabel{eq:objective}{{4}{13}{Objective}{equation.51}{}}
+\newlabel{eq:objective@cref}{{[equation][4][]4}{[1][13][]13}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Calibration Gap}{13}{subsection.52}\protected@file@percent }
+\newlabel{eq:coverage_gap}{{5}{13}{Calibration Gap}{equation.53}{}}
+\newlabel{eq:coverage_gap@cref}{{[equation][5][]5}{[1][13][]13}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Baseline Policies}{13}{subsection.54}\protected@file@percent }
 \citation{dibaji2019systems}
-\@writefile{toc}{\contentsline {section}{\numberline {5}The Observed-State Safety Illusion}{8}{section.56}\protected@file@percent }
-\newlabel{sec:safety_illusion}{{5}{8}{The Observed-State Safety Illusion}{section.56}{}}
-\newlabel{sec:safety_illusion@cref}{{[section][5][]5}{[1][7][]8}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Formal Statement of the Gap}{8}{subsection.57}\protected@file@percent }
-\newlabel{eq:gap_lower_bound}{{6}{8}{Formal Statement of the Gap}{equation.58}{}}
-\newlabel{eq:gap_lower_bound@cref}{{[equation][6][]6}{[1][8][]8}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Why This Matters in Practice}{8}{subsection.59}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Why Standard Robust Dispatch Cannot Close This Gap Alone}{8}{subsection.61}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}CPSBench as a Measurement Framework}{8}{subsection.62}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Observed-vs-true safety gap by fault type (deterministic baseline, DE locked run). Observed violation rate is what a standard evaluation protocol would report; true violation rate is what CPSBench measures against the truth trajectory. The gap column is the fraction of violations that are invisible to observed-state evaluation.}}{9}{table.caption.60}\protected@file@percent }
-\newlabel{tab:safety_gap_by_fault}{{3}{9}{Observed-vs-true safety gap by fault type (deterministic baseline, DE locked run). Observed violation rate is what a standard evaluation protocol would report; true violation rate is what CPSBench measures against the truth trajectory. The gap column is the fraction of violations that are invisible to observed-state evaluation}{table.caption.60}{}}
-\newlabel{tab:safety_gap_by_fault@cref}{{[table][3][]3}{[1][8][]9}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6}Forecasting and Uncertainty Method}{9}{section.67}\protected@file@percent }
-\newlabel{sec:forecasting_uq}{{6}{9}{Forecasting and Uncertainty Method}{section.67}{}}
-\newlabel{sec:forecasting_uq@cref}{{[section][6][]6}{[1][9][]9}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Locked Forecasting Layer}{9}{subsection.68}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Anomaly Detection Pipeline}{9}{subsection.69}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Layer 1: Residual-based rules.}{9}{section*.70}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Layer 2: Multivariate isolation forest.}{9}{section*.71}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Integration with DC\textsuperscript  {3}S.}{9}{section*.72}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Training Setup and Feature Engineering}{9}{subsection.74}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}The Observed-State Safety Illusion}{14}{section.58}\protected@file@percent }
+\newlabel{sec:safety_illusion}{{5}{14}{The Observed-State Safety Illusion}{section.58}{}}
+\newlabel{sec:safety_illusion@cref}{{[section][5][]5}{[1][14][]14}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Formal Statement of the Gap}{14}{subsection.59}\protected@file@percent }
+\newlabel{eq:gap_lower_bound}{{6}{14}{Formal Statement of the Gap}{equation.60}{}}
+\newlabel{eq:gap_lower_bound@cref}{{[equation][6][]6}{[1][14][]14}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Why This Matters in Practice}{15}{subsection.61}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Observed-vs-true safety gap by fault type (deterministic baseline, DE locked run). Observed violation rate is what a standard evaluation protocol would report; true violation rate is what CPSBench measures against the truth trajectory. The gap column is the fraction of violations that are invisible to observed-state evaluation.}}{15}{table.caption.62}\protected@file@percent }
+\newlabel{tab:safety_gap_by_fault}{{4}{15}{Observed-vs-true safety gap by fault type (deterministic baseline, DE locked run). Observed violation rate is what a standard evaluation protocol would report; true violation rate is what CPSBench measures against the truth trajectory. The gap column is the fraction of violations that are invisible to observed-state evaluation}{table.caption.62}{}}
+\newlabel{tab:safety_gap_by_fault@cref}{{[table][4][]4}{[1][15][]15}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Why Standard Robust Dispatch Cannot Close This Gap Alone}{15}{subsection.63}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}CPSBench as a Measurement Framework}{16}{subsection.64}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Forecasting and Uncertainty Method}{16}{section.69}\protected@file@percent }
+\newlabel{sec:forecasting_uq}{{6}{16}{Forecasting and Uncertainty Method}{section.69}{}}
+\newlabel{sec:forecasting_uq@cref}{{[section][6][]6}{[1][16][]16}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Locked Forecasting Layer}{16}{subsection.70}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Anomaly Detection Pipeline}{16}{subsection.71}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Layer 1: Residual-based rules.}{17}{section*.72}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Layer 2: Multivariate isolation forest.}{17}{section*.73}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Integration with DC\textsuperscript  {3}S.}{17}{section*.74}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Anomaly detection timeline showing residual-rule and isolation-forest flags across the evaluation horizon. Clustered anomaly episodes correspond to drift events and sensor degradation periods.}}{17}{figure.caption.75}\protected@file@percent }
+\newlabel{fig:FIG19_ANOMALY_TIMELINE}{{4}{17}{Anomaly detection timeline showing residual-rule and isolation-forest flags across the evaluation horizon. Clustered anomaly episodes correspond to drift events and sensor degradation periods}{figure.caption.75}{}}
+\newlabel{fig:FIG19_ANOMALY_TIMELINE@cref}{{[figure][4][]4}{[1][17][]17}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Training Setup and Feature Engineering}{17}{subsection.76}\protected@file@percent }
 \citation{romano2019conformalized}
 \citation{gibbs2021adaptive}
 \citation{zaffran2022adaptive}
 \citation{barber2023conformal}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Anomaly detection timeline showing residual-rule and isolation-forest flags across the evaluation horizon. Clustered anomaly episodes correspond to drift events and sensor degradation periods.}}{10}{figure.caption.73}\protected@file@percent }
-\newlabel{fig:FIG19_ANOMALY_TIMELINE}{{4}{10}{Anomaly detection timeline showing residual-rule and isolation-forest flags across the evaluation horizon. Clustered anomaly episodes correspond to drift events and sensor degradation periods}{figure.caption.73}{}}
-\newlabel{fig:FIG19_ANOMALY_TIMELINE@cref}{{[figure][4][]4}{[1][9][]10}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}CQR and Adaptive Conformal Layer}{10}{subsection.79}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Regime-aware CQR with volatility binning (research extension).}{10}{section*.80}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Reliability-conditioned group coverage (research extension).}{10}{section*.81}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Conformal prediction intervals for the three forecast targets. Shaded bands show the calibrated 90\% intervals; observations outside the band represent under-coverage events.}}{10}{figure.caption.83}\protected@file@percent }
-\newlabel{fig:FIG17_CONFORMAL_INTERVALS}{{5}{10}{Conformal prediction intervals for the three forecast targets. Shaded bands show the calibrated 90\% intervals; observations outside the band represent under-coverage events}{figure.caption.83}{}}
-\newlabel{fig:FIG17_CONFORMAL_INTERVALS@cref}{{[figure][5][]5}{[1][10][]10}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}CQR and Adaptive Conformal Layer}{18}{subsection.81}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Regime-aware CQR with volatility binning (research extension).}{18}{section*.82}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Reliability-conditioned group coverage (research extension).}{19}{section*.83}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Regime-group CQR coverage and interval width summary.}}{19}{table.caption.84}\protected@file@percent }
+\newlabel{tab:TBL03_CQR_GROUP_COVERAGE}{{5}{19}{Regime-group CQR coverage and interval width summary}{table.caption.84}{}}
+\newlabel{tab:TBL03_CQR_GROUP_COVERAGE@cref}{{[table][5][]5}{[1][19][]19}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Conformal prediction intervals for the three forecast targets. Shaded bands show the calibrated 90\% intervals; observations outside the band represent under-coverage events.}}{19}{figure.caption.85}\protected@file@percent }
+\newlabel{fig:FIG17_CONFORMAL_INTERVALS}{{5}{19}{Conformal prediction intervals for the three forecast targets. Shaded bands show the calibrated 90\% intervals; observations outside the band represent under-coverage events}{figure.caption.85}{}}
+\newlabel{fig:FIG17_CONFORMAL_INTERVALS@cref}{{[figure][5][]5}{[1][19][]19}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}RAC-Cert Inflation Law}{19}{subsection.87}\protected@file@percent }
+\newlabel{eq:rac_inflation}{{7}{19}{RAC-Cert Inflation Law}{equation.88}{}}
+\newlabel{eq:rac_inflation@cref}{{[equation][7][]7}{[1][19][]19}{}{}{}}
 \citation{romano2019conformalized}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Comparison of distributional forecasting versus conformalized quantile regression (CQR). CQR provides finite-sample coverage guarantees without distributional assumptions.}}{20}{figure.caption.86}\protected@file@percent }
+\newlabel{fig:FIG28_DISTRIBUTIONAL_VS_CQR}{{6}{20}{Comparison of distributional forecasting versus conformalized quantile regression (CQR). CQR provides finite-sample coverage guarantees without distributional assumptions}{figure.caption.86}{}}
+\newlabel{fig:FIG28_DISTRIBUTIONAL_VS_CQR@cref}{{[figure][6][]6}{[1][19][]20}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.6}Formal Assumptions}{20}{subsection.89}\protected@file@percent }
+\newlabel{sec:assumptions}{{6.6}{20}{Formal Assumptions}{subsection.89}{}}
+\newlabel{sec:assumptions@cref}{{[subsection][6][6]6.6}{[1][20][]20}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.7}Coverage Preservation Under Monotone Inflation}{20}{subsection.90}\protected@file@percent }
+\newlabel{thm:rac_coverage}{{1}{20}{Marginal coverage preservation}{theorem.91}{}}
+\newlabel{thm:rac_coverage@cref}{{[theorem][1][]1}{[1][20][]20}{}{}{}}
 \citation{vovk2005conformal}
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Regime-group CQR coverage and interval width summary.}}{11}{table.caption.82}\protected@file@percent }
-\newlabel{tab:TBL03_CQR_GROUP_COVERAGE}{{4}{11}{Regime-group CQR coverage and interval width summary}{table.caption.82}{}}
-\newlabel{tab:TBL03_CQR_GROUP_COVERAGE@cref}{{[table][4][]4}{[1][10][]11}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Comparison of distributional forecasting versus conformalized quantile regression (CQR). CQR provides finite-sample coverage guarantees without distributional assumptions.}}{11}{figure.caption.84}\protected@file@percent }
-\newlabel{fig:FIG28_DISTRIBUTIONAL_VS_CQR}{{6}{11}{Comparison of distributional forecasting versus conformalized quantile regression (CQR). CQR provides finite-sample coverage guarantees without distributional assumptions}{figure.caption.84}{}}
-\newlabel{fig:FIG28_DISTRIBUTIONAL_VS_CQR@cref}{{[figure][6][]6}{[1][10][]11}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}RAC-Cert Inflation Law}{11}{subsection.85}\protected@file@percent }
-\newlabel{eq:rac_inflation}{{7}{11}{RAC-Cert Inflation Law}{equation.86}{}}
-\newlabel{eq:rac_inflation@cref}{{[equation][7][]7}{[1][11][]11}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.6}Formal Assumptions}{11}{subsection.87}\protected@file@percent }
-\newlabel{sec:assumptions}{{6.6}{11}{Formal Assumptions}{subsection.87}{}}
-\newlabel{sec:assumptions@cref}{{[subsection][6][6]6.6}{[1][11][]11}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.7}Coverage Preservation Under Monotone Inflation}{11}{subsection.88}\protected@file@percent }
-\newlabel{thm:rac_coverage}{{1}{11}{Marginal coverage preservation}{theorem.89}{}}
-\newlabel{thm:rac_coverage@cref}{{[theorem][1][]1}{[1][11][]11}{}{}{}}
-\@writefile{toc}{\contentsline {paragraph}{Contribution boundary.}{11}{section*.90}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.8}Conditional Coverage Under Reliability Grouping}{11}{subsection.91}\protected@file@percent }
-\newlabel{thm:conditional_coverage}{{2}{11}{Group-conditional coverage under Mondrian partition}{theorem.92}{}}
-\newlabel{thm:conditional_coverage@cref}{{[theorem][2][]2}{[1][11][]11}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.9}Monotone Safety-Margin Theorem}{12}{subsection.93}\protected@file@percent }
-\newlabel{thm:safety_margin}{{3}{12}{Safety-margin monotonicity}{theorem.94}{}}
-\newlabel{thm:safety_margin@cref}{{[theorem][3][]3}{[1][11][]12}{}{}{}}
-\newlabel{cor:zero_violation}{{1}{12}{Zero-violation sufficiency}{corollary.98}{}}
-\newlabel{cor:zero_violation@cref}{{[corollary][1][]1}{[1][12][]12}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.10}Theorem-to-Experiment Mapping}{12}{subsection.99}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.11}Alternative Inflation Laws}{12}{subsection.100}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{FTIT-RO law.}{12}{section*.101}\protected@file@percent }
-\newlabel{eq:ftit_inflation}{{8}{12}{FTIT-RO law}{equation.102}{}}
-\newlabel{eq:ftit_inflation@cref}{{[equation][8][]8}{[1][12][]12}{}{}{}}
-\@writefile{toc}{\contentsline {paragraph}{Ambiguity widening.}{12}{section*.103}\protected@file@percent }
-\newlabel{eq:ambiguity}{{9}{12}{Ambiguity widening}{equation.104}{}}
-\newlabel{eq:ambiguity@cref}{{[equation][9][]9}{[1][12][]12}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces RAC-Cert sensitivity signal versus interval width expansion across controllers. Higher degradation yields larger inflation.}}{12}{figure.caption.105}\protected@file@percent }
-\newlabel{fig:FIG08_RAC_SENSITIVITY_WIDTH}{{7}{12}{RAC-Cert sensitivity signal versus interval width expansion across controllers. Higher degradation yields larger inflation}{figure.caption.105}{}}
-\newlabel{fig:FIG08_RAC_SENSITIVITY_WIDTH@cref}{{[figure][7][]7}{[1][12][]12}{}{}{}}
+\@writefile{toc}{\contentsline {paragraph}{Contribution boundary.}{21}{section*.92}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.8}Conditional Coverage Under Reliability Grouping}{21}{subsection.93}\protected@file@percent }
+\newlabel{thm:conditional_coverage}{{2}{21}{Group-conditional coverage under Mondrian partition}{theorem.94}{}}
+\newlabel{thm:conditional_coverage@cref}{{[theorem][2][]2}{[1][21][]21}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.9}Monotone Safety-Margin Theorem}{21}{subsection.95}\protected@file@percent }
+\newlabel{thm:safety_margin}{{3}{21}{Safety-margin monotonicity}{theorem.96}{}}
+\newlabel{thm:safety_margin@cref}{{[theorem][3][]3}{[1][21][]21}{}{}{}}
+\newlabel{cor:zero_violation}{{1}{22}{Zero-violation sufficiency}{corollary.100}{}}
+\newlabel{cor:zero_violation@cref}{{[corollary][1][]1}{[1][22][]22}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.10}Theorem-to-Experiment Mapping}{22}{subsection.101}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Theorem-to-register mapping (T1--T8).}{22}{section*.102}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Battery-8 theorem register: T1--T8 and implementation anchors.}}{23}{table.caption.103}\protected@file@percent }
+\newlabel{tab:theorem_register_code}{{6}{23}{Battery-8 theorem register: T1--T8 and implementation anchors}{table.caption.103}{}}
+\newlabel{tab:theorem_register_code@cref}{{[table][6][]6}{[1][22][]23}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.11}Alternative Inflation Laws}{23}{subsection.104}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{FTIT-RO law.}{23}{section*.105}\protected@file@percent }
+\newlabel{eq:ftit_inflation}{{8}{23}{FTIT-RO law}{equation.106}{}}
+\newlabel{eq:ftit_inflation@cref}{{[equation][8][]8}{[1][23][]23}{}{}{}}
+\@writefile{toc}{\contentsline {paragraph}{Ambiguity widening.}{23}{section*.107}\protected@file@percent }
+\newlabel{eq:ambiguity}{{9}{23}{Ambiguity widening}{equation.108}{}}
+\newlabel{eq:ambiguity@cref}{{[equation][9][]9}{[1][23][]23}{}{}{}}
 \citation{sha2001using}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Safe Dispatch and DC3S Shield}{13}{section.106}\protected@file@percent }
-\newlabel{sec:safe_dispatch}{{7}{13}{Safe Dispatch and DC3S Shield}{section.106}{}}
-\newlabel{sec:safe_dispatch@cref}{{[section][7][]7}{[1][12][]13}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Robust Dispatch}{13}{subsection.107}\protected@file@percent }
-\newlabel{eq:robust_dispatch}{{10}{13}{Robust Dispatch}{equation.108}{}}
-\newlabel{eq:robust_dispatch@cref}{{[equation][10][]10}{[1][13][]13}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}CVaR Comparator}{13}{subsection.109}\protected@file@percent }
-\newlabel{eq:cvar}{{11}{13}{CVaR Comparator}{equation.110}{}}
-\newlabel{eq:cvar@cref}{{[equation][11][]11}{[1][13][]13}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Action Repair}{13}{subsection.111}\protected@file@percent }
-\newlabel{eq:projection}{{12}{13}{Action Repair}{equation.112}{}}
-\newlabel{eq:projection@cref}{{[equation][12][]12}{[1][13][]13}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Post-Repair Guarantee Checks}{13}{subsection.113}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.5}Certificate Emission}{13}{subsection.114}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.6}One-Step Algorithm}{13}{subsection.116}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.7}FTIT State Tracking}{13}{subsection.126}\protected@file@percent }
-\newlabel{eq:ftit_rates}{{13}{13}{FTIT State Tracking}{equation.127}{}}
-\newlabel{eq:ftit_rates@cref}{{[equation][13][]13}{[1][13][]13}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces \DCThreeS  {} runtime step: observe $\to $ score $\to $ inflate $\to $ solve $\to $ repair $\to $ certify.}}{14}{figure.caption.115}\protected@file@percent }
-\newlabel{fig:FIG02_DC3S_STEP}{{8}{14}{\DCThreeS {} runtime step: observe $\to $ score $\to $ inflate $\to $ solve $\to $ repair $\to $ certify}{figure.caption.115}{}}
-\newlabel{fig:FIG02_DC3S_STEP@cref}{{[figure][8][]8}{[1][13][]14}{}{}{}}
-\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces \DCThreeS  {} dispatch step}}{14}{algorithm.117}\protected@file@percent }
-\newlabel{alg:dc3s}{{1}{14}{\DCThreeS {} dispatch step}{algorithm.117}{}}
-\newlabel{alg:dc3s@cref}{{[algorithm][1][]1}{[1][13][]14}{}{}{}}
-\newlabel{eq:ftit_reliability}{{14}{14}{FTIT State Tracking}{equation.128}{}}
-\newlabel{eq:ftit_reliability@cref}{{[equation][14][]14}{[1][13][]14}{}{}{}}
-\newlabel{eq:soc_tube}{{15}{14}{FTIT State Tracking}{equation.129}{}}
-\newlabel{eq:soc_tube@cref}{{[equation][15][]15}{[1][14][]14}{}{}{}}
-\newlabel{prop:tightened_tube}{{1}{14}{One-step invariance under a tightened SOC tube}{proposition.130}{}}
-\newlabel{prop:tightened_tube@cref}{{[proposition][1][]1}{[1][14][]14}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.8}DC\textsuperscript  {3}S Configuration Detail}{14}{subsection.131}\protected@file@percent }
-\newlabel{sec:dc3s_config}{{7.8}{14}{DC\textsuperscript {3}S Configuration Detail}{subsection.131}{}}
-\newlabel{sec:dc3s_config@cref}{{[subsection][8][7]7.8}{[1][14][]14}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces \DCThreeS  {} configuration parameters from the locked \texttt  {configs/dc3s.yaml}.}}{15}{table.caption.132}\protected@file@percent }
-\newlabel{tab:dc3s_config}{{5}{15}{\DCThreeS {} configuration parameters from the locked \texttt {configs/dc3s.yaml}}{table.caption.132}{}}
-\newlabel{tab:dc3s_config@cref}{{[table][5][]5}{[1][14][]15}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {8}Experimental Protocol}{16}{section.133}\protected@file@percent }
-\newlabel{sec:experiments}{{8}{16}{Experimental Protocol}{section.133}{}}
-\newlabel{sec:experiments@cref}{{[section][8][]8}{[1][16][]16}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Forecasting Evaluation}{16}{subsection.134}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Walk-forward evaluation.}{16}{section*.135}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Fault Injection Benchmark}{16}{subsection.136}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{IoT closed-loop simulation.}{16}{section*.138}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Controllers}{16}{subsection.139}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces CPSBench fault families and their injection mechanisms. Rates are per-timestep probabilities; magnitudes control severity.}}{17}{table.caption.137}\protected@file@percent }
-\newlabel{tab:fault_families}{{6}{17}{CPSBench fault families and their injection mechanisms. Rates are per-timestep probabilities; magnitudes control severity}{table.caption.137}{}}
-\newlabel{tab:fault_families@cref}{{[table][6][]6}{[1][16][]17}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Metrics}{17}{subsection.145}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Forecast metrics.}{17}{section*.146}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Uncertainty metrics.}{17}{section*.147}\protected@file@percent }
-\newlabel{eq:winkler}{{16}{17}{Uncertainty metrics}{equation.148}{}}
-\newlabel{eq:winkler@cref}{{[equation][16][]16}{[1][17][]17}{}{}{}}
-\@writefile{toc}{\contentsline {paragraph}{Control metrics.}{17}{section*.149}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Regret metric.}{17}{section*.150}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces RAC-Cert sensitivity signal versus interval width expansion across controllers. Higher degradation yields larger inflation.}}{24}{figure.caption.109}\protected@file@percent }
+\newlabel{fig:FIG08_RAC_SENSITIVITY_WIDTH}{{7}{24}{RAC-Cert sensitivity signal versus interval width expansion across controllers. Higher degradation yields larger inflation}{figure.caption.109}{}}
+\newlabel{fig:FIG08_RAC_SENSITIVITY_WIDTH@cref}{{[figure][7][]7}{[1][24][]24}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Safe Dispatch and DC3S Shield}{24}{section.110}\protected@file@percent }
+\newlabel{sec:safe_dispatch}{{7}{24}{Safe Dispatch and DC3S Shield}{section.110}{}}
+\newlabel{sec:safe_dispatch@cref}{{[section][7][]7}{[1][24][]24}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Robust Dispatch}{25}{subsection.111}\protected@file@percent }
+\newlabel{eq:robust_dispatch}{{10}{25}{Robust Dispatch}{equation.112}{}}
+\newlabel{eq:robust_dispatch@cref}{{[equation][10][]10}{[1][24][]25}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}CVaR Comparator}{25}{subsection.113}\protected@file@percent }
+\newlabel{eq:cvar}{{11}{25}{CVaR Comparator}{equation.114}{}}
+\newlabel{eq:cvar@cref}{{[equation][11][]11}{[1][25][]25}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Action Repair}{25}{subsection.115}\protected@file@percent }
+\newlabel{eq:projection}{{12}{25}{Action Repair}{equation.116}{}}
+\newlabel{eq:projection@cref}{{[equation][12][]12}{[1][25][]25}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Post-Repair Guarantee Checks}{25}{subsection.117}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.5}Certificate Emission}{26}{subsection.118}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces \DCThreeS  {} runtime step: observe $\to $ score $\to $ inflate $\to $ solve $\to $ repair $\to $ certify.}}{26}{figure.caption.119}\protected@file@percent }
+\newlabel{fig:FIG02_DC3S_STEP}{{8}{26}{\DCThreeS {} runtime step: observe $\to $ score $\to $ inflate $\to $ solve $\to $ repair $\to $ certify}{figure.caption.119}{}}
+\newlabel{fig:FIG02_DC3S_STEP@cref}{{[figure][8][]8}{[1][26][]26}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.6}One-Step Algorithm}{26}{subsection.120}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces \DCThreeS  {} dispatch step}}{26}{algorithm.121}\protected@file@percent }
+\newlabel{alg:dc3s}{{1}{26}{\DCThreeS {} dispatch step}{algorithm.121}{}}
+\newlabel{alg:dc3s@cref}{{[algorithm][1][]1}{[1][26][]26}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.7}FTIT State Tracking}{26}{subsection.130}\protected@file@percent }
+\newlabel{eq:ftit_rates}{{13}{27}{FTIT State Tracking}{equation.131}{}}
+\newlabel{eq:ftit_rates@cref}{{[equation][13][]13}{[1][26][]27}{}{}{}}
+\newlabel{eq:ftit_reliability}{{14}{27}{FTIT State Tracking}{equation.132}{}}
+\newlabel{eq:ftit_reliability@cref}{{[equation][14][]14}{[1][27][]27}{}{}{}}
+\newlabel{eq:soc_tube}{{15}{27}{FTIT State Tracking}{equation.133}{}}
+\newlabel{eq:soc_tube@cref}{{[equation][15][]15}{[1][27][]27}{}{}{}}
+\newlabel{prop:tightened_tube}{{1}{27}{One-step invariance under a tightened SOC tube}{proposition.134}{}}
+\newlabel{prop:tightened_tube@cref}{{[proposition][1][]1}{[1][27][]27}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.8}DC\textsuperscript  {3}S Configuration Detail}{28}{subsection.135}\protected@file@percent }
+\newlabel{sec:dc3s_config}{{7.8}{28}{DC\textsuperscript {3}S Configuration Detail}{subsection.135}{}}
+\newlabel{sec:dc3s_config@cref}{{[subsection][8][7]7.8}{[1][28][]28}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces \DCThreeS  {} configuration parameters from the locked \texttt  {configs/dc3s.yaml}.}}{28}{table.caption.136}\protected@file@percent }
+\newlabel{tab:dc3s_config}{{7}{28}{\DCThreeS {} configuration parameters from the locked \texttt {configs/dc3s.yaml}}{table.caption.136}{}}
+\newlabel{tab:dc3s_config@cref}{{[table][7][]7}{[1][28][]28}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Experimental Protocol}{29}{section.137}\protected@file@percent }
+\newlabel{sec:experiments}{{8}{29}{Experimental Protocol}{section.137}{}}
+\newlabel{sec:experiments@cref}{{[section][8][]8}{[1][29][]29}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Forecasting Evaluation}{29}{subsection.138}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Walk-forward evaluation.}{29}{section*.139}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Fault Injection Benchmark}{29}{subsection.140}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces CPSBench fault families and their injection mechanisms. Rates are per-timestep probabilities; magnitudes control severity.}}{30}{table.caption.141}\protected@file@percent }
+\newlabel{tab:fault_families}{{8}{30}{CPSBench fault families and their injection mechanisms. Rates are per-timestep probabilities; magnitudes control severity}{table.caption.141}{}}
+\newlabel{tab:fault_families@cref}{{[table][8][]8}{[1][29][]30}{}{}{}}
+\@writefile{toc}{\contentsline {paragraph}{IoT closed-loop simulation.}{30}{section*.142}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Controllers}{30}{subsection.143}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Metrics}{31}{subsection.149}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Forecast metrics.}{31}{section*.150}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Uncertainty metrics.}{31}{section*.151}\protected@file@percent }
+\newlabel{eq:winkler}{{16}{31}{Uncertainty metrics}{equation.152}{}}
+\newlabel{eq:winkler@cref}{{[equation][16][]16}{[1][31][]31}{}{}{}}
+\@writefile{toc}{\contentsline {paragraph}{Control metrics.}{31}{section*.153}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Regret metric.}{31}{section*.154}\protected@file@percent }
 \citation{borisov2022deep}
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.5}Statistical Protocol}{18}{subsection.151}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.6}Evidence Lock}{18}{subsection.152}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {9}Results}{18}{section.153}\protected@file@percent }
-\newlabel{sec:results}{{9}{18}{Results}{section.153}{}}
-\newlabel{sec:results@cref}{{[section][9][]9}{[1][18][]18}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {9.1}Forecast Quality Across Model Families}{18}{subsection.154}\protected@file@percent }
-\newlabel{sec:forecast_quality}{{9.1}{18}{Forecast Quality Across Model Families}{subsection.154}{}}
-\newlabel{sec:forecast_quality@cref}{{[subsection][1][9]9.1}{[1][18][]18}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Forecast versus actual values for all three targets across the test horizon. GBM tracks the ground truth closely; deviations are concentrated in high-volatility episodes.}}{18}{figure.caption.156}\protected@file@percent }
-\newlabel{fig:FIG14_FORECAST_VS_ACTUAL}{{9}{18}{Forecast versus actual values for all three targets across the test horizon. GBM tracks the ground truth closely; deviations are concentrated in high-volatility episodes}{figure.caption.156}{}}
-\newlabel{fig:FIG14_FORECAST_VS_ACTUAL@cref}{{[figure][9][]9}{[1][18][]18}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Promoted six-model forecasting comparison. Deep learning baselines evaluate point-forecast performance, confirming GBM's operational dominance in this tabular regime. Conformal uncertainty artifacts (PICP, Width) are materialized exclusively for the production-candidate model (GBM).}}{18}{table.caption.155}\protected@file@percent }
-\newlabel{tab:TBL08_FORECAST_BASELINES}{{7}{18}{Promoted six-model forecasting comparison. Deep learning baselines evaluate point-forecast performance, confirming GBM's operational dominance in this tabular regime. Conformal uncertainty artifacts (PICP, Width) are materialized exclusively for the production-candidate model (GBM)}{table.caption.155}{}}
-\newlabel{tab:TBL08_FORECAST_BASELINES@cref}{{[table][7][]7}{[1][18][]18}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {9.2}Safety Under Telemetry Faults}{18}{subsection.158}\protected@file@percent }
-\newlabel{sec:main_result}{{9.2}{18}{Safety Under Telemetry Faults}{subsection.158}{}}
-\newlabel{sec:main_result@cref}{{[subsection][2][9]9.2}{[1][18][]18}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Main safety and cost outcomes under telemetry faults.}}{18}{table.caption.159}\protected@file@percent }
-\newlabel{tab:TBL01_MAIN_RESULTS}{{8}{18}{Main safety and cost outcomes under telemetry faults}{table.caption.159}{}}
-\newlabel{tab:TBL01_MAIN_RESULTS@cref}{{[table][8][]8}{[1][18][]18}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Six-model forecasting comparison across regions and targets. GBM dominates in all target--region combinations, consistent with the tabular-regime effect discussed in \Cref  {sec:baseline_diagnosis}.}}{19}{figure.caption.157}\protected@file@percent }
-\newlabel{fig:FIG38_MODEL_COMPARISON}{{10}{19}{Six-model forecasting comparison across regions and targets. GBM dominates in all target--region combinations, consistent with the tabular-regime effect discussed in \Cref {sec:baseline_diagnosis}}{figure.caption.157}{}}
-\newlabel{fig:FIG38_MODEL_COMPARISON@cref}{{[figure][10][]10}{[1][18][]19}{}{}{}}
-\@writefile{toc}{\contentsline {paragraph}{Why CVaR and Robust Fixed produce identical results.}{19}{section*.160}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{DC\textsuperscript  {3}S wrapped vs.\ FTIT intervention accounting.}{19}{section*.161}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces True-SOC violation rate versus fault severity. \DCThreeS  {} remains at zero across all severity levels while baseline controllers degrade monotonically with increasing fault intensity.}}{19}{figure.caption.162}\protected@file@percent }
-\newlabel{fig:FIG03_TRUE_SOC_VIOLATION}{{11}{19}{True-SOC violation rate versus fault severity. \DCThreeS {} remains at zero across all severity levels while baseline controllers degrade monotonically with increasing fault intensity}{figure.caption.162}{}}
-\newlabel{fig:FIG03_TRUE_SOC_VIOLATION@cref}{{[figure][11][]11}{[1][19][]19}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces P95 true-SOC violation severity under the aggregate fault sweep. The deterministic baseline's severity grows superlinearly; \DCThreeS  {} remains at zero.}}{19}{figure.caption.163}\protected@file@percent }
-\newlabel{fig:FIG04_TRUE_SOC_SEVERITY}{{12}{19}{P95 true-SOC violation severity under the aggregate fault sweep. The deterministic baseline's severity grows superlinearly; \DCThreeS {} remains at zero}{figure.caption.163}{}}
-\newlabel{fig:FIG04_TRUE_SOC_SEVERITY@cref}{{[figure][12][]12}{[1][19][]19}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Violation rate across controllers and fault-severity levels. \DCThreeS  {} maintains zero violations at all tested severity levels.}}{19}{figure.caption.164}\protected@file@percent }
-\newlabel{fig:FIG30_VIOLATION_RATE}{{13}{19}{Violation rate across controllers and fault-severity levels. \DCThreeS {} maintains zero violations at all tested severity levels}{figure.caption.164}{}}
-\newlabel{fig:FIG30_VIOLATION_RATE@cref}{{[figure][13][]13}{[1][19][]19}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {9.3}Cost--Safety Frontier}{19}{subsection.167}\protected@file@percent }
-\newlabel{sec:frontier}{{9.3}{19}{Cost--Safety Frontier}{subsection.167}{}}
-\newlabel{sec:frontier@cref}{{[subsection][3][9]9.3}{[1][19][]19}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces P95 violation severity decomposition by controller. The deterministic baseline exhibits increasingly severe violations under higher fault intensity.}}{20}{figure.caption.165}\protected@file@percent }
-\newlabel{fig:FIG31_VIOLATION_SEVERITY_P95}{{14}{20}{P95 violation severity decomposition by controller. The deterministic baseline exhibits increasingly severe violations under higher fault intensity}{figure.caption.165}{}}
-\newlabel{fig:FIG31_VIOLATION_SEVERITY_P95@cref}{{[figure][14][]14}{[1][19][]20}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {9.4}Locked Region-Level Impact and Stochastic Value}{20}{subsection.170}\protected@file@percent }
-\newlabel{sec:impact}{{9.4}{20}{Locked Region-Level Impact and Stochastic Value}{subsection.170}{}}
-\newlabel{sec:impact@cref}{{[subsection][4][9]9.4}{[1][20][]20}{}{}{}}
-\@writefile{toc}{\contentsline {paragraph}{Stochastic value.}{20}{section*.174}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {9.5}Robustness Perturbation Analysis}{20}{subsection.175}\protected@file@percent }
-\newlabel{sec:robustness}{{9.5}{20}{Robustness Perturbation Analysis}{subsection.175}{}}
-\newlabel{sec:robustness@cref}{{[subsection][5][9]9.5}{[1][20][]20}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {9.6}Ablation Study: What Matters for Safety}{20}{subsection.181}\protected@file@percent }
-\newlabel{sec:ablation}{{9.6}{20}{Ablation Study: What Matters for Safety}{subsection.181}{}}
-\newlabel{sec:ablation@cref}{{[subsection][6][9]9.6}{[1][20][]20}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Dispatch trajectory comparison across controllers under telemetry faults. \DCThreeS  {} produces more conservative discharge patterns during degraded periods, avoiding the over-discharge that causes violations in the deterministic baseline.}}{21}{figure.caption.166}\protected@file@percent }
-\newlabel{fig:FIG20_DISPATCH_COMPARISON}{{15}{21}{Dispatch trajectory comparison across controllers under telemetry faults. \DCThreeS {} produces more conservative discharge patterns during degraded periods, avoiding the over-discharge that causes violations in the deterministic baseline}{figure.caption.166}{}}
-\newlabel{fig:FIG20_DISPATCH_COMPARISON@cref}{{[figure][15][]15}{[1][19][]21}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Cost--safety Pareto frontier. \DCThreeS  {} dominates the zero-violation, low-cost region. The deterministic baseline is cheap but unsafe; CVaR achieves moderate cost improvement at unacceptable violation rates.}}{21}{figure.caption.168}\protected@file@percent }
-\newlabel{fig:FIG07_COST_SAFETY_FRONTIER}{{16}{21}{Cost--safety Pareto frontier. \DCThreeS {} dominates the zero-violation, low-cost region. The deterministic baseline is cheap but unsafe; CVaR achieves moderate cost improvement at unacceptable violation rates}{figure.caption.168}{}}
-\newlabel{fig:FIG07_COST_SAFETY_FRONTIER@cref}{{[figure][16][]16}{[1][19][]21}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Locked region-level decision impact (percentage).}}{21}{table.caption.171}\protected@file@percent }
-\newlabel{tab:locked_impact}{{9}{21}{Locked region-level decision impact (percentage)}{table.caption.171}{}}
-\newlabel{tab:locked_impact@cref}{{[table][9][]9}{[1][20][]21}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Absolute decision impact: B1 (deterministic LP dispatch) versus B2 (grid-only, no battery). All values from locked artifacts.}}{21}{table.caption.172}\protected@file@percent }
-\newlabel{tab:absolute_impact}{{10}{21}{Absolute decision impact: B1 (deterministic LP dispatch) versus B2 (grid-only, no battery). All values from locked artifacts}{table.caption.172}{}}
-\newlabel{tab:absolute_impact@cref}{{[table][10][]10}{[1][20][]21}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Violation rate versus operational cost curve. Each point represents a controller--severity combination. The Pareto-efficient frontier is dominated by \DCThreeS  {} variants.}}{22}{figure.caption.169}\protected@file@percent }
-\newlabel{fig:FIG27_VIOLATION_VS_COST}{{17}{22}{Violation rate versus operational cost curve. Each point represents a controller--severity combination. The Pareto-efficient frontier is dominated by \DCThreeS {} variants}{figure.caption.169}{}}
-\newlabel{fig:FIG27_VIOLATION_VS_COST@cref}{{[figure][17][]17}{[1][19][]22}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Baseline policy comparison (DE). B1 = deterministic LP, B2 = grid-only, B3 = naive battery heuristic.}}{22}{table.caption.173}\protected@file@percent }
-\newlabel{tab:baseline_comparison}{{11}{22}{Baseline policy comparison (DE). B1 = deterministic LP, B2 = grid-only, B3 = naive battery heuristic}{table.caption.173}{}}
-\newlabel{tab:baseline_comparison@cref}{{[table][11][]11}{[1][20][]22}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Robustness under forecast perturbation. All configurations remain 100\% feasible. Negative regret = cheaper (constraint relaxation); positive = real cost increase.}}{22}{table.caption.176}\protected@file@percent }
-\newlabel{tab:robustness}{{12}{22}{Robustness under forecast perturbation. All configurations remain 100\% feasible. Negative regret = cheaper (constraint relaxation); positive = real cost increase}{table.caption.176}{}}
-\newlabel{tab:robustness@cref}{{[table][12][]12}{[1][20][]22}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces Savings sensitivity to perturbation level. Cost savings remain stable at moderate perturbation but diverge at 30\%, confirming the optimizer's tolerance range.}}{22}{figure.caption.177}\protected@file@percent }
-\newlabel{fig:FIG23_SAVINGS_SENSITIVITY}{{18}{22}{Savings sensitivity to perturbation level. Cost savings remain stable at moderate perturbation but diverge at 30\%, confirming the optimizer's tolerance range}{figure.caption.177}{}}
-\newlabel{fig:FIG23_SAVINGS_SENSITIVITY@cref}{{[figure][18][]18}{[1][20][]22}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces Cost regret under forecast perturbation. Non-monotonic behavior reflects the interaction between constraint relaxation (negative regret) and conservative hedging (positive regret).}}{22}{figure.caption.178}\protected@file@percent }
-\newlabel{fig:FIG24_REGRET_PERTURBATION}{{19}{22}{Cost regret under forecast perturbation. Non-monotonic behavior reflects the interaction between constraint relaxation (negative regret) and conservative hedging (positive regret)}{figure.caption.178}{}}
-\newlabel{fig:FIG24_REGRET_PERTURBATION@cref}{{[figure][19][]19}{[1][20][]22}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {20}{\ignorespaces Regret distribution boxplots across perturbation levels. Whiskers show the range of regret outcomes over seeds and scenarios.}}{22}{figure.caption.179}\protected@file@percent }
-\newlabel{fig:FIG49_ROBUSTNESS_REGRET_BOXPLOT}{{20}{22}{Regret distribution boxplots across perturbation levels. Whiskers show the range of regret outcomes over seeds and scenarios}{figure.caption.179}{}}
-\newlabel{fig:FIG49_ROBUSTNESS_REGRET_BOXPLOT@cref}{{[figure][20][]20}{[1][20][]22}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {21}{\ignorespaces Infeasible rate under perturbation. The optimizer maintains 100\% feasibility at all tested levels in both regions.}}{22}{figure.caption.180}\protected@file@percent }
-\newlabel{fig:FIG50_ROBUSTNESS_INFEASIBLE_RATE}{{21}{22}{Infeasible rate under perturbation. The optimizer maintains 100\% feasibility at all tested levels in both regions}{figure.caption.180}{}}
-\newlabel{fig:FIG50_ROBUSTNESS_INFEASIBLE_RATE@cref}{{[figure][21][]21}{[1][20][]22}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Ablation study with strict gate fields and statistical tests.}}{22}{table.caption.182}\protected@file@percent }
-\newlabel{tab:TBL02_ABLATIONS}{{13}{22}{Ablation study with strict gate fields and statistical tests}{table.caption.182}{}}
-\newlabel{tab:TBL02_ABLATIONS@cref}{{[table][13][]13}{[1][20][]22}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {22}{\ignorespaces Ablation sensitivity analysis. Each bar shows the increase in violation rate or severity when the corresponding \DCThreeS  {} component is removed.}}{22}{figure.caption.188}\protected@file@percent }
-\newlabel{fig:FIG26_ABLATION_SENSITIVITY}{{22}{22}{Ablation sensitivity analysis. Each bar shows the increase in violation rate or severity when the corresponding \DCThreeS {} component is removed}{figure.caption.188}{}}
-\newlabel{fig:FIG26_ABLATION_SENSITIVITY@cref}{{[figure][22][]22}{[1][22][]22}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {9.7}Calibration Quality}{22}{subsection.189}\protected@file@percent }
-\newlabel{sec:calibration}{{9.7}{22}{Calibration Quality}{subsection.189}{}}
-\newlabel{sec:calibration@cref}{{[subsection][7][9]9.7}{[1][22][]22}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {23}{\ignorespaces Regime-aware CQR coverage by target and volatility group. Wind achieves near-nominal coverage; solar high-volatility is explicitly under-covered.}}{22}{figure.caption.190}\protected@file@percent }
-\newlabel{fig:FIG05_CQR_GROUP_COVERAGE}{{23}{22}{Regime-aware CQR coverage by target and volatility group. Wind achieves near-nominal coverage; solar high-volatility is explicitly under-covered}{figure.caption.190}{}}
-\newlabel{fig:FIG05_CQR_GROUP_COVERAGE@cref}{{[figure][23][]23}{[1][22][]22}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {24}{\ignorespaces Coverage-versus-width tradeoff across target and regime combinations. Points below the dashed 90\% line indicate under-coverage.}}{23}{figure.caption.191}\protected@file@percent }
-\newlabel{fig:FIG10_CALIBRATION_TRADEOFF}{{24}{23}{Coverage-versus-width tradeoff across target and regime combinations. Points below the dashed 90\% line indicate under-coverage}{figure.caption.191}{}}
-\newlabel{fig:FIG10_CALIBRATION_TRADEOFF@cref}{{[figure][24][]24}{[1][22][]23}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {25}{\ignorespaces Coverage (PICP) as a function of forecast horizon (1--24~hours). Coverage degrades moderately at longer horizons, consistent with increasing forecast difficulty.}}{23}{figure.caption.192}\protected@file@percent }
-\newlabel{fig:FIG18_COVERAGE_VS_HORIZON}{{25}{23}{Coverage (PICP) as a function of forecast horizon (1--24~hours). Coverage degrades moderately at longer horizons, consistent with increasing forecast difficulty}{figure.caption.192}{}}
-\newlabel{fig:FIG18_COVERAGE_VS_HORIZON@cref}{{[figure][25][]25}{[1][22][]23}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {26}{\ignorespaces Detailed coverage-by-horizon breakdown showing per-target behavior. Wind maintains tighter coverage across horizons; solar shows the strongest horizon-dependent degradation.}}{23}{figure.caption.193}\protected@file@percent }
-\newlabel{fig:FIG51_COVERAGE_BY_HORIZON}{{26}{23}{Detailed coverage-by-horizon breakdown showing per-target behavior. Wind maintains tighter coverage across horizons; solar shows the strongest horizon-dependent degradation}{figure.caption.193}{}}
-\newlabel{fig:FIG51_COVERAGE_BY_HORIZON@cref}{{[figure][26][]26}{[1][22][]23}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {27}{\ignorespaces Prediction intervals for the load target overlaid on actual values. The conformal band adapts width to local forecast difficulty.}}{23}{figure.caption.194}\protected@file@percent }
-\newlabel{fig:FIG42_PREDICTION_INTERVALS_LOAD}{{27}{23}{Prediction intervals for the load target overlaid on actual values. The conformal band adapts width to local forecast difficulty}{figure.caption.194}{}}
-\newlabel{fig:FIG42_PREDICTION_INTERVALS_LOAD@cref}{{[figure][27][]27}{[1][22][]23}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {28}{\ignorespaces Interval width expansion as a function of forecast horizon. Longer horizons produce wider intervals, reflecting increased uncertainty.}}{23}{figure.caption.195}\protected@file@percent }
-\newlabel{fig:FIG43_INTERVAL_WIDTH_BY_HORIZON}{{28}{23}{Interval width expansion as a function of forecast horizon. Longer horizons produce wider intervals, reflecting increased uncertainty}{figure.caption.195}{}}
-\newlabel{fig:FIG43_INTERVAL_WIDTH_BY_HORIZON@cref}{{[figure][28][]28}{[1][22][]23}{}{}{}}
-\@writefile{toc}{\contentsline {paragraph}{Why solar is under-covered.}{23}{section*.196}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Why DC\textsuperscript  {3}S stays safe despite solar under-coverage.}{23}{section*.197}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.5}Statistical Protocol}{32}{subsection.155}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.6}Evidence Lock}{32}{subsection.156}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}Results}{32}{section.157}\protected@file@percent }
+\newlabel{sec:results}{{9}{32}{Results}{section.157}{}}
+\newlabel{sec:results@cref}{{[section][9][]9}{[1][32][]32}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1}Forecast Quality Across Model Families}{32}{subsection.158}\protected@file@percent }
+\newlabel{sec:forecast_quality}{{9.1}{32}{Forecast Quality Across Model Families}{subsection.158}{}}
+\newlabel{sec:forecast_quality@cref}{{[subsection][1][9]9.1}{[1][32][]32}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Promoted six-model forecasting comparison. Deep learning baselines evaluate point-forecast performance, confirming GBM's operational dominance in this tabular regime. Conformal uncertainty artifacts (PICP, Width) are materialized exclusively for the production-candidate model (GBM).. \textit  {--- = n/a; PICP@90 and Width only for GBM.}}}{33}{table.caption.159}\protected@file@percent }
+\newlabel{tab:TBL08_FORECAST_BASELINES}{{9}{33}{Promoted six-model forecasting comparison. Deep learning baselines evaluate point-forecast performance, confirming GBM's operational dominance in this tabular regime. Conformal uncertainty artifacts (PICP, Width) are materialized exclusively for the production-candidate model (GBM).. \textit {--- = n/a; PICP@90 and Width only for GBM.}}{table.caption.159}{}}
+\newlabel{tab:TBL08_FORECAST_BASELINES@cref}{{[table][9][]9}{[1][32][]33}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Forecast versus actual values for all three targets across the test horizon. GBM tracks the ground truth closely; deviations are concentrated in high-volatility episodes.}}{33}{figure.caption.160}\protected@file@percent }
+\newlabel{fig:FIG14_FORECAST_VS_ACTUAL}{{9}{33}{Forecast versus actual values for all three targets across the test horizon. GBM tracks the ground truth closely; deviations are concentrated in high-volatility episodes}{figure.caption.160}{}}
+\newlabel{fig:FIG14_FORECAST_VS_ACTUAL@cref}{{[figure][9][]9}{[1][32][]33}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Six-model forecasting comparison across regions and targets. GBM dominates in all target--region combinations, consistent with the tabular-regime effect discussed in \Cref  {sec:baseline_diagnosis}.}}{33}{figure.caption.161}\protected@file@percent }
+\newlabel{fig:FIG38_MODEL_COMPARISON}{{10}{33}{Six-model forecasting comparison across regions and targets. GBM dominates in all target--region combinations, consistent with the tabular-regime effect discussed in \Cref {sec:baseline_diagnosis}}{figure.caption.161}{}}
+\newlabel{fig:FIG38_MODEL_COMPARISON@cref}{{[figure][10][]10}{[1][32][]33}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2}Safety Under Telemetry Faults}{34}{subsection.162}\protected@file@percent }
+\newlabel{sec:main_result}{{9.2}{34}{Safety Under Telemetry Faults}{subsection.162}{}}
+\newlabel{sec:main_result@cref}{{[subsection][2][9]9.2}{[1][34][]34}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Main safety and cost outcomes under telemetry faults.}}{34}{table.caption.163}\protected@file@percent }
+\newlabel{tab:TBL01_MAIN_RESULTS}{{10}{34}{Main safety and cost outcomes under telemetry faults}{table.caption.163}{}}
+\newlabel{tab:TBL01_MAIN_RESULTS@cref}{{[table][10][]10}{[1][34][]34}{}{}{}}
+\@writefile{toc}{\contentsline {paragraph}{Why CVaR and Robust Fixed produce identical results.}{34}{section*.164}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{DC\textsuperscript  {3}S wrapped vs.\ FTIT intervention accounting.}{34}{section*.165}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces True-SOC violation rate versus fault severity. \DCThreeS  {} remains at zero across all severity levels while baseline controllers degrade monotonically with increasing fault intensity.}}{35}{figure.caption.166}\protected@file@percent }
+\newlabel{fig:FIG03_TRUE_SOC_VIOLATION}{{11}{35}{True-SOC violation rate versus fault severity. \DCThreeS {} remains at zero across all severity levels while baseline controllers degrade monotonically with increasing fault intensity}{figure.caption.166}{}}
+\newlabel{fig:FIG03_TRUE_SOC_VIOLATION@cref}{{[figure][11][]11}{[1][35][]35}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3}Cost--Safety Frontier}{35}{subsection.171}\protected@file@percent }
+\newlabel{sec:frontier}{{9.3}{35}{Cost--Safety Frontier}{subsection.171}{}}
+\newlabel{sec:frontier@cref}{{[subsection][3][9]9.3}{[1][35][]35}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces P95 true-SOC violation severity under the aggregate fault sweep. The deterministic baseline's severity grows superlinearly; \DCThreeS  {} remains at zero.}}{36}{figure.caption.167}\protected@file@percent }
+\newlabel{fig:FIG04_TRUE_SOC_SEVERITY}{{12}{36}{P95 true-SOC violation severity under the aggregate fault sweep. The deterministic baseline's severity grows superlinearly; \DCThreeS {} remains at zero}{figure.caption.167}{}}
+\newlabel{fig:FIG04_TRUE_SOC_SEVERITY@cref}{{[figure][12][]12}{[1][35][]36}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Violation rate across controllers and fault-severity levels. \DCThreeS  {} maintains zero violations at all tested severity levels.}}{36}{figure.caption.168}\protected@file@percent }
+\newlabel{fig:FIG30_VIOLATION_RATE}{{13}{36}{Violation rate across controllers and fault-severity levels. \DCThreeS {} maintains zero violations at all tested severity levels}{figure.caption.168}{}}
+\newlabel{fig:FIG30_VIOLATION_RATE@cref}{{[figure][13][]13}{[1][35][]36}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces P95 violation severity decomposition by controller. The deterministic baseline exhibits increasingly severe violations under higher fault intensity.}}{37}{figure.caption.169}\protected@file@percent }
+\newlabel{fig:FIG31_VIOLATION_SEVERITY_P95}{{14}{37}{P95 violation severity decomposition by controller. The deterministic baseline exhibits increasingly severe violations under higher fault intensity}{figure.caption.169}{}}
+\newlabel{fig:FIG31_VIOLATION_SEVERITY_P95@cref}{{[figure][14][]14}{[1][35][]37}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Dispatch trajectory comparison across controllers under telemetry faults. \DCThreeS  {} produces more conservative discharge patterns during degraded periods, avoiding the over-discharge that causes violations in the deterministic baseline.}}{37}{figure.caption.170}\protected@file@percent }
+\newlabel{fig:FIG20_DISPATCH_COMPARISON}{{15}{37}{Dispatch trajectory comparison across controllers under telemetry faults. \DCThreeS {} produces more conservative discharge patterns during degraded periods, avoiding the over-discharge that causes violations in the deterministic baseline}{figure.caption.170}{}}
+\newlabel{fig:FIG20_DISPATCH_COMPARISON@cref}{{[figure][15][]15}{[1][35][]37}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Cost--safety Pareto frontier. \DCThreeS  {} dominates the zero-violation, low-cost region. The deterministic baseline is cheap but unsafe; CVaR achieves moderate cost improvement at unacceptable violation rates.}}{38}{figure.caption.172}\protected@file@percent }
+\newlabel{fig:FIG07_COST_SAFETY_FRONTIER}{{16}{38}{Cost--safety Pareto frontier. \DCThreeS {} dominates the zero-violation, low-cost region. The deterministic baseline is cheap but unsafe; CVaR achieves moderate cost improvement at unacceptable violation rates}{figure.caption.172}{}}
+\newlabel{fig:FIG07_COST_SAFETY_FRONTIER@cref}{{[figure][16][]16}{[1][35][]38}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Violation rate versus operational cost curve. Each point represents a controller--severity combination. The Pareto-efficient frontier is dominated by \DCThreeS  {} variants.}}{38}{figure.caption.173}\protected@file@percent }
+\newlabel{fig:FIG27_VIOLATION_VS_COST}{{17}{38}{Violation rate versus operational cost curve. Each point represents a controller--severity combination. The Pareto-efficient frontier is dominated by \DCThreeS {} variants}{figure.caption.173}{}}
+\newlabel{fig:FIG27_VIOLATION_VS_COST@cref}{{[figure][17][]17}{[1][35][]38}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.4}Locked Region-Level Impact and Stochastic Value}{39}{subsection.174}\protected@file@percent }
+\newlabel{sec:impact}{{9.4}{39}{Locked Region-Level Impact and Stochastic Value}{subsection.174}{}}
+\newlabel{sec:impact@cref}{{[subsection][4][9]9.4}{[1][39][]39}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Locked region-level decision impact (percentage).}}{39}{table.caption.175}\protected@file@percent }
+\newlabel{tab:locked_impact}{{11}{39}{Locked region-level decision impact (percentage)}{table.caption.175}{}}
+\newlabel{tab:locked_impact@cref}{{[table][11][]11}{[1][39][]39}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Absolute decision impact: B1 (deterministic LP dispatch) versus B2 (grid-only, no battery). All values from locked artifacts.}}{39}{table.caption.176}\protected@file@percent }
+\newlabel{tab:absolute_impact}{{12}{39}{Absolute decision impact: B1 (deterministic LP dispatch) versus B2 (grid-only, no battery). All values from locked artifacts}{table.caption.176}{}}
+\newlabel{tab:absolute_impact@cref}{{[table][12][]12}{[1][39][]39}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Baseline policy comparison (DE). B1 = deterministic LP, B2 = grid-only, B3 = naive battery heuristic.}}{39}{table.caption.177}\protected@file@percent }
+\newlabel{tab:baseline_comparison}{{13}{39}{Baseline policy comparison (DE). B1 = deterministic LP, B2 = grid-only, B3 = naive battery heuristic}{table.caption.177}{}}
+\newlabel{tab:baseline_comparison@cref}{{[table][13][]13}{[1][39][]39}{}{}{}}
+\@writefile{toc}{\contentsline {paragraph}{Stochastic value.}{40}{section*.178}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.5}Robustness Perturbation Analysis}{40}{subsection.179}\protected@file@percent }
+\newlabel{sec:robustness}{{9.5}{40}{Robustness Perturbation Analysis}{subsection.179}{}}
+\newlabel{sec:robustness@cref}{{[subsection][5][9]9.5}{[1][40][]40}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.6}Ablation Study: What Matters for Safety}{40}{subsection.185}\protected@file@percent }
+\newlabel{sec:ablation}{{9.6}{40}{Ablation Study: What Matters for Safety}{subsection.185}{}}
+\newlabel{sec:ablation@cref}{{[subsection][6][9]9.6}{[1][40][]40}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Robustness under forecast perturbation. All configurations remain 100\% feasible. Negative regret = cheaper (constraint relaxation); positive = real cost increase.}}{41}{table.caption.180}\protected@file@percent }
+\newlabel{tab:robustness}{{14}{41}{Robustness under forecast perturbation. All configurations remain 100\% feasible. Negative regret = cheaper (constraint relaxation); positive = real cost increase}{table.caption.180}{}}
+\newlabel{tab:robustness@cref}{{[table][14][]14}{[1][40][]41}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces Savings sensitivity to perturbation level. Cost savings remain stable at moderate perturbation but diverge at 30\%, confirming the optimizer's tolerance range.}}{41}{figure.caption.181}\protected@file@percent }
+\newlabel{fig:FIG23_SAVINGS_SENSITIVITY}{{18}{41}{Savings sensitivity to perturbation level. Cost savings remain stable at moderate perturbation but diverge at 30\%, confirming the optimizer's tolerance range}{figure.caption.181}{}}
+\newlabel{fig:FIG23_SAVINGS_SENSITIVITY@cref}{{[figure][18][]18}{[1][40][]41}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces Ablation study with strict gate fields and statistical tests.}}{41}{table.caption.186}\protected@file@percent }
+\newlabel{tab:TBL02_ABLATIONS}{{15}{41}{Ablation study with strict gate fields and statistical tests}{table.caption.186}{}}
+\newlabel{tab:TBL02_ABLATIONS@cref}{{[table][15][]15}{[1][40][]41}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces Cost regret under forecast perturbation. Non-monotonic behavior reflects the interaction between constraint relaxation (negative regret) and conservative hedging (positive regret).}}{42}{figure.caption.182}\protected@file@percent }
+\newlabel{fig:FIG24_REGRET_PERTURBATION}{{19}{42}{Cost regret under forecast perturbation. Non-monotonic behavior reflects the interaction between constraint relaxation (negative regret) and conservative hedging (positive regret)}{figure.caption.182}{}}
+\newlabel{fig:FIG24_REGRET_PERTURBATION@cref}{{[figure][19][]19}{[1][40][]42}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {20}{\ignorespaces Regret distribution boxplots across perturbation levels. Whiskers show the range of regret outcomes over seeds and scenarios.}}{42}{figure.caption.183}\protected@file@percent }
+\newlabel{fig:FIG49_ROBUSTNESS_REGRET_BOXPLOT}{{20}{42}{Regret distribution boxplots across perturbation levels. Whiskers show the range of regret outcomes over seeds and scenarios}{figure.caption.183}{}}
+\newlabel{fig:FIG49_ROBUSTNESS_REGRET_BOXPLOT@cref}{{[figure][20][]20}{[1][40][]42}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21}{\ignorespaces Infeasible rate under perturbation. The optimizer maintains 100\% feasibility at all tested levels in both regions.}}{43}{figure.caption.184}\protected@file@percent }
+\newlabel{fig:FIG50_ROBUSTNESS_INFEASIBLE_RATE}{{21}{43}{Infeasible rate under perturbation. The optimizer maintains 100\% feasibility at all tested levels in both regions}{figure.caption.184}{}}
+\newlabel{fig:FIG50_ROBUSTNESS_INFEASIBLE_RATE@cref}{{[figure][21][]21}{[1][40][]43}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.7}Calibration Quality}{43}{subsection.193}\protected@file@percent }
+\newlabel{sec:calibration}{{9.7}{43}{Calibration Quality}{subsection.193}{}}
+\newlabel{sec:calibration@cref}{{[subsection][7][9]9.7}{[1][43][]43}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {22}{\ignorespaces Ablation sensitivity analysis. Each bar shows the increase in violation rate or severity when the corresponding \DCThreeS  {} component is removed.}}{44}{figure.caption.192}\protected@file@percent }
+\newlabel{fig:FIG26_ABLATION_SENSITIVITY}{{22}{44}{Ablation sensitivity analysis. Each bar shows the increase in violation rate or severity when the corresponding \DCThreeS {} component is removed}{figure.caption.192}{}}
+\newlabel{fig:FIG26_ABLATION_SENSITIVITY@cref}{{[figure][22][]22}{[1][43][]44}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {23}{\ignorespaces Regime-aware CQR coverage by target and volatility group. Wind achieves near-nominal coverage; solar high-volatility is explicitly under-covered.}}{44}{figure.caption.194}\protected@file@percent }
+\newlabel{fig:FIG05_CQR_GROUP_COVERAGE}{{23}{44}{Regime-aware CQR coverage by target and volatility group. Wind achieves near-nominal coverage; solar high-volatility is explicitly under-covered}{figure.caption.194}{}}
+\newlabel{fig:FIG05_CQR_GROUP_COVERAGE@cref}{{[figure][23][]23}{[1][43][]44}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {24}{\ignorespaces Coverage-versus-width tradeoff across target and regime combinations. Points below the dashed 90\% line indicate under-coverage.}}{45}{figure.caption.195}\protected@file@percent }
+\newlabel{fig:FIG10_CALIBRATION_TRADEOFF}{{24}{45}{Coverage-versus-width tradeoff across target and regime combinations. Points below the dashed 90\% line indicate under-coverage}{figure.caption.195}{}}
+\newlabel{fig:FIG10_CALIBRATION_TRADEOFF@cref}{{[figure][24][]24}{[1][43][]45}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {25}{\ignorespaces Coverage (PICP) as a function of forecast horizon (1--24~hours). Coverage degrades moderately at longer horizons, consistent with increasing forecast difficulty.}}{45}{figure.caption.196}\protected@file@percent }
+\newlabel{fig:FIG18_COVERAGE_VS_HORIZON}{{25}{45}{Coverage (PICP) as a function of forecast horizon (1--24~hours). Coverage degrades moderately at longer horizons, consistent with increasing forecast difficulty}{figure.caption.196}{}}
+\newlabel{fig:FIG18_COVERAGE_VS_HORIZON@cref}{{[figure][25][]25}{[1][43][]45}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {26}{\ignorespaces Detailed coverage-by-horizon breakdown showing per-target behavior. Wind maintains tighter coverage across horizons; solar shows the strongest horizon-dependent degradation.}}{46}{figure.caption.197}\protected@file@percent }
+\newlabel{fig:FIG51_COVERAGE_BY_HORIZON}{{26}{46}{Detailed coverage-by-horizon breakdown showing per-target behavior. Wind maintains tighter coverage across horizons; solar shows the strongest horizon-dependent degradation}{figure.caption.197}{}}
+\newlabel{fig:FIG51_COVERAGE_BY_HORIZON@cref}{{[figure][26][]26}{[1][43][]46}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {27}{\ignorespaces Prediction intervals for the load target overlaid on actual values. The conformal band adapts width to local forecast difficulty.}}{46}{figure.caption.198}\protected@file@percent }
+\newlabel{fig:FIG42_PREDICTION_INTERVALS_LOAD}{{27}{46}{Prediction intervals for the load target overlaid on actual values. The conformal band adapts width to local forecast difficulty}{figure.caption.198}{}}
+\newlabel{fig:FIG42_PREDICTION_INTERVALS_LOAD@cref}{{[figure][27][]27}{[1][43][]46}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {28}{\ignorespaces Interval width expansion as a function of forecast horizon. Longer horizons produce wider intervals, reflecting increased uncertainty.}}{47}{figure.caption.199}\protected@file@percent }
+\newlabel{fig:FIG43_INTERVAL_WIDTH_BY_HORIZON}{{28}{47}{Interval width expansion as a function of forecast horizon. Longer horizons produce wider intervals, reflecting increased uncertainty}{figure.caption.199}{}}
+\newlabel{fig:FIG43_INTERVAL_WIDTH_BY_HORIZON@cref}{{[figure][28][]28}{[1][43][]47}{}{}{}}
+\@writefile{toc}{\contentsline {paragraph}{Why solar is under-covered.}{47}{section*.200}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Why DC\textsuperscript  {3}S stays safe despite solar under-coverage.}{48}{section*.201}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Reliability-conditioned calibration diagnostic.}{48}{section*.205}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Governed calibration audit.}{48}{section*.206}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Governed reliability-group coverage audit ($n=2{,}000$ samples, 10~quantile bins, nominal target $1-\alpha =0.90$, release \texttt  {R1\_DEPLOY\_20260314}). This is a governed diagnostic audit that improves interpretability of under-coverage patterns without changing the locked runtime CQR+RAC-Cert calibration path.}}{49}{table.caption.207}\protected@file@percent }
+\newlabel{tab:reliability_group_coverage}{{16}{49}{Governed reliability-group coverage audit ($n=2{,}000$ samples, 10~quantile bins, nominal target $1-\alpha =0.90$, release \texttt {R1\_DEPLOY\_20260314}). This is a governed diagnostic audit that improves interpretability of under-coverage patterns without changing the locked runtime CQR+RAC-Cert calibration path}{table.caption.207}{}}
+\newlabel{tab:reliability_group_coverage@cref}{{[table][16][]16}{[1][48][]49}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.8}Transfer and Generalization}{49}{subsection.208}\protected@file@percent }
+\newlabel{sec:transfer}{{9.8}{49}{Transfer and Generalization}{subsection.208}{}}
+\newlabel{sec:transfer@cref}{{[subsection][8][9]9.8}{[1][48][]49}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.9}Runtime and Computational Profile}{49}{subsection.213}\protected@file@percent }
+\newlabel{sec:runtime}{{9.9}{49}{Runtime and Computational Profile}{subsection.213}{}}
+\newlabel{sec:runtime@cref}{{[subsection][9][9]9.9}{[1][49][]49}{}{}{}}
+\@writefile{toc}{\contentsline {paragraph}{Model-count reconciliation.}{49}{section*.216}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {17}{\ignorespaces Compact DE/US transfer-generalization summary from current publication artifacts.}}{50}{table.caption.209}\protected@file@percent }
+\newlabel{tab:TBL04_TRANSFER_STRESS}{{17}{50}{Compact DE/US transfer-generalization summary from current publication artifacts}{table.caption.209}{}}
+\newlabel{tab:TBL04_TRANSFER_STRESS@cref}{{[table][17][]17}{[1][49][]50}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {29}{\ignorespaces Transfer stress coverage summary across DE/US stress scenarios. \DCThreeS  {} preserves safety more reliably than cost optimality under transfer/generalization stress.}}{50}{figure.caption.210}\protected@file@percent }
+\newlabel{fig:FIG06_TRANSFER_COVERAGE}{{29}{50}{Transfer stress coverage summary across DE/US stress scenarios. \DCThreeS {} preserves safety more reliably than cost optimality under transfer/generalization stress}{figure.caption.210}{}}
+\newlabel{fig:FIG06_TRANSFER_COVERAGE@cref}{{[figure][29][]29}{[1][49][]50}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {18}{\ignorespaces Computational profile of the locked training and inference pipeline.}}{50}{table.caption.214}\protected@file@percent }
+\newlabel{tab:runtime}{{18}{50}{Computational profile of the locked training and inference pipeline}{table.caption.214}{}}
+\newlabel{tab:runtime@cref}{{[table][18][]18}{[1][49][]50}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {30}{\ignorespaces Cross-region transfer performance matrix. Safety generalizes more robustly than cost optimality, consistent with the conditional-conservatism mechanism.}}{51}{figure.caption.211}\protected@file@percent }
+\newlabel{fig:FIG29_CROSS_REGION_TRANSFER}{{30}{51}{Cross-region transfer performance matrix. Safety generalizes more robustly than cost optimality, consistent with the conditional-conservatism mechanism}{figure.caption.211}{}}
+\newlabel{fig:FIG29_CROSS_REGION_TRANSFER@cref}{{[figure][30][]30}{[1][49][]51}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {31}{\ignorespaces Cross-region transfer and generalization performance summary.}}{51}{figure.caption.212}\protected@file@percent }
+\newlabel{fig:FIG11_TRANSFER_GENERALIZATION}{{31}{51}{Cross-region transfer and generalization performance summary}{figure.caption.212}{}}
+\newlabel{fig:FIG11_TRANSFER_GENERALIZATION@cref}{{[figure][31][]31}{[1][49][]51}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {19}{\ignorespaces DC\textsuperscript  {3}S per-step latency profile (5000 iterations, single-threaded).}}{51}{table.caption.215}\protected@file@percent }
+\newlabel{tab:dc3s_latency}{{19}{51}{DC\textsuperscript {3}S per-step latency profile (5000 iterations, single-threaded)}{table.caption.215}{}}
+\newlabel{tab:dc3s_latency@cref}{{[table][19][]19}{[1][49][]51}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.10}Operational Trace: DC\textsuperscript  {3}S Under a Covariate Drift Event}{52}{subsection.217}\protected@file@percent }
+\newlabel{sec:operational_trace}{{9.10}{52}{Operational Trace: DC\textsuperscript {3}S Under a Covariate Drift Event}{subsection.217}{}}
+\newlabel{sec:operational_trace@cref}{{[subsection][10][9]9.10}{[1][52][]52}{}{}{}}
+\@writefile{toc}{\contentsline {paragraph}{Steps 1--3 (Detection lag).}{52}{section*.218}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Steps 4--8 (Drift detected, inflation activates).}{52}{section*.219}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Steps 9--12 (Shield active, violations prevented).}{52}{section*.220}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Steps 13+ (Recovery).}{52}{section*.221}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {20}{\ignorespaces DC\textsuperscript  {3}S governed step trace (first 10~steps of the covariate drift scenario, release \texttt  {R1\_DEPLOY\_20260314}). Reliability stays high for most steps, with a visible dip at step~4 under degraded telemetry. Inflation spikes when drift is flagged (step~10, $\times 1.60$). Proposed and safe actions are identical except when intervention is required. All guarantee checks pass before dispatch.}}{53}{table.caption.222}\protected@file@percent }
+\newlabel{tab:step_trace}{{20}{53}{DC\textsuperscript {3}S governed step trace (first 10~steps of the covariate drift scenario, release \texttt {R1\_DEPLOY\_20260314}). Reliability stays high for most steps, with a visible dip at step~4 under degraded telemetry. Inflation spikes when drift is flagged (step~10, $\times 1.60$). Proposed and safe actions are identical except when intervention is required. All guarantee checks pass before dispatch}{table.caption.222}{}}
+\newlabel{tab:step_trace@cref}{{[table][20][]20}{[1][53][]53}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {32}{\ignorespaces SOC trajectory under the covariate drift scenario. The deterministic baseline drifts below minimum SOC (dashed red line) while \DCThreeS  {} maintains safe limits throughout.}}{53}{figure.caption.223}\protected@file@percent }
+\newlabel{fig:FIG21_SOC_TRAJECTORY}{{32}{53}{SOC trajectory under the covariate drift scenario. The deterministic baseline drifts below minimum SOC (dashed red line) while \DCThreeS {} maintains safe limits throughout}{figure.caption.223}{}}
+\newlabel{fig:FIG21_SOC_TRAJECTORY@cref}{{[figure][32][]32}{[1][53][]53}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {10}Universal Domain Framework}{53}{section.225}\protected@file@percent }
+\newlabel{sec:universal}{{10}{53}{Universal Domain Framework}{section.225}{}}
+\newlabel{sec:universal@cref}{{[section][10][]10}{[1][53][]53}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {33}{\ignorespaces Detailed SOC trajectory comparison showing the divergence between observed-state and true-state SOC during telemetry degradation. \DCThreeS  {}'s inflated intervals prevent the over-discharge that the deterministic controller commits.}}{54}{figure.caption.224}\protected@file@percent }
+\newlabel{fig:FIG41_SOC_TRAJECTORY_DETAIL}{{33}{54}{Detailed SOC trajectory comparison showing the divergence between observed-state and true-state SOC during telemetry degradation. \DCThreeS {}'s inflated intervals prevent the over-discharge that the deterministic controller commits}{figure.caption.224}{}}
+\newlabel{fig:FIG41_SOC_TRAJECTORY_DETAIL@cref}{{[figure][33][]33}{[1][53][]54}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {21}{\ignorespaces Domain state schema for ORIUS universal framework.}}{54}{table.caption.229}\protected@file@percent }
+\newlabel{tab:universal-state}{{21}{54}{Domain state schema for ORIUS universal framework}{table.caption.229}{}}
+\newlabel{tab:universal-state@cref}{{[table][21][]21}{[1][54][]54}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1}Multi-Domain Architecture}{54}{subsection.226}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2}Domain State Schema and Safety Predicates}{54}{subsection.228}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {34}{\ignorespaces ORIUS universal domain physical safety framework. The five-stage pipeline (Detect$\to $Calibrate$\to $Constrain$\to $Shield$\to $Certify) applies uniformly; domain adapters for five domains (Energy, AV, Industrial, Healthcare/Surgical, Aerospace) provide domain-specific state, safety predicates, and repair logic.}}{55}{figure.caption.227}\protected@file@percent }
+\newlabel{fig:FIG_UNIVERSAL_FRAMEWORK}{{34}{55}{ORIUS universal domain physical safety framework. The five-stage pipeline (Detect$\to $Calibrate$\to $Constrain$\to $Shield$\to $Certify) applies uniformly; domain adapters for five domains (Energy, AV, Industrial, Healthcare/Surgical, Aerospace) provide domain-specific state, safety predicates, and repair logic}{figure.caption.227}{}}
+\newlabel{fig:FIG_UNIVERSAL_FRAMEWORK@cref}{{[figure][34][]34}{[1][54][]55}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {22}{\ignorespaces Safety predicates per domain.}}{55}{table.caption.230}\protected@file@percent }
+\newlabel{tab:universal-safety}{{22}{55}{Safety predicates per domain}{table.caption.230}{}}
+\newlabel{tab:universal-safety@cref}{{[table][22][]22}{[1][54][]55}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.3}AV (Autonomous Vehicle) Adapter}{55}{subsection.232}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4}Industrial Adapter}{55}{subsection.233}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {23}{\ignorespaces Universal DC3S pipeline stages.}}{56}{table.caption.231}\protected@file@percent }
+\newlabel{tab:universal-pipeline}{{23}{56}{Universal DC3S pipeline stages}{table.caption.231}{}}
+\newlabel{tab:universal-pipeline@cref}{{[table][23][]23}{[1][54][]56}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.5}Healthcare and Surgical Robotics Adapter}{56}{subsection.234}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.6}Aerospace Adapter}{56}{subsection.235}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.7}Universal ORIUS Validation Evidence}{56}{subsection.236}\protected@file@percent }
+\newlabel{sec:universal_validation}{{10.7}{56}{Universal ORIUS Validation Evidence}{subsection.236}{}}
+\newlabel{sec:universal_validation@cref}{{[subsection][7][10]10.7}{[1][56][]56}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {24}{\ignorespaces Cross-domain OASG validation. Six ORIUS-Bench tracks with fault episodes; baseline vs. ORIUS TSVR and reduction.}}{56}{table.caption.237}\protected@file@percent }
+\newlabel{tab:TBL09_CROSS_DOMAIN_OASG}{{24}{56}{Cross-domain OASG validation. Six ORIUS-Bench tracks with fault episodes; baseline vs. ORIUS TSVR and reduction}{table.caption.237}{}}
+\newlabel{tab:TBL09_CROSS_DOMAIN_OASG@cref}{{[table][24][]24}{[1][56][]56}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {35}{\ignorespaces Multi-domain ORIUS validation. Baseline (nominal) vs.\ ORIUS (DC3S) true-state violation rate across six domains under fault episodes.}}{57}{figure.caption.238}\protected@file@percent }
+\newlabel{fig:FIG_MULTI_DOMAIN_VALIDATION}{{35}{57}{Multi-domain ORIUS validation. Baseline (nominal) vs.\ ORIUS (DC3S) true-state violation rate across six domains under fault episodes}{figure.caption.238}{}}
+\newlabel{fig:FIG_MULTI_DOMAIN_VALIDATION@cref}{{[figure][35][]35}{[1][56][]57}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.8}Implementation and Scope}{57}{subsection.239}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Papers 2--6 module mapping.}{57}{section*.240}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {25}{\ignorespaces Papers 2--6 extension modules and implementation paths.}}{57}{table.caption.241}\protected@file@percent }
+\newlabel{tab:papers26_modules}{{25}{57}{Papers 2--6 extension modules and implementation paths}{table.caption.241}{}}
+\newlabel{tab:papers26_modules@cref}{{[table][25][]25}{[1][57][]57}{}{}{}}
+\citation{borisov2022deep}
+\@writefile{toc}{\contentsline {section}{\numberline {11}Deep Baseline Diagnosis}{58}{section.242}\protected@file@percent }
+\newlabel{sec:baseline_diagnosis}{{11}{58}{Deep Baseline Diagnosis}{section.242}{}}
+\newlabel{sec:baseline_diagnosis@cref}{{[section][11][]11}{[1][57][]58}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1}The Core Finding}{58}{subsection.243}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.2}Why: The Tabular Regime Effect}{58}{subsection.244}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.3}Implications for Practitioners}{58}{subsection.245}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.4}Lookback, Horizon, and Optimization Target}{58}{subsection.246}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.5}Tuning-Budget Caveat}{58}{subsection.247}\protected@file@percent }
+\citation{borisov2022deep}
+\citation{lundberg2017shap}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.6}Feature Importance and Representation Analysis}{59}{subsection.248}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{SHAP-based explainability.}{59}{section*.252}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {36}{\ignorespaces SHAP summary plot for the load forecasting model. The 168-hour lag and hour-of-day features dominate, confirming the tabular regime effect.}}{60}{figure.caption.253}\protected@file@percent }
+\newlabel{fig:FIG32_SHAP_SUMMARY_LOAD}{{36}{60}{SHAP summary plot for the load forecasting model. The 168-hour lag and hour-of-day features dominate, confirming the tabular regime effect}{figure.caption.253}{}}
+\newlabel{fig:FIG32_SHAP_SUMMARY_LOAD@cref}{{[figure][36][]36}{[1][59][]60}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {37}{\ignorespaces SHAP summary plot for the wind forecasting model. The 1-hour lag and hub-height wind speed are the primary drivers, reflecting wind's strong persistence structure.}}{61}{figure.caption.254}\protected@file@percent }
+\newlabel{fig:FIG33_SHAP_SUMMARY_WIND}{{37}{61}{SHAP summary plot for the wind forecasting model. The 1-hour lag and hub-height wind speed are the primary drivers, reflecting wind's strong persistence structure}{figure.caption.254}{}}
+\newlabel{fig:FIG33_SHAP_SUMMARY_WIND@cref}{{[figure][37][]37}{[1][59][]61}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {38}{\ignorespaces SHAP summary plot for the solar forecasting model. Hour-of-day dominates due to the diurnal cycle; cloud cover is the primary weather driver.}}{62}{figure.caption.255}\protected@file@percent }
+\newlabel{fig:FIG34_SHAP_SUMMARY_SOLAR}{{38}{62}{SHAP summary plot for the solar forecasting model. Hour-of-day dominates due to the diurnal cycle; cloud cover is the primary weather driver}{figure.caption.255}{}}
+\newlabel{fig:FIG34_SHAP_SUMMARY_SOLAR@cref}{{[figure][38][]38}{[1][59][]62}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {39}{\ignorespaces Per-target forecast vs.\ actual: load. GBM captures the diurnal and weekly patterns with tight residuals.}}{63}{figure.caption.256}\protected@file@percent }
+\newlabel{fig:FIG35_FORECAST_VS_ACTUAL_LOAD}{{39}{63}{Per-target forecast vs.\ actual: load. GBM captures the diurnal and weekly patterns with tight residuals}{figure.caption.256}{}}
+\newlabel{fig:FIG35_FORECAST_VS_ACTUAL_LOAD@cref}{{[figure][39][]39}{[1][59][]63}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {40}{\ignorespaces Per-target forecast vs.\ actual: wind. Forecast errors are largest during rapid ramp events, which the conformal layer captures with wider intervals.}}{63}{figure.caption.257}\protected@file@percent }
+\newlabel{fig:FIG36_FORECAST_VS_ACTUAL_WIND}{{40}{63}{Per-target forecast vs.\ actual: wind. Forecast errors are largest during rapid ramp events, which the conformal layer captures with wider intervals}{figure.caption.257}{}}
+\newlabel{fig:FIG36_FORECAST_VS_ACTUAL_WIND@cref}{{[figure][40][]40}{[1][59][]63}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {41}{\ignorespaces Per-target forecast vs.\ actual: solar. Nighttime zeros are trivially correct; daytime cloud-cover transitions drive the largest errors.}}{63}{figure.caption.258}\protected@file@percent }
+\newlabel{fig:FIG37_FORECAST_VS_ACTUAL_SOLAR}{{41}{63}{Per-target forecast vs.\ actual: solar. Nighttime zeros are trivially correct; daytime cloud-cover transitions drive the largest errors}{figure.caption.258}{}}
+\newlabel{fig:FIG37_FORECAST_VS_ACTUAL_SOLAR@cref}{{[figure][41][]41}{[1][59][]63}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {42}{\ignorespaces Residual error distributions for all three forecast targets. Load residuals are approximately Gaussian; wind and solar residuals exhibit heavier tails, justifying the conformal (distribution-free) calibration approach.}}{64}{figure.caption.259}\protected@file@percent }
+\newlabel{fig:FIG47_ERROR_DISTRIBUTION}{{42}{64}{Residual error distributions for all three forecast targets. Load residuals are approximately Gaussian; wind and solar residuals exhibit heavier tails, justifying the conformal (distribution-free) calibration approach}{figure.caption.259}{}}
+\newlabel{fig:FIG47_ERROR_DISTRIBUTION@cref}{{[figure][42][]42}{[1][59][]64}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {43}{\ignorespaces Seasonality--hour error heatmap. Forecast errors cluster in afternoon hours for solar and evening ramp hours for load, informing time-of-day-aware operational scheduling.}}{64}{figure.caption.260}\protected@file@percent }
+\newlabel{fig:FIG48_SEASONALITY_ERROR_HEATMAP}{{43}{64}{Seasonality--hour error heatmap. Forecast errors cluster in afternoon hours for solar and evening ramp hours for load, informing time-of-day-aware operational scheduling}{figure.caption.260}{}}
+\newlabel{fig:FIG48_SEASONALITY_ERROR_HEATMAP@cref}{{[figure][43][]43}{[1][59][]64}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {12}Cross-Region and US Regime Analysis}{65}{section.261}\protected@file@percent }
+\newlabel{sec:us_analysis}{{12}{65}{Cross-Region and US Regime Analysis}{section.261}{}}
+\newlabel{sec:us_analysis@cref}{{[section][12][]12}{[1][59][]65}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.1}Why US Direct Gains Are Weak}{65}{subsection.262}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.2}Arbitrage Headroom and Tariff Structure}{65}{subsection.263}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {44}{\ignorespaces Arbitrage optimization across US balancing authorities. The price spread structure differs substantially across MISO, PJM, and ERCOT, explaining the per-BA variation in dispatch impact.}}{65}{figure.caption.264}\protected@file@percent }
+\newlabel{fig:FIG40_ARBITRAGE_OPTIMIZATION}{{44}{65}{Arbitrage optimization across US balancing authorities. The price spread structure differs substantially across MISO, PJM, and ERCOT, explaining the per-BA variation in dispatch impact}{figure.caption.264}{}}
+\newlabel{fig:FIG40_ARBITRAGE_OPTIMIZATION@cref}{{[figure][44][]44}{[1][65][]65}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.3}Battery Utilization and Constraint Binding}{65}{subsection.266}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.4}Calibration Quality and Optimization Leverage}{65}{subsection.267}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {45}{\ignorespaces Cost--carbon tradeoff Pareto frontier across regions. DE offers wider optimization headroom; US operates in a tighter regime where cost and carbon improvements are more constrained.}}{66}{figure.caption.265}\protected@file@percent }
+\newlabel{fig:FIG22_COST_CARBON_TRADEOFF}{{45}{66}{Cost--carbon tradeoff Pareto frontier across regions. DE offers wider optimization headroom; US operates in a tighter regime where cost and carbon improvements are more constrained}{figure.caption.265}{}}
+\newlabel{fig:FIG22_COST_CARBON_TRADEOFF@cref}{{[figure][45][]45}{[1][65][]66}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.5}Region Heterogeneity Inside ``US''}{66}{subsection.268}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.6}Per-Balancing-Authority Dispatch Impact}{66}{subsection.269}\protected@file@percent }
+\newlabel{sec:per_ba_impact}{{12.6}{66}{Per-Balancing-Authority Dispatch Impact}{subsection.269}{}}
+\newlabel{sec:per_ba_impact@cref}{{[subsection][6][12]12.6}{[1][66][]66}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {26}{\ignorespaces Per-balancing-authority dispatch impact from locked release-family artifacts. All values from the optimized-forecast controller versus grid-only baseline over 168 test steps. PJM's large cost saving and negative carbon delta reflect its heavier fossil mix and wider price spreads.}}{66}{table.caption.270}\protected@file@percent }
+\newlabel{tab:ba_impact}{{26}{66}{Per-balancing-authority dispatch impact from locked release-family artifacts. All values from the optimized-forecast controller versus grid-only baseline over 168 test steps. PJM's large cost saving and negative carbon delta reflect its heavier fossil mix and wider price spreads}{table.caption.270}{}}
+\newlabel{tab:ba_impact@cref}{{[table][26][]26}{[1][66][]66}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {12.7}Per-Balancing-Authority Structural Differences}{67}{subsection.274}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {27}{\ignorespaces Structural differences across US balancing authorities in the release-family assets.}}{67}{table.caption.275}\protected@file@percent }
+\newlabel{tab:ba_structure}{{27}{67}{Structural differences across US balancing authorities in the release-family assets}{table.caption.275}{}}
+\newlabel{tab:ba_structure@cref}{{[table][27][]27}{[1][67][]67}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {13}Battery Theorem Validation}{68}{section.276}\protected@file@percent }
+\newlabel{sec:theorem_validation_longform}{{13}{68}{Battery Theorem Validation}{section.276}{}}
+\newlabel{sec:theorem_validation_longform@cref}{{[section][13][]13}{[1][68][]68}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {14}Assumptions, Notation, and Proof Discipline}{68}{section.277}\protected@file@percent }
+\newlabel{ch:assumptions}{{14}{68}{Assumptions, Notation, and Proof Discipline}{section.277}{}}
+\newlabel{ch:assumptions@cref}{{[section][14][]14}{[1][68][]68}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {14.1}Stable Notation}{68}{subsection.278}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Battery instantiation.}{68}{section*.279}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {14.2}Assumption IDs (A1--A8)}{68}{subsection.280}\protected@file@percent }
+\newlabel{assm:A1}{{1}{68}{A1: Bounded model error}{assumption.281}{}}
+\newlabel{assm:A1@cref}{{[assumption][1][]1}{[1][68][]68}{}{}{}}
+\newlabel{assm:A2}{{2}{69}{A2: Bounded telemetry error}{assumption.282}{}}
+\newlabel{assm:A2@cref}{{[assumption][2][]2}{[1][68][]69}{}{}{}}
+\newlabel{assm:A3}{{3}{69}{A3: Feasible safe repair}{assumption.283}{}}
+\newlabel{assm:A3@cref}{{[assumption][3][]3}{[1][69][]69}{}{}{}}
+\newlabel{assm:A4}{{4}{69}{A4: Known dynamics}{assumption.284}{}}
+\newlabel{assm:A4@cref}{{[assumption][4][]4}{[1][69][]69}{}{}{}}
+\newlabel{assm:A5}{{5}{69}{A5: Monotone bounded uncertainty inflation}{assumption.285}{}}
+\newlabel{assm:A5@cref}{{[assumption][5][]5}{[1][69][]69}{}{}{}}
+\newlabel{assm:A6}{{6}{69}{A6: Bounded detector lag}{assumption.286}{}}
+\newlabel{assm:A6@cref}{{[assumption][6][]6}{[1][69][]69}{}{}{}}
+\newlabel{assm:A7}{{7}{69}{A7: Causal certificate update}{assumption.287}{}}
+\newlabel{assm:A7@cref}{{[assumption][7][]7}{[1][69][]69}{}{}{}}
+\newlabel{assm:A8}{{8}{69}{A8: Admissible fallback policy}{assumption.288}{}}
+\newlabel{assm:A8@cref}{{[assumption][8][]8}{[1][69][]69}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {14.3}Proof Dependency Matrix}{69}{subsection.289}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {28}{\ignorespaces Assumption dependencies of main theorems.}}{69}{table.caption.290}\protected@file@percent }
+\newlabel{tab:proof-deps}{{28}{69}{Assumption dependencies of main theorems}{table.caption.290}{}}
+\newlabel{tab:proof-deps@cref}{{[table][28][]28}{[1][69][]69}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {14.4}Marginal Versus Conditional Coverage}{69}{subsection.291}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {14.5}One-Step Versus Multi-Step Claims}{70}{subsection.292}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {14.6}The Theorem Ladder}{70}{subsection.293}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {14.7}Theorem-Writing Discipline}{70}{subsection.299}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {14.8}Common Theorem Failure Modes}{71}{subsection.305}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {14.9}Chapter Summary}{71}{subsection.310}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {15}Battery Theorem 1: OASG Existence}{71}{section.311}\protected@file@percent }
+\newlabel{ch:theorem-oasg}{{15}{71}{Battery Theorem 1: OASG Existence}{section.311}{}}
+\newlabel{ch:theorem-oasg@cref}{{[section][15][]15}{[1][71][]71}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.1}Battery-Domain Setup}{71}{subsection.312}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.2}Observed and True Safety Predicates}{72}{subsection.313}\protected@file@percent }
+\newlabel{def:obs-safe}{{2}{72}{Observed safety}{definition.314}{}}
+\newlabel{def:obs-safe@cref}{{[definition][2][]2}{[1][71][]72}{}{}{}}
+\newlabel{def:true-safe}{{3}{72}{True safety}{definition.315}{}}
+\newlabel{def:true-safe@cref}{{[definition][3][]3}{[1][72][]72}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.3}Assumptions Used}{72}{subsection.316}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.4}Auxiliary Lemmas}{72}{subsection.317}\protected@file@percent }
+\newlabel{lem:obs-gap-dropout}{{4}{72}{Observation gap under dropout}{theorem.318}{}}
+\newlabel{lem:obs-gap-dropout@cref}{{[theorem][4][]4}{[1][72][]72}{}{}{}}
+\newlabel{lem:boundary-proximity}{{5}{72}{Boundary proximity under arbitrage}{theorem.319}{}}
+\newlabel{lem:boundary-proximity@cref}{{[theorem][5][]5}{[1][72][]72}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.5}Main Theorem: OASG Existence}{73}{subsection.320}\protected@file@percent }
+\newlabel{thm:oasg-existence}{{6}{73}{OASG Existence}{theorem.321}{}}
+\newlabel{thm:oasg-existence@cref}{{[theorem][6][]6}{[1][72][]73}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.6}Interpretive Table}{73}{subsection.322}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {29}{\ignorespaces Mapping OASG Existence theorem to battery domain.}}{73}{table.caption.323}\protected@file@percent }
+\newlabel{tab:oasg-interpretation}{{29}{73}{Mapping OASG Existence theorem to battery domain}{table.caption.323}{}}
+\newlabel{tab:oasg-interpretation@cref}{{[table][29][]29}{[1][73][]73}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.7}Artifact-Backed Figure}{73}{subsection.324}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.8}Corollaries}{73}{subsection.326}\protected@file@percent }
+\newlabel{cor:oasg-rate}{{2}{73}{OASG rate lower bound}{corollary.327}{}}
+\newlabel{cor:oasg-rate@cref}{{[corollary][2][]2}{[1][73][]73}{}{}{}}
+\newlabel{cor:oasg-severity}{{3}{73}{OASG severity}{corollary.328}{}}
+\newlabel{cor:oasg-severity@cref}{{[corollary][3][]3}{[1][73][]73}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {46}{\ignorespaces Empirical OASG rate (TSVR) versus dropout rate for the deterministic LP. Non-zero TSVR at all $d > 0$ confirms Theorem~\ref {thm:oasg-existence}.}}{74}{figure.caption.325}\protected@file@percent }
+\newlabel{fig:oasg-evidence}{{46}{74}{Empirical OASG rate (TSVR) versus dropout rate for the deterministic LP. Non-zero TSVR at all $d > 0$ confirms Theorem~\ref {thm:oasg-existence}}{figure.caption.325}{}}
+\newlabel{fig:oasg-evidence@cref}{{[figure][46][]46}{[1][73][]74}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.9}What This Theorem Does Not Prove}{74}{subsection.329}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {15.10}Chapter Summary}{74}{subsection.333}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {16}Battery Theorem 2: Safety Preservation Under the Shield}{74}{section.334}\protected@file@percent }
+\newlabel{ch:theorem-safety}{{16}{74}{Battery Theorem 2: Safety Preservation Under the Shield}{section.334}{}}
+\newlabel{ch:theorem-safety@cref}{{[section][16][]16}{[1][74][]74}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.1}Tightened Safe Action Set}{75}{subsection.335}\protected@file@percent }
+\newlabel{def:tightened-set}{{4}{75}{Tightened safe-action set}{definition.336}{}}
+\newlabel{def:tightened-set@cref}{{[definition][4][]4}{[1][74][]75}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.2}Assumptions Used}{75}{subsection.337}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.3}Auxiliary Propositions}{75}{subsection.338}\protected@file@percent }
+\newlabel{prop:margin-dominates}{{2}{75}{Margin dominates observation gap}{proposition.339}{}}
+\newlabel{prop:margin-dominates@cref}{{[proposition][2][]2}{[1][75][]75}{}{}{}}
+\newlabel{prop:tightened-implies-true}{{3}{75}{Tightened feasibility implies true feasibility}{proposition.340}{}}
+\newlabel{prop:tightened-implies-true@cref}{{[proposition][3][]3}{[1][75][]75}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.4}Main Theorem: Safety Preservation}{76}{subsection.341}\protected@file@percent }
+\newlabel{thm:safety-preservation}{{7}{76}{Safety Preservation}{theorem.342}{}}
+\newlabel{thm:safety-preservation@cref}{{[theorem][7][]7}{[1][75][]76}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.5}Scalar SOC Derivation}{76}{subsection.343}\protected@file@percent }
+\newlabel{eq:soc-lower}{{17}{76}{Scalar SOC Derivation}{equation.344}{}}
+\newlabel{eq:soc-lower@cref}{{[equation][17][]17}{[1][76][]76}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.6}Proof Roadmap Table}{76}{subsection.345}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {30}{\ignorespaces Proof roadmap for Safety Preservation.}}{76}{table.caption.346}\protected@file@percent }
+\newlabel{tab:safety-roadmap}{{30}{76}{Proof roadmap for Safety Preservation}{table.caption.346}{}}
+\newlabel{tab:safety-roadmap@cref}{{[table][30][]30}{[1][76][]76}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.7}Artifact-Backed Figure}{76}{subsection.347}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.8}Corollaries}{76}{subsection.349}\protected@file@percent }
+\newlabel{cor:zero-violation}{{4}{76}{Zero-violation regime}{corollary.350}{}}
+\newlabel{cor:zero-violation@cref}{{[corollary][4][]4}{[1][76][]76}{}{}{}}
+\newlabel{cor:ir-safety}{{5}{76}{Intervention-safety tradeoff}{corollary.351}{}}
+\newlabel{cor:ir-safety@cref}{{[corollary][5][]5}{[1][76][]76}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {47}{\ignorespaces P95 violation severity versus dropout rate. The DC3S shield (blue) achieves zero severity across all dropout rates, confirming Theorem~\ref {thm:safety-preservation}.}}{77}{figure.caption.348}\protected@file@percent }
+\newlabel{fig:safety-preservation-evidence}{{47}{77}{P95 violation severity versus dropout rate. The DC3S shield (blue) achieves zero severity across all dropout rates, confirming Theorem~\ref {thm:safety-preservation}}{figure.caption.348}{}}
+\newlabel{fig:safety-preservation-evidence@cref}{{[figure][47][]47}{[1][76][]77}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.9}What This Theorem Does Not Prove}{77}{subsection.352}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {16.10}Chapter Summary}{77}{subsection.356}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {17}The ORIUS Core Bound in Battery}{77}{section.357}\protected@file@percent }
+\newlabel{ch:core-bound}{{17}{77}{The ORIUS Core Bound in Battery}{section.357}{}}
+\newlabel{ch:core-bound@cref}{{[section][17][]17}{[1][77][]77}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.1}Violation Process and Horizon Notation}{78}{subsection.358}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.2}Per-Step Risk Lemma}{78}{subsection.359}\protected@file@percent }
+\newlabel{lem:per-step-risk}{{8}{78}{Per-step violation probability}{theorem.360}{}}
+\newlabel{lem:per-step-risk@cref}{{[theorem][8][]8}{[1][78][]78}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.3}Main Theorem: ORIUS Core Bound}{78}{subsection.361}\protected@file@percent }
+\newlabel{thm:core-bound}{{9}{78}{ORIUS Core Bound}{theorem.362}{}}
+\newlabel{thm:core-bound@cref}{{[theorem][9][]9}{[1][78][]78}{}{}{}}
+\newlabel{eq:core-bound}{{18}{79}{Main Theorem: ORIUS Core Bound}{equation.363}{}}
+\newlabel{eq:core-bound@cref}{{[equation][18][]18}{[1][78][]79}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.4}Equivalent Average-Rate Form}{79}{subsection.364}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.5}Special Cases Table}{79}{subsection.365}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {31}{\ignorespaces ORIUS Core Bound: special cases ($\alpha = 0.10$, $T = 1680$).}}{79}{table.caption.366}\protected@file@percent }
+\newlabel{tab:core-bound-cases}{{31}{79}{ORIUS Core Bound: special cases ($\alpha = 0.10$, $T = 1680$)}{table.caption.366}{}}
+\newlabel{tab:core-bound-cases@cref}{{[table][31][]31}{[1][79][]79}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.6}Artifact-Backed Figure}{80}{subsection.367}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {48}{\ignorespaces Empirical TSVR (markers) versus the ORIUS Core Bound (dashed line) as a function of average reliability $\bar  {w}$. All empirical points lie below the bound.}}{80}{figure.caption.368}\protected@file@percent }
+\newlabel{fig:core-bound-evidence}{{48}{80}{Empirical TSVR (markers) versus the ORIUS Core Bound (dashed line) as a function of average reliability $\bar {w}$. All empirical points lie below the bound}{figure.caption.368}{}}
+\newlabel{fig:core-bound-evidence@cref}{{[figure][48][]48}{[1][79][]80}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.7}Corollaries}{80}{subsection.369}\protected@file@percent }
+\newlabel{cor:perfect-telemetry}{{6}{80}{Perfect-telemetry collapse}{corollary.370}{}}
+\newlabel{cor:perfect-telemetry@cref}{{[corollary][6][]6}{[1][80][]80}{}{}{}}
+\newlabel{cor:proportional-safety}{{7}{80}{Reliability-proportional safety}{corollary.371}{}}
+\newlabel{cor:proportional-safety@cref}{{[corollary][7][]7}{[1][80][]80}{}{}{}}
+\newlabel{cor:intervention-sufficiency}{{8}{80}{Intervention sufficiency}{corollary.372}{}}
+\newlabel{cor:intervention-sufficiency@cref}{{[corollary][8][]8}{[1][80][]80}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.8}What This Theorem Does Not Prove}{80}{subsection.373}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {17.9}Chapter Summary}{81}{subsection.377}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {18}No Free Safety Theorem in Battery}{81}{section.378}\protected@file@percent }
+\newlabel{ch:no-free-safety}{{18}{81}{No Free Safety Theorem in Battery}{section.378}{}}
+\newlabel{ch:no-free-safety@cref}{{[section][18][]18}{[1][81][]81}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.1}Quality-Ignorant Controller Class}{81}{subsection.379}\protected@file@percent }
+\newlabel{def:quality-ignorant}{{5}{81}{Quality-ignorant controller}{definition.380}{}}
+\newlabel{def:quality-ignorant@cref}{{[definition][5][]5}{[1][81][]81}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.2}Auxiliary Lemmas}{81}{subsection.381}\protected@file@percent }
+\newlabel{lem:admissible-fault}{{10}{81}{Admissible fault sequence existence}{theorem.382}{}}
+\newlabel{lem:admissible-fault@cref}{{[theorem][10][]10}{[1][81][]81}{}{}{}}
+\newlabel{lem:no-margin}{{11}{82}{No margin compensation for quality-ignorant controllers}{theorem.386}{}}
+\newlabel{lem:no-margin@cref}{{[theorem][11][]11}{[1][81][]82}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.3}Constructive Fault-Sequence Logic}{82}{subsection.387}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.4}Main Theorem: No Free Safety}{82}{subsection.391}\protected@file@percent }
+\newlabel{thm:no-free-safety}{{12}{82}{No Free Safety}{theorem.392}{}}
+\newlabel{thm:no-free-safety@cref}{{[theorem][12][]12}{[1][82][]82}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {32}{\ignorespaces Mapping No Free Safety theorem to battery domain.}}{83}{table.caption.394}\protected@file@percent }
+\newlabel{tab:no-free-safety-interp}{{32}{83}{Mapping No Free Safety theorem to battery domain}{table.caption.394}{}}
+\newlabel{tab:no-free-safety-interp@cref}{{[table][32][]32}{[1][82][]83}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {49}{\ignorespaces P95 violation severity for quality-ignorant controllers (LP, CQR-only) versus DC3S across dropout rates. Quality-ignorant controllers exhibit non-zero severity at all $d > 0$, confirming Theorem~\ref {thm:no-free-safety}.}}{83}{figure.caption.396}\protected@file@percent }
+\newlabel{fig:no-free-safety-evidence}{{49}{83}{P95 violation severity for quality-ignorant controllers (LP, CQR-only) versus DC3S across dropout rates. Quality-ignorant controllers exhibit non-zero severity at all $d > 0$, confirming Theorem~\ref {thm:no-free-safety}}{figure.caption.396}{}}
+\newlabel{fig:no-free-safety-evidence@cref}{{[figure][49][]49}{[1][82][]83}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.5}Interpretive Table}{83}{subsection.393}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.6}Artifact-Backed Figure}{83}{subsection.395}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.7}Corollary}{83}{subsection.397}\protected@file@percent }
+\newlabel{cor:reliability-necessary}{{9}{83}{Reliability awareness is necessary}{corollary.398}{}}
+\newlabel{cor:reliability-necessary@cref}{{[corollary][9][]9}{[1][82][]83}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.8}What This Theorem Does Not Prove}{83}{subsection.399}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {18.9}Chapter Summary}{84}{subsection.403}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {19}Temporal and Behavioral Extensions in Battery}{84}{section.404}\protected@file@percent }
+\newlabel{ch:temporal-extensions}{{19}{84}{Temporal and Behavioral Extensions in Battery}{section.404}{}}
+\newlabel{ch:temporal-extensions@cref}{{[section][19][]19}{[1][84][]84}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.1}Certificate Object and Validity Horizon}{84}{subsection.405}\protected@file@percent }
+\newlabel{def:certificate}{{6}{84}{Safety certificate}{definition.406}{}}
+\newlabel{def:certificate@cref}{{[definition][6][]6}{[1][84][]84}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.2}Forward-Tube Construction}{84}{subsection.407}\protected@file@percent }
+\newlabel{def:forward-tube}{{7}{84}{Forward tube}{definition.408}{}}
+\newlabel{def:forward-tube@cref}{{[definition][7][]7}{[1][84][]84}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.3}Main Temporal Theorems}{85}{subsection.409}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {19.3.1}Certificate Validity Horizon}{85}{subsubsection.410}\protected@file@percent }
+\newlabel{thm:cert-horizon}{{13}{85}{Certificate validity horizon}{theorem.411}{}}
+\newlabel{thm:cert-horizon@cref}{{[theorem][13][]13}{[1][85][]85}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {19.3.2}Certificate Expiration Bound}{85}{subsubsection.412}\protected@file@percent }
+\newlabel{thm:cert-expiration}{{14}{85}{Certificate expiration bound}{theorem.413}{}}
+\newlabel{thm:cert-expiration@cref}{{[theorem][14][]14}{[1][85][]85}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {19.3.3}Certificate Half-Life Corollary}{85}{subsubsection.414}\protected@file@percent }
+\newlabel{cor:half-life}{{10}{85}{Certificate half-life}{corollary.415}{}}
+\newlabel{cor:half-life@cref}{{[corollary][10][]10}{[1][85][]85}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.4}Temporal Summary Table}{86}{subsection.416}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {33}{\ignorespaces Temporal extension results: validity horizon, expiration bound, and half-life under representative conditions ($\sigma _d = 1.55$~MW, $q_{\text  {eff}} = 8.2$~MWh, $\alpha = 0.10$).}}{86}{table.caption.417}\protected@file@percent }
+\newlabel{tab:temporal-summary}{{33}{86}{Temporal extension results: validity horizon, expiration bound, and half-life under representative conditions ($\sigma _d = 1.55$~MW, $q_{\text {eff}} = 8.2$~MWh, $\alpha = 0.10$)}{table.caption.417}{}}
+\newlabel{tab:temporal-summary@cref}{{[table][33][]33}{[1][85][]86}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.5}Fallback and Graceful Degradation}{86}{subsection.418}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {19.5.1}Feasible Fallback Existence}{86}{subsubsection.419}\protected@file@percent }
+\newlabel{thm:fallback-existence}{{15}{86}{Feasible fallback existence}{theorem.420}{}}
+\newlabel{thm:fallback-existence@cref}{{[theorem][15][]15}{[1][86][]86}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {19.5.2}Graceful Degradation Dominance}{86}{subsubsection.421}\protected@file@percent }
+\newlabel{thm:graceful-dominance}{{16}{86}{Graceful degradation dominance}{theorem.422}{}}
+\newlabel{thm:graceful-dominance@cref}{{[theorem][16][]16}{[1][86][]86}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {19.5.3}Safe-Budget Monotonicity}{87}{subsubsection.423}\protected@file@percent }
+\newlabel{prop:budget-monotonicity}{{4}{87}{Safe-budget monotonicity}{proposition.424}{}}
+\newlabel{prop:budget-monotonicity@cref}{{[proposition][4][]4}{[1][87][]87}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.6}Behavioral Comparison Table}{87}{subsection.425}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {34}{\ignorespaces Behavioral comparison: graceful degradation versus alternatives.}}{87}{table.caption.426}\protected@file@percent }
+\newlabel{tab:behavioral-comparison}{{34}{87}{Behavioral comparison: graceful degradation versus alternatives}{table.caption.426}{}}
+\newlabel{tab:behavioral-comparison@cref}{{[table][34][]34}{[1][87][]87}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.7}Artifact-Backed Figure}{87}{subsection.427}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.8}What This Chapter Does Not Prove}{87}{subsection.429}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {50}{\ignorespaces Coverage--width tradeoff under temporal extension. As the certificate ages (horizontal axis), the coverage probability decreases while the interval width increases. The half-life (vertical dashed line) marks the crossover point.}}{88}{figure.caption.428}\protected@file@percent }
+\newlabel{fig:temporal-evidence}{{50}{88}{Coverage--width tradeoff under temporal extension. As the certificate ages (horizontal axis), the coverage probability decreases while the interval width increases. The half-life (vertical dashed line) marks the crossover point}{figure.caption.428}{}}
+\newlabel{fig:temporal-evidence@cref}{{[figure][50][]50}{[1][87][]88}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {19.9}Chapter Summary}{88}{subsection.435}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {20}Governance and Reproducibility}{88}{section.436}\protected@file@percent }
+\newlabel{sec:governance}{{20}{88}{Governance and Reproducibility}{section.436}{}}
+\newlabel{sec:governance@cref}{{[section][20][]20}{[1][88][]88}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {20.1}Source of Truth}{88}{subsection.437}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {20.2}Repo-to-Paper Traceability}{89}{subsection.438}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Model registry and promotion.}{89}{section*.439}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {35}{\ignorespaces Repository artifact traceability for the paper pipeline.}}{89}{table.caption.440}\protected@file@percent }
+\newlabel{tab:repo_traceability}{{35}{89}{Repository artifact traceability for the paper pipeline}{table.caption.440}{}}
+\newlabel{tab:repo_traceability@cref}{{[table][35][]35}{[1][89][]89}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {20.3}Deployment Evidence}{89}{subsection.441}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {36}{\ignorespaces Deployment evidence map: code surface $\to $ governed artifact $\to $ manuscript claim.}}{89}{table.caption.442}\protected@file@percent }
+\newlabel{tab:evidence_map}{{36}{89}{Deployment evidence map: code surface $\to $ governed artifact $\to $ manuscript claim}{table.caption.442}{}}
+\newlabel{tab:evidence_map@cref}{{[table][36][]36}{[1][89][]89}{}{}{}}
+\citation{pineau2021improving}
+\@writefile{toc}{\contentsline {subsection}{\numberline {20.4}Validation Gates}{90}{subsection.443}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {20.5}What Governance Does Not Claim}{90}{subsection.448}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {20.6}Incident Response and Operational Safeguards}{90}{subsection.449}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Observability stack.}{91}{section*.454}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {51}{\ignorespaces Data drift monitoring timeline. KS-statistic and Page-Hinkley scores track distributional shifts in incoming telemetry, triggering drift flags that feed the reliability scorer.}}{91}{figure.caption.455}\protected@file@percent }
+\newlabel{fig:FIG25_DATA_DRIFT}{{51}{91}{Data drift monitoring timeline. KS-statistic and Page-Hinkley scores track distributional shifts in incoming telemetry, triggering drift flags that feed the reliability scorer}{figure.caption.455}{}}
+\newlabel{fig:FIG25_DATA_DRIFT@cref}{{[figure][51][]51}{[1][91][]91}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {52}{\ignorespaces KS-statistic over time for data drift detection. Sustained breaches above the threshold trigger retraining alerts and increase the inflation factor via the drift component.}}{91}{figure.caption.456}\protected@file@percent }
+\newlabel{fig:FIG44_DATA_DRIFT_KS}{{52}{91}{KS-statistic over time for data drift detection. Sustained breaches above the threshold trigger retraining alerts and increase the inflation factor via the drift component}{figure.caption.456}{}}
+\newlabel{fig:FIG44_DATA_DRIFT_KS@cref}{{[figure][52][]52}{[1][91][]91}{}{}{}}
+\@writefile{toc}{\contentsline {paragraph}{Operator dashboard.}{91}{section*.459}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {53}{\ignorespaces Model drift metrics over time. Forecast accuracy degradation is tracked by rolling RMSE and coverage deviation, enabling proactive retraining decisions.}}{92}{figure.caption.457}\protected@file@percent }
+\newlabel{fig:FIG45_MODEL_DRIFT_METRIC}{{53}{92}{Model drift metrics over time. Forecast accuracy degradation is tracked by rolling RMSE and coverage deviation, enabling proactive retraining decisions}{figure.caption.457}{}}
+\newlabel{fig:FIG45_MODEL_DRIFT_METRIC@cref}{{[figure][53][]53}{[1][91][]92}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {54}{\ignorespaces Residual $z$-score timeline for the anomaly detection pipeline. Scores exceeding $\pm 3\sigma $ are flagged as anomalous and fed into the reliability scorer.}}{92}{figure.caption.458}\protected@file@percent }
+\newlabel{fig:FIG46_RESIDUAL_ZSCORE}{{54}{92}{Residual $z$-score timeline for the anomaly detection pipeline. Scores exceeding $\pm 3\sigma $ are flagged as anomalous and fed into the reliability scorer}{figure.caption.458}{}}
+\newlabel{fig:FIG46_RESIDUAL_ZSCORE@cref}{{[figure][54][]54}{[1][91][]92}{}{}{}}
+\@writefile{toc}{\contentsline {paragraph}{Containerized deployment.}{93}{section*.460}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {21}Extended Battery Validation and Thesis Hardening}{93}{section.461}\protected@file@percent }
+\newlabel{sec:hardening_longform}{{21}{93}{Extended Battery Validation and Thesis Hardening}{section.461}{}}
+\newlabel{sec:hardening_longform@cref}{{[section][21][]21}{[1][93][]93}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {22}Fault-Performance Stress Tests}{93}{section.462}\protected@file@percent }
+\newlabel{ch:fault-stress}{{22}{93}{Fault-Performance Stress Tests}{section.462}{}}
+\newlabel{ch:fault-stress@cref}{{[section][22][]22}{[1][93][]93}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {22.1}Motivation}{93}{subsection.463}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {22.2}Fault Taxonomy}{93}{subsection.464}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {22.3}Controller Comparison Across Faults}{94}{subsection.465}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {22.4}Per-Fault Results}{94}{subsection.471}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {37}{\ignorespaces True-SOC violation rate (\%) by fault dimension and severity, pivoted across controllers. Source: \texttt  {reports/publication/fault\_performance\_pivot.csv}.}}{94}{table.caption.472}\protected@file@percent }
+\newlabel{tab:fault-stress}{{37}{94}{True-SOC violation rate (\%) by fault dimension and severity, pivoted across controllers. Source: \texttt {reports/publication/fault\_performance\_pivot.csv}}{table.caption.472}{}}
+\newlabel{tab:fault-stress@cref}{{[table][37][]37}{[1][94][]94}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {22.5}Intervention Rate and Cost Delta}{95}{subsection.473}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {38}{\ignorespaces DC3S+FTIT intervention rate and cost delta at maximum tested severity per fault dimension.}}{95}{table.caption.474}\protected@file@percent }
+\newlabel{tab:fault-ir}{{38}{95}{DC3S+FTIT intervention rate and cost delta at maximum tested severity per fault dimension}{table.caption.474}{}}
+\newlabel{tab:fault-ir@cref}{{[table][38][]38}{[1][95][]95}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {22.6}Cross-Fault Stability Analysis}{95}{subsection.475}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {22.7}Which Faults Are Hardest?}{95}{subsection.476}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {22.8}Summary}{95}{subsection.481}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {23}Runtime Latency and Systems Footprint}{96}{section.482}\protected@file@percent }
+\newlabel{ch:latency}{{23}{96}{Runtime Latency and Systems Footprint}{section.482}{}}
+\newlabel{ch:latency@cref}{{[section][23][]23}{[1][96][]96}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {23.1}Why Latency Matters for Real-Time Dispatch}{96}{subsection.483}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {23.2}Measurement Methodology}{96}{subsection.484}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {23.3}Per-Component Latency}{96}{subsection.485}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {39}{\ignorespaces Per-component DC3S latency statistics (milliseconds). Source: \texttt  {reports/publication/dc3s\_latency\_summary.csv}.}}{96}{table.caption.486}\protected@file@percent }
+\newlabel{tab:latency}{{39}{96}{Per-component DC3S latency statistics (milliseconds). Source: \texttt {reports/publication/dc3s\_latency\_summary.csv}}{table.caption.486}{}}
+\newlabel{tab:latency@cref}{{[table][39][]39}{[1][96][]96}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {23.4}Statistical Summary}{96}{subsection.487}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {23.5}Runtime Memory Footprint}{97}{subsection.488}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {23.6}Solver Infeasibility Rate}{97}{subsection.489}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {23.7}Observability Outputs}{97}{subsection.490}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {23.8}Deployment Implications}{97}{subsection.491}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {23.9}Summary}{98}{subsection.495}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {24}Hyperparameter Surface and Stability}{98}{section.496}\protected@file@percent }
+\newlabel{ch:hyperparameter}{{24}{98}{Hyperparameter Surface and Stability}{section.496}{}}
+\newlabel{ch:hyperparameter@cref}{{[section][24][]24}{[1][98][]98}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {24.1}Why Stability Matters}{98}{subsection.497}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {24.2}Sweep Protocol}{98}{subsection.498}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {24.3}TSVR Surface}{98}{subsection.499}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {55}{\ignorespaces TSVR heatmap across the hyperparameter sweep. DC3S achieves 0.00\% TSVR at every tested grid point.}}{99}{figure.caption.500}\protected@file@percent }
+\newlabel{fig:sweep-tsvr}{{55}{99}{TSVR heatmap across the hyperparameter sweep. DC3S achieves 0.00\% TSVR at every tested grid point}{figure.caption.500}{}}
+\newlabel{fig:sweep-tsvr@cref}{{[figure][55][]55}{[1][98][]99}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {24.4}Intervention Rate Surface}{99}{subsection.501}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {56}{\ignorespaces Intervention rate heatmap across the hyperparameter sweep. DC3S+FTIT IR ranges from 0.0\% to 5.4\%.}}{99}{figure.caption.502}\protected@file@percent }
+\newlabel{fig:sweep-ir}{{56}{99}{Intervention rate heatmap across the hyperparameter sweep. DC3S+FTIT IR ranges from 0.0\% to 5.4\%}{figure.caption.502}{}}
+\newlabel{fig:sweep-ir@cref}{{[figure][56][]56}{[1][98][]99}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {24.5}Cost--Safety Trade-off}{99}{subsection.503}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {24.6}Useful Work Preserved}{99}{subsection.505}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {40}{\ignorespaces Cost delta (\%) and TSVR (\%) at sweep corner points (DC3S wrapped and DC3S+FTIT, averaged over seeds 11 and 22).}}{100}{table.caption.504}\protected@file@percent }
+\newlabel{tab:sweep-cost}{{40}{100}{Cost delta (\%) and TSVR (\%) at sweep corner points (DC3S wrapped and DC3S+FTIT, averaged over seeds 11 and 22)}{table.caption.504}{}}
+\newlabel{tab:sweep-cost@cref}{{[table][40][]40}{[1][99][]100}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {24.7}Sensitivity Analysis}{100}{subsection.506}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {24.8}Recommended Operating Region}{100}{subsection.507}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {24.9}Summary}{101}{subsection.508}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {25}Conditional Coverage and Subgroup Calibration}{101}{section.509}\protected@file@percent }
+\newlabel{ch:conditional-coverage}{{25}{101}{Conditional Coverage and Subgroup Calibration}{section.509}{}}
+\newlabel{ch:conditional-coverage@cref}{{[section][25][]25}{[1][101][]101}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {25.1}Why Marginal Coverage Is Insufficient}{101}{subsection.510}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {25.2}Reliability-Bin Stratification}{101}{subsection.511}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {41}{\ignorespaces Coverage and interval width by OQE reliability bin (10 bins, $n=200$ per bin, 90\% target).}}{101}{table.caption.512}\protected@file@percent }
+\newlabel{tab:reliability-coverage}{{41}{101}{Coverage and interval width by OQE reliability bin (10 bins, $n=200$ per bin, 90\% target)}{table.caption.512}{}}
+\newlabel{tab:reliability-coverage@cref}{{[table][41][]41}{[1][101][]101}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {25.3}Volatility-Group Results}{102}{subsection.513}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {42}{\ignorespaces CQR coverage and width by target and volatility group (90\% target, $n=424$ per group).}}{102}{table.caption.514}\protected@file@percent }
+\newlabel{tab:cqr-groups}{{42}{102}{CQR coverage and width by target and volatility group (90\% target, $n=424$ per group)}{table.caption.514}{}}
+\newlabel{tab:cqr-groups@cref}{{[table][42][]42}{[1][101][]102}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {25.4}Under-Coverage Diagnosis}{102}{subsection.515}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {25.5}RAC-Cert Correction Effect}{102}{subsection.516}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {25.6}Solar and Wind Subgroup Behaviour}{102}{subsection.518}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {57}{\ignorespaces Coverage vs.\ interval width across volatility groups. RAC-Cert inflation widens intervals for under-covered subgroups.}}{103}{figure.caption.517}\protected@file@percent }
+\newlabel{fig:coverage-width}{{57}{103}{Coverage vs.\ interval width across volatility groups. RAC-Cert inflation widens intervals for under-covered subgroups}{figure.caption.517}{}}
+\newlabel{fig:coverage-width@cref}{{[figure][57][]57}{[1][102][]103}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {25.7}Summary}{103}{subsection.522}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {26}Regional Decomposition and Real-Price Grounding}{103}{section.523}\protected@file@percent }
+\newlabel{ch:regional}{{26}{103}{Regional Decomposition and Real-Price Grounding}{section.523}{}}
+\newlabel{ch:regional@cref}{{[section][26][]26}{[1][103][]103}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {26.1}Why Regional Decomposition Matters}{103}{subsection.524}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {26.2}Forecast Quality by Region}{104}{subsection.525}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {43}{\ignorespaces Forecast accuracy by region and target (walk-forward evaluation).}}{104}{table.caption.526}\protected@file@percent }
+\newlabel{tab:region-forecast}{{43}{104}{Forecast accuracy by region and target (walk-forward evaluation)}{table.caption.526}{}}
+\newlabel{tab:region-forecast@cref}{{[table][43][]43}{[1][104][]104}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {26.3}Per-Region Safety Results}{104}{subsection.527}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {44}{\ignorespaces DC3S safety comparison across DE and US-MISO (averaged over 3 seeds $\times $ 4 scenarios).}}{104}{table.caption.528}\protected@file@percent }
+\newlabel{tab:region-safety}{{44}{104}{DC3S safety comparison across DE and US-MISO (averaged over 3 seeds $\times $ 4 scenarios)}{table.caption.528}{}}
+\newlabel{tab:region-safety@cref}{{[table][44][]44}{[1][104][]104}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {26.4}Per-BA Results: MISO, PJM, ERCOT}{104}{subsection.529}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {45}{\ignorespaces Per-balancing-authority dispatch impact from the canonical publication package. Values are taken directly from \texttt  {reports/publication/per\_ba\_dispatch\_impact.csv}.}}{105}{table.caption.530}\protected@file@percent }
+\newlabel{tab:per-ba-impact}{{45}{105}{Per-balancing-authority dispatch impact from the canonical publication package. Values are taken directly from \texttt {reports/publication/per\_ba\_dispatch\_impact.csv}}{table.caption.530}{}}
+\newlabel{tab:per-ba-impact@cref}{{[table][45][]45}{[1][104][]105}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {26.5}Price-Signal Effect on Dispatch}{105}{subsection.534}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {26.6}Transfer Validation: DE to US Zero-Shot}{105}{subsection.535}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {26.7}Regional Robustness}{106}{subsection.536}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {26.8}Summary}{106}{subsection.537}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {27}Battery Aging and Asset Preservation Proxy}{106}{section.538}\protected@file@percent }
+\newlabel{ch:aging}{{27}{106}{Battery Aging and Asset Preservation Proxy}{section.538}{}}
+\newlabel{ch:aging@cref}{{[section][27][]27}{[1][106][]106}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {27.1}Why Aging Still Matters}{106}{subsection.539}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {27.2}Locked Aging Calibration Surface}{106}{subsection.540}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {46}{\ignorespaces Locked uncertainty-width multiplier surface from \texttt  {aging\_calibration\_outputs.csv}.}}{107}{table.caption.541}\protected@file@percent }
+\newlabel{tab:aging-multiplier}{{46}{107}{Locked uncertainty-width multiplier surface from \texttt {aging\_calibration\_outputs.csv}}{table.caption.541}{}}
+\newlabel{tab:aging-multiplier@cref}{{[table][46][]46}{[1][106][]107}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {27.3}Asset-Preservation Proxy Table}{107}{subsection.542}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {47}{\ignorespaces Representative rows from the locked asset-preservation proxy table.}}{107}{table.caption.543}\protected@file@percent }
+\newlabel{tab:asset-preservation-proxy}{{47}{107}{Representative rows from the locked asset-preservation proxy table}{table.caption.543}{}}
+\newlabel{tab:asset-preservation-proxy@cref}{{[table][47][]47}{[1][107][]107}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {27.4}Bounded Claim}{107}{subsection.544}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {27.5}What Is Not Yet Implemented}{107}{subsection.545}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {27.6}Summary}{108}{subsection.546}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {28}Hardware-in-the-Loop Validation}{108}{section.547}\protected@file@percent }
+\newlabel{ch:hil}{{28}{108}{Hardware-in-the-Loop Validation}{section.547}{}}
+\newlabel{ch:hil@cref}{{[section][28][]28}{[1][108][]108}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {28.1}Why This Layer Matters}{108}{subsection.548}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {28.2}Locked Runtime Path}{108}{subsection.549}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {28.3}Scenario Coverage}{109}{subsection.550}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {28.4}Step Log and SOC Trace}{109}{subsection.551}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {28.5}Certificate Audit}{109}{subsection.552}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {28.6}Evidence Package}{109}{subsection.553}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {28.7}What This Chapter Establishes}{109}{subsection.555}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {48}{\ignorespaces Locked HIL evidence package for the battery thesis.}}{110}{table.caption.554}\protected@file@percent }
+\newlabel{tab:hil-evidence}{{48}{110}{Locked HIL evidence package for the battery thesis}{table.caption.554}{}}
+\newlabel{tab:hil-evidence@cref}{{[table][48][]48}{[1][109][]110}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {28.8}Summary}{110}{subsection.559}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {29}Certificate Half-Life and Communication Blackout}{110}{section.560}\protected@file@percent }
+\newlabel{ch:cert-half-life-blackout}{{29}{110}{Certificate Half-Life and Communication Blackout}{section.560}{}}
+\newlabel{ch:cert-half-life-blackout@cref}{{[section][29][]29}{[1][110][]110}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {29.1}Why Blackout Stress Matters}{110}{subsection.561}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {29.2}Current Experimental Protocol}{110}{subsection.562}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {29.3}Locked Results}{111}{subsection.567}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {49}{\ignorespaces Locked battery blackout study from \texttt  {blackout\_study.csv}.}}{111}{table.caption.568}\protected@file@percent }
+\newlabel{tab:blackout-study}{{49}{111}{Locked battery blackout study from \texttt {blackout\_study.csv}}{table.caption.568}{}}
+\newlabel{tab:blackout-study@cref}{{[table][49][]49}{[1][111][]111}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {29.4}What the Current Result Does and Does Not Show}{111}{subsection.569}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {29.5}Operational Consequence}{111}{subsection.570}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {29.6}Summary}{112}{subsection.571}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {30}Graceful Degradation and Safe Landing}{112}{section.572}\protected@file@percent }
+\newlabel{ch:graceful-degradation}{{30}{112}{Graceful Degradation and Safe Landing}{section.572}{}}
+\newlabel{ch:graceful-degradation@cref}{{[section][30][]30}{[1][112][]112}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {30.1}Motivation}{112}{subsection.573}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {30.2}Safe-Landing Protocol}{112}{subsection.574}\protected@file@percent }
+\newlabel{def:safe-landing}{{8}{112}{Safe-landing trajectory}{definition.575}{}}
+\newlabel{def:safe-landing@cref}{{[definition][8][]8}{[1][112][]112}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {30.3}Landing Controller Design}{112}{subsection.579}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {30.4}Experimental Evaluation}{113}{subsection.583}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {30.4.1}Scenario 1: Sudden Blackout}{113}{subsubsection.584}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {30.4.2}Scenario 2: Gradual Quality Decay}{113}{subsubsection.585}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {50}{\ignorespaces Safe-landing performance under sudden and gradual blackout.}}{113}{table.caption.586}\protected@file@percent }
+\newlabel{tab:safe-landing}{{50}{113}{Safe-landing performance under sudden and gradual blackout}{table.caption.586}{}}
+\newlabel{tab:safe-landing@cref}{{[table][50][]50}{[1][113][]113}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {30.5}Safe-Zone Descent Traces}{113}{subsection.587}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {30.6}Formal Guarantee}{113}{subsection.589}\protected@file@percent }
+\newlabel{prop:landing-convergence}{{5}{113}{Landing convergence}{proposition.590}{}}
+\newlabel{prop:landing-convergence@cref}{{[proposition][5][]5}{[1][113][]113}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {30.7}Summary}{113}{subsection.591}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {58}{\ignorespaces SOC trajectory during safe-landing activation (sudden blackout at $t=72$). The landing controller (blue) converges to the safe zone within 8~steps, while the unprotected controller (red dashed) drifts below SOC$_{\min }$.}}{114}{figure.caption.588}\protected@file@percent }
+\newlabel{fig:safe-landing-trace}{{58}{114}{SOC trajectory during safe-landing activation (sudden blackout at $t=72$). The landing controller (blue) converges to the safe zone within 8~steps, while the unprotected controller (red dashed) drifts below SOC$_{\min }$}{figure.caption.588}{}}
+\newlabel{fig:safe-landing-trace@cref}{{[figure][58][]58}{[1][113][]114}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {31}ORIUS-Bench: Battery Track}{114}{section.592}\protected@file@percent }
+\newlabel{ch:orius-bench-battery}{{31}{114}{ORIUS-Bench: Battery Track}{section.592}{}}
+\newlabel{ch:orius-bench-battery@cref}{{[section][31][]31}{[1][113][]114}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {31.1}Benchmark Scope and Design Goals}{114}{subsection.593}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {31.2}Episode Generation}{115}{subsection.598}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {31.3}Metrics Suite}{115}{subsection.599}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {31.4}Fault Severity Sweep}{115}{subsection.600}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {51}{\ignorespaces Fault dimensions and sweep levels in ORIUS-Bench (Battery Track).}}{115}{table.caption.601}\protected@file@percent }
+\newlabel{tab:bench-sweep-dims}{{51}{115}{Fault dimensions and sweep levels in ORIUS-Bench (Battery Track)}{table.caption.601}{}}
+\newlabel{tab:bench-sweep-dims@cref}{{[table][51][]51}{[1][115][]115}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {31.5}Controller Interface}{116}{subsection.602}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {31.6}Baseline Controllers}{116}{subsection.603}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {31.7}Reproduction Instructions}{116}{subsection.612}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {31.8}Summary}{116}{subsection.613}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {32}Compositional Safety for Battery Fleets}{117}{section.614}\protected@file@percent }
+\newlabel{ch:compositional-safety-fleets}{{32}{117}{Compositional Safety for Battery Fleets}{section.614}{}}
+\newlabel{ch:compositional-safety-fleets@cref}{{[section][32][]32}{[1][116][]117}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {32.1}Why Composition Matters}{117}{subsection.615}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {32.2}Battery-Fleet View}{117}{subsection.616}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {32.3}Locked Two-Battery Stress Output}{117}{subsection.620}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {52}{\ignorespaces Locked fleet-composition metrics from the current two-battery study.}}{117}{table.caption.621}\protected@file@percent }
+\newlabel{tab:fleet-results}{{52}{117}{Locked fleet-composition metrics from the current two-battery study}{table.caption.621}{}}
+\newlabel{tab:fleet-results@cref}{{[table][52][]52}{[1][117][]117}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {32.4}Interpretation}{118}{subsection.622}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {32.5}What Remains Open}{118}{subsection.623}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {32.6}Summary}{118}{subsection.624}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {33}Adversarial Robustness and Active Probing}{118}{section.625}\protected@file@percent }
+\newlabel{ch:adversarial-robustness}{{33}{118}{Adversarial Robustness and Active Probing}{section.625}{}}
+\newlabel{ch:adversarial-robustness@cref}{{[section][33][]33}{[1][118][]118}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {33.1}Battery Threat Model}{118}{subsection.626}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {33.2}Locked Detection Package}{119}{subsection.630}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {33.3}Detection Results}{119}{subsection.631}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {53}{\ignorespaces Locked active-probing detection results for the battery threat model.}}{119}{table.caption.632}\protected@file@percent }
+\newlabel{tab:spoof-results}{{53}{119}{Locked active-probing detection results for the battery threat model}{table.caption.632}{}}
+\newlabel{tab:spoof-results@cref}{{[table][53][]53}{[1][119][]119}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {33.4}Battery-Operational Meaning}{119}{subsection.633}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {33.5}Bounded Claim}{120}{subsection.634}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {33.6}Summary}{120}{subsection.635}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {34}Closing Battery Thesis Block}{120}{section.636}\protected@file@percent }
+\newlabel{sec:closing_longform}{{34}{120}{Closing Battery Thesis Block}{section.636}{}}
+\newlabel{sec:closing_longform@cref}{{[section][34][]34}{[1][120][]120}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {35}What the Battery Thesis Proves}{120}{section.637}\protected@file@percent }
+\newlabel{ch:what-battery-thesis-proves}{{35}{120}{What the Battery Thesis Proves}{section.637}{}}
+\newlabel{ch:what-battery-thesis-proves@cref}{{[section][35][]35}{[1][120][]120}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {35.1}What Is Established}{120}{subsection.638}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {35.2}What The Battery Result Means}{121}{subsection.643}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {35.3}Why Battery Is Enough for the Main Claim}{121}{subsection.644}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {35.4}Summary}{121}{subsection.645}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {36}What Remains Outside the Current Evidence}{121}{section.646}\protected@file@percent }
+\newlabel{ch:outside-current-evidence}{{36}{121}{What Remains Outside the Current Evidence}{section.646}{}}
+\newlabel{ch:outside-current-evidence@cref}{{[section][36][]36}{[1][121][]121}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {36.1}Not Claimed}{121}{subsection.647}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {36.2}Still Partial}{122}{subsection.653}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {36.3}Why This Boundary Matters}{122}{subsection.654}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {36.4}Summary}{122}{subsection.655}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {37}Deployment Path and Verification Discipline}{122}{section.656}\protected@file@percent }
+\newlabel{ch:deployment-path-verification}{{37}{122}{Deployment Path and Verification Discipline}{section.656}{}}
+\newlabel{ch:deployment-path-verification@cref}{{[section][37][]37}{[1][122][]122}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {37.1}Verification Before Expansion}{122}{subsection.657}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {37.2}Battery Deployment Path}{122}{subsection.662}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {37.3}Verification Discipline}{123}{subsection.668}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {37.4}Summary}{123}{subsection.669}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {38}Conclusion}{123}{section.670}\protected@file@percent }
+\newlabel{ch:conclusion-battery}{{38}{123}{Conclusion}{section.670}{}}
+\newlabel{ch:conclusion-battery@cref}{{[section][38][]38}{[1][123][]123}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {38.1}Battery Outcome}{123}{subsection.671}\protected@file@percent }
+\citation{dibaji2019systems}
+\@writefile{toc}{\contentsline {subsection}{\numberline {38.2}Why The Result Matters}{124}{subsection.672}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {38.3}Final Boundary}{124}{subsection.673}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {38.4}Closing Statement}{124}{subsection.674}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {39}Discussion and Threats to Validity}{124}{section.675}\protected@file@percent }
+\newlabel{sec:discussion}{{39}{124}{Discussion and Threats to Validity}{section.675}{}}
+\newlabel{sec:discussion@cref}{{[section][39][]39}{[1][124][]124}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {39.1}Implications}{124}{subsection.676}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {39.2}CPS Security Implications}{124}{subsection.677}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {39.3}Deployment Considerations}{125}{subsection.681}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Latency requirements.}{125}{section*.682}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Shadow-mode validation.}{125}{section*.683}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{BMS integration.}{125}{section*.684}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Certificate storage.}{125}{section*.685}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Multi-device coordination.}{125}{section*.686}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {39.4}Negative and Neutral Findings}{126}{subsection.687}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {39.5}Threats to Internal Validity}{126}{subsection.692}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {39.6}Threats to External Validity}{126}{subsection.693}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {39.7}Threats to Construct and Conclusion Validity}{126}{subsection.694}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {40}Limitations and Future Work}{127}{section.695}\protected@file@percent }
+\newlabel{sec:limitations}{{40}{127}{Limitations and Future Work}{section.695}{}}
+\newlabel{sec:limitations@cref}{{[section][40][]40}{[1][126][]127}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {40.1}Current Limitations}{127}{subsection.696}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {40.2}Near-Term Future Work}{127}{subsection.702}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Streaming validation.}{127}{section*.703}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {40.3}Longer-Term Future Work}{127}{subsection.705}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {54}{\ignorespaces Governed streaming-validation summary (deterministic replay, release \texttt  {R1\_DEPLOY\_20260314}). This is a software replay validation of the ingest path, not a live deployment claim.}}{128}{table.caption.704}\protected@file@percent }
+\newlabel{tab:streaming_validation}{{54}{128}{Governed streaming-validation summary (deterministic replay, release \texttt {R1\_DEPLOY\_20260314}). This is a software replay validation of the ingest path, not a live deployment claim}{table.caption.704}{}}
+\newlabel{tab:streaming_validation@cref}{{[table][54][]54}{[1][127][]128}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {41}Conclusion}{128}{section.706}\protected@file@percent }
+\newlabel{sec:conclusion}{{41}{128}{Conclusion}{section.706}{}}
+\newlabel{sec:conclusion@cref}{{[section][41][]41}{[1][128][]128}{}{}{}}
+\@writefile{toc}{\contentsline {paragraph}{Thesis statement.}{128}{section*.707}\protected@file@percent }
+\bibstyle{plain}
+\bibcite{vovk2005conformal}{1}
+\bibcite{shafer2008tutorial}{2}
+\bibcite{romano2019conformalized}{3}
+\bibcite{gibbs2021adaptive}{4}
+\bibcite{zaffran2022adaptive}{5}
+\bibcite{barber2023conformal}{6}
+\bibcite{bertsimas2011theory}{7}
+\bibcite{ben2009robust}{8}
+\@writefile{toc}{\contentsline {paragraph}{The core message.}{129}{section*.708}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Scope boundary.}{129}{section*.709}\protected@file@percent }
+\bibcite{birge2011stochastic}{9}
+\bibcite{rockafellar2000optimization}{10}
+\bibcite{rosewater2020riskaverse}{11}
+\bibcite{alshiekh2018safe}{12}
+\bibcite{bastani2021safe}{13}
+\bibcite{konighofer2020shield}{14}
+\bibcite{sha2001using}{15}
+\bibcite{leucker2009brief}{16}
+\bibcite{dibaji2019systems}{17}
+\bibcite{chandola2009anomaly}{18}
+\bibcite{chen2020review_bess}{19}
+\bibcite{pineau2021improving}{20}
+\bibcite{borisov2022deep}{21}
+\bibcite{lundberg2017shap}{22}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Replication Checklist}{131}{appendix.711}\protected@file@percent }
+\newlabel{app:replication}{{A}{131}{Replication Checklist}{appendix.711}{}}
+\newlabel{app:replication@cref}{{[section][1][]A}{[1][130][]131}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {B}Hyperparameters and Configuration}{131}{appendix.712}\protected@file@percent }
+\newlabel{app:hyperparams}{{B}{131}{Hyperparameters and Configuration}{appendix.712}{}}
+\newlabel{app:hyperparams@cref}{{[section][2][]B}{[1][131][]131}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {55}{\ignorespaces Core training and RAC-Cert hyperparameters.}}{131}{table.caption.713}\protected@file@percent }
+\newlabel{tab:TBL06_HYPERPARAMS}{{55}{131}{Core training and RAC-Cert hyperparameters}{table.caption.713}{}}
+\newlabel{tab:TBL06_HYPERPARAMS@cref}{{[table][55][]55}{[1][131][]131}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {56}{\ignorespaces Optimization configuration from \texttt  {configs/optimization.yaml}.}}{132}{table.caption.714}\protected@file@percent }
+\newlabel{tab:optim_config}{{56}{132}{Optimization configuration from \texttt {configs/optimization.yaml}}{table.caption.714}{}}
+\newlabel{tab:optim_config@cref}{{[table][56][]56}{[1][132][]132}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {C}Data Assets and Feature Design}{132}{appendix.715}\protected@file@percent }
+\newlabel{app:data_assets}{{C}{132}{Data Assets and Feature Design}{appendix.715}{}}
+\newlabel{app:data_assets@cref}{{[section][3][]C}{[1][132][]132}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {57}{\ignorespaces Feature family composition by region.}}{132}{table.caption.716}\protected@file@percent }
+\newlabel{tab:feature_composition}{{57}{132}{Feature family composition by region}{table.caption.716}{}}
+\newlabel{tab:feature_composition@cref}{{[table][57][]57}{[1][132][]132}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {58}{\ignorespaces Target distribution snapshot (DE).}}{132}{table.caption.717}\protected@file@percent }
+\newlabel{tab:target_dist_de}{{58}{132}{Target distribution snapshot (DE)}{table.caption.717}{}}
+\newlabel{tab:target_dist_de@cref}{{[table][58][]58}{[1][132][]132}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {59}{\ignorespaces Target distribution snapshot (US/MISO).}}{133}{table.caption.718}\protected@file@percent }
+\newlabel{tab:target_dist_us}{{59}{133}{Target distribution snapshot (US/MISO)}{table.caption.718}{}}
+\newlabel{tab:target_dist_us@cref}{{[table][59][]59}{[1][132][]133}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {59}{\ignorespaces Dataset cards for all regions in the release scope.}}{133}{figure.caption.719}\protected@file@percent }
+\newlabel{fig:FIG09_REGION_DATASET_CARDS}{{59}{133}{Dataset cards for all regions in the release scope}{figure.caption.719}{}}
+\newlabel{fig:FIG09_REGION_DATASET_CARDS@cref}{{[figure][59][]59}{[1][133][]133}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {60}{\ignorespaces Rolling backtest RMSE across the evaluation horizon. Walk-forward windows (168-hour steps) show forecast accuracy evolution over time, with seasonal degradation visible in summer months.}}{134}{figure.caption.721}\protected@file@percent }
+\newlabel{fig:FIG15_ROLLING_BACKTEST_RMSE}{{60}{134}{Rolling backtest RMSE across the evaluation horizon. Walk-forward windows (168-hour steps) show forecast accuracy evolution over time, with seasonal degradation visible in summer months}{figure.caption.721}{}}
+\newlabel{fig:FIG15_ROLLING_BACKTEST_RMSE@cref}{{[figure][60][]60}{[1][133][]134}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {61}{\ignorespaces Multi-horizon backtest results. Forecast accuracy degrades gracefully with increasing horizon, supporting the 24-hour operational dispatch window.}}{134}{figure.caption.722}\protected@file@percent }
+\newlabel{fig:FIG55_MULTI_HORIZON_BACKTEST}{{61}{134}{Multi-horizon backtest results. Forecast accuracy degrades gracefully with increasing horizon, supporting the 24-hour operational dispatch window}{figure.caption.722}{}}
+\newlabel{fig:FIG55_MULTI_HORIZON_BACKTEST@cref}{{[figure][61][]61}{[1][133][]134}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {62}{\ignorespaces Forecast error seasonality patterns across targets. Solar errors peak in transition seasons (spring/autumn) due to variable cloud cover; load errors peak during extreme temperature episodes.}}{134}{figure.caption.723}\protected@file@percent }
+\newlabel{fig:FIG16_ERROR_SEASONALITY}{{62}{134}{Forecast error seasonality patterns across targets. Solar errors peak in transition seasons (spring/autumn) due to variable cloud cover; load errors peak during extreme temperature episodes}{figure.caption.723}{}}
+\newlabel{fig:FIG16_ERROR_SEASONALITY@cref}{{[figure][62][]62}{[1][133][]134}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {63}{\ignorespaces Dispatch comparison across controller types during a representative week. \DCThreeS  {} matches the deterministic controller during healthy telemetry and diverges only during degraded periods.}}{135}{figure.caption.724}\protected@file@percent }
+\newlabel{fig:FIG39_DISPATCH_COMPARE}{{63}{135}{Dispatch comparison across controller types during a representative week. \DCThreeS {} matches the deterministic controller during healthy telemetry and diverges only during degraded periods}{figure.caption.724}{}}
+\newlabel{fig:FIG39_DISPATCH_COMPARE@cref}{{[figure][63][]63}{[1][133][]135}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {64}{\ignorespaces Case study dispatch: a 48-hour window showing charge/discharge decisions, price signals, and SOC evolution under three controllers.}}{135}{figure.caption.725}\protected@file@percent }
+\newlabel{fig:FIG53_CASE_STUDY_DISPATCH}{{64}{135}{Case study dispatch: a 48-hour window showing charge/discharge decisions, price signals, and SOC evolution under three controllers}{figure.caption.725}{}}
+\newlabel{fig:FIG53_CASE_STUDY_DISPATCH@cref}{{[figure][64][]64}{[1][133][]135}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {65}{\ignorespaces Case study week: a seven-day operational trace showing the interaction between forecast quality, reliability scoring, and dispatch behavior.}}{135}{figure.caption.726}\protected@file@percent }
+\newlabel{fig:FIG54_CASE_STUDY_WEEK}{{65}{135}{Case study week: a seven-day operational trace showing the interaction between forecast quality, reliability scoring, and dispatch behavior}{figure.caption.726}{}}
+\newlabel{fig:FIG54_CASE_STUDY_WEEK@cref}{{[figure][65][]65}{[1][133][]135}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {66}{\ignorespaces Detailed cost--carbon tradeoff analysis. Each Pareto point represents a different weight configuration in the multi-objective optimizer.}}{136}{figure.caption.727}\protected@file@percent }
+\newlabel{fig:FIG52_COST_CARBON_DETAIL}{{66}{136}{Detailed cost--carbon tradeoff analysis. Each Pareto point represents a different weight configuration in the multi-objective optimizer}{figure.caption.727}{}}
+\newlabel{fig:FIG52_COST_CARBON_DETAIL@cref}{{[figure][66][]66}{[1][133][]136}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {67}{\ignorespaces US data quality deep dive. Coverage, missing-data patterns, and signal reliability across MISO, PJM, and ERCOT balancing authorities.}}{136}{figure.caption.728}\protected@file@percent }
+\newlabel{fig:FIG56_USA_DATA_QUALITY}{{67}{136}{US data quality deep dive. Coverage, missing-data patterns, and signal reliability across MISO, PJM, and ERCOT balancing authorities}{figure.caption.728}{}}
+\newlabel{fig:FIG56_USA_DATA_QUALITY@cref}{{[figure][67][]67}{[1][133][]136}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {68}{\ignorespaces DE--US hourly profile gap analysis. Structural differences in diurnal load, wind, and solar patterns between German and US grid regimes.}}{137}{figure.caption.729}\protected@file@percent }
+\newlabel{fig:FIG57_GAP_HOURLY_PROFILES}{{68}{137}{DE--US hourly profile gap analysis. Structural differences in diurnal load, wind, and solar patterns between German and US grid regimes}{figure.caption.729}{}}
+\newlabel{fig:FIG57_GAP_HOURLY_PROFILES@cref}{{[figure][68][]68}{[1][133][]137}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {69}{\ignorespaces DE--US distribution comparison. Target variable distributions differ in scale, skewness, and zero-inflation (especially solar), motivating region-specific calibration.}}{137}{figure.caption.730}\protected@file@percent }
+\newlabel{fig:FIG58_GAP_DISTRIBUTION}{{69}{137}{DE--US distribution comparison. Target variable distributions differ in scale, skewness, and zero-inflation (especially solar), motivating region-specific calibration}{figure.caption.730}{}}
+\newlabel{fig:FIG58_GAP_DISTRIBUTION@cref}{{[figure][69][]69}{[1][133][]137}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {60}{\ignorespaces Core manuscript and evidence artifacts.}}{137}{table.caption.732}\protected@file@percent }
+\newlabel{tab:artifact_inventory}{{60}{137}{Core manuscript and evidence artifacts}{table.caption.732}{}}
+\newlabel{tab:artifact_inventory@cref}{{[table][60][]60}{[1][133][]137}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {61}{\ignorespaces Certificate schema and audit-chain fields implemented by the DC\textsuperscript  {3}S runtime.}}{138}{table.caption.733}\protected@file@percent }
+\newlabel{tab:certificate_schema}{{61}{138}{Certificate schema and audit-chain fields implemented by the DC\textsuperscript {3}S runtime}{table.caption.733}{}}
+\newlabel{tab:certificate_schema@cref}{{[table][61][]61}{[1][133][]138}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {62}{\ignorespaces Operational failure modes and safety controls.}}{138}{table.caption.735}\protected@file@percent }
+\newlabel{tab:failure_modes}{{62}{138}{Operational failure modes and safety controls}{table.caption.735}{}}
+\newlabel{tab:failure_modes@cref}{{[table][62][]62}{[1][133][]138}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {D}Additional Figures}{139}{appendix.720}\protected@file@percent }
+\newlabel{app:figures}{{D}{139}{Additional Figures}{appendix.720}{}}
+\newlabel{app:figures@cref}{{[section][4][]D}{[1][133][]139}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {E}Artifact Inventory}{139}{appendix.731}\protected@file@percent }
+\newlabel{app:inventory}{{E}{139}{Artifact Inventory}{appendix.731}{}}
+\newlabel{app:inventory@cref}{{[section][5][]E}{[1][133][]139}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {F}Operational Failure Modes}{139}{appendix.734}\protected@file@percent }
+\newlabel{app:failure_modes}{{F}{139}{Operational Failure Modes}{appendix.734}{}}
+\newlabel{app:failure_modes@cref}{{[section][6][]F}{[1][133][]139}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {G}Notation and Symbols}{139}{appendix.736}\protected@file@percent }
+\newlabel{app:notation}{{G}{139}{Notation and Symbols}{appendix.736}{}}
+\newlabel{app:notation@cref}{{[section][7][]G}{[1][133][]139}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {63}{\ignorespaces Principal notation used throughout this paper.}}{139}{table.caption.737}\protected@file@percent }
+\newlabel{tab:notation}{{63}{139}{Principal notation used throughout this paper}{table.caption.737}{}}
+\newlabel{tab:notation@cref}{{[table][63][]63}{[1][133][]139}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {H}Extended Algorithm Details}{140}{appendix.738}\protected@file@percent }
+\newlabel{app:algorithms}{{H}{140}{Extended Algorithm Details}{appendix.738}{}}
+\newlabel{app:algorithms@cref}{{[section][8][]H}{[1][139][]140}{}{}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces FTIT state update at each dispatch step}}{140}{algorithm.739}\protected@file@percent }
+\newlabel{alg:ftit}{{2}{140}{FTIT state update at each dispatch step}{algorithm.739}{}}
+\newlabel{alg:ftit@cref}{{[algorithm][2][]2}{[1][139][]140}{}{}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {3}{\ignorespaces Reliability scoring from raw telemetry}}{140}{algorithm.751}\protected@file@percent }
+\newlabel{alg:reliability}{{3}{140}{Reliability scoring from raw telemetry}{algorithm.751}{}}
+\newlabel{alg:reliability@cref}{{[algorithm][3][]3}{[1][140][]140}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Notation Sheet}{140}{appendix.761}\protected@file@percent }
+\newlabel{app:notation}{{I}{140}{Notation Sheet}{appendix.761}{}}
+\newlabel{app:notation@cref}{{[section][9][]I}{[1][140][]140}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.1}Telemetry and State Variables}{140}{subsection.762}\protected@file@percent }
+\gdef \LT@i {\LT@entry 
+    {1}{46.94019pt}\LT@entry 
+    {1}{55.10397pt}\LT@entry 
+    {1}{239.3125pt}}
+\gdef \LT@ii {\LT@entry 
+    {1}{46.94019pt}\LT@entry 
+    {1}{55.10397pt}\LT@entry 
+    {1}{239.3125pt}}
+\gdef \LT@iii {\LT@entry 
+    {1}{46.94019pt}\LT@entry 
+    {1}{55.10397pt}\LT@entry 
+    {1}{239.3125pt}}
+\@writefile{lot}{\contentsline {table}{\numberline {64}{\ignorespaces Telemetry and state symbols.}}{141}{table.64}\protected@file@percent }
+\newlabel{tab:notation-state}{{64}{141}{Telemetry and state symbols}{table.64}{}}
+\newlabel{tab:notation-state@cref}{{[table][64][]64}{[1][140][]141}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.2}Quality, Drift, and Sensitivity Indicators}{141}{subsection.763}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {65}{\ignorespaces Quality and detector symbols.}}{141}{table.65}\protected@file@percent }
+\newlabel{tab:notation-quality}{{65}{141}{Quality and detector symbols}{table.65}{}}
+\newlabel{tab:notation-quality@cref}{{[table][65][]65}{[1][141][]141}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.3}Uncertainty and Action Objects}{141}{subsection.764}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {66}{\ignorespaces Uncertainty-set and action symbols.}}{141}{table.66}\protected@file@percent }
+\newlabel{tab:notation-action}{{66}{141}{Uncertainty-set and action symbols}{table.66}{}}
+\newlabel{tab:notation-action@cref}{{[table][66][]66}{[1][141][]141}{}{}{}}
+\gdef \LT@iv {\LT@entry 
+    {1}{46.94019pt}\LT@entry 
+    {1}{55.10397pt}\LT@entry 
+    {1}{239.3125pt}}
+\gdef \LT@v {\LT@entry 
+    {1}{46.94019pt}\LT@entry 
+    {1}{55.10397pt}\LT@entry 
+    {1}{239.3125pt}}
+\gdef \LT@vi {\LT@entry 
+    {1}{46.94019pt}\LT@entry 
+    {1}{55.10397pt}\LT@entry 
+    {1}{239.3125pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.4}Battery Plant Parameters}{142}{subsection.765}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {67}{\ignorespaces Battery plant parameters.}}{142}{table.67}\protected@file@percent }
+\newlabel{tab:notation-battery}{{67}{142}{Battery plant parameters}{table.67}{}}
+\newlabel{tab:notation-battery@cref}{{[table][67][]67}{[1][142][]142}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.5}Metrics}{142}{subsection.766}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {68}{\ignorespaces Evaluation metrics.}}{142}{table.68}\protected@file@percent }
+\newlabel{tab:notation-metrics}{{68}{142}{Evaluation metrics}{table.68}{}}
+\newlabel{tab:notation-metrics@cref}{{[table][68][]68}{[1][142][]142}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.6}Tuning Constants and Greek Letters}{142}{subsection.767}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {69}{\ignorespaces Tuning constants and thresholds.}}{142}{table.69}\protected@file@percent }
+\newlabel{tab:notation-tuning}{{69}{142}{Tuning constants and thresholds}{table.69}{}}
+\newlabel{tab:notation-tuning@cref}{{[table][69][]69}{[1][142][]142}{}{}{}}
+\gdef \LT@vii {\LT@entry 
+    {3}{84.15665pt}\LT@entry 
+    {1}{304.75394pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {I.7}Set Notation and Operators}{143}{subsection.768}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {70}{\ignorespaces Set notation and mathematical operators.}}{143}{table.70}\protected@file@percent }
+\newlabel{tab:notation-ops}{{70}{143}{Set notation and mathematical operators}{table.70}{}}
+\newlabel{tab:notation-ops@cref}{{[table][70][]70}{[1][143][]143}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {J}Assumption Register}{143}{appendix.769}\protected@file@percent }
+\newlabel{app:assumptions}{{J}{143}{Assumption Register}{appendix.769}{}}
+\newlabel{app:assumptions@cref}{{[section][10][]J}{[1][143][]143}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.1}How to Read This Register}{143}{subsection.770}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.2}Master Table}{143}{subsection.771}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.3}Detailed Statements}{143}{subsection.773}\protected@file@percent }
+\newlabel{assum:A1}{{9}{143}{A1 --- Bounded model error}{assumption.774}{}}
+\newlabel{assum:A1@cref}{{[assumption][9][]9}{[1][143][]143}{}{}{}}
+\newlabel{assum:A2}{{10}{143}{A2 --- Bounded telemetry error}{assumption.775}{}}
+\newlabel{assum:A2@cref}{{[assumption][10][]10}{[1][143][]143}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {71}{\ignorespaces Master assumption table (A1--A8).}}{144}{table.caption.772}\protected@file@percent }
+\newlabel{tab:assumption-master}{{71}{144}{Master assumption table (A1--A8)}{table.caption.772}{}}
+\newlabel{tab:assumption-master@cref}{{[table][71][]71}{[1][143][]144}{}{}{}}
+\newlabel{assum:A3}{{11}{144}{A3 --- Feasible safe repair}{assumption.776}{}}
+\newlabel{assum:A3@cref}{{[assumption][11][]11}{[1][144][]144}{}{}{}}
+\newlabel{assum:A4}{{12}{144}{A4 --- Known dynamics}{assumption.777}{}}
+\newlabel{assum:A4@cref}{{[assumption][12][]12}{[1][144][]144}{}{}{}}
+\newlabel{assum:A5}{{13}{144}{A5 --- Monotone bounded inflation}{assumption.778}{}}
+\newlabel{assum:A5@cref}{{[assumption][13][]13}{[1][144][]144}{}{}{}}
+\newlabel{assum:A6}{{14}{144}{A6 --- Bounded detector lag}{assumption.779}{}}
+\newlabel{assum:A6@cref}{{[assumption][14][]14}{[1][144][]144}{}{}{}}
+\newlabel{assum:A7}{{15}{144}{A7 --- Causal certificate}{assumption.780}{}}
+\newlabel{assum:A7@cref}{{[assumption][15][]15}{[1][144][]144}{}{}{}}
+\newlabel{assum:A8}{{16}{144}{A8 --- Admissible fallback}{assumption.781}{}}
+\newlabel{assum:A8@cref}{{[assumption][16][]16}{[1][144][]144}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {J.4}Assumption Usage Map by Chapter}{144}{subsection.782}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {72}{\ignorespaces Assumption usage map: \text  {$\mathsurround \z@ \mathchar "458$}\,=\,required, ---\,=\,not used.}}{144}{table.caption.783}\protected@file@percent }
+\newlabel{tab:assumption-usage}{{72}{144}{Assumption usage map: \checkmark \,=\,required, ---\,=\,not used}{table.caption.783}{}}
+\newlabel{tab:assumption-usage@cref}{{[table][72][]72}{[1][144][]144}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {K}Full Proofs}{145}{appendix.784}\protected@file@percent }
+\newlabel{app:proofs}{{K}{145}{Full Proofs}{appendix.784}{}}
+\newlabel{app:proofs@cref}{{[section][11][]K}{[1][144][]145}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.1}C.1\hskip 1em\relax Battery-Domain OASG Existence}{145}{subsection.793}\protected@file@percent }
+\newlabel{sec:proof-oasg}{{K.1}{145}{C.1\quad Battery-Domain OASG Existence}{subsection.793}{}}
+\newlabel{sec:proof-oasg@cref}{{[subsection][1][11]K.1}{[1][145][]145}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.2}C.2\hskip 1em\relax One-Step Safety Preservation}{145}{subsection.795}\protected@file@percent }
+\newlabel{sec:proof-one-step}{{K.2}{145}{C.2\quad One-Step Safety Preservation}{subsection.795}{}}
+\newlabel{sec:proof-one-step@cref}{{[subsection][2][11]K.2}{[1][145][]145}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.3}C.3\hskip 1em\relax Battery ORIUS Core Bound}{145}{subsection.797}\protected@file@percent }
+\newlabel{sec:proof-core-bound}{{K.3}{145}{C.3\quad Battery ORIUS Core Bound}{subsection.797}{}}
+\newlabel{sec:proof-core-bound@cref}{{[subsection][3][11]K.3}{[1][145][]145}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.4}C.4\hskip 1em\relax No Free Safety}{146}{subsection.799}\protected@file@percent }
+\newlabel{sec:proof-no-free}{{K.4}{146}{C.4\quad No Free Safety}{subsection.799}{}}
+\newlabel{sec:proof-no-free@cref}{{[subsection][4][11]K.4}{[1][145][]146}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.5}C.5\hskip 1em\relax Certificate Validity Horizon}{146}{subsection.801}\protected@file@percent }
+\newlabel{sec:proof-cert-valid}{{K.5}{146}{C.5\quad Certificate Validity Horizon}{subsection.801}{}}
+\newlabel{sec:proof-cert-valid@cref}{{[subsection][5][11]K.5}{[1][146][]146}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.6}C.6\hskip 1em\relax Certificate Expiration Bound}{146}{subsection.803}\protected@file@percent }
+\newlabel{sec:proof-expiration}{{K.6}{146}{C.6\quad Certificate Expiration Bound}{subsection.803}{}}
+\newlabel{sec:proof-expiration@cref}{{[subsection][6][11]K.6}{[1][146][]146}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.7}C.7\hskip 1em\relax Certificate Half-Life Corollary}{146}{subsection.805}\protected@file@percent }
+\newlabel{sec:proof-halflife}{{K.7}{146}{C.7\quad Certificate Half-Life Corollary}{subsection.805}{}}
+\newlabel{sec:proof-halflife@cref}{{[subsection][7][11]K.7}{[1][146][]146}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.8}C.8\hskip 1em\relax Feasible Fallback Existence}{146}{subsection.807}\protected@file@percent }
+\newlabel{sec:proof-fallback}{{K.8}{146}{C.8\quad Feasible Fallback Existence}{subsection.807}{}}
+\newlabel{sec:proof-fallback@cref}{{[subsection][8][11]K.8}{[1][146][]146}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.9}C.9\hskip 1em\relax Graceful Degradation Dominance}{147}{subsection.809}\protected@file@percent }
+\newlabel{sec:proof-graceful}{{K.9}{147}{C.9\quad Graceful Degradation Dominance}{subsection.809}{}}
+\newlabel{sec:proof-graceful@cref}{{[subsection][9][11]K.9}{[1][146][]147}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {K.10}C.10\hskip 1em\relax Safe-Budget Monotonicity Proposition}{147}{subsection.811}\protected@file@percent }
+\newlabel{sec:proof-budget}{{K.10}{147}{C.10\quad Safe-Budget Monotonicity Proposition}{subsection.811}{}}
+\newlabel{sec:proof-budget@cref}{{[subsection][10][11]K.10}{[1][147][]147}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {L}Extended Battery Result Tables}{147}{appendix.813}\protected@file@percent }
+\newlabel{app:extended-results}{{L}{147}{Extended Battery Result Tables}{appendix.813}{}}
+\newlabel{app:extended-results@cref}{{[section][12][]L}{[1][147][]147}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.1}Extended Controller Comparison}{147}{subsection.814}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {73}{\ignorespaces Extended controller comparison (DE, drift\_combo, 20\,\% dropout). Source: \texttt  {dc3s\_main\_table.csv}.}}{147}{table.caption.815}\protected@file@percent }
+\newlabel{tab:extended-controller}{{73}{147}{Extended controller comparison (DE, drift\_combo, 20\,\% dropout). Source: \texttt {dc3s\_main\_table.csv}}{table.caption.815}{}}
+\newlabel{tab:extended-controller@cref}{{[table][73][]73}{[1][147][]147}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.2}Metric Definitions}{147}{subsection.816}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.3}Regional Impact Breakdown}{148}{subsection.817}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {74}{\ignorespaces Regional impact breakdown for DC3S + FTIT. Source: \texttt  {dc3s\_main\_table.csv}, \texttt  {48h\_trace\_final\_de.csv}, \texttt  {48h\_trace\_final\_us.csv}.}}{148}{table.caption.818}\protected@file@percent }
+\newlabel{tab:regional-impact}{{74}{148}{Regional impact breakdown for DC3S + FTIT. Source: \texttt {dc3s\_main\_table.csv}, \texttt {48h\_trace\_final\_de.csv}, \texttt {48h\_trace\_final\_us.csv}}{table.caption.818}{}}
+\newlabel{tab:regional-impact@cref}{{[table][74][]74}{[1][148][]148}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.4}Fault-Profile Sensitivity}{148}{subsection.819}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {75}{\ignorespaces DC3S + FTIT under individual fault families (DE, 20\,\% dropout). Source: \texttt  {fault\_performance\_table.csv}.}}{148}{table.caption.820}\protected@file@percent }
+\newlabel{tab:fault-profile-ext}{{75}{148}{DC3S + FTIT under individual fault families (DE, 20\,\% dropout). Source: \texttt {fault\_performance\_table.csv}}{table.caption.820}{}}
+\newlabel{tab:fault-profile-ext@cref}{{[table][75][]75}{[1][148][]148}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {L.5}Artifact Provenance}{148}{subsection.821}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {M}Hardware-in-the-Loop Bill of Materials and Safety}{149}{appendix.822}\protected@file@percent }
+\newlabel{app:hil-bom-safety}{{M}{149}{Hardware-in-the-Loop Bill of Materials and Safety}{appendix.822}{}}
+\newlabel{app:hil-bom-safety@cref}{{[section][13][]M}{[1][149][]149}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.1}Bill of Materials}{149}{subsection.823}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {76}{\ignorespaces HIL Bill of Materials}}{149}{table.caption.824}\protected@file@percent }
+\newlabel{tab:hil-bom}{{76}{149}{HIL Bill of Materials}{table.caption.824}{}}
+\newlabel{tab:hil-bom@cref}{{[table][76][]76}{[1][149][]149}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.2}Safety Classification}{149}{subsection.825}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {77}{\ignorespaces HIL Safety Classification (IEC 61508)}}{150}{table.caption.826}\protected@file@percent }
+\newlabel{tab:hil-safety-class}{{77}{150}{HIL Safety Classification (IEC 61508)}{table.caption.826}{}}
+\newlabel{tab:hil-safety-class@cref}{{[table][77][]77}{[1][149][]150}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.3}Risk Assessment}{150}{subsection.827}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {78}{\ignorespaces HIL Simulation Environment Risk Assessment}}{150}{table.caption.828}\protected@file@percent }
+\newlabel{tab:hil-risk}{{78}{150}{HIL Simulation Environment Risk Assessment}{table.caption.828}{}}
+\newlabel{tab:hil-risk@cref}{{[table][78][]78}{[1][150][]150}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.4}Operator Safety Checklist}{150}{subsection.829}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {M.5}Evidence Artifacts}{151}{subsection.835}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {N}Sweep and Latency Measurement Protocols}{151}{appendix.836}\protected@file@percent }
+\newlabel{app:sweep-latency}{{N}{151}{Sweep and Latency Measurement Protocols}{appendix.836}{}}
+\newlabel{app:sweep-latency@cref}{{[section][14][]N}{[1][151][]151}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.1}Hyperparameter Sweep Protocol}{151}{subsection.837}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {N.1.1}Grid Parameters}{151}{subsubsection.838}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {N.1.2}CLI Commands}{151}{subsubsection.839}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {N.1.3}Output Artifacts}{152}{subsubsection.840}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {N.1.4}Config Override Mechanism}{152}{subsubsection.841}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.2}Latency Benchmark Protocol}{152}{subsection.842}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {N.2.1}Measurement Method}{152}{subsubsection.843}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {N.2.2}CLI Command}{152}{subsubsection.847}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {N.2.3}Benchmarked Components}{153}{subsubsection.848}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {N.2.4}Output Artifacts}{153}{subsubsection.849}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {N.3}Fault Severity Sweep}{153}{subsection.850}\protected@file@percent }
+\gdef \@abspage@last{153}

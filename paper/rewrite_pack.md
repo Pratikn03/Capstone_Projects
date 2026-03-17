@@ -1,4 +1,4 @@
-# GridPulse Full Thesis Rewrite Pack (Markdown Master)
+# ORIUS Full Thesis Rewrite Pack (Markdown Master)
 
 ## How to Use This Pack
 Use this file as the write/edit blueprint for `paper/PAPER_DRAFT.md`.
@@ -47,7 +47,7 @@ E. Governance and Compliance Notes
 
 ## 1) Title Page
 ### Required facts
-- Project name: GridPulse.
+- Project name: ORIUS.
 - Problem framing: forecasting + carbon-aware battery dispatch.
 - Author and affiliation.
 - Manuscript date.

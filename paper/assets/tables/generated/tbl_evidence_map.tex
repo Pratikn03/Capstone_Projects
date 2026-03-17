@@ -6,12 +6,12 @@
 \toprule
 Surface & Code & Artifact & Paper claim \\
 \midrule
-  Latency benchmark & \texttt{scripts/benchmark\_dc3s\_steps.py} & \texttt{dc3s\_latency\_summary.csv} & Runtime profile (\S\ref{sec:runtime}) \\
-  Streaming validation & \texttt{src/gridpulse/streaming/consumer.py} & \texttt{streaming\_validation\_summary.json} & Streaming extension (\S\ref{sec:limitations}) \\
-  Step trace & \texttt{src/gridpulse/dc3s/\{shield,calibration\}.py} & \texttt{dc3s\_step\_trace.csv} & Operational trace (\S\ref{sec:operational_trace}) \\
-  Shadow-mode run & \texttt{iot/edge\_agent/run\_agent.py} & \texttt{shadow\_mode\_summary.json} & Deployment (\S\ref{sec:discussion}) \\
-  Runtime safety contracts & \texttt{src/gridpulse/dc3s/coverage\_theorem.py} & Runtime assertions & Safety guarantee (\S\ref{sec:assumptions}) \\
-  Calibration governance & \texttt{.../reliability\_mondrian.py} & \texttt{reliability\_group\_coverage.csv} & Calibration (\S\ref{sec:calibration}) \\
+  Latency benchmark & \texttt{scripts/benchmark\_dc3s\_steps.py} & \texttt{dc3s\_latency\_summary.csv} & Runtime profile (\S\ref{sec:runtime}): per-step latency < 1\,ms \\
+  Streaming validation & \texttt{src/orius/streaming/consumer.py} & \texttt{streaming\_validation\_summary.json} & Streaming extension (\S\ref{sec:limitations}): validated ingest path \\
+  Step trace & \texttt{src/orius/dc3s/{shield,calibration,quality,drift}.py} & \texttt{dc3s\_step\_trace.csv} & Operational trace (\S\ref{sec:operational_trace}): governed 12-step record \\
+  Shadow-mode run & \texttt{iot/edge\_agent/run\_agent.py} & \texttt{shadow\_mode\_summary.json} & IoT deployment (\S\ref{sec:discussion}): closed-loop shadow-mode validation \\
+  Runtime safety contracts & \texttt{src/orius/dc3s/coverage\_theorem.py} & \texttt{coverage\_theorem.py (runtime assertions)} & Safety guarantee (\S\ref{sec:assumptions}): verify\_inflation\_geq\_one() \\
+  Calibration governance & \texttt{src/orius/forecasting/uncertainty/reliability\_mondrian.py} & \texttt{reliability\_group\_coverage.csv} & Calibration (\S\ref{sec:calibration}): group-conditional coverage audit \\
 \bottomrule
 \end{tabular}}
 \end{table*}

@@ -1,4 +1,4 @@
-# R1-Level PhD Research Assessment and Publication Blueprint for GridPulse/DC3S
+# R1-Level PhD Research Assessment and Publication Blueprint for ORIUS/DC3S
 
 ## Executive summary
 
@@ -29,12 +29,12 @@ The main blockers to “R1-level / camera-ready” are:
 - **Safety stress tests that actually bite**: your README’s CPSBench excerpt indicates **0.0 violation rate** for all controllers under the configured scenario; that makes it hard to argue robust safety improvements without heavier faults, stronger mismatch, or longer horizons.  
 - **External validity**: the strongest paper claims require at least *two* materially different grid contexts and at least *one* realism upgrade for price/carbon signals (or a rigorous argument why proxies are acceptable).
 
-[Download the synthesized PDF report with appendices](sandbox:/mnt/data/GridPulse_R1_DeepResearch_Report_With_Appendices.pdf)
+[Download the synthesized PDF report with appendices](sandbox:/mnt/data/ORIUS_R1_DeepResearch_Report_With_Appendices.pdf)
 
 ## Repository extraction and synthesis
 
 ### Repository scope and what it already contributes scientifically
-From README.md and `paper/paper.tex`, GridPulse/DC3S is framed as a **cyber-physical decision system under degraded telemetry**, not merely forecasting. The loop is: **Forecast → Optimize → DC3S Shield → Dispatch → Audit** (README.md). The “DC³S” component is explicitly positioned as a **reliability-weighted conformal safety shield** that inflates uncertainty intervals online using telemetry reliability (`w_t`) and drift signals (README.md).
+From README.md and `paper/paper.tex`, ORIUS/DC3S is framed as a **cyber-physical decision system under degraded telemetry**, not merely forecasting. The loop is: **Forecast → Optimize → DC3S Shield → Dispatch → Audit** (README.md). The “DC³S” component is explicitly positioned as a **reliability-weighted conformal safety shield** that inflates uncertainty intervals online using telemetry reliability (`w_t`) and drift signals (README.md).
 
 This is aligned with real grid-ops concerns: operators must make decisions with imperfect measurements, delay/jitter, missingness, and cyber/quality issues. citeturn5search10turn1search48
 
@@ -299,7 +299,7 @@ This section explicitly covers tasks (5), (6), and (7): a detailed research plan
 ### Timeline Gantt chart (no hardware-in-loop scope)
 ```mermaid
 gantt
-  title GridPulse/DC3S R1 Upgrade Timeline (No HIL Hardware Scope)
+  title ORIUS/DC3S R1 Upgrade Timeline (No HIL Hardware Scope)
   dateFormat  YYYY-MM-DD
   axisFormat  %b %d
   section Foundations
