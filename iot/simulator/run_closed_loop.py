@@ -30,7 +30,7 @@ from services.api.routers import dc3s as dc3s_router
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run GridPulse IoT closed-loop simulation")
+    parser = argparse.ArgumentParser(description="Run ORIUS IoT closed-loop simulation")
     parser.add_argument("--steps", type=int, default=24)
     parser.add_argument("--seed", type=int, default=17)
     parser.add_argument("--device-id", type=str, default="sim-battery-001")
@@ -72,14 +72,14 @@ def _build_telemetry(step: int, start_ts: datetime, scenario: str) -> dict[str, 
 
 def run_closed_loop(*, steps: int, seed: int, device_id: str, zone_id: str, scenario: str) -> dict[str, Any]:
     api_key = "iot-sim-key"
-    os.environ["GRIDPULSE_API_KEYS"] = json.dumps({api_key: ["read", "write"]})
+    os.environ["ORIUS_API_KEYS"] = json.dumps({api_key: ["read", "write"]})
     get_api_keys.cache_clear()
 
     client = TestClient(app)
     driver = SimBatteryDriver()
     agent = EdgeAgent(client=client, device_id=device_id, zone_id=zone_id, driver=driver, api_key=api_key)
     start_ts = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
-    auth_headers = {"X-GridPulse-Key": api_key}
+    auth_headers = {"X-ORIUS-Key": api_key}
 
     safety_violations = 0
     interventions = 0

@@ -25,7 +25,7 @@ class EdgeAgent:
     def _headers(self) -> dict[str, str]:
         if not self.api_key:
             return {}
-        return {"X-GridPulse-Key": self.api_key}
+        return {"X-ORIUS-Key": self.api_key}
 
     def send_telemetry(self, telemetry_event: Mapping[str, Any]) -> dict[str, Any]:
         payload = {

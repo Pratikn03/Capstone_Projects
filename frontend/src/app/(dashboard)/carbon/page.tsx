@@ -22,8 +22,8 @@ export default function CarbonPage() {
 
   const carbonReductionPct = realImpact?.carbon_reduction_pct ?? regionImpact?.carbon_reduction_pct ?? reportsImpact?.carbon_reduction_pct ?? null;
   const baselineCarbon = realImpact?.baseline_carbon_kg ?? null;
-  const gridpulseCarbon = realImpact?.gridpulse_carbon_kg ?? null;
-  const carbonReductionKg = baselineCarbon !== null && gridpulseCarbon !== null ? baselineCarbon - gridpulseCarbon : null;
+  const oriusCarbon = realImpact?.orius_carbon_kg ?? null;
+  const carbonReductionKg = baselineCarbon !== null && oriusCarbon !== null ? baselineCarbon - oriusCarbon : null;
   const carbonTons = carbonReductionKg !== null ? carbonReductionKg / 1000 : null;
   const carbonIntensity = baselineCarbon !== null && dataset.stats?.rows
     ? baselineCarbon / (dataset.stats.rows || 1) / 1000  // rough estimate kgCO2/MWh
@@ -79,7 +79,7 @@ export default function CarbonPage() {
         />
         <KPICard
           label="Optimised Carbon"
-          value={gridpulseCarbon !== null ? (gridpulseCarbon / 1e6).toFixed(1) : 'N/A'}
+          value={oriusCarbon !== null ? (oriusCarbon / 1e6).toFixed(1) : 'N/A'}
           unit="ktCO₂"
           change={carbonReductionPct ? -carbonReductionPct : undefined}
           changeLabel="reduction"
@@ -101,9 +101,9 @@ export default function CarbonPage() {
               </div>
             </div>
             <div className="px-3 py-2.5 rounded-lg bg-white/3">
-              <div className="text-slate-500 mb-1">GridPulse Emissions</div>
+              <div className="text-slate-500 mb-1">ORIUS Emissions</div>
               <div className="text-energy-primary font-mono font-medium">
-                {gridpulseCarbon !== null ? `${(gridpulseCarbon / 1e6).toFixed(2)} Mt CO₂` : 'N/A'}
+                {oriusCarbon !== null ? `${(oriusCarbon / 1e6).toFixed(2)} Mt CO₂` : 'N/A'}
               </div>
             </div>
             <div className="px-3 py-2.5 rounded-lg bg-white/3">

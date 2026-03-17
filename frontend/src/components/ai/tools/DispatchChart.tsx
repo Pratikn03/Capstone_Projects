@@ -106,7 +106,7 @@ export function DispatchChart({
                       : 'text-slate-500 hover:text-slate-300'
                   }`}
                 >
-                  {view === 'optimized' ? 'GridPulse Optimized' : 'Baseline'}
+                  {view === 'optimized' ? 'ORIUS Optimized' : 'Baseline'}
                 </button>
               ))}
             </div>

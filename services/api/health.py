@@ -6,8 +6,8 @@ from pathlib import Path
 
 
 def readiness_check() -> dict:
-    features_path = Path(os.getenv("GRIDPULSE_FEATURES_PATH", "data/processed/features.parquet"))
-    models_dir = Path(os.getenv("GRIDPULSE_MODELS_DIR", "artifacts/models"))
+    features_path = Path(os.getenv("ORIUS_FEATURES_PATH", "data/processed/features.parquet"))
+    models_dir = Path(os.getenv("ORIUS_MODELS_DIR", "artifacts/models"))
 
     has_features = features_path.exists()
     model_files = []

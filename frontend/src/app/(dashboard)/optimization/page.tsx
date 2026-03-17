@@ -38,8 +38,8 @@ export default function OptimizationPage() {
 
   const costSavingsPct = realImpact?.cost_savings_pct ?? regionImpact?.cost_savings_pct ?? null;
   const baselineCost = realImpact?.baseline_cost_usd ?? null;
-  const gridpulseCost = realImpact?.gridpulse_cost_usd ?? null;
-  const costSaved = baselineCost !== null && gridpulseCost !== null ? baselineCost - gridpulseCost : null;
+  const oriusCost = realImpact?.orius_cost_usd ?? null;
+  const costSaved = baselineCost !== null && oriusCost !== null ? baselineCost - oriusCost : null;
   const statusMessages = [
     dataset.error ? `Dataset view error: ${dataset.error}` : null,
     !dispatchData.length ? 'No extracted dispatch trace is available; optimization charts are waiting for real artifacts.' : null,
@@ -112,9 +112,9 @@ export default function OptimizationPage() {
               </div>
             </div>
             <div className="px-3 py-2.5 rounded-lg bg-white/3">
-              <div className="text-slate-500 mb-1">GridPulse Cost</div>
+              <div className="text-slate-500 mb-1">ORIUS Cost</div>
               <div className="text-energy-primary font-mono font-medium">
-                {gridpulseCost !== null ? formatCurrency(gridpulseCost, 'USD') : 'N/A'}
+                {oriusCost !== null ? formatCurrency(oriusCost, 'USD') : 'N/A'}
               </div>
             </div>
             <div className="px-3 py-2.5 rounded-lg bg-white/3">

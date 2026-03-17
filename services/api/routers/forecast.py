@@ -10,7 +10,7 @@ import yaml
 from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
 
-from gridpulse.forecasting.predict import load_model_bundle, predict_next_24h
+from orius.forecasting.predict import load_model_bundle, predict_next_24h
 
 router = APIRouter()
 

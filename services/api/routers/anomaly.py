@@ -9,8 +9,8 @@ import pandas as pd
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from gridpulse.anomaly.detect import detect_anomalies
-from gridpulse.forecasting.baselines import persistence_24h
+from orius.anomaly.detect import detect_anomalies
+from orius.forecasting.baselines import persistence_24h
 
 router = APIRouter()
 

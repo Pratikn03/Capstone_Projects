@@ -6,7 +6,7 @@ import {
 } from './schema';
 
 /**
- * GridPulse API client.
+ * ORIUS API client.
  *
  * Routes aligned with FastAPI backend (services/api/main.py):
  *   GET  /forecast                → forecast router (targets, horizon params)
@@ -28,7 +28,7 @@ async function apiFetchRaw(path: string, options?: RequestInit): Promise<any> {
   const res = await fetch(`${API_BASE}${path}`, {
     cache: 'no-store',
     headers: {
-      'X-GridPulse-Key': process.env.API_SECRET_KEY || '',
+      'X-ORIUS-Key': process.env.API_SECRET_KEY || '',
       'Content-Type': 'application/json',
     },
     ...options,

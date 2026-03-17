@@ -9,9 +9,9 @@ import yaml
 from fastapi import APIRouter, HTTPException, Query, Security
 from pydantic import BaseModel, Field
 
-from gridpulse.dc3s.certificate import get_certificate
-from gridpulse.dc3s.quality import compute_reliability
-from gridpulse.iot.store import IoTLoopStore
+from orius.dc3s.certificate import get_certificate
+from orius.dc3s.quality import compute_reliability
+from orius.iot.store import IoTLoopStore
 from services.api.security import get_api_key, verify_scope
 
 router = APIRouter()

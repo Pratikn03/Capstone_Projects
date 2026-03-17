@@ -1,4 +1,4 @@
-# GridPulse Frontend
+# ORIUS Frontend
 
 Smart energy management dashboard built with **Next.js 15**, **React 19**, **Vercel AI SDK**, and **Recharts**.
 

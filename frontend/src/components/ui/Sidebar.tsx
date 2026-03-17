@@ -56,7 +56,7 @@ export function Sidebar() {
               exit={{ opacity: 0, width: 0 }}
               className="text-lg font-bold text-white tracking-tight overflow-hidden whitespace-nowrap"
             >
-              GridPulse
+              ORIUS
             </motion.span>
           )}
         </AnimatePresence>

@@ -19,13 +19,13 @@ def _load_yaml(path: Path) -> dict:
 
 @lru_cache(maxsize=1)
 def load_serving_config(path: str | Path | None = None) -> dict:
-    cfg_path = Path(path or os.getenv("GRIDPULSE_SERVING_CONFIG", "configs/serving.yaml"))
+    cfg_path = Path(path or os.getenv("ORIUS_SERVING_CONFIG", "configs/serving.yaml"))
     return _load_yaml(cfg_path)
 
 
 @lru_cache(maxsize=1)
 def load_uncertainty_config(path: str | Path | None = None) -> dict:
-    cfg_path = Path(path or os.getenv("GRIDPULSE_UNCERTAINTY_CONFIG", "configs/uncertainty.yaml"))
+    cfg_path = Path(path or os.getenv("ORIUS_UNCERTAINTY_CONFIG", "configs/uncertainty.yaml"))
     return _load_yaml(cfg_path)
 
 
@@ -59,21 +59,21 @@ def get_bms_config(cfg: Optional[dict] = None) -> dict:
     cfg = cfg or load_serving_config()
     bms_cfg = cfg.get("safety", {}).get("bms", {})
     return {
-        "capacity_mwh": _read_float_env("GRIDPULSE_BMS_CAPACITY_MWH", bms_cfg.get("capacity_mwh", 10.0)),
-        "max_power_mw": _read_float_env("GRIDPULSE_BMS_MAX_POWER_MW", bms_cfg.get("max_power_mw", 5.0)),
-        "min_soc_pct": _read_float_env("GRIDPULSE_BMS_MIN_SOC_PCT", bms_cfg.get("min_soc_pct", 0.05)),
-        "max_soc_pct": _read_float_env("GRIDPULSE_BMS_MAX_SOC_PCT", bms_cfg.get("max_soc_pct", 0.95)),
+        "capacity_mwh": _read_float_env("ORIUS_BMS_CAPACITY_MWH", bms_cfg.get("capacity_mwh", 10.0)),
+        "max_power_mw": _read_float_env("ORIUS_BMS_MAX_POWER_MW", bms_cfg.get("max_power_mw", 5.0)),
+        "min_soc_pct": _read_float_env("ORIUS_BMS_MIN_SOC_PCT", bms_cfg.get("min_soc_pct", 0.05)),
+        "max_soc_pct": _read_float_env("ORIUS_BMS_MAX_SOC_PCT", bms_cfg.get("max_soc_pct", 0.95)),
     }
 
 
 def get_watchdog_timeout(cfg: Optional[dict] = None) -> int:
     cfg = cfg or load_serving_config()
     watchdog_cfg = cfg.get("safety", {}).get("watchdog", {})
-    return _read_int_env("GRIDPULSE_WATCHDOG_TIMEOUT_SECONDS", watchdog_cfg.get("timeout_seconds", 30))
+    return _read_int_env("ORIUS_WATCHDOG_TIMEOUT_SECONDS", watchdog_cfg.get("timeout_seconds", 30))
 
 
 def _load_api_keys_from_env() -> Optional[Dict[str, Any]]:
-    raw = os.getenv("GRIDPULSE_API_KEYS")
+    raw = os.getenv("ORIUS_API_KEYS")
     if not raw:
         return None
     path = Path(raw)

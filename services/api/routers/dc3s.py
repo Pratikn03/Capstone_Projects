@@ -14,26 +14,26 @@ import yaml
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from gridpulse.dc3s.calibration import build_uncertainty_set
-from gridpulse.dc3s.certificate import (
+from orius.dc3s.calibration import build_uncertainty_set
+from orius.dc3s.certificate import (
     compute_config_hash,
     compute_model_hash,
     get_certificate,
     make_certificate,
     store_certificate,
 )
-from gridpulse.dc3s.drift import PageHinkleyDetector
-from gridpulse.dc3s.ftit import update as update_ftit_state
-from gridpulse.dc3s.guarantee_checks import evaluate_guarantee_checks
-from gridpulse.dc3s.quality import compute_reliability
-from gridpulse.dc3s.shield import repair_action
-from gridpulse.dc3s.state import DC3SStateStore
-from gridpulse.forecasting.predict import predict_next_24h
-from gridpulse.forecasting.uncertainty.conformal import load_conformal
-from gridpulse.iot.store import IoTLoopStore
-from gridpulse.optimizer import optimize_dispatch
-from gridpulse.optimizer.robust_dispatch import optimize_robust_dispatch
-from gridpulse.safety.bms import SafetyLayer, SafetyViolation
+from orius.dc3s.drift import PageHinkleyDetector
+from orius.dc3s.ftit import update as update_ftit_state
+from orius.dc3s.guarantee_checks import evaluate_guarantee_checks
+from orius.dc3s.quality import compute_reliability
+from orius.dc3s.shield import repair_action
+from orius.dc3s.state import DC3SStateStore
+from orius.forecasting.predict import predict_next_24h
+from orius.forecasting.uncertainty.conformal import load_conformal
+from orius.iot.store import IoTLoopStore
+from orius.optimizer import optimize_dispatch
+from orius.optimizer.robust_dispatch import optimize_robust_dispatch
+from orius.safety.bms import SafetyLayer, SafetyViolation
 from services.api.config import get_bms_config, get_conformal_path, load_uncertainty_config
 from services.api.routers.forecast import _cached_bundle, _load_cfg as _load_forecast_cfg, _resolve_model_path
 from services.api.routers.optimize import _build_robust_config, _load_cfg as _load_optimize_cfg
