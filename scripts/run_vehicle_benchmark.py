@@ -15,8 +15,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
+from orius.adapters.vehicle import VehicleDomainAdapter
 from orius.vehicles.plant import VehiclePlant
-from orius.vehicles.vehicle_adapter import VehicleDomainAdapter
 from orius.vehicles.vehicle_runner import run_vehicle_episode, compute_vehicle_metrics
 
 

@@ -34,6 +34,11 @@ def _step(name: str, fn, *args, **kwargs):
 def check_imports():
     """Verify all core ORIUS imports."""
     def _do():
+        from orius.adapters.aerospace import AerospaceDomainAdapter
+        from orius.adapters.battery import BatteryDomainAdapter
+        from orius.adapters.healthcare import HealthcareDomainAdapter
+        from orius.adapters.industrial import IndustrialDomainAdapter
+        from orius.adapters.vehicle import VehicleDomainAdapter
         from orius.dc3s import (
             compute_reliability,
             repair_action,
@@ -46,9 +51,14 @@ def check_imports():
         from orius.cpsbench_iot.runner import run_suite
         from orius.cpsbench_iot.plant import BatteryPlant
         from orius.cpsbench_iot.scenarios import generate_episode
+        assert BatteryDomainAdapter is not None
+        assert VehicleDomainAdapter is not None
+        assert IndustrialDomainAdapter is not None
+        assert HealthcareDomainAdapter is not None
+        assert AerospaceDomainAdapter is not None
         return True
 
-    _step("Imports (DC3S, forecasting, optimizer, CPSBench)", _do)
+    _step("Imports (adapters, DC3S, forecasting, optimizer, CPSBench)", _do)
 
 
 def check_config():
