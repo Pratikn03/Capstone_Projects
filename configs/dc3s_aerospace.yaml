@@ -1,0 +1,57 @@
+# DC3S configuration for the Aerospace (flight envelope) portability-validated domain.
+# Safety predicates: airspeed_kt in [v_min, v_max], bank_angle_deg in [-max_bank, max_bank],
+#                    fuel_remaining_pct >= fuel_min.
+# Highest k_quality of all domains — avionics data loss is safety-critical.
+
+dc3s:
+  assumptions_version: dc3s-aerospace-v1
+
+  # Avionics data bus refresh (1 Hz ARINC 429 / 10 Hz AFDX; use 1 s as conservative default)
+  expected_cadence_s: 1.0
+
+  law: linear
+  k_quality: 0.70      # maximum sensitivity — any sensor loss inflates heavily
+  k_drift: 0.50        # aggressive drift inflation for flight-critical parameters
+  k_sensitivity: 0.03
+  infl_max: 2.5        # bounded to avoid over-conservative throttle limits
+
+  reliability:
+    lambda_delay: 0.020    # avionics tolerates <50 ms latency; penalty kicks in fast
+    spike_beta: 0.10       # very tight: airspeed cannot spike ±10 kt instantaneously
+    ooo_gamma: 0.50        # heavy OOO penalty on sequenced avionics packets
+    min_w: 0.05
+
+  ftit:
+    decay: 0.99            # slow decay — envelope violations are very persistent
+    stale_k: 3
+    stale_tol: 1.0e-9
+    alpha_dropout: 1.0
+    alpha_stale_sensor: 1.0
+    alpha_delay_jitter: 1.0
+    alpha_out_of_order: 1.0
+    alpha_spikes: 1.0
+    sigma2_init: 1.0
+    delta: 0.05
+
+  drift:
+    detector: page_hinkley
+    ph_delta: 0.005
+    ph_lambda: 3.0
+    warmup_steps: 20
+    cooldown_steps: 10
+
+  shield:
+    mode: l2_projection
+    reserve_soc_pct_drift: 0.12   # 12 % margin on throttle during sensor drift
+
+  # Aerospace-specific constraint defaults
+  aerospace:
+    v_min_kt: 60.0
+    v_max_kt: 350.0
+    max_bank_deg: 30.0
+    fuel_min_pct: 10.0
+
+  audit:
+    duckdb_path: data/audit/dc3s_aerospace_audit.duckdb
+    table_name: dispatch_certificates
+    state_table_name: dc3s_aerospace_online_state
