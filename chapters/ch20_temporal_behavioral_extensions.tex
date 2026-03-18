@@ -216,10 +216,10 @@ the uncontrolled strategy incurs at least one violation.
 \begin{proof}
 The graceful degradation protocol reduces dispatch magnitude
 monotonically, shrinking the SOC excursion at each step.  Since the
-safe zone $\mathcal{X}_{\text{safe}}$ is an absorbing set under the
-landing controller (Proposition~\ref{prop:landing-convergence} in
-Chapter~\ref{ch:graceful-degradation}), the SOC converges to the
-interior and no further violations can occur after landing.
+safe zone $\mathcal{X}_{\text{safe}}$ remains absorbing under the
+bounded landing regime described in Chapter~\ref{ch:graceful-degradation},
+the SOC converges toward the interior and no further violations can occur
+after landing.
 
 The uncontrolled strategy, by contrast, continues to dispatch at full
 power.  Under the admissible fault sequence, the accumulated
