@@ -1,0 +1,57 @@
+# DC3S configuration for the Industrial (process control / CCPP) portability-validated domain.
+# Safety predicates: temp_c in [temp_min, temp_max], power_mw in [0, power_max].
+# Parameters closely mirror the battery reference domain (hourly cadence, similar inflation).
+
+dc3s:
+  assumptions_version: dc3s-industrial-v1
+
+  # SCADA / DCS telemetry heartbeat (1-second fast loop; 3600 s also common for hourly KPIs)
+  expected_cadence_s: 3600.0
+
+  law: linear
+  k_quality: 0.50
+  k_drift: 0.30
+  k_sensitivity: 0.05
+  infl_max: 2.0
+
+  reliability:
+    lambda_delay: 0.002
+    spike_beta: 0.25
+    ooo_gamma: 0.35
+    min_w: 0.05
+
+  ftit:
+    decay: 0.98
+    stale_k: 3
+    stale_tol: 1.0e-9
+    alpha_dropout: 1.0
+    alpha_stale_sensor: 1.0
+    alpha_delay_jitter: 1.0
+    alpha_out_of_order: 1.0
+    alpha_spikes: 1.0
+    sigma2_init: 1.0
+    delta: 0.05
+
+  drift:
+    detector: page_hinkley
+    ph_delta: 0.010
+    ph_lambda: 5.0
+    warmup_steps: 24
+    cooldown_steps: 12
+
+  shield:
+    mode: l2_projection
+    reserve_soc_pct_drift: 0.08
+
+  # Industrial-specific constraint defaults (CCPP-style)
+  industrial:
+    temp_min_c: 0.0
+    temp_max_c: 120.0
+    pressure_min_mbar: 990.0
+    pressure_max_mbar: 1040.0
+    power_max_mw: 500.0
+
+  audit:
+    duckdb_path: data/audit/dc3s_industrial_audit.duckdb
+    table_name: dispatch_certificates
+    state_table_name: dc3s_industrial_online_state
