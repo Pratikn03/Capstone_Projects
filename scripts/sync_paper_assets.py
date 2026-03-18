@@ -36,6 +36,20 @@ PAPER_ASSET_PATHS = [
     "paper/paper.tex",
 ]
 
+# Canonical evidence surface: sync MUST fail if any of these are missing
+REQUIRED_CANONICAL_PATHS = [
+    "paper/metrics_manifest.json",
+    "paper/claim_matrix.csv",
+    "scripts/validate_paper_claims.py",
+    "scripts/sync_paper_assets.py",
+    "reports/impact_summary.csv",
+    "reports/eia930/impact_summary.csv",
+    "reports/research_metrics_de.csv",
+    "reports/research_metrics_us.csv",
+    "configs/dc3s.yaml",
+    "configs/optimization.yaml",
+]
+
 
 def _check_release_manifest_contract() -> list[dict[str, Any]]:
     manifest_path = REPO_ROOT / "reports" / "publication" / "release_manifest.json"
@@ -231,9 +245,71 @@ def _check_uq_contract_consistency() -> list[dict[str, Any]]:
     return issues
 
 
+def _check_impact_alignment_with_manifest() -> list[dict[str, Any]]:
+    """Fail if impact_summary files diverge from metrics_manifest canonical_metrics beyond tolerance."""
+    issues: list[dict[str, Any]] = []
+    manifest_path = REPO_ROOT / "paper" / "metrics_manifest.json"
+    if not manifest_path.exists():
+        return issues
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return issues
+    cm = manifest.get("canonical_metrics", {})
+    tolerance = 0.005  # 0.5% for percentages
+
+    for region, rel_path in [("de", "reports/impact_summary.csv"), ("us", "reports/eia930/impact_summary.csv")]:
+        impact_path = REPO_ROOT / rel_path
+        if not impact_path.exists():
+            continue
+        locked = cm.get(region, {}).get("impact", {})
+        if not locked:
+            continue
+        with open(impact_path, encoding="utf-8") as fh:
+            rows = list(csv.DictReader(fh))
+        if not rows:
+            continue
+        row = rows[0]
+        for key, manifest_key in [
+            ("cost_savings_pct", "cost_savings_pct_raw"),
+            ("carbon_reduction_pct", "carbon_reduction_pct_raw"),
+            ("peak_shaving_pct", "peak_shaving_pct_raw"),
+        ]:
+            try:
+                actual = float(row.get(key, 0))
+                expected = float(locked.get(manifest_key, 0))
+                if abs(actual - expected) > tolerance:
+                    issues.append({
+                        "check": "impact_alignment",
+                        "error": f"{rel_path} {key}={actual:.4f} diverges from manifest {expected:.4f} (tolerance {tolerance})",
+                    })
+            except (TypeError, ValueError):
+                pass
+    return issues
+
+
+def _check_required_canonical_paths() -> list[dict[str, Any]]:
+    """Fail if any canonical evidence surface file is missing."""
+    issues: list[dict[str, Any]] = []
+    for rel in REQUIRED_CANONICAL_PATHS:
+        p = REPO_ROOT / rel
+        if not p.exists():
+            issues.append({
+                "check": "required_asset",
+                "error": f"Required canonical asset missing: {rel}",
+            })
+    return issues
+
+
 def run_checks() -> list[dict[str, Any]]:
     """Run all paper-asset consistency checks."""
     all_issues: list[dict[str, Any]] = []
+
+    # Required canonical paths (fail fast)
+    all_issues.extend(_check_required_canonical_paths())
+
+    # Impact files must match manifest (canonical rerun reproduces within tolerance)
+    all_issues.extend(_check_impact_alignment_with_manifest())
 
     # Stale values
     for key, spec in KNOWN_STALE_VALUES.items():
