@@ -1,0 +1,65 @@
+\chapter{Locked Artifact Hash Registry}
+\label{app:locked-hash-registry}
+
+This appendix replaces the placeholder hash registry with concrete locked
+entries drawn from
+\path{reports/publication/final_lock_manifest_full_thesis.json}.  The goal is
+not to list every temporary file in the repository.  The goal is to record
+the canonical final-package artifacts whose hashes anchor the thesis claim
+surface.
+
+\begin{small}
+\begin{longtable}{@{}p{8.0cm}p{3.1cm}p{1.6cm}@{}}
+\caption{Locked artifact hash registry from the final full-thesis package.}
+\label{tab:locked-hash-registry} \\
+\toprule
+\textbf{Artifact path} & \textbf{SHA-256 prefix} & \textbf{Bytes} \\
+\midrule
+\endfirsthead
+
+\multicolumn{3}{c}{\tablename\ \thetable{} --- continued} \\
+\toprule
+\textbf{Artifact path} & \textbf{SHA-256 prefix} & \textbf{Bytes} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{3}{r}{\textit{Continued on next page}} \\
+\endfoot
+
+\bottomrule
+\endlastfoot
+
+\path{reports/publication/final_package_FINAL_20260317T030715Z/48h_trace.csv} & \texttt{7002cbaa77e8dfe0} & 14971 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/active_probing_spoofing_detection.csv} & \texttt{a8d12550ed3ae633} & 105 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/aging_calibration_outputs.csv} & \texttt{f5b89bafecac6d3f} & 255 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/appendices_hq_manifest.json} & \texttt{73e8e9c4ea0593d0} & 1723 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/baseline_lock_manifest.json} & \texttt{bcfa0eee34e71792} & 3053 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/battery_leaderboard.csv} & \texttt{96fbd6dfcf857cb1} & 647 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/blackout_half_life.csv} & \texttt{cd35353971342fdf} & 122 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/claim_evidence_matrix.csv} & \texttt{e429255befdc88e2} & 1891 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/dc3s_latency_summary.csv} & \texttt{cc1e470c6df2d5b9} & 336 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/fault_performance_table.csv} & \texttt{ba5652d3b071a742} & 4275 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/fleet_composition_two_battery.csv} & \texttt{6dd383794d60f42d} & 6838 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/graceful_degradation_trace.csv} & \texttt{dad786d86aee0f58} & 6352 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/hyperparameter_surfaces.csv} & \texttt{b1be66a9a03710e4} & 655 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/orius-plan/10-baseline-lock-and-runid-policy.md} & \texttt{9e5c2c3fe41f4e96} & 534 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/orius-plan/11-part1to4-gap-closure.md} & \texttt{28714d964c28fa9f} & 1233 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/orius-plan/12-part5-hardening-lock.md} & \texttt{b0b55b82c4de4ee2} & 853 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/orius-plan/13-part6-extension-evidence.md} & \texttt{e85963b5f28afeb0} & 1127 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/orius-plan/14-appendices-hq-buildout.md} & \texttt{3f537daaf1b838c4} & 672 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/orius-plan/assumption_register.md} & \texttt{d11d439c0475e305} & 4157 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/orius-plan/theorem_to_evidence_map.md} & \texttt{4c890c0003c634fa} & 4341 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/paper.pdf} & \texttt{21a273a8aa25debd} & 3796137 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/part5_hardening_lock_manifest.json} & \texttt{44b918fed0c5166d} & 1916 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/part6_extension_lock_manifest.json} & \texttt{03e64f759a95e277} & 2171 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/priority2_artifacts_manifest.json} & \texttt{ec9d073108b836ee} & 692 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/priority3_artifacts_manifest.json} & \texttt{c994d26b52c7dd34} & 465 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/release_manifest.json} & \texttt{e3bc745701ebc6c4} & 9486 \\
+\path{reports/publication/final_package_FINAL_20260317T030715Z/run_id_policy.json} & \texttt{ba69366033e80aa4} & 320 \\
+\end{longtable}
+\end{small}
+
+The registry above is intentionally concrete.  It gives the defense package
+a stable hash anchor for the highest-value battery artifacts rather than a
+promise that such a registry will be added later.

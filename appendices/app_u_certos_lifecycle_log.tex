@@ -1,0 +1,135 @@
+\chapter{Full CertOS Lifecycle Log}
+\label{app:certos-lifecycle-log}
+
+This appendix reproduces the governed battery runtime log from
+\path{reports/certos/certos_lifecycle.csv}.  The main text only needs a few
+representative rows; the full trace belongs here so that the transition from
+valid to degraded to fallback execution can be inspected directly.
+
+\begin{small}
+\begin{longtable}{@{}rrrrrl@{}}
+\caption{Full 96-step CertOS lifecycle log.}
+\label{tab:certos-full-log} \\
+\toprule
+\textbf{Step} & \textbf{Horizon} & \textbf{Status} & \textbf{Discharge} &
+\textbf{SOC} & \textbf{Fallback} \\
+\midrule
+\endfirsthead
+
+\multicolumn{6}{c}{\tablename\ \thetable{} --- continued} \\
+\toprule
+\textbf{Step} & \textbf{Horizon} & \textbf{Status} & \textbf{Discharge} &
+\textbf{SOC} & \textbf{Fallback} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\textit{Continued on next page}} \\
+\endfoot
+
+\bottomrule
+\endlastfoot
+
+0 & 18 & valid & 45.0 & 88.16 & False \\
+1 & 21 & valid & 50.0 & 75.0 & False \\
+2 & 21 & valid & 50.0 & 61.84 & False \\
+3 & 20 & valid & 50.0 & 48.68 & False \\
+4 & 19 & valid & 47.5 & 36.18 & False \\
+5 & 21 & valid & 50.0 & 23.03 & False \\
+6 & 17 & valid & 42.5 & 11.84 & False \\
+7 & 20 & valid & 50.0 & 0 & False \\
+8 & 17 & valid & 42.5 & 0 & False \\
+9 & 16 & valid & 40.0 & 0 & False \\
+10 & 18 & valid & 45.0 & 0 & False \\
+11 & 20 & valid & 50.0 & 0 & False \\
+12 & 18 & valid & 45.0 & 0 & False \\
+13 & 18 & valid & 45.0 & 0 & False \\
+14 & 18 & valid & 45.0 & 0 & False \\
+15 & 18 & valid & 45.0 & 0 & False \\
+16 & 16 & valid & 40.0 & 0 & False \\
+17 & 14 & valid & 35.0 & 0 & False \\
+18 & 18 & valid & 45.0 & 0 & False \\
+19 & 16 & valid & 40.0 & 0 & False \\
+20 & 15 & valid & 37.5 & 0 & False \\
+21 & 14 & valid & 35.0 & 0 & False \\
+22 & 13 & valid & 32.5 & 0 & False \\
+23 & 17 & valid & 42.5 & 0 & False \\
+24 & 15 & valid & 37.5 & 0 & False \\
+25 & 15 & valid & 37.5 & 0 & False \\
+26 & 14 & valid & 35.0 & 0 & False \\
+27 & 16 & valid & 40.0 & 0 & False \\
+28 & 13 & valid & 32.5 & 0 & False \\
+29 & 13 & valid & 32.5 & 0 & False \\
+30 & 13 & valid & 32.5 & 0 & False \\
+31 & 12 & valid & 30.0 & 0 & False \\
+32 & 10 & valid & 25.0 & 0 & False \\
+33 & 12 & valid & 30.0 & 0 & False \\
+34 & 14 & valid & 35.0 & 0 & False \\
+35 & 10 & valid & 25.0 & 0 & False \\
+36 & 13 & valid & 32.5 & 0 & False \\
+37 & 13 & valid & 32.5 & 0 & False \\
+38 & 10 & valid & 25.0 & 0 & False \\
+39 & 12 & valid & 30.0 & 0 & False \\
+40 & 0 & fallback & 0.0 & 0 & True \\
+41 & 0 & fallback & 0.0 & 0 & True \\
+42 & 0 & fallback & 0.0 & 0 & True \\
+43 & 0 & fallback & 0.0 & 0 & True \\
+44 & 0 & fallback & 0.0 & 0 & True \\
+45 & 0 & fallback & 0.0 & 0 & True \\
+46 & 0 & fallback & 0.0 & 0 & True \\
+47 & 0 & fallback & 0.0 & 0 & True \\
+48 & 0 & fallback & 0.0 & 0 & True \\
+49 & 0 & fallback & 0.0 & 0 & True \\
+50 & 0 & fallback & 0.0 & 0 & True \\
+51 & 0 & fallback & 0.0 & 0 & True \\
+52 & 0 & fallback & 0.0 & 0 & True \\
+53 & 0 & fallback & 0.0 & 0 & True \\
+54 & 0 & fallback & 0.0 & 0 & True \\
+55 & 0 & fallback & 0.0 & 0 & True \\
+56 & 6 & valid & 15.0 & 0 & False \\
+57 & 4 & degraded & 10.0 & 0 & False \\
+58 & 7 & valid & 17.5 & 0 & False \\
+59 & 7 & valid & 17.5 & 0 & False \\
+60 & 7 & valid & 17.5 & 0 & False \\
+61 & 6 & valid & 15.0 & 0 & False \\
+62 & 4 & degraded & 10.0 & 0 & False \\
+63 & 7 & valid & 17.5 & 0 & False \\
+64 & 4 & degraded & 10.0 & 0 & False \\
+65 & 3 & degraded & 7.5 & 0 & False \\
+66 & 6 & valid & 15.0 & 0 & False \\
+67 & 3 & degraded & 7.5 & 0 & False \\
+68 & 1 & degraded & 2.5 & 0 & False \\
+69 & 3 & degraded & 7.5 & 0 & False \\
+70 & 4 & degraded & 10.0 & 0 & False \\
+71 & 1 & degraded & 2.5 & 0 & False \\
+72 & 2 & degraded & 5.0 & 0 & False \\
+73 & 0 & fallback & 0.0 & 0 & True \\
+74 & 3 & degraded & 7.5 & 0 & False \\
+75 & 2 & degraded & 5.0 & 0 & False \\
+76 & 0 & fallback & 0.0 & 0 & True \\
+77 & 0 & fallback & 0.0 & 0 & True \\
+78 & 1 & degraded & 2.5 & 0 & False \\
+79 & 2 & degraded & 5.0 & 0 & False \\
+80 & 2 & degraded & 5.0 & 0 & False \\
+81 & 0 & fallback & 0.0 & 0 & True \\
+82 & 0 & fallback & 0.0 & 0 & True \\
+83 & 2 & degraded & 5.0 & 0 & False \\
+84 & 0 & fallback & 0.0 & 0 & True \\
+85 & 0 & fallback & 0.0 & 0 & True \\
+86 & 0 & fallback & 0.0 & 0 & True \\
+87 & 0 & fallback & 0.0 & 0 & True \\
+88 & 0 & fallback & 0.0 & 0 & True \\
+89 & 0 & fallback & 0.0 & 0 & True \\
+90 & 0 & fallback & 0.0 & 0 & True \\
+91 & 0 & fallback & 0.0 & 0 & True \\
+92 & 0 & fallback & 0.0 & 0 & True \\
+93 & 0 & fallback & 0.0 & 0 & True \\
+94 & 0 & fallback & 0.0 & 0 & True \\
+95 & 0 & fallback & 0.0 & 0 & True \\
+\end{longtable}
+\end{small}
+
+The long contiguous fallback stretches visible above are exactly why the
+runtime chapter remains honest about scope.  The artifact shows explicit
+fallback behavior and complete audit coverage.  It does not show a runtime
+that has already solved every deployment-side recovery problem.

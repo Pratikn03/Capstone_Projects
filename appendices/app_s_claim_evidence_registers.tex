@@ -1,0 +1,163 @@
+\chapter{Claim-to-Evidence and Coverage Registers}
+\label{app:claim-evidence-registers}
+
+This appendix consolidates the main governance registers that keep thesis
+claims attached to code, scripts, and artifacts.  The battery manuscript is
+long enough that prose-only traceability is fragile; these tables are the
+practical safeguard against drift.
+
+\section{Primary Claim Matrix}
+
+\begin{small}
+\begin{longtable}{@{}p{2.3cm}p{3.2cm}p{4.0cm}p{2.1cm}p{1.3cm}@{}}
+\caption{Primary claim-to-evidence matrix from the locked publication
+register.}
+\label{tab:claim-evidence-matrix} \\
+\toprule
+\textbf{Claim ID} & \textbf{Claim text} & \textbf{Evidence path} &
+\textbf{Evidence type} & \textbf{Status} \\
+\midrule
+\endfirsthead
+
+\multicolumn{5}{c}{\tablename\ \thetable{} --- continued} \\
+\toprule
+\textbf{Claim ID} & \textbf{Claim text} & \textbf{Evidence path} &
+\textbf{Evidence type} & \textbf{Status} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{5}{r}{\textit{Continued on next page}} \\
+\endfoot
+
+\bottomrule
+\endlastfoot
+
+\texttt{central\_claim} & deterministic unsafe vs.\ dc3s safe & \path{reports/publication/dc3s_main_table_ci.csv} & csv row & locked \\
+\texttt{theorem\_t1} & oasg existence & \path{src/gridpulse/cpsbench_iot/scenarios.py} & code path & implemented \\
+\texttt{theorem\_t2} & one-step safety preservation & \path{src/gridpulse/dc3s/guarantee_checks.py} & code path & implemented \\
+\texttt{theorem\_t3} & coverage monotonicity plus empirical core-bound audit & \path{src/gridpulse/dc3s/coverage_theorem.py} & code path & implemented \\
+\texttt{theorem\_t4} & no free safety & \path{src/gridpulse/cpsbench_iot/baselines.py} & code path & implemented \\
+\texttt{theorem\_t5} & certificate validity horizon & \path{src/gridpulse/dc3s/temporal_theorems.py} & code path & implemented \\
+\texttt{theorem\_t6} & certificate expiration bound & \path{src/gridpulse/dc3s/temporal_theorems.py} & code path & implemented \\
+\texttt{theorem\_t7} & feasible fallback existence & \path{src/gridpulse/dc3s/temporal_theorems.py} & code path & implemented \\
+\texttt{theorem\_t8} & graceful degradation dominance & \path{src/gridpulse/dc3s/temporal_theorems.py} & code path & implemented \\
+\texttt{priority1\_fault\_table} & fault performance table & \path{reports/publication/fault_performance_table.csv} & artifact file & generated \\
+\texttt{priority1\_trace} & 48h operational trace & \path{reports/publication/48h_trace.csv} & artifact file & generated \\
+\texttt{priority1\_latency} & latency p99 table & \path{reports/publication/dc3s_latency_summary.csv} & artifact file & generated \\
+\texttt{priority1\_hil} & software hil summary & \path{reports/hil/closed_loop_nominal_48h_summary.json} & artifact file & generated \\
+\texttt{priority2\_surfaces} & hyperparameter surfaces & \path{reports/publication/hyperparameter_surfaces.csv} & artifact file & generated \\
+\texttt{priority2\_half\_life} & blackout half-life & \path{reports/publication/blackout_half_life.csv} & artifact file & generated \\
+\texttt{priority2\_graceful} & graceful degradation trace & \path{reports/publication/graceful_degradation_trace.csv} & artifact file & generated \\
+\texttt{priority3\_leaderboard} & battery leaderboard & \path{reports/publication/battery_leaderboard.csv} & artifact file & generated \\
+\texttt{priority3\_fleet} & fleet composition & \path{reports/publication/fleet_composition_two_battery.csv} & artifact file & generated \\
+\texttt{priority3\_probing} & bounded active probing audit & \path{reports/probing/spoofing_attack_results.csv} & artifact file & generated \\
+\texttt{priority3\_aging} & aging proxy calibration outputs & \path{reports/aging/asset_preservation_proxy_table.csv} & artifact file & generated \\
+\end{longtable}
+\end{small}
+
+\section{Theorem and Chapter Register}
+
+\begin{small}
+\begin{longtable}{@{}p{1.4cm}p{1.0cm}p{1.4cm}p{3.4cm}p{3.7cm}p{1.3cm}@{}}
+\caption{Battery theorem and chapter evidence register from the locked
+battery claim register.}
+\label{tab:battery-claim-register} \\
+\toprule
+\textbf{Scope} & \textbf{Ch.} & \textbf{Token} & \textbf{Code or script} &
+\textbf{Artifact path} & \textbf{Status} \\
+\midrule
+\endfirsthead
+
+\multicolumn{6}{c}{\tablename\ \thetable{} --- continued} \\
+\toprule
+\textbf{Scope} & \textbf{Ch.} & \textbf{Token} & \textbf{Code or script} &
+\textbf{Artifact path} & \textbf{Status} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\textit{Continued on next page}} \\
+\endfoot
+
+\bottomrule
+\endlastfoot
+
+T1 & 16 & \texttt{THM\_T1} & \path{src/gridpulse/cpsbench_iot/scenarios.py} & \path{reports/publication/dc3s_main_table_ci.csv} & locked \\
+T2 & 17 & \texttt{THM\_T2} & \path{src/gridpulse/dc3s/guarantee_checks.py} & \path{reports/publication/dc3s_main_table_ci.csv} & locked \\
+T3 & 18 & \texttt{THM\_T3} & \path{src/gridpulse/dc3s/coverage_theorem.py} & \path{reports/publication/reliability_group_coverage_phase3.csv} & locked \\
+T4 & 19 & \texttt{THM\_T4} & \path{src/gridpulse/cpsbench_iot/baselines.py} & \path{reports/publication/fault_performance_table.csv} & locked \\
+T5 & 20 & \texttt{THM\_T5} & \path{src/gridpulse/dc3s/temporal_theorems.py} & \path{reports/blackout/blackout_study.csv} & locked \\
+T6 & 20 & \texttt{THM\_T6} & \path{src/gridpulse/dc3s/temporal_theorems.py} & \path{reports/blackout/blackout_study.csv} & locked \\
+T7 & 20 & \texttt{THM\_T7} & \path{src/gridpulse/dc3s/temporal_theorems.py} & \path{reports/blackout/graceful_degradation_trace.csv} & locked \\
+T8 & 20 & \texttt{THM\_T8} & \path{src/gridpulse/dc3s/temporal_theorems.py} & \path{reports/blackout/graceful_degradation_trace.csv} & locked \\
+A1--A8 & 15 & \texttt{ASM\_REGISTER} & \path{configs/dc3s.yaml} & \path{orius-plan/assumption_register.md} & locked \\
+TRACE\_48H & 13 & \texttt{FIG\_TRACE\_48H} & \path{scripts/generate_48h_trace.py} & \path{reports/publication/48h_trace_final_de.csv} & locked \\
+HIL & 27 & \texttt{FIG\_HIL} & \path{scripts/generate_hil_evidence.py} & \path{reports/hil/hil_summary.json} & locked \\
+BLACKOUT & 28 & \texttt{FIG\_BLACKOUT} & \path{scripts/run_blackout_study.py} & \path{reports/publication/blackout_study.csv} & locked \\
+PROBING & appV & \texttt{TBL\_PROBING} & \path{scripts/run_spoofing_attack.py} & \path{reports/probing/spoofing_attack_results.csv} & locked \\
+\end{longtable}
+\end{small}
+
+\section{Chapter Coverage Register}
+
+\begin{small}
+\begin{longtable}{@{}p{1.0cm}p{4.6cm}p{4.0cm}p{1.5cm}@{}}
+\caption{Chapter coverage register from the thesis coverage audit.}
+\label{tab:chapter-coverage-register} \\
+\toprule
+\textbf{Ch.} & \textbf{Chapter file} & \textbf{Primary artifact} & \textbf{Status} \\
+\midrule
+\endfirsthead
+
+\multicolumn{4}{c}{\tablename\ \thetable{} --- continued} \\
+\toprule
+\textbf{Ch.} & \textbf{Chapter file} & \textbf{Primary artifact} & \textbf{Status} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\textit{Continued on next page}} \\
+\endfoot
+
+\bottomrule
+\endlastfoot
+
+15 & \path{chapters/ch15_assumptions_notation_proof_discipline.tex} & \path{orius-plan/assumption_register.md} & locked \\
+16 & \path{chapters/ch16_battery_theorem_oasg_existence.tex} & \path{reports/publication/dc3s_main_table_ci.csv} & locked \\
+17 & \path{chapters/ch17_battery_theorem_safety_preservation.tex} & \path{reports/publication/dc3s_main_table_ci.csv} & locked \\
+18 & \path{chapters/ch18_orius_core_bound_battery.tex} & \path{reports/publication/reliability_group_coverage_phase3.csv} & locked \\
+19 & \path{chapters/ch19_no_free_safety_battery.tex} & \path{reports/publication/fault_performance_table.csv} & locked \\
+20 & \path{chapters/ch20_temporal_behavioral_extensions.tex} & \path{reports/blackout/blackout_study.csv} & partial empirical \\
+21 & \path{chapters/ch21_fault_performance_stress_tests.tex} & \path{reports/fault_benchmark/fault_performance_table.csv} & locked \\
+22 & \path{chapters/ch22_latency_systems_footprint.tex} & \path{reports/latency/dc3s_latency_summary.csv} & locked \\
+23 & \path{chapters/ch23_hyperparameter_surface_stability.tex} & \path{reports/calibration/hyperparameter_surfaces.csv} & locked \\
+24 & \path{chapters/ch24_conditional_coverage_subgroups.tex} & \path{reports/calibration/reliability_group_audit.csv} & locked \\
+25 & \path{chapters/ch25_regional_decomposition_real_prices.tex} & \path{reports/publication/per_ba_dispatch_impact.csv} & locked \\
+26 & \path{chapters/ch26_asset_preservation_aging_proxy.tex} & \path{reports/aging/asset_preservation_proxy_table.csv} & partial proxy \\
+27 & \path{chapters/ch27_hardware_in_loop_validation.tex} & \path{reports/hil/hil_summary.json} & locked \\
+28 & \path{chapters/ch28_certificate_half_life_blackout.tex} & \path{reports/blackout/blackout_study.csv} & locked \\
+29 & \path{chapters/ch29_graceful_degradation_safe_landing.tex} & \path{reports/blackout/graceful_degradation_trace.csv} & locked \\
+30 & \path{chapters/ch30_orius_bench_battery_track.tex} & \path{reports/publication/orius_bench_battery_leaderboard.csv} & locked \\
+31 & \path{chapters/ch31_compositional_safety_battery_fleets.tex} & \path{reports/fleet/fleet_composition_two_battery.csv} & locked \\
+32 & \path{chapters/ch32_certos_runtime_certificate_lifecycle.tex} & \path{reports/certos/certos_summary.json} & locked runtime \\
+33 & \path{chapters/ch33_what_battery_thesis_proves.tex} & \path{reports/publication/battery_claim_evidence_register.csv} & locked \\
+34 & \path{chapters/ch34_outside_current_evidence.tex} & \path{reports/publication/battery_plan_gap_audit.csv} & locked \\
+35 & \path{chapters/ch35_deployment_path_verification_discipline.tex} & \path{reports/publication/phase3_rebuild_battery_evidence_manifest.json} & locked \\
+36 & \path{chapters/ch36_conclusion.tex} & \path{reports/publication/phase0_lock_current_truth_manifest.json} & locked \\
+\end{longtable}
+\end{small}
+
+\section{Full Claim--Evidence Matrix}
+
+Table~\ref{tab:claim_evidence} provides the complete 22-claim matrix
+generated directly from \path{reports/publication/claim_evidence_matrix.csv}.
+Each row maps a thesis claim to its locked artifact, evidence type, and
+status.  All claims are marked \emph{locked}: the artifact file exists,
+contains real numerical data, and is hash-registered in Appendix~R.
+
+\input{paper/assets/tables/generated/tbl_claim_evidence}
+
+Taken together, these registers are the defense-facing answer to the
+question ``where does this claim live in code and artifacts?''  They make
+the thesis longer, but more importantly they make it harder to bluff.
