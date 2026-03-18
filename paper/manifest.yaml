@@ -141,7 +141,7 @@ tables:
     status: provisional
   TBL09_CROSS_DOMAIN_OASG:
     path: reports/universal_orius_validation/cross_domain_oasg_table.csv
-    title: "Cross-domain OASG validation. Six ORIUS-Bench tracks with fault episodes; baseline vs. ORIUS TSVR and reduction."
+    title: "Cross-domain ORIUS-Bench harness output. Six tracks under fault episodes; baseline and ORIUS TSVR are reported as framework-portability evidence rather than universal dominance."
     status: locked
 
 data:

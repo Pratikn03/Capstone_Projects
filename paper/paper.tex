@@ -32,7 +32,7 @@
 
 \onehalfspacing
 
-\title{DC3S: Telemetry-Reliability-Weighted Conformal Safety Shield for Battery Dispatch under Degraded Mixed Telemetry, with a Universal Multi-Domain Framework}
+\title{ORIUS: A Universal Physical-Safety Framework for Degraded Observation, with Battery-Domain DC3S Validation}
 \author{Pratik Niroula\\
         Minnesota State University, Mankato\\
         CIT (Major), Mathematics (Minor)\\
@@ -200,14 +200,16 @@
 \maketitle
 
 \begin{abstract}
-Battery dispatch controllers can look feasible on observed sensor state while simultaneously violating physical battery limits on true state when telemetry degrades---a hidden safety failure that standard evaluation protocols do not expose. We study this gap under realistic battery fault conditions and find that deterministic dispatch violates true state-of-charge limits at \textbf{3.9\% of steps with P95 severity of 333\,MWh}, even while observed-state evaluation reports zero violations. The manuscript responds to that failure mode in three layers. First, \textbf{CPSBench} maintains separate truth and observed battery trajectories so that true-state safety becomes measurable rather than implicit. Second, \textbf{DC\textsuperscript{3}S} (Detect--Calibrate--Constrain--Certify--Shield) converts per-step telemetry reliability into adaptive uncertainty inflation (RAC-Cert), solves dispatch against the widened set, repairs infeasible actions by projection, and emits a per-step auditable certificate. Third, the full battery manuscript hardens that core with subgroup calibration, asset-preservation proxies, blackout and safe-landing behavior, fleet composition, active probing, and a controller-in-the-loop runtime rehearsal. Cost-side results on Germany (OPSD, 17{,}377 rows) yield \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\% cost savings, \PaperMetric{DE_CARBON_REDUCTION_PCT}{0.30}\% carbon reduction, and \PaperMetric{DE_PEAK_SHAVING_PCT}{6.13}\% peak shaving; stochastic value remains positive in both DE and US regions (VSS\,=\,\PaperMetric{DE_VSS}{2,708.61} and \PaperMetric{US_VSS}{297,092.71}) across three US balancing authorities (EIA-930 MISO/PJM/ERCOT). The current package includes runtime-rehearsal evidence but stops short of claiming full physical deployment or production-hardware validation. We extend the battery-only DC\textsuperscript{3}S architecture to a \textbf{universal domain physical safety framework} spanning Energy (battery), AV (autonomous vehicles), Industrial (process control), and Healthcare (vital signs), with a shared five-stage pipeline (Detect--Calibrate--Constrain--Shield--Certify) and domain-specific adapters. Every quantitative claim is tied to versioned run artifacts and checked automatically against the release evidence.
+ORIUS is a universal physical-safety framework for cyber-physical control under degraded observation. This paper presents its battery-domain reference implementation, DC3S, and uses that surface to quantify the hidden gap between observed-state feasibility and true-state safety. Under realistic battery telemetry faults, deterministic dispatch violates true state-of-charge limits at \textbf{3.9\% of steps with P95 severity of 333\,MWh}, even while observed-state evaluation reports zero violations. ORIUS organizes the response as a five-stage loop---Detect, Calibrate, Constrain, Shield, Certify---that is shared across Energy, AV, Industrial, Healthcare/Surgical, and Aerospace adapters, while battery dispatch remains the primary locked empirical and theorem-validation surface. On Germany (OPSD, 17{,}377 rows), the battery-domain DC3S implementation delivers \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\% cost savings, \PaperMetric{DE_CARBON_REDUCTION_PCT}{0.30}\% carbon reduction, and \PaperMetric{DE_PEAK_SHAVING_PCT}{6.13}\% peak shaving; stochastic value remains positive in both DE and US regions (VSS\,=\,\PaperMetric{DE_VSS}{2,708.61} and \PaperMetric{US_VSS}{297,092.71}) across three US balancing authorities (EIA-930 MISO/PJM/ERCOT). The current package includes runtime-rehearsal evidence plus a unified cross-domain harness, but these non-battery surfaces should be read as framework-portability evidence rather than universal performance guarantees or production-hardware validation. Every quantitative claim is tied to versioned run artifacts and checked automatically against the release evidence.
 \end{abstract}
 
-\noindent\textbf{Keywords:} conformal prediction, battery dispatch, safety shield, telemetry reliability, robust optimization, cyber-physical systems, uncertainty quantification, multi-domain framework, universal physical safety
+\noindent\textbf{Keywords:} ORIUS, universal physical-safety framework, conformal prediction, battery dispatch, safety shield, telemetry reliability, cyber-physical systems, uncertainty quantification, multi-domain framework
 
 \section{Introduction}\label{sec:intro}
 
 Grid-scale battery energy storage systems (BESS) are increasingly central to grid decarbonization, load balancing, and frequency regulation. Their value depends on dispatch controllers that decide, at each time step, how much power to charge or discharge using forecasts of load, renewable generation, and price. Much of the dispatch literature quietly assumes that the controller observes the battery's true state --- its state of charge (SOC), power output, and degradation level --- and can therefore check feasibility in real time. In operational settings, that assumption is too strong.
+
+ORIUS treats that failure mode as a general cyber-physical systems problem rather than a battery-specific quirk. Whenever a controller acts on degraded observation of a physical state, an observation-action safety gap can emerge between what appears feasible on the observed channel and what is actually safe in the physical system. The framework contribution of this paper is therefore architectural as well as empirical: a shared Detect--Calibrate--Constrain--Shield--Certify loop that can be instantiated across multiple domains, with battery dispatch providing the deepest locked evidence boundary.
 
 In practice, grid-scale battery dispatch runs on mixed telemetry --- delayed SCADA measurements, stale sensor feeds, packet reordering, spikes, and dropouts are ordinary operating conditions rather than edge cases~\cite{dibaji2019systems,chandola2009anomaly}. The key consequence is one the BESS dispatch literature has not directly measured: \textbf{a controller can be observationally safe (feasible on degraded observed state) while physically unsafe (violating true battery limits) at the same time}~\cite{chen2020review_bess}. On real grid data, that hidden safety failure appears at a 3.9\% violation rate with 333\,MWh P95 severity.
 
@@ -238,20 +240,20 @@ A forecasting model can have strong RMSE while still inducing unsafe dispatch if
 \subsection{Contributions}
 
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{Hidden safety gap measurement.} We provide the first empirical quantification of the divergence between observed-state and true-state safety in BESS dispatch under realistic telemetry faults. Deterministic dispatch violates true-SOC at 3.9\% of steps with P95 severity of 333\,MWh while appearing safe on observed state. This finding motivates rethinking how BESS dispatch safety is evaluated.
+  \item \textbf{ORIUS universal framework.} We present ORIUS as a universal physical-safety framework organized around a five-stage Detect--Calibrate--Constrain--Shield--Certify loop. The framework is implemented across Energy, AV, Industrial, Healthcare/Surgical, and Aerospace adapters, while the strongest formal and locked empirical guarantees in this paper remain battery-scoped.
+  \item \textbf{Hidden safety gap measurement.} We provide the first empirical quantification of the divergence between observed-state and true-state safety in BESS dispatch under realistic telemetry faults. Deterministic dispatch violates true-SOC at 3.9\% of steps with P95 severity of 333\,MWh while appearing safe on observed state.
   \item \textbf{CPSBench.} A multi-fault-dimension evaluation harness that maintains separate truth and observed battery trajectories across four fault types, enabling reproducible true-state safety evaluation. CPSBench is the framework that makes the hidden gap measurable and reproducible.
-  \item \textbf{DC\textsuperscript{3}S architecture.} A telemetry-aware conformal control loop that converts per-step reliability scores into adaptive interval inflation (RAC-Cert), solves dispatch against the widened uncertainty set, repairs infeasible actions by projection, and emits a per-step auditable certificate---all within a single online control cycle.
-  \item \textbf{Conditional conservatism result.} DC\textsuperscript{3}S achieves zero true-SOC violations at a 2.8\% intervention rate across all fault conditions. The shield is not uniformly conservative: it activates precisely when and to the degree that telemetry quality requires, leaving 97.2\% of steps unmodified.
-\item \textbf{Universal domain framework.} We extend DC\textsuperscript{3}S to a multi-domain physical safety framework (ORIUS) with adapters for Energy (battery), AV (autonomous vehicles), Industrial (process control), and Healthcare (vital signs), sharing the same five-stage pipeline and fault taxonomy across domains.
+  \item \textbf{Battery-domain DC3S architecture.} We instantiate ORIUS in a telemetry-aware conformal control loop that converts per-step reliability scores into adaptive interval inflation (RAC-Cert), solves dispatch against the widened uncertainty set, repairs infeasible actions by projection, and emits a per-step auditable certificate---all within a single online control cycle.
+  \item \textbf{Conditional conservatism result.} The battery-domain DC3S implementation achieves zero true-SOC violations at a 2.8\% intervention rate across the locked fault conditions. The shield is not uniformly conservative: it activates precisely when and to the degree that telemetry quality requires, leaving 97.2\% of dispatch steps unmodified.
 \end{enumerate}
 
 \subsection{Contribution Boundary}
 
-The central scientific contribution is the discovery and empirical characterization of the hidden safety failure mode, together with the first end-to-end architecture that closes it in an auditable control loop. The manuscript includes a bounded formal layer consisting of three theorems and one corollary: \Cref{thm:rac_coverage} establishes that monotone interval inflation preserves marginal coverage; \Cref{thm:conditional_coverage} provides group-conditional coverage under reliability-based Mondrian partitioning; and \Cref{thm:safety_margin} with \Cref{cor:zero_violation} establish safety-margin monotonicity and a zero-violation sufficiency condition. These results provide correctness support for the empirical surfaces that follow: \Cref{thm:rac_coverage} explains why RAC-Cert can widen the forecast set without weakening the base coverage guarantee, \Cref{thm:conditional_coverage} motivates the reliability-group audit in \Cref{sec:calibration}, and \Cref{thm:safety_margin} with \Cref{cor:zero_violation} explain why the FTIT tube in \Cref{sec:operational_trace} can prevent the true-SOC failures quantified in \Cref{sec:main_result}. They validate the shield's design but do not claim closed-loop stability, optimal inflation scheduling, or universal safety guarantees. The primary novelty remains the hidden safety gap discovery, the CPSBench measurement framework, the DC\textsuperscript{3}S runtime architecture, and the conditional-conservatism result demonstrating that the gap can be closed at a 2.8\% intervention rate without sacrificing economic performance.
+The central scientific contribution is two-layered: ORIUS as a reusable architectural framework for observation-degraded physical control, and battery-domain DC3S as the primary validated instantiation. The manuscript includes a bounded formal layer consisting of three theorems and one corollary: \Cref{thm:rac_coverage} establishes that monotone interval inflation preserves marginal coverage; \Cref{thm:conditional_coverage} provides group-conditional coverage under reliability-based Mondrian partitioning; and \Cref{thm:safety_margin} with \Cref{cor:zero_violation} establish safety-margin monotonicity and a zero-violation sufficiency condition. These results provide correctness support for the locked battery evidence surfaces: \Cref{thm:rac_coverage} explains why RAC-Cert can widen the forecast set without weakening the base coverage guarantee, \Cref{thm:conditional_coverage} motivates the reliability-group audit in \Cref{sec:calibration}, and \Cref{thm:safety_margin} with \Cref{cor:zero_violation} explain why the FTIT tube in \Cref{sec:operational_trace} can prevent the true-SOC failures quantified in \Cref{sec:main_result}. They validate the battery shield construction but do not claim closed-loop stability, optimal inflation scheduling, or universal safety guarantees across all domains. The multi-domain sections establish implementation portability and unified harness execution; the strongest theorem and performance claims remain battery-scoped.
 
 \subsection{Paper Roadmap}
 
-Sections~\ref{sec:related}--\ref{sec:problem} position the work and define the dispatch setting. Sections~\ref{sec:forecasting_uq} and~\ref{sec:safe_dispatch} describe the forecasting, calibration, and shield mechanics. Sections~\ref{sec:experiments}--\ref{sec:us_analysis} present the core empirical evidence, baseline diagnosis, and regime analysis. Sections~\ref{sec:governance}--\ref{sec:deployment_discipline} extend the paper into the full battery hardening surface: governance, aging, blackout behavior, runtime rehearsal, benchmark formalization, fleet composition, adversarial probing, and final scope discipline. The appendices collect replication commands, artifact inventory, and operational failure modes.
+Sections~\ref{sec:related}--\ref{sec:problem} position ORIUS and define the battery reference setting. Sections~\ref{sec:forecasting_uq} and~\ref{sec:safe_dispatch} describe the forecasting, calibration, and shield mechanics. Sections~\ref{sec:experiments}--\ref{sec:us_analysis} present the core battery evidence, baseline diagnosis, and regime analysis. \Cref{sec:universal} then lifts the architecture into the universal framework layer, documenting domain adapters and cross-domain harness outputs. The later sections extend the battery reference surface through governance, hardening, benchmark formalization, and deployment discipline, and the closing sections state the evidence boundary explicitly: ORIUS is the organizing framework, but the deepest formal and empirical validation in this paper remains the battery domain.
 
 \section{Related Work}\label{sec:related}
 
@@ -291,7 +293,7 @@ This paper makes a bounded governance claim: locked metrics, run-scoped provenan
 
 Taken together, the related work reveals a consistent blind spot. Prior robust, stochastic, and risk-aware BESS dispatch methods generally assume the measurement channel is trustworthy---the uncertainty set or scenario tree is cleanly specified at calibration time and does not degrade at runtime. Prior safety-shield and runtime-monitor work addresses action-space restriction or post-hoc trace verification, but not the specific dispatch-time failure where observed-state feasibility diverges from true-state feasibility under degraded telemetry. This paper's distinctive contribution is the combination of four elements that no single prior work provides: (i)~truth-vs-observation trajectory separation for safety evaluation, (ii)~telemetry reliability as a first-class control-state signal that modulates the uncertainty set, (iii)~dispatch-time action repair that prevents unsafe commands before execution rather than detecting them afterward, and (iv)~per-step auditable certificate emission that records the full safety-relevant decision context. None of these elements is individually unprecedented; their integration into a single online control loop targeting the hidden safety gap is what distinguishes DC\textsuperscript{3}S from the prior art.
 
-Seen against this literature, the paper's originality lies in elevating the gap between observed-state feasibility and true-state physical safety to a first-class systems problem in battery dispatch under degraded telemetry. CPSBench makes that gap measurable by maintaining separate observed and truth trajectories under realistic telemetry faults, while DC\textsuperscript{3}S addresses it through a modular runtime design that does not replace forecasting or optimization, but instead wraps the dispatch boundary with telemetry-reliability scoring, reliability-conditioned uncertainty inflation, action repair, and per-step certificate emission. The resulting contribution is therefore not a broader claim of universal runtime safety, but a bounded systems synthesis: measurement-quality-aware uncertainty, safe dispatch-time intervention, and auditable evidence for each online control decision.
+Seen against this literature, the paper's originality lies in elevating the gap between observed-state feasibility and true-state physical safety to a first-class systems problem in battery dispatch under degraded telemetry, then packaging the resulting control logic as the ORIUS framework. CPSBench makes the battery gap measurable by maintaining separate observed and truth trajectories under realistic telemetry faults, while DC\textsuperscript{3}S addresses it through a modular runtime design that does not replace forecasting or optimization, but instead wraps the dispatch boundary with telemetry-reliability scoring, reliability-conditioned uncertainty inflation, action repair, and per-step certificate emission. The resulting contribution is therefore not a claim of universal safety guarantees or universal cross-domain dominance, but a bounded systems synthesis: a reusable framework plus a battery-domain reference implementation with auditable evidence for each online control decision.
 
 \section{Background, Preliminaries, and System Context}\label{sec:background}
 
@@ -1243,70 +1245,6 @@ Taken together, the trace shows what conditional conservatism looks like in oper
 
 \PaperFigure{FIG41_SOC_TRAJECTORY_DETAIL}{Detailed SOC trajectory comparison showing the divergence between observed-state and true-state SOC during telemetry degradation. \DCThreeS{}'s inflated intervals prevent the over-discharge that the deterministic controller commits.}
 
-\section{Universal Domain Framework}\label{sec:universal}
-
-The battery DC\textsuperscript{3}S architecture generalizes to a \textbf{universal domain physical safety framework} (ORIUS) that applies the same five-stage pipeline---Detect, Calibrate, Constrain, Shield, Certify---across five cyber-physical domains. This section describes the framework, domain adapters, and implementation status. Historical incidents---Air France 447 (pitot dropout), 737 MAX MCAS (sensor spike/drift), Tesla Autopilot (perception dropout), Texas City refinery (level sensor failure), and Uber ATG (sensor fusion failure)---illustrate the OASG across aviation, automotive, and industrial control; ORIUS addresses the common observation-reality integrity gap underlying these events.
-
-\subsection{Multi-Domain Architecture}
-
-\Cref{fig:FIG_UNIVERSAL_FRAMEWORK} illustrates the universal pipeline. Each domain provides a \emph{DomainAdapter} that implements: (1) telemetry ingestion, (2) reliability scoring (OQE), (3) uncertainty set construction, (4) action set tightening, (5) action repair (shield), and (6) certificate emission. The pipeline stages are identical across domains; only the state schema, safety predicates, and action spaces differ.
-
-\PaperFigureWide{FIG_UNIVERSAL_FRAMEWORK}{ORIUS universal domain physical safety framework. The five-stage pipeline (Detect$\to$Calibrate$\to$Constrain$\to$Shield$\to$Certify) applies uniformly; domain adapters for five domains (Energy, AV, Industrial, Healthcare/Surgical, Aerospace) provide domain-specific state, safety predicates, and repair logic.}
-
-\subsection{Domain State Schema and Safety Predicates}
-
-\Cref{tab:universal-state} defines the state schema per domain. Energy uses SOC, load, and renewables; AV uses longitudinal kinematics (position, speed, lead vehicle); Industrial uses process variables (temperature, pressure, power); Healthcare uses vital signs (heart rate, SpO$_2$, respiratory rate). \Cref{tab:universal-safety} summarizes the safety predicates. \Cref{tab:universal-pipeline} lists the pipeline stages and adapter methods.
-
-\input{assets/tables/generated/tbl_universal_framework.tex}
-
-\subsection{AV (Autonomous Vehicle) Adapter}
-
-The AV adapter implements 1D longitudinal control: position $x_t$, speed $v_t$, speed limit $v_{\max}(t)$, and optional lead-vehicle position $x^{\mathrm{lead}}_t$. Safety predicates are $v_t \leq v_{\max}(t)$ and $x^{\mathrm{lead}}_t - x_t \geq d_{\min}(v_t)$ when a lead vehicle is present. The action space is acceleration $a_t \in [a_{\min}, a_{\max}]$. Datasets include NGSIM (US highway), HEE (Bosch), and synthetic trajectories; see \texttt{orius-plan/AV\_DATASETS.md}.
-
-\subsection{Industrial Adapter}
-
-The Industrial adapter targets process control (e.g., combined-cycle power plants). State fields are temperature, pressure, humidity, and power output. Safety predicates enforce temperature and power bounds. The action space is power setpoint. Datasets include UCI CCPP and synthetic process data; see \texttt{orius-plan/INDUSTRIAL\_DATASETS.md}.
-
-\subsection{Healthcare and Surgical Robotics Adapter}
-
-The Healthcare adapter (including surgical robotics / telesurgery) monitors vital signs: heart rate (HR), SpO$_2$, and respiratory rate. For telesurgical systems, network latency creates a time-delayed control loop; the adapter widens force-constraint bounds in proportion to detected latency. Safety predicates enforce HR $\in$ [hr$_{\min}$, hr$_{\max}$], SpO$_2$ $\geq$ spo2$_{\min}$, and respiratory rate in a valid range. The action space includes alert levels. Datasets include PhysioNet BIDMC and synthetic vital signs; see \texttt{orius-plan/HEALTHCARE\_DATASETS.md}.
-
-\subsection{Aerospace Adapter}
-
-The Aerospace adapter targets avionics and flight control. State fields include airspeed, angle-of-attack, altitude, and sensor health (pitot heat status, AoA cross-check consistency, GPS satellite count). Safety predicates enforce flight-envelope limits. When sensor health degrades (e.g., pitot icing, GPS jamming), the uncertainty set expands and the safe action set contracts toward conservative commands. The adapter instantiates the OASG pattern observed in Air France 447 and 737 MAX MCAS.
-
-\subsection{Universal ORIUS Validation Evidence}\label{sec:universal_validation}
-
-The unified validation harness (\texttt{scripts/run\_universal\_orius\_validation.py}) runs all six ORIUS-Bench tracks---battery, navigation, industrial, healthcare, aerospace, vehicle---with fault episodes (bias, noise, stuck\_sensor, blackout) and aggregates TSVR (true-state violation rate) and OASG metrics. \Cref{tab:TBL09_CROSS_DOMAIN_OASG} reports the cross-domain OASG table from the locked validation run. All six domains pass the harness gate; battery and vehicle show non-zero baseline TSVR under faults, with ORIUS reducing or maintaining safety. The harness is part of the locked replication flow (\texttt{orius\_program\_manifest.json}) and produces \texttt{reports/universal\_orius\_validation/cross\_domain\_oasg\_table.csv}.
-
-\PaperTableCSV{TBL09_CROSS_DOMAIN_OASG}{Cross-domain OASG validation. Six ORIUS-Bench tracks with fault episodes; baseline vs.\ ORIUS TSVR and reduction.}
-
-\PaperFigure{FIG_MULTI_DOMAIN_VALIDATION}{Multi-domain ORIUS validation. Baseline (nominal) vs.\ ORIUS (DC3S) true-state violation rate across six domains under fault episodes.}
-
-\subsection{Implementation and Scope}
-
-The universal framework is implemented in \texttt{src/orius/universal\_framework/} with domain registry, pipeline (\texttt{run\_universal\_step}), and adapters for all five domains: Energy (Battery), AV, Industrial, Healthcare/Surgical, and Aerospace. The battery domain remains the primary validated surface with locked CPSBench evidence; the six ORIUS-Bench tracks (including vehicle) provide multi-domain validation evidence as in \Cref{tab:TBL09_CROSS_DOMAIN_OASG}. Locked evidence and theorem validation apply to the battery domain; multi-domain extensions are validated via the unified harness.
-
-\paragraph{Papers 2--6 module mapping.}
-The ORIUS program extends beyond the core DC\textsuperscript{3}S shield. \Cref{tab:papers26_modules} maps each extension paper to its implementation modules under \texttt{src/orius/}.
-
-\begin{table}[htbp]
-\centering\small
-\caption{Papers 2--6 extension modules and implementation paths.}
-\label{tab:papers26_modules}
-\begin{tabular}{p{2.2cm}p{3.2cm}p{6.8cm}}
-\toprule
-Paper & Extension & Primary paths \\
-\midrule
-Paper 2 & Certificate half-life, reachability & \path{src/orius/dc3s/half_life.py}, \path{src/orius/dc3s/reachability.py} \\
-Paper 3 & Graceful degradation planner & \path{src/orius/dc3s/graceful.py}, \path{src/orius/optimizer/fallback_dispatch.py} \\
-Paper 4 & ORIUS-Bench evaluation harness & \path{src/orius/orius_bench/} (adapter, fault\_engine, metrics\_engine, battery\_track, navigation\_track) \\
-Paper 5 & Multi-agent shared-constraint safety & \path{src/orius/multi_agent/} (plant, protocol, margin\_allocation, scenarios) \\
-Paper 6 & CertOS runtime certificate lifecycle & \path{src/orius/certos/} (runtime, certificate\_engine, audit\_ledger, recovery\_manager, belief\_engine, graceful\_planner) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
 \section{Deep Baseline Diagnosis}\label{sec:baseline_diagnosis}
 
 \subsection{The Core Finding}
@@ -1438,6 +1376,70 @@ Wind variability & High (Great Plains) & Moderate (coastal/inland) & High (West 
 These structural differences have direct implications for dispatch optimization and explain the per-BA variation in \Cref{tab:ba_impact}. PJM's heavier fossil mix creates wider price differentials for the optimizer to exploit, while ERCOT's isolated grid means import/export constraints bind differently. MISO's wind-dominant renewable profile makes renewable curtailment the primary battery value driver rather than price arbitrage.
 
 The coexistence of weak aggregate US improvements and large US VSS is not contradictory; it reflects the difference between realized percentage gains and the internal value of uncertainty-aware planning. Over the locked US evaluation window, the B1-versus-B2 comparison offers limited arbitrage and peak-shaving headroom in MISO and ERCOT, so even better dispatch decisions translate into only small realized percentage changes. PJM's stronger results show that the architecture can realize large gains when market structure provides sufficient headroom. The stochastic program still benefits from modeling uncertainty in all three BAs because that uncertainty affects reserve use, constraint satisfaction, and tail-risk exposure---even when realized direct savings remain small.
+
+\section{Universal Domain Framework}\label{sec:universal}
+
+The battery DC3S architecture is the primary validated instantiation of ORIUS, a \textbf{universal domain physical-safety framework} that applies the same five-stage pipeline---Detect, Calibrate, Constrain, Shield, Certify---across five adapter families. This section documents the shared framework, domain adapters, and current evidence boundary for the cross-domain layer. Historical incidents---Air France 447 (pitot dropout), 737 MAX MCAS (sensor spike/drift), Tesla Autopilot (perception dropout), Texas City refinery (level sensor failure), and Uber ATG (sensor fusion failure)---illustrate the OASG across aviation, automotive, and industrial control; ORIUS addresses the common observation-reality integrity gap underlying these events.
+
+\subsection{Multi-Domain Architecture}
+
+\Cref{fig:FIG_UNIVERSAL_FRAMEWORK} illustrates the universal pipeline. Each domain provides a \emph{DomainAdapter} that implements: (1) telemetry ingestion, (2) reliability scoring (OQE), (3) uncertainty set construction, (4) action set tightening, (5) action repair (shield), and (6) certificate emission. The pipeline stages are identical across domains; only the state schema, safety predicates, and action spaces differ.
+
+\PaperFigureWide{FIG_UNIVERSAL_FRAMEWORK}{ORIUS universal domain physical safety framework. The five-stage pipeline (Detect$\to$Calibrate$\to$Constrain$\to$Shield$\to$Certify) applies uniformly; domain adapters for five domains (Energy, AV, Industrial, Healthcare/Surgical, Aerospace) provide domain-specific state, safety predicates, and repair logic.}
+
+\subsection{Domain State Schema and Safety Predicates}
+
+\Cref{tab:universal-state} defines the state schema per domain. Energy uses SOC, load, and renewables; AV uses longitudinal kinematics (position, speed, lead vehicle); Industrial uses process variables (temperature, pressure, power); Healthcare uses vital signs (heart rate, SpO$_2$, respiratory rate); and Aerospace uses flight-envelope state (altitude, airspeed, bank angle, fuel). \Cref{tab:universal-safety} summarizes the safety predicates. \Cref{tab:universal-pipeline} lists the pipeline stages and adapter methods.
+
+\input{assets/tables/generated/tbl_universal_framework.tex}
+
+\subsection{AV (Autonomous Vehicle) Adapter}
+
+The AV adapter implements 1D longitudinal control: position $x_t$, speed $v_t$, speed limit $v_{\max}(t)$, and optional lead-vehicle position $x^{\mathrm{lead}}_t$. Safety predicates are $v_t \leq v_{\max}(t)$ and $x^{\mathrm{lead}}_t - x_t \geq d_{\min}(v_t)$ when a lead vehicle is present. The action space is acceleration $a_t \in [a_{\min}, a_{\max}]$. Datasets include NGSIM (US highway), HEE (Bosch), and synthetic trajectories; see \texttt{orius-plan/AV\_DATASETS.md}.
+
+\subsection{Industrial Adapter}
+
+The Industrial adapter targets process control (e.g., combined-cycle power plants). State fields are temperature, pressure, humidity, and power output. Safety predicates enforce temperature and power bounds. The action space is power setpoint. Datasets include UCI CCPP and synthetic process data; see \texttt{orius-plan/INDUSTRIAL\_DATASETS.md}.
+
+\subsection{Healthcare and Surgical Robotics Adapter}
+
+The Healthcare adapter (including surgical robotics / telesurgery) monitors vital signs: heart rate (HR), SpO$_2$, and respiratory rate. For telesurgical systems, network latency creates a time-delayed control loop; the adapter widens force-constraint bounds in proportion to detected latency. Safety predicates enforce HR $\in$ [hr$_{\min}$, hr$_{\max}$], SpO$_2$ $\geq$ spo2$_{\min}$, and respiratory rate in a valid range. The action space includes alert levels. Datasets include PhysioNet BIDMC and synthetic vital signs; see \texttt{orius-plan/HEALTHCARE\_DATASETS.md}.
+
+\subsection{Aerospace Adapter}
+
+The Aerospace adapter targets avionics and flight control. State fields include airspeed, angle-of-attack, altitude, and sensor health (pitot heat status, AoA cross-check consistency, GPS satellite count). Safety predicates enforce flight-envelope limits. When sensor health degrades (e.g., pitot icing, GPS jamming), the uncertainty set expands and the safe action set contracts toward conservative commands. The adapter instantiates the OASG pattern observed in Air France 447 and 737 MAX MCAS.
+
+\subsection{Universal ORIUS Validation Evidence}\label{sec:universal_validation}
+
+The unified validation harness (\texttt{scripts/run\_universal\_orius\_validation.py}) runs all six ORIUS-Bench tracks---battery, navigation, industrial, healthcare, aerospace, vehicle---with fault episodes (bias, noise, stuck\_sensor, blackout) and aggregates TSVR (true-state violation rate) and OASG metrics. \Cref{tab:TBL09_CROSS_DOMAIN_OASG} reports the cross-domain table from the locked run, while the companion validation report records that all six configured tracks completed without harness failure. The artifact is therefore best read first as evidence that one shared ORIUS-Bench protocol can execute comparable fault episodes across multiple domains. The TSVR outcomes themselves are mixed: several domains remain at zero in both baseline and ORIUS paths, while battery and vehicle expose non-zero rates and therefore do not support a universal dominance claim. Accordingly, the current cross-domain surface supports framework portability and auditability, not cross-domain superiority.
+
+\PaperTableCSV{TBL09_CROSS_DOMAIN_OASG}{Cross-domain OASG validation. Six ORIUS-Bench tracks with fault episodes; baseline vs.\ ORIUS TSVR and reduction.}
+
+\PaperFigure{FIG_MULTI_DOMAIN_VALIDATION}{Multi-domain ORIUS validation. Baseline (nominal) vs.\ ORIUS (DC3S) true-state violation rate across six domains under fault episodes.}
+
+\subsection{Implementation and Scope}
+
+The universal framework is implemented in \texttt{src/orius/universal\_framework/} with domain registry, pipeline (\texttt{run\_universal\_step}), and adapters for all five domains: Energy (Battery), AV, Industrial, Healthcare/Surgical, and Aerospace. The battery domain remains the primary locked empirical and theorem-validation surface. The additional adapters and six-track ORIUS-Bench harness demonstrate that the same ORIUS pattern can be instantiated beyond energy and evaluated under one shared contract, but they do not yet match the evidence depth of the battery domain.
+
+\paragraph{Papers 2--6 module mapping.}
+The ORIUS program extends beyond the core DC\textsuperscript{3}S shield. \Cref{tab:papers26_modules} maps each extension paper to its implementation modules under \texttt{src/orius/}.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Papers 2--6 extension modules and implementation paths.}
+\label{tab:papers26_modules}
+\begin{tabular}{p{2.2cm}p{3.2cm}p{6.8cm}}
+\toprule
+Paper & Extension & Primary paths \\
+\midrule
+Paper 2 & Certificate half-life, reachability & \path{src/orius/dc3s/half_life.py}, \path{src/orius/dc3s/reachability.py} \\
+Paper 3 & Graceful degradation planner & \path{src/orius/dc3s/graceful.py}, \path{src/orius/optimizer/fallback_dispatch.py} \\
+Paper 4 & ORIUS-Bench evaluation harness & \path{src/orius/orius_bench/} (adapter, fault\_engine, metrics\_engine, battery\_track, navigation\_track) \\
+Paper 5 & Multi-agent shared-constraint safety & \path{src/orius/multi_agent/} (plant, protocol, margin\_allocation, scenarios) \\
+Paper 6 & CertOS runtime certificate lifecycle & \path{src/orius/certos/} (runtime, certificate\_engine, audit\_ledger, recovery\_manager, belief\_engine, graceful\_planner) \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \input{longform/theorem_block_longform.tex}
 
@@ -1575,7 +1577,7 @@ The main internal-validity risk is manuscript-artifact drift. This is mitigated 
 
 \subsection{Threats to External Validity}
 
-This paper is intentionally scoped to the locked DE and US windows plus the battery-only hardening extensions added later in the manuscript. Generalization to different tariff regimes, different battery sizes, different telemetry infrastructures, or non-battery domains remains future work. The multi-BA US evidence surface improves external validity, but it does not convert this paper into a universal market study.
+This paper is intentionally scoped as an ORIUS flagship manuscript with a battery-primary evidence boundary. The locked DE and US windows support the deepest quantitative claims. The cross-domain ORIUS sections document framework implementation and shared-harness outputs, but they are not yet equivalent to the battery-domain evidence depth. The multi-BA US evidence surface improves external validity, but it does not convert this paper into a universal market study or a universal safety guarantee.
 
 \subsection{Threats to Construct and Conclusion Validity}
 
@@ -1618,9 +1620,9 @@ DC\textsuperscript{3}S achieves zero true-SOC violations at a 2.8\% intervention
 
 The promoted six-model forecasting comparison points in one practical direction: on these moderate-sized, feature-rich grid datasets, GBM remains the strongest operational model under the locked equal-budget protocol. For practitioners, the message is simple: on data of this kind, feature engineering matters more than architectural complexity.
 
-\paragraph{The core message.} Trustworthy grid-scale dispatch requires the uncertainty model to degrade when the measurement channel degrades. In that sense, telemetry is not an implementation detail but part of the control problem itself. DC\textsuperscript{3}S turns that idea into a single online loop with per-step auditable evidence. Within the present battery evidence boundary, the hidden safety gap is both measurable and closeable; the hardening layers added in this manuscript show that the same logic extends into asset preservation, blackout handling, fleet coordination, active probing, and runtime rehearsal without abandoning the battery-only claim discipline.
+\paragraph{The core message.} Trustworthy cyber-physical control requires the uncertainty model to degrade when the measurement channel degrades. In that sense, telemetry is not an implementation detail but part of the control problem itself. ORIUS turns that idea into a single Detect--Calibrate--Constrain--Shield--Certify loop with per-step auditable evidence, and DC3S is the battery-domain reference implementation developed in this paper. Within the current evidence lock, the hidden safety gap is both measurable and closeable on the battery surface; the hardening layers added here show how the same logic extends into asset preservation, blackout handling, fleet coordination, active probing, runtime rehearsal, and cross-domain adapter portability without overstating the proof boundary.
 
-\paragraph{Scope boundary.} This consolidated paper is intentionally a battery-first manuscript, not a universal deployment claim. What it proves is that the ORIUS logic now has a full battery-domain reference implementation with a hardened evidence surface and explicit theorem-to-code-to-artifact lineage. What it does not prove is universal cross-domain validation, adversarial completeness, or production-hardware deployment safety.
+\paragraph{Scope boundary.} This consolidated paper is an ORIUS flagship manuscript with a battery-primary evidence boundary. What it establishes is a universal Detect--Calibrate--Constrain--Shield--Certify framework implemented across multiple domain adapters, together with a battery-domain reference implementation whose theorem-to-code-to-artifact lineage is locked and auditable. What it does not establish is universal dominance across all domains, adversarial completeness, or production-hardware deployment safety.
 
 The conclusion-level locked numeric summary is therefore explicit: 7.11\% DE cost savings, 0.30\% DE carbon reduction, 6.13\% DE peak shaving, 0.11\% US cost savings, 0.13\% US carbon reduction, and 0.00\% US peak shaving.
 
