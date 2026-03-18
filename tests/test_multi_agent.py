@@ -142,3 +142,36 @@ class TestNonCompositionCounterexample:
             assert "centralized" in results
             assert results["independent"]["joint_violations"] > 0
             assert results["centralized"]["joint_violations"] == 0
+
+    def test_scenario_writes_step_log_when_out_dir_set(self):
+        """Multi-agent step logs exist when out_dir is set."""
+        with tempfile.TemporaryDirectory() as d:
+            run_transformer_capacity_scenario(out_dir=d, n_steps=6)
+            step_log = Path(d) / "multi_agent_step_log.csv"
+            assert step_log.exists()
+            rows = step_log.read_text().strip().split("\n")
+            assert len(rows) >= 2  # header + at least one row
+            assert "step" in rows[0] and "protocol" in rows[0]
+            # 6 steps * 3 protocols = 18 rows
+            assert len(rows) == 19  # header + 18
+
+    def test_heterogeneous_degradation_changes_output(self):
+        """Heterogeneous per-agent degradation produces different joint_violations."""
+        r_none = run_transformer_capacity_scenario(out_dir=None)
+        # [0.5, 0.5]: both propose 30 MW, total 60 < 80 → no violation
+        r_deg = run_transformer_capacity_scenario(
+            out_dir=None, agent_degradation=[0.5, 0.5]
+        )
+        assert r_none["independent"]["joint_violations"] > 0
+        assert r_deg["independent"]["joint_violations"] == 0
+
+    def test_heterogeneous_degradation_injectable(self):
+        """Per-agent efficiency degradation (degradation_per_agent) is injectable."""
+        # [1.0, 0.85]: agent 1 has 85% charge/discharge efficiency (0.95*0.85)
+        results = run_transformer_capacity_scenario(
+            out_dir=None, degradation_per_agent=[1.0, 0.85]
+        )
+        assert "independent" in results
+        assert "centralized" in results
+        assert results["independent"]["joint_violations"] >= 0
+        assert results["independent"]["useful_work_mwh"] >= 0

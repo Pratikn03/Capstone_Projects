@@ -89,6 +89,34 @@ def test_run_universal_step_aerospace() -> None:
     assert "bank_deg" in safe
 
 
+def test_run_universal_step_vehicle_repairs_tight_headway() -> None:
+    adapter = get_adapter("av", {})
+    result = run_universal_step(
+        domain_adapter=adapter,
+        raw_telemetry={
+            "position_m": 44.0,
+            "speed_mps": 10.0,
+            "speed_limit_mps": 30.0,
+            "lead_position_m": 50.0,
+            "ts_utc": "2026-01-01T00:00:00Z",
+        },
+        history=None,
+        candidate_action={"acceleration_mps2": 2.0},
+        constraints={
+            "speed_limit_mps": 30.0,
+            "accel_min_mps2": -5.0,
+            "accel_max_mps2": 3.0,
+            "dt_s": 0.25,
+            "min_headway_m": 5.0,
+            "headway_time_s": 2.0,
+        },
+        quantile=0.9,
+    )
+    assert result["repair_meta"]["repaired"] is True
+    assert result["repair_meta"]["intervention_reason"] == "headway_clamp"
+    assert result["safe_action"]["acceleration_mps2"] < 0.0
+
+
 def test_get_adapter_unknown_raises() -> None:
     with pytest.raises(KeyError, match="Unknown domain"):
         get_adapter("unknown_domain", {})

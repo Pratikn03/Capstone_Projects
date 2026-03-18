@@ -4,8 +4,8 @@ from __future__ import annotations
 import math
 import pytest
 
+from orius.adapters.vehicle import VehicleDomainAdapter
 from orius.vehicles.plant import VehiclePlant
-from orius.vehicles.vehicle_adapter import VehicleDomainAdapter
 
 
 class TestVehiclePlant:
@@ -58,10 +58,12 @@ class TestVehicleDomainAdapterComputeOqe:
 class TestVehicleDomainAdapterBuildUncertaintySet:
     def test_returns_intervals(self) -> None:
         adapter = VehicleDomainAdapter()
-        state = {"position_m": 10.0, "speed_mps": 5.0}
+        state = {"position_m": 10.0, "speed_mps": 5.0, "lead_position_m": 40.0}
         unc, meta = adapter.build_uncertainty_set(state, 0.9, 0.9, cfg={})
         assert "position_lower_m" in unc
         assert "position_upper_m" in unc
+        assert "lead_position_lower_m" in unc
+        assert "lead_position_upper_m" in unc
         assert unc["position_lower_m"] < unc["position_upper_m"]
         assert "inflation" in meta
 
@@ -88,6 +90,43 @@ class TestVehicleDomainAdapterRepairAction:
         )
         assert abs(safe["acceleration_mps2"] - 1.0) < 1e-6
         assert meta["repaired"] is False
+
+    def test_headway_clamp_brakes_when_gap_is_tight(self) -> None:
+        adapter = VehicleDomainAdapter()
+        candidate = {"acceleration_mps2": 2.0}
+        tightened = {
+            "uncertainty": {
+                "position_upper_m": 44.0,
+                "speed_lower_mps": 10.0,
+                "speed_upper_mps": 10.0,
+                "lead_position_lower_m": 50.0,
+            },
+            "constraints": {
+                "accel_max_mps2": 3.0,
+                "accel_min_mps2": -5.0,
+                "speed_limit_mps": 30.0,
+                "dt_s": 0.25,
+                "min_headway_m": 5.0,
+                "headway_time_s": 2.0,
+            },
+        }
+        state = {
+            "position_m": 44.0,
+            "speed_mps": 10.0,
+            "speed_limit_mps": 30.0,
+            "lead_position_m": 50.0,
+        }
+        safe, meta = adapter.repair_action(
+            candidate,
+            tightened,
+            state=state,
+            uncertainty=tightened["uncertainty"],
+            constraints=tightened["constraints"],
+            cfg={},
+        )
+        assert safe["acceleration_mps2"] < 0.0
+        assert meta["repaired"] is True
+        assert meta["intervention_reason"] == "headway_clamp"
 
 
 class TestVehicleDomainAdapterEmitCertificate:

@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
+from orius.adapters.vehicle import VehicleDomainAdapter
 from orius.vehicles.plant import VehiclePlant
-from orius.vehicles.vehicle_adapter import VehicleDomainAdapter
 from orius.vehicles.vehicle_runner import run_vehicle_episode, compute_vehicle_metrics
 
 

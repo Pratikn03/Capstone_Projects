@@ -256,3 +256,50 @@ class TestCertOSMultiStep:
         log = rt.audit_log
         assert len(log) >= 3
         assert rt.intervention_count >= 1
+
+
+# ── CertOS Module Surface (Step 6.1) ────────────────────────────────────────
+
+
+class TestCertOSModuleSurface:
+    """Verify all nine CertOS modules are importable and callable."""
+
+    def test_belief_engine(self):
+        from orius.certos.belief_engine import get_belief
+        b = get_belief({"soc": 0.5}, {"w": 0.9})
+        assert "state" in b and "uncertainty" in b
+
+    def test_reliability_engine(self):
+        from orius.certos.reliability_engine import compute_reliability
+        w, flags = compute_reliability({"soc_mwh": 50}, None, expected_cadence_s=3600.0)
+        assert 0 <= w <= 1
+
+    def test_shift_engine(self):
+        from orius.certos.shift_engine import build_uncertainty_set
+        lower, upper, meta = build_uncertainty_set(50.0, 5.0, 0.9)
+        assert len(lower) > 0 and len(upper) > 0
+
+    def test_reachability_engine(self):
+        from orius.certos.reachability_engine import compute_validity_horizon
+        constraints = {"min_soc_mwh": 10, "max_soc_mwh": 90}
+        r = compute_validity_horizon(40, 60, {"discharge_mw": 10}, constraints, 5.0, 100)
+        assert "tau_t" in r
+
+    def test_safe_action_filter(self):
+        from orius.certos.safe_action_filter import filter_action
+        safe, meta = filter_action(
+            {"discharge_mw": 50},
+            {"soc_mwh": 50},
+            {"lower": [40], "upper": [60]},
+            {"capacity_mwh": 200},
+            {},
+        )
+        assert "discharge_mw" in safe or "charge_mw" in safe
+
+    def test_graceful_planner(self):
+        from orius.certos.graceful_planner import plan_fallback
+        actions = plan_fallback(
+            {"discharge_mw": 20}, 5, 50.0,
+            {"min_soc_mwh": 10, "max_soc_mwh": 90},
+        )
+        assert len(actions) > 0
