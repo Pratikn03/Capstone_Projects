@@ -251,6 +251,51 @@ Three pathways to closing the gap are pursued in subsequent chapters:
 \end{enumerate}
 
 % ----------------------------------------------------------------
+\section{Wind Coverage Gap: Diagnosis, Bound, and Partial Mitigation}
+\label{sec:wind-gap}
+
+Wind PICP@90 of 39--49\% is the most prominent calibration failure in this
+thesis.  This section documents the root cause, the scope of the gap, and
+the partial mitigation already in place.
+
+\paragraph{Root cause: regime non-stationarity.}
+Wind generation follows strongly seasonal and synoptic regimes.  The CQR
+calibration set is a fixed temporal window; when the test set contains a
+regime not represented in calibration (e.g.\ a prolonged high-pressure
+anticyclone producing near-zero wind for days), the conformal quantile
+$\hat{q}_\alpha$ is badly underfit.  The residuals on test are heavy-tailed
+relative to the calibration distribution, so 50\% of test points fall
+outside an interval sized for a stationary distribution.
+
+\paragraph{Scope of the gap.}
+Wind conditional under-coverage is a known limitation, not a hidden failure.
+Table~\ref{tab:cqr_coverage} documents the 39--49\% values explicitly.
+The DC3S shield compensates via two mechanisms: (1)~the OQE reliability
+weight $w_t$ drops when the forecast residual exceeds expected magnitude,
+triggering RUI inflation; (2)~Mondrian CQR stratification by reliability
+group (detailed in Chapter~\ref{ch:conditional-coverage}) partially recovers
+conditional coverage within each stratum, though marginal wind coverage
+remains below nominal.
+
+\paragraph{Quantitative bound.}
+From \path{reports/publication/reliability_group_coverage_phase3.csv},
+the wind stratum with $w_t \geq 0.8$ achieves PICP@90 = 72\%; the stratum
+with $w_t < 0.5$ achieves 31\%.  The RUI module inflates intervals by
+$1/w_t$ for low-reliability steps, which raises effective coverage toward
+the target without requiring full marginal calibration.  However, this
+is a safety argument (zero dispatch violations), not a coverage-equality
+argument: the thesis claims zero true-SOC violations, not marginal wind
+coverage at 90\%.  The latter is a known open problem in conformal
+prediction under distribution shift~\cite{gibbs2021adaptive}.
+
+\paragraph{Consequence for safety.}
+Critically, wind under-coverage propagates to the dispatch layer only
+if the DC3S shield does not compensate.  Empirically, zero SOC violations
+are observed despite 39--49\% wind coverage, confirming that RUI inflation
+bridges the calibration gap for the safety claim even when it cannot close
+the statistical coverage gap.
+
+% ----------------------------------------------------------------
 \section{Chapter Summary}
 
 This chapter described the six forecast model families (GBM, LSTM, TCN,
