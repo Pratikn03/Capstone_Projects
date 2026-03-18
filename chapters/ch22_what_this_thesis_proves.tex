@@ -48,9 +48,10 @@ Several claims are supported by evidence but carry caveats:
     degradation curves.  Field data spanning multi-year battery aging
     is not available in the current dataset.
   \item \textbf{Certificate half-life.}  The blackout study
-    (Chapter~\ref{ch:cert-half-life-blackout}) characterises certificate
-    decay over a 96-hour horizon.  Longer horizons (weeks, months) are
-    extrapolated, not measured.
+    (Chapter~\ref{ch:cert-half-life-blackout}) now establishes a bounded
+    safe-hold result and a conservative width-expansion proxy rather than a
+    measured finite safety-breakdown horizon.  Longer horizons (weeks,
+    months) remain extrapolated, not measured.
   \item \textbf{Transfer across regions.}  The US--DE transfer stress
     test (Chapter~\ref{ch:transfer-generalisation}) shows positive
     results for two grid regions.  Generalisation to grids with
@@ -61,21 +62,28 @@ Several claims are supported by evidence but carry caveats:
 \section{What Is Framework-Level but Not Yet Validated Universally}
 
 The ORIUS architecture makes structural claims that go beyond the battery
-domain.  These claims are \emph{plausible by construction} but not yet
-validated by experiment in a second domain:
+domain.  These claims are implemented and auditable in the repo, but the
+non-battery evidence remains shallower than the locked battery proof surface:
 
 \begin{enumerate}
   \item \textbf{Multi-domain portability.}  Chapter~\ref{ch:battery-to-orius}
-    argues that the adapter pattern generalises.  No non-battery adapter has
-    been implemented and tested.
+    argues that the adapter pattern generalises.  Non-battery adapters now
+    exist in ORIUS-Bench (navigation, industrial, healthcare, aerospace,
+    vehicle), but they should be read as portability and auditability
+    evidence rather than as battery-grade proof surfaces.
   \item \textbf{Multi-asset composition.}  The fleet-level shield
     (Chapter~\ref{ch:compositional-safety-fleets}) is validated for a
     two-battery fleet.  Composition across \emph{heterogeneous} asset
     types (battery + solar inverter + load controller) is an open problem.
-  \item \textbf{Adversarial completeness.}  Active probing
-    (Chapter~\ref{ch:adversarial-robustness}) detects the tested spoofing
-    attack.  Completeness against all possible adversarial strategies is
-    not claimed and likely unachievable in general.
+  \item \textbf{Runtime portability.}  CertOS
+    (Chapter~\ref{ch:certos-runtime}) now has bounded systems evidence,
+    including lifecycle artifacts, invariants, recovery behavior, and a toy
+    second-domain demonstration.  That is runtime evidence, not a universal
+    runtime-safety proof.
+  \item \textbf{Adversarial completeness.}  The active-probing audit
+    summarized in Chapter~\ref{ch:outside-current-evidence} detects the
+    tested spoofing attack.  Completeness against all possible adversarial
+    strategies is not claimed and likely unachievable in general.
 \end{enumerate}
 
 \section{Why Battery-First Is the Correct Sequence}
