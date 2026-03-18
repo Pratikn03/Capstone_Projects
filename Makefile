@@ -1,4 +1,4 @@
-.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick thesis-pipeline-verify iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze
+.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick thesis-pipeline-verify iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark
 
 PYTHON ?= $(if $(wildcard .venv/bin/python3),.venv/bin/python3,python3)
 PROFILE ?= standard
@@ -252,6 +252,14 @@ paper-assets:
 paper-verify:
 	.venv/bin/python3 scripts/verify_paper_manifest.py
 	.venv/bin/python3 scripts/validate_paper_claims.py
+
+# Paper 2: certificate half-life blackout benchmark
+paper2-blackout-benchmark:
+	$(PYTHON) scripts/run_paper2_blackout_benchmark.py
+
+# Paper 3: four-policy graceful degradation comparison
+paper3-four-policy-benchmark:
+	$(PYTHON) scripts/run_paper3_four_policy_benchmark.py
 
 paper-compile:
 	cd paper && pdflatex -interaction=nonstopmode paper.tex
