@@ -22,6 +22,7 @@ from orius.adapters.healthcare import HealthcareDomainAdapter
 from orius.adapters.healthcare import HealthcareTrackAdapter
 from orius.adapters.aerospace import AerospaceDomainAdapter
 from orius.adapters.aerospace import AerospaceTrackAdapter
+from orius.adapters.navigation import NavigationDomainAdapter
 from orius.adapters.navigation import NavigationTrackAdapter
 
 __all__ = [
@@ -35,5 +36,6 @@ __all__ = [
     "HealthcareTrackAdapter",
     "AerospaceDomainAdapter",
     "AerospaceTrackAdapter",
+    "NavigationDomainAdapter",
     "NavigationTrackAdapter",
 ]

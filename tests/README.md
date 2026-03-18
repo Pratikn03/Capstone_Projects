@@ -22,16 +22,16 @@ Pytest test suite for the ORIUS forecasting platform.
 
 ```bash
 # Run all tests
-pytest tests/ -v
+python -m pytest tests/ -v
 
 # Run with coverage
-pytest tests/ --cov=src/orius --cov-report=html
+python -m pytest tests/ --cov=orius --cov-report=html
 
 # Run specific test file
-pytest tests/test_optimizer.py -v
+python -m pytest tests/test_optimizer.py -v
 
 # Run tests matching pattern
-pytest tests/ -k "anomaly" -v
+python -m pytest tests/ -k "anomaly" -v
 ```
 
 ## Test Configuration
@@ -48,6 +48,6 @@ Common test fixtures are defined in `conftest.py` (if present) or inline within 
 ## CI Integration
 
 Tests run automatically via GitHub Actions on:
-- Push to main/develop branches
-- Pull request creation
-- Scheduled nightly runs
+- Pull requests targeting `main`
+- Frontend type-check and build in the same CI workflow
+- Additional release automation via manual workflow dispatches

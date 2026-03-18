@@ -16,6 +16,7 @@ def test_universal_domains_endpoint_exposes_framework_metadata() -> None:
     assert payload["domains"] == sorted(payload["domains"])
     assert "energy" in payload["domains"]
     assert "av" in payload["domains"]
+    assert "navigation" in payload["domains"]
     assert payload["pipeline_stages"] == [
         "Detect",
         "Calibrate",
@@ -79,3 +80,30 @@ def test_universal_step_unknown_domain_returns_404() -> None:
 
     assert response.status_code == 404
     assert "Unknown domain" in response.text
+
+
+def test_universal_step_navigation_round_trip() -> None:
+    client = TestClient(app)
+
+    response = client.post(
+        "/universal/step",
+        json={
+            "domain_id": "navigation",
+            "raw_telemetry": {
+                "x": 4.8,
+                "y": 4.8,
+                "vx": 0.1,
+                "vy": 0.1,
+                "ts_utc": "2026-01-01T00:00:00Z",
+            },
+            "candidate_action": {"ax": 1.0, "ay": 1.0},
+            "constraints": {"arena_min": 0.0, "arena_max": 10.0, "speed_limit": 1.0, "dt": 1.0},
+            "quantile": 10.0,
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["domain_id"] == "navigation"
+    assert payload["repair_meta"]["repaired"] is True
+    assert "certificate_hash" in payload["certificate"]

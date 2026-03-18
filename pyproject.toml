@@ -59,6 +59,7 @@ dependencies = [
   "gitdb==4.0.12",
   "gitpython==3.1.46",
   "h11==0.16.0",
+  "httpx==0.28.1",
   "httptools==0.7.1",
   "highspy==1.8.1",
   "idna==3.11",

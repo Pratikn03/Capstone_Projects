@@ -46,7 +46,7 @@ The current universal-framework boundary is:
 
 - `battery` is the validated reference domain
 - `vehicle` is the designated second proof domain for universal validation
-- `navigation`, `industrial`, and `healthcare` are portability-only domains
+- `navigation`, `industrial`, and `healthcare` are portability-only domains with runnable runtime adapters, but no locked validation claim
 - `aerospace` is experimental until the placeholder path is replaced and validated
 - `certos` is implemented as a runtime prototype, not a deployment claim
 

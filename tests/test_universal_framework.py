@@ -10,6 +10,7 @@ def test_list_domains() -> None:
     domains = list_domains()
     assert "energy" in domains
     assert "av" in domains
+    assert "navigation" in domains
     assert "industrial" in domains
     assert "healthcare" in domains
     assert "surgical_robotics" in domains
@@ -43,6 +44,28 @@ def test_run_universal_step_industrial() -> None:
     safe = result["safe_action"]
     assert "power_setpoint_mw" in safe
     assert 0.0 <= safe["power_setpoint_mw"] <= 500.0
+
+
+def test_run_universal_step_navigation() -> None:
+    adapter = get_adapter("navigation", {})
+    result = run_universal_step(
+        domain_adapter=adapter,
+        raw_telemetry={
+            "x": 4.8,
+            "y": 4.8,
+            "vx": 0.1,
+            "vy": 0.1,
+            "ts_utc": "2026-01-01T00:00:00Z",
+        },
+        history=None,
+        candidate_action={"ax": 1.0, "ay": 1.0},
+        constraints={"arena_min": 0.0, "arena_max": 10.0, "speed_limit": 1.0, "dt": 1.0},
+        quantile=10.0,
+    )
+    assert "certificate" in result
+    assert "safe_action" in result
+    assert "reliability_w" in result
+    assert result["repair_meta"]["repaired"] is True
 
 
 def test_run_universal_step_healthcare() -> None:

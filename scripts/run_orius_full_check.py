@@ -154,13 +154,14 @@ def check_universal_framework():
         domains = list_domains()
         assert "energy" in domains
         assert "av" in domains
+        assert "navigation" in domains
         assert "industrial" in domains
         assert "healthcare" in domains
         assert "surgical_robotics" in domains
         assert "aerospace" in domains
 
         # Run one step per domain (synthetic telemetry)
-        for domain_id in ["energy", "av", "industrial", "healthcare", "aerospace"]:
+        for domain_id in ["energy", "av", "navigation", "industrial", "healthcare", "aerospace"]:
             adapter = get_adapter(domain_id, {})
             if domain_id == "energy":
                 telemetry = {"load_mw": 45.0, "renewables_mw": 80.0, "current_soc_mwh": 100.0, "capacity_mwh": 200.0, "yhat_load": 48.0, "ts_utc": "2026-01-01T00:00:00Z"}
@@ -170,6 +171,10 @@ def check_universal_framework():
                 telemetry = {"position_m": 100.0, "speed_mps": 8.0, "speed_limit_mps": 15.0, "lead_position_m": 150.0, "ts_utc": "2026-01-01T00:00:00Z"}
                 candidate = {"acceleration_mps2": 0.5}
                 constraints = {"speed_max_mps": 15.0}
+            elif domain_id == "navigation":
+                telemetry = {"x": 4.8, "y": 4.8, "vx": 0.1, "vy": 0.1, "ts_utc": "2026-01-01T00:00:00Z"}
+                candidate = {"ax": 1.0, "ay": 1.0}
+                constraints = {"arena_min": 0.0, "arena_max": 10.0, "speed_limit": 1.0, "dt": 1.0}
             elif domain_id == "industrial":
                 telemetry = {"temp_c": 85.0, "pressure_mbar": 1010.0, "power_mw": 450.0, "ts_utc": "2026-01-01T00:00:00Z"}
                 candidate = {"power_setpoint_mw": 480.0}
