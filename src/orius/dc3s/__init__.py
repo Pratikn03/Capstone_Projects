@@ -35,6 +35,8 @@ from .temporal_theorems import (
     certify_fallback_existence,
     evaluate_graceful_degradation_dominance,
     certificate_half_life,
+    should_renew_certificate,
+    should_expire_certificate,
 )
 from .domain_adapter import DomainAdapter
 from .battery_adapter import BatteryDomainAdapter
@@ -84,6 +86,8 @@ __all__ = [
     "certify_fallback_existence",
     "evaluate_graceful_degradation_dominance",
     "certificate_half_life",
+    "should_renew_certificate",
+    "should_expire_certificate",
     "compute_validity_horizon",
     "compute_half_life_from_horizon",
     "compute_certificate_state",

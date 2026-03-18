@@ -70,15 +70,19 @@ def write_bundle_json(
     rows: Sequence[dict[str, Any]],
     fault_digests: dict[int, str],
     path: str | Path,
+    *,
+    fault_schedules: dict[int, list[dict[str, Any]]] | None = None,
 ) -> Path:
-    """Write full artefact bundle (results + fault digests) as JSON."""
+    """Write full artefact bundle (results + fault digests + optional fault schedules) as JSON."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    bundle = {
+    bundle: dict[str, Any] = {
         "schema_version": "1.0.0",
         "fault_digests": {str(k): v for k, v in fault_digests.items()},
         "results": list(rows),
     }
+    if fault_schedules is not None:
+        bundle["fault_schedules"] = {str(k): v for k, v in fault_schedules.items()}
     with open(path, "w") as f:
         json.dump(bundle, f, indent=2)
     return path

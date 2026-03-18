@@ -27,6 +27,8 @@ class VehicleDomainAdapter(DomainAdapter):
         self._default_dt_s = _f(self._cfg.get("vehicles", {}).get("dt_s"), 0.25)
         self._accel_min = _f(self._cfg.get("vehicles", {}).get("accel_min_mps2"), -5.0)
         self._accel_max = _f(self._cfg.get("vehicles", {}).get("accel_max_mps2"), 3.0)
+        self._min_headway_m = _f(self._cfg.get("vehicles", {}).get("min_headway_m"), 5.0)
+        self._headway_time_s = _f(self._cfg.get("vehicles", {}).get("headway_time_s"), 2.0)
         self._expected_cadence_s = _f(self._cfg.get("expected_cadence_s"), 1.0)
 
     def ingest_telemetry(self, raw_packet: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -97,6 +99,11 @@ class VehicleDomainAdapter(DomainAdapter):
             "speed_upper_mps": spd + margin,
             "meta": {"inflation": margin, "w_t": w},
         }
+        lead = state.get("lead_position_m")
+        if lead is not None and not (isinstance(lead, float) and math.isnan(lead)):
+            lead_f = _f(lead, 0.0)
+            uncertainty["lead_position_lower_m"] = lead_f - margin
+            uncertainty["lead_position_upper_m"] = lead_f + margin
         meta = {"inflation": margin, "w_t": w}
         return uncertainty, meta
 
@@ -124,26 +131,58 @@ class VehicleDomainAdapter(DomainAdapter):
         constraints: Mapping[str, Any],
         cfg: Mapping[str, Any],
     ) -> tuple[Mapping[str, float], Mapping[str, Any]]:
-        """Clip acceleration to safe set. L2 projection onto feasible acceleration."""
+        """Clip acceleration to the vehicle-safe set.
+
+        The repair step enforces both speed-limit and headway predicates under a
+        worst-case one-step uncertainty box so the AV proof-domain path uses the
+        same explicit safety semantics as the track itself.
+        """
         a = _f(candidate_action.get("acceleration_mps2"), 0.0)
         unc = tightened_set.get("uncertainty", uncertainty)
         cstr = tightened_set.get("constraints", constraints)
         spd_lo = _f(unc.get("speed_lower_mps"), 0.0)
         spd_hi = _f(unc.get("speed_upper_mps"), 50.0)
+        pos_hi = _f(unc.get("position_upper_m"), state.get("position_m", 0.0))
+        lead_lo = unc.get("lead_position_lower_m", state.get("lead_position_m"))
         v_limit = _f(state.get("speed_limit_mps"), cstr.get("speed_limit_mps", 30.0))
         a_min = _f(cstr.get("accel_min_mps2"), self._accel_min)
         a_max = _f(cstr.get("accel_max_mps2"), self._accel_max)
         dt = _f(cstr.get("dt_s"), self._default_dt_s)
+        min_headway_m = _f(cstr.get("min_headway_m"), self._min_headway_m)
+        headway_time_s = _f(cstr.get("headway_time_s"), self._headway_time_s)
 
         a_safe = max(a_min, min(a_max, a))
+        reason = None
+
+        telemetry_vals = (spd_lo, spd_hi, pos_hi, v_limit)
+        if any(isinstance(v, float) and math.isnan(v) for v in telemetry_vals):
+            a_safe = a_min
+            reason = "telemetry_blackout_brake"
+
         v_next = spd_hi + a_safe * dt
         if v_next > v_limit + 1e-9:
             a_cap = (v_limit - spd_hi) / max(dt, 1e-9)
             a_safe = min(a_safe, a_cap)
+            reason = reason or "speed_limit_clamp"
         v_next_lo = spd_lo + a_safe * dt
         if v_next_lo < 0:
             a_floor = -spd_lo / max(dt, 1e-9)
             a_safe = max(a_safe, a_floor)
+            reason = reason or "nonnegative_speed_clamp"
+
+        if lead_lo is not None and not (isinstance(lead_lo, float) and math.isnan(lead_lo)):
+            lead_lo_f = _f(lead_lo, pos_hi)
+            gap_budget = lead_lo_f - pos_hi - min_headway_m
+            if gap_budget <= 0:
+                a_safe = a_min
+                reason = reason or "headway_clamp"
+            else:
+                max_next_speed = gap_budget / max(dt + headway_time_s, 1e-9)
+                a_headway = (max_next_speed - spd_hi) / max(dt, 1e-9)
+                if a_headway < a_safe - 1e-9:
+                    a_safe = a_headway
+                    reason = reason or "headway_clamp"
+
         a_safe = max(a_min, min(a_max, a_safe))
 
         repaired = abs(a_safe - a) > 1e-9
@@ -153,7 +192,9 @@ class VehicleDomainAdapter(DomainAdapter):
             "original_acceleration_mps2": a,
         }
         if repaired:
-            meta["intervention_reason"] = "acceleration_clamp"
+            meta["intervention_reason"] = reason or "acceleration_clamp"
+        if lead_lo is not None and not (isinstance(lead_lo, float) and math.isnan(lead_lo)):
+            meta["worst_case_gap_budget_m"] = float(_f(lead_lo, pos_hi) - pos_hi - min_headway_m)
         return {"acceleration_mps2": float(a_safe)}, meta
 
     def emit_certificate(
