@@ -134,6 +134,17 @@ deploying DC3S on a 100~MWh BESS can expect:
     break-even in lower-volatility markets (US CAISO).
 \end{itemize}
 
+\section{Controller Leaderboard}
+
+Table~\ref{tab:battery_leaderboard} ranks all eight controllers from the
+CPSBench evaluation.  Controllers achieving zero violations are ranked by
+cost; those with non-zero violations rank below.  DC3S variants and
+scenario-based controllers occupy the top four positions, with
+Deterministic LP last due to its 13\% violation rate under degraded
+telemetry.
+
+\input{paper/assets/tables/generated/tbl_battery_leaderboard}
+
 \section{What Results Do and Do Not Prove}
 
 \paragraph{What the results establish.}

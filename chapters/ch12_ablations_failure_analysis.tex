@@ -158,6 +158,18 @@ Even when calibration weakens, safety is preserved because:
 This layered defence is the operational manifestation of the theoretical
 safety-preservation theorem (Theorem~\ref{thm:safety-preservation}).
 
+\section{Rank Reversal Under Degradation}
+
+A key finding from the CPSBench sweep is that controller rankings are not
+stable across fault conditions.  Table~\ref{tab:rank_reversal} shows how
+each controller's rank changes from the nominal (clean telemetry) to the
+degraded (30\% dropout, simultaneous drift) scenario.  CVaR Interval
+drops by 5 positions; DC3S-FTIT maintains or improves its rank because
+its reliability-adaptive inflation correctly widens the uncertainty set
+rather than assuming clean inputs.
+
+\input{paper/assets/tables/generated/tbl_rank_reversal}
+
 \section{Chapter Summary}
 
 The ablation study confirms that each DC3S component contributes to
