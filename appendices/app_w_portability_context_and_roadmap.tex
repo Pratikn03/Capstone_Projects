@@ -1,0 +1,144 @@
+\chapter{Portability Context and Research Roadmap}
+\label{app:portability-roadmap}
+
+The battery thesis is intentionally not a universal proof document.  The
+repo nevertheless contains enough adapter structure and roadmap material to
+justify one bounded appendix on how the battery result interfaces with a
+larger ORIUS program.  This appendix serves that purpose.
+
+\section{From Battery Adapter to a Portable Runtime Pattern}
+
+The battery result is structurally interesting because the DC3S pipeline
+operates on a small set of abstract objects:
+
+\begin{enumerate}
+  \item an observation vector,
+  \item a reliability score,
+  \item an uncertainty region,
+  \item a feasible action set, and
+  \item a repair or fallback operator.
+\end{enumerate}
+
+The battery adapter is one concrete instantiation of those objects.  The
+abstract pattern is portable; the evidence depth is not.  That distinction is
+exactly why the battery thesis can mention adapters without turning into a
+universal guarantee document.
+
+\section{Adapter Mapping}
+
+\begin{table}[ht]
+\centering
+\caption{Battery objects and their domain-general counterparts.}
+\label{tab:portable-adapter-map}
+\begin{tabular}{lll}
+\toprule
+\textbf{ORIUS object} & \textbf{Battery instantiation} & \textbf{Portable meaning} \\
+\midrule
+$z_t$ & SCADA packet (SOC, voltage, current, load) & raw telemetry vector \\
+$w_t$ & OQE composite score & observation reliability \\
+$C_t^{\mathrm{RAC}}$ & SOC conformal interval & state uncertainty region \\
+$\mathcal{A}_t$ & charge/discharge bounds & feasible action set \\
+$a_t^{\mathrm{safe}}$ & SOC-preserving dispatch & safety-projected action \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{What Changes by Domain}
+
+Porting ORIUS to a new domain requires replacing four domain-specific
+components:
+
+\begin{description}
+  \item[Plant dynamics.] Battery uses an SOC integrator; other domains may be
+    nonlinear or high-dimensional.
+  \item[State definition.] SOC is scalar; vehicles, industrial systems, and
+    aerospace plants carry richer state.
+  \item[Constraint geometry.] Batteries are dominated by box-style limits;
+    other domains may need polytopic or nonlinear repair.
+  \item[Fault taxonomy.] Battery dropout, drift, stale sensors, and spikes
+    must be re-instantiated for the target telemetry stack.
+\end{description}
+
+\section{What the Repo Already Contains}
+
+\begin{table}[ht]
+\centering
+\caption{Current bounded portability surfaces present in the repo.}
+\label{tab:portability-surfaces}
+\begin{tabular}{p{2.5cm}p{3.2cm}p{5.1cm}}
+\toprule
+\textbf{Surface} & \textbf{Primary path} & \textbf{Bounded role} \\
+\midrule
+Battery adapter & \path{src/orius/dc3s/battery_adapter.py} & Locked proof and evidence domain \\
+Vehicle adapter & \path{src/orius/vehicles/vehicle_adapter.py} & Prototype second-domain portability surface \\
+ORIUS-Bench tracks & \path{src/orius/orius_bench/} & Shared evaluation contract \\
+Universal registry & \path{src/orius/universal_framework/domain_registry.py} & Adapter wiring and dispatch \\
+CertOS runtime & \path{src/orius/certos/} & Runtime pattern with bounded portability evidence \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Leaderboards as Portability Evidence, Not Dominance Evidence}
+
+The broader ORIUS-Bench leaderboard provides context for portability.  It
+does \emph{not} carry the same proof weight as the battery domain.
+
+\begin{table}[ht]
+\centering
+\caption{Vehicle-domain excerpt from the shared ORIUS-Bench leaderboard.}
+\label{tab:vehicle-leaderboard-excerpt}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Controller} & \textbf{Seed} & \textbf{TSVR} & \textbf{GDQ} & \textbf{IR} \\
+\midrule
+nominal & 1000 & 0.0833 & 0.9167 & 0.4583 \\
+nominal & 1001 & 0.0833 & 0.9167 & 0.3333 \\
+robust  & 1000 & 0.0000 & 1.0000 & 0.4583 \\
+robust  & 1001 & 0.0000 & 1.0000 & 0.3333 \\
+dc3s    & 1000 & 0.1667 & 0.8333 & 0.4583 \\
+dc3s    & 1001 & 0.1667 & 0.8333 & 0.3333 \\
+fallback& 1000 & 0.0000 & 1.0000 & 0.4583 \\
+fallback& 1001 & 0.0000 & 1.0000 & 0.3333 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This excerpt is useful because it shows the shared contract actually runs on
+another domain.  It is not useful as evidence of universal DC3S dominance,
+and the thesis should not read it that way.
+
+\section{Research Roadmap}
+
+The long-term program remains dependency-ordered:
+
+\begin{enumerate}
+  \item preserve and defend the locked battery foundation,
+  \item harden remaining battery gaps before broadening claims,
+  \item extract domain-independent ORIUS core modules cleanly,
+  \item validate one additional domain under the full dual-trajectory
+    protocol,
+  \item strengthen hardware-in-the-loop and controller-in-the-loop evidence,
+  \item release the benchmark and adapter contract more publicly, and
+  \item only then widen runtime and deployment claims.
+\end{enumerate}
+
+\section{Deployment Sequence}
+
+The practical deployment ladder for the battery stack is:
+
+\begin{enumerate}
+  \item benchmark replay with observed-vs.-true trajectory separation,
+  \item controller-in-the-loop runtime rehearsal with complete
+    certificates,
+  \item hardware-in-the-loop with real telemetry transport and relay
+    behavior,
+  \item supervised pilot operation under bounded fallback policies, and
+  \item wider deployment only after those layers remain manifest-traceable.
+\end{enumerate}
+
+\section{Why This Appendix Exists}
+
+This appendix exists to make one distinction explicit.  The thesis is long
+because it contains a complete battery proof surface plus a disciplined
+program of bounded extensions.  It is \emph{not} long because it claims to
+have solved every future domain already.

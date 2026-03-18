@@ -1,0 +1,86 @@
+\chapter{Active-Probing Battery Audit}
+\label{app:active-probing-audit}
+
+The main thesis now uses Chapter~\ref{ch:certos-runtime} for the runtime
+promotion slot.  The active-probing material is therefore preserved here as
+an evidence appendix rather than a mainline chapter.  That placement fits
+the current claim boundary: the repo contains a bounded battery spoofing
+detection package, but not a complete adversarial-safety frontier.
+
+\section{Battery Threat Model}
+
+The battery-specific adversary considered here attempts to preserve the
+appearance of healthy telemetry while drifting away from true plant state.
+Operationally, that means:
+
+\begin{enumerate}
+  \item replaying or smoothing readings so the battery appears stable,
+  \item spoofing load-sensitive inputs so the dispatch policy overcommits,
+    and
+  \item hiding the attack inside packet behavior that otherwise appears
+    plausible.
+\end{enumerate}
+
+The point of active probing is to break that illusion by asking the plant
+for a small physical response that a forged telemetry stream cannot mimic
+indefinitely.
+
+\section{Locked Detection Package}
+
+The bounded evidence package is:
+
+\begin{itemize}
+  \item \path{reports/probing/spoofing_attack_results.csv}, which stores the
+    confusion counts, and
+  \item \path{reports/probing/probing_detection_quality.png}, which turns the
+    same audit into a defense-facing figure.
+\end{itemize}
+
+These outputs correspond to the publication-facing lineage rooted in
+\path{reports/publication/active_probing_spoofing_detection.csv}.
+
+\section{Detection Results}
+
+\begin{table}[ht]
+\centering
+\caption{Locked active-probing detection results for the battery threat
+model.}
+\label{tab:active-probing-results}
+\begin{tabular}{lr}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Events evaluated & 300 \\
+Threshold & 0.60 \\
+True positives & 48 \\
+False positives & 6 \\
+False negatives & 4 \\
+True negatives & 242 \\
+Precision & 0.889 \\
+Recall & 0.923 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Battery-Operational Meaning}
+
+For the battery thesis, these numbers support a narrow operational point.
+The probing layer catches most spoofing events while keeping false alarms
+bounded.  That matters because every false alarm tightens the battery
+unnecessarily, while every missed detection risks preserving the hidden
+observation-action gap identified in Part~I.
+
+\section{Bounded Interpretation}
+
+This appendix supports three claims and no more:
+
+\begin{itemize}
+  \item the battery implementation contains an active-probing detection path,
+  \item that path achieves high recall and strong precision on the current
+    spoofing audit, and
+  \item the audit does \emph{not} yet establish adversarial completeness or a
+    full controller-vs.-attacker safety frontier.
+\end{itemize}
+
+Keeping this material in an appendix is therefore not a demotion of the
+implementation.  It is a promotion of the manuscript's honesty.

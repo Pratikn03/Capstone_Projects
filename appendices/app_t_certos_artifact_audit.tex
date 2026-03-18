@@ -1,0 +1,155 @@
+\chapter{CertOS Artifact Audit}
+\label{app:certos-artifact-audit}
+
+This appendix records the bounded runtime evidence promoted into
+Chapter~\ref{ch:certos-runtime}.  The runtime chapter itself carries the
+main story.  The present appendix preserves the implementation-facing tables
+that a committee or reviewer may reasonably ask for once the runtime is part
+of the defense package.
+
+\section{Artifact Bundle}
+
+\begin{table}[ht]
+\centering
+\caption{CertOS artifact bundle and its role in the thesis.}
+\label{tab:certos-artifact-bundle}
+\begin{tabular}{p{4.8cm}p{2.6cm}p{4.0cm}}
+\toprule
+\textbf{Artifact} & \textbf{Type} & \textbf{Role} \\
+\midrule
+\path{reports/certos/certos_lifecycle.csv} & CSV & Stepwise battery runtime trace \\
+\path{reports/certos/certos_summary.json} & JSON & Aggregate counts by lifecycle phase \\
+\path{reports/certos/latency_report.csv} & CSV & Runtime latency and throughput \\
+\path{reports/certos/audit_completeness.json} & JSON & Audit-chain completeness check \\
+\path{reports/certos/recovery_report.md} & Markdown & Recovery note after fallback \\
+\path{reports/certos/certos_vehicle_toy.json} & JSON & Bounded non-battery lifecycle toy \\
+\path{reports/certos/invariant_tests.log} & Log & Runtime invariant test surface \\
+\path{reports/certos/audit_ops.jsonl} & JSONL & Append-only lifecycle operation stream \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Lifecycle Counts by Status}
+
+\begin{table}[ht]
+\centering
+\caption{Status counts derived from the locked CertOS summary artifact.}
+\label{tab:certos-status-counts}
+\begin{tabular}{lr}
+\toprule
+\textbf{Status bucket} & \textbf{Count} \\
+\midrule
+valid & 47 \\
+degraded & 16 \\
+fallback & 33 \\
+total steps & 96 \\
+audit entries & 96 \\
+runtime interventions & 33 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The lifecycle counts matter because they make the runtime story concrete.
+The battery runtime spends roughly half of the governed demo in ordinary
+\texttt{valid} operation, moves through a smaller degraded regime when the
+certificate horizon narrows, and explicitly falls back when the horizon is
+exhausted.  That is the empirical meaning of the runtime chapter's bounded
+claim.
+
+\section{Certificate Field Schema}
+
+The certificate engine stores only a small number of fields, but those
+fields are enough to reconstruct the runtime decision trail.  The runtime
+then augments the certificate with a previous-hash link and a current
+certificate hash.
+
+\begin{table}[ht]
+\centering
+\caption{Certificate and runtime-state fields used by CertOS.}
+\label{tab:certos-certificate-schema}
+\begin{tabular}{p{3.0cm}p{1.8cm}p{5.8cm}}
+\toprule
+\textbf{Field} & \textbf{Type} & \textbf{Meaning} \\
+\midrule
+\texttt{op} & string & Lifecycle operation that created the certificate \\
+\texttt{proposed\_action} & mapping & Action before runtime filtering \\
+\texttt{safe\_action} & mapping & Action released after runtime filtering \\
+\texttt{validity\_horizon} & integer & Remaining certified horizon \\
+\texttt{status} & string & \texttt{valid}, \texttt{degraded}, \texttt{expired}, or \texttt{revoked} \\
+\texttt{prev\_hash} & string / null & Previous certificate hash in the ledger chain \\
+\texttt{cert\_hash} & string & Current certificate hash \\
+\texttt{step} & integer & Runtime step index in the governed demo \\
+\texttt{fallback\_active} & boolean & Whether fallback action is currently active \\
+\texttt{audit\_count} & integer & Number of audit entries emitted so far \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Audit Ledger Record Format}
+
+\begin{table}[ht]
+\centering
+\caption{Audit ledger record fields from the CertOS audit-ledger module.}
+\label{tab:certos-audit-ledger-schema}
+\begin{tabular}{p{2.6cm}p{1.7cm}p{6.1cm}}
+\toprule
+\textbf{Field} & \textbf{Type} & \textbf{Meaning} \\
+\midrule
+\texttt{op} & string & Lifecycle operation appended to the ledger \\
+\texttt{step} & integer & Runtime step where the event occurred \\
+\texttt{cert\_hash} & string / null & Hash anchor for the relevant certificate \\
+\texttt{meta} & mapping & Optional metadata such as recovery details \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ledger is intentionally austere.  It is not a full event-sourcing
+platform.  It is an append-only trail sufficient to prove that lifecycle
+events happened, in order, and with the expected linkage to certificate
+records.
+
+\section{Latency and Recovery Audit}
+
+\begin{table}[ht]
+\centering
+\caption{Latency and recovery audit from the CertOS runtime artifacts.}
+\label{tab:certos-latency-recovery}
+\begin{tabular}{p{5.8cm}r}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Runtime step latency (ms) & 0.59 \\
+Runtime throughput (steps/s) & 1691.70 \\
+Audit completeness (\%) & 100.0 \\
+Recovery transitions noted & yes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The recovery note is qualitative rather than mathematical: the runtime
+artifact records that transitions from fallback back to valid execution were
+observed.  This is enough for a bounded systems chapter.  It is not enough
+to claim optimal recovery or universal recovery guarantees.
+
+\section{Bounded Second-Domain Runtime Surface}
+
+\begin{table}[ht]
+\centering
+\caption{Vehicle-shaped CertOS toy artifact.}
+\label{tab:certos-toy-domain}
+\begin{tabular}{lr}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Domain & vehicle \\
+Steps & 12 \\
+Fallback steps & 4 \\
+Audit entries & 12 \\
+Interventions & 4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This toy artifact earns its place in the appendix because it helps defend a
+very narrow point: the runtime lifecycle is adapter-shaped rather than
+battery-field hard coded.  It does not widen the thesis proof boundary.
