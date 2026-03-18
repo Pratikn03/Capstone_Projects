@@ -1,0 +1,303 @@
+\chapter{CertOS Runtime and Certificate Lifecycle}
+\label{ch:certos-runtime}
+
+This chapter promotes CertOS from roadmap language into a bounded runtime
+surface backed by code and locked artifacts.  The thesis claim remains
+intentionally narrow.  CertOS is \emph{not} presented here as a universal
+runtime proof or a deployment announcement.  It is presented as a battery
+reference runtime that enforces certificate-aware execution, maintains an
+append-only audit chain, and falls back safely when certificate validity is
+exhausted.
+
+\section{Why the Runtime Layer Exists}
+
+The DC3S battery shield prevents unsafe actions at the optimisation
+boundary.  A deployment-facing system still needs a second question
+answered: \emph{what happens between a safe action and the runtime that is
+allowed to execute it?}  CertOS answers that question with one simple
+discipline:
+
+\begin{quote}
+\textbf{No action without a valid certificate or an explicit fallback
+action.}
+\end{quote}
+
+This runtime discipline matters for three reasons.  First, it makes
+certificate validity a live operational object rather than a static chapter
+concept.  Second, it turns every intervention into an auditable lifecycle
+event rather than an implicit side effect.  Third, it gives the battery
+thesis a controlled path from batch evidence toward controller-in-the-loop
+execution without pretending that the full deployment problem has already
+been solved.
+
+\section{CertOS Code Surface}
+
+The implementation lives under \path{src/orius/certos/}.  The main runtime
+file is \path{runtime.py}; the surrounding modules handle lifecycle
+issuance, audit logging, recovery, reachability, reliability, and safe
+action filtering.  Table~\ref{tab:certos-module-map} maps the main runtime
+surface to the concrete code paths.
+
+\begin{table}[ht]
+\centering
+\caption{CertOS runtime module map and bounded role in the battery thesis.}
+\label{tab:certos-module-map}
+\begin{tabular}{p{3.2cm}p{4.8cm}p{4.6cm}}
+\toprule
+\textbf{Module} & \textbf{Primary role} & \textbf{Code path} \\
+\midrule
+Runtime orchestrator & Per-step lifecycle dispatch and invariant checks & \path{src/orius/certos/runtime.py} \\
+Certificate engine & ISSUE, VALIDATE, EXPIRE, RENEW, REVOKE, FALLBACK & \path{src/orius/certos/certificate_engine.py} \\
+Audit ledger & Append-only runtime event log & \path{src/orius/certos/audit_ledger.py} \\
+Recovery manager & Recovery callback after expiry/fallback & \path{src/orius/certos/recovery_manager.py} \\
+Belief engine & Combined state and uncertainty object & \path{src/orius/certos/belief_engine.py} \\
+Reliability engine & Runtime quality scoring for degraded observation & \path{src/orius/certos/reliability_engine.py} \\
+Shift engine & Uncertainty-set construction & \path{src/orius/certos/shift_engine.py} \\
+Reachability engine & Validity-horizon computation & \path{src/orius/certos/reachability_engine.py} \\
+Safe-action filter & Final safe action enforcement & \path{src/orius/certos/safe_action_filter.py} \\
+Graceful planner & Structured fallback planning & \path{src/orius/certos/graceful_planner.py} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Lifecycle Operations}
+
+The certificate engine implements six lifecycle operations.  These are not
+just conceptual labels; each one corresponds to a callable path in
+\path{certificate_engine.py} and is exercised through
+\path{scripts/run_certos_lifecycle.py} and \path{tests/test_certos.py}.
+
+\begin{table}[ht]
+\centering
+\caption{CertOS lifecycle operations and their runtime meaning.}
+\label{tab:certos-lifecycle-ops}
+\begin{tabular}{p{1.7cm}p{4.2cm}p{5.0cm}}
+\toprule
+\textbf{Op} & \textbf{When it occurs} & \textbf{Battery-runtime meaning} \\
+\midrule
+ISSUE & New safe action and positive validity horizon & Normal certified dispatch step \\
+VALIDATE & Check current certificate before action release & Guard against stale or exhausted authorisation \\
+EXPIRE & Validity horizon reaches zero & Runtime may no longer trust the previously issued action \\
+RENEW & Horizon is still positive but below degraded threshold & Continue operating with explicit degraded semantics \\
+REVOKE & Runtime or operator invalidates current certificate & Force transition away from normal execution \\
+FALLBACK & No valid certificate remains & Replace actuation with a known-safe fallback action \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  node distance=1.9cm and 2.1cm,
+  every node/.style={draw, rounded corners, align=center, minimum width=2.8cm, minimum height=0.9cm},
+  >=Latex
+]
+\node (issue) {ISSUE\\valid};
+\node[right=of issue] (renew) {RENEW\\degraded};
+\node[below=of renew] (fallback) {FALLBACK};
+\node[left=of fallback] (expire) {EXPIRE};
+\node[below=of issue] (revoke) {REVOKE};
+
+\draw[->] (issue) -- node[above]{low horizon} (renew);
+\draw[->] (renew) -- node[right]{horizon $\le 0$} (fallback);
+\draw[->] (issue) -- node[left]{manual invalidate} (revoke);
+\draw[->] (revoke) -- (fallback);
+\draw[->] (issue) -- node[left]{horizon $\le 0$} (expire);
+\draw[->] (expire) -- (fallback);
+\draw[->, bend left=18] (fallback) to node[below]{recovery + new cert} (issue);
+\draw[->, bend left=18] (renew) to node[below]{recovered quality} (issue);
+\end{tikzpicture}
+\caption{CertOS lifecycle state machine as implemented in the battery runtime.
+The defended contract is simple: remain in valid or degraded certified
+execution when a horizon exists; otherwise fall back explicitly.}
+\label{fig:certos-lifecycle}
+\end{figure}
+
+\section{Runtime Invariants}
+
+The runtime is small enough that its main safety contract can be stated as
+three explicit invariants.  These are codified in
+\path{CertOSRuntime.check_invariants()} and exercised in
+\path{tests/test_certos.py}.
+
+\begin{table}[ht]
+\centering
+\caption{CertOS runtime invariants.}
+\label{tab:certos-invariants}
+\begin{tabular}{p{1.6cm}p{4.0cm}p{5.4cm}}
+\toprule
+\textbf{Invariant} & \textbf{Statement} & \textbf{Operational interpretation} \\
+\midrule
+INV-1 & No dispatch without a valid or fallback certificate & The runtime must never emit a free-running actuation path \\
+INV-2 & Certificate hash chain is unbroken & Every lifecycle event remains auditable and ordered \\
+INV-3 & Fallback triggers iff validity horizon is exhausted & The fallback path is explicit rather than discretionary \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The value of these invariants in the battery thesis is not theoretical
+novelty.  Their value is that they turn runtime behavior into something
+that can be traced, tested, and audited after the shield has already
+produced a safe action.
+
+\section{Battery Runtime Evidence}
+
+The publication-facing runtime artifacts live under \path{reports/certos/}.
+They include a 96-step lifecycle log, a JSON summary, a latency report, an
+audit-completeness report, and a short recovery note.  Table
+\ref{tab:certos-runtime-summary} summarises the main locked battery runtime
+surface.
+
+\begin{table}[ht]
+\centering
+\caption{Locked CertOS runtime summary from the battery lifecycle demo.}
+\label{tab:certos-runtime-summary}
+\begin{tabular}{lr}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Total steps & 96 \\
+Valid steps & 47 \\
+Degraded steps & 16 \\
+Fallback steps & 33 \\
+Runtime interventions & 33 \\
+Audit entries & 96 \\
+Audit completeness & 100.0\% \\
+Step latency & 0.59\,ms \\
+Throughput & 1691.70 steps/s \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two facts are especially important.  First, the audit-completeness report
+records 96 audit entries for 96 runtime steps, so the lifecycle trace is
+complete for the governed demo.  Second, the measured 0.59\,ms step latency
+shows that the certificate-aware runtime layer is cheap relative to hourly
+battery dispatch timescales.  This does \emph{not} prove suitability for
+every real-time control loop; it does show that the current battery runtime
+prototype is not bottlenecked by certificate bookkeeping.
+
+\section{Representative Runtime Transitions}
+
+Table~\ref{tab:certos-representative-rows} shows representative lifecycle
+states from the battery trace.  The goal is not to report every row in the
+main chapter; the full log is preserved in Appendix~\ref{app:certos-lifecycle-log}.
+The main chapter only needs enough rows to make the runtime logic legible.
+
+\begin{table}[ht]
+\centering
+\caption{Representative CertOS lifecycle rows from the governed battery
+runtime log.}
+\label{tab:certos-representative-rows}
+\begin{tabular}{rrrrrl}
+\toprule
+\textbf{Step} & \textbf{Horizon} & \textbf{Status} & \textbf{Discharge} &
+\textbf{SOC} & \textbf{Fallback} \\
+\midrule
+0  & 18 & valid    & 45.0 & 88.16 & no \\
+7  & 20 & valid    & 50.0 & 0.00  & no \\
+40 & 0  & fallback & 0.0  & 0.00  & yes \\
+56 & 6  & valid    & 15.0 & 0.00  & no \\
+57 & 4  & degraded & 10.0 & 0.00  & no \\
+73 & 0  & fallback & 0.0  & 0.00  & yes \\
+83 & 2  & degraded & 5.0  & 0.00  & no \\
+95 & 0  & fallback & 0.0  & 0.00  & yes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The pattern is operationally coherent.  Healthy steps stay in a certified
+\texttt{valid} regime.  As the horizon compresses, the runtime can remain
+active but only in an explicitly marked \texttt{degraded} regime.  When the
+horizon reaches zero, the runtime does not improvise; it falls back to a
+zero-action battery-safe command.  That is the systems contribution of the
+chapter.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  node distance=1.8cm and 1.8cm,
+  every node/.style={draw, rounded corners, align=center, minimum width=2.4cm, minimum height=0.85cm},
+  >=Latex
+]
+\node (obs) {Observed state\\and safe action};
+\node[right=of obs] (validate) {Validate\\certificate};
+\node[right=of validate] (act) {Release\\action};
+\node[below=of validate] (fb) {Fallback\\action};
+\node[right=of act] (audit) {Audit\\ledger};
+
+\draw[->] (obs) -- (validate);
+\draw[->] (validate) -- node[above]{valid / degraded} (act);
+\draw[->] (validate) -- node[right]{expired / revoked} (fb);
+\draw[->] (act) -- (audit);
+\draw[->] (fb) -- (audit);
+\end{tikzpicture}
+\caption{No-action-without-certificate runtime path.  A release path exists
+only for certified actions; otherwise the runtime records a fallback event
+and emits the fallback action instead.}
+\label{fig:certos-runtime-path}
+\end{figure}
+
+\section{Recovery, Audit, and Bounded Portability}
+
+The recovery note in \path{reports/certos/recovery_report.md} records that
+the lifecycle contains transitions from fallback back to valid execution.
+The recovery manager in \path{recovery_manager.py} is deliberately simple:
+it is a callback-based regain path, not a proof of optimal recovery.  That
+level of modesty is appropriate to the current evidence lock.
+
+The audit layer is similarly bounded.  The ledger stores lifecycle
+operation, step, certificate hash, and optional metadata.  The current
+battery artifact proves completeness for the demo and preserves an
+append-only runtime trail.  It does not yet prove cryptographic immutability
+or fleet-scale storage guarantees.
+
+CertOS also includes a small second-domain toy artifact in
+\path{reports/certos/certos_vehicle_toy.json}.  That artifact records a
+12-step vehicle-shaped run with four fallback steps, twelve audit entries,
+and four interventions.  The role of the toy is narrow: it shows that the
+certificate lifecycle is not hard-coded to battery field names.  It does
+\emph{not} elevate the thesis into a second fully validated proof domain.
+
+\begin{table}[ht]
+\centering
+\caption{Bounded non-battery portability evidence for the CertOS runtime.}
+\label{tab:certos-vehicle-toy}
+\begin{tabular}{lr}
+\toprule
+\textbf{Vehicle toy metric} & \textbf{Value} \\
+\midrule
+Domain & vehicle \\
+Steps & 12 \\
+Fallback steps & 4 \\
+Audit entries & 12 \\
+Interventions & 4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Bounded Claim}
+
+The runtime chapter therefore supports five bounded statements:
+
+\begin{enumerate}
+  \item the repo contains a concrete certificate-aware runtime rather than
+    only a conceptual deployment story,
+  \item the six lifecycle operations are implemented and test-covered,
+  \item the battery lifecycle demo records complete audit coverage and
+    explicit fallback behavior,
+  \item the prototype runtime is computationally lightweight at the measured
+    operating scale, and
+  \item the lifecycle contract ports to a toy second domain without changing
+    the battery thesis into a universal runtime proof.
+\end{enumerate}
+
+\section{Summary}
+
+CertOS closes the gap between a safe battery action and a runtime that is
+allowed to execute it.  The current chapter does not claim deployment
+completion.  It claims something narrower and stronger: the thesis now has a
+bounded certificate lifecycle chapter with code anchors, runtime invariants,
+measured battery evidence, complete audit coverage, explicit fallback
+semantics, and a small portability demonstration that remains outside the
+main proof boundary.
