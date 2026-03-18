@@ -222,6 +222,46 @@ def certificate_half_life(
     return {"half_life_steps": int(half_life), "tau_t": int(tau_t)}
 
 
+def should_renew_certificate(
+    *,
+    tau_t: int,
+    steps_since_renewal: int = 0,
+    renewal_threshold_steps: int = 5,
+) -> dict[str, bool | int | str]:
+    """Runtime predicate: should the certificate be renewed?
+
+    Returns True when remaining certified time is at or below the renewal
+    threshold (certificate is approaching expiry).
+    """
+    remaining = max(0, tau_t - steps_since_renewal)
+    return {
+        "should_renew": bool(remaining <= renewal_threshold_steps and tau_t > 0),
+        "remaining_certified_steps": int(remaining),
+        "tau_t": int(tau_t),
+        "renewal_trigger_reason": (
+            "tau_t_remaining_le_threshold" if remaining <= renewal_threshold_steps and tau_t > 0 else ""
+        ),
+    }
+
+
+def should_expire_certificate(
+    *,
+    tau_t: int,
+    steps_since_renewal: int = 0,
+) -> dict[str, bool | int | str]:
+    """Runtime predicate: has the certificate expired?
+
+    Returns True when remaining certified time is zero (tube would exit bounds).
+    """
+    remaining = max(0, tau_t - steps_since_renewal)
+    return {
+        "should_expire": bool(remaining <= 0),
+        "remaining_certified_steps": int(remaining),
+        "tau_t": int(tau_t),
+        "expiration_trigger_reason": "tau_t_exhausted" if remaining <= 0 else "",
+    }
+
+
 __all__ = [
     "forward_tube",
     "certificate_validity_horizon",
@@ -230,4 +270,6 @@ __all__ = [
     "certify_fallback_existence",
     "evaluate_graceful_degradation_dominance",
     "certificate_half_life",
+    "should_renew_certificate",
+    "should_expire_certificate",
 ]
