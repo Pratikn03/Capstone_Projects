@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+\centering
+\caption{Battery Controller Leaderboard: ranked by safety (zero violations first), then cost.  All controllers run on the same CPSBench fault scenarios.}
+\label{tab:battery_leaderboard}
+\begin{tabular}{clrrrr}
+\toprule
+Rank & Controller & Viol.\ Rate & Intervention Rate & Cost (USD) & PICP@90 \\
+\midrule
+1 & Scenario MPC & \textbf{0.000} & 0.000 & \$114.3M & 0.935 \\
+2 & Scenario Robust & \textbf{0.000} & 0.000 & \$114.3M & 0.975 \\
+3 & ACI Conformal & \textbf{0.000} & 0.021 & \$114.4M & 0.965 \\
+4 & DC3S (Wrapped) & \textbf{0.000} & 0.000 & \$114.4M & 0.881 \\
+5 & DC3S-FTIT & \textbf{0.000} & 0.088 & \$114.5M & 0.931 \\
+6 & Deterministic LP & 0.130 & 0.000 & \$114.3M & 0.880 \\
+7 & CVaR Interval & 0.192 & 0.000 & \$114.3M & 0.880 \\
+8 & Robust Fixed & 0.192 & 0.000 & \$114.3M & 0.880 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,32 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Claim--Evidence Matrix: all 22 thesis claims with locked artifact pointers.  Status \emph{locked} means the artifact file exists and contains real numerical data.}
+\label{tab:claim_evidence}
+\begin{tabular}{lp{5cm}p{5cm}ll}
+\toprule
+ID & Claim & Evidence Path & Type & Status \\
+\midrule
+\texttt{central\_claim} & deterministic unsafe vs dc3s safe... & \texttt{reports/\-publication/\-dc3s\_main\_table\_ci.csv} & csv\_row:determinis & locked \\
+\texttt{theorem\_t1} & oasg existence... & \texttt{src/\-gridpulse/\-cpsbench\_iot/\-scenarios.py} & code\_path & implemented \\
+\texttt{theorem\_t2} & one-step safety preservation... & \texttt{src/\-gridpulse/\-dc3s/\-guarantee\_checks.py} & code\_path & implemented \\
+\texttt{theorem\_t3} & coverage monotonicity plus empirical core-bound audit... & \texttt{src/\-gridpulse/\-dc3s/\-coverage\_theorem.py} & code\_path & implemented \\
+\texttt{theorem\_t4} & no free safety... & \texttt{src/\-gridpulse/\-cpsbench\_iot/\-baselines.py} & code\_path & implemented \\
+\texttt{theorem\_t5} & certificate validity horizon... & \texttt{src/\-gridpulse/\-dc3s/\-temporal\_theorems.py} & code\_path & implemented \\
+\texttt{theorem\_t6} & certificate expiration bound... & \texttt{src/\-gridpulse/\-dc3s/\-temporal\_theorems.py} & code\_path & implemented \\
+\texttt{theorem\_t7} & feasible fallback existence... & \texttt{src/\-gridpulse/\-dc3s/\-temporal\_theorems.py} & code\_path & implemented \\
+\texttt{theorem\_t8} & graceful degradation dominance... & \texttt{src/\-gridpulse/\-dc3s/\-temporal\_theorems.py} & code\_path & implemented \\
+\texttt{priority1\_fault\_tabl} & fault performance table... & \texttt{reports/\-publication/\-fault\_performance\_table.csv} & artifact\_file & generated \\
+\texttt{priority1\_trace} & 48h operational trace... & \texttt{reports/\-publication/\-48h\_trace.csv} & artifact\_file & generated \\
+\texttt{priority1\_latency} & latency p99 table... & \texttt{reports/\-publication/\-dc3s\_latency\_summary.csv} & artifact\_file & generated \\
+\texttt{priority1\_hil} & software hil summary... & \texttt{reports/\-hil/\-closed\_loop\_nominal\_48h\_summary.json} & artifact\_file & generated \\
+\texttt{priority2\_surfaces} & hyperparameter surfaces... & \texttt{reports/\-publication/\-hyperparameter\_surfaces.csv} & artifact\_file & generated \\
+\texttt{priority2\_half\_life} & blackout half-life... & \texttt{reports/\-publication/\-blackout\_half\_life.csv} & artifact\_file & generated \\
+\texttt{priority2\_graceful} & graceful degradation trace... & \texttt{reports/\-publication/\-graceful\_degradation\_trace.csv} & artifact\_file & generated \\
+\texttt{priority3\_leaderboar} & battery leaderboard... & \texttt{reports/\-publication/\-battery\_leaderboard.csv} & artifact\_file & generated \\
+\texttt{priority3\_fleet} & fleet composition... & \texttt{reports/\-publication/\-fleet\_composition\_two\_battery.csv} & artifact\_file & generated \\
+\texttt{priority3\_probing} & bounded active probing audit... & \texttt{reports/\-probing/\-spoofing\_attack\_results.csv} & artifact\_file & generated \\
+\texttt{priority3\_aging} & aging proxy calibration outputs... & \texttt{reports/\-aging/\-asset\_preservation\_proxy\_table.csv} & artifact\_file & generated \\
+\bottomrule
+\end{tabular}
+\end{table}
