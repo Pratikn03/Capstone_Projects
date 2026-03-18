@@ -1,6 +1,6 @@
 # ORIUS
 
-ORIUS is a research-to-runtime framework for safe battery dispatch under degraded telemetry. It combines forecasting, uncertainty quantification, optimization, safety shielding, closed-loop cyber-physical evaluation, publication-grade artifact generation, and manuscript claim locking in one repository.
+ORIUS is a research-to-runtime framework for safe battery dispatch under degraded telemetry. It combines forecasting, uncertainty quantification, optimization, safety shielding, runtime certificate management, cross-domain benchmarking, publication-grade artifact generation, and manuscript claim locking in one repository.
 
 The central method is **DC3S**: a telemetry-reliability-weighted conformal safety shield that:
 - scores telemetry quality at each control step,
@@ -33,7 +33,24 @@ The locked paper evidence currently centers on:
 
 Hardware validation, PHIL, and field pilots are **not** part of the current submission scope. The repository contains future-pilot infrastructure, but real-device validation remains future work.
 
-**Vehicles prototype**: A `VehicleDomainAdapter` for 1D longitudinal control exists under `src/orius/vehicles/` as an exploratory extension. It is **not** part of the locked thesis or paper claims. All strong safety claims remain battery-only. See `orius-plan/vehicles-extension.md` and `reports/vehicles_prototype/` for prototype artifacts.
+## Universal Framework Maturity
+
+The repo uses four separate maturity states for ORIUS:
+
+- `designed`: the cross-domain architecture exists on paper and in the repo layout
+- `implemented`: the code paths exist and run through shared adapters, ORIUS-Bench, and CertOS prototypes
+- `validated`: the domain has a non-trivial safety gap and a locked ORIUS improvement surface
+- `deployed`: HIL, runtime guarantees, and field-ready operations exist
+
+The current universal-framework boundary is:
+
+- `battery` is the validated reference domain
+- `vehicle` is the designated second proof domain for universal validation
+- `navigation`, `industrial`, and `healthcare` are portability-only domains
+- `aerospace` is experimental until the placeholder path is replaced and validated
+- `certos` is implemented as a runtime prototype, not a deployment claim
+
+**Vehicle proof-domain note**: the canonical import path is `orius.adapters.vehicle`. The implementation still lives under `src/orius/vehicles/` as a compatibility path, but the universal validation gate now treats vehicle as the locked second-domain proof target. This does **not** widen the locked battery thesis claims into a universal deployment claim.
 
 ## Locked Paper Snapshot
 
@@ -54,16 +71,35 @@ For exact numbers, use the manuscript and locked artifact interfaces instead of 
 
 ## Repository Layout
 
+The repo now has an official backbone for new code, while older modules remain in place as compatibility layers:
+
+- `orius.adapters.*` for canonical domain and benchmark entrypoints
+- `orius.dc3s.*` for safety logic
+- `orius.certos.*` for runtime certificate and recovery logic
+- `orius.orius_bench.*` for benchmark infrastructure
+- `orius.multi_agent.*` for shared-constraint composition
+- `orius.forecasting.*`, `orius.optimizer.*`, and `orius.data_pipeline.*` for the upstream control stack
+
 ```text
 .
 ├── src/orius/                  Core Python package
-│   ├── data_pipeline/          Dataset normalization and feature generation
+│   ├── adapters/               Canonical domain/track entrypoints
+│   ├── dc3s/                   Shield logic, FTIT, guarantee checks, theory helpers
+│   ├── certos/                 Runtime certificate lifecycle and recovery layer
+│   ├── orius_bench/            Cross-domain benchmark, metrics, and exports
+│   ├── multi_agent/            Shared-constraint coordination layer
 │   ├── forecasting/            GBM + deep forecasting models and UQ tooling
 │   ├── optimizer/              Deterministic, robust, and CVaR dispatch
-│   ├── dc3s/                   Shield logic, FTIT, guarantee checks, theory helpers
+│   ├── data_pipeline/          Dataset normalization and feature generation
+│   ├── anomaly/                Residual and multivariate anomaly surfaces
 │   ├── cpsbench_iot/           Truth-vs-observed benchmark harness
 │   ├── monitoring/             Drift and health monitoring
-│   └── safety/                 BMS-style safety checks
+│   ├── streaming/              Runtime ingestion and cadence validation
+│   ├── registry/               Model promotion and artifact registry
+│   ├── safety/                 BMS-style safety checks
+│   ├── universal_framework/    Legacy universal-framework implementations
+│   ├── vehicles/               Legacy vehicle prototype implementation
+│   └── domain/                 Legacy battery/domain compatibility modules
 ├── services/api/              FastAPI service layer
 ├── frontend/                  Next.js dashboard
 ├── iot/                       Closed-loop simulator and edge-agent code
@@ -75,6 +111,8 @@ For exact numbers, use the manuscript and locked artifact interfaces instead of 
 ├── tests/                     Unit and workflow regression coverage
 └── deploy/                    Deployment examples and service manifests
 ```
+
+For artifact layout, treat [`reports/README.md`](reports/README.md) as the canonical output-folder contract.
 
 ## Quick Start
 
