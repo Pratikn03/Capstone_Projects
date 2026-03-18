@@ -58,6 +58,16 @@ Useful work preserved (MWh) & 4513.97 & Safety does not force total shutdown \\
 \end{tabular}
 \end{table}
 
+\section{Multi-Agent Protocol Comparison}
+
+Table~\ref{tab:multi_agent} reports the non-composition counterexample
+quantitatively: two batteries each proposing 60~MW of discharge into a
+shared 80~MW feeder.  The independent protocol produces 24 joint
+violations; ORIUS-coordinated (centralized) produces zero, while
+preserving the same useful work output.
+
+\input{paper/assets/tables/generated/tbl_multi_agent}
+
 \section{Interpretation}
 
 The important battery result is not that the fleet chapter is ``finished'' as
