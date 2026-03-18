@@ -48,6 +48,11 @@ Common test fixtures are defined in `conftest.py` (if present) or inline within 
 ## CI Integration
 
 Tests run automatically via GitHub Actions on:
-- Push to main/develop branches
-- Pull request creation
-- Scheduled nightly runs
+- Pull requests targeting `main`
+
+The backend CI workflow also runs:
+- Ruff lint and format checks
+- Mypy
+- paper-claim validation
+- paper asset sync checks
+- package build verification
