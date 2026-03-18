@@ -7,7 +7,7 @@ Provides a domain-agnostic pipeline for:
   4. Shield  (repair)
   5. Certify (dispatch certificate)
 
-Domains: energy (battery), av (vehicle), industrial, healthcare, surgical_robotics, aerospace.
+ Domains: energy (battery), av (vehicle), navigation, industrial, healthcare, surgical_robotics, aerospace.
 """
 from .pipeline import run_universal_step, PIPELINE_STAGES
 from .domain_registry import get_adapter, list_domains, register_domain

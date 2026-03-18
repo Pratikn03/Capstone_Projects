@@ -10,6 +10,7 @@ def test_list_domains() -> None:
     domains = list_domains()
     assert "energy" in domains
     assert "av" in domains
+    assert "navigation" in domains
     assert "industrial" in domains
     assert "healthcare" in domains
     assert "surgical_robotics" in domains
@@ -115,6 +116,46 @@ def test_run_universal_step_vehicle_repairs_tight_headway() -> None:
     assert result["repair_meta"]["repaired"] is True
     assert result["repair_meta"]["intervention_reason"] == "headway_clamp"
     assert result["safe_action"]["acceleration_mps2"] < 0.0
+
+
+def test_run_universal_step_navigation_repairs_out_of_bounds_motion() -> None:
+    adapter = get_adapter(
+        "navigation",
+        {
+            "navigation": {
+                "arena_size": 10.0,
+                "speed_limit": 1.0,
+                "obstacle_centres": [(5.0, 5.0)],
+                "obstacle_radius": 1.0,
+                "dt_s": 0.25,
+            }
+        },
+    )
+    result = run_universal_step(
+        domain_adapter=adapter,
+        raw_telemetry={
+            "x": 9.95,
+            "y": 9.80,
+            "vx": 0.0,
+            "vy": 0.0,
+            "ts_utc": "2026-01-01T00:00:00Z",
+        },
+        history=None,
+        candidate_action={"ax": 4.0, "ay": 4.0},
+        constraints={
+            "arena_min": 0.0,
+            "arena_max": 10.0,
+            "max_speed": 1.0,
+            "dt_s": 0.25,
+        },
+        quantile=10.0,
+    )
+    assert "certificate" in result
+    assert "safe_action" in result
+    assert result["repair_meta"]["repaired"] is True
+    assert result["repair_meta"]["intervention_reason"] in {"speed_limit_clamp", "arena_bound_clamp"}
+    assert result["safe_action"]["ax"] <= 0.2
+    assert result["safe_action"]["ay"] <= 0.8
 
 
 def test_get_adapter_unknown_raises() -> None:
