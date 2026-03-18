@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+\centering
+\caption{ORIUS Universal Framework: Cross-Domain Safety Under Fault Injection (dropout $p{=}0.15$, spike $p{=}0.08$, stale $p{=}0.10$; $N{=}200$ steps per domain)}
+\label{tab:all_domain_comparison}
+\begin{tabular}{lrrrrrr}
+\toprule
+Domain & $N$ & Faults Inj.\ & Viol.\ Before (\%) & Viol.\ After (\%) & Repair Rate (\%) & $\bar{w}_t$ \\
+\midrule
+Aerospace & 200 & $\approx$66 & 7.5 & \textbf{6.0} & 15.0 & 1.000 \\
+Autonomous Vehicles & 200 & $\approx$66 & 3.0 & \textbf{0.0} & 99.5 & 1.000 \\
+Healthcare (ICU Vitals) & 200 & $\approx$66 & 8.0 & \textbf{0.0} & 19.0 & 1.000 \\
+Industrial Process Control & 200 & $\approx$66 & 1.5 & \textbf{0.0} & 100.0 & 1.000 \\
+\bottomrule
+\end{tabular}
+\smallskip
+\begin{minipage}{\linewidth}\footnotesize
+Violations Before = fraction of steps where faulted telemetry or aggressive candidate action breaches the domain safety constraint before the ORIUS shield intervenes.  Violations After = fraction remaining after shield repair.  Fault injection follows the DC3S taxonomy (Chapter~\ref{ch:cpsbench-battery}).
+\end{minipage}
+\end{table}

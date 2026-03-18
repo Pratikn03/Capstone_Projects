@@ -1,0 +1,6 @@
+rank,controller,domain,tsvr,gdq
+1,robust,battery,0.0,1.0
+2,nominal,battery,0.5,0.5
+3,fallback,battery,0.666667,0.333333
+4,dc3s,battery,0.75,0.25
+5,naive,battery,0.916667,0.083333
