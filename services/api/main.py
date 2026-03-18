@@ -46,7 +46,7 @@ from orius.safety.watchdog import SystemWatchdog
 from orius.utils.logging import setup_logging
 from services.api.config import get_bms_config, get_watchdog_timeout
 from services.api.health import readiness_check
-from services.api.routers import forecast, anomaly, optimize, monitor, dc3s, iot
+from services.api.routers import forecast, anomaly, optimize, monitor, dc3s, iot, universal
 from services.api.routers.forecast_intervals import router as intervals_router
 from services.api.security import get_api_key, verify_scope
 
@@ -115,6 +115,7 @@ app.include_router(optimize.router, prefix="/optimize", tags=["optimize"])
 app.include_router(monitor.router, prefix="/monitor", tags=["monitor"])
 app.include_router(dc3s.router, prefix="/dc3s", tags=["dc3s"])
 app.include_router(iot.router, prefix="/iot", tags=["iot"])
+app.include_router(universal.router, prefix="/universal", tags=["universal"])
 
 
 class DispatchRequest(BaseModel):

@@ -9,6 +9,7 @@ This FastAPI-based service exposes endpoints for:
 - **Anomaly Detection**: Real-time outlier identification
 - **Optimization**: Battery dispatch scheduling
 - **Monitoring**: Model drift and data quality metrics
+- **Universal Framework**: Cross-domain ORIUS safety-step execution
 
 ## Architecture
 
@@ -23,7 +24,8 @@ services/api/
     ├── forecast_intervals.py # Prediction intervals
     ├── anomaly.py            # /anomaly/* endpoints
     ├── optimize.py           # /optimize/* endpoints
-    └── monitor.py            # /monitor/* endpoints
+    ├── monitor.py            # /monitor/* endpoints
+    └── universal.py         # /universal/* endpoints
 ```
 
 ## Running Locally
@@ -47,6 +49,8 @@ gunicorn services.api.main:app -w 4 -k uvicorn.workers.UvicornWorker
 | `/optimize` | POST | Optimize battery dispatch (`optimization_mode=robust|deterministic`, default robust) |
 | `/monitor` | GET | Model drift metrics and retraining decision |
 | `/monitor/research-metrics` | GET | Latest DE/US EVPI-VSS research summaries + frozen snapshot |
+| `/universal/domains` | GET | List registered ORIUS framework domains, stages, and framework tables |
+| `/universal/step` | POST | Run one universal ORIUS safety step for a selected domain |
 
 ## Authentication
 
