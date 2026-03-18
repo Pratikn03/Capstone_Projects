@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+<rect width="400" height="300" fill="white"/>
+<text x="10" y="20" font-size="12">Cost-Safety Frontier (Paper 1)</text>
+<circle cx="299" cy="250" r="4" fill="#1a2b3c"/>
+<text x="304" y="250" font-size="8">aci_conforma</text>
+<circle cx="20" cy="194" r="4" fill="#4c78a8"/>
+<text x="25" y="194" font-size="8">cvar_interva</text>
+<circle cx="340" cy="250" r="4" fill="#f58518"/>
+<text x="340" y="250" font-size="8">dc3s_ftit</text>
+<circle cx="29" cy="250" r="4" fill="#2ca02c"/>
+<text x="34" y="250" font-size="8">dc3s_wrapped</text>
+<circle cx="146" cy="241" r="4" fill="#e45756"/>
+<text x="151" y="241" font-size="8">deterministi</text>
+<circle cx="20" cy="194" r="4" fill="#9b59b6"/>
+<text x="25" y="194" font-size="8">robust_fixed</text>
+<circle cx="20" cy="250" r="4" fill="#1a2b3c"/>
+<text x="25" y="250" font-size="8">scenario_mpc</text>
+<circle cx="20" cy="250" r="4" fill="#4c78a8"/>
+<text x="25" y="250" font-size="8">scenario_rob</text>
+</svg>
