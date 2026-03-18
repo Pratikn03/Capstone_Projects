@@ -1,0 +1,14 @@
+\begin{table}[htbp]
+\centering
+\caption{Hardware-in-the-Loop Bill of Materials: components used for software-in-the-loop validation of the DC3S pipeline.}
+\label{tab:hil_hardware}
+\begin{tabular}{lll}
+\toprule
+component & value & type \\
+\midrule
+controller\_runtime & FastAPI TestClient + EdgeAgent sim & software\_hil \\
+battery\_driver & iot.edge\_agent.drivers.sim.SimBatteryDriver & emulator \\
+fault\_injection & nominal/dropout scenarios & protocol \\
+\bottomrule
+\end{tabular}
+\end{table}
