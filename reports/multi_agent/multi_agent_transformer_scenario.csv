@@ -1,4 +1,4 @@
-protocol,joint_violations,local_violations,useful_work_mwh,fairness,margin_quality
-independent,24,0,1920.0,1.0,0.0
-centralized,0,0,1920.0,1.0,1.0
-distributed,0,0,1920.0,1.0,1.0
+protocol,joint_violations,local_violations,useful_work_mwh,fairness,margin_quality,degradation_allocation_quality
+independent,24,0,1920.0,1.0,0.0,0.0
+centralized,0,0,1920.0,1.0,1.0,1.0
+distributed,0,0,1920.0,1.0,1.0,1.0
