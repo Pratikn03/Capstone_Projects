@@ -1,5 +1,6 @@
 *.md
 *.json
+!README.md
 !publication/ambiguity_calibration_summary.json
 !publication/cqr_calibration_summary.json
 !publication/distributional_summary.json
