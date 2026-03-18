@@ -3,9 +3,12 @@ import pytest
 from orius.dc3s.temporal_theorems import (
     certificate_expiration_bound,
     certificate_validity_horizon,
+    certificate_half_life,
     certify_fallback_existence,
     evaluate_graceful_degradation_dominance,
     forward_tube,
+    should_expire_certificate,
+    should_renew_certificate,
     zero_dispatch_fallback,
 )
 
@@ -84,3 +87,31 @@ def test_graceful_degradation_dominance_detects_failure():
         uncontrolled_violations=[0, 0],
     )
     assert result["dominates"] is False
+
+
+def test_should_renew_certificate_triggers_when_remaining_le_threshold():
+    r = should_renew_certificate(tau_t=10, steps_since_renewal=7, renewal_threshold_steps=5)
+    assert r["should_renew"] is True
+    assert r["remaining_certified_steps"] == 3
+    assert r["renewal_trigger_reason"] == "tau_t_remaining_le_threshold"
+
+
+def test_should_renew_certificate_no_trigger_when_remaining_above_threshold():
+    r = should_renew_certificate(tau_t=10, steps_since_renewal=2, renewal_threshold_steps=5)
+    assert r["should_renew"] is False
+    assert r["remaining_certified_steps"] == 8
+    assert r["renewal_trigger_reason"] == ""
+
+
+def test_should_expire_certificate_triggers_when_exhausted():
+    r = should_expire_certificate(tau_t=5, steps_since_renewal=6)
+    assert r["should_expire"] is True
+    assert r["remaining_certified_steps"] == 0
+    assert r["expiration_trigger_reason"] == "tau_t_exhausted"
+
+
+def test_should_expire_certificate_no_trigger_when_valid():
+    r = should_expire_certificate(tau_t=5, steps_since_renewal=2)
+    assert r["should_expire"] is False
+    assert r["remaining_certified_steps"] == 3
+    assert r["expiration_trigger_reason"] == ""
