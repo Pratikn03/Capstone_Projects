@@ -236,7 +236,7 @@ eval-baselines:
 
 # CPSBench-IoT + closed-loop IoT validation
 cpsbench:
-	.venv/bin/python3 scripts/run_cpsbench.py
+	PYTHONPATH=src $(PYTHON) scripts/run_cpsbench.py
 
 publication-artifact:
 ifndef RELEASE_ID
@@ -246,12 +246,12 @@ endif
 
 paper-assets:
 	bash scripts/export_paper_assets.sh
-	.venv/bin/python3 scripts/build_paper_table_tex.py
-	.venv/bin/python3 scripts/update_paper_metrics.py
+	PYTHONPATH=src $(PYTHON) scripts/build_paper_table_tex.py
+	PYTHONPATH=src $(PYTHON) scripts/update_paper_metrics.py
 
 paper-verify:
-	.venv/bin/python3 scripts/verify_paper_manifest.py
-	.venv/bin/python3 scripts/validate_paper_claims.py
+	PYTHONPATH=src $(PYTHON) scripts/verify_paper_manifest.py
+	PYTHONPATH=src $(PYTHON) scripts/validate_paper_claims.py
 
 # Paper 2: certificate half-life blackout benchmark
 paper2-blackout-benchmark:
@@ -274,11 +274,11 @@ endif
 	$(PYTHON) scripts/post_training_paper_update.py --release-id $(RELEASE_ID) --out-dir reports/publication
 
 dc3s-demo:
-	.venv/bin/python3 scripts/run_dc3s_demo.py
+	PYTHONPATH=src $(PYTHON) scripts/run_dc3s_demo.py
 
 # ORIUS full pipeline check (imports, config, DC3S demo, CPSBench, locked evidence)
 orius-check:
-	.venv/bin/python3 scripts/run_orius_full_check.py
+	PYTHONPATH=src $(PYTHON) scripts/run_orius_full_check.py
 
 # Thesis-level pipeline verification: theorems + full ORIUS + AV training
 thesis-pipeline-verify: orius-check
@@ -287,10 +287,10 @@ thesis-pipeline-verify: orius-check
 
 # ORIUS quick check (skip CPSBench, ~10s)
 orius-check-quick:
-	.venv/bin/python3 scripts/run_orius_full_check.py --quick
+	PYTHONPATH=src $(PYTHON) scripts/run_orius_full_check.py --quick
 
 iot-sim:
-	.venv/bin/python3 iot/simulator/run_closed_loop.py
+	PYTHONPATH=src $(PYTHON) iot/simulator/run_closed_loop.py
 
 refresh-data:
 	$(PYTHON) scripts/refresh_data_delta.py --dataset ALL --apply
