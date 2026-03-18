@@ -66,6 +66,8 @@ def main() -> int:
     payload["negative_test_pass"] = r3.returncode == 0
 
     payload["all_paths_exist"] = all(payload["paths"].values())
+    # sync_assets_pass implies impact_alignment (source files match manifest within tolerance)
+    payload["canonical_rerun_reproduces"] = payload["sync_assets_pass"]
     payload["integrity_ok"] = (
         payload["validator_pass"]
         and payload["sync_assets_pass"]

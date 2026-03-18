@@ -32,6 +32,10 @@ def ensure_dirs() -> None:
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def _local_bidmc_csv_files() -> list[Path]:
+    return sorted((RAW_DIR / "bidmc").glob("bidmc_*_Numerics.csv"))
+
+
 def download_bidmc_numerics() -> Path | None:
     """Download BIDMC Numerics CSVs from PhysioNet (first 5 recordings)."""
     bidmc_dir = RAW_DIR / "bidmc"
@@ -55,6 +59,7 @@ def convert_bidmc_to_orius(csv_path: Path, out_path: Path) -> Path:
     """Convert BIDMC Numerics CSV to ORIUS healthcare format."""
     import pandas as pd
     df = pd.read_csv(csv_path)
+    df.columns = [str(c).strip() for c in df.columns]
     col_map = {}
     if "HR" in df.columns:
         col_map["HR"] = "hr_bpm"
@@ -79,6 +84,42 @@ def convert_bidmc_to_orius(csv_path: Path, out_path: Path) -> Path:
     else:
         out["ts_utc"] = pd.to_datetime("2026-01-01") + pd.to_timedelta(out["step"], unit="s")
     out["ts_utc"] = out["ts_utc"].dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    out_cols = ["patient_id", "step", "hr_bpm", "spo2_pct", "respiratory_rate", "ts_utc"]
+    out_cols = [c for c in out_cols if c in out.columns]
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out[out_cols].to_csv(out_path, index=False)
+    print(f"Converted -> {out_path} ({len(out)} rows)")
+    return out_path
+
+
+def convert_bidmc_dir_to_orius(csv_files: list[Path], out_path: Path) -> Path:
+    """Convert one or more BIDMC numerics CSVs into a combined ORIUS file."""
+    import pandas as pd
+
+    dfs = []
+    for p in csv_files:
+        df = pd.read_csv(p)
+        df.columns = [str(c).strip() for c in df.columns]
+        col_map = {}
+        if "HR" in df.columns:
+            col_map["HR"] = "hr_bpm"
+        if "SpO2" in df.columns:
+            col_map["SpO2"] = "spo2_pct"
+        if "RESP" in df.columns:
+            col_map["RESP"] = "respiratory_rate"
+        elif "RR" in df.columns:
+            col_map["RR"] = "respiratory_rate"
+        df = df.rename(columns=col_map)
+        df["patient_id"] = p.stem.split("_")[1]
+        df["step"] = range(len(df))
+        if "Time [s]" in df.columns:
+            df["ts_utc"] = pd.to_datetime("2026-01-01") + pd.to_timedelta(df["Time [s]"], unit="s")
+        else:
+            df["ts_utc"] = pd.to_datetime("2026-01-01") + pd.to_timedelta(df["step"], unit="s")
+        df["ts_utc"] = df["ts_utc"].dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        dfs.append(df)
+
+    out = pd.concat(dfs, ignore_index=True)
     out_cols = ["patient_id", "step", "hr_bpm", "spo2_pct", "respiratory_rate", "ts_utc"]
     out_cols = [c for c in out_cols if c in out.columns]
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -134,38 +175,15 @@ def main() -> int:
         return 0
 
     if args.source == "bidmc":
+        csv_files = _local_bidmc_csv_files()
+        if csv_files:
+            convert_bidmc_dir_to_orius(csv_files, args.out)
+            return 0
         bidmc_dir = download_bidmc_numerics()
         if bidmc_dir:
             csv_files = sorted(bidmc_dir.glob("bidmc_*_Numerics.csv"))
             if csv_files:
-                import pandas as pd
-                dfs = []
-                for p in csv_files:
-                    df = pd.read_csv(p)
-                    col_map = {}
-                    if "HR" in df.columns:
-                        col_map["HR"] = "hr_bpm"
-                    if "SpO2" in df.columns:
-                        col_map["SpO2"] = "spo2_pct"
-                    if "RESP" in df.columns:
-                        col_map["RESP"] = "respiratory_rate"
-                    elif "RR" in df.columns:
-                        col_map["RR"] = "respiratory_rate"
-                    df = df.rename(columns=col_map)
-                    df["patient_id"] = p.stem.split("_")[1]
-                    df["step"] = range(len(df))
-                    if "Time [s]" in df.columns:
-                        df["ts_utc"] = pd.to_datetime("2026-01-01") + pd.to_timedelta(df["Time [s]"], unit="s")
-                    else:
-                        df["ts_utc"] = pd.to_datetime("2026-01-01") + pd.to_timedelta(df["step"], unit="s")
-                    df["ts_utc"] = df["ts_utc"].dt.strftime("%Y-%m-%dT%H:%M:%SZ")
-                    dfs.append(df)
-                out = pd.concat(dfs, ignore_index=True)
-                out_cols = ["patient_id", "step", "hr_bpm", "spo2_pct", "respiratory_rate", "ts_utc"]
-                out_cols = [c for c in out_cols if c in out.columns]
-                args.out.parent.mkdir(parents=True, exist_ok=True)
-                out[out_cols].to_csv(args.out, index=False)
-                print(f"Converted -> {args.out} ({len(out)} rows)")
+                convert_bidmc_dir_to_orius(csv_files, args.out)
                 return 0
         print("Falling back to synthetic. Run with --source synthetic for immediate use.")
         generate_synthetic_vital_signs(args.out)

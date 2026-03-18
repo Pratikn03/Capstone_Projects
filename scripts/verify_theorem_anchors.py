@@ -66,10 +66,13 @@ def main() -> int:
     required = [
         "forward_tube",
         "certificate_validity_horizon",
+        "certificate_half_life",
         "certificate_expiration_bound",
         "zero_dispatch_fallback",
         "certify_fallback_existence",
         "evaluate_graceful_degradation_dominance",
+        "should_renew_certificate",
+        "should_expire_certificate",
     ]
     for name in required:
         if not hasattr(temporal_theorems, name):

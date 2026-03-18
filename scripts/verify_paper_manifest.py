@@ -21,6 +21,7 @@ REQUIRED_SECTIONS_PREFIX = [
     "Results",
     "Deep Baseline Diagnosis",
     "Cross-Region and US Regime Analysis",
+    "Universal Domain Framework",
     "Governance and Reproducibility",
     "Discussion and Threats to Validity",
     "Limitations and Future Work",

@@ -34,6 +34,10 @@ def ensure_dirs() -> None:
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def _local_ccpp_xlsx_files() -> list[Path]:
+    return list((RAW_DIR / "ccpp").rglob("*.xlsx"))
+
+
 def download_ccpp_from_uci() -> Path | None:
     """Download UCI Combined Cycle Power Plant dataset."""
     try:
@@ -150,6 +154,10 @@ def main() -> int:
         return 0
 
     if args.source == "ccpp":
+        xlsx_files = _local_ccpp_xlsx_files()
+        if xlsx_files:
+            convert_ccpp_xlsx_to_orius(xlsx_files[0], args.out)
+            return 0
         ccpp_dir = download_ccpp_from_uci()
         if ccpp_dir:
             xlsx_files = list(ccpp_dir.rglob("*.xlsx"))
