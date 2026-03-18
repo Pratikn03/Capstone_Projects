@@ -12,17 +12,23 @@ Usage:
 from __future__ import annotations
 
 import argparse
-from typing import Any
 import json
 import math
+import sys
 import tarfile
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
+from orius.adapters.aerospace import AerospaceTrackAdapter
+from orius.adapters.battery import BatteryTrackAdapter
+from orius.adapters.healthcare import HealthcareTrackAdapter
+from orius.adapters.industrial import IndustrialTrackAdapter
+from orius.adapters.navigation import NavigationTrackAdapter
+from orius.adapters.vehicle import VehicleTrackAdapter
 from orius.orius_bench.adapter import BenchmarkAdapter
-from orius.orius_bench.aerospace_track import AerospaceTrackAdapter
-from orius.orius_bench.battery_track import BatteryTrackAdapter
 from orius.orius_bench.controller_api import (
     ControllerAPI,
     DC3SController,
@@ -38,8 +44,6 @@ from orius.orius_bench.export import (
     write_leaderboard_csv,
     write_schemas,
 )
-from orius.orius_bench.healthcare_track import HealthcareTrackAdapter
-from orius.orius_bench.industrial_track import IndustrialTrackAdapter
 from orius.orius_bench.fault_engine import (
     active_faults,
     apply_faults,
@@ -49,8 +53,6 @@ from orius.orius_bench.metrics_engine import (
     StepRecord,
     compute_all_metrics,
 )
-from orius.orius_bench.navigation_track import NavigationTrackAdapter
-from orius.orius_bench.vehicle_track import VehicleTrackAdapter
 
 
 def _run_episode(
@@ -157,15 +159,20 @@ def main() -> None:
 
     rows = []
     fault_digests: dict[int, str] = {}
+    fault_schedules: dict[int, list[dict[str, Any]]] = {}
 
     for track in tracks:
         for ctrl in controllers:
             for s in range(args.seeds):
                 seed = 1000 + s
-                # Collect fault digest
+                # Collect fault digest and serialized schedule
                 if seed not in fault_digests:
                     sched = generate_fault_schedule(seed, args.horizon)
                     fault_digests[seed] = sched.digest
+                    fault_schedules[seed] = [
+                        {"step": e.step, "kind": e.kind, "params": e.params, "duration": e.duration}
+                        for e in sched.events
+                    ]
 
                 records = _run_episode(track, ctrl, seed, args.horizon)
                 metrics = compute_all_metrics(records)
@@ -178,19 +185,44 @@ def main() -> None:
 
     # Write outputs
     csv_path = write_leaderboard_csv(rows, out / "leaderboard.csv")
-    json_path = write_bundle_json(rows, fault_digests, out / "artefact_bundle.json")
+    json_path = write_bundle_json(
+        rows, fault_digests, out / "artefact_bundle.json", fault_schedules=fault_schedules
+    )
     schema_dir = out / "schemas"
     write_schemas(schema_dir)
+
+    # Write run metadata for replayability audit
+    run_metadata = {
+        "schema_version": "1.0.0",
+        "timestamp_iso": datetime.now(timezone.utc).isoformat(),
+        "command_line": " ".join(sys.argv) if sys.argv else "",
+        "seeds": list(range(1000, 1000 + args.seeds)),
+        "horizon": args.horizon,
+        "n_tracks": len(tracks),
+        "n_controllers": len(controllers),
+        "n_runs": len(rows),
+        "fault_digests": {str(k): v for k, v in fault_digests.items()},
+        "artifacts": {
+            "leaderboard": str(csv_path.name),
+            "artefact_bundle": str(json_path.name),
+            "schemas_dir": str(schema_dir.name),
+            "bundle_tar": "benchmark_bundle.tar.gz",
+        },
+    }
+    metadata_path = out / "run_metadata.json"
+    metadata_path.write_text(json.dumps(run_metadata, indent=2))
 
     # Create benchmark_bundle.tar.gz
     bundle_path = out / "benchmark_bundle.tar.gz"
     with tarfile.open(bundle_path, "w:gz") as tf:
         tf.add(csv_path, arcname="leaderboard.csv")
         tf.add(json_path, arcname="artefact_bundle.json")
+        tf.add(metadata_path, arcname="run_metadata.json")
         for f in schema_dir.glob("*.json"):
             tf.add(f, arcname=f"schemas/{f.name}")
 
-    print(f"\nLeaderboard → {csv_path}")
+    print(f"\nMetadata   → {metadata_path}")
+    print(f"Leaderboard → {csv_path}")
     print(f"Bundle      → {json_path}")
     print(f"Schemas     → {schema_dir}")
     print(f"Tar.gz      → {bundle_path}")

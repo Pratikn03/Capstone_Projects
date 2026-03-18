@@ -10,6 +10,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 from pathlib import Path
 
@@ -31,7 +32,7 @@ def main() -> None:
     for proto, data in results.items():
         summary[proto] = {
             "joint_violations": data.get("joint_violations", 0),
-            "useful_work": data.get("useful_work", 0),
+            "useful_work": data.get("useful_work_mwh", data.get("useful_work", 0)),
             "fairness": data.get("fairness", 0),
         }
 
@@ -39,11 +40,47 @@ def main() -> None:
     with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2)
 
+    # protocol_compare.csv (clean comparison artifact)
+    proto_compare_path = out / "protocol_compare.csv"
+    with open(proto_compare_path, "w", newline="") as f:
+        w = csv.DictWriter(
+            f,
+            fieldnames=["protocol", "joint_violations", "local_violations", "useful_work_mwh", "fairness", "margin_quality", "degradation_allocation_quality"],
+        )
+        w.writeheader()
+        for proto, data in results.items():
+            w.writerow({
+                "protocol": proto,
+                "joint_violations": data.get("joint_violations", 0),
+                "local_violations": data.get("local_violations", 0),
+                "useful_work_mwh": data.get("useful_work_mwh", 0),
+                "fairness": data.get("fairness", 0),
+                "margin_quality": data.get("margin_quality", 0),
+                "degradation_allocation_quality": data.get("degradation_allocation_quality", data.get("margin_quality", 0)),
+            })
+
+    # fairness_metrics.csv
+    fairness_path = out / "fairness_metrics.csv"
+    with open(fairness_path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["protocol", "fairness", "margin_quality", "degradation_allocation_quality", "joint_violations", "useful_work_mwh"])
+        w.writeheader()
+        for proto, data in results.items():
+            w.writerow({
+                "protocol": proto,
+                "fairness": data.get("fairness", 0),
+                "margin_quality": data.get("margin_quality", 0),
+                "degradation_allocation_quality": data.get("degradation_allocation_quality", data.get("margin_quality", 0)),
+                "joint_violations": data.get("joint_violations", 0),
+                "useful_work_mwh": data.get("useful_work_mwh", 0),
+            })
+
     print("=== Multi-Agent Non-Composition Counterexample ===")
     for proto, s in summary.items():
         print(f"  {proto:30s} | violations={s['joint_violations']} "
               f"| useful_work={s['useful_work']:.1f} | fairness={s['fairness']:.4f}")
     print(f"\nSummary → {summary_path}")
+    print(f"Protocol compare → {proto_compare_path}")
+    print(f"Fairness metrics → {fairness_path}")
 
 
 if __name__ == "__main__":

@@ -84,6 +84,12 @@ def main() -> None:
         w.writeheader()
         w.writerows(rows)
 
+    # Audit ops (Step 6.2: lifecycle operation evidence)
+    audit_path = out / "audit_ops.jsonl"
+    with open(audit_path, "w") as f:
+        for entry in rt.audit_log:
+            f.write(json.dumps({"op": entry["op"], "step": entry["step"]}) + "\n")
+
     # Summary
     n_valid = sum(1 for r in rows if r["status"] == "valid")
     n_degraded = sum(1 for r in rows if r["status"] == "degraded")
