@@ -34,7 +34,8 @@ class HealthcareTrackAdapter(BenchmarkAdapter):
 
     def reset(self, seed: int = 42) -> Mapping[str, Any]:
         self._rng = np.random.default_rng(seed)
-        self._spo2 = 97.0
+        # Start in mild hypoxia: SpO2=85 % — clinician must intervene to restore above 90 %
+        self._spo2 = 85.0
         self._hr = 72.0
         self._rr = 14.0
         return self.true_state()

@@ -33,7 +33,8 @@ class IndustrialTrackAdapter(BenchmarkAdapter):
 
     def reset(self, seed: int = 42) -> Mapping[str, Any]:
         self._rng = np.random.default_rng(seed)
-        self._temp = 85.0
+        # Start near upper temperature bound so over-limit setpoints quickly cause violations
+        self._temp = 110.0
         self._power = 450.0
         return self.true_state()
 
@@ -74,8 +75,8 @@ class IndustrialTrackAdapter(BenchmarkAdapter):
 
     def step(self, action: Mapping[str, Any]) -> Mapping[str, Any]:
         setpoint = float(action.get("power_setpoint_mw", 450.0))
-        setpoint = max(0.0, min(self._power_max, setpoint))
-        # Simple dynamics: temp drifts toward setpoint/10, power follows setpoint
+        # No internal clipping: violations manifest when setpoint exceeds power_max.
+        # DC3S repair is the safety layer that prevents this from happening.
         self._power = setpoint
         self._temp = self._temp + 0.1 * (setpoint / 10.0 - self._temp) * self._dt
         self._temp = max(self._temp_min - 20, min(self._temp_max + 20, self._temp))

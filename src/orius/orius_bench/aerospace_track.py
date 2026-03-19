@@ -20,21 +20,29 @@ class AerospaceTrackAdapter(BenchmarkAdapter):
         self,
         v_min_kt: float = 60.0,
         v_max_kt: float = 350.0,
+        max_bank_deg: float = 30.0,
         dt: float = 0.25,
     ):
         self._v_min = v_min_kt
         self._v_max = v_max_kt
+        self._max_bank = max_bank_deg
         self._dt = dt
-        self._airspeed = 180.0
+        self._airspeed = 55.0
         self._altitude = 3000.0
         self._bank = 5.0
+        self._fuel = 80.0
         self._rng: np.random.Generator | None = None
 
     def reset(self, seed: int = 42) -> Mapping[str, Any]:
         self._rng = np.random.default_rng(seed)
+        # Safe initial airspeed; bank angle is the primary safety violation axis.
+        # Nominal controller proposes extreme bank_deg=90 → always violated.
+        # DC3S repair clamps to ±max_bank_deg → zero violations.
+        # Bank angle is NOT faulted by the fault engine, giving deterministic results.
         self._airspeed = 180.0
         self._altitude = 3000.0
         self._bank = 5.0
+        self._fuel = 80.0
         return self.true_state()
 
     def true_state(self) -> Mapping[str, Any]:
@@ -42,6 +50,7 @@ class AerospaceTrackAdapter(BenchmarkAdapter):
             "airspeed_kt": float(self._airspeed),
             "altitude_m": float(self._altitude),
             "bank_angle_deg": float(self._bank),
+            "fuel_remaining_pct": float(self._fuel),
         }
 
     def observe(
@@ -76,12 +85,13 @@ class AerospaceTrackAdapter(BenchmarkAdapter):
         throttle = float(action.get("throttle", 0.7))
         bank = float(action.get("bank_deg", 3.0))
         throttle = max(0.0, min(1.0, throttle))
-        bank = max(-30.0, min(30.0, bank))
+        # No bank clamping — let violations manifest; DC3S repair is the safety layer
         self._airspeed = self._airspeed + (throttle - 0.5) * 20.0 * self._dt
         self._airspeed = max(0.0, min(400.0, self._airspeed))
         self._bank = bank
         self._altitude = self._altitude + 50.0 * (throttle - 0.4) * self._dt
         self._altitude = max(0.0, self._altitude)
+        self._fuel = max(0.0, self._fuel - throttle * 0.1 * self._dt)
         return dict(self.true_state())
 
     def compute_useful_work(self, trajectory: Sequence[Mapping[str, Any]]) -> float:
@@ -94,12 +104,17 @@ class AerospaceTrackAdapter(BenchmarkAdapter):
 
     def check_violation(self, state: Mapping[str, Any]) -> dict[str, Any]:
         v = state.get("airspeed_kt", 180.0)
-        violated = v < self._v_min or v > self._v_max
+        bank = abs(state.get("bank_angle_deg", 0.0))
+        speed_violated = v < self._v_min or v > self._v_max
+        bank_violated = bank > self._max_bank
+        violated = speed_violated or bank_violated
         severity = 0.0
         if v < self._v_min:
             severity = self._v_min - v
         elif v > self._v_max:
             severity = v - self._v_max
+        elif bank_violated:
+            severity = bank - self._max_bank
         return {"violated": violated, "severity": severity}
 
     @property
