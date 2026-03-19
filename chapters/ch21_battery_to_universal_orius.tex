@@ -6,10 +6,12 @@ The preceding chapters proved a concrete result: the DC3S shield
 eliminates true-state SOC violations for a grid-scale battery under
 realistic telemetry faults.  This chapter asks whether that result is an
 accident of battery physics or a structural consequence of the ORIUS
-architecture.  We argue the latter.  Every pipeline component operates on
-abstractions with natural counterparts in other cyber-physical domains.
-The battery adapter is one instantiation; the ORIUS principle is the
-invariant.
+architecture.  The current repo supports a bounded answer: the shared
+pipeline transfers across domains, but the evidence is tiered rather than
+uniform.  Battery remains the reference domain, vehicle is the current
+second proof-domain surface, and the remaining non-battery domains are
+portability or experimental evidence rather than a universal performance
+claim.
 
 \section{Why the Battery Result Is Structurally General}
 
@@ -30,7 +32,8 @@ plant.  It consumes five objects:
 
 None of these objects mention SOC, voltage, or Coulomb counting.  They are
 \emph{domain-general}: any CPS providing equivalent definitions can reuse
-the ORIUS pipeline without modification.
+the ORIUS pipeline subject to domain-specific validation and bounded
+claim discipline.
 
 \section{Mapping Battery Objects to the Universal Adapter}
 
@@ -114,13 +117,19 @@ a shared library, tested once and reused rather than reimplemented per domain.
 \section{Cross-Domain Empirical Validation}
 \label{sec:cross-domain-eval}
 
-To move beyond architecture claims, we validated the ORIUS universal pipeline
-on real telemetry from four additional domains.  Each domain uses a separate
-\texttt{DomainAdapter} implementation but the same shared DC3S core.
+To move beyond architecture-only claims, we validated the ORIUS universal
+pipeline on additional non-battery domains and one portability-only
+navigation track.  Each domain uses a separate \texttt{DomainAdapter}
+implementation but the same shared DC3S core.  The resulting evidence is
+explicitly tiered by validation status.
 
 \subsection{Datasets}
 
 \begin{itemize}
+  \item \textbf{Navigation} (synthetic bounded-arena telemetry):
+    2D position and velocity with obstacle and boundary constraints.
+    This is a portability-only runtime track used to confirm that the
+    five-stage pipeline and certificate surface remain domain-agnostic.
   \item \textbf{Aerospace} (5\,000 steps, 1-second cadence): synthetic
     flight-envelope telemetry with altitude, airspeed, bank angle, and fuel
     fraction.  Constraints: airspeed $\in [60, 350]$~kt, bank angle
@@ -163,27 +172,44 @@ We report: safety violations before and after the shield, the fraction of
 steps where the shield altered (repaired) the candidate action, mean
 observation-quality reliability $\bar{w}_t$, and pipeline latency.
 
+\subsection{Validation Status by Domain}
+
+\input{reports/universal_orius_validation/tbl_domain_validation_summary}
+
+Table~\ref{tab:domain-validation-summary} is the governing cross-domain
+status table for the repo.  It separates the battery reference claim from
+the vehicle proof-domain result and keeps navigation, industrial, and
+healthcare as portability-only evidence.  This table, rather than the raw
+TSVR columns alone, determines what the thesis is allowed to claim.
+
 \subsection{Results}
 
 \input{reports/multi_domain/tbl_all_domain_comparison}
 
 Table~\ref{tab:all_domain_comparison} shows that fault injection produces
 non-trivial violation rates \emph{before} the ORIUS shield intervenes
-(1.5--8.0\% depending on domain), and that the shield reduces these to
-zero or near-zero in every case.  The two domains where a residual
-1.5--6\% remains after shielding (Aerospace) represent already-corrupted
-state values that the shield cannot retroactively correct --- a known
-limitation explicitly bounded in Chapter~\ref{ch:boundary} --- but all
-\emph{proposed actions} are repaired.  AV and industrial domains show
-100\% repair rates because the baseline policy intentionally proposes
-aggressive actions (1.5 m/s\textsuperscript{2} acceleration and 520~MW
-setpoint, respectively) that violate the domain constraints on every step.
+(1.5--8.0\% depending on domain), and that the shared repair path reduces
+post-shield violations on several non-battery tracks.  This should be read
+as bounded portability evidence for a shared harness and repair interface,
+not as a universal dominance theorem.  In particular, the industrial,
+healthcare, and navigation rows remain portability-only in the governing
+status table, while aerospace remains experimental.
 
 \input{reports/multi_domain/tbl_all_domain_latency}
 
 Table~\ref{tab:all_domain_latency} confirms that the ORIUS pipeline adds
 sub-millisecond overhead per step across all domains (P95 $< 1$~ms in all
 cases), meeting the real-time requirements of each application.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.88\linewidth]{paper/assets/figures/fig_multi_domain_validation.png}
+  \caption{Cross-domain validation surface from the locked universal harness.
+    The figure is intended as portability and auditability evidence: vehicle
+    is the current second proof-domain surface, while navigation, industrial,
+    and healthcare remain portability-only.}
+  \label{fig:multi-domain-validation}
+\end{figure}
 
 \subsection{Implications}
 
@@ -193,8 +219,10 @@ These results support three claims:
   \item \textbf{Portability without re-engineering.} Each new domain required
     only a \texttt{DomainAdapter} implementation; the DC3S core was not
     modified.
-  \item \textbf{Safety is preserved.} The shield eliminates constraint
-    violations regardless of domain dynamics.
+  \item \textbf{Tiered evidence rather than universal dominance.} Battery
+    remains the reference domain, vehicle is the current second proof-domain
+    result, and industrial, healthcare, and navigation are currently
+    portability-only surfaces.
   \item \textbf{Overhead is negligible.} Sub-millisecond pipeline latency
     makes ORIUS suitable for fast-control-loop applications (AV at 1~Hz,
     industrial at hourly cadence).
@@ -211,8 +239,9 @@ implementing a \texttt{DomainAdapter}---a bounded engineering task, not a
 research contribution---provided the new domain satisfies the regularity
 conditions of Chapter~\ref{ch:problem-formulation}.
 
-Empirical validation on four additional CPS domains (aerospace,
-autonomous vehicles, healthcare ICU monitoring, and industrial process
-control) confirms that the architecture generalises: zero safety violations
-post-shield, repair rates appropriate to each domain's constraint tightness,
-and sub-millisecond overhead in all cases.
+Empirical validation outside the battery domain now shows that the shared
+runtime, adapter contract, and harness execute across vehicle, navigation,
+industrial, healthcare, and aerospace settings.  The strongest non-battery
+claim in the current repo is the vehicle proof-domain result; the remaining
+domains support portability, auditability, and low-latency execution rather
+than a universal safety guarantee.

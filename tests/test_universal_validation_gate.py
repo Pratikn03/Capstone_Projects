@@ -101,6 +101,7 @@ def test_validation_cli_reports_reference_and_proof_domain(tmp_path: Path) -> No
 
     report = json.loads((tmp_path / "validation_report.json").read_text())
     proof_report = json.loads((tmp_path / "proof_domain_report.json").read_text())
+    summary_tex = (tmp_path / "tbl_domain_validation_summary.tex").read_text()
 
     assert report["reference_domain"] == "battery"
     assert report["proof_domain"] == "vehicle"
@@ -113,3 +114,6 @@ def test_validation_cli_reports_reference_and_proof_domain(tmp_path: Path) -> No
     assert domain_rows["vehicle"]["validation_status"] == "proof_validated"
     assert domain_rows["navigation"]["validation_status"] == "portability_only"
     assert domain_rows["aerospace"]["validation_status"] == "experimental"
+    assert r"\label{tab:domain-validation-summary}" in summary_tex
+    assert "proof\\_validated" in summary_tex
+    assert "portability\\_only" in summary_tex
