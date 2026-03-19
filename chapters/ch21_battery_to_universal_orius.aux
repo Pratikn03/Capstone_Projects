@@ -10,30 +10,40 @@
 \@writefile{toc}{\contentsline {section}{\numberline {21.2}Mapping Battery Objects to the Universal Adapter}{110}{section.21.2}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {21.1}{\ignorespaces Battery-specific objects and their domain-general counterparts.}}{110}{table.caption.59}\protected@file@percent }
 \newlabel{tab:domain-mapping}{{21.1}{110}{Battery-specific objects and their domain-general counterparts}{table.caption.59}{}}
-\newlabel{tab:domain-mapping@cref}{{[table][1][21]21.1}{[1][109][]110}{}{}{}}
+\newlabel{tab:domain-mapping@cref}{{[table][1][21]21.1}{[1][110][]110}{}{}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {21.3}What Changes by Domain}{110}{section.21.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {21.4}What Remains Invariant Across Domains}{110}{section.21.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {21.4}What Remains Invariant Across Domains}{111}{section.21.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {21.5}How to Port ORIUS to a New Domain}{111}{section.21.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {21.6}Cross-Domain Empirical Validation}{111}{section.21.6}\protected@file@percent }
 \newlabel{sec:cross-domain-eval}{{21.6}{111}{Cross-Domain Empirical Validation}{section.21.6}{}}
 \newlabel{sec:cross-domain-eval@cref}{{[section][6][21]21.6}{[1][111][]111}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.1}Datasets}{111}{subsection.21.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.1}Datasets}{112}{subsection.21.6.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {21.6.2}Universal Framework Architecture}{112}{subsection.21.6.2}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {21.1}{\ignorespaces ORIUS universal 5-stage pipeline. Each domain plugs in a \texttt  {DomainAdapter}; the DC3S core (stages 1--5) is shared and domain-agnostic.}}{112}{figure.caption.60}\protected@file@percent }
 \newlabel{fig:universal_framework}{{21.1}{112}{ORIUS universal 5-stage pipeline. Each domain plugs in a \texttt {DomainAdapter}; the DC3S core (stages 1--5) is shared and domain-agnostic}{figure.caption.60}{}}
 \newlabel{fig:universal_framework@cref}{{[figure][1][21]21.1}{[1][112][]112}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.3}Protocol}{112}{subsection.21.6.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.4}Results}{113}{subsection.21.6.4}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {21.2}{\ignorespaces ORIUS Universal Framework: Cross-Domain Safety Under Fault Injection (dropout $p{=}0.15$, spike $p{=}0.08$, stale $p{=}0.10$; $N{=}200$ steps per domain)}}{113}{table.caption.61}\protected@file@percent }
-\newlabel{tab:all_domain_comparison}{{21.2}{113}{ORIUS Universal Framework: Cross-Domain Safety Under Fault Injection (dropout $p{=}0.15$, spike $p{=}0.08$, stale $p{=}0.10$; $N{=}200$ steps per domain)}{table.caption.61}{}}
-\newlabel{tab:all_domain_comparison@cref}{{[table][2][21]21.2}{[1][112][]113}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {21.3}{\ignorespaces ORIUS Pipeline Latency per Domain Under Fault Injection ($N{=}200$ steps)}}{113}{table.caption.62}\protected@file@percent }
-\newlabel{tab:all_domain_latency}{{21.3}{113}{ORIUS Pipeline Latency per Domain Under Fault Injection ($N{=}200$ steps)}{table.caption.62}{}}
-\newlabel{tab:all_domain_latency@cref}{{[table][3][21]21.3}{[1][113][]113}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.5}Implications}{113}{subsection.21.6.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {21.7}Chapter Summary}{114}{section.21.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.3}Protocol}{113}{subsection.21.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.4}Validation Status by Domain}{113}{subsection.21.6.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {21.2}{\ignorespaces Universal ORIUS validation status by domain. Battery remains the reference domain, vehicle is the current second proof domain, navigation, industrial, and healthcare are portability-only surfaces, and aerospace remains experimental.}}{113}{table.caption.61}\protected@file@percent }
+\newlabel{tab:domain-validation-summary}{{21.2}{113}{Universal ORIUS validation status by domain. Battery remains the reference domain, vehicle is the current second proof domain, navigation, industrial, and healthcare are portability-only surfaces, and aerospace remains experimental}{table.caption.61}{}}
+\newlabel{tab:domain-validation-summary@cref}{{[table][2][21]21.2}{[1][113][]113}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.5}Results}{113}{subsection.21.6.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {21.3}{\ignorespaces Portable-domain ORIUS audit under fault injection (dropout $p{=}0.15$, spike $p{=}0.08$, stale $p{=}0.10$).}}{114}{table.caption.62}\protected@file@percent }
+\newlabel{tab:all_domain_comparison}{{21.3}{114}{Portable-domain ORIUS audit under fault injection (dropout $p{=}0.15$, spike $p{=}0.08$, stale $p{=}0.10$)}{table.caption.62}{}}
+\newlabel{tab:all_domain_comparison@cref}{{[table][3][21]21.3}{[1][113][]114}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21.2}{\ignorespaces Portable-domain ORIUS audit from the shared universal runtime. The figure summarizes before-vs-after violation rates under one fault protocol across AV, navigation, medical monitoring, industrial control, and aerospace. Navigation uses a synthetic bounded-arena trace; the remaining rows use locked repo telemetry.}}{114}{figure.caption.63}\protected@file@percent }
+\newlabel{fig:all-domain-comparison}{{21.2}{114}{Portable-domain ORIUS audit from the shared universal runtime. The figure summarizes before-vs-after violation rates under one fault protocol across AV, navigation, medical monitoring, industrial control, and aerospace. Navigation uses a synthetic bounded-arena trace; the remaining rows use locked repo telemetry}{figure.caption.63}{}}
+\newlabel{fig:all-domain-comparison@cref}{{[figure][2][21]21.2}{[1][114][]114}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.6}Implications}{114}{subsection.21.6.6}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {21.4}{\ignorespaces ORIUS pipeline latency per portable domain under fault injection.}}{115}{table.caption.64}\protected@file@percent }
+\newlabel{tab:all_domain_latency}{{21.4}{115}{ORIUS pipeline latency per portable domain under fault injection}{table.caption.64}{}}
+\newlabel{tab:all_domain_latency@cref}{{[table][4][21]21.4}{[1][114][]115}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21.3}{\ignorespaces Cross-domain validation surface from the locked universal harness. The figure is intended as portability and auditability evidence: vehicle is the current second proof-domain surface, while navigation, industrial, and healthcare remain portability-only.}}{115}{figure.caption.65}\protected@file@percent }
+\newlabel{fig:multi-domain-validation}{{21.3}{115}{Cross-domain validation surface from the locked universal harness. The figure is intended as portability and auditability evidence: vehicle is the current second proof-domain surface, while navigation, industrial, and healthcare remain portability-only}{figure.caption.65}{}}
+\newlabel{fig:multi-domain-validation@cref}{{[figure][3][21]21.3}{[1][114][]115}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {21.7}Chapter Summary}{116}{section.21.7}\protected@file@percent }
 \@setckpt{chapters/ch21_battery_to_universal_orius}{
-\setcounter{page}{115}
+\setcounter{page}{117}
 \setcounter{equation}{0}
 \setcounter{enumi}{3}
 \setcounter{enumii}{0}
@@ -48,8 +58,8 @@
 \setcounter{subsubsection}{0}
 \setcounter{paragraph}{0}
 \setcounter{subparagraph}{0}
-\setcounter{figure}{1}
-\setcounter{table}{3}
+\setcounter{figure}{3}
+\setcounter{table}{4}
 \setcounter{parentequation}{0}
 \setcounter{LT@tables}{0}
 \setcounter{LT@chunks}{0}
@@ -66,7 +76,7 @@
 \setcounter{section@level}{1}
 \setcounter{Item}{177}
 \setcounter{Hfootnote}{0}
-\setcounter{bookmark@seq@number}{244}
+\setcounter{bookmark@seq@number}{245}
 \setcounter{NAT@ctr}{0}
 \setcounter{@pps}{0}
 \setcounter{@ppsavesec}{0}

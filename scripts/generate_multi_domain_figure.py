@@ -6,8 +6,8 @@ import os
 import sys
 from pathlib import Path
 
-import matplotlib
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
+import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd

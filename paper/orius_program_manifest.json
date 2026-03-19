@@ -168,19 +168,29 @@
       "status": "completed"
     },
     "phase8": {
-      "name": "Universal Framework (five thesis domains)",
+      "name": "Universal Framework (six runtime domains)",
       "status": "implemented",
       "package": "src/orius/universal_framework/",
       "modules": [
         "src/orius/universal_framework/pipeline.py",
         "src/orius/universal_framework/domain_registry.py",
+        "src/orius/universal_framework/navigation_adapter.py",
         "src/orius/universal_framework/industrial_adapter.py",
         "src/orius/universal_framework/healthcare_adapter.py",
         "src/orius/universal_framework/aerospace_adapter.py"
       ],
-      "tests": ["tests/test_universal_framework.py"],
-      "scripts": ["scripts/run_multi_domain_framework.py"],
-      "test_count": 6
+      "tests": [
+        "tests/test_universal_framework.py",
+        "tests/test_multi_domain_framework.py",
+        "tests/test_universal_validation_gate.py",
+        "tests/test_run_all_domain_eval.py"
+      ],
+      "scripts": [
+        "scripts/run_multi_domain_framework.py",
+        "scripts/run_universal_orius_validation.py",
+        "scripts/run_all_domain_eval.py"
+      ],
+      "test_count": 16
     }
   },
   "cold_start_reproducibility": {

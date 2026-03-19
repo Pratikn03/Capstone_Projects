@@ -1,19 +1,20 @@
 \begin{table}[htbp]
 \centering
-\caption{ORIUS Universal Framework: Cross-Domain Safety Under Fault Injection (dropout $p{=}0.15$, spike $p{=}0.08$, stale $p{=}0.10$; $N{=}200$ steps per domain)}
+\caption{Portable-domain ORIUS audit under fault injection (dropout $p{=}0.15$, spike $p{=}0.08$, stale $p{=}0.10$).}
 \label{tab:all_domain_comparison}
-\begin{tabular}{lrrrrrr}
+\begin{tabular}{llrrrrrr}
 \toprule
-Domain & $N$ & Faults Inj.\ & Viol.\ Before (\%) & Viol.\ After (\%) & Repair Rate (\%) & $\bar{w}_t$ \\
+Domain & Source & $N$ & Faults Inj.\ & Viol.\ Before (\%) & Viol.\ After (\%) & Repair Rate (\%) & $\bar{w}_t$ \\
 \midrule
-Aerospace & 200 & $\approx$66 & 7.5 & \textbf{6.0} & 15.0 & 1.000 \\
-Autonomous Vehicles & 200 & $\approx$66 & 3.0 & \textbf{0.0} & 99.5 & 1.000 \\
-Healthcare (ICU Vitals) & 200 & $\approx$66 & 8.0 & \textbf{0.0} & 19.0 & 1.000 \\
-Industrial Process Control & 200 & $\approx$66 & 1.5 & \textbf{0.0} & 100.0 & 1.000 \\
+Aerospace & locked\_csv & 200 & $\approx$66 & 7.5 & \textbf{7.5} & 15.0 & 0.790 \\
+Autonomous Vehicles & locked\_csv & 200 & $\approx$66 & 3.0 & \textbf{3.0} & 99.5 & 0.744 \\
+Navigation & synthetic & 200 & $\approx$66 & 24.0 & \textbf{1.5} & 100.0 & 0.843 \\
+Medical Monitoring (ICU Vitals) & locked\_csv & 200 & $\approx$66 & 8.5 & \textbf{0.0} & 19.5 & 0.793 \\
+Industrial Process Control & locked\_csv & 200 & $\approx$66 & 23.5 & \textbf{0.0} & 91.0 & 0.616 \\
 \bottomrule
 \end{tabular}
 \smallskip
 \begin{minipage}{\linewidth}\footnotesize
-Violations Before = fraction of steps where faulted telemetry or aggressive candidate action breaches the domain safety constraint before the ORIUS shield intervenes.  Violations After = fraction remaining after shield repair.  Fault injection follows the DC3S taxonomy (Chapter~\ref{ch:cpsbench-battery}).
+Violations Before = fraction of steps where faulted telemetry or aggressive candidate action breaches the domain safety constraint before the ORIUS shield intervenes. Violations After = fraction remaining after shield repair. Navigation uses a synthetic bounded-arena trace because no locked real navigation telemetry dataset is currently included in the repo.
 \end{minipage}
 \end{table}

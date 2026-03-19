@@ -5,6 +5,7 @@ DOMAIN_STATE_TABLE = """
 |--------|--------------|------|-------------|
 | Energy | soc_mwh, load_mw, renewables_mw | MWh, MW | Battery SOC, grid load, renewables |
 | AV | position_m, speed_mps, speed_limit_mps, lead_position_m | m, m/s | Longitudinal kinematics |
+| Navigation | x, y, vx, vy | m, m/s | 2D bounded-arena navigation |
 | Industrial | temp_c, pressure_mbar, humidity_pct, power_mw | °C, mbar, %, MW | Process variables |
 | Healthcare | hr_bpm, spo2_pct, respiratory_rate | bpm, %, /min | Vital signs |
 """
@@ -14,6 +15,7 @@ DOMAIN_SAFETY_TABLE = """
 |--------|------------------|------------|
 | Energy | SOC ∈ [min_soc, max_soc]; charge/discharge mutual exclusion | min_soc_mwh, max_soc_mwh |
 | AV | v ≤ v_max; x_lead - x ≥ d_min(v) | speed_limit_mps, min_headway_m |
+| Navigation | (x, y) remains inside arena bounds and outside obstacle set | arena_min, arena_max |
 | Industrial | temp ∈ [T_min, T_max]; power ∈ [0, P_max] | temp_min_c, power_max_mw |
 | Healthcare | hr ∈ [hr_min, hr_max]; SpO2 ≥ spo2_min; rr ∈ [rr_min, rr_max] | hr_min_bpm, spo2_min_pct |
 """
