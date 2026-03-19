@@ -1,0 +1,111 @@
+%% Chapter 22 — Byzantine-Resistant OQE and Adversarial Robustness
+%% Phase 3 of ORIUS gap-closing plan
+%% Adds Theorem 11 (Byzantine Safety Bound), adversarial fault types, robust OQE
+
+\section{Adversarial Robustness and Byzantine-Resistant OQE}
+\label{sec:ch22_byzantine_robustness}
+
+\subsection{Motivation}
+
+The OQE reliability scoring in Chapter~3 assumes that sensor faults follow
+known stochastic patterns (bias, noise, stuck sensor, blackout).
+A stronger adversarial model allows an attacker to craft \emph{plausible-but-false}
+readings that evade spike detection — spoofed signals that look statistically
+normal but systematically push the safety controller toward a boundary.
+Without robustness to such inputs, the reliability score $w_t$ could be
+inflated by a skilled adversary, weakening the DC3S safety margin.
+
+This chapter introduces two adversarial fault types, a Byzantine-resistant OQE
+variant, and a formal safety bound.
+
+\subsection{Adversarial Fault Types}
+
+Two new fault kinds are added to the ORIUS-Bench fault engine
+(\texttt{src/orius/orius\_bench/fault\_engine.py}):
+
+\begin{description}
+  \item[\texttt{replay}] Return a reading from $k$ steps ago instead of the
+        current true state.  Simulates a replay/injection attack where an
+        adversary re-sends an old valid packet.  The controller sees a
+        plausible historical value; the reliability signal (timestamp, range)
+        may appear normal.
+  \item[\texttt{coordinated\_spoof}] Apply a small systematic bias
+        $\leq 10\,\%$ of the normal signal range.  Designed to evade
+        mean-based spike detection by staying within the historical
+        distribution while shifting the signal in a safety-critical direction.
+\end{description}
+
+\subsection{Byzantine-Resistant OQE}
+
+The function \texttt{compute\_reliability\_robust()} in
+\texttt{src/orius/dc3s/quality.py} replaces mean-based statistics with
+three robust mechanisms:
+
+\begin{enumerate}
+  \item \textbf{MAD spike detection.}
+        The spike ratio is computed as a normalised MAD $z$-score:
+        \[
+          z_t = \frac{|x_t - \tilde{x}|}{1.4826 \cdot \mathrm{MAD}(W)}
+        \]
+        where $\tilde{x}$ is the window median and $\mathrm{MAD}(W)$ is the
+        median absolute deviation.  Unlike the mean-relative spike ratio,
+        this is resistant to a single large adversarial reading because the
+        median is not shifted by one outlier.
+
+  \item \textbf{Trimmed-mean history.}
+        Before computing staleness and drift statistics, the top and bottom
+        $\tau = 10\,\%$ of window values are removed.  This limits the
+        influence of adversarially inserted outliers to $2\tau$ of the window.
+
+  \item \textbf{Consistency check.}
+        If $|\tilde{x} - \bar{x}| / \sigma > \theta_\text{adv}$
+        (default $\theta_\text{adv} = 1.5$), the function flags
+        \texttt{adversarial\_suspected} and reduces $w_t$ by an additional
+        penalty $\delta_\text{adv} = 0.30$.  This detects the systematic
+        mean-shift that coordinated spoofing creates.
+\end{enumerate}
+
+\subsection{Theorem 11 — Byzantine Safety Bound}
+
+\begin{theorem}[Byzantine Reliability Bound]\label{thm:byzantine_safety}
+Let $W$ be the history window size and $f < 1/3$ be the fraction of
+adversarially spoofed readings in the window.
+The trimmed-mean estimator with trim fraction $\tau = f + \epsilon$
+(for small $\epsilon > 0$) returns an estimate $\hat{\mu}$ satisfying:
+\[
+  |\hat{\mu} - \mu_\mathrm{true}| \;\leq\; \frac{C_\tau \cdot \sigma}{\sqrt{W(1-2\tau)}}
+\]
+where $\sigma$ is the signal standard deviation and $C_\tau$ is a constant
+depending only on the trim fraction.
+Consequently, \texttt{compute\_reliability\_robust()} returns
+$w_t \leq w_\mathrm{true} + \delta$ where $\delta \to 0$ as $W \to \infty$.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+By the Lipschitz continuity of the trimmed mean under bounded contamination
+(Huber~1981, Theorem~3.3), replacing $\lfloor Wf \rfloor$ arbitrary values
+with adversarial inputs shifts the trimmed mean by at most
+$C_\tau \cdot \sigma / \sqrt{W(1-2\tau)}$.
+Since $w_t$ is a monotone decreasing function of the spike penalty and
+consistency ratio, which are both computed from the trimmed statistics,
+the corresponding shift in $w_t$ is bounded by the same asymptotic term.
+$\square$
+\end{proof}
+
+\subsection{Empirical Evidence}
+
+\Cref{tab:adversarial_tsvr} compares per-domain TSVR under:
+\begin{itemize}
+  \item \textbf{Standard faults}: bias, noise, stuck-sensor, blackout
+        (the original ORIUS-Bench schedule).
+  \item \textbf{Adversarial + standard OQE}: replay and coordinated\_spoof
+        faults with the original mean-based reliability scoring.
+  \item \textbf{Adversarial + robust OQE}: same adversarial faults with
+        \texttt{compute\_reliability\_robust()}.
+\end{itemize}
+
+The evidence gate requires: robust OQE TSVR $\leq 1.5\times$ standard TSVR
+on all domains.  All five proof domains pass this gate
+(\Cref{tab:adversarial_tsvr}).
+
+\input{assets/tables/generated/tbl_adversarial_tsvr.tex}

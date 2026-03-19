@@ -1,0 +1,7 @@
+domain,maturity_label,validation_status,harness_status,baseline_tsvr_mean,baseline_tsvr_std,orius_tsvr_mean,orius_tsvr_std,orius_reduction_pct,evidence_pass
+battery,reference,reference_validated,pass,0.8750,0.0000,0.9375,0.0000,-7.1,
+navigation,proof_domain,proof_validated,pass,0.8333,0.0000,0.0000,0.0000,100.0,true
+industrial,proof_domain,proof_validated,pass,1.0000,0.0000,0.0000,0.0000,100.0,true
+healthcare,proof_domain,proof_validated,pass,1.0000,0.0000,0.2792,0.0102,72.1,true
+aerospace,proof_domain,proof_validated,pass,1.0000,0.0000,0.0000,0.0000,100.0,true
+vehicle,proof_domain,proof_validated,pass,0.5417,0.0000,0.0167,0.0333,96.9,true
