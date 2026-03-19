@@ -1,8 +1,10 @@
 """Navigation domain adapter — canonical entrypoint.
 
-Re-exports the ORIUS-Bench navigation track (BenchmarkAdapter).
-Legacy path: orius.orius_bench.navigation_track
+Exports both:
+  - NavigationDomainAdapter for the universal runtime path
+  - NavigationTrackAdapter for ORIUS-Bench benchmark runs
 """
 from orius.orius_bench.navigation_track import NavigationTrackAdapter
+from orius.universal_framework.navigation_adapter import NavigationDomainAdapter
 
-__all__ = ["NavigationTrackAdapter"]
+__all__ = ["NavigationDomainAdapter", "NavigationTrackAdapter"]
