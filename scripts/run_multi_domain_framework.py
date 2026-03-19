@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Run ORIUS Universal Framework across all five thesis domains.
+"""Run ORIUS Universal Framework across the registered runtime domains.
 
-Thesis Ch 18: Battery, AV, Surgical Robotics, Aerospace, Industrial.
+Current default surface: battery, AV, navigation, surgical robotics,
+aerospace, and industrial.
 
 Each domain runs one step of run_universal_step with synthetic telemetry.
 Outputs a JSON report with certificates and safe actions per domain.
@@ -33,7 +34,7 @@ def _json_serializable(obj: object) -> object:
     return obj
 
 
-# Thesis five domains (Ch 18) with synthetic telemetry
+# Runtime domains exercised with synthetic telemetry.
 DOMAIN_CONFIGS = [
     {
         "id": "energy",
@@ -66,6 +67,24 @@ DOMAIN_CONFIGS = [
         },
         "candidate": {"acceleration_mps2": 0.5},
         "constraints": {"speed_max_mps": 15.0},
+    },
+    {
+        "id": "navigation",
+        "name": "Navigation",
+        "telemetry": {
+            "x": 9.95,
+            "y": 9.80,
+            "vx": 0.0,
+            "vy": 0.0,
+            "ts_utc": "2026-03-16T12:00:00Z",
+        },
+        "candidate": {"ax": 4.0, "ay": 4.0},
+        "constraints": {
+            "arena_min": 0.0,
+            "arena_max": 10.0,
+            "max_speed": 1.0,
+            "dt_s": 0.25,
+        },
     },
     {
         "id": "surgical_robotics",
@@ -109,7 +128,7 @@ DOMAIN_CONFIGS = [
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Run ORIUS Universal Framework across five thesis domains"
+        description="Run ORIUS Universal Framework across the registered runtime domains"
     )
     parser.add_argument("--out", default="reports/multi_domain", help="Output directory")
     args = parser.parse_args()

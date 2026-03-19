@@ -1,0 +1,27 @@
+\begin{table}[htbp]
+\centering
+\caption{Universal ORIUS validation status by domain. Battery remains the
+reference domain, vehicle is the current second proof domain, navigation,
+industrial, and healthcare are portability-only surfaces, and aerospace
+remains experimental.}
+\label{tab:domain-validation-summary}
+\begin{tabular}{lllr r}
+\toprule
+Domain & Maturity & Validation & Harness & ORIUS TSVR \\
+\midrule
+Battery & reference & reference\_validated & pass & 0.8750 \\
+Vehicle & proof\_domain & proof\_validated & pass & 0.0000 \\
+Navigation & portability\_only & portability\_only & pass & 0.0000 \\
+Industrial & portability\_only & portability\_only & pass & 0.0000 \\
+Healthcare & portability\_only & portability\_only & pass & 0.0000 \\
+Aerospace & experimental & experimental & pass & 0.0000 \\
+\bottomrule
+\end{tabular}
+\smallskip
+\begin{minipage}{0.94\linewidth}\footnotesize
+Validation status is governed by the repo evidence gate, not by raw TSVR
+alone. Reference and proof labels require separate domain-specific evidence;
+portability-only rows show that the shared harness and repair path execute
+without elevating those domains to universal-proof status.
+\end{minipage}
+\end{table}

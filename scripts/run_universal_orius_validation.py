@@ -100,6 +100,67 @@ def _mean_std(values: list[float]) -> tuple[float, float]:
     return float(np.mean(values)), float(np.std(values))
 
 
+def _domain_display(domain: str) -> str:
+    labels = {
+        "battery": "Battery",
+        "vehicle": "Vehicle",
+        "navigation": "Navigation",
+        "industrial": "Industrial",
+        "healthcare": "Healthcare",
+        "aerospace": "Aerospace",
+    }
+    return labels.get(domain, domain.replace("_", " ").title())
+
+
+def _tex_escape(value: object) -> str:
+    return str(value).replace("_", r"\_")
+
+
+def _write_domain_summary_tex(out: Path, domain_rows: list[dict[str, object]]) -> Path:
+    ordered = ["battery", "vehicle", "navigation", "industrial", "healthcare", "aerospace"]
+    order_map = {name: idx for idx, name in enumerate(ordered)}
+    rows = sorted(domain_rows, key=lambda row: order_map.get(str(row.get("domain")), 999))
+
+    lines = [
+        r"\begin{table}[htbp]",
+        r"\centering",
+        r"\caption{Universal ORIUS validation status by domain. Battery remains the",
+        r"reference domain, vehicle is the current second proof domain, navigation,",
+        r"industrial, and healthcare are portability-only surfaces, and aerospace",
+        r"remains experimental.}",
+        r"\label{tab:domain-validation-summary}",
+        r"\begin{tabular}{lllr r}",
+        r"\toprule",
+        r"Domain & Maturity & Validation & Harness & ORIUS TSVR \\",
+        r"\midrule",
+    ]
+    for row in rows:
+        lines.append(
+            f"{_domain_display(str(row.get('domain', '')))} & "
+            f"{_tex_escape(row.get('maturity_label', ''))} & "
+            f"{_tex_escape(row.get('validation_status', ''))} & "
+            f"{_tex_escape(row.get('harness_status', ''))} & "
+            f"{_tex_escape(row.get('orius_tsvr_mean', '---'))} \\\\"
+        )
+    lines.extend(
+        [
+            r"\bottomrule",
+            r"\end{tabular}",
+            r"\smallskip",
+            r"\begin{minipage}{0.94\linewidth}\footnotesize",
+            r"Validation status is governed by the repo evidence gate, not by raw TSVR",
+            r"alone. Reference and proof labels require separate domain-specific evidence;",
+            r"portability-only rows show that the shared harness and repair path execute",
+            r"without elevating those domains to universal-proof status.",
+            r"\end{minipage}",
+            r"\end{table}",
+        ]
+    )
+    tex_path = out / "tbl_domain_validation_summary.tex"
+    tex_path.write_text("\n".join(lines), encoding="utf-8")
+    return tex_path
+
+
 def _domain_validation_status(
     domain: str,
     maturity_label: str,
@@ -403,6 +464,7 @@ def main() -> int:
             writer = csv.DictWriter(f, fieldnames=list(domain_rows[0].keys()))
             writer.writeheader()
             writer.writerows(domain_rows)
+    summary_tex_path = _write_domain_summary_tex(out, domain_rows)
 
     proof_report_path = out / "proof_domain_report.json"
     with open(proof_report_path, "w") as f:
@@ -448,6 +510,7 @@ def main() -> int:
         "results_count": len(results),
         "cross_domain_oasg_csv": str(csv_path),
         "domain_summary_csv": str(summary_csv_path),
+        "domain_summary_tex": str(summary_tex_path),
     }
 
     report_path = out / "validation_report.json"
@@ -469,6 +532,7 @@ def main() -> int:
     print(f"  Report → {report_path}")
     print(f"  OASG table → {csv_path}")
     print(f"  Domain summary → {summary_csv_path}")
+    print(f"  Domain summary TeX → {summary_tex_path}")
     print(f"  Proof-domain report → {proof_report_path}")
 
     if not args.no_fail and not report["all_passed"]:
