@@ -144,7 +144,12 @@ class AerospaceDomainAdapter(DomainAdapter):
         fuel_lo = _f(unc.get("fuel_lower_pct"), self._fuel_min_pct)
         throttle_safe = max(0.0, min(1.0, throttle))
         bank_safe = max(-self._max_bank_deg, min(self._max_bank_deg, bank_cmd))
-        if v_lo < self._v_min_kt:
+        v_actual = _f(state.get("airspeed_kt", self._v_min_kt), self._v_min_kt)
+        if v_actual < self._v_min_kt:
+            # Recovery mode: actual airspeed is below stall — enforce minimum throttle
+            throttle_safe = max(throttle_safe, 0.8)
+        elif v_lo < self._v_min_kt:
+            # Uncertainty suggests possible low-speed condition — cap throttle conservatively
             throttle_safe = min(throttle_safe, 0.8)
         if fuel_lo < self._fuel_min_pct:
             throttle_safe = min(throttle_safe, 0.5)

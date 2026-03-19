@@ -1,0 +1,7 @@
+domain,primary_fault,oasg_rate_baseline,oasg_rate_orius,orius_reduction_pct
+battery,multi,0.8750,0.9375,-7.1
+navigation,multi,0.8333,0.0000,100.0
+industrial,multi,1.0000,0.0000,100.0
+healthcare,multi,1.0000,0.2792,72.1
+aerospace,multi,1.0000,0.0000,100.0
+vehicle,multi,0.5417,0.0167,96.9

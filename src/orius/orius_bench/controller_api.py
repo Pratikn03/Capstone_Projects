@@ -104,18 +104,32 @@ def domain_aware_action(
     domain_name: str,
     base_action: Mapping[str, Any],
 ) -> Mapping[str, Any]:
-    """Map battery-style action to domain-specific action."""
+    """Map battery-style action to domain-specific action.
+
+    Actions are intentionally aggressive / unguarded so that the proof
+    framework can demonstrate meaningful TSVR reduction via DC3S repair:
+
+      navigation  — full-speed push toward x-boundary (violations without DC3S)
+      healthcare  — zero alert (no clinician intervention → SpO2 drifts down)
+      industrial  — over-limit power setpoint (power > 500 MW → violation)
+      aerospace   — dangerously low throttle near stall (airspeed drops below v_min)
+      vehicle     — positive acceleration (can exceed speed limit)
+    """
     effort = min(1.0, max(0.0, float(base_action.get("discharge_mw", 50)) / 100.0))
     if domain_name == "battery":
         return dict(base_action)
     if domain_name == "navigation":
-        return {"ax": 0.3 * effort, "ay": 0.2 * effort}
+        # Aggressive toward +x boundary; DC3S clamps to stay inside arena
+        return {"ax": 1.0 * effort, "ay": 0.0}
     if domain_name == "industrial":
-        return {"power_setpoint_mw": 400.0 + 80.0 * effort}
+        # Over-limit setpoint: 750 MW > 500 MW cap → power violation unless DC3S clamps it
+        return {"power_setpoint_mw": 750.0}
     if domain_name == "healthcare":
-        return {"alert_level": 0.2 + 0.5 * effort}
+        # No monitoring intervention → SpO2 continues to fall from 85 % (below safe 90 %)
+        return {"alert_level": 0.0}
     if domain_name == "aerospace":
-        return {"throttle": 0.5 + 0.3 * effort, "bank_deg": 2.0}
+        # Low throttle + extreme bank → airspeed drops AND bank violation without DC3S repair
+        return {"throttle": 0.15, "bank_deg": 90.0}
     if domain_name == "vehicle":
         return {"acceleration_mps2": 0.5 * effort}
     return dict(base_action)

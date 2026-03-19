@@ -1,0 +1,50 @@
+\begin{table*}[htbp]
+\centering
+\small
+\caption{ORIUS universal framework: per-domain adapter parameters, safety predicates, and repair logic. All six domains share the same five-stage DC3S pipeline; only the state schema, predicates, and repair strategy differ.}
+\label{tab:universal_adapter_params}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{llllll}
+\toprule
+\textbf{Domain} & \textbf{State fields} & \textbf{Safety predicate} & \textbf{Action space} & \textbf{Repair strategy} & \textbf{Validation} \\
+\midrule
+Battery (ref.) &
+  SOC, load, renewables &
+  SOC $\in [\text{soc\_min}, \text{soc\_max}]$ &
+  Charge/discharge MW &
+  Projection to SOC interval &
+  reference\_validated \\
+Vehicle &
+  $x$, $v$, $x^{\text{lead}}$ &
+  $v \leq v_{\max}$, headway $\geq d_{\min}(v)$ &
+  Acceleration $a$ &
+  Velocity clamp + headway clamp &
+  proof\_validated \\
+Healthcare &
+  HR, SpO$_2$, RR &
+  SpO$_2 \geq 90$, HR $\in [40,120]$ &
+  Alert level $\in [0,1]$ &
+  Alert boost ($\geq$0.8) on low SpO$_2$ &
+  proof\_validated \\
+Industrial &
+  Temperature, power &
+  Power $\leq 500$\,MW, temp $\leq 120$\,°C &
+  Power setpoint &
+  Setpoint clip to safe range &
+  proof\_validated \\
+Aerospace &
+  Airspeed, bank, altitude, fuel &
+  $|\text{bank}| \leq 30°$, $v \in [60, 350]$\,kt &
+  Throttle, bank angle &
+  Bank clamp; throttle boost/cap &
+  proof\_validated \\
+Navigation &
+  $(x, y, v_x, v_y)$ &
+  $x,y \in [0, s]$, $\|a\| \leq v_{\lim}$ &
+  Acceleration $(a_x, a_y)$ &
+  Arena clamp (worst-case $x^+$) &
+  proof\_validated \\
+\bottomrule
+\end{tabular}
+\end{table*}
