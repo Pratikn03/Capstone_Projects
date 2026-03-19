@@ -164,8 +164,7 @@ realistic fault injection following the DC3S fault taxonomy
 (Chapter~\ref{ch:cpsbench-battery}): 15\% packet dropout, 8\% sensor
 spike to unsafe values, and 10\% stale readings.  This stress-tests the
 shield's ability to prevent safety violations that would otherwise occur.
-At each
-passed through the full five-stage ORIUS pipeline:
+At each step, telemetry was passed through the full five-stage ORIUS pipeline:
 \textsf{Detect} $\to$ \textsf{Calibrate} $\to$ \textsf{Constrain}
 $\to$ \textsf{Shield} $\to$ \textsf{Certify}.
 We report: safety violations before and after the shield, the fraction of
@@ -188,12 +187,26 @@ TSVR columns alone, determines what the thesis is allowed to claim.
 
 Table~\ref{tab:all_domain_comparison} shows that fault injection produces
 non-trivial violation rates \emph{before} the ORIUS shield intervenes
-(1.5--8.0\% depending on domain), and that the shared repair path reduces
-post-shield violations on several non-battery tracks.  This should be read
-as bounded portability evidence for a shared harness and repair interface,
-not as a universal dominance theorem.  In particular, the industrial,
-healthcare, and navigation rows remain portability-only in the governing
-status table, while aerospace remains experimental.
+(3.0--24.0\% in the current portable-domain audit), and that the shared
+repair path reduces post-shield violations sharply on navigation, medical,
+and industrial tracks.  The aerospace row remains mixed, and the
+portable-domain AV audit is intentionally secondary to the proof-domain
+vehicle result in Table~\ref{tab:domain-validation-summary}.  This should
+therefore be read as bounded portability evidence for a shared harness and
+repair interface, not as a universal dominance theorem.  In particular,
+the industrial, healthcare, and navigation rows remain portability-only in
+the governing status table, while aerospace remains experimental.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.88\linewidth]{reports/multi_domain/fig_all_domain_comparison.png}
+  \caption{Portable-domain ORIUS audit from the shared universal runtime.
+    The figure summarizes before-vs-after violation rates under one fault
+    protocol across AV, navigation, medical monitoring, industrial control,
+    and aerospace.  Navigation uses a synthetic bounded-arena trace; the
+    remaining rows use locked repo telemetry.}
+  \label{fig:all-domain-comparison}
+\end{figure}
 
 \input{reports/multi_domain/tbl_all_domain_latency}
 

@@ -200,7 +200,7 @@ def check_universal_framework():
             assert "safe_action" in result
         return True
 
-    _step("Universal framework (5 domains)", _do)
+    _step("Universal framework (6 runtime domains)", _do)
 
 
 def check_locked_evidence():

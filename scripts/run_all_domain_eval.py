@@ -26,11 +26,11 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
 import matplotlib
 import numpy as np
 import pandas as pd
 
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 

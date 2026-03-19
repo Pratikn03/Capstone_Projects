@@ -138,7 +138,7 @@ def main() -> None:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
 
-    # Tracks (all five thesis domains + navigation)
+    # Tracks (six runtime domains)
     tracks: list[BenchmarkAdapter] = [
         BatteryTrackAdapter(),
         NavigationTrackAdapter(),

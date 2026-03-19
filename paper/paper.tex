@@ -1379,17 +1379,17 @@ The coexistence of weak aggregate US improvements and large US VSS is not contra
 
 \section{Universal Domain Framework}\label{sec:universal}
 
-The battery DC3S architecture is the primary validated instantiation of ORIUS, a \textbf{universal domain physical-safety framework} that applies the same five-stage pipeline---Detect, Calibrate, Constrain, Shield, Certify---across five adapter families. This section documents the shared framework, domain adapters, and current evidence boundary for the cross-domain layer. Historical incidents---Air France 447 (pitot dropout), 737 MAX MCAS (sensor spike/drift), Tesla Autopilot (perception dropout), Texas City refinery (level sensor failure), and Uber ATG (sensor fusion failure)---illustrate the OASG across aviation, automotive, and industrial control; ORIUS addresses the common observation-reality integrity gap underlying these events.
+The battery DC3S architecture is the primary validated instantiation of ORIUS, a \textbf{universal domain physical-safety framework} that applies the same five-stage pipeline---Detect, Calibrate, Constrain, Shield, Certify---across six runtime domains. This section documents the shared framework, domain adapters, and current evidence boundary for the cross-domain layer. Historical incidents---Air France 447 (pitot dropout), 737 MAX MCAS (sensor spike/drift), Tesla Autopilot (perception dropout), Texas City refinery (level sensor failure), and Uber ATG (sensor fusion failure)---illustrate the OASG across aviation, automotive, and industrial control; ORIUS addresses the common observation-reality integrity gap underlying these events.
 
 \subsection{Multi-Domain Architecture}
 
 \Cref{fig:FIG_UNIVERSAL_FRAMEWORK} illustrates the universal pipeline. Each domain provides a \emph{DomainAdapter} that implements: (1) telemetry ingestion, (2) reliability scoring (OQE), (3) uncertainty set construction, (4) action set tightening, (5) action repair (shield), and (6) certificate emission. The pipeline stages are identical across domains; only the state schema, safety predicates, and action spaces differ.
 
-\PaperFigureWide{FIG_UNIVERSAL_FRAMEWORK}{ORIUS universal domain physical safety framework. The five-stage pipeline (Detect$\to$Calibrate$\to$Constrain$\to$Shield$\to$Certify) applies uniformly; domain adapters for five domains (Energy, AV, Industrial, Healthcare/Surgical, Aerospace) provide domain-specific state, safety predicates, and repair logic.}
+\PaperFigureWide{FIG_UNIVERSAL_FRAMEWORK}{ORIUS universal domain physical safety framework. The five-stage pipeline (Detect$\to$Calibrate$\to$Constrain$\to$Shield$\to$Certify) applies uniformly; domain adapters for six runtime domains (Energy, Vehicle/AV, Navigation, Industrial, Healthcare/Surgical, Aerospace) provide domain-specific state, safety predicates, and repair logic.}
 
 \subsection{Domain State Schema and Safety Predicates}
 
-\Cref{tab:universal-state} defines the state schema per domain. Energy uses SOC, load, and renewables; AV uses longitudinal kinematics (position, speed, lead vehicle); Industrial uses process variables (temperature, pressure, power); Healthcare uses vital signs (heart rate, SpO$_2$, respiratory rate); and Aerospace uses flight-envelope state (altitude, airspeed, bank angle, fuel). \Cref{tab:universal-safety} summarizes the safety predicates. \Cref{tab:universal-pipeline} lists the pipeline stages and adapter methods.
+\Cref{tab:universal-state} defines the state schema per domain. Energy uses SOC, load, and renewables; AV uses longitudinal kinematics (position, speed, lead vehicle); Navigation uses 2D pose and velocity inside a bounded arena; Industrial uses process variables (temperature, pressure, power); Healthcare uses vital signs (heart rate, SpO$_2$, respiratory rate); and Aerospace uses flight-envelope state (altitude, airspeed, bank angle, fuel). \Cref{tab:universal-safety} summarizes the safety predicates. \Cref{tab:universal-pipeline} lists the pipeline stages and adapter methods.
 
 \input{assets/tables/generated/tbl_universal_framework.tex}
 
@@ -1419,7 +1419,7 @@ The unified validation harness (\texttt{scripts/run\_universal\_orius\_validatio
 
 \subsection{Implementation and Scope}
 
-The universal framework is implemented in \texttt{src/orius/universal\_framework/} with domain registry, pipeline (\texttt{run\_universal\_step}), and adapters for all five domains: Energy (Battery), AV, Industrial, Healthcare/Surgical, and Aerospace. The battery domain remains the primary locked empirical and theorem-validation surface. The additional adapters and six-track ORIUS-Bench harness demonstrate that the same ORIUS pattern can be instantiated beyond energy and evaluated under one shared contract, but they do not yet match the evidence depth of the battery domain.
+The universal framework is implemented in \texttt{src/orius/universal\_framework/} with domain registry, pipeline (\texttt{run\_universal\_step}), and six runtime domains: Energy (Battery), Vehicle/AV, Navigation, Industrial, Healthcare/Surgical, and Aerospace. The battery domain remains the primary locked empirical and theorem-validation surface. The additional adapters and six-track ORIUS-Bench harness demonstrate that the same ORIUS pattern can be instantiated beyond energy and evaluated under one shared contract, but they do not yet match the evidence depth of the battery domain.
 
 \paragraph{Papers 2--6 module mapping.}
 The ORIUS program extends beyond the core DC\textsuperscript{3}S shield. \Cref{tab:papers26_modules} maps each extension paper to its implementation modules under \texttt{src/orius/}.
