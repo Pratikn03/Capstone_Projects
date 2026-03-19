@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+\centering
+\caption{Proof-gate status for the non-battery runtime domains.}
+\label{tab:domain-proof-status}
+\begin{tabular}{lllp{4.0cm}}
+\toprule
+Domain & Tier & Gate pass & Notes \\
+\midrule
+Autonomous Vehicles & proof\_candidate & no & locked telemetry exists, but the current replay surface does not yet justify promotion; reasons=orius\_did\_not\_improve \\
+Industrial Process Control & proof\_validated & yes & locked telemetry replay plus shared universal repair path passed the promotion gate \\
+Medical Monitoring (ICU Vitals) & proof\_validated & yes & locked telemetry replay plus shared universal repair path passed the promotion gate \\
+Navigation & shadow\_synthetic & no & synthetic runtime shadow surface only; reasons=synthetic\_data \\
+Aerospace & experimental & no & adapter and replay path execute, but the current surface remains experimental; reasons=experimental\_surface \\
+\bottomrule
+\end{tabular}
+\end{table}

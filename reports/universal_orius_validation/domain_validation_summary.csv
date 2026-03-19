@@ -1,7 +1,7 @@
-domain,maturity_label,validation_status,harness_status,baseline_tsvr_mean,baseline_tsvr_std,orius_tsvr_mean,orius_tsvr_std,orius_reduction_pct,evidence_pass
-battery,reference,reference_validated,pass,0.7500,0.0000,0.8750,0.0000,-16.7,
-navigation,portability_only,portability_only,pass,0.0000,0.0000,0.0000,0.0000,0.0,
-industrial,portability_only,portability_only,pass,0.0000,0.0000,0.0000,0.0000,0.0,
-healthcare,portability_only,portability_only,pass,0.0000,0.0000,0.0000,0.0000,0.0,
-aerospace,experimental,experimental,pass,0.0000,0.0000,0.0000,0.0000,0.0,
-vehicle,proof_domain,proof_validated,pass,0.0833,0.0000,0.0000,0.0000,100.0,true
+domain,display,data_source,evidence_tier,validation_status,harness_status,baseline_tsvr_mean,baseline_tsvr_std,orius_tsvr_mean,orius_tsvr_std,orius_reduction_pct,repair_rate_mean,repair_rate_std,mean_reliability,p50_latency_ms,p95_latency_ms,seeds_evaluated,rows_per_seed,proof_gate_pass,proof_gate_reasons,evidence_note
+battery,Battery,locked_artifact,reference,reference_validated,pass,3.9,2.52,0.0,0.0,100.0,3.36,1.18,0.8059,0.0336,0.0368,25,artifact_aggregate,True,,locked battery publication aggregate across degraded-telemetry scenarios
+av,Autonomous Vehicles,locked_csv,proof_candidate,proof_candidate,pass,2.78,0.99,2.78,0.99,0.0,98.61,1.97,0.7835,0.0673,0.0883,3,48,False,orius_did_not_improve,"locked telemetry exists, but the current replay surface does not yet justify promotion"
+industrial,Industrial Process Control,locked_csv,proof_validated,proof_validated,pass,21.53,6.88,0.0,0.0,100.0,91.67,1.7,0.6524,0.068,0.0833,3,48,True,,locked telemetry replay plus shared universal repair path passed the promotion gate
+healthcare,Medical Monitoring (ICU Vitals),locked_csv,proof_validated,proof_validated,pass,6.25,4.5,0.0,0.0,100.0,14.58,4.5,0.8534,0.0653,0.075,3,48,True,,locked telemetry replay plus shared universal repair path passed the promotion gate
+navigation,Navigation,synthetic,shadow_synthetic,shadow_synthetic,pass,18.06,3.54,0.69,0.98,96.2,100.0,0.0,0.8052,0.0703,0.081,3,48,False,synthetic_data,synthetic runtime shadow surface only
+aerospace,Aerospace,locked_csv,experimental,experimental,pass,9.72,4.91,9.72,4.91,0.0,13.89,2.6,0.8062,0.0673,0.0773,3,48,False,experimental_surface,"adapter and replay path execute, but the current surface remains experimental"

@@ -298,6 +298,7 @@ make r1-promote RELEASE_ID=$RELEASE_ID
 | [`docs/TRAINING_PIPELINE.md`](docs/TRAINING_PIPELINE.md) | Training pipeline guide |
 | [`docs/RUNBOOK.md`](docs/RUNBOOK.md) | Operational runbook |
 | [`docs/ASSUMPTIONS_AND_GUARANTEES.md`](docs/ASSUMPTIONS_AND_GUARANTEES.md) | Safety and modeling assumptions |
+| [`docs/ORIUS_FRAMEWORK_PROOF.md`](docs/ORIUS_FRAMEWORK_PROOF.md) | Battery-anchored, all-domain ORIUS proof workflow |
 | [`DATA.md`](DATA.md) | Dataset scope and source details |
 | [`PRODUCTION_GUIDE.md`](PRODUCTION_GUIDE.md) | Production/deployment guide |
 | [`ORIUS_REPRODUCIBILITY.md`](ORIUS_REPRODUCIBILITY.md) | Reproducibility guidance |

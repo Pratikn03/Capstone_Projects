@@ -31,8 +31,11 @@ conference paper. That means:
 
 1. **clear claim boundary**  
    - battery is the validated reference domain,  
-   - vehicle is the proof domain,  
-   - the remaining domains are portability / experimental evidence.
+   - industrial and healthcare are the current proof-validated non-battery
+     rows under the canonical replay harness,
+   - AV is a proof candidate,
+   - navigation is synthetic-shadow evidence,
+   - aerospace is experimental.
 
 2. **chapter-like structure**  
    - problem and system context,  
