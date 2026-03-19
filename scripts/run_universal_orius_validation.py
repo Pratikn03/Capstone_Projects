@@ -53,6 +53,7 @@ PROMOTED_PROOF_CANDIDATES = ("av", "industrial", "healthcare")
 SHADOW_SYNTHETIC_DOMAINS = ("navigation",)
 EXPERIMENTAL_DOMAINS = ("aerospace",)
 DOMAIN_ORDER = ("battery", "av", "industrial", "healthcare", "navigation", "aerospace")
+TRAINING_AUDIT_DEFAULT = REPO / "reports" / "universal_training_audit" / "domain_training_summary.csv"
 
 BATTERY_ARTIFACT = PUBLICATION / "dc3s_main_table.csv"
 BATTERY_LATENCY_ARTIFACT = PUBLICATION / "dc3s_latency_summary.csv"
@@ -61,6 +62,7 @@ BASELINE_MIN_TSVR_PCT = 1.0
 MIN_REDUCTION_PCT = 50.0
 MAX_BASELINE_STD_PCT = 8.0
 MAX_ORIUS_STD_PCT = 4.0
+MAX_SIL_P95_LATENCY_MS = 50.0
 
 plt.rcParams.update(
     {
@@ -111,6 +113,12 @@ def _domain_display(domain: str) -> str:
     return labels.get(domain, domain.replace("_", " ").title())
 
 
+def _coerce_bool(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "y"}
+
+
 def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
     if not rows:
         return
@@ -155,6 +163,11 @@ def _load_battery_reference_row() -> dict[str, object]:
         "mean_reliability": _round(reliability_mean, 4),
         "p50_latency_ms": _round(float(full_step["median_ms"]), 4),
         "p95_latency_ms": _round(float(full_step["p95_ms"]), 4),
+        "certificate_rate_mean": 100.0,
+        "runtime_error_rate_mean": 0.0,
+        "sil_pass": True,
+        "training_verified": True,
+        "training_note": "locked battery reference surface",
         "seeds_evaluated": len(dc3s_vals),
         "rows_per_seed": "artifact_aggregate",
         "proof_gate_pass": True,
@@ -180,6 +193,8 @@ def _evaluate_proof_candidate(summary: dict[str, object]) -> dict[str, object]:
     orius_improved = reduction_pct >= MIN_REDUCTION_PCT and orius_mean < baseline_mean
     stable = baseline_std <= MAX_BASELINE_STD_PCT and orius_std <= MAX_ORIUS_STD_PCT
     non_synthetic = data_source != "synthetic"
+    training_verified = bool(summary.get("training_verified", True))
+    sil_pass = bool(summary.get("sil_pass", True))
 
     reasons: list[str] = []
     if not baseline_nontrivial:
@@ -190,14 +205,20 @@ def _evaluate_proof_candidate(summary: dict[str, object]) -> dict[str, object]:
         reasons.append("seed_instability")
     if not non_synthetic:
         reasons.append("synthetic_data")
+    if not training_verified:
+        reasons.append("training_not_verified")
+    if not sil_pass:
+        reasons.append("sil_not_passed")
 
     return {
         "baseline_nontrivial": baseline_nontrivial,
         "orius_improved": orius_improved,
         "stable": stable,
         "non_synthetic": non_synthetic,
+        "training_verified": training_verified,
+        "sil_pass": sil_pass,
         "reduction_pct": _round(reduction_pct, 1),
-        "pass_gate": baseline_nontrivial and orius_improved and stable and non_synthetic,
+        "pass_gate": baseline_nontrivial and orius_improved and stable and non_synthetic and training_verified and sil_pass,
         "failure_reasons": reasons,
     }
 
@@ -210,6 +231,8 @@ def _aggregate_runtime_domain(domain: str, cfg: dict[str, object], seeds: list[i
     reliability_vals = [float(ep["mean_reliability"]) for ep in episodes]
     p50_vals = [float(ep["p50_latency_ms"]) for ep in episodes]
     p95_vals = [float(ep["p95_latency_ms"]) for ep in episodes]
+    certificate_vals = [float(ep["certificate_rate_pct"]) for ep in episodes]
+    runtime_error_vals = [float(ep["runtime_error_rate_pct"]) for ep in episodes]
 
     before_mean, before_std = _mean_std(before_vals)
     after_mean, after_std = _mean_std(after_vals)
@@ -217,7 +240,15 @@ def _aggregate_runtime_domain(domain: str, cfg: dict[str, object], seeds: list[i
     reliability_mean, _ = _mean_std(reliability_vals)
     p50_mean, _ = _mean_std(p50_vals)
     p95_mean, _ = _mean_std(p95_vals)
+    certificate_mean, _ = _mean_std(certificate_vals)
+    runtime_error_mean, _ = _mean_std(runtime_error_vals)
     data_source = str(episodes[0]["data_source"])
+    sil_pass = all(
+        float(ep["certificate_rate_pct"]) >= 100.0
+        and float(ep["runtime_error_rate_pct"]) <= 0.0
+        and float(ep["p95_latency_ms"]) <= MAX_SIL_P95_LATENCY_MS
+        for ep in episodes
+    )
 
     row = {
         "domain": domain,
@@ -234,6 +265,11 @@ def _aggregate_runtime_domain(domain: str, cfg: dict[str, object], seeds: list[i
         "mean_reliability": _round(reliability_mean, 4),
         "p50_latency_ms": _round(p50_mean, 4),
         "p95_latency_ms": _round(p95_mean, 4),
+        "certificate_rate_mean": _round(certificate_mean, 2),
+        "runtime_error_rate_mean": _round(runtime_error_mean, 2),
+        "sil_pass": sil_pass,
+        "training_verified": False,
+        "training_note": "training_audit_missing",
         "seeds_evaluated": len(seeds),
         "rows_per_seed": horizon,
         "proof_gate_pass": False,
@@ -273,6 +309,12 @@ def _ordered_rows(rows: list[dict[str, object]]) -> list[dict[str, object]]:
     return sorted(rows, key=lambda row: order.get(str(row["domain"]), 999))
 
 
+def _load_training_audit(path: Path) -> dict[str, dict[str, object]]:
+    if not path.exists():
+        return {}
+    return {str(row["domain"]): row for row in _read_csv(path)}
+
+
 def _write_domain_summary_tex(out: Path, rows: list[dict[str, object]]) -> None:
     ordered = _ordered_rows(rows)
     lines = [
@@ -304,8 +346,9 @@ def _write_domain_summary_tex(out: Path, rows: list[dict[str, object]]) -> None:
             r"\smallskip",
             r"\begin{minipage}{0.95\linewidth}\footnotesize",
             r"Evidence tier, not raw TSVR alone, governs the manuscript claim boundary.",
-            r"Proof-valid rows require locked non-synthetic telemetry, a nontrivial",
-            r"baseline gap, material ORIUS improvement, and stable seed behavior.",
+            r"Proof-valid rows require locked non-synthetic telemetry, a verified",
+            r"training surface, a clean software-in-loop pass, a nontrivial baseline",
+            r"gap, material ORIUS improvement, and stable seed behavior.",
             r"\end{minipage}",
             r"\end{table}",
         ]
@@ -345,8 +388,9 @@ def _write_comparison_tex(out: Path, rows: list[dict[str, object]]) -> None:
             r"\begin{minipage}{0.95\linewidth}\footnotesize",
             r"Battery is a locked publication aggregate across degraded-telemetry",
             r"scenarios. AV, industrial, healthcare, navigation, and aerospace use",
-            r"the shared replay harness and universal repair path. Navigation remains",
-            r"synthetic-shadow evidence; aerospace remains experimental.",
+            r"the shared replay harness and universal repair path. Training and SIL",
+            r"audits now gate non-battery promotion. Navigation remains synthetic-shadow",
+            r"evidence; aerospace remains experimental.",
             r"\end{minipage}",
             r"\end{table}",
         ]
@@ -383,9 +427,9 @@ def _write_proof_status_tex(out: Path, rows: list[dict[str, object]]) -> None:
         r"\centering",
         r"\caption{Proof-gate status for the non-battery runtime domains.}",
         r"\label{tab:domain-proof-status}",
-        r"\begin{tabular}{lllp{4.0cm}}",
+        r"\begin{tabular}{lllllp{3.3cm}}",
         r"\toprule",
-        r"Domain & Tier & Gate pass & Notes \\",
+        r"Domain & Tier & Training & SIL & Gate pass & Notes \\",
         r"\midrule",
     ]
     for row in ordered:
@@ -395,6 +439,8 @@ def _write_proof_status_tex(out: Path, rows: list[dict[str, object]]) -> None:
         lines.append(
             f"{_tex_escape(row['display'])} & "
             f"{_tex_escape(row['evidence_tier'])} & "
+            f"{'yes' if row['training_verified'] else 'no'} & "
+            f"{'yes' if row['sil_pass'] else 'no'} & "
             f"{'yes' if row['proof_gate_pass'] else 'no'} & "
             f"{_tex_escape(notes)} \\\\"
         )
@@ -467,7 +513,7 @@ def _write_before_after_figure(out: Path, rows: list[dict[str, object]]) -> Path
 
 def _write_proof_heatmap(out: Path, rows: list[dict[str, object]]) -> Path:
     domains = [row for row in _ordered_rows(rows) if row["domain"] != REFERENCE_DOMAIN]
-    metrics = ["locked_source", "baseline_gap", "improvement", "stable", "tier_gate"]
+    metrics = ["locked_source", "training", "sil", "baseline_gap", "improvement", "stable", "tier_gate"]
     matrix: list[list[float]] = []
     for metric in metrics:
         metric_row: list[float] = []
@@ -475,6 +521,10 @@ def _write_proof_heatmap(out: Path, rows: list[dict[str, object]]) -> Path:
             domain = str(row["domain"])
             if metric == "locked_source":
                 metric_row.append(1.0 if row["data_source"] != "synthetic" else 0.0)
+            elif metric == "training":
+                metric_row.append(1.0 if bool(row["training_verified"]) else 0.0)
+            elif metric == "sil":
+                metric_row.append(1.0 if bool(row["sil_pass"]) else 0.0)
             elif metric == "baseline_gap":
                 metric_row.append(1.0 if float(row["baseline_tsvr_mean"]) >= BASELINE_MIN_TSVR_PCT else 0.0)
             elif metric == "improvement":
@@ -490,7 +540,7 @@ def _write_proof_heatmap(out: Path, rows: list[dict[str, object]]) -> Path:
     ax.set_xticks(range(len(domains)))
     ax.set_xticklabels([str(row["domain"]) for row in domains], rotation=15, ha="right")
     ax.set_yticks(range(len(metrics)))
-    ax.set_yticklabels(["Locked source", "Baseline gap", "Improvement", "Stable", "Gate"])
+    ax.set_yticklabels(["Locked source", "Training", "SIL", "Baseline gap", "Improvement", "Stable", "Gate"])
     ax.set_title("Universal Proof-Gate Heatmap")
     for y, metric_row in enumerate(matrix):
         for x, value in enumerate(metric_row):
@@ -508,6 +558,7 @@ def main() -> int:
     parser.add_argument("--seeds", type=int, default=3)
     parser.add_argument("--horizon", type=int, default=48)
     parser.add_argument("--out", default="reports/universal_orius_validation")
+    parser.add_argument("--training-audit-csv", default=str(TRAINING_AUDIT_DEFAULT))
     parser.add_argument("--no-fail", action="store_true")
     args = parser.parse_args()
 
@@ -518,6 +569,34 @@ def main() -> int:
     domain_rows = [_load_battery_reference_row()]
     for domain in ("av", "industrial", "healthcare", "navigation", "aerospace"):
         domain_rows.append(_aggregate_runtime_domain(domain, DOMAINS[domain], seeds, args.horizon))
+
+    training_audit = _load_training_audit(Path(args.training_audit_csv))
+    for row in domain_rows:
+        if row["domain"] == REFERENCE_DOMAIN:
+            continue
+        audit_row = training_audit.get(str(row["domain"]))
+        if audit_row is None:
+            row["training_verified"] = False
+            row["training_note"] = "training_audit_missing"
+        else:
+            row["training_verified"] = _coerce_bool(audit_row.get("training_verified"))
+            row["training_note"] = str(audit_row.get("note", "verified"))
+
+    for row in domain_rows:
+        if row["domain"] not in PROMOTED_PROOF_CANDIDATES:
+            continue
+        gate = _evaluate_proof_candidate(row)
+        row["proof_gate_pass"] = bool(gate["pass_gate"])
+        row["proof_gate_reasons"] = ";".join(gate["failure_reasons"])
+        row["orius_reduction_pct"] = gate["reduction_pct"]
+        if gate["pass_gate"]:
+            row["evidence_tier"] = "proof_validated"
+            row["validation_status"] = "proof_validated"
+            row["evidence_note"] = "locked telemetry replay, verified training surface, and SIL pass all cleared the promotion gate"
+        else:
+            row["evidence_tier"] = "proof_candidate"
+            row["validation_status"] = "proof_candidate"
+            row["evidence_note"] = "runtime replay executes, but promotion is blocked until replay, training, and SIL evidence all align"
     domain_rows = _ordered_rows(domain_rows)
 
     cross_domain_rows = []
@@ -555,6 +634,11 @@ def main() -> int:
             "mean_reliability": row["mean_reliability"],
             "p50_latency_ms": row["p50_latency_ms"],
             "p95_latency_ms": row["p95_latency_ms"],
+            "certificate_rate_mean": row["certificate_rate_mean"],
+            "runtime_error_rate_mean": row["runtime_error_rate_mean"],
+            "sil_pass": row["sil_pass"],
+            "training_verified": row["training_verified"],
+            "training_note": row["training_note"],
             "seeds_evaluated": row["seeds_evaluated"],
             "rows_per_seed": row["rows_per_seed"],
             "proof_gate_pass": row["proof_gate_pass"],
@@ -591,6 +675,7 @@ def main() -> int:
 
     proof_report = {
         "reference_domain": REFERENCE_DOMAIN,
+        "evaluated_proof_candidates": list(PROMOTED_PROOF_CANDIDATES),
         "promoted_proof_candidates": list(PROMOTED_PROOF_CANDIDATES),
         "proof_validated_domains": proof_validated,
         "proof_downgraded_domains": proof_downgraded,
@@ -632,6 +717,7 @@ def main() -> int:
         "committee_audit_tex": str(out / "tbl_committee_audit_checklist.tex"),
         "before_after_figure": str(before_after_fig),
         "proof_heatmap_figure": str(proof_heatmap_fig),
+        "training_audit_csv": str(Path(args.training_audit_csv)),
         "integrated_theorem_gate": str(theorem_gate_path),
     }
     report_path = out / "validation_report.json"

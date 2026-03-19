@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Analyze ORIUS_PhD_Thesis_300pages.pdf vs paper/paper.pdf for depth, multi-domain, and gaps."""
+"""Analyze deprecated thesis reference PDF vs canonical repo-root paper.pdf."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -57,14 +57,14 @@ def find_sections(text: str) -> list[str]:
 
 def main() -> None:
     repo = Path(__file__).resolve().parents[1]
-    thesis_path = repo / "ORIUS_PhD_Thesis_300pages.pdf"
-    paper_path = repo / "paper" / "paper.pdf"
+    thesis_path = repo / "orius_battery_409page_figures_upgraded_main.pdf"
+    paper_path = repo / "paper.pdf"
 
     if not thesis_path.exists():
-        print(f"Thesis not found: {thesis_path}")
+        print(f"Deprecated reference thesis not found: {thesis_path}")
         return
     if not paper_path.exists():
-        print(f"Paper not found: {paper_path}")
+        print(f"Canonical paper not found: {paper_path}")
         return
 
     thesis_text = extract_text(thesis_path)
@@ -77,13 +77,13 @@ def main() -> None:
     p_kw = count_keywords(paper_text)
 
     print("=" * 60)
-    print("ORIUS PhD Thesis (300p) vs Paper — Depth & Multi-Domain Analysis")
+    print("Deprecated Reference Thesis vs Canonical Paper — Depth & Multi-Domain Analysis")
     print("=" * 60)
     print()
     print("PAGE COUNTS")
     print("-" * 40)
-    print(f"  Thesis: {thesis_pages} pages")
-    print(f"  Paper:  {paper_pages} pages")
+    print(f"  Deprecated thesis reference: {thesis_pages} pages")
+    print(f"  Canonical paper:            {paper_pages} pages")
     print()
 
     print("KEYWORD COUNTS (first 100 pages each)")
@@ -105,7 +105,7 @@ def main() -> None:
         print(f"  {d:20} {status}")
     print()
 
-    print("GAPS: In thesis but absent/weak in paper")
+    print("GAPS: In deprecated reference thesis but absent/weak in canonical paper")
     print("-" * 40)
     gaps = []
     for k, t_v in t_kw.items():
@@ -120,10 +120,10 @@ def main() -> None:
 
     print("IMPLEMENTATION ALIGNMENT")
     print("-" * 40)
-    print("  Thesis 300p: Extended battery + multi-domain roadmap")
-    print("  Paper:      Battery-only DC3S (per paper.tex title)")
-    print("  Code:       Universal framework (energy, av, industrial, healthcare)")
-    print("  Gap:        Paper does not yet reflect multi-domain in same depth as thesis")
+    print("  Deprecated thesis reference: historical long-form comparison surface")
+    print("  Canonical paper:            repo-root paper.pdf from paper/paper.tex")
+    print("  Code:                       Universal framework (energy, av, industrial, healthcare)")
+    print("  Gap:                        Canonical paper still sets the defended evidence boundary")
     print()
 
 

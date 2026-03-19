@@ -4,6 +4,7 @@ PYTHON ?= $(if $(wildcard .venv/bin/python3),.venv/bin/python3,python3)
 PROFILE ?= standard
 PROOF_SEEDS ?= 1
 PROOF_HORIZON ?= 24
+PAPER_MIN_PAGES ?= 300
 
 setup:
 	$(PYTHON) -m venv .venv && . .venv/bin/activate && .venv/bin/pip install -r requirements.lock.txt
@@ -266,6 +267,19 @@ paper3-four-policy-benchmark:
 paper-compile:
 	cd paper && pdflatex -interaction=nonstopmode paper.tex
 	cd paper && pdflatex -interaction=nonstopmode paper.tex
+	cp paper/paper.pdf paper.pdf
+	test -f paper.pdf
+	cmp -s paper/paper.pdf paper.pdf
+	@pages=$$(grep -Eo 'Output written on paper\.pdf \([0-9]+ pages' paper/paper.log | tail -n1 | sed -E 's/.*\(([0-9]+) pages/\1/'); \
+	if [ -z "$$pages" ]; then \
+		echo "Could not determine page count from paper/paper.log"; \
+		exit 1; \
+	fi; \
+	if [ "$$pages" -lt "$(PAPER_MIN_PAGES)" ]; then \
+		echo "Canonical paper.pdf page count $$pages is below required minimum $(PAPER_MIN_PAGES)"; \
+		exit 1; \
+	fi; \
+	echo "Canonical paper.pdf page count $$pages >= $(PAPER_MIN_PAGES)"
 
 paper-refresh: paper-assets paper-verify paper-compile
 

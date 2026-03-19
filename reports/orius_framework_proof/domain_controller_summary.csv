@@ -1,7 +1,7 @@
 domain,data_source,evidence_tier,validation_status,baseline_tsvr_mean,orius_tsvr_mean,orius_reduction_pct,repair_rate_mean,mean_reliability,p95_latency_ms,proof_gate_reasons
 battery,locked_artifact,reference,reference_validated,3.9000,0.0000,100.0,3.36,0.8059,0.0368,
-av,locked_csv,proof_candidate,proof_candidate,2.7800,2.7800,0.0,98.61,0.7835,0.0840,orius_did_not_improve
-industrial,locked_csv,proof_validated,proof_validated,21.5300,0.0000,100.0,91.67,0.6524,0.0717,
-healthcare,locked_csv,proof_validated,proof_validated,6.2500,0.0000,100.0,14.58,0.8534,0.0697,
-navigation,synthetic,shadow_synthetic,shadow_synthetic,18.0600,0.6900,96.2,100.00,0.8052,0.0753,synthetic_data
-aerospace,locked_csv,experimental,experimental,9.7200,9.7200,0.0,13.89,0.8062,0.0730,experimental_surface
+av,locked_csv,proof_candidate,proof_candidate,2.7800,2.7800,0.0,98.61,0.7835,0.0990,orius_did_not_improve
+industrial,locked_csv,proof_validated,proof_validated,21.5300,0.0000,100.0,91.67,0.6524,0.1097,
+healthcare,locked_csv,proof_validated,proof_validated,6.2500,0.0000,100.0,14.58,0.8534,0.0953,
+navigation,synthetic,shadow_synthetic,shadow_synthetic,18.0600,0.6900,96.2,100.00,0.8052,0.1067,synthetic_data
+aerospace,locked_csv,experimental,experimental,9.7200,9.7200,0.0,13.89,0.8062,0.1180,experimental_surface

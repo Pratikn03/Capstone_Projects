@@ -177,9 +177,25 @@ each non-battery runtime row, the candidate action and the repaired ORIUS
 action are evaluated under the same row-wise truth surface, and we report:
 baseline TSVR, post-shield TSVR, repair rate, mean reliability
 $\bar{w}_t$, and latency.  Promotion from \emph{proof candidate} to
-\emph{proof validated} requires four conditions simultaneously: locked
-non-synthetic telemetry, a nontrivial baseline gap, material TSVR
-reduction after repair, and stable behavior across seeds.
+\emph{proof validated} requires six conditions simultaneously: locked
+non-synthetic telemetry, a verified training surface, a clean
+software-in-loop (SIL) runtime pass, a nontrivial baseline gap, material
+TSVR reduction after repair, and stable behavior across seeds.
+
+\subsection{Training and Software-in-Loop Readiness}
+
+\input{reports/universal_training_audit/tbl_domain_training_audit}
+
+\input{reports/universal_sil_validation/tbl_domain_sil_summary}
+
+These two tables close an important gap in the older universal narrative.
+The replay surface shows whether ORIUS improves safety under degraded
+observation; the training audit checks whether each non-battery domain has
+a reproducible forecasting surface with non-empty splits and versioned
+artifacts; and the SIL table checks whether the software stack emits
+certificates and completes faulted replay traces without runtime failure.
+Together they provide the minimum non-battery support needed before a
+domain can be discussed as anything stronger than portability context.
 
 \subsection{Validation Status by Domain}
 
@@ -192,7 +208,9 @@ mixes a proof table from one harness with performance rows from another.
 The table separates the battery reference row from the two currently
 promoted proof-validated domains (industrial and healthcare), keeps AV as a
 proof candidate with an explicit failure reason, preserves navigation as a
-synthetic shadow surface, and leaves aerospace experimental.
+synthetic shadow surface, and leaves aerospace experimental.  The proof
+status table now also exposes the two new gating columns: whether the
+domain's training surface verified and whether the SIL trace passed.
 
 \input{reports/universal_orius_validation/tbl_domain_proof_status}
 

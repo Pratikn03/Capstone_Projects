@@ -27,37 +27,37 @@
 \contentsline {figure}{\numberline {20.1}{\ignorespaces Coverage--width tradeoff under temporal extension. As the certificate ages (horizontal axis), the coverage probability decreases while the interval width increases. The half-life (vertical dashed line) marks the crossover point.}}{107}{figure.caption.58}%
 \addvspace {10\p@ }
 \contentsline {figure}{\numberline {21.1}{\ignorespaces ORIUS universal 5-stage pipeline. Each domain plugs in a \texttt {DomainAdapter}; the DC3S core (stages 1--5) is shared and domain-agnostic.}}{113}{figure.caption.60}%
-\contentsline {figure}{\numberline {21.2}{\ignorespaces Canonical universal ORIUS validation surface. Battery is shown as the locked reference aggregate; industrial and healthcare are the current proof-validated non-battery rows; AV remains a proof candidate; navigation is synthetic-shadow evidence; and aerospace remains experimental.}}{115}{figure.caption.64}%
-\contentsline {figure}{\numberline {21.3}{\ignorespaces Cross-domain validation surface from the canonical universal evidence tier table. The labels encode the defended claim boundary: reference, proof-validated, proof-candidate, shadow-synthetic, and experimental.}}{116}{figure.caption.66}%
+\contentsline {figure}{\numberline {21.2}{\ignorespaces Canonical universal ORIUS validation surface. Battery is shown as the locked reference aggregate; industrial and healthcare are the current proof-validated non-battery rows; AV remains a proof candidate; navigation is synthetic-shadow evidence; and aerospace remains experimental.}}{116}{figure.caption.66}%
+\contentsline {figure}{\numberline {21.3}{\ignorespaces Cross-domain validation surface from the canonical universal evidence tier table. The labels encode the defended claim boundary: reference, proof-validated, proof-candidate, shadow-synthetic, and experimental.}}{117}{figure.caption.68}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {24.1}{\ignorespaces TSVR heatmap across the hyperparameter sweep. DC3S achieves 0.00\% TSVR at every tested grid point.}}{128}{figure.caption.71}%
-\contentsline {figure}{\numberline {24.2}{\ignorespaces Intervention rate heatmap across the hyperparameter sweep. DC3S+FTIT IR ranges from 0.0\% to 5.4\%.}}{128}{figure.caption.72}%
+\contentsline {figure}{\numberline {24.1}{\ignorespaces TSVR heatmap across the hyperparameter sweep. DC3S achieves 0.00\% TSVR at every tested grid point.}}{129}{figure.caption.73}%
+\contentsline {figure}{\numberline {24.2}{\ignorespaces Intervention rate heatmap across the hyperparameter sweep. DC3S+FTIT IR ranges from 0.0\% to 5.4\%.}}{129}{figure.caption.74}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {25.1}{\ignorespaces Coverage vs.\ interval width across volatility groups. RAC-Cert inflation widens intervals for under-covered subgroups.}}{133}{figure.caption.76}%
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\contentsline {figure}{\numberline {30.1}{\ignorespaces Four-policy graceful-degradation comparison. The current locked battery trace differentiates the policies primarily by useful work retained and descent quality, not by observed safety loss in the measured horizon.}}{152}{figure.caption.88}%
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\contentsline {figure}{\numberline {33.1}{\ignorespaces CertOS lifecycle state machine as implemented in the battery runtime. The defended contract is simple: remain in valid or degraded certified execution when a horizon exists; otherwise fall back explicitly.}}{165}{figure.caption.95}%
-\contentsline {figure}{\numberline {33.2}{\ignorespaces No-action-without-certificate runtime path. A release path exists only for certified actions; otherwise the runtime records a fallback event and emits the fallback action instead.}}{166}{figure.caption.99}%
+\contentsline {figure}{\numberline {25.1}{\ignorespaces Coverage vs.\ interval width across volatility groups. RAC-Cert inflation widens intervals for under-covered subgroups.}}{134}{figure.caption.78}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {30.1}{\ignorespaces Four-policy graceful-degradation comparison. The current locked battery trace differentiates the policies primarily by useful work retained and descent quality, not by observed safety loss in the measured horizon.}}{153}{figure.caption.90}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {33.1}{\ignorespaces CertOS lifecycle state machine as implemented in the battery runtime. The defended contract is simple: remain in valid or degraded certified execution when a horizon exists; otherwise fall back explicitly.}}{166}{figure.caption.97}%
+\contentsline {figure}{\numberline {33.2}{\ignorespaces No-action-without-certificate runtime path. A release path exists only for certified actions; otherwise the runtime records a fallback event and emits the fallback action instead.}}{167}{figure.caption.101}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {e.1}{\ignorespaces Coverage vs.\ interval width by reliability bin. Lower reliability $\Rightarrow $ wider intervals $\Rightarrow $ higher coverage. Source: \texttt {fig\_coverage\_width.png}.}}{194}{figure.caption.107}%
-\contentsline {figure}{\numberline {e.2}{\ignorespaces CQR group coverage across reliability bins. All bins exceed the 90\,\% target (dashed line). Source: \texttt {fig\_coverage\_width\_tradeoff.png}.}}{194}{figure.caption.108}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {e.1}{\ignorespaces Coverage vs.\ interval width by reliability bin. Lower reliability $\Rightarrow $ wider intervals $\Rightarrow $ higher coverage. Source: \texttt {fig\_coverage\_width.png}.}}{195}{figure.caption.109}%
+\contentsline {figure}{\numberline {e.2}{\ignorespaces CQR group coverage across reliability bins. All bins exceed the 90\,\% target (dashed line). Source: \texttt {fig\_coverage\_width\_tradeoff.png}.}}{195}{figure.caption.110}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }

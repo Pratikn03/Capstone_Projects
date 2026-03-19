@@ -117,6 +117,12 @@ def test_validation_cli_reports_reference_and_promoted_domains(tmp_path: Path) -
     assert domain_rows["navigation"]["validation_status"] == "shadow_synthetic"
     assert domain_rows["aerospace"]["validation_status"] == "experimental"
     assert domain_rows["av"]["proof_gate_reasons"] == "orius_did_not_improve"
+    assert domain_rows["industrial"]["training_verified"] is True
+    assert domain_rows["healthcare"]["training_verified"] is True
+    assert domain_rows["av"]["training_verified"] is True
+    assert domain_rows["industrial"]["sil_pass"] is True
+    assert domain_rows["healthcare"]["sil_pass"] is True
+    assert domain_rows["av"]["sil_pass"] is True
 
     assert proof_report["proof_validated_domains"] == ["industrial", "healthcare"]
     assert proof_report["proof_downgraded_domains"][0]["domain"] == "av"

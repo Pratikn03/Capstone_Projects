@@ -200,4 +200,4 @@ notes:
     - "bash scripts/export_paper_assets.sh"
     - "python scripts/build_paper_table_tex.py"
     - "python scripts/update_paper_metrics.py"
-    - "cd paper && pdflatex paper.tex && pdflatex paper.tex"
+    - "make paper-compile"

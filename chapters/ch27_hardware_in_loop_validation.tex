@@ -121,9 +121,17 @@ dispatch steps, zero safety violations, and 100\% certificate
 completeness.  Table~\ref{tab:hil_hardware} lists the software components
 used in the validation loop.
 
-\input{paper/assets/tables/generated/tbl_hil_timing}
+\IfFileExists{paper/assets/tables/generated/tbl_hil_timing.tex}{%
+\input{paper/assets/tables/generated/tbl_hil_timing}%
+}{%
+\input{assets/tables/generated/tbl_hil_timing}%
+}
 
-\input{paper/assets/tables/generated/tbl_hil_hardware}
+\IfFileExists{paper/assets/tables/generated/tbl_hil_hardware.tex}{%
+\input{paper/assets/tables/generated/tbl_hil_hardware}%
+}{%
+\input{assets/tables/generated/tbl_hil_hardware}%
+}
 
 \section{Summary}
 

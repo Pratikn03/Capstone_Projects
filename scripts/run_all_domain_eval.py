@@ -278,6 +278,10 @@ def _safe(v: object) -> object:
     return v
 
 
+def _json_text(payload: object) -> str:
+    return json.dumps(_safe(payload), sort_keys=True)
+
+
 def _load_domain_frame(
     cfg: dict[str, object],
     rng: np.random.Generator,
@@ -300,6 +304,7 @@ def eval_domain(
     rng: np.random.Generator,
     *,
     n_rows: int,
+    capture_trace: bool = False,
 ) -> dict[str, object]:
     df, data_source = _load_domain_frame(cfg, rng, n_rows)
     if df.empty:
@@ -316,11 +321,14 @@ def eval_domain(
     violations_before = 0
     violations_after = 0
     repairs = 0
+    certificate_count = 0
+    runtime_errors = 0
     reliabilities: list[float] = []
     latencies_ms: list[float] = []
     history: list[dict[str, object]] = []
+    trace_rows: list[dict[str, object]] = []
 
-    for _, row in df_faulted.iterrows():
+    for step_idx, row in df_faulted.iterrows():
         telemetry: dict[str, object] = {}
         for c in avail_cols + ["dropout", "stale_sensor", "spikes"]:
             if c not in row.index:
@@ -346,7 +354,8 @@ def eval_domain(
             candidate = {"value": 0.5}
             constraints = dict(cfg["constraints"])
 
-        if violation_fn(row, candidate, constraints):
+        before_violation = bool(violation_fn(row, candidate, constraints))
+        if before_violation:
             violations_before += 1
 
         t0 = time.perf_counter()
@@ -366,19 +375,62 @@ def eval_domain(
 
             safe_action = dict(result.get("safe_action", candidate))
             repair_meta = dict(result.get("repair_meta", {}))
-            if bool(repair_meta.get("repaired", False)):
+            repaired = bool(repair_meta.get("repaired", False))
+            if repaired:
                 repairs += 1
 
-            if violation_fn(row, safe_action, constraints):
+            after_violation = bool(violation_fn(row, safe_action, constraints))
+            if after_violation:
                 violations_after += 1
+            certificate = dict(result.get("certificate", {}))
+            certificate_present = bool(certificate)
+            if certificate_present:
+                certificate_count += 1
             history.append(dict(result.get("state", telemetry)))
+            if capture_trace:
+                trace_rows.append(
+                    {
+                        "domain": name,
+                        "step": int(step_idx),
+                        "ts_utc": telemetry.get("ts_utc", "2026-01-01T00:00:00Z"),
+                        "status": "ok",
+                        "data_source": data_source,
+                        "repaired": repaired,
+                        "reliability_w": reliability,
+                        "latency_ms": latencies_ms[-1],
+                        "violation_before": before_violation,
+                        "violation_after": after_violation,
+                        "certificate_present": certificate_present,
+                        "candidate_action_json": _json_text(candidate),
+                        "safe_action_json": _json_text(safe_action),
+                    }
+                )
         except Exception:
             latencies_ms.append(0.0)
             reliabilities.append(0.0)
             violations_after += 1
+            runtime_errors += 1
+            if capture_trace:
+                trace_rows.append(
+                    {
+                        "domain": name,
+                        "step": int(step_idx),
+                        "ts_utc": telemetry.get("ts_utc", "2026-01-01T00:00:00Z"),
+                        "status": "error",
+                        "data_source": data_source,
+                        "repaired": False,
+                        "reliability_w": 0.0,
+                        "latency_ms": 0.0,
+                        "violation_before": before_violation,
+                        "violation_after": True,
+                        "certificate_present": False,
+                        "candidate_action_json": _json_text(candidate),
+                        "safe_action_json": _json_text(candidate),
+                    }
+                )
 
     n = len(df_faulted)
-    return {
+    summary = {
         "domain": name,
         "display": cfg["display"],
         "data_source": data_source,
@@ -394,11 +446,16 @@ def eval_domain(
         "violation_rate_before_pct": round(100.0 * violations_before / max(n, 1), 2),
         "violation_rate_after_pct": round(100.0 * violations_after / max(n, 1), 2),
         "repair_rate_pct": round(100.0 * repairs / max(n, 1), 2),
+        "certificate_rate_pct": round(100.0 * certificate_count / max(n, 1), 2),
+        "runtime_error_rate_pct": round(100.0 * runtime_errors / max(n, 1), 2),
         "mean_reliability": round(float(np.mean(reliabilities)) if reliabilities else 0.0, 4),
         "p50_latency_ms": round(float(np.percentile(latencies_ms, 50)) if latencies_ms else 0.0, 3),
         "p95_latency_ms": round(float(np.percentile(latencies_ms, 95)) if latencies_ms else 0.0, 3),
         "safety_range": str(cfg["safety_range"]),
     }
+    if capture_trace:
+        summary["trace_rows"] = trace_rows
+    return summary
 
 
 def build_comparison_table(results: list[dict[str, object]]) -> str:
