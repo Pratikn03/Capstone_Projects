@@ -458,14 +458,37 @@ def _run_vehicle_proof_episode(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Universal ORIUS validation")
-    parser.add_argument("--seeds",    type=int, default=3)
-    parser.add_argument("--horizon",  type=int, default=48)
-    parser.add_argument("--out",      default="reports/universal_orius_validation")
-    parser.add_argument("--no-fail",  action="store_true", help="Do not exit 1 on failure")
+    parser.add_argument("--seeds",       type=int, default=3)
+    parser.add_argument("--horizon",     type=int, default=48)
+    parser.add_argument("--out",         default="reports/universal_orius_validation")
+    parser.add_argument("--no-fail",     action="store_true", help="Do not exit 1 on failure")
+    parser.add_argument(
+        "--real-data", action="store_true",
+        help="Use real datasets (data/ccpp/CCPP.csv, data/bidmc/bidmc_vitals.csv) "
+             "for industrial and healthcare tracks. Falls back to calibrated synthetic "
+             "if files are absent.",
+    )
     args = parser.parse_args()
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
+
+    # Build track list — optionally wire real-data paths
+    from orius.orius_bench.real_data_loader import CCPP_PATH, BIDMC_PATH, get_ccpp_rows, get_bidmc_rows
+    if args.real_data:
+        # Pre-load to confirm availability and log source
+        ccpp_src  = "real" if CCPP_PATH.exists() else "calibrated-synthetic"
+        bidmc_src = "real" if BIDMC_PATH.exists() else "calibrated-synthetic"
+        ind_track  = IndustrialTrackAdapter(dataset_path=CCPP_PATH  if CCPP_PATH.exists()  else None)
+        hc_track   = HealthcareTrackAdapter(dataset_path=BIDMC_PATH if BIDMC_PATH.exists() else None)
+        print(f"  [real-data] industrial → {ccpp_src} ({CCPP_PATH})")
+        print(f"  [real-data] healthcare → {bidmc_src} ({BIDMC_PATH})")
+        active_tracks: list[BenchmarkAdapter] = [
+            BatteryTrackAdapter(), NavigationTrackAdapter(),
+            ind_track, hc_track, AerospaceTrackAdapter(), VehicleTrackAdapter(),
+        ]
+    else:
+        active_tracks = list(TRACKS)
 
     results:               list[dict[str, Any]] = []
     domain_summary:        dict[str, dict[str, Any]] = {}
@@ -474,7 +497,7 @@ def main() -> int:
     # All non-battery domains use the universal proof episode for the DC3S run.
     proof_domains_for_dc3s = set(PROOF_DOMAINS)
 
-    for track in TRACKS:
+    for track in active_tracks:
         domain = track.domain_name
         domain_summary[domain] = {
             "tsvr_dc3s":       [],
@@ -700,11 +723,37 @@ def main() -> int:
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2)
 
+    # Write real-data supplementary report when --real-data is active
+    if args.real_data:
+        real_data_meta: dict[str, Any] = {}
+        for domain in ("industrial", "healthcare"):
+            track_obj = next((t for t in active_tracks if t.domain_name == domain), None)
+            using_real = getattr(track_obj, "using_real_data", False) if track_obj else False
+            pr = domain_proof_reports.get(domain, {})
+            real_data_meta[domain] = {
+                "source":          "real" if using_real else "calibrated-synthetic",
+                "evidence_pass":   pr.get("evidence_pass", False),
+                "baseline_tsvr":   pr.get("baseline_tsvr_mean", 0.0),
+                "orius_tsvr":      pr.get("orius_tsvr_mean", 0.0),
+                "reduction_pct":   pr.get("orius_reduction_pct", 0.0),
+                "failure_reasons": pr.get("failure_reasons", []),
+            }
+        real_data_report_path = out / "real_data_report.json"
+        with open(real_data_report_path, "w") as f:
+            json.dump({
+                "real_data_mode":  True,
+                "seeds":           args.seeds,
+                "horizon":         args.horizon,
+                "domains":         real_data_meta,
+                "all_pass":        all(v["evidence_pass"] for v in real_data_meta.values()),
+            }, f, indent=2)
+        print(f"  Real-data report      → {real_data_report_path}")
+
     # ------------------------------------------------------------------
     # Console summary
     # ------------------------------------------------------------------
     print("=== Universal ORIUS Multi-Domain Validation ===")
-    print(f"  Domains run:             {len(TRACKS)}")
+    print(f"  Domains run:             {len(active_tracks)}")
     print(f"  Harness pass:            {harness_pass}")
     print(f"  Evidence pass (vehicle): {evidence_pass}")
     print(f"  All proof domains pass:  {all_proof_pass}  {PROOF_DOMAINS}")

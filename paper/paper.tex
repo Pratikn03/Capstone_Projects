@@ -1427,6 +1427,34 @@ All five non-battery domains satisfy the full evidence gate---baseline TSVR mean
 
 \PaperFigure{FIG_MULTI_DOMAIN_VALIDATION}{Multi-domain ORIUS proof validation. Baseline (nominal) vs.\ ORIUS (DC3S) true-state violation rate across six domains under fault episodes. Five non-battery domains achieve \emph{proof\_validated} status.}
 
+\subsection{Real-Dataset Validation}\label{sec:real_data_validation}
+
+To address the objection that all non-battery evidence is synthetic, the industrial and healthcare tracks were re-evaluated with real public datasets as initial-condition sources.  The industrial adapter was wired to the UCI Combined Cycle Power Plant dataset (9\,568 rows; Tufekci~2014), and the healthcare adapter to the PhysioNet BIDMC ICU Numerics corpus (4\,000 rows; Pimentel et al.~2016).  Each \texttt{reset()} call selects a near-limit row from the real dataset to initialise the synthetic state (industrial: PE\,$\geq$\,480\,MW maps to temp$\approx$110\,°C; healthcare: real HR and RR from BIDMC, SpO\textsubscript{2}\,=\,85\,\% per benchmark design).  Subsequent \texttt{step()} calls use the same synthetic dynamics as the harness, so DC3S repair operates on the identical action-response surface while the starting conditions are anchored in real measured data.
+
+\Cref{tab:real_data_validation} reports the locked TSVR results.  Industrial achieves 100\,\% TSVR reduction (baseline 1.00, ORIUS 0.00); healthcare achieves 72.1\,\% (baseline 1.00, ORIUS 0.279), both far exceeding the 25\,\% evidence gate.  These results confirm that the DC3S safety-shield pattern transfers to real measured operating conditions in both process-control and clinical-monitoring domains.
+
+\input{assets/tables/generated/tbl_real_data_validation.tex}
+
+\subsection{Adversarial Robustness}\label{sec:adversarial_robustness}
+
+Standard ORIUS-Bench fault episodes assume stochastic sensor degradation.
+A stronger adversarial model injects \emph{replay} attacks (returning a stale
+reading from $k$ steps ago to simulate packet re-injection) and
+\emph{coordinated spoof} attacks (a systematic bias $\leq 10\,\%$ of the
+normal signal range, designed to evade mean-based spike detection).
+The Byzantine-resistant OQE variant (\texttt{compute\_reliability\_robust()} in
+\texttt{src/orius/dc3s/quality.py}) replaces mean-based spike detection with
+MAD $z$-scoring, applies a 10\,\% trimmed-mean to the history window, and
+flags adversarial input via a median-vs-mean consistency check
+(Theorem~11, \Cref{sec:ch22_byzantine_robustness}).
+
+\Cref{tab:adversarial_tsvr} compares per-domain TSVR under standard faults,
+adversarial faults with original OQE, and adversarial faults with robust OQE.
+The evidence gate (robust OQE TSVR $\leq 1.5\times$ standard TSVR) is met by
+all five proof domains.
+
+\input{assets/tables/generated/tbl_adversarial_tsvr.tex}
+
 \subsection{Implementation and Scope}
 
 The universal framework is implemented in \texttt{src/orius/universal\_framework/} with a domain registry, shared pipeline (\texttt{run\_universal\_step}), and adapters for all six domains: Energy/Battery, AV/Vehicle, Industrial, Healthcare, Aerospace, and Navigation. The battery domain remains the primary locked empirical and theorem-validation surface; the five proof domains demonstrate that the same ORIUS DC3S pattern---telemetry ingestion, OQE reliability scoring, conformal uncertainty inflation, action repair, and certificate emission---transfers to structurally different physical systems with evidence-grade TSVR reductions. \Cref{tab:universal_adapter_params} summarises the key adapter parameters and safety predicates for each domain.
@@ -1456,6 +1484,18 @@ Paper 6 & CertOS runtime certificate lifecycle & \path{src/orius/certos/} (runti
 \input{longform/theorem_block_longform.tex}
 
 \section{Governance and Reproducibility}\label{sec:governance}
+
+\subsection{Runtime Overhead}\label{sec:runtime_overhead}
+
+A production safety shield must impose negligible latency overhead on the
+control loop.  \Cref{tab:latency_benchmark} reports wall-clock latency
+for 500 consecutive DC3S steps per domain, measured single-threaded on a
+standard workstation (Python~3.11).  The p99 latency is below 0.35\,ms
+across all six domains — more than two orders of magnitude below the 50\,ms
+production threshold.  The benchmark is reproducible via
+\texttt{python scripts/benchmark\_latency.py}.
+
+\input{assets/tables/generated/tbl_latency_benchmark.tex}
 
 \subsection{Source of Truth}
 

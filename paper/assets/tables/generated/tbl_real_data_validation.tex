@@ -1,0 +1,19 @@
+% Real-Dataset Validation Results (auto-generated)
+% Source: reports/universal_orius_validation/real_data_report.json
+% Seeds: 5 | Horizon: 48 steps per seed
+\begin{table}[htbp]
+\centering
+\caption{DC3S Real-Dataset Validation: TSVR reduction on public benchmark datasets.
+Baseline is an unconstrained controller; ORIUS applies full DC3S repair.
+Both domains exceed the 25\,\% evidence gate.}
+\label{tab:real_data_validation}
+\begin{tabular}{lllrrr}
+\toprule
+\textbf{Domain} & \textbf{Dataset} & \textbf{Source} &
+\textbf{Baseline TSVR} & \textbf{ORIUS TSVR} & \textbf{Reduction} \\
+\midrule
+Industrial & UCI CCPP (9\,568 rows) & Real & 1.000 & 0.000 & 100.0\,\% \\
+Healthcare & PhysioNet BIDMC (4\,000 rows) & Real & 1.000 & 0.279 & 72.1\,\% \\
+\bottomrule
+\end{tabular}
+\end{table}
