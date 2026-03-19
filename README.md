@@ -53,6 +53,7 @@ If you want the **full proof package** and publication-facing evidence, start he
 | [`paper/paper.tex`](paper/paper.tex) | Main thesis source |
 | [`paper/paper_r1.tex`](paper/paper_r1.tex) | Conference / R1 variant |
 | [`paper/PAPER_DRAFT.md`](paper/PAPER_DRAFT.md) | Long-form paper draft and argument narrative |
+| [`paper/README.md`](paper/README.md) | Thesis-writing and paper-production workflow guide |
 | [`paper/metrics_manifest.json`](paper/metrics_manifest.json) | Locked metric source of truth |
 | [`paper/claim_matrix.csv`](paper/claim_matrix.csv) | Claim-to-evidence mapping |
 | [`paper/manifest.yaml`](paper/manifest.yaml) | Paper artifact manifest |
