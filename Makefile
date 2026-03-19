@@ -1,4 +1,4 @@
-.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick thesis-pipeline-verify iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark
+.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark
 
 PYTHON ?= $(if $(wildcard .venv/bin/python3),.venv/bin/python3,python3)
 PROFILE ?= standard
@@ -236,7 +236,7 @@ eval-baselines:
 
 # CPSBench-IoT + closed-loop IoT validation
 cpsbench:
-	.venv/bin/python3 scripts/run_cpsbench.py
+	PYTHONPATH=src $(PYTHON) scripts/run_cpsbench.py
 
 publication-artifact:
 ifndef RELEASE_ID
@@ -246,12 +246,12 @@ endif
 
 paper-assets:
 	bash scripts/export_paper_assets.sh
-	.venv/bin/python3 scripts/build_paper_table_tex.py
-	.venv/bin/python3 scripts/update_paper_metrics.py
+	PYTHONPATH=src $(PYTHON) scripts/build_paper_table_tex.py
+	PYTHONPATH=src $(PYTHON) scripts/update_paper_metrics.py
 
 paper-verify:
-	.venv/bin/python3 scripts/verify_paper_manifest.py
-	.venv/bin/python3 scripts/validate_paper_claims.py
+	PYTHONPATH=src $(PYTHON) scripts/verify_paper_manifest.py
+	PYTHONPATH=src $(PYTHON) scripts/validate_paper_claims.py
 
 # Paper 2: certificate half-life blackout benchmark
 paper2-blackout-benchmark:
@@ -274,23 +274,62 @@ endif
 	$(PYTHON) scripts/post_training_paper_update.py --release-id $(RELEASE_ID) --out-dir reports/publication
 
 dc3s-demo:
-	.venv/bin/python3 scripts/run_dc3s_demo.py
+	PYTHONPATH=src $(PYTHON) scripts/run_dc3s_demo.py
 
 # ORIUS full pipeline check (imports, config, DC3S demo, CPSBench, locked evidence)
 orius-check:
-	.venv/bin/python3 scripts/run_orius_full_check.py
+	PYTHONPATH=src $(PYTHON) scripts/run_orius_full_check.py
 
 # Thesis-level pipeline verification: theorems + full ORIUS + AV training
 thesis-pipeline-verify: orius-check
 	$(PYTHON) scripts/verify_theorem_anchors.py
 	@echo "Thesis pipeline verification complete: theorems + ORIUS + training"
 
+# Thesis writing / production workflow
+thesis-train:
+ifndef RELEASE_ID
+	$(error RELEASE_ID is not set. Usage: make thesis-train RELEASE_ID=FINAL_20260319T000000Z PROFILE=standard)
+endif
+	$(MAKE) r1-full RELEASE_ID=$(RELEASE_ID) PROFILE=$(PROFILE)
+
+thesis-bench:
+ifndef RELEASE_ID
+	$(error RELEASE_ID is not set. Usage: make thesis-bench RELEASE_ID=FINAL_20260319T000000Z)
+endif
+	$(MAKE) r1-cpsbench RELEASE_ID=$(RELEASE_ID)
+
+thesis-artifacts:
+ifndef RELEASE_ID
+	$(error RELEASE_ID is not set. Usage: make thesis-artifacts RELEASE_ID=FINAL_20260319T000000Z)
+endif
+	$(MAKE) publication-artifact RELEASE_ID=$(RELEASE_ID)
+	$(MAKE) paper-assets
+
+thesis-manuscript:
+	$(MAKE) paper-verify
+	$(MAKE) paper-compile
+
+thesis-freeze:
+ifndef RELEASE_ID
+	$(error RELEASE_ID is not set. Usage: make thesis-freeze RELEASE_ID=FINAL_20260319T000000Z)
+endif
+	$(MAKE) paper-freeze RELEASE_ID=$(RELEASE_ID)
+
+thesis-full:
+ifndef RELEASE_ID
+	$(error RELEASE_ID is not set. Usage: make thesis-full RELEASE_ID=FINAL_20260319T000000Z PROFILE=standard)
+endif
+	$(MAKE) thesis-train RELEASE_ID=$(RELEASE_ID) PROFILE=$(PROFILE)
+	$(MAKE) thesis-bench RELEASE_ID=$(RELEASE_ID)
+	$(MAKE) thesis-artifacts RELEASE_ID=$(RELEASE_ID)
+	$(MAKE) thesis-manuscript
+
 # ORIUS quick check (skip CPSBench, ~10s)
 orius-check-quick:
-	.venv/bin/python3 scripts/run_orius_full_check.py --quick
+	PYTHONPATH=src $(PYTHON) scripts/run_orius_full_check.py --quick
 
 iot-sim:
-	.venv/bin/python3 iot/simulator/run_closed_loop.py
+	PYTHONPATH=src $(PYTHON) iot/simulator/run_closed_loop.py
 
 refresh-data:
 	$(PYTHON) scripts/refresh_data_delta.py --dataset ALL --apply
