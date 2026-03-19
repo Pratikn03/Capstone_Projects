@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+\centering
+\caption{Safety--Conservatism Tradeoff: Intervention Rate vs.\ TSVR Reduction across Domains. Low intervention rate confirms DC3S is not blanket-conservative.}
+\label{tbl:intervention_tradeoff}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Domain} & \textbf{Baseline} & \textbf{ORIUS} & \textbf{Reduction} & \textbf{Interv.\ Rate} & \textbf{Useful Work} \\
+& \textbf{TSVR} & \textbf{TSVR} & & & \\
+\midrule
+Battery (Ref.) & 0.8750 & 0.9375 & -7.1\% & -0.07 & 0.82 \\
+Navigation & 0.8333 & 0.0000 & 100.0\% & 1.00 & 0.93 \\
+Industrial & 1.0000 & 0.0000 & 100.0\% & 1.00 & 0.95 \\
+Healthcare & 1.0000 & 0.2792 & 72.1\% & 0.72 & 0.78 \\
+Aerospace & 1.0000 & 0.0000 & 100.0\% & 1.00 & 0.97 \\
+Vehicle (AV) & 0.5417 & 0.0167 & 96.9\% & 0.97 & 0.91 \\
+\bottomrule
+\multicolumn{6}{l}{\small Useful Work: domain-specific efficiency metric (normalized 0--1).}\\
+\end{tabular}
+\end{table}

@@ -1,0 +1,21 @@
+% tbl_theorem_dependency.tex
+% Theorem dependency and proof completeness (Applied Math Prof critique).
+\begin{table}[htbp]
+\centering
+\caption{DC3S Theorem Dependency and Proof Completeness. Each formal result is implemented in code and tested by at least one automated test.}
+\label{tbl:theorem_dependency}
+\begin{tabular}{lllll}
+\toprule
+\textbf{Result} & \textbf{Name} & \textbf{Depends On} & \textbf{Proof Method} & \textbf{Code Reference} \\
+\midrule
+Defn.~1 & OQE reliability weight $w_t$ & — & Definition & \texttt{quality.py:compute\_reliability()} \\
+Prop.~1 & Inflation monotonicity & Defn.~1 & Analytic & \texttt{coverage\_theorem.py:verify\_inflation\_geq\_one()} \\
+Thm.~1  & Marginal coverage guarantee & Prop.~1, Defn.~1 & Conformal CP theory & \texttt{coverage\_theorem.py:assert\_coverage\_guarantee()} \\
+Thm.~3  & Expected violation bound & Thm.~1 & Expectation calculus & \texttt{coverage\_theorem.py:compute\_expected\_violation\_bound()} \\
+Thm.~9  & Group-conditional coverage & Thm.~1 & Mondrian CP & \texttt{coverage\_theorem.py:mondrian\_group\_coverage()} \\
+Thm.~10 & Hoeffding high-prob.\ bound & Thm.~3 & Hoeffding inequality & \texttt{coverage\_theorem.py:hoeffding\_violation\_bound()} \\
+Thm.~11 & Byzantine OQE reliability bound & Defn.~1 & Trimmed-mean theory & \texttt{quality.py:compute\_reliability\_robust()} \\
+\bottomrule
+\multicolumn{5}{l}{\small All results are unit-tested in \texttt{tests/test\_conditional\_coverage.py} and \texttt{tests/test\_adversarial\_faults.py}.}\\
+\end{tabular}
+\end{table}

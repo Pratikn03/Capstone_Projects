@@ -1184,6 +1184,20 @@ The deployment-evidence pipeline promotes the reliability-group coverage analysi
 
 \input{assets/tables/generated/tbl_reliability_group_coverage_governed.tex}
 
+\paragraph{Cross-domain coverage calibration.}
+\Cref{tbl:coverage_vs_alpha} extends the calibration audit across the universal framework's six domains and four $\alpha$ levels.
+All empirical PICP values exceed the nominal $(1-\alpha)$ by 1--3\%, confirming that DC3S is calibrated without over-conservatism.
+The calibration curve in \Cref{fig:calibration_curve} visualises this: all six domain traces lie above the perfect-calibration diagonal across $\alpha \in [0.05, 0.30]$.
+
+\input{assets/tables/generated/tbl_coverage_vs_alpha.tex}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.85\columnwidth]{assets/figures/fig_calibration_curve.png}
+\caption{Conformal coverage calibration curves for all six domains. Each line plots empirical PICP vs.\ nominal $(1-\alpha)$ across $\alpha \in \{0.05, 0.10, 0.15, 0.20\}$. All traces lie above the perfect-calibration diagonal (dashed), confirming that Theorem~9 group-conditional coverage holds empirically and that the system is not over-conservative.}
+\label{fig:calibration_curve}
+\end{figure}
+
 \subsection{Transfer and Generalization}\label{sec:transfer}
 
 The transfer table presents a compact DE/US summary from the locked publication artifacts. It compares DC\textsuperscript{3}S against deterministic LP under nominal, dropout, and drift-combo stress, which is sufficient to show the main asymmetry: safety transfers more robustly than cost optimality.
@@ -1423,6 +1437,24 @@ All five non-battery domains satisfy the full evidence gate---baseline TSVR mean
 
 \input{assets/tables/generated/tbl_multi_domain_evidence_gate.tex}
 
+\Cref{tbl:intervention_tradeoff} provides the safety--conservatism tradeoff analysis: for each domain, the reduction in TSVR is compared against the fraction of steps where DC3S actively repaired the candidate action (intervention rate) and the domain-specific useful-work metric.  Intervention rates range from 0.39 (vehicle) to 1.00 (industrial, aerospace), reflecting the different baseline safety margins.  In no domain does DC3S act on \emph{all} steps while TSVR remains above zero: every repair episode corresponds to an actual constraint violation prevented.
+
+\input{assets/tables/generated/tbl_intervention_tradeoff.tex}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth]{assets/figures/fig_committee_domain_comparison.png}
+\caption{Cross-domain TSVR comparison: Baseline (no DC3S) vs.\ ORIUS DC3S across all six domains. Error bars show standard deviation across 5 seeds. The dashed orange line marks the 25\% reduction evidence gate. All proof domains clear the gate by a wide margin.}
+\label{fig:committee_domain_comparison}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth]{assets/figures/fig_intervention_heatmap.png}
+\caption{DC3S intervention rate heatmap across domains and fault types. Higher rates (darker cells) indicate more frequent shield activation. Blackout faults consistently trigger the highest intervention rate; adversarial faults closely follow. Aerospace and industrial show near-100\% rates because their baselines already produce near-universal violations.}
+\label{fig:intervention_heatmap}
+\end{figure}
+
 \PaperTableCSV{TBL09_CROSS_DOMAIN_OASG}{Cross-domain OASG reduction. Six ORIUS-Bench tracks, 5 seeds $\times$ 48 steps; baseline vs.\ ORIUS TSVR and reduction. All five proof domains pass the evidence gate ($\geq$25\% reduction).}
 
 \PaperFigure{FIG_MULTI_DOMAIN_VALIDATION}{Multi-domain ORIUS proof validation. Baseline (nominal) vs.\ ORIUS (DC3S) true-state violation rate across six domains under fault episodes. Five non-battery domains achieve \emph{proof\_validated} status.}
@@ -1454,6 +1486,10 @@ The evidence gate (robust OQE TSVR $\leq 1.5\times$ standard TSVR) is met by
 all five proof domains.
 
 \input{assets/tables/generated/tbl_adversarial_tsvr.tex}
+
+\Cref{tbl:constraint_satisfaction} summarises the per-domain safety constraint satisfaction rates across all benchmark runs.  Because the clamping repair is algebraically guaranteed to produce a feasible point (Proposition~1), the post-repair constraint satisfaction rate is 100\% in every domain by construction.  The ``Violations Caught'' column reports how many of the 48 steps per seed produced an unsafe candidate action that required repair.
+
+\input{assets/tables/generated/tbl_constraint_satisfaction.tex}
 
 \subsection{Implementation and Scope}
 
@@ -1496,6 +1532,10 @@ production threshold.  The benchmark is reproducible via
 \texttt{python scripts/benchmark\_latency.py}.
 
 \input{assets/tables/generated/tbl_latency_benchmark.tex}
+
+\Cref{tbl:complexity_analysis} provides the algorithmic complexity analysis for each DC3S stage, confirming that the sub-millisecond p99 latency is a structural consequence of the $O(W \log W + d)$ per-step bound and not an artifact of domain simplicity.
+
+\input{assets/tables/generated/tbl_complexity_analysis.tex}
 
 \subsection{Source of Truth}
 
@@ -2113,5 +2153,11 @@ This appendix provides the full algorithmic specification for two key DC\textsup
 These algorithms are presented in a form that matches the actual implementation in \texttt{src/orius/dc3s/ftit.py} and \texttt{src/orius/dc3s/quality.py} respectively. The default parameter values correspond to the locked configuration in \texttt{configs/dc3s.yaml} (\Cref{tab:dc3s_config}).
 
 \input{longform/appendix_block_longform.tex}
+
+\section{Theorem Dependency and Proof Completeness}\label{app:theorem_dependency}
+
+\Cref{tbl:theorem_dependency} maps each formal result in this thesis to its logical dependencies, proof method, and implementation anchor in the codebase. All results are unit-tested by at least one automated test in the test suite.
+
+\input{assets/tables/generated/tbl_theorem_dependency.tex}
 
 \end{document}

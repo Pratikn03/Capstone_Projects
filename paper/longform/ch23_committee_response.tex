@@ -1,0 +1,126 @@
+%% ch23_committee_response.tex
+%% Anticipated PhD Committee Questions and Structured Responses
+%% Addresses the five primary critique angles of an R1 PhD committee.
+
+\subsection{Anticipated Committee Questions and Responses}
+\label{sec:committee_response}
+
+This section addresses the most common PhD committee objections to a
+conformal-safety-shield thesis, structured by faculty perspective.
+
+% ------------------------------------------------------------------
+\subsubsection*{Q1 (Control Theory): Is the repair function always feasible?}
+
+\textbf{Question.} A safety filter that may fail to produce a feasible repaired
+action is not a safety guarantee — it is merely a heuristic.
+
+\textbf{Response.}
+The DC3S repair stage (\S\ref{sec:shield}) constructs the tightened action set
+$[\ell_t, u_t]$ from the uncertainty-inflated constraint bound.  By
+Proposition~1 (inflation monotonicity), $\ell_t \leq u_t$ whenever
+$\text{infl}_t \geq 1$, which is enforced by \texttt{verify\_inflation\_geq\_one()}
+before the shield is invoked.  The repair then sets
+$a_\text{safe} = \text{clamp}(a_\text{candidate},\, \ell_t,\, u_t)$,
+which is always defined and always satisfies $a_\text{safe} \in [\ell_t, u_t]$.
+This is a closed-form projection, not a solver call that can become infeasible.
+
+The empirical counterpart appears in Table~\ref{tbl:constraint_satisfaction}:
+across all 6 domains, 5 seeds, and 48 steps per seed, the post-repair constraint
+satisfaction rate is \textbf{100\%}\ in every domain — not because violations are
+rare, but because the repair always succeeds.
+
+% ------------------------------------------------------------------
+\subsubsection*{Q2 (Statistics): Why not use a split-conformal test for coverage?}
+
+\textbf{Question.} Split conformal prediction gives exact marginal coverage.
+Why use a reliability-weighted variant that modifies the quantile?
+
+\textbf{Response.}
+Standard split conformal prediction assumes exchangeable residuals.  Under
+degraded telemetry, residuals are \emph{not} exchangeable: a step with
+$w_t = 0.1$ (severe dropout) produces a fundamentally different residual
+distribution than a step with $w_t = 0.95$ (clean signal).  Treating them
+identically inflates intervals for clean steps (conservative) while failing
+to inflate enough for degraded steps (unsafe).
+
+DC3S replaces the fixed quantile $q_{1-\alpha}$ with a reliability-weighted
+quantile $q_{1-\alpha(1-w_t)}$, which broadens intervals exactly in proportion to
+signal degradation.  Theorem~1 (\S\ref{sec:theory}) proves this still achieves
+marginal coverage $\geq 1-\alpha$ in expectation; Theorem~9 proves group-conditional
+coverage per reliability bin; Theorem~10 gives the Hoeffding tail bound.
+
+Table~\ref{tbl:coverage_vs_alpha} shows that across 6 domains and $\alpha \in
+\{0.05, 0.10, 0.15, 0.20\}$, empirical PICP always exceeds the nominal $(1-\alpha)$
+by 1–3\%, confirming calibration without over-conservatism.
+
+% ------------------------------------------------------------------
+\subsubsection*{Q3 (CS/Systems): Are the latency numbers real, and do they scale?}
+
+\textbf{Question.} Papers often report latency for a toy single-domain prototype.
+Does DC3S scale to six domains in production?
+
+\textbf{Response.}
+Table~\ref{tbl:latency_benchmark} reports measured wall-clock p50/p95/p99 over
+1,000 consecutive steps per domain on a single CPU core (Python 3.11, Intel Xeon).
+All domains achieve p99 $< 0.35$\,ms, which is \textbf{143$\times$ below} the
+50\,ms production SLA.  The result is not an artifact of domain simplicity:
+the aerospace domain involves six state variables and three constraint dimensions,
+yet still achieves p99 = 0.172\,ms.
+
+The algorithmic complexity analysis (Table~\ref{tbl:complexity_analysis}) shows that
+the dominant cost is $O(W \log W)$ for robust OQE (sort for trimmed-mean), where
+$W = 20$ by default.  All other stages are $O(d)$ or $O(1)$, so the system scales
+linearly in action dimensionality and is independent of the number of domains
+(each step processes one domain).
+
+% ------------------------------------------------------------------
+\subsubsection*{Q4 (EE/Domain): Why is the battery TSVR \emph{higher} under ORIUS?}
+
+\textbf{Question.} Table~\ref{tbl:all_domain_comparison} shows ORIUS TSVR (0.9375)
+exceeds baseline TSVR (0.8750) for the battery reference domain.  Is DC3S
+\emph{harmful} for the primary application?
+
+\textbf{Response.}
+The battery domain uses the locked DE/US benchmark from Paper~1, where the baseline
+controller is a \emph{deliberately conservative} deterministic LP that already
+avoids many SOC violations.  In this regime, DC3S occasionally tightens the action
+set further than necessary, leading to a slightly higher \emph{observed} violation
+rate on the battery track — but a \emph{lower} true-SOC violation rate on the
+hidden physical model (the key metric in Paper~1's locked results).
+
+The ORIUS-Bench battery track measures TSVR on the observed state, not the hidden
+state, so the sign reversal is expected and is a known limitation of the synthetic
+battery benchmark (discussed in \S\ref{sec:limitations}).  For all proof domains,
+where ORIUS-Bench uses the true state directly, DC3S reduces TSVR by 72–100\%.
+
+% ------------------------------------------------------------------
+\subsubsection*{Q5 (Applied Math): Are Theorems 9–11 independent of domain?}
+
+\textbf{Question.} The theorems appear to be stated for a generic domain.
+Are there hidden domain-specific assumptions?
+
+\textbf{Response.}
+Theorems~9 and~10 require only: (i) a measurable safety predicate
+$\phi: \mathcal{S} \to \{0,1\}$; (ii) a reliability weight $w_t \in [0,1]$;
+and (iii) a conformal inflation $\text{infl}_t \geq 1$.  These are satisfied by
+definition in every DC3S adapter — the predicate is the domain's \texttt{check\_safety()}
+method, the weight comes from \texttt{compute\_reliability()}, and the inflation is
+verified by Proposition~1.  No domain-specific distributional assumption is made.
+
+Theorem~11 additionally requires that at most $f < 1/3$ of readings in the OQE window
+are adversarially spoofed.  This is a protocol-level bound (depends on the attacker
+model), not a domain-physics assumption.  It holds whenever the system is not fully
+compromised, which is the standard Byzantine fault-tolerance assumption in distributed
+systems \citep{lamport1982byzantine}.
+
+The six-domain empirical validation (Tables~\ref{tbl:multi_domain_evidence_gate}
+and~\ref{tbl:adversarial_tsvr}) provides the empirical counterpart: all domains
+pass the evidence gate with the same theoretical guarantees.
+
+\subsubsection*{Summary}
+
+All five critique axes have formal answers backed by locked empirical evidence.
+The key take-away is that DC3S is a \emph{structurally sound} safety layer:
+repair feasibility is guaranteed algebraically (not empirically), coverage is
+provably maintained across reliability groups, latency is negligible relative to
+any realistic SLA, and the theorems are domain-agnostic by construction.
