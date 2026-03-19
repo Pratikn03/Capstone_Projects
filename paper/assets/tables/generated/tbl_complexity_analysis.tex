@@ -1,0 +1,23 @@
+% tbl_complexity_analysis.tex
+% DC3S Algorithmic Complexity per stage (CS/Systems Prof critique).
+\begin{table}[htbp]
+\centering
+\caption{DC3S Algorithmic Complexity per Pipeline Stage.
+$W$: OQE window size (default 20); $d$: action dimensionality; $n_\text{cal}$: calibration set size.}
+\label{tbl:complexity_analysis}
+\begin{tabular}{llccc}
+\toprule
+\textbf{Stage} & \textbf{Operation} & \textbf{Time} & \textbf{Space} & \textbf{Notes} \\
+\midrule
+\textbf{OQE (standard)} & Rolling window statistics & $O(W)$ & $O(W)$ & Dropout, delay, spike \\
+\textbf{OQE (robust)} & Trimmed-mean + MAD & $O(W \log W)$ & $O(W)$ & Sort for trim fraction \\
+\textbf{Calibrate} & Quantile lookup & $O(1)$ & $O(n_\text{cal})$ & Stored sorted residuals \\
+\textbf{Constrain} & Interval arithmetic & $O(d)$ & $O(d)$ & Per-dimension tighten \\
+\textbf{Shield/Repair} & Projection + clamp & $O(d)$ & $O(1)$ & Domain-specific predicate \\
+\textbf{Certify} & SHA-256 hash chain & $O(1)$ & $O(1)$ & Fixed-length digest \\
+\midrule
+\textbf{Total per step} & & $O(W \log W + d)$ & $O(W + n_\text{cal})$ & \\
+\bottomrule
+\multicolumn{5}{l}{\small With $W{=}20$, $d{=}4$, $n_\text{cal}{=}200$: dominated by calibration storage. Latency $<$0.35\,ms p99 (Table~\ref{tbl:latency_benchmark}).}\\
+\end{tabular}
+\end{table}
