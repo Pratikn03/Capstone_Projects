@@ -19,6 +19,7 @@ import pytest
 from orius.adapters.aerospace import AerospaceDomainAdapter, AerospaceTrackAdapter
 from orius.adapters.healthcare import HealthcareDomainAdapter, HealthcareTrackAdapter
 from orius.adapters.industrial import IndustrialDomainAdapter, IndustrialTrackAdapter
+from orius.adapters.navigation import NavigationDomainAdapter, NavigationTrackAdapter
 from orius.adapters.vehicle import VehicleDomainAdapter, VehicleTrackAdapter
 from orius.orius_bench.controller_api import (
     DC3SController,
@@ -593,6 +594,14 @@ class TestCrossDomainCertificateStructure:
             5.0,
             AEROSPACE_CFG,
         ),
+        (
+            NavigationDomainAdapter({"expected_cadence_s": 0.25}),
+            {"x": 5.0, "y": 5.0, "vx": 0.0, "vy": 0.0, "ts_utc": _ts()},
+            {"ax": 0.2, "ay": 0.1},
+            {"arena_size": 10.0, "speed_limit": 1.0},
+            1.0,
+            {"expected_cadence_s": 0.25},
+        ),
     ]
 
     @pytest.mark.parametrize("adapter,telemetry,action,constraints,quantile,cfg", CASES)
@@ -805,3 +814,143 @@ class TestCertificateHashChain:
             prev_cert_hash=cert0_hash,
         )
         assert r1["certificate"]["prev_hash"] == cert0_hash
+
+
+# ===========================================================================
+# Navigation domain tests
+# ===========================================================================
+
+NAVIGATION_CFG = {"expected_cadence_s": 0.25}
+NAVIGATION_HOLD = ("x", "y", "vx", "vy")
+NAVIGATION_CONSTRAINTS = {"arena_size": 10.0, "speed_limit": 1.0}
+
+
+def _nav_constraints(state: dict) -> dict:
+    return NAVIGATION_CONSTRAINTS
+
+
+class TestNavigationDomain:
+    adapter = NavigationDomainAdapter(NAVIGATION_CFG)
+
+    def _constraints(self, state: dict) -> dict:
+        return NAVIGATION_CONSTRAINTS
+
+    def test_single_step_nominal(self):
+        """Navigation adapter emits a certificate for a safe nominal step."""
+        result = run_universal_step(
+            domain_adapter=self.adapter,
+            raw_telemetry={"x": 5.0, "y": 5.0, "vx": 0.0, "vy": 0.0, "ts_utc": _ts()},
+            history=None,
+            candidate_action={"ax": 0.2, "ay": 0.1},
+            constraints=NAVIGATION_CONSTRAINTS,
+            quantile=1.0,
+            cfg=NAVIGATION_CFG,
+        )
+        assert "certificate" in result
+        safe = result["safe_action"]
+        assert "ax" in safe
+        assert "ay" in safe
+
+    def test_arena_x_boundary_clamp(self):
+        """Action pushing robot past x=10 must be clamped."""
+        result = run_universal_step(
+            domain_adapter=self.adapter,
+            raw_telemetry={"x": 9.9, "y": 5.0, "vx": 0.0, "vy": 0.0, "ts_utc": _ts()},
+            history=None,
+            candidate_action={"ax": 2.0, "ay": 0.0},  # would push x >> 10
+            constraints=NAVIGATION_CONSTRAINTS,
+            quantile=1.0,
+            cfg=NAVIGATION_CFG,
+        )
+        assert result["repair_meta"]["repaired"] is True
+        # Next predicted x must not exceed arena_size
+        safe = result["safe_action"]
+        dt = 0.25
+        x_next = 9.9 + safe["ax"] * dt
+        assert x_next <= 10.0 + 1e-6
+
+    def test_arena_y_boundary_clamp(self):
+        """Action pushing robot past y=10 must be clamped."""
+        result = run_universal_step(
+            domain_adapter=self.adapter,
+            raw_telemetry={"x": 5.0, "y": 9.9, "vx": 0.0, "vy": 0.0, "ts_utc": _ts()},
+            history=None,
+            candidate_action={"ax": 0.0, "ay": 2.0},
+            constraints=NAVIGATION_CONSTRAINTS,
+            quantile=1.0,
+            cfg=NAVIGATION_CFG,
+        )
+        assert result["repair_meta"]["repaired"] is True
+
+    def test_speed_limit_enforced(self):
+        """Actions exceeding the speed limit must be scaled down."""
+        result = run_universal_step(
+            domain_adapter=self.adapter,
+            raw_telemetry={"x": 5.0, "y": 5.0, "vx": 0.0, "vy": 0.0, "ts_utc": _ts()},
+            history=None,
+            candidate_action={"ax": 5.0, "ay": 5.0},  # |v| >> 1.0 limit
+            constraints=NAVIGATION_CONSTRAINTS,
+            quantile=1.0,
+            cfg=NAVIGATION_CFG,
+        )
+        safe = result["safe_action"]
+        import math
+        speed = math.hypot(safe["ax"], safe["ay"])
+        assert speed <= 1.0 + 1e-6
+
+    def test_blackout_yields_valid_output(self):
+        """Full NaN telemetry (blackout) must produce a valid zero-motion certificate."""
+        raw = {"x": float("nan"), "y": float("nan"), "vx": float("nan"), "vy": float("nan"),
+               "ts_utc": _ts()}
+        result = run_universal_step(
+            domain_adapter=self.adapter,
+            raw_telemetry=raw,
+            history=None,
+            candidate_action={"ax": 0.5, "ay": 0.5},
+            constraints=NAVIGATION_CONSTRAINTS,
+            quantile=1.0,
+            cfg=NAVIGATION_CFG,
+        )
+        assert "certificate" in result
+        assert 0.05 <= result["reliability_w"] <= 1.0
+
+    def test_multi_step_no_regression(self):
+        """DC3S must not regress TSVR vs nominal over a full episode."""
+        track = NavigationTrackAdapter()
+        dc3s_recs = _run_domain_episode(
+            track, self.adapter, NAVIGATION_CFG, _nav_constraints, 1.0, NAVIGATION_HOLD,
+            DC3SController(), seed=2004, horizon=48, use_universal=True,
+        )
+        track = NavigationTrackAdapter()
+        nom_recs = _run_domain_episode(
+            track, self.adapter, NAVIGATION_CFG, _nav_constraints, 1.0, NAVIGATION_HOLD,
+            NominalController(), seed=2004, horizon=48, use_universal=False,
+        )
+        dc3s_m = compute_all_metrics(dc3s_recs)
+        nom_m  = compute_all_metrics(nom_recs)
+        assert dc3s_m.tsvr <= nom_m.tsvr + 0.01, (
+            f"Navigation DC3S TSVR {dc3s_m.tsvr:.3f} regressed vs nominal {nom_m.tsvr:.3f}"
+        )
+        assert 0.0 <= dc3s_m.intervention_rate <= 1.0
+        assert dc3s_m.audit_completeness == 1.0
+
+    def test_proof_quality_tsvr_reduction(self):
+        """DC3S must achieve ≥ 25 % TSVR reduction vs nominal (evidence gate)."""
+        track = NavigationTrackAdapter()
+        dc3s_recs = _run_domain_episode(
+            track, self.adapter, NAVIGATION_CFG, _nav_constraints, 1.0, NAVIGATION_HOLD,
+            DC3SController(), seed=2004, horizon=48, use_universal=True,
+        )
+        track = NavigationTrackAdapter()
+        nom_recs = _run_domain_episode(
+            track, self.adapter, NAVIGATION_CFG, _nav_constraints, 1.0, NAVIGATION_HOLD,
+            NominalController(), seed=2004, horizon=48, use_universal=False,
+        )
+        dc3s_m = compute_all_metrics(dc3s_recs)
+        nom_m  = compute_all_metrics(nom_recs)
+        if nom_m.tsvr > 0.05:
+            reduction = (nom_m.tsvr - dc3s_m.tsvr) / nom_m.tsvr
+            assert reduction >= 0.25, (
+                f"Navigation TSVR reduction {reduction*100:.1f}% < 25% "
+                f"(nominal={nom_m.tsvr:.3f}, dc3s={dc3s_m.tsvr:.3f})"
+            )

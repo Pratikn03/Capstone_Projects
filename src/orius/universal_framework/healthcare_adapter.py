@@ -140,7 +140,8 @@ class HealthcareDomainAdapter(DomainAdapter):
         spo2_min = _f(constraints.get("spo2_min_pct", self._spo2_min), self._spo2_min)
         alert_safe = max(0.0, min(1.0, alert))
         if spo2_lo < spo2_min:
-            alert_safe = max(alert_safe, 0.5)
+            # Emergency intervention: boost alert to 0.8 for faster SpO2 recovery
+            alert_safe = max(alert_safe, 0.8)
         repaired = abs(alert_safe - alert) > 1e-9
         meta = {
             "mode": "projection",
