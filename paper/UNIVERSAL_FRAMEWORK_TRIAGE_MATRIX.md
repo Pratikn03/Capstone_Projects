@@ -4,7 +4,7 @@ This matrix records the comparison used to reframe `paper/paper.tex` into the fl
 
 ## Source policy
 
-- Canonical sources of edit truth: repo thesis LaTeX, `paper/paper.tex`, locked reports, theorem/evidence maps.
+- Canonical sources of edit truth: `paper/paper.tex`, imported chapter/appendix blocks, locked reports, theorem/evidence maps.
 - Reference-only surfaces: `agent-artifacts-zip_*.zip`, `ORIUS_PhD_Thesis_300pages.pdf`, compiled PDFs.
 - Dispositions:
   - `import`: repo-backed and safe to foreground in the paper

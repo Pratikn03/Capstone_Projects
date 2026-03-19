@@ -28,6 +28,8 @@ The goal is to generate one artifact bundle showing:
 
 - the canonical universal validation harness passed,
 - the 18-theorem surface passed,
+- the non-battery training surfaces verified,
+- the software-in-loop replay traces passed,
 - the per-domain evidence tier is explicit,
 - and the artifact locations are recorded in one place.
 
@@ -45,6 +47,8 @@ Key outputs:
 - `framework_proof_summary.md`
 - `artifact_register.csv`
 - `domain_controller_summary.csv`
+- `training_audit/training_audit_report.json`
+- `sil_validation/sil_validation_report.json`
 - `universal_validation/validation_report.json`
 - `universal_validation/proof_domain_report.json`
 - `universal_validation/domain_validation_summary.csv`
@@ -52,6 +56,15 @@ Key outputs:
 
 This makes the universal surface easier to review without changing the core
 claim boundary that battery remains the deepest reference surface.
+
+Promotion from proof-candidate to proof-validated now requires all of:
+
+- locked non-synthetic telemetry,
+- a verified training surface,
+- a clean software-in-loop replay pass,
+- a nontrivial baseline gap,
+- material ORIUS TSVR improvement,
+- stable behavior across seeds.
 
 ---
 
@@ -87,6 +100,7 @@ to answer:
 
 - what is actually validated,
 - what is only proof-candidate, shadow, or experimental evidence,
+- which non-battery domains have training and SIL support,
 - how the canonical replay protocol was exercised across domains,
 - where the validation and theorem-gate artifacts live,
 - whether the ORIUS framework gate passed.

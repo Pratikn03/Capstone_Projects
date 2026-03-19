@@ -448,6 +448,13 @@ def build_multi_horizon(ctx: ReportContext):
     train_df, test_df = load_split_data(ctx)
     if train_df is None or test_df is None:
         return None
+    if train_df.empty or test_df.empty:
+        return {
+            "status": "skipped",
+            "reason": "empty_split",
+            "horizons": [],
+            "targets": {},
+        }
 
     horizons = [1, 3, 6, 12, 24]
     targets = _report_targets(ctx)
@@ -457,7 +464,7 @@ def build_multi_horizon(ctx: ReportContext):
     if not targets:
         return None
 
-    result = {"horizons": horizons, "targets": {}}
+    result = {"status": "ok", "horizons": horizons, "targets": {}}
     for target in targets:
         y_true = test_df[target].to_numpy()
         y_pred = persistence_24h(test_df, target)
@@ -468,12 +475,28 @@ def build_multi_horizon(ctx: ReportContext):
 
         # Quick GBM baseline for reference at multiple horizons.
         feat_cols = [c for c in train_df.columns if c not in drop_cols and pd.api.types.is_numeric_dtype(train_df[c])]
-        X_train = train_df[feat_cols].to_numpy()
-        y_train = train_df[target].to_numpy()
-        X_test = test_df[feat_cols].to_numpy()
+        if not feat_cols:
+            result["targets"][target] = {
+                "status": "skipped",
+                "reason": "no_numeric_features",
+            }
+            continue
+
+        aligned_train = train_df[feat_cols + [target]].dropna(subset=[target]).copy()
+        aligned_test = test_df[feat_cols + [target]].dropna(subset=[target]).copy()
+        if aligned_train.empty or aligned_test.empty:
+            result["targets"][target] = {
+                "status": "skipped",
+                "reason": "empty_train_or_test_after_alignment",
+            }
+            continue
+
+        X_train = aligned_train[feat_cols].to_numpy()
+        y_train = aligned_train[target].to_numpy()
+        X_test = aligned_test[feat_cols].to_numpy()
         _, gbm = train_gbm(X_train, y_train, params={"n_estimators": 200, "learning_rate": 0.05, "random_state": 42})
         gbm_pred = predict_gbm(gbm, X_test)
-        gbm = multi_horizon_metrics(test_df[target].to_numpy(), gbm_pred, horizons, target)
+        gbm = multi_horizon_metrics(aligned_test[target].to_numpy(), gbm_pred, horizons, target)
 
         result["targets"][target] = {"persistence": baseline, "gbm": gbm}
 

@@ -1,26 +1,20 @@
 \begin{table}[htbp]
 \centering
-\caption{Unified cross-domain controller comparison from the canonical
-universal replay harness. Fault protocol is shared across all runtime
-rows: dropout $p{=}0.15$, spike $p{=}0.08$, stale $p{=}0.10$.}
+\caption{Portable-domain ORIUS audit under fault injection (dropout $p{=}0.15$, spike $p{=}0.08$, stale $p{=}0.10$).}
 \label{tab:all_domain_comparison}
-\begin{tabular}{llrrrrr}
+\begin{tabular}{llrrrrrr}
 \toprule
-Domain & Tier & Baseline TSVR (\%) & ORIUS TSVR (\%) & Reduction (\%) & Repair (\%) & $\bar{w}_t$ \\
+Domain & Source & $N$ & Faults Inj.\ & Viol.\ Before (\%) & Viol.\ After (\%) & Repair Rate (\%) & $\bar{w}_t$ \\
 \midrule
-Battery & reference & 3.90 & \textbf{0.00} & 100.0 & 3.36 & 0.806 \\
-Autonomous Vehicles & proof\_candidate & 2.78 & \textbf{2.78} & 0.0 & 98.61 & 0.783 \\
-Industrial Process Control & proof\_validated & 21.53 & \textbf{0.00} & 100.0 & 91.67 & 0.652 \\
-Medical Monitoring (ICU Vitals) & proof\_validated & 6.25 & \textbf{0.00} & 100.0 & 14.58 & 0.853 \\
-Navigation & shadow\_synthetic & 18.06 & \textbf{0.69} & 96.2 & 100.00 & 0.805 \\
-Aerospace & experimental & 9.72 & \textbf{9.72} & 0.0 & 13.89 & 0.806 \\
+Aerospace & locked\_csv & 2000 & $\approx$660 & 10.9 & \textbf{10.9} & 75.7 & 0.782 \\
+Autonomous Vehicles & locked\_csv & 2000 & $\approx$660 & 3.6 & \textbf{3.6} & 99.6 & 0.768 \\
+Navigation & synthetic & 2000 & $\approx$660 & 25.8 & \textbf{1.0} & 100.0 & 0.775 \\
+Medical Monitoring (ICU Vitals) & locked\_csv & 2000 & $\approx$660 & 7.5 & \textbf{0.0} & 37.2 & 0.812 \\
+Industrial Process Control & locked\_csv & 2000 & $\approx$660 & 21.7 & \textbf{0.0} & 90.7 & 0.660 \\
 \bottomrule
 \end{tabular}
 \smallskip
-\begin{minipage}{0.95\linewidth}\footnotesize
-Battery is a locked publication aggregate across degraded-telemetry
-scenarios. AV, industrial, healthcare, navigation, and aerospace use
-the shared replay harness and universal repair path. Navigation remains
-synthetic-shadow evidence; aerospace remains experimental.
+\begin{minipage}{\linewidth}\footnotesize
+Violations Before = fraction of steps where faulted telemetry or aggressive candidate action breaches the domain safety constraint before the ORIUS shield intervenes. Violations After = fraction remaining after shield repair. Navigation uses a synthetic bounded-arena trace because no locked real navigation telemetry dataset is currently included in the repo.
 \end{minipage}
 \end{table}

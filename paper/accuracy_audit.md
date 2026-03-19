@@ -26,7 +26,7 @@ Canonical policy: **dataset-scoped latest** as of February 17, 2026.
 - Evidence: `python3 scripts/validate_paper_claims.py` returns `PASS: no findings`.
 
 2. LaTeX compilation succeeds (non-fatal typography warnings only).
-- Evidence: `cd paper && pdflatex -interaction=nonstopmode -halt-on-error paper.tex` completed successfully and produced `paper/paper.pdf` (18 pages).
+- Evidence: `make paper-compile` completed successfully and published the canonical manuscript at repo-root `paper.pdf`.
 
 3. Historical blockers from earlier drafts are resolved in current `paper/paper.tex`.
 - Missing `\input{}` compile failures previously noted in this project state are no longer active blockers in the current compiled file.

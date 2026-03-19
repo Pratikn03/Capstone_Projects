@@ -37,10 +37,14 @@ def test_framework_proof_bundle_builds_expected_outputs(tmp_path: Path) -> None:
     assert manifest["harness_pass"] is True
     assert manifest["evidence_pass"] is True
     assert manifest["integrated_theorem_gate_pass"] is True
+    assert manifest["training_audit_pass"] is True
+    assert manifest["sil_audit_pass"] is True
 
     summary_md = (tmp_path / "framework_proof_summary.md").read_text()
     assert "Proof-validated domains" in summary_md
     assert "`industrial, healthcare`" in summary_md
+    assert "Training audit" in summary_md
+    assert "SIL audit" in summary_md
 
     artifact_register = (tmp_path / "artifact_register.csv").read_text()
     assert "battery" in artifact_register

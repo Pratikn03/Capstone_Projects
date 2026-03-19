@@ -2,15 +2,15 @@
 \centering
 \caption{Proof-gate status for the non-battery runtime domains.}
 \label{tab:domain-proof-status}
-\begin{tabular}{lllp{4.0cm}}
+\begin{tabular}{lllllp{3.3cm}}
 \toprule
-Domain & Tier & Gate pass & Notes \\
+Domain & Tier & Training & SIL & Gate pass & Notes \\
 \midrule
-Autonomous Vehicles & proof\_candidate & no & locked telemetry exists, but the current replay surface does not yet justify promotion; reasons=orius\_did\_not\_improve \\
-Industrial Process Control & proof\_validated & yes & locked telemetry replay plus shared universal repair path passed the promotion gate \\
-Medical Monitoring (ICU Vitals) & proof\_validated & yes & locked telemetry replay plus shared universal repair path passed the promotion gate \\
-Navigation & shadow\_synthetic & no & synthetic runtime shadow surface only; reasons=synthetic\_data \\
-Aerospace & experimental & no & adapter and replay path execute, but the current surface remains experimental; reasons=experimental\_surface \\
+Autonomous Vehicles & proof\_candidate & yes & yes & no & runtime replay executes, but promotion is blocked until replay, training, and SIL evidence all align; reasons=orius\_did\_not\_improve \\
+Industrial Process Control & proof\_validated & yes & yes & yes & locked telemetry replay, verified training surface, and SIL pass all cleared the promotion gate \\
+Medical Monitoring (ICU Vitals) & proof\_validated & yes & yes & yes & locked telemetry replay, verified training surface, and SIL pass all cleared the promotion gate \\
+Navigation & shadow\_synthetic & no & yes & no & synthetic runtime shadow surface only; reasons=synthetic\_data \\
+Aerospace & experimental & yes & yes & no & adapter and replay path execute, but the current surface remains experimental; reasons=experimental\_surface \\
 \bottomrule
 \end{tabular}
 \end{table}

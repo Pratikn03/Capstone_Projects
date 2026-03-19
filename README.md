@@ -35,7 +35,7 @@ The battery-domain claim is the main locked result in this repository:
 ### What is *not* currently claimed
 
 - No field-deployment claim.
-- No production-hardware / HIL claim for the main thesis result.
+- No production-hardware / HIL claim for the main manuscript result.
 - No claim that every ORIUS domain is equally validated.
 - No claim that portability evidence equals universal theorem closure.
 
@@ -49,8 +49,8 @@ If you want the **full proof package** and publication-facing evidence, start he
 
 | Artifact | What it is |
 |---|---|
-| [`paper/paper.pdf`](paper/paper.pdf) | Current thesis-facing compiled PDF |
-| [`paper/paper.tex`](paper/paper.tex) | Main thesis source |
+| [`paper.pdf`](paper.pdf) | Canonical compiled manuscript PDF |
+| [`paper/paper.tex`](paper/paper.tex) | Canonical manuscript source |
 | [`paper/paper_r1.tex`](paper/paper_r1.tex) | Conference / R1 variant |
 | [`paper/PAPER_DRAFT.md`](paper/PAPER_DRAFT.md) | Long-form paper draft and argument narrative |
 | [`paper/README.md`](paper/README.md) | Thesis-writing and paper-production workflow guide |
@@ -151,8 +151,8 @@ The locked forecasting comparison includes:
 - PatchTST.
 
 Canonical datasets:
-- **DE / OPSD** for the thesis reference path,
-- **US / EIA-930** with MISO as the canonical thesis lock and PJM/ERCOT as supporting release-family evidence.
+- **DE / OPSD** for the reference path,
+- **US / EIA-930** with MISO as the canonical locked dataset and PJM/ERCOT as supporting release-family evidence.
 
 ### DC3S safety loop
 
@@ -251,7 +251,7 @@ make r1-promote RELEASE_ID=$RELEASE_ID
 ## 7. Where to look depending on what you want
 
 ### If you want the **paper / thesis argument**
-- [`paper/paper.pdf`](paper/paper.pdf)
+- [`paper.pdf`](paper.pdf)
 - [`paper/PAPER_DRAFT.md`](paper/PAPER_DRAFT.md)
 - [`chapters/`](chapters/)
 - [`appendices/`](appendices/)
@@ -311,7 +311,7 @@ make r1-promote RELEASE_ID=$RELEASE_ID
 If you are new to the project, use this order:
 
 1. this `README.md`,
-2. [`paper/paper.pdf`](paper/paper.pdf),
+2. [`paper.pdf`](paper.pdf),
 3. [`paper/PAPER_DRAFT.md`](paper/PAPER_DRAFT.md),
 4. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md),
 5. [`reports/publication/`](reports/publication/),

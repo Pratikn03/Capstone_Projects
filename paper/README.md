@@ -1,12 +1,19 @@
-# ORIUS Thesis / Paper Authoring Guide
+# ORIUS Manuscript Authoring Guide
 
 This folder is the manuscript control room for the ORIUS thesis and paper
 variants. Use it as the **authoring guide** for:
 
-- writing the thesis-facing manuscript,
+- writing the canonical long-form manuscript,
 - keeping paper claims synchronized with locked artifacts,
 - regenerating tables and figures from trained runs,
 - moving from training outputs to a paper-ready PDF.
+
+Canonical policy:
+
+- source of truth: `paper/paper.tex`
+- official compiled deliverable: repo-root `paper.pdf`
+- shorter derivative: `paper/paper_r1.tex`
+- deprecated reference only: `../orius_battery_409page_figures_upgraded_main.*`
 
 ---
 
@@ -14,9 +21,10 @@ variants. Use it as the **authoring guide** for:
 
 | File | Role |
 |---|---|
-| `paper.tex` | Main thesis-facing manuscript |
+| `paper.tex` | Canonical LaTeX manuscript |
 | `paper_r1.tex` | Conference / submission variant |
-| `PAPER_DRAFT.md` | Long-form narrative draft and claim framing |
+| `PAPER_DRAFT.md` | Narrative draft and argument companion |
+| `../paper.pdf` | Official compiled manuscript deliverable |
 | `metrics_manifest.json` | Locked metrics source of truth |
 | `claim_matrix.csv` | Claim-to-evidence map |
 | `manifest.yaml` | Paper artifact manifest |
@@ -55,9 +63,9 @@ conference paper. That means:
 
 ---
 
-## 3. Thesis source layout
+## 3. Manuscript source layout
 
-The thesis-style story is spread across:
+The canonical long-form story is spread across:
 
 - `paper.tex` for the main compiled manuscript,
 - `chapters/` for the chapter-level source blocks,
@@ -136,7 +144,7 @@ make thesis-bench RELEASE_ID=$RELEASE_ID
 make thesis-artifacts RELEASE_ID=$RELEASE_ID
 ```
 
-### Step 4 — verify and compile the manuscript
+### Step 4 — verify and compile the canonical manuscript
 
 ```bash
 make thesis-manuscript
@@ -159,6 +167,7 @@ When writing the thesis, iterate in this order:
 3. run paper sync and claim validation,
 4. compile the PDF,
 5. only then promote the wording into final thesis-facing prose.
+5. confirm the canonical output landed at repo root as `paper.pdf`.
 
 ---
 
@@ -169,7 +178,7 @@ When writing the thesis, iterate in this order:
 | `make thesis-train RELEASE_ID=... PROFILE=...` | Run thesis-facing training stage |
 | `make thesis-bench RELEASE_ID=...` | Run benchmark / CPSBench stage |
 | `make thesis-artifacts RELEASE_ID=...` | Build publication artifact + paper assets |
-| `make thesis-manuscript` | Validate and compile the manuscript |
+| `make thesis-manuscript` | Validate and compile the canonical manuscript to `../paper.pdf` |
 | `make thesis-freeze RELEASE_ID=...` | Freeze verified outputs into the paper path |
 | `make paper-sync` | Check paper asset synchronization |
 | `make publish-audit` | Run final publication audit |

@@ -38,7 +38,7 @@ Legacy/internal scripts may still exist for compatibility, but they should not b
 | `compute_reliability_group_coverage.py` | Build reliability-binned conformal coverage artifacts for research analysis |
 | `build_stats_tables.py` | Statistical significance tables |
 | `build_paper_table_tex.py` | Convert manifest-mapped CSV tables into LaTeX table fragments + token lookup |
-| `post_training_paper_update.py` | Freeze thesis/conference PDFs, render review PNGs, and record PDF hashes in the publication manifest |
+| `post_training_paper_update.py` | Freeze the canonical manuscript/conference PDFs, render review PNGs, and record PDF hashes in the publication manifest |
 | `build_forecast_interval_report.py` | Uncertainty quantification report |
 | `statistical_tests.py` | Diebold-Mariano tests |
 | `shap_importance.py` | SHAP feature importance analysis |
@@ -188,7 +188,7 @@ This runs:
 2. `scripts/build_paper_table_tex.py`
 3. `scripts/update_paper_metrics.py`
 4. `scripts/verify_paper_manifest.py`
-5. 2-pass `pdflatex` compile for `paper/paper.tex`
+5. 2-pass `pdflatex` compile for `paper/paper.tex` plus publish repo-root `paper.pdf`
 
 For the final submission freeze, use the release-scoped canonical flow instead of `make paper-refresh`:
 
@@ -196,4 +196,4 @@ For the final submission freeze, use the release-scoped canonical flow instead o
 make paper-freeze RELEASE_ID=FINAL_20260312T000000Z
 ```
 
-This performs the paper-refresh steps, compiles both `paper.tex` and `paper_r1.tex`, renders review PNGs, copies immutable frozen PDFs under `reports/publication/frozen/<RELEASE_ID>/`, and records PDF hashes in `reports/publication/release_manifest.json`.
+This performs the paper-refresh steps, compiles both `paper.tex` and `paper_r1.tex`, publishes the canonical manuscript to repo-root `paper.pdf`, renders review PNGs, copies immutable frozen PDFs under `reports/publication/frozen/<RELEASE_ID>/`, and records PDF hashes in `reports/publication/release_manifest.json`.

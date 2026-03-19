@@ -20,6 +20,6 @@ echo "=== Refreshing paper assets (from $ROOT) ==="
 "$PY" scripts/build_paper_table_tex.py
 
 echo "=== Building paper ==="
-(cd paper && pdflatex -interaction=nonstopmode paper.tex)
+make paper-compile
 
-echo "Done. PDF: paper/paper.pdf"
+echo "Done. PDF: paper.pdf"

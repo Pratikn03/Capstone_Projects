@@ -28,7 +28,7 @@ splits:
   train_ratio: 0.70
   calibration_ratio: 0.05
   val_ratio: 0.10
-  gap_hours: 1
+  gap_hours: 0
 
 models:
   baseline_gbm:
