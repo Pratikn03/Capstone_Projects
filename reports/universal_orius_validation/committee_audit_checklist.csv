@@ -1,0 +1,6 @@
+item,status,owner
+Battery reference claim matches locked artifacts,pass,R1
+Integrated 18-theorem release gate passes,pass,R2
+Universal runtime proof gate promotes only supported domains,pass,R3
+Release artifacts and manuscript tables are generated from one harness,pass,R4
+Scope/limitations remain aligned with evidence tiers,pass,R5

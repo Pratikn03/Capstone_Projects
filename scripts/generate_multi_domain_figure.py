@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate multi-domain ORIUS validation figure for the paper."""
+"""Generate the paper-facing multi-domain ORIUS validation figure."""
 from __future__ import annotations
 
 import os
@@ -37,11 +37,13 @@ def main() -> int:
     status_map: dict[str, str] = {}
     if STATUS_CSV.exists():
         status_df = pd.read_csv(STATUS_CSV)
-        raw_map = dict(zip(status_df["domain"], status_df["maturity_label"]))
+        tier_col = "evidence_tier" if "evidence_tier" in status_df.columns else "maturity_label"
+        raw_map = dict(zip(status_df["domain"], status_df[tier_col]))
         short = {
             "reference": "reference",
-            "proof_domain": "proof",
-            "portability_only": "portable",
+            "proof_validated": "proof",
+            "proof_candidate": "candidate",
+            "shadow_synthetic": "shadow",
             "experimental": "experimental",
         }
         status_map = {str(key): short.get(str(value), str(value)) for key, value in raw_map.items()}
@@ -61,7 +63,7 @@ def main() -> int:
     ax.set_xticks(x)
     ax.set_xticklabels(tick_labels, rotation=15, ha="right")
     ax.set_ylabel("TSVR (true-state violation rate)")
-    ax.set_title("Multi-Domain ORIUS Validation: TSVR by Domain and Evidence Tier")
+    ax.set_title("Canonical Universal ORIUS Validation: TSVR by Domain and Evidence Tier")
     ax.legend(loc="upper right", fontsize=9)
     ax.set_ylim(0, max(1.0, baseline.max() * 1.1, orius.max() * 1.1))
     ax.grid(axis="y", alpha=0.3)

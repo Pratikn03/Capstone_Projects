@@ -8,10 +8,11 @@ realistic telemetry faults.  This chapter asks whether that result is an
 accident of battery physics or a structural consequence of the ORIUS
 architecture.  The current repo supports a bounded answer: the shared
 pipeline transfers across domains, but the evidence is tiered rather than
-uniform.  Battery remains the reference domain, vehicle is the current
-second proof-domain surface, and the remaining non-battery domains are
-portability or experimental evidence rather than a universal performance
-claim.
+uniform.  Battery remains the reference domain; industrial process control
+and medical monitoring are the current proof-validated non-battery rows;
+autonomous vehicles remain a proof candidate under the locked replay
+surface; navigation is synthetic shadow evidence; and aerospace remains
+experimental rather than part of the defended proof boundary.
 
 \section{Why the Battery Result Is Structurally General}
 
@@ -118,32 +119,40 @@ a shared library, tested once and reused rather than reimplemented per domain.
 \label{sec:cross-domain-eval}
 
 To move beyond architecture-only claims, we validated the ORIUS universal
-pipeline on additional non-battery domains and one portability-only
-navigation track.  Each domain uses a separate \texttt{DomainAdapter}
-implementation but the same shared DC3S core.  The resulting evidence is
-explicitly tiered by validation status.
+pipeline on a single canonical replay-backed evidence surface.  The
+canonical validator now combines: (i) the locked battery reference
+aggregate from publication artifacts; and (ii) a shared universal replay
+harness over autonomous-vehicle, industrial, healthcare, navigation, and
+aerospace telemetry.  Each row uses the same shared runtime path, but the
+claim tier is governed by evidence quality rather than by the existence of
+an adapter alone.
 
 \subsection{Datasets}
 
 \begin{itemize}
-  \item \textbf{Navigation} (synthetic bounded-arena telemetry):
-    2D position and velocity with obstacle and boundary constraints.
-    This is a portability-only runtime track used to confirm that the
-    five-stage pipeline and certificate surface remain domain-agnostic.
-  \item \textbf{Aerospace} (5\,000 steps, 1-second cadence): synthetic
-    flight-envelope telemetry with altitude, airspeed, bank angle, and fuel
-    fraction.  Constraints: airspeed $\in [60, 350]$~kt, bank angle
-    $\leq 30^\circ$.
-  \item \textbf{Autonomous Vehicles} (10\,000 steps, 1-second cadence):
-    longitudinal platoon trajectories with position, speed, and leading-vehicle
-    position.  Constraint: speed $\leq v_{\text{limit}}$~m/s.
-  \item \textbf{Healthcare -- ICU Vitals} (2\,400 steps, 1-second cadence):
-    patient-level heart rate, SpO\textsubscript{2}, and respiratory rate.
-    Constraint: SpO\textsubscript{2} $\geq 90\%$.
-  \item \textbf{Industrial Process Control} (9\,500 steps, hourly cadence):
-    factory sensor readings including temperature, vacuum, pressure, humidity,
-    and power draw.  Constraints: power $\leq 500$~MW, temperature
-    $\leq 120^\circ$C.
+  \item \textbf{Battery reference} uses the locked publication aggregate
+    over degraded-telemetry scenarios in
+    \texttt{reports/publication/dc3s\_main\_table.csv}; it is the only row
+    backed by the full theorem-to-code-to-artifact battery lineage
+    established in the earlier parts of the thesis.
+  \item \textbf{Autonomous Vehicles} use locked longitudinal telemetry with
+    speed-limit and lead-vehicle constraints.  This row is replayed through
+    the universal repair path and currently remains a proof candidate rather
+    than a promoted proof surface because the present locked traces do not
+    show post-shield TSVR improvement.
+  \item \textbf{Industrial Process Control} uses locked process telemetry
+    with temperature and power safety constraints.  This row passes the
+    promotion gate under the shared replay harness.
+  \item \textbf{Healthcare -- ICU Vitals} uses locked patient-monitoring
+    telemetry with SpO\textsubscript{2} safety constraints.  This row also
+    passes the promotion gate under the shared replay harness.
+  \item \textbf{Navigation} uses a bounded synthetic 2D arena trace with
+    obstacle and boundary constraints.  It is retained as a synthetic shadow
+    surface to test adapter portability, not to support a non-synthetic
+    universal claim.
+  \item \textbf{Aerospace} uses replayable flight-envelope telemetry and
+    remains experimental because the current locked row does not yet satisfy
+    the same improvement gate applied to the promoted proof candidates.
 \end{itemize}
 
 \subsection{Universal Framework Architecture}
@@ -159,68 +168,74 @@ explicitly tiered by validation status.
 
 \subsection{Protocol}
 
-We evaluated $N = 200$ consecutive telemetry steps per domain, with
-realistic fault injection following the DC3S fault taxonomy
-(Chapter~\ref{ch:cpsbench-battery}): 15\% packet dropout, 8\% sensor
-spike to unsafe values, and 10\% stale readings.  This stress-tests the
-shield's ability to prevent safety violations that would otherwise occur.
-At each step, telemetry was passed through the full five-stage ORIUS pipeline:
-\textsf{Detect} $\to$ \textsf{Calibrate} $\to$ \textsf{Constrain}
-$\to$ \textsf{Shield} $\to$ \textsf{Certify}.
-We report: safety violations before and after the shield, the fraction of
-steps where the shield altered (repaired) the candidate action, mean
-observation-quality reliability $\bar{w}_t$, and pipeline latency.
+For the universal replay rows we evaluate $N = 48$ consecutive telemetry
+steps per seed across three locked seeds with a shared fault schedule:
+15\% packet dropout, 8\% spike-to-unsafe-value corruption, and 10\% stale
+readings.  Battery is reported as a locked publication aggregate over the
+degraded-telemetry scenarios already used in the main battery paper.  For
+each non-battery runtime row, the candidate action and the repaired ORIUS
+action are evaluated under the same row-wise truth surface, and we report:
+baseline TSVR, post-shield TSVR, repair rate, mean reliability
+$\bar{w}_t$, and latency.  Promotion from \emph{proof candidate} to
+\emph{proof validated} requires four conditions simultaneously: locked
+non-synthetic telemetry, a nontrivial baseline gap, material TSVR
+reduction after repair, and stable behavior across seeds.
 
 \subsection{Validation Status by Domain}
 
 \input{reports/universal_orius_validation/tbl_domain_validation_summary}
 
 Table~\ref{tab:domain-validation-summary} is the governing cross-domain
-status table for the repo.  It separates the battery reference claim from
-the vehicle proof-domain result and keeps navigation, industrial, and
-healthcare as portability-only evidence.  This table, rather than the raw
-TSVR columns alone, determines what the thesis is allowed to claim.
+status table for the repo.  It now comes from the same canonical replay
+surface as the comparison tables and figures below, so the thesis no longer
+mixes a proof table from one harness with performance rows from another.
+The table separates the battery reference row from the two currently
+promoted proof-validated domains (industrial and healthcare), keeps AV as a
+proof candidate with an explicit failure reason, preserves navigation as a
+synthetic shadow surface, and leaves aerospace experimental.
+
+\input{reports/universal_orius_validation/tbl_domain_proof_status}
 
 \subsection{Results}
 
-\input{reports/multi_domain/tbl_all_domain_comparison}
+\input{reports/universal_orius_validation/tbl_all_domain_comparison}
 
-Table~\ref{tab:all_domain_comparison} shows that fault injection produces
-non-trivial violation rates \emph{before} the ORIUS shield intervenes
-(3.0--24.0\% in the current portable-domain audit), and that the shared
-repair path reduces post-shield violations sharply on navigation, medical,
-and industrial tracks.  The aerospace row remains mixed, and the
-portable-domain AV audit is intentionally secondary to the proof-domain
-vehicle result in Table~\ref{tab:domain-validation-summary}.  This should
-therefore be read as bounded portability evidence for a shared harness and
-repair interface, not as a universal dominance theorem.  In particular,
-the industrial, healthcare, and navigation rows remain portability-only in
-the governing status table, while aerospace remains experimental.
+Table~\ref{tab:all_domain_comparison} makes the tier boundary explicit.
+Battery remains the locked reference row with 3.9\% baseline TSVR and
+0.0\% ORIUS TSVR under degraded telemetry.  Industrial control
+(21.53\% $\rightarrow$ 0.00\%) and medical monitoring
+(6.25\% $\rightarrow$ 0.00\%) both pass the non-battery promotion gate on
+locked telemetry.  AV remains informative but not promotable in the current
+release because the universal repair path repairs aggressively while the
+locked traces still yield no net TSVR improvement.  Navigation shows strong
+synthetic-shadow improvement but is not eligible for promotion because its
+trace is synthetic.  Aerospace remains an execution-verified experimental
+row rather than a defended proof surface.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.88\linewidth]{reports/multi_domain/fig_all_domain_comparison.png}
-  \caption{Portable-domain ORIUS audit from the shared universal runtime.
-    The figure summarizes before-vs-after violation rates under one fault
-    protocol across AV, navigation, medical monitoring, industrial control,
-    and aerospace.  Navigation uses a synthetic bounded-arena trace; the
-    remaining rows use locked repo telemetry.}
+  \includegraphics[width=0.88\linewidth]{reports/universal_orius_validation/fig_all_domain_comparison.png}
+  \caption{Canonical universal ORIUS validation surface.  Battery is shown as
+    the locked reference aggregate; industrial and healthcare are the current
+    proof-validated non-battery rows; AV remains a proof candidate; navigation
+    is synthetic-shadow evidence; and aerospace remains experimental.}
   \label{fig:all-domain-comparison}
 \end{figure}
 
-\input{reports/multi_domain/tbl_all_domain_latency}
+\input{reports/universal_orius_validation/tbl_all_domain_latency}
 
 Table~\ref{tab:all_domain_latency} confirms that the ORIUS pipeline adds
-sub-millisecond overhead per step across all domains (P95 $< 1$~ms in all
-cases), meeting the real-time requirements of each application.
+sub-millisecond overhead per step across all rows (P95 $< 0.1$~ms in the
+current locked replay package), so the universal runtime evidence is not
+trading away latency to obtain the safety gains reported above.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.88\linewidth]{paper/assets/figures/fig_multi_domain_validation.png}
-  \caption{Cross-domain validation surface from the locked universal harness.
-    The figure is intended as portability and auditability evidence: vehicle
-    is the current second proof-domain surface, while navigation, industrial,
-    and healthcare remain portability-only.}
+  \caption{Cross-domain validation surface from the canonical universal
+    evidence tier table.  The labels encode the defended claim boundary:
+    reference, proof-validated, proof-candidate, shadow-synthetic, and
+    experimental.}
   \label{fig:multi-domain-validation}
 \end{figure}
 
@@ -233,9 +248,9 @@ These results support three claims:
     only a \texttt{DomainAdapter} implementation; the DC3S core was not
     modified.
   \item \textbf{Tiered evidence rather than universal dominance.} Battery
-    remains the reference domain, vehicle is the current second proof-domain
-    result, and industrial, healthcare, and navigation are currently
-    portability-only surfaces.
+    remains the reference domain; industrial and healthcare are currently
+    proof-validated under locked replay; AV is a proof candidate; navigation
+    is a synthetic shadow surface; and aerospace remains experimental.
   \item \textbf{Overhead is negligible.} Sub-millisecond pipeline latency
     makes ORIUS suitable for fast-control-loop applications (AV at 1~Hz,
     industrial at hourly cadence).
@@ -253,8 +268,9 @@ research contribution---provided the new domain satisfies the regularity
 conditions of Chapter~\ref{ch:problem-formulation}.
 
 Empirical validation outside the battery domain now shows that the shared
-runtime, adapter contract, and harness execute across vehicle, navigation,
+runtime, adapter contract, and replay harness execute across AV, navigation,
 industrial, healthcare, and aerospace settings.  The strongest non-battery
-claim in the current repo is the vehicle proof-domain result; the remaining
-domains support portability, auditability, and low-latency execution rather
-than a universal safety guarantee.
+claims in the current repo are the industrial and healthcare
+proof-validated rows; AV remains a disciplined proof candidate; navigation
+remains synthetic shadow evidence; and aerospace remains experimental rather
+than part of the defended universal claim.
