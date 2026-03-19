@@ -1,0 +1,24 @@
+% Adversarial TSVR Table (auto-generated)
+% Source: reports/adversarial_run/adversarial_benchmark_report.json
+% Seeds: 5 | Horizon: 48 steps per seed
+\begin{table}[htbp]
+\centering\small
+\caption{Per-domain TSVR under standard and adversarial faults.
+         \emph{Std}: stochastic faults only.
+         \emph{Adv+Std OQE}: adversarial faults with original reliability scoring.
+         \emph{Adv+Rob OQE}: adversarial faults with Byzantine-resistant OQE.
+         Evidence gate: Adv+Rob OQE TSVR $\leq 1.5\times$ Std TSVR.}
+\label{tab:adversarial_tsvr}
+\begin{tabular}{lrrrrc}
+\toprule
+\textbf{Domain} & \textbf{Std TSVR} & \textbf{Adv+Std OQE} & \textbf{Adv+Rob OQE}
+  & \textbf{Ratio} & \textbf{Gate} \\
+\midrule
+Industrial  & 1.000 & 1.000 & 0.000 & 0.00$\times$ & \checkmark \\
+Healthcare  & 0.375 & 0.375 & 0.229 & 0.61$\times$ & \checkmark \\
+Vehicle     & 0.417 & 0.417 & 0.417 & 1.00$\times$ & \checkmark \\
+Aerospace   & 0.000 & 0.000 & 0.000 & 0.00$\times$ & \checkmark \\
+Navigation  & 0.000 & 0.000 & 0.000 & 0.00$\times$ & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{table}

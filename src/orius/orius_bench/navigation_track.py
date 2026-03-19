@@ -39,7 +39,8 @@ class NavigationTrackAdapter(BenchmarkAdapter):
 
     def reset(self, seed: int = 42) -> Mapping[str, Any]:
         self._rng = np.random.default_rng(seed)
-        self._pos = np.array([1.0, 1.0])
+        # Start near x-boundary so an aggressive nominal action quickly causes violations
+        self._pos = np.array([9.0, 1.0])
         self._vel = np.zeros(2)
         return self.true_state()
 

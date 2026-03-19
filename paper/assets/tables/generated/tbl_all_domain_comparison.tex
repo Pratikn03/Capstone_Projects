@@ -1,15 +1,19 @@
-\begin{table}[htbp]
+\begin{table*}[htbp]
 \centering
-\caption{ORIUS Universal Framework: Cross-Domain Safety Results on Real Telemetry}
+\small
+\caption{ORIUS Universal Framework: Cross-Domain Safety Results (ORIUS-Bench, 5 seeds $\times$ 48 steps, multi-fault episodes). All five proof domains are \emph{proof\_validated} ($\geq$25\% TSVR reduction). Battery is the reference domain evaluated on real grid data.}
 \label{tab:all_domain_comparison}
-\begin{tabular}{lrrrrr}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{llrrrrr}
 \toprule
-Domain & $N$ & Viol.\ Before (\%) & Viol.\ After (\%) & Repair Rate (\%) & $\bar{w}_t$ \\
+Domain & Status & Baseline TSVR & ORIUS TSVR & Reduction (\%) & Evidence gate \\
 \midrule
-Aerospace & 200 & 0.0 & 0.0 & 0.0 & 1.000 \\
-Autonomous Vehicles & 200 & 0.0 & 0.0 & 100.0 & 1.000 \\
-Healthcare (ICU Vitals) & 200 & 0.0 & 0.0 & 0.0 & 1.000 \\
-Industrial Process Control & 200 & 0.0 & 0.0 & 100.0 & 1.000 \\
+Battery (reference)           & reference\_validated & 87.5\% & 93.8\% & --- & --- \\
+Vehicle (AV)                  & proof\_validated     & 54.2\% &  1.7\% & 96.9\% & \checkmark \\
+Healthcare (ICU Vitals)       & proof\_validated     & 100.0\% & 27.9\% & 72.1\% & \checkmark \\
+Industrial (Process Control)  & proof\_validated     & 100.0\% &  0.0\% & 100.0\% & \checkmark \\
+Aerospace (Flight Control)    & proof\_validated     & 100.0\% &  0.0\% & 100.0\% & \checkmark \\
+Navigation (2D Robot)         & proof\_validated     & 83.3\% &  0.0\% & 100.0\% & \checkmark \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}

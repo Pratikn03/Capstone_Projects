@@ -1,0 +1,57 @@
+# DC3S configuration for the Healthcare (vital signs) portability-validated domain.
+# Safety predicates: SpO2 >= spo2_min, HR in [hr_min, hr_max], RR in [rr_min, rr_max].
+# Higher k_quality and infl_max than battery — patient safety is critical.
+
+dc3s:
+  assumptions_version: dc3s-healthcare-v1
+
+  # Vital-sign monitor heartbeat (1 Hz typical bedside monitor)
+  expected_cadence_s: 1.0
+
+  law: linear
+  k_quality: 0.60      # heightened sensitivity to sensor degradation
+  k_drift: 0.40        # stronger inflation on physiological drift
+  k_sensitivity: 0.03
+  infl_max: 3.0        # wider safety margins; false alarms preferred over misses
+
+  reliability:
+    lambda_delay: 0.005    # bedside devices tolerate short latency bursts
+    spike_beta: 0.15       # tight spike threshold (SpO2 cannot jump ±15%)
+    ooo_gamma: 0.40        # heavy OOO penalty on vital-sign streams
+    min_w: 0.05
+
+  ftit:
+    decay: 0.95            # faster forgetting — patient state changes quickly
+    stale_k: 3
+    stale_tol: 1.0e-9
+    alpha_dropout: 1.0
+    alpha_stale_sensor: 1.0
+    alpha_delay_jitter: 1.0
+    alpha_out_of_order: 1.0
+    alpha_spikes: 1.0
+    sigma2_init: 1.0
+    delta: 0.05
+
+  drift:
+    detector: page_hinkley
+    ph_delta: 0.005
+    ph_lambda: 3.0
+    warmup_steps: 10       # short warmup — patient deterioration can be fast
+    cooldown_steps: 5
+
+  shield:
+    mode: l2_projection
+    reserve_soc_pct_drift: 0.10   # 10 % extra margin on alert threshold during drift
+
+  # Healthcare-specific constraint defaults
+  healthcare:
+    hr_min_bpm: 40.0
+    hr_max_bpm: 120.0
+    spo2_min_pct: 90.0
+    rr_min: 8.0
+    rr_max: 30.0
+
+  audit:
+    duckdb_path: data/audit/dc3s_healthcare_audit.duckdb
+    table_name: dispatch_certificates
+    state_table_name: dc3s_healthcare_online_state
