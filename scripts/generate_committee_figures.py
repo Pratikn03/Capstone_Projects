@@ -199,6 +199,81 @@ def make_intervention_heatmap() -> None:
 
 
 # ============================================================
+# C4 — Per-Domain Fault Breakdown (6-panel bar chart)
+# ============================================================
+
+def make_per_domain_fault_breakdown() -> None:
+    """6-panel figure: each domain gets a grouped bar chart of TSVR by fault type."""
+    csv_path = REPORTS / "multi_domain_ablation" / "fault_type_tsvr.csv"
+    if not csv_path.exists():
+        print(f"  SKIP fig_per_domain_fault_breakdown.png (missing {csv_path})")
+        return
+
+    import csv as _csv
+    from collections import defaultdict
+
+    with open(csv_path) as f:
+        rows = list(_csv.DictReader(f))
+
+    # data[(domain, fault_type, controller)] = [tsvr, ...]
+    data: dict[tuple[str, str, str], list[float]] = defaultdict(list)
+    for r in rows:
+        try:
+            v = float(r["tsvr"])
+            if v == v:
+                data[(r["domain"], r["fault_type"], r["controller"])].append(v)
+        except (ValueError, KeyError):
+            pass
+
+    def _mean(d: dict, dom: str, ft: str, ctrl: str) -> float:
+        vals = d.get((dom, ft, ctrl), [])
+        return sum(vals) / len(vals) if vals else 0.0
+
+    domain_order = ["battery", "vehicle", "healthcare", "industrial", "aerospace", "navigation"]
+    fault_order  = ["bias", "noise", "stuck_sensor", "blackout", "multi"]
+    fault_labels = ["Bias", "Noise", "Stuck", "Blackout", "Multi"]
+    dom_labels   = {
+        "battery":    "Battery (Ref.)",
+        "vehicle":    "Vehicle (AV)",
+        "healthcare": "Healthcare",
+        "industrial": "Industrial",
+        "aerospace":  "Aerospace",
+        "navigation": "Navigation",
+    }
+
+    x = np.arange(len(fault_order))
+    width = 0.35
+    cmap = plt.get_cmap("tab10")
+
+    fig, axes = plt.subplots(2, 3, figsize=(9, 5), sharey=False)
+    axes_flat = axes.flatten()
+
+    for idx, dom in enumerate(domain_order):
+        ax = axes_flat[idx]
+        nom_vals  = [_mean(data, dom, ft, "nominal") for ft in fault_order]
+        dc3s_vals = [_mean(data, dom, ft, "dc3s")    for ft in fault_order]
+
+        ax.bar(x - width/2, nom_vals,  width, label="Nominal", color="#d62728", alpha=0.8)
+        ax.bar(x + width/2, dc3s_vals, width, label="DC3S",    color="#2ca02c", alpha=0.8)
+        ax.set_xticks(x)
+        ax.set_xticklabels(fault_labels, fontsize=7)
+        ax.set_title(dom_labels.get(dom, dom), fontsize=8)
+        ax.set_ylim(0, 1.1)
+        ax.set_ylabel("TSVR", fontsize=7)
+        ax.tick_params(axis="y", labelsize=7)
+        if idx == 0:
+            ax.legend(fontsize=6.5, loc="upper right")
+
+    fig.suptitle("Per-Domain Fault-Type TSVR: Nominal vs DC3S (5 seeds × 48 steps)",
+                 fontsize=9)
+    fig.tight_layout(rect=[0, 0, 1, 0.96])
+    out = FIG_DIR / "fig_per_domain_fault_breakdown.png"
+    fig.savefig(out, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  wrote {out.name}")
+
+
+# ============================================================
 # main
 # ============================================================
 
@@ -207,6 +282,7 @@ def main() -> None:
     make_domain_comparison()
     make_calibration_curve()
     make_intervention_heatmap()
+    make_per_domain_fault_breakdown()
     print("Done.")
 
 

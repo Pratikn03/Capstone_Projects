@@ -1512,6 +1512,33 @@ Key findings: \emph{Vehicle} is most vulnerable to blackout faults (DC3S TSVR 0.
 \input{assets/tables/generated/tbl_domain_data_sources.tex}
 \input{assets/tables/generated/tbl_all_domain_latency.tex}
 
+\subsection{Per-Domain Controller Rankings}\label{sec:per_domain_leaderboards}
+
+\Cref{tab:vehicle_leaderboard,tab:healthcare_leaderboard,tab:industrial_leaderboard,tab:aerospace_leaderboard,tab:navigation_leaderboard} rank all five controllers by TSVR for each proof domain, mirroring the battery leaderboard in~\Cref{tab:TBL01_MAIN_RESULTS}. DC3S achieves rank 1 (lowest TSVR) in every proof domain, with zero or near-zero violations in Industrial, Aerospace, and Navigation. Vehicle and Healthcare show measurable baseline violation rates that DC3S substantially reduces. Fallback performance is domain-dependent: it achieves low TSVR in Navigation (where the fallback action is arena-safe) but fails in Healthcare (where no single fixed action is universally safe across all patient states).
+
+\input{assets/tables/generated/tbl_vehicle_leaderboard.tex}
+\input{assets/tables/generated/tbl_healthcare_leaderboard.tex}
+\input{assets/tables/generated/tbl_industrial_leaderboard.tex}
+\input{assets/tables/generated/tbl_aerospace_leaderboard.tex}
+\input{assets/tables/generated/tbl_navigation_leaderboard.tex}
+
+\subsection{Per-Domain Fault Vulnerability}\label{sec:fault_breakdown_figure}
+
+\Cref{fig:per_domain_fault_breakdown} visualises the fault-type breakdown from~\Cref{tab:fault_type_breakdown_per_domain} as a six-panel bar chart. Each panel shows Nominal vs.\ DC3S TSVR for the five isolated fault types. The figure reveals domain-specific vulnerability patterns: Industrial and Aerospace are uniformly high under Nominal control but drop to zero under DC3S across all fault types; Healthcare is the most resilient to single-fault isolation (Nominal TSVR = 1.0 across all types, DC3S $\approx$ 0.27); Battery shows fault-invariant TSVR due to the scenario-MPC mismatch in the ORIUS-Bench harness.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{assets/figures/fig_per_domain_fault_breakdown.png}
+\caption{Per-domain fault-type TSVR: Nominal vs.\ DC3S controller (5\,seeds $\times$ 48\,steps). Each panel is one domain; bars show isolated fault types (Bias, Noise, Stuck Sensor, Blackout, Multi). Multi-domain extension of the battery fault ablation in~\Cref{tab:TBL02_ABLATIONS}.}
+\label{fig:per_domain_fault_breakdown}
+\end{figure}
+
+\subsection{Real-Dataset Temporal Transfer (Industrial and Healthcare)}\label{sec:real_data_transfer}
+
+For the two proof domains with real public datasets, \Cref{tab:real_data_transfer} reports a temporal 80/20 hold-out transfer test: DC3S is calibrated on the first 80\% of rows and evaluated on the held-out last 20\%. This is the closest non-battery analog to the DE$\to$US regional transfer study in~\Cref{tab:TBL04_TRANSFER_STRESS}. Both Industrial (UCI CCPP, 9{,}568 rows) and Healthcare (PhysioNet BIDMC, 4{,}000 rows) satisfy the gate (test TSVR $\leq 1.25\times$ train TSVR), confirming that DC3S generalises to out-of-distribution real data within each domain.
+
+\input{assets/tables/generated/tbl_real_data_transfer.tex}
+
 \subsection{Implementation and Scope}
 
 The universal framework is implemented in \texttt{src/orius/universal\_framework/} with a domain registry, shared pipeline (\texttt{run\_universal\_step}), and adapters for all six domains: Energy/Battery, AV/Vehicle, Industrial, Healthcare, Aerospace, and Navigation. The battery domain remains the primary locked empirical and theorem-validation surface; the five proof domains demonstrate that the same ORIUS DC3S pattern---telemetry ingestion, OQE reliability scoring, conformal uncertainty inflation, action repair, and certificate emission---transfers to structurally different physical systems with evidence-grade TSVR reductions. \Cref{tab:universal_adapter_params} summarises the key adapter parameters and safety predicates for each domain.
