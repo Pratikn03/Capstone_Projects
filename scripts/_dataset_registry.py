@@ -138,7 +138,7 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         reports_dir="reports/av",
         uncertainty_dir="artifacts/uncertainty/av",
         backtests_dir="artifacts/backtests/av",
-        raw_data_path="data/av/processed",
+        raw_data_path="data/av/processed/av_trajectories_orius.csv",
         feature_module="orius.data_pipeline.build_features_av",
     ),
     "INDUSTRIAL": DatasetConfig(
@@ -151,7 +151,7 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         reports_dir="reports/industrial",
         uncertainty_dir="artifacts/uncertainty/industrial",
         backtests_dir="artifacts/backtests/industrial",
-        raw_data_path="data/industrial/processed",
+        raw_data_path="data/industrial/processed/industrial_orius.csv",
         feature_module="orius.data_pipeline.build_features_industrial",
     ),
     "HEALTHCARE": DatasetConfig(
@@ -164,7 +164,7 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         reports_dir="reports/healthcare",
         uncertainty_dir="artifacts/uncertainty/healthcare",
         backtests_dir="artifacts/backtests/healthcare",
-        raw_data_path="data/healthcare/processed",
+        raw_data_path="data/healthcare/processed/healthcare_orius.csv",
         feature_module="orius.data_pipeline.build_features_healthcare",
     ),
     "AEROSPACE": DatasetConfig(
@@ -177,7 +177,7 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         reports_dir="reports/aerospace",
         uncertainty_dir="artifacts/uncertainty/aerospace",
         backtests_dir="artifacts/backtests/aerospace",
-        raw_data_path="data/aerospace/processed",
+        raw_data_path="data/aerospace/processed/aerospace_orius.csv",
         feature_module="orius.data_pipeline.build_features_aerospace",
     ),
 }

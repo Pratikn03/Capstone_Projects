@@ -1,0 +1,19 @@
+theorem_key,theorem_class,title,source,mapped_to,traceability_status,source_exists,code_anchors_ok,artifacts_ok,appendix_mapping_ok,pass_gate,notes
+S1,unique_theorem,Existence of the illusion under dropout,chapters/ch04_observed_state_safety_illusion.tex,Existence of the illusion under dropout,locked,True,True,True,True,True,locked
+S2,unique_theorem,Informal safety guarantee of DC3S,chapters/ch04_observed_state_safety_illusion.tex,Informal safety guarantee of DC3S,locked,True,True,True,True,True,locked
+T1,unique_theorem,OASG Existence,chapters/ch16_battery_theorem_oasg_existence.tex,OASG Existence,locked,True,True,True,True,True,locked
+T2,unique_theorem,Safety Preservation,chapters/ch17_battery_theorem_safety_preservation.tex,Safety Preservation,locked,True,True,True,True,True,locked
+T3,unique_theorem,ORIUS Core Bound,chapters/ch18_orius_core_bound_battery.tex,ORIUS Core Bound,locked,True,True,True,True,True,locked
+T4,unique_theorem,No Free Safety,chapters/ch19_no_free_safety_battery.tex,No Free Safety,locked,True,True,True,True,True,locked
+T5,unique_theorem,Certificate validity horizon,chapters/ch20_temporal_behavioral_extensions.tex,Certificate validity horizon,locked,True,True,True,True,True,locked
+T6,unique_theorem,Certificate expiration bound,chapters/ch20_temporal_behavioral_extensions.tex,Certificate expiration bound,locked,True,True,True,True,True,locked
+T7,unique_theorem,Feasible fallback existence,chapters/ch20_temporal_behavioral_extensions.tex,Feasible fallback existence,locked,True,True,True,True,True,locked
+T8,unique_theorem,Graceful degradation dominance,chapters/ch20_temporal_behavioral_extensions.tex,Graceful degradation dominance,locked,True,True,True,True,True,locked
+C.1,appendix_restatement,C.1 Battery-Domain OASG Existence,appendices/app_c_full_proofs.tex,OASG Existence,restated,True,True,True,True,True,appendix theorem restatement matches main theorem
+C.2,appendix_restatement,C.2 One-Step Safety Preservation,appendices/app_c_full_proofs.tex,Safety Preservation,restated,True,True,True,True,True,appendix theorem restatement matches main theorem
+C.3,appendix_restatement,C.3 Battery ORIUS Core Bound,appendices/app_c_full_proofs.tex,ORIUS Core Bound,restated,True,True,True,True,True,appendix theorem restatement matches main theorem
+C.4,appendix_restatement,C.4 No Free Safety,appendices/app_c_full_proofs.tex,No Free Safety,restated,True,True,True,True,True,appendix theorem restatement matches main theorem
+C.5,appendix_restatement,C.5 Certificate Validity Horizon,appendices/app_c_full_proofs.tex,Certificate validity horizon,restated,True,True,True,True,True,appendix theorem restatement matches main theorem
+C.6,appendix_restatement,C.6 Certificate Expiration Bound,appendices/app_c_full_proofs.tex,Certificate expiration bound,restated,True,True,True,True,True,appendix theorem restatement matches main theorem
+C.8,appendix_restatement,C.8 Feasible Fallback Existence,appendices/app_c_full_proofs.tex,Feasible fallback existence,restated,True,True,True,True,True,appendix theorem restatement matches main theorem
+C.9,appendix_restatement,C.9 Graceful Degradation Dominance,appendices/app_c_full_proofs.tex,Graceful degradation dominance,restated,True,True,True,True,True,appendix theorem restatement matches main theorem

@@ -31,7 +31,6 @@ def build_features(
 ) -> Path:
     """Build Healthcare features and splits."""
     df = pd.read_csv(csv_path)
-    col_map = {"respiratory_rate": "respiratory_rate"}
     for c in ["hr_bpm", "spo2_pct", "respiratory_rate"]:
         if c in df.columns:
             df[c] = pd.to_numeric(df[c], errors="coerce")
@@ -44,6 +43,15 @@ def build_features(
     else:
         df["timestamp"] = pd.to_datetime("2026-01-01") + pd.to_timedelta(df["step"], unit="s")
     df = df.sort_values("timestamp").reset_index(drop=True)
+
+    # Convert multi-patient rows into one timestamp-aligned monitoring stream.
+    agg_spec: dict[str, str] = {"hr_bpm": "mean"}
+    if "spo2_pct" in df.columns:
+        agg_spec["spo2_pct"] = "mean"
+    if "respiratory_rate" in df.columns:
+        agg_spec["respiratory_rate"] = "mean"
+    df = df.groupby("timestamp", as_index=False).agg(agg_spec)
+    df["ts_utc"] = df["timestamp"].dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     for lag in LAG_STEPS:
         df[f"hr_bpm_lag{lag}"] = df["hr_bpm"].shift(lag)

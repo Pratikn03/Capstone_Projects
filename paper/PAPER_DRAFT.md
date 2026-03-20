@@ -344,12 +344,12 @@ The long-form paper now imports the fuller theorem scaffolding from the thesis b
 The long-form LaTeX manuscript now includes the battery theorem ladder more faithfully: OASG existence, safety preservation under the shield, the ORIUS core bound, and the No Free Safety result all appear as thesis-derived sections in the primary paper build rather than only as compressed theorem summaries.
 
 ### 11.3 Temporal and Behavioral Extensions
-The paper also now carries the longer treatment of certificate horizon, expiration, half-life, fallback existence, and graceful degradation through the imported temporal-extension chapter. This means `paper.pdf` now includes the fuller theorem narrative that previously lived only in the thesis build.
+The paper also now carries the longer treatment of certificate horizon, expiration, half-life, fallback existence, and graceful degradation through the imported temporal-extension chapter. This means repo-root `paper.pdf` now includes the fuller theorem narrative that previously lived only in the deprecated reference thesis build.
 
 ## 12. Governance and Reproducibility
 
 ### 12.1 Source of Truth
-The canonical manuscript source is `paper/PAPER_DRAFT.md`. The corresponding LaTeX thesis manuscript is `paper/paper.tex`, and the shorter conference derivative is `paper/paper_r1.tex`. Quantitative claims are valid only if they remain traceable to `paper/metrics_manifest.json`, `paper/claim_matrix.csv`, and the locked report artifacts.
+The canonical manuscript source is `paper/paper.tex`. `paper/PAPER_DRAFT.md` is the narrative companion, `paper/paper_r1.tex` is the shorter conference derivative, and repo-root `paper.pdf` is the official compiled deliverable. Quantitative claims are valid only if they remain traceable to `paper/metrics_manifest.json`, `paper/claim_matrix.csv`, and the locked report artifacts.
 
 ### 12.2 Repo-to-Paper Traceability
 | Repo artifact family | Primary role in the paper | Main paper touchpoint |
@@ -582,7 +582,7 @@ The long-form LaTeX paper now imports the thesis notation appendix so the primar
 The long-form paper also imports the thesis assumption register, including the A1-A8 master table and the chapter-by-chapter assumption usage map that supports the theorem block.
 
 ## Appendix F. Full Proofs
-`paper.pdf` now includes the thesis proof appendix for the imported battery theorem ladder. The Markdown twin records that this proof material is part of the primary LaTeX manuscript even though the detailed derivations remain LaTeX-first.
+Repo-root `paper.pdf` now includes the proof appendix for the imported battery theorem ladder. The Markdown companion records that this proof material is part of the primary LaTeX manuscript even though the detailed derivations remain LaTeX-first.
 
 ## Appendix G. Extended Battery Result Tables
 The long-form paper imports the extended-results appendix so the primary manuscript now carries fuller controller comparison, regional impact, and fault-profile tables than the earlier compressed paper build.

@@ -143,7 +143,11 @@ scenario-based controllers occupy the top four positions, with
 Deterministic LP last due to its 13\% violation rate under degraded
 telemetry.
 
-\input{paper/assets/tables/generated/tbl_battery_leaderboard}
+\IfFileExists{paper/assets/tables/generated/tbl_battery_leaderboard.tex}{%
+\input{paper/assets/tables/generated/tbl_battery_leaderboard}%
+}{%
+\input{assets/tables/generated/tbl_battery_leaderboard}%
+}
 
 \section{What Results Do and Do Not Prove}
 
