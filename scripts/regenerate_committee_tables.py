@@ -494,6 +494,103 @@ def write_fault_type_breakdown(csv_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# tbl_{domain}_leaderboard.tex  (per-domain controller rankings)
+# ---------------------------------------------------------------------------
+
+def write_per_domain_leaderboard(csv_path: Path) -> None:
+    """Per-domain leaderboard: all 5 controllers ranked by TSVR for each domain.
+
+    Reads per_controller_tsvr.csv and produces 5 ranked tables (one per
+    non-battery proof domain), analogous to tbl_battery_leaderboard.tex.
+    """
+    if not csv_path.exists():
+        print(f"  SKIP per-domain leaderboards (missing {csv_path})")
+        return
+
+    rows = _read_csv(csv_path)
+
+    from collections import defaultdict
+    # Aggregate: mean TSVR, intervention_rate, oasg per (domain, controller)
+    tsvr_data: dict[tuple[str, str], list[float]] = defaultdict(list)
+    ir_data:   dict[tuple[str, str], list[float]] = defaultdict(list)
+    oasg_data: dict[tuple[str, str], list[float]] = defaultdict(list)
+    for r in rows:
+        dom, ctrl = r["domain"], r["controller"]
+        try:
+            tsvr_data[(dom, ctrl)].append(float(r["tsvr"]))
+        except (ValueError, KeyError):
+            pass
+        try:
+            ir_data[(dom, ctrl)].append(float(r["intervention_rate"]))
+        except (ValueError, KeyError):
+            pass
+        try:
+            oasg_data[(dom, ctrl)].append(float(r["oasg"]))
+        except (ValueError, KeyError):
+            pass
+
+    def _mean(vals: list[float]) -> float:
+        return sum(vals) / len(vals) if vals else float("nan")
+
+    def _fmt(v: float) -> str:
+        return f"{v:.4f}" if v == v else "---"
+
+    def _fmt2(v: float) -> str:
+        return f"{v:.3f}" if v == v else "---"
+
+    # Proof domains only
+    proof_domains = [d for d in DOMAIN_ORDER if d != "battery"]
+
+    for dom in proof_domains:
+        # Build rows sorted by TSVR ascending
+        ctrl_stats = []
+        for ctrl in CONTROLLER_ORDER:
+            t = _mean(tsvr_data.get((dom, ctrl), []))
+            ir = _mean(ir_data.get((dom, ctrl), []))
+            oa = _mean(oasg_data.get((dom, ctrl), []))
+            ctrl_stats.append((ctrl, t, ir, oa))
+        ctrl_stats.sort(key=lambda x: x[1] if x[1] == x[1] else 9999)
+
+        dom_pretty = DOMAIN_PRETTY.get(dom, dom.capitalize())
+        label = f"tab:{dom}_leaderboard"
+        fname = f"tbl_{dom}_leaderboard.tex"
+
+        lines = [
+            r"\begin{table}[htbp]",
+            r"\centering\small",
+            rf"\caption{{{dom_pretty} domain: all controllers ranked by TSVR "
+            rf"(5\,seeds $\times$ 48\,steps on ORIUS-Bench synthetic harness). "
+            rf"Lower TSVR = better safety. DC3S intervention rate reflects fraction "
+            rf"of steps where repair was applied.}}",
+            rf"\label{{{label}}}",
+            r"\begin{tabular}{clccc}",
+            r"\toprule",
+            r"\textbf{Rank} & \textbf{Controller} & \textbf{TSVR} "
+            r"& \textbf{Interv.\ Rate} & \textbf{OASG} \\",
+            r"\midrule",
+        ]
+
+        for rank, (ctrl, t, ir, oa) in enumerate(ctrl_stats, 1):
+            ctrl_pretty = CONTROLLER_PRETTY.get(ctrl, ctrl.capitalize())
+            # Bold rank 1
+            rank_str = rf"\textbf{{{rank}}}" if rank == 1 else str(rank)
+            ctrl_str = rf"\textbf{{{ctrl_pretty}}}" if rank == 1 else ctrl_pretty
+            lines.append(
+                f"{rank_str} & {ctrl_str} & {_fmt(t)} & {_fmt2(ir)} & {_fmt2(oa)} \\\\"
+            )
+
+        lines += [
+            r"\bottomrule",
+            r"\multicolumn{5}{l}{\small OASG = Observed-Action Safety Gap; "
+            r"Interv.\ Rate = fraction of steps DC3S repair was applied.}\\",
+            r"\end{tabular}",
+            r"\end{table}",
+        ]
+        (OUT / fname).write_text("\n".join(lines))
+        print(f"  wrote {fname}")
+
+
+# ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
 
@@ -522,6 +619,7 @@ def main() -> None:
     # New tables (only generated when their source CSVs exist)
     write_per_domain_controllers(per_ctrl_path)
     write_fault_type_breakdown(ablation_path)
+    write_per_domain_leaderboard(per_ctrl_path)
 
     print("Done.")
 

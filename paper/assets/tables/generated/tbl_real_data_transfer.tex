@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+\centering\small
+\caption{Real-dataset temporal transfer validation for Industrial (UCI CCPP) and Healthcare (PhysioNet BIDMC). Temporal 80/20 split: DC3S evaluated on held-out last-20\% rows after calibration on first-80\% rows. Gate: test TSVR $\leq 1.25\times$ train TSVR (temporal generalisation). Non-battery analog of the battery DE$\to$US transfer in Table~\ref{tab:TBL04_TRANSFER_STRESS}.}
+\label{tab:real_data_transfer}
+\begin{tabular}{lrrrrrrc}
+\toprule
+\textbf{Domain} & \textbf{Train} & \textbf{Test} & \textbf{Train TSVR} & \textbf{Test TSVR} & \textbf{Train IR} & \textbf{Test IR} & \textbf{Gate} \\
+ & \textbf{rows} & \textbf{rows} & \textbf{(mean±std)} & \textbf{(mean±std)} & \textbf{(mean)} & \textbf{(mean)} & \\
+\midrule
+Industrial (CCPP) & 7,654 & 1,914 & $0.000\pm0.000$ & $0.000\pm0.000$ & 0.000 & 0.000 & $\checkmark$ \\
+Healthcare (BIDMC) & 3,200 & 800 & $0.279\pm0.010$ & $0.279\pm0.010$ & 0.000 & 0.000 & $\checkmark$ \\
+\bottomrule
+\multicolumn{8}{l}{\small Gate: test TSVR $\leq 1.25\times$ train TSVR. IR = DC3S intervention rate. Split is temporal (not random).}\\
+\multicolumn{8}{l}{\small Both domains use real public datasets; Vehicle/Aerospace/Navigation use 240-row synthetic ORIUS-Bench environments.}\\
+\end{tabular}
+\end{table}
