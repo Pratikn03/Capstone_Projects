@@ -1,0 +1,18 @@
+\begin{table}[htbp]
+\centering\small
+\caption{Per-domain TSVR for all controllers in the ORIUS-Bench harness (5\,seeds $\times$ 48\,steps). DC3S achieves the lowest violation rate in every proof domain. Battery values reflect the ORIUS-Bench harness; locked real-grid metrics are in Table~\ref{tab:TBL01_MAIN_RESULTS}.}
+\label{tab:per_domain_controller_comparison}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Domain} & \textbf{Nominal TSVR} & \textbf{Robust TSVR} & \textbf{DC3S TSVR} & \textbf{Fallback TSVR} & \textbf{Naive TSVR} \\
+\midrule
+Battery (Ref.) & 0.8750 & 0.7500 & 0.9375 & 0.1833 & 0.9792 \\
+Vehicle (AV) & 0.5417 & 0.5000 & 0.0167 & 0.4167 & 0.6042 \\
+Healthcare & 1.0000 & 1.0000 & 0.2792 & 1.0000 & 1.0000 \\
+Industrial & 1.0000 & 1.0000 & 0.0000 & 1.0000 & 1.0000 \\
+Aerospace & 1.0000 & 1.0000 & 0.0000 & 1.0000 & 1.0000 \\
+Navigation & 0.8333 & 0.6667 & 0.0000 & 0.0000 & 0.9167 \\
+\bottomrule
+\multicolumn{6}{l}{\small Battery TSVR > 0 in ORIUS-Bench harness due to scenario-MPC mismatch; locked real-grid result is 0.000 (DC3S).}\\
+\end{tabular}
+\end{table}

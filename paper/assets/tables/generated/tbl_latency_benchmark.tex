@@ -1,0 +1,18 @@
+\begin{table}[htbp]
+\centering
+\caption{DC3S Runtime Overhead per Domain (1{,}000 steps, Python 3.11, Intel Xeon). All p99 values are well below the 50\,ms production SLA.}
+\label{tbl:latency_benchmark}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Domain} & \textbf{p50 (ms)} & \textbf{p95 (ms)} & \textbf{p99 (ms)} & \textbf{Gate} \\
+\midrule
+Industrial & 0.125 & 0.152 & 0.170 & $\checkmark$ \\
+Healthcare & 0.122 & 0.159 & 0.246 & $\checkmark$ \\
+Vehicle (AV) & 0.136 & 0.160 & 0.180 & $\checkmark$ \\
+Aerospace & 0.125 & 0.154 & 0.172 & $\checkmark$ \\
+Navigation & 0.131 & 0.157 & 0.178 & $\checkmark$ \\
+Battery (Ref.) & 0.013 & 0.017 & 0.034 & $\checkmark$ \\
+\bottomrule
+\multicolumn{5}{l}{\small Gate: p99 $<$ 50\,ms. All domains pass.}\\
+\end{tabular}
+\end{table}
