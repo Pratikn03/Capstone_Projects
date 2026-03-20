@@ -45,18 +45,20 @@
     ],
     "universal_framework": {
       "status": "validated",
-      "validation_scope": "battery_reference_plus_vehicle_proof_domain",
+      "validation_scope": "battery_reference_plus_canonical_universal_replay_gate",
       "breadth_status": "implemented",
       "reference_domain": "battery",
-      "proof_domain": "vehicle",
+      "proof_domain": "industrial_and_healthcare",
       "validated_domains": [
         "battery",
-        "vehicle"
-      ],
-      "portability_only_domains": [
-        "navigation",
         "industrial",
         "healthcare"
+      ],
+      "proof_candidate_domains": [
+        "av"
+      ],
+      "shadow_synthetic_domains": [
+        "navigation"
       ],
       "experimental_domains": [
         "aerospace"
@@ -81,6 +83,7 @@
   "locked_replication_flow": [
     "python3 scripts/validate_paper_claims.py",
     "python3 scripts/verify_theorem_anchors.py",
+    "python3 scripts/verify_integrated_theorem_surface.py",
     "python3 scripts/run_universal_orius_validation.py",
     "python3 scripts/sync_paper_assets.py --check",
     "make train-all-ba",
@@ -168,19 +171,29 @@
       "status": "completed"
     },
     "phase8": {
-      "name": "Universal Framework (five thesis domains)",
+      "name": "Universal Framework (six runtime domains)",
       "status": "implemented",
       "package": "src/orius/universal_framework/",
       "modules": [
         "src/orius/universal_framework/pipeline.py",
         "src/orius/universal_framework/domain_registry.py",
+        "src/orius/universal_framework/navigation_adapter.py",
         "src/orius/universal_framework/industrial_adapter.py",
         "src/orius/universal_framework/healthcare_adapter.py",
         "src/orius/universal_framework/aerospace_adapter.py"
       ],
-      "tests": ["tests/test_universal_framework.py"],
-      "scripts": ["scripts/run_multi_domain_framework.py"],
-      "test_count": 6
+      "tests": [
+        "tests/test_universal_framework.py",
+        "tests/test_multi_domain_framework.py",
+        "tests/test_universal_validation_gate.py",
+        "tests/test_run_all_domain_eval.py"
+      ],
+      "scripts": [
+        "scripts/run_multi_domain_framework.py",
+        "scripts/run_universal_orius_validation.py",
+        "scripts/run_all_domain_eval.py"
+      ],
+      "test_count": 16
     }
   },
   "cold_start_reproducibility": {

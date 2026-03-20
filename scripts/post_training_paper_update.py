@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Canonical finalization flow for the DC3S submission freeze.
+"""Canonical finalization flow for the manuscript submission freeze.
 
-This script freezes one release family across publication artifacts and paper
+This script freezes one release family across publication artifacts and manuscript
 outputs. It does not train models itself; it expects a verified single
 release family to exist already.
 """
@@ -19,6 +19,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 PAPER_DIR = REPO / "paper"
+CANONICAL_PDF = REPO / "paper.pdf"
 PUBLICATION_DIR = REPO / "reports" / "publication"
 PYTHON_BIN = sys.executable or "python3"
 
@@ -57,7 +58,12 @@ def _compile_papers() -> dict[str, Path]:
     outputs: dict[str, Path] = {}
     for tex_name in ("paper.tex", "paper_r1.tex"):
         _run(["latexmk", "-pdf", "-interaction=nonstopmode", "-halt-on-error", tex_name], cwd=PAPER_DIR)
-        outputs[tex_name] = PAPER_DIR / tex_name.replace(".tex", ".pdf")
+        built_pdf = PAPER_DIR / tex_name.replace(".tex", ".pdf")
+        if tex_name == "paper.tex":
+            shutil.copy2(built_pdf, CANONICAL_PDF)
+            outputs[tex_name] = CANONICAL_PDF
+        else:
+            outputs[tex_name] = built_pdf
     return outputs
 
 
@@ -65,27 +71,27 @@ def _freeze_pdfs(
     *,
     release_id: str,
     publication_dir: Path,
-    thesis_pdf: Path,
+    manuscript_pdf: Path,
     conference_pdf: Path,
 ) -> dict[str, dict[str, object]]:
     freeze_root = publication_dir / "frozen" / release_id
     review_dir = freeze_root / "review"
     freeze_root.mkdir(parents=True, exist_ok=True)
 
-    frozen_thesis = freeze_root / f"{release_id}_thesis.pdf"
+    frozen_manuscript = freeze_root / f"{release_id}_manuscript.pdf"
     frozen_conference = freeze_root / f"{release_id}_conference.pdf"
-    shutil.copy2(thesis_pdf, frozen_thesis)
+    shutil.copy2(manuscript_pdf, frozen_manuscript)
     shutil.copy2(conference_pdf, frozen_conference)
 
-    thesis_images = _render_pdf(frozen_thesis, review_dir / "thesis")
+    manuscript_images = _render_pdf(frozen_manuscript, review_dir / "manuscript")
     conference_images = _render_pdf(frozen_conference, review_dir / "conference")
 
     return {
-        "thesis": {
-            "canonical_path": str(thesis_pdf.relative_to(REPO)),
-            "frozen_path": str(frozen_thesis.relative_to(REPO)),
-            "sha256": _sha256(frozen_thesis),
-            "rendered_pages": thesis_images,
+        "manuscript": {
+            "canonical_path": str(manuscript_pdf.relative_to(REPO)),
+            "frozen_path": str(frozen_manuscript.relative_to(REPO)),
+            "sha256": _sha256(frozen_manuscript),
+            "rendered_pages": manuscript_images,
         },
         "conference": {
             "canonical_path": str(conference_pdf.relative_to(REPO)),
@@ -107,11 +113,12 @@ def _update_release_manifest(
     payload["release_id"] = release_id
     payload["frozen_pdfs"] = frozen_pdfs
     payload["paper_assets"] = payload.get("paper_assets", {})
-    payload["paper_assets"]["FINAL_THESIS_PDF"] = {
-        "paper_path": frozen_pdfs["thesis"]["canonical_path"],
-        "source_artifact": frozen_pdfs["thesis"]["frozen_path"],
+    payload["paper_assets"].pop("FINAL_THESIS_PDF", None)
+    payload["paper_assets"]["FINAL_MANUSCRIPT_PDF"] = {
+        "paper_path": frozen_pdfs["manuscript"]["canonical_path"],
+        "source_artifact": frozen_pdfs["manuscript"]["frozen_path"],
         "build_command": f"{Path(__file__).relative_to(REPO)} --release-id {release_id}",
-        "sha256": frozen_pdfs["thesis"]["sha256"],
+        "sha256": frozen_pdfs["manuscript"]["sha256"],
     }
     payload["paper_assets"]["FINAL_CONFERENCE_PDF"] = {
         "paper_path": frozen_pdfs["conference"]["canonical_path"],
@@ -143,7 +150,7 @@ def _write_freeze_summary(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Freeze a final release family into paper and publication outputs")
+    parser = argparse.ArgumentParser(description="Freeze a final release family into manuscript and publication outputs")
     parser.add_argument("--release-id", required=True)
     parser.add_argument("--out-dir", default=str(PUBLICATION_DIR))
     return parser.parse_args()
@@ -182,7 +189,7 @@ def main() -> int:
     frozen_pdfs = _freeze_pdfs(
         release_id=args.release_id,
         publication_dir=out_dir,
-        thesis_pdf=compiled["paper.tex"],
+        manuscript_pdf=compiled["paper.tex"],
         conference_pdf=compiled["paper_r1.tex"],
     )
     manifest_path = _update_release_manifest(

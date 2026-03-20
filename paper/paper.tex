@@ -307,7 +307,7 @@ ORIUS is implemented as a forecast-to-dispatch stack whose main layers are data 
 
 \begin{table*}[htbp]
 \centering\small
-\caption{Component-to-code map for the main thesis surfaces.}
+\caption{Component-to-code map for the main manuscript surfaces.}
 \label{tab:component_code_map}
 \begin{tabular}{p{2.4cm}p{3.1cm}p{6.9cm}}
 \toprule
@@ -347,7 +347,7 @@ The canonical dataset lock is summarized in \Cref{tab:TBL05_DATASET_SUMMARY}. DE
 \PaperTableCSV{TBL05_DATASET_SUMMARY}{Dataset summary: regions, date ranges, signal counts, and coverage.}
 
 \paragraph{Dataset--framework traceability.}
-\Cref{tab:dataset_framework_trace} maps each locked dataset to its role in the pipeline and the primary evidence tables. DE and US\_MISO feed the canonical battery evaluation (TBL01, TBL04); PJM and ERCOT extend the release-family scope. The universal framework (\Cref{sec:universal}) uses synthetic telemetry for non-energy domains; ORIUS-Bench validation evidence is in \Cref{tab:TBL09_CROSS_DOMAIN_OASG}.
+\Cref{tab:dataset_framework_trace} maps each locked dataset to its role in the pipeline and the primary evidence tables. DE and US\_MISO feed the canonical battery evaluation (TBL01, TBL04); PJM and ERCOT extend the release-family scope. The universal framework (\Cref{sec:universal}) now uses locked telemetry for AV, industrial, healthcare, and aerospace rows, plus a synthetic navigation shadow surface; the governed cross-domain evidence is in \Cref{tab:TBL09_CROSS_DOMAIN_OASG}.
 
 \begin{table}[htbp]
 \centering\small
@@ -362,7 +362,7 @@ US\_MISO & 13{,}638 & Forecast, DC3S, CPSBench & TBL04, TBL05, TBL08 \\
 US\_PJM & 13{,}639 & Forecast, transfer & TBL05, TBL07 \\
 US\_ERCOT & 13{,}453 & Forecast, transfer & TBL05, TBL07 \\
 \midrule
-\multicolumn{4}{l}{\textit{Universal (synthetic): battery, navigation, industrial, healthcare, aerospace, vehicle $\to$ TBL09}} \\
+\multicolumn{4}{l}{\textit{Universal replay: AV/industrial/healthcare/aerospace locked, navigation synthetic shadow, battery reference aggregate $\to$ TBL09}} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -678,11 +678,11 @@ The three theorems correspond to three layers of the empirical evidence:
 \end{itemize}
 
 \paragraph{Theorem-to-register mapping (T1--T8).}
-The paper theorems map to the canonical battery-8 theorem register (thesis Appendix~M). Compact paper form: \Cref{thm:rac_coverage} $\equiv$ T3 (ORIUS Core Bound); \Cref{thm:safety_margin} and \Cref{cor:zero_violation} $\equiv$ T2 (One-Step Safety Preservation); \Cref{thm:conditional_coverage} is an auxiliary Mondrian diagnostic. The full longform block (\Cref{sec:theorem_validation_longform}) and thesis chapters ch16--ch20 state all eight theorems: T1 OASG Existence, T2 One-Step Safety Preservation, T3 ORIUS Core Bound, T4 No Free Safety, T5 Certificate Validity Horizon, T6 Certificate Expiration Bound, T7 Feasible Fallback Existence, T8 Graceful Degradation Dominance. \Cref{tab:theorem_register_code} maps each to its implementation anchor. The full evidence mapping is in \texttt{orius-plan/theorem\_to\_evidence\_map.md}.
+The paper theorems map to the flagship battery T1--T8 ladder (thesis Appendix~M), which sits inside the broader integrated theorem surface audited in thesis Appendix~AC. Compact paper form: \Cref{thm:rac_coverage} $\equiv$ T3 (ORIUS Core Bound); \Cref{thm:safety_margin} and \Cref{cor:zero_violation} $\equiv$ T2 (One-Step Safety Preservation); \Cref{thm:conditional_coverage} is an auxiliary Mondrian diagnostic. The full longform block (\Cref{sec:theorem_validation_longform}) and thesis chapters ch16--ch20 state the eight flagship ladder theorems: T1 OASG Existence, T2 One-Step Safety Preservation, T3 ORIUS Core Bound, T4 No Free Safety, T5 Certificate Validity Horizon, T6 Certificate Expiration Bound, T7 Feasible Fallback Existence, T8 Graceful Degradation Dominance. \Cref{tab:theorem_register_code} maps each to its implementation anchor. The full evidence mapping is in \texttt{orius-plan/theorem\_to\_evidence\_map.md}.
 
 \begin{table}[htbp]
 \centering\small
-\caption{Battery-8 theorem register: T1--T8 and implementation anchors.}
+\caption{Flagship battery theorem ladder: T1--T8 and implementation anchors.}
 \label{tab:theorem_register_code}
 \begin{tabular}{p{0.9cm}p{2.8cm}p{5.2cm}}
 \toprule
@@ -1405,7 +1405,7 @@ All five proof domains (vehicle, healthcare, industrial, aerospace, navigation) 
 
 \subsection{Domain State Schema and Safety Predicates}
 
-\Cref{tab:universal-state} defines the state schema per domain. Energy uses SOC, load, and renewables; AV uses longitudinal kinematics (position, speed, lead vehicle); Industrial uses process variables (temperature, pressure, power); Healthcare uses vital signs (heart rate, SpO$_2$, respiratory rate); Aerospace uses flight-envelope state (altitude, airspeed, bank angle, fuel); and Navigation uses 2D robot position $(x, y)$ with velocity in a bounded arena. \Cref{tab:universal-safety} summarizes the safety predicates. \Cref{tab:universal-pipeline} lists the pipeline stages and adapter methods.
+\Cref{tab:universal-state} defines the state schema per domain. Energy uses SOC, load, and renewables; AV uses longitudinal kinematics (position, speed, lead vehicle); Navigation uses 2D robot position $(x, y)$ with velocity in a bounded arena; Industrial uses process variables (temperature, pressure, power); Healthcare uses vital signs (heart rate, SpO$_2$, respiratory rate); and Aerospace uses flight-envelope state (altitude, airspeed, bank angle, fuel). \Cref{tab:universal-safety} summarizes the safety predicates. \Cref{tab:universal-pipeline} lists the pipeline stages and adapter methods.
 
 \input{assets/tables/generated/tbl_universal_framework.tex}
 
@@ -1560,7 +1560,7 @@ production threshold.  The benchmark is reproducible via
 
 \subsection{Source of Truth}
 
-This paper uses a markdown-first and artifact-locked workflow. The canonical manuscript source is \texttt{paper/PAPER\_DRAFT.md}. The corresponding LaTeX manuscript is this file, and the shorter conference cut is \texttt{paper/paper\_r1.tex}. Quantitative claims are valid only if they appear in the manuscript and remain traceable to \texttt{paper/metrics\_manifest.json}, \texttt{paper/claim\_matrix.csv}, and the locked report artifacts.
+This paper uses a LaTeX-first and artifact-locked workflow. The canonical manuscript source is \texttt{paper/paper.tex}. The narrative companion is \texttt{paper/PAPER\_DRAFT.md}, the shorter conference cut is \texttt{paper/paper\_r1.tex}, and the official compiled deliverable is repo-root \texttt{paper.pdf}. Quantitative claims are valid only if they appear in the manuscript and remain traceable to \texttt{paper/metrics\_manifest.json}, \texttt{paper/claim\_matrix.csv}, and the locked report artifacts.
 
 \subsection{Repo-to-Paper Traceability}
 
@@ -1733,9 +1733,9 @@ DC\textsuperscript{3}S achieves zero true-SOC violations at a 2.8\% intervention
 
 The promoted six-model forecasting comparison points in one practical direction: on these moderate-sized, feature-rich grid datasets, GBM remains the strongest operational model under the locked equal-budget protocol. For practitioners, the message is simple: on data of this kind, feature engineering matters more than architectural complexity.
 
-\paragraph{The core message.} Trustworthy cyber-physical control requires the uncertainty model to degrade when the measurement channel degrades. In that sense, telemetry is not an implementation detail but part of the control problem itself. ORIUS turns that idea into a single Detect--Calibrate--Constrain--Shield--Certify loop with per-step auditable evidence, and DC3S is the battery-domain reference implementation developed in this paper. Within the current evidence lock, the hidden safety gap is both measurable and closeable on the battery surface; the hardening layers added here show how the same logic extends into asset preservation, blackout handling, fleet coordination, active probing, runtime rehearsal, and cross-domain adapter portability without overstating the proof boundary.
+\paragraph{The core message.} Trustworthy cyber-physical control requires the uncertainty model to degrade when the measurement channel degrades. In that sense, telemetry is not an implementation detail but part of the control problem itself. ORIUS turns that idea into a single Detect--Calibrate--Constrain--Shield--Certify loop with per-step auditable evidence, and DC3S is the battery-domain reference implementation developed in this paper. Within the current evidence lock, the hidden safety gap is both measurable and closeable on the battery surface; the hardening layers added here show how the same logic extends into asset preservation, blackout handling, fleet coordination, active probing, runtime rehearsal, and cross-domain adapter portability while still enforcing a tiered claim boundary outside battery.
 
-\paragraph{Scope boundary.} This consolidated paper is an ORIUS flagship manuscript with a battery-primary evidence boundary. What it establishes is a universal Detect--Calibrate--Constrain--Shield--Certify framework implemented across multiple domain adapters, together with a battery-domain reference implementation whose theorem-to-code-to-artifact lineage is locked and auditable. What it does not establish is universal dominance across all domains, adversarial completeness, or production-hardware deployment safety.
+\paragraph{Scope boundary.} This consolidated paper is an ORIUS flagship manuscript with a battery-primary evidence boundary. What it establishes is a universal Detect--Calibrate--Constrain--Shield--Certify framework implemented across multiple domain adapters, together with a battery-domain reference implementation whose theorem-to-code-to-artifact lineage is locked and auditable, plus a canonical replay harness that currently promotes industrial and healthcare as proof-validated non-battery rows, retains AV as a proof candidate, keeps navigation synthetic-shadow, and leaves aerospace experimental. What it does not establish is universal dominance across all domains, adversarial completeness, or production-hardware deployment safety.
 
 The conclusion-level locked numeric summary is therefore explicit: 7.11\% DE cost savings, 0.30\% DE carbon reduction, 6.13\% DE peak shaving, 0.11\% US cost savings, 0.13\% US carbon reduction, and 0.00\% US peak shaving.
 

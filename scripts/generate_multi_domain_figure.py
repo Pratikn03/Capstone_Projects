@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Generate multi-domain ORIUS validation figure for the paper."""
+"""Generate the paper-facing multi-domain ORIUS validation figure."""
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
+os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -12,6 +14,7 @@ import pandas as pd
 
 REPO = Path(__file__).resolve().parents[1]
 OASG_CSV = REPO / "reports" / "universal_orius_validation" / "cross_domain_oasg_table.csv"
+STATUS_CSV = REPO / "reports" / "universal_orius_validation" / "domain_validation_summary.csv"
 OUT = REPO / "paper" / "assets" / "figures" / "fig_multi_domain_validation.png"
 
 plt.rcParams.update({
@@ -31,9 +34,26 @@ def main() -> int:
         return 1
 
     df = pd.read_csv(OASG_CSV)
+    status_map: dict[str, str] = {}
+    if STATUS_CSV.exists():
+        status_df = pd.read_csv(STATUS_CSV)
+        tier_col = "evidence_tier" if "evidence_tier" in status_df.columns else "maturity_label"
+        raw_map = dict(zip(status_df["domain"], status_df[tier_col]))
+        short = {
+            "reference": "reference",
+            "proof_validated": "proof",
+            "proof_candidate": "candidate",
+            "shadow_synthetic": "shadow",
+            "experimental": "experimental",
+        }
+        status_map = {str(key): short.get(str(value), str(value)) for key, value in raw_map.items()}
     domains = df["domain"].tolist()
     baseline = pd.to_numeric(df["oasg_rate_baseline"], errors="coerce").fillna(0)
     orius = pd.to_numeric(df["oasg_rate_orius"], errors="coerce").fillna(0)
+    tick_labels = [
+        f"{domain}\n({status_map.get(str(domain), 'unknown')})"
+        for domain in domains
+    ]
 
     fig, ax = plt.subplots(figsize=(8, 4))
     x = range(len(domains))
@@ -41,9 +61,9 @@ def main() -> int:
     ax.bar([i - w/2 for i in x], baseline, w, label="Baseline (nominal)", color="#d62728", alpha=0.8)
     ax.bar([i + w/2 for i in x], orius, w, label="ORIUS (DC3S)", color="#2ca02c", alpha=0.8)
     ax.set_xticks(x)
-    ax.set_xticklabels(domains, rotation=15, ha="right")
+    ax.set_xticklabels(tick_labels, rotation=15, ha="right")
     ax.set_ylabel("TSVR (true-state violation rate)")
-    ax.set_title("Multi-Domain ORIUS Validation: Baseline vs. ORIUS Under Fault Episodes")
+    ax.set_title("Canonical Universal ORIUS Validation: TSVR by Domain and Evidence Tier")
     ax.legend(loc="upper right", fontsize=9)
     ax.set_ylim(0, max(1.0, baseline.max() * 1.1, orius.max() * 1.1))
     ax.grid(axis="y", alpha=0.3)

@@ -27,7 +27,7 @@ def build_features(
     train_ratio: float = 0.70,
     calibration_ratio: float = 0.05,
     val_ratio: float = 0.10,
-    gap_hours: int = 1,
+    gap_hours: int = 0,
 ) -> Path:
     """Build Industrial features and splits."""
     df = pd.read_csv(csv_path)

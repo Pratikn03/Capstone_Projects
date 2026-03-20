@@ -5,8 +5,10 @@
 \chapter{Verified Theorems and Gap Audit}
 \label{app:verified-theorems-gap-audit}
 
-This appendix mirrors the authoritative battery-8 theorem register used by the
-proof appendix.  The canonical set is:
+This appendix mirrors the flagship T1--T8 battery theorem ladder used by the
+proof appendix.  That ladder is the governance-critical proof spine, but it is
+not the whole integrated theorem surface of the thesis; Appendix~\ref{app:integrated-theorem-surface-register}
+audits the full theorem-like inventory.  The flagship set is:
 \begin{enumerate}
   \item OASG existence,
   \item one-step safety preservation,
@@ -131,9 +133,9 @@ helper and safe-landing implementation support.
 
 \section{Gap Audit Table}
 
-Table~\ref{tab:theorem-gap-audit} summarizes the authoritative battery-8
-theorem set, whether the proof is complete, whether empirical validation
-exists, and whether the code matches the formal statement.
+Table~\ref{tab:theorem-gap-audit} summarizes the flagship T1--T8 theorem set,
+whether the proof is complete, whether empirical validation exists, and
+whether the code matches the formal statement.
 
 \begin{table}[htbp]
 \centering
@@ -169,3 +171,14 @@ locked outputs in \texttt{reports/publication/}:
 \end{itemize}
 
 The theorem-to-evidence map is maintained in \texttt{orius-plan/theorem\_to\_evidence\_map.md}.
+
+\section{Integrated Release-Gate Status}
+
+The flagship T1--T8 ladder above remains the governance-critical proof spine,
+but the release package now checks the full 18-theorem surface directly.  The
+generated summary below reports the hard-gated release status for the 10
+unique theorem claims plus the 8 Appendix~C theorem restatements.
+
+\input{reports/publication/integrated_theorem_gate_summary}
+
+\input{reports/publication/integrated_theorem_gate_matrix}

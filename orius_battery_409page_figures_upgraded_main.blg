@@ -1,0 +1,131 @@
+This is BibTeX, Version 0.99d (TeX Live 2025/Homebrew)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: orius_battery_409page_figures_upgraded_main.aux
+A level-1 auxiliary file: chapters/ch01_introduction.aux
+A level-1 auxiliary file: chapters/ch02_related_work.aux
+A level-1 auxiliary file: chapters/ch03_problem_formulation.aux
+A level-1 auxiliary file: chapters/ch04_observed_state_safety_illusion.aux
+A level-1 auxiliary file: chapters/ch05_orius_system_context.aux
+A level-1 auxiliary file: chapters/ch06_data_telemetry_scope.aux
+A level-1 auxiliary file: chapters/ch07_battery_dynamics_dispatch.aux
+A level-1 auxiliary file: chapters/ch08_forecasting_calibration.aux
+A level-1 auxiliary file: chapters/ch09_dc3s_battery_adapter.aux
+A level-1 auxiliary file: chapters/ch10_cpsbench_battery_track.aux
+A level-1 auxiliary file: chapters/ch11_main_battery_results.aux
+A level-1 auxiliary file: chapters/ch12_ablations_failure_analysis.aux
+A level-1 auxiliary file: chapters/ch13_case_studies_operational_traces.aux
+A level-1 auxiliary file: chapters/ch14_battery_lessons_domain_interpretation.aux
+A level-1 auxiliary file: chapters/ch15_assumptions_notation_proof_discipline.aux
+A level-1 auxiliary file: chapters/ch16_battery_theorem_oasg_existence.aux
+A level-1 auxiliary file: chapters/ch17_battery_theorem_safety_preservation.aux
+A level-1 auxiliary file: chapters/ch18_orius_core_bound_battery.aux
+A level-1 auxiliary file: chapters/ch19_no_free_safety_battery.aux
+A level-1 auxiliary file: chapters/ch20_temporal_behavioral_extensions.aux
+A level-1 auxiliary file: chapters/ch21_battery_to_universal_orius.aux
+A level-1 auxiliary file: chapters/ch21_fault_performance_stress_tests.aux
+A level-1 auxiliary file: chapters/ch22_latency_systems_footprint.aux
+A level-1 auxiliary file: chapters/ch23_hyperparameter_surface_stability.aux
+A level-1 auxiliary file: chapters/ch24_conditional_coverage_subgroups.aux
+A level-1 auxiliary file: chapters/ch25_regional_decomposition_real_prices.aux
+A level-1 auxiliary file: chapters/ch26_asset_preservation_aging_proxy.aux
+A level-1 auxiliary file: chapters/ch27_hardware_in_loop_validation.aux
+A level-1 auxiliary file: chapters/ch28_certificate_half_life_blackout.aux
+A level-1 auxiliary file: chapters/ch29_graceful_degradation_safe_landing.aux
+A level-1 auxiliary file: chapters/ch30_orius_bench_battery_track.aux
+A level-1 auxiliary file: chapters/ch31_compositional_safety_battery_fleets.aux
+A level-1 auxiliary file: chapters/ch32_certos_runtime_certificate_lifecycle.aux
+A level-1 auxiliary file: chapters/ch33_what_battery_thesis_proves.aux
+A level-1 auxiliary file: chapters/ch34_outside_current_evidence.aux
+A level-1 auxiliary file: chapters/ch35_deployment_path_verification_discipline.aux
+A level-1 auxiliary file: chapters/ch36_conclusion.aux
+A level-1 auxiliary file: appendices/app_a_notation.aux
+A level-1 auxiliary file: appendices/app_b_assumptions.aux
+A level-1 auxiliary file: appendices/app_c_full_proofs.aux
+A level-1 auxiliary file: appendices/app_d_extended_results.aux
+A level-1 auxiliary file: appendices/app_e_reliability_audits.aux
+A level-1 auxiliary file: appendices/app_f_fault_specs.aux
+A level-1 auxiliary file: appendices/app_g_adapter_interface.aux
+A level-1 auxiliary file: appendices/app_h_four_reviewer_audit.aux
+A level-1 auxiliary file: appendices/app_i_hil_bom_and_safety.aux
+A level-1 auxiliary file: appendices/app_j_sweep_and_latency_protocols.aux
+A level-1 auxiliary file: appendices/app_k_blueprint_coverage_matrix.aux
+A level-1 auxiliary file: appendices/app_l_artifact_figure_table_index.aux
+A level-1 auxiliary file: appendices/app_m_verified_theorems_and_gap_audit.aux
+A level-1 auxiliary file: appendices/app_n_defense_lock_templates.aux
+A level-1 auxiliary file: appendices/app_o_claim_scope_and_citation_policy.aux
+A level-1 auxiliary file: appendices/app_p_battery_gap_hardening_synthesis.aux
+A level-1 auxiliary file: appendices/app_q_editorial_integration_and_locking.aux
+A level-1 auxiliary file: appendices/app_r_locked_artifact_hash_registry.aux
+A level-1 auxiliary file: appendices/app_s_claim_evidence_registers.aux
+A level-1 auxiliary file: appendices/app_t_certos_artifact_audit.aux
+A level-1 auxiliary file: appendices/app_u_certos_lifecycle_log.aux
+A level-1 auxiliary file: appendices/app_v_active_probing_battery_audit.aux
+A level-1 auxiliary file: appendices/app_w_portability_context_and_roadmap.aux
+A level-1 auxiliary file: appendices/app_x_full_locked_de_trace.aux
+A level-1 auxiliary file: appendices/app_y_full_locked_us_trace.aux
+A level-1 auxiliary file: appendices/app_z_theorem_and_paper_sync_registers.aux
+A level-1 auxiliary file: appendices/app_aa_release_manifest_and_artifact_traceability.aux
+A level-1 auxiliary file: appendices/app_ab_hil_fault_response_log.aux
+A level-1 auxiliary file: appendices/app_ac_integrated_theorem_surface_register.aux
+A level-1 auxiliary file: backmatter/references.aux
+The style file: plainnat.bst
+I couldn't open database file references.bib
+---line 4 of file backmatter/references.aux
+ : \bibdata{references
+ :                    }
+I'm skipping whatever remains of this command
+A level-1 auxiliary file: backmatter/extended_reading_index.aux
+I found no database files---while reading file orius_battery_409page_figures_upgraded_main.aux
+Warning--I didn't find a database entry for "xu2020optimal"
+Warning--I didn't find a database entry for "bemporad2007robust"
+Warning--I didn't find a database entry for "shapiro2021lectures"
+Warning--I didn't find a database entry for "liang2017review"
+Warning--I didn't find a database entry for "cardenas2011attacks"
+Warning--I didn't find a database entry for "sun2020adversarial"
+Warning--I didn't find a database entry for "vovk2005algorithmic"
+Warning--I didn't find a database entry for "romano2019conformalized"
+Warning--I didn't find a database entry for "gibbs2021adaptive"
+Warning--I didn't find a database entry for "bloem2015shield"
+Warning--I didn't find a database entry for "ames2019control"
+You've used 0 entries,
+            2773 wiz_defined-function locations,
+            671 strings with 8106 characters,
+and the built_in function-call counts, 33 in all, are:
+= -- 0
+> -- 0
+< -- 0
++ -- 0
+- -- 0
+* -- 2
+:= -- 10
+add.period$ -- 0
+call.type$ -- 0
+change.case$ -- 0
+chr.to.int$ -- 0
+cite$ -- 0
+duplicate$ -- 0
+empty$ -- 1
+format.name$ -- 0
+if$ -- 1
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 0
+newline$ -- 8
+num.names$ -- 0
+pop$ -- 0
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 1
+stack$ -- 0
+substring$ -- 0
+swap$ -- 0
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 0
+while$ -- 0
+width$ -- 0
+write$ -- 7
+(There were 2 error messages)
