@@ -1,15 +1,26 @@
+% All-Domain Latency Table (updated from latency_report.json, 1000 steps)
+% Source: reports/latency_run/latency_report.json
+% All 6 domains | N=1000 steps | Gate: p99 < 50 ms
 \begin{table}[htbp]
-\centering
-\caption{ORIUS Pipeline Latency per Domain (real telemetry, $N=200$ steps)}
+\centering\small
+\caption{ORIUS DC3S pipeline latency across all six domains ($N=1{,}000$ steps per domain,
+         Python~3.11, Intel~Xeon). Gate: $\text{p99} < 50$\,ms.
+         Battery (energy) domain benefits from a simpler state schema;
+         proof domains carry richer observation vectors.}
 \label{tab:all_domain_latency}
-\begin{tabular}{lrr}
+\begin{tabular}{lrrrc}
 \toprule
-Domain & P50 Latency (ms) & P95 Latency (ms) \\
+\textbf{Domain} & \textbf{P50 (ms)} & \textbf{P95 (ms)} & \textbf{P99 (ms)} & \textbf{Gate} \\
 \midrule
-Aerospace & 0.07 & 0.08 \\
-Autonomous Vehicles & 0.07 & 0.07 \\
-Healthcare (ICU Vitals) & 0.06 & 0.07 \\
-Industrial Process Control & 0.06 & 0.07 \\
+Battery (Ref.)              & 0.013 & 0.017 & 0.034 & \checkmark \\
+\midrule
+Industrial                  & 0.125 & 0.152 & 0.170 & \checkmark \\
+Healthcare                  & 0.122 & 0.159 & 0.246 & \checkmark \\
+Vehicle (AV)                & 0.136 & 0.160 & 0.180 & \checkmark \\
+Aerospace                   & 0.125 & 0.154 & 0.172 & \checkmark \\
+Navigation                  & 0.131 & 0.157 & 0.178 & \checkmark \\
 \bottomrule
+\multicolumn{5}{l}{\small All p99 values $\ll 50$\,ms SLA. Battery uses energy-grid pipeline
+  (lower overhead).}\\
 \end{tabular}
 \end{table}

@@ -1,28 +1,17 @@
-\begin{table*}[htbp]
+\begin{table}[htbp]
 \centering
-\small
-\caption{Multi-domain proof-validation evidence gate results (5 seeds $\times$ 48 steps each). All five proof domains satisfy the evidence-gate criteria: baseline mean $>0.05$, ORIUS mean $<$ baseline mean, ORIUS std $\leq 0.05$. Battery is the reference domain; its DC3S operates via the energy-optimisation pipeline.}
-\label{tab:multi_domain_evidence_gate}
-\setlength{\tabcolsep}{5pt}
-\renewcommand{\arraystretch}{1.05}
-\begin{tabular}{lllrrrrrc}
+\caption{Multi-Domain Proof-Validation Evidence Gate Results (5 seeds $\times$ 48 steps).}
+\label{tbl:multi_domain_evidence_gate}
+\begin{tabular}{lcccc}
 \toprule
-\textbf{Domain} & \textbf{Status} & \textbf{Safety axis} &
-  \textbf{Baseline} & \textbf{Baseline} & \textbf{ORIUS} & \textbf{ORIUS} &
-  \textbf{Reduction} & \textbf{Gate} \\
- & & &
-  \textbf{TSVR} $\mu$ & \textbf{TSVR} $\sigma$ &
-  \textbf{TSVR} $\mu$ & \textbf{TSVR} $\sigma$ &
-  \textbf{(\%)} & \textbf{pass?} \\
+\textbf{Domain} & \textbf{Baseline} & \textbf{ORIUS} & \textbf{Reduction} & \textbf{Pass} \\
+& \textbf{TSVR mean} & \textbf{TSVR mean} & \textbf{($\geq$25\%)} & \\
 \midrule
-Battery (ref.) & \emph{reference\_validated} & SOC bounds & 0.875 & 0.000 & 0.938 & 0.000 & --- & --- \\
-Vehicle        & \emph{proof\_validated}      & Speed limit & 0.542 & 0.000 & 0.017 & 0.033 & 96.9 & \checkmark \\
-Healthcare     & \emph{proof\_validated}      & SpO$_2$ min & 1.000 & 0.000 & 0.279 & 0.010 & 72.1 & \checkmark \\
-Industrial     & \emph{proof\_validated}      & Power cap   & 1.000 & 0.000 & 0.000 & 0.000 & 100.0 & \checkmark \\
-Aerospace      & \emph{proof\_validated}      & Bank angle  & 1.000 & 0.000 & 0.000 & 0.000 & 100.0 & \checkmark \\
-Navigation     & \emph{proof\_validated}      & Arena bounds & 0.833 & 0.000 & 0.000 & 0.000 & 100.0 & \checkmark \\
-\midrule
-\multicolumn{7}{l}{\textit{All proof domains pass ($\geq$25\% reduction, non-trivial baseline, stable ORIUS)}} & 5/5 & \checkmark \\
+Navigation & 0.8333 & 0.0000 & 100.0\% & $\checkmark$ \\
+Industrial & 1.0000 & 0.0000 & 100.0\% & $\checkmark$ \\
+Healthcare & 1.0000 & 0.2792 & 72.1\% & $\checkmark$ \\
+Aerospace & 1.0000 & 0.0000 & 100.0\% & $\checkmark$ \\
+Vehicle (AV) & 0.5417 & 0.0167 & 96.9\% & $\checkmark$ \\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}

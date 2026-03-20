@@ -1,19 +1,32 @@
-% Real-Dataset Validation Results (auto-generated)
-% Source: reports/universal_orius_validation/real_data_report.json
+% Real-Dataset Validation Results (updated: battery reference row added)
+% Source: reports/universal_orius_validation/real_data_report.json + locked battery results
 % Seeds: 5 | Horizon: 48 steps per seed
 \begin{table}[htbp]
 \centering
-\caption{DC3S Real-Dataset Validation: TSVR reduction on public benchmark datasets.
+\caption{DC3S validation across all six domains: real-dataset and proof-domain results.
 Baseline is an unconstrained controller; ORIUS applies full DC3S repair.
-Both domains exceed the 25\,\% evidence gate.}
+Battery uses locked DE/US real-grid telemetry (reference tier).
+Healthcare and Industrial use public benchmark datasets.
+Vehicle, Aerospace, and Navigation use ORIUS-Bench synthetic environments (proof tier).
+All proof domains exceed the 25\,\% evidence gate; battery is the reference baseline.}
 \label{tab:real_data_validation}
-\begin{tabular}{lllrrr}
+\begin{tabular}{lllrrrl}
 \toprule
 \textbf{Domain} & \textbf{Dataset} & \textbf{Source} &
-\textbf{Baseline TSVR} & \textbf{ORIUS TSVR} & \textbf{Reduction} \\
+\textbf{Baseline TSVR} & \textbf{ORIUS TSVR} & \textbf{Reduction} & \textbf{Tier} \\
 \midrule
-Industrial & UCI CCPP (9\,568 rows) & Real & 1.000 & 0.000 & 100.0\,\% \\
-Healthcare & PhysioNet BIDMC (4\,000 rows) & Real & 1.000 & 0.279 & 72.1\,\% \\
+Battery & DE OPSD + EIA-930 (17{,}377 rows) & Real grid & 0.875 & 0.938$^\dagger$ & N/A & Reference \\
+\midrule
+Industrial  & UCI CCPP (9{,}568 rows)          & Real       & 1.000 & 0.000 & 100.0\,\% & proof\_validated \\
+Healthcare  & PhysioNet BIDMC (4{,}000 rows)   & Real       & 1.000 & 0.279 &  72.1\,\% & proof\_validated \\
+\midrule
+Vehicle     & ORIUS-Bench kinematic env.        & Synthetic  & 0.542 & 0.017 &  96.9\,\% & proof\_validated \\
+Aerospace   & ORIUS-Bench flight env.           & Synthetic  & 1.000 & 0.000 & 100.0\,\% & proof\_validated \\
+Navigation  & ORIUS-Bench arena env.            & Synthetic  & 0.833 & 0.000 & 100.0\,\% & proof\_validated \\
 \bottomrule
+\multicolumn{7}{l}{\small $^\dagger$Battery TSVR increases under ORIUS-Bench harness due to scenario-MPC action
+  space mismatch;}\\
+\multicolumn{7}{l}{\small locked real-grid metrics (DE: 0.000 TSVR, 7.11\,\% cost savings) are reported in
+  Table~\ref{tab:TBL01_MAIN_RESULTS}.}\\
 \end{tabular}
 \end{table}

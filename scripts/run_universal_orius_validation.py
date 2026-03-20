@@ -639,6 +639,14 @@ def main() -> int:
             writer.writeheader()
             writer.writerows(domain_rows)
 
+    # Per-controller breakdown CSV (all domains × all controllers × all seeds)
+    per_ctrl_csv_path = out / "per_controller_tsvr.csv"
+    with open(per_ctrl_csv_path, "w", newline="") as f:
+        if results:
+            writer = csv.DictWriter(f, fieldnames=list(results[0].keys()))
+            writer.writeheader()
+            writer.writerows(results)
+
     # Proof-domain report
     proof_report_path = out / "proof_domain_report.json"
     with open(proof_report_path, "w") as f:
@@ -717,6 +725,7 @@ def main() -> int:
         "results_count":                  len(results),
         "cross_domain_oasg_csv":          str(csv_path),
         "domain_summary_csv":             str(summary_csv_path),
+        "per_controller_tsvr_csv":        str(per_ctrl_csv_path),
     }
 
     report_path = out / "validation_report.json"
@@ -772,6 +781,7 @@ def main() -> int:
     print(f"  Report                → {report_path}")
     print(f"  OASG table            → {csv_path}")
     print(f"  Domain summary        → {summary_csv_path}")
+    print(f"  Per-controller CSV    → {per_ctrl_csv_path}")
     print(f"  Proof-domain report   → {proof_report_path}")
     print(f"  Portability report    → {portability_report_path}")
 

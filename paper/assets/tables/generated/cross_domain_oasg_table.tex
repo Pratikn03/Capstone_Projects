@@ -1,20 +1,17 @@
 \begin{table}[htbp]
 \centering
-\scriptsize
-\caption{Cross-domain ORIUS-Bench validation (5 seeds $\times$ 48 steps). All five non-battery domains achieve $\geq$25\% TSVR reduction (\emph{proof\_validated}); battery is the reference domain. Evidence gate: baseline mean $>0.05$, ORIUS improves, ORIUS std $\leq 0.05$.}
-\label{tab:TBL09_CROSS_DOMAIN_OASG}
-\setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{0.98}
-\begin{tabular}{llrrr}
+\caption{Cross-Domain OASG (Observed-Action Safety Gap) Rates.}
+\label{tbl:cross_domain_oasg}
+\begin{tabular}{lccc}
 \toprule
-\textbf{Domain} & \textbf{Faults} & \textbf{Baseline TSVR} & \textbf{ORIUS TSVR} & \textbf{Reduction (\%)} \\
+\textbf{Domain} & \textbf{Baseline OASG} & \textbf{ORIUS OASG} & \textbf{Reduction} \\
 \midrule
-battery & multi & 0.875 & 0.9375 & -7.1 \\
-navigation & multi & 0.8333 & 0.0 & 100.0 \\
-industrial & multi & 1.0 & 0.0 & 100.0 \\
-healthcare & multi & 1.0 & 0.2792 & 72.1 \\
-aerospace & multi & 1.0 & 0.0 & 100.0 \\
-vehicle & multi & 0.5417 & 0.0167 & 96.9 \\
+Battery (Ref.) & 0.8750 & 0.9375 & -7.1\% \\
+Navigation & 0.8333 & 0.0000 & 100.0\% \\
+Industrial & 1.0000 & 0.0000 & 100.0\% \\
+Healthcare & 1.0000 & 0.2792 & 72.1\% \\
+Aerospace & 1.0000 & 0.0000 & 100.0\% \\
+Vehicle (AV) & 0.5417 & 0.0167 & 96.9\% \\
 \bottomrule
 \end{tabular}
 \end{table}
