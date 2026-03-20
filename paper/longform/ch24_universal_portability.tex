@@ -90,7 +90,22 @@ Navigation & Robotic 2-D & Synthetic arena & 100\% \\
 \end{tabular}
 \end{center}
 
-All five proof domains exceed the 25\% evidence gate (Table~\ref{tbl:multi_domain_evidence_gate}).
+All five proof domains exceed the 25\% evidence gate
+(Table~\ref{tbl:multi_domain_evidence_gate}).
+
+\textbf{Validation-depth note.}
+The formal guarantees in Claim~\ref{claim:portability}(i)--(iv) hold for any
+DC3S-compatible system by the domain-agnostic structure of the theorems; this is
+a framework-level result, not an empirical claim about each domain.
+The evidence table above distinguishes \emph{validation depth}:
+battery carries locked real-data evidence at the \emph{reference\_validated} tier;
+the five proof domains demonstrate evidence-gate passage at the
+\emph{proof\_validated} tier on ORIUS-Bench synthetic benchmarks.
+The two tiers reflect different depths of empirical validation---not different
+theoretical coverage guarantees.
+Portability evidence (same pipeline, same theorems, evidence gate passed) is not
+the same as universal theorem closure; each domain remains subject to its own
+calibration data quality and operating-envelope assumptions.
 
 % ------------------------------------------------------------------
 \subsubsection*{Scope Limitation and Future Work}
