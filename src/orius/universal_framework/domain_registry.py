@@ -70,6 +70,11 @@ def _register_builtins() -> None:
         register_domain("aerospace", lambda cfg: AerospaceDomainAdapter(cfg))
     except ImportError:
         pass
+    try:
+        from orius.adapters.navigation import NavigationDomainAdapter
+        register_domain("navigation", lambda cfg: NavigationDomainAdapter(cfg))
+    except ImportError:
+        pass
 
 
 _register_builtins()
