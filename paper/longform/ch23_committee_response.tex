@@ -114,8 +114,14 @@ compromised, which is the standard Byzantine fault-tolerance assumption in distr
 systems \citep{lamport1982byzantine}.
 
 The six-domain empirical validation (Tables~\ref{tbl:multi_domain_evidence_gate}
-and~\ref{tbl:adversarial_tsvr}) provides the empirical counterpart: all domains
-pass the evidence gate with the same theoretical guarantees.
+and~\ref{tbl:adversarial_tsvr}) provides the empirical counterpart: all five proof
+domains pass the evidence gate on ORIUS-Bench synthetic benchmarks.
+The theorems themselves are domain-agnostic by construction---Theorems~9 and~10
+require no domain-physics assumptions, only conditions (C1)--(C3) of
+Definition~\ref{def:compatible_cps}---but the \emph{empirical validation depth}
+is tiered: battery carries locked real-data evidence, the full energy-optimisation
+pipeline, and hardware-in-loop results that the proof domains do not yet replicate.
+The formal guarantee applies universally; the evidence depth does not.
 
 \subsubsection*{Summary}
 
