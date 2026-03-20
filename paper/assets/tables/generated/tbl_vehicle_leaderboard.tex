@@ -1,0 +1,17 @@
+\begin{table}[htbp]
+\centering\small
+\caption{Vehicle (AV) domain: all controllers ranked by TSVR (5\,seeds $\times$ 48\,steps on ORIUS-Bench synthetic harness). Lower TSVR = better safety. DC3S intervention rate reflects fraction of steps where repair was applied.}
+\label{tab:vehicle_leaderboard}
+\begin{tabular}{clccc}
+\toprule
+\textbf{Rank} & \textbf{Controller} & \textbf{TSVR} & \textbf{Interv.\ Rate} & \textbf{OASG} \\
+\midrule
+\textbf{1} & \textbf{DC3S} & 0.0167 & 0.175 & 0.968 \\
+2 & Fallback & 0.4167 & 0.175 & 1.000 \\
+3 & Robust & 0.5000 & 0.175 & 1.000 \\
+4 & Nominal & 0.5417 & 0.175 & 1.000 \\
+5 & Naive & 0.6042 & 0.175 & 0.758 \\
+\bottomrule
+\multicolumn{5}{l}{\small OASG = Observed-Action Safety Gap; Interv.\ Rate = fraction of steps DC3S repair was applied.}\\
+\end{tabular}
+\end{table}
