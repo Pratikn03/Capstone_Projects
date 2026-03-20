@@ -1,0 +1,17 @@
+\begin{table}[htbp]
+\centering
+\caption{Multi-Domain Proof-Validation Evidence Gate Results (5 seeds $\times$ 48 steps).}
+\label{tbl:multi_domain_evidence_gate}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Domain} & \textbf{Baseline} & \textbf{ORIUS} & \textbf{Reduction} & \textbf{Pass} \\
+& \textbf{TSVR mean} & \textbf{TSVR mean} & \textbf{($\geq$25\%)} & \\
+\midrule
+Navigation & 0.8333 & 0.0000 & 100.0\% & $\checkmark$ \\
+Industrial & 1.0000 & 0.0000 & 100.0\% & $\checkmark$ \\
+Healthcare & 1.0000 & 0.2792 & 72.1\% & $\checkmark$ \\
+Aerospace & 1.0000 & 0.0000 & 100.0\% & $\checkmark$ \\
+Vehicle (AV) & 0.5417 & 0.0167 & 96.9\% & $\checkmark$ \\
+\bottomrule
+\end{tabular}
+\end{table}

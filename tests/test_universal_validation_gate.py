@@ -1,4 +1,10 @@
-"""Regression tests for the universal validation evidence gate."""
+"""Regression tests for the universal validation evidence gate.
+
+Multi-Domain Universal Framework maturity model:
+  reference     → battery   (locked PhD-thesis reference domain)
+  proof_domain  → vehicle, healthcare, industrial, aerospace, navigation
+                  (full evidence gate: TSVR reduction ≥ 25 %)
+"""
 from __future__ import annotations
 
 import importlib.util
@@ -27,6 +33,10 @@ def _load_validation_script():
 
 validation_script = _load_validation_script()
 
+
+# ---------------------------------------------------------------------------
+# Unit tests for the proof-domain evidence gate
+# ---------------------------------------------------------------------------
 
 def test_evaluate_proof_domain_rejects_trivial_baseline() -> None:
     summary = {
@@ -68,48 +78,129 @@ def test_evaluate_proof_domain_accepts_stable_improvement() -> None:
     assert report["failure_reasons"] == []
 
 
+# ---------------------------------------------------------------------------
+# Unit tests for the portability_validated soft gate
+# ---------------------------------------------------------------------------
+
+def test_evaluate_portability_domain_passes_no_regression() -> None:
+    summary = {
+        "tsvr_nominal": [0.10, 0.12, 0.08],
+        "tsvr_dc3s":    [0.09, 0.10, 0.07],
+        "harness_status": "pass",
+    }
+    report = validation_script._evaluate_portability_domain("healthcare", summary)
+    assert report["portability_pass"] is True
+    assert report["failure_reasons"] == []
+
+
+def test_evaluate_portability_domain_fails_on_regression() -> None:
+    summary = {
+        "tsvr_nominal": [0.10, 0.10, 0.10],
+        "tsvr_dc3s":    [0.20, 0.22, 0.21],   # DC3S makes things worse
+        "harness_status": "pass",
+    }
+    report = validation_script._evaluate_portability_domain("industrial", summary)
+    assert report["portability_pass"] is False
+    assert "dc3s_regression_on_tsvr" in report["failure_reasons"]
+
+
+def test_evaluate_portability_domain_fails_on_harness_error() -> None:
+    summary = {
+        "tsvr_nominal": [0.10],
+        "tsvr_dc3s":    [0.05],
+        "harness_status": "fail",
+    }
+    report = validation_script._evaluate_portability_domain("aerospace", summary)
+    assert report["portability_pass"] is False
+    assert "harness_failed" in report["failure_reasons"]
+
+
+def test_evaluate_portability_domain_passes_with_zero_tsvr() -> None:
+    """If neither baseline nor DC3S has violations, no regression → pass."""
+    summary = {
+        "tsvr_nominal": [0.0, 0.0, 0.0],
+        "tsvr_dc3s":    [0.0, 0.0, 0.0],
+        "harness_status": "pass",
+    }
+    report = validation_script._evaluate_portability_domain("industrial", summary)
+    assert report["portability_pass"] is True
+
+
+# ---------------------------------------------------------------------------
+# Integration: vehicle proof episode beats nominal
+# ---------------------------------------------------------------------------
+
 def test_vehicle_proof_episode_beats_nominal_on_locked_protocol() -> None:
-    nominal = validation_script._run_episode(VehicleTrackAdapter(), NominalController(), seed=2000, horizon=24)
-    repaired = validation_script._run_vehicle_proof_episode(DC3SController(), seed=2000, horizon=24)
-
-    nominal_metrics = compute_all_metrics(nominal)
+    nominal = validation_script._run_episode(
+        VehicleTrackAdapter(), NominalController(), seed=2000, horizon=24
+    )
+    repaired = validation_script._run_vehicle_proof_episode(
+        DC3SController(), seed=2000, horizon=24
+    )
+    nominal_metrics  = compute_all_metrics(nominal)
     repaired_metrics = compute_all_metrics(repaired)
-
     assert nominal_metrics.tsvr > 0.0
     assert repaired_metrics.tsvr < nominal_metrics.tsvr
 
 
-def test_validation_cli_reports_reference_and_proof_domain(tmp_path: Path) -> None:
+# ---------------------------------------------------------------------------
+# End-to-end CLI test
+# ---------------------------------------------------------------------------
+
+def test_validation_cli_reports_all_domain_tiers(tmp_path: Path) -> None:
     run = subprocess.run(
         [
             sys.executable,
             str(SCRIPT_PATH),
-            "--seeds",
-            "1",
-            "--horizon",
-            "24",
-            "--out",
-            str(tmp_path),
+            "--seeds", "1",
+            "--horizon", "24",
+            "--out", str(tmp_path),
         ],
         cwd=REPO_ROOT,
         check=True,
         capture_output=True,
         text=True,
     )
-    assert "Harness pass:  True" in run.stdout
-    assert "Evidence pass: True" in run.stdout
+    assert "Harness pass:" in run.stdout
+    assert "Evidence pass" in run.stdout
+    assert "All proof domains pass:  True" in run.stdout
 
-    report = json.loads((tmp_path / "validation_report.json").read_text())
+    report       = json.loads((tmp_path / "validation_report.json").read_text())
     proof_report = json.loads((tmp_path / "proof_domain_report.json").read_text())
+    port_report  = json.loads((tmp_path / "portability_validation_report.json").read_text())
 
-    assert report["reference_domain"] == "battery"
-    assert report["proof_domain"] == "vehicle"
-    assert report["validated_domains"] == ["battery", "vehicle"]
-    assert report["harness_pass"] is True
-    assert report["evidence_pass"] is True
-    assert proof_report["evidence_pass"] is True
+    # ---- Reference and primary proof domain ----
+    assert report["reference_domain"]     == "battery"
+    assert report["proof_domain"]         == "vehicle"
+    assert report["harness_pass"]         is True
+    assert report["evidence_pass"]        is True
+    assert report["all_proof_domains_pass"] is True
+
+    # ---- All non-battery domains are now proof_validated ----
     domain_rows = {row["domain"]: row for row in report["domain_results"]}
-    assert domain_rows["battery"]["validation_status"] == "reference_validated"
-    assert domain_rows["vehicle"]["validation_status"] == "proof_validated"
-    assert domain_rows["navigation"]["validation_status"] == "portability_only"
-    assert domain_rows["aerospace"]["validation_status"] == "experimental"
+
+    assert domain_rows["battery"]["validation_status"]     == "reference_validated"
+    for proof_d in ("vehicle", "healthcare", "industrial", "aerospace", "navigation"):
+        assert domain_rows[proof_d]["validation_status"]   == "proof_validated", (
+            f"{proof_d} expected proof_validated, got "
+            f"{domain_rows[proof_d]['validation_status']}: "
+            f"{report['domain_proof_reports'].get(proof_d, {}).get('failure_reasons')}"
+        )
+
+    # validated_domains contains battery + all proof domains that passed
+    for d in ("battery", "vehicle", "healthcare", "industrial", "aerospace", "navigation"):
+        assert d in report["validated_domains"], f"{d} not in validated_domains"
+
+    # ---- Domain proof reports ----
+    for proof_d in ("vehicle", "healthcare", "industrial", "aerospace", "navigation"):
+        dr = report["domain_proof_reports"][proof_d]
+        assert dr["evidence_pass"] is True, (
+            f"{proof_d} evidence gate failed: {dr.get('failure_reasons')}"
+        )
+
+    # ---- Proof-domain report (vehicle primary) ----
+    assert proof_report["evidence_pass"]  is True
+    assert proof_report["proof_domain"]   == "vehicle"
+
+    # ---- Portability report (backward-compat; now empty) ----
+    assert port_report["portability_all_pass"] is True

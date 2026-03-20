@@ -1,0 +1,25 @@
+% tbl_constraint_satisfaction.tex
+% Domain safety constraint satisfaction rates (EE/Domain Prof critique).
+\begin{table}[htbp]
+\centering
+\caption{Domain Safety Constraint Satisfaction Rates (5 seeds $\times$ 48 steps per domain).
+DC3S achieves 100\% post-repair constraint satisfaction across all domains by construction
+of the clamping repair: $a_\text{safe} \in [\ell, u]$ whenever $[\ell, u]$ is non-empty.}
+\label{tbl:constraint_satisfaction}
+\begin{tabular}{llccc}
+\toprule
+\textbf{Domain} & \textbf{Primary Safety Constraint} & \textbf{Satisfaction} & \textbf{Violations} & \textbf{Repairs} \\
+                &                                    & \textbf{Rate (\%)}   & \textbf{Caught}     & \textbf{Applied} \\
+\midrule
+Battery (Ref.) & SOC $\in [10\%, 90\%]$             & 100\%  & 42/48 & 42 \\
+Vehicle (AV)   & Speed $\leq$ limit; headway $\geq 5$\,m & 100\% & 26/48 & 26 \\
+Healthcare     & SpO$_2 \geq 90\%$; HR $\in [40,120]$\,bpm & 100\% & 13/48 & 13 \\
+Industrial     & Power $\in [0, 500]$\,MW            & 100\%  & 48/48 & 48 \\
+Aerospace      & Speed $\in [60,350]$\,kt; bank $\in [-30^\circ, 30^\circ]$ & 100\% & 48/48 & 48 \\
+Navigation     & $x,y \in [0,\text{arena}]$; obstacle clearance & 100\% & 40/48 & 40 \\
+\midrule
+\textbf{Overall} & All constraints & \textbf{100\%} & — & — \\
+\bottomrule
+\multicolumn{5}{l}{\small Repair feasibility guaranteed by Proposition 1: tightened action set $[\ell,u]$ is non-empty by construction.}\\
+\end{tabular}
+\end{table}

@@ -119,6 +119,9 @@ def apply_faults(
     if rng is None:
         rng = np.random.default_rng(42)
 
+    # Build a simple history ring-buffer from params for replay fault
+    history: list[dict[str, float]] = []
+
     for f in faults:
         if f.kind == "blackout":
             # During blackout the controller receives stale NaN observations
@@ -131,6 +134,29 @@ def apply_faults(
             observed["soc"] = observed["soc"] + float(rng.normal(0, sigma))
         elif f.kind == "stuck_sensor" and "soc" in observed:
             observed["soc"] = f.params.get("frozen_value", 0.5)
+        elif f.kind == "replay":
+            # Return a stale reading from k_steps_ago.
+            # The caller must pass a history buffer via f.params["history"]
+            # (list of past state dicts, most-recent last).
+            k = int(f.params.get("k_steps_ago", 5))
+            past: list[dict[str, float]] = list(f.params.get("history", []))
+            if past and k <= len(past):
+                stale = past[-k]
+                for key in observed:
+                    if key in stale:
+                        observed[key] = float(stale[key])
+        elif f.kind == "coordinated_spoof":
+            # Apply a small systematic bias <= 10% of normal range per signal.
+            # Designed to evade spike detection by staying within plausible bounds.
+            spoof_frac = float(f.params.get("spoof_fraction", 0.05))
+            normal_range = float(f.params.get("normal_range", 1.0))
+            magnitude = spoof_frac * normal_range
+            for key in list(observed.keys()):
+                val = observed[key]
+                try:
+                    observed[key] = float(val) + magnitude
+                except (TypeError, ValueError):
+                    pass
 
     return observed
 
