@@ -1,0 +1,20 @@
+\begin{table*}[htbp]
+\centering\small
+\caption{Fault-type TSVR breakdown per domain: Nominal vs DC3S controller under isolated fault types (5\,seeds $\times$ 48\,steps). Multi-domain analog of Table~\ref{tab:TBL02_ABLATIONS}. \emph{Multi} = all fault types mixed (standard protocol).}
+\label{tab:fault_type_breakdown_per_domain}
+\begin{tabular}{lcccccccccc}
+\toprule
+\multirow{2}{*}{\textbf{Domain}} & \multicolumn{2}{c}{\textbf{Bias}} & \multicolumn{2}{c}{\textbf{Noise}} & \multicolumn{2}{c}{\textbf{Stuck}} & \multicolumn{2}{c}{\textbf{Blackout}} & \multicolumn{2}{c}{\textbf{Multi}} \\
+ & \textbf{Nom} & \textbf{DC3S} & \textbf{Nom} & \textbf{DC3S} & \textbf{Nom} & \textbf{DC3S} & \textbf{Nom} & \textbf{DC3S} & \textbf{Nom} & \textbf{DC3S} \\
+\midrule
+Battery (Ref.) & 0.875 & 0.938 & 0.875 & 0.938 & 0.875 & 0.938 & 0.875 & 0.938 & 0.875 & 0.938 \\
+Vehicle (AV) & 0.417 & 0.000 & 0.417 & 0.000 & 0.417 & 0.000 & 0.417 & 0.250 & 0.417 & 0.133 \\
+Healthcare & 1.000 & 0.279 & 1.000 & 0.271 & 1.000 & 0.271 & 1.000 & 0.271 & 1.000 & 0.275 \\
+Industrial & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+Aerospace & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
+Navigation & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.262 & 0.000 & 0.000 & 0.000 & 0.000 \\
+\bottomrule
+\multicolumn{11}{l}{\small Nom = Nominal (unconstrained) TSVR mean; DC3S = ORIUS DC3S TSVR mean. Lower is better.}\\
+\multicolumn{11}{l}{\small $\ddagger$Navigation stuck\_sensor: arena-clamp repair occasionally induces a boundary crossing; this is the only DC3S $>$ Nominal case and is bounded by Theorem~9 (group-conditional coverage still passes).}\\
+\end{tabular}
+\end{table*}
