@@ -6,10 +6,11 @@ This chapter derives the central quantitative result of the ORIUS
 framework: an upper bound on the expected number of true-state violations
 over an episode of length~$T$.  The bound links the conformal miscoverage
 level~$\alpha$, the average observation reliability~$\bar{w}$, and the
-horizon~$T$ into a single inequality.  The manuscript carries the formal
-derivation, while the runtime module
-\texttt{src/orius/dc3s/coverage\_theorem.py} now exposes helper
-functions that compute the same bound and compare empirical traces against it.
+horizon~$T$ into a single inequality.  The derivation uses energy
+management notation but is domain-agnostic: it holds for any domain whose
+adapter satisfies the shared contract.  The runtime module
+\texttt{src/orius/dc3s/coverage\_theorem.py} exposes helper functions that
+compute and verify this bound for all six validated domains.
 
 \section{Violation Process and Horizon Notation}
 

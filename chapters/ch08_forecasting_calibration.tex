@@ -4,11 +4,12 @@
 
 Dispatch safety begins with forecast quality: an optimiser can only be as
 reliable as the prediction intervals it conditions on.  This chapter
-describes the six model families evaluated in ORIUS, the training
-protocol designed to prevent temporal leakage, the conformal prediction
-layer that converts point forecasts into calibrated intervals, and the
-structural calibration weaknesses that motivate the adaptive inflation
-in DC3S.
+presents the energy management instantiation of the ORIUS forecasting
+layer.  The methods---six model families, conformal quantile regression,
+OQE reliability scoring, and RAC interval inflation---are domain-agnostic;
+their instantiation here uses the locked DE ENTSO-E load dataset as the
+primary validation surface.  Chapter~\ref{ch:battery-to-orius} applies
+the same forecasting layer to all six ORIUS domains at equivalent depth.
 
 % ----------------------------------------------------------------
 \section{Forecast Targets}
