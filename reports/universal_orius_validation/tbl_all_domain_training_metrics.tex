@@ -1,0 +1,20 @@
+\begin{table*}[htbp]
+\centering
+\caption{Training, calibration, and test surfaces for all six ORIUS domains.
+  Battery metrics are from the locked DE ENTSO-E run (load\_mw, $h{=}1$, conformal-adjusted PICP).
+  Navigation uses a closed-loop simulation surface with no trained forecasting model.
+  PICP$_{90}$ target is $\geq 0.90$ for all forecasting-capable domains.}
+\label{tab:all-domain-training-metrics}
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+Domain & Train & Cal & Test & RMSE & MAE & sMAPE & PICP$_{90}$ & Mean width \\
+\midrule
+Energy Management (Battery / DE) & 12,163 & 868 & 2,537 & 253.32 & 200.90 & 0.0035 & 0.924 & 1111.05 \\
+Autonomous Vehicles & 85 & 6 & 19 & 0.06 & 0.04 & 0.0036 & 0.947 & 0.2663 \\
+Industrial Process Control & 6,680 & 477 & 1,433 & 3.61 & 2.73 & 0.0060 & 0.896 & 11.5782 \\
+Medical Monitoring (ICU Vitals) & 319 & 22 & 71 & 0.76 & 0.62 & 0.0070 & 0.930 & 3.1030 \\
+Aerospace (Flight Envelope) & 3,483 & 248 & 748 & 16.32 & 12.58 & 0.0066 & 0.912 & 35.61 \\
+Navigation (Simulation) & — & — & — & — & — & — & — & — \\
+\bottomrule
+\end{tabular}
+\end{table*}

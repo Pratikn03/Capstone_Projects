@@ -31,6 +31,13 @@ warnings.filterwarnings("ignore")
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 DOMAINS: dict[str, dict] = {
+    "av": {
+        "target": "speed_mps",
+        "display": "Autonomous Vehicles",
+        "units": "m/s",
+        "constraint_lo": 0.0,
+        "constraint_hi": 11.0,
+    },
     "industrial": {
         "target": "power_mw",
         "display": "Industrial Process Control",
@@ -52,6 +59,9 @@ DOMAINS: dict[str, dict] = {
         "constraint_lo": 60.0,
         "constraint_hi": 350.0,
     },
+    # Navigation uses a closed-loop simulation surface with no trained forecasting
+    # model; it appears in the multi-domain comparison table but not in the
+    # per-domain training evidence profiles.
 }
 
 FAULT_COLOR = "#d62728"   # red for fault windows
