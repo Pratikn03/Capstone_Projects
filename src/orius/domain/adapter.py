@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Callable
 
-# A placeholder for now, this would be a more specific dataclass
+# Type aliases for domain-generic objects used throughout the ORIUS pipeline.
 State = Any
 Action = Any
 UncertaintySet = Any

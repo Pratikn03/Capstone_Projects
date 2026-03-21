@@ -545,7 +545,6 @@ class BatteryOptimizer(Optimizer):
         self.config = config
 
     def get_candidate_action(self, state: Any, forecast: Any) -> Action:
-        print("Warning: BatteryOptimizer.get_candidate_action is a placeholder.")
         return 0.0
 
 
