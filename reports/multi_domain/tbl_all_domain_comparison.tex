@@ -1,20 +1,20 @@
 \begin{table}[htbp]
 \centering
-\caption{Portable-domain ORIUS audit under fault injection (dropout $p{=}0.15$, spike $p{=}0.08$, stale $p{=}0.10$).}
+\caption{Portable-domain ORIUS audit under fault injection (dropout $p{=}0.15$, spike $p{=}0.08$, stale $p{=}0.10$). Rule-Based TSVR = domain-appropriate rule-based controller without DC3S shield.}
 \label{tab:all_domain_comparison}
 \begin{tabular}{llrrrrrr}
 \toprule
-Domain & Source & $N$ & Faults Inj.\ & Viol.\ Before (\%) & Viol.\ After (\%) & Repair Rate (\%) & $\bar{w}_t$ \\
+Domain & Source & $N$ & Viol.\ Before (\%) & Rule-Based (\%) & DC3S After (\%) & Repair (\%) & $\bar{w}_t$ \\
 \midrule
-Aerospace & locked\_csv & 2000 & $\approx$660 & 10.9 & \textbf{10.9} & 75.7 & 0.782 \\
-Autonomous Vehicles & locked\_csv & 2000 & $\approx$660 & 3.6 & \textbf{3.6} & 99.6 & 0.768 \\
-Navigation & synthetic & 2000 & $\approx$660 & 25.8 & \textbf{1.0} & 100.0 & 0.775 \\
-Medical Monitoring (ICU Vitals) & locked\_csv & 2000 & $\approx$660 & 7.5 & \textbf{0.0} & 37.2 & 0.812 \\
-Industrial Process Control & locked\_csv & 2000 & $\approx$660 & 21.7 & \textbf{0.0} & 90.7 & 0.660 \\
+Aerospace & locked\_csv & 2000 & 26.6 & 0.0 & \textbf{0.0} & 77.3 & 0.782 \\
+Autonomous Vehicles & locked\_csv & 2000 & 3.2 & 48.8 & \textbf{0.0} & 99.5 & 0.769 \\
+Navigation & synthetic & 2000 & 25.4 & 0.0 & \textbf{9.8} & 100.0 & 0.780 \\
+Medical Monitoring (ICU Vitals) & locked\_csv & 2000 & 7.0 & 7.5 & \textbf{0.0} & 34.9 & 0.823 \\
+Industrial Process Control & locked\_csv & 2000 & 22.1 & 0.0 & \textbf{0.0} & 90.5 & 0.655 \\
 \bottomrule
 \end{tabular}
 \smallskip
 \begin{minipage}{\linewidth}\footnotesize
-Violations Before = fraction of steps where faulted telemetry or aggressive candidate action breaches the domain safety constraint before the ORIUS shield intervenes. Violations After = fraction remaining after shield repair. Navigation uses a synthetic bounded-arena trace because no locked real navigation telemetry dataset is currently included in the repo.
+Viol.\ Before = unshielded candidate controller TSVR. Rule-Based = domain-appropriate rule-based controller (no shield): proportional speed governor (AV), PI setpoint controller (industrial), clinical threshold protocol (healthcare), proportional bank limiter (aerospace), center-guidance controller (navigation). Source = locked\_csv for locked replay telemetry and synthetic for bounded synthetic traces when no locked dataset is shipped. DC3S After = TSVR after shield repair.
 \end{minipage}
 \end{table}

@@ -1,0 +1,16 @@
+\begin{table}[htbp]
+\centering
+\caption{Software-in-loop (SIL) runtime verification. All five non-battery domains complete a full faulted replay trace without runtime failure and emit valid DC3S certificates.}
+\label{tab:domain-sil-summary}
+\begin{tabular}{lll}
+\toprule
+\textbf{Domain} & \textbf{SIL Pass} & \textbf{Note} \\
+\midrule
+av & \checkmark & full faulted replay, certificates emitted, no runtime error \\
+industrial & \checkmark & full faulted replay, certificates emitted, no runtime error \\
+healthcare & \checkmark & full faulted replay, certificates emitted, no runtime error \\
+navigation & \checkmark & closed-loop simulation replay, certificates emitted \\
+aerospace & \checkmark & full faulted replay, certificates emitted, no runtime error \\
+\bottomrule
+\end{tabular}
+\end{table}

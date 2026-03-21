@@ -1,0 +1,17 @@
+\begin{table}[htbp]
+\centering
+\caption{Training surface verification for all domains. All domains have locked data splits, trained GBM models, and conformal calibration artifacts.}
+\label{tab:domain-training-audit}
+\begin{tabular}{llp{8cm}}
+\toprule
+\textbf{Domain} & \textbf{Verified} & \textbf{Note} \\
+\midrule
+battery & \checkmark & locked reference domain \\
+av & \checkmark & vehicle adapter training verified via locked CPSBench harness \\
+industrial & \checkmark & industrial adapter training verified via OPSD-derived telemetry replay \\
+healthcare & \checkmark & healthcare adapter training verified via ICU vitals locked dataset \\
+navigation & \checkmark & navigation adapter training verified via closed-loop replay \\
+aerospace & \checkmark & aerospace adapter training verified via locked CMU dataset replay \\
+\bottomrule
+\end{tabular}
+\end{table}
