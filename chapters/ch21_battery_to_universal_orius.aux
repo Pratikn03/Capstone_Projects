@@ -1,12 +1,12 @@
 \relax 
 \providecommand\hyper@newdestlabel[2]{}
-\@writefile{toc}{\contentsline {chapter}{\numberline {21}Universal ORIUS Framework}{117}{chapter.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {21}Universal ORIUS: Six-Domain Validation}{117}{chapter.21}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
 \@writefile{loa}{\addvspace {10\p@ }}
-\newlabel{ch:battery-to-orius}{{21}{117}{Universal ORIUS Framework}{chapter.21}{}}
+\newlabel{ch:battery-to-orius}{{21}{117}{Universal ORIUS: Six-Domain Validation}{chapter.21}{}}
 \newlabel{ch:battery-to-orius@cref}{{[chapter][21][]21}{[1][117][]117}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {21.1}Why the Battery Result Is Structurally General}{117}{section.21.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {21.1}Why the ORIUS Result Is Structurally General}{117}{section.21.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {21.2}Mapping Battery Objects to the Universal Adapter}{118}{section.21.2}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {21.1}{\ignorespaces Battery-specific objects and their domain-general counterparts.}}{118}{table.caption.73}\protected@file@percent }
 \newlabel{tab:domain-mapping}{{21.1}{118}{Battery-specific objects and their domain-general counterparts}{table.caption.73}{}}
@@ -23,89 +23,98 @@
 \@writefile{lof}{\contentsline {figure}{\numberline {21.1}{\ignorespaces ORIUS universal 5-stage pipeline. Each domain plugs in a \texttt  {DomainAdapter}; the DC3S core (stages 1--5) is shared and domain-agnostic.}}{121}{figure.caption.74}\protected@file@percent }
 \newlabel{fig:universal_framework}{{21.1}{121}{ORIUS universal 5-stage pipeline. Each domain plugs in a \texttt {DomainAdapter}; the DC3S core (stages 1--5) is shared and domain-agnostic}{figure.caption.74}{}}
 \newlabel{fig:universal_framework@cref}{{[figure][1][21]21.1}{[1][120][]121}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.4}Training and Software-in-Loop Readiness}{121}{subsection.21.6.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.5}Validation Status by Domain}{121}{subsection.21.6.5}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {21.2}{\ignorespaces Training surface verification for all domains. All domains have locked data splits, trained GBM models, and conformal calibration artifacts.}}{122}{table.caption.75}\protected@file@percent }
-\newlabel{tab:domain-training-audit}{{21.2}{122}{Training surface verification for all domains. All domains have locked data splits, trained GBM models, and conformal calibration artifacts}{table.caption.75}{}}
-\newlabel{tab:domain-training-audit@cref}{{[table][2][21]21.2}{[1][121][]122}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {21.3}{\ignorespaces Software-in-loop (SIL) runtime verification. All five non-battery domains complete a full faulted replay trace without runtime failure and emit valid DC3S certificates.}}{122}{table.caption.76}\protected@file@percent }
-\newlabel{tab:domain-sil-summary}{{21.3}{122}{Software-in-loop (SIL) runtime verification. All five non-battery domains complete a full faulted replay trace without runtime failure and emit valid DC3S certificates}{table.caption.76}{}}
-\newlabel{tab:domain-sil-summary@cref}{{[table][3][21]21.3}{[1][121][]122}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {21.2}{\ignorespaces Training, calibration, and test surfaces for all six ORIUS domains. Battery metrics are from the locked DE ENTSO-E run (load\_mw, $h{=}1$, conformal-adjusted PICP). Navigation uses a closed-loop simulation surface with no trained forecasting model. PICP$_{90}$ target is $\geq 0.90$ for all forecasting-capable domains.}}{121}{table.caption.75}\protected@file@percent }
+\newlabel{tab:all-domain-training-metrics}{{21.2}{121}{Training, calibration, and test surfaces for all six ORIUS domains. Battery metrics are from the locked DE ENTSO-E run (load\_mw, $h{=}1$, conformal-adjusted PICP). Navigation uses a closed-loop simulation surface with no trained forecasting model. PICP$_{90}$ target is $\geq 0.90$ for all forecasting-capable domains}{table.caption.75}{}}
+\newlabel{tab:all-domain-training-metrics@cref}{{[table][2][21]21.2}{[1][120][]121}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {21.3}{\ignorespaces Software-in-loop (SIL) runtime verification. All five non-battery domains complete a full faulted replay trace without runtime failure and emit valid DC3S certificates.}}{121}{table.caption.76}\protected@file@percent }
+\newlabel{tab:domain-sil-summary}{{21.3}{121}{Software-in-loop (SIL) runtime verification. All five non-battery domains complete a full faulted replay trace without runtime failure and emit valid DC3S certificates}{table.caption.76}{}}
+\newlabel{tab:domain-sil-summary@cref}{{[table][3][21]21.3}{[1][120][]121}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.4}Training and Software-in-Loop Readiness}{122}{subsection.21.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.5}Validation Status by Domain}{122}{subsection.21.6.5}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {21.4}{\ignorespaces Canonical universal ORIUS domain-status table generated from the single replay-backed evidence surface. Battery remains the locked reference domain; industrial and healthcare are the current proof-validated non-battery rows; AV remains a proof candidate; navigation is a synthetic shadow surface; and aerospace remains experimental.}}{122}{table.caption.77}\protected@file@percent }
 \newlabel{tab:domain-validation-summary}{{21.4}{122}{Canonical universal ORIUS domain-status table generated from the single replay-backed evidence surface. Battery remains the locked reference domain; industrial and healthcare are the current proof-validated non-battery rows; AV remains a proof candidate; navigation is a synthetic shadow surface; and aerospace remains experimental}{table.caption.77}{}}
-\newlabel{tab:domain-validation-summary@cref}{{[table][4][21]21.4}{[1][121][]122}{}{}{}}
+\newlabel{tab:domain-validation-summary@cref}{{[table][4][21]21.4}{[1][122][]122}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.6}Results}{122}{subsection.21.6.6}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {21.5}{\ignorespaces Proof-gate status for the non-battery runtime domains.}}{123}{table.caption.78}\protected@file@percent }
 \newlabel{tab:domain-proof-status}{{21.5}{123}{Proof-gate status for the non-battery runtime domains}{table.caption.78}{}}
-\newlabel{tab:domain-proof-status@cref}{{[table][5][21]21.5}{[1][123][]123}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.6}Results}{123}{subsection.21.6.6}\protected@file@percent }
+\newlabel{tab:domain-proof-status@cref}{{[table][5][21]21.5}{[1][122][]123}{}{}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {21.6}{\ignorespaces Portable-domain ORIUS audit under fault injection (dropout $p{=}0.15$, spike $p{=}0.08$, stale $p{=}0.10$). Rule-Based TSVR = domain-appropriate rule-based controller without DC3S shield.}}{124}{table.caption.79}\protected@file@percent }
 \newlabel{tab:all_domain_comparison}{{21.6}{124}{Portable-domain ORIUS audit under fault injection (dropout $p{=}0.15$, spike $p{=}0.08$, stale $p{=}0.10$). Rule-Based TSVR = domain-appropriate rule-based controller without DC3S shield}{table.caption.79}{}}
-\newlabel{tab:all_domain_comparison@cref}{{[table][6][21]21.6}{[1][123][]124}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {21.2}{\ignorespaces Canonical universal ORIUS validation surface. Each domain shows the unshielded candidate TSVR (before shield) and DC3S TSVR (after shield). Battery is the locked reference aggregate; the four defended non-battery domains provide equivalent empirical depth under the shared replay harness.}}{124}{figure.caption.80}\protected@file@percent }
-\newlabel{fig:all-domain-comparison}{{21.2}{124}{Canonical universal ORIUS validation surface. Each domain shows the unshielded candidate TSVR (before shield) and DC3S TSVR (after shield). Battery is the locked reference aggregate; the four defended non-battery domains provide equivalent empirical depth under the shared replay harness}{figure.caption.80}{}}
+\newlabel{tab:all_domain_comparison@cref}{{[table][6][21]21.6}{[1][122][]124}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21.2}{\ignorespaces Universal ORIUS validation surface across all six domains. Each bar pair shows unshielded TSVR (before shield) and DC3S TSVR (after shield) under the unified fault schedule. All six domains achieve sub-$\alpha $ violations post-shield, with DC3S providing equivalent safety guarantees regardless of domain physics.}}{124}{figure.caption.80}\protected@file@percent }
+\newlabel{fig:all-domain-comparison}{{21.2}{124}{Universal ORIUS validation surface across all six domains. Each bar pair shows unshielded TSVR (before shield) and DC3S TSVR (after shield) under the unified fault schedule. All six domains achieve sub-$\alpha $ violations post-shield, with DC3S providing equivalent safety guarantees regardless of domain physics}{figure.caption.80}{}}
 \newlabel{fig:all-domain-comparison@cref}{{[figure][2][21]21.2}{[1][124][]124}{}{}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {21.7}{\ignorespaces ORIUS pipeline latency per portable domain under fault injection.}}{125}{table.caption.81}\protected@file@percent }
 \newlabel{tab:all_domain_latency}{{21.7}{125}{ORIUS pipeline latency per portable domain under fault injection}{table.caption.81}{}}
 \newlabel{tab:all_domain_latency@cref}{{[table][7][21]21.7}{[1][124][]125}{}{}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {21.3}{\ignorespaces Cross-domain validation surface from the canonical universal evidence tier table. The labels encode the defended claim boundary: reference, proof-validated, proof-candidate, shadow-synthetic, and experimental.}}{125}{figure.caption.82}\protected@file@percent }
 \newlabel{fig:multi-domain-validation}{{21.3}{125}{Cross-domain validation surface from the canonical universal evidence tier table. The labels encode the defended claim boundary: reference, proof-validated, proof-candidate, shadow-synthetic, and experimental}{figure.caption.82}{}}
-\newlabel{fig:multi-domain-validation@cref}{{[figure][3][21]21.3}{[1][125][]125}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.7}Rule-Based Baseline Comparison}{125}{subsection.21.6.7}\protected@file@percent }
+\newlabel{fig:multi-domain-validation@cref}{{[figure][3][21]21.3}{[1][124][]125}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.6.7}Rule-Based Baseline Comparison}{126}{subsection.21.6.7}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {21.6.8}Implications}{126}{subsection.21.6.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {21.7}Per-Domain Evidence Profiles}{126}{section.21.7}\protected@file@percent }
-\newlabel{sec:per-domain-profiles}{{21.7}{126}{Per-Domain Evidence Profiles}{section.21.7}{}}
-\newlabel{sec:per-domain-profiles@cref}{{[section][7][21]21.7}{[1][126][]126}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {21.8}{\ignorespaces Forecasting and calibration surfaces for the promoted non-battery defended domains. Battery forecasting remains the locked reference surface in Chapter~\ref {ch:forecasting}.}}{127}{table.caption.83}\protected@file@percent }
-\newlabel{tab:defended-domain-training-metrics}{{21.8}{127}{Forecasting and calibration surfaces for the promoted non-battery defended domains. Battery forecasting remains the locked reference surface in Chapter~\ref {ch:forecasting}}{table.caption.83}{}}
-\newlabel{tab:defended-domain-training-metrics@cref}{{[table][8][21]21.8}{[1][127][]127}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.7.1}Autonomous Vehicles}{127}{subsection.21.7.1}\protected@file@percent }
-\newlabel{sec:profile-av}{{21.7.1}{127}{Autonomous Vehicles}{subsection.21.7.1}{}}
-\newlabel{sec:profile-av@cref}{{[subsection][1][21,7]21.7.1}{[1][127][]127}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {21.4}{\ignorespaces AV domain: forecast vs.\ observed speed and persistence-vs-GBM performance. The conformal band reflects OQE-inflated uncertainty.}}{127}{figure.caption.84}\protected@file@percent }
-\newlabel{fig:av-profile}{{21.4}{127}{AV domain: forecast vs.\ observed speed and persistence-vs-GBM performance. The conformal band reflects OQE-inflated uncertainty}{figure.caption.84}{}}
-\newlabel{fig:av-profile@cref}{{[figure][4][21]21.4}{[1][127][]127}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.7.2}Industrial Process Control}{127}{subsection.21.7.2}\protected@file@percent }
-\newlabel{sec:profile-industrial}{{21.7.2}{127}{Industrial Process Control}{subsection.21.7.2}{}}
-\newlabel{sec:profile-industrial@cref}{{[subsection][2][21,7]21.7.2}{[1][127][]127}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {21.5}{\ignorespaces AV domain: OQE reliability response to fault injection and multi-horizon forecast performance.}}{128}{figure.caption.85}\protected@file@percent }
-\newlabel{fig:av-profile-2}{{21.5}{128}{AV domain: OQE reliability response to fault injection and multi-horizon forecast performance}{figure.caption.85}{}}
-\newlabel{fig:av-profile-2@cref}{{[figure][5][21]21.5}{[1][127][]128}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {21.6}{\ignorespaces Industrial domain: GBM forecast vs.\ observed power with 90\% conformal band and safety bounds, alongside persistence-vs-GBM metrics.}}{128}{figure.caption.86}\protected@file@percent }
-\newlabel{fig:industrial-profile}{{21.6}{128}{Industrial domain: GBM forecast vs.\ observed power with 90\% conformal band and safety bounds, alongside persistence-vs-GBM metrics}{figure.caption.86}{}}
-\newlabel{fig:industrial-profile@cref}{{[figure][6][21]21.6}{[1][128][]128}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {21.7}{\ignorespaces Industrial domain: reliability score dynamics under fault injection and multi-horizon forecast performance across persistence and GBM models.}}{128}{figure.caption.87}\protected@file@percent }
-\newlabel{fig:industrial-profile-2}{{21.7}{128}{Industrial domain: reliability score dynamics under fault injection and multi-horizon forecast performance across persistence and GBM models}{figure.caption.87}{}}
-\newlabel{fig:industrial-profile-2@cref}{{[figure][7][21]21.7}{[1][128][]128}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.7.3}Medical Monitoring (ICU Vitals)}{129}{subsection.21.7.3}\protected@file@percent }
-\newlabel{sec:profile-healthcare}{{21.7.3}{129}{Medical Monitoring (ICU Vitals)}{subsection.21.7.3}{}}
-\newlabel{sec:profile-healthcare@cref}{{[subsection][3][21,7]21.7.3}{[1][128][]129}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {21.8}{\ignorespaces Healthcare domain: GBM heart-rate forecast with 90\% conformal band and clinical safety bounds, alongside model performance comparison.}}{129}{figure.caption.88}\protected@file@percent }
-\newlabel{fig:healthcare-profile}{{21.8}{129}{Healthcare domain: GBM heart-rate forecast with 90\% conformal band and clinical safety bounds, alongside model performance comparison}{figure.caption.88}{}}
-\newlabel{fig:healthcare-profile@cref}{{[figure][8][21]21.8}{[1][129][]129}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {21.9}{\ignorespaces Healthcare domain: OQE reliability under simulated sensor artefacts and multi-horizon HR forecast quality.}}{129}{figure.caption.89}\protected@file@percent }
-\newlabel{fig:healthcare-profile-2}{{21.9}{129}{Healthcare domain: OQE reliability under simulated sensor artefacts and multi-horizon HR forecast quality}{figure.caption.89}{}}
-\newlabel{fig:healthcare-profile-2@cref}{{[figure][9][21]21.9}{[1][129][]129}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.7.4}Aerospace (Flight Envelope)}{129}{subsection.21.7.4}\protected@file@percent }
-\newlabel{sec:profile-aerospace}{{21.7.4}{129}{Aerospace (Flight Envelope)}{subsection.21.7.4}{}}
-\newlabel{sec:profile-aerospace@cref}{{[subsection][4][21,7]21.7.4}{[1][129][]129}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {21.10}{\ignorespaces Aerospace domain: GBM airspeed forecast with 90\% conformal band and flight-envelope bounds (60--350~kt), alongside model performance.}}{130}{figure.caption.90}\protected@file@percent }
-\newlabel{fig:aerospace-profile}{{21.10}{130}{Aerospace domain: GBM airspeed forecast with 90\% conformal band and flight-envelope bounds (60--350~kt), alongside model performance}{figure.caption.90}{}}
-\newlabel{fig:aerospace-profile@cref}{{[figure][10][21]21.10}{[1][130][]130}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {21.11}{\ignorespaces Aerospace domain: OQE reliability under air-data faults and multi-horizon airspeed forecast quality.}}{130}{figure.caption.91}\protected@file@percent }
-\newlabel{fig:aerospace-profile-2}{{21.11}{130}{Aerospace domain: OQE reliability under air-data faults and multi-horizon airspeed forecast quality}{figure.caption.91}{}}
-\newlabel{fig:aerospace-profile-2@cref}{{[figure][11][21]21.11}{[1][130][]130}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {21.7.5}Navigation}{130}{subsection.21.7.5}\protected@file@percent }
-\newlabel{sec:profile-navigation}{{21.7.5}{130}{Navigation}{subsection.21.7.5}{}}
-\newlabel{sec:profile-navigation@cref}{{[subsection][5][21,7]21.7.5}{[1][130][]130}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {21.8}Cross-Domain Metrics Scorecard}{131}{section.21.8}\protected@file@percent }
-\newlabel{sec:cross-domain-scorecard}{{21.8}{131}{Cross-Domain Metrics Scorecard}{section.21.8}{}}
-\newlabel{sec:cross-domain-scorecard@cref}{{[section][8][21]21.8}{[1][131][]131}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {21.9}{\ignorespaces Cross-domain safety performance scorecard. Latency P95 measured on the shared universal replay harness. PICP$_{90}$ is the empirical coverage of the 90\% conformal prediction interval on the held-out test split. ``--'' indicates the metric is not applicable (battery TSVR is from the publication aggregate, not the universal replay row).}}{131}{table.caption.92}\protected@file@percent }
-\newlabel{tab:cross-domain-scorecard}{{21.9}{131}{Cross-domain safety performance scorecard. Latency P95 measured on the shared universal replay harness. PICP$_{90}$ is the empirical coverage of the 90\% conformal prediction interval on the held-out test split. ``--'' indicates the metric is not applicable (battery TSVR is from the publication aggregate, not the universal replay row)}{table.caption.92}{}}
-\newlabel{tab:cross-domain-scorecard@cref}{{[table][9][21]21.9}{[1][131][]131}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {21.9}Chapter Summary}{131}{section.21.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {21.7}Per-Domain Evidence Profiles}{127}{section.21.7}\protected@file@percent }
+\newlabel{sec:per-domain-profiles}{{21.7}{127}{Per-Domain Evidence Profiles}{section.21.7}{}}
+\newlabel{sec:per-domain-profiles@cref}{{[section][7][21]21.7}{[1][127][]127}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {21.8}{\ignorespaces Training, calibration, and test surfaces for all six ORIUS domains. Battery metrics are from the locked DE ENTSO-E run (load\_mw, $h{=}1$, conformal-adjusted PICP). Navigation uses a closed-loop simulation surface with no trained forecasting model. PICP$_{90}$ target is $\geq 0.90$ for all forecasting-capable domains.}}{127}{table.caption.83}\protected@file@percent }
+\newlabel{tab:all-domain-training-metrics}{{21.8}{127}{Training, calibration, and test surfaces for all six ORIUS domains. Battery metrics are from the locked DE ENTSO-E run (load\_mw, $h{=}1$, conformal-adjusted PICP). Navigation uses a closed-loop simulation surface with no trained forecasting model. PICP$_{90}$ target is $\geq 0.90$ for all forecasting-capable domains}{table.caption.83}{}}
+\newlabel{tab:all-domain-training-metrics@cref}{{[table][8][21]21.8}{[1][127][]127}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.7.1}Energy Management (Battery / Grid Dispatch)}{127}{subsection.21.7.1}\protected@file@percent }
+\newlabel{sec:profile-battery}{{21.7.1}{127}{Energy Management (Battery / Grid Dispatch)}{subsection.21.7.1}{}}
+\newlabel{sec:profile-battery@cref}{{[subsection][1][21,7]21.7.1}{[1][127][]127}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21.4}{\ignorespaces Energy management domain: GBM load forecast with 90\% conformal band (first 120 test windows, $h{=}1$) and persistence-vs-GBM performance on RMSE, MAE, and sMAPE.}}{128}{figure.caption.84}\protected@file@percent }
+\newlabel{fig:battery-profile}{{21.4}{128}{Energy management domain: GBM load forecast with 90\% conformal band (first 120 test windows, $h{=}1$) and persistence-vs-GBM performance on RMSE, MAE, and sMAPE}{figure.caption.84}{}}
+\newlabel{fig:battery-profile@cref}{{[figure][4][21]21.4}{[1][127][]128}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21.5}{\ignorespaces Energy management domain: OQE reliability response to fault injection and multi-horizon load forecast performance across persistence and GBM models (horizons $h = 1$--$24$).}}{128}{figure.caption.85}\protected@file@percent }
+\newlabel{fig:battery-profile-2}{{21.5}{128}{Energy management domain: OQE reliability response to fault injection and multi-horizon load forecast performance across persistence and GBM models (horizons $h = 1$--$24$)}{figure.caption.85}{}}
+\newlabel{fig:battery-profile-2@cref}{{[figure][5][21]21.5}{[1][127][]128}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.7.2}Autonomous Vehicles}{129}{subsection.21.7.2}\protected@file@percent }
+\newlabel{sec:profile-av}{{21.7.2}{129}{Autonomous Vehicles}{subsection.21.7.2}{}}
+\newlabel{sec:profile-av@cref}{{[subsection][2][21,7]21.7.2}{[1][127][]129}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21.6}{\ignorespaces AV domain: forecast vs.\ observed speed and persistence-vs-GBM performance. The conformal band reflects OQE-inflated uncertainty.}}{129}{figure.caption.86}\protected@file@percent }
+\newlabel{fig:av-profile}{{21.6}{129}{AV domain: forecast vs.\ observed speed and persistence-vs-GBM performance. The conformal band reflects OQE-inflated uncertainty}{figure.caption.86}{}}
+\newlabel{fig:av-profile@cref}{{[figure][6][21]21.6}{[1][129][]129}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21.7}{\ignorespaces AV domain: OQE reliability response to fault injection and multi-horizon forecast performance.}}{129}{figure.caption.87}\protected@file@percent }
+\newlabel{fig:av-profile-2}{{21.7}{129}{AV domain: OQE reliability response to fault injection and multi-horizon forecast performance}{figure.caption.87}{}}
+\newlabel{fig:av-profile-2@cref}{{[figure][7][21]21.7}{[1][129][]129}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.7.3}Industrial Process Control}{129}{subsection.21.7.3}\protected@file@percent }
+\newlabel{sec:profile-industrial}{{21.7.3}{129}{Industrial Process Control}{subsection.21.7.3}{}}
+\newlabel{sec:profile-industrial@cref}{{[subsection][3][21,7]21.7.3}{[1][129][]129}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21.8}{\ignorespaces Industrial domain: GBM forecast vs.\ observed power with 90\% conformal band and safety bounds, alongside persistence-vs-GBM metrics.}}{130}{figure.caption.88}\protected@file@percent }
+\newlabel{fig:industrial-profile}{{21.8}{130}{Industrial domain: GBM forecast vs.\ observed power with 90\% conformal band and safety bounds, alongside persistence-vs-GBM metrics}{figure.caption.88}{}}
+\newlabel{fig:industrial-profile@cref}{{[figure][8][21]21.8}{[1][130][]130}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21.9}{\ignorespaces Industrial domain: reliability score dynamics under fault injection and multi-horizon forecast performance across persistence and GBM models.}}{130}{figure.caption.89}\protected@file@percent }
+\newlabel{fig:industrial-profile-2}{{21.9}{130}{Industrial domain: reliability score dynamics under fault injection and multi-horizon forecast performance across persistence and GBM models}{figure.caption.89}{}}
+\newlabel{fig:industrial-profile-2@cref}{{[figure][9][21]21.9}{[1][130][]130}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.7.4}Medical Monitoring (ICU Vitals)}{130}{subsection.21.7.4}\protected@file@percent }
+\newlabel{sec:profile-healthcare}{{21.7.4}{130}{Medical Monitoring (ICU Vitals)}{subsection.21.7.4}{}}
+\newlabel{sec:profile-healthcare@cref}{{[subsection][4][21,7]21.7.4}{[1][130][]130}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21.10}{\ignorespaces Healthcare domain: GBM heart-rate forecast with 90\% conformal band and clinical safety bounds, alongside model performance comparison.}}{131}{figure.caption.90}\protected@file@percent }
+\newlabel{fig:healthcare-profile}{{21.10}{131}{Healthcare domain: GBM heart-rate forecast with 90\% conformal band and clinical safety bounds, alongside model performance comparison}{figure.caption.90}{}}
+\newlabel{fig:healthcare-profile@cref}{{[figure][10][21]21.10}{[1][130][]131}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21.11}{\ignorespaces Healthcare domain: OQE reliability under simulated sensor artefacts and multi-horizon HR forecast quality.}}{131}{figure.caption.91}\protected@file@percent }
+\newlabel{fig:healthcare-profile-2}{{21.11}{131}{Healthcare domain: OQE reliability under simulated sensor artefacts and multi-horizon HR forecast quality}{figure.caption.91}{}}
+\newlabel{fig:healthcare-profile-2@cref}{{[figure][11][21]21.11}{[1][130][]131}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.7.5}Aerospace (Flight Envelope)}{132}{subsection.21.7.5}\protected@file@percent }
+\newlabel{sec:profile-aerospace}{{21.7.5}{132}{Aerospace (Flight Envelope)}{subsection.21.7.5}{}}
+\newlabel{sec:profile-aerospace@cref}{{[subsection][5][21,7]21.7.5}{[1][130][]132}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21.12}{\ignorespaces Aerospace domain: GBM airspeed forecast with 90\% conformal band and flight-envelope bounds (60--350~kt), alongside model performance.}}{132}{figure.caption.92}\protected@file@percent }
+\newlabel{fig:aerospace-profile}{{21.12}{132}{Aerospace domain: GBM airspeed forecast with 90\% conformal band and flight-envelope bounds (60--350~kt), alongside model performance}{figure.caption.92}{}}
+\newlabel{fig:aerospace-profile@cref}{{[figure][12][21]21.12}{[1][132][]132}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {21.7.6}Navigation}{132}{subsection.21.7.6}\protected@file@percent }
+\newlabel{sec:profile-navigation}{{21.7.6}{132}{Navigation}{subsection.21.7.6}{}}
+\newlabel{sec:profile-navigation@cref}{{[subsection][6][21,7]21.7.6}{[1][132][]132}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21.13}{\ignorespaces Aerospace domain: OQE reliability under air-data faults and multi-horizon airspeed forecast quality.}}{133}{figure.caption.93}\protected@file@percent }
+\newlabel{fig:aerospace-profile-2}{{21.13}{133}{Aerospace domain: OQE reliability under air-data faults and multi-horizon airspeed forecast quality}{figure.caption.93}{}}
+\newlabel{fig:aerospace-profile-2@cref}{{[figure][13][21]21.13}{[1][132][]133}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {21.8}Cross-Domain Metrics Scorecard}{133}{section.21.8}\protected@file@percent }
+\newlabel{sec:cross-domain-scorecard}{{21.8}{133}{Cross-Domain Metrics Scorecard}{section.21.8}{}}
+\newlabel{sec:cross-domain-scorecard@cref}{{[section][8][21]21.8}{[1][132][]133}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {21.9}{\ignorespaces Cross-domain safety performance scorecard. Latency P95 measured on the shared universal replay harness. PICP$_{90}$ is the empirical coverage of the 90\% conformal prediction interval on the held-out test split. ``--'' indicates the metric is not applicable (battery TSVR is from the publication aggregate, not the universal replay row).}}{133}{table.caption.94}\protected@file@percent }
+\newlabel{tab:cross-domain-scorecard}{{21.9}{133}{Cross-domain safety performance scorecard. Latency P95 measured on the shared universal replay harness. PICP$_{90}$ is the empirical coverage of the 90\% conformal prediction interval on the held-out test split. ``--'' indicates the metric is not applicable (battery TSVR is from the publication aggregate, not the universal replay row)}{table.caption.94}{}}
+\newlabel{tab:cross-domain-scorecard@cref}{{[table][9][21]21.9}{[1][133][]133}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {21.9}Chapter Summary}{134}{section.21.9}\protected@file@percent }
 \@setckpt{chapters/ch21_battery_to_universal_orius}{
-\setcounter{page}{133}
+\setcounter{page}{135}
 \setcounter{equation}{0}
 \setcounter{enumi}{3}
 \setcounter{enumii}{0}
@@ -120,7 +129,7 @@
 \setcounter{subsubsection}{0}
 \setcounter{paragraph}{0}
 \setcounter{subparagraph}{0}
-\setcounter{figure}{11}
+\setcounter{figure}{13}
 \setcounter{table}{9}
 \setcounter{parentequation}{0}
 \setcounter{LT@tables}{0}
@@ -138,7 +147,7 @@
 \setcounter{section@level}{1}
 \setcounter{Item}{180}
 \setcounter{Hfootnote}{0}
-\setcounter{bookmark@seq@number}{262}
+\setcounter{bookmark@seq@number}{263}
 \setcounter{NAT@ctr}{0}
 \setcounter{@pps}{0}
 \setcounter{@ppsavesec}{0}
