@@ -1,7 +1,7 @@
 \chapter{What Remains Outside the Current Evidence}
 \label{ch:outside-current-evidence}
 
-The battery book is stronger when it is explicit about what has \emph{not}
+The ORIUS framework is stronger when it is explicit about what has \emph{not}
 been shown.  This chapter records the outer boundary of the current evidence
 package so the thesis does not borrow credibility from work that has not yet
 been executed.
@@ -11,12 +11,18 @@ been executed.
 The current package does not claim:
 
 \begin{enumerate}
-  \item universal deployment safety across all cyber-physical domains,
-  \item full physical hardware validation on a production battery stack,
-  \item adversarial completeness against every possible spoofing strategy,
-  \item heterogeneous multi-asset composition guarantees, or
+  \item deployment safety in any production system without domain-specific
+    engineering validation and regulatory approval,
+  \item full physical hardware validation on a live safety-critical stack
+    (battery, aircraft, ICU monitor, or vehicle),
+  \item adversarial completeness against every possible spoofing or
+    Byzantine sensor strategy,
+  \item heterogeneous multi-asset composition guarantees across domain
+    boundaries (e.g., battery + AV + medical device in a shared fleet),
   \item a final certificate-expiration law beyond the conservative blackout
-    hold behavior now locked in Chapter~\ref{ch:cert-half-life-blackout}.
+    hold behavior locked in Chapter~\ref{ch:cert-half-life-blackout}, or
+  \item coverage guarantees for fault families outside the calibration set
+    (out-of-distribution faults, novel sensor failure modes).
 \end{enumerate}
 
 \section{Still Partial}
@@ -28,18 +34,67 @@ Several thesis-hardening layers exist in meaningful but still bounded form:
     calibration design rather than long-horizon field degradation data.
   \item Fleet composition is implemented for the two-battery shared-transformer
     case, not for a broader heterogeneous fleet.
-  \item The HIL chapter now has an auditable runtime rehearsal, but not a full
+  \item The HIL chapter has an auditable runtime rehearsal, but not a full
     external-bench package with independent device timing and relay shutdown.
+  \item Navigation domain validation is simulation-backed rather than
+    field-telemetry-backed.
 \end{itemize}
+
+\section{Per-Domain Future Work}
+
+Each validated domain opens a natural next research step for the broader
+ORIUS community.
+
+\begin{description}
+  \item[Battery.] Adaptive conformal recalibration under non-stationary
+    energy demand (e.g., demand-response events, grid frequency events).
+    Online decay-rate estimation for the certificate half-life model to
+    replace the current fixed decay parameter.
+
+  \item[Autonomous Vehicles.] Multi-vehicle interaction under shared
+    telemetry infrastructure: extending OQE scoring to handle V2X-fused
+    observations and validating DC3S repair in cooperative platooning
+    scenarios where one vehicle's action affects another's safety margin.
+
+  \item[Industrial Process Control.] Multi-process constraint coupling:
+    when multiple actuators share a power budget, the safe-action projection
+    must solve a coupled feasibility problem.  Extending the RAC-Cert
+    inflation to handle joint constraint surfaces is the key technical step.
+
+  \item[Medical Monitoring (ICU Vitals).] Multi-patient fleet monitoring
+    with shared calibration surface: OQE reliability scores should account
+    for cross-patient covariate shift.  Alarm-fatigue mitigation via
+    certificate-gated alert suppression is a safety-critical extension.
+
+  \item[Aerospace.] Multi-aircraft separation assurance integrated with
+    ATC intent data.  The current single-aircraft envelope model does not
+    account for traffic advisory corrections; extending the feasible action
+    set to encode separation minima would turn ORIUS into a conflict-resolution
+    advisory layer on top of TCAS.
+
+  \item[Navigation.] Transition from simulation-validated to
+    field-telemetry-backed evidence.  GPS-denied scenarios (underground
+    parking, dense urban canyons) and LiDAR-based OQE feature extraction
+    are the next data-collection targets.
+\end{description}
 
 \section{Why This Boundary Matters}
 
-The battery thesis is meant to be hard to challenge because it is internally
-coherent, not because it quietly widens its scope.  By naming what remains
-outside the current evidence, the thesis protects the core battery result from
-being diluted by larger claims that the present repo does not yet support.
+The ORIUS framework is meant to be hard to challenge because it is internally
+coherent and multi-domain consistent, not because it quietly widens its scope.
+By naming what remains outside the current evidence, the thesis protects the
+core multi-domain result from being diluted by larger claims the present
+evidence package does not yet support.  Correctness of the safety bound and
+equivalence of domain performance are the locked results; scalability to
+production, adversarial completeness, and heterogeneous composition are the
+open research agenda that the framework is designed to grow into.
 
 \section{Summary}
 
-The current evidence package is deep, but it is intentionally not universal.
-That is the correct scientific posture for a battery-first ORIUS thesis.
+The current evidence package is deep across the defended five-domain set, but it
+is intentionally bounded in scope.  Battery plus four non-battery defended
+domains contribute real locked-telemetry evidence under a shared fault
+schedule; navigation adds simulation-backed portability evidence rather than
+field-telemetry-backed validation.  None contributes deployment-grade
+certification.  That is the correct scientific posture for a
+framework-contribution thesis at this stage.

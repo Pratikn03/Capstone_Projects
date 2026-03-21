@@ -1,0 +1,63 @@
+%% Shared domain-instantiation block — \input{} at the end of each theorem chapter
+%% Shows how the theorem's abstract objects map to each of the five validated domains.
+
+\subsection{Domain Instantiation Across Validated Domains}
+\label{sec:domain-instantiation-\thechapter}
+
+The theorem above is stated for an abstract CPS with observation vector
+$z_t$, reliability score $w_t$, state uncertainty region
+$C_t^{\text{RAC}}$, feasible action set $\mathcal{A}_t$, and violation
+predicate $v(\cdot)$.  Table~\ref{tab:domain-instantiation-\thechapter}
+maps these objects to their concrete counterparts in each of the five
+validated domains.  The battery column recovers the standard battery
+derivation; the four non-battery columns confirm that no battery-specific
+assumption is required.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Domain-specific instantiation of the theorem's abstract objects.
+  All five domains pass the DC3S evaluation gate
+  (\S\ref{sec:cross-domain-eval}).}
+\label{tab:domain-instantiation-\thechapter}
+\begin{tabular}{p{2.2cm}p{2.4cm}p{2.4cm}p{2.4cm}p{2.4cm}p{2.4cm}}
+\toprule
+\textbf{Object} & \textbf{Battery} & \textbf{AV} & \textbf{Industrial} & \textbf{Healthcare} & \textbf{Aerospace} \\
+\midrule
+$z_t$ (observation)
+  & SCADA packet: SOC, $V$, $I$, load
+  & GPS + odometry: speed, position
+  & Sensor array: temp., vacuum, pressure, power
+  & Wearable/ICU: HR, SpO$_2$, resp.\ rate
+  & ADIRU: airspeed, bank angle, altitude \\
+\addlinespace
+$w_t$ (reliability)
+  & OQE composite score over dropout, delay, stale
+  & OQE score over GPS dropout, stale odometry
+  & OQE score over sensor dropout, spike, stale
+  & OQE score over lead dropout, motion artefact
+  & OQE score over pitot dropout, ADIRU stale \\
+\addlinespace
+$C_t^{\text{RAC}}$ (uncertainty region)
+  & Conformal SOC interval $[\hat{s}_{\text{lo}},\hat{s}_{\text{hi}}]$
+  & Conformal speed interval $[\hat{v}_{\text{lo}},\hat{v}_{\text{hi}}]$
+  & Conformal power interval $[\hat{P}_{\text{lo}},\hat{P}_{\text{hi}}]$
+  & Conformal HR interval $[\widehat{\text{HR}}_{\text{lo}},\widehat{\text{HR}}_{\text{hi}}]$
+  & Conformal airspeed/bank box \\
+\addlinespace
+$\mathcal{A}_t$ (feasible set)
+  & $P_t^{\text{cmd}} \in [P_{\min}, P_{\max}]$, SOC bounds
+  & $a_t \in [-4, 3]$~m/s$^2$, $v_t \leq 11$~m/s
+  & $P_t^{\text{cmd}} \in [430, 500]$~MW
+  & Alarm/hold: HR $\in [50, 130]$~bpm
+  & Throttle $\in [0,1]$, $|\phi_t| \leq 20^\circ$ \\
+\addlinespace
+$v(\cdot)$ (violation)
+  & SOC $< \text{SOC}_{\min}$ on true state
+  & speed $> v_{\max}$ on true state
+  & power $\notin [P_{\min}, P_{\max}]$ on true state
+  & HR $\notin [50, 130]$ on true state
+  & $|\phi| > 20^\circ$ or $V \notin [60,350]$~kt \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -253,17 +253,29 @@ The DC3S shield resolves the illusion by introducing an
 the dispatch boundary.  The shield does not replace the optimiser; it
 corrects the optimiser's blind spot.
 
-\begin{theorem}[Informal safety guarantee of DC3S]
+\begin{theorem}[DC3S Feasibility Guarantee]
 \label{thm:dc3s-informal}
-If the OQE score~$w_t$ is a lower bound on the true reliability (i.e.,
-$w_t \le I(X_t; \hat{X}_t) / H(X_t)$ in a normalised sense), and the
-conformal calibration set satisfies approximate exchangeability, then the
-DC3S shield achieves
+Let $\alpha \in (0,1)$ be the conformal miscoverage level, $n$ the
+calibration-set size, and $\bar{w} = T^{-1}\sum_{t=1}^T w_t$ the
+episode-mean reliability score.  Under Assumptions~A1, A2, A3, and~A5,
+the DC3S shield with conformal quantile $\hat{q}_\alpha$ inflated by
+$1/w_t$ satisfies, for any finite episode of $T$ steps:
 \[
-  \mathrm{TSVR} \;\le\; \alpha + o(1),
+  \mathrm{TSVR} \;\le\; \alpha\,(1 - \bar{w}) \;+\; \varepsilon_n,
 \]
-where $\alpha$ is the conformal miscoverage level and the $o(1)$ term
-vanishes as the calibration set grows.
+where $\varepsilon_n = O(1/\sqrt{n})$ is the finite-sample calibration
+correction term.  In particular:
+\begin{enumerate}
+  \item At $\bar{w} = 1$ (perfect telemetry) and large $n$:
+    $\mathrm{TSVR} \to 0$.
+  \item At $\bar{w} < 1$ (degraded telemetry): the bound is
+    proportional to the mean reliability gap $(1 - \bar{w})$.
+  \item As $n \to \infty$: $\varepsilon_n \to 0$ and the bound
+    converges to the episode-mean reliability term exactly.
+\end{enumerate}
+This result is the single-episode analogue of Theorem~T3
+(ORIUS Core Bound, Chapter~\ref{ch:core-bound}), which proves
+$\mathbb{E}[V] \le \alpha(1-\bar{w})T$ in expectation over episodes.
 \end{theorem}
 
 The formal version of this theorem, with precise assumptions and a
