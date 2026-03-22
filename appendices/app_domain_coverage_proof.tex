@@ -4,9 +4,22 @@
 The per-step risk lemma (Lemma~\ref{lem:per-step-risk}) states that
 $\Pr[Z_t = 1] \le \alpha(1 - w_t)$ for each step~$t$, given marginal
 conformal coverage at level~$1 - \alpha$ and the monotone inflation
-assumption~(A5).  This subsection confirms that each of the four
-non-battery domains satisfies the exchangeability and boundedness
+assumption~(A5).  This subsection confirms that each of the five
+forecasting-capable domains satisfies the exchangeability and boundedness
 conditions required for the lemma to apply.
+
+\paragraph{Energy Management (load\_mw).}
+The calibration split of the locked DE ENTSO-E run contains $n = 36$
+calibration windows ($h{=}1$ step-ahead,
+\texttt{load\_mw\_calibration.npz}) with conformal-adjusted empirical
+$\mathrm{PICP}_{90} = 0.924 \ge 0.90$.  Grid load dynamics follow a
+bounded seasonal pattern~(A1); the OQE score $w_t$ is monotone decreasing
+in SCADA dropout rate~(A5).  Calibration residuals are drawn from the
+same locked DE replay trace as the test surface, satisfying approximate
+exchangeability.  Lemma~\ref{lem:per-step-risk} therefore applies:
+$\Pr[Z_t = 1] \le \alpha(1 - w_t)$ holds for each energy management step,
+and the Core Bound $\mathbb{E}[V] \le \alpha(1 - \bar{w})T$ holds for the
+energy management domain.
 
 \paragraph{AV (speed\_mps).}
 The calibration split contains $n = 19$ held-out speed traces
@@ -53,10 +66,10 @@ shared fault schedule.  Lemma~\ref{lem:per-step-risk} applies; the
 Core Bound holds for the aerospace domain.
 
 \medskip
-\noindent\textbf{Summary.}  All four non-battery domains achieve
+\noindent\textbf{Summary.}  All five forecasting-capable domains achieve
 $\mathrm{PICP}_{90} \ge 0.90$ on their respective calibration splits,
 satisfy the boundedness condition~(A1) by domain physics, and have
 calibration residuals drawn from the same locked replay harness as the
 test trace, giving approximate exchangeability.  The per-step risk
-lemma and Core Bound therefore hold for all five domains under the
+lemma and Core Bound therefore hold for all six domains under the
 shared fault schedule.
