@@ -1,7 +1,10 @@
 """Domain registry for ORIUS Universal Framework."""
 from __future__ import annotations
 
+import logging
 from typing import Any, Callable, Mapping
+
+logger = logging.getLogger(__name__)
 
 _REGISTRY: dict[str, Callable[[Mapping[str, Any] | None], Any]] = {}
 
@@ -42,39 +45,34 @@ def _register_builtins() -> None:
     try:
         from orius.adapters.battery import BatteryDomainAdapter
         register_domain("energy", lambda cfg: BatteryDomainAdapter())
-    except ImportError:
-        pass
+    except ImportError as e:
+        logger.warning("Failed to register energy domain adapter: %s", e)
     try:
         from orius.adapters.vehicle import VehicleDomainAdapter
         register_domain("av", lambda cfg: VehicleDomainAdapter(cfg))
-    except ImportError:
-        pass
+    except ImportError as e:
+        logger.warning("Failed to register av domain adapter: %s", e)
     try:
         from orius.adapters.navigation import NavigationDomainAdapter
         register_domain("navigation", lambda cfg: NavigationDomainAdapter(cfg))
-    except ImportError:
-        pass
+    except ImportError as e:
+        logger.warning("Failed to register navigation domain adapter: %s", e)
     try:
         from orius.adapters.industrial import IndustrialDomainAdapter
         register_domain("industrial", lambda cfg: IndustrialDomainAdapter(cfg))
-    except ImportError:
-        pass
+    except ImportError as e:
+        logger.warning("Failed to register industrial domain adapter: %s", e)
     try:
         from orius.adapters.healthcare import HealthcareDomainAdapter
         register_domain("healthcare", lambda cfg: HealthcareDomainAdapter(cfg))
         register_domain("surgical_robotics", lambda cfg: HealthcareDomainAdapter(cfg))
-    except ImportError:
-        pass
+    except ImportError as e:
+        logger.warning("Failed to register healthcare domain adapter: %s", e)
     try:
         from orius.adapters.aerospace import AerospaceDomainAdapter
         register_domain("aerospace", lambda cfg: AerospaceDomainAdapter(cfg))
-    except ImportError:
-        pass
-    try:
-        from orius.adapters.navigation import NavigationDomainAdapter
-        register_domain("navigation", lambda cfg: NavigationDomainAdapter(cfg))
-    except ImportError:
-        pass
+    except ImportError as e:
+        logger.warning("Failed to register aerospace domain adapter: %s", e)
 
 
 _register_builtins()

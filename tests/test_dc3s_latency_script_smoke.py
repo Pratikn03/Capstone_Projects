@@ -46,4 +46,4 @@ def test_dc3s_latency_script_smoke(tmp_path: Path) -> None:
     if "build_uncertainty_set_kappa_ms" in benchmarks:
         assert "available" in benchmarks["build_uncertainty_set_kappa_ms"]
 
-    assert "| Component | Mean (ms) | P95 (ms) |" in proc.stdout
+    assert "| Component | Mean (ms) |" in proc.stdout

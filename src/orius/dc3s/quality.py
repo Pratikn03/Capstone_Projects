@@ -1,16 +1,40 @@
-"""Telemetry quality scoring for DC3S reliability weight."""
+"""Telemetry quality scoring for the DC3S reliability weight w_t.
+
+Public API
+----------
+compute_reliability
+    Main entry point.  Given a single telemetry event and the previous event,
+    returns ``(w_t, flags)`` where *w_t* in ``[min_w, 1]`` is the reliability
+    weight and *flags* is a diagnostic dict.
+compute_reliability_robust
+    Byzantine-resistant variant operating on a sliding signal-history window
+    instead of a single event pair.
+"""
 from __future__ import annotations
 
-from datetime import datetime
 import math
 import statistics
+import warnings
+from datetime import datetime
 from typing import Any, Mapping, Sequence
 
 from .ftit import FTIT_FAULT_KEYS, preview_fault_state
 
+__all__ = ["compute_reliability", "compute_reliability_robust"]
 
-_TS_KEYS = ("ts_utc", "utc_timestamp", "timestamp", "ts")
-_NON_SIGNAL_KEYS = {"device_id", "zone_id", "target"}
+# ---------------------------------------------------------------------------
+# Module-level constants
+# ---------------------------------------------------------------------------
+
+#: Event-dict keys checked (in order) when extracting a telemetry timestamp.
+_TS_KEYS: tuple[str, ...] = ("ts_utc", "utc_timestamp", "timestamp", "ts")
+
+#: Keys that are never treated as numeric signal channels.
+_NON_SIGNAL_KEYS: frozenset[str] = frozenset({"device_id", "zone_id", "target"})
+
+#: Rolling window length for the OOO (out-of-order) fraction tracker.
+#: 20 steps at hourly cadence ≈ 20 hours of packet-ordering history.
+_OOO_HISTORY_WINDOW: int = 20
 
 
 def _parse_ts(value: Any) -> datetime | None:
@@ -172,6 +196,20 @@ def compute_reliability(
     ts_prev = _extract_ts(last_event or {})
     delay_seconds = 0.0
     out_of_order = False
+    if ts_now is None:
+        # No recognised timestamp key found in the event (checked: ts_utc,
+        # utc_timestamp, timestamp, ts).  Delay and OOO penalties cannot be
+        # computed, so they will default to zero — making the reliability score
+        # appear healthy even if data is stale.  Add the correct key to the
+        # event payload or extend _TS_KEYS to suppress this warning.
+        warnings.warn(
+            f"DC3S reliability: no timestamp key found in telemetry event "
+            f"(checked: {_TS_KEYS}).  Delay/OOO penalties will be zero. "
+            "Set a recognised timestamp key (e.g. 'ts_utc') to enable "
+            "accurate staleness detection.",
+            UserWarning,
+            stacklevel=2,
+        )
     if ts_now is not None and ts_prev is not None:
         delta = (ts_now - ts_prev).total_seconds()
         if delta < 0:
@@ -203,19 +241,26 @@ def compute_reliability(
         stale_k=stale_k,
     )
 
+    # If the event carries an explicit fault label (e.g. CPSBench injecting
+    # dropout=True), that takes precedence over the signal-derived heuristic.
+    # In production, these fields are absent and we always fall back to the
+    # computed detections.
+    def _resolve_fault_flag(explicit: bool | None, detected: bool) -> bool:
+        return detected if explicit is None else explicit
+
     explicit_faults: dict[str, bool | None] = {
-        "dropout": _as_bool(event.get("dropout")),
+        "dropout":      _as_bool(event.get("dropout")),
         "stale_sensor": _as_bool(event.get("stale_sensor")),
         "delay_jitter": _as_bool(event.get("delay_jitter")),
         "out_of_order": _as_bool(event.get("out_of_order")),
-        "spikes": _as_bool(event.get("spikes")),
+        "spikes":       _as_bool(event.get("spikes")),
     }
     fault_flags = {
-        "dropout": explicit_faults["dropout"] if explicit_faults["dropout"] is not None else bool(keys) and present < len(keys),
-        "stale_sensor": explicit_faults["stale_sensor"] if explicit_faults["stale_sensor"] is not None else bool(stale_detected),
-        "delay_jitter": explicit_faults["delay_jitter"] if explicit_faults["delay_jitter"] is not None else bool(delay_seconds > 0.0),
-        "out_of_order": explicit_faults["out_of_order"] if explicit_faults["out_of_order"] is not None else bool(out_of_order),
-        "spikes": explicit_faults["spikes"] if explicit_faults["spikes"] is not None else bool(spike_detected),
+        "dropout":      _resolve_fault_flag(explicit_faults["dropout"],      bool(keys) and present < len(keys)),
+        "stale_sensor": _resolve_fault_flag(explicit_faults["stale_sensor"], bool(stale_detected)),
+        "delay_jitter": _resolve_fault_flag(explicit_faults["delay_jitter"], delay_seconds > 0.0),
+        "out_of_order": _resolve_fault_flag(explicit_faults["out_of_order"], bool(out_of_order)),
+        "spikes":       _resolve_fault_flag(explicit_faults["spikes"],       bool(spike_detected)),
     }
 
     missing_penalty = max(0.0, 1.0 - missing_fraction)
@@ -225,9 +270,9 @@ def compute_reliability(
     # Fallback: binary penalty for backward compatibility.
     ooo_history = list((_ftit_state(adaptive_state) or {}).get("ooo_history", []))
     ooo_history.append(0.0 if out_of_order else 1.0)
-    # Keep a rolling window of last 20 observations
-    if len(ooo_history) > 20:
-        ooo_history = ooo_history[-20:]
+    # Keep a rolling window of the last _OOO_HISTORY_WINDOW observations.
+    if len(ooo_history) > _OOO_HISTORY_WINDOW:
+        ooo_history = ooo_history[-_OOO_HISTORY_WINDOW:]
     ooo_fraction_in_order = sum(ooo_history) / max(len(ooo_history), 1)
     ooo_penalty = max(1.0 - ooo_gamma, ooo_fraction_in_order)
     spike_penalty = 1.0 if spike_ratio <= spike_beta else 1.0 / (1.0 + (spike_ratio - spike_beta))

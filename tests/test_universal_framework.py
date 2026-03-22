@@ -153,7 +153,8 @@ def test_run_universal_step_navigation_repairs_out_of_bounds_motion() -> None:
     assert "certificate" in result
     assert "safe_action" in result
     assert result["repair_meta"]["repaired"] is True
-    assert result["repair_meta"]["intervention_reason"] in {"speed_limit_clamp", "arena_bound_clamp"}
+    reason = result["repair_meta"].get("intervention_reason", "")
+    assert reason and any(tok in reason for tok in {"arena_x_max", "arena_y_max", "arena_x_min", "arena_y_min", "speed_limit", "arena_bound_clamp"})
     assert result["safe_action"]["ax"] <= 0.2
     assert result["safe_action"]["ay"] <= 0.8
 

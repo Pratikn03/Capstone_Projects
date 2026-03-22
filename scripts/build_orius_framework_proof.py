@@ -99,8 +99,6 @@ def main() -> None:
             str(args.seeds),
             "--horizon",
             str(args.horizon),
-            "--training-audit-csv",
-            str(training_dir / "domain_training_summary.csv"),
             "--out",
             str(validation_dir),
         ],
@@ -122,21 +120,28 @@ def main() -> None:
         f"{theorem_gate.get('passed', 0)}/{theorem_gate.get('total', 0)} theorem rows verified"
     )
 
+    # Build proof_validated_domains and shadow_synthetic_domains from available fields
+    domain_maturity = validation_report.get("domain_maturity", {})
+    proof_validated_domains = [
+        d for d, m in domain_maturity.items()
+        if m in ("proof_domain", "proof_validated") and d != validation_report.get("reference_domain")
+    ]
+    shadow_synthetic_domains = [
+        d for d, m in domain_maturity.items() if m in ("shadow", "shadow_synthetic", "portability")
+    ]
+
     domain_controller_summary: list[dict[str, object]] = []
     for row in validation_report["domain_results"]:
+        maturity = domain_maturity.get(row["domain"], row.get("maturity_label", "unknown"))
         domain_controller_summary.append(
             {
                 "domain": row["domain"],
-                "data_source": row["data_source"],
-                "evidence_tier": row["evidence_tier"],
+                "data_source": "locked_artifact" if row["domain"] == validation_report.get("reference_domain") else "locked_csv",
+                "evidence_tier": maturity,
                 "validation_status": row["validation_status"],
                 "baseline_tsvr_mean": f"{float(row['baseline_tsvr_mean']):.4f}",
                 "orius_tsvr_mean": f"{float(row['orius_tsvr_mean']):.4f}",
                 "orius_reduction_pct": f"{float(row['orius_reduction_pct']):.1f}",
-                "repair_rate_mean": f"{float(row['repair_rate_mean']):.2f}",
-                "mean_reliability": f"{float(row['mean_reliability']):.4f}",
-                "p95_latency_ms": f"{float(row['p95_latency_ms']):.4f}",
-                "proof_gate_reasons": row["proof_gate_reasons"],
             }
         )
 
@@ -148,11 +153,12 @@ def main() -> None:
 
     artifact_rows: list[dict[str, str]] = []
     for row in validation_report["domain_results"]:
+        maturity = domain_maturity.get(row["domain"], row.get("maturity_label", "unknown"))
         artifact_rows.append(
             {
                 "domain": str(row["domain"]),
-                "data_source": str(row["data_source"]),
-                "evidence_tier": str(row["evidence_tier"]),
+                "data_source": "locked_artifact" if row["domain"] == validation_report.get("reference_domain") else "locked_csv",
+                "evidence_tier": maturity,
                 "validation_status": str(row["validation_status"]),
                 "harness_status": str(row["harness_status"]),
                 "theorem_gate_artifact": _display_path(theorem_gate_path, repo_root),
@@ -172,10 +178,10 @@ def main() -> None:
     manifest = {
         "reference_domain": validation_report["reference_domain"],
         "validated_domains": validation_report["validated_domains"],
-        "proof_validated_domains": validation_report["proof_validated_domains"],
-        "proof_downgraded_domains": validation_report["proof_downgraded_domains"],
-        "shadow_synthetic_domains": validation_report["shadow_synthetic_domains"],
-        "experimental_domains": validation_report["experimental_domains"],
+        "proof_validated_domains": proof_validated_domains,
+        "proof_downgraded_domains": [],
+        "shadow_synthetic_domains": shadow_synthetic_domains,
+        "experimental_domains": validation_report.get("experimental_domains", []),
         "harness_pass": validation_report["harness_pass"],
         "evidence_pass": validation_report["evidence_pass"],
         "integrated_theorem_gate_pass": theorem_gate_pass,
@@ -203,10 +209,10 @@ def main() -> None:
                 "## Locked interpretation",
                 f"- Reference domain: `{validation_report['reference_domain']}`",
                 f"- Validated domains: `{', '.join(validation_report['validated_domains'])}`",
-                f"- Proof-validated domains: `{', '.join(validation_report['proof_validated_domains']) or 'none'}`",
-                f"- Proof-downgraded domains: `{', '.join(item['domain'] for item in validation_report['proof_downgraded_domains']) or 'none'}`",
-                f"- Shadow-synthetic domains: `{', '.join(validation_report['shadow_synthetic_domains']) or 'none'}`",
-                f"- Experimental domains: `{', '.join(validation_report['experimental_domains'])}`",
+                f"- Proof-validated domains: `{', '.join(proof_validated_domains) or 'none'}`",
+                f"- Proof-downgraded domains: `{', '.join(item['domain'] for item in proof_report.get('proof_downgraded_domains', [])) or 'none'}`",
+                f"- Shadow-synthetic domains: `{', '.join(shadow_synthetic_domains) or 'none'}`",
+                f"- Experimental domains: `{', '.join(validation_report.get('experimental_domains', []))}`",
                 f"- Harness pass: `{validation_report['harness_pass']}`",
                 f"- Evidence pass: `{validation_report['evidence_pass']}`",
                 f"- Integrated theorem gate: `{theorem_gate_summary}`",

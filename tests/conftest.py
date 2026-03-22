@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 import sys
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Generator, List
 from unittest.mock import MagicMock, patch
@@ -234,7 +234,7 @@ def sample_optimization_config(sample_battery_config: Dict[str, Any]) -> Dict[st
 def sample_kafka_message() -> Dict[str, Any]:
     """Create a sample Kafka message."""
     return {
-        "utc_timestamp": datetime.utcnow().isoformat(),
+        "utc_timestamp": datetime.now(timezone.utc).isoformat(),
         "load_mw": 45000.0,
         "wind_mw": 3000.0,
         "solar_mw": 2000.0,

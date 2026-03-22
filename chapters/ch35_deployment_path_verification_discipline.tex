@@ -1,52 +1,137 @@
 \chapter{Deployment Path and Verification Discipline}
 \label{ch:deployment-path-verification}
 
-The battery thesis closes with a deployment path that is operationally
-serious but still evidence-bounded.  The goal is not to announce deployment.
-The goal is to specify how battery deployment would proceed without breaking
-the claim discipline of the rest of the book.
+The ORIUS framework closes with a deployment path that is operationally
+serious but evidence-bounded.  The goal is not to announce production
+deployment.  The goal is to specify how deployment would proceed for any
+domain without breaking the claim discipline established in this thesis.
 
-\section{Verification Before Expansion}
+\section{Universal Deployment Readiness Checklist}
 
-The correct next sequence is:
+Before deploying DC3S in any domain, the following conditions must be
+verified:
 
 \begin{enumerate}
-  \item preserve the locked battery core claims and manifests,
-  \item regenerate every late-chapter artifact through named wrapper scripts,
-  \item run manuscript validators and classify failures honestly, and
-  \item only then widen the runtime path toward stronger HIL and physical
-    deployment.
+  \item \textbf{Domain adapter registration.}  A concrete \texttt{DomainAdapter}
+    subclass implementing all five pipeline stages (ingest, OQE, uncertainty,
+    tighten, repair, certify) must be registered in the domain registry.
+    All adapter unit tests must pass.
+
+  \item \textbf{Calibration surface validation.}  A domain-specific calibration
+    split must achieve $\mathrm{PICP}_{90} \ge 0.90$.  The calibration
+    residuals must satisfy approximate exchangeability with the deployment
+    telemetry distribution.
+
+  \item \textbf{OQE threshold configuration.}  The reliability score $w_t$
+    thresholds (alert level, blackout level) must be calibrated against
+    domain-specific telemetry fault rates.  Stale, spike, and dropout
+    fault injection tests must confirm OQE detection lag within the
+    Assumption~A6 bound.
+
+  \item \textbf{Constraint and feasibility verification.}  The safety predicate
+    $\phi(x_t)$, the constraint set $\mathcal{U}$, and the margin function
+    $m_t = q_t / (w_t + \varepsilon)$ must be reviewed by domain experts.
+    Assumption~A3 (feasible safe repair) must be confirmed: $\mathcal{A}_t$
+    must be non-empty whenever the domain is in a safe physical state.
+
+  \item \textbf{End-to-end benchmark replay.}  A CPSBench replay with separate
+    truth and observed trajectories must be executed over at least 1000
+    telemetry steps under the target fault schedule.  The empirical TSVR
+    must satisfy the Core Bound ($\mathbb{E}[V] \le \alpha(1-\bar{w})T$).
+
+  \item \textbf{Artifact manifest traceability.}  Every output artifact
+    (tables, figures, certificates) must be registered in the artifact
+    manifest with its generating script, run parameters, and version hash.
+    Re-running the named script must reproduce the artifact within numerical
+    tolerance.
 \end{enumerate}
 
-\section{Battery Deployment Path}
+\section{Universal Deployment Ladder}
 
-For the battery domain, the practical deployment ladder is:
+For any CPS domain, the deployment ladder is:
 
 \begin{enumerate}
-  \item benchmark replay with observed versus true trajectory separation,
-  \item controller-in-the-loop runtime rehearsal with complete certificates,
-  \item hardware-in-the-loop with real telemetry transport and relay behavior,
-  \item supervised pilot operation with bounded fallback policies, and
-  \item wider deployment only after those layers remain manifest-traceable.
+  \item \textbf{Benchmark replay}---observed versus true trajectory separation,
+    TSVR measurement, Core Bound verification.
+  \item \textbf{Software-in-loop (SIL) rehearsal}---DC3S running against a
+    simulated or replayed telemetry stream, with full certificate emission
+    and manifest logging.
+  \item \textbf{Hardware-in-loop (HIL) validation}---real telemetry transport,
+    physical actuator interface, relay behavior under injected faults.
+  \item \textbf{Supervised pilot operation}---bounded fallback policies,
+    certificate-gated alert suppression, human-in-the-loop audit.
+  \item \textbf{Wider deployment}---only after all prior layers remain
+    manifest-traceable and no regression in TSVR or certificate integrity
+    has been observed.
+\end{enumerate}
+
+The energy management domain is currently at Stage~1--3.  No domain in
+this thesis has reached Stage~4.  Stages~4--5 require domain-specific
+regulatory engagement beyond the scope of this framework contribution.
+
+\section{Operational Monitoring}
+
+Once deployed in any live tier, DC3S requires continuous monitoring of:
+
+\begin{itemize}
+  \item \textbf{OQE trend.}  A sustained drop in the average reliability
+    score $\bar{w}_t$ below the alert threshold ($w < 0.60$ for energy
+    management, domain-specific for others) should trigger a calibration
+    review and possible shield recalibration.
+
+  \item \textbf{Intervention rate drift.}  An intervention rate (IR) that
+    exceeds the baseline by more than 10 percentage points may signal
+    distribution shift in the input telemetry.  The conformal quantile
+    $q_t$ should be re-estimated on a fresh calibration split.
+
+  \item \textbf{Certificate half-life.}  The runtime certificate validity
+    window should be monitored using the decay model in
+    Chapter~\ref{ch:cert-half-life-blackout}.  Certificates expiring faster
+    than expected indicate elevated fault rates or OQE degradation.
+
+  \item \textbf{TSVR monitoring.}  Where ground-truth state can be accessed
+    post-hoc (e.g., from SCADA historian data or sensor reconciliation),
+    the empirical TSVR should be computed at each reporting period and
+    compared to the Core Bound prediction.
+\end{itemize}
+
+\section{Rollback Protocol}
+
+If any monitoring indicator exceeds its alarm threshold, the following
+rollback protocol applies:
+
+\begin{enumerate}
+  \item \textbf{Certificate hold.}  Suspend certificate emission and fall
+    back to the safe-landing policy (Chapter~\ref{ch:graceful-degradation}).
+  \item \textbf{Fault diagnosis.}  Identify the root cause of the degradation
+    (telemetry faults, model drift, constraint boundary change) using the
+    OQE diagnostic flags.
+  \item \textbf{Calibration refresh.}  Re-run conformal calibration on a
+    fresh holdout split reflecting current operating conditions.
+  \item \textbf{Re-verification.}  Execute a full SIL pass under the refreshed
+    calibration before resuming certificate emission.
 \end{enumerate}
 
 \section{Verification Discipline}
 
-Every stage should preserve four invariants:
+Every stage of the deployment ladder must preserve four invariants:
 
 \begin{itemize}
-  \item a named script path that can regenerate the output,
-  \item a run-scoped artifact with stable location,
-  \item a manifest entry tying the artifact to a chapter claim, and
+  \item a named script path that can regenerate each output artifact,
+  \item a run-scoped artifact with stable, version-controlled location,
+  \item a manifest entry tying the artifact to the corresponding claim, and
   \item an explicit statement of what the result does \emph{not} prove.
 \end{itemize}
 
-This discipline is part of the battery contribution.  The thesis is not only
-about a safer dispatch policy; it is also about a verifiable way to connect
-runtime safety claims to evidence.
+This discipline is not only an engineering convenience.  It is a
+prerequisite for any safety-critical certification process.  A domain
+that cannot reproduce its validation artifacts on demand cannot make a
+defensible safety argument to a regulatory body.
 
 \section{Summary}
 
-The battery deployment path is therefore incremental and auditable.  Each new
-layer must inherit the same theorem-to-code-to-artifact traceability that
-governs the current battery package.
+The ORIUS deployment path is incremental and auditable.  Each new layer
+inherits the theorem-to-code-to-artifact traceability that governs the
+current evidence package.  Widening to production---within any domain---is
+a matter of climbing the deployment ladder step by step, with each rung
+verified against the Core Bound and logged in the artifact manifest.

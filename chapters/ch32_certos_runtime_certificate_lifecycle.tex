@@ -14,7 +14,7 @@ exhausted.
 The DC3S battery shield prevents unsafe actions at the optimisation
 boundary.  A deployment-facing system still needs a second question
 answered: \emph{what happens between a safe action and the runtime that is
-allowed to execute it?}  CertOS answers that question with one simple
+allowed to execute it?}  CertOS answers that question with one governing
 discipline:
 
 \begin{quote}
@@ -108,7 +108,7 @@ FALLBACK & No valid certificate remains & Replace actuation with a known-safe fa
 \draw[->, bend left=18] (renew) to node[below]{recovered quality} (issue);
 \end{tikzpicture}
 \caption{CertOS lifecycle state machine as implemented in the battery runtime.
-The defended contract is simple: remain in valid or degraded certified
+The defended contract is precise: remain in valid or degraded certified
 execution when a horizon exists; otherwise fall back explicitly.}
 \label{fig:certos-lifecycle}
 \end{figure}
@@ -242,9 +242,9 @@ and emits the fallback action instead.}
 
 The recovery note in \path{reports/certos/recovery_report.md} records that
 the lifecycle contains transitions from fallback back to valid execution.
-The recovery manager in \path{recovery_manager.py} is deliberately simple:
+The recovery manager in \path{recovery_manager.py} is intentionally minimal:
 it is a callback-based regain path, not a proof of optimal recovery.  That
-level of modesty is appropriate to the current evidence lock.
+level of modesty is appropriate to the evidence lock maintained in this thesis.
 
 The audit layer is similarly bounded.  The ledger stores lifecycle
 operation, step, certificate hash, and optional metadata.  The current

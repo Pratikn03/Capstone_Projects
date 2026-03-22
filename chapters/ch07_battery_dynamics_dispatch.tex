@@ -46,7 +46,7 @@ Soft SOC margins are enforced at $[\mathrm{SOC}_{\min}, \mathrm{SOC}_{\max}]
 
 The energy balance over one time step ($\Delta t = 1$\,h) is:
 \begin{equation}
-\label{eq:soc-dynamics}
+\label{eq:soc-dynamics-battery}
   E_{t+1} = E_t + \eta^{+}\,P_t^{+}\,\Delta t
                  - \frac{P_t^{-}}{\eta^{-}}\,\Delta t.
 \end{equation}
@@ -96,7 +96,7 @@ separate charge and discharge sub-problems and selecting the dominant mode.
   E_{\min} \le E_{t+1} \le E_{\max},
 \end{equation}
 where $E_{\min} = \mathrm{SOC}_{\min} \cdot E_{\max}$ and similarly for the
-upper bound.  Substituting the dynamics~\eqref{eq:soc-dynamics}:
+upper bound.  Substituting the dynamics~\eqref{eq:soc-dynamics-battery}:
 \begin{equation}
 \label{eq:soc-bounds-expanded}
   E_{\min} - E_t \;\le\;
@@ -260,7 +260,7 @@ Chapter~\ref{ch:orius-bench-battery}.
 \section{Chapter Summary}
 
 This chapter formalised the battery state-space model, the SOC dynamics
-equation~\eqref{eq:soc-dynamics}, the power/ramp/SOC constraint set, and the
+equation~\eqref{eq:soc-dynamics-battery}, the power/ramp/SOC constraint set, and the
 deterministic dispatch LP~\eqref{eq:dispatch-lp}.  Three action types---candidate,
 safe, and executed---were distinguished to precisely locate the safety
 intervention point.  The effect of degraded observation on the feasible set

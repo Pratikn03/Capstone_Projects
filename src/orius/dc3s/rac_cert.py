@@ -1,13 +1,37 @@
-"""RAC-Cert utilities for reliability-adaptive conformal uncertainty."""
+"""RAC-Cert utilities for reliability-adaptive conformal uncertainty.
+
+Public API
+----------
+RACCertConfig
+    Calibration hyper-parameters (alpha, vol bins, sensitivity weights, etc.).
+RACCertModel
+    Volatility-binned conformal quantile model.  Fit on a calibration split,
+    then serialise/deserialise with ``to_json`` / ``from_json``.
+compute_q_multiplier
+    Scale factor for the conformal threshold based on w_t and sensitivity.
+compute_inflation
+    Inflation factor per the DC3S linear law.
+compute_dispatch_sensitivity
+    Numerical perturbation-based dispatch sensitivity probe.
+"""
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
 import json
+from dataclasses import asdict, dataclass
 from typing import Any, Callable
 
 import numpy as np
 
 from orius.forecasting.uncertainty.cqr import assign_bins, cqr_scores, rolling_volatility
+
+__all__ = [
+    "RACCertConfig",
+    "RACCertModel",
+    "compute_q_multiplier",
+    "compute_inflation",
+    "compute_dispatch_sensitivity",
+    "normalize_sensitivity",
+]
 
 
 @dataclass
@@ -87,7 +111,8 @@ class RACCertModel:
         self._require_fitted()
         y = np.asarray(y_context, dtype=float).reshape(-1)
         vol = rolling_volatility(y, self.cfg.vol_window)
-        assert self.vol_edges is not None
+        if self.vol_edges is None:  # guaranteed by _require_fitted, but explicit for type checkers
+            raise RuntimeError("RACCertModel vol_edges is None after fit — this is a bug")
         bins = np.digitize(vol, self.vol_edges[1:-1], right=False)
         bins = np.clip(bins, 0, self.cfg.n_vol_bins - 1).astype(int)
         return bins
@@ -100,7 +125,8 @@ class RACCertModel:
             bins = np.full(horizon, int(bins[0]), dtype=int)
         elif bins.size != horizon:
             bins = np.full(horizon, int(bins[-1]), dtype=int)
-        assert self.qhat_by_vol_bin is not None
+        if self.qhat_by_vol_bin is None:  # guaranteed by _require_fitted, but explicit for type checkers
+            raise RuntimeError("RACCertModel qhat_by_vol_bin is None after fit — this is a bug")
         return self.qhat_by_vol_bin[bins].astype(float)
 
     def to_json(self) -> str:

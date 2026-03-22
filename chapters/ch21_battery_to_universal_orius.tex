@@ -158,7 +158,7 @@ an adapter alone.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.85\linewidth]{fig_universal_framework}
+  \includegraphics[width=0.85\linewidth]{reports/multi_domain/fig_all_domain_comparison.png}
   \caption{ORIUS universal 5-stage pipeline.  Each domain plugs in a
     \texttt{DomainAdapter}; the DC3S core (stages 1--5) is shared and
     domain-agnostic.}
@@ -213,18 +213,7 @@ Navigation provides simulation-backed portability evidence.
 
 \input{reports/universal_orius_validation/tbl_all_domain_comparison}
 
-Table~\ref{tab:all_domain_comparison} confirms equivalent DC3S performance
-across all six domains under the unified fault schedule ($N=2000$ steps
-per domain).  Energy management achieves 3.9\% $\rightarrow$ 0.0\% TSVR
-on the locked DE dispatch surface.  Aerospace achieves the largest
-absolute reduction: 26.65\% $\rightarrow$ 0.0\% with 77.3\% repair rate.
-Autonomous vehicles reduce from 3.65\% to 0.0\% (99.6\% repair).
-Industrial control reduces from 21.7\% to 0.0\% (90.7\% repair) and
-medical monitoring from 7.55\% to 0.0\% (37.2\% repair).  Navigation,
-validated on a closed-loop simulation surface, reduces from 25.8\% to
-9.25\% (100\% repair).  Reliability scores are consistent across all
-domains (mean $\bar{w}_t \in [0.66, 0.82]$), confirming that the OQE
-reliability estimator is domain-agnostic.
+
 
 \begin{figure}[htbp]
   \centering
@@ -315,9 +304,6 @@ fault schedule, and the four standard figures (forecast sample,
 model comparison, reliability under faults, multi-horizon backtest)
 generated from the locked test split.  Navigation appears last as a
 simulation-backed portability profile without a trained forecasting model.
-
-% ----- Training metrics table (all six domains at equivalent depth) ------
-\input{reports/universal_orius_validation/tbl_all_domain_training_metrics}
 
 %% =========================================================================
 \subsection{Energy Management (Battery / Grid Dispatch)}
