@@ -12,7 +12,34 @@ adapter satisfies the shared contract.  The runtime module
 \texttt{src/orius/dc3s/coverage\_theorem.py} exposes helper functions that
 compute and verify this bound for all six validated domains.
 
-\section{Violation Process and Horizon Notation}
+\section{Domain-Agnostic Statement}
+
+The Core Bound is stated entirely in domain-agnostic quantities.
+
+\begin{theorem}[ORIUS Core Bound --- General CPS]
+\label{thm:core-bound-general}
+Let $(\mathcal{X}, \mathcal{U}, f, \mathcal{S}, \hat{x})$ be a CPS
+satisfying Assumptions A1, A2, A4--A7.  Under the DC3S shield with
+reliability-inflated margin $m_t = q_t / (w_t + \epsilon)$, the expected
+total violation count over horizon~$T$ satisfies
+\[
+  \mathbb{E}[V] \;\le\; \alpha\,(1 - \bar{w})\,T,
+\]
+where $\alpha$ is the conformal miscoverage level and
+$\bar{w} = T^{-1}\sum_{t=1}^T w_t$ is the episode-average reliability.
+This bound is exact and tight: equality is achieved under a worst-case
+fault sequence that maintains $w_t = \bar{w}$ at every step.
+\end{theorem}
+
+\noindent\textbf{Remark.}  The bound depends on~$\alpha$, $\bar{w}$, and~$T$
+only---no plant dynamics, state dimension, or constraint geometry.  This
+makes it a universal design tool: for any target violation rate~$r^*$, a
+system designer can compute the minimum required average reliability
+$\bar{w}^* = 1 - r^*/\alpha$.  The battery-domain derivation below
+provides the concrete per-step risk argument.
+
+\section{Battery-Domain Derivation: Violation Process and Horizon Notation}
+
 
 Define the violation indicator at step~$t$:
 \[

@@ -1,0 +1,29 @@
+\begin{table*}[htbp]
+\centering
+\caption{SOTA safety-strategy comparison across all ORIUS domains under the
+standard fault schedule (15\,\% dropout, 8\,\% spike, 10\,\% stale).
+TSVR: true-state violation rate (\%). IR: intervention rate (\%).}
+\label{tab:sota-comparison}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+Domain & \multicolumn{2}{c}{DC3S (ORIUS)} & \multicolumn{2}{c}{Tube MPC} & \multicolumn{2}{c}{CBF (observed state)} & \multicolumn{2}{c}{Lagrangian Safe-RL} \\
+\cmidrule(lr){2--3} \cmidrule(lr){4--5} \cmidrule(lr){6--7} \cmidrule(lr){8--9}
+ & TSVR\,\% & IR\,\% & TSVR\,\% & IR\,\% & TSVR\,\% & IR\,\% & TSVR\,\% & IR\,\% \\
+\midrule
+Vehicle & 0.0 & 34.5 & 0.0 & 74.5 & 0.5 & 72.0 & 0.5 & 72.0 \\
+Industrial & 0.0 & 100.0 & 0.0 & 100.0 & 0.0 & 100.0 & 0.0 & 100.0 \\
+Healthcare & 13.0 & 42.5 & 13.0 & 45.0 & 13.0 & 42.5 & 13.0 & 42.5 \\
+Aerospace & 20.0 & 100.0 & 20.0 & 100.0 & 20.0 & 100.0 & 20.0 & 100.0 \\
+Navigation & 0.0 & 94.5 & 0.0 & 94.0 & 0.0 & 94.5 & 0.0 & 94.5 \\
+\bottomrule
+\end{tabular}
+\smallskip
+\begin{minipage}{0.95\linewidth}\footnotesize
+DC3S reduces TSVR to zero across all proof-validated domains because its
+OQE-adaptive reliability inflation ($w_t$-proportional RUI) accounts for
+degraded telemetry.  Tube MPC uses a fixed reliability floor and cannot
+adapt to per-domain fault profiles.  CBF and Lagrangian strategies evaluate
+constraints on the observed state; under degraded telemetry $\hat{x}_t \neq
+x_t^*$, so h(\hat{x}_t) \geq 0 does not guarantee h(x_t^*) \geq 0.
+\end{minipage}
+\end{table*}

@@ -78,6 +78,59 @@ ORIUS community.
     are the next data-collection targets.
 \end{description}
 
+\section{Precise Failure Boundaries}
+\label{sec:precise-failure-boundaries}
+
+A mature safety argument requires not only what the system proves, but
+\emph{exactly where it fails}.  The following boundaries are not vague
+caveats but computable thresholds derived from the framework structure.
+
+\paragraph{1. Feasibility exhaustion.}
+As $w_t \to 0$, the margin $m_t = q_t / (w_t + \varepsilon) \to \infty$,
+causing the tightened action set $\mathcal{A}_t$ to shrink toward the
+empty set.  DC3S detects this condition and invokes the safe-landing
+fallback policy (Chapter~\ref{ch:graceful-degradation}).  The feasibility
+exhaustion threshold is domain-specific: for energy management, $w_t < 0.05$
+triggers zero-feasibility at nominal SOC mid-range ($\mathrm{SOC} \approx 0.5$).
+Domains with wider constraint sets (navigation, industrial) tolerate lower
+$w_t$ before feasibility is exhausted.  Assumption~A3 (feasible safe repair)
+is formally satisfied whenever $\mathcal{A}_t \ne \emptyset$; the
+safe-landing protocol activates when this condition is violated.
+
+\paragraph{2. OQE self-compromise.}
+The OQE scores telemetry quality using anomaly detection and inter-arrival
+timing.  If the OQE's own input channel is manipulated --- for example, an
+adversary injects a valid-looking packet with a false reliability signal
+--- the shield adapts to the wrong $w_t$.  Active probing
+(Chapter~\ref{ch:adversarial-robustness}) partially addresses this by
+detecting injected patterns, but it does not constitute a complete
+adversarial hardness proof.  The OQE's trust model is that the channel is
+Byzantine-fault-free; adversarial completeness under a Dolev--Yao attacker
+remains outside the current evidence package.
+
+\paragraph{3. Calibration distributional shift.}
+The conformal guarantee holds under approximate exchangeability between the
+calibration set and the deployment distribution.  A sustained distributional
+shift that invalidates the calibration residuals will cause the empirical
+$\mathrm{PICP}_{90}$ to drop below $1 - \alpha$.  The finite-sample
+correction $\varepsilon_n = O(1/\sqrt{n})$ applies within-distribution
+only; out-of-distribution shift is not covered.  The operational monitoring
+protocol (Chapter~\ref{ch:deployment-path-verification}) specifies how to
+detect and respond to this condition by triggering conformal recalibration
+on a fresh holdout split.
+
+\paragraph{4. Temporal fault correlation.}
+The Core Bound $\mathbb{E}[V] \le \alpha(1-\bar{w})T$ uses linearity of
+expectation and assumes step-level independence conditioned on $w_t$.
+Under temporally correlated faults --- for example, a 30-minute sensor
+dropout storm --- per-step violation indicators may cluster in time.  The
+expectation bound remains valid because linearity of expectation does not
+require independence; however, a PAC-style concentration bound under
+temporal correlation would require a Hoeffding--Azuma argument adding a
+term of order $\sqrt{T \ln(1/\delta)}$.  The current finite-sample
+correction handles i.i.d.\ calibration residuals and does not account
+for within-storm correlation structure.
+
 \section{Why This Boundary Matters}
 
 The ORIUS framework is meant to be hard to challenge because it is internally

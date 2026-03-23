@@ -11,7 +11,11 @@ class _MultiHeadAttention(nn.Module):
     
     def __init__(self, hidden_size: int, num_heads: int = 4, dropout: float = 0.1):
         super().__init__()
-        assert hidden_size % num_heads == 0
+        if hidden_size % num_heads != 0:
+            raise ValueError(
+                f"hidden_size ({hidden_size}) must be divisible by num_heads ({num_heads})"
+            )
+
         self.num_heads = num_heads
         self.head_dim = hidden_size // num_heads
         self.scale = math.sqrt(self.head_dim)

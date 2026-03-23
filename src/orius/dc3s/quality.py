@@ -256,12 +256,13 @@ def compute_reliability(
         "spikes":       _as_bool(event.get("spikes")),
     }
     fault_flags = {
-        "dropout":      _resolve_fault_flag(explicit_faults["dropout"],      bool(keys) and present < len(keys)),
+        "dropout":      _resolve_fault_flag(explicit_faults["dropout"],      bool(keys) and present < len(keys)),  # noqa: E241
         "stale_sensor": _resolve_fault_flag(explicit_faults["stale_sensor"], bool(stale_detected)),
         "delay_jitter": _resolve_fault_flag(explicit_faults["delay_jitter"], delay_seconds > 0.0),
         "out_of_order": _resolve_fault_flag(explicit_faults["out_of_order"], bool(out_of_order)),
-        "spikes":       _resolve_fault_flag(explicit_faults["spikes"],       bool(spike_detected)),
+        "spikes":       _resolve_fault_flag(explicit_faults["spikes"],       bool(spike_detected)),  # noqa: E241
     }
+
 
     missing_penalty = max(0.0, 1.0 - missing_fraction)
     delay_penalty = math.exp(-lambda_delay * max(0.0, delay_seconds))

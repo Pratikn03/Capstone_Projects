@@ -62,7 +62,7 @@ def send_webhook(
         
     Example:
         >>> send_webhook(
-        ...     "https://hooks.slack.com/services/XXX",
+        ...     "https://hooks.slack.com/services/EXAMPLE",
         ...     {"text": ":warning: Model drift detected!"}
         ... )
     """

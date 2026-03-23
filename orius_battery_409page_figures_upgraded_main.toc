@@ -1,584 +1,647 @@
 \contentsline {chapter}{Abstract}{i}{chapter*.1}%
 \contentsline {chapter}{Acknowledgments}{iii}{chapter*.2}%
 \contentsline {part}{I\hspace {1em}Problem Formulation and Witness Domains}{1}{part.1}%
-\contentsline {chapter}{\numberline {1}Introduction}{2}{chapter.1}%
-\contentsline {section}{\numberline {1.1}The Hidden Assumption in Physical AI}{2}{section.1.1}%
-\contentsline {section}{\numberline {1.2}Why Observed Safety Can Differ from Physical Safety}{3}{section.1.2}%
-\contentsline {section}{\numberline {1.3}The Observation-Action Safety Gap}{3}{section.1.3}%
-\contentsline {section}{\numberline {1.4}Why the Battery Domain Exposed the Problem First}{3}{section.1.4}%
-\contentsline {section}{\numberline {1.5}The ORIUS Principle}{4}{section.1.5}%
-\contentsline {section}{\numberline {1.6}Research Questions}{5}{section.1.6}%
-\contentsline {section}{\numberline {1.7}Contributions}{5}{section.1.7}%
-\contentsline {section}{\numberline {1.8}Contribution Boundary}{6}{section.1.8}%
-\contentsline {section}{\numberline {1.9}Organisation of the Manuscript}{6}{section.1.9}%
-\contentsline {chapter}{\numberline {2}Background and Related Work}{7}{chapter.2}%
-\contentsline {section}{\numberline {2.1}Battery Dispatch and Renewable-Aware Control}{7}{section.2.1}%
-\contentsline {subsection}{\numberline {2.1.1}Deterministic Dispatch}{7}{subsection.2.1.1}%
-\contentsline {subsection}{\numberline {2.1.2}Robust and Tube-Based Methods}{7}{subsection.2.1.2}%
-\contentsline {subsection}{\numberline {2.1.3}Stochastic and Risk-Aware Methods}{8}{subsection.2.1.3}%
-\contentsline {section}{\numberline {2.2}The Measurement Blind Spot}{8}{section.2.2}%
-\contentsline {section}{\numberline {2.3}Telemetry Faults in Cyber-Physical Systems}{8}{section.2.3}%
-\contentsline {section}{\numberline {2.4}Uncertainty Quantification and Conformal Methods}{9}{section.2.4}%
-\contentsline {subsection}{\numberline {2.4.1}Conformal Quantile Regression (CQR)}{9}{subsection.2.4.1}%
-\contentsline {subsection}{\numberline {2.4.2}Adaptive Conformal Inference}{9}{subsection.2.4.2}%
-\contentsline {subsection}{\numberline {2.4.3}Key Limitation}{10}{subsection.2.4.3}%
-\contentsline {section}{\numberline {2.5}Runtime Safety, Shields, and Assurance}{10}{section.2.5}%
-\contentsline {subsection}{\numberline {2.5.1}How DC3S Extends the State of the Art}{10}{subsection.2.5.1}%
-\contentsline {section}{\numberline {2.6}Control Barrier Functions}{10}{section.2.6}%
-\contentsline {section}{\numberline {2.7}Information-Theoretic Roots}{11}{section.2.7}%
-\contentsline {section}{\numberline {2.8}Evaluation Protocols and the Benchmark Gap}{11}{section.2.8}%
-\contentsline {section}{\numberline {2.9}The Novelty Gap}{11}{section.2.9}%
-\contentsline {section}{\numberline {2.10}Chapter Summary}{11}{section.2.10}%
-\contentsline {chapter}{\numberline {3}Problem Formulation}{13}{chapter.3}%
-\contentsline {section}{\numberline {3.1}ORIUS System Context}{13}{section.3.1}%
-\contentsline {section}{\numberline {3.2}The Hidden Safety Gap}{14}{section.3.2}%
-\contentsline {section}{\numberline {3.3}State Objects and Telemetry Model}{14}{section.3.3}%
-\contentsline {subsection}{\numberline {3.3.1}True State}{14}{subsection.3.3.1}%
-\contentsline {subsection}{\numberline {3.3.2}Observed State}{14}{subsection.3.3.2}%
-\contentsline {subsection}{\numberline {3.3.3}Observation Quality Score}{15}{subsection.3.3.3}%
-\contentsline {section}{\numberline {3.4}Fault Model}{15}{section.3.4}%
-\contentsline {section}{\numberline {3.5}Battery Dynamics and Feasible Action Set}{16}{section.3.5}%
-\contentsline {subsection}{\numberline {3.5.1}SOC Dynamics}{16}{subsection.3.5.1}%
-\contentsline {subsection}{\numberline {3.5.2}Feasible Action Set}{16}{subsection.3.5.2}%
-\contentsline {section}{\numberline {3.6}Dispatch Objective}{16}{section.3.6}%
-\contentsline {section}{\numberline {3.7}The Calibration Gap Under Degradation}{17}{section.3.7}%
-\contentsline {section}{\numberline {3.8}Baseline Policies}{17}{section.3.8}%
-\contentsline {section}{\numberline {3.9}Research Questions Formalised}{18}{section.3.9}%
-\contentsline {section}{\numberline {3.10}Scope Boundary}{18}{section.3.10}%
-\contentsline {section}{\numberline {3.11}Dataset Scope}{19}{section.3.11}%
-\contentsline {section}{\numberline {3.12}Chapter Summary}{19}{section.3.12}%
-\contentsline {chapter}{\numberline {4}The Observed-State Safety Illusion}{20}{chapter.4}%
-\contentsline {section}{\numberline {4.1}From Partial Observability to Safety Illusion}{20}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Why the Illusion Arises in the ORIUS Loop}{21}{section.4.2}%
-\contentsline {subsection}{\numberline {4.2.1}The Optimise-to-Dispatch Boundary}{21}{subsection.4.2.1}%
-\contentsline {subsection}{\numberline {4.2.2}Why Good Forecasting Does Not Solve It}{21}{subsection.4.2.2}%
-\contentsline {section}{\numberline {4.3}Formal Statement of the Illusion}{21}{section.4.3}%
-\contentsline {section}{\numberline {4.4}Battery-Domain Realisation Under Telemetry Faults}{22}{section.4.4}%
-\contentsline {subsection}{\numberline {4.4.1}A Simple Battery Narrative}{22}{subsection.4.4.1}%
-\contentsline {section}{\numberline {4.5}Why Standard Evaluation Misses the Problem}{23}{section.4.5}%
-\contentsline {section}{\numberline {4.6}CPSBench and Dual-Trajectory Evaluation}{23}{section.4.6}%
-\contentsline {section}{\numberline {4.7}Why the Illusion Demands a Runtime Shield}{24}{section.4.7}%
-\contentsline {section}{\numberline {4.8}Chapter Summary}{25}{section.4.8}%
-\contentsline {chapter}{\numberline {5}ORIUS System Context}{26}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Why Grid-Scale Batteries Matter}{26}{section.5.1}%
-\contentsline {section}{\numberline {5.2}ORIUS as a Closed Decision Loop}{27}{section.5.2}%
-\contentsline {section}{\numberline {5.3}The Optimize--Dispatch Boundary as the True Risk Location}{27}{section.5.3}%
-\contentsline {section}{\numberline {5.4}Operational Telemetry Pathways}{28}{section.5.4}%
-\contentsline {section}{\numberline {5.5}Why Measurement Quality Enters the Control Problem}{29}{section.5.5}%
-\contentsline {section}{\numberline {5.6}Chapter Summary}{29}{section.5.6}%
-\contentsline {chapter}{\numberline {6}Data, Telemetry, and Dataset Scope}{31}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Germany and United States Dataset Surface}{31}{section.6.1}%
-\contentsline {paragraph}{Germany (OPSD).}{31}{section*.7}%
-\contentsline {paragraph}{United States (EIA-930).}{31}{section*.8}%
-\contentsline {section}{\numberline {6.2}Forecast Targets and Operational Channels}{32}{section.6.2}%
-\contentsline {section}{\numberline {6.3}Observed Telemetry Versus Truth Trajectory}{32}{section.6.3}%
-\contentsline {section}{\numberline {6.4}Missingness, Corruption, and Signal Degradation}{33}{section.6.4}%
-\contentsline {section}{\numberline {6.5}Why Telemetry Faults Are Ordinary, Not Edge Cases}{33}{section.6.5}%
-\contentsline {section}{\numberline {6.6}Artifact Contracts and Profile Lock}{34}{section.6.6}%
-\contentsline {section}{\numberline {6.7}Scope Boundary}{34}{section.6.7}%
-\contentsline {section}{\numberline {6.8}Chapter Summary}{35}{section.6.8}%
-\contentsline {chapter}{\numberline {7}Battery Dynamics and Dispatch Problem}{36}{chapter.7}%
-\contentsline {section}{\numberline {7.1}Battery State Variables}{36}{section.7.1}%
-\contentsline {section}{\numberline {7.2}SOC Dynamics}{37}{section.7.2}%
-\contentsline {section}{\numberline {7.3}Power, Ramp-Rate, and SOC Constraints}{37}{section.7.3}%
-\contentsline {paragraph}{Power bounds.}{37}{section*.12}%
-\contentsline {paragraph}{Mutual exclusion.}{37}{section*.13}%
-\contentsline {paragraph}{Ramp-rate limits.}{37}{section*.14}%
-\contentsline {paragraph}{SOC bounds.}{37}{section*.15}%
-\contentsline {section}{\numberline {7.4}Candidate, Safe, and Executed Actions}{38}{section.7.4}%
-\contentsline {section}{\numberline {7.5}Dispatch Objective}{38}{section.7.5}%
-\contentsline {section}{\numberline {7.6}Uncertainty and Feasible Set Under Degraded Observation}{39}{section.7.6}%
-\contentsline {section}{\numberline {7.7}Calibration Gap and Uncertainty Mismatch}{39}{section.7.7}%
-\contentsline {section}{\numberline {7.8}Baseline Policies}{39}{section.7.8}%
-\contentsline {section}{\numberline {7.9}Scope Boundary}{40}{section.7.9}%
-\contentsline {section}{\numberline {7.10}Chapter Summary}{40}{section.7.10}%
-\contentsline {chapter}{\numberline {8}Forecasting and Calibration}{42}{chapter.8}%
-\contentsline {section}{\numberline {8.1}Forecast Targets}{42}{section.8.1}%
-\contentsline {section}{\numberline {8.2}Model Families}{43}{section.8.2}%
-\contentsline {paragraph}{GBM (LightGBM).}{43}{section*.17}%
-\contentsline {paragraph}{LSTM.}{43}{section*.18}%
-\contentsline {paragraph}{TCN.}{43}{section*.19}%
-\contentsline {paragraph}{N-BEATS.}{43}{section*.20}%
-\contentsline {paragraph}{TFT.}{43}{section*.21}%
-\contentsline {paragraph}{PatchTST.}{44}{section*.22}%
-\contentsline {section}{\numberline {8.3}Training Protocol and Leakage Control}{44}{section.8.3}%
-\contentsline {section}{\numberline {8.4}Conformal Prediction Intervals}{44}{section.8.4}%
-\contentsline {section}{\numberline {8.5}Marginal Coverage}{45}{section.8.5}%
-\contentsline {section}{\numberline {8.6}Reliability-Conditioned Under-Coverage}{45}{section.8.6}%
-\contentsline {section}{\numberline {8.7}Solar and Wind Calibration Weaknesses}{46}{section.8.7}%
-\contentsline {paragraph}{Wind non-stationarity.}{46}{section*.24}%
-\contentsline {paragraph}{Solar bimodality.}{46}{section*.25}%
-\contentsline {section}{\numberline {8.8}Why Calibration Alone Cannot Close the Gap}{46}{section.8.8}%
-\contentsline {section}{\numberline {8.9}Wind Coverage Gap: Diagnosis, Bound, and Partial Mitigation}{47}{section.8.9}%
-\contentsline {paragraph}{Root cause: regime non-stationarity.}{47}{section*.26}%
-\contentsline {paragraph}{Scope of the gap.}{47}{section*.27}%
-\contentsline {paragraph}{Quantitative bound.}{47}{section*.28}%
-\contentsline {paragraph}{Consequence for safety.}{47}{section*.29}%
-\contentsline {section}{\numberline {8.10}Chapter Summary}{48}{section.8.10}%
-\contentsline {chapter}{\numberline {9}DC3S: The Universal Safety Adapter}{49}{chapter.9}%
-\contentsline {section}{\numberline {9.1}Why a Runtime Shield Is Needed}{49}{section.9.1}%
-\contentsline {section}{\numberline {9.2}Runtime Objects}{50}{section.9.2}%
-\contentsline {section}{\numberline {9.3}Detect: Telemetry Reliability Scoring (OQE)}{50}{section.9.3}%
-\contentsline {section}{\numberline {9.4}Calibrate: Reliability-Adaptive Interval Inflation}{51}{section.9.4}%
-\contentsline {paragraph}{Inflation diagnostics.}{51}{section*.31}%
-\contentsline {section}{\numberline {9.5}Constrain: Safe-Action Sets Under Widened Uncertainty}{51}{section.9.5}%
-\contentsline {section}{\numberline {9.6}Shield: Projection and Repair}{52}{section.9.6}%
-\contentsline {section}{\numberline {9.7}FTIT State Tube}{52}{section.9.7}%
-\contentsline {section}{\numberline {9.8}Certify: Step-Level Audit Records}{52}{section.9.8}%
-\contentsline {section}{\numberline {9.9}DC3S Latency Profile}{53}{section.9.9}%
-\contentsline {section}{\numberline {9.10}Complete Runtime Narrative}{54}{section.9.10}%
-\contentsline {section}{\numberline {9.11}Chapter Summary}{54}{section.9.11}%
-\contentsline {chapter}{\numberline {10}CPSBench Multi-Domain Evaluation Framework}{55}{chapter.10}%
-\contentsline {section}{\numberline {10.1}Why Standard Evaluation Is Insufficient}{55}{section.10.1}%
-\contentsline {section}{\numberline {10.2}Dual-Trajectory Evaluation}{56}{section.10.2}%
-\contentsline {section}{\numberline {10.3}Truth-State and Observed-State Logging}{56}{section.10.3}%
-\contentsline {section}{\numberline {10.4}Fault Taxonomy and Replayable Schedules}{56}{section.10.4}%
-\contentsline {section}{\numberline {10.5}Benchmark Metrics}{57}{section.10.5}%
-\contentsline {subsection}{\numberline {10.5.1}Safety Metrics}{58}{subsection.10.5.1}%
-\contentsline {subsection}{\numberline {10.5.2}Economic Metrics}{58}{subsection.10.5.2}%
-\contentsline {subsection}{\numberline {10.5.3}Environmental Metrics}{58}{subsection.10.5.3}%
-\contentsline {section}{\numberline {10.6}Benchmark Invariants}{58}{section.10.6}%
-\contentsline {section}{\numberline {10.7}Battery Track as Benchmark Foundation}{59}{section.10.7}%
-\contentsline {section}{\numberline {10.8}Chapter Summary}{59}{section.10.8}%
-\contentsline {chapter}{\numberline {11}Main Battery Results}{61}{chapter.11}%
-\contentsline {section}{\numberline {11.1}Main Controller Comparison}{61}{section.11.1}%
-\contentsline {section}{\numberline {11.2}Hidden True-State Violation Measurement}{62}{section.11.2}%
-\contentsline {section}{\numberline {11.3}Zero-Violation Shield Result}{62}{section.11.3}%
-\contentsline {section}{\numberline {11.4}Intervention Rate and Conditional Conservatism}{62}{section.11.4}%
-\contentsline {section}{\numberline {11.5}Regional Value Surface}{63}{section.11.5}%
-\contentsline {section}{\numberline {11.6}Robustness and Severity Surfaces}{63}{section.11.6}%
-\contentsline {section}{\numberline {11.7}Operational Meaning}{63}{section.11.7}%
-\contentsline {section}{\numberline {11.8}Controller Leaderboard}{64}{section.11.8}%
-\contentsline {section}{\numberline {11.9}What Results Do and Do Not Prove}{65}{section.11.9}%
-\contentsline {paragraph}{What the results establish.}{65}{section*.39}%
-\contentsline {paragraph}{What the results do not establish.}{65}{section*.40}%
-\contentsline {section}{\numberline {11.10}Chapter Summary}{65}{section.11.10}%
-\contentsline {chapter}{\numberline {12}Ablations and Failure Analysis}{66}{chapter.12}%
-\contentsline {section}{\numberline {12.1}Reliability Scoring Ablation}{66}{section.12.1}%
-\contentsline {section}{\numberline {12.2}Inflation Ablation}{66}{section.12.2}%
-\contentsline {section}{\numberline {12.3}Projection Ablation}{67}{section.12.3}%
-\contentsline {section}{\numberline {12.4}FTIT Ablation}{67}{section.12.4}%
-\contentsline {section}{\numberline {12.5}Fault-Family Sensitivity}{68}{section.12.5}%
-\contentsline {section}{\numberline {12.6}When DC3S Intervenes}{68}{section.12.6}%
-\contentsline {section}{\numberline {12.7}When Base Calibration Weakens}{68}{section.12.7}%
-\contentsline {section}{\numberline {12.8}Why Safety Is Preserved Anyway}{69}{section.12.8}%
-\contentsline {section}{\numberline {12.9}Rank Reversal Under Degradation}{69}{section.12.9}%
-\contentsline {section}{\numberline {12.10}Chapter Summary}{70}{section.12.10}%
-\contentsline {chapter}{\numberline {13}Case Studies and Operational Traces}{71}{chapter.13}%
-\contentsline {section}{\numberline {13.1}48-Hour Case Study}{71}{section.13.1}%
-\contentsline {section}{\numberline {13.2}7-Day Operational Trace}{71}{section.13.2}%
-\contentsline {section}{\numberline {13.3}Price--Dispatch Interaction}{72}{section.13.3}%
-\contentsline {section}{\numberline {13.4}Reliability Score Evolution}{72}{section.13.4}%
-\contentsline {section}{\numberline {13.5}Intervention Timing}{72}{section.13.5}%
-\contentsline {section}{\numberline {13.6}True Versus Observed SOC Divergence}{73}{section.13.6}%
-\contentsline {section}{\numberline {13.7}Failure Avoided by the Shield}{73}{section.13.7}%
-\contentsline {section}{\numberline {13.8}Chapter Summary}{74}{section.13.8}%
-\contentsline {chapter}{\numberline {14}Witness Domain Lessons and Cross-Domain Interpretation}{76}{chapter.14}%
-\contentsline {section}{\numberline {14.1}Battery as a Witness, Not a Toy}{76}{section.14.1}%
-\contentsline {section}{\numberline {14.2}What the Battery Proof Surface Establishes}{77}{section.14.2}%
-\contentsline {section}{\numberline {14.3}What Battery Cannot Establish Alone}{77}{section.14.3}%
-\contentsline {section}{\numberline {14.4}Why Battery Is the Right Reference Domain}{77}{section.14.4}%
-\contentsline {section}{\numberline {14.5}How Battery Lifts into ORIUS}{78}{section.14.5}%
-\contentsline {section}{\numberline {14.6}Chapter Summary}{78}{section.14.6}%
-\contentsline {part}{II\hspace {1em}DC3S Safety Theorem Ladder}{79}{part.2}%
-\contentsline {chapter}{\numberline {15}Assumptions, Notation, and Proof Discipline}{80}{chapter.15}%
-\contentsline {section}{\numberline {15.1}Stable Notation}{80}{section.15.1}%
-\contentsline {paragraph}{Battery instantiation.}{81}{section*.46}%
-\contentsline {section}{\numberline {15.2}Assumption IDs (A1--A8)}{81}{section.15.2}%
-\contentsline {section}{\numberline {15.3}Proof Dependency Matrix}{82}{section.15.3}%
-\contentsline {section}{\numberline {15.4}Marginal Versus Conditional Coverage}{82}{section.15.4}%
-\contentsline {section}{\numberline {15.5}One-Step Versus Multi-Step Claims}{83}{section.15.5}%
-\contentsline {section}{\numberline {15.6}The Theorem Ladder}{83}{section.15.6}%
-\contentsline {section}{\numberline {15.7}Theorem-Writing Discipline}{83}{section.15.7}%
-\contentsline {section}{\numberline {15.8}Common Theorem Failure Modes}{84}{section.15.8}%
-\contentsline {section}{\numberline {15.9}Integrated Theorem Surface Summary}{84}{section.15.9}%
-\contentsline {section}{\numberline {15.10}Chapter Summary}{84}{section.15.10}%
-\contentsline {chapter}{\numberline {16}Theorem~1: OASG Existence}{86}{chapter.16}%
-\contentsline {section}{\numberline {16.1}Battery-Domain Setup}{86}{section.16.1}%
-\contentsline {section}{\numberline {16.2}Observed and True Safety Predicates}{86}{section.16.2}%
-\contentsline {section}{\numberline {16.3}Assumptions Used}{87}{section.16.3}%
-\contentsline {section}{\numberline {16.4}Auxiliary Lemmas}{87}{section.16.4}%
-\contentsline {section}{\numberline {16.5}Main Theorem: OASG Existence}{88}{section.16.5}%
-\contentsline {section}{\numberline {16.6}Interpretive Table}{88}{section.16.6}%
-\contentsline {section}{\numberline {16.7}Artifact-Backed Figure}{88}{section.16.7}%
-\contentsline {section}{\numberline {16.8}Corollaries}{89}{section.16.8}%
-\contentsline {section}{\numberline {16.9}What This Theorem Does Not Prove}{89}{section.16.9}%
-\contentsline {section}{\numberline {16.10}Chapter Summary}{90}{section.16.10}%
-\contentsline {subsection}{\numberline {16.10.1}Domain Instantiation Across Validated Domains}{90}{subsection.16.10.1}%
-\contentsline {chapter}{\numberline {17}Theorem~2: Safety Preservation Under the Shield}{91}{chapter.17}%
-\contentsline {section}{\numberline {17.1}Tightened Safe Action Set}{91}{section.17.1}%
-\contentsline {section}{\numberline {17.2}Assumptions Used}{91}{section.17.2}%
-\contentsline {section}{\numberline {17.3}Auxiliary Propositions}{92}{section.17.3}%
-\contentsline {section}{\numberline {17.4}Main Theorem: Safety Preservation}{92}{section.17.4}%
-\contentsline {section}{\numberline {17.5}Scalar SOC Derivation}{93}{section.17.5}%
-\contentsline {section}{\numberline {17.6}Proof Roadmap Table}{93}{section.17.6}%
-\contentsline {section}{\numberline {17.7}Artifact-Backed Figure}{93}{section.17.7}%
-\contentsline {section}{\numberline {17.8}Corollaries}{93}{section.17.8}%
-\contentsline {section}{\numberline {17.9}What This Theorem Does Not Prove}{94}{section.17.9}%
-\contentsline {section}{\numberline {17.10}Chapter Summary}{94}{section.17.10}%
-\contentsline {subsection}{\numberline {17.10.1}Domain Instantiation Across Validated Domains}{95}{subsection.17.10.1}%
-\contentsline {subsection}{\numberline {17.10.2}Per-Domain Per-Step Coverage Verification}{95}{subsection.17.10.2}%
-\contentsline {paragraph}{Energy Management (load\_mw).}{96}{section*.55}%
-\contentsline {paragraph}{AV (speed\_mps).}{96}{section*.56}%
-\contentsline {paragraph}{Industrial (power\_mw).}{96}{section*.57}%
-\contentsline {paragraph}{Healthcare (hr\_bpm).}{96}{section*.58}%
-\contentsline {paragraph}{Aerospace (airspeed\_kt).}{96}{section*.59}%
-\contentsline {chapter}{\numberline {18}The ORIUS Core Safety Bound}{98}{chapter.18}%
-\contentsline {section}{\numberline {18.1}Violation Process and Horizon Notation}{98}{section.18.1}%
-\contentsline {section}{\numberline {18.2}Per-Step Risk Lemma}{98}{section.18.2}%
-\contentsline {section}{\numberline {18.3}Main Theorem: ORIUS Core Bound}{99}{section.18.3}%
-\contentsline {section}{\numberline {18.4}Equivalent Average-Rate Form}{100}{section.18.4}%
-\contentsline {section}{\numberline {18.5}Special Cases Table}{100}{section.18.5}%
-\contentsline {section}{\numberline {18.6}Artifact-Backed Figure}{100}{section.18.6}%
-\contentsline {section}{\numberline {18.7}Corollaries}{100}{section.18.7}%
-\contentsline {section}{\numberline {18.8}What This Theorem Does Not Prove}{101}{section.18.8}%
-\contentsline {section}{\numberline {18.9}Chapter Summary}{102}{section.18.9}%
-\contentsline {subsection}{\numberline {18.9.1}Domain Instantiation Across Validated Domains}{102}{subsection.18.9.1}%
-\contentsline {subsection}{\numberline {18.9.2}Per-Domain Per-Step Coverage Verification}{103}{subsection.18.9.2}%
-\contentsline {paragraph}{Energy Management (load\_mw).}{103}{section*.63}%
-\contentsline {paragraph}{AV (speed\_mps).}{103}{section*.64}%
-\contentsline {paragraph}{Industrial (power\_mw).}{103}{section*.65}%
-\contentsline {paragraph}{Healthcare (hr\_bpm).}{103}{section*.66}%
-\contentsline {paragraph}{Aerospace (airspeed\_kt).}{104}{section*.67}%
-\contentsline {chapter}{\numberline {19}No Free Safety Theorem}{105}{chapter.19}%
-\contentsline {section}{\numberline {19.1}Quality-Ignorant Controller Class}{105}{section.19.1}%
-\contentsline {section}{\numberline {19.2}Auxiliary Lemmas}{105}{section.19.2}%
-\contentsline {section}{\numberline {19.3}Constructive Fault-Sequence Logic}{106}{section.19.3}%
-\contentsline {section}{\numberline {19.4}Main Theorem: No Free Safety}{106}{section.19.4}%
-\contentsline {section}{\numberline {19.5}Interpretive Table}{107}{section.19.5}%
-\contentsline {section}{\numberline {19.6}Artifact-Backed Figure}{107}{section.19.6}%
-\contentsline {section}{\numberline {19.7}Corollary}{107}{section.19.7}%
-\contentsline {section}{\numberline {19.8}What This Theorem Does Not Prove}{108}{section.19.8}%
-\contentsline {section}{\numberline {19.9}Chapter Summary}{108}{section.19.9}%
-\contentsline {subsection}{\numberline {19.9.1}Domain Instantiation Across Validated Domains}{109}{subsection.19.9.1}%
-\contentsline {chapter}{\numberline {20}Theorems~T5--T8: Temporal and Behavioral Extensions}{110}{chapter.20}%
-\contentsline {section}{\numberline {20.1}Certificate Object and Validity Horizon}{110}{section.20.1}%
-\contentsline {section}{\numberline {20.2}Forward-Tube Construction}{111}{section.20.2}%
-\contentsline {section}{\numberline {20.3}Main Temporal Theorems}{111}{section.20.3}%
-\contentsline {subsection}{\numberline {20.3.1}Certificate Validity Horizon}{111}{subsection.20.3.1}%
-\contentsline {subsection}{\numberline {20.3.2}Certificate Expiration Bound}{111}{subsection.20.3.2}%
-\contentsline {subsection}{\numberline {20.3.3}Certificate Half-Life Corollary}{112}{subsection.20.3.3}%
-\contentsline {section}{\numberline {20.4}Temporal Summary Table}{112}{section.20.4}%
-\contentsline {section}{\numberline {20.5}Fallback and Graceful Degradation}{112}{section.20.5}%
-\contentsline {subsection}{\numberline {20.5.1}Feasible Fallback Existence}{113}{subsection.20.5.1}%
-\contentsline {subsection}{\numberline {20.5.2}Graceful Degradation Dominance}{113}{subsection.20.5.2}%
-\contentsline {subsection}{\numberline {20.5.3}Safe-Budget Monotonicity}{113}{subsection.20.5.3}%
-\contentsline {section}{\numberline {20.6}Behavioral Comparison Table}{114}{section.20.6}%
-\contentsline {section}{\numberline {20.7}Artifact-Backed Figure}{114}{section.20.7}%
-\contentsline {section}{\numberline {20.8}What This Chapter Does Not Prove}{114}{section.20.8}%
-\contentsline {section}{\numberline {20.9}Chapter Summary}{115}{section.20.9}%
-\contentsline {subsection}{\numberline {20.9.1}Domain Instantiation Across Validated Domains}{115}{subsection.20.9.1}%
-\contentsline {part}{III\hspace {1em}Universal ORIUS Framework and Multi-Domain Validation}{117}{part.3}%
-\contentsline {chapter}{\numberline {21}Universal ORIUS: Six-Domain Validation}{118}{chapter.21}%
-\contentsline {section}{\numberline {21.1}Why the ORIUS Result Is Structurally General}{118}{section.21.1}%
-\contentsline {section}{\numberline {21.2}Mapping Battery Objects to the Universal Adapter}{119}{section.21.2}%
-\contentsline {section}{\numberline {21.3}What Changes by Domain}{119}{section.21.3}%
-\contentsline {section}{\numberline {21.4}What Remains Invariant Across Domains}{120}{section.21.4}%
-\contentsline {section}{\numberline {21.5}How to Port ORIUS to a New Domain}{120}{section.21.5}%
-\contentsline {section}{\numberline {21.6}Cross-Domain Empirical Validation}{120}{section.21.6}%
-\contentsline {subsection}{\numberline {21.6.1}Datasets}{121}{subsection.21.6.1}%
-\contentsline {subsection}{\numberline {21.6.2}Universal Framework Architecture}{121}{subsection.21.6.2}%
-\contentsline {subsection}{\numberline {21.6.3}Protocol}{121}{subsection.21.6.3}%
-\contentsline {subsection}{\numberline {21.6.4}Training and Software-in-Loop Readiness}{123}{subsection.21.6.4}%
-\contentsline {subsection}{\numberline {21.6.5}Validation Status by Domain}{123}{subsection.21.6.5}%
-\contentsline {subsection}{\numberline {21.6.6}Results}{123}{subsection.21.6.6}%
-\contentsline {subsection}{\numberline {21.6.7}Rule-Based Baseline Comparison}{126}{subsection.21.6.7}%
-\contentsline {subsection}{\numberline {21.6.8}Implications}{127}{subsection.21.6.8}%
-\contentsline {section}{\numberline {21.7}Per-Domain Evidence Profiles}{127}{section.21.7}%
-\contentsline {subsection}{\numberline {21.7.1}Energy Management (Battery / Grid Dispatch)}{127}{subsection.21.7.1}%
-\contentsline {subsection}{\numberline {21.7.2}Autonomous Vehicles}{128}{subsection.21.7.2}%
-\contentsline {subsection}{\numberline {21.7.3}Industrial Process Control}{130}{subsection.21.7.3}%
-\contentsline {subsection}{\numberline {21.7.4}Medical Monitoring (ICU Vitals)}{130}{subsection.21.7.4}%
-\contentsline {subsection}{\numberline {21.7.5}Aerospace (Flight Envelope)}{131}{subsection.21.7.5}%
-\contentsline {subsection}{\numberline {21.7.6}Navigation}{132}{subsection.21.7.6}%
-\contentsline {section}{\numberline {21.8}Cross-Domain Metrics Scorecard}{133}{section.21.8}%
-\contentsline {section}{\numberline {21.9}Chapter Summary}{133}{section.21.9}%
-\contentsline {part}{IV\hspace {1em}Evidence Hardening and Reproducibility Surface}{135}{part.4}%
-\contentsline {chapter}{\numberline {22}Fault-Performance Stress Tests}{136}{chapter.22}%
-\contentsline {section}{\numberline {22.1}Motivation}{136}{section.22.1}%
-\contentsline {section}{\numberline {22.2}Fault Taxonomy}{136}{section.22.2}%
-\contentsline {section}{\numberline {22.3}Controller Comparison Across Faults}{137}{section.22.3}%
-\contentsline {section}{\numberline {22.4}Per-Fault Results}{137}{section.22.4}%
-\contentsline {section}{\numberline {22.5}Intervention Rate and Cost Delta}{137}{section.22.5}%
-\contentsline {section}{\numberline {22.6}Cross-Fault Stability Analysis}{138}{section.22.6}%
-\contentsline {section}{\numberline {22.7}Which Faults Are Hardest?}{139}{section.22.7}%
-\contentsline {section}{\numberline {22.8}Fault Stress Comparison Table}{139}{section.22.8}%
-\contentsline {section}{\numberline {22.9}Summary}{139}{section.22.9}%
-\contentsline {chapter}{\numberline {23}Runtime Latency and Systems Footprint}{141}{chapter.23}%
-\contentsline {section}{\numberline {23.1}Why Latency Matters for Real-Time Dispatch}{141}{section.23.1}%
-\contentsline {section}{\numberline {23.2}Measurement Methodology}{141}{section.23.2}%
-\contentsline {section}{\numberline {23.3}Per-Component Latency}{141}{section.23.3}%
-\contentsline {section}{\numberline {23.4}Statistical Summary}{142}{section.23.4}%
-\contentsline {section}{\numberline {23.5}Runtime Memory Footprint}{142}{section.23.5}%
-\contentsline {section}{\numberline {23.6}Solver Infeasibility Rate}{142}{section.23.6}%
-\contentsline {section}{\numberline {23.7}Observability Outputs}{143}{section.23.7}%
-\contentsline {section}{\numberline {23.8}Deployment Implications}{143}{section.23.8}%
-\contentsline {section}{\numberline {23.9}Summary}{143}{section.23.9}%
-\contentsline {chapter}{\numberline {24}Hyperparameter Surface and Stability}{144}{chapter.24}%
-\contentsline {section}{\numberline {24.1}Why Stability Matters}{144}{section.24.1}%
-\contentsline {section}{\numberline {24.2}Sweep Protocol}{144}{section.24.2}%
-\contentsline {section}{\numberline {24.3}TSVR Surface}{145}{section.24.3}%
-\contentsline {section}{\numberline {24.4}Intervention Rate Surface}{145}{section.24.4}%
-\contentsline {section}{\numberline {24.5}Cost--Safety Trade-off}{146}{section.24.5}%
-\contentsline {section}{\numberline {24.6}Useful Work Preserved}{146}{section.24.6}%
-\contentsline {section}{\numberline {24.7}Sensitivity Analysis}{146}{section.24.7}%
-\contentsline {section}{\numberline {24.8}Recommended Operating Region}{147}{section.24.8}%
-\contentsline {section}{\numberline {24.9}Summary}{147}{section.24.9}%
-\contentsline {chapter}{\numberline {25}Conditional Coverage and Subgroup Calibration}{148}{chapter.25}%
-\contentsline {section}{\numberline {25.1}Why Marginal Coverage Is Insufficient}{148}{section.25.1}%
-\contentsline {section}{\numberline {25.2}Reliability-Bin Stratification}{148}{section.25.2}%
-\contentsline {section}{\numberline {25.3}Volatility-Group Results}{149}{section.25.3}%
-\contentsline {section}{\numberline {25.4}Under-Coverage Diagnosis}{149}{section.25.4}%
-\contentsline {section}{\numberline {25.5}RAC-Cert Correction Effect}{150}{section.25.5}%
-\contentsline {section}{\numberline {25.6}Solar and Wind Subgroup Behaviour}{150}{section.25.6}%
-\contentsline {section}{\numberline {25.7}Summary}{151}{section.25.7}%
-\contentsline {chapter}{\numberline {26}Regional Decomposition and Real-Price Grounding}{152}{chapter.26}%
-\contentsline {section}{\numberline {26.1}Why Regional Decomposition Matters}{152}{section.26.1}%
-\contentsline {section}{\numberline {26.2}Forecast Quality by Region}{152}{section.26.2}%
-\contentsline {section}{\numberline {26.3}Per-Region Safety Results}{153}{section.26.3}%
-\contentsline {section}{\numberline {26.4}Per-BA Results: MISO, PJM, ERCOT}{153}{section.26.4}%
-\contentsline {section}{\numberline {26.5}Price-Signal Effect on Dispatch}{154}{section.26.5}%
-\contentsline {section}{\numberline {26.6}Transfer Validation: DE to US Zero-Shot}{154}{section.26.6}%
-\contentsline {section}{\numberline {26.7}Regional Robustness}{155}{section.26.7}%
-\contentsline {section}{\numberline {26.8}Summary}{155}{section.26.8}%
-\contentsline {chapter}{\numberline {27}Battery Aging and Asset Preservation Proxy}{156}{chapter.27}%
-\contentsline {section}{\numberline {27.1}Why Aging Still Matters}{156}{section.27.1}%
-\contentsline {section}{\numberline {27.2}Locked Aging Calibration Surface}{156}{section.27.2}%
-\contentsline {section}{\numberline {27.3}Asset-Preservation Proxy Table}{157}{section.27.3}%
-\contentsline {section}{\numberline {27.4}Bounded Claim}{158}{section.27.4}%
-\contentsline {section}{\numberline {27.5}What Is Not Yet Implemented}{158}{section.27.5}%
-\contentsline {section}{\numberline {27.6}Summary}{158}{section.27.6}%
-\contentsline {chapter}{\numberline {28}Hardware-in-the-Loop Validation}{159}{chapter.28}%
-\contentsline {section}{\numberline {28.1}Why This Layer Matters}{159}{section.28.1}%
-\contentsline {section}{\numberline {28.2}Locked Runtime Path}{159}{section.28.2}%
-\contentsline {section}{\numberline {28.3}Scenario Coverage}{160}{section.28.3}%
-\contentsline {section}{\numberline {28.4}Step Log and SOC Trace}{160}{section.28.4}%
-\contentsline {section}{\numberline {28.5}Certificate Audit}{160}{section.28.5}%
-\contentsline {section}{\numberline {28.6}Evidence Package}{161}{section.28.6}%
-\contentsline {section}{\numberline {28.7}What This Chapter Establishes}{161}{section.28.7}%
-\contentsline {section}{\numberline {28.8}HIL Execution Tables}{161}{section.28.8}%
-\contentsline {section}{\numberline {28.9}Summary}{162}{section.28.9}%
-\contentsline {part}{V\hspace {1em}Extensions and Runtime Promotion}{163}{part.5}%
-\contentsline {chapter}{\numberline {29}Certificate Validity and Blackout Safe-Hold}{164}{chapter.29}%
-\contentsline {section}{\numberline {29.1}Why Blackout Stress Matters}{164}{section.29.1}%
-\contentsline {section}{\numberline {29.2}Current Experimental Protocol}{164}{section.29.2}%
-\contentsline {section}{\numberline {29.3}Locked Results}{165}{section.29.3}%
-\contentsline {section}{\numberline {29.4}Width-Expansion Proxy}{165}{section.29.4}%
-\contentsline {section}{\numberline {29.5}Operational Consequence}{166}{section.29.5}%
-\contentsline {section}{\numberline {29.6}What the Current Result Does and Does Not Show}{166}{section.29.6}%
-\contentsline {section}{\numberline {29.7}Summary}{166}{section.29.7}%
-\contentsline {chapter}{\numberline {30}Graceful Degradation and Safe Landing}{167}{chapter.30}%
-\contentsline {section}{\numberline {30.1}Why Prolonged Blindness Matters}{167}{section.30.1}%
-\contentsline {section}{\numberline {30.2}Four-Policy Battery Comparison}{167}{section.30.2}%
-\contentsline {section}{\numberline {30.3}Locked Comparative Results}{168}{section.30.3}%
-\contentsline {section}{\numberline {30.4}Comparative Figure}{168}{section.30.4}%
-\contentsline {section}{\numberline {30.5}Operational Interpretation}{168}{section.30.5}%
-\contentsline {section}{\numberline {30.6}Bounded Claim}{169}{section.30.6}%
-\contentsline {section}{\numberline {30.7}Summary}{170}{section.30.7}%
-\contentsline {chapter}{\numberline {31}ORIUS-Bench: Battery Track and Benchmark Contract}{171}{chapter.31}%
-\contentsline {section}{\numberline {31.1}Benchmark Scope and Design Goals}{171}{section.31.1}%
-\contentsline {section}{\numberline {31.2}Episode Generation and Fault Replay}{172}{section.31.2}%
-\contentsline {section}{\numberline {31.3}Seven-Metric Schema}{172}{section.31.3}%
-\contentsline {section}{\numberline {31.4}Schema and Adapter Contract}{172}{section.31.4}%
-\contentsline {section}{\numberline {31.5}Controller Interface}{172}{section.31.5}%
-\contentsline {section}{\numberline {31.6}Fault Replay and Determinism}{173}{section.31.6}%
-\contentsline {section}{\numberline {31.7}Leaderboard Surface}{173}{section.31.7}%
-\contentsline {section}{\numberline {31.8}Ranking Under Degradation}{174}{section.31.8}%
-\contentsline {section}{\numberline {31.9}What ORIUS-Bench Does and Does Not Prove}{174}{section.31.9}%
-\contentsline {section}{\numberline {31.10}Summary}{175}{section.31.10}%
-\contentsline {chapter}{\numberline {32}Compositional Safety for Battery Fleets}{176}{chapter.32}%
-\contentsline {section}{\numberline {32.1}Why Composition Matters}{176}{section.32.1}%
-\contentsline {section}{\numberline {32.2}Battery-Fleet View}{176}{section.32.2}%
-\contentsline {section}{\numberline {32.3}Locked Two-Battery Stress Output}{177}{section.32.3}%
-\contentsline {section}{\numberline {32.4}Multi-Agent Protocol Comparison}{177}{section.32.4}%
-\contentsline {section}{\numberline {32.5}Interpretation}{177}{section.32.5}%
-\contentsline {section}{\numberline {32.6}What Remains Open}{178}{section.32.6}%
-\contentsline {section}{\numberline {32.7}Summary}{178}{section.32.7}%
-\contentsline {chapter}{\numberline {33}CertOS Runtime and Certificate Lifecycle}{179}{chapter.33}%
-\contentsline {section}{\numberline {33.1}Why the Runtime Layer Exists}{179}{section.33.1}%
-\contentsline {section}{\numberline {33.2}CertOS Code Surface}{180}{section.33.2}%
-\contentsline {section}{\numberline {33.3}Lifecycle Operations}{180}{section.33.3}%
-\contentsline {section}{\numberline {33.4}Runtime Invariants}{181}{section.33.4}%
-\contentsline {section}{\numberline {33.5}Battery Runtime Evidence}{182}{section.33.5}%
-\contentsline {section}{\numberline {33.6}Representative Runtime Transitions}{183}{section.33.6}%
-\contentsline {section}{\numberline {33.7}Recovery, Audit, and Bounded Portability}{183}{section.33.7}%
-\contentsline {section}{\numberline {33.8}Bounded Claim}{184}{section.33.8}%
-\contentsline {section}{\numberline {33.9}Summary}{185}{section.33.9}%
-\contentsline {part}{VI\hspace {1em}Boundary, Governance, and Conclusion}{186}{part.6}%
-\contentsline {chapter}{\numberline {34}What the ORIUS Framework Proves}{187}{chapter.34}%
-\contentsline {section}{\numberline {34.1}What Is Established}{187}{section.34.1}%
-\contentsline {section}{\numberline {34.2}Theorem-to-Empirical Correspondence}{188}{section.34.2}%
-\contentsline {section}{\numberline {34.3}What the Framework Result Means}{188}{section.34.3}%
-\contentsline {section}{\numberline {34.4}Scope of the Defended Claim}{189}{section.34.4}%
-\contentsline {section}{\numberline {34.5}Summary}{189}{section.34.5}%
-\contentsline {chapter}{\numberline {35}What Remains Outside the Current Evidence}{190}{chapter.35}%
-\contentsline {section}{\numberline {35.1}Not Claimed}{190}{section.35.1}%
-\contentsline {section}{\numberline {35.2}Still Partial}{191}{section.35.2}%
-\contentsline {section}{\numberline {35.3}Per-Domain Future Work}{191}{section.35.3}%
-\contentsline {section}{\numberline {35.4}Why This Boundary Matters}{192}{section.35.4}%
-\contentsline {section}{\numberline {35.5}Summary}{192}{section.35.5}%
-\contentsline {chapter}{\numberline {36}Deployment Path and Verification Discipline}{193}{chapter.36}%
-\contentsline {section}{\numberline {36.1}Universal Deployment Readiness Checklist}{193}{section.36.1}%
-\contentsline {section}{\numberline {36.2}Universal Deployment Ladder}{194}{section.36.2}%
-\contentsline {section}{\numberline {36.3}Operational Monitoring}{194}{section.36.3}%
-\contentsline {section}{\numberline {36.4}Rollback Protocol}{195}{section.36.4}%
-\contentsline {section}{\numberline {36.5}Verification Discipline}{195}{section.36.5}%
-\contentsline {section}{\numberline {36.6}Summary}{196}{section.36.6}%
-\contentsline {chapter}{\numberline {37}Conclusion}{197}{chapter.37}%
-\contentsline {section}{\numberline {37.1}Universal Framework Outcome}{197}{section.37.1}%
-\contentsline {section}{\numberline {37.2}Domain Coverage and Empirical Results}{197}{section.37.2}%
-\contentsline {section}{\numberline {37.3}Formal Apparatus and Theorem Ladder Scope}{198}{section.37.3}%
-\contentsline {section}{\numberline {37.4}Final Boundary}{198}{section.37.4}%
-\contentsline {section}{\numberline {37.5}Closing Statement}{199}{section.37.5}%
-\contentsline {chapter}{\numberline {a}Notation Sheet}{200}{appendix.A}%
-\contentsline {section}{\numberline {a.1}Telemetry and State Variables}{200}{section.A.1}%
-\contentsline {section}{\numberline {a.2}Quality, Drift, and Sensitivity Indicators}{200}{section.A.2}%
-\contentsline {section}{\numberline {a.3}Uncertainty and Action Objects}{201}{section.A.3}%
-\contentsline {section}{\numberline {a.4}Battery Plant Parameters}{201}{section.A.4}%
-\contentsline {section}{\numberline {a.5}Metrics}{202}{section.A.5}%
-\contentsline {section}{\numberline {a.6}Tuning Constants and Greek Letters}{202}{section.A.6}%
-\contentsline {section}{\numberline {a.7}Set Notation and Operators}{203}{section.A.7}%
-\contentsline {chapter}{\numberline {b}Assumption Register}{204}{appendix.B}%
-\contentsline {section}{\numberline {b.1}How to Read This Register}{204}{section.B.1}%
-\contentsline {section}{\numberline {b.2}Master Table}{204}{section.B.2}%
-\contentsline {section}{\numberline {b.3}Detailed Statements}{205}{section.B.3}%
-\contentsline {section}{\numberline {b.4}Assumption Usage Map by Chapter}{205}{section.B.4}%
-\contentsline {chapter}{\numberline {c}Full Proofs}{207}{appendix.C}%
-\contentsline {section}{\numberline {c.1}C.1\hskip 1em\relax Battery-Domain OASG Existence}{207}{section.C.1}%
-\contentsline {section}{\numberline {c.2}C.2\hskip 1em\relax One-Step Safety Preservation}{208}{section.C.2}%
-\contentsline {section}{\numberline {c.3}C.3\hskip 1em\relax Battery ORIUS Core Bound}{208}{section.C.3}%
-\contentsline {section}{\numberline {c.4}C.4\hskip 1em\relax No Free Safety}{208}{section.C.4}%
-\contentsline {section}{\numberline {c.5}C.5\hskip 1em\relax Certificate Validity Horizon}{208}{section.C.5}%
-\contentsline {section}{\numberline {c.6}C.6\hskip 1em\relax Certificate Expiration Bound}{209}{section.C.6}%
-\contentsline {section}{\numberline {c.7}C.7\hskip 1em\relax Certificate Half-Life Corollary}{209}{section.C.7}%
-\contentsline {section}{\numberline {c.8}C.8\hskip 1em\relax Feasible Fallback Existence}{209}{section.C.8}%
-\contentsline {section}{\numberline {c.9}C.9\hskip 1em\relax Graceful Degradation Dominance}{209}{section.C.9}%
-\contentsline {section}{\numberline {c.10}C.10\hskip 1em\relax Safe-Budget Monotonicity Proposition}{210}{section.C.10}%
-\contentsline {chapter}{\numberline {d}Extended Battery Result Tables}{211}{appendix.D}%
-\contentsline {section}{\numberline {d.1}Extended Controller Comparison}{211}{section.D.1}%
-\contentsline {section}{\numberline {d.2}Metric Definitions}{211}{section.D.2}%
-\contentsline {section}{\numberline {d.3}Regional Impact Breakdown}{212}{section.D.3}%
-\contentsline {section}{\numberline {d.4}Fault-Profile Sensitivity}{212}{section.D.4}%
-\contentsline {section}{\numberline {d.5}Artifact Provenance}{212}{section.D.5}%
-\contentsline {chapter}{\numberline {e}Reliability-Group Coverage Audits}{214}{appendix.E}%
-\contentsline {section}{\numberline {e.1}Audit Logic}{214}{section.E.1}%
-\contentsline {section}{\numberline {e.2}Illustrative Audit Table}{215}{section.E.2}%
-\contentsline {section}{\numberline {e.3}Coverage--Width Trade-off}{215}{section.E.3}%
-\contentsline {section}{\numberline {e.4}CQR Group Coverage Visualisation}{215}{section.E.4}%
-\contentsline {section}{\numberline {e.5}Audit Protocol}{217}{section.E.5}%
-\contentsline {chapter}{\numberline {f}Fault Injection Specifications}{218}{appendix.F}%
-\contentsline {section}{\numberline {f.1}Fault Families}{218}{section.F.1}%
-\contentsline {section}{\numberline {f.2}Combined Profile: \texttt {drift\_combo}}{219}{section.F.2}%
-\contentsline {section}{\numberline {f.3}Fault Injection Implementation}{220}{section.F.3}%
-\contentsline {section}{\numberline {f.4}Severity Mapping}{220}{section.F.4}%
-\contentsline {chapter}{\numberline {g}Battery Adapter Interface Specification}{222}{appendix.G}%
-\contentsline {section}{\numberline {g.1}Interface Overview}{222}{section.G.1}%
-\contentsline {section}{\numberline {g.2}Method Contracts}{222}{section.G.2}%
-\contentsline {section}{\numberline {g.3}Pipeline Diagram}{224}{section.G.3}%
-\contentsline {section}{\numberline {g.4}How to Implement a New Domain Adapter}{224}{section.G.4}%
-\contentsline {chapter}{\numberline {h}Five-Reviewer Committee Audit Protocol}{225}{appendix.H}%
-\contentsline {section}{\numberline {h.1}Role Assignments}{225}{section.H.1}%
-\contentsline {section}{\numberline {h.2}Audit Checklist}{226}{section.H.2}%
-\contentsline {section}{\numberline {h.3}Procedure}{226}{section.H.3}%
-\contentsline {section}{\numberline {h.4}Pass Criteria}{226}{section.H.4}%
-\contentsline {chapter}{\numberline {i}Hardware-in-the-Loop Bill of Materials and Safety}{228}{appendix.I}%
-\contentsline {section}{\numberline {i.1}Bill of Materials}{228}{section.I.1}%
-\contentsline {section}{\numberline {i.2}Safety Classification}{228}{section.I.2}%
-\contentsline {section}{\numberline {i.3}Risk Assessment}{228}{section.I.3}%
-\contentsline {section}{\numberline {i.4}Operator Safety Checklist}{230}{section.I.4}%
-\contentsline {section}{\numberline {i.5}Evidence Artifacts}{230}{section.I.5}%
-\contentsline {chapter}{\numberline {j}Sweep and Latency Measurement Protocols}{232}{appendix.J}%
-\contentsline {section}{\numberline {j.1}Hyperparameter Sweep Protocol}{232}{section.J.1}%
-\contentsline {subsection}{\numberline {j.1.1}Grid Parameters}{232}{subsection.J.1.1}%
-\contentsline {subsection}{\numberline {j.1.2}CLI Commands}{232}{subsection.J.1.2}%
-\contentsline {subsection}{\numberline {j.1.3}Output Artifacts}{233}{subsection.J.1.3}%
-\contentsline {subsection}{\numberline {j.1.4}Config Override Mechanism}{233}{subsection.J.1.4}%
-\contentsline {section}{\numberline {j.2}Latency Benchmark Protocol}{233}{section.J.2}%
-\contentsline {subsection}{\numberline {j.2.1}Measurement Method}{233}{subsection.J.2.1}%
-\contentsline {subsection}{\numberline {j.2.2}CLI Command}{234}{subsection.J.2.2}%
-\contentsline {subsection}{\numberline {j.2.3}Benchmarked Components}{234}{subsection.J.2.3}%
-\contentsline {subsection}{\numberline {j.2.4}Output Artifacts}{234}{subsection.J.2.4}%
-\contentsline {section}{\numberline {j.3}Fault Severity Sweep}{234}{section.J.3}%
-\contentsline {chapter}{\numberline {k}Blueprint Coverage Matrix}{236}{appendix.K}%
-\contentsline {section}{\numberline {k.1}Coverage Matrix}{236}{section.K.1}%
-\contentsline {section}{\numberline {k.2}Status Legend}{238}{section.K.2}%
-\contentsline {section}{\numberline {k.3}Paper Section Reference}{238}{section.K.3}%
-\contentsline {chapter}{\numberline {l}Artifact, Figure, and Table Index}{239}{appendix.L}%
-\contentsline {section}{\numberline {l.1}CSV Artifacts}{239}{section.L.1}%
-\contentsline {section}{\numberline {l.2}Figure Artifacts}{240}{section.L.2}%
-\contentsline {section}{\numberline {l.3}Additional Artifacts}{241}{section.L.3}%
-\contentsline {chapter}{\numberline {m}Verified Theorems and Gap Audit}{243}{appendix.M}%
-\contentsline {section}{\numberline {m.1}Theorem Statements}{243}{section.M.1}%
-\contentsline {subsection}{\numberline {m.1.1}Theorem 1: OASG Existence}{243}{subsection.M.1.1}%
-\contentsline {subsection}{\numberline {m.1.2}Theorem 2: One-Step Safety Preservation}{244}{subsection.M.1.2}%
-\contentsline {subsection}{\numberline {m.1.3}Theorem 3: ORIUS Core Bound}{244}{subsection.M.1.3}%
-\contentsline {subsection}{\numberline {m.1.4}Theorem 4: No Free Safety}{244}{subsection.M.1.4}%
-\contentsline {subsection}{\numberline {m.1.5}Theorem 5: Certificate Validity Horizon}{245}{subsection.M.1.5}%
-\contentsline {subsection}{\numberline {m.1.6}Theorem 6: Certificate Expiration Bound}{245}{subsection.M.1.6}%
-\contentsline {subsection}{\numberline {m.1.7}Theorem 7: Feasible Fallback Existence}{245}{subsection.M.1.7}%
-\contentsline {subsection}{\numberline {m.1.8}Theorem 8: Graceful Degradation Dominance}{245}{subsection.M.1.8}%
-\contentsline {section}{\numberline {m.2}Gap Audit Table}{246}{section.M.2}%
-\contentsline {section}{\numberline {m.3}Locked Empirical Evidence}{246}{section.M.3}%
-\contentsline {section}{\numberline {m.4}Integrated Release-Gate Status}{246}{section.M.4}%
-\contentsline {chapter}{\numberline {n}Defense Lock Templates}{250}{appendix.N}%
-\contentsline {section}{\numberline {n.1}Three-Minute Elevator Pitch}{250}{section.N.1}%
-\contentsline {section}{\numberline {n.2}Anticipated Examiner Questions and Responses}{251}{section.N.2}%
-\contentsline {section}{\numberline {n.3}Slide Structure Outline (20 Slides)}{252}{section.N.3}%
-\contentsline {chapter}{\numberline {o}Claim Scope and Citation Policy}{254}{appendix.O}%
-\contentsline {section}{\numberline {o.1}Scope of Validity}{254}{section.O.1}%
-\contentsline {section}{\numberline {o.2}Assumptions That Limit Generalizability}{255}{section.O.2}%
-\contentsline {section}{\numberline {o.3}Claims NOT Made}{255}{section.O.3}%
-\contentsline {section}{\numberline {o.4}Citation Policy for Empirical Numbers}{256}{section.O.4}%
-\contentsline {section}{\numberline {o.5}Reproducibility Contract}{256}{section.O.5}%
-\contentsline {chapter}{\numberline {p}Battery Gap Hardening Synthesis}{258}{appendix.P}%
-\contentsline {section}{\numberline {p.1}Hardening Checklist}{258}{section.P.1}%
-\contentsline {section}{\numberline {p.2}Artifact Locations}{259}{section.P.2}%
-\contentsline {section}{\numberline {p.3}Lock Manifests}{259}{section.P.3}%
-\contentsline {chapter}{\numberline {q}Editorial Integration and Locking Protocol}{260}{appendix.Q}%
-\contentsline {section}{\numberline {q.1}CSV-to-LaTeX Table Mapping}{260}{section.Q.1}%
-\contentsline {section}{\numberline {q.2}Figure Generation Pipeline}{260}{section.Q.2}%
-\contentsline {section}{\numberline {q.3}Version Control Protocol}{261}{section.Q.3}%
-\contentsline {section}{\numberline {q.4}Pre-Submission Checklist (14 Items)}{261}{section.Q.4}%
-\contentsline {section}{\numberline {q.5}Final Lock Procedure}{262}{section.Q.5}%
-\contentsline {subsection}{\numberline {q.5.1}Reproducibility Lock JSON Schema}{263}{subsection.Q.5.1}%
-\contentsline {chapter}{\numberline {r}Locked Artifact Hash Registry}{264}{appendix.R}%
-\contentsline {chapter}{\numberline {s}Claim-to-Evidence and Coverage Registers}{267}{appendix.S}%
-\contentsline {section}{\numberline {s.1}Primary Claim Matrix}{267}{section.S.1}%
-\contentsline {section}{\numberline {s.2}Theorem and Chapter Register}{269}{section.S.2}%
-\contentsline {section}{\numberline {s.3}Chapter Coverage Register}{271}{section.S.3}%
-\contentsline {section}{\numberline {s.4}Full Claim--Evidence Matrix}{274}{section.S.4}%
-\contentsline {chapter}{\numberline {t}CertOS Artifact Audit}{276}{appendix.T}%
-\contentsline {section}{\numberline {t.1}Artifact Bundle}{276}{section.T.1}%
-\contentsline {section}{\numberline {t.2}Lifecycle Counts by Status}{277}{section.T.2}%
-\contentsline {section}{\numberline {t.3}Certificate Field Schema}{277}{section.T.3}%
-\contentsline {section}{\numberline {t.4}Audit Ledger Record Format}{277}{section.T.4}%
-\contentsline {section}{\numberline {t.5}Latency and Recovery Audit}{277}{section.T.5}%
-\contentsline {section}{\numberline {t.6}Bounded Second-Domain Runtime Surface}{278}{section.T.6}%
-\contentsline {chapter}{\numberline {u}Full CertOS Lifecycle Log}{280}{appendix.U}%
-\contentsline {chapter}{\numberline {v}Active-Probing Battery Audit}{284}{appendix.V}%
-\contentsline {section}{\numberline {v.1}Battery Threat Model}{284}{section.V.1}%
-\contentsline {section}{\numberline {v.2}Locked Detection Package}{284}{section.V.2}%
-\contentsline {section}{\numberline {v.3}Detection Results}{285}{section.V.3}%
-\contentsline {section}{\numberline {v.4}Battery-Operational Meaning}{285}{section.V.4}%
-\contentsline {section}{\numberline {v.5}Bounded Interpretation}{285}{section.V.5}%
-\contentsline {chapter}{\numberline {w}Portability Context and Research Roadmap}{286}{appendix.W}%
-\contentsline {section}{\numberline {w.1}From Battery Adapter to a Portable Runtime Pattern}{286}{section.W.1}%
-\contentsline {section}{\numberline {w.2}Adapter Mapping}{287}{section.W.2}%
-\contentsline {section}{\numberline {w.3}What Changes by Domain}{287}{section.W.3}%
-\contentsline {section}{\numberline {w.4}What the Repo Already Contains}{287}{section.W.4}%
-\contentsline {section}{\numberline {w.5}Leaderboards as Portability Evidence, Not Dominance Evidence}{287}{section.W.5}%
-\contentsline {section}{\numberline {w.6}Research Roadmap}{288}{section.W.6}%
-\contentsline {section}{\numberline {w.7}Deployment Sequence}{288}{section.W.7}%
-\contentsline {section}{\numberline {w.8}Why This Appendix Exists}{289}{section.W.8}%
-\contentsline {chapter}{\numberline {x}Full Locked DE Runtime Trace}{290}{appendix.X}%
-\contentsline {chapter}{\numberline {y}Full Locked US Runtime Trace}{295}{appendix.Y}%
-\contentsline {chapter}{\numberline {z}Theorem and Paper-Sync Registers}{299}{appendix.Z}%
-\contentsline {section}{\numberline {z.1}Chapter-Theorem Traceability}{299}{section.Z.1}%
-\contentsline {section}{\numberline {z.2}Paper-Thesis Coverage Map}{300}{section.Z.2}%
-\contentsline {chapter}{\numberline {aa}Release Manifest and Artifact Traceability}{303}{appendix.Alph27}%
-\contentsline {section}{\numberline {aa.1}Artifact Traceability Table}{303}{section.Alph27.1}%
-\contentsline {section}{\numberline {aa.2}Governed Release Manifest}{303}{section.Alph27.2}%
-\contentsline {chapter}{\numberline {ab}Hardware-in-the-Loop Fault Response Log}{308}{appendix.Alph28}%
-\contentsline {chapter}{\numberline {ac}Integrated Theorem Surface Register}{312}{appendix.Alph29}%
-\contentsline {chapter}{References}{326}{appendix*.160}%
-\contentsline {chapter}{Extended Reading and Index}{329}{appendix*.162}%
+\contentsline {chapter}{\numberline {1}Introduction and Problem Formulation}{2}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Introduction}{2}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}The Hidden Assumption in Physical AI}{2}{subsection.1.1.1}%
+\contentsline {subsection}{\numberline {1.1.2}Why Observed Safety Can Differ from Physical Safety}{3}{subsection.1.1.2}%
+\contentsline {subsection}{\numberline {1.1.3}The Observation-Action Safety Gap}{3}{subsection.1.1.3}%
+\contentsline {subsection}{\numberline {1.1.4}Why the Battery Domain Exposed the Problem First}{4}{subsection.1.1.4}%
+\contentsline {subsection}{\numberline {1.1.5}The ORIUS Principle}{4}{subsection.1.1.5}%
+\contentsline {subsection}{\numberline {1.1.6}Research Questions}{5}{subsection.1.1.6}%
+\contentsline {subsection}{\numberline {1.1.7}Contributions}{5}{subsection.1.1.7}%
+\contentsline {subsection}{\numberline {1.1.8}Contribution Boundary}{6}{subsection.1.1.8}%
+\contentsline {subsection}{\numberline {1.1.9}Organisation of the Manuscript}{6}{subsection.1.1.9}%
+\contentsline {section}{\numberline {1.2}Problem Formulation}{7}{section.1.2}%
+\contentsline {subsection}{\numberline {1.2.1}ORIUS System Context}{7}{subsection.1.2.1}%
+\contentsline {subsection}{\numberline {1.2.2}The Hidden Safety Gap}{8}{subsection.1.2.2}%
+\contentsline {subsection}{\numberline {1.2.3}State Objects and Telemetry Model}{8}{subsection.1.2.3}%
+\contentsline {subsubsection}{True State}{8}{section*.7}%
+\contentsline {subsubsection}{Observed State}{8}{section*.8}%
+\contentsline {subsubsection}{Observation Quality Score}{8}{section*.9}%
+\contentsline {subsection}{\numberline {1.2.4}Fault Model}{9}{subsection.1.2.4}%
+\contentsline {subsection}{\numberline {1.2.5}Battery Dynamics and Feasible Action Set}{9}{subsection.1.2.5}%
+\contentsline {subsubsection}{SOC Dynamics}{9}{section*.10}%
+\contentsline {subsubsection}{Feasible Action Set}{10}{section*.11}%
+\contentsline {subsection}{\numberline {1.2.6}Dispatch Objective}{10}{subsection.1.2.6}%
+\contentsline {subsection}{\numberline {1.2.7}The Calibration Gap Under Degradation}{10}{subsection.1.2.7}%
+\contentsline {subsection}{\numberline {1.2.8}Baseline Policies}{11}{subsection.1.2.8}%
+\contentsline {subsection}{\numberline {1.2.9}Research Questions Formalised}{11}{subsection.1.2.9}%
+\contentsline {subsection}{\numberline {1.2.10}Scope Boundary}{12}{subsection.1.2.10}%
+\contentsline {subsection}{\numberline {1.2.11}Dataset Scope}{12}{subsection.1.2.11}%
+\contentsline {subsection}{\numberline {1.2.12}Chapter Summary}{13}{subsection.1.2.12}%
+\contentsline {chapter}{\numberline {2}Related Work}{14}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Background and Related Work}{14}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Battery Dispatch and Renewable-Aware Control}{14}{subsection.2.1.1}%
+\contentsline {subsubsection}{Deterministic Dispatch}{14}{section*.12}%
+\contentsline {subsubsection}{Robust and Tube-Based Methods}{14}{section*.13}%
+\contentsline {subsubsection}{Stochastic and Risk-Aware Methods}{15}{section*.14}%
+\contentsline {subsection}{\numberline {2.1.2}The Measurement Blind Spot}{15}{subsection.2.1.2}%
+\contentsline {subsection}{\numberline {2.1.3}Telemetry Faults in Cyber-Physical Systems}{15}{subsection.2.1.3}%
+\contentsline {subsection}{\numberline {2.1.4}Uncertainty Quantification and Conformal Methods}{16}{subsection.2.1.4}%
+\contentsline {subsubsection}{Conformal Quantile Regression (CQR)}{16}{section*.15}%
+\contentsline {subsubsection}{Adaptive Conformal Inference}{16}{section*.16}%
+\contentsline {subsubsection}{Key Limitation}{16}{section*.17}%
+\contentsline {subsection}{\numberline {2.1.5}Runtime Safety, Shields, and Assurance}{17}{subsection.2.1.5}%
+\contentsline {subsubsection}{How DC3S Extends the State of the Art}{17}{section*.18}%
+\contentsline {subsection}{\numberline {2.1.6}Control Barrier Functions}{17}{subsection.2.1.6}%
+\contentsline {subsection}{\numberline {2.1.7}Information-Theoretic Roots}{18}{subsection.2.1.7}%
+\contentsline {subsection}{\numberline {2.1.8}Evaluation Protocols and the Benchmark Gap}{18}{subsection.2.1.8}%
+\contentsline {subsection}{\numberline {2.1.9}The Novelty Gap}{18}{subsection.2.1.9}%
+\contentsline {subsection}{\numberline {2.1.10}Chapter Summary}{18}{subsection.2.1.10}%
+\contentsline {chapter}{\numberline {3}System Context and Safety Distinctions}{20}{chapter.3}%
+\contentsline {section}{\numberline {3.1}ORIUS System Context}{20}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Why Grid-Scale Batteries Matter}{20}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}ORIUS as a Closed Decision Loop}{21}{subsection.3.1.2}%
+\contentsline {subsection}{\numberline {3.1.3}The Optimize--Dispatch Boundary as the True Risk Location}{21}{subsection.3.1.3}%
+\contentsline {subsection}{\numberline {3.1.4}Operational Telemetry Pathways}{22}{subsection.3.1.4}%
+\contentsline {subsection}{\numberline {3.1.5}Why Measurement Quality Enters the Control Problem}{23}{subsection.3.1.5}%
+\contentsline {subsection}{\numberline {3.1.6}Chapter Summary}{23}{subsection.3.1.6}%
+\contentsline {section}{\numberline {3.2}Data, Telemetry, and Dataset Scope}{23}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Germany and United States Dataset Surface}{24}{subsection.3.2.1}%
+\contentsline {paragraph}{Germany (OPSD).}{24}{section*.20}%
+\contentsline {paragraph}{United States (EIA-930).}{24}{section*.21}%
+\contentsline {subsection}{\numberline {3.2.2}Forecast Targets and Operational Channels}{24}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Observed Telemetry Versus Truth Trajectory}{25}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Missingness, Corruption, and Signal Degradation}{25}{subsection.3.2.4}%
+\contentsline {subsection}{\numberline {3.2.5}Why Telemetry Faults Are Ordinary, Not Edge Cases}{26}{subsection.3.2.5}%
+\contentsline {subsection}{\numberline {3.2.6}Artifact Contracts and Profile Lock}{26}{subsection.3.2.6}%
+\contentsline {subsection}{\numberline {3.2.7}Scope Boundary}{27}{subsection.3.2.7}%
+\contentsline {subsection}{\numberline {3.2.8}Chapter Summary}{27}{subsection.3.2.8}%
+\contentsline {section}{\numberline {3.3}The Observed-State Safety Illusion}{27}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}From Partial Observability to Safety Illusion}{28}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Why the Illusion Arises in the ORIUS Loop}{28}{subsection.3.3.2}%
+\contentsline {subsubsection}{The Optimise-to-Dispatch Boundary}{28}{section*.24}%
+\contentsline {subsubsection}{Why Good Forecasting Does Not Solve It}{28}{section*.25}%
+\contentsline {subsection}{\numberline {3.3.3}Formal Statement of the Illusion}{29}{subsection.3.3.3}%
+\contentsline {subsection}{\numberline {3.3.4}Battery-Domain Realisation Under Telemetry Faults}{30}{subsection.3.3.4}%
+\contentsline {subsubsection}{A Simple Battery Narrative}{30}{section*.26}%
+\contentsline {subsection}{\numberline {3.3.5}Why Standard Evaluation Misses the Problem}{30}{subsection.3.3.5}%
+\contentsline {subsection}{\numberline {3.3.6}CPSBench and Dual-Trajectory Evaluation}{31}{subsection.3.3.6}%
+\contentsline {subsection}{\numberline {3.3.7}Why the Illusion Demands a Runtime Shield}{32}{subsection.3.3.7}%
+\contentsline {subsection}{\numberline {3.3.8}Chapter Summary}{33}{subsection.3.3.8}%
+\contentsline {section}{\numberline {3.4}Battery Dynamics and Dispatch Problem}{33}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}Battery State Variables}{33}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}SOC Dynamics}{34}{subsection.3.4.2}%
+\contentsline {subsection}{\numberline {3.4.3}Power, Ramp-Rate, and SOC Constraints}{34}{subsection.3.4.3}%
+\contentsline {paragraph}{Power bounds.}{34}{section*.28}%
+\contentsline {paragraph}{Mutual exclusion.}{34}{section*.29}%
+\contentsline {paragraph}{Ramp-rate limits.}{34}{section*.30}%
+\contentsline {paragraph}{SOC bounds.}{34}{section*.31}%
+\contentsline {subsection}{\numberline {3.4.4}Candidate, Safe, and Executed Actions}{35}{subsection.3.4.4}%
+\contentsline {subsection}{\numberline {3.4.5}Dispatch Objective}{35}{subsection.3.4.5}%
+\contentsline {subsection}{\numberline {3.4.6}Uncertainty and Feasible Set Under Degraded Observation}{35}{subsection.3.4.6}%
+\contentsline {subsection}{\numberline {3.4.7}Calibration Gap and Uncertainty Mismatch}{36}{subsection.3.4.7}%
+\contentsline {subsection}{\numberline {3.4.8}Baseline Policies}{36}{subsection.3.4.8}%
+\contentsline {subsection}{\numberline {3.4.9}Scope Boundary}{37}{subsection.3.4.9}%
+\contentsline {subsection}{\numberline {3.4.10}Chapter Summary}{37}{subsection.3.4.10}%
+\contentsline {chapter}{\numberline {4}ORIUS Framework and Theoretical Foundations}{38}{chapter.4}%
+\contentsline {section}{\numberline {4.1}DC3S: The Universal Safety Adapter}{38}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Why a Runtime Shield Is Needed}{38}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Runtime Objects}{39}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}Detect: Telemetry Reliability Scoring (OQE)}{39}{subsection.4.1.3}%
+\contentsline {subsection}{\numberline {4.1.4}Calibrate: Reliability-Adaptive Interval Inflation}{40}{subsection.4.1.4}%
+\contentsline {paragraph}{Inflation diagnostics.}{40}{section*.33}%
+\contentsline {subsection}{\numberline {4.1.5}Constrain: Safe-Action Sets Under Widened Uncertainty}{40}{subsection.4.1.5}%
+\contentsline {subsection}{\numberline {4.1.6}Shield: Projection and Repair}{41}{subsection.4.1.6}%
+\contentsline {subsection}{\numberline {4.1.7}FTIT State Tube}{41}{subsection.4.1.7}%
+\contentsline {subsection}{\numberline {4.1.8}Certify: Step-Level Audit Records}{41}{subsection.4.1.8}%
+\contentsline {subsection}{\numberline {4.1.9}DC3S Latency Profile}{42}{subsection.4.1.9}%
+\contentsline {subsection}{\numberline {4.1.10}Complete Runtime Narrative}{43}{subsection.4.1.10}%
+\contentsline {subsection}{\numberline {4.1.11}Chapter Summary}{43}{subsection.4.1.11}%
+\contentsline {section}{\numberline {4.2}Assumptions, Notation, and Proof Discipline}{43}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Stable Notation}{44}{subsection.4.2.1}%
+\contentsline {paragraph}{Battery instantiation.}{44}{section*.36}%
+\contentsline {subsection}{\numberline {4.2.2}Assumption IDs (A1--A8)}{44}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Proof Dependency Matrix}{45}{subsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.2.4}Marginal Versus Conditional Coverage}{45}{subsection.4.2.4}%
+\contentsline {subsection}{\numberline {4.2.5}One-Step Versus Multi-Step Claims}{46}{subsection.4.2.5}%
+\contentsline {subsection}{\numberline {4.2.6}The Theorem Ladder}{46}{subsection.4.2.6}%
+\contentsline {subsection}{\numberline {4.2.7}Theorem-Writing Discipline}{46}{subsection.4.2.7}%
+\contentsline {subsection}{\numberline {4.2.8}Common Theorem Failure Modes}{47}{subsection.4.2.8}%
+\contentsline {subsection}{\numberline {4.2.9}Integrated Theorem Surface Summary}{47}{subsection.4.2.9}%
+\contentsline {subsection}{\numberline {4.2.10}Chapter Summary}{47}{subsection.4.2.10}%
+\contentsline {section}{\numberline {4.3}Theorem~1: OASG Existence}{48}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Domain-Agnostic Statement}{48}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Battery-Domain Instantiation}{49}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.3.3}Observed and True Safety Predicates}{49}{subsection.4.3.3}%
+\contentsline {subsection}{\numberline {4.3.4}Assumptions Used}{49}{subsection.4.3.4}%
+\contentsline {subsection}{\numberline {4.3.5}Auxiliary Lemmas}{50}{subsection.4.3.5}%
+\contentsline {subsection}{\numberline {4.3.6}Main Theorem: OASG Existence}{50}{subsection.4.3.6}%
+\contentsline {subsection}{\numberline {4.3.7}Interpretive Table}{51}{subsection.4.3.7}%
+\contentsline {subsection}{\numberline {4.3.8}Artifact-Backed Figure}{51}{subsection.4.3.8}%
+\contentsline {subsection}{\numberline {4.3.9}Corollaries}{52}{subsection.4.3.9}%
+\contentsline {subsection}{\numberline {4.3.10}What This Theorem Does Not Prove}{52}{subsection.4.3.10}%
+\contentsline {subsection}{\numberline {4.3.11}Chapter Summary}{52}{subsection.4.3.11}%
+\contentsline {subsection}{\numberline {4.3.12}Domain Instantiation Across Validated Domains}{52}{subsection.4.3.12}%
+\contentsline {section}{\numberline {4.4}Theorem~2: Safety Preservation Under the Shield}{52}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Domain-Agnostic Statement}{53}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}Battery-Domain Instantiation: Tightened Safe Action Set}{54}{subsection.4.4.2}%
+\contentsline {subsection}{\numberline {4.4.3}Assumptions Used}{54}{subsection.4.4.3}%
+\contentsline {subsection}{\numberline {4.4.4}Auxiliary Propositions}{54}{subsection.4.4.4}%
+\contentsline {subsection}{\numberline {4.4.5}Main Theorem: Safety Preservation}{55}{subsection.4.4.5}%
+\contentsline {subsection}{\numberline {4.4.6}Scalar SOC Derivation}{55}{subsection.4.4.6}%
+\contentsline {subsection}{\numberline {4.4.7}Proof Roadmap Table}{56}{subsection.4.4.7}%
+\contentsline {subsection}{\numberline {4.4.8}Artifact-Backed Figure}{56}{subsection.4.4.8}%
+\contentsline {subsection}{\numberline {4.4.9}Corollaries}{56}{subsection.4.4.9}%
+\contentsline {subsection}{\numberline {4.4.10}What This Theorem Does Not Prove}{57}{subsection.4.4.10}%
+\contentsline {subsection}{\numberline {4.4.11}Chapter Summary}{57}{subsection.4.4.11}%
+\contentsline {subsection}{\numberline {4.4.12}Domain Instantiation Across Validated Domains}{57}{subsection.4.4.12}%
+\contentsline {subsection}{\numberline {4.4.13}Per-Domain Per-Step Coverage Verification}{57}{subsection.4.4.13}%
+\contentsline {paragraph}{Energy Management (load\_mw).}{57}{section*.45}%
+\contentsline {paragraph}{AV (speed\_mps).}{58}{section*.46}%
+\contentsline {paragraph}{Industrial (power\_mw).}{58}{section*.47}%
+\contentsline {paragraph}{Healthcare (hr\_bpm).}{59}{section*.48}%
+\contentsline {paragraph}{Aerospace (airspeed\_kt).}{59}{section*.49}%
+\contentsline {section}{\numberline {4.5}The ORIUS Core Safety Bound}{59}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}Domain-Agnostic Statement}{59}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {4.5.2}Battery-Domain Derivation: Violation Process and Horizon Notation}{60}{subsection.4.5.2}%
+\contentsline {subsection}{\numberline {4.5.3}Per-Step Risk Lemma}{60}{subsection.4.5.3}%
+\contentsline {subsection}{\numberline {4.5.4}Main Theorem: ORIUS Core Bound}{61}{subsection.4.5.4}%
+\contentsline {subsection}{\numberline {4.5.5}Equivalent Average-Rate Form}{61}{subsection.4.5.5}%
+\contentsline {subsection}{\numberline {4.5.6}Special Cases Table}{62}{subsection.4.5.6}%
+\contentsline {subsection}{\numberline {4.5.7}Artifact-Backed Figure}{62}{subsection.4.5.7}%
+\contentsline {subsection}{\numberline {4.5.8}Corollaries}{62}{subsection.4.5.8}%
+\contentsline {subsection}{\numberline {4.5.9}What This Theorem Does Not Prove}{63}{subsection.4.5.9}%
+\contentsline {subsection}{\numberline {4.5.10}Chapter Summary}{63}{subsection.4.5.10}%
+\contentsline {subsection}{\numberline {4.5.11}Domain Instantiation Across Validated Domains}{64}{subsection.4.5.11}%
+\contentsline {subsection}{\numberline {4.5.12}Per-Domain Per-Step Coverage Verification}{64}{subsection.4.5.12}%
+\contentsline {paragraph}{Energy Management (load\_mw).}{64}{section*.53}%
+\contentsline {paragraph}{AV (speed\_mps).}{65}{section*.54}%
+\contentsline {paragraph}{Industrial (power\_mw).}{65}{section*.55}%
+\contentsline {paragraph}{Healthcare (hr\_bpm).}{65}{section*.56}%
+\contentsline {paragraph}{Aerospace (airspeed\_kt).}{65}{section*.57}%
+\contentsline {section}{\numberline {4.6}No Free Safety Theorem}{66}{section.4.6}%
+\contentsline {subsection}{\numberline {4.6.1}Domain-Agnostic Statement}{66}{subsection.4.6.1}%
+\contentsline {subsection}{\numberline {4.6.2}Battery-Domain Instantiation: Quality-Ignorant Controller Class}{66}{subsection.4.6.2}%
+\contentsline {subsection}{\numberline {4.6.3}Auxiliary Lemmas}{67}{subsection.4.6.3}%
+\contentsline {subsection}{\numberline {4.6.4}Constructive Fault-Sequence Logic}{67}{subsection.4.6.4}%
+\contentsline {subsection}{\numberline {4.6.5}Main Theorem: No Free Safety}{68}{subsection.4.6.5}%
+\contentsline {subsection}{\numberline {4.6.6}Interpretive Table}{68}{subsection.4.6.6}%
+\contentsline {subsection}{\numberline {4.6.7}Artifact-Backed Figure}{69}{subsection.4.6.7}%
+\contentsline {subsection}{\numberline {4.6.8}Corollary}{69}{subsection.4.6.8}%
+\contentsline {subsection}{\numberline {4.6.9}What This Theorem Does Not Prove}{69}{subsection.4.6.9}%
+\contentsline {subsection}{\numberline {4.6.10}Chapter Summary}{70}{subsection.4.6.10}%
+\contentsline {subsection}{\numberline {4.6.11}Domain Instantiation Across Validated Domains}{70}{subsection.4.6.11}%
+\contentsline {section}{\numberline {4.7}Theorems~T5--T8: Temporal and Behavioral Extensions}{70}{section.4.7}%
+\contentsline {subsection}{\numberline {4.7.1}Certificate Object and Validity Horizon}{70}{subsection.4.7.1}%
+\contentsline {subsection}{\numberline {4.7.2}Forward-Tube Construction}{71}{subsection.4.7.2}%
+\contentsline {subsection}{\numberline {4.7.3}Main Temporal Theorems}{72}{subsection.4.7.3}%
+\contentsline {subsubsection}{Certificate Validity Horizon}{72}{section*.61}%
+\contentsline {subsubsection}{Certificate Expiration Bound}{72}{section*.62}%
+\contentsline {subsubsection}{Certificate Half-Life Corollary}{72}{section*.63}%
+\contentsline {subsection}{\numberline {4.7.4}Temporal Summary Table}{73}{subsection.4.7.4}%
+\contentsline {subsection}{\numberline {4.7.5}Fallback and Graceful Degradation}{73}{subsection.4.7.5}%
+\contentsline {subsubsection}{Feasible Fallback Existence}{73}{section*.65}%
+\contentsline {subsubsection}{Graceful Degradation Dominance}{73}{section*.66}%
+\contentsline {subsubsection}{Safe-Budget Monotonicity}{74}{section*.67}%
+\contentsline {subsection}{\numberline {4.7.6}Behavioral Comparison Table}{74}{subsection.4.7.6}%
+\contentsline {subsection}{\numberline {4.7.7}Artifact-Backed Figure}{75}{subsection.4.7.7}%
+\contentsline {subsection}{\numberline {4.7.8}What This Chapter Does Not Prove}{75}{subsection.4.7.8}%
+\contentsline {subsection}{\numberline {4.7.9}Chapter Summary}{76}{subsection.4.7.9}%
+\contentsline {subsection}{\numberline {4.7.10}Domain Instantiation Across Validated Domains}{76}{subsection.4.7.10}%
+\contentsline {chapter}{\numberline {5}System Deployment and Testbench Architecture}{78}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Forecasting and Calibration}{78}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}Forecast Targets}{78}{subsection.5.1.1}%
+\contentsline {subsection}{\numberline {5.1.2}Model Families}{79}{subsection.5.1.2}%
+\contentsline {paragraph}{GBM (LightGBM).}{79}{section*.72}%
+\contentsline {paragraph}{LSTM.}{79}{section*.73}%
+\contentsline {paragraph}{TCN.}{79}{section*.74}%
+\contentsline {paragraph}{N-BEATS.}{79}{section*.75}%
+\contentsline {paragraph}{TFT.}{79}{section*.76}%
+\contentsline {paragraph}{PatchTST.}{80}{section*.77}%
+\contentsline {subsection}{\numberline {5.1.3}Training Protocol and Leakage Control}{80}{subsection.5.1.3}%
+\contentsline {subsection}{\numberline {5.1.4}Conformal Prediction Intervals}{80}{subsection.5.1.4}%
+\contentsline {subsection}{\numberline {5.1.5}Marginal Coverage}{81}{subsection.5.1.5}%
+\contentsline {subsection}{\numberline {5.1.6}Reliability-Conditioned Under-Coverage}{81}{subsection.5.1.6}%
+\contentsline {subsection}{\numberline {5.1.7}Solar and Wind Calibration Weaknesses}{82}{subsection.5.1.7}%
+\contentsline {paragraph}{Wind non-stationarity.}{82}{section*.79}%
+\contentsline {paragraph}{Solar bimodality.}{82}{section*.80}%
+\contentsline {subsection}{\numberline {5.1.8}Why Calibration Alone Cannot Close the Gap}{82}{subsection.5.1.8}%
+\contentsline {subsection}{\numberline {5.1.9}Wind Coverage Gap: Diagnosis, Bound, and Partial Mitigation}{82}{subsection.5.1.9}%
+\contentsline {paragraph}{Root cause: regime non-stationarity.}{83}{section*.81}%
+\contentsline {paragraph}{Scope of the gap.}{83}{section*.82}%
+\contentsline {paragraph}{Quantitative bound.}{83}{section*.83}%
+\contentsline {paragraph}{Consequence for safety.}{83}{section*.84}%
+\contentsline {subsection}{\numberline {5.1.10}Chapter Summary}{83}{subsection.5.1.10}%
+\contentsline {section}{\numberline {5.2}CPSBench Multi-Domain Evaluation Framework}{84}{section.5.2}%
+\contentsline {subsection}{\numberline {5.2.1}Why Standard Evaluation Is Insufficient}{84}{subsection.5.2.1}%
+\contentsline {subsection}{\numberline {5.2.2}Dual-Trajectory Evaluation}{85}{subsection.5.2.2}%
+\contentsline {subsection}{\numberline {5.2.3}Truth-State and Observed-State Logging}{85}{subsection.5.2.3}%
+\contentsline {subsection}{\numberline {5.2.4}Fault Taxonomy and Replayable Schedules}{86}{subsection.5.2.4}%
+\contentsline {subsection}{\numberline {5.2.5}Benchmark Metrics}{86}{subsection.5.2.5}%
+\contentsline {subsubsection}{Safety Metrics}{86}{section*.87}%
+\contentsline {subsubsection}{Economic Metrics}{87}{section*.88}%
+\contentsline {subsubsection}{Environmental Metrics}{87}{section*.89}%
+\contentsline {subsection}{\numberline {5.2.6}Benchmark Invariants}{87}{subsection.5.2.6}%
+\contentsline {subsection}{\numberline {5.2.7}Battery Track as Benchmark Foundation}{88}{subsection.5.2.7}%
+\contentsline {subsection}{\numberline {5.2.8}Chapter Summary}{88}{subsection.5.2.8}%
+\contentsline {section}{\numberline {5.3}ORIUS-Bench: Battery Track and Benchmark Contract}{89}{section.5.3}%
+\contentsline {subsection}{\numberline {5.3.1}Benchmark Scope and Design Goals}{89}{subsection.5.3.1}%
+\contentsline {subsection}{\numberline {5.3.2}Episode Generation and Fault Replay}{89}{subsection.5.3.2}%
+\contentsline {subsection}{\numberline {5.3.3}Seven-Metric Schema}{89}{subsection.5.3.3}%
+\contentsline {subsection}{\numberline {5.3.4}Schema and Adapter Contract}{90}{subsection.5.3.4}%
+\contentsline {subsection}{\numberline {5.3.5}Controller Interface}{90}{subsection.5.3.5}%
+\contentsline {subsection}{\numberline {5.3.6}Fault Replay and Determinism}{91}{subsection.5.3.6}%
+\contentsline {subsection}{\numberline {5.3.7}Leaderboard Surface}{91}{subsection.5.3.7}%
+\contentsline {subsection}{\numberline {5.3.8}Ranking Under Degradation}{91}{subsection.5.3.8}%
+\contentsline {subsection}{\numberline {5.3.9}What ORIUS-Bench Does and Does Not Prove}{92}{subsection.5.3.9}%
+\contentsline {subsection}{\numberline {5.3.10}Summary}{92}{subsection.5.3.10}%
+\contentsline {section}{\numberline {5.4}Runtime Latency and Systems Footprint}{92}{section.5.4}%
+\contentsline {subsection}{\numberline {5.4.1}Why Latency Matters for Real-Time Dispatch}{92}{subsection.5.4.1}%
+\contentsline {subsection}{\numberline {5.4.2}Measurement Methodology}{93}{subsection.5.4.2}%
+\contentsline {subsection}{\numberline {5.4.3}Per-Component Latency}{93}{subsection.5.4.3}%
+\contentsline {subsection}{\numberline {5.4.4}Statistical Summary}{93}{subsection.5.4.4}%
+\contentsline {subsection}{\numberline {5.4.5}Runtime Memory Footprint}{93}{subsection.5.4.5}%
+\contentsline {subsection}{\numberline {5.4.6}Solver Infeasibility Rate}{94}{subsection.5.4.6}%
+\contentsline {subsection}{\numberline {5.4.7}Observability Outputs}{94}{subsection.5.4.7}%
+\contentsline {subsection}{\numberline {5.4.8}Deployment Implications}{94}{subsection.5.4.8}%
+\contentsline {subsection}{\numberline {5.4.9}Summary}{95}{subsection.5.4.9}%
+\contentsline {chapter}{\numberline {6}Comprehensive Battery Fault and Performance Results}{96}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Main Battery Results}{96}{section.6.1}%
+\contentsline {subsection}{\numberline {6.1.1}Main Controller Comparison}{96}{subsection.6.1.1}%
+\contentsline {subsection}{\numberline {6.1.2}Hidden True-State Violation Measurement}{97}{subsection.6.1.2}%
+\contentsline {subsection}{\numberline {6.1.3}Zero-Violation Shield Result}{97}{subsection.6.1.3}%
+\contentsline {subsection}{\numberline {6.1.4}Intervention Rate and Conditional Conservatism}{97}{subsection.6.1.4}%
+\contentsline {subsection}{\numberline {6.1.5}Regional Value Surface}{98}{subsection.6.1.5}%
+\contentsline {subsection}{\numberline {6.1.6}Robustness and Severity Surfaces}{98}{subsection.6.1.6}%
+\contentsline {subsection}{\numberline {6.1.7}Operational Meaning}{98}{subsection.6.1.7}%
+\contentsline {subsection}{\numberline {6.1.8}Controller Leaderboard}{99}{subsection.6.1.8}%
+\contentsline {subsection}{\numberline {6.1.9}Comparison with Alternative Safety Architectures}{100}{subsection.6.1.9}%
+\contentsline {subsection}{\numberline {6.1.10}What Results Do and Do Not Prove}{100}{subsection.6.1.10}%
+\contentsline {paragraph}{What the results establish.}{100}{section*.97}%
+\contentsline {paragraph}{What the results do not establish.}{100}{section*.98}%
+\contentsline {subsection}{\numberline {6.1.11}Chapter Summary}{100}{subsection.6.1.11}%
+\contentsline {section}{\numberline {6.2}Ablations and Failure Analysis}{102}{section.6.2}%
+\contentsline {subsection}{\numberline {6.2.1}Reliability Scoring Ablation}{102}{subsection.6.2.1}%
+\contentsline {subsection}{\numberline {6.2.2}Inflation Ablation}{102}{subsection.6.2.2}%
+\contentsline {subsection}{\numberline {6.2.3}Projection Ablation}{103}{subsection.6.2.3}%
+\contentsline {subsection}{\numberline {6.2.4}FTIT Ablation}{103}{subsection.6.2.4}%
+\contentsline {subsection}{\numberline {6.2.5}Fault-Family Sensitivity}{103}{subsection.6.2.5}%
+\contentsline {subsection}{\numberline {6.2.6}When DC3S Intervenes}{104}{subsection.6.2.6}%
+\contentsline {subsection}{\numberline {6.2.7}When Base Calibration Weakens}{104}{subsection.6.2.7}%
+\contentsline {subsection}{\numberline {6.2.8}Why Safety Is Preserved Anyway}{104}{subsection.6.2.8}%
+\contentsline {subsection}{\numberline {6.2.9}Rank Reversal Under Degradation}{105}{subsection.6.2.9}%
+\contentsline {subsection}{\numberline {6.2.10}Ablation Summary}{105}{subsection.6.2.10}%
+\contentsline {subsection}{\numberline {6.2.11}Chapter Summary}{105}{subsection.6.2.11}%
+\contentsline {section}{\numberline {6.3}Case Studies and Operational Traces}{105}{section.6.3}%
+\contentsline {subsection}{\numberline {6.3.1}48-Hour Case Study}{106}{subsection.6.3.1}%
+\contentsline {subsection}{\numberline {6.3.2}7-Day Operational Trace}{106}{subsection.6.3.2}%
+\contentsline {subsection}{\numberline {6.3.3}Price--Dispatch Interaction}{107}{subsection.6.3.3}%
+\contentsline {subsection}{\numberline {6.3.4}Reliability Score Evolution}{107}{subsection.6.3.4}%
+\contentsline {subsection}{\numberline {6.3.5}Intervention Timing}{107}{subsection.6.3.5}%
+\contentsline {subsection}{\numberline {6.3.6}True Versus Observed SOC Divergence}{108}{subsection.6.3.6}%
+\contentsline {subsection}{\numberline {6.3.7}Failure Avoided by the Shield}{108}{subsection.6.3.7}%
+\contentsline {subsection}{\numberline {6.3.8}Chapter Summary}{109}{subsection.6.3.8}%
+\contentsline {section}{\numberline {6.4}Witness Domain Lessons and Cross-Domain Interpretation}{109}{section.6.4}%
+\contentsline {subsection}{\numberline {6.4.1}Battery as a Witness, Not a Toy}{109}{subsection.6.4.1}%
+\contentsline {subsection}{\numberline {6.4.2}What the Battery Proof Surface Establishes}{109}{subsection.6.4.2}%
+\contentsline {subsection}{\numberline {6.4.3}What Battery Cannot Establish Alone}{110}{subsection.6.4.3}%
+\contentsline {subsection}{\numberline {6.4.4}Why Battery Is the Right Reference Domain}{110}{subsection.6.4.4}%
+\contentsline {subsection}{\numberline {6.4.5}How Battery Lifts into ORIUS}{111}{subsection.6.4.5}%
+\contentsline {subsection}{\numberline {6.4.6}Chapter Summary}{111}{subsection.6.4.6}%
+\contentsline {section}{\numberline {6.5}Fault-Performance Stress Tests}{111}{section.6.5}%
+\contentsline {subsection}{\numberline {6.5.1}Motivation}{112}{subsection.6.5.1}%
+\contentsline {subsection}{\numberline {6.5.2}Fault Taxonomy}{112}{subsection.6.5.2}%
+\contentsline {subsection}{\numberline {6.5.3}Controller Comparison Across Faults}{112}{subsection.6.5.3}%
+\contentsline {subsection}{\numberline {6.5.4}Per-Fault Results}{113}{subsection.6.5.4}%
+\contentsline {subsection}{\numberline {6.5.5}Intervention Rate and Cost Delta}{113}{subsection.6.5.5}%
+\contentsline {subsection}{\numberline {6.5.6}Cross-Fault Stability Analysis}{114}{subsection.6.5.6}%
+\contentsline {subsection}{\numberline {6.5.7}Which Faults Are Hardest?}{114}{subsection.6.5.7}%
+\contentsline {subsection}{\numberline {6.5.8}Fault Stress Comparison Table}{114}{subsection.6.5.8}%
+\contentsline {subsection}{\numberline {6.5.9}Summary}{115}{subsection.6.5.9}%
+\contentsline {section}{\numberline {6.6}Hyperparameter Surface and Stability}{115}{section.6.6}%
+\contentsline {subsection}{\numberline {6.6.1}Why Stability Matters}{116}{subsection.6.6.1}%
+\contentsline {subsection}{\numberline {6.6.2}Sweep Protocol}{116}{subsection.6.6.2}%
+\contentsline {subsection}{\numberline {6.6.3}TSVR Surface}{116}{subsection.6.6.3}%
+\contentsline {subsection}{\numberline {6.6.4}Intervention Rate Surface}{116}{subsection.6.6.4}%
+\contentsline {subsection}{\numberline {6.6.5}Cost--Safety Trade-off}{116}{subsection.6.6.5}%
+\contentsline {subsection}{\numberline {6.6.6}Useful Work Preserved}{117}{subsection.6.6.6}%
+\contentsline {subsection}{\numberline {6.6.7}Sensitivity Analysis}{117}{subsection.6.6.7}%
+\contentsline {subsection}{\numberline {6.6.8}Recommended Operating Region}{118}{subsection.6.6.8}%
+\contentsline {subsection}{\numberline {6.6.9}Summary}{118}{subsection.6.6.9}%
+\contentsline {section}{\numberline {6.7}Conditional Coverage and Subgroup Calibration}{118}{section.6.7}%
+\contentsline {subsection}{\numberline {6.7.1}Why Marginal Coverage Is Insufficient}{118}{subsection.6.7.1}%
+\contentsline {subsection}{\numberline {6.7.2}Reliability-Bin Stratification}{119}{subsection.6.7.2}%
+\contentsline {subsection}{\numberline {6.7.3}Volatility-Group Results}{119}{subsection.6.7.3}%
+\contentsline {subsection}{\numberline {6.7.4}Under-Coverage Diagnosis}{119}{subsection.6.7.4}%
+\contentsline {subsection}{\numberline {6.7.5}RAC-Cert Correction Effect}{120}{subsection.6.7.5}%
+\contentsline {subsection}{\numberline {6.7.6}Solar and Wind Subgroup Behaviour}{120}{subsection.6.7.6}%
+\contentsline {subsection}{\numberline {6.7.7}Summary}{121}{subsection.6.7.7}%
+\contentsline {section}{\numberline {6.8}Regional Decomposition and Real-Price Grounding}{121}{section.6.8}%
+\contentsline {subsection}{\numberline {6.8.1}Why Regional Decomposition Matters}{121}{subsection.6.8.1}%
+\contentsline {subsection}{\numberline {6.8.2}Forecast Quality by Region}{121}{subsection.6.8.2}%
+\contentsline {subsection}{\numberline {6.8.3}Per-Region Safety Results}{122}{subsection.6.8.3}%
+\contentsline {subsection}{\numberline {6.8.4}Per-BA Results: MISO, PJM, ERCOT}{122}{subsection.6.8.4}%
+\contentsline {subsection}{\numberline {6.8.5}Price-Signal Effect on Dispatch}{123}{subsection.6.8.5}%
+\contentsline {subsection}{\numberline {6.8.6}Transfer Validation: DE to US Zero-Shot}{123}{subsection.6.8.6}%
+\contentsline {subsection}{\numberline {6.8.7}Regional Robustness}{124}{subsection.6.8.7}%
+\contentsline {subsection}{\numberline {6.8.8}Summary}{124}{subsection.6.8.8}%
+\contentsline {section}{\numberline {6.9}Battery Aging and Asset Preservation Proxy}{124}{section.6.9}%
+\contentsline {subsection}{\numberline {6.9.1}Why Aging Still Matters}{124}{subsection.6.9.1}%
+\contentsline {subsection}{\numberline {6.9.2}Locked Aging Calibration Surface}{125}{subsection.6.9.2}%
+\contentsline {subsection}{\numberline {6.9.3}Asset-Preservation Proxy Table}{125}{subsection.6.9.3}%
+\contentsline {subsection}{\numberline {6.9.4}Bounded Claim}{126}{subsection.6.9.4}%
+\contentsline {subsection}{\numberline {6.9.5}What Is Not Yet Implemented}{126}{subsection.6.9.5}%
+\contentsline {subsection}{\numberline {6.9.6}Summary}{126}{subsection.6.9.6}%
+\contentsline {section}{\numberline {6.10}Certificate Validity and Blackout Safe-Hold}{126}{section.6.10}%
+\contentsline {subsection}{\numberline {6.10.1}Why Blackout Stress Matters}{127}{subsection.6.10.1}%
+\contentsline {subsection}{\numberline {6.10.2}Current Experimental Protocol}{127}{subsection.6.10.2}%
+\contentsline {subsection}{\numberline {6.10.3}Locked Results}{127}{subsection.6.10.3}%
+\contentsline {subsection}{\numberline {6.10.4}Width-Expansion Proxy}{128}{subsection.6.10.4}%
+\contentsline {subsection}{\numberline {6.10.5}Operational Consequence}{128}{subsection.6.10.5}%
+\contentsline {subsection}{\numberline {6.10.6}What the Current Result Does and Does Not Show}{128}{subsection.6.10.6}%
+\contentsline {subsection}{\numberline {6.10.7}Summary}{129}{subsection.6.10.7}%
+\contentsline {section}{\numberline {6.11}Graceful Degradation and Safe Landing}{129}{section.6.11}%
+\contentsline {subsection}{\numberline {6.11.1}Why Prolonged Blindness Matters}{129}{subsection.6.11.1}%
+\contentsline {subsection}{\numberline {6.11.2}Four-Policy Battery Comparison}{129}{subsection.6.11.2}%
+\contentsline {subsection}{\numberline {6.11.3}Locked Comparative Results}{130}{subsection.6.11.3}%
+\contentsline {subsection}{\numberline {6.11.4}Comparative Figure}{130}{subsection.6.11.4}%
+\contentsline {subsection}{\numberline {6.11.5}Operational Interpretation}{130}{subsection.6.11.5}%
+\contentsline {subsection}{\numberline {6.11.6}Bounded Claim}{130}{subsection.6.11.6}%
+\contentsline {subsection}{\numberline {6.11.7}Summary}{131}{subsection.6.11.7}%
+\contentsline {section}{\numberline {6.12}Compositional Safety for Battery Fleets}{131}{section.6.12}%
+\contentsline {subsection}{\numberline {6.12.1}Why Composition Matters}{131}{subsection.6.12.1}%
+\contentsline {subsection}{\numberline {6.12.2}Battery-Fleet View}{131}{subsection.6.12.2}%
+\contentsline {subsection}{\numberline {6.12.3}Locked Two-Battery Stress Output}{131}{subsection.6.12.3}%
+\contentsline {subsection}{\numberline {6.12.4}Multi-Agent Protocol Comparison}{132}{subsection.6.12.4}%
+\contentsline {subsection}{\numberline {6.12.5}Interpretation}{132}{subsection.6.12.5}%
+\contentsline {subsection}{\numberline {6.12.6}What Remains Open}{133}{subsection.6.12.6}%
+\contentsline {subsection}{\numberline {6.12.7}Summary}{133}{subsection.6.12.7}%
+\contentsline {section}{\numberline {6.13}Adversarial Robustness and Active Probing}{133}{section.6.13}%
+\contentsline {subsection}{\numberline {6.13.1}Battery Threat Model}{133}{subsection.6.13.1}%
+\contentsline {subsection}{\numberline {6.13.2}Locked Detection Package}{134}{subsection.6.13.2}%
+\contentsline {subsection}{\numberline {6.13.3}Detection Results}{134}{subsection.6.13.3}%
+\contentsline {subsection}{\numberline {6.13.4}Battery-Operational Meaning}{135}{subsection.6.13.4}%
+\contentsline {subsection}{\numberline {6.13.5}Bounded Claim}{135}{subsection.6.13.5}%
+\contentsline {subsection}{\numberline {6.13.6}Summary}{135}{subsection.6.13.6}%
+\contentsline {section}{\numberline {6.14}CertOS Runtime and Certificate Lifecycle}{135}{section.6.14}%
+\contentsline {subsection}{\numberline {6.14.1}Why the Runtime Layer Exists}{135}{subsection.6.14.1}%
+\contentsline {subsection}{\numberline {6.14.2}CertOS Code Surface}{136}{subsection.6.14.2}%
+\contentsline {subsection}{\numberline {6.14.3}Lifecycle Operations}{136}{subsection.6.14.3}%
+\contentsline {subsection}{\numberline {6.14.4}Runtime Invariants}{136}{subsection.6.14.4}%
+\contentsline {subsection}{\numberline {6.14.5}Battery Runtime Evidence}{136}{subsection.6.14.5}%
+\contentsline {subsection}{\numberline {6.14.6}Representative Runtime Transitions}{137}{subsection.6.14.6}%
+\contentsline {subsection}{\numberline {6.14.7}Recovery, Audit, and Bounded Portability}{138}{subsection.6.14.7}%
+\contentsline {subsection}{\numberline {6.14.8}Bounded Claim}{139}{subsection.6.14.8}%
+\contentsline {subsection}{\numberline {6.14.9}Summary}{140}{subsection.6.14.9}%
+\contentsline {chapter}{\numberline {7}Universal Defense: AV, Industrial, and Healthcare}{145}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Universal ORIUS: Six-Domain Validation}{145}{section.7.1}%
+\contentsline {subsection}{\numberline {7.1.1}Why the ORIUS Result Is Structurally General}{145}{subsection.7.1.1}%
+\contentsline {subsection}{\numberline {7.1.2}Mapping Battery Objects to the Universal Adapter}{146}{subsection.7.1.2}%
+\contentsline {subsection}{\numberline {7.1.3}What Changes by Domain}{146}{subsection.7.1.3}%
+\contentsline {subsection}{\numberline {7.1.4}What Remains Invariant Across Domains}{147}{subsection.7.1.4}%
+\contentsline {subsection}{\numberline {7.1.5}How to Port ORIUS to a New Domain}{147}{subsection.7.1.5}%
+\contentsline {subsection}{\numberline {7.1.6}Cross-Domain Empirical Validation}{147}{subsection.7.1.6}%
+\contentsline {subsubsection}{Datasets}{148}{section*.135}%
+\contentsline {subsubsection}{Universal Framework Architecture}{148}{section*.136}%
+\contentsline {subsubsection}{Protocol}{149}{section*.138}%
+\contentsline {subsubsection}{Training and Software-in-Loop Readiness}{149}{section*.139}%
+\contentsline {subsubsection}{Validation Status by Domain}{150}{section*.142}%
+\contentsline {subsubsection}{Results}{150}{section*.145}%
+\contentsline {subsubsection}{Rule-Based Baseline Comparison}{150}{section*.150}%
+\contentsline {subsubsection}{Implications}{153}{section*.151}%
+\contentsline {subsection}{\numberline {7.1.7}Per-Domain Evidence Profiles}{154}{subsection.7.1.7}%
+\contentsline {subsubsection}{Energy Management (Battery / Grid Dispatch)}{154}{section*.152}%
+\contentsline {subsubsection}{Autonomous Vehicles}{156}{section*.155}%
+\contentsline {subsubsection}{Industrial Process Control}{156}{section*.158}%
+\contentsline {subsubsection}{Medical Monitoring (ICU Vitals)}{157}{section*.161}%
+\contentsline {subsubsection}{Aerospace (Flight Envelope)}{159}{section*.164}%
+\contentsline {subsubsection}{Navigation}{159}{section*.167}%
+\contentsline {subsection}{\numberline {7.1.8}Theorem Applicability Matrix}{160}{subsection.7.1.8}%
+\contentsline {subsection}{\numberline {7.1.9}Cross-Domain Metrics Scorecard}{161}{subsection.7.1.9}%
+\contentsline {subsection}{\numberline {7.1.10}Chapter Summary}{161}{subsection.7.1.10}%
+\contentsline {section}{\numberline {7.2}Hardware-in-the-Loop Validation}{162}{section.7.2}%
+\contentsline {subsection}{\numberline {7.2.1}Why This Layer Matters}{162}{subsection.7.2.1}%
+\contentsline {subsection}{\numberline {7.2.2}Locked Runtime Path}{162}{subsection.7.2.2}%
+\contentsline {subsection}{\numberline {7.2.3}Scenario Coverage}{163}{subsection.7.2.3}%
+\contentsline {subsection}{\numberline {7.2.4}Step Log and SOC Trace}{163}{subsection.7.2.4}%
+\contentsline {subsection}{\numberline {7.2.5}Certificate Audit}{163}{subsection.7.2.5}%
+\contentsline {subsection}{\numberline {7.2.6}Evidence Package}{164}{subsection.7.2.6}%
+\contentsline {subsection}{\numberline {7.2.7}What This Chapter Establishes}{164}{subsection.7.2.7}%
+\contentsline {subsection}{\numberline {7.2.8}HIL Execution Tables}{164}{subsection.7.2.8}%
+\contentsline {subsection}{\numberline {7.2.9}Summary}{165}{subsection.7.2.9}%
+\contentsline {section}{\numberline {7.3}What Remains Outside the Current Evidence}{165}{section.7.3}%
+\contentsline {subsection}{\numberline {7.3.1}Not Claimed}{165}{subsection.7.3.1}%
+\contentsline {subsection}{\numberline {7.3.2}Still Partial}{166}{subsection.7.3.2}%
+\contentsline {subsection}{\numberline {7.3.3}Per-Domain Future Work}{166}{subsection.7.3.3}%
+\contentsline {subsection}{\numberline {7.3.4}Precise Failure Boundaries}{167}{subsection.7.3.4}%
+\contentsline {paragraph}{1. Feasibility exhaustion.}{167}{section*.173}%
+\contentsline {paragraph}{2. OQE self-compromise.}{167}{section*.174}%
+\contentsline {paragraph}{3. Calibration distributional shift.}{167}{section*.175}%
+\contentsline {paragraph}{4. Temporal fault correlation.}{168}{section*.176}%
+\contentsline {subsection}{\numberline {7.3.5}Why This Boundary Matters}{168}{subsection.7.3.5}%
+\contentsline {subsection}{\numberline {7.3.6}Summary}{168}{subsection.7.3.6}%
+\contentsline {chapter}{\numberline {8}Deployment Roadmap and Conclusion}{169}{chapter.8}%
+\contentsline {section}{\numberline {8.1}What This Thesis Proves and What It Leaves Open}{169}{section.8.1}%
+\contentsline {subsection}{\numberline {8.1.1}The Full Formal Apparatus}{169}{subsection.8.1.1}%
+\contentsline {subsection}{\numberline {8.1.2}What Is Fully Validated Across the Defended Five-Domain Set}{170}{subsection.8.1.2}%
+\contentsline {subsection}{\numberline {8.1.3}What Is Fully Validated in Battery (Reference Domain)}{170}{subsection.8.1.3}%
+\contentsline {subsection}{\numberline {8.1.4}What Is Partially Proved}{171}{subsection.8.1.4}%
+\contentsline {subsection}{\numberline {8.1.5}Why Multi-Domain Validation Strengthens the Core Claim}{171}{subsection.8.1.5}%
+\contentsline {subsection}{\numberline {8.1.6}What Remains Outside the Current Evidence}{172}{subsection.8.1.6}%
+\contentsline {subsection}{\numberline {8.1.7}Chapter Summary}{172}{subsection.8.1.7}%
+\contentsline {section}{\numberline {8.2}What the ORIUS Framework Proves}{172}{section.8.2}%
+\contentsline {subsection}{\numberline {8.2.1}What Is Established}{173}{subsection.8.2.1}%
+\contentsline {subsection}{\numberline {8.2.2}Theorem-to-Empirical Correspondence}{173}{subsection.8.2.2}%
+\contentsline {subsection}{\numberline {8.2.3}What the Framework Result Means}{173}{subsection.8.2.3}%
+\contentsline {subsection}{\numberline {8.2.4}Scope of the Defended Claim}{174}{subsection.8.2.4}%
+\contentsline {subsection}{\numberline {8.2.5}Summary}{175}{subsection.8.2.5}%
+\contentsline {section}{\numberline {8.3}Deployment Path and Verification Discipline}{175}{section.8.3}%
+\contentsline {subsection}{\numberline {8.3.1}Universal Deployment Readiness Checklist}{175}{subsection.8.3.1}%
+\contentsline {subsection}{\numberline {8.3.2}Universal Deployment Ladder}{176}{subsection.8.3.2}%
+\contentsline {subsection}{\numberline {8.3.3}Operational Monitoring}{176}{subsection.8.3.3}%
+\contentsline {subsection}{\numberline {8.3.4}Rollback Protocol}{177}{subsection.8.3.4}%
+\contentsline {subsection}{\numberline {8.3.5}Verification Discipline}{177}{subsection.8.3.5}%
+\contentsline {subsection}{\numberline {8.3.6}Summary}{178}{subsection.8.3.6}%
+\contentsline {section}{\numberline {8.4}Research Roadmap and Deployment Path}{178}{section.8.4}%
+\contentsline {subsection}{\numberline {8.4.1}Submit the Battery Foundation First}{178}{subsection.8.4.1}%
+\contentsline {subsection}{\numberline {8.4.2}Fix Remaining Empirical Gaps}{178}{subsection.8.4.2}%
+\contentsline {subsection}{\numberline {8.4.3}Extract ORIUS Core Modules}{179}{subsection.8.4.3}%
+\contentsline {subsection}{\numberline {8.4.4}Build the Battery Adapter Package}{179}{subsection.8.4.4}%
+\contentsline {subsection}{\numberline {8.4.5}Add a Second Domain}{179}{subsection.8.4.5}%
+\contentsline {subsection}{\numberline {8.4.6}Add a Third Domain and Beyond}{179}{subsection.8.4.6}%
+\contentsline {subsection}{\numberline {8.4.7}Hardware-in-the-Loop Validation}{180}{subsection.8.4.7}%
+\contentsline {subsection}{\numberline {8.4.8}ORIUS-Bench Public Release}{180}{subsection.8.4.8}%
+\contentsline {subsection}{\numberline {8.4.9}CertOS Runtime Path}{180}{subsection.8.4.9}%
+\contentsline {subsection}{\numberline {8.4.10}Chapter Summary}{180}{subsection.8.4.10}%
+\contentsline {section}{\numberline {8.5}Conclusion}{181}{section.8.5}%
+\contentsline {subsection}{\numberline {8.5.1}Universal Framework Outcome}{181}{subsection.8.5.1}%
+\contentsline {subsection}{\numberline {8.5.2}Domain Coverage and Empirical Results}{181}{subsection.8.5.2}%
+\contentsline {subsection}{\numberline {8.5.3}Formal Apparatus and Theorem Ladder Scope}{182}{subsection.8.5.3}%
+\contentsline {subsection}{\numberline {8.5.4}Final Boundary}{182}{subsection.8.5.4}%
+\contentsline {subsection}{\numberline {8.5.5}Closing Statement}{183}{subsection.8.5.5}%
+\contentsline {section}{\numberline {8.6}Conclusion}{183}{section.8.6}%
+\contentsline {subsection}{\numberline {8.6.1}The Central Message}{183}{subsection.8.6.1}%
+\contentsline {subsection}{\numberline {8.6.2}What the Battery Domain Taught Us}{183}{subsection.8.6.2}%
+\contentsline {subsection}{\numberline {8.6.3}Why Observation Reliability Belongs Inside Control}{184}{subsection.8.6.3}%
+\contentsline {subsection}{\numberline {8.6.4}What ORIUS Can Become}{184}{subsection.8.6.4}%
+\contentsline {subsection}{\numberline {8.6.5}Final Remarks}{185}{subsection.8.6.5}%
+\contentsline {part}{II\hspace {1em}DC3S Safety Theorem Ladder}{186}{part.2}%
+\contentsline {part}{III\hspace {1em}Universal ORIUS Framework and Multi-Domain Validation}{187}{part.3}%
+\contentsline {chapter}{\numberline {9}Comparison to Alternative Safety Approaches}{188}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Alternative Safety Strategies}{188}{section.9.1}%
+\contentsline {paragraph}{Tube MPC (fixed disturbance tube).}{188}{section*.178}%
+\contentsline {paragraph}{Control Barrier Function (CBF) filter.}{188}{section*.179}%
+\contentsline {paragraph}{Lagrangian / Safe-RL filter.}{189}{section*.180}%
+\contentsline {paragraph}{DC3S (ORIUS, this work).}{189}{section*.181}%
+\contentsline {section}{\numberline {9.2}Experimental Setup}{189}{section.9.2}%
+\contentsline {section}{\numberline {9.3}Results}{189}{section.9.3}%
+\contentsline {section}{\numberline {9.4}Why the Alternatives Fail}{190}{section.9.4}%
+\contentsline {section}{\numberline {9.5}Intervention Rate and Economic Cost}{191}{section.9.5}%
+\contentsline {section}{\numberline {9.6}Summary}{191}{section.9.6}%
+\contentsline {part}{IV\hspace {1em}Evidence Hardening and Reproducibility Surface}{192}{part.4}%
+\contentsline {part}{V\hspace {1em}Extensions and Runtime Promotion}{193}{part.5}%
+\contentsline {part}{VI\hspace {1em}Boundary, Governance, and Conclusion}{194}{part.6}%
+\contentsline {chapter}{\numberline {a}Notation Sheet}{195}{appendix.A}%
+\contentsline {section}{\numberline {a.1}Telemetry and State Variables}{195}{section.A.1}%
+\contentsline {section}{\numberline {a.2}Quality, Drift, and Sensitivity Indicators}{195}{section.A.2}%
+\contentsline {section}{\numberline {a.3}Uncertainty and Action Objects}{196}{section.A.3}%
+\contentsline {section}{\numberline {a.4}Battery Plant Parameters}{196}{section.A.4}%
+\contentsline {section}{\numberline {a.5}Metrics}{197}{section.A.5}%
+\contentsline {section}{\numberline {a.6}Tuning Constants and Greek Letters}{197}{section.A.6}%
+\contentsline {section}{\numberline {a.7}Set Notation and Operators}{198}{section.A.7}%
+\contentsline {chapter}{\numberline {b}Assumption Register}{199}{appendix.B}%
+\contentsline {section}{\numberline {b.1}How to Read This Register}{199}{section.B.1}%
+\contentsline {section}{\numberline {b.2}Master Table}{199}{section.B.2}%
+\contentsline {section}{\numberline {b.3}Detailed Statements}{200}{section.B.3}%
+\contentsline {section}{\numberline {b.4}Assumption Usage Map by Chapter}{200}{section.B.4}%
+\contentsline {chapter}{\numberline {c}Full Proofs}{202}{appendix.C}%
+\contentsline {section}{\numberline {c.1}C.1\hskip 1em\relax Battery-Domain OASG Existence}{202}{section.C.1}%
+\contentsline {section}{\numberline {c.2}C.2\hskip 1em\relax One-Step Safety Preservation}{203}{section.C.2}%
+\contentsline {section}{\numberline {c.3}C.3\hskip 1em\relax Battery ORIUS Core Bound}{203}{section.C.3}%
+\contentsline {section}{\numberline {c.4}C.4\hskip 1em\relax No Free Safety}{203}{section.C.4}%
+\contentsline {section}{\numberline {c.5}C.5\hskip 1em\relax Certificate Validity Horizon}{203}{section.C.5}%
+\contentsline {section}{\numberline {c.6}C.6\hskip 1em\relax Certificate Expiration Bound}{204}{section.C.6}%
+\contentsline {section}{\numberline {c.7}C.7\hskip 1em\relax Certificate Half-Life Corollary}{204}{section.C.7}%
+\contentsline {section}{\numberline {c.8}C.8\hskip 1em\relax Feasible Fallback Existence}{204}{section.C.8}%
+\contentsline {section}{\numberline {c.9}C.9\hskip 1em\relax Graceful Degradation Dominance}{204}{section.C.9}%
+\contentsline {section}{\numberline {c.10}C.10\hskip 1em\relax Safe-Budget Monotonicity Proposition}{205}{section.C.10}%
+\contentsline {chapter}{\numberline {d}Extended Battery Result Tables}{206}{appendix.D}%
+\contentsline {section}{\numberline {d.1}Extended Controller Comparison}{206}{section.D.1}%
+\contentsline {section}{\numberline {d.2}Metric Definitions}{206}{section.D.2}%
+\contentsline {section}{\numberline {d.3}Regional Impact Breakdown}{207}{section.D.3}%
+\contentsline {section}{\numberline {d.4}Fault-Profile Sensitivity}{207}{section.D.4}%
+\contentsline {section}{\numberline {d.5}Artifact Provenance}{207}{section.D.5}%
+\contentsline {chapter}{\numberline {e}Reliability-Group Coverage Audits}{209}{appendix.E}%
+\contentsline {section}{\numberline {e.1}Audit Logic}{209}{section.E.1}%
+\contentsline {section}{\numberline {e.2}Illustrative Audit Table}{210}{section.E.2}%
+\contentsline {section}{\numberline {e.3}Coverage--Width Trade-off}{210}{section.E.3}%
+\contentsline {section}{\numberline {e.4}CQR Group Coverage Visualisation}{210}{section.E.4}%
+\contentsline {section}{\numberline {e.5}Audit Protocol}{212}{section.E.5}%
+\contentsline {chapter}{\numberline {f}Fault Injection Specifications}{213}{appendix.F}%
+\contentsline {section}{\numberline {f.1}Fault Families}{213}{section.F.1}%
+\contentsline {section}{\numberline {f.2}Combined Profile: \texttt {drift\_combo}}{214}{section.F.2}%
+\contentsline {section}{\numberline {f.3}Fault Injection Implementation}{215}{section.F.3}%
+\contentsline {section}{\numberline {f.4}Severity Mapping}{215}{section.F.4}%
+\contentsline {chapter}{\numberline {g}Battery Adapter Interface Specification}{217}{appendix.G}%
+\contentsline {section}{\numberline {g.1}Interface Overview}{217}{section.G.1}%
+\contentsline {section}{\numberline {g.2}Method Contracts}{217}{section.G.2}%
+\contentsline {section}{\numberline {g.3}Pipeline Diagram}{219}{section.G.3}%
+\contentsline {section}{\numberline {g.4}How to Implement a New Domain Adapter}{219}{section.G.4}%
+\contentsline {chapter}{\numberline {h}Five-Reviewer Committee Audit Protocol}{220}{appendix.H}%
+\contentsline {section}{\numberline {h.1}Role Assignments}{220}{section.H.1}%
+\contentsline {section}{\numberline {h.2}Audit Checklist}{221}{section.H.2}%
+\contentsline {section}{\numberline {h.3}Procedure}{221}{section.H.3}%
+\contentsline {section}{\numberline {h.4}Pass Criteria}{221}{section.H.4}%
+\contentsline {chapter}{\numberline {i}Hardware-in-the-Loop Bill of Materials and Safety}{223}{appendix.I}%
+\contentsline {section}{\numberline {i.1}Bill of Materials}{223}{section.I.1}%
+\contentsline {section}{\numberline {i.2}Safety Classification}{223}{section.I.2}%
+\contentsline {section}{\numberline {i.3}Risk Assessment}{223}{section.I.3}%
+\contentsline {section}{\numberline {i.4}Operator Safety Checklist}{225}{section.I.4}%
+\contentsline {section}{\numberline {i.5}Evidence Artifacts}{225}{section.I.5}%
+\contentsline {chapter}{\numberline {j}Sweep and Latency Measurement Protocols}{227}{appendix.J}%
+\contentsline {section}{\numberline {j.1}Hyperparameter Sweep Protocol}{227}{section.J.1}%
+\contentsline {subsection}{\numberline {j.1.1}Grid Parameters}{227}{subsection.J.1.1}%
+\contentsline {subsection}{\numberline {j.1.2}CLI Commands}{227}{subsection.J.1.2}%
+\contentsline {subsection}{\numberline {j.1.3}Output Artifacts}{228}{subsection.J.1.3}%
+\contentsline {subsection}{\numberline {j.1.4}Config Override Mechanism}{228}{subsection.J.1.4}%
+\contentsline {section}{\numberline {j.2}Latency Benchmark Protocol}{228}{section.J.2}%
+\contentsline {subsection}{\numberline {j.2.1}Measurement Method}{228}{subsection.J.2.1}%
+\contentsline {subsection}{\numberline {j.2.2}CLI Command}{229}{subsection.J.2.2}%
+\contentsline {subsection}{\numberline {j.2.3}Benchmarked Components}{229}{subsection.J.2.3}%
+\contentsline {subsection}{\numberline {j.2.4}Output Artifacts}{229}{subsection.J.2.4}%
+\contentsline {section}{\numberline {j.3}Fault Severity Sweep}{229}{section.J.3}%
+\contentsline {chapter}{\numberline {k}Blueprint Coverage Matrix}{231}{appendix.K}%
+\contentsline {section}{\numberline {k.1}Coverage Matrix}{231}{section.K.1}%
+\contentsline {section}{\numberline {k.2}Status Legend}{233}{section.K.2}%
+\contentsline {section}{\numberline {k.3}Paper Section Reference}{233}{section.K.3}%
+\contentsline {chapter}{\numberline {l}Artifact, Figure, and Table Index}{234}{appendix.L}%
+\contentsline {section}{\numberline {l.1}CSV Artifacts}{234}{section.L.1}%
+\contentsline {section}{\numberline {l.2}Figure Artifacts}{235}{section.L.2}%
+\contentsline {section}{\numberline {l.3}Additional Artifacts}{236}{section.L.3}%
+\contentsline {chapter}{\numberline {m}Verified Theorems and Gap Audit}{238}{appendix.M}%
+\contentsline {section}{\numberline {m.1}Theorem Statements}{238}{section.M.1}%
+\contentsline {subsection}{\numberline {m.1.1}Theorem 1: OASG Existence}{238}{subsection.M.1.1}%
+\contentsline {subsection}{\numberline {m.1.2}Theorem 2: One-Step Safety Preservation}{239}{subsection.M.1.2}%
+\contentsline {subsection}{\numberline {m.1.3}Theorem 3: ORIUS Core Bound}{239}{subsection.M.1.3}%
+\contentsline {subsection}{\numberline {m.1.4}Theorem 4: No Free Safety}{239}{subsection.M.1.4}%
+\contentsline {subsection}{\numberline {m.1.5}Theorem 5: Certificate Validity Horizon}{240}{subsection.M.1.5}%
+\contentsline {subsection}{\numberline {m.1.6}Theorem 6: Certificate Expiration Bound}{240}{subsection.M.1.6}%
+\contentsline {subsection}{\numberline {m.1.7}Theorem 7: Feasible Fallback Existence}{240}{subsection.M.1.7}%
+\contentsline {subsection}{\numberline {m.1.8}Theorem 8: Graceful Degradation Dominance}{240}{subsection.M.1.8}%
+\contentsline {section}{\numberline {m.2}Gap Audit Table}{241}{section.M.2}%
+\contentsline {section}{\numberline {m.3}Locked Empirical Evidence}{241}{section.M.3}%
+\contentsline {section}{\numberline {m.4}Integrated Release-Gate Status}{241}{section.M.4}%
+\contentsline {chapter}{\numberline {n}Defense Lock Templates}{245}{appendix.N}%
+\contentsline {section}{\numberline {n.1}Three-Minute Elevator Pitch}{245}{section.N.1}%
+\contentsline {section}{\numberline {n.2}Anticipated Examiner Questions and Responses}{246}{section.N.2}%
+\contentsline {section}{\numberline {n.3}Slide Structure Outline (20 Slides)}{247}{section.N.3}%
+\contentsline {chapter}{\numberline {o}Claim Scope and Citation Policy}{249}{appendix.O}%
+\contentsline {section}{\numberline {o.1}Scope of Validity}{249}{section.O.1}%
+\contentsline {section}{\numberline {o.2}Assumptions That Limit Generalizability}{250}{section.O.2}%
+\contentsline {section}{\numberline {o.3}Claims NOT Made}{250}{section.O.3}%
+\contentsline {section}{\numberline {o.4}Citation Policy for Empirical Numbers}{251}{section.O.4}%
+\contentsline {section}{\numberline {o.5}Reproducibility Contract}{251}{section.O.5}%
+\contentsline {chapter}{\numberline {p}Battery Gap Hardening Synthesis}{253}{appendix.P}%
+\contentsline {section}{\numberline {p.1}Hardening Checklist}{253}{section.P.1}%
+\contentsline {section}{\numberline {p.2}Artifact Locations}{254}{section.P.2}%
+\contentsline {section}{\numberline {p.3}Lock Manifests}{254}{section.P.3}%
+\contentsline {chapter}{\numberline {q}Editorial Integration and Locking Protocol}{255}{appendix.Q}%
+\contentsline {section}{\numberline {q.1}CSV-to-LaTeX Table Mapping}{255}{section.Q.1}%
+\contentsline {section}{\numberline {q.2}Figure Generation Pipeline}{255}{section.Q.2}%
+\contentsline {section}{\numberline {q.3}Version Control Protocol}{256}{section.Q.3}%
+\contentsline {section}{\numberline {q.4}Pre-Submission Checklist (14 Items)}{256}{section.Q.4}%
+\contentsline {section}{\numberline {q.5}Final Lock Procedure}{257}{section.Q.5}%
+\contentsline {subsection}{\numberline {q.5.1}Reproducibility Lock JSON Schema}{258}{subsection.Q.5.1}%
+\contentsline {chapter}{\numberline {r}Locked Artifact Hash Registry}{259}{appendix.R}%
+\contentsline {chapter}{\numberline {s}Claim-to-Evidence and Coverage Registers}{262}{appendix.S}%
+\contentsline {section}{\numberline {s.1}Primary Claim Matrix}{262}{section.S.1}%
+\contentsline {section}{\numberline {s.2}Theorem and Chapter Register}{264}{section.S.2}%
+\contentsline {section}{\numberline {s.3}Chapter Coverage Register}{266}{section.S.3}%
+\contentsline {section}{\numberline {s.4}Full Claim--Evidence Matrix}{269}{section.S.4}%
+\contentsline {chapter}{\numberline {t}CertOS Artifact Audit}{271}{appendix.T}%
+\contentsline {section}{\numberline {t.1}Artifact Bundle}{271}{section.T.1}%
+\contentsline {section}{\numberline {t.2}Lifecycle Counts by Status}{272}{section.T.2}%
+\contentsline {section}{\numberline {t.3}Certificate Field Schema}{272}{section.T.3}%
+\contentsline {section}{\numberline {t.4}Audit Ledger Record Format}{272}{section.T.4}%
+\contentsline {section}{\numberline {t.5}Latency and Recovery Audit}{272}{section.T.5}%
+\contentsline {section}{\numberline {t.6}Bounded Second-Domain Runtime Surface}{273}{section.T.6}%
+\contentsline {chapter}{\numberline {u}Full CertOS Lifecycle Log}{275}{appendix.U}%
+\contentsline {chapter}{\numberline {v}Active-Probing Battery Audit}{279}{appendix.V}%
+\contentsline {section}{\numberline {v.1}Battery Threat Model}{279}{section.V.1}%
+\contentsline {section}{\numberline {v.2}Locked Detection Package}{279}{section.V.2}%
+\contentsline {section}{\numberline {v.3}Detection Results}{280}{section.V.3}%
+\contentsline {section}{\numberline {v.4}Battery-Operational Meaning}{280}{section.V.4}%
+\contentsline {section}{\numberline {v.5}Bounded Interpretation}{280}{section.V.5}%
+\contentsline {chapter}{\numberline {w}Portability Context and Research Roadmap}{281}{appendix.W}%
+\contentsline {section}{\numberline {w.1}From Battery Adapter to a Portable Runtime Pattern}{281}{section.W.1}%
+\contentsline {section}{\numberline {w.2}Adapter Mapping}{282}{section.W.2}%
+\contentsline {section}{\numberline {w.3}What Changes by Domain}{282}{section.W.3}%
+\contentsline {section}{\numberline {w.4}What the Repo Already Contains}{282}{section.W.4}%
+\contentsline {section}{\numberline {w.5}Leaderboards as Portability Evidence, Not Dominance Evidence}{282}{section.W.5}%
+\contentsline {section}{\numberline {w.6}Research Roadmap}{283}{section.W.6}%
+\contentsline {section}{\numberline {w.7}Deployment Sequence}{283}{section.W.7}%
+\contentsline {section}{\numberline {w.8}Why This Appendix Exists}{284}{section.W.8}%
+\contentsline {chapter}{\numberline {x}Full Locked DE Runtime Trace}{285}{appendix.X}%
+\contentsline {chapter}{\numberline {y}Full Locked US Runtime Trace}{290}{appendix.Y}%
+\contentsline {chapter}{\numberline {z}Theorem and Paper-Sync Registers}{294}{appendix.Z}%
+\contentsline {section}{\numberline {z.1}Chapter-Theorem Traceability}{294}{section.Z.1}%
+\contentsline {section}{\numberline {z.2}Paper-Thesis Coverage Map}{295}{section.Z.2}%
+\contentsline {chapter}{\numberline {aa}Release Manifest and Artifact Traceability}{298}{appendix.Alph27}%
+\contentsline {section}{\numberline {aa.1}Artifact Traceability Table}{298}{section.Alph27.1}%
+\contentsline {section}{\numberline {aa.2}Governed Release Manifest}{298}{section.Alph27.2}%
+\contentsline {chapter}{\numberline {ab}Hardware-in-the-Loop Fault Response Log}{303}{appendix.Alph28}%
+\contentsline {chapter}{\numberline {ac}Integrated Theorem Surface Register}{307}{appendix.Alph29}%
+\contentsline {chapter}{References}{321}{appendix*.212}%
+\contentsline {chapter}{Extended Reading and Index}{324}{appendix*.214}%

@@ -95,7 +95,8 @@ class HealthcareTrackAdapter(BenchmarkAdapter):
             obs["spo2_pct"] = obs["spo2_pct"] + fault.get("magnitude", 0)
         elif kind == "noise" and "spo2_pct" in obs:
             sigma = fault.get("sigma", 3.0)
-            assert self._rng is not None
+            if self._rng is None:
+                raise RuntimeError("HealthcareTrackAdapter.reset() must be called before observe()")
             obs["spo2_pct"] = obs["spo2_pct"] + float(self._rng.normal(0, sigma))
         elif kind == "stuck_sensor" and "spo2_pct" in obs:
             obs["spo2_pct"] = fault.get("frozen_value", 95.0)

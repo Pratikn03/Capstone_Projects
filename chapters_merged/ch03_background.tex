@@ -1,0 +1,969 @@
+\chapter{System Context and Safety Distinctions}
+\label{ch:ch03_background}
+
+% --- Merged from ch05_orius_system_context.tex ---
+
+\section{ORIUS System Context}
+\label{ch:orius-context}
+
+Grid-scale battery energy storage systems (BESS) sit at the intersection of
+three economic forces: variable renewable generation that must be absorbed,
+load profiles that demand dispatchable power on sub-hourly timescales, and
+wholesale markets that price energy at volatile clearing rates.  This chapter
+positions the ORIUS framework within that operational context, traces the
+closed decision loop from forecast to measurement, and identifies the
+\emph{Optimize--Dispatch boundary} as the location where observation quality
+most directly threatens safety.
+
+% ----------------------------------------------------------------
+\subsection{Why Grid-Scale Batteries Matter}
+
+The penetration of wind and solar generation has transformed balancing-area
+operations.  In 2024 the ERCOT interconnection recorded negative real-time
+prices for 18\% of daytime hours, while evening ramp rates exceeded
+12\,GW\,h$^{-1}$ on 37 days.  Grid-scale batteries absorb these mismatches:
+they charge when marginal cost is low, discharge when it is high, and provide
+ancillary services (frequency regulation, spinning reserve) that stabilise the
+grid during transients.
+
+Three properties distinguish BESS from conventional peakers:
+\begin{enumerate}
+  \item \textbf{Bidirectional power flow.}  A 100\,MW / 400\,MWh installation
+    can charge or discharge at full rate within seconds, making it a
+    controllable load \emph{and} a controllable generator.
+  \item \textbf{State-of-charge coupling.}  Every dispatch decision at time~$t$
+    constrains the feasible set at time~$t+1$ through the SOC dynamics.  The
+    controller cannot treat time steps independently.
+  \item \textbf{Degradation risk.}  Deep cycling, high C-rates, and
+    over-voltage operation accelerate cell ageing.  Safety envelopes are
+    therefore both \emph{hard} (BMS trip thresholds) and \emph{soft}
+    (warranty-preserving SOC margins).
+\end{enumerate}
+
+These properties mean that dispatch quality depends not only on forecast
+accuracy but on the fidelity of the real-time observation that informs each
+control step.
+
+% ----------------------------------------------------------------
+\subsection{ORIUS as a Closed Decision Loop}
+
+The ORIUS system implements a five-stage closed loop:
+
+\[
+  \underbrace{\text{Forecast}}_{\hat{y}_{t+1:t+H}}
+  \;\longrightarrow\;
+  \underbrace{\text{Optimize}}_{a_t^\star}
+  \;\longrightarrow\;
+  \underbrace{\text{Dispatch}}_{a_t^{\mathrm{exec}}}
+  \;\longrightarrow\;
+  \underbrace{\text{Measure}}_{\tilde{z}_t}
+  \;\longrightarrow\;
+  \underbrace{\text{Monitor}}_{\mathcal{C}_t}
+  \;\longrightarrow\;
+  \text{(next cycle)}
+\]
+
+\begin{description}
+  \item[Forecast.]  A model family $\mathcal{F}$ produces point forecasts and
+    prediction intervals for load, wind, solar, and price over a rolling
+    horizon $H$ (typically 24--48\,h at hourly resolution).
+
+  \item[Optimize.]  A dispatch optimiser receives the forecast distribution
+    and the current SOC estimate, then solves a constrained programme to
+    produce a candidate action $a_t^\star = (\text{charge}_t,
+    \text{discharge}_t)$.
+
+  \item[Dispatch.]  The candidate action is checked against safety constraints
+    (SOC bounds, ramp limits, BMS thresholds).  If the action is feasible it
+    is forwarded to the battery management system; otherwise it is repaired to
+    the nearest safe action $a_t^{\mathrm{safe}}$.
+
+  \item[Measure.]  Operational telemetry $\tilde{z}_t$ returns from the plant:
+    actual SOC, terminal voltage, cell temperatures, grid-side power meter
+    readings.  This measurement may be delayed, dropped, corrupted, or stale.
+
+  \item[Monitor.]  A certificate $\mathcal{C}_t$ records the action taken, the
+    observation quality score, the interval width, and whether the step passed
+    all safety invariants.  The certificate feeds the next forecast cycle and
+    is archived for audit.
+\end{description}
+
+% ----------------------------------------------------------------
+\subsection{The Optimize--Dispatch Boundary as the True Risk Location}
+
+Not all stages of the loop carry equal risk.  A forecast error at
+$t + 12$\,h can be corrected by re-optimisation at $t + 1$; a measurement
+delay at the \emph{Measure} stage is visible to the \emph{Monitor} and can
+trigger a conservative hold.  The highest-risk transition is the
+\textbf{Optimize $\to$ Dispatch} boundary, for three reasons:
+
+\begin{enumerate}
+  \item \textbf{Commitment.}  Once the BMS receives a power setpoint, the
+    battery executes it within milliseconds.  The action is irreversible on the
+    control-cycle timescale.
+  \item \textbf{Observation dependence.}  The optimiser's candidate~$a_t^\star$
+    is conditioned on the most recent observation~$\tilde{z}_{t-1}$.  If that
+    observation is stale or corrupted, the candidate may lie outside the true
+    feasible set without any visible warning.
+  \item \textbf{Constraint coupling.}  An unsafe action at time~$t$ shifts the
+    SOC into a region that may render \emph{all} future actions infeasible
+    until a recovery period elapses (the ``SOC trap'').
+\end{enumerate}
+
+The DC3S adapter (Chapter~\ref{ch:dc3s-adapter}) is positioned precisely at
+this boundary: it intercepts~$a_t^\star$, inflates the uncertainty set to
+account for observation degradation, and projects the action into the
+tightened safe set before it reaches the BMS.
+
+% ----------------------------------------------------------------
+\subsection{Operational Telemetry Pathways}
+
+Telemetry in a grid-scale BESS traverses multiple communication layers before
+reaching the dispatch controller:
+
+\begin{enumerate}
+  \item \textbf{Cell-level sensors} (voltage, temperature, current) report to
+    the Battery Management System (BMS) over CAN bus at 1--10\,Hz.
+  \item \textbf{BMS aggregation} computes pack-level SOC, state-of-health
+    (SOH), and thermal limits, then publishes to the site SCADA at 1\,Hz.
+  \item \textbf{SCADA gateway} relays readings to the Energy Management System
+    (EMS) via Modbus/TCP or IEC~61850.  This link is typically on-site LAN
+    with sub-second latency.
+  \item \textbf{Cloud telemetry} streams from the EMS to the dispatch
+    controller (ORIUS) over cellular, fibre, or satellite uplink.  This
+    link is the primary source of packet loss, delay jitter, and reordering.
+  \item \textbf{Grid-side meters} (revenue meters, PMUs) provide independent
+    power and frequency measurements at 4\,s or sub-second resolution.
+\end{enumerate}
+
+Each hop introduces a distinct failure mode: CAN bus saturation at high
+C-rates, SCADA gateway reboot during firmware updates, cellular dropout during
+storms, and satellite latency during congestion.  The telemetry fault taxonomy
+used in CPSBench (Chapter~\ref{ch:cpsbench}) mirrors these real failure modes.
+
+% ----------------------------------------------------------------
+\subsection{Why Measurement Quality Enters the Control Problem}
+
+Classical dispatch formulations assume that the controller observes the true
+state~$z_t$ at each step.  In practice the controller observes a degraded
+version~$\tilde{z}_t$ that may differ from~$z_t$ in timing, magnitude, or
+completeness.  The gap between $z_t$ and $\tilde{z}_t$ has three consequences
+for safety:
+
+\begin{enumerate}
+  \item \textbf{SOC estimation error.}  If the reported SOC is stale by
+    $\Delta t$ steps, the true SOC has drifted by up to
+    $P_{\max} \cdot \Delta t / E_{\mathrm{cap}}$ in normalised units, where
+    $P_{\max}$ is the rated power and $E_{\mathrm{cap}}$ the nameplate energy.
+  \item \textbf{Forecast conditioning error.}  The most recent load and
+    renewables readings condition the next forecast window.  Corrupted readings
+    propagate into biased intervals, undermining conformal coverage guarantees.
+  \item \textbf{Constraint tightening mismatch.}  A robust optimiser that
+    tightens constraints based on \emph{assumed} interval width may
+    under-tighten if the true observation quality is worse than assumed, or
+    over-tighten if quality is better, sacrificing economic value.
+\end{enumerate}
+
+The central thesis of this dissertation is that measurement quality must be
+\emph{explicitly scored and fed back} into the uncertainty set at each control
+step.  The observation quality estimator (OQE, Chapter~\ref{ch:dc3s-adapter})
+and the reliability-adaptive conformal certificate (RAC-Cert) implement this
+feedback loop.
+
+% ----------------------------------------------------------------
+\subsection{Chapter Summary}
+
+This chapter established the ORIUS system as a five-stage closed decision
+loop---Forecast, Optimize, Dispatch, Measure, Monitor---operating over
+grid-scale battery storage.  The Optimize--Dispatch boundary was identified as
+the highest-risk transition because actions are irreversible, observation-dependent,
+and coupled through SOC dynamics.  Telemetry traverses multiple communication
+layers, each introducing distinct degradation modes.  Because measurement
+quality directly affects SOC estimation, forecast conditioning, and constraint
+tightening, it must enter the control formulation as a first-class variable.
+The remainder of Part~II develops the mathematical machinery to accomplish this.
+
+
+% --- Merged from ch06_data_telemetry_scope.tex ---
+
+\section{Data, Telemetry, and Dataset Scope}
+\label{ch:data-telemetry}
+
+Every empirical claim in this dissertation rests on two locked dataset
+surfaces: the Germany OPSD archive and the United States EIA-930 feed.  This
+chapter documents the signals, their provenance, the telemetry pathways
+through which they enter the ORIUS loop, and the fault modes that make
+degraded observation an ordinary operating condition rather than an edge case.
+
+% ----------------------------------------------------------------
+\subsection{Germany and United States Dataset Surface}
+
+The ORIUS evaluation spans two geographically and regulatorily distinct
+power systems.
+
+\paragraph{Germany (OPSD).}
+The Open Power System Data platform aggregates hourly generation, load, and
+day-ahead price series from ENTSO-E and the German TSOs.  The locked dataset
+covers 2018-10-07 to 2020-09-30 (17\,377 hourly rows), with four primary
+targets: \texttt{load\_mw}, \texttt{wind\_mw}, \texttt{solar\_mw}, and
+\texttt{price\_eur\_mwh}.  Weather covariates (temperature, irradiance, wind
+speed) are sourced from the Open-Meteo archive API and joined on UTC
+timestamp.  The full feature matrix contains 94 engineered columns after
+calendar encoding and lag construction.
+
+\paragraph{United States (EIA-930).}
+The U.S.\ Energy Information Administration Form~930 provides hourly
+demand and net generation by source for each balancing authority.  Three
+regions are retained:
+
+\begin{table}[ht]
+\centering
+\caption{Dataset cards for the locked evaluation surfaces.  Source:
+\texttt{reports/publication/dataset\_cards.csv}.}
+\label{tab:dataset-cards}
+\begin{tabular}{llrrrl}
+\toprule
+\textbf{Key} & \textbf{Region} & \textbf{Rows} & \textbf{Features} &
+  \textbf{Coverage} & \textbf{Period} \\
+\midrule
+DE       & Germany (OPSD)    & 17\,377 & 94  & 100\% & 2018-10 to 2020-09 \\
+US\_ERCOT & USA (EIA-930)    & 13\,453 & 62  & 100\% & 2024-07 to 2026-01 \\
+US\_MISO  & USA (EIA-930)    & 13\,638 & 114 & 100\% & 2024-07 to 2026-01 \\
+US\_PJM   & USA (EIA-930)    & 13\,639 & 62  & 100\% & 2024-07 to 2026-01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Weather covariates for US regions are likewise obtained from Open-Meteo.
+Carbon intensity is estimated from the SMARD generation mix (DE) or a
+proxy generation-mix model (US).
+
+% ----------------------------------------------------------------
+\subsection{Forecast Targets and Operational Channels}
+
+Each dataset surface exposes three operational forecast targets:
+
+\begin{description}
+  \item[\texttt{load\_mw}] Net system load (total demand minus behind-the-meter
+    solar), measured at the transmission level.  This is the primary signal for
+    arbitrage scheduling.
+  \item[\texttt{wind\_mw}] Aggregate onshore and offshore wind generation.
+    Wind exhibits high variance and heavy tails, particularly during storm
+    fronts, making calibration challenging.
+  \item[\texttt{solar\_mw}] Aggregate photovoltaic generation.  Solar follows a
+    deterministic diurnal envelope modulated by cloud cover; residual
+    uncertainty is sharply bimodal (clear vs.\ overcast).
+\end{description}
+
+A fourth target, \texttt{price\_eur\_mwh} (DE only), drives the economic
+objective in the dispatch optimiser.  For US regions, a simplified tariff
+schedule or locational marginal price proxy is used.
+
+All targets are sampled at hourly resolution and aligned to UTC.  The forecast
+horizon is $H = 48$\,h with a stride of 1\,h, yielding a rolling-origin
+evaluation with 168 test windows per week.
+
+% ----------------------------------------------------------------
+\subsection{Observed Telemetry Versus Truth Trajectory}
+
+A central design choice in ORIUS is the separation of \emph{truth state}
+and \emph{observed state}.  At every control step~$t$:
+
+\begin{itemize}
+  \item The \textbf{truth trajectory} $\{z_t\}$ records what actually happened
+    at the plant: the true SOC, the true net load, the true renewable
+    generation.  This trajectory is never available to the controller in real
+    time; it is logged by the CPSBench harness for post-hoc evaluation.
+  \item The \textbf{observed trajectory} $\{\tilde{z}_t\}$ is what the
+    controller actually sees after telemetry faults have been applied.  It may
+    contain dropped readings (NaN), delayed values, sensor spikes, stale
+    repetitions, or drifted baselines.
+\end{itemize}
+
+The gap $\|z_t - \tilde{z}_t\|$ is the observation error.  All safety metrics
+(TSVR, severity) are computed on the truth trajectory, while the controller's
+decisions are computed on the observed trajectory.  This dual-trajectory
+architecture is the foundation of the CPSBench evaluation protocol
+(Chapter~\ref{ch:cpsbench}).
+
+% ----------------------------------------------------------------
+\subsection{Missingness, Corruption, and Signal Degradation}
+
+Telemetry faults fall into six categories, each modelled by a corresponding
+CPSBench fault injector:
+
+\begin{table}[ht]
+\centering
+\caption{Telemetry fault taxonomy and operational causes.}
+\label{tab:fault-taxonomy}
+\begin{tabular}{lll}
+\toprule
+\textbf{Fault type} & \textbf{Mechanism} & \textbf{Field cause} \\
+\midrule
+Dropout       & Packet loss (NaN)       & Cellular dropout, gateway reboot \\
+Delay jitter  & Arrival-time shift      & Network congestion, buffering \\
+Spike         & Multiplicative outlier  & Sensor transient, ADC overflow \\
+Stale sensor  & Frozen reading          & Firmware hang, watchdog failure \\
+Drift         & Slow baseline shift     & Sensor ageing, calibration decay \\
+Reorder       & Out-of-sequence packets & UDP path diversity, queue inversion \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+These fault types are not mutually exclusive.  The \texttt{drift\_combo}
+scenario in CPSBench applies all six simultaneously at configurable severity,
+representing a worst-case but operationally plausible field condition.
+
+% ----------------------------------------------------------------
+\subsection{Why Telemetry Faults Are Ordinary, Not Edge Cases}
+
+Field data from commercial BESS installations suggests that telemetry
+degradation is the norm rather than the exception:
+
+\begin{itemize}
+  \item Cellular uplinks in rural wind-farm sites experience 2--8\% packet
+    loss during normal operation, rising to 15--25\% during severe weather.
+  \item SCADA gateway reboots occur 1--3 times per month, each causing a
+    30--90\,s telemetry blackout.
+  \item Sensor drift in current transducers accumulates at 0.1--0.5\% of
+    full-scale per year, enough to bias SOC estimates by 2--5\,MWh on a
+    100\,MW/400\,MWh system within six months.
+  \item Firmware updates on BMS controllers occasionally freeze individual
+    cell-group readings for minutes until the watchdog timer resets the
+    reporting thread.
+\end{itemize}
+
+A safety framework that assumes clean telemetry is therefore unsafe by
+construction.  The ORIUS evaluation treats faulted telemetry as the
+\emph{default} operating condition and clean telemetry as a special case
+(the \texttt{nominal} scenario with zero fault injection).
+
+% ----------------------------------------------------------------
+\subsection{Artifact Contracts and Profile Lock}
+
+Each dataset surface is frozen at a specific commit hash and validated by a
+reproducibility contract:
+
+\begin{enumerate}
+  \item \textbf{Row-count invariant.}  The ingestion pipeline asserts that
+    the row count matches the locked value in
+    \texttt{reports/publication/dataset\_cards.csv}.
+  \item \textbf{Column schema.}  The feature matrix schema (column names,
+    dtypes, nullable flags) is checked against a frozen JSON schema at
+    pipeline entry.
+  \item \textbf{Target coverage.}  All three forecast targets must have
+    100\% non-null coverage in the locked period.  Any gap causes the pipeline
+    to abort with a traceable error.
+  \item \textbf{Hash verification.}  The SHA-256 hash of the serialised
+    Parquet file is compared to the locked value before any model training or
+    evaluation proceeds.
+\end{enumerate}
+
+These contracts ensure that no drift in upstream data sources can silently
+invalidate the empirical results.
+
+% ----------------------------------------------------------------
+\subsection{Scope Boundary}
+
+The dataset scope of this dissertation is intentionally bounded:
+
+\begin{itemize}
+  \item \textbf{Included:} hourly bulk-power system signals (load, wind,
+    solar, price) for four regions across two continents.
+  \item \textbf{Excluded:} sub-hourly (5-min, 1-min) data, distribution-level
+    signals, behind-the-meter solar, demand response, and frequency regulation
+    signals.
+  \item \textbf{Rationale:} the hourly resolution matches the natural
+    arbitrage cycle of 2--4\,h duration storage and aligns with the temporal
+    granularity of conformal calibration windows.
+\end{itemize}
+
+Extending the framework to sub-hourly resolution is discussed in
+Chapter~\ref{ch:orius-bench-battery} as part of the benchmark roadmap.
+
+% ----------------------------------------------------------------
+\subsection{Chapter Summary}
+
+This chapter documented the two dataset surfaces (Germany OPSD and US EIA-930)
+that underpin every empirical result, the three forecast targets (\texttt{load\_mw},
+\texttt{wind\_mw}, \texttt{solar\_mw}), and the six telemetry fault types that
+degrade observations between the plant and the controller.  The dual-trajectory
+architecture---truth state versus observed state---was introduced as the
+foundation for safety evaluation.  Artifact contracts and hash-locked profiles
+ensure reproducibility.  Telemetry faults are treated as ordinary operating
+conditions, not edge cases, motivating the observation-aware machinery
+developed in the following chapters.
+
+
+% --- Merged from ch04_observed_state_safety_illusion.tex ---
+
+\section{The Observed-State Safety Illusion}
+\label{ch:safety-illusion}
+
+A battery controller that checks constraints only against its own
+observations will, by construction, never detect a violation it cannot
+see.  This chapter formalises the \emph{observed-state safety illusion},
+shows how it arises in the ORIUS dispatch loop, explains why neither
+better forecasting nor tighter optimisation can resolve it, and introduces
+the dual-trajectory evaluation paradigm that makes the illusion visible.
+
+\subsection{From Partial Observability to Safety Illusion}
+
+Partial observability is a well-studied concept in control theory and
+reinforcement learning.  A partially observable Markov decision process
+(POMDP) acknowledges that the agent sees a noisy or incomplete projection
+of the true state and plans accordingly, typically via belief-state
+updates.  The safety illusion arises when the agent \emph{does not plan
+accordingly}---when the controller treats its observation as ground truth
+and evaluates constraints against it without accounting for observation
+quality.
+
+In a POMDP with a well-calibrated belief, the agent maintains a
+distribution over true states and can compute the worst-case constraint
+satisfaction probability.  In practice, battery dispatch controllers do
+not maintain belief distributions; they receive a point estimate
+$\hat{x}_t$ from the SCADA system and optimise against it.  The gap
+between the POMDP ideal and the deployed reality is the source of the
+illusion.
+
+
+\subsection{Why the Illusion Arises in the ORIUS Loop}
+
+\subsubsection{The Optimise-to-Dispatch Boundary}
+
+As described in Chapter~\ref{ch:problem-formulation}, the ORIUS loop
+has a clear boundary between the optimiser and the dispatcher.  The
+optimiser solves~\eqref{eq:dispatch-obj} on the observed state and
+produces a candidate action~$a_t^{\star}$.  The dispatcher (in the
+baseline case) forwards this action to the plant without modification.
+
+Both the optimiser and the baseline dispatcher operate on
+$\hat{x}_t$.  The safety constraints
+\[
+  \mathrm{SOC}_{\min} \;\le\;
+  \widehat{\mathrm{SOC}}_t + \frac{\eta_c [a_t]^{+} - [a_t]^{-}/\eta_d}{E_{\max}} \cdot \Delta t
+  \;\le\; \mathrm{SOC}_{\max}
+\]
+are checked on the observed SOC.  If $\widehat{\mathrm{SOC}}_t$ over- or
+under-estimates the true SOC, the constraint check is meaningless with
+respect to physical safety.
+
+\subsubsection{Why Good Forecasting Does Not Solve It}
+
+A natural objection is: ``Improve the forecast, and the observation error
+disappears.''  This is incorrect for a fundamental reason.  The forecast
+model predicts future load, solar, and wind \emph{given current
+observations}.  If the current observation is itself degraded---a stale
+SOC reading, a dropped load packet---the forecast inherits the error.  A
+perfect forecast model with imperfect inputs produces imperfect outputs.
+
+More precisely, the forecast model learns $\mathbb{E}[Y_{t+h} \mid
+\hat{X}_t]$, not $\mathbb{E}[Y_{t+h} \mid X_t]$.  When
+$\hat{X}_t \ne X_t$, the conditional expectation is evaluated at the wrong
+conditioning point.  The resulting action is optimal for a state the plant
+does not occupy.
+
+\subsection{Formal Statement of the Illusion}
+\label{sec:formal-illusion}
+
+\begin{definition}[Observed-State Safety Illusion]
+\label{def:safety-illusion}
+Let $\hat{x}_t$ be the observed state, $x_t$ the true state, and
+$a_t$ the dispatched action.  The \emph{observed-state safety illusion}
+at time~$t$ is the conjunction of three conditions:
+\begin{enumerate}
+  \item \textbf{Observed safety:}
+    $a_t \in \mathcal{A}(\hat{x}_t)$---the action satisfies all
+    constraints when evaluated on the observation.
+  \item \textbf{True-state violation:}
+    $a_t \notin \mathcal{A}(x_t)$---the action violates at least one
+    constraint when evaluated on the truth.
+  \item \textbf{Undetectability:}
+    The controller has no mechanism to detect condition~(2) from its
+    available information $\hat{x}_t$ alone.
+\end{enumerate}
+\end{definition}
+
+Condition~(3) distinguishes the illusion from a detectable fault.  If the
+controller could infer that $\hat{x}_t$ is unreliable (e.g., via an OQE
+score), it could compensate.  The illusion is \emph{silent}: the
+controller proceeds with full confidence in a physically unsafe action.
+
+\begin{theorem}[Existence of the illusion under dropout]
+\label{thm:illusion-existence}
+Under the fault model of Section~\ref{sec:fault-model} with dropout
+rate $\rho > 0$ and last-value hold imputation, there exists a time
+step~$t$ and a deterministic LP dispatch action~$a_t$ such that the
+observed-state safety illusion (Definition~\ref{def:safety-illusion})
+holds with positive probability.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Consider a discharge phase where
+$\mathrm{SOC}_t^{\mathrm{true}} = \mathrm{SOC}_{\min} + \epsilon$ for
+small $\epsilon > 0$.  If the most recent $k$ SOC readings were dropped
+and the last-value hold reports
+$\widehat{\mathrm{SOC}}_t = \mathrm{SOC}_{\min} + \epsilon + k \cdot
+\delta$ (the SOC at the time of the last successful reading, before $k$
+discharge steps each consuming $\delta$), then the LP observes a
+comfortable margin and dispatches a further discharge~$a_t < 0$.  The
+true SOC after this action is
+$\mathrm{SOC}_{t+1}^{\mathrm{true}} = \mathrm{SOC}_{\min} + \epsilon -
+|a_t| \cdot \Delta t / (E_{\max} \cdot \eta_d) < \mathrm{SOC}_{\min}$
+for $|a_t|$ exceeding $\epsilon \cdot E_{\max} \cdot \eta_d / \Delta t$.
+The action satisfies observed constraints, violates true constraints, and
+the LP cannot detect the violation---all three conditions hold.
+\end{proof}
+
+\subsection{Battery-Domain Realisation Under Telemetry Faults}
+\label{sec:battery-narrative}
+
+\subsubsection{A Simple Battery Narrative}
+
+Consider a 100~MWh / 50~MW battery operating over 168~hours (one week)
+under the \texttt{dropout\_only} scenario at $\rho = 0.20$.
+
+\begin{enumerate}
+  \item \textbf{Hour 0--24.}  Telemetry is clean.  The deterministic LP
+    dispatches charge during solar surplus and discharge during evening
+    peak.  Observed and true SOC tracks are indistinguishable.
+  \item \textbf{Hour 25.}  A dropout burst begins: five consecutive SOC
+    readings are missing.  The last-value hold freezes
+    $\widehat{\mathrm{SOC}}$ at 55\%.
+  \item \textbf{Hour 26--28.}  The LP continues discharging against the
+    frozen observation.  True SOC falls from 55\% to 38\% to 24\%.  The
+    observed SOC remains at 55\%.
+  \item \textbf{Hour 29.}  The LP dispatches a 40~MW discharge, believing
+    SOC is 55\%.  True SOC drops to 16\%, breaching the 20\% floor.
+    Observed SOC still shows 55\%.  The illusion is complete.
+  \item \textbf{Hour 30.}  Telemetry recovers.  The LP observes SOC at
+    16\% and abruptly curtails dispatch, but the damage---an SOC
+    excursion below the safety floor---has already occurred.
+\end{enumerate}
+
+This narrative is not hypothetical.  The CPSBench harness reproduces it
+deterministically (seed 42, \texttt{dropout\_only}, $\rho = 0.20$), and
+the true-state violation is recorded in the TSVR metric.
+
+\subsection{Why Standard Evaluation Misses the Problem}
+\label{sec:standard-eval-fails}
+
+Standard battery dispatch evaluation protocols report:
+
+\begin{itemize}
+  \item Revenue or regret (economic performance).
+  \item Observed SOC constraint violations (observed safety).
+  \item Forecast accuracy (MAPE, RMSE, CRPS).
+\end{itemize}
+
+None of these metrics involve the \emph{true} SOC trajectory.  A
+controller that achieves zero observed violations can simultaneously have
+a high true-state violation rate.  The evaluation is complicit in the
+illusion: it checks safety on the same degraded observation that caused
+the unsafe action.
+
+\begin{proposition}[Insufficiency of observed-state evaluation]
+\label{prop:obs-eval-insufficient}
+For any $\mathrm{TSVR} > 0$, there exists a controller-scenario pair
+with $\mathrm{OSVR} = 0$ and the given $\mathrm{TSVR}$.  Observed-state
+evaluation is therefore \emph{insufficient} to certify physical safety.
+\end{proposition}
+
+\begin{proof}
+Take any controller $\pi$ and any fault scenario with dropout rate
+$\rho > 0$.  Since $\pi$ evaluates constraints on $\hat{x}_t$ and the
+telemetry operator preserves observed-state feasibility by construction
+(the hold value is always within bounds), $\mathrm{OSVR} = 0$.  By
+Theorem~\ref{thm:illusion-existence}, there exists a step where $a_t$
+violates true-state constraints, so $\mathrm{TSVR} > 0$.
+\end{proof}
+
+\subsection{CPSBench and Dual-Trajectory Evaluation}
+\label{sec:cpsbench-dual}
+
+To break the illusion, we introduce the \emph{dual-trajectory} evaluation
+paradigm implemented in the CPSBench harness.  At each step~$t$, the
+harness maintains two parallel state machines:
+
+\begin{enumerate}
+  \item \textbf{Observed trajectory.}  The SOC evolution computed from
+    the action~$a_t$ and the observed state~$\hat{x}_t$, using the
+    dynamics~\eqref{eq:soc-dynamics} with $\widehat{\mathrm{SOC}}_t$ as
+    the initial condition.
+  \item \textbf{True trajectory.}  The SOC evolution computed from the
+    \emph{same} action~$a_t$ but with the true
+    state~$\mathrm{SOC}_t^{\mathrm{true}}$ as the initial condition.
+\end{enumerate}
+
+The true trajectory is never visible to the controller; it is maintained
+solely for evaluation.  This separation is critical: the controller
+cannot ``cheat'' by observing the truth, and the evaluator cannot be
+fooled by the observation.
+
+\begin{definition}[True-State Violation Rate (TSVR)]
+\label{def:tsvr}
+\[
+  \mathrm{TSVR} \;=\; \frac{1}{T} \sum_{t=1}^{T}
+  \mathbf{1}\!\Bigl[\,
+    \mathrm{SOC}_{t}^{\mathrm{true}} < \mathrm{SOC}_{\min}
+    \;\;\text{or}\;\;
+    \mathrm{SOC}_{t}^{\mathrm{true}} > \mathrm{SOC}_{\max}
+  \,\Bigr].
+\]
+\end{definition}
+
+\begin{definition}[Intervention Rate (IR)]
+\label{def:ir}
+\[
+  \mathrm{IR} \;=\; \frac{1}{T} \sum_{t=1}^{T}
+  \mathbf{1}\!\bigl[\,a_t^{\mathrm{safe}} \ne a_t^{\star}\,\bigr],
+\]
+where $a_t^{\star}$ is the optimiser's proposed action and
+$a_t^{\mathrm{safe}}$ is the action actually dispatched after the
+DC3S shield.
+\end{definition}
+
+The dual-trajectory architecture enables unambiguous attribution: every
+true-state violation is traceable to a specific action, a specific
+observation error, and a specific gap between $\hat{x}_t$ and $x_t$.
+
+\subsection{Why the Illusion Demands a Runtime Shield}
+\label{sec:shield-motivation}
+
+The illusion cannot be resolved at the optimiser level for two reasons:
+
+\begin{enumerate}
+  \item \textbf{Information asymmetry.}  The optimiser has access only to
+    $\hat{x}_t$.  Without a reliability signal, it cannot distinguish
+    clean telemetry from degraded telemetry.  Any fixed margin it
+    applies will be either too conservative (wasting revenue when
+    telemetry is clean) or too aggressive (missing violations when
+    telemetry degrades).
+  \item \textbf{Separation of concerns.}  The optimiser's objective is
+    economic; the safety layer's objective is physical.  Mixing the two
+    creates Pareto conflicts that are better resolved by a dedicated
+    post-optimiser shield.  The shield can adapt its tightening in
+    real time based on the OQE score, something a batch optimiser
+    solved minutes ago cannot do.
+\end{enumerate}
+
+The DC3S shield resolves the illusion by introducing an
+\emph{observation-quality-aware} constraint tightening that operates at
+the dispatch boundary.  The shield does not replace the optimiser; it
+corrects the optimiser's blind spot.
+
+\begin{theorem}[DC3S Feasibility Guarantee]
+\label{thm:dc3s-informal}
+Let $\alpha \in (0,1)$ be the conformal miscoverage level, $n$ the
+calibration-set size, and $\bar{w} = T^{-1}\sum_{t=1}^T w_t$ the
+episode-mean reliability score.  Under Assumptions~A1, A2, A3, and~A5,
+the DC3S shield with conformal quantile $\hat{q}_\alpha$ inflated by
+$1/w_t$ satisfies, for any finite episode of $T$ steps:
+\[
+  \mathrm{TSVR} \;\le\; \alpha\,(1 - \bar{w}) \;+\; \varepsilon_n,
+\]
+where $\varepsilon_n = O(1/\sqrt{n})$ is the finite-sample calibration
+correction term.  In particular:
+\begin{enumerate}
+  \item At $\bar{w} = 1$ (perfect telemetry) and large $n$:
+    $\mathrm{TSVR} \to 0$.
+  \item At $\bar{w} < 1$ (degraded telemetry): the bound is
+    proportional to the mean reliability gap $(1 - \bar{w})$.
+  \item As $n \to \infty$: $\varepsilon_n \to 0$ and the bound
+    converges to the episode-mean reliability term exactly.
+\end{enumerate}
+This result is the single-episode analogue of Theorem~T3
+(ORIUS Core Bound, Chapter~\ref{ch:core-bound}), which proves
+$\mathbb{E}[V] \le \alpha(1-\bar{w})T$ in expectation over episodes.
+\end{theorem}
+
+The formal version of this theorem, with precise assumptions and a
+complete proof, is developed in subsequent chapters.
+
+\subsection{Chapter Summary}
+
+The observed-state safety illusion is the mechanism by which the OASG
+operates in practice: a controller evaluates constraints on a degraded
+observation, concludes the system is safe, and dispatches an action that
+is physically unsafe.  The illusion is invisible to any evaluation
+protocol that checks constraints on the observed trajectory only.  The
+dual-trajectory architecture of CPSBench makes the illusion visible, and
+the DC3S runtime shield makes it preventable.  The remainder of the
+dissertation develops the shield, proves its guarantees, and validates
+them empirically across US and German grid data under the full fault model
+of Chapter~\ref{ch:problem-formulation}.
+
+
+% --- Merged from ch07_battery_dynamics_dispatch.tex ---
+
+\section{Battery Dynamics and Dispatch Problem}
+\label{ch:battery-dynamics}
+
+This chapter formalises the state-space model of a grid-scale battery energy
+storage system (BESS), derives the dispatch optimisation programme, and
+shows how observation uncertainty enlarges the feasible set in ways that
+classical deterministic formulations cannot capture.
+
+% ----------------------------------------------------------------
+\subsection{Battery State Variables}
+
+The BESS plant is characterised by the following state and parameter
+variables at each hourly time step~$t$:
+
+\begin{table}[ht]
+\centering
+\caption{Battery state and parameter variables.}
+\label{tab:battery-vars}
+\begin{tabular}{cll}
+\toprule
+\textbf{Symbol} & \textbf{Name} & \textbf{Units / Range} \\
+\midrule
+$E_t$          & State of charge (energy)      & MWh, $[0, E_{\max}]$ \\
+$P_t^{+}$     & Charge power                  & MW,  $[0, P_{\max}^{+}]$ \\
+$P_t^{-}$     & Discharge power               & MW,  $[0, P_{\max}^{-}]$ \\
+$\eta^{+}$    & Charge efficiency              & dimensionless, $(0,1]$ \\
+$\eta^{-}$    & Discharge efficiency           & dimensionless, $(0,1]$ \\
+$E_{\max}$    & Nameplate energy capacity      & MWh \\
+$P_{\max}$    & Rated power (symmetric)        & MW \\
+$R_{\max}$    & Maximum ramp rate              & MW\,h$^{-1}$ \\
+$\mathrm{SOC}_t$ & Normalised SOC, $E_t / E_{\max}$ & $[0, 1]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For the ORIUS reference plant the nameplate parameters are
+$E_{\max} = 10\,000$\,MWh, $P_{\max} = 200$\,MW, $\eta^{+} = \eta^{-} = 0.95$,
+and $R_{\max} = P_{\max}$ (no additional ramp constraint beyond rated power).
+Soft SOC margins are enforced at $[\mathrm{SOC}_{\min}, \mathrm{SOC}_{\max}]
+= [0.05, 0.95]$; hard BMS trips occur at $[0.0, 1.0]$.
+
+% ----------------------------------------------------------------
+\subsection{SOC Dynamics}
+\label{sec:soc-dynamics}
+
+The energy balance over one time step ($\Delta t = 1$\,h) is:
+\begin{equation}
+\label{eq:soc-dynamics-battery}
+  E_{t+1} = E_t + \eta^{+}\,P_t^{+}\,\Delta t
+                 - \frac{P_t^{-}}{\eta^{-}}\,\Delta t.
+\end{equation}
+In normalised form:
+\begin{equation}
+\label{eq:soc-normalised}
+  \mathrm{SOC}_{t+1} = \mathrm{SOC}_t
+    + \frac{\eta^{+}\,P_t^{+} - P_t^{-}/\eta^{-}}{E_{\max}}\,\Delta t.
+\end{equation}
+This is a deterministic, linear transition---the stochasticity enters through
+the \emph{observation} of $E_t$ (which may be stale or corrupted) and through
+the forecast of external signals that drive the optimiser's choice of
+$(P_t^{+}, P_t^{-})$.
+
+% ----------------------------------------------------------------
+\subsection{Power, Ramp-Rate, and SOC Constraints}
+\label{sec:constraints}
+
+The feasible action set at time~$t$ is defined by the following constraints:
+
+\paragraph{Power bounds.}
+\begin{equation}
+\label{eq:power-bounds}
+  0 \le P_t^{+} \le P_{\max}^{+}, \qquad
+  0 \le P_t^{-} \le P_{\max}^{-}.
+\end{equation}
+
+\paragraph{Mutual exclusion.}
+Simultaneous charge and discharge is prohibited:
+\begin{equation}
+\label{eq:mutual-exclusion}
+  P_t^{+} \cdot P_t^{-} = 0.
+\end{equation}
+In the LP relaxation this is enforced via a binary indicator or by solving
+separate charge and discharge sub-problems and selecting the dominant mode.
+
+\paragraph{Ramp-rate limits.}
+\begin{equation}
+\label{eq:ramp-limits}
+  |P_t^{+} - P_{t-1}^{+}| \le R_{\max}\,\Delta t, \qquad
+  |P_t^{-} - P_{t-1}^{-}| \le R_{\max}\,\Delta t.
+\end{equation}
+
+\paragraph{SOC bounds.}
+\begin{equation}
+\label{eq:soc-bounds}
+  E_{\min} \le E_{t+1} \le E_{\max},
+\end{equation}
+where $E_{\min} = \mathrm{SOC}_{\min} \cdot E_{\max}$ and similarly for the
+upper bound.  Substituting the dynamics~\eqref{eq:soc-dynamics-battery}:
+\begin{equation}
+\label{eq:soc-bounds-expanded}
+  E_{\min} - E_t \;\le\;
+    \eta^{+}\,P_t^{+}\,\Delta t - \frac{P_t^{-}}{\eta^{-}}\,\Delta t
+  \;\le\; E_{\max} - E_t.
+\end{equation}
+
+% ----------------------------------------------------------------
+\subsection{Candidate, Safe, and Executed Actions}
+
+Three action vectors are distinguished at each control step:
+
+\begin{description}
+  \item[$a_t^\star = (P_t^{+\star}, P_t^{-\star})$:]
+    The \emph{candidate action} produced by the dispatch optimiser, maximising
+    expected economic value subject to the forecast distribution and the
+    \emph{observed} SOC~$\tilde{E}_t$.
+
+  \item[$a_t^{\mathrm{safe}} = (P_t^{+,\mathrm{safe}}, P_t^{-,\mathrm{safe}})$:]
+    The \emph{safe action} produced by the DC3S shield
+    (Chapter~\ref{ch:dc3s-adapter}).  This is the nearest feasible point to
+    $a_t^\star$ within the tightened safe-action set~$\mathcal{A}_t$.
+
+  \item[$a_t^{\mathrm{exec}}$:]
+    The \emph{executed action} sent to the BMS.  Under nominal operation
+    $a_t^{\mathrm{exec}} = a_t^{\mathrm{safe}}$; under BMS override
+    $a_t^{\mathrm{exec}}$ may be further clipped by hardware limits.
+\end{description}
+
+The \emph{intervention rate} (IR) measures the fraction of steps where
+$a_t^{\mathrm{safe}} \neq a_t^\star$, quantifying the economic cost of
+safety enforcement.
+
+% ----------------------------------------------------------------
+\subsection{Dispatch Objective}
+\label{sec:dispatch-objective}
+
+The deterministic dispatch LP over a rolling horizon~$H$ is:
+\begin{equation}
+\label{eq:dispatch-lp}
+\begin{aligned}
+  \max_{P_{t:t+H}^{+},\, P_{t:t+H}^{-}} \quad &
+    \sum_{\tau=t}^{t+H-1}
+    \bigl[\,\hat{\pi}_\tau\,(P_\tau^{-} - P_\tau^{+})
+           - c_{\mathrm{deg}}\,(P_\tau^{+} + P_\tau^{-})\,\bigr]\,\Delta t \\
+  \text{s.t.} \quad &
+    E_{\tau+1} = E_\tau + \eta^{+}\,P_\tau^{+}\,\Delta t
+                       - P_\tau^{-}/\eta^{-}\,\Delta t,
+      \quad \forall\,\tau, \\
+  & E_{\min} \le E_{\tau+1} \le E_{\max},
+      \quad \forall\,\tau, \\
+  & 0 \le P_\tau^{+} \le P_{\max}^{+},\;
+    0 \le P_\tau^{-} \le P_{\max}^{-},
+      \quad \forall\,\tau, \\
+  & |P_\tau^{+} - P_{\tau-1}^{+}| \le R_{\max}\,\Delta t,
+      \quad \forall\,\tau, \\
+  & |P_\tau^{-} - P_{\tau-1}^{-}| \le R_{\max}\,\Delta t,
+      \quad \forall\,\tau, \\
+  & E_t = \tilde{E}_t \quad (\text{initial condition from observation}).
+\end{aligned}
+\end{equation}
+Here $\hat{\pi}_\tau$ is the forecast price, $c_{\mathrm{deg}}$ is a
+degradation penalty per MWh throughput, and the initial SOC~$\tilde{E}_t$ is
+the \emph{observed} (possibly degraded) state.
+
+The objective trades revenue (buy low, sell high) against degradation cost.
+Only the first action $(P_t^{+\star}, P_t^{-\star})$ is committed; the
+remainder is discarded and re-solved at $t+1$ (receding-horizon control).
+
+% ----------------------------------------------------------------
+\subsection{Uncertainty and Feasible Set Under Degraded Observation}
+
+When the observation $\tilde{E}_t$ is degraded, the initial-condition
+constraint $E_t = \tilde{E}_t$ in~\eqref{eq:dispatch-lp} becomes uncertain.
+Let $\hat{E}_t$ denote the controller's best estimate and
+$\delta_t = E_t - \hat{E}_t$ the estimation error.  The true SOC after action
+is:
+\begin{equation}
+\label{eq:soc-uncertain}
+  E_{t+1}^{\mathrm{true}} = (\hat{E}_t + \delta_t)
+    + \eta^{+}\,P_t^{+}\,\Delta t - \frac{P_t^{-}}{\eta^{-}}\,\Delta t.
+\end{equation}
+For the SOC bounds to hold with probability at least $1 - \alpha$, the
+constraint must be tightened by the conformal prediction half-width~$q_t$:
+\begin{equation}
+\label{eq:tightened-bounds}
+  E_{\min} + q_t \;\le\; E_{t+1}^{\mathrm{est}} \;\le\; E_{\max} - q_t,
+\end{equation}
+where $q_t$ is the reliability-inflated interval half-width from RAC-Cert
+(Chapter~\ref{ch:dc3s-adapter}).  This tightening shrinks the feasible set
+and reduces the economic value of the dispatch, but guarantees safety
+against observation error.
+
+% ----------------------------------------------------------------
+\subsection{Calibration Gap and Uncertainty Mismatch}
+
+Even with conformal intervals, a \emph{calibration gap} arises when marginal
+coverage differs from conditional coverage across reliability groups.  The
+locked CQR group-coverage results
+(\texttt{reports/publication/cqr\_group\_coverage.csv}) reveal that wind
+intervals achieve only 39--49\% coverage in the low and high reliability
+groups despite 90\% nominal marginal coverage.  Solar intervals are better
+calibrated (82--90\%) but still exhibit under-coverage at the high-variability
+group.
+
+This calibration gap means that the tightened bounds
+in~\eqref{eq:tightened-bounds} are \emph{insufficiently tight} during periods
+of poor observation quality, motivating the adaptive inflation law in DC3S
+(Section~\ref{sec:dispatch-objective} cross-references
+Chapter~\ref{ch:dc3s-adapter}).
+
+% ----------------------------------------------------------------
+\subsection{Baseline Policies}
+
+The ORIUS evaluation includes eight dispatch controllers spanning four
+design philosophies:
+
+\begin{enumerate}
+  \item \textbf{Deterministic LP} (\texttt{deterministic\_lp}):
+    solves~\eqref{eq:dispatch-lp} on point forecasts with no interval
+    awareness.
+  \item \textbf{Robust fixed-interval} (\texttt{robust\_fixed\_interval}):
+    worst-case robust LP using fixed (non-adaptive) prediction intervals.
+  \item \textbf{CVaR interval} (\texttt{cvar\_interval}):
+    CVaR-optimised scenario dispatch over quantile forecasts.
+  \item \textbf{ACI conformal} (\texttt{aci\_conformal}):
+    adaptive conformal inference baseline with online width adjustment.
+  \item \textbf{Scenario robust} (\texttt{scenario\_robust}):
+    scenario-based robust optimisation over sampled forecast paths.
+  \item \textbf{Scenario MPC} (\texttt{scenario\_mpc}):
+    receding-horizon model predictive control with scenario tree.
+  \item \textbf{DC3S wrapped} (\texttt{dc3s\_wrapped}):
+    full DC3S shield with linear reliability inflation.
+  \item \textbf{DC3S FTIT} (\texttt{dc3s\_ftit}):
+    DC3S with fault-tolerant invariant tube extension.
+\end{enumerate}
+
+Results across these controllers are reported in
+Chapter~\ref{ch:dc3s-adapter} and the benchmark track
+(Chapter~\ref{ch:cpsbench}).
+
+% ----------------------------------------------------------------
+\subsection{Scope Boundary}
+
+The dispatch model in this dissertation is a \emph{single-asset, energy-only}
+formulation:
+
+\begin{itemize}
+  \item \textbf{Included:} energy arbitrage, SOC management, degradation
+    penalty, safety constraints.
+  \item \textbf{Excluded:} ancillary services (frequency regulation, spinning
+    reserve), multi-asset portfolio dispatch, network constraints, and
+    market-clearing co-optimisation.
+\end{itemize}
+
+The single-asset scope is sufficient to demonstrate the observation-quality
+feedback mechanism; extension to fleet-level dispatch is discussed in
+Chapter~\ref{ch:orius-bench-battery}.
+
+% ----------------------------------------------------------------
+\subsection{Chapter Summary}
+
+This chapter formalised the battery state-space model, the SOC dynamics
+equation~\eqref{eq:soc-dynamics-battery}, the power/ramp/SOC constraint set, and the
+deterministic dispatch LP~\eqref{eq:dispatch-lp}.  Three action types---candidate,
+safe, and executed---were distinguished to precisely locate the safety
+intervention point.  The effect of degraded observation on the feasible set
+was derived, showing that the conformal half-width must tighten the SOC bounds
+and that calibration gaps in wind and solar intervals motivate adaptive
+inflation.  Eight baseline controllers spanning deterministic, robust,
+conformal, and shielded design philosophies were enumerated.
+
+

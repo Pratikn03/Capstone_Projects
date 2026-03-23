@@ -68,7 +68,8 @@ class AerospaceTrackAdapter(BenchmarkAdapter):
             obs["airspeed_kt"] = obs["airspeed_kt"] + fault.get("magnitude", 0)
         elif kind == "noise" and "airspeed_kt" in obs:
             sigma = fault.get("sigma", 10.0)
-            assert self._rng is not None
+            if self._rng is None:
+                raise RuntimeError("AerospaceTrackAdapter.reset() must be called before observe()")
             obs["airspeed_kt"] = obs["airspeed_kt"] + float(self._rng.normal(0, sigma))
         elif kind == "stuck_sensor" and "airspeed_kt" in obs:
             obs["airspeed_kt"] = fault.get("frozen_value", 180.0)

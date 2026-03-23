@@ -69,7 +69,8 @@ class NavigationTrackAdapter(BenchmarkAdapter):
             obs["y"] = obs["y"] + mag
         elif kind == "noise":
             sigma = fault.get("sigma", 0.5)
-            assert self._rng is not None
+            if self._rng is None:
+                raise RuntimeError("NavigationTrackAdapter.reset() must be called before observe()")
             obs["x"] = obs["x"] + float(self._rng.normal(0, sigma))
             obs["y"] = obs["y"] + float(self._rng.normal(0, sigma))
         elif kind == "stuck_sensor":

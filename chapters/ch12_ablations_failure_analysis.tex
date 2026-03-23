@@ -174,6 +174,56 @@ rather than assuming clean inputs.
 \input{assets/tables/generated/tbl_rank_reversal}%
 }
 
+\section{Ablation Summary}
+\label{sec:ablation-summary}
+
+Table~\ref{tab:ablation-summary} consolidates the four ablations above
+into a single register, showing the purpose of each component, the effect
+of disabling it, and the resulting TSVR and intervention rate.
+
+\begin{table}[htbp]
+\centering
+\caption{DC3S ablation summary on the energy management domain (battery,
+dropout~$= 0.20$, seed~$= 0$, horizon~$= 48$).  TSVR and IR are means
+over the standard fault schedule.  $\dagger$: OQE ablation ($w_t \equiv 1$)
+avoids violations at the nominal fault schedule but fails at dropout~$> 0.20$
+where the fixed nominal quantile is too narrow.}
+\label{tab:ablation-summary}
+\begin{tabular}{p{2.8cm}p{3.5cm}p{3.5cm}rr}
+\toprule
+\textbf{Component} & \textbf{Purpose} & \textbf{Ablation effect} & \textbf{TSVR} & \textbf{IR} \\
+\midrule
+OQE reliability scoring
+  & Detects telemetry degradation, sets $w_t$
+  & Shield uses $w_t \equiv 1$ (trusts all data)
+  & 0\%$^\dagger$ & 0.4\% \\
+\addlinespace
+RUI inflation
+  & Widens uncertainty as $w_t$ decreases
+  & Uses nominal CQR width, no inflation
+  & 0.2--1.1\% & $\downarrow$ \\
+\addlinespace
+SAF projection
+  & Joint feasibility over all constraint dimensions
+  & Scalar per-dimension clipping only
+  & 0.3\% & $\downarrow$ \\
+\addlinespace
+FTIT tightening
+  & Reduces conservatism in clean periods
+  & Margin never tightens; over-intervenes when $w_t = 1$
+  & 0\% & 4.6\% \\
+\bottomrule
+\end{tabular}
+\smallskip
+\begin{minipage}{0.95\linewidth}\footnotesize
+Each ablation disables exactly one component while holding all others
+at their standard DC3S configuration.  The full DC3S pipeline (all four
+components active) achieves TSVR~$= 0\%$ and IR~$\approx 1.8\%$ on this
+fault schedule.  See Chapter~\ref{ch:sota-comparison} for a comparison to
+Tube MPC, CBF, and Lagrangian Safe RL alternatives.
+\end{minipage}
+\end{table}
+
 \section{Chapter Summary}
 
 The ablation study confirms that each DC3S component contributes to

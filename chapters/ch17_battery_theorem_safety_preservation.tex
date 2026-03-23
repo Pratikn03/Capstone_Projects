@@ -11,7 +11,37 @@ any domain satisfying the shared adapter contract follows by substituting
 domain-specific state and constraint definitions
 (see Chapter~\ref{ch:battery-to-orius} for all six instantiations).
 
-\section{Tightened Safe Action Set}
+\section{Domain-Agnostic Statement}
+
+We first state the Safety Preservation result for an arbitrary CPS
+satisfying the ORIUS adapter contract.
+
+\begin{theorem}[Safety Preservation --- General CPS]
+\label{thm:safety-general}
+Let $(\mathcal{X}, \mathcal{U}, f, \mathcal{S}, \hat{x})$ be a CPS
+satisfying Assumptions A1--A5 and A7.  Define the tightened safe
+action set
+\[
+  \mathcal{A}_t \;=\; \bigl\{\,a \in \mathcal{U} \;:\;
+    f(\hat{x}_t, a) \oplus B(m_t) \subseteq \mathcal{S}\,\bigr\},
+\]
+where $m_t = q_t / (w_t + \epsilon)$ is the reliability-inflated
+conformal margin and $B(m_t)$ is the ball of radius $m_t$.
+
+If the DC3S shield selects $a_t \in \mathcal{A}_t$ at every step, then
+\[
+  \Pr\!\bigl[\,\phi_{\text{true}}(a_t) = 1\,\bigr] \;\ge\; 1 - \alpha
+  \quad\text{for all } t = 1, \ldots, T,
+\]
+and the expected number of true-state violations satisfies
+$\mathbb{E}[V] \le \alpha\,T$.
+\end{theorem}
+
+The battery domain provides the scalar instantiation below, where
+$\mathcal{S} = [\text{SOC}_{\min}, \text{SOC}_{\max}]$ and
+$\mathcal{A}_t$ reduces to a power-clipping interval.
+
+\section{Battery-Domain Instantiation: Tightened Safe Action Set}
 
 \begin{definition}[Tightened safe-action set]
 \label{def:tightened-set}

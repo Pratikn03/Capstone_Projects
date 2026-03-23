@@ -9,7 +9,33 @@ an admissible fault sequence.  The result establishes that the
 reliability-aware machinery of DC3S is not merely useful but
 \emph{necessary}.
 
-\section{Quality-Ignorant Controller Class}
+\section{Domain-Agnostic Statement}
+
+We first state the necessity result for an arbitrary CPS.
+
+\begin{theorem}[No Free Safety --- General CPS]
+\label{thm:no-free-safety-general}
+Let $(\mathcal{X}, \mathcal{U}, f, \mathcal{S}, \hat{x})$ be a CPS
+satisfying Assumption~A2 with $g(w_t) > 0$ under degraded quality.
+For any quality-ignorant controller
+$\pi : \mathcal{X} \to \mathcal{U}$ (one whose action depends on
+$\hat{x}_t$ but not on $w_t$), and any target violation rate
+$\epsilon \in (0, 0.5)$, there exists an admissible fault sequence
+$\{\xi_t\}_{t=1}^T$ such that
+\[
+  \mathbb{E}[\text{TSVR}_\pi] \;>\; \epsilon.
+\]
+That is, no quality-ignorant controller can achieve arbitrarily low
+violation rates under worst-case but physically realisable faults.
+Quality-aware control is therefore \emph{mathematically necessary},
+not merely beneficial.
+\end{theorem}
+
+The proof is constructive: we exhibit a three-phase fault sequence
+(baiting $\to$ injection $\to$ violation) that exploits the controller's
+fixed margin.  The battery domain provides the concrete construction below.
+
+\section{Battery-Domain Instantiation: Quality-Ignorant Controller Class}
 
 \begin{definition}[Quality-ignorant controller]
 \label{def:quality-ignorant}

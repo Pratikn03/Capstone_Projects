@@ -149,6 +149,88 @@ telemetry.
 \input{assets/tables/generated/tbl_battery_leaderboard}%
 }
 
+\section{Comparison with Alternative Safety Architectures}
+\label{sec:safety-comparison}
+
+Table~\ref{tab:safety-comparison} positions DC3S against five major
+alternative approaches to safe control under uncertainty.  The central
+distinction is whether each method models \emph{observation quality}
+as a first-class input to the safety shield.
+
+\begin{table*}[htbp]
+\centering
+\caption{Positioning DC3S against alternative safety architectures.
+  The ``Obs.\ Quality'' column indicates whether the method adapts its
+  safety margin to degraded telemetry.  $^\dagger$Requires domain-specific
+  design of the recovery controller.  $^\ddagger$Assumes perfect state
+  feedback or bounded model error only.}
+\label{tab:safety-comparison}
+\begin{tabular}{p{3.0cm}p{2.0cm}p{2.0cm}p{5.5cm}}
+\toprule
+\textbf{Method} & \textbf{Obs.\ Quality} & \textbf{Formal Bound} & \textbf{Gap Under Degraded Telemetry} \\
+\midrule
+Simplex Architecture$^\dagger$
+  & No
+  & Yes (switching)
+  & Assumes the decision module and the safety controller both receive
+    accurate state estimates.  Under telemetry degradation, the safety
+    controller operates on stale or biased observations and may itself
+    violate constraints. \\
+\addlinespace
+GP-MPC$^\ddagger$
+  & No
+  & Yes (PAC)
+  & Gaussian Process uncertainty quantifies \emph{model} error, not
+    \emph{observation} error.  The posterior assumes the training inputs are
+    noise-free.  Under sensor drift, the GP posterior mischaracterises
+    residual uncertainty, producing invalid confidence sets. \\
+\addlinespace
+DRO (Distributionally Robust Optimisation)
+  & No
+  & Yes (worst-case)
+  & Constructs ambiguity sets over the \emph{cost distribution}, not over the
+    observation channel.  The worst-case policy is robust to model
+    misspecification but not to telemetry degradation: the ambiguity
+    set does not expand when observation quality drops. \\
+\addlinespace
+Safe RL (CPO/RCPO)
+  & No
+  & Asymptotic
+  & Constrains expected cost over rollouts but assumes the policy
+    receives accurate observations during both training and deployment.
+    No mechanism adapts constraint margins to degraded sensors.
+    Transferring to degraded telemetry voids the policy's guarantees. \\
+\addlinespace
+Conformal Prediction (vanilla CQR)
+  & No
+  & Yes (marginal)
+  & Constructs valid prediction intervals on residuals but uses a
+    \emph{fixed} quantile regardless of observation quality.  Under
+    degraded telemetry, the residual distribution shifts, violating the
+    exchangeability assumption.  DC3S restores validity by inflating the
+    quantile by $1/w_t$. \\
+\midrule
+\textbf{DC3S / ORIUS}
+  & \textbf{Yes}
+  & \textbf{Yes}
+  & Explicitly models observation quality through OQE scoring, inflates
+    conformal intervals by $1/w_t$, and tightens the safe action set.
+    Formal bound $\mathbb{E}[V] \le \alpha(1-\bar{w})T$ degrades
+    gracefully with reliability. \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\noindent\textbf{Key insight.}  Every alternative method listed above
+achieves safety guarantees \emph{conditioned on reliable observations}.
+ORIUS is the first framework that (a) diagnoses observation quality in
+real time, (b) propagates the quality score into the safety shield, and
+(c) provides formal bounds that degrade gracefully as telemetry quality
+decreases.  The No Free Safety theorem (Chapter~\ref{ch:no-free-safety})
+proves that this quality-awareness is \emph{necessary}, not optional:
+no quality-ignorant controller can achieve target safety rates under
+adversarial fault sequences.
+
 \section{What Results Do and Do Not Prove}
 
 \paragraph{What the results establish.}

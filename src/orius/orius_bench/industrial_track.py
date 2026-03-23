@@ -94,7 +94,8 @@ class IndustrialTrackAdapter(BenchmarkAdapter):
             obs["temp_c"] = obs["temp_c"] + fault.get("magnitude", 0)
         elif kind == "noise" and "temp_c" in obs:
             sigma = fault.get("sigma", 5.0)
-            assert self._rng is not None
+            if self._rng is None:
+                raise RuntimeError("IndustrialTrackAdapter.reset() must be called before observe()")
             obs["temp_c"] = obs["temp_c"] + float(self._rng.normal(0, sigma))
         elif kind == "stuck_sensor" and "temp_c" in obs:
             obs["temp_c"] = fault.get("frozen_value", 85.0)

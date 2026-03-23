@@ -9,7 +9,51 @@ is safe according to the observed state but unsafe according to the
 true state---the foundational phenomenon that motivates the entire
 ORIUS safety layer.
 
-\section{Battery-Domain Setup}
+\section{Domain-Agnostic Statement}
+
+We first state the OASG existence result for an arbitrary cyber-physical
+system; the battery domain provides the concrete instantiation that follows.
+
+\begin{definition}[Abstract CPS]
+\label{def:abstract-cps}
+A cyber-physical system is a tuple
+$(\mathcal{X}, \mathcal{U}, f, \mathcal{S}, \hat{x})$ where
+$\mathcal{X} \subseteq \mathbb{R}^n$ is the state space,
+$\mathcal{U} \subseteq \mathbb{R}^m$ is the action space,
+$f : \mathcal{X} \times \mathcal{U} \to \mathcal{X}$ is the (possibly
+stochastic) dynamics, $\mathcal{S} \subseteq \mathcal{X}$ is the safe
+set with non-empty boundary $\partial \mathcal{S} \neq \emptyset$, and
+$\hat{x}_t = x_t + \xi_t$ is the observed state under telemetry error
+$\xi_t$ with $\|\xi_t\| \le g(w_t)$ (Assumption~A2).
+\end{definition}
+
+\begin{theorem}[OASG Existence --- General CPS]
+\label{thm:oasg-general}
+Let $(\mathcal{X}, \mathcal{U}, f, \mathcal{S}, \hat{x})$ be a CPS
+satisfying Assumptions A1 (bounded dynamics error), A2 (bounded telemetry
+error with $g(w_t) > 0$ under degraded quality), and A4 (known dynamics).
+Let $\pi : \mathcal{X} \to \mathcal{U}$ be any quality-ignorant controller,
+i.e.\ one whose action depends only on $\hat{x}_t$ and not on $w_t$.
+
+If the controller drives the state within distance
+$\delta > 0$ of $\partial \mathcal{S}$ with positive frequency, and the
+telemetry error satisfies $\Pr[\|\xi_t\| > \delta] > 0$, then there
+exists a time $t^*$ such that
+\[
+  \phi_{\text{obs}}(\pi(\hat{x}_{t^*})) = 1
+  \quad\text{and}\quad
+  \phi_{\text{true}}(\pi(\hat{x}_{t^*})) = 0,
+\]
+where $\phi_{\text{obs}}$ and $\phi_{\text{true}}$ are the observed-safe
+and truly-safe predicates respectively.
+\end{theorem}
+
+The proof constructs the witness $t^*$ by intersecting the boundary-proximity
+set (from optimal control) with the observation-error tail (from degraded
+telemetry).  We now instantiate this in the battery domain.
+
+\section{Battery-Domain Instantiation}
+\label{sec:battery-setup}
 
 Consider a battery energy storage system with:
 \begin{itemize}

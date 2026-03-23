@@ -1,0 +1,264 @@
+\chapter{Related Work}
+\label{ch:ch02_related_work}
+
+% --- Merged from ch02_related_work.tex ---
+
+\section{Background and Related Work}
+\label{ch:related-work}
+
+This chapter surveys the literatures that converge on the problem
+addressed in this dissertation: battery dispatch optimisation, telemetry
+faults in cyber-physical systems, uncertainty quantification via conformal
+methods, and runtime safety assurance.  For each strand, we identify the
+specific gap that the ORIUS framework fills.
+
+\subsection{Battery Dispatch and Renewable-Aware Control}
+
+Grid-scale battery dispatch is the problem of choosing charge and
+discharge actions to maximise economic value (arbitrage, ancillary
+services) while respecting SOC, power, and ramp constraints.  The
+literature falls into three broad families.
+
+\subsubsection{Deterministic Dispatch}
+
+Linear programming (LP) formulations treat load, solar, and wind
+forecasts as point estimates and solve a single deterministic optimisation
+at each decision epoch~\cite{xu2020optimal}.  The approach is fast and
+widely deployed, but it ignores forecast uncertainty entirely: the action
+is optimal only if the forecast is exact.  Under telemetry degradation,
+the deterministic LP has no mechanism to detect that its inputs are stale
+or incorrect, and it will dispatch against an observation that may not
+reflect the plant state.
+
+\subsubsection{Robust and Tube-Based Methods}
+
+Robust MPC constructs a \emph{tube} of feasible trajectories around the
+nominal forecast, ensuring that the dispatched action is safe for all
+realisations within a bounded uncertainty set~\cite{bemporad2007robust}.
+Tube-based approaches are conservative by construction: they sacrifice
+economic performance to guarantee constraint satisfaction.  However, the
+uncertainty set is typically derived from forecast error statistics and
+does not account for observation-quality degradation.  If the tube is
+calibrated on clean telemetry, it will be \emph{too narrow} when telemetry
+is degraded---precisely the regime where safety margins matter most.
+
+\subsubsection{Stochastic and Risk-Aware Methods}
+
+Stochastic programming and chance-constrained formulations model
+uncertainty through scenario trees or distributional
+assumptions~\cite{shapiro2021lectures}.  Risk-aware variants incorporate
+CVaR or other coherent risk measures to penalise tail outcomes.  These
+methods acknowledge uncertainty but assume it is \emph{aleatoric}
+(inherent randomness in load and renewables) rather than \emph{epistemic}
+(degraded or missing observations).  None of the existing risk-aware
+dispatch frameworks condition their uncertainty sets on the quality of the
+incoming telemetry.
+
+\subsection{The Measurement Blind Spot}
+
+Across all three families, a common blind spot emerges: the optimiser
+trusts its inputs.  Whether the formulation is deterministic, robust, or
+stochastic, it assumes that the observation~$\hat{x}_t$ arriving at the
+decision epoch is a faithful---if noisy---representation of the true
+state~$x_t$.  This assumption is codified in the measurement
+equation~$\hat{x}_t = x_t + v_t$ with well-characterised noise~$v_t$.
+
+In practice, telemetry faults violate this equation structurally.  A
+dropped packet does not add noise; it removes information.  A stale
+sensor does not perturb the reading; it freezes it.  A replay attack
+substitutes a plausible but outdated value.  These faults create
+\emph{epistemic} degradation that standard noise models cannot capture.
+
+The measurement blind spot is the root cause of the Observation-Action
+Safety Gap defined in Chapter~\ref{ch:introduction}: the optimiser
+dispatches against a state that may not exist, and no downstream
+constraint check can detect the error because it, too, operates on the
+same degraded observation.
+
+\subsection{Telemetry Faults in Cyber-Physical Systems}
+
+The CPS literature documents telemetry faults extensively in the context
+of power systems~\cite{liang2017review}, industrial
+SCADA~\cite{cardenas2011attacks}, and autonomous
+vehicles~\cite{sun2020adversarial}.  Fault taxonomies typically
+distinguish:
+
+\begin{description}
+  \item[Packet dropout:] The reading is absent; the system either holds
+    the last known value or interpolates.
+  \item[Delay and jitter:] The reading arrives late; the decision is made
+    on stale information.
+  \item[Spike:] A transient hardware glitch produces an out-of-range
+    value.
+  \item[Stale sensor:] The sensor output is constant across multiple
+    intervals, indicating a frozen transducer or a repeated value.
+  \item[Covariate drift:] The joint distribution of load, solar, and wind
+    shifts between the calibration period and deployment, invalidating
+    learned residual distributions.
+\end{description}
+
+Existing fault-tolerant control methods address each fault type in
+isolation---median filters for spikes, watchdog timers for stale
+sensors, Kalman-based imputation for dropouts.  None synthesise the
+fault signals into a \emph{unified reliability score} that feeds back
+into the safety layer.  The Observation Quality Engine (OQE) introduced
+in this dissertation fills this gap.
+
+\subsection{Uncertainty Quantification and Conformal Methods}
+
+\subsubsection{Conformal Quantile Regression (CQR)}
+
+Conformal prediction provides distribution-free prediction intervals with
+finite-sample coverage guarantees~\cite{vovk2005algorithmic}.  Conformal
+Quantile Regression (CQR) combines quantile regression with conformal
+calibration to produce adaptive intervals whose width varies with the
+input features~\cite{romano2019conformalized}.
+
+CQR is attractive for battery dispatch because it makes no distributional
+assumptions about the forecast residuals and inherits the exchangeability
+guarantee of conformal inference.  The coverage guarantee states:
+\[
+  \Pr\!\bigl[\,Y_{n+1} \in \hat{C}(X_{n+1})\,\bigr]
+  \;\ge\; 1 - \alpha,
+\]
+where $\hat{C}$ is the conformal prediction set and $\alpha$ is the
+target miscoverage level.
+
+\subsubsection{Adaptive Conformal Inference}
+
+Adaptive conformal inference (ACI) adjusts the conformal threshold online
+to maintain coverage under distribution shift~\cite{gibbs2021adaptive}.
+ACI is essential for battery dispatch, where load and renewable patterns
+exhibit diurnal, weekly, and seasonal non-stationarity.
+
+\subsubsection{Key Limitation}
+
+The standard CQR/ACI guarantee assumes that calibration residuals are
+exchangeable with test residuals.  Under telemetry degradation, this
+assumption may be violated: a dropout burst changes the residual
+distribution.  The ORIUS framework addresses this limitation by
+\emph{inflating} the conformal interval width in proportion to the
+observation quality penalty~$1/w_t$, restoring coverage even when the
+exchangeability assumption is weakened.
+
+\subsection{Runtime Safety, Shields, and Assurance}
+
+Runtime verification and shielding have a rich history in formal methods
+and reactive synthesis~\cite{bloem2015shield}.  A \emph{shield} is a
+runtime monitor that intercepts unsafe actions before they reach the
+plant, replacing them with the nearest safe alternative.
+
+\subsubsection{How DC3S Extends the State of the Art}
+
+Existing shields operate on the \emph{observed} state: they check whether
+the proposed action satisfies constraints given the current observation.
+DC3S introduces three innovations:
+
+\begin{enumerate}
+  \item \textbf{Observation-quality conditioning.}  The shield's
+    constraint tightening is a function of the OQE score~$w_t$, not a
+    fixed margin.  When telemetry is clean ($w_t \approx 1$), the shield
+    is nearly transparent; when telemetry degrades, the shield tightens
+    progressively.
+  \item \textbf{Conformal uncertainty integration.}  The tightened
+    constraints are derived from CQR intervals inflated by $1/w_t$,
+    inheriting the conformal coverage guarantee.
+  \item \textbf{Certified actions.}  Every dispatched action carries a
+    machine-readable certificate recording the observation quality,
+    uncertainty bounds, and safety margin, enabling downstream audit
+    and temporal-validity analysis
+    (Chapter~\ref{ch:cert-half-life-blackout}).
+\end{enumerate}
+
+\subsection{Control Barrier Functions}
+
+Control barrier functions (CBFs) provide a Lyapunov-like certificate for
+forward invariance of a safe set~\cite{ames2019control}.  A CBF
+$h : \mathcal{X} \to \mathbb{R}$ defines the safe set as
+$\mathcal{C} = \{x : h(x) \ge 0\}$ and enforces the condition
+$\dot{h}(x, u) + \gamma\, h(x) \ge 0$ for some class-$\mathcal{K}$
+function~$\gamma$.
+
+CBFs assume \emph{full state feedback}: the barrier condition is evaluated
+at the true state~$x_t$.  When only a degraded observation~$\hat{x}_t$ is
+available, the CBF condition may be satisfied on the observation while
+violated on the truth---precisely the OASG.  DC3S can be viewed as a
+\emph{data-centric CBF} that inflates the barrier margin based on
+observation quality, closing the gap that classical CBFs leave open.
+
+\subsection{Information-Theoretic Roots}
+
+The observation quality score~$w_t$ can be interpreted through an
+information-theoretic lens.  When telemetry is perfect, the mutual
+information $I(X_t; \hat{X}_t) = H(X_t)$ (full information).  Each fault
+type reduces $I(X_t; \hat{X}_t)$: dropout removes entire samples, delay
+introduces conditional-entropy growth, and stale sensors reduce the
+effective channel capacity to zero.
+
+The OQE multiplicative formula
+\[
+  w_t = \max\!\bigl(w_{\min},\;
+  p_{\mathrm{miss}} \cdot p_{\mathrm{delay}} \cdot p_{\mathrm{ooo}} \cdot p_{\mathrm{spike}}\bigr)
+\]
+is a heuristic proxy for the normalised mutual information
+$I(X_t; \hat{X}_t) / H(X_t)$.  While not a tight bound, the
+multiplicative structure ensures that any single fault channel can
+independently drive reliability toward the floor~$w_{\min}$, matching
+the information-theoretic intuition that a single broken channel
+dominates the overall quality.
+
+\subsection{Evaluation Protocols and the Benchmark Gap}
+
+Standard battery dispatch benchmarks evaluate controllers on economic
+metrics (revenue, regret) and observed constraint satisfaction.  None
+maintain a parallel truth trajectory, so they \emph{cannot detect the
+OASG} by construction.  The CPSBench harness introduced in this
+dissertation (Chapter~\ref{ch:orius-bench-battery}) addresses this gap by
+running every controller on both the observed and true state machines
+simultaneously, reporting True-State Violation Rate (TSVR) alongside
+Observed-State Violation Rate (OSVR).
+
+\subsection{The Novelty Gap}
+
+Table~\ref{tab:novelty-gap} summarises the positioning of DC3S relative
+to the prior art.
+
+\begin{table}[ht]
+\centering
+\caption{Positioning of DC3S relative to prior work.  A filled circle
+(\ding{108}) indicates the capability is present; an open circle
+(\ding{109}) indicates it is absent.}
+\label{tab:novelty-gap}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Method} &
+\rotatebox{70}{\textbf{Obs.\ quality}} &
+\rotatebox{70}{\textbf{Conformal UQ}} &
+\rotatebox{70}{\textbf{True-state eval.}} &
+\rotatebox{70}{\textbf{Runtime cert.}} &
+\rotatebox{70}{\textbf{Adaptive width}} \\
+\midrule
+Deterministic LP   & \ding{109} & \ding{109} & \ding{109} & \ding{109} & \ding{109} \\
+Robust MPC         & \ding{109} & \ding{109} & \ding{109} & \ding{109} & \ding{108} \\
+Stochastic MPC     & \ding{109} & \ding{109} & \ding{109} & \ding{109} & \ding{108} \\
+Classical shield   & \ding{109} & \ding{109} & \ding{109} & \ding{108} & \ding{109} \\
+CBF shield         & \ding{109} & \ding{109} & \ding{109} & \ding{108} & \ding{109} \\
+\textbf{DC3S (ours)} & \ding{108} & \ding{108} & \ding{108} & \ding{108} & \ding{108} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Chapter Summary}
+
+The literatures on battery dispatch, CPS telemetry faults, conformal
+prediction, and runtime shielding each address a piece of the
+observation-aware safety problem, but none provide a complete solution.
+Dispatch optimisers ignore observation quality.  Fault-tolerant control
+handles faults individually without feeding a unified score into the
+safety layer.  Conformal methods provide coverage guarantees but do not
+condition on telemetry reliability.  Runtime shields check constraints on
+the observed state, missing the OASG entirely.  The ORIUS framework and
+its DC3S realisation unify these strands into a single pipeline with
+end-to-end safety guarantees from observation to actuation.
+
+

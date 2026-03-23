@@ -53,7 +53,8 @@ class BatteryTrackAdapter(BenchmarkAdapter):
         return self.true_state()
 
     def true_state(self) -> Mapping[str, Any]:
-        assert self._plant is not None
+        if self._plant is None:
+            raise RuntimeError("BatteryTrackAdapter.reset() must be called before true_state()")
         return {
             "soc": self._plant.soc_mwh / self._capacity,
             "soc_mwh": self._plant.soc_mwh,
@@ -77,7 +78,8 @@ class BatteryTrackAdapter(BenchmarkAdapter):
             obs["soc"] = obs["soc"] + fault.get("magnitude", 0)
         elif kind == "noise" and "soc" in obs:
             sigma = fault.get("sigma", 0.02)
-            assert self._rng is not None
+            if self._rng is None:
+                raise RuntimeError("BatteryTrackAdapter.reset() must be called before observe()")
             obs["soc"] = obs["soc"] + float(self._rng.normal(0, sigma))
         elif kind == "stuck_sensor" and "soc" in obs:
             obs["soc"] = fault.get("frozen_value", 0.5)
@@ -95,7 +97,8 @@ class BatteryTrackAdapter(BenchmarkAdapter):
         }
 
     def step(self, action: Mapping[str, Any]) -> Mapping[str, Any]:
-        assert self._plant is not None
+        if self._plant is None:
+            raise RuntimeError("BatteryTrackAdapter.reset() must be called before step()")
         charge = float(action.get("charge_mw", 0))
         discharge = float(action.get("discharge_mw", 0))
         self._plant.step(charge, discharge)

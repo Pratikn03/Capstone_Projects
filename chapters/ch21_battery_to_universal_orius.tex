@@ -599,6 +599,58 @@ to test adapter portability rather than as a field-data proof surface.
 Baseline TSVR~17.8\% $\rightarrow$ 5.6\% post-shield (100\% repair rate,
 mean $\bar{w}_t = 0.775$, $N = 2000$).
 
+\section{Theorem Applicability Matrix}
+\label{sec:theorem-applicability}
+
+Table~\ref{tab:theorem-applicability} maps each core theorem (T1--T8)
+to the six validated domains and indicates the evidence tier supporting
+each claim.  All theorems are stated in domain-agnostic notation using
+only Assumptions~A1--A8 (Chapters~\ref{ch:theorem-oasg}--\ref{ch:temporal-extensions}).
+The battery domain carries formal proofs with battery-specific
+instantiation; the remaining five domains carry equivalent empirical
+validation.
+
+\begin{table*}[htbp]
+\centering
+\caption{Theorem applicability across six domains.
+  \textbf{F}~= formal proof with domain-specific instantiation;
+  \textbf{E}~= empirical validation (SIL replay, fault injection);
+  \textbf{A}~= architectural guarantee (domain-agnostic by construction);
+  \textbf{P}~= portability evidence (simulation-backed).
+  All theorems are stated in domain-agnostic notation (see abstract
+  statements in Chapters~\ref{ch:theorem-oasg}--\ref{ch:no-free-safety}).}
+\label{tab:theorem-applicability}
+\begin{tabular}{llcccccc}
+\toprule
+\textbf{Key} & \textbf{Theorem} & \textbf{Battery} & \textbf{AV} &
+  \textbf{Industrial} & \textbf{Healthcare} & \textbf{Aerospace} &
+  \textbf{Navigation} \\
+\midrule
+T1 & OASG Existence              & F & E & E & E & E & P \\
+T2 & Safety Preservation         & F & E & E & E & E & P \\
+T3 & ORIUS Core Bound            & F & A & A & A & A & A \\
+T4 & No Free Safety              & F & E & E & E & E & P \\
+T5 & Certificate Validity Horizon & F & A & A & A & A & A \\
+T6 & Certificate Expiration Bound & F & A & A & A & A & A \\
+T7 & Feasible Fallback Existence & F & E & E & E & E & P \\
+T8 & Graceful Degradation Dom.\  & F & E & E & E & E & P \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\noindent\textbf{Reading the table.}
+Theorems T3, T5, and T6 are marked~\textbf{A} (architectural) for
+non-battery domains because their statements and proofs depend only on
+$\alpha$, $\bar{w}$, and~$T$---quantities that carry no domain semantics.
+The bound $\mathbb{E}[V] \le \alpha(1-\bar{w})T$ holds for any CPS
+that satisfies the adapter contract, without requiring domain-specific
+derivation.
+
+Theorems T1, T4, T7, and T8 involve domain-specific constructions
+(fault injection, boundary proximity, fallback existence) and therefore
+require per-domain empirical validation.  The cross-domain replay results
+in Table~\ref{tab:cross-domain-scorecard} below provide this evidence.
+
 %% =========================================================================
 \section{Cross-Domain Metrics Scorecard}
 \label{sec:cross-domain-scorecard}

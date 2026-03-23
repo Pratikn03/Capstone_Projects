@@ -94,8 +94,14 @@ def run_dc3s_step(
         },
     }
 
-    # Add FTIT tightened SOC bounds if available
-    q_rac_mwh = float(cal_meta.get("q_eff_scalar", cal_meta.get("q_eff", [0.0])[0] if isinstance(cal_meta.get("q_eff"), (list, np.ndarray)) else 0.0))
+    # Extract the RAC effective quantile scalar from the calibration meta dict.
+    # cal_meta["q_eff"] may be a scalar float or a 1-D numpy/list array depending
+    # on whether the RAC-Cert multiplier was applied before or after the inflation.
+    _q_eff_raw = cal_meta.get("q_eff_scalar") or cal_meta.get("q_eff", 0.0)
+    if isinstance(_q_eff_raw, (list, np.ndarray)):
+        _q_eff_raw = _q_eff_raw[0] if len(_q_eff_raw) else 0.0
+    q_rac_mwh = float(_q_eff_raw)
+
     if hasattr(state, "current_soc_mwh"):
         constraints_for_ftit = {
             "min_soc_mwh": getattr(state, "min_soc_mwh", 0.0),

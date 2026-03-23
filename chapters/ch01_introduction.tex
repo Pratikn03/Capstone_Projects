@@ -43,7 +43,21 @@ intervals.  The controller still sees SOC~$= 50\%$ and issues a large
 discharge.  In reality, a prior discharge already pushed SOC to 22\%.
 The new action drives the physical SOC below the 20\% safety floor.
 The observed trajectory shows no violation; the true trajectory shows a
-hard constraint breach.
+hard constraint breach.  Figure~\ref{fig:oasg-hero} illustrates this
+gap and the five-stage DC3S pipeline that closes it.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\linewidth]{paper/assets/figures/fig_oasg_hero}
+\caption{The OASG in practice (left): observed SOC appears above the 20\%
+safety floor while the true SOC has already breached it.  DC3S detects
+reliability degradation, inflates the safety margin, and intercepts the
+unsafe action before dispatch.  The DC3S five-stage pipeline (right)
+maps the live OQE reliability score $w_t$ through calibrated uncertainty
+inflation (RUI), tightened action constraints (SAF), safe-action repair,
+and auditable runtime certificates (CERTos).}
+\label{fig:oasg-hero}
+\end{figure}
 
 This is not a contrived edge case.  Field telemetry from US-grid EIA-930
 data exhibits dropout rates of 5--15\% under normal operation and exceeding

@@ -39,7 +39,8 @@ class VehicleTrackAdapter(BenchmarkAdapter):
         return self.true_state()
 
     def true_state(self) -> Mapping[str, Any]:
-        assert self._plant is not None
+        if self._plant is None:
+            raise RuntimeError("VehicleTrackAdapter.reset() must be called before true_state()")
         s = self._plant.state()
         return {
             "position_m": s["position_m"],
@@ -66,7 +67,8 @@ class VehicleTrackAdapter(BenchmarkAdapter):
                 obs["lead_position_m"] = obs["lead_position_m"] + mag
         elif kind == "noise":
             sigma = fault.get("sigma", 2.0)
-            assert self._rng is not None
+            if self._rng is None:
+                raise RuntimeError("VehicleTrackAdapter.reset() must be called before observe()")
             obs["position_m"] = obs["position_m"] + float(self._rng.normal(0, sigma))
         elif kind == "stuck_sensor":
             fv = fault.get("frozen_value", 10.0)
@@ -81,7 +83,8 @@ class VehicleTrackAdapter(BenchmarkAdapter):
         return {"speed_max_mps": self._speed_limit}
 
     def step(self, action: Mapping[str, Any]) -> Mapping[str, Any]:
-        assert self._plant is not None
+        if self._plant is None:
+            raise RuntimeError("VehicleTrackAdapter.reset() must be called before step()")
         a = float(action.get("acceleration_mps2", 0.0))
         self._plant.step(a)
         return dict(self.true_state())
