@@ -2,12 +2,12 @@
 %% Shows how the theorem's abstract objects map to each of the five validated domains.
 
 \subsection{Domain Instantiation Across Validated Domains}
-\label{sec:domain-instantiation-\thechapter}
+\label{sec:domain-instantiation-\domainblockid}
 
 The theorem above is stated for an abstract CPS with observation vector
 $z_t$, reliability score $w_t$, state uncertainty region
 $C_t^{\text{RAC}}$, feasible action set $\mathcal{A}_t$, and violation
-predicate $v(\cdot)$.  Table~\ref{tab:domain-instantiation-\thechapter}
+predicate $v(\cdot)$.  Table~\ref{tab:domain-instantiation-\domainblockid}
 maps these objects to their concrete counterparts in each of the five
 forecasting-capable validated domains.  Each column instantiates the shared
 adapter contract; no domain-specific assumption propagates to the abstract
@@ -16,10 +16,8 @@ theorem statement.
 \begin{table}[htbp]
 \centering
 \small
-\caption{Domain-specific instantiation of the theorem's abstract objects.
-  All five domains pass the DC3S evaluation gate
-  (\S\ref{sec:cross-domain-eval}).}
-\label{tab:domain-instantiation-\thechapter}
+\caption{Domain-specific instantiation for Theorem~\domainblockid{} — abstract objects mapped to each peer domain.}
+\label{tab:domain-instantiation-\domainblockid}
 \begin{tabular}{p{2.2cm}p{2.4cm}p{2.4cm}p{2.4cm}p{2.4cm}p{2.4cm}}
 \toprule
 \textbf{Object} & \textbf{Battery} & \textbf{AV} & \textbf{Industrial} & \textbf{Healthcare} & \textbf{Aerospace} \\

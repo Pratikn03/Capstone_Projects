@@ -386,6 +386,7 @@ clipping to $(v_{\max} - v_t)/\Delta t$.
 \textbf{DC3S result.}
 Baseline TSVR~3.65\% $\rightarrow$ 0.0\% post-shield (99.6\% repair rate,
 mean $\bar{w}_t = 0.768$, $N = 2000$).
+\textit{Protocol note: the locked three-seed framework proof evaluation (48 steps per seed) yields TSVR~$= 2.78\%$ for this domain --- the improvement is not confirmed at that shorter evaluation budget, classifying AV as a proof-candidate surface. The N~$= 2000$ result above reflects the full per-domain deep-dive at a higher sample budget.}
 
 \begin{figure}[htbp]
   \centering
@@ -547,6 +548,7 @@ $[-20^\circ, +20^\circ]$.
 \textbf{DC3S result.}
 Baseline TSVR~26.65\% $\rightarrow$ 0.0\% post-shield (77.3\% repair rate,
 mean $\bar{w}_t = 0.782$, $N = 2000$).
+\textit{Protocol note: the locked three-seed framework proof evaluation (48 steps per seed) yields TSVR~$= 9.72\%$ for this domain --- the improvement is not confirmed at that shorter evaluation budget, classifying aerospace as an experimental surface. The N~$= 2000$ result above reflects the full per-domain deep-dive at a higher sample budget.}
 
 \textbf{Violation predicate scope.}
 The violation predicate $v(\cdot)$ evaluates the \emph{commanded bank angle}
@@ -663,7 +665,7 @@ Table~\ref{tab:cross-domain-scorecard} consolidates the key safety and
 performance metrics for all six peer domains into a single committee-readable scorecard.  All
 peer-domain rows use $N = 2000$ fault-stressed steps under the unified
 fault schedule (dropout~15\%, spike~8\%, stale~10\%).  Battery is
-reported as the locked publication aggregate.
+reported as the publication aggregate.
 
 \begin{table*}[htbp]
 \centering
@@ -860,12 +862,12 @@ used in the validation loop.
 
 \subsection{Summary}
 
-The HIL chapter now matches the locked battery evidence package rather than
+The SIL chapter now matches the evidence package rather than
 an earlier aspirational setup.  The current artifact set shows a 96-step,
 two-scenario, certificate-complete runtime rehearsal with zero true-state
-violations.  For the battery book, that means the safety argument now extends
-one layer beyond offline benchmark replay and into the executable controller
-path, while remaining honest about the fact that full physical HIL is still
+violations.  The safety argument now extends one layer beyond offline benchmark
+replay and into the executable controller path, while remaining honest about
+the fact that full physical hardware-in-the-loop integration is still
 future work.
 
 
@@ -1010,7 +1012,7 @@ coherent and multi-domain consistent, not because it quietly widens its scope.
 By naming what remains outside the current evidence, the thesis protects the
 core multi-domain result from being diluted by larger claims the present
 evidence package does not yet support.  Correctness of the safety bound and
-equivalence of domain performance are the locked results; scalability to
+equivalence of domain performance are the confirmed results; scalability to
 production, adversarial completeness, and heterogeneous composition are the
 open research agenda that the framework is designed to grow into.
 

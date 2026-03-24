@@ -1409,7 +1409,7 @@ transfer results:
     is more conservative due to higher wind variability).
 \end{itemize}
 
-The locked evidence supports a bounded transfer claim: the DE-to-US
+The evidence supports a transfer claim: the DE-to-US
 evaluation remains safety-preserving in the current package, but the
 economic surface differs sharply by balancing authority.  The main lesson
 is therefore not ``one US result generalises automatically'', but rather
@@ -1662,7 +1662,7 @@ goes dark.
 
 \subsection{What the Current Result Does and Does Not Show}
 
-This locked result establishes a bounded claim:
+This result establishes:
 
 \begin{itemize}
   \item The present battery implementation can enter a conservative frozen
@@ -1676,8 +1676,8 @@ This locked result establishes a bounded claim:
 
 \subsection{Summary}
 
-The blackout chapter now matches the locked evidence.  The defended battery
-claim is that certificate validity degrades into a safe-hold path
+The blackout chapter now matches the empirical evidence.  The defended claim
+is that certificate validity degrades into a safe-hold path
 with zero measured violations, while the half-life artifact should be read as
 an interval-width proxy rather than as an empirical physical-failure clock.
 
@@ -1770,15 +1770,15 @@ Three battery-facing points matter:
     required by the runtime story promoted in Chapter~\ref{ch:certos-runtime}.
 \end{enumerate}
 
-\subsection{Bounded Claim}
+\subsection{Summary of Claims}
 
-The current empirical chapter supports a bounded claim:
+The empirical findings of this chapter establish:
 
 \begin{itemize}
   \item the repo now contains a four-policy battery comparison rather than a
     single fallback anecdote,
   \item graceful fallback retains materially more useful work than immediate
-    shutdown in the locked trace, and
+    shutdown in the recorded trace, and
   \item the theorem-level dominance claim still lives in
     Chapter~\ref{ch:temporal-extensions}, not in this single measured trace.
 \end{itemize}
@@ -1786,7 +1786,7 @@ The current empirical chapter supports a bounded claim:
 \subsection{Summary}
 
 The battery extension is now stronger than a single safe-landing anecdote.
-The locked evidence compares four prolonged-blindness policies directly and
+The empirical evidence compares four prolonged-blindness policies directly and
 shows the practical trade-off surface: shutdown is safest but wasteful,
 ramp-down is conservative, and the optimized graceful policy retains more
 useful work while staying inside the current measured safety envelope.
@@ -1797,7 +1797,7 @@ useful work while staying inside the current measured safety envelope.
 \label{ch:compositional-safety-fleets}
 
 This chapter keeps the thesis inside the battery domain while pushing beyond
-the single-asset case.  The current locked extension is a two-battery shared
+the single-asset case.  The current extension is a two-battery shared
 transformer study, packaged through
 \texttt{reports/fleet/fleet\_composition\_two\_battery.csv} and
 \texttt{reports/fleet/two\_battery\_composition\_metrics.csv}.
@@ -1871,7 +1871,7 @@ preserving the same useful work output.
 
 The important battery result is not that the fleet chapter is ``finished'' as
 a full theorem-backed composition theory.  It is that the repo now contains a
-locked, chapter-facing composition run showing exactly where shared
+chapter-facing composition run showing exactly where shared
 infrastructure stress emerges and how much useful work remains after
 coordination.  That closes a practical gap between single-battery safety and
 fleet operation without pretending that all composition questions are solved.
@@ -1891,7 +1891,7 @@ The present fleet package is intentionally narrow:
 \subsection{Summary}
 
 The battery thesis now includes a real fleet-composition artifact rather than
-only a conceptual extension.  The locked two-battery study shows repeated
+only a conceptual extension.  The two-battery study shows repeated
 shared-transformer stress, bounded curtailment, and non-trivial useful work
 preservation.  For the battery book, that is the correct claim: composition
 has moved from future-work rhetoric into an auditable battery extension, while
@@ -1938,7 +1938,7 @@ These are generated from the underlying publication artifact
 
 \subsection{Detection Results}
 
-The locked spoofing-detection audit reports 300 evaluated events with a
+The spoofing-detection audit reports 300 evaluated events with a
 threshold of 0.6, producing:
 
 \begin{itemize}
@@ -1952,7 +1952,7 @@ threshold of 0.6, producing:
 
 \begin{table}[ht]
 \centering
-\caption{Locked active-probing detection results for the battery threat model.}
+\caption{Active-probing detection results for the battery threat model.}
 \label{tab:spoof-results}
 \begin{tabular}{lr}
 \toprule
@@ -1994,7 +1994,7 @@ locked artifacts:
 \subsection{Summary}
 
 The adversarial extension is no longer just conceptual.  The repo now
-contains a locked battery spoofing-detection package with explicit confusion
+contains a battery spoofing-detection package with explicit confusion
 counts, precision, recall, and a chapter-facing figure.  That gives the
 battery thesis a real active-probing evidence surface while keeping the claim
 appropriately bounded to what has actually been implemented and measured.
@@ -2148,12 +2148,12 @@ produced a safe action.
 The publication-facing runtime artifacts live under \path{reports/certos/}.
 They include a 96-step lifecycle log, a JSON summary, a latency report, an
 audit-completeness report, and a short recovery note.  Table
-\ref{tab:certos-runtime-summary} summarises the main locked battery runtime
+\ref{tab:certos-runtime-summary} summarises the main battery runtime
 surface.
 
 \begin{table}[ht]
 \centering
-\caption{Locked CertOS runtime summary from the battery lifecycle demo.}
+\caption{CertOS runtime summary from the battery lifecycle demo.}
 \label{tab:certos-runtime-summary}
 \begin{tabular}{lr}
 \toprule

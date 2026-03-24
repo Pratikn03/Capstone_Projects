@@ -1,15 +1,15 @@
-\chapter{Hardware-in-the-Loop Validation}
+\chapter{Software-in-the-Loop Validation}
 \label{ch:hil}
 
-This chapter documents the \emph{hardware-facing validation package} now
+This chapter documents the \emph{software-in-the-loop validation package} now
 locked in the repository.  The current evidence is not a claim of full
 field deployment.  It is a controller-in-the-loop rehearsal that exercises
 the edge-agent path, certificate logging, and fault-handling interface under
-the same battery-domain safety logic used elsewhere in the thesis.
+the same safety logic used elsewhere in the dissertation.
 
 \section{Why This Layer Matters}
 
-The battery thesis has already shown, in CPSBench, that hidden
+The dissertation has already shown, in CPSBench, that hidden
 true-state violations appear under degraded telemetry and that DC3S can
 eliminate them.  The next question is operational rather than theoretical:
 does the end-to-end runtime still emit actionable commands, preserve the
@@ -34,7 +34,7 @@ These configuration facts are recorded directly in
 
 \section{Scenario Coverage}
 
-The regenerated HIL package spans two scenarios:
+The regenerated SIL package spans two scenarios:
 
 \begin{itemize}
   \item \textbf{Nominal}: 48 steps, 0 violations, 48 interventions,
@@ -54,8 +54,8 @@ The per-step command path is logged in
 in \texttt{reports/hil/fig\_hil\_soc\_trace.png}.  The operational meaning is
 direct: once the controller approaches the lower SOC boundary, the shield
 repeatedly projects aggressive discharge proposals back to safe near-zero
-actions.  That behavior is exactly what the battery thesis claims should
-happen under safety tightening, and the HIL package shows it on the live
+actions.  That behavior is exactly what the dissertation claims should
+happen under safety tightening, and the SIL package shows it on the live
 runtime path rather than only in benchmark replay.
 
 \section{Certificate Audit}
@@ -72,15 +72,15 @@ derived timing table in \texttt{reports/hil/hil\_timing\_table.csv} reports:
   \item 100\% certificate completeness.
 \end{itemize}
 
-This is the battery-operational consequence of the HIL layer: every command
-that would have stressed the battery near its lower bound was repaired before
+This is the operational consequence of the SIL layer: every command
+that would have stressed the system near its constraint boundary was repaired before
 execution, and every repaired command remained traceable.
 
 \section{Evidence Package}
 
 \begin{table}[ht]
 \centering
-\caption{Locked HIL evidence package for the battery thesis.}
+\caption{Locked SIL evidence package.}
 \label{tab:hil-evidence}
 \begin{tabular}{lll}
 \toprule
@@ -98,25 +98,24 @@ Timing table & \texttt{hil\_timing\_table.csv} & Aggregate metrics \\
 
 \section{What This Chapter Establishes}
 
-The current HIL package establishes three battery-specific facts:
+The current SIL package establishes three operational facts:
 
 \begin{enumerate}
   \item The edge-agent execution path preserves the same safety logic used in
     the benchmarked DC3S loop.
   \item The certificate chain remains complete under both nominal and dropout
     conditions.
-  \item The battery remains within the safe envelope throughout the audited
+  \item The controlled system remains within the safe envelope throughout the audited
     runtime trace.
 \end{enumerate}
 
 It does \emph{not} yet establish external-hardware timing on a production
-controller, relay-trip behavior on a physical BMS, or field deployment
-robustness.  Those remain the next battery-hardening layer rather than a
-completed claim.
+controller or full field deployment robustness.  Those remain future work
+rather than a completed claim.
 
-\section{HIL Execution Tables}
+\section{SIL Execution Tables}
 
-Table~\ref{tab:hil_timing} summarises the HIL execution metrics: 144
+Table~\ref{tab:hil_timing} summarises the SIL execution metrics: 144
 dispatch steps, zero safety violations, and 100\% certificate
 completeness.  Table~\ref{tab:hil_hardware} lists the software components
 used in the validation loop.
@@ -135,10 +134,10 @@ used in the validation loop.
 
 \section{Summary}
 
-The HIL chapter now matches the locked battery evidence package rather than
+The SIL chapter now matches the locked evidence package rather than
 an earlier aspirational setup.  The current artifact set shows a 96-step,
 two-scenario, certificate-complete runtime rehearsal with zero true-state
-violations.  For the battery book, that means the safety argument now extends
-one layer beyond offline benchmark replay and into the executable controller
-path, while remaining honest about the fact that full physical HIL is still
+violations.  The safety argument now extends one layer beyond offline benchmark
+replay and into the executable controller path, while remaining honest about
+the fact that full physical hardware-in-the-loop integration is still
 future work.

@@ -9,7 +9,7 @@ observation--action safety gap (OASG) is latent in any CPS that separates sensin
 actuation, and ORIUS provides a domain-agnostic architecture for detecting, bounding, and
 eliminating it.
 
-The framework is validated across six peer CPS domains: energy management (grid-scale
+The framework is evaluated across six peer CPS domains: energy management (grid-scale
 battery dispatch), autonomous vehicles, industrial process control, medical monitoring,
 aerospace control, and navigation.  All six share the same five-stage DC3S pipeline---Detect,
 Calibrate, Constrain, Shield, Certify---instantiated through a common \texttt{DomainAdapter}
@@ -22,9 +22,11 @@ Under degraded telemetry, a quality-ignorant deterministic controller produces a
 violation rate (TSVR) of 3.9\% with P95 severity of 333.4~MWh, while appearing perfectly
 safe in observed state.  DC3S eliminates all true-state violations (TSVR~$= 0$\%) with
 an intervention rate of only 2.8\%, demonstrating that the OASG is both real and
-closable.  Equivalent TSVR reductions to zero are confirmed across the autonomous vehicle,
-industrial, healthcare, and aerospace domains; the navigation domain provides
-simulation-backed portability evidence.
+closable.  TSVR reductions to zero are confirmed under the locked three-seed evaluation
+protocol across the industrial process control and medical monitoring domains (proof-validated);
+AV and aerospace domains show equivalent reduction under a higher-budget N~$= 2000$
+per-domain evaluation and are classified as proof-candidate and experimental surfaces
+respectively.  The navigation domain provides simulation-backed portability evidence.
 
 The dissertation establishes a four-theorem safety ladder: (T1) OASG existence, (T2)
 one-step safety preservation, (T3) the ORIUS core safety bound
@@ -36,7 +38,7 @@ empirical slack.
 
 The dissertation further characterises DC3S through fault-performance stress tests,
 latency benchmarking, conditional coverage audits, hyperparameter stability analysis,
-hardware-in-the-loop trials, certificate half-life studies, graceful degradation protocols,
+software-in-the-loop trials, certificate half-life studies, graceful degradation protocols,
 compositional safety for multi-unit fleets, and adversarial robustness via active probing.
 Across all conditions and all six domains, DC3S achieves the core safety guarantee while
 preserving dispatch performance---demonstrating that the observation--action safety gap

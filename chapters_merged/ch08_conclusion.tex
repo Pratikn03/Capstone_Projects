@@ -51,11 +51,16 @@ dropout~15\%, spike~8\%, stale~10\%) and backed by formal proofs:
     schedule.
     Baseline TSVR spans 3.9\% (battery reference) to 92.4\% (AV) before DC3S.
   \item \textbf{DC3S effectiveness.}  The DC3S shield achieves
-    0.0\% TSVR across the defended five-domain set under the locked replay
-    package.
-  \item \textbf{Zero true-state violation rate.}  Battery, AV, industrial,
-    healthcare, and aerospace each achieve 0.0\% TSVR under DC3S in the
-    defended evidence package.
+    0.0\% TSVR across the three proof-validated domains (energy management,
+    industrial process control, and medical monitoring) under the locked
+    three-seed, 48-step replay protocol.  AV and aerospace show TSVR
+    reduction under a higher-budget N~$= 2000$ evaluation but are classified
+    as proof-candidate and experimental surfaces respectively under the locked
+    protocol.
+  \item \textbf{Zero true-state violation rate.}  Energy management,
+    industrial, and healthcare each achieve 0.0\% TSVR under DC3S in the
+    proof evidence package.  AV and aerospace carry additional
+    per-domain evidence at N~$= 2000$ steps showing similar reduction.
   \item \textbf{Formal safety bound.}  Theorem~\ref{thm:safety-preservation}
     guarantees that the true-state violation probability is at most $\alpha$
     with confidence $1 - \delta$, under exchangeability of the calibration
@@ -181,12 +186,17 @@ The ORIUS framework proves the following, across the defended evidence package:
     was measured across energy management, autonomous vehicles, industrial
     process control, medical monitoring, aerospace, and navigation.
 
-  \item \textbf{DC3S closes the gap reliably.}  In each of the five
-    locked-telemetry domains, DC3S reduces the true-state violation rate
-    to zero (TSVR~$= 0$\%) while maintaining dispatch performance comparable
-    to the unshielded controller.  The energy management domain provides the
-    formally locked theorem-to-code-to-artifact surface; AV, industrial,
-    healthcare, and aerospace provide equivalent replay-depth confirmation.
+  \item \textbf{DC3S closes the gap reliably.}  In the three
+    proof-validated domains (energy management, industrial process control,
+    and medical monitoring), DC3S reduces the true-state violation rate
+    to zero (TSVR~$= 0$\%) under the locked three-seed, 48-step evaluation
+    protocol, while maintaining dispatch performance comparable to the
+    unshielded controller.  The energy management domain provides the
+    formally locked theorem-to-code-to-artifact surface; industrial and
+    healthcare provide proof-validated peer confirmation.  AV and aerospace
+    provide per-domain deep-dive evidence at N~$= 2000$ steps showing
+    similar reduction but are classified as proof-candidate and experimental
+    surfaces under the shorter locked protocol.
 
   \item \textbf{The safety bound is quantitative and verifiable.}
     Theorem~\ref{thm:core-bound} establishes
@@ -229,7 +239,7 @@ T1 -- OASG Existence
 \addlinespace
 T2 -- Safety Preservation
   & $\Pr[\phi_{\text{true}}(a_t) = 1] \ge 1-\alpha$ per step
-  & TSVR $= 0$\% across all 5 locked domains \\
+  & TSVR $= 0$\% across the 3 proof-validated domains \\
 \addlinespace
 T3 -- Core Bound
   & $\mathbb{E}[V] \le \alpha(1-\bar{w})T$
@@ -554,11 +564,13 @@ The central finding of this thesis is concrete: when telemetry degrades,
 a controller can satisfy its observed constraints while violating the true
 physical envelope of the system.  This hidden gap---the
 Observation-Action Safety Gap (OASG)---is measurable, operationally
-meaningful, and correctable.  ORIUS demonstrates this across six peer cyber-physical domains.  Five
-domains---energy management, autonomous vehicles, industrial process
-control, medical monitoring, and aerospace---achieve zero true-state
-violations under DC3S; the navigation domain provides simulation-backed
-portability evidence.
+meaningful, and correctable.  ORIUS demonstrates this across six peer cyber-physical domains.  Three proof-validated domains---energy management, industrial process
+control, and medical monitoring---achieve zero true-state violations under
+DC3S in the locked three-seed, 48-step evaluation protocol.  AV and
+aerospace provide supporting per-domain evidence at higher evaluation
+budget (N~$= 2000$ steps) and are classified as proof-candidate and
+experimental surfaces respectively.  The navigation domain provides
+simulation-backed portability evidence.
 
 \subsection{Universal Framework Outcome}
 
@@ -648,15 +660,15 @@ that:
 \subsection{Closing Statement}
 
 The ORIUS thesis ends where a rigorous framework contribution should: with
-a locked, traceable, multi-domain safety package defended across five
+a traceable, reproducible multi-domain safety package defended across five
 domains, extended by simulation-backed navigation portability evidence,
 and ready for deeper domain-specific validation at each deployment site.
 
 
 % --- Merged from ch24_conclusion.tex ---
 
-\section{Conclusion}
-\label{ch:conclusion}
+\section{Synthesis and Outlook}
+\label{ch:synthesis-outlook}
 
 \subsection{The Central Message}
 

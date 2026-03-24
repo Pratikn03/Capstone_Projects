@@ -52,7 +52,16 @@ All four strategies were evaluated on the five universal proof domains
 (autonomous vehicles, industrial process control, medical monitoring,
 aerospace, and navigation) under the standard ORIUS fault schedule: 15\%
 dropout, 8\% spike, 10\% stale.  Each domain ran for two independent seeds
-of 100 steps each.  The nominal aggressive-controller baseline (see
+of 100 steps each.
+
+\textbf{Note on evaluation protocol.}  This comparison uses a quick
+evaluation budget (2 seeds $\times$ 100 steps) to enable tractable
+comparison across four strategies.  The main domain validation results
+reported in Chapter~\ref{ch:battery-to-orius} use the locked framework
+proof protocol (3 seeds $\times$ 48 steps) and should be taken as the
+primary evidence of DC3S effectiveness.  Differences in TSVR between
+this chapter and Chapter~\ref{ch:battery-to-orius} reflect the different
+evaluation budgets rather than inconsistencies in the underlying mechanism.  The nominal aggressive-controller baseline (see
 Chapter~\ref{ch:cpsbench}) proposed actions without any safety
 filter; the four strategies then either repaired or passed through each
 proposed action.
