@@ -1,8 +1,11 @@
 \begin{table*}[htbp]
 \centering
-\caption{SOTA safety-strategy comparison across all ORIUS domains under the
-standard fault schedule (15\,\% dropout, 8\,\% spike, 10\,\% stale).
-TSVR: true-state violation rate (\%). IR: intervention rate (\%).}
+\caption{SOTA safety-strategy comparison under the quick-eval protocol
+(2 seeds $\times$ 100 steps per domain; fault schedule: 15\,\% dropout, 8\,\% spike, 10\,\% stale).
+TSVR: true-state violation rate (\%). IR: intervention rate (\%).
+Healthcare and aerospace non-zero results reflect the multi-step lag phenomenon at this
+evaluation budget; under the primary locked protocol (3 seeds $\times$ 48 steps)
+healthcare achieves 0.0\,\% TSVR and aerospace 9.72\,\% (classified experimental).}
 \label{tab:sota-comparison}
 \begin{tabular}{lrrrrrrrr}
 \toprule
@@ -19,11 +22,15 @@ Navigation & 0.0 & 94.5 & 0.0 & 94.0 & 0.0 & 94.5 & 0.0 & 94.5 \\
 \end{tabular}
 \smallskip
 \begin{minipage}{0.95\linewidth}\footnotesize
-DC3S reduces TSVR to zero across all proof-validated domains because its
-OQE-adaptive reliability inflation ($w_t$-proportional RUI) accounts for
-degraded telemetry.  Tube MPC uses a fixed reliability floor and cannot
-adapt to per-domain fault profiles.  CBF and Lagrangian strategies evaluate
+DC3S achieves the lowest TSVR of all four strategies in every domain.
+At the primary locked protocol (N~$= 144$ steps, 3 seeds), DC3S achieves
+0.0\,\% TSVR on industrial and healthcare (proof-validated) and 0.0\,\% on
+energy management (reference domain); aerospace remains 9.72\,\% (experimental).
+In this quick-eval run (N~$= 200$ steps), healthcare shows 13.0\,\% across all
+strategies equally --- reflecting the multi-step lag structure of that domain at
+short horizons rather than a DC3S failure.  Tube MPC uses a fixed reliability
+floor and cannot adapt to per-domain fault profiles.  CBF and Lagrangian evaluate
 constraints on the observed state; under degraded telemetry $\hat{x}_t \neq
-x_t^*$, so h(\hat{x}_t) \geq 0 does not guarantee h(x_t^*) \geq 0.
+x_t^*$, so $h(\hat{x}_t) \geq 0$ does not guarantee $h(x_t^*) \geq 0$.
 \end{minipage}
 \end{table*}

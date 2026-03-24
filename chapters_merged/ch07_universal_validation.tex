@@ -725,18 +725,18 @@ additional simulation-backed portability evidence.
 
 
 % --- Merged from ch27_hardware_in_loop_validation.tex ---
-\section{Hardware-in-the-Loop Validation}
+\section{Software-in-the-Loop Validation}
 \label{ch:hil}
 
-This chapter documents the \emph{hardware-facing validation package} now
+This chapter documents the \emph{software-in-the-loop validation package} now
 locked in the repository.  The current evidence is not a claim of full
 field deployment.  It is a controller-in-the-loop rehearsal that exercises
 the edge-agent path, certificate logging, and fault-handling interface under
-the same battery-domain safety logic used elsewhere in the thesis.
+the same safety logic used elsewhere in the dissertation.
 
 \subsection{Why This Layer Matters}
 
-The battery thesis has already shown, in CPSBench, that hidden
+The dissertation has already shown, in CPSBench, that hidden
 true-state violations appear under degraded telemetry and that DC3S can
 eliminate them.  The next question is operational rather than theoretical:
 does the end-to-end runtime still emit actionable commands, preserve the
@@ -761,7 +761,7 @@ These configuration facts are recorded directly in
 
 \subsection{Scenario Coverage}
 
-The regenerated HIL package spans two scenarios:
+The regenerated SIL package spans two scenarios:
 
 \begin{itemize}
   \item \textbf{Nominal}: 48 steps, 0 violations, 48 interventions,
@@ -781,8 +781,8 @@ The per-step command path is logged in
 in \texttt{reports/hil/fig\_hil\_soc\_trace.png}.  The operational meaning is
 direct: once the controller approaches the lower SOC boundary, the shield
 repeatedly projects aggressive discharge proposals back to safe near-zero
-actions.  That behavior is exactly what the battery thesis claims should
-happen under safety tightening, and the HIL package shows it on the live
+actions.  That behavior is exactly what the dissertation claims should
+happen under safety tightening, and the SIL package shows it on the live
 runtime path rather than only in benchmark replay.
 
 \subsection{Certificate Audit}
@@ -799,15 +799,15 @@ derived timing table in \texttt{reports/hil/hil\_timing\_table.csv} reports:
   \item 100\% certificate completeness.
 \end{itemize}
 
-This is the battery-operational consequence of the HIL layer: every command
-that would have stressed the battery near its lower bound was repaired before
+This is the operational consequence of the SIL layer: every command
+that would have stressed the system near its constraint boundary was repaired before
 execution, and every repaired command remained traceable.
 
 \subsection{Evidence Package}
 
 \begin{table}[ht]
 \centering
-\caption{Locked HIL evidence package for the battery thesis.}
+\caption{Locked SIL evidence package.}
 \label{tab:hil-evidence}
 \begin{tabular}{lll}
 \toprule
@@ -825,7 +825,7 @@ Timing table & \texttt{hil\_timing\_table.csv} & Aggregate metrics \\
 
 \subsection{What This Chapter Establishes}
 
-The current HIL package establishes three battery-specific facts:
+The current SIL package establishes three operational facts:
 
 \begin{enumerate}
   \item The edge-agent execution path preserves the same safety logic used in
@@ -841,9 +841,9 @@ controller, relay-trip behavior on a physical BMS, or field deployment
 robustness.  Those remain the next battery-hardening layer rather than a
 completed claim.
 
-\subsection{HIL Execution Tables}
+\subsection{SIL Execution Tables}
 
-Table~\ref{tab:hil_timing} summarises the HIL execution metrics: 144
+Table~\ref{tab:hil_timing} summarises the SIL execution metrics: 144
 dispatch steps, zero safety violations, and 100\% certificate
 completeness.  Table~\ref{tab:hil_hardware} lists the software components
 used in the validation loop.
@@ -908,7 +908,7 @@ Several thesis-hardening layers exist in meaningful but still bounded form:
     calibration design rather than long-horizon field degradation data.
   \item Fleet composition is implemented for the two-battery shared-transformer
     case, not for a broader heterogeneous fleet.
-  \item The HIL chapter has an auditable runtime rehearsal, but not a full
+  \item The SIL chapter has an auditable runtime rehearsal, but not a full
     external-bench package with independent device timing and relay shutdown.
   \item Navigation domain validation is simulation-backed rather than
     field-telemetry-backed.

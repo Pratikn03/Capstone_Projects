@@ -593,20 +593,19 @@ Five defended cyber-physical domains were validated under a unified fault schedu
     0.0\% under DC3S.  Full theorem-to-code-to-artifact lineage
     established in Parts~I--II.
   \item \textbf{Autonomous Vehicles}: 3.65\% $\rightarrow$ 0.0\%
-    (99.6\% repair rate, mean $\bar{w}_t = 0.768$).
-  \item \textbf{Industrial Process Control}: 21.7\% $\rightarrow$ 0.0\%
-    (90.7\% repair rate, mean $\bar{w}_t = 0.660$).
-  \item \textbf{Medical Monitoring (ICU Vitals)}: 7.55\% $\rightarrow$ 0.0\%
-    (37.2\% repair rate, mean $\bar{w}_t = 0.812$).
-  \item \textbf{Aerospace (Flight Envelope)}: 26.65\% $\rightarrow$ 0.0\%
-    (77.3\% repair rate, mean $\bar{w}_t = 0.782$).
+    at N~$= 2000$ steps (proof-candidate; locked 3-seed protocol: 2.78\% $\rightarrow$ 2.78\%).
+  \item \textbf{Industrial Process Control}: 21.53\% $\rightarrow$ 0.0\%
+    (proof-validated under locked 3-seed, 48-step protocol).
+  \item \textbf{Medical Monitoring (ICU Vitals)}: 6.25\% $\rightarrow$ 0.0\%
+    (proof-validated under locked 3-seed, 48-step protocol).
+  \item \textbf{Aerospace (Flight Envelope)}: 9.72\% $\rightarrow$ 9.72\%
+    under the locked 3-seed protocol (experimental surface; N~$= 2000$ deep-dive
+    shows 26.65\% $\rightarrow$ 0.0\% at higher evaluation budget).
 \end{itemize}
 
-Navigation remains part of the broader ORIUS portability package, but it is
-simulation-backed rather than part of the defended five-domain equivalent-depth
-claim: 25.8\% $\rightarrow$ 9.25\% (100\% repair rate, mean $\bar{w}_t = 0.773$).
-All five defended domains show DC3S reducing true-state violations by a factor
-of ten or more.  Pipeline latency remains sub-millisecond across the defended
+Navigation provides simulation-backed portability evidence: 18.06\% $\rightarrow$ 0.69\%
+(100\% repair rate).  Industrial and healthcare confirm 0.0\% TSVR under the
+stricter locked protocol; energy management is the reference domain at 0.0\% TSVR.  Pipeline latency remains sub-millisecond across the defended
 five-domain set (P95~$<$~0.1~ms), confirming ORIUS is suitable for
 fast-control-loop applications.
 
@@ -670,26 +669,8 @@ and ready for deeper domain-specific validation at each deployment site.
 \section{Synthesis and Outlook}
 \label{ch:synthesis-outlook}
 
-\subsection{The Central Message}
-
-Physical AI controllers routinely make decisions based on observations they
-have no reason to trust.  A telemetry packet arrives late, or not at all,
-or carrying a stale reading---and the controller evaluates its safety
-constraints against a state the plant may never have occupied.  The
-resulting Observation-Action Safety Gap is invisible to any evaluation
-protocol that checks constraints only on the observed trajectory.
-
-This dissertation has shown, in the battery dispatch domain, that the gap
-is real, measurable, and dangerous.  More importantly, it has shown that
-the gap is \emph{closable}.  The ORIUS principle---make observation
-reliability part of the control state, inflate uncertainty in proportion to
-unreliability, and project actions onto the tightened feasible set---eliminates
-true-state violations without replacing the upstream optimiser or requiring
-a new plant model.
-
-Under degraded observation, safety cannot be taken for granted.  ORIUS makes
-observation reliability a first-class quantity in the control loop, not an
-afterthought logged for post-hoc analysis.
+The preceding section summarises contributions and evidence scope.  This section
+reflects on what the research revealed and where it points next.
 
 \subsection{What the Battery Domain Taught Us}
 
