@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Audit and optionally build non-battery training surfaces for universal ORIUS.
+"""Audit and optionally build peer-domain training surfaces for universal ORIUS.
 
 This script is the forecasting-side counterpart to the universal runtime gate.
-It verifies that each promoted non-battery domain has:
+It verifies that each promoted peer domain has:
   - non-empty train/calibration/val/test splits,
   - a model bundle,
   - conformal / backtest artifacts,
@@ -229,7 +229,7 @@ def _write_tex(path: Path, rows: list[dict[str, object]]) -> None:
     lines = [
         r"\begin{table}[htbp]",
         r"\centering",
-        r"\caption{Forecasting-training audit for the non-battery ORIUS domains.}",
+        r"\caption{Forecasting-training audit for the peer ORIUS domains.}",
         r"\label{tab:domain-training-audit}",
         r"\begin{tabular}{lrrrrllll}",
         r"\toprule",
@@ -249,7 +249,7 @@ def _write_tex(path: Path, rows: list[dict[str, object]]) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Audit/train non-battery ORIUS forecasting surfaces")
+    parser = argparse.ArgumentParser(description="Audit/train peer-domain ORIUS forecasting surfaces")
     parser.add_argument("--out", default="reports/universal_training_audit")
     parser.add_argument("--train-missing", action="store_true")
     parser.add_argument("--repair-invalid-splits", action="store_true")

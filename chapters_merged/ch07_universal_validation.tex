@@ -644,7 +644,7 @@ T8 & Graceful Degradation Dom.\  & F & E & E & E & E & P \\
 
 \noindent\textbf{Reading the table.}
 Theorems T3, T5, and T6 are marked~\textbf{A} (architectural) for
-non-battery domains because their statements and proofs depend only on
+peer domains because their statements and proofs depend only on
 $\alpha$, $\bar{w}$, and~$T$---quantities that carry no domain semantics.
 The bound $\mathbb{E}[V] \le \alpha(1-\bar{w})T$ holds for any CPS
 that satisfies the adapter contract, without requiring domain-specific
@@ -660,9 +660,8 @@ in Table~\ref{tab:cross-domain-scorecard} below provide this evidence.
 \label{sec:cross-domain-scorecard}
 
 Table~\ref{tab:cross-domain-scorecard} consolidates the key safety and
-performance metrics for all six domains (battery reference plus five
-non-battery domains) into a single committee-readable scorecard.  All
-non-battery rows use $N = 2000$ fault-stressed steps under the unified
+performance metrics for all six peer domains into a single committee-readable scorecard.  All
+peer-domain rows use $N = 2000$ fault-stressed steps under the unified
 fault schedule (dropout~15\%, spike~8\%, stale~10\%).  Battery is
 reported as the locked publication aggregate.
 

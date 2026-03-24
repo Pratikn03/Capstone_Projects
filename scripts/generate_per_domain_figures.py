@@ -1,4 +1,4 @@
-"""Generate four thesis-quality figures for each non-battery domain.
+"""Generate four thesis-quality figures for each peer domain.
 
 Produces (for industrial, healthcare, aerospace):
   reports/{domain}/figures/forecast_sample.png   — forecast vs actual + 90% conformal band

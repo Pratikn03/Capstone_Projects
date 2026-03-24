@@ -2,7 +2,7 @@
 """CertOS toy second-domain demo (Paper 6 Step 6.4).
 
 Runs CertOSRuntime with vehicle-shaped actions to demonstrate
-CertOS works with a non-battery domain. Outputs certos_vehicle_toy.json.
+CertOS works with a peer domain (vehicle). Outputs certos_vehicle_toy.json.
 
 Usage:
     python3 scripts/run_certos_vehicle_toy.py [--out reports/certos]

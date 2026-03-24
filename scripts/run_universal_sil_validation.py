@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate software-in-loop validation artifacts for non-battery domains."""
+"""Generate software-in-loop validation artifacts for peer ORIUS domains."""
 from __future__ import annotations
 
 import argparse
@@ -52,7 +52,7 @@ def _write_summary_tex(path: Path, rows: list[dict[str, object]]) -> None:
     lines = [
         r"\begin{table}[htbp]",
         r"\centering",
-        r"\caption{Software-in-loop validation summary for the non-battery ORIUS domains.}",
+        r"\caption{Software-in-loop validation summary for the peer ORIUS domains.}",
         r"\label{tab:domain-sil-summary}",
         r"\begin{tabular}{lrrrrrl}",
         r"\toprule",

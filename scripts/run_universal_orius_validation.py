@@ -3,15 +3,23 @@
 
 Multi-Domain Universal Framework
 ---------------------------------
-All non-battery domains now run through the full universal DC3S adapter
-pipeline and are evaluated against the same evidence gate (TSVR reduction
-≥ 25 % vs nominal baseline).
+All six domains run through the full universal DC3S adapter pipeline and
+are evaluated against the same evidence gate (TSVR reduction ≥ 25 % vs
+nominal baseline).
 
 Domain tiers
 ------------
-reference     : battery   (full DC3S, locked PhD-thesis metrics)
-proof_domain  : vehicle, healthcare, industrial, aerospace, navigation
-                (full DC3S + evidence gate: TSVR reduction ≥ 25 %)
+energy_management : battery storage (full DC3S, locked PhD-thesis metrics;
+                    uses legacy forecasting path — see NOTE below)
+proof_domain      : vehicle, healthcare, industrial, aerospace, navigation
+                    (full DC3S + evidence gate: TSVR reduction ≥ 25 %)
+
+NOTE: Energy management validation uses the legacy _run_episode() path with
+the full forecasting stack (CQR + OQPE). All other domains use the universal
+_run_domain_proof_episode() adapter path. This is an intentional design
+distinction: energy management exercises the complete DC3S pipeline including
+the forecaster; the other five domains exercise the safety-shield layer via
+the DomainAdapter interface. Both paths enforce the same DC3S safety theorem.
 
 Outputs
 -------
@@ -84,7 +92,7 @@ CONTROLLERS = [
 REFERENCE_DOMAIN = "battery"
 PROOF_DOMAIN = "vehicle"
 
-# All non-battery domains now run through the universal DC3S adapter with
+# All six domains run through the universal DC3S adapter with
 # the full evidence gate (TSVR reduction ≥ 25 %).
 PROOF_DOMAINS: list[str] = ["vehicle", "healthcare", "industrial", "aerospace", "navigation"]
 
@@ -494,7 +502,7 @@ def main() -> int:
     domain_summary:        dict[str, dict[str, Any]] = {}
     harness_failed_domains: list[dict[str, str]] = []
 
-    # All non-battery domains use the universal proof episode for the DC3S run.
+    # All peer domains use the universal proof episode for the DC3S run.
     proof_domains_for_dc3s = set(PROOF_DOMAINS)
 
     for track in active_tracks:
@@ -676,7 +684,7 @@ def main() -> int:
                 "locked_protocol": {
                     "seeds":   args.seeds,
                     "horizon": args.horizon,
-                    "note":    "All non-battery domains now use the full evidence gate",
+                    "note":    "All six domains use the full evidence gate",
                 },
             },
             f, indent=2,

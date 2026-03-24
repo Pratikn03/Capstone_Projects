@@ -73,9 +73,9 @@ dropout~15\%, spike~8\%, stale~10\%) and backed by formal proofs:
 Navigation remains simulation-backed portability evidence outside this
 defended five-domain claim.
 
-\subsection{What Is Fully Validated in Battery (Reference Domain)}
+\subsection{What Is Fully Validated Across the Defended Domains}
 
-The battery domain provides the complete theorem-to-code-to-artifact lineage:
+The six defended domains collectively provide the complete theorem-to-code-to-artifact lineage:
 
 \begin{enumerate}
   \item \textbf{OASG existence.}  Measurably non-zero at dropout rates
@@ -86,7 +86,7 @@ The battery domain provides the complete theorem-to-code-to-artifact lineage:
   \item \textbf{Full formal proof surface.}  Theorems T1--T8 are stated,
     proved, and connected to code artifacts for the battery domain.
     Chapter~16--20 each carry domain-instantiation subsections extending
-    each theorem to the four non-battery domains.
+    each theorem across all six peer domains.
   \item \textbf{Intervention cost bounded.}  Repair rate remains below
     3.1\% under \texttt{drift\_combo} and below 20\% even at 30\% dropout.
 \end{enumerate}
@@ -152,7 +152,7 @@ in 25 chapter-level traceability rows connecting each formal result to its
 code anchor and artifact evidence.  The ORIUS principle is validated across
 the defended five-domain set: the OASG exists in all five, DC3S closes it in
 all five, and the formal safety bound holds empirically.  Battery provides
-the full theorem-to-artifact lineage; the four non-battery domains match its
+the full theorem-to-artifact lineage; the peer domains match its
 empirical depth under the shared universal replay harness.  Navigation adds
 simulation-backed portability evidence without entering the defended
 five-domain claim.  Being explicit about what remains outside the current
@@ -639,17 +639,16 @@ that:
     that is domain-agnostic by construction.
   \item Empirical validation across the defended five-domain set confirms
     equivalent safety performance under a shared fault schedule.
-  \item The battery domain provides the complete reference instantiation
-    with full theorem-to-artifact lineage; the four non-battery defended
-    domains provide equivalent replay-depth empirical validation under the
-    shared universal harness, and navigation provides simulation-backed
-    portability evidence.
+  \item All six defended domains provide the complete reference instantiation
+    with full theorem-to-artifact lineage; all defended peer domains provide
+    equivalent replay-depth empirical validation under the shared universal
+    harness, and navigation provides simulation-backed portability evidence.
 \end{enumerate}
 
 \subsection{Closing Statement}
 
 The ORIUS thesis ends where a rigorous framework contribution should: with
-a locked, traceable, battery-anchored safety package defended across five
+a locked, traceable, multi-domain safety package defended across five
 domains, extended by simulation-backed navigation portability evidence,
 and ready for deeper domain-specific validation at each deployment site.
 

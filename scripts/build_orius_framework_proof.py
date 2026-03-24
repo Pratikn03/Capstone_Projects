@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Build a battery-anchored ORIUS framework proof bundle.
+"""Build a universal ORIUS framework proof bundle.
 
 This orchestration script runs:
   1. the integrated 18-theorem release gate,
-  2. the non-battery training audit,
-  3. the non-battery software-in-loop audit, and
+  2. the peer-domain training audit,
+  3. the peer-domain software-in-loop audit, and
   4. the canonical universal ORIUS validation gate,
 
 then emits a compact bundle that answers:
   - which domain is the validated reference surface,
-  - which non-battery domains are proof-validated,
+  - which peer-domain domains are proof-validated,
   - which domains remain proof-candidate, shadow, or experimental,
   - where the training, SIL, and validation artifacts live, and
   - how the before/after domain metrics summarize in one register.
@@ -42,7 +42,7 @@ def _display_path(path: Path, repo_root: Path) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build a battery-anchored ORIUS framework proof bundle.")
+    parser = argparse.ArgumentParser(description="Build a universal ORIUS framework proof bundle.")
     parser.add_argument("--seeds", type=int, default=1, help="Number of seeds for the universal validation run.")
     parser.add_argument("--horizon", type=int, default=24, help="Episode horizon for the validation run.")
     parser.add_argument(

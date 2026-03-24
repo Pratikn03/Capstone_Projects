@@ -600,7 +600,7 @@ ORIUS safety layer.
 \subsection{Domain-Agnostic Statement}
 
 We first state the OASG existence result for an arbitrary cyber-physical
-system; the battery domain provides the concrete instantiation that follows.
+system; the battery domain provides one concrete instantiation below (Chapter~\ref{ch:battery-to-orius} covers all six).
 
 \begin{definition}[Abstract CPS]
 \label{def:abstract-cps}
@@ -839,7 +839,7 @@ $\mathbb{E}[|\xi_t| - \delta_{\text{bnd}} \mid |\xi_t| > \delta_{\text{bnd}}] > 
 The OASG Existence theorem is the first rung of the theorem ladder.
 It proves that the gap between observed and true safety is not a
 theoretical curiosity but an inevitable consequence of telemetry
-degradation in optimising controllers.  The battery domain provides
+degradation in optimising controllers.  The energy management domain provides
 a concrete witness: a TSVR of 3.9\% for the deterministic LP under
 \texttt{drift\_combo} at 20\% dropout.
 
@@ -886,7 +886,7 @@ and the expected number of true-state violations satisfies
 $\mathbb{E}[V] \le \alpha\,T$.
 \end{theorem}
 
-The battery domain provides the scalar instantiation below, where
+The energy management domain provides the scalar instantiation below (SOC case), where
 $\mathcal{S} = [\text{SOC}_{\min}, \text{SOC}_{\max}]$ and
 $\mathcal{A}_t$ reduces to a power-clipping interval.
 
@@ -1345,7 +1345,7 @@ not merely beneficial.
 
 The proof is constructive: we exhibit a three-phase fault sequence
 (baiting $\to$ injection $\to$ violation) that exploits the controller's
-fixed margin.  The battery domain provides the concrete construction below.
+fixed margin.  The energy management domain provides one concrete construction below.
 
 \subsection{Battery-Domain Instantiation: Quality-Ignorant Controller Class}
 

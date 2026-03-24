@@ -501,7 +501,7 @@ def write_per_domain_leaderboard(csv_path: Path) -> None:
     """Per-domain leaderboard: all 5 controllers ranked by TSVR for each domain.
 
     Reads per_controller_tsvr.csv and produces 5 ranked tables (one per
-    non-battery proof domain), analogous to tbl_battery_leaderboard.tex.
+    peer proof domain), analogous to tbl_battery_leaderboard.tex.
     """
     if not csv_path.exists():
         print(f"  SKIP per-domain leaderboards (missing {csv_path})")
