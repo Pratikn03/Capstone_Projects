@@ -600,7 +600,7 @@ ORIUS safety layer.
 \subsection{Domain-Agnostic Statement}
 
 We first state the OASG existence result for an arbitrary cyber-physical
-system; the battery domain provides one concrete instantiation below (Chapter~\ref{ch:battery-to-orius} covers all six).
+system; the battery domain provides the concrete instantiation that follows.
 
 \begin{definition}[Abstract CPS]
 \label{def:abstract-cps}
@@ -839,12 +839,10 @@ $\mathbb{E}[|\xi_t| - \delta_{\text{bnd}} \mid |\xi_t| > \delta_{\text{bnd}}] > 
 The OASG Existence theorem is the first rung of the theorem ladder.
 It proves that the gap between observed and true safety is not a
 theoretical curiosity but an inevitable consequence of telemetry
-degradation in optimising controllers.  The energy management domain provides
+degradation in optimising controllers.  The battery domain provides
 a concrete witness: a TSVR of 3.9\% for the deterministic LP under
 \texttt{drift\_combo} at 20\% dropout.
 
-\def\domainblockid{T1}
-\input{appendices/app_domain_instantiation_block}
 
 
 % --- Merged from ch17_battery_theorem_safety_preservation.tex ---
@@ -887,7 +885,7 @@ and the expected number of true-state violations satisfies
 $\mathbb{E}[V] \le \alpha\,T$.
 \end{theorem}
 
-The energy management domain provides the scalar instantiation below (SOC case), where
+The battery domain provides the scalar instantiation below, where
 $\mathcal{S} = [\text{SOC}_{\min}, \text{SOC}_{\max}]$ and
 $\mathcal{A}_t$ reduces to a power-clipping interval.
 
@@ -1077,8 +1075,6 @@ projection ensures constraint satisfaction.  The empirical evidence
 (TSVR~$= 0$\% across all conditions) confirms the theorem's prediction
 with margin to spare.
 
-\def\domainblockid{T2}
-\input{appendices/app_domain_instantiation_block}
 
 \input{appendices/app_domain_coverage_proof}
 
@@ -1306,8 +1302,6 @@ evaluation confirms the bound with substantial empirical slack,
 indicating that the shield is more effective in practice than the
 worst-case theory requires.
 
-\def\domainblockid{T3}
-\input{appendices/app_domain_instantiation_block}
 
 \input{appendices/app_domain_coverage_proof}
 
@@ -1348,7 +1342,7 @@ not merely beneficial.
 
 The proof is constructive: we exhibit a three-phase fault sequence
 (baiting $\to$ injection $\to$ violation) that exploits the controller's
-fixed margin.  The energy management domain provides one concrete construction below.
+fixed margin.  The battery domain provides the concrete construction below.
 
 \subsection{Battery-Domain Instantiation: Quality-Ignorant Controller Class}
 
@@ -1545,8 +1539,166 @@ proximity) and the empirical ablation results
 (Chapter~\ref{ch:ablations}) confirm the theorem's prediction: removing
 reliability-aware inflation from DC3S re-introduces violations.
 
-\def\domainblockid{T4}
-\input{appendices/app_domain_instantiation_block}
+
+
+% --- Merged from ch19b_sota_comparison.tex ---
+\section{Comparison to Alternative Safety Approaches}
+\label{ch:sota-comparison}
+
+
+
+\subsection{Alternative Safety Strategies}
+
+Three alternatives represent the mainstream literature on safe control under
+uncertainty:
+
+\paragraph{Tube MPC (fixed disturbance tube).}
+Tube MPC handles uncertainty by pre-computing a worst-case disturbance
+bound $\delta$ and adding it as a fixed safety margin to the constraint
+set~\citep{mayne2005robust}.  In our comparison, TubeMPC uses a fixed
+reliability floor $w_{\text{floor}} = 0.5$: the uncertainty set is inflated
+as if telemetry reliability were always 0.5, regardless of the actual OQE
+score.  This captures Tube MPC's defining limitation: the tube is
+domain-calibrated but \emph{constant} across all telemetry conditions.
+
+\paragraph{Control Barrier Function (CBF) filter.}
+A CBF enforces safety by maintaining $h(x_t) \ge 0$ along the trajectory,
+where $h$ is a domain-specific barrier function~\citep{ames2019control}.
+In our comparison, the CBF wrapper sets $w_t = 1.0$ at the uncertainty
+computation stage --- it evaluates the barrier on the \emph{observed} state
+$\hat{x}_t$ rather than correcting for telemetry degradation.  Under
+degraded telemetry, $\hat{x}_t \ne x_t^*$: the observed state is optimistic,
+and the barrier may approve actions that violate the true-state constraint.
+
+\paragraph{Lagrangian / Safe-RL filter.}
+Lagrangian Safe RL trains a policy under a constrained MDP with a penalty
+$\lambda \cdot \max(0, -h(x_t))$ added to the
+reward~\citep{garcia2015comprehensive}.  At deployment, the penalty signal
+comes from the observed state; under degraded telemetry the penalty is
+evaluated on $\hat{x}_t$, not $x_t^*$.  Our Lagrangian wrapper
+additionally relaxes the hard constraint boundaries by a soft-margin
+fraction of $0.25$, capturing the residual softness of a Lagrangian penalty
+that reduces but does not hard-eliminate constraint violations.
+
+\paragraph{DC3S (ORIUS, this work).}
+DC3S uses the live OQE reliability score $w_t$ to inflate the uncertainty
+set in proportion to the current telemetry degradation severity.  When
+$w_t$ is low (faulted sensor), the margin is wide; when $w_t = 1.0$ (clean
+telemetry), the margin collapses to the nominal conformal width.  This
+adaptive inflation is the mechanism that closes the OASG.
+
+\subsection{Experimental Setup}
+
+All four strategies were evaluated on the five universal proof domains
+(autonomous vehicles, industrial process control, medical monitoring,
+aerospace, and navigation) under the standard ORIUS fault schedule: 15\%
+dropout, 8\% spike, 10\% stale.  Each domain ran for two independent seeds
+of 100 steps each.
+
+\textbf{Note on evaluation protocol.}  This comparison uses a quick
+evaluation budget (2 seeds $\times$ 100 steps) to enable tractable
+comparison across four strategies.  The main domain validation results
+reported in Chapter~\ref{ch:battery-to-orius} use the locked framework
+proof protocol (3 seeds $\times$ 48 steps) and should be taken as the
+primary evidence of DC3S effectiveness.  Differences in TSVR between
+this chapter and Chapter~\ref{ch:battery-to-orius} reflect the different
+evaluation budgets rather than inconsistencies in the underlying mechanism.  The nominal aggressive-controller baseline (see
+Chapter~\ref{ch:cpsbench}) proposed actions without any safety
+filter; the four strategies then either repaired or passed through each
+proposed action.
+
+All five domains used the same \texttt{DomainAdapter} interface and the same
+\texttt{run\_universal\_step} pipeline (Chapter~\ref{ch:assumptions}).
+Strategies differ only in which reliability score they pass to
+\texttt{build\_uncertainty\_set} and how they handle constraint boundaries.
+
+\subsection{Results}
+
+Table~\ref{tab:sota-comparison} reports the true-state violation rate (TSVR)
+and intervention rate (IR) for each strategy across all five domains.
+
+\input{reports/sota_comparison/tbl_sota_comparison}
+
+The autonomous vehicles domain provides the cleanest OASG demonstration.
+DC3S achieves TSVR~$= 0.0\%$ with an intervention rate of 34.5\%.
+Tube MPC also achieves TSVR~$= 0.0\%$ but at a higher intervention rate of
+74.5\% --- the fixed $w_{\text{floor}} = 0.5$ tube is conservative in clean
+periods and over-intervenes even when telemetry is reliable.
+CBF and Lagrangian both produce TSVR~$= 0.5\%$ with IR~$= 72\%$: despite
+intervening far more often than DC3S, they still allow true-state violations
+because their barrier evaluations are based on the optimistic observed
+state.
+
+The industrial process control and navigation domains show TSVR~$= 0\%$
+across all strategies: the constraint set for these domains is wide enough
+that any repair filter eliminates violations.  This confirms that the OASG
+is not universal in severity --- it is most dangerous in domains where the
+gap between observed and true state is large relative to the safety margin.
+
+The healthcare and aerospace domains show violations across all strategies.
+For healthcare, the OASG manifests as a \emph{multi-step lag}: by the time
+a one-step repair is applied, the true vital signs have already breached the
+safe range from a prior undetected degraded observation.  The one-step
+repair framework can prevent \emph{future} violations but not retroactively
+correct an already-violated state.  Aerospace is rated experimental
+(Chapter~\ref{ch:outside-current-evidence}) and the 20\% violation rate reflects a
+combination of domain severity and incomplete calibration.
+
+\subsection{Why the Alternatives Fail}
+
+The three alternatives share a root failure: they evaluate safety conditions
+on the observed state $\hat{x}_t$ without correcting for telemetry
+reliability.
+
+\begin{itemize}
+  \item \textbf{Tube MPC} fixes the tube width at $w = w_{\text{floor}}$.
+    If the true fault rate exceeds the assumed disturbance bound, violations
+    occur; if the fault rate is lower, the tube over-constrains and increases
+    economic cost.  Across six domains with different fault profiles, no
+    single $w_{\text{floor}}$ is simultaneously tight and safe.
+
+  \item \textbf{CBF} enforces $h(\hat{x}_t) \ge 0$.  Under degraded
+    telemetry, $\hat{x}_t$ is an optimistic estimate of $x_t^*$.  When the
+    gap $\|\hat{x}_t - x_t^*\|$ exceeds the safety margin, the barrier
+    certifies an unsafe action.  This is exactly the OASG (Definition in
+    Chapter~\ref{ch:safety-illusion}).
+
+  \item \textbf{Lagrangian Safe RL} trains a penalty that penalises
+    $h(\hat{x}_t) < 0$.  At deployment, the penalty signal is still
+    evaluated on $\hat{x}_t$.  The residual softness of the Lagrangian
+    penalty (captured by the $0.25$ soft-margin parameter) means hard
+    constraints are not enforced even on the observed state.
+\end{itemize}
+
+DC3S closes all three failure modes simultaneously.  The OQE score $w_t$
+provides a continuous measurement of telemetry reliability; the
+reliability-aware uncertainty inflation (RUI) scales the safety margin
+proportionally; and the safe-action repair (SAR) enforces hard constraints
+on the inflated set.  The adaptive nature of $w_t$ is what distinguishes
+DC3S from a fixed-tube strategy: the margin widens exactly when telemetry is
+degraded and contracts when telemetry is clean, minimising both violations
+and unnecessary interventions.
+
+\subsection{Intervention Rate and Economic Cost}
+
+A safety strategy that over-intervenes imposes an economic cost even if it
+achieves low TSVR.  Table~\ref{tab:sota-comparison} shows that Tube MPC's
+IR of 74.5\% on the AV domain is more than twice DC3S's 34.5\%.  In an
+energy management context, excessive intervention means unnecessary
+curtailment of battery dispatch, reducing revenue.  In an industrial
+context, it means conservative setpoints that reduce throughput.  DC3S's
+OQE-adaptive margin avoids this trade-off: it is conservative exactly when
+telemetry is degraded and permissive when telemetry is reliable.
+
+\subsection{Summary}
+
+DC3S is the only strategy in this comparison that closes the OASG across
+all proof-validated domains while maintaining a lower intervention rate than
+conservative alternatives.  The three alternative strategies all fail for
+the same reason: they evaluate safety conditions on the observed state and
+cannot account for telemetry degradation severity.  The OQE-to-RUI coupling
+in DC3S is the structural mechanism that resolves this failure mode.
+
 
 
 % --- Merged from ch20_temporal_behavioral_extensions.tex ---
@@ -1879,7 +2031,5 @@ the landing protocol and prove it is strictly safer than uncontrolled
 dispatch.  Together, these extensions complete the theorem ladder
 initiated in Chapter~\ref{ch:theorem-oasg}.
 
-\def\domainblockid{T5-T8}
-\input{appendices/app_domain_instantiation_block}
 
 

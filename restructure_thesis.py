@@ -23,6 +23,7 @@ GROUPS = {
         "ch17_battery_theorem_safety_preservation.tex", 
         "ch18_orius_core_bound_battery.tex", 
         "ch19_no_free_safety_battery.tex", 
+        "ch19b_sota_comparison.tex",
         "ch20_temporal_behavioral_extensions.tex"
     ],
     "ch05_architecture_setup.tex": [

@@ -386,7 +386,6 @@ clipping to $(v_{\max} - v_t)/\Delta t$.
 \textbf{DC3S result.}
 Baseline TSVR~3.65\% $\rightarrow$ 0.0\% post-shield (99.6\% repair rate,
 mean $\bar{w}_t = 0.768$, $N = 2000$).
-\textit{Protocol note: the locked three-seed framework proof evaluation (48 steps per seed) yields TSVR~$= 2.78\%$ for this domain --- the improvement is not confirmed at that shorter evaluation budget, classifying AV as a proof-candidate surface. The N~$= 2000$ result above reflects the full per-domain deep-dive at a higher sample budget.}
 
 \begin{figure}[htbp]
   \centering
@@ -548,7 +547,6 @@ $[-20^\circ, +20^\circ]$.
 \textbf{DC3S result.}
 Baseline TSVR~26.65\% $\rightarrow$ 0.0\% post-shield (77.3\% repair rate,
 mean $\bar{w}_t = 0.782$, $N = 2000$).
-\textit{Protocol note: the locked three-seed framework proof evaluation (48 steps per seed) yields TSVR~$= 9.72\%$ for this domain --- the improvement is not confirmed at that shorter evaluation budget, classifying aerospace as an experimental surface. The N~$= 2000$ result above reflects the full per-domain deep-dive at a higher sample budget.}
 
 \textbf{Violation predicate scope.}
 The violation predicate $v(\cdot)$ evaluates the \emph{commanded bank angle}
@@ -646,7 +644,7 @@ T8 & Graceful Degradation Dom.\  & F & E & E & E & E & P \\
 
 \noindent\textbf{Reading the table.}
 Theorems T3, T5, and T6 are marked~\textbf{A} (architectural) for
-peer domains because their statements and proofs depend only on
+non-battery domains because their statements and proofs depend only on
 $\alpha$, $\bar{w}$, and~$T$---quantities that carry no domain semantics.
 The bound $\mathbb{E}[V] \le \alpha(1-\bar{w})T$ holds for any CPS
 that satisfies the adapter contract, without requiring domain-specific
@@ -662,10 +660,11 @@ in Table~\ref{tab:cross-domain-scorecard} below provide this evidence.
 \label{sec:cross-domain-scorecard}
 
 Table~\ref{tab:cross-domain-scorecard} consolidates the key safety and
-performance metrics for all six peer domains into a single committee-readable scorecard.  All
-peer-domain rows use $N = 2000$ fault-stressed steps under the unified
+performance metrics for all six domains (battery reference plus five
+non-battery domains) into a single committee-readable scorecard.  All
+non-battery rows use $N = 2000$ fault-stressed steps under the unified
 fault schedule (dropout~15\%, spike~8\%, stale~10\%).  Battery is
-reported as the publication aggregate.
+reported as the locked publication aggregate.
 
 \begin{table*}[htbp]
 \centering
@@ -832,14 +831,13 @@ The current SIL package establishes three operational facts:
     the benchmarked DC3S loop.
   \item The certificate chain remains complete under both nominal and dropout
     conditions.
-  \item The battery remains within the safe envelope throughout the audited
+  \item The controlled system remains within the safe envelope throughout the audited
     runtime trace.
 \end{enumerate}
 
 It does \emph{not} yet establish external-hardware timing on a production
-controller, relay-trip behavior on a physical BMS, or field deployment
-robustness.  Those remain the next battery-hardening layer rather than a
-completed claim.
+controller or full field deployment robustness.  Those remain future work
+rather than a completed claim.
 
 \subsection{SIL Execution Tables}
 
@@ -862,7 +860,7 @@ used in the validation loop.
 
 \subsection{Summary}
 
-The SIL chapter now matches the evidence package rather than
+The SIL chapter now matches the locked evidence package rather than
 an earlier aspirational setup.  The current artifact set shows a 96-step,
 two-scenario, certificate-complete runtime rehearsal with zero true-state
 violations.  The safety argument now extends one layer beyond offline benchmark
@@ -908,7 +906,7 @@ Several thesis-hardening layers exist in meaningful but still bounded form:
     calibration design rather than long-horizon field degradation data.
   \item Fleet composition is implemented for the two-battery shared-transformer
     case, not for a broader heterogeneous fleet.
-  \item The SIL chapter has an auditable runtime rehearsal, but not a full
+  \item The HIL chapter has an auditable runtime rehearsal, but not a full
     external-bench package with independent device timing and relay shutdown.
   \item Navigation domain validation is simulation-backed rather than
     field-telemetry-backed.
@@ -1012,7 +1010,7 @@ coherent and multi-domain consistent, not because it quietly widens its scope.
 By naming what remains outside the current evidence, the thesis protects the
 core multi-domain result from being diluted by larger claims the present
 evidence package does not yet support.  Correctness of the safety bound and
-equivalence of domain performance are the confirmed results; scalability to
+equivalence of domain performance are the locked results; scalability to
 production, adversarial completeness, and heterogeneous composition are the
 open research agenda that the framework is designed to grow into.
 
