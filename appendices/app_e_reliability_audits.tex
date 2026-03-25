@@ -110,15 +110,12 @@ alongside the global target, confirming uniform coverage.
 
 \section{Audit Protocol}
 
-The reliability-group audit is executed as part of the five-reviewer
-committee protocol (Appendix~\ref{app:four-reviewer-audit}, R1 checklist).  The
-procedure:
+The reliability-group audit procedure:
 \begin{enumerate}
   \item Run \texttt{scripts/generate\_priority2\_artifacts.py} to
     produce \texttt{cqr\_group\_coverage.csv}.
   \item Verify that no bin is flagged in the output CSV.
   \item Cross-check aggregate PICP against
     \texttt{dc3s\_main\_table.csv}.
-  \item Record pass/fail in the audit checklist
-    (Table~\ref{tab:committee-audit-checklist}).
+  \item Record pass/fail in the verification log.
 \end{enumerate}

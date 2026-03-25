@@ -31,7 +31,7 @@
 \contentsline {figure}{\numberline {7.10}{\ignorespaces Healthcare domain: GBM heart-rate forecast with 90\% conformal band and clinical safety bounds, alongside model performance comparison.}}{158}{figure.caption.162}%
 \contentsline {figure}{\numberline {7.11}{\ignorespaces Healthcare domain: OQE reliability under simulated sensor artefacts and multi-horizon HR forecast quality.}}{158}{figure.caption.163}%
 \contentsline {figure}{\numberline {7.12}{\ignorespaces Aerospace domain: GBM airspeed forecast with 90\% conformal band and flight-envelope bounds (60--350~kt), alongside model performance.}}{159}{figure.caption.165}%
-\contentsline {figure}{\numberline {7.13}{\ignorespaces Aerospace domain: OQE reliability under air-data faults and multi-horizon airspeed forecast quality.}}{160}{figure.caption.166}%
+\contentsline {figure}{\numberline {7.13}{\ignorespaces Aerospace domain: OQE reliability under air-data faults and multi-horizon airspeed forecast quality.}}{159}{figure.caption.166}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
@@ -39,19 +39,8 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {e.1}{\ignorespaces Coverage vs.\ interval width by reliability bin. Lower reliability $\Rightarrow $ wider intervals $\Rightarrow $ higher coverage. Source: \texttt {fig\_coverage\_width.png}.}}{211}{figure.caption.189}%
-\contentsline {figure}{\numberline {e.2}{\ignorespaces CQR group coverage across reliability bins. All bins exceed the 90\,\% target (dashed line). Source: \texttt {fig\_coverage\_width\_tradeoff.png}.}}{211}{figure.caption.190}%
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
+\contentsline {figure}{\numberline {e.1}{\ignorespaces Coverage vs.\ interval width by reliability bin. Lower reliability $\Rightarrow $ wider intervals $\Rightarrow $ higher coverage. Source: \texttt {fig\_coverage\_width.png}.}}{212}{figure.caption.189}%
+\contentsline {figure}{\numberline {e.2}{\ignorespaces CQR group coverage across reliability bins. All bins exceed the 90\,\% target (dashed line). Source: \texttt {fig\_coverage\_width\_tradeoff.png}.}}{212}{figure.caption.190}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }

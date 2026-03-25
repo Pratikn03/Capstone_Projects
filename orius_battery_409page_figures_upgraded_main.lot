@@ -12,16 +12,16 @@
 \contentsline {table}{\numberline {4.4}{\ignorespaces Assumption dependencies of main theorems.}}{45}{table.caption.37}%
 \contentsline {table}{\numberline {4.5}{\ignorespaces Integrated theorem-like surface counts generated from the thesis sources.}}{48}{table.caption.38}%
 \contentsline {table}{\numberline {4.6}{\ignorespaces Mapping OASG Existence theorem to battery domain.}}{51}{table.caption.39}%
-\contentsline {table}{\numberline {4.7}{\ignorespaces Domain-specific instantiation of the theorem's abstract objects. All five domains pass the DC3S evaluation gate (\S \ref {sec:cross-domain-eval}).}}{53}{table.caption.41}%
+\contentsline {table}{\numberline {4.7}{\ignorespaces Domain-specific instantiation for Theorem~T1{} — abstract objects mapped to each peer domain.}}{53}{table.caption.41}%
 \contentsline {table}{\numberline {4.8}{\ignorespaces Proof roadmap for Safety Preservation.}}{56}{table.caption.42}%
-\contentsline {table}{\numberline {4.9}{\ignorespaces Domain-specific instantiation of the theorem's abstract objects. All five domains pass the DC3S evaluation gate (\S \ref {sec:cross-domain-eval}).}}{58}{table.caption.44}%
+\contentsline {table}{\numberline {4.9}{\ignorespaces Domain-specific instantiation for Theorem~T2{} — abstract objects mapped to each peer domain.}}{58}{table.caption.44}%
 \contentsline {table}{\numberline {4.10}{\ignorespaces ORIUS Core Bound: special cases ($\alpha = 0.10$, $T = 1680$).}}{62}{table.caption.50}%
-\contentsline {table}{\numberline {4.11}{\ignorespaces Domain-specific instantiation of the theorem's abstract objects. All five domains pass the DC3S evaluation gate (\S \ref {sec:cross-domain-eval}).}}{64}{table.caption.52}%
+\contentsline {table}{\numberline {4.11}{\ignorespaces Domain-specific instantiation for Theorem~T3{} — abstract objects mapped to each peer domain.}}{64}{table.caption.52}%
 \contentsline {table}{\numberline {4.12}{\ignorespaces Mapping No Free Safety theorem to battery domain.}}{68}{table.caption.58}%
-\contentsline {table}{\numberline {4.13}{\ignorespaces Domain-specific instantiation of the theorem's abstract objects. All five domains pass the DC3S evaluation gate (\S \ref {sec:cross-domain-eval}).}}{71}{table.caption.60}%
+\contentsline {table}{\numberline {4.13}{\ignorespaces Domain-specific instantiation for Theorem~T4{} — abstract objects mapped to each peer domain.}}{71}{table.caption.60}%
 \contentsline {table}{\numberline {4.14}{\ignorespaces Temporal extension results: validity horizon, expiration bound, and half-life under representative conditions ($\sigma _d = 1.55$~MW, $q_{\text {eff}} = 8.2$~MWh, $\alpha = 0.10$).}}{73}{table.caption.64}%
 \contentsline {table}{\numberline {4.15}{\ignorespaces Behavioral comparison: graceful degradation versus alternatives.}}{75}{table.caption.68}%
-\contentsline {table}{\numberline {4.16}{\ignorespaces Domain-specific instantiation of the theorem's abstract objects. All five domains pass the DC3S evaluation gate (\S \ref {sec:cross-domain-eval}).}}{77}{table.caption.70}%
+\contentsline {table}{\numberline {4.16}{\ignorespaces Domain-specific instantiation for Theorem~T5-T8{} — abstract objects mapped to each peer domain.}}{77}{table.caption.70}%
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {5.1}{\ignorespaces Forecast model families and key hyper-parameters.}}{79}{table.caption.71}%
 \contentsline {table}{\numberline {5.2}{\ignorespaces CQR group coverage at 90\% nominal level, stratified by reliability group. Source: \texttt {reports/publication/cqr\_group\_coverage.csv}.}}{81}{table.caption.78}%
@@ -55,13 +55,13 @@
 \contentsline {table}{\numberline {6.22}{\ignorespaces Four-policy graceful-degradation comparison from \texttt {reports/publication/graceful\_four\_policy\_metrics.csv}.}}{130}{table.caption.121}%
 \contentsline {table}{\numberline {6.23}{\ignorespaces Locked fleet-composition metrics from the current two-battery study.}}{132}{table.caption.123}%
 \contentsline {table}{\numberline {6.24}{\ignorespaces Multi-Agent Fleet Coordination: joint safety violations and useful work under shared transformer capacity constraint (limit = 80\,MW, two batteries at 60\,MW each $= 120$\,MW proposed). Independent protocol violates; ORIUS-coordinated eliminates violations.}}{132}{table.caption.124}%
-\contentsline {table}{\numberline {6.25}{\ignorespaces Locked active-probing detection results for the battery threat model.}}{134}{table.caption.125}%
+\contentsline {table}{\numberline {6.25}{\ignorespaces Active-probing detection results for the battery threat model.}}{134}{table.caption.125}%
 \contentsline {table}{\numberline {6.26}{\ignorespaces CertOS runtime module map and bounded role in the battery thesis.}}{137}{table.caption.126}%
 \contentsline {table}{\numberline {6.27}{\ignorespaces CertOS lifecycle operations and their runtime meaning.}}{138}{table.caption.127}%
 \contentsline {table}{\numberline {6.28}{\ignorespaces CertOS runtime invariants.}}{139}{table.caption.129}%
-\contentsline {table}{\numberline {6.29}{\ignorespaces Locked CertOS runtime summary from the battery lifecycle demo.}}{139}{table.caption.130}%
+\contentsline {table}{\numberline {6.29}{\ignorespaces CertOS runtime summary from the battery lifecycle demo.}}{139}{table.caption.130}%
 \contentsline {table}{\numberline {6.30}{\ignorespaces Representative CertOS lifecycle rows from the governed battery runtime log.}}{140}{table.caption.131}%
-\contentsline {table}{\numberline {6.31}{\ignorespaces Bounded non-battery portability evidence for the CertOS runtime.}}{140}{table.caption.133}%
+\contentsline {table}{\numberline {6.31}{\ignorespaces Bounded peer-domain portability evidence for the CertOS runtime.}}{140}{table.caption.133}%
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {7.1}{\ignorespaces Battery-specific objects and their domain-general counterparts.}}{146}{table.caption.134}%
 \contentsline {table}{\numberline {7.2}{\ignorespaces Training, calibration, and test surfaces for all six ORIUS domains. Battery metrics are from the locked DE ENTSO-E run (load\_mw, $h{=}1$, conformal-adjusted PICP). Navigation uses a closed-loop simulation surface with no trained forecasting model. PICP$_{90}$ target is $\geq 0.90$ for all forecasting-capable domains.}}{149}{table.caption.140}%
@@ -72,84 +72,61 @@
 \contentsline {table}{\numberline {7.7}{\ignorespaces ORIUS pipeline latency per portable domain under fault injection.}}{152}{table.caption.148}%
 \contentsline {table}{\numberline {7.8}{\ignorespaces Theorem applicability across six domains. \textbf {F}~= formal proof with domain-specific instantiation; \textbf {E}~= empirical validation (SIL replay, fault injection); \textbf {A}~= architectural guarantee (domain-agnostic by construction); \textbf {P}~= portability evidence (simulation-backed). All theorems are stated in domain-agnostic notation (see abstract statements in Chapters~\ref {ch:theorem-oasg}--\ref {ch:no-free-safety}).}}{160}{table.caption.168}%
 \contentsline {table}{\numberline {7.9}{\ignorespaces Cross-domain safety performance scorecard. Latency P95 measured on the shared universal replay harness. PICP$_{90}$ is the empirical coverage of the 90\% conformal prediction interval on the held-out test split. ``--'' indicates the metric is not applicable (battery TSVR is from the publication aggregate, not the universal replay row).}}{161}{table.caption.169}%
-\contentsline {table}{\numberline {7.10}{\ignorespaces Locked HIL evidence package for the battery thesis.}}{164}{table.caption.170}%
+\contentsline {table}{\numberline {7.10}{\ignorespaces Locked SIL evidence package.}}{164}{table.caption.170}%
 \contentsline {table}{\numberline {7.11}{\ignorespaces Hardware-in-the-Loop Validation: execution summary. Zero safety violations across 144 steps; 100\% certificate completeness.}}{164}{table.caption.171}%
-\contentsline {table}{\numberline {7.12}{\ignorespaces Hardware-in-the-Loop Bill of Materials: components used for software-in-the-loop validation of the DC3S pipeline.}}{165}{table.caption.172}%
+\contentsline {table}{\numberline {7.12}{\ignorespaces Hardware-in-the-Loop Bill of Materials: components used for software-in-the-loop validation of the DC3S pipeline.}}{164}{table.caption.172}%
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {8.1}{\ignorespaces Core theorem ladder and empirical confirmation across all six domains.}}{174}{table.caption.177}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {9.1}{\ignorespaces SOTA safety-strategy comparison across all ORIUS domains under the standard fault schedule (15\,\% dropout, 8\,\% spike, 10\,\% stale). TSVR: true-state violation rate (\%). IR: intervention rate (\%).}}{190}{table.caption.182}%
+\contentsline {table}{\numberline {9.1}{\ignorespaces SOTA safety-strategy comparison under the quick-eval protocol (2 seeds $\times $ 100 steps per domain; fault schedule: 15\,\% dropout, 8\,\% spike, 10\,\% stale). TSVR: true-state violation rate (\%). IR: intervention rate (\%). Healthcare and aerospace non-zero results reflect the multi-step lag phenomenon at this evaluation budget; under the primary locked protocol (3 seeds $\times $ 48 steps) healthcare achieves 0.0\,\% TSVR and aerospace 9.72\,\% (classified experimental).}}{190}{table.caption.182}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {a.1}{\ignorespaces Telemetry and state symbols.}}{195}{table.A.1}%
-\contentsline {table}{\numberline {a.2}{\ignorespaces Quality and detector symbols.}}{196}{table.A.2}%
-\contentsline {table}{\numberline {a.3}{\ignorespaces Uncertainty-set and action symbols.}}{196}{table.A.3}%
-\contentsline {table}{\numberline {a.4}{\ignorespaces Battery plant parameters.}}{197}{table.A.4}%
-\contentsline {table}{\numberline {a.5}{\ignorespaces Evaluation metrics.}}{197}{table.A.5}%
-\contentsline {table}{\numberline {a.6}{\ignorespaces Tuning constants and thresholds.}}{197}{table.A.6}%
-\contentsline {table}{\numberline {a.7}{\ignorespaces Set notation and mathematical operators.}}{198}{table.A.7}%
+\contentsline {table}{\numberline {a.1}{\ignorespaces Telemetry and state symbols.}}{196}{table.A.1}%
+\contentsline {table}{\numberline {a.2}{\ignorespaces Quality and detector symbols.}}{197}{table.A.2}%
+\contentsline {table}{\numberline {a.3}{\ignorespaces Uncertainty-set and action symbols.}}{197}{table.A.3}%
+\contentsline {table}{\numberline {a.4}{\ignorespaces Battery plant parameters.}}{198}{table.A.4}%
+\contentsline {table}{\numberline {a.5}{\ignorespaces Evaluation metrics.}}{198}{table.A.5}%
+\contentsline {table}{\numberline {a.6}{\ignorespaces Tuning constants and thresholds.}}{198}{table.A.6}%
+\contentsline {table}{\numberline {a.7}{\ignorespaces Set notation and mathematical operators.}}{199}{table.A.7}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {b.1}{\ignorespaces Master assumption table (A1--A8).}}{199}{table.caption.183}%
-\contentsline {table}{\numberline {b.2}{\ignorespaces Assumption usage map: \text {$\mathsurround \z@ \mathchar "458$}\,=\,required, ---\,=\,not used.}}{201}{table.caption.184}%
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\contentsline {table}{\numberline {d.1}{\ignorespaces Extended controller comparison (DE, drift\_combo, 20\,\% dropout). Source: \texttt {dc3s\_main\_table.csv}.}}{206}{table.caption.185}%
-\contentsline {table}{\numberline {d.2}{\ignorespaces Regional impact breakdown for DC3S + FTIT. Source: \texttt {dc3s\_main\_table.csv}, \texttt {48h\_trace\_final\_de.csv}, \texttt {48h\_trace\_final\_us.csv}.}}{207}{table.caption.186}%
-\contentsline {table}{\numberline {d.3}{\ignorespaces DC3S + FTIT under individual fault families (DE, 20\,\% dropout). Source: \texttt {fault\_performance\_table.csv}.}}{208}{table.caption.187}%
-\addvspace {10\p@ }
-\contentsline {table}{\numberline {e.1}{\ignorespaces Coverage by reliability bin (DE, drift\_combo, 20\,\% dropout). Source: \texttt {cqr\_group\_coverage.csv}.}}{210}{table.caption.188}%
-\addvspace {10\p@ }
-\contentsline {table}{\numberline {f.1}{\ignorespaces Battery fault families for CPSBench telemetry degradation.}}{213}{table.F.1}%
-\contentsline {table}{\numberline {f.2}{\ignorespaces \texttt {drift\_combo} default parameter values.}}{215}{table.caption.191}%
-\contentsline {table}{\numberline {f.3}{\ignorespaces Fault-to-pipeline severity mapping.}}{216}{table.caption.192}%
-\addvspace {10\p@ }
-\contentsline {table}{\numberline {g.1}{\ignorespaces \texttt {BatteryDomainAdapter} interface methods.}}{218}{table.caption.193}%
-\addvspace {10\p@ }
-\contentsline {table}{\numberline {h.1}{\ignorespaces Five-reviewer committee audit generated from the release gates.}}{221}{table.caption.194}%
-\addvspace {10\p@ }
-\contentsline {table}{\numberline {i.1}{\ignorespaces HIL Bill of Materials}}{224}{table.caption.195}%
-\contentsline {table}{\numberline {i.2}{\ignorespaces HIL Safety Classification (IEC 61508)}}{224}{table.caption.196}%
-\contentsline {table}{\numberline {i.3}{\ignorespaces HIL Simulation Environment Risk Assessment}}{225}{table.caption.197}%
+\contentsline {table}{\numberline {b.1}{\ignorespaces Master assumption table (A1--A8).}}{200}{table.caption.183}%
+\contentsline {table}{\numberline {b.2}{\ignorespaces Assumption usage map: \text {$\mathsurround \z@ \mathchar "458$}\,=\,required, ---\,=\,not used.}}{202}{table.caption.184}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {k.1}{\ignorespaces Thesis Chapter to Paper, Code, and Artifact Mapping}}{231}{table.K.1}%
+\contentsline {table}{\numberline {d.1}{\ignorespaces Extended controller comparison (DE, drift\_combo, 20\,\% dropout). Source: \texttt {dc3s\_main\_table.csv}.}}{207}{table.caption.185}%
+\contentsline {table}{\numberline {d.2}{\ignorespaces Regional impact breakdown for DC3S + FTIT. Source: \texttt {dc3s\_main\_table.csv}, \texttt {48h\_trace\_final\_de.csv}, \texttt {48h\_trace\_final\_us.csv}.}}{208}{table.caption.186}%
+\contentsline {table}{\numberline {d.3}{\ignorespaces DC3S + FTIT under individual fault families (DE, 20\,\% dropout). Source: \texttt {fault\_performance\_table.csv}.}}{209}{table.caption.187}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {l.1}{\ignorespaces CSV Artifact Index}}{234}{table.L.1}%
-\contentsline {table}{\numberline {l.2}{\ignorespaces Figure Artifact Index}}{236}{table.L.2}%
+\contentsline {table}{\numberline {e.1}{\ignorespaces Coverage by reliability bin (DE, drift\_combo, 20\,\% dropout). Source: \texttt {cqr\_group\_coverage.csv}.}}{211}{table.caption.188}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {m.3}{\ignorespaces Integrated theorem release-gate matrix.}}{241}{table.M.3}%
-\contentsline {table}{\numberline {m.1}{\ignorespaces Theorem Gap Audit}}{243}{table.caption.198}%
-\contentsline {table}{\numberline {m.2}{\ignorespaces Integrated 18-theorem release-gate summary. The unique theorem set contains the two supporting Chapter~4 theorem statements and the flagship T1--T8 ladder; the appendix class checks the eight theorem restatements in Appendix~C against that unique surface.}}{244}{table.caption.199}%
+\contentsline {table}{\numberline {f.1}{\ignorespaces Battery fault families for CPSBench telemetry degradation.}}{214}{table.F.1}%
+\contentsline {table}{\numberline {f.2}{\ignorespaces \texttt {drift\_combo} default parameter values.}}{216}{table.caption.191}%
+\contentsline {table}{\numberline {f.3}{\ignorespaces Fault-to-pipeline severity mapping.}}{217}{table.caption.192}%
 \addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\contentsline {table}{\numberline {p.1}{\ignorespaces Battery Gap Hardening Checklist}}{253}{table.caption.200}%
+\contentsline {table}{\numberline {g.1}{\ignorespaces \texttt {BatteryDomainAdapter} interface methods.}}{219}{table.caption.193}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {r.1}{\ignorespaces Locked artifact hash registry from the final full-thesis package.}}{259}{table.R.1}%
+\contentsline {table}{\numberline {i.1}{\ignorespaces Thesis Chapter to Paper, Code, and Artifact Mapping}}{225}{table.I.1}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {s.1}{\ignorespaces Primary claim-to-evidence matrix from the locked publication register.}}{262}{table.S.1}%
-\contentsline {table}{\numberline {s.2}{\ignorespaces Battery theorem and chapter evidence register from the locked battery claim register.}}{265}{table.S.2}%
-\contentsline {table}{\numberline {s.3}{\ignorespaces Chapter coverage register from the thesis coverage audit.}}{266}{table.S.3}%
-\contentsline {table}{\numberline {s.4}{\ignorespaces Claim--Evidence Matrix: all 22 thesis claims with locked artifact pointers. Status \emph {locked} means the artifact file exists and contains real numerical data.}}{270}{table.caption.201}%
+\contentsline {table}{\numberline {j.3}{\ignorespaces Integrated theorem release-gate matrix.}}{231}{table.J.3}%
+\contentsline {table}{\numberline {j.1}{\ignorespaces Theorem Gap Audit}}{233}{table.caption.194}%
+\contentsline {table}{\numberline {j.2}{\ignorespaces Integrated 18-theorem release-gate summary. The unique theorem set contains the two supporting Chapter~4 theorem statements and the flagship T1--T8 ladder; the appendix class checks the eight theorem restatements in Appendix~C against that unique surface.}}{234}{table.caption.195}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {t.1}{\ignorespaces CertOS artifact bundle and its role in the thesis.}}{271}{table.caption.202}%
-\contentsline {table}{\numberline {t.2}{\ignorespaces Status counts derived from the locked CertOS summary artifact.}}{272}{table.caption.203}%
-\contentsline {table}{\numberline {t.3}{\ignorespaces Certificate and runtime-state fields used by CertOS.}}{273}{table.caption.204}%
-\contentsline {table}{\numberline {t.4}{\ignorespaces Audit ledger record fields from the CertOS audit-ledger module.}}{274}{table.caption.205}%
-\contentsline {table}{\numberline {t.5}{\ignorespaces Latency and recovery audit from the CertOS runtime artifacts.}}{274}{table.caption.206}%
-\contentsline {table}{\numberline {t.6}{\ignorespaces Vehicle-shaped CertOS toy artifact.}}{274}{table.caption.207}%
+\contentsline {table}{\numberline {k.1}{\ignorespaces CertOS artifact bundle and its role in the thesis.}}{235}{table.caption.196}%
+\contentsline {table}{\numberline {k.2}{\ignorespaces Status counts derived from the locked CertOS summary artifact.}}{236}{table.caption.197}%
+\contentsline {table}{\numberline {k.3}{\ignorespaces Certificate and runtime-state fields used by CertOS.}}{237}{table.caption.198}%
+\contentsline {table}{\numberline {k.4}{\ignorespaces Audit ledger record fields from the CertOS audit-ledger module.}}{238}{table.caption.199}%
+\contentsline {table}{\numberline {k.5}{\ignorespaces Latency and recovery audit from the CertOS runtime artifacts.}}{238}{table.caption.200}%
+\contentsline {table}{\numberline {k.6}{\ignorespaces Vehicle-shaped CertOS toy artifact.}}{238}{table.caption.201}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {u.1}{\ignorespaces Full 96-step CertOS lifecycle log.}}{275}{table.U.1}%
+\contentsline {table}{\numberline {l.1}{\ignorespaces Full 96-step CertOS lifecycle log.}}{239}{table.L.1}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {v.1}{\ignorespaces Locked active-probing detection results for the battery threat model.}}{280}{table.caption.208}%
+\contentsline {table}{\numberline {m.1}{\ignorespaces Locked active-probing detection results for the battery threat model.}}{244}{table.caption.202}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {w.1}{\ignorespaces Battery objects and their domain-general counterparts.}}{282}{table.caption.209}%
-\contentsline {table}{\numberline {w.2}{\ignorespaces Current bounded portability surfaces present in the repo.}}{283}{table.caption.210}%
-\contentsline {table}{\numberline {w.3}{\ignorespaces Vehicle-domain excerpt from the shared ORIUS-Bench leaderboard.}}{284}{table.caption.211}%
+\contentsline {table}{\numberline {n.1}{\ignorespaces Battery objects and their domain-general counterparts.}}{246}{table.caption.203}%
+\contentsline {table}{\numberline {n.2}{\ignorespaces Current bounded portability surfaces present in the repo.}}{247}{table.caption.204}%
+\contentsline {table}{\numberline {n.3}{\ignorespaces Vehicle-domain excerpt from the shared ORIUS-Bench leaderboard.}}{248}{table.caption.205}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\addvspace {10\p@ }
-\addvspace {10\p@ }
-\contentsline {table}{\numberline {ac.1}{\ignorespaces Integrated theorem-like surface register generated from chapters and appendices.}}{307}{table.Alph29.1}%
+\contentsline {table}{\numberline {r.1}{\ignorespaces Integrated theorem-like surface register generated from chapters and appendices.}}{262}{table.R.1}%
