@@ -1,0 +1,19 @@
+\begin{table*}[htbp]
+\centering\footnotesize
+\caption{Assumption-to-code traceability for the universal degraded-observation kernel.}
+\label{tab:assumption-code-traceability}
+\begin{tabular}{p{0.8cm}p{3.2cm}p{6.1cm}p{3.0cm}}
+\toprule
+\textbf{ID} & \textbf{Assumption} & \textbf{Canonical code surface} & \textbf{Runtime status} \\
+\midrule
+A1 & Bounded model error & Domain instantiation and battery reference helpers in \path{src/orius/universal_theory/battery_instantiation.py} & Declared by model/artifact surface \\
+A2 & Bounded telemetry error & \path{compute_oqe()}, \path{build_reliability_assessment()}, observation-consistent state construction & Checked through reliability and state envelopes \\
+A3 & Feasible safe repair & \path{tighten_action_set()}, \path{repair_action()}, \path{build_repair_decision()} & Checked per step \\
+A4 & Known dynamics & \path{DomainInstantiation} contract and domain-specific transition models & Declared by domain instantiation \\
+A5 & Monotone bounded inflation & \path{verify_inflation_geq_one()} and clipped inflation in \path{build_observation_consistent_state_set()} & Checked per step \\
+A6 & Bounded detector lag & OQE/drift artifacts and locked replay audits & Artifact-validated; not fully checked at runtime \\
+A7 & Causal certificate update & \path{execute_universal_step()} and \path{SafetyCertificate.from_payload()} & Checked structurally \\
+A8 & Admissible fallback policy & \path{SafetySpec.fallback_action}, battery zero-dispatch fallback, fallback branch in \path{build_repair_decision()} & Checked when fallback exists \\
+\bottomrule
+\end{tabular}
+\end{table*}

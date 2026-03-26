@@ -1,7 +1,7 @@
-# ORIUS — Observation–Reality Integrity for Universal Safety
+# ORIUS — Observation–Reality Integrity for Safe Control under Degraded Observation
 
-> A runtime safety shield for cyber-physical systems under degraded telemetry.
-> Validated across six CPS domains with sub-millisecond overhead and formal guarantees.
+> A runtime safety kernel for cyber-physical systems under degraded telemetry.
+> Implements a typed repair-and-certificate contract with tiered cross-domain evidence.
 
 ![Tests](https://img.shields.io/badge/tests-950%2B%20passing-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
@@ -16,7 +16,7 @@
 
 **ORIUS** (*Observation–Reality Integrity for Universal Safety*) addresses a fundamental hazard in cyber-physical systems: a closed-loop controller can produce actions that appear safe relative to the observed system state while the true physical state has already violated its safety constraint. This divergence — the *Observation–Action Safety Gap* (OASG) — arises whenever a sensing channel is subject to dropout, stale readings, sensor spike, or calibration drift. Standard safety methods (Tube MPC, Control Barrier Functions, Lagrangian Safe RL) evaluate constraints against the observed state, and therefore inherit the OASG rather than close it.
 
-ORIUS closes the OASG via **DC3S** (*Degradation-Conditioned Conformal Safety Shield*), a five-stage runtime pipeline that continuously scores telemetry quality, inflates conformal prediction uncertainty in proportion to degradation severity, tightens the feasible action set, repairs constraint-violating actions through joint projection, and issues per-step runtime certificates. The framework is exercised across six CPS runtime rows — energy management, autonomous vehicles, industrial process control, medical monitoring, aerospace flight control, and navigation — under a tiered evidence model: energy management is the reference row, industrial process control and medical monitoring are proof-validated, autonomous vehicles is proof-candidate, navigation is shadow-synthetic, and aerospace is experimental. The three highest-confidence rows reach **0 %** TSVR at **35.3 µs mean / 41.1 µs P95** full-pipeline latency, enabling deployment in 100 Hz and 200 Hz real-time control loops.
+ORIUS closes the OASG via **DC3S** (*Degradation-Conditioned Conformal Safety Shield*), a five-stage runtime pipeline that continuously scores telemetry quality, inflates conformal prediction uncertainty in proportion to degradation severity, tightens the feasible action set, repairs constraint-violating actions through joint projection, and issues per-step runtime certificates. The core theory/runtime surface is now exposed explicitly in `src/orius/universal_theory/` as typed objects for observation packets, reliability assessments, observation-consistent state sets, safe-action sets, repair decisions, and safety certificates. The framework is exercised across six CPS runtime rows under a tiered evidence model: energy management is the reference row, industrial process control and medical monitoring are proof-validated, autonomous vehicles is proof-candidate, navigation is shadow-synthetic, and aerospace is experimental. The three highest-confidence rows reach **0 %** TSVR at **35.3 µs mean / 41.1 µs P95** full-pipeline latency, enabling deployment in 100 Hz and 200 Hz real-time control loops.
 
 A formal safety theorem establishes that TSVR is bounded by α(1 − w̄)T (Theorem T3), where α is the conformal miscoverage rate and w̄ is the mean OQE reliability score. That theorem is anchored to the battery reference surface, and the locked universal replay tables show how the six runtime rows relate to the same conservative envelope under one fault protocol. The theorem surface comprises 18 verified items (theorems, lemmas, propositions, corollaries, definitions, and standing assumptions), each anchored to source code in `src/orius/dc3s/` and locked experimental artifacts in `reports/`.
 
@@ -218,9 +218,15 @@ gridpulse/
 │   │   ├── aerospace/           — AerospaceDomainAdapter (altitude, airspeed, bank)
 │   │   └── navigation/          — NavigationDomainAdapter (2D arena, obstacles)
 │   │
+│   ├── universal_theory/        — Typed degraded-observation theorem/runtime kernel
+│   │   ├── contracts.py         — ObservationPacket, SafetyCertificate, ContractVerifier
+│   │   ├── kernel.py            — execute_universal_step(), repair + certificate orchestration
+│   │   ├── risk_bounds.py       — Coverage and degradation-sensitive risk envelopes
+│   │   └── battery_instantiation.py — Battery-specific temporal/fallback helpers
+│   │
 │   ├── universal_framework/     — Multi-domain validation runner
 │   │   ├── domain_registry.py   — register() / get_adapter() / list_domains()
-│   │   ├── pipeline.py          — run_universal_step() for any adapter
+│   │   ├── pipeline.py          — typed run_universal_step() wrapper
 │   │   ├── healthcare_adapter.py
 │   │   ├── industrial_adapter.py
 │   │   ├── aerospace_adapter.py

@@ -6,6 +6,7 @@
     "package_root": "src/orius/",
     "official_backbone": [
       "src/orius/adapters/",
+      "src/orius/universal_theory/",
       "src/orius/dc3s/",
       "src/orius/certos/",
       "src/orius/orius_bench/",
@@ -16,6 +17,7 @@
     ],
     "canonical_import_rule": {
       "adapters": "orius.adapters.*",
+      "universal_theory": "orius.universal_theory.*",
       "safety_logic": "orius.dc3s.*",
       "runtime_os": "orius.certos.*",
       "benchmark": "orius.orius_bench.*",

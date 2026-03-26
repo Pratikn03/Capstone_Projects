@@ -108,6 +108,21 @@ bounded disturbance.
 because SOC is unchanged (up to model error).
 \end{assumption}
 
+\paragraph{Executable universal kernel.}
+The canonical code surface for these assumptions now lives in
+\path{src/orius/universal_theory/}.  That package exposes typed runtime
+objects for observation packets, reliability assessments,
+observation-consistent state sets, safe-action sets, repair decisions, and
+safety certificates.  The battery-domain proofs remain the reference
+instantiation, but the reusable universal claim now attaches to this typed
+kernel rather than to an untyped adapter narrative.
+
+\IfFileExists{reports/publication/assumption_code_traceability.tex}{%
+  \input{reports/publication/assumption_code_traceability}%
+}{%
+  \input{../reports/publication/assumption_code_traceability}%
+}
+
 \section{Proof Dependency Matrix}
 
 Table~\ref{tab:proof-deps} shows which assumptions each theorem requires.

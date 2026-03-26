@@ -3,38 +3,41 @@
 \label{ch:battery-to-orius}
 
 This chapter presents the ORIUS universal validation: the DC3S shield is
-proven to eliminate true-state safety violations across six distinct
-cyber-physical domains---energy management, autonomous vehicles, industrial
-process control, medical monitoring, aerospace, and navigation---each
-evaluated at equivalent empirical depth.  Every forecasting-capable domain
-carries locked telemetry, a trained forecasting surface, conformal
-calibration artifacts, and a software-in-loop replay trace.  All
-forecasting-capable domains show DC3S reducing true-state violations by
-70\% or more under a unified fault schedule (dropout~15\%, spike~8\%,
-stale~10\%).  Navigation is included as a simulation-backed portability
-surface confirming that the adapter contract extends to guidance domains.
+implemented as one shared degraded-observation repair-and-certify kernel
+instantiated across six cyber-physical domains---energy management,
+autonomous vehicles, industrial process control, medical monitoring,
+aerospace, and navigation.  The claim boundary is tiered rather than
+uniform: battery is the reference witness, industrial and healthcare are
+defended proof-validated peers, autonomous vehicles remains proof-candidate,
+navigation is shadow-synthetic, and aerospace remains experimental.  The
+shared result is therefore not ``six domains with equivalent guarantees,'' but
+one typed runtime contract whose strongest theorem-to-artifact lineage
+remains anchored to the battery reference surface.
 
 \section{Why the ORIUS Result Is Structurally General}
 
 The DC3S pipeline never inspects the internal dynamics of the battery
-plant.  It consumes five objects:
+plant directly.  The canonical universal kernel now consumes six typed
+objects:
 
 \begin{enumerate}
-  \item An observation vector $z_t$ (telemetry readings at time $t$).
-  \item A scalar reliability score $w_t \in [w_{\min}, 1]$ summarising
-    telemetry quality.
-  \item A conformal prediction region $C_t^{\text{RAC}}$ over the true state,
-    inflated by $1/w_t$.
-  \item A feasible action set $\mathcal{A}_t$ defined by domain constraints.
-  \item A safe-action projection $a_t^{\text{safe}}$ that maps any candidate
-    action into $\mathcal{A}_t$ under the worst-case realisation of
-    $C_t^{\text{RAC}}$.
+  \item An \emph{observation packet} carrying raw telemetry and its parsed
+    state view at time $t$.
+  \item A scalar \emph{reliability assessment} $w_t \in [w_{\min}, 1]$
+    summarising telemetry quality and detector output.
+  \item An \emph{observation-consistent state set} $U_t$ over the true state,
+    widened conservatively when observation quality degrades.
+  \item A domain \emph{safety specification} plus a tightened safe-action set
+    $\mathcal{A}_t$ derived from $U_t$.
+  \item A \emph{repair decision} $a_t^{\text{safe}}$ that maps any candidate
+    action into $\mathcal{A}_t$ under the worst-case realisation of $U_t$.
+  \item A causal \emph{safety certificate} recording the repaired action,
+    reliability state, uncertainty state, and assumption tags.
 \end{enumerate}
 
-None of these objects mention SOC, voltage, or Coulomb counting.  They are
-\emph{domain-general}: any CPS providing equivalent definitions can reuse
-the ORIUS pipeline subject to domain-specific validation and bounded
-claim discipline.
+None of these objects require SOC, voltage, or Coulomb counting.  Battery
+semantics live in the battery instantiation, while the reusable universal
+claim attaches to the typed kernel shared across domains.
 
 \section{Mapping Battery Objects to the Universal Adapter}
 
@@ -135,8 +138,8 @@ an adapter alone.
     under degraded-telemetry fault injection matching the universal
     fault schedule.  The energy management instantiation is developed
     in full in Chapters~\ref{ch:forecasting}--\ref{ch:no-free-safety};
-    this chapter presents it at the same evidence tier as the other five
-    domains.
+    this chapter presents it as the reference witness rather than as one
+    peer among equivalent domains.
   \item \textbf{Autonomous Vehicles} use locked longitudinal kinematic
     telemetry with speed-limit constraints.  The training surface
     (85 train / 6 calibration / 19 test) is locked and verified.
@@ -215,9 +218,21 @@ status table.  All six domains share the same evaluation protocol and
 claim structure: energy management, AV, industrial, healthcare, and
 aerospace carry locked real-data telemetry; navigation carries a
 simulation surface.  Industrial and healthcare are proof-validated (SIL
-pass, material TSVR reduction, locked telemetry).  AV, aerospace, and
-energy management are proof-candidates under the same promotion contract.
-Navigation provides simulation-backed portability evidence.
+pass, material TSVR reduction, locked telemetry).  AV remains
+proof-candidate because the current promotion contract is not yet cleared.
+The root cause is a structural constraint-class mismatch: the headway
+constraint $\mathrm{gap}_t \ge d_{\min} + \tau v_t$ is evaluated on the
+\emph{current} plant state, while the DC3S shield repairs the
+\emph{next-step} acceleration.
+Proposition~\ref{prop:constraint-class-mismatch}
+(Chapter~\ref{ch:universality-completeness}) formalises why one-dimensional
+action-space repair is insufficient here and identifies three promotion
+paths: augmented state repair, TTC reformulation, or a predictive entry
+barrier.  Until one of those is instantiated, the 2.78\% AV residual
+TSVR is a structural artefact, not a conformal-coverage shortfall.
+Navigation provides simulation-backed portability evidence, and aerospace
+remains experimental pending promotion-gate completion.  Energy management
+remains the reference row.
 
 \IfFileExists{reports/universal_orius_validation/tbl_domain_proof_status.tex}{%
   \input{reports/universal_orius_validation/tbl_domain_proof_status}%
@@ -240,9 +255,10 @@ Navigation provides simulation-backed portability evidence.
   \includegraphics[width=0.88\linewidth]{reports/universal_orius_validation/fig_all_domain_comparison.png}
   \caption{Universal ORIUS validation surface across all six domains.  Each bar
     pair shows unshielded TSVR (before shield) and DC3S TSVR (after shield)
-    under the unified fault schedule.  All six domains achieve sub-$\alpha$
-    violations post-shield, with DC3S providing equivalent safety guarantees
-    regardless of domain physics.}
+    under the unified fault schedule.  The figure visualises one shared
+    degraded-observation repair contract exercised across tiered evidence
+    rows; it does not imply equivalent proof depth or equivalent guarantees
+    across all six domains.}
   \label{fig:all-domain-comparison}
 \end{figure}
 
@@ -302,16 +318,16 @@ These results support three claims:
 
 \begin{enumerate}
   \item \textbf{Portability without re-engineering.} Each new domain required
-    only a \texttt{DomainAdapter} implementation; the DC3S core was not
-    modified.  All five adapters share the same five-stage runtime, the same
-    OQE scoring function, and the same conformal inflation rule.
-  \item \textbf{Equivalent safety performance across domains.} All six
-    domains show DC3S reducing true-state violations by
-    $\geq\!70\%$ relative to the unshielded baseline under identical fault
-    schedules.  Each domain carries equivalent empirical evidence: locked
-    telemetry, trained forecasting surface, conformal calibration artifacts,
-    and software-in-loop replay traces.  Navigation provides additional
-    simulation-backed portability evidence.
+    only a typed domain instantiation; the shared kernel in
+    \path{src/orius/universal_theory/} was not modified.  All adapters share
+    the same five-stage runtime, the same reliability-to-uncertainty logic,
+    and the same certificate surface.
+  \item \textbf{Tiered evidence, not equal guarantees.} The defended claim
+    surface is battery reference plus industrial/healthcare proof-validation.
+    AV remains proof-candidate, navigation remains shadow-synthetic, and
+    aerospace remains experimental.  The common result is a reusable
+    degraded-observation repair contract under one protocol, not six domains
+    with equivalent proof depth.
   \item \textbf{Overhead is negligible.} Sub-millisecond pipeline latency
     (P95~$<\!0.1$~ms across all domains) makes ORIUS suitable for
     fast-control-loop applications (AV at 1~Hz, industrial at hourly cadence,

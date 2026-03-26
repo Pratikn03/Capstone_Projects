@@ -244,6 +244,40 @@ CBF shield         & \ding{109} & \ding{109} & \ding{109} & \ding{108} & \ding{1
 \end{tabular}
 \end{table}
 
+\section{ORIUS as a Unifying Framework}
+\label{sec:orius-unification}
+
+The universality chapter (Chapter~\ref{ch:universality-completeness},
+Theorem~\ref{thm:unification}) packages a precise unification claim:
+CBF, Robust MPC, and Safe RL can each be represented as special cases of the
+ORIUS degraded-observation kernel under fixed or model-derived reliability
+policies.
+
+\begin{description}
+  \item[\textbf{CBF} (Control Barrier Functions).]
+    CBF assumes $w_t \equiv 1$ (perfect observation).  The barrier constraint
+    defines the tightened set; the CBF-QP is the repair step.  Under
+    telemetry degradation, CBF does not inflate the margin, incurring the
+    OASG phenomenon (T9 applies with large $c$).
+  \item[\textbf{Robust MPC} (tube methods).]
+    Robust MPC uses a fixed tube radius $r$, equivalent to $w_t \equiv
+    1 - r/r_{\max}$ for all steps.  It applies a constant safety margin
+    regardless of whether current telemetry is clean or degraded,
+    sacrificing performance unnecessarily during clean periods.
+  \item[\textbf{Safe RL} (posterior constraint).]
+    Safe RL derives the action constraint from the posterior predictive
+    distribution, which corresponds to $w_t$ from the posterior concentration
+    and $q_t$ from the posterior quantile.  ORIUS provides the same guarantee
+    without model assumptions via conformal prediction.
+\end{description}
+
+ORIUS strictly generalises each in the sense relevant to this dissertation:
+dynamic $w_t$ from the OQE reduces unnecessary conservatism under clean
+telemetry and automatically tightens under degraded telemetry.  The
+reference reductions are implemented in \texttt{src/orius/universal/unification.py},
+while the canonical production kernel remains
+\texttt{src/orius/universal\_theory/}.
+
 \section{Chapter Summary}
 
 The literatures on battery dispatch, CPS telemetry faults, conformal

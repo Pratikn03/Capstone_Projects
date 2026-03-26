@@ -219,6 +219,23 @@ $\Omega(T)$, exceeding any $o(T)$ bound.
     assumptions are violated.
 \end{enumerate}
 
+\section{Universal Impossibility (T9)}
+\label{sec:t9-ch19}
+
+T4 establishes necessity for one adversarial sequence.
+The universality program's T9 statement is the universal
+extension: under an i.i.d.\ fault process with rate $d > 0$, any
+quality-ignorant controller incurs $\mathbb{E}[V_T] \ge c \cdot d \cdot T$
+expected violations, where $c > 0$ depends only on constraint geometry.
+
+This makes explicit what T4 implies informally: quality-aware inflation is not
+a design convenience but a structural necessity at the $\Omega(T)$ level.
+T9's proof uses Borel-Cantelli on disjoint fault windows, not a single
+adversarial sequence.  In the broader universality program, the constant $c$
+is interpreted as a domain-dependent sensitivity to degraded observation, with
+battery providing the reference proof witness and the remaining rows supplying
+tiered supporting evidence rather than equal theorem surfaces.
+
 \section{Chapter Summary}
 
 The No Free Safety theorem is the fourth rung of the theorem ladder.

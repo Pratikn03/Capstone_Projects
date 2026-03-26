@@ -14,6 +14,11 @@ into safety-guaranteed actions.  This chapter specifies the runtime objects,
 derives each stage of the pipeline, and narrates a complete control step from
 telemetry ingestion to certificate issuance.
 
+In the codebase, the domain-agnostic version of that runtime now lives in
+\path{src/orius/universal_theory/}.  The battery derivation below is the
+reference instantiation of that universal degraded-observation kernel, not a
+hidden claim that every domain already inherits battery-level proof depth.
+
 % ----------------------------------------------------------------
 \subsection{Why a Runtime Shield Is Needed}
 
@@ -2032,5 +2037,4 @@ monotonicity (Proposition~\ref{prop:budget-monotonicity})---formalise
 the landing protocol and prove it is strictly safer than uncontrolled
 dispatch.  Together, these extensions complete the theorem ladder
 initiated in Chapter~\ref{ch:theorem-oasg}.
-
 

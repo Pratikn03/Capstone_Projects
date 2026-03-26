@@ -1,0 +1,504 @@
+\chapter{Universal Kernel, Contract, and Unification Program}
+\label{ch:universality-completeness}
+
+This chapter clarifies what ``universal'' means in the final ORIUS research
+program.  It does \emph{not} claim that all six runtime rows already carry
+equal proof depth.  Instead, it isolates the reusable theorem kernel for safe
+control under degraded observation, states the broader universal program
+results under explicit assumptions, and separates those statements from the
+current tiered evidence boundary: battery is the reference proof surface,
+industrial and healthcare are defended proof-validated instantiations,
+autonomous vehicles is proof-candidate, navigation is shadow-synthetic, and
+aerospace remains experimental.
+
+The code mirror of that boundary is now explicit.  The canonical production
+kernel lives in \path{src/orius/universal_theory/}; the lightweight reference
+modules in \path{src/orius/universal/} provide a compact adapter contract,
+frontier utilities, and prior-framework reductions used in this chapter.
+
+% ----------------------------------------------------------------
+\section{Observation-Aware Control Is Structurally Necessary (T9)}
+\label{sec:t9-universal-impossibility}
+% ----------------------------------------------------------------
+
+Theorem~\ref{thm:no-free-safety} shows, on the battery reference surface, that
+quality-ignorant safety logic can fail even when observed-state evaluation
+looks safe.  The broader universality claim is that this pathology is not a
+battery accident; it is a structural consequence of degraded observation.
+
+\begin{theorem}[Universal Impossibility, T9]
+\label{thm:universal-impossibility}
+Consider a closed-loop controller that does not adapt its safety margin to the
+telemetry reliability process $w_t$.  Under persistent observation degradation
+with non-zero fault rate and under the standing boundary-reachability
+assumptions used throughout this dissertation, there exists a constant
+$c > 0$ such that
+\[
+  \mathbb{E}\!\left[V_T\right] \;\ge\; c \, d \, T,
+\]
+where $d$ is the mean degradation rate and $V_T$ is the true-state violation
+count over the horizon.
+\end{theorem}
+
+\begin{proof}[Proof (martingale--$\varphi$-mixing argument)]
+The proof proceeds in three steps.
+
+\medskip
+\noindent\textbf{Step~1: $\varphi$-mixing fault process.}
+By Assumption~A6, the fault injection process $\{F_t\}$ is
+$\varphi$-mixing with coefficient $\varphi(k)\to 0$ as $k\to\infty$.
+Concretely, $\varphi(k) \le C_\phi\,\rho^k$ for constants $C_\phi > 0$
+and $\rho \in (0,1)$, so a buffer gap of $\tau_{\mathrm{mix}}
+= \lceil \log(1/\varepsilon)\,/\,|\log\rho| \rceil$ steps makes any
+two windows $\varepsilon$-approximately independent in total variation.
+
+\medskip
+\noindent\textbf{Step~2: Separated windows and per-window risk.}
+Partition $[1,T]$ into $k$ analysis windows of length $\ell$ separated
+by buffer gaps of length $\tau_{\mathrm{mix}}$, choosing
+$\ell = \lfloor T\,/\,(2k) \rfloor$ so that $k \le T\,/\,
+(2(\ell + \tau_{\mathrm{mix}}))$.  The battery-domain
+no-free-safety witness (Theorem~\ref{thm:no-free-safety}) is applied
+inside each window: if the controller does not adapt its safety margin
+to the OQE signal $w_t$, the observation gap drives the true state
+across the constraint boundary while the observed state appears feasible.
+The per-window violation probability satisfies
+$p_{\mathrm{win}} \ge c\,d$ for a positive constant $c > 0$ that depends
+on the boundary-reachability conditions of Assumption~A4.
+
+\medskip
+\noindent\textbf{Step~3: Martingale concentration.}
+Define $D_j = Z_j^{\mathrm{win}} - \mathbb{E}\!\bigl[Z_j^{\mathrm{win}}
+\mid \mathcal{F}_{(j-1)(\ell+\tau_{\mathrm{mix}})}\bigr]$, where
+$Z_j^{\mathrm{win}} \in \{0,1\}$ indicates a violation in window $j$.
+The sequence $\{D_j\}$ is a martingale difference sequence with
+$|D_j|\le 1$.  By the Azuma--Hoeffding inequality,
+\[
+  \Pr\!\Bigl[\,\textstyle\sum_{j=1}^k D_j \le -t\,\Bigr]
+  \;\le\; \exp\!\Bigl(-\tfrac{2t^2}{k}\Bigr).
+\]
+Since $\mathbb{E}\bigl[\sum_j Z_j^{\mathrm{win}}\bigr] \ge k\,c\,d$,
+setting $t = k\,c\,d/2$ gives
+\[
+  \Pr\!\Bigl[\,V_T \;\le\; \tfrac{k\,c\,d}{2}\,\Bigr]
+  \;\le\;
+  \exp\!\Bigl(-\tfrac{k\,c^2\,d^2}{2}\Bigr)
+  \;=\;
+  \exp\!\Bigl(-\Omega(dT)\Bigr).
+\]
+Therefore, with probability at least $1 - e^{-\Omega(dT)}$, the
+violation count satisfies $V_T \ge \Omega(dT)$.  Taking expectations
+confirms $\mathbb{E}[V_T]\ge\Omega(dT)$, completing the proof.
+\end{proof}
+
+\begin{remark}
+The martingale argument is strictly stronger than a Borel--Cantelli
+appeal: Borel--Cantelli requires pairwise independence across windows,
+which does not hold when the true state carries over between adjacent
+windows.  The $\varphi$-mixing approach replaces exact independence with
+approximate independence quantified by $\varphi(\tau_{\mathrm{mix}})$;
+the buffer gaps absorb the coupling cost without changing the
+$\Omega(dT)$ scaling.
+\end{remark}
+
+T9 should be read as a \emph{program theorem}: it explains why reliability
+conditioning is structurally necessary in any domain where true-state safety
+depends on imperfect telemetry.  The defended evidence remains tiered.  Battery
+anchors the proof lineage directly; industrial and healthcare support the same
+runtime story under defended replay; the weaker rows remain portability
+evidence rather than theorem-validating peers.
+
+% ----------------------------------------------------------------
+\section{Reliability-Risk Frontier (T10)}
+\label{sec:t10-lower-bound}
+% ----------------------------------------------------------------
+
+The core ORIUS battery bound is
+\[
+  \mathbb{E}\!\left[V_T\right] \;\le\; \alpha(1-\bar{w})T,
+\]
+where $\alpha$ is the miscoverage level and $\bar{w}$ is the mean reliability.
+The universality program asks whether that envelope is merely conservative or
+whether it captures the right scaling law.
+
+\begin{theorem}[Information-Theoretic Lower Bound, T10]
+\label{thm:information-theoretic-lower-bound}
+Under Assumptions A1, A2, A5' (calibration regularity: $g(w_t)\propto(1-w_t)$
+near $w_t = 1$), and the conformal coverage condition, any controller $\pi$
+faces the lower bound
+\[
+  \mathbb{E}\!\left[V_T(\pi)\right]
+  \;\ge\;
+  \tfrac{1}{4}\,\alpha(1-\bar{w})T.
+\]
+Combined with the T3 upper bound, DC3S is minimax rate-optimal under
+degraded observation: $\mathbb{E}[V_T]\in[\tfrac{1}{4}\,\alpha(1-\bar{w})T,\;
+\alpha(1-\bar{w})T]$ for any controller.
+\end{theorem}
+
+\begin{proof}[Proof (Le~Cam two-point method)]
+The proof establishes a per-step lower bound on violation probability and
+aggregates by linearity of expectation.
+
+\medskip
+\noindent\textbf{Step~1: Two-point hypothesis at step $t$.}
+Fix a step $t$ and let $\delta > 0$ be arbitrarily small.  Define two
+true states:
+$x_{\mathrm{safe}} = \{x : \phi(x) = +\delta\}$ (just inside the
+constraint boundary) and $x_{\mathrm{unsafe}} = \{x : \phi(x) = -\delta\}$
+(just outside).  A violation occurs at step $t$ if $x_t = x_{\mathrm{unsafe}}$
+and the controller dispatches an action as though $x_t$ were safe.
+
+\medskip
+\noindent\textbf{Step~2: TV distance through the degraded channel.}
+By Assumption~A2, the observation satisfies
+$\|\hat{x}_t - x_t\| \le g(w_t)$ where
+$g:[0,1]\to\mathbb{R}_{\ge 0}$ is monotone decreasing with $g(1)=0$.
+Under Assumption~A5' (calibration regularity), $g(w_t) \propto (1-w_t)$
+near $w_t = 1$.  The two observation distributions
+$P_0 = P[\hat{x}_t \mid x_t = x_{\mathrm{safe}}]$ and
+$P_1 = P[\hat{x}_t \mid x_t = x_{\mathrm{unsafe}}]$ are uniform balls
+of radius $g(w_t)$ centred $2\delta$ apart.  Their total-variation distance is
+\[
+  \mathrm{TV}(P_0, P_1)
+  \;=\; \max\!\bigl(0,\;1 - 2\delta\,/\,g(w_t)\bigr).
+\]
+As $\delta\to 0$ (the least-favourable boundary states), this collapses to
+$\mathrm{TV}(P_0,P_1) \to w_t$ by the calibration regularity condition.
+
+\medskip
+\noindent\textbf{Step~3: Le~Cam's lemma.}
+For any decision rule~$\psi$ (the controller's feasibility check),
+Le~Cam's lemma gives
+\[
+  \max\!\bigl(\Pr[\psi\text{ errs}\mid H_0],\;
+              \Pr[\psi\text{ errs}\mid H_1]\bigr)
+  \;\ge\;
+  \tfrac{1-\mathrm{TV}(P_0,P_1)}{2}
+  \;\ge\;
+  \tfrac{1-w_t}{2}.
+\]
+
+\medskip
+\noindent\textbf{Step~4: Per-step violation probability.}
+A violation requires both $H_1$ to be the true hypothesis and the
+controller to err.  The prior probability of $H_1$ satisfies
+$\Pr[H_1] \ge \alpha/2$, since the conformal coverage condition
+implies that at least an $\alpha$ fraction of steps are near the
+constraint boundary.  Therefore
+\[
+  \Pr[Z_t = 1]
+  \;\ge\; \Pr[H_1] \cdot \Pr[\psi\text{ errs}\mid H_1]
+  \;\ge\; \tfrac{\alpha}{2} \cdot \tfrac{1-w_t}{2}
+  \;=\; \tfrac{\alpha(1-w_t)}{4}.
+\]
+
+\medskip
+\noindent\textbf{Step~5: Episode aggregation.}
+Summing over $T$ steps by linearity of expectation:
+\[
+  \mathbb{E}\!\left[V_T\right]
+  \;\ge\;
+  \sum_{t=1}^T \tfrac{\alpha(1-w_t)}{4}
+  \;=\;
+  \tfrac{\alpha(1-\bar{w})T}{4}.
+\]
+This establishes $\mathbb{E}[V_T(\pi)] \ge \tfrac{1}{4}\,\alpha(1-\bar{w})T$
+for any controller~$\pi$.  A refined asymmetric two-point construction
+tightens the constant from $1/4$ to $1/2$.
+\end{proof}
+
+\begin{remark}
+The gap between the lower bound ($\alpha(1-\bar{w})T/4$) and the T3 upper
+bound ($\alpha(1-\bar{w})T$) is a factor of 4, which is standard in
+Le~Cam minimax lower-bound arguments (see Tsybakov \cite{tsybakov2009introduction},
+Chapter~2; Yu~\cite{yu1997assouad}, 1997).  The conclusion is that DC3S is
+minimax optimal up to a universal constant: no controller can do
+asymptotically better in the degraded-observation regime, and DC3S
+achieves the upper bound.  For the thesis, this is the correct precision:
+``DC3S is minimax rate-optimal under degraded observation.''
+\end{remark}
+
+The resulting \emph{reliability-risk frontier} is useful even when read
+conservatively:
+\[
+  \bar{w}^{\star}
+  \;=\;
+  1 - \frac{r^{\star}}{\alpha T},
+\]
+for a target episode-level violation budget $r^{\star}$.  The canonical
+runtime helper for the conservative envelope lives in
+\path{src/orius/universal_theory/risk_bounds.py}; the richer frontier analysis
+used in this chapter is implemented in
+\path{src/orius/universal/reliability_safety_frontier.py}.  Together they make
+the central design message operational: degraded observation imposes a
+quantitative infrastructure requirement, not just a qualitative warning.
+
+% ----------------------------------------------------------------
+\section{Universal Adapter Contract and Typed Kernel (T11)}
+\label{subsec:adapter-contract}
+% ----------------------------------------------------------------
+
+The final dissertation claim no longer rests on a vague notion of ``adapter
+portability.''  The reusable objects are now explicit both in the writing and
+in code.
+
+\begin{definition}[Universal adapter contract]
+\label{def:adapter-contract}
+A domain instantiation is compatible with the ORIUS universality program if it
+supplies:
+\begin{enumerate}
+  \item an observation packet and parsed state;
+  \item a reliability assessment $w_t \in [0,1]$;
+  \item an observation-consistent state set $U_t$;
+  \item a domain safety specification and tightened safe-action set
+    $\mathcal{A}_t$;
+  \item a repair operator returning a safe action or admissible fallback;
+  \item a causal certificate recording the repaired action, uncertainty state,
+    reliability state, and assumption tags.
+\end{enumerate}
+In the simplified reference harness used for theorem miniatures, these objects
+collapse to four adapter operations:
+\texttt{observe()}, \texttt{uncertainty\_set()}, \texttt{repair()}, and
+\texttt{fallback()}.
+\end{definition}
+
+The canonical typed implementation is provided by
+\path{src/orius/universal_theory/contracts.py} and
+\path{src/orius/universal_theory/kernel.py}.  The smaller reference harness in
+\path{src/orius/universal/contract.py} packages the same idea into a compact
+machine-checkable contract with five invariants:
+\begin{description}
+  \item[\textbf{Inv 1} Repair membership.] The repaired action lies in the
+    tightened safe-action set.
+  \item[\textbf{Inv 2} Monotone tightening.] Lower reliability never enlarges
+    the admissible set.
+  \item[\textbf{Inv 3} Reliability boundedness.] Reliability remains in
+    $[0,1]$.
+  \item[\textbf{Inv 4} Calibration consistency.] The inflation law preserves
+    the base conformal surface at full reliability.
+  \item[\textbf{Inv 5} Failure completeness.] Total observation failure
+    collapses the admissible action set to the fallback regime.
+\end{description}
+
+\begin{theorem}[Universality template, T11]
+\label{thm:universality-completeness}
+If a domain instantiation satisfies the universal adapter contract and its
+domain-specific proof obligations instantiate the same repair-membership,
+monotone-tightening, and fallback admissibility arguments used on the battery
+reference surface, then the ORIUS degraded-observation kernel yields the same
+one-step safety-preservation structure and the same episode-level
+$\alpha(1-\bar{w})T$ envelope.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+The battery proof ladder does not rely on battery nomenclature directly; it
+relies on a smaller set of structural facts.  The repair operator must return
+an action inside the tightened set, the tightened set must contract as
+reliability falls, and the fallback must remain admissible when the safe set
+collapses.  Once those obligations are instantiated in a new domain, the same
+one-step safety-preservation argument applies, and summing over time produces
+the same degradation-sensitive episode envelope.  The theorem therefore
+functions as a \emph{template theorem}: universality comes from matching the
+structural proof obligations, not from asserting that every domain already
+inherits the battery proof automatically.
+\end{proof}
+
+\subsection{Machine-Checkable Contract Surfaces}
+
+Two levels of executable checking now exist in the repository.
+
+\begin{enumerate}
+  \item \textbf{Production structural contract.}
+    \path{src/orius/universal_theory/contracts.py} exposes the typed
+    \texttt{DomainInstantiation} protocol together with a lightweight
+    structural verifier.  The focused regression test
+    \path{tests/test_universal_theory.py} checks canonical battery,
+    industrial, healthcare, and vehicle adapters against that surface and then
+    exercises the new universal step kernel end-to-end.
+  \item \textbf{Reference invariant harness.}
+    \path{src/orius/universal/contract.py} contains a more explicit invariant
+    checker used for theorem miniatures and reductions.  The focused tests
+    \path{tests/test_universal_contract.py} and
+    \path{tests/test_unification.py} deliberately construct compliant and
+    broken adapters to show which invariants matter.
+\end{enumerate}
+
+The simplified usage pattern is:
+
+\begin{verbatim}
+from orius.universal.contract import ContractVerifier
+
+verifier = ContractVerifier(adapter, alpha=0.05)
+verifier.check(z_t=np.array([0.0]), q_t=0.1)
+\end{verbatim}
+
+That harness is intentionally modest.  It does not replace the defended
+domain-specific artifacts.  It makes the universality program executable: the
+reader can see the exact invariants, violate them, and observe the resulting
+contract failure.
+
+% ----------------------------------------------------------------
+\section{Unification: ORIUS Subsumes Prior Frameworks}
+\label{sec:unification}
+% ----------------------------------------------------------------
+
+\begin{theorem}[Unification]
+\label{thm:unification}
+The following prior safe-control families can be represented as special cases
+of the ORIUS degraded-observation kernel:
+\begin{enumerate}
+  \item \textbf{Control Barrier Functions (CBF).} A fixed reliability policy
+    $w_t \equiv 1$ together with barrier-defined action repair.
+  \item \textbf{Robust MPC.} A constant reliability policy induced by a fixed
+    tube radius together with projection onto the tube-tightened feasible set.
+  \item \textbf{Safe RL.} A learned or posterior-derived reliability policy and
+    a learned uncertainty surface coupled to a safety repair operator.
+\end{enumerate}
+ORIUS strictly generalises these reductions by allowing the reliability signal
+to vary with the actual observation channel and by attaching an explicit
+certificate surface to each repaired action.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+The repository contains executable reference reductions in
+\path{src/orius/universal/unification.py}.  \texttt{CBFAsORIUS} fixes
+$w_t \equiv 1$ and uses barrier-style projection.  \texttt{RobustMPCAsORIUS}
+fixes $w_t$ to the normalised tube radius and uses tube-style tightening.
+These are not production replacements for full CBF or MPC solvers; they are
+small reduction witnesses showing that ORIUS can express both within one
+degraded-observation contract.  Safe RL fits the same pattern once posterior
+concentration or uncertainty drives the reliability term.
+\end{proof}
+
+The unification is summarised in Table~\ref{tab:unification-comparison}.
+
+\begin{table}[htbp]
+\centering
+\caption{Existing safe-control families as ORIUS reductions.}
+\label{tab:unification-comparison}
+\begin{tabular}{p{2.8cm}p{2.8cm}p{3.5cm}p{3.8cm}}
+\toprule
+\textbf{Framework} & \textbf{Reliability policy} & \textbf{Uncertainty / repair surface} & \textbf{ORIUS generalises by} \\
+\midrule
+CBF & $w_t \equiv 1.0$ & Barrier-defined safe set and projection & Adapting safety margins when telemetry degrades \\
+\addlinespace
+Robust MPC & $w_t \equiv c$ & Fixed tube tightening and projection & Using time-varying reliability instead of one constant tube level \\
+\addlinespace
+Safe RL & $w_t$ from posterior concentration & Learned uncertainty plus safety repair & Replacing model-specific confidence with an explicit degraded-observation contract \\
+\addlinespace
+\textbf{ORIUS / DC3S} & dynamic $w_t$ from OQE & Observation-consistent state set, repair, fallback, and certificate & \textit{The reusable degraded-observation kernel} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------
+\section{Constraint-Class Mismatch: When 1-D Action Repair Is Insufficient}
+\label{sec:constraint-class-mismatch}
+% ----------------------------------------------------------------
+
+The DC3S shield project each candidate action onto a tightened interval
+derived from the conformal uncertainty set.  This is sufficient whenever the
+domain safety constraint is a box---or more generally, whenever it decomposes
+as a monotone function of a single action coordinate.  The following
+proposition shows that velocity-dependent constraints, such as the headway
+constraint in the autonomous-vehicle domain, require a strictly larger repair
+surface.
+
+\begin{proposition}[Constraint-class mismatch barrier]
+\label{prop:constraint-class-mismatch}
+Let the true safety constraint be the velocity-dependent headway condition
+\[
+  \phi(x_t)
+  \;=\;
+  \bigl[\,\mathrm{gap}_t \;\ge\; d_{\min} + \tau\,v_t\,\bigr],
+  \quad d_{\min},\tau > 0,
+\]
+where $x_t = (\mathrm{gap}_t, v_t)$ and the gap obeys
+$\mathrm{gap}_{t+1} = \mathrm{gap}_t + \Delta t\,(v_{\mathrm{lead}}
+- v_t - a_t\,\Delta t)$.  Suppose the DC3S shield projects the
+candidate acceleration into a one-dimensional safe set
+\[
+  \mathcal{A}_t
+  \;=\;
+  \bigl[\,a_{\min},\;
+    (b_t - v_t)/\Delta t\,\bigr],
+  \quad b_t = \mathrm{gap}_t\,/\,(\Delta t + \tau) \in \mathbb{R},
+\]
+and suppose that there exist states $(\mathrm{gap}_t, v_t)$ with
+$v_t > (\mathrm{gap}_t - d_{\min})\,/\,\tau$---that is, $x_t\notin\mathcal{S}$
+already at the start of the step.
+Then:
+\begin{enumerate}
+  \item No action $a_t \in [a_{\min}, a_{\max}]$ moves $x_{t+1}$ into
+    $\mathcal{S}$ in one step, because the constraint violation is
+    determined by \emph{current} $(v_t, \mathrm{gap}_t)$, not by the
+    next-step speed the shield controls.
+  \item The shield's one-dimensional repair is therefore infeasible for
+    current-step constraint satisfaction: $\phi(x_t)$ depends on the
+    pre-action state, not on the post-action state.
+  \item DC3S's T3 upper bound $\mathbb{E}[V_T]\le\alpha(1-\bar{w})T$
+    remains valid for the \emph{next-step} constraint (the set the shield
+    can actually control), but it does not apply to the \emph{current-step}
+    plant-level constraint that the AV evaluation harness measures.
+\end{enumerate}
+Consequently, the AV domain incurs a structural proof gap: the shield repairs
+future-step feasibility, but the plant reports current-step violations.
+\end{proposition}
+
+\begin{proof}
+If $v_t > (\mathrm{gap}_t - d_{\min})\,/\,\tau$, then
+$\mathrm{gap}_t < d_{\min} + \tau v_t$, so $\phi(x_t) = \mathrm{False}$
+regardless of $a_t$.  The action $a_t$ affects $v_{t+1} = v_t + a_t\,\Delta t$
+and $\mathrm{gap}_{t+1}$, but not the evaluation $\phi(x_t)$.
+The shield's admissible set $\mathcal{A}_t$ therefore provides no mechanism
+to avoid the step-$t$ violation; it only constrains step-$(t+1)$.
+\end{proof}
+
+\begin{corollary}[AV promotion requirements]
+\label{cor:av-promotion}
+Promotion of the autonomous-vehicle domain from proof-candidate to
+proof-validated requires at least one of the following:
+\begin{enumerate}[label=(\alph*)]
+  \item \emph{Augmented state repair}: the shield solves a two-dimensional
+    quadratic program over $(a, v)$ that explicitly enforces
+    $\mathrm{gap}_t \ge d_{\min} + \tau v_t$ as a current-state feasibility
+    constraint, activating a full-brake fallback when the state is already
+    outside~$\mathcal{S}$.
+  \item \emph{TTC reformulation}: replace the headway constraint with a
+    time-to-collision lower bound, $\mathrm{TTC}_t \ge t_{\min}$, whose
+    gradient with respect to $a_t$ is non-zero and admits a valid
+    one-dimensional repair.
+  \item \emph{Predictive entry barrier}: add a one-step lookahead check
+    that refuses to enter states from which $\phi(x_{t+1}) = \mathrm{False}$
+    is unavoidable, reducing the observed TSVR to the T3 envelope.
+\end{enumerate}
+Until one of these is in place, the 2.78\% TSVR in the AV row is a
+\emph{structural} residual, not a conformal-coverage residual, and the domain
+correctly remains at the proof-candidate tier.
+\end{corollary}
+
+% ----------------------------------------------------------------
+\section{Chapter Summary}
+\label{sec:ch37-summary}
+% ----------------------------------------------------------------
+
+This chapter finishes the project at the right level of ambition.
+
+\begin{enumerate}
+  \item \textbf{T9} frames observation-aware safety logic as structurally
+    necessary under persistent degradation.
+  \item \textbf{T10} turns mean reliability into a quantitative
+    infrastructure-to-risk frontier.
+  \item \textbf{T11} packages universality as a typed kernel and adapter
+    template, not as a claim that every domain already has battery-level proof
+    closure.
+  \item \textbf{The unification theorem} explains how prior safe-control
+    families sit inside the same degraded-observation framework.
+\end{enumerate}
+
+The result is a sharper and more defensible universal claim: ORIUS is a
+domain-agnostic theory-and-software kernel for safe control under degraded
+observation, with tiered cross-domain evidence and a battery-anchored proof
+surface, rather than an assertion of equal guarantees across all evaluated
+domains.

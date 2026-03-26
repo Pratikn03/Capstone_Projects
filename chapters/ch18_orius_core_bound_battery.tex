@@ -211,6 +211,49 @@ average reliability deficit.
     effectiveness beyond what the bound guarantees.
 \end{enumerate}
 
+\section{Information-Theoretic Lower Bound and DC3S Optimality (T10)}
+\label{sec:t10-lower-bound-ch18}
+
+T3 establishes that DC3S achieves $\mathbb{E}[V] \le \alpha(1-\bar{w})T$.
+Theorem~T10 (Chapter~\ref{ch:universality-completeness},
+Section~\ref{sec:t10-lower-bound}) proves this bound is tight up to a
+universal constant via the Le~Cam two-point method: by constructing
+least-favourable priors at the constraint boundary and computing the
+total-variation distance through the degraded observation channel
+(Assumption~A2), one obtains
+\[
+  \mathbb{E}\!\left[V_T(\pi)\right]
+  \;\ge\;
+  \tfrac{1}{4}\,\alpha(1-\bar{w})T
+\]
+for any controller~$\pi$.  Combined with the T3 upper bound, the minimax tight band is:
+\[
+  \tfrac{1}{4}\,\alpha(1-\bar{w})T
+  \;\le\;
+  \mathbb{E}[V_T(\pi)]
+  \;\le\;
+  \alpha(1-\bar{w})T.
+\]
+The factor-of-4 gap is the standard Le~Cam minimax constant
+\cite{tsybakov2009introduction}; the conclusion is that DC3S is
+minimax rate-optimal under degraded observation.  Any substantial
+improvement to the coefficient would require changing the observation
+model assumptions, not just the repair mechanism.
+
+The \emph{reliability-safety frontier} derived from this pair of bounds gives
+the minimum infrastructure reliability for a target violation rate:
+\[
+  \bar{w}^* \;=\; 1 - \frac{r^*}{\alpha T},
+\]
+implemented conservatively in
+\texttt{src/orius/universal\_theory/risk\_bounds.py}
+(\texttt{minimum\_reliability\_for\_target}) and, for the chapter's
+research-program frontier plots, in
+\texttt{src/orius/universal/reliability\_safety\_frontier.py}.  The battery
+reference row and the defended cross-domain rows are interpreted against this
+envelope; weaker rows remain portability evidence, not theorem-validating
+instances.
+
 \section{Chapter Summary}
 
 The ORIUS Core Bound $\mathbb{E}[V] \le \alpha(1 - \bar{w})T$ is the

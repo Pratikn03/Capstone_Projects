@@ -57,7 +57,7 @@ figures:
     status: locked
   FIG_UNIVERSAL_FRAMEWORK:
     path: paper/assets/figures/fig_universal_framework.png
-    caption: "ORIUS universal domain physical safety framework. Five-stage pipeline applies uniformly across domains."
+    caption: "ORIUS degraded-observation safety kernel. One five-stage repair-and-certify loop is instantiated across tiered domains."
     status: locked
   # Extended figures (synced from reports/ via sync_paper_figures.py)
   FIG14_FORECAST_VS_ACTUAL: {path: paper/assets/figures/fig14_forecast_vs_actual.png, caption: "Forecast vs actual.", status: provisional}
@@ -104,7 +104,7 @@ figures:
   FIG55_MULTI_HORIZON_BACKTEST: {path: paper/assets/figures/fig55_multi_horizon_backtest.png, caption: "Multi-horizon backtest.", status: provisional}
   FIG56_USA_DATA_QUALITY: {path: paper/assets/figures/fig56_usa_data_quality.png, caption: "USA data quality.", status: provisional}
   FIG57_GAP_HOURLY_PROFILES: {path: paper/assets/figures/fig57_gap_hourly_profiles.png, caption: "Gap hourly profiles.", status: provisional}
-  FIG_MULTI_DOMAIN_VALIDATION: {path: paper/assets/figures/fig_multi_domain_validation.png, caption: "Multi-domain ORIUS validation: baseline vs. ORIUS TSVR with evidence-tier labels (reference, proof, portability, experimental).", status: locked}
+  FIG_MULTI_DOMAIN_VALIDATION: {path: paper/assets/figures/fig_multi_domain_validation.png, caption: "Multi-domain ORIUS validation: baseline vs. ORIUS TSVR with tier labels (reference, proof-validated, proof-candidate, shadow-synthetic, experimental).", status: locked}
 
 tables:
   TBL01_MAIN_RESULTS:
