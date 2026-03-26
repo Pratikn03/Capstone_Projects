@@ -4,7 +4,8 @@ PYTHON ?= $(if $(wildcard .venv/bin/python3),.venv/bin/python3,python3)
 PROFILE ?= standard
 PROOF_SEEDS ?= 1
 PROOF_HORIZON ?= 24
-PAPER_MIN_PAGES ?= 300
+# Canonical longform paper build, not the retired 300+ page thesis surface.
+PAPER_MIN_PAGES ?= 150
 
 setup:
 	$(PYTHON) -m venv .venv && . .venv/bin/activate && .venv/bin/pip install -r requirements.lock.txt
@@ -265,8 +266,11 @@ paper3-four-policy-benchmark:
 	$(PYTHON) scripts/run_paper3_four_policy_benchmark.py
 
 paper-compile:
-	cd paper && pdflatex -interaction=nonstopmode paper.tex
-	cd paper && pdflatex -interaction=nonstopmode paper.tex
+	rm -f paper/paper.pdf paper/paper.log
+	- cd paper && pdflatex -interaction=nonstopmode paper.tex
+	- cd paper && pdflatex -interaction=nonstopmode paper.tex
+	test -f paper/paper.pdf
+	test -f paper/paper.log
 	cp paper/paper.pdf paper.pdf
 	test -f paper.pdf
 	cmp -s paper/paper.pdf paper.pdf

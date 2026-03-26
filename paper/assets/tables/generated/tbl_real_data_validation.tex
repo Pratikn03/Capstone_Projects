@@ -3,12 +3,13 @@
 % Seeds: 5 | Horizon: 48 steps per seed
 \begin{table}[htbp]
 \centering
-\caption{DC3S validation across all six domains: real-dataset and proof-domain results.
+\caption{DC3S validation summary across the tiered six-row runtime package.
 Baseline is an unconstrained controller; ORIUS applies full DC3S repair.
 Battery uses locked DE/US real-grid telemetry (reference tier).
 Healthcare and Industrial use public benchmark datasets.
-Vehicle, Aerospace, and Navigation use ORIUS-Bench synthetic environments (proof tier).
-All proof domains exceed the 25\,\% evidence gate; battery is the reference baseline.}
+Vehicle and Aerospace use replay surfaces that remain below the proof-validated
+promotion threshold; Navigation is a synthetic portability surface.
+The tier column governs the conservative manuscript claim boundary.}
 \label{tab:real_data_validation}
 \begin{tabular}{lllrrrl}
 \toprule
@@ -20,9 +21,9 @@ Battery & DE OPSD + EIA-930 (17{,}377 rows) & Real grid & 0.875 & 0.938$^\dagger
 Industrial  & UCI CCPP (9{,}568 rows)          & Real       & 1.000 & 0.000 & 100.0\,\% & proof\_validated \\
 Healthcare  & PhysioNet BIDMC (4{,}000 rows)   & Real       & 1.000 & 0.279 &  72.1\,\% & proof\_validated \\
 \midrule
-Vehicle     & ORIUS-Bench kinematic env.        & Synthetic  & 0.542 & 0.017 &  96.9\,\% & proof\_validated \\
-Aerospace   & ORIUS-Bench flight env.           & Synthetic  & 1.000 & 0.000 & 100.0\,\% & proof\_validated \\
-Navigation  & ORIUS-Bench arena env.            & Synthetic  & 0.833 & 0.000 & 100.0\,\% & proof\_validated \\
+Vehicle     & ORIUS-Bench kinematic env.        & Replay     & 0.542 & 0.017 &  96.9\,\% & proof\_candidate \\
+Aerospace   & ORIUS-Bench flight env.           & Replay     & 1.000 & 0.000 & 100.0\,\% & experimental \\
+Navigation  & ORIUS-Bench arena env.            & Synthetic  & 0.833 & 0.000 & 100.0\,\% & shadow\_synthetic \\
 \bottomrule
 \multicolumn{7}{l}{\small $^\dagger$Battery TSVR increases under ORIUS-Bench harness due to scenario-MPC action
   space mismatch;}\\
