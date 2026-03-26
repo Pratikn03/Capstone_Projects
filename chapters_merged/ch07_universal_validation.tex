@@ -189,9 +189,9 @@ TSVR reduction after repair, and stable behavior across seeds.
 
 \input{reports/universal_sil_validation/tbl_domain_sil_summary}
 
-Table~\ref{tab:all-domain-training-metrics} shows training surfaces for
-all six domains at equivalent depth.  Five of the six carry trained
-forecasting models with conformal calibration; all five achieve
+Table~\ref{tab:all-domain-training-metrics} shows the training surfaces
+used across the shared six-row runtime package.  Five of the six carry
+trained forecasting models with conformal calibration; all five achieve
 PICP$_{90} \geq 0.89$, meeting the $\alpha = 0.10$ target.  Navigation
 uses a closed-loop simulation surface and does not require a trained
 forecasting model.  The SIL table confirms that the software stack
@@ -206,10 +206,11 @@ Table~\ref{tab:domain-validation-summary} is the governing cross-domain
 status table.  All six domains share the same evaluation protocol and
 claim structure: energy management, AV, industrial, healthcare, and
 aerospace carry locked real-data telemetry; navigation carries a
-simulation surface.  Industrial and healthcare are proof-validated (SIL
-pass, material TSVR reduction, locked telemetry).  AV, aerospace, and
-energy management are proof-candidates under the same promotion contract.
-Navigation provides simulation-backed portability evidence.
+simulation surface.  Battery is the reference row, industrial and
+healthcare are proof-validated, AV is a proof-candidate row because the
+current gate does not clear a material-improvement requirement,
+aerospace remains experimental, and navigation provides
+simulation-backed portability evidence.
 
 \input{reports/universal_orius_validation/tbl_domain_proof_status}
 
@@ -222,11 +223,13 @@ Navigation provides simulation-backed portability evidence.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.88\linewidth]{reports/universal_orius_validation/fig_all_domain_comparison.png}
-  \caption{Universal ORIUS validation surface across all six domains.  Each bar
-    pair shows unshielded TSVR (before shield) and DC3S TSVR (after shield)
-    under the unified fault schedule.  All six domains achieve sub-$\alpha$
-    violations post-shield, with DC3S providing equivalent safety guarantees
-    regardless of domain physics.}
+  \caption{Universal ORIUS validation surface across all six runtime rows.
+    Each bar pair shows unshielded TSVR (before shield) and DC3S TSVR
+    (after shield) under the unified fault schedule.  The runtime surface
+    is shared, but the manuscript claim boundary remains governed by the
+    reference / proof-validated / proof-candidate /
+    shadow-synthetic / experimental tier table rather than by a single
+    universal guarantee.}
   \label{fig:all-domain-comparison}
 \end{figure}
 
@@ -302,12 +305,13 @@ These results support three claims:
 \subsection{Per-Domain Evidence Profiles}
 \label{sec:per-domain-profiles}
 
-All six domains are presented below at equivalent depth: a physical
-context paragraph, key adapter parameters, DC3S result under the unified
-fault schedule, and the four standard figures (forecast sample,
-model comparison, reliability under faults, multi-horizon backtest)
-generated from the locked test split.  Navigation appears last as a
-simulation-backed portability profile without a trained forecasting model.
+All six domains are presented below through one shared reporting template:
+a physical context paragraph, key adapter parameters, DC3S result under the
+unified fault schedule, and the standard figures available for that row.
+Five rows include forecasting, model-comparison, reliability, and
+multi-horizon backtest figures generated from locked test data.  Navigation
+appears last as a simulation-backed portability profile without a trained
+forecasting model.
 
 %% =========================================================================
 \subsubsection{Energy Management (Battery / Grid Dispatch)}
@@ -660,8 +664,8 @@ in Table~\ref{tab:cross-domain-scorecard} below provide this evidence.
 \label{sec:cross-domain-scorecard}
 
 Table~\ref{tab:cross-domain-scorecard} consolidates the key safety and
-performance metrics for all six domains (battery reference plus five
-non-battery domains) into a single committee-readable scorecard.  All
+performance metrics for the six-row runtime package (battery reference
+plus five non-battery rows) into a single committee-readable scorecard.  All
 non-battery rows use $N = 2000$ fault-stressed steps under the unified
 fault schedule (dropout~15\%, spike~8\%, stale~10\%).  Battery is
 reported as the locked publication aggregate.
@@ -689,12 +693,14 @@ Navigation (sim.)           & 25.80 & 9.25  & 100.0 & 0.773 & --    & --     & $
 \end{tabular}
 \end{table*}
 
-The scorecard confirms three quantitative claims: (i) DC3S reduces TSVR by
-a factor of $\geq\!10$ in every non-simulation domain; (ii) conformal
-coverage (PICP$_{90}$) meets or exceeds the nominal 0.90 target in all
-domains with a trained forecasting surface; (iii) pipeline latency is
-sub-millisecond across all domains, confirming runtime suitability for fast
-control loops.
+The scorecard confirms three runtime facts: (i) the higher-budget replay
+harness shows large TSVR reduction in each locked non-navigation runtime
+row; (ii) conformal coverage (PICP$_{90}$) meets or exceeds the nominal
+0.90 target in all domains with a trained forecasting surface; (iii)
+pipeline latency is sub-millisecond across all runtime rows, confirming
+runtime suitability for fast control loops.  Promotion to stronger
+evidence tiers still follows Table~\ref{tab:domain-validation-summary},
+not this scorecard alone.
 
 %% =========================================================================
 \subsection{Chapter Summary}
@@ -705,11 +711,14 @@ actions---and is therefore structurally portable across CPS domains.
 What changes across domains is the plant-side adapter; what remains
 invariant is the safety architecture.
 
-Empirical validation across the defended five-domain set (battery, AV,
-industrial, healthcare, aerospace) at $N = 2000$ fault-stressed steps confirms that
-DC3S reduces true-state violations by $\geq\!70\%$ in every case, with
-sub-millisecond overhead.  Per-domain figures (\S\ref{sec:per-domain-profiles})
-show equivalent forecasting depth: locked test splits, trained GBM
+Higher-budget replay across the battery reference row plus the AV,
+industrial, healthcare, and aerospace runtime rows shows strong TSVR
+reduction with sub-millisecond overhead.  Claim strength still follows the
+tier table: battery is the reference row, industrial and healthcare are
+proof-validated, AV remains proof-candidate, aerospace remains
+experimental, and navigation remains shadow-synthetic portability
+evidence.  Per-domain figures (\S\ref{sec:per-domain-profiles}) show the
+shared forecasting/runtime machinery: locked test splits, trained GBM
 surfaces, 90\% conformal prediction bands, and OQE reliability traces
 under fault injection.  The training audit
 (Table~\ref{tab:all-domain-training-metrics}) and software-in-loop table
@@ -1023,5 +1032,3 @@ replay-backed empirical evidence under the shared fault schedule; navigation
 adds simulation-backed portability evidence rather than field-telemetry-backed
 validation.  None contributes deployment-grade certification.  That is the
 correct scientific posture for a framework-contribution thesis at this stage.
-
-

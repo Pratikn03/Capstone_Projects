@@ -76,7 +76,11 @@ Strategies differ only in which reliability score they pass to
 Table~\ref{tab:sota-comparison} reports the true-state violation rate (TSVR)
 and intervention rate (IR) for each strategy across all five domains.
 
-\input{reports/sota_comparison/tbl_sota_comparison}
+\IfFileExists{reports/sota_comparison/tbl_sota_comparison.tex}{%
+  \input{reports/sota_comparison/tbl_sota_comparison}%
+}{%
+  \input{../reports/sota_comparison/tbl_sota_comparison}%
+}
 
 The autonomous vehicles domain provides the cleanest OASG demonstration.
 DC3S achieves TSVR~$= 0.0\%$ with an intervention rate of 34.5\%.
@@ -157,4 +161,3 @@ conservative alternatives.  The three alternative strategies all fail for
 the same reason: they evaluate safety conditions on the observed state and
 cannot account for telemetry degradation severity.  The OQE-to-RUI coupling
 in DC3S is the structural mechanism that resolves this failure mode.
-

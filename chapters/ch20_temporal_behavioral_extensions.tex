@@ -327,4 +327,12 @@ the landing protocol and prove it is strictly safer than uncontrolled
 dispatch.  Together, these extensions complete the theorem ladder
 initiated in Chapter~\ref{ch:theorem-oasg}.
 
-\input{appendices/app_domain_instantiation_block}
+\begingroup
+\def\domainblockid{t5t8}
+\def\domainblocktitle{T5--T8}
+\IfFileExists{appendices/app_domain_instantiation_block.tex}{%
+  \input{appendices/app_domain_instantiation_block}%
+}{%
+  \input{../appendices/app_domain_instantiation_block}%
+}
+\endgroup

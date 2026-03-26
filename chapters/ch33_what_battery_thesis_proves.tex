@@ -4,12 +4,12 @@
 This chapter draws a strict line between what the ORIUS evidence package
 establishes and what remains outside its current scope.  The value of the
 framework is not breadth of claim, but depth of traceability: every asserted
-result connects from theorem statement through code to artifact, across all
-six validated domains.
+result connects from theorem statement through code to artifact across the
+tiered six-row runtime package.
 
 \section{What Is Established}
 
-The ORIUS framework proves the following, across the defended evidence package:
+The ORIUS framework proves the following, across the tiered evidence package:
 
 \begin{enumerate}
   \item \textbf{OASG existence is universal.}  The observation-action safety
@@ -18,12 +18,12 @@ The ORIUS framework proves the following, across the defended evidence package:
     was measured across energy management, autonomous vehicles, industrial
     process control, medical monitoring, aerospace, and navigation.
 
-  \item \textbf{DC3S closes the gap reliably.}  In each of the five
-    locked-telemetry domains, DC3S reduces the true-state violation rate
-    to zero (TSVR~$= 0$\%) while maintaining dispatch performance comparable
-    to the unshielded controller.  The energy management domain provides the
-    formally locked theorem-to-code-to-artifact surface; AV, industrial,
-    healthcare, and aerospace provide equivalent replay-depth confirmation.
+  \item \textbf{DC3S closes the gap reliably on the strongest rows.}  In the
+    battery reference row and the two proof-validated peers, DC3S reduces the
+    true-state violation rate to zero (TSVR~$= 0$\%) while maintaining
+    performance comparable to the unshielded controller.  AV remains
+    proof-candidate, aerospace remains experimental, and navigation remains
+    shadow-synthetic portability evidence under the locked tier tables.
 
   \item \textbf{The safety bound is quantitative and verifiable.}
     Theorem~\ref{thm:core-bound} establishes
@@ -36,7 +36,7 @@ The ORIUS framework proves the following, across the defended evidence package:
     is linked to a code anchor in \texttt{src/orius/dc3s/} and to a locked
     artifact trace.  The integrated theorem surface register
     (Appendix~\ref{app:integrated-theorem-surface-register}) maps claim to code to artifact
-    for every defended result.
+    for every strongest-claim result.
 
   \item \textbf{The hardening surface is deep.}  Beyond the core TSVR
     result, the energy management domain contributes: fault-performance
@@ -54,7 +54,7 @@ to their empirical confirmations across domains.
 
 \begin{table}[htbp]
 \centering
-\caption{Core theorem ladder and empirical confirmation across all six domains.}
+\caption{Core theorem ladder and empirical confirmation across the tiered six-row runtime package.}
 \label{tab:theorem-empirical-correspondence}
 \begin{tabular}{p{3.8cm}p{5.5cm}p{4.5cm}}
 \toprule
@@ -62,19 +62,19 @@ to their empirical confirmations across domains.
 \midrule
 T1 -- OASG Existence
   & TSVR $> 0$ under quality-ignorant controller
-  & 3.9\%--26.65\% baseline TSVR across 5 domains \\
+  & 2.78\%--21.53\% baseline TSVR across the locked non-battery runtime rows \\
 \addlinespace
 T2 -- Safety Preservation
   & $\Pr[\phi_{\text{true}}(a_t) = 1] \ge 1-\alpha$ per step
-  & TSVR $= 0$\% across all 5 locked domains \\
+  & TSVR $= 0$\% across the three proof-validated domains (energy management, industrial, healthcare) \\
 \addlinespace
 T3 -- Core Bound
   & $\mathbb{E}[V] \le \alpha(1-\bar{w})T$
-  & All empirical TSVRs below bound with slack \\
+  & Runtime TSVRs stay within the conservative battery-anchored envelope \\
 \addlinespace
 T4 -- No-Free-Safety
   & Any safe-in-observation-only policy has TSVR $> 0$
-  & Rule-based baselines confirm non-zero TSVR when quality-unaware \\
+  & Rule-based baselines confirm non-zero TSVR on the locked runtime rows \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -93,17 +93,18 @@ state is too optimistic.  Certificates are not audit theatre; they provide
 a per-step commitment to the safe-action guarantee that can be logged,
 reviewed, and acted upon by downstream safety monitors.
 
-\section{Scope of the Defended Claim}
+\section{Scope of the Final Claim}
 
-The defended claim is precisely bounded:
+The final claim is precisely bounded:
 
 \begin{quote}
 Under degraded telemetry, a quality-ignorant controller can be observationally
-safe while physically unsafe.  The DC3S shield closes this gap across six CPS
-domains through reliability-aware uncertainty inflation, safe-action repair,
-and auditable runtime certificates.  The safety bound
-$\mathbb{E}[V] \le \alpha(1-\bar{w})T$ is verified empirically across all
-defended domains.
+safe while physically unsafe.  The DC3S shield addresses this gap through
+reliability-aware uncertainty inflation, safe-action repair, and auditable
+runtime certificates.  In this thesis, the complete formal reference lineage
+is battery; industrial and healthcare are proof-validated empirical peers;
+AV remains proof-candidate; aerospace remains experimental; and navigation
+remains shadow-synthetic portability evidence.
 \end{quote}
 
 This claim is supported by code, artifacts, and chapter-level alignment.  It
@@ -114,9 +115,12 @@ heterogeneous multi-domain composition without further engineering validation
 \section{Summary}
 
 The ORIUS framework proves that the observation-action safety gap is a
-universal CPS phenomenon with a principled, deployable remedy.  The energy
-management domain provides the formally locked reference surface; four
-additional domains confirm the result with equivalent replay depth.  The
-theorem ladder, finite-sample bound, and cross-domain PICP confirmation
-together constitute a complete, end-to-end safety argument for DC3S-shielded
-controllers under degraded telemetry.
+universal CPS phenomenon with a principled remedy.  The energy management
+domain provides the formally locked reference surface; industrial process
+control and healthcare confirm TSVR~$= 0$\% as the proof-validated peers.
+Navigation provides simulation-backed portability evidence (0.69\% TSVR),
+while the autonomous vehicle and aerospace domains are classified as
+proof-candidate and experimental surfaces respectively.  The theorem ladder,
+finite-sample bound, and cross-domain PICP confirmation together constitute a
+traceable, end-to-end safety argument for DC3S-shielded controllers under
+degraded telemetry.

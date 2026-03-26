@@ -181,13 +181,21 @@ TSVR reduction after repair, and stable behavior across seeds.
 
 \subsection{Training and Software-in-Loop Readiness}
 
-\input{reports/universal_orius_validation/tbl_all_domain_training_metrics}
+\IfFileExists{reports/universal_orius_validation/tbl_all_domain_training_metrics.tex}{%
+  \input{reports/universal_orius_validation/tbl_all_domain_training_metrics}%
+}{%
+  \input{../reports/universal_orius_validation/tbl_all_domain_training_metrics}%
+}
 
-\input{reports/universal_sil_validation/tbl_domain_sil_summary}
+\IfFileExists{reports/universal_sil_validation/tbl_domain_sil_summary.tex}{%
+  \input{reports/universal_sil_validation/tbl_domain_sil_summary}%
+}{%
+  \input{../reports/universal_sil_validation/tbl_domain_sil_summary}%
+}
 
-Table~\ref{tab:all-domain-training-metrics} shows training surfaces for
-all six domains at equivalent depth.  Five of the six carry trained
-forecasting models with conformal calibration; all five achieve
+Table~\ref{tab:all-domain-training-metrics} shows the tiered training
+surfaces used across the six-domain package.  Five of the six carry
+trained forecasting models with conformal calibration; all five achieve
 PICP$_{90} \geq 0.89$, meeting the $\alpha = 0.10$ target.  Navigation
 uses a closed-loop simulation surface and does not require a trained
 forecasting model.  The SIL table confirms that the software stack
@@ -196,7 +204,11 @@ without runtime failure.
 
 \subsection{Validation Status by Domain}
 
-\input{reports/universal_orius_validation/tbl_domain_validation_summary}
+\IfFileExists{reports/universal_orius_validation/tbl_domain_validation_summary.tex}{%
+  \input{reports/universal_orius_validation/tbl_domain_validation_summary}%
+}{%
+  \input{../reports/universal_orius_validation/tbl_domain_validation_summary}%
+}
 
 Table~\ref{tab:domain-validation-summary} is the governing cross-domain
 status table.  All six domains share the same evaluation protocol and
@@ -207,11 +219,19 @@ pass, material TSVR reduction, locked telemetry).  AV, aerospace, and
 energy management are proof-candidates under the same promotion contract.
 Navigation provides simulation-backed portability evidence.
 
-\input{reports/universal_orius_validation/tbl_domain_proof_status}
+\IfFileExists{reports/universal_orius_validation/tbl_domain_proof_status.tex}{%
+  \input{reports/universal_orius_validation/tbl_domain_proof_status}%
+}{%
+  \input{../reports/universal_orius_validation/tbl_domain_proof_status}%
+}
 
 \subsection{Results}
 
-\input{reports/universal_orius_validation/tbl_all_domain_comparison}
+\IfFileExists{reports/universal_orius_validation/tbl_all_domain_comparison.tex}{%
+  \input{reports/universal_orius_validation/tbl_all_domain_comparison}%
+}{%
+  \input{../reports/universal_orius_validation/tbl_all_domain_comparison}%
+}
 
 
 
@@ -226,7 +246,11 @@ Navigation provides simulation-backed portability evidence.
   \label{fig:all-domain-comparison}
 \end{figure}
 
-\input{reports/universal_orius_validation/tbl_all_domain_latency}
+\IfFileExists{reports/universal_orius_validation/tbl_all_domain_latency.tex}{%
+  \input{reports/universal_orius_validation/tbl_all_domain_latency}%
+}{%
+  \input{../reports/universal_orius_validation/tbl_all_domain_latency}%
+}
 
 Table~\ref{tab:all_domain_latency} confirms that the ORIUS pipeline adds
 sub-millisecond overhead per step across all rows (P95 $< 0.1$~ms in the
@@ -298,12 +322,11 @@ These results support three claims:
 \section{Per-Domain Evidence Profiles}
 \label{sec:per-domain-profiles}
 
-All six domains are presented below at equivalent depth: a physical
-context paragraph, key adapter parameters, DC3S result under the unified
-fault schedule, and the four standard figures (forecast sample,
-model comparison, reliability under faults, multi-horizon backtest)
-generated from the locked test split.  Navigation appears last as a
-simulation-backed portability profile without a trained forecasting model.
+All six domains are presented below through a common evidence template:
+a physical context paragraph, key adapter parameters, the DC3S result
+under the unified fault schedule, and the standard supporting figures
+available for that tier.  Navigation appears last as a simulation-backed
+portability profile without a trained forecasting model.
 
 %% =========================================================================
 \subsection{Energy Management (Battery / Grid Dispatch)}
@@ -701,18 +724,19 @@ actions---and is therefore structurally portable across CPS domains.
 What changes across domains is the plant-side adapter; what remains
 invariant is the safety architecture.
 
-Empirical validation across the defended five-domain set (battery, AV,
-industrial, healthcare, aerospace) at $N = 2000$ fault-stressed steps confirms that
-DC3S reduces true-state violations by $\geq\!70\%$ in every case, with
-sub-millisecond overhead.  Per-domain figures (\S\ref{sec:per-domain-profiles})
-show equivalent forecasting depth: locked test splits, trained GBM
-surfaces, 90\% conformal prediction bands, and OQE reliability traces
-under fault injection.  The training audit
+Empirical validation across the tiered six-domain package confirms that
+DC3S reduces true-state violations on the strongest replay rows while
+preserving sub-millisecond overhead.  Per-domain figures
+(\S\ref{sec:per-domain-profiles}) show the common forecasting and runtime
+artifact template: locked test splits where available, trained GBM
+surfaces for the trained rows, 90\% conformal prediction bands, and OQE
+reliability traces under fault injection.  The training audit
 (Table~\ref{tab:all-domain-training-metrics}) and software-in-loop table
 (Table~\ref{tab:domain-sil-summary}) confirm that each domain's
-forecasting and runtime surfaces are reproducible and execution-verified.
-All six domains share the same evaluation protocol, artifact types, and
-evidence tier structure.  The theorem-to-code-to-artifact lineage
+forecasting and runtime surfaces are reproducible and execution-verified
+at its assigned evidence tier.  All six domains share the same
+evaluation protocol, artifact types, and evidence tier structure.  The
+theorem-to-code-to-artifact lineage
 established in the preceding chapters for energy management
 (Chapters~\ref{ch:forecasting}--\ref{ch:no-free-safety}) applies equally
 to each domain through the shared adapter contract.  Navigation provides

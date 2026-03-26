@@ -21,4 +21,8 @@ inventory that the release gate audits.
 The surface counts are summarised in Table~\ref{tab:integrated-theorem-surface-summary}
 (Chapter~\ref{ch:assumptions}).
 
-\input{reports/publication/theorem_surface_register}
+\IfFileExists{reports/publication/theorem_surface_register.tex}{%
+  \input{reports/publication/theorem_surface_register}%
+}{%
+  \input{../reports/publication/theorem_surface_register}%
+}

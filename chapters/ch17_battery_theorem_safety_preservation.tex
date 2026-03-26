@@ -227,6 +227,18 @@ projection ensures constraint satisfaction.  The empirical evidence
 (TSVR~$= 0$\% across all conditions) confirms the theorem's prediction
 with margin to spare.
 
-\input{appendices/app_domain_instantiation_block}
+\begingroup
+\def\domainblockid{t2}
+\def\domainblocktitle{T2}
+\IfFileExists{appendices/app_domain_instantiation_block.tex}{%
+  \input{appendices/app_domain_instantiation_block}%
+}{%
+  \input{../appendices/app_domain_instantiation_block}%
+}
+\endgroup
 
-\input{appendices/app_domain_coverage_proof}
+\IfFileExists{appendices/app_domain_coverage_proof.tex}{%
+  \input{appendices/app_domain_coverage_proof}%
+}{%
+  \input{../appendices/app_domain_coverage_proof}%
+}

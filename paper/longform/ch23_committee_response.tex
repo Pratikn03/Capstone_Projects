@@ -8,6 +8,12 @@
 This section addresses the most common PhD committee objections to a
 conformal-safety-shield thesis, structured by faculty perspective.
 
+\input{assets/tables/generated/tbl_constraint_satisfaction.tex}
+\input{assets/tables/generated/tbl_coverage_vs_alpha.tex}
+\input{assets/tables/generated/tbl_latency_benchmark.tex}
+\input{assets/tables/generated/tbl_complexity_analysis.tex}
+\input{assets/tables/generated/tbl_multi_domain_evidence_gate.tex}
+
 % ------------------------------------------------------------------
 \subsubsection*{Q1 (Control Theory): Is the repair function always feasible?}
 
@@ -76,7 +82,7 @@ linearly in action dimensionality and is independent of the number of domains
 % ------------------------------------------------------------------
 \subsubsection*{Q4 (EE/Domain): Why is the battery TSVR \emph{higher} under ORIUS?}
 
-\textbf{Question.} Table~\ref{tbl:all_domain_comparison} shows ORIUS TSVR (0.9375)
+\textbf{Question.} Table~\ref{tab:all_domain_comparison} shows ORIUS TSVR (0.9375)
 exceeds baseline TSVR (0.8750) for the battery reference domain.  Is DC3S
 \emph{harmful} for the primary application?
 
@@ -114,7 +120,7 @@ compromised, which is the standard Byzantine fault-tolerance assumption in distr
 systems \cite{lamport1982byzantine}.
 
 The six-domain empirical validation (Tables~\ref{tbl:multi_domain_evidence_gate}
-and~\ref{tbl:adversarial_tsvr}) provides the empirical counterpart: all five proof
+and~\ref{tab:adversarial_tsvr}) provides the empirical counterpart: all five proof
 domains pass the evidence gate on ORIUS-Bench synthetic benchmarks.
 The theorems themselves are domain-agnostic by construction---Theorems~9 and~10
 require no domain-physics assumptions, only conditions (C1)--(C3) of

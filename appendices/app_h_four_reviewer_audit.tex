@@ -35,7 +35,11 @@ claims are audited separately from the core battery evidence.
 The release now generates the committee checklist directly from the active
 theorem gate and universal validation reports.
 
-\input{reports/universal_orius_validation/tbl_committee_audit_checklist}
+\IfFileExists{reports/universal_orius_validation/tbl_committee_audit_checklist.tex}{%
+  \input{reports/universal_orius_validation/tbl_committee_audit_checklist}%
+}{%
+  \input{../reports/universal_orius_validation/tbl_committee_audit_checklist}%
+}
 
 \section{Procedure}
 

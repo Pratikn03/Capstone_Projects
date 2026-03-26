@@ -179,6 +179,14 @@ but the release package now checks the full 18-theorem surface directly.  The
 generated summary below reports the hard-gated release status for the 10
 unique theorem claims plus the 8 Appendix~C theorem restatements.
 
-\input{reports/publication/integrated_theorem_gate_summary}
+\IfFileExists{reports/publication/integrated_theorem_gate_summary.tex}{%
+  \input{reports/publication/integrated_theorem_gate_summary}%
+}{%
+  \input{../reports/publication/integrated_theorem_gate_summary}%
+}
 
-\input{reports/publication/integrated_theorem_gate_matrix}
+\IfFileExists{reports/publication/integrated_theorem_gate_matrix.tex}{%
+  \input{reports/publication/integrated_theorem_gate_matrix}%
+}{%
+  \input{../reports/publication/integrated_theorem_gate_matrix}%
+}

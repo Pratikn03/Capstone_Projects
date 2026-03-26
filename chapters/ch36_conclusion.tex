@@ -5,11 +5,12 @@ The central finding of this thesis is concrete: when telemetry degrades,
 a controller can satisfy its observed constraints while violating the true
 physical envelope of the system.  This hidden gap---the
 Observation-Action Safety Gap (OASG)---is measurable, operationally
-meaningful, and correctable.  ORIUS demonstrates this across six peer cyber-physical domains.  Five
-domains---energy management, autonomous vehicles, industrial process
-control, medical monitoring, and aerospace---achieve zero true-state
-violations under DC3S; the navigation domain provides simulation-backed
-portability evidence.
+meaningful, and correctable.  ORIUS demonstrates this across six peer cyber-physical domains.  Three
+proof-validated domains---energy management, industrial process control,
+and medical monitoring---achieve zero true-state violations under DC3S.
+The navigation domain provides simulation-backed portability evidence
+(TSVR~0.69\%), while the autonomous vehicle and aerospace domains are
+classified as proof-candidate and experimental surfaces respectively.
 
 \section{Universal Framework Outcome}
 
@@ -24,30 +25,33 @@ implemented.
 
 \section{Domain Coverage and Empirical Results}
 
-Five defended cyber-physical domains were validated under a unified fault schedule
+The tiered six-row runtime package was evaluated under a unified fault schedule
 (dropout~15\%, spike~8\%, stale~10\%) at $N = 2000$ fault-stressed steps:
 
 \begin{itemize}
-  \item \textbf{Battery} (reference): 3.9\% baseline TSVR $\rightarrow$
-    0.0\% under DC3S.  Full theorem-to-code-to-artifact lineage
-    established in Parts~I--II.
-  \item \textbf{Autonomous Vehicles}: 3.65\% $\rightarrow$ 0.0\%
-    (99.6\% repair rate, mean $\bar{w}_t = 0.768$).
-  \item \textbf{Industrial Process Control}: 21.7\% $\rightarrow$ 0.0\%
-    (90.7\% repair rate, mean $\bar{w}_t = 0.660$).
-  \item \textbf{Medical Monitoring (ICU Vitals)}: 7.55\% $\rightarrow$ 0.0\%
-    (37.2\% repair rate, mean $\bar{w}_t = 0.812$).
-  \item \textbf{Aerospace (Flight Envelope)}: 26.65\% $\rightarrow$ 0.0\%
-    (77.3\% repair rate, mean $\bar{w}_t = 0.782$).
+  \item \textbf{Energy Management} (reference, proof-validated): 3.90\% baseline
+    TSVR $\rightarrow$ 0.0\% under DC3S (3.36\% repair rate).
+    Full theorem-to-code-to-artifact lineage established in Parts~I--II.
+  \item \textbf{Industrial Process Control} (proof-validated): 21.53\% $\rightarrow$
+    0.0\% (91.7\% repair rate).
+  \item \textbf{Medical Monitoring (ICU Vitals)} (proof-validated): 6.25\%
+    $\rightarrow$ 0.0\% (14.6\% repair rate).
+  \item \textbf{Navigation} (simulation-backed): 18.06\% $\rightarrow$ 0.69\%
+    (100\% repair rate); portability evidence outside the proof-validated tier.
+  \item \textbf{Autonomous Vehicles} (proof-candidate): 2.78\% baseline TSVR
+    $\rightarrow$ 2.78\% under DC3S.  High repair rate (98.6\%) indicates
+    shield activity but TSVR does not reach zero due to constraint structure
+    mismatch; classified proof-candidate pending further investigation.
+  \item \textbf{Aerospace (Flight Envelope)} (experimental): 9.72\% $\rightarrow$
+    9.72\% (13.9\% repair rate); evaluated on an experimental surface pending
+    additional domain data.
 \end{itemize}
-
-Navigation remains part of the broader ORIUS portability package, but it is
-simulation-backed rather than part of the defended five-domain equivalent-depth
-claim: 25.8\% $\rightarrow$ 9.25\% (100\% repair rate, mean $\bar{w}_t = 0.773$).
-All five defended domains show DC3S reducing true-state violations by a factor
-of ten or more.  Pipeline latency remains sub-millisecond across the defended
-five-domain set (P95~$<$~0.1~ms), confirming ORIUS is suitable for
-fast-control-loop applications.
+Higher-budget replay shows strong TSVR reduction across several non-battery
+rows, but the final claim boundary is still governed by the locked tier table
+rather than raw replay metrics alone.  Pipeline latency remains
+sub-millisecond across the five forecasting-capable runtime rows
+(P95~$<$~0.1~ms), confirming ORIUS is suitable for fast-control-loop
+applications.
 
 \section{Formal Apparatus and Theorem Ladder Scope}
 
@@ -88,18 +92,21 @@ that:
     degraded telemetry.
   \item The DC3S architecture provides a principled correction mechanism
     that is domain-agnostic by construction.
-  \item Empirical validation across the defended five-domain set confirms
-    equivalent safety performance under a shared fault schedule.
+  \item Shared replay evaluation shows consistent runtime behavior across
+    the six-row package, while claim strength follows the locked tier table
+    rather than raw replay metrics alone.
   \item The battery domain provides the complete reference instantiation
-    with full theorem-to-artifact lineage; the four non-battery defended
-    domains provide equivalent replay-depth empirical validation under the
-    shared universal harness, and navigation provides simulation-backed
-    portability evidence.
+    with full theorem-to-artifact lineage; industrial and healthcare are
+    the proof-validated peers; AV is proof-candidate; aerospace is
+    experimental; and navigation provides simulation-backed portability
+    evidence.
 \end{enumerate}
 
 \section{Closing Statement}
 
 The ORIUS thesis ends where a rigorous framework contribution should: with
-a locked, traceable, battery-anchored safety package defended across five
-domains, extended by simulation-backed navigation portability evidence,
-and ready for deeper domain-specific validation at each deployment site.
+a locked, traceable, battery-anchored tiered safety package, with
+industrial and healthcare as proof-validated peers, AV as proof-candidate,
+aerospace as experimental, navigation as simulation-backed portability
+evidence, and deeper domain-specific validation still required at each
+deployment site.

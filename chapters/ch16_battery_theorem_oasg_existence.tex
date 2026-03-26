@@ -255,4 +255,12 @@ degradation in optimising controllers.  The battery domain provides
 a concrete witness: a TSVR of 3.9\% for the deterministic LP under
 \texttt{drift\_combo} at 20\% dropout.
 
-\input{appendices/app_domain_instantiation_block}
+\begingroup
+\def\domainblockid{t1}
+\def\domainblocktitle{T1}
+\IfFileExists{appendices/app_domain_instantiation_block.tex}{%
+  \input{appendices/app_domain_instantiation_block}%
+}{%
+  \input{../appendices/app_domain_instantiation_block}%
+}
+\endgroup

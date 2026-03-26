@@ -16,9 +16,9 @@
 
 **ORIUS** (*Observation–Reality Integrity for Universal Safety*) addresses a fundamental hazard in cyber-physical systems: a closed-loop controller can produce actions that appear safe relative to the observed system state while the true physical state has already violated its safety constraint. This divergence — the *Observation–Action Safety Gap* (OASG) — arises whenever a sensing channel is subject to dropout, stale readings, sensor spike, or calibration drift. Standard safety methods (Tube MPC, Control Barrier Functions, Lagrangian Safe RL) evaluate constraints against the observed state, and therefore inherit the OASG rather than close it.
 
-ORIUS closes the OASG via **DC3S** (*Degradation-Conditioned Conformal Safety Shield*), a five-stage runtime pipeline that continuously scores telemetry quality, inflates conformal prediction uncertainty in proportion to degradation severity, tightens the feasible action set, repairs constraint-violating actions through joint projection, and issues per-step runtime certificates. The framework has been validated across six CPS domains — energy management, autonomous vehicles, industrial process control, medical monitoring, aerospace flight control, and navigation — achieving a true-state violation rate (TSVR) of **0 %** on three proof-validated domains at a full-pipeline step latency of **35.3 µs mean / 41.1 µs P95**, enabling deployment in 100 Hz and 200 Hz real-time control loops.
+ORIUS closes the OASG via **DC3S** (*Degradation-Conditioned Conformal Safety Shield*), a five-stage runtime pipeline that continuously scores telemetry quality, inflates conformal prediction uncertainty in proportion to degradation severity, tightens the feasible action set, repairs constraint-violating actions through joint projection, and issues per-step runtime certificates. The framework is exercised across six CPS runtime rows — energy management, autonomous vehicles, industrial process control, medical monitoring, aerospace flight control, and navigation — under a tiered evidence model: energy management is the reference row, industrial process control and medical monitoring are proof-validated, autonomous vehicles is proof-candidate, navigation is shadow-synthetic, and aerospace is experimental. The three highest-confidence rows reach **0 %** TSVR at **35.3 µs mean / 41.1 µs P95** full-pipeline latency, enabling deployment in 100 Hz and 200 Hz real-time control loops.
 
-A formal safety theorem establishes that TSVR is bounded by α(1 − w̄)T (Theorem T3), where α is the conformal miscoverage rate and w̄ is the mean OQE reliability score. This bound is empirically satisfied across all six domains under a locked three-seed, 48-step evaluation protocol with 15 % dropout, 8 % spike, and 10 % stale fault injection. The theorem surface comprises 18 verified items (theorems, lemmas, propositions, corollaries, definitions, and standing assumptions), each anchored to source code in `src/orius/dc3s/` and locked experimental artifacts in `reports/`.
+A formal safety theorem establishes that TSVR is bounded by α(1 − w̄)T (Theorem T3), where α is the conformal miscoverage rate and w̄ is the mean OQE reliability score. That theorem is anchored to the battery reference surface, and the locked universal replay tables show how the six runtime rows relate to the same conservative envelope under one fault protocol. The theorem surface comprises 18 verified items (theorems, lemmas, propositions, corollaries, definitions, and standing assumptions), each anchored to source code in `src/orius/dc3s/` and locked experimental artifacts in `reports/`.
 
 ---
 
@@ -80,7 +80,7 @@ where:
 
 A finite-sample correction ε\_n = O(1/√n) tightens the bound for finite calibration set size n.
 
-**Empirical confirmation:** Every measured TSVR lies strictly below the theoretical bound across all six domains and all seeds in the locked evaluation protocol.
+**Empirical confirmation:** The locked replay package keeps the reported TSVR rows below the conservative α(1−w̄)T envelope, while the evidence tiers determine which rows carry reference, proof-validated, proof-candidate, shadow-synthetic, or experimental claims.
 
 ---
 
@@ -179,7 +179,7 @@ DC3S is designed for deployment inside real-time control loops. All measurements
 <tr>
 <td align="center" width="50%">
   <img src="reports/universal_orius_validation/fig_all_domain_comparison.png" alt="All Domain Comparison" width="100%"/>
-  <br/><sub><b>Fig 5.</b> Baseline vs ORIUS TSVR across all six domains (locked 3-seed protocol). Proof-validated domains reach exactly 0 % TSVR; the theoretical bound E[V] ≤ α(1−w̄)T is confirmed.</sub>
+  <br/><sub><b>Fig 5.</b> Baseline vs ORIUS TSVR across the six runtime rows (locked 3-seed protocol). The reference and proof-validated rows reach exactly 0 % TSVR; the broader package remains governed by the tiered evidence table rather than a single universal claim.</sub>
 </td>
 <td align="center" width="50%">
   <img src="reports/sota_comparison/fig_sota_comparison.png" alt="SOTA Comparison" width="100%"/>
@@ -385,10 +385,11 @@ The ORIUS framework uses a four-tier evidence classification that governs the st
 |---|---|---|
 | **Reference** | `reference` | Locked real telemetry; trained + calibrated forecasting surface; software-in-loop replay; non-trivial baseline TSVR; DC3S TSVR = 0 %; stable across all seeds; peer-reviewed data provenance |
 | **Proof-validated** | `proof_validated` | All Reference conditions except strict peer-review requirement; non-synthetic locked CSV; confirmed ORIUS improvement (ΔTSVR > 10 %) |
+| **Proof-candidate** | `proof_candidate` | Locked non-synthetic telemetry, verified training, and SIL evidence exist, but at least one promotion-gate condition remains unmet |
 | **Shadow-synthetic** | `shadow_synthetic` | Closed-loop simulation only; no locked real telemetry; demonstrates adapter contract portability to guidance/robotics domains |
 | **Experimental** | `experimental` | Real data present but at least one gate condition unmet (e.g., ORIUS improvement not statistically confirmed across all seeds) |
 
-Energy management is the **reference domain**: the single domain with full formal traceability from Theorem T1–T8 through source code to locked experimental artifact. Industrial process control and medical monitoring are **proof-validated** peers. Navigation is **shadow-synthetic** (simulation only). Autonomous vehicles and aerospace are **experimental** surfaces.
+Energy management is the **reference domain**: the single domain with full formal traceability from Theorem T1–T8 through source code to locked experimental artifact. Industrial process control and medical monitoring are **proof-validated** peers. Autonomous vehicles is a **proof-candidate** row. Navigation is **shadow-synthetic** (simulation only). Aerospace is **experimental**.
 
 ---
 
@@ -466,7 +467,7 @@ The ORIUS theorem surface comprises 18 verified items. The eight-theorem core la
 
 | # | Theorem | Formal Claim | Code Anchor | Empirical Confirmation |
 |---|---|---|---|---|
-| **T1** | OASG Existence | ∃ controller C and fault schedule F such that TSVR(C, F) > 0 under quality-ignorant dispatch | `dc3s/safety_filter_theory.py` | Baseline TSVR 2.78–21.53 % across all six domains |
+| **T1** | OASG Existence | ∃ controller C and fault schedule F such that TSVR(C, F) > 0 under quality-ignorant dispatch | `dc3s/safety_filter_theory.py` | Baseline TSVR 2.78–21.53 % across the locked non-battery runtime rows |
 | **T2** | One-Step Safety Preservation | Pr[φ(a\_t^safe) = 1] ≥ 1 − α per control step, conditional on w\_t | `dc3s/shield.py` + `dc3s/calibration.py` | TSVR = 0 % on Reference + Proof-validated domains (3 seeds × 48 steps) |
 | **T3** | Core Violation Bound | E[V] ≤ α(1 − w̄)T | `dc3s/safety_filter_theory.py::reliability_error_bound()` | All empirical TSVRs ≤ theoretical bound |
 | **T4** | No-Free-Safety | ∀ observation-only safe policy P: TSVR(P) > 0 under fault schedule F | `dc3s/safety_filter_theory.py` | Rule-based baseline confirms TSVR > 0 on all locked domains |

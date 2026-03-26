@@ -1,7 +1,11 @@
 %% Shared domain-instantiation block — \input{} at the end of each theorem chapter
-%% Shows how the theorem's abstract objects map to each of the five validated domains.
+%% Shows how the theorem's abstract objects map to the battery reference row
+%% plus the four forecasting-capable non-battery replay rows.
 
-\subsection{Domain Instantiation Across Validated Domains}
+\providecommand{\domainblockid}{generic}
+\providecommand{\domainblocktitle}{\domainblockid}
+
+\subsection{Domain Instantiation Across Forecasting-Capable Replay Domains}
 \label{sec:domain-instantiation-\domainblockid}
 
 The theorem above is stated for an abstract CPS with observation vector
@@ -9,14 +13,15 @@ $z_t$, reliability score $w_t$, state uncertainty region
 $C_t^{\text{RAC}}$, feasible action set $\mathcal{A}_t$, and violation
 predicate $v(\cdot)$.  Table~\ref{tab:domain-instantiation-\domainblockid}
 maps these objects to their concrete counterparts in each of the five
-forecasting-capable validated domains.  Each column instantiates the shared
-adapter contract; no domain-specific assumption propagates to the abstract
-theorem statement.
+forecasting-capable replay domains.  Each column instantiates the shared
+adapter contract; the table records how the abstract theorem objects map
+onto the replay surfaces without asserting equal evidence tiers across
+those domains.
 
 \begin{table}[htbp]
 \centering
 \small
-\caption{Domain-specific instantiation for Theorem~\domainblockid{} — abstract objects mapped to each peer domain.}
+\caption{Domain-specific instantiation for Theorem~\domainblocktitle{} — abstract objects mapped to the battery reference row and four forecasting-capable replay rows.}
 \label{tab:domain-instantiation-\domainblockid}
 \begin{tabular}{p{2.2cm}p{2.4cm}p{2.4cm}p{2.4cm}p{2.4cm}p{2.4cm}}
 \toprule

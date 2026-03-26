@@ -85,7 +85,7 @@ figures:
   FIG36_FORECAST_VS_ACTUAL_WIND: {path: paper/assets/figures/fig36_forecast_vs_actual_wind.png, caption: "Forecast vs actual wind.", status: provisional}
   FIG37_FORECAST_VS_ACTUAL_SOLAR: {path: paper/assets/figures/fig37_forecast_vs_actual_solar.png, caption: "Forecast vs actual solar.", status: provisional}
   FIG38_MODEL_COMPARISON: {path: paper/assets/figures/fig38_model_comparison.png, caption: "Model comparison.", status: provisional}
-  FIG39_DISPATCH_COMPARE: {path: paper/assets/figures/fig39_dispatch_compare.png, caption: "Dispatch compare.", status: provisional}
+  FIG39_DISPATCH_COMPARE: {path: paper/assets/figures/fig39_dispatch_compare.png, caption: "Dispatch compare.", status: provisional, optional: true}
   FIG40_ARBITRAGE_OPTIMIZATION: {path: paper/assets/figures/fig40_arbitrage_optimization.png, caption: "Arbitrage optimization.", status: provisional}
   FIG41_SOC_TRAJECTORY_DETAIL: {path: paper/assets/figures/fig41_soc_trajectory_detail.png, caption: "SOC trajectory detail.", status: provisional}
   FIG42_PREDICTION_INTERVALS_LOAD: {path: paper/assets/figures/fig42_prediction_intervals_load.png, caption: "Prediction intervals load.", status: provisional}
@@ -135,6 +135,7 @@ tables:
     path: paper/assets/tables/tbl07_dataset_cards.csv
     title: "Dataset-card inventory for the conference release family."
     status: provisional
+    optional: true
   TBL08_FORECAST_BASELINES:
     path: paper/assets/tables/tbl08_forecast_baselines.csv
     title: "Promoted six-model forecasting comparison. Deep learning baselines evaluate point-forecast performance, confirming GBM's operational dominance in this tabular regime. Conformal uncertainty artifacts (PICP, Width) are materialized exclusively for the production-candidate model (GBM)."
@@ -143,10 +144,12 @@ tables:
     path: reports/universal_orius_validation/cross_domain_oasg_table.csv
     title: "Canonical universal replay output. Battery is the locked reference row; industrial and healthcare are proof-validated; AV is a proof candidate; navigation is shadow-synthetic; aerospace is experimental."
     status: locked
+    optional: true
   TBL10_DOMAIN_VALIDATION_STATUS:
     path: reports/universal_orius_validation/domain_validation_summary.csv
     title: "Tiered validation status across the six runtime domains: reference, proof-validated, proof-candidate, shadow-synthetic, and experimental."
     status: locked
+    optional: true
 
 data:
   DATA_MANIFEST:

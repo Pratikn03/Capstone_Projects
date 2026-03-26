@@ -93,7 +93,7 @@ def main() -> int:
         errors.append("Found unresolved placeholder token markers [[...]] in paper.tex")
 
     # Token checks
-    figure_tokens_used = _collect_tokens(paper_text, r"\\PaperFigure\{([^}]+)\}\{")
+    figure_tokens_used = _collect_tokens(paper_text, r"\\PaperFigure(?:Wide|Hero)?\{([^}]+)\}\{")
     table_tokens_used = _collect_tokens(paper_text, r"\\PaperTableCSV\{([^}]+)\}\{")
 
     figure_manifest = set((manifest.get("figures") or {}).keys())

@@ -221,7 +221,11 @@ T1--T8) and their appendix restatements (C.1--C.9) all pass the
 integrated theorem gate: source file exists, code anchor verified,
 artifact locked, and appendix mapping confirmed.
 
-\input{reports/publication/theorem_surface_summary}
+\IfFileExists{reports/publication/theorem_surface_summary.tex}{%
+  \input{reports/publication/theorem_surface_summary}%
+}{%
+  \input{../reports/publication/theorem_surface_summary}%
+}
 
 \section{Chapter Summary}
 

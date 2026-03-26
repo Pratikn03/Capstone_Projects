@@ -66,10 +66,11 @@ shared fault schedule.  Lemma~\ref{lem:per-step-risk} applies; the
 Core Bound holds for the aerospace domain.
 
 \medskip
-\noindent\textbf{Summary.}  All five forecasting-capable domains achieve
-$\mathrm{PICP}_{90} \ge 0.90$ on their respective calibration splits,
-satisfy the boundedness condition~(A1) by domain physics, and have
-calibration residuals drawn from the same locked replay harness as the
-test trace, giving approximate exchangeability.  The per-step risk
-lemma and Core Bound therefore hold for all six domains under the
-shared fault schedule.
+\noindent\textbf{Summary.}  The five forecasting-capable replay domains
+(battery, AV, industrial, healthcare, and aerospace) achieve the
+calibration coverage and boundedness conditions needed for the per-step
+risk lemma under the shared replay harness.  Navigation remains a
+simulation-backed portability row rather than part of this
+calibration-based proof check.  Under that scope, the per-step risk
+lemma and Core Bound apply to the forecasting-capable replay domains
+used in the locked audit.

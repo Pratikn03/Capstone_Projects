@@ -13,7 +13,8 @@ layer.  The methods---six model families, conformal quantile regression,
 OQE reliability scoring, and RAC interval inflation---are domain-agnostic;
 their instantiation here uses the locked DE ENTSO-E load dataset as the
 primary validation surface.  Chapter~\ref{ch:battery-to-orius} applies
-the same forecasting layer to all six ORIUS domains at equivalent depth.
+the same forecasting layer across the tiered ORIUS runtime package, with
+claim strength governed later by the universal validation tables.
 
 % ----------------------------------------------------------------
 \subsection{Forecast Targets}
@@ -882,5 +883,4 @@ forecast, OQE, RUI, SAF, and certificate generation fits within
 $\sim$12\,MB RAM.  These figures confirm that the safety guarantee
 is computationally free in the context of grid-scale dispatch cycles,
 removing latency as a barrier to deployment.
-
 

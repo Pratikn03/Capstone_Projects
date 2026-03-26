@@ -31,7 +31,7 @@
 
 \onehalfspacing
 
-\title{ORIUS: A Universal Physical-Safety Framework Validated Across Battery Dispatch, Autonomous Vehicles, Industrial Control, and Medical Monitoring}
+\title{ORIUS: A Universal Physical-Safety Framework for Degraded Observation, with Battery-Domain DC3S Validation}
 \author{Pratik Niroula\\
         Minnesota State University, Mankato\\
         CIT (Major), Mathematics (Minor)\\
@@ -123,6 +123,7 @@
 \DeclareRobustCommand{\DCThreeS}{DC\textsuperscript{3}S}
 
 \newtheorem{theorem}{Theorem}
+\newtheorem{claim}[theorem]{Claim}
 \newtheorem{proposition}{Proposition}
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{definition}{Definition}
@@ -199,7 +200,7 @@
 \maketitle
 
 \begin{abstract}
-ORIUS is a universal physical-safety framework for cyber-physical control under degraded observation. This manuscript validates one shared Detect--Calibrate--Constrain--Shield--Certify loop across four defended domains: battery dispatch, autonomous vehicles, industrial process control, and medical monitoring. The reference battery result remains the observation-action safety gap that motivated the framework: under realistic battery telemetry faults, deterministic dispatch violates true state-of-charge limits at \textbf{3.9\% of steps with P95 severity of 333\,MWh}, even while observed-state evaluation reports zero violations. The same universal replay protocol now promotes three additional defended domains with locked non-synthetic telemetry, verified training surfaces, and software-in-loop passes. Under the canonical cross-domain gate, ORIUS reduces true-state violation rate from \textbf{65.3\% to 4.9\%} in autonomous-vehicle car following, from \textbf{44.5\% to 0.0\%} in industrial process control, and from \textbf{97.9\% to 0.0\%} in medical monitoring. Battery remains the reference domain for the locked economics and theorem-to-artifact lineage: on Germany (OPSD, 17{,}377 rows), the battery-domain DC3S implementation delivers \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\% cost savings, \PaperMetric{DE_CARBON_REDUCTION_PCT}{0.30}\% carbon reduction, and \PaperMetric{DE_PEAK_SHAVING_PCT}{6.13}\% peak shaving, while stochastic value remains positive in both DE and US regions (VSS\,=\,\PaperMetric{DE_VSS}{2,708.61} and \PaperMetric{US_VSS}{297,092.71}) across three US balancing authorities (EIA-930 MISO/PJM/ERCOT). Navigation remains shadow-synthetic and aerospace remains experimental. Every quantitative claim is tied to versioned run artifacts, theorem registers, and release gates.
+ORIUS is a universal physical-safety framework for cyber-physical control under degraded observation. This manuscript presents one shared Detect--Calibrate--Constrain--Shield--Certify loop across a tiered six-row runtime package: battery dispatch is the reference domain, industrial process control and medical monitoring are proof-validated peers, autonomous vehicles is a proof-candidate row, navigation is shadow-synthetic, and aerospace remains experimental. The reference battery result remains the observation-action safety gap that motivated the framework: under realistic battery telemetry faults, deterministic dispatch violates true state-of-charge limits at \textbf{3.9\% of steps with P95 severity of 333\,MWh}, even while observed-state evaluation reports zero violations. Under the locked cross-domain gate, industrial process control and medical monitoring reduce true-state violation rate from \textbf{21.53\% to 0.0\%} and \textbf{6.25\% to 0.0\%} respectively; autonomous vehicles retains locked training and software-in-loop artifacts but remains proof-candidate because the current promotion gate does not yet clear a material-improvement requirement. Battery remains the reference domain for the locked economics and theorem-to-artifact lineage: on Germany (OPSD, 17{,}377 rows), the battery-domain DC3S implementation delivers \PaperMetric{DE_COST_SAVINGS_PCT}{7.11}\% cost savings, \PaperMetric{DE_CARBON_REDUCTION_PCT}{0.30}\% carbon reduction, and \PaperMetric{DE_PEAK_SHAVING_PCT}{6.13}\% peak shaving, while stochastic value remains positive in both DE and US regions (VSS\,=\,\PaperMetric{DE_VSS}{2,708.61} and \PaperMetric{US_VSS}{297,092.71}) across three US balancing authorities (EIA-930 MISO/PJM/ERCOT). Every quantitative claim is tied to versioned run artifacts, theorem registers, and release gates.
 \end{abstract}
 
 \noindent\textbf{Keywords:} ORIUS, universal physical-safety framework, degraded observation, battery dispatch, autonomous vehicles, industrial control, medical monitoring, safety shield, telemetry reliability, cyber-physical systems
@@ -208,7 +209,7 @@ ORIUS is a universal physical-safety framework for cyber-physical control under 
 
 Grid-scale battery energy storage systems (BESS) are increasingly central to grid decarbonization, load balancing, and frequency regulation. Their value depends on dispatch controllers that decide, at each time step, how much power to charge or discharge using forecasts of load, renewable generation, and price. Much of the dispatch literature quietly assumes that the controller observes the battery's true state --- its state of charge (SOC), power output, and degradation level --- and can therefore check feasibility in real time. In operational settings, that assumption is too strong.
 
-ORIUS treats that failure mode as a general cyber-physical systems problem rather than a battery-specific quirk. Whenever a controller acts on degraded observation of a physical state, an observation-action safety gap can emerge between what appears feasible on the observed channel and what is actually safe in the physical system. The framework contribution of this paper is therefore architectural as well as empirical: one shared Detect--Calibrate--Constrain--Shield--Certify loop instantiated across four defended domains in this release---battery dispatch, autonomous vehicles, industrial process control, and medical monitoring---with battery serving as the locked reference surface for economics and theorem-to-artifact lineage.
+ORIUS treats that failure mode as a general cyber-physical systems problem rather than a battery-specific quirk. Whenever a controller acts on degraded observation of a physical state, an observation-action safety gap can emerge between what appears feasible on the observed channel and what is actually safe in the physical system. The framework contribution of this paper is therefore architectural as well as empirical: one shared Detect--Calibrate--Constrain--Shield--Certify loop instantiated across a tiered cross-domain evidence package, with battery serving as the locked reference surface for economics and theorem-to-artifact lineage, industrial process control and medical monitoring acting as proof-validated peers, autonomous vehicles remaining proof-candidate, navigation shadow-synthetic, and aerospace experimental.
 
 In practice, grid-scale battery dispatch runs on mixed telemetry --- delayed SCADA measurements, stale sensor feeds, packet reordering, spikes, and dropouts are ordinary operating conditions rather than edge cases~\cite{dibaji2019systems,chandola2009anomaly}. The key consequence is one the BESS dispatch literature has not directly measured: \textbf{a controller can be observationally safe (feasible on degraded observed state) while physically unsafe (violating true battery limits) at the same time}~\cite{chen2020review_bess}. On real grid data, that hidden safety failure appears at a 3.9\% violation rate with 333\,MWh P95 severity.
 
@@ -240,20 +241,20 @@ A forecasting model can have strong RMSE while still inducing unsafe dispatch if
 \subsection{Contributions}
 
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{Universal defended-domain validation.} We present ORIUS as a universal physical-safety framework organized around one five-stage Detect--Calibrate--Constrain--Shield--Certify loop, and we defend that loop across four domains in this release: battery dispatch, autonomous vehicles, industrial process control, and medical monitoring.
+  \item \textbf{Tiered universal runtime validation.} We present ORIUS as a universal physical-safety framework organized around one five-stage Detect--Calibrate--Constrain--Shield--Certify loop and evaluate that loop across a tiered six-row runtime package with one reference row, two proof-validated peers, one proof-candidate row, one shadow-synthetic row, and one experimental row.
   \item \textbf{Battery reference result.} We preserve the battery-domain hidden-gap result as the reference scientific witness: deterministic dispatch violates true SOC at 3.9\% of steps with P95 severity of 333\,MWh while appearing safe on observed state.
-  \item \textbf{Shared cross-domain repair gate.} We promote AV, industrial, and healthcare from portability rows to defended domains by requiring locked telemetry, verified training surfaces, clean software-in-loop execution, a nontrivial baseline true-state violation gap, material ORIUS improvement, and stable seed behavior under one canonical replay harness.
-  \item \textbf{Shared theorem package with defended-domain instantiations.} We keep one ORIUS theorem ladder and make its state, observation, safety, constraint, repair, code, and artifact instantiations explicit for battery, AV, industrial, and healthcare rather than treating non-battery domains as informal portability notes.
-  \item \textbf{Artifact-locked universal evidence bundle.} The same validator that assigns evidence tiers now emits the manuscript-facing dataset-scope, training-metric, runtime, fault-severity, theorem-instantiation, and flagship-trace artifacts consumed by the paper.
+  \item \textbf{Shared cross-domain promotion gate.} We use one locked replay harness and one promotion contract across the non-battery rows, with industrial and healthcare clearing the proof-validated gate, AV remaining proof-candidate, navigation remaining shadow-synthetic, and aerospace remaining experimental.
+  \item \textbf{Shared theorem package with tiered instantiations.} We keep one ORIUS theorem ladder and make its state, observation, safety, constraint, repair, code, and artifact instantiations explicit across the battery reference row and the non-battery replay rows without claiming equal proof depth for every domain.
+  \item \textbf{Artifact-locked universal evidence bundle.} The manuscript consumes the locked status, proof, training, SIL, comparison, and latency artifacts emitted by the universal validation workflow, and uses those tier tables as the governing boundary for cross-domain claims.
 \end{enumerate}
 
 \subsection{Contribution Boundary}
 
-The central scientific contribution is now a defended universal package rather than battery-plus-portability narrative. ORIUS is the reusable architectural framework; battery, AV, industrial, and healthcare are the defended instantiations. The manuscript still keeps a bounded formal layer consisting of the ORIUS theorem package together with defended-domain instantiation maps. \Cref{thm:rac_coverage} explains why monotone inflation preserves coverage under the shared uncertainty construction, \Cref{thm:conditional_coverage} motivates the reliability-group calibration audits, and \Cref{thm:safety_margin} with \Cref{cor:zero_violation} explain why reliability-conditioned margins and repair can eliminate true-state failures on the reference battery surface. These results validate the construction and are instantiated across four defended domains, but they still do not claim closed-loop stability, optimal inflation scheduling, or universal safety dominance outside the defended set. Navigation remains shadow-synthetic and aerospace remains experimental in this release.
+The central scientific contribution is now a tiered universal package rather than battery-plus-portability narrative. ORIUS is the reusable architectural framework; battery is the formal reference row, industrial and healthcare are the strongest non-battery empirical peers, AV remains proof-candidate, navigation remains shadow-synthetic, and aerospace remains experimental. The manuscript still keeps a bounded formal layer consisting of the ORIUS theorem package together with tiered domain-instantiation maps. \Cref{thm:rac_coverage} explains why monotone inflation preserves coverage under the shared uncertainty construction, \Cref{thm:conditional_coverage} motivates the reliability-group calibration audits, and \Cref{thm:safety_margin} with \Cref{cor:zero_violation} explain why reliability-conditioned margins and repair can eliminate true-state failures on the reference battery surface. These results validate the construction and are instantiated across the replay rows, but they do not claim closed-loop stability, optimal inflation scheduling, or universal safety dominance outside the battery reference row and the proof-validated peer rows.
 
 \subsection{Paper Roadmap}
 
-Sections~\ref{sec:related}--\ref{sec:problem} position ORIUS and define the battery reference setting that motivated the framework. Sections~\ref{sec:forecasting_uq} and~\ref{sec:safe_dispatch} describe the forecasting, calibration, and shield mechanics. Sections~\ref{sec:experiments}--\ref{sec:us_analysis} preserve the core battery evidence, baseline diagnosis, and regime analysis. \Cref{sec:universal} then presents the defended universal package: shared protocol, dataset scope, training metrics, runtime and SIL results, flagship traces, and theorem instantiations for battery, AV, industrial, and healthcare. The later sections extend that package through governance, hardening, benchmark formalization, and deployment discipline, and the closing sections restate the defended claim boundary explicitly: four defended domains in this release, with navigation and aerospace outside the equal-depth claim.
+Sections~\ref{sec:related}--\ref{sec:problem} position ORIUS and define the battery reference setting that motivated the framework. Sections~\ref{sec:forecasting_uq} and~\ref{sec:safe_dispatch} describe the forecasting, calibration, and shield mechanics. Sections~\ref{sec:experiments}--\ref{sec:us_analysis} preserve the core battery evidence, baseline diagnosis, and regime analysis. \Cref{sec:universal} then presents the tiered universal package: shared protocol, tier tables, training metrics, runtime and SIL results, and latency for the battery reference row plus the non-battery replay rows. The later sections extend that package through governance, hardening, benchmark formalization, and deployment discipline, and the closing sections restate the bounded claim boundary explicitly: battery reference, industrial and healthcare proof-validated, AV proof-candidate, navigation shadow-synthetic, aerospace experimental.
 
 \section{Related Work}\label{sec:related}
 
@@ -347,7 +348,7 @@ The canonical dataset lock is summarized in \Cref{tab:TBL05_DATASET_SUMMARY}. DE
 \PaperTableCSV{TBL05_DATASET_SUMMARY}{Dataset summary: regions, date ranges, signal counts, and coverage.}
 
 \paragraph{Dataset--framework traceability.}
-\Cref{tab:dataset_framework_trace} maps each locked dataset to its role in the pipeline and the primary evidence tables. DE and US\_MISO feed the canonical battery evaluation (TBL01, TBL04); PJM and ERCOT extend the release-family scope. The defended universal framework (\Cref{sec:universal}) now uses locked telemetry for AV, industrial, healthcare, and aerospace rows, plus a synthetic navigation shadow surface; the governed cross-domain evidence is summarized in \Cref{tab:defended-domain-dataset-scope} and \Cref{tab:defended-domain-runtime}.
+\Cref{tab:dataset_framework_trace} maps each locked dataset to its role in the pipeline and the primary evidence tables. DE and US\_MISO feed the canonical battery evaluation (TBL01, TBL04); PJM and ERCOT extend the release-family scope. The tiered universal runtime package (\Cref{sec:universal}) uses locked telemetry for AV, industrial, healthcare, and aerospace rows, plus a synthetic navigation shadow surface; the governed cross-domain evidence is summarized by the universal status and proof tables.
 
 \begin{table}[htbp]
 \centering\small
@@ -362,7 +363,7 @@ US\_MISO & 13{,}638 & Forecast, DC3S, CPSBench & TBL04, TBL05, TBL08 \\
 US\_PJM & 13{,}639 & Forecast, transfer & TBL05, TBL07 \\
 US\_ERCOT & 13{,}453 & Forecast, transfer & TBL05, TBL07 \\
 \midrule
-\multicolumn{4}{l}{\textit{Universal replay: battery + AV + industrial + healthcare defended; navigation shadow-synthetic; aerospace experimental}} \\
+\multicolumn{4}{l}{\textit{Universal replay: battery reference; industrial + healthcare proof-validated; AV proof-candidate; navigation shadow-synthetic; aerospace experimental}} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -466,7 +467,7 @@ Three baseline policies appear throughout this paper:
 
 Canonical DE and US impact percentages are B1-versus-B2 comparisons. Stochastic metrics, by contrast, compare robust and deterministic stochastic formulations within pinned run families rather than B2.
 
-\section{The Observed-State Safety Illusion}\label{sec:safety_illusion}
+\section{The Observed-State Safety Illusion}\label{sec:safety_illusion}\label{ch:safety-illusion}
 
 This section presents the central discovery of the paper: a pervasive and previously unmeasured failure mode in which dispatch controllers appear safe when evaluated on observed (degraded) state but simultaneously violate physical battery limits on the true (hidden) state. We first give an intuitive explanation of why this happens, then formalize the gap mathematically, and finally describe CPSBench --- the evaluation framework that makes the gap visible and reproducible.
 
@@ -531,7 +532,7 @@ CPSBench provides the infrastructure to make this gap visible and reproducible. 
 \end{enumerate}
 
 
-\section{Forecasting and Uncertainty Method}\label{sec:forecasting_uq}
+\section{Forecasting and Uncertainty Method}\label{sec:forecasting_uq}\label{sec:theory}
 
 The forecasting layer provides the informational substrate on which the dispatch optimizer and safety shield operate. Its design must satisfy two competing requirements: point predictions must be accurate enough to drive cost-effective dispatch decisions, and prediction intervals must maintain valid coverage under distribution shift caused by telemetry degradation. The second requirement is often treated as an afterthought in the load forecasting literature, yet it is the one that determines whether the downstream safety shield can function correctly.
 
@@ -722,7 +723,7 @@ The locked evaluation uses only the linear law; the FTIT-RO and ambiguity varian
 
 \PaperFigure{FIG08_RAC_SENSITIVITY_WIDTH}{RAC-Cert sensitivity signal versus interval width expansion across controllers. Higher degradation yields larger inflation.}
 
-\section{Safe Dispatch and DC3S Shield}\label{sec:safe_dispatch}
+\section{Safe Dispatch and DC3S Shield}\label{sec:safe_dispatch}\label{ch:dc3s}\label{sec:shield}
 
 The DC\textsuperscript{3}S shield transforms a risk-aware optimizer into a certifiably safe controller through a five-stage pipeline executed at every dispatch step: (1)~score telemetry reliability, (2)~inflate prediction intervals proportional to degradation, (3)~solve robust dispatch against the widened intervals, (4)~repair any remaining constraint violations by feasible-set projection, and (5)~emit a cryptographically chained certificate recording the entire decision context. The conceptual innovation is that stages 1--2 bridge the measurement channel to the uncertainty model: when sensors degrade, the controller's confidence intervals automatically widen, forcing the optimizer to hedge more aggressively. When sensors are healthy, the intervals remain tight, and the optimizer operates at full economic efficiency. This \emph{conditional conservatism} is what distinguishes DC\textsuperscript{3}S from blanket-conservative approaches that widen margins uniformly regardless of measurement quality.
 
@@ -958,7 +959,7 @@ This paper binds its quantitative claims to the following locked artifacts:
   \item dashboard profile lock timestamp: \texttt{\PaperMetric{DASHBOARD_LOCK_TS}{2026-02-17T11:15:38.623283}}
 \end{itemize}
 
-\section{Results}\label{sec:results}
+\section{Results}\label{sec:results}\label{ch:main-results}
 
 \subsection{Forecast Quality Across Model Families}\label{sec:forecast_quality}
 
@@ -1119,7 +1120,7 @@ The key result is that the optimizer maintains 100\% feasibility across all pert
 
 \PaperFigure{FIG50_ROBUSTNESS_INFEASIBLE_RATE}{Infeasible rate under perturbation. The optimizer maintains 100\% feasibility at all tested levels in both regions.}
 
-\subsection{Ablation Study: What Matters for Safety}\label{sec:ablation}
+\subsection{Ablation Study: What Matters for Safety}\label{sec:ablation}\label{ch:ablations}
 
 \PaperTableCSV{TBL02_ABLATIONS}{Ablation study with strict two-gate verification: relative reduction $\ge$ 10\% \emph{and} Wilcoxon signed-rank $p < 0.01$.}
 
@@ -1300,7 +1301,7 @@ The six-model comparison uses a common 168-hour lookback and 24-hour horizon acr
 
 \PaperFigure{FIG48_SEASONALITY_ERROR_HEATMAP}{Seasonality--hour error heatmap. Forecast errors cluster in afternoon hours for solar and evening ramp hours for load, informing time-of-day-aware operational scheduling.}
 
-\section{Cross-Region and US Regime Analysis}\label{sec:us_analysis}
+\section{Cross-Region and US Regime Analysis}\label{sec:us_analysis}\label{ch:battery-lessons}
 
 \subsection{Why US Direct Gains Are Weak}
 
@@ -1377,9 +1378,9 @@ These structural differences have direct implications for dispatch optimization 
 
 The coexistence of weak aggregate US improvements and large US VSS is not contradictory; it reflects the difference between realized percentage gains and the internal value of uncertainty-aware planning. Over the locked US evaluation window, the B1-versus-B2 comparison offers limited arbitrage and peak-shaving headroom in MISO and ERCOT, so even better dispatch decisions translate into only small realized percentage changes. PJM's stronger results show that the architecture can realize large gains when market structure provides sufficient headroom. The stochastic program still benefits from modeling uncertainty in all three BAs because that uncertainty affects reserve use, constraint satisfaction, and tail-risk exposure---even when realized direct savings remain small.
 
-\section{Universal Domain Framework}\label{sec:universal}
+\section{Universal Domain Framework}\label{sec:universal}\label{ch:battery-to-orius}
 
-This manuscript now treats ORIUS as a defended universal framework rather than a battery-only system with portability notes. The defended set in this release is four-domain: battery dispatch, autonomous vehicles, industrial process control, and medical monitoring. Battery remains the reference witness for the hidden-gap discovery, the locked economics, and the theorem-to-artifact lineage; AV, industrial, and healthcare now share the same training, runtime, software-in-loop, and promotion gates. Navigation remains a shadow-synthetic surface and aerospace remains experimental.
+This manuscript now treats ORIUS as a tiered universal framework rather than a battery-only system with portability notes. Battery remains the reference witness for the hidden-gap discovery, the locked economics, and the theorem-to-artifact lineage; industrial process control and medical monitoring are proof-validated peers; autonomous vehicles remains proof-candidate; navigation remains shadow-synthetic; and aerospace remains experimental. The cross-domain claim boundary is governed by the locked tier tables, not by raw TSVR alone.
 
 \subsection{Multi-Domain Architecture}
 
@@ -1387,69 +1388,37 @@ This manuscript now treats ORIUS as a defended universal framework rather than a
 
 \PaperFigureWide{FIG_UNIVERSAL_FRAMEWORK}{ORIUS universal domain physical safety framework. The five-stage pipeline (Detect$\to$Calibrate$\to$Constrain$\to$Shield$\to$Certify) applies uniformly; domain adapters for six runtime domains (Energy, Vehicle/AV, Navigation, Industrial, Healthcare/Surgical, Aerospace) provide domain-specific state, safety predicates, and repair logic.}
 
-\subsection{Defended Domain Scope}
+\subsection{Tiered Evidence Surface}
 
-The defended universal claim is anchored by one canonical evidence generator, \texttt{scripts/run\_universal\_orius\_validation.py}, which emits the dataset cards, training metrics, runtime tables, fault-severity sweeps, theorem-instantiation tables, and flagship traces used in this section. The resulting scope table is the manuscript's governing universal contract.
+The universal claim is anchored by one canonical evidence generator, \texttt{scripts/run\_universal\_orius\_validation.py}, which emits the status, proof, training, runtime, SIL, comparison, and latency artifacts used in this section. The following two tables are the governing universal contract: the first fixes the claim tier for each row, and the second records why the tier holds.
 
-\input{../reports/universal_orius_validation/tbl_defended_domain_dataset_scope.tex}
+\input{../reports/universal_orius_validation/tbl_domain_validation_summary.tex}
+
+\input{../reports/universal_orius_validation/tbl_domain_proof_status.tex}
 
 \subsection{Training and Calibration Surfaces}
 
-The non-battery defended domains now expose battery-style forecasting and calibration artifacts rather than a single readiness bit. AV, industrial, and healthcare all have non-empty train/calibration/test splits, locked feature paths, model bundles, conformal artifacts, and publication-facing reports. Battery forecasting remains the locked reference surface in Sections~\ref{sec:forecasting_uq} and~\ref{sec:calibration}; the table below equalizes the three promoted non-battery domains against that standard.
+The forecasting-capable non-battery replay rows now expose battery-style forecasting and calibration artifacts rather than a single readiness bit. AV, industrial, healthcare, and aerospace all have non-empty train/calibration/test splits, locked feature paths, model bundles, conformal artifacts, and publication-facing reports. Battery forecasting remains the locked reference surface in Sections~\ref{sec:forecasting_uq} and~\ref{sec:calibration}; the tables below summarize the non-battery forecasting surfaces and the locked training audit.
 
 \input{../reports/universal_orius_validation/tbl_defended_domain_training_metrics.tex}
 
+\input{../reports/universal_training_audit/tbl_domain_training_audit.tex}
+
 \subsection{Runtime and Software-in-Loop Validation}\label{sec:universal_validation}
 
-The defended runtime contract is shared across the four domains: one fault protocol, one universal repair path, one promotion gate, and one artifact bundle. Battery remains the reference row from locked publication artifacts; AV, industrial, and healthcare are replay-backed defended domains under the same gate.
+The shared runtime contract is exercised across all six rows: one fault protocol, one universal repair path, one promotion gate, and one artifact bundle. Battery remains the reference row; industrial and healthcare are proof-validated; AV remains proof-candidate; navigation remains shadow-synthetic; aerospace remains experimental.
 
-\input{../reports/universal_orius_validation/tbl_defended_domain_runtime.tex}
+\input{../reports/universal_sil_validation/tbl_domain_sil_summary.tex}
 
-\begin{figure*}[htbp]
-\centering
-\includegraphics[width=0.92\textwidth]{../reports/universal_orius_validation/fig_defended_domain_validation.png}
-\caption{Defended-domain ORIUS validation under the canonical replay gate. Battery is the locked reference aggregate; AV, industrial, and healthcare are replay-backed defended domains under the same promotion contract.}
-\label{fig:defended-domain-validation}
-\end{figure*}
+\input{../reports/universal_orius_validation/tbl_all_domain_comparison.tex}
 
-\input{../reports/universal_orius_validation/tbl_defended_domain_fault_severity.tex}
+\PaperFigureWide{FIG_MULTI_DOMAIN_VALIDATION}{Cross-domain validation surface from the canonical universal evidence-tier table. The labels encode the claim boundary: reference, proof-validated, proof-candidate, shadow-synthetic, and experimental.}
 
-\IfFileExists{../reports/universal_orius_validation/tbl_defended_domain_sil.tex}{\input{../reports/universal_orius_validation/tbl_defended_domain_sil.tex}}{}
-
-\subsection{Flagship Traces}
-
-The universal claim is not carried by summary tables alone. Each promoted non-battery defended domain now includes a flagship true-versus-observed trace showing the safety variable seen by the controller, the corresponding true variable used for evaluation, and the intervention points introduced by the ORIUS shield.
-
-\begin{figure*}[htbp]
-\centering
-\includegraphics[width=0.92\textwidth]{../reports/universal_orius_validation/fig_av_flagship_trace.png}
-\caption{Autonomous-vehicle flagship trace. The defended AV surface is longitudinal car following under degraded observation, with violations defined on true next-step speed and headway.}
-\label{fig:av-flagship-trace}
-\end{figure*}
-
-\begin{figure*}[htbp]
-\centering
-\includegraphics[width=0.92\textwidth]{../reports/universal_orius_validation/fig_industrial_flagship_trace.png}
-\caption{Industrial flagship trace. ORIUS clamps unsafe power-setpoint commands while the true plant state is evaluated against the defended process envelope.}
-\label{fig:industrial-flagship-trace}
-\end{figure*}
-
-\begin{figure*}[htbp]
-\centering
-\includegraphics[width=0.92\textwidth]{../reports/universal_orius_validation/fig_healthcare_flagship_trace.png}
-\caption{Medical-monitoring flagship trace. ORIUS escalates alerts when degraded observation obscures defended SpO$_2$/HR/RR safety conditions.}
-\label{fig:healthcare-flagship-trace}
-\end{figure*}
-
-\subsection{Shared Theorem Package and Instantiations}
-
-The ORIUS theorem ladder is shared across the defended domains; what changes by domain is the concrete state, observation channel, safety predicate, constraint set, repair operator, and the empirical artifact family used to confirm the instantiation. This keeps the theorem layer universal without duplicating T1--T8 four times.
-
-\input{../reports/universal_orius_validation/tbl_defended_domain_theorem_instantiation.tex}
+\input{../reports/universal_orius_validation/tbl_all_domain_latency.tex}
 
 \subsection{Non-Defended Domains}
 
-Navigation and aerospace remain in the canonical harness, but not in the defended claim set. Navigation is still shadow-synthetic because the current trace is synthetic rather than locked telemetry. Aerospace remains experimental because the current replay surface executes correctly but does not yet satisfy the defended-domain promotion contract. They remain valuable for adapter hardening and externalization planning, but they are intentionally outside the equal-depth universal claim made in this manuscript.
+Navigation and aerospace remain in the canonical harness, but not in the proof-validated claim set. Navigation is still shadow-synthetic because the current trace is synthetic rather than locked telemetry. Aerospace remains experimental because the current replay surface executes correctly but does not yet satisfy the promotion contract. AV remains between those tiers: it is a proof-candidate row with locked telemetry, training, and SIL evidence, but it does not yet clear the full promotion gate. These rows remain valuable for adapter hardening and externalization planning, but they are intentionally outside the reference + proof-validated claim set used for the strongest universal wording in this manuscript.
 
 \paragraph{Papers 2--6 module mapping.}
 The ORIUS program extends beyond the core DC\textsuperscript{3}S shield. \Cref{tab:papers26_modules} maps each extension paper to its implementation modules under \texttt{src/orius/}.
@@ -1473,7 +1442,7 @@ Paper 6 & CertOS runtime certificate lifecycle & \path{src/orius/certos/} (runti
 
 \input{longform/theorem_block_longform.tex}
 
-\section{Governance and Reproducibility}\label{sec:governance}
+\section{Governance and Reproducibility}\label{sec:governance}\label{ch:certos-runtime}
 
 \subsection{Source of Truth}
 
@@ -1607,14 +1576,14 @@ The main internal-validity risk is manuscript-artifact drift. This is mitigated 
 
 \subsection{Threats to External Validity}
 
-This paper is intentionally scoped as a defended universal ORIUS manuscript, not as a claim of universal dominance. The defended set is limited to battery dispatch, autonomous vehicles, industrial process control, and medical monitoring. Battery still carries the locked economic narrative and the deepest theorem-to-artifact lineage; 
+This paper is intentionally scoped as a tiered universal ORIUS manuscript, not as a claim of universal dominance. The strongest evidence set is limited to the battery reference row and the two proof-validated peers (industrial process control and medical monitoring). AV remains proof-candidate, navigation remains shadow-synthetic, and aerospace remains experimental. Battery still carries the locked economic narrative and the deepest theorem-to-artifact lineage.
 \subsection{Threats to Construct and Conclusion Validity}
 
 Construct validity depends on the proxy cost and carbon signals being appropriate enough for comparative analysis. Conclusion validity depends on scenario design and calibration definitions remaining stable. The formal results (\Cref{thm:rac_coverage,thm:conditional_coverage,thm:safety_margin}) should not be overstated: \Cref{thm:rac_coverage} gives marginal coverage preservation under monotone inflation; \Cref{thm:conditional_coverage} gives group-conditional coverage under a Mondrian partition; and \Cref{thm:safety_margin} establishes safety-margin monotonicity and true-SOC feasibility under reliability-conditioned margins. Together they formalize why the DC\textsuperscript{3}S construction is correct, but they do not establish closed-loop stability, optimal inflation, or finite-time convergence.
 
 The theorems should be read as correctness conditions for the safety shield's construction, not as a standalone contribution in conformal prediction theory. They do not prove that the chosen inflation law is optimal among all monotone laws, do not guarantee minimum intervention rate, and do not remove the need for empirical validation. The practical safety of the system depends on how reliability scoring, drift behavior, forecast quality, optimization, and action repair interact under realistic faults. The empirical evidence in \Cref{sec:main_result} and the ablation study in \Cref{sec:ablation} provide the primary safety validation. Accordingly, the paper's contribution is systems-oriented: the theorems validate the construction, while the locked benchmark results validate the method.
 
-\section{Limitations and Future Work}\label{sec:limitations}
+\section{Limitations and Future Work}\label{sec:limitations}\label{sec:future_work}
 
 \subsection{Current Limitations}
 
@@ -1649,9 +1618,9 @@ DC\textsuperscript{3}S achieves zero true-SOC violations at a 2.8\% intervention
 
 The promoted six-model forecasting comparison points in one practical direction: on these moderate-sized, feature-rich grid datasets, GBM remains the strongest operational model under the locked equal-budget protocol. For practitioners, the message is simple: on data of this kind, feature engineering matters more than architectural complexity.
 
-\paragraph{The core message.} Trustworthy cyber-physical control requires the uncertainty model to degrade when the measurement channel degrades. In that sense, telemetry is not an implementation detail but part of the control problem itself. ORIUS turns that idea into a single Detect--Calibrate--Constrain--Shield--Certify loop with per-step auditable evidence, and this release now defends that loop across four domains rather than presenting battery as the only serious validation surface. Battery remains the reference witness for the hidden-gap discovery and the locked economic story; AV, industrial, and healthcare now supply defended replay, training, software-in-loop, and theorem-instantiation evidence under the same promotion gate.
+\paragraph{The core message.} Trustworthy cyber-physical control requires the uncertainty model to degrade when the measurement channel degrades. In that sense, telemetry is not an implementation detail but part of the control problem itself. ORIUS turns that idea into a single Detect--Calibrate--Constrain--Shield--Certify loop with per-step auditable evidence, and this release now supports that loop with a tiered universal evidence package rather than with battery alone. Battery remains the reference witness for the hidden-gap discovery and the locked economic story; industrial and healthcare are proof-validated peers; AV remains proof-candidate; navigation remains shadow-synthetic; aerospace remains experimental.
 
-\paragraph{Scope boundary.} What this paper establishes is a defended universal ORIUS package across battery dispatch, autonomous vehicles, industrial control, and medical monitoring, with navigation and aerospace intentionally held outside the equal-depth claim. What it does not establish is universal dominance across all domains, adversarial completeness, or production-hardware deployment safety. The defended claim is exactly the one supported by the artifact bundle: under degraded observation, the same ORIUS repair contract can expose and materially reduce true-state safety failures across four distinct cyber-physical domains.
+\paragraph{Scope boundary.} What this paper establishes is a tiered universal ORIUS package anchored by a battery reference row and two proof-validated non-battery peers. It does not establish universal dominance across all domains, adversarial completeness, or production-hardware deployment safety. The strongest claim supported by the artifact bundle is that under degraded observation, the same ORIUS repair contract can expose and materially reduce true-state safety failures on the reference and proof-validated surfaces, while additional rows remain evidence-tiered as proof-candidate, shadow-synthetic, or experimental.
 
 The conclusion-level locked numeric summary is therefore explicit: 7.11\% DE cost savings, 0.30\% DE carbon reduction, 6.13\% DE peak shaving, 0.11\% US cost savings, 0.13\% US carbon reduction, and 0.00\% US peak shaving.
 
@@ -1767,6 +1736,11 @@ V.~Borisov, T.~Leemann, K.~Sessler, J.~Haug, M.~Pawelczyk, and G.~Kasneci.
 S.~M.~Lundberg and S.-I.~Lee.
 \newblock A unified approach to interpreting model predictions.
 \newblock {\em Advances in Neural Information Processing Systems}, 30, 2017.
+
+\bibitem{lamport1982byzantine}
+L.~Lamport, R.~Shostak, and M.~Pease.
+\newblock The Byzantine generals problem.
+\newblock {\em ACM Transactions on Programming Languages and Systems}, 4(3):382--401, 1982.
 
 \end{thebibliography}
 

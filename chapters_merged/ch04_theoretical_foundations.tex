@@ -1092,7 +1092,9 @@ horizon~$T$ into a single inequality.  The derivation uses energy
 management notation but is domain-agnostic: it holds for any domain whose
 adapter satisfies the shared contract.  The runtime module
 \texttt{src/orius/dc3s/coverage\_theorem.py} exposes helper functions that
-compute and verify this bound for all six validated domains.
+compute and inspect this bound across the locked runtime rows; the
+strength of the manuscript claim remains governed by the tier matrix in
+Chapter~\ref{ch:universal-validation}.
 
 \subsection{Domain-Agnostic Statement}
 
@@ -2030,6 +2032,5 @@ monotonicity (Proposition~\ref{prop:budget-monotonicity})---formalise
 the landing protocol and prove it is strictly safer than uncontrolled
 dispatch.  Together, these extensions complete the theorem ladder
 initiated in Chapter~\ref{ch:theorem-oasg}.
-
 
 

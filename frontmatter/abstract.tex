@@ -20,13 +20,15 @@ rather than implicit.
 The energy management domain provides the formally locked theorem-to-artifact surface.
 Under degraded telemetry, a quality-ignorant deterministic controller produces a true-state
 violation rate (TSVR) of 3.9\% with P95 severity of 333.4~MWh, while appearing perfectly
-safe in observed state.  DC3S eliminates all true-state violations (TSVR~$= 0$\%) with
-an intervention rate of only 2.8\%, demonstrating that the OASG is both real and
-closable.  TSVR reductions to zero are confirmed under the locked three-seed evaluation
-protocol across the industrial process control and medical monitoring domains (proof-validated);
-AV and aerospace domains show equivalent reduction under a higher-budget N~$= 2000$
-per-domain evaluation and are classified as proof-candidate and experimental surfaces
-respectively.  The navigation domain provides simulation-backed portability evidence.
+safe in observed state.  DC3S eliminates all true-state violations (TSVR~$= 0$\%) for the energy management
+domain, with an intervention rate of only 2.8\%, demonstrating that the OASG is both
+real and closable.  TSVR reductions to zero are confirmed under the locked three-seed
+evaluation protocol across the industrial process control and medical monitoring domains
+(proof-validated).  The autonomous vehicle and aerospace domains do not achieve
+TSVR~$= 0$\% under the locked protocol---AV remains at 2.78\% baseline (constraint
+structure mismatch; classified proof-candidate) and aerospace at 9.72\% (experimental
+surface)---and are distinguished from the proof-validated tier accordingly.
+The navigation domain provides simulation-backed portability evidence (0.69\% TSVR).
 
 The dissertation establishes a four-theorem safety ladder: (T1) OASG existence, (T2)
 one-step safety preservation, (T3) the ORIUS core safety bound
@@ -43,6 +45,6 @@ compositional safety for multi-unit fleets, and adversarial robustness via activ
 Across the three proof-validated domains and under all tested fault conditions,
 DC3S achieves the core safety guarantee while preserving dispatch performance.
 The framework demonstrates that the observation--action safety gap is a universal
-CPS phenomenon with a principled, deployable remedy---closable on proof-validated
-domains, measurably reduced on proof-candidate domains, and structurally addressed
-on experimental surfaces.
+CPS phenomenon with a principled remedy---closable on the reference and
+proof-validated rows, partially resolved on proof-candidate surfaces, and
+structurally addressed on experimental surfaces.

@@ -35,39 +35,43 @@ The eight principal theorems T1--T8 then formalise, quantify, and
 extend this guarantee across one-step, episode-level, and multi-step
 temporal horizons.
 
-\section{What Is Fully Validated Across the Defended Five-Domain Set}
+\section{What Is Established Across the Tiered Runtime Package}
 
 The following results are established by reproducible experiment on the locked
-CPSBench harness (seed~42, $N = 2000$ fault-stressed steps, unified fault schedule:
-dropout~15\%, spike~8\%, stale~10\%) and backed by formal proofs:
+CPSBench harness (seed~42, $N = 2000$ fault-stressed steps, unified fault
+schedule: dropout~15\%, spike~8\%, stale~10\%) together with the battery
+reference proofs and the locked tier tables:
 
 \begin{enumerate}
   \item \textbf{OASG existence.}  The Observation-Action Safety Gap is
-    measurably non-zero in all five defended domains under the shared fault
+    measurably non-zero across the locked runtime rows under the shared fault
     schedule.
-    Baseline TSVR spans 3.9\% (battery reference) to 92.4\% (AV) before DC3S.
   \item \textbf{DC3S effectiveness.}  The DC3S shield achieves
-    0.0\% TSVR across the defended five-domain set under the locked replay
-    package.
-  \item \textbf{Zero true-state violation rate.}  Battery, AV, industrial,
-    healthcare, and aerospace each achieve 0.0\% TSVR under DC3S in the
-    defended evidence package.
+    0.0\% TSVR across the three proof-validated domains (energy management,
+    industrial process control, and medical monitoring) under the locked
+    three-seed evaluation protocol.
+  \item \textbf{Zero true-state violation rate.}  Energy management, industrial
+    process control, and medical monitoring each achieve 0.0\% TSVR under DC3S
+    in the strongest evidence rows.  The autonomous vehicle and aerospace domains
+    are classified as proof-candidate and experimental surfaces respectively; their
+    TSVR remains at baseline under the locked protocol (2.78\% and 9.72\%).
   \item \textbf{Formal safety bound.}  Theorem~\ref{thm:safety-preservation}
     guarantees that the true-state violation probability is at most $\alpha$
     with confidence $1 - \delta$, under exchangeability of the calibration
-    residuals and bounded observation error.  The bound holds for all five
-    defended domain instantiations via the domain adapter mapping.
+    residuals and bounded observation error.  The bound is formalized on the
+    battery reference row and instantiated across the tiered domain maps via
+    the shared domain-adapter construction.
   \item \textbf{Bounded intervention cost.}  The shield's repair rate remains
-    below 100\% across the defended five-domain set (mean~$\bar{w}_t \in
+    below 100\% across the five forecasting-capable runtime rows (mean~$\bar{w}_t \in
     [0.66, 0.81]$), confirming that DC3S does not collapse all actions to a
     constant fallback.
   \item \textbf{Sub-millisecond overhead.}  Pipeline latency (P95~$<$~0.1~ms)
-    is consistent across the defended five-domain set, confirming runtime
+    is consistent across the five forecasting-capable runtime rows, confirming runtime
     suitability for fast control-loop applications.
 \end{enumerate}
 
 Navigation remains simulation-backed portability evidence outside this
-defended five-domain claim.
+forecasting-surface summary.
 
 \section{What Is Fully Validated in Battery (Reference Domain)}
 
@@ -118,11 +122,13 @@ independent evidence that the OASG is a structural phenomenon in any CPS with
 degraded telemetry, not a battery-specific measurement anomaly.
 
 Battery provides the canonical instantiation with full theorem lineage.
-AV, industrial, healthcare, and aerospace provide equivalent empirical depth
-under the shared universal replay harness.  Navigation provides simulation-validated
-portability evidence.  Together, the defended five-domain set establishes
-equivalence of safety performance under the OASG principle, while navigation
-extends the portability story without entering the equal-depth claim.
+Industrial and healthcare provide proof-validated empirical depth under the
+shared universal replay harness.  AV contributes proof-candidate evidence,
+aerospace contributes experimental evidence, and navigation provides
+simulation-backed portability evidence.  Together, the runtime rows provide
+broad evidence of the OASG phenomenon under the ORIUS principle, while the
+final claim boundary still follows the locked tier matrix rather than a flat
+reading of every row.
 
 \section{What Remains Outside the Current Evidence}
 
@@ -145,12 +151,11 @@ extends the portability story without entering the equal-depth claim.
 This thesis contributes a 67-item formal apparatus (18 theorems, 5 lemmas,
 7 propositions, 10 corollaries, 11 definitions, 16 assumptions) grounded
 in 25 chapter-level traceability rows connecting each formal result to its
-code anchor and artifact evidence.  The ORIUS principle is validated across
-the defended five-domain set: the OASG exists in all five, DC3S closes it in
-all five, and the formal safety bound holds empirically.  Battery provides
-the full theorem-to-artifact lineage; the four non-battery domains match its
-empirical depth under the shared universal replay harness.  Navigation adds
-simulation-backed portability evidence without entering the defended
-five-domain claim.  Being explicit about what remains outside the current
-evidence package protects the core multi-domain result from credibility it
-does not yet claim.
+code anchor and artifact evidence.  The ORIUS principle is established on a
+tiered runtime package: the OASG exists across the locked runtime rows,
+DC3S achieves zero TSVR in the battery reference row and the two
+proof-validated peers, AV remains proof-candidate, aerospace remains
+experimental, and navigation adds simulation-backed portability evidence.
+Being explicit about what remains outside the battery reference row and
+proof-validated peer rows protects the core multi-domain result from
+credibility it does not yet claim.
