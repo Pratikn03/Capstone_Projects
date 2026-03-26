@@ -11,7 +11,7 @@ All six domains share the DC3S pipeline instantiated through a common
 Domain & Source & Tier & Baseline TSVR & ORIUS TSVR \\
 \midrule
 Battery & locked\_artifact & reference & 3.90 & 0.00 \\
-Autonomous Vehicles & locked\_csv & proof\_candidate & 2.78 & 2.78 \\
+Autonomous Vehicles$^\dagger$ & locked\_csv & proof\_candidate & 2.78 & 2.78 \\
 Industrial Process Control & locked\_csv & proof\_validated & 21.53 & 0.00 \\
 Medical Monitoring (ICU Vitals) & locked\_csv & proof\_validated & 6.25 & 0.00 \\
 Navigation & synthetic & shadow\_synthetic & 18.06 & 0.69 \\
@@ -24,5 +24,10 @@ Evidence tier, not raw TSVR alone, governs the manuscript claim boundary.
 Proof-valid rows require locked non-synthetic telemetry, a verified
 training surface, a clean software-in-loop pass, a nontrivial baseline
 gap, material ORIUS improvement, and stable seed behavior.
+
+$\dagger$~The 2.78\,\% AV residual TSVR is a \emph{structural} artefact
+(constraint-class mismatch; see Proposition~\ref{prop:constraint-class-mismatch}),
+not a conformal-coverage shortfall.  Promotion to proof-validated requires
+augmented state repair, TTC reformulation, or a predictive entry barrier.
 \end{minipage}
 \end{table}

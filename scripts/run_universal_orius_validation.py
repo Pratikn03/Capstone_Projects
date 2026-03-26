@@ -1,25 +1,22 @@
 #!/usr/bin/env python3
-"""Unified Universal ORIUS validation — runs ALL domains through ORIUS-Bench.
+"""Unified universal ORIUS validation over the canonical tier ladder.
 
-Multi-Domain Universal Framework
----------------------------------
-All six domains run through the full universal DC3S adapter pipeline and
-are evaluated against the same evidence gate (TSVR reduction ≥ 25 % vs
-nominal baseline).
-
-Domain tiers
-------------
-energy_management : battery storage (full DC3S, locked PhD-thesis metrics;
-                    uses legacy forecasting path — see NOTE below)
-proof_domain      : vehicle, healthcare, industrial, aerospace, navigation
-                    (full DC3S + evidence gate: TSVR reduction ≥ 25 %)
+Tier model
+----------
+battery        : reference row (locked theorem/economics witness)
+industrial     : proof_validated target
+healthcare     : proof_validated target
+vehicle        : proof_candidate
+navigation     : shadow_synthetic
+aerospace      : experimental
 
 NOTE: Energy management validation uses the legacy _run_episode() path with
 the full forecasting stack (CQR + OQPE). All other domains use the universal
 _run_domain_proof_episode() adapter path. This is an intentional design
 distinction: energy management exercises the complete DC3S pipeline including
 the forecaster; the other five domains exercise the safety-shield layer via
-the DomainAdapter interface. Both paths enforce the same DC3S safety theorem.
+the DomainAdapter interface. Both paths enforce the same degraded-observation
+repair contract, but not all rows carry the same evidence claim.
 
 Outputs
 -------
@@ -29,8 +26,8 @@ Outputs
 - reports/universal_orius_validation/cross_domain_oasg_table.csv
 - reports/universal_orius_validation/domain_validation_summary.csv
 
-Exit 0 only when harness completes without errors AND every proof domain
-passes the evidence gate.
+Exit 0 only when harness completes without errors AND every defended domain
+(industrial + healthcare) passes the strong evidence gate.
 
 Usage:
     python scripts/run_universal_orius_validation.py [--seeds 3] [--horizon 48] \\
@@ -91,21 +88,21 @@ CONTROLLERS = [
 
 REFERENCE_DOMAIN = "battery"
 PROOF_DOMAIN = "vehicle"
-
-# All six domains run through the universal DC3S adapter with
-# the full evidence gate (TSVR reduction ≥ 25 %).
-PROOF_DOMAINS: list[str] = ["vehicle", "healthcare", "industrial", "aerospace", "navigation"]
-
-# Keep for backward-compat with existing test assertions (no domains in soft-gate-only tier)
+DEFENDED_DOMAINS: list[str] = ["industrial", "healthcare"]
+PROOF_CANDIDATE_DOMAINS: list[str] = ["vehicle"]
+SHADOW_SYNTHETIC_DOMAINS: list[str] = ["navigation"]
+EXPERIMENTAL_DOMAINS: list[str] = ["aerospace"]
+PROOF_DOMAINS: list[str] = DEFENDED_DOMAINS + PROOF_CANDIDATE_DOMAINS
+SUPPORT_DOMAINS: list[str] = SHADOW_SYNTHETIC_DOMAINS + EXPERIMENTAL_DOMAINS
 PORTABILITY_VALIDATED_DOMAINS: list[str] = []
 
 DOMAIN_MATURITY: dict[str, str] = {
-    "battery":    "reference",
-    "vehicle":    "proof_domain",
-    "healthcare": "proof_domain",
-    "industrial": "proof_domain",
-    "aerospace":  "proof_domain",
-    "navigation": "proof_domain",
+    "battery": "reference",
+    "industrial": "proof_validated",
+    "healthcare": "proof_validated",
+    "vehicle": "proof_candidate",
+    "navigation": "shadow_synthetic",
+    "aerospace": "experimental",
 }
 
 # Evidence-gate thresholds for the proof domain
@@ -224,10 +221,12 @@ def _domain_validation_status(
 ) -> str:
     if domain == REFERENCE_DOMAIN:
         return "reference_validated"
-    if maturity_label == "proof_domain":
+    if maturity_label == "proof_validated":
         return "proof_validated" if proof_evidence_pass else "proof_candidate_only"
-    if maturity_label == "portability_validated":
-        return "portability_validated" if portability_pass else "portability_candidate"
+    if maturity_label == "proof_candidate":
+        return "proof_candidate"
+    if maturity_label == "shadow_synthetic":
+        return "shadow_synthetic" if portability_pass else "shadow_synthetic"
     if maturity_label == "experimental":
         return "experimental"
     return "portability_only"
@@ -238,7 +237,7 @@ def _domain_validation_status(
 # ---------------------------------------------------------------------------
 
 def _evaluate_proof_domain(summary: dict[str, Any]) -> dict[str, Any]:
-    """Full evidence gate for the designated proof domain (vehicle).
+    """Strong evidence gate for defended or promotable non-battery domains.
 
     Criteria
     --------
@@ -279,7 +278,7 @@ def _evaluate_proof_domain(summary: dict[str, Any]) -> dict[str, Any]:
 
 
 def _evaluate_portability_domain(domain: str, summary: dict[str, Any]) -> dict[str, Any]:
-    """Soft evidence gate for portability_validated domains.
+    """Soft support gate for shadow-synthetic or experimental domains.
 
     Criteria
     --------
@@ -502,8 +501,8 @@ def main() -> int:
     domain_summary:        dict[str, dict[str, Any]] = {}
     harness_failed_domains: list[dict[str, str]] = []
 
-    # All peer domains use the universal proof episode for the DC3S run.
-    proof_domains_for_dc3s = set(PROOF_DOMAINS)
+    # Every non-battery row uses the universal repair path for its DC3S run.
+    proof_domains_for_dc3s = set(PROOF_DOMAINS + SUPPORT_DOMAINS)
 
     for track in active_tracks:
         domain = track.domain_name
@@ -546,7 +545,7 @@ def main() -> int:
             harness_failed_domains.append({"domain": domain, "error": str(exc)})
 
     # ------------------------------------------------------------------
-    # Multi-domain evidence gate: all proof domains evaluated equally
+    # Multi-domain evidence gate: defended peers plus promotable candidates
     # ------------------------------------------------------------------
     # Primary proof-domain gate (vehicle) — kept for backward-compat keys
     proof_gate: dict[str, Any] = {
@@ -558,7 +557,7 @@ def main() -> int:
     if domain_summary.get(PROOF_DOMAIN, {}).get("harness_status") == "pass":
         proof_gate = {**proof_gate, **_evaluate_proof_domain(domain_summary[PROOF_DOMAIN])}
 
-    # Per-domain evidence reports for all proof domains
+    # Per-domain strong-gate reports for defended domains and proof candidates
     domain_proof_reports: dict[str, dict[str, Any]] = {}
     for pd in PROOF_DOMAINS:
         if pd not in domain_summary:
@@ -575,12 +574,24 @@ def main() -> int:
             domain_proof_reports[pd] = _evaluate_proof_domain(domain_summary[pd])
 
     all_proof_pass = all(
-        r.get("evidence_pass", False) for r in domain_proof_reports.values()
+        domain_proof_reports.get(domain, {}).get("evidence_pass", False)
+        for domain in DEFENDED_DOMAINS
     )
 
-    # Portability reports kept for backward-compat (empty — no portability-only domains)
     portability_reports: dict[str, dict[str, Any]] = {}
-    portability_all_pass = True
+    for domain in SUPPORT_DOMAINS:
+        if domain not in domain_summary:
+            portability_reports[domain] = {
+                "domain": domain,
+                "portability_pass": False,
+                "failure_reasons": ["domain_not_evaluated"],
+            }
+        else:
+            portability_reports[domain] = _evaluate_portability_domain(domain, domain_summary[domain])
+    portability_all_pass = all(
+        portability_reports.get(domain, {}).get("portability_pass", False)
+        for domain in SHADOW_SYNTHETIC_DOMAINS
+    )
 
     # ------------------------------------------------------------------
     # Build output tables
@@ -614,9 +625,9 @@ def main() -> int:
         )
 
         evidence_row = ""
-        if maturity_label == "proof_domain":
+        if maturity_label in {"proof_validated", "proof_candidate"}:
             evidence_row = str(pd_pass).lower()
-        elif maturity_label == "portability_validated":
+        elif maturity_label in {"shadow_synthetic", "experimental"}:
             evidence_row = str(pv_pass).lower()
 
         domain_rows.append({
@@ -655,6 +666,19 @@ def main() -> int:
             writer.writeheader()
             writer.writerows(results)
 
+    promoted_candidates = [
+        d for d in PROOF_CANDIDATE_DOMAINS
+        if domain_proof_reports.get(d, {}).get("evidence_pass", False)
+    ]
+    proof_downgraded_domains = [
+        {
+            "domain": d,
+            "failure_reasons": domain_proof_reports.get(d, {}).get("failure_reasons", []),
+        }
+        for d in PROOF_CANDIDATE_DOMAINS
+        if not domain_proof_reports.get(d, {}).get("evidence_pass", False)
+    ]
+
     # Proof-domain report
     proof_report_path = out / "proof_domain_report.json"
     with open(proof_report_path, "w") as f:
@@ -662,6 +686,10 @@ def main() -> int:
             {
                 "reference_domain": REFERENCE_DOMAIN,
                 "proof_domain":     PROOF_DOMAIN,
+                "proof_validated_domains": DEFENDED_DOMAINS,
+                "evaluated_proof_candidates": PROOF_CANDIDATE_DOMAINS,
+                "promoted_proof_candidates": promoted_candidates,
+                "proof_downgraded_domains": proof_downgraded_domains,
                 "locked_protocol":  {
                     "seeds":                args.seeds,
                     "horizon":              args.horizon,
@@ -673,18 +701,20 @@ def main() -> int:
             f, indent=2,
         )
 
-    # Portability validation report (kept for backward-compat; empty in multi-domain framework)
+    # Support-tier report (kept on the portability path for backward-compat)
     portability_report_path = out / "portability_validation_report.json"
     with open(portability_report_path, "w") as f:
         json.dump(
             {
                 "portability_validated_domains": PORTABILITY_VALIDATED_DOMAINS,
+                "shadow_synthetic_domains":      SHADOW_SYNTHETIC_DOMAINS,
+                "experimental_domains":          EXPERIMENTAL_DOMAINS,
                 "portability_all_pass":          portability_all_pass,
                 "domain_reports":                portability_reports,
                 "locked_protocol": {
                     "seeds":   args.seeds,
                     "horizon": args.horizon,
-                    "note":    "All six domains use the full evidence gate",
+                    "note":    "Shadow/experimental rows retain the universal repair path but not the defended-domain claim tier",
                 },
             },
             f, indent=2,
@@ -692,11 +722,11 @@ def main() -> int:
 
     # Master validation report
     harness_pass  = len(harness_failed_domains) == 0
-    evidence_pass = bool(proof_gate.get("evidence_pass", False))
+    evidence_pass = bool(all_proof_pass)
 
-    # All proof domains that passed the evidence gate
+    # All defended domains that passed the strong evidence gate
     validated_domains = [REFERENCE_DOMAIN] + [
-        d for d in PROOF_DOMAINS
+        d for d in DEFENDED_DOMAINS
         if domain_proof_reports.get(d, {}).get("evidence_pass", False)
     ]
     # Backward-compat: portability_validated_domains is now empty
@@ -715,16 +745,24 @@ def main() -> int:
         "reference_domain":               REFERENCE_DOMAIN,
         "proof_domain":                   PROOF_DOMAIN,
         "proof_domains":                  PROOF_DOMAINS,
+        "defended_domains":               DEFENDED_DOMAINS,
+        "proof_candidate_domains":        PROOF_CANDIDATE_DOMAINS,
+        "shadow_synthetic_domains":       SHADOW_SYNTHETIC_DOMAINS,
         "domain_maturity":                DOMAIN_MATURITY,
         "validated_domains":              validated_domains,
         "portability_validated_domains":  portability_validated_confirmed,
-        "experimental_domains":           [d for d, lbl in DOMAIN_MATURITY.items() if lbl == "experimental"],
+        "experimental_domains":           EXPERIMENTAL_DOMAINS,
         "portability_only_domains":       [d for d, lbl in DOMAIN_MATURITY.items() if lbl == "portability_only"],
         "domain_results":                 domain_rows,
         "domain_proof_reports":           domain_proof_reports,
+        "domain_support_reports":         portability_reports,
         "proof_domain_report":            str(proof_report_path),
         "portability_validation_report":  str(portability_report_path),
-        "evidence_failure_reasons":       proof_gate.get("failure_reasons", []),
+        "evidence_failure_reasons":       [
+            reason
+            for domain in DEFENDED_DOMAINS
+            for reason in domain_proof_reports.get(domain, {}).get("failure_reasons", [])
+        ],
         "proof_domain_failure_reasons": {
             d: r.get("failure_reasons", [])
             for d, r in domain_proof_reports.items()
@@ -772,8 +810,8 @@ def main() -> int:
     print("=== Universal ORIUS Multi-Domain Validation ===")
     print(f"  Domains run:             {len(active_tracks)}")
     print(f"  Harness pass:            {harness_pass}")
-    print(f"  Evidence pass (vehicle): {evidence_pass}")
-    print(f"  All proof domains pass:  {all_proof_pass}  {PROOF_DOMAINS}")
+    print(f"  Evidence pass (defended): {evidence_pass}")
+    print(f"  All defended domains pass: {all_proof_pass}  {DEFENDED_DOMAINS}")
     print(f"  Harness passed domains:  {report['domains_passed']}")
     print(f"  Harness failed domains:  {report['domains_failed']}")
     if harness_failed_domains:
@@ -786,6 +824,13 @@ def main() -> int:
         if not ep:
             reasons_str = "  ← " + ", ".join(dr.get("failure_reasons", []))
         print(f"  Harness pass:  {symbol} {d}{reasons_str}")
+    for d, dr in portability_reports.items():
+        ep = dr.get("portability_pass", False)
+        symbol = "✓" if ep else "✗"
+        reasons_str = ""
+        if not ep:
+            reasons_str = "  ← " + ", ".join(dr.get("failure_reasons", []))
+        print(f"  Support tier:  {symbol} {d}{reasons_str}")
     print(f"  Report                → {report_path}")
     print(f"  OASG table            → {csv_path}")
     print(f"  Domain summary        → {summary_csv_path}")
