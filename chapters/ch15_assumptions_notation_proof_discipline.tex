@@ -29,11 +29,16 @@ Throughout Part~III, the following symbols have fixed meaning:
 $x_t$ & True (plant-internal) state at step $t$ \\
 $\hat{x}_t$ & Observed (telemetry-delivered) state at step $t$ \\
 $a_t$ & Action (dispatch decision) at step $t$ \\
+$a_t^{\mathrm{cand}}$ & Candidate action proposed from the observation history \\
+$a_t^{\mathrm{safe}}$ & Repaired action returned by the ORIUS kernel \\
+$U_t$ & Observation-consistent state set built from degraded telemetry \\
+$\mathcal{S}$ & Safe state set: $\mathcal{S} = \{x : \phi(x) \ge 0\}$ \\
 $\phi(x_t)$ & Safety predicate: $\phi(x_t) = 1$ iff $x_t$ satisfies all constraints \\
 $w_t$ & Reliability score, $w_t \in [0,1]$ \\
 $\alpha$ & Conformal miscoverage level (nominal $\alpha = 0.10$) \\
 $q_t$ & Conformal quantile (half-width of the prediction interval) \\
 $\mathcal{A}_t$ & Tightened safe-action set at step $t$ \\
+$\mathcal{H}_t$ & Causal observation history available at time $t$ \\
 $T$ & Episode horizon (number of steps) \\
 $V$ & Total violation count: $V = \sum_{t=1}^T \mathbf{1}[\lnot\,\phi(x_t)]$ \\
 $\bar{w}$ & Episode-average reliability: $\bar{w} = T^{-1}\sum_t w_t$ \\
@@ -86,11 +91,34 @@ monotone decreasing in $w_t$ and bounded: $\iota(w_t) \le \bar{\iota}$
 for all $w_t \in [0,1]$.
 \end{assumption}
 
+\begin{assumption}[A5$'$: Calibration regularity]
+\label{assm:A5prime}
+The telemetry error bound $g(w_t)$ from Assumption~A2 satisfies
+$g(1) = 0$ and is Lipschitz near $w_t = 1$: there exist constants
+$c_g > 0$ and $\delta_w \in (0,1)$ such that
+$g(w_t) \le c_g\,(1-w_t)$ for all $w_t \in [1-\delta_w, 1]$.
+This calibration regularity aligns the error bound with the reliability
+score and is used in the information-theoretic lower bound (T10).
+\end{assumption}
+
 \begin{assumption}[A6: Bounded detector lag]
 \label{assm:A6}
 The OQE reliability score $w_t$ reflects a telemetry fault within at
 most $\ell$ steps of fault onset: if a fault begins at step $t_f$,
 then $w_{t_f + \ell} \le w_{\text{alert}}$.
+\end{assumption}
+
+\begin{assumption}[A6$'$: $\varphi$-mixing fault process]
+\label{assm:A6prime}
+The fault injection process $\{F_t\}$ is $\varphi$-mixing with
+geometric decay: there exist constants $C_\phi > 0$ and $\rho\in(0,1)$
+such that the $\varphi$-mixing coefficient satisfies $\varphi(k) \le
+C_\phi\,\rho^k$ for all $k \ge 0$.  A buffer of
+$\tau_{\mathrm{mix}} = \lceil\log(1/\varepsilon)/|\log\rho|\rceil$
+steps makes any two windows $\varepsilon$-approximately independent in
+total variation.  Assumption~A6$'$ is used in the universal
+impossibility proof (T9) and is satisfied by any i.i.d.\ or
+geometrically ergodic Markov fault model.
 \end{assumption}
 
 \begin{assumption}[A7: Causal certificate update]
@@ -142,6 +170,29 @@ Core Bound           & \checkmark & \checkmark &            & \checkmark & \chec
 No Free Safety       &            & \checkmark &            &            &            &            &            &            \\
 Certificate Horizon  & \checkmark & \checkmark &            & \checkmark & \checkmark & \checkmark & \checkmark &            \\
 Graceful Degradation & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark &            &            & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Extended Monograph Theorem Program}
+
+The flagship dependency matrix above covers the battery proof ladder.  The
+monograph-level extension adds T9--T11, each of which answers a distinct
+control-theory question and introduces an explicit new obligation.
+
+\begin{table}[htbp]
+\centering
+\caption{Extended theorem program beyond the battery ladder.}
+\label{tab:extended-theorem-program}
+\begin{tabular}{p{1.3cm}p{4.4cm}p{3.2cm}p{3.7cm}}
+\toprule
+\textbf{Theorem} & \textbf{Question answered} & \textbf{New assumptions} & \textbf{Role} \\
+\midrule
+T9 & Is reliability-aware repair structurally necessary under persistent degradation? & A6$'$ + boundary reachability from A4 & Necessity theorem for degraded-observation control \\
+\addlinespace
+T10 & Can the $\alpha(1-\bar{w})T$ envelope be improved by a different controller alone? & A5$'$ + conformal coverage condition & Lower-bound scaling theorem \\
+\addlinespace
+T11 & Which structural obligations let the battery argument transfer to a new domain? & Explicit soundness, repair-membership, and fallback obligations & Template transfer theorem \\
 \bottomrule
 \end{tabular}
 \end{table}

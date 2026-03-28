@@ -278,6 +278,41 @@ reference reductions are implemented in \texttt{src/orius/universal/unification.
 while the canonical production kernel remains
 \texttt{src/orius/universal\_theory/}.
 
+\section{What Is New and What Is Not}
+\label{sec:what-is-new-and-not}
+
+For the control-theory reader, the novelty boundary matters as much as the
+novelty claim itself.
+
+\paragraph{What is not claimed as new.}
+ORIUS does not claim to invent safe control, set tightening, fallback
+policies, or uncertainty-aware decision making in the abstract.  Control
+barrier functions, tube/robust MPC, chance-constrained control, viability
+methods, runtime assurance, and conformal prediction each already contribute
+important pieces of that landscape.
+
+\paragraph{What is claimed as new.}
+The dissertation's technical claim is that \emph{degraded observation}
+changes the safe-control object.  The key contribution is not a new generic
+stability theory; it is a new kernel for safe control when the observation
+channel itself is unreliable.  Concretely, the new ingredients are:
+\begin{enumerate}
+  \item the observation--reality gap as the primary control failure mode;
+  \item a reliability-conditioned uncertainty law that widens the
+    observation-consistent state set as telemetry weakens;
+  \item a repair-and-certify kernel that acts on that set in real time; and
+  \item a theorem-to-runtime contract that makes transfer beyond battery an
+    explicit structural obligation rather than an informal portability claim.
+\end{enumerate}
+
+\paragraph{What remains outside the claim.}
+ORIUS does not claim a universal stability theory, a universal optimality
+theory for all safe-control problems, or equal proof closure across all
+evaluated domains.  The monograph's defended statement is narrower: under
+degraded observation, reliability-aware repair yields a reusable
+domain-agnostic kernel whose full proof witness is battery and whose
+cross-domain instantiations are tiered by evidence strength.
+
 \section{Chapter Summary}
 
 The literatures on battery dispatch, CPS telemetry faults, conformal

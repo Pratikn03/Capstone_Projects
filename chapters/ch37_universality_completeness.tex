@@ -1,20 +1,98 @@
-\chapter{Universal Kernel, Contract, and Unification Program}
+\chapter{A Domain-Agnostic Kernel for Safe Control Under Degraded Observation}
 \label{ch:universality-completeness}
 
-This chapter clarifies what ``universal'' means in the final ORIUS research
-program.  It does \emph{not} claim that all six runtime rows already carry
-equal proof depth.  Instead, it isolates the reusable theorem kernel for safe
-control under degraded observation, states the broader universal program
-results under explicit assumptions, and separates those statements from the
-current tiered evidence boundary: battery is the reference proof surface,
-industrial and healthcare are defended proof-validated instantiations,
-autonomous vehicles is proof-candidate, navigation is shadow-synthetic, and
-aerospace remains experimental.
+This chapter is the control-theory extension of the dissertation.  Its
+purpose is not to add more runtime rows; it is to isolate the
+domain-agnostic kernel that the rest of the monograph instantiates.  The
+central claim is deliberately narrow: under degraded observation, safe
+control is governed by an observation-consistent state set, a
+reliability-conditioned tightening law, a repair map, and a causal
+certificate surface.  Battery remains the only full proof reference
+surface.  Industrial and healthcare remain defended instantiations.
+Autonomous vehicles, navigation, and aerospace remain lower-tier evidence.
 
-The code mirror of that boundary is now explicit.  The canonical production
-kernel lives in \path{src/orius/universal_theory/}; the lightweight reference
-modules in \path{src/orius/universal/} provide a compact adapter contract,
-frontier utilities, and prior-framework reductions used in this chapter.
+The code mirror of that boundary is explicit.  The canonical production
+kernel lives in \path{src/orius/universal_theory/}; the lightweight
+reference modules in \path{src/orius/universal/} provide the compact
+contract, frontier, and reduction objects used in the formal arguments
+below.
+
+% ----------------------------------------------------------------
+\section{Universal Problem Statement and Information Pattern}
+\label{sec:universal-kernel-model}
+% ----------------------------------------------------------------
+
+We consider a partially observed, safety-constrained control system on a
+discrete horizon $t = 0,1,\dots,T-1$:
+\[
+  x_{t+1} = f(x_t, a_t, \omega_t),
+  \qquad
+  y_t = h(x_t, \nu_t),
+  \qquad
+  w_t = \psi(y_{0:t}),
+\]
+where $x_t \in \mathcal{X} \subseteq \mathbb{R}^n$ is the true plant state,
+$a_t \in \mathcal{A} \subseteq \mathbb{R}^m$ is the applied control,
+$y_t$ is the telemetry channel output, $\omega_t$ is admissible plant
+disturbance, $\nu_t$ is telemetry corruption, and $w_t \in [0,1]$ is the
+reliability score extracted from the observation history.  The safe state set
+is
+\[
+  \mathcal{S} = \{x \in \mathcal{X} : \phi(x) \ge 0\},
+\]
+and the violation count is
+\[
+  V_T = \sum_{t=0}^{T-1} \mathbf{1}[x_t \notin \mathcal{S}].
+\]
+
+The candidate controller sees only the observation history
+$\mathcal{H}_t = \sigma(y_{0:t})$ and proposes
+$a_t^{\mathrm{cand}} = \pi_t(\mathcal{H}_t)$.  The ORIUS kernel then builds
+an observation-consistent state set $U_t$, derives a tightened safe-action
+set $\mathcal{A}_t^{\mathrm{safe}}(U_t)$, repairs the candidate action into
+$a_t^{\mathrm{safe}}$, and emits a certificate summarizing the causal data
+used at step $t$.
+
+\begin{definition}[Degraded-observation safe-control problem]
+\label{def:degraded-observation-safe-control}
+Given only the observation history $\mathcal{H}_t$, the reliability score
+$w_t$, and a nominal candidate action $a_t^{\mathrm{cand}}$, construct a
+measurable repair-and-certify map such that:
+\begin{enumerate}
+  \item the repaired action depends only on causal information available at
+    time $t$;
+  \item the repaired action preserves safety for all states consistent with
+    the degraded observation, up to the stated miscoverage level $\alpha$;
+  \item the resulting episode-level violation count admits an explicit bound
+    in terms of $\alpha$, the reliability process, and the horizon.
+\end{enumerate}
+\end{definition}
+
+For the control-theory reader, this chapter answers three questions beyond the
+battery ladder:
+
+\begin{table}[htbp]
+\centering
+\caption{Theorem questions answered by the monograph extension.}
+\label{tab:universal-theorem-questions}
+\begin{tabular}{p{1.5cm}p{4.7cm}p{5.1cm}}
+\toprule
+\textbf{Theorem} & \textbf{Control-theory question} & \textbf{Role in the monograph} \\
+\midrule
+T9 & Is reliability-aware repair structurally necessary, or merely useful? & Necessity theorem for degraded-observation control \\
+\addlinespace
+T10 & Does the ORIUS envelope have the right scaling law, or is it loose? & Lower-bound theorem for degraded-observation risk \\
+\addlinespace
+T11 & Which structural obligations let the battery proof pattern transfer? & Template transfer theorem for new domains \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The dependency order is strict.  T1--T8 establish the battery reference
+ladder.  T9 proves that ignoring reliability breaks safety structurally.
+T10 shows that the $\alpha(1-\bar{w})T$ scaling cannot be removed by a better
+controller alone.  T11 then identifies the obligations under which the same
+repair-and-bound structure transfers beyond battery.
 
 % ----------------------------------------------------------------
 \section{Observation-Aware Control Is Structurally Necessary (T9)}
@@ -45,12 +123,13 @@ The proof proceeds in three steps.
 
 \medskip
 \noindent\textbf{Step~1: $\varphi$-mixing fault process.}
-By Assumption~A6, the fault injection process $\{F_t\}$ is
-$\varphi$-mixing with coefficient $\varphi(k)\to 0$ as $k\to\infty$.
-Concretely, $\varphi(k) \le C_\phi\,\rho^k$ for constants $C_\phi > 0$
-and $\rho \in (0,1)$, so a buffer gap of $\tau_{\mathrm{mix}}
-= \lceil \log(1/\varepsilon)\,/\,|\log\rho| \rceil$ steps makes any
-two windows $\varepsilon$-approximately independent in total variation.
+By Assumption~A6$'$ (Chapter~\ref{ch:assumptions}), the fault injection
+process $\{F_t\}$ is $\varphi$-mixing with coefficient $\varphi(k)\to 0$
+as $k\to\infty$.  Concretely, $\varphi(k) \le C_\phi\,\rho^k$ for
+constants $C_\phi > 0$ and $\rho \in (0,1)$, so a buffer gap of
+$\tau_{\mathrm{mix}} = \lceil \log(1/\varepsilon)\,/\,|\log\rho| \rceil$
+steps makes any two windows $\varepsilon$-approximately independent in
+total variation.
 
 \medskip
 \noindent\textbf{Step~2: Separated windows and per-window risk.}
@@ -101,12 +180,13 @@ the buffer gaps absorb the coupling cost without changing the
 $\Omega(dT)$ scaling.
 \end{remark}
 
-T9 should be read as a \emph{program theorem}: it explains why reliability
-conditioning is structurally necessary in any domain where true-state safety
-depends on imperfect telemetry.  The defended evidence remains tiered.  Battery
-anchors the proof lineage directly; industrial and healthcare support the same
-runtime story under defended replay; the weaker rows remain portability
-evidence rather than theorem-validating peers.
+T9 is the necessity theorem for the universal kernel: whenever safety depends
+on a corrupted observation channel, a controller that ignores reliability
+cannot remove the violation scaling by algorithmic tuning alone.  The defended
+evidence remains tiered.  Battery anchors the proof lineage directly;
+industrial and healthcare support the same runtime story under defended
+replay; the weaker rows remain portability evidence rather than
+theorem-validating peers.
 
 % ----------------------------------------------------------------
 \section{Reliability-Risk Frontier (T10)}
@@ -118,13 +198,14 @@ The core ORIUS battery bound is
   \mathbb{E}\!\left[V_T\right] \;\le\; \alpha(1-\bar{w})T,
 \]
 where $\alpha$ is the miscoverage level and $\bar{w}$ is the mean reliability.
-The universality program asks whether that envelope is merely conservative or
+The monograph extension asks whether that envelope is merely conservative or
 whether it captures the right scaling law.
 
 \begin{theorem}[Information-Theoretic Lower Bound, T10]
 \label{thm:information-theoretic-lower-bound}
-Under Assumptions A1, A2, A5' (calibration regularity: $g(w_t)\propto(1-w_t)$
-near $w_t = 1$), and the conformal coverage condition, any controller $\pi$
+Under Assumptions A1, A2, A5$'$ (calibration regularity,
+Chapter~\ref{ch:assumptions}), and the conformal coverage condition,
+any controller $\pi$
 faces the lower bound
 \[
   \mathbb{E}\!\left[V_T(\pi)\right]
@@ -154,8 +235,8 @@ and the controller dispatches an action as though $x_t$ were safe.
 By Assumption~A2, the observation satisfies
 $\|\hat{x}_t - x_t\| \le g(w_t)$ where
 $g:[0,1]\to\mathbb{R}_{\ge 0}$ is monotone decreasing with $g(1)=0$.
-Under Assumption~A5' (calibration regularity), $g(w_t) \propto (1-w_t)$
-near $w_t = 1$.  The two observation distributions
+Under Assumption~A5$'$ (Chapter~\ref{ch:assumptions}, calibration regularity),
+$g(w_t) \le c_g\,(1-w_t)$ near $w_t = 1$.  The two observation distributions
 $P_0 = P[\hat{x}_t \mid x_t = x_{\mathrm{safe}}]$ and
 $P_1 = P[\hat{x}_t \mid x_t = x_{\mathrm{unsafe}}]$ are uniform balls
 of radius $g(w_t)$ centred $2\delta$ apart.  Their total-variation distance is
@@ -228,14 +309,15 @@ conservatively:
 \]
 for a target episode-level violation budget $r^{\star}$.  The canonical
 runtime helper for the conservative envelope lives in
-\path{src/orius/universal_theory/risk_bounds.py}; the richer frontier analysis
+\path{src/orius/universal_theory/risk_bounds.py}.  The richer frontier analysis
 used in this chapter is implemented in
-\path{src/orius/universal/reliability_safety_frontier.py}.  Together they make
-the central design message operational: degraded observation imposes a
-quantitative infrastructure requirement, not just a qualitative warning.
+\path{src/orius/universal/reliability_safety_frontier.py}.  Together these
+helpers make the central design message operational: degraded observation
+imposes a quantitative infrastructure requirement, not just a qualitative
+warning.
 
 % ----------------------------------------------------------------
-\section{Universal Adapter Contract and Typed Kernel (T11)}
+\section{Typed Kernel and Structural Transfer Theorem (T11)}
 \label{subsec:adapter-contract}
 % ----------------------------------------------------------------
 
@@ -245,8 +327,8 @@ in code.
 
 \begin{definition}[Universal adapter contract]
 \label{def:adapter-contract}
-A domain instantiation is compatible with the ORIUS universality program if it
-supplies:
+A domain instantiation is compatible with the degraded-observation transfer
+claim if it supplies:
 \begin{enumerate}
   \item an observation packet and parsed state;
   \item a reliability assessment $w_t \in [0,1]$;
@@ -281,28 +363,61 @@ machine-checkable contract with five invariants:
     collapses the admissible action set to the fallback regime.
 \end{description}
 
-\begin{theorem}[Universality template, T11]
+\begin{theorem}[Structural transfer theorem, T11]
 \label{thm:universality-completeness}
-If a domain instantiation satisfies the universal adapter contract and its
-domain-specific proof obligations instantiate the same repair-membership,
-monotone-tightening, and fallback admissibility arguments used on the battery
-reference surface, then the ORIUS degraded-observation kernel yields the same
-one-step safety-preservation structure and the same episode-level
-$\alpha(1-\bar{w})T$ envelope.
+Let $\mathcal{D}$ be a domain instantiation for the degraded-observation
+safe-control problem in Definition~\ref{def:degraded-observation-safe-control}.
+Assume that, for every step $t$:
+\begin{enumerate}
+  \item the constructed observation-consistent state set satisfies
+    $\Prob[x_t \in U_t \mid \mathcal{H}_t] \ge 1-\alpha$;
+  \item the tightened safe-action set is sound for that uncertainty set, in
+    the sense that every action in $\mathcal{A}_t^{\mathrm{safe}}(U_t)$ keeps
+    the next state inside $\mathcal{S}$ for all $x \in U_t$ and all
+    admissible disturbance;
+  \item the repair map returns an element of
+    $\mathcal{A}_t^{\mathrm{safe}}(U_t)$ whenever that set is non-empty;
+  \item when the tightened safe-action set is empty, the fallback action is
+    admissible and preserves safety from any current safe state.
+\end{enumerate}
+Then the repaired action produced by the ORIUS kernel satisfies the same
+one-step safety-preservation statement as the battery reference theorem, and
+the episode-level bound
+\[
+  \mathbb{E}[V_T] \le \alpha(1-\bar{w})T
+\]
+follows by the same aggregation argument as T3.
 \end{theorem}
 
-\begin{proof}[Proof sketch]
-The battery proof ladder does not rely on battery nomenclature directly; it
-relies on a smaller set of structural facts.  The repair operator must return
-an action inside the tightened set, the tightened set must contract as
-reliability falls, and the fallback must remain admissible when the safe set
-collapses.  Once those obligations are instantiated in a new domain, the same
-one-step safety-preservation argument applies, and summing over time produces
-the same degradation-sensitive episode envelope.  The theorem therefore
-functions as a \emph{template theorem}: universality comes from matching the
-structural proof obligations, not from asserting that every domain already
-inherits the battery proof automatically.
+\begin{proof}
+Fix a step $t$ and condition on the observation history $\mathcal{H}_t$.
+On the event $E_t = \{x_t \in U_t\}$, Assumption~(2) implies that every action
+in $\mathcal{A}_t^{\mathrm{safe}}(U_t)$ preserves membership in the safe set
+at the next step.  If the tightened safe-action set is non-empty, then
+Assumption~(3) ensures that the repaired action returned by the kernel lies in
+that set, hence preserves safety on $E_t$.  If the tightened safe-action set
+is empty, then Assumption~(4) ensures that the fallback action preserves
+safety from any current safe state.  Therefore,
+\[
+  \Prob[x_{t+1}\in\mathcal{S} \mid \mathcal{H}_t]
+  \;\ge\;
+  \Prob[E_t \mid \mathcal{H}_t]
+  \;\ge\;
+  1-\alpha,
+\]
+which is the one-step safety-preservation statement.
+
+Summing the corresponding violation indicators across the horizon and applying
+the same linearity-of-expectation argument used in T3 yields the episode-level
+bound with mean reliability $\bar{w}$.  The proof uses only the structural
+obligations above, not battery-specific state coordinates.
 \end{proof}
+
+T11 is therefore a transfer theorem, not a blanket declaration that every
+evaluated row already satisfies those obligations.  Battery provides the full
+reference proof.  Other domains enter the monograph only when their
+instantiation evidence is strong enough to support the corresponding
+obligations.
 
 \subsection{Machine-Checkable Contract Surfaces}
 
@@ -334,7 +449,7 @@ verifier.check(z_t=np.array([0.0]), q_t=0.1)
 \end{verbatim}
 
 That harness is intentionally modest.  It does not replace the defended
-domain-specific artifacts.  It makes the universality program executable: the
+domain-specific artifacts.  It makes the transfer theorem executable: the
 reader can see the exact invariants, violate them, and observe the resulting
 contract failure.
 
@@ -397,7 +512,7 @@ Safe RL & $w_t$ from posterior concentration & Learned uncertainty plus safety r
 \label{sec:constraint-class-mismatch}
 % ----------------------------------------------------------------
 
-The DC3S shield project each candidate action onto a tightened interval
+The DC3S shield projects each candidate action onto a tightened interval
 derived from the conformal uncertainty set.  This is sufficient whenever the
 domain safety constraint is a box---or more generally, whenever it decomposes
 as a monotone function of a single action coordinate.  The following
@@ -483,7 +598,7 @@ correctly remains at the proof-candidate tier.
 \label{sec:ch37-summary}
 % ----------------------------------------------------------------
 
-This chapter finishes the project at the right level of ambition.
+This chapter closes the monograph at the correct control-theory level.
 
 \begin{enumerate}
   \item \textbf{T9} frames observation-aware safety logic as structurally
@@ -497,8 +612,11 @@ This chapter finishes the project at the right level of ambition.
     families sit inside the same degraded-observation framework.
 \end{enumerate}
 
-The result is a sharper and more defensible universal claim: ORIUS is a
-domain-agnostic theory-and-software kernel for safe control under degraded
-observation, with tiered cross-domain evidence and a battery-anchored proof
-surface, rather than an assertion of equal guarantees across all evaluated
-domains.
+The central theorem contribution is now precise: the safe-control object under
+degraded telemetry is not the nominal state alone but a reliability-indexed
+observation-consistent state set together with a repair map and a causal
+certificate surface.  Battery supplies the full proof witness.  T9 and T10
+show that degraded observation creates a necessity and a lower bound.  T11
+shows how the same kernel transfers when a new domain discharges the explicit
+structural obligations.  This is a defensible control-theory claim; it is not
+an assertion that all evaluated domains already enjoy equal proof closure.

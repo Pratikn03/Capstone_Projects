@@ -5,19 +5,24 @@
 \chapter{Verified Theorems and Gap Audit}
 \label{app:verified-theorems-gap-audit}
 
-This appendix mirrors the flagship T1--T8 battery theorem ladder used by the
-proof appendix.  That ladder is the governance-critical proof spine, but it is
-not the whole integrated theorem surface of the thesis; Appendix~\ref{app:integrated-theorem-surface-register}
-audits the full theorem-like inventory.  The flagship set is:
+This appendix covers the full T1--T11 theorem set.  T1--T8 form the
+governance-critical battery proof spine; T9--T11 are the monograph
+extension theorems added in
+Chapter~\ref{ch:universality-completeness}.
+Appendix~\ref{app:integrated-theorem-surface-register} audits the full
+theorem-like inventory.  The complete set is:
 \begin{enumerate}
-  \item OASG existence,
-  \item one-step safety preservation,
-  \item ORIUS core bound,
-  \item no free safety,
-  \item certificate validity horizon,
-  \item certificate expiration bound,
-  \item feasible fallback existence, and
-  \item graceful degradation dominance.
+  \item OASG existence (T1),
+  \item one-step safety preservation (T2),
+  \item ORIUS core bound (T3),
+  \item no free safety (T4),
+  \item certificate validity horizon (T5),
+  \item certificate expiration bound (T6),
+  \item feasible fallback existence (T7),
+  \item graceful degradation dominance (T8),
+  \item universal impossibility --- martingale/\mbox{$\varphi$-mixing} argument (T9),
+  \item information-theoretic lower bound --- Le~Cam two-point method (T10), and
+  \item universality completeness --- typed adapter contract (T11).
 \end{enumerate}
 The certificate half-life remains a corollary, and safe-budget monotonicity
 remains a proposition.
@@ -131,11 +136,73 @@ helper and safe-landing implementation support.
 (\texttt{evaluate\_graceful\_degradation\_dominance()}) and
 \texttt{src/orius/dc3s/shield.py} (\texttt{safe\_landing} mode).
 
+\subsection{Theorem 9: Universal Impossibility}
+\label{sec:thm-universal-impossibility}
+
+\textbf{Statement.} For any quality-ignorant controller~$\pi$ and any
+$\varphi$-mixing fault process with mean degradation rate~$d > 0$,
+$\mathbb{E}[V_T(\pi)] \ge c\,d\,T$ for some constant $c > 0$.
+
+\textbf{Assumptions.} A4 (boundary reachability), A6$'$ ($\varphi$-mixing
+fault process).
+
+\textbf{Proof status.} Formal: martingale difference sequence +
+Azuma--Hoeffding concentration; battery T4 is the reference witness for
+the per-window violation probability.
+
+\textbf{Code anchor.} No dedicated module; the battery
+\texttt{cpsbench\_iot/runner.py} provides the reference witness;
+the proof is in Chapter~\ref{ch:universality-completeness},
+Section~\ref{sec:t9-universal-impossibility}.
+
+\subsection{Theorem 10: Information-Theoretic Lower Bound}
+\label{sec:thm-info-lower-bound}
+
+\textbf{Statement.} For any controller~$\pi$,
+$\mathbb{E}[V_T(\pi)] \ge \tfrac{1}{4}\,\alpha(1-\bar{w})T$.
+Combined with T3, DC3S is minimax rate-optimal up to a universal constant
+under degraded observation.
+
+\textbf{Assumptions.} A1, A2, A5$'$ (calibration regularity), conformal
+coverage condition.
+
+\textbf{Proof status.} Formal: Le~Cam two-point method with explicit
+TV-distance computation through the degraded channel; factor-of-4 gap
+is standard in minimax lower bounds (Tsybakov 2009, Ch.~2).
+
+\textbf{Code anchor.} \texttt{src/orius/universal/reliability\_safety\_frontier.py}
+(\texttt{compute\_frontier}, \texttt{is\_dc3s\_optimal}); 25 unit tests
+in \texttt{tests/test\_reliability\_frontier.py}.
+
+\subsection{Theorem 11: Universality Completeness}
+\label{sec:thm-universality-completeness}
+
+\textbf{Statement.} Any CPS domain instantiation satisfying the structural
+transfer obligations of T11---coverage of the observation-consistent state
+set, soundness of the tightened safe-action set, repair membership, and
+safe fallback admissibility---inherits the T2--T3 safety-guarantee pattern
+without new battery-specific algebra.
+
+\textbf{Assumptions.} The universal adapter contract and the four structural
+obligations stated in Definition~\ref{def:adapter-contract} and
+Theorem~\ref{thm:universality-completeness}.
+
+\textbf{Proof status.} Template proof: the one-step preservation and
+episode-level aggregation arguments depend only on the structural
+obligations above, not on battery-specific state coordinates; each new
+domain must still discharge those obligations explicitly.
+
+\textbf{Code anchor.} \texttt{src/orius/universal\_theory/contracts.py} and
+\texttt{src/orius/universal\_theory/kernel.py}, with a compact reference
+harness in \texttt{src/orius/universal/contract.py}; focused tests in
+\texttt{tests/test\_universal\_contract.py},
+\texttt{tests/test\_unification.py}, and
+\texttt{tests/test\_reliability\_frontier.py}, plus
+\texttt{tests/test\_universal\_theory.py}.
+
 \section{Gap Audit Table}
 
-Table~\ref{tab:theorem-gap-audit} summarizes the flagship T1--T8 theorem set,
-whether the proof is complete, whether empirical validation exists, and
-whether the code matches the formal statement.
+Table~\ref{tab:theorem-gap-audit} summarises the full T1--T11 theorem set.
 
 \begin{table}[htbp]
 \centering
@@ -154,6 +221,10 @@ T5 Certificate Validity Horizon & Yes & Yes & Yes & Forward-tube helper and hori
 T6 Certificate Expiration Bound & Yes & Partial & Yes & Analytical lower bound is implemented; empirical chapter remains conservative \\
 T7 Feasible Fallback Existence & Yes & Partial & Yes & Constructive zero-dispatch fallback is validated for bounded-error interior states \\
 T8 Graceful Degradation Dominance & Yes & Partial & Yes & Comparison helper and safe-landing implementation exist; evidence remains bounded to current traces \\
+\midrule
+T9 Universal Impossibility & Yes (martingale) & Yes & N/A & $\varphi$-mixing + Azuma--Hoeffding argument; battery T4 is the reference witness; ch37 \S\,\ref{sec:t9-universal-impossibility} \\
+T10 Info.-Theoretic Lower Bound & Yes (Le~Cam) & Partial & N/A & Le~Cam two-point method; minimax rate-optimal up to constant; ch37 \S\,\ref{sec:t10-lower-bound}; \texttt{reliability\_safety\_frontier.py} \\
+T11 Universality Completeness & Template proof & Yes & Yes & Structural transfer obligations; typed kernel + reference harness; ch37 \S\,\ref{subsec:adapter-contract} \\
 \bottomrule
 \end{tabular}
 \end{table}

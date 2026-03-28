@@ -1,50 +1,74 @@
-\chapter{What the ORIUS Framework Proves}
+\chapter{What the Monograph Proves and What It Does Not}
 \label{ch:what-battery-thesis-proves}
 
-This chapter draws a strict line between what the ORIUS evidence package
-establishes and what remains outside its current scope.  The value of the
-framework is not breadth of claim, but depth of traceability: every asserted
-result connects from theorem statement through code to artifact across the
-tiered six-row runtime package.
+This chapter draws a strict line between the central theorem contribution of
+the dissertation and the surrounding evidence package.  The main value of the
+work is not that it claims equal proof closure across six domains; it is that
+it isolates one degraded-observation safety kernel, proves it completely on a
+battery reference surface, extends it with necessity and lower-bound results,
+and then instantiates it across tiered cross-domain evidence rows with an
+explicit claim boundary.
 
-\section{What Is Established}
+\section{Central Theorem Contribution}
 
-The ORIUS framework proves the following, across the tiered evidence package:
+The monograph establishes the following theorem program:
 
 \begin{enumerate}
-  \item \textbf{OASG existence is universal.}  The observation-action safety
-    gap is not domain-specific.  It arises whenever a closed-loop controller
-    optimises against a degraded observation channel.  Evidence of the gap
-    was measured across energy management, autonomous vehicles, industrial
-    process control, medical monitoring, aerospace, and navigation.
+  \item \textbf{The observation--reality gap is the control object.}  The
+    observation-action safety gap is not a battery-only accident.  It arises
+    whenever a controller proposes actions from degraded telemetry while
+    safety is evaluated on the true plant state.  T1 identifies this gap on
+    the reference surface, and T9 shows that a quality-ignorant controller
+    cannot remove the resulting violation scaling by tuning alone.
 
-  \item \textbf{DC3S closes the gap reliably on the strongest rows.}  In the
-    battery reference row and the two proof-validated peers, DC3S reduces the
-    true-state violation rate to zero (TSVR~$= 0$\%) while maintaining
-    performance comparable to the unshielded controller.  AV remains
-    proof-candidate, aerospace remains experimental, and navigation remains
-    shadow-synthetic portability evidence under the locked tier tables.
+  \item \textbf{Battery is the full proof witness.}  The battery chapters
+    provide the only complete reference proof ladder: gap existence, one-step
+    safety preservation, the episode-level risk envelope, no-free-safety,
+    certificate horizon results, fallback existence, and graceful-degradation
+    dominance.  This is the governance-critical proof spine of the
+    dissertation.
+
+  \item \textbf{The universal extension is formal, not rhetorical.}  T10
+    proves that the degraded-observation risk envelope has the correct
+    first-order scaling law, and T11 states the exact structural obligations
+    under which the battery argument transfers to a new domain.  The
+    dissertation therefore claims a domain-agnostic kernel for safe control
+    under degraded observation, not a solved theory of generic universal safe
+    control.
 
   \item \textbf{The safety bound is quantitative and verifiable.}
-    Theorem~\ref{thm:core-bound} establishes
+    Theorem~\ref{thm:core-bound} on the battery reference surface establishes
     $\mathbb{E}[V] \le \alpha(1-\bar{w})T$ under Assumptions A1--A7.  The
-    finite-sample correction $\varepsilon_n = O(1/\sqrt{n})$ tightens the
-    bound for calibration sets of finite size.  Every empirical TSVR lies
-    strictly below this bound with measurable slack.
+    T10 lower bound shows the same dependence is minimax-rate tight up to a
+    universal constant.  The bound is therefore both operational and
+    theoretically non-accidental.
 
-  \item \textbf{Traceability is end-to-end.}  Each theorem group (T1--T8)
-    is linked to a code anchor in \texttt{src/orius/dc3s/} and to a locked
-    artifact trace.  The integrated theorem surface register
-    (Appendix~\ref{app:integrated-theorem-surface-register}) maps claim to code to artifact
-    for every strongest-claim result.
+  \item \textbf{Cross-domain evidence is tiered and explicit.}  Industrial
+    process control and healthcare are defended instantiations of the same
+    kernel.  Autonomous vehicles remain proof-candidate because of the
+    constraint-class mismatch analysed in the monograph's universality
+    chapter.  Navigation remains
+    shadow-synthetic portability evidence, and aerospace remains
+    experimental.  These rows support the transfer claim at different levels;
+    they do not carry the same proof burden as battery.
 
-  \item \textbf{The hardening surface is deep.}  Beyond the core TSVR
-    result, the energy management domain contributes: fault-performance
-    stress tests, latency benchmarking (P95 $< 5$~ms end-to-end),
-    conditional coverage audits, hyperparameter stability analysis,
-    hardware-in-the-loop rehearsal, certificate half-life studies, graceful
-    degradation protocols, two-asset fleet compositional safety, and
-    adversarial robustness via active probing.
+  \item \textbf{Traceability is end-to-end.}  Each major theorem group is
+    tied to code anchors and locked artifacts.  The integrated theorem surface
+    register (Appendix~\ref{app:integrated-theorem-surface-register}) maps
+    claim to code to artifact for every strongest-claim result.
+\end{enumerate}
+
+\section{What Is Established Empirically}
+
+The empirical package supports the theorem program in a tiered way:
+\begin{enumerate}
+  \item the battery row is the reference witness where the theorem ladder and
+    executable artifacts are both deepest;
+  \item industrial and healthcare defend the transfer story with locked
+    replay, SIL pass, and material TSVR reduction;
+  \item AV, navigation, and aerospace show the practical boundary of the
+    kernel and help locate where additional control design or stronger data is
+    still required.
 \end{enumerate}
 
 \section{Theorem-to-Empirical Correspondence}
@@ -79,32 +103,45 @@ T4 -- No-Free-Safety
 \end{tabular}
 \end{table}
 
-\section{What the Framework Result Means}
+\section{What the Result Means}
 
-The ORIUS result is strong because it ties every major claim to an operational
-consequence.  Hidden violations are not abstract theorem objects; they
-correspond to unsafe physical outcomes---damaging battery discharge, vehicle
-over-speed, process power exceedance, ICU alarm suppression failure, or
-aircraft envelope breach.  Reliability-aware interval inflation is not only a
-calibration device; it widens the safe-action margin in proportion to the
-observation degradation severity.  Action repair is not merely a projection
-lemma; it is the mechanism that prevents unsafe actuation when the observed
-state is too optimistic.  Certificates are not audit theatre; they provide
-a per-step commitment to the safe-action guarantee that can be logged,
-reviewed, and acted upon by downstream safety monitors.
+The ORIUS result is strong because it ties every major theorem object to an
+operational consequence.  Hidden violations are not abstract pathologies; they
+correspond to unsafe physical outcomes such as damaging battery discharge,
+vehicle over-speed, process power exceedance, ICU alarm suppression failure,
+or aircraft envelope breach.  Reliability-aware interval inflation is not
+only a calibration device; it widens the safe-action margin in proportion to
+degradation severity.  Action repair is not merely a projection lemma; it is
+the mechanism that prevents unsafe actuation when the observation channel is
+too optimistic.  Certificates are not audit theatre; they make the causal
+assumptions behind each repaired action explicit.
+
+\section{What Is Not Established}
+
+The monograph does \emph{not} establish the following:
+\begin{enumerate}
+  \item a generic universal stability theory for all safe-control problems;
+  \item equal proof closure across the six evaluated domains;
+  \item production-readiness for every adapter without further engineering and
+    validation;
+  \item adversarial completeness beyond the bounded degradation and replay
+    assumptions stated in Chapter~\ref{ch:assumptions};
+  \item a replacement for full CBF, robust MPC, or viability theory in their
+    native settings.
+\end{enumerate}
 
 \section{Scope of the Final Claim}
 
 The final claim is precisely bounded:
 
 \begin{quote}
-Under degraded telemetry, a quality-ignorant controller can be observationally
-safe while physically unsafe.  The DC3S shield addresses this gap through
-reliability-aware uncertainty inflation, safe-action repair, and auditable
-runtime certificates.  In this thesis, the complete formal reference lineage
-is battery; industrial and healthcare are proof-validated empirical peers;
-AV remains proof-candidate; aerospace remains experimental; and navigation
-remains shadow-synthetic portability evidence.
+Under degraded telemetry, observed safety can diverge from true safety.
+ORIUS addresses this gap with a domain-agnostic repair-and-certify kernel
+built on reliability-aware uncertainty inflation, safe-action repair, and
+causal runtime certificates.  In this monograph, battery is the complete
+formal reference lineage; industrial and healthcare are defended
+instantiations; AV remains proof-candidate; aerospace remains experimental;
+and navigation remains shadow-synthetic portability evidence.
 \end{quote}
 
 This claim is supported by code, artifacts, and chapter-level alignment.  It
@@ -114,13 +151,11 @@ heterogeneous multi-domain composition without further engineering validation
 
 \section{Summary}
 
-The ORIUS framework proves that the observation-action safety gap is a
-universal CPS phenomenon with a principled remedy.  The energy management
-domain provides the formally locked reference surface; industrial process
-control and healthcare confirm TSVR~$= 0$\% as the proof-validated peers.
-Navigation provides simulation-backed portability evidence (0.69\% TSVR),
-while the autonomous vehicle and aerospace domains are classified as
-proof-candidate and experimental surfaces respectively.  The theorem ladder,
-finite-sample bound, and cross-domain PICP confirmation together constitute a
-traceable, end-to-end safety argument for DC3S-shielded controllers under
-degraded telemetry.
+The dissertation now ends at the right level of precision.  Its main theorem
+contribution is a domain-agnostic degraded-observation safety kernel with one
+full proof witness, one necessity theorem, one lower-bound theorem, and one
+explicit transfer theorem.  The battery domain remains the complete proof
+surface.  Industrial and healthcare defend the same kernel at a lower proof
+burden.  AV, navigation, and aerospace map the current frontier of the claim
+rather than inflating it.  That is monograph-grade scope: narrow enough to be
+defensible, broad enough to matter.

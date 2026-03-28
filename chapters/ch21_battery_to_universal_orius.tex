@@ -1,8 +1,8 @@
 
-\chapter{Universal ORIUS: Six-Domain Validation}
+\chapter{Transfer Instantiations and Tiered Cross-Domain Evidence}
 \label{ch:battery-to-orius}
 
-This chapter presents the ORIUS universal validation: the DC3S shield is
+This chapter presents the ORIUS transfer evidence surface: the DC3S shield is
 implemented as one shared degraded-observation repair-and-certify kernel
 instantiated across six cyber-physical domains---energy management,
 autonomous vehicles, industrial process control, medical monitoring,
@@ -13,6 +13,15 @@ navigation is shadow-synthetic, and aerospace remains experimental.  The
 shared result is therefore not ``six domains with equivalent guarantees,'' but
 one typed runtime contract whose strongest theorem-to-artifact lineage
 remains anchored to the battery reference surface.
+
+This is an evidence chapter, not a second proof chapter.  Its role in the
+monograph is to show that the control objects isolated in
+Chapter~\ref{ch:universality-completeness}---observation packets,
+reliability assessments, observation-consistent state sets, safe-action
+sets, repair maps, and certificates---instantiate coherently beyond the
+battery domain.  The proof burden remains battery; the non-battery rows are
+used to demonstrate defended transfer, promotion gaps, and the outer boundary
+of the current claim.
 
 \section{Why the ORIUS Result Is Structurally General}
 
@@ -214,12 +223,14 @@ without runtime failure.
 }
 
 Table~\ref{tab:domain-validation-summary} is the governing cross-domain
-status table.  All six domains share the same evaluation protocol and
-claim structure: energy management, AV, industrial, healthcare, and
-aerospace carry locked real-data telemetry; navigation carries a
-simulation surface.  Industrial and healthcare are proof-validated (SIL
-pass, material TSVR reduction, locked telemetry).  AV remains
-proof-candidate because the current promotion contract is not yet cleared.
+status table.  All six domains share the same evaluation protocol, but they
+do \emph{not} carry the same theorem burden.  Energy management remains the
+reference proof surface; industrial and healthcare are the defended
+instantiation rows; AV, navigation, and aerospace are retained because they
+show where the universal kernel transfers cleanly and where the current proof
+surface stops.  Industrial and healthcare are proof-validated (SIL pass,
+material TSVR reduction, locked telemetry).  AV remains proof-candidate
+because the current promotion contract is not yet cleared.
 The root cause is a structural constraint-class mismatch: the headway
 constraint $\mathrm{gap}_t \ge d_{\min} + \tau v_t$ is evaluated on the
 \emph{current} plant state, while the DC3S shield repairs the
@@ -231,8 +242,7 @@ paths: augmented state repair, TTC reformulation, or a predictive entry
 barrier.  Until one of those is instantiated, the 2.78\% AV residual
 TSVR is a structural artefact, not a conformal-coverage shortfall.
 Navigation provides simulation-backed portability evidence, and aerospace
-remains experimental pending promotion-gate completion.  Energy management
-remains the reference row.
+remains experimental pending promotion-gate completion.
 
 \IfFileExists{reports/universal_orius_validation/tbl_domain_proof_status.tex}{%
   \input{reports/universal_orius_validation/tbl_domain_proof_status}%
@@ -314,10 +324,14 @@ navigation).
 
 \subsection{Implications}
 
-These results support three claims:
+These results support four monograph-level conclusions:
 
 \begin{enumerate}
-  \item \textbf{Portability without re-engineering.} Each new domain required
+  \item \textbf{The proof burden remains battery.} The cross-domain rows do not
+    replace the battery proof ladder.  They show where the universal kernel
+    instantiates cleanly, where defended replay evidence is already strong,
+    and where additional control design is still required.
+  \item \textbf{Portability without kernel redesign.} Each new domain required
     only a typed domain instantiation; the shared kernel in
     \path{src/orius/universal_theory/} was not modified.  All adapters share
     the same five-stage runtime, the same reliability-to-uncertainty logic,
