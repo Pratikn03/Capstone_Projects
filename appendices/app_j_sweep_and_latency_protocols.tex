@@ -41,15 +41,17 @@ python scripts/run_sensitivity_sweeps.py \
 \subsection{Output Artifacts}
 
 \begin{itemize}
-\item \texttt{reports/publication/sensitivity\_grid.csv} --- Full grid results (all rows).
-\item \texttt{reports/publication/sensitivity\_summary\_ci.csv} --- Bootstrap confidence intervals by \texttt{(scenario, controller, alpha0, ph\_lambda, kappa\_drift\_penalty)}.
-\item \texttt{reports/publication/sweeps/configs/} --- Per-grid-point YAML configs (e.g., \texttt{tmp\_dc3s\_alpha0=0.05\_\_ph\_lambda=3\_\_kpen=0.3.yaml}).
-\item \texttt{reports/publication/sweeps/runs/<tag>/} --- Per-run outputs: \texttt{dc3s\_main\_table.csv}, \texttt{dc3s\_fault\_breakdown.csv}, \texttt{calibration\_plot.png}, \texttt{violation\_vs\_cost\_curve.png}.
+\item \path{reports/publication/sensitivity_grid.csv} --- Full grid results (all rows).
+\item \path{reports/publication/sensitivity_summary_ci.csv} --- Bootstrap confidence intervals by tuple $(\mathrm{scenario}, \mathrm{controller}, \alpha_0, \lambda_{\mathrm{PH}}, \kappa_{\mathrm{drift}})$.
+\item \path{reports/publication/sweeps/configs/} --- Per-grid-point YAML configs; each filename records the sweep setting tuple.
+\item \path{reports/publication/sweeps/runs/<tag>/} --- Per-run outputs such as \path{dc3s_main_table.csv}, \path{dc3s_fault_breakdown.csv}, \path{calibration_plot.png}, and \path{violation_vs_cost_curve.png}.
 \end{itemize}
 
 \subsection{Config Override Mechanism}
 
-Each grid point sets \texttt{GRIDPULSE\_DC3S\_CONFIG} to the corresponding YAML path. The base config \texttt{configs/dc3s.yaml} is loaded and overridden with the grid values before each run.
+Each grid point sets \path{GRIDPULSE_DC3S_CONFIG} to the corresponding YAML
+path. The base config \path{configs/dc3s.yaml} is loaded and overridden with
+the grid values before each run.
 
 \section{Latency Benchmark Protocol}
 

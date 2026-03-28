@@ -1,7 +1,10 @@
 \begin{table}[htbp]
 \centering
+\scriptsize
 \caption{Portable-domain ORIUS audit under fault injection (dropout $p{=}0.15$, spike $p{=}0.08$, stale $p{=}0.10$). Rule-Based TSVR = domain-appropriate rule-based controller without DC3S shield.}
 \label{tab:all_domain_comparison}
+\setlength{\tabcolsep}{3pt}
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llrrrrrr}
 \toprule
 Domain & Source & $N$ & Viol.\ Before (\%) & Rule-Based (\%) & DC3S After (\%) & Repair (\%) & $\bar{w}_t$ \\
@@ -13,6 +16,7 @@ Medical Monitoring (ICU Vitals) & locked\_csv & 2000 & 7.0 & 7.5 & \textbf{0.0} 
 Industrial Process Control & locked\_csv & 2000 & 22.1 & 0.0 & \textbf{0.0} & 90.5 & 0.655 \\
 \bottomrule
 \end{tabular}
+}
 \smallskip
 \begin{minipage}{\linewidth}\footnotesize
 Viol.\ Before = unshielded candidate controller TSVR. Rule-Based = domain-appropriate rule-based controller (no shield): proportional speed governor (AV), PI setpoint controller (industrial), clinical threshold protocol (healthcare), proportional bank limiter (aerospace), center-guidance controller (navigation). Source = locked\_csv for locked replay telemetry and synthetic for bounded synthetic traces when no locked dataset is shipped. DC3S After = TSVR after shield repair.

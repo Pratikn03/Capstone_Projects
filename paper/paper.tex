@@ -30,6 +30,7 @@
 \usepackage{setspace}
 
 \onehalfspacing
+\microtypesetup{nopatch=footnote}
 
 \title{ORIUS: Observation--Reality Integrity for Safe Control under Degraded Observation}
 \author{Pratik Niroula\\
@@ -121,6 +122,10 @@
 \IfFileExists{assets/data/metrics_values.tex}{\input{assets/data/metrics_values.tex}}{}
 
 \DeclareRobustCommand{\DCThreeS}{DC\textsuperscript{3}S}
+\pdfstringdefDisableCommands{%
+  \def\textsuperscript#1{#1}%
+  \def\hskip#1{}%
+}
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{claim}[theorem]{Claim}
@@ -364,7 +369,7 @@ US\_MISO & 13{,}638 & Forecast, DC3S, CPSBench & TBL04, TBL05, TBL08 \\
 US\_PJM & 13{,}639 & Forecast, transfer & TBL05, TBL07 \\
 US\_ERCOT & 13{,}453 & Forecast, transfer & TBL05, TBL07 \\
 \midrule
-\multicolumn{4}{l}{\textit{Universal replay: battery reference; industrial + healthcare proof-validated; AV proof-candidate; navigation shadow-synthetic; aerospace experimental}} \\
+\multicolumn{4}{p{0.9\linewidth}}{\textit{Universal replay: battery reference; industrial and healthcare proof-validated; AV proof-candidate; navigation shadow-synthetic; aerospace experimental.}} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1744,6 +1749,11 @@ S.~M.~Lundberg and S.-I.~Lee.
 L.~Lamport, R.~Shostak, and M.~Pease.
 \newblock The Byzantine generals problem.
 \newblock {\em ACM Transactions on Programming Languages and Systems}, 4(3):382--401, 1982.
+
+\bibitem{tsybakov2009introduction}
+A.~B.~Tsybakov.
+\newblock {\em Introduction to Nonparametric Estimation}.
+\newblock Springer, 2009.
 
 \end{thebibliography}
 
