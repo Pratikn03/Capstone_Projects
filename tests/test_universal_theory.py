@@ -1,12 +1,15 @@
 """Tests for the typed universal degraded-observation theory kernel."""
 from __future__ import annotations
 
+import pytest
+
 from orius.adapters.battery import BatteryDomainAdapter
 from orius.adapters.healthcare import HealthcareDomainAdapter
 from orius.adapters.industrial import IndustrialDomainAdapter
 from orius.adapters.vehicle import VehicleDomainAdapter
 from orius.universal_theory import (
     ContractVerifier,
+    ContractViolation,
     SafetyCertificate,
     UniversalStepResult,
     build_observation_consistent_state_set,
@@ -42,7 +45,15 @@ def test_run_universal_step_returns_structured_result() -> None:
             "power_mw": 450.0,
             "ts_utc": "2026-01-01T00:00:00Z",
         },
-        history=None,
+        history=[
+            {
+                "temp_c": 24.0,
+                "pressure_mbar": 1008.0,
+                "power_mw": 445.0,
+                "ts_utc": "2025-12-31T23:00:00Z",
+                "w_t": 0.7,
+            }
+        ],
         candidate_action={"power_setpoint_mw": 480.0},
         constraints={"power_max_mw": 500.0},
         quantile=30.0,
@@ -51,6 +62,89 @@ def test_run_universal_step_returns_structured_result() -> None:
     assert isinstance(result["certificate"], SafetyCertificate)
     assert result["certificate"]["controller"] == "orius-universal"
     assert result["step_risk_bound"] >= 0.0
+    assert result["contract_checks"]["contract_passed"] is True
+    assert result["episode_risk_bound"]["scope"] in {"current_step_only", "observed_prefix"}
+    assert result["certificate"]["semantic_checks"]["contract_passed"] is True
+    assert result["episode_risk_bound"]["scope"] == "observed_prefix"
+    assert result["episode_risk_bound"]["horizon"] == 2.0
+    assert result["contract_checks"]["contract_passed"] is True
+    assert result["certificate"]["semantic_checks"]["contract_passed"] is True
+    assert "reliability_range" in result["contract_checks"]["checked_invariants"]
+
+
+def test_contract_verifier_rejects_tampered_runtime_certificate() -> None:
+    adapter = get_adapter("industrial", {})
+    constraints = {"power_max_mw": 500.0}
+    result = run_universal_step(
+        domain_adapter=adapter,
+        raw_telemetry={
+            "temp_c": 25.0,
+            "pressure_mbar": 1010.0,
+            "power_mw": 450.0,
+            "ts_utc": "2026-01-01T00:00:00Z",
+        },
+        history=None,
+        candidate_action={"power_setpoint_mw": 480.0},
+        constraints=constraints,
+        quantile=30.0,
+    )
+    result.certificate.safe_action = {"power_setpoint_mw": -1.0}
+    try:
+        ContractVerifier.validate_runtime_step(
+            adapter=adapter,
+            state=result.state,
+            constraints=constraints,
+            quantile=30.0,
+            cfg={},
+            reliability=result.reliability,
+            uncertainty_set=result.uncertainty_set,
+            safe_action_set=result.safe_action_set,
+            repair_decision=result.repair_decision,
+            certificate=result.certificate,
+            step_risk_bound=result.step_risk_bound,
+            episode_risk_bound=result.episode_risk_bound,
+            alpha=result.episode_risk_bound["alpha"],
+        )
+    except ContractViolation as exc:
+        assert "certificate_matches_repair" in str(exc)
+    else:
+        raise AssertionError("Tampered certificate should fail runtime semantic validation.")
+
+
+def test_contract_verifier_rejects_dishonest_episode_scope() -> None:
+    adapter = get_adapter("industrial", {})
+    constraints = {"power_max_mw": 500.0}
+    result = run_universal_step(
+        domain_adapter=adapter,
+        raw_telemetry={
+            "temp_c": 25.0,
+            "pressure_mbar": 1010.0,
+            "power_mw": 450.0,
+            "ts_utc": "2026-01-01T00:00:00Z",
+        },
+        history=None,
+        candidate_action={"power_setpoint_mw": 480.0},
+        constraints=constraints,
+        quantile=30.0,
+    )
+    dishonest_episode_bound = dict(result.episode_risk_bound)
+    dishonest_episode_bound["scope"] = "constant_reliability_proxy"
+    with pytest.raises(ContractViolation, match="risk_bound_semantics"):
+        ContractVerifier.validate_runtime_step(
+            adapter=adapter,
+            state=result.state,
+            constraints=constraints,
+            quantile=30.0,
+            cfg={},
+            reliability=result.reliability,
+            uncertainty_set=result.uncertainty_set,
+            safe_action_set=result.safe_action_set,
+            repair_decision=result.repair_decision,
+            certificate=result.certificate,
+            step_risk_bound=result.step_risk_bound,
+            episode_risk_bound=dishonest_episode_bound,
+            alpha=result.episode_risk_bound["alpha"],
+        )
 
 
 def test_observation_consistent_state_set_tracks_monotone_inflation() -> None:
@@ -158,4 +252,3 @@ def test_certificate_preserves_causal_payload_and_horizon_metadata() -> None:
     assert cert["source_domain"] == "navigation"
     assert cert.certificate_horizon_steps == 5
     assert cert["assumptions_checked"] == ["A2", "A5", "A7"]
-

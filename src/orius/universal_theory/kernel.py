@@ -171,6 +171,31 @@ def build_safety_certificate(
     )
 
 
+def _extract_reliability_history(
+    history: Sequence[Mapping[str, Any]] | None,
+    *,
+    current_weight: float,
+) -> list[float]:
+    weights: list[float] = []
+    for item in history or ():
+        if not isinstance(item, Mapping):
+            continue
+        candidate = item.get("reliability_w")
+        if candidate is None:
+            candidate = item.get("w_t")
+        if candidate is None and isinstance(item.get("reliability"), Mapping):
+            reliability_payload = item.get("reliability")
+            candidate = reliability_payload.get("w_t", reliability_payload.get("weight", reliability_payload.get("w")))
+        if candidate is None:
+            continue
+        try:
+            weights.append(float(min(1.0, max(0.0, float(candidate)))))
+        except (TypeError, ValueError):
+            continue
+    weights.append(float(min(1.0, max(0.0, current_weight))))
+    return weights
+
+
 def execute_universal_step(
     *,
     domain_adapter: DomainInstantiation,
@@ -289,8 +314,39 @@ def execute_universal_step(
     )
 
     alpha = float(dcfg.get("alpha", dcfg.get("miscoverage_alpha", 0.10)))
-    episode_bound = compute_episode_risk_bound([float(reliability.weight)], alpha=alpha)
     step_bound = compute_step_risk_bound(float(reliability.weight), alpha=alpha)
+    planned_horizon = int(
+        dcfg.get(
+            "episode_horizon_steps",
+            dcfg.get("planning_horizon_steps", dcfg.get("horizon_steps", 1)),
+        )
+    )
+    reliability_history = _extract_reliability_history(
+        history,
+        current_weight=float(reliability.weight),
+    )
+    episode_bound = compute_episode_risk_bound(reliability_history, alpha=alpha)
+    episode_bound["scope"] = "observed_prefix" if len(reliability_history) > 1 else "current_step_only"
+    episode_bound["observed_reliability_samples"] = float(len(reliability_history))
+    episode_bound["planned_horizon_steps"] = float(planned_horizon)
+
+    contract_checks = ContractVerifier.validate_runtime_step(
+        adapter=domain_adapter,
+        state=state,
+        constraints=constraints,
+        quantile=quantile,
+        cfg=dcfg,
+        reliability=reliability,
+        uncertainty_set=state_set,
+        safe_action_set=safe_action_set,
+        repair_decision=repair_decision,
+        certificate=certificate,
+        step_risk_bound=step_bound,
+        episode_risk_bound=episode_bound,
+        alpha=alpha,
+    )
+    certificate.extras["semantic_checks"] = dict(contract_checks)
+    certificate.extras["risk_bound_scope"] = str(episode_bound.get("scope", "current_step_only"))
 
     return UniversalStepResult(
         certificate=certificate,
@@ -303,4 +359,5 @@ def execute_universal_step(
         state=state,
         step_risk_bound=step_bound,
         episode_risk_bound=episode_bound,
+        contract_checks=contract_checks,
     )
