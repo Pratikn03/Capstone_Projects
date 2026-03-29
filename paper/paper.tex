@@ -205,7 +205,7 @@
 \maketitle
 
 \begin{abstract}
-ORIUS studies a domain-agnostic safety problem: under degraded telemetry, a controller can be observationally safe while physically unsafe. This manuscript formalizes that observation--reality gap and implements one typed Detect--Calibrate--Constrain--Shield--Certify kernel that maps degraded telemetry to observation-consistent state sets, robust safe-action sets, repaired actions, and causal safety certificates. The battery domain remains the locked reference witness: under realistic battery telemetry faults, deterministic dispatch violates true state-of-charge limits at \textbf{3.9\% of steps with P95 severity of 333\,MWh}, even while observed-state evaluation reports zero violations. The same kernel is instantiated across a tiered six-row evidence ladder: industrial process control and medical monitoring are proof-validated defended peers, autonomous vehicles remains proof-candidate, navigation is shadow-synthetic, and aerospace remains experimental. The strongest supported claim is therefore not universal dominance across all domains, but a reusable degraded-observation repair contract with explicit assumption tags, auditable certificates, and locked validation artifacts. Every quantitative claim is tied to versioned run artifacts, theorem registers, and release gates.
+ORIUS studies a general safety failure in cyber-physical control: under degraded telemetry, a controller can be observationally safe while physically unsafe. This manuscript formalizes that observation--reality gap and introduces a typed Detect--Calibrate--Constrain--Shield--Certify kernel that constructs observation-consistent state sets, derives robust safe-action sets, repairs candidate actions, and emits causal safety certificates. The battery domain is the reference scientific witness: under realistic battery telemetry faults, deterministic dispatch violates true state-of-charge limits at \textbf{3.9\% of steps with P95 severity of 333\,MWh}, even while observed-state evaluation reports zero violations. The broader ORIUS claim is intentionally narrower than ``universal safety across domains.'' It is a reusable degraded-observation repair contract with one complete reference surface, explicit transfer obligations, and a tiered cross-domain evidence package in which industrial process control and medical monitoring are defended peers, autonomous vehicles remains proof-candidate, navigation is shadow-synthetic, and aerospace remains experimental. The implementation and artifact layer is kept auditable, but it is secondary to the paper's main point: once truth and observation separate, safety logic must adapt to measurement reliability.
 \end{abstract}
 
 \noindent\textbf{Keywords:} ORIUS, observation--reality integrity, safe control, degraded observation, battery dispatch, industrial control, medical monitoring, safety shield, telemetry reliability, cyber-physical systems
@@ -214,13 +214,13 @@ ORIUS studies a domain-agnostic safety problem: under degraded telemetry, a cont
 
 Grid-scale battery energy storage systems (BESS) are increasingly central to grid decarbonization, load balancing, and frequency regulation. Their value depends on dispatch controllers that decide, at each time step, how much power to charge or discharge using forecasts of load, renewable generation, and price. Much of the dispatch literature quietly assumes that the controller observes the battery's true state --- its state of charge (SOC), power output, and degradation level --- and can therefore check feasibility in real time. In operational settings, that assumption is too strong.
 
-ORIUS treats that failure mode as a general cyber-physical systems problem rather than a battery-specific quirk. Whenever a controller acts on degraded observation of a physical state, an observation-action safety gap can emerge between what appears feasible on the observed channel and what is actually safe in the physical system. The framework contribution of this paper is therefore architectural as well as empirical: one shared Detect--Calibrate--Constrain--Shield--Certify loop instantiated across a tiered cross-domain evidence package, with battery serving as the locked reference surface for economics and theorem-to-artifact lineage, industrial process control and medical monitoring acting as proof-validated peers, autonomous vehicles remaining proof-candidate, navigation shadow-synthetic, and aerospace experimental. In code, that reusable contract is now materialized explicitly in \path{src/orius/universal_theory/} as typed runtime objects for observation packets, reliability assessments, observation-consistent state sets, safe-action sets, repair decisions, and safety certificates.
+ORIUS treats that failure mode as a general cyber-physical systems problem rather than a battery-specific quirk. Whenever a controller acts on degraded observation of a physical state, an observation--action safety gap can emerge between what appears feasible on the observed channel and what is actually safe in the plant. The central contribution of this paper is therefore not another battery-only control heuristic, but a reusable repair-and-certify kernel for degraded-observation safety. Battery remains the reference surface on which the strongest proof and measurement claims are made. The non-battery rows matter, but they play a supporting role: industrial process control and medical monitoring are defended instantiations of the same contract, autonomous vehicles remains proof-candidate, navigation remains shadow-synthetic, and aerospace remains experimental.
 
 In practice, grid-scale battery dispatch runs on mixed telemetry --- delayed SCADA measurements, stale sensor feeds, packet reordering, spikes, and dropouts are ordinary operating conditions rather than edge cases~\cite{dibaji2019systems,chandola2009anomaly}. The key consequence is one the BESS dispatch literature has not directly measured: \textbf{a controller can be observationally safe (feasible on degraded observed state) while physically unsafe (violating true battery limits) at the same time}~\cite{chen2020review_bess}. On real grid data, that hidden safety failure appears at a 3.9\% violation rate with 333\,MWh P95 severity.
 
-The central insight is that the measurement channel between the physical battery and the dispatch controller is not a passive conduit; it is part of the safety problem. Once telemetry degrades, the controller's model of the world begins to drift away from physical reality. Standard robust optimization is designed to hedge uncertainty in \emph{future} load and generation scenarios, but it does not correct for uncertainty in \emph{current} state measurement. That gap motivates a different control stance: telemetry reliability should enter directly into uncertainty calibration and safe dispatch.
+The central insight is that the measurement channel between the physical battery and the dispatch controller is not a passive conduit; it is part of the safety problem. Once telemetry degrades, the controller's internal picture of the world begins to drift away from physical reality. Standard robust optimization is designed to hedge uncertainty in \emph{future} load and generation scenarios, but it does not directly address uncertainty in the \emph{current} state estimate on which safety is checked. That gap motivates a different control stance: telemetry reliability must enter the safety logic itself.
 
-DC\textsuperscript{3}S (Degradation-Conditioned Conformal Dispatch Safety Shield) is built around that failure mode. Rather than relegating telemetry quality to a monitoring dashboard, the controller uses it to widen uncertainty sets, solve against the widened sets, repair unsafe candidate actions, and emit a step-level audit record within the same online control cycle. The guiding principle is \emph{conditional conservatism}: the shield should stay permissive when the measurements are trustworthy and become more protective only when the measurement channel weakens.
+DC\textsuperscript{3}S (Degradation-Conditioned Conformal Dispatch Safety Shield) is built around that failure mode. Rather than treating telemetry quality as a passive monitoring signal, the controller uses it to widen uncertainty sets, solve against the widened sets, repair unsafe candidate actions, and emit a step-level certificate within the same online control cycle. The guiding principle is \emph{conditional conservatism}: the shield should remain permissive when measurements are trustworthy and become more protective only when the observation channel weakens.
 
 \subsection{Operational Motivation}
 
@@ -246,20 +246,20 @@ A forecasting model can have strong RMSE while still inducing unsafe dispatch if
 \subsection{Contributions}
 
 \begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{Universal degraded-observation kernel.} We present ORIUS as one typed Detect--Calibrate--Constrain--Shield--Certify kernel for safe control under degraded observation, with explicit runtime objects for observation-consistent state sets, repaired actions, and causal safety certificates.
-  \item \textbf{Battery reference result.} We preserve the battery-domain hidden-gap result as the reference scientific witness: deterministic dispatch violates true SOC at 3.9\% of steps with P95 severity of 333\,MWh while appearing safe on observed state.
-  \item \textbf{Tiered defended-domain validation.} We use one locked replay harness and one promotion contract across the non-battery rows, with industrial and healthcare clearing the proof-validated gate, AV remaining proof-candidate, navigation remaining shadow-synthetic, and aerospace remaining experimental.
-  \item \textbf{Theorem-to-code contract.} We make the reusable kernel explicit in code rather than leaving universality at the adapter story level: the theorem-facing objects and assumption tags are now attached to the runtime contract itself.
-  \item \textbf{Artifact-locked universal evidence bundle.} The manuscript consumes the locked status, proof, training, SIL, comparison, and latency artifacts emitted by the universal validation workflow, and uses those tier tables as the governing boundary for cross-domain claims.
+  \item \textbf{Problem formalization.} We formulate degraded-observation safe control as a mismatch between observed feasibility and true physical safety, and make that gap the primary object of analysis rather than a side effect of forecast error.
+  \item \textbf{Typed repair-and-certify kernel.} We present ORIUS as one typed Detect--Calibrate--Constrain--Shield--Certify kernel for safe control under degraded observation, with explicit runtime objects for observation-consistent state sets, repaired actions, and causal safety certificates.
+  \item \textbf{Battery reference witness.} We establish the battery-domain hidden-gap result as the reference scientific witness: deterministic dispatch violates true SOC at 3.9\% of steps with P95 severity of 333\,MWh while appearing safe on observed state.
+  \item \textbf{Tiered cross-domain instantiation.} We evaluate the same kernel across a six-row evidence package, with industrial and healthcare clearing the proof-validated gate, autonomous vehicles remaining proof-candidate, navigation remaining shadow-synthetic, and aerospace remaining experimental.
+  \item \textbf{Auditable implementation surface.} We tie the formal kernel to a typed runtime implementation so that theorem-facing objects, evidence tiers, and reported quantities remain inspectable without making implementation inventory the main scientific claim.
 \end{enumerate}
 
 \subsection{Contribution Boundary}
 
-The central scientific contribution is now a tiered universal package rather than battery-plus-portability narrative. ORIUS is the reusable degraded-observation kernel; battery is the formal reference row, industrial and healthcare are the strongest non-battery empirical peers, AV remains proof-candidate, navigation remains shadow-synthetic, and aerospace remains experimental. The manuscript still keeps a bounded formal layer consisting of the ORIUS theorem package together with typed runtime contracts and tiered domain-instantiation maps. \Cref{thm:rac_coverage} explains why monotone inflation preserves coverage under the shared uncertainty construction, \Cref{thm:conditional_coverage} motivates the reliability-group calibration audits, and \Cref{thm:safety_margin} with \Cref{cor:zero_violation} explain why reliability-conditioned margins and repair can eliminate true-state failures on the reference battery surface. These results validate the construction and are instantiated across the replay rows, but they do not claim closed-loop stability, optimal inflation scheduling, or universal safety dominance outside the battery reference row and the proof-validated peer rows.
+The central scientific contribution is a battery-anchored degraded-observation safety result together with a transferable kernel, not a claim of equal guarantees across six domains. ORIUS is the reusable degraded-observation kernel; battery is the formal reference row; industrial and healthcare are the strongest non-battery defended instantiations; autonomous vehicles remains proof-candidate; navigation remains shadow-synthetic; and aerospace remains experimental. The bounded formal layer consists of the ORIUS theorem package together with typed runtime contracts and explicit transfer obligations. \Cref{thm:rac_coverage} explains why monotone inflation preserves coverage under the shared uncertainty construction, \Cref{thm:conditional_coverage} motivates the reliability-group calibration audits, and \Cref{thm:safety_margin} with \Cref{cor:zero_violation} explain why reliability-conditioned margins and repair can eliminate true-state failures on the reference battery surface. These results support a reusable degraded-observation contract; they do not imply closed-loop stability, optimal inflation scheduling, or equal proof closure for every instantiated domain.
 
 \subsection{Paper Roadmap}
 
-Sections~\ref{sec:related}--\ref{sec:problem} position ORIUS and define the battery reference setting that motivated the framework. Sections~\ref{sec:forecasting_uq} and~\ref{sec:safe_dispatch} describe the forecasting, calibration, and shield mechanics. Sections~\ref{sec:experiments}--\ref{sec:us_analysis} preserve the core battery evidence, baseline diagnosis, and regime analysis. \Cref{sec:universal} then presents the tiered universal package: shared protocol, tier tables, training metrics, runtime and SIL results, and latency for the battery reference row plus the non-battery replay rows. The later sections extend that package through governance, hardening, benchmark formalization, and deployment discipline, and the closing sections restate the bounded claim boundary explicitly: battery reference, industrial and healthcare proof-validated, AV proof-candidate, navigation shadow-synthetic, aerospace experimental.
+Sections~\ref{sec:related}--\ref{sec:problem} position ORIUS and define the battery reference setting that motivated the framework. Sections~\ref{sec:forecasting_uq} and~\ref{sec:safe_dispatch} describe the forecasting, calibration, and shield mechanics. Sections~\ref{sec:experiments}--\ref{sec:us_analysis} carry the main battery evidence, baseline diagnosis, and regime analysis. \Cref{sec:universal} then asks the narrower transfer question: which parts of the same repair contract survive beyond the battery witness once replay, software-in-loop execution, and theorem obligations are all gated together? The later sections document the implementation surface, hardening, and governance needed to keep that evidence auditable, while the closing sections restate the bounded claim boundary explicitly: battery reference, industrial and healthcare proof-validated, AV proof-candidate, navigation shadow-synthetic, aerospace experimental.
 
 \section{Related Work}\label{sec:related}
 
@@ -293,7 +293,7 @@ That assumption breaks down precisely under the fault conditions studied here. A
 
 \subsection{Governance and Reproducibility}
 
-This paper makes a bounded governance claim: locked metrics, run-scoped provenance, and validator gates are treated as a first-class part of the publication artifact. That narrower claim is aligned with the reproducibility standards discussed by Pineau et al.~\cite{pineau2021improving}, but it is not presented as a new general governance framework.
+This paper makes a bounded governance claim: locked metrics, run-scoped provenance, and validator gates are used to keep the evidence auditable. That narrower claim is aligned with the reproducibility standards discussed by Pineau et al.~\cite{pineau2021improving}, but it is not presented as a new general governance framework or as the paper's primary novelty.
 
 \subsection{Summary of the Novelty Gap}
 
@@ -305,15 +305,17 @@ Seen against this literature, the paper's originality lies in elevating the gap 
 
 \subsection{ORIUS System Context}
 
-ORIUS is implemented as a forecast-to-dispatch stack whose main layers are data preparation, forecasting, uncertainty calibration, optimization, monitoring, and API/dashboard serving. DC\textsuperscript{3}S sits at the dispatch boundary: it receives observed telemetry and forecast intervals, widens those intervals when telemetry quality or drift risk deteriorates, and prevents physically unsafe commands from reaching the battery.
+ORIUS is implemented as a forecast-to-dispatch stack whose main layers are data preparation, forecasting, uncertainty calibration, optimization, and monitoring. DC\textsuperscript{3}S sits at the dispatch boundary: it receives observed telemetry and forecast intervals, widens those intervals when telemetry quality or drift risk deteriorates, and prevents physically unsafe commands from reaching the battery. The system view matters here only insofar as it shows where the degraded-observation repair loop enters the control stack.
 
 \PaperFigureHero{FIG01_ARCHITECTURE}{ORIUS architecture with \DCThreeS{} at the dispatch boundary. Offline forecasting and calibration produce promoted model and interval artifacts; online DC\textsuperscript{3}S turns degraded telemetry into safe dispatch actions, certificates, and operator-visible audit records.}
 
-\subsection{Component-to-Code Map}
+\subsection{Implementation Reference Map}
+
+The implementation inventory in \Cref{tab:component_code_map} is included as a supporting reference for auditability. Readers focused on the scientific argument can treat it as companion material; the main paper claim remains the battery witness and the degraded-observation repair contract.
 
 \begin{table*}[htbp]
 \centering\small
-\caption{Component-to-code map for the main manuscript surfaces.}
+\caption{Reference implementation map for the main manuscript surfaces.}
 \label{tab:component_code_map}
 \begin{tabular}{p{2.4cm}p{3.1cm}p{6.9cm}}
 \toprule
@@ -335,7 +337,7 @@ IoT & Edge agent, device contract, closed-loop simulator & \path{iot/} \\
 \end{tabular}
 \end{table*}
 
-\subsection{Artifact Contracts and Profile Lock}
+\subsection{Evidence Lock}
 
 This paper uses a locked profile family rather than free-floating report values. The manuscript-level source artifacts are:
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
@@ -345,7 +347,7 @@ This paper uses a locked profile family rather than free-floating report values.
   \item stochastic summaries: \path{reports/research_metrics_de.csv} and \path{reports/research_metrics_us.csv}
   \item paper-facing publication tables and figures under \path{reports/publication/}
 \end{itemize}
-Any manuscript claim that depends on these interfaces is treated as invalid unless it can be traced back to one of them.
+Any manuscript claim that depends on these interfaces is treated as invalid unless it can be traced back to one of them. This lock exists to keep the evidence stable; it is not the paper's main research contribution.
 
 \subsection{Dataset Scope}
 

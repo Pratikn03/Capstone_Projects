@@ -2,26 +2,29 @@
 \chapter{Transfer Instantiations and Tiered Cross-Domain Evidence}
 \label{ch:battery-to-orius}
 
-This chapter presents the ORIUS transfer evidence surface: the DC3S shield is
+This chapter presents the ORIUS transfer evidence surface.  The DC3S shield is
 implemented as one shared degraded-observation repair-and-certify kernel
 instantiated across six cyber-physical domains---energy management,
 autonomous vehicles, industrial process control, medical monitoring,
-aerospace, and navigation.  The claim boundary is tiered rather than
-uniform: battery is the reference witness, industrial and healthcare are
-defended proof-validated peers, autonomous vehicles remains proof-candidate,
-navigation is shadow-synthetic, and aerospace remains experimental.  The
-shared result is therefore not ``six domains with equivalent guarantees,'' but
-one typed runtime contract whose strongest theorem-to-artifact lineage
-remains anchored to the battery reference surface.
+aerospace, and navigation---but the resulting claim is tiered rather than
+uniform.  Battery remains the reference witness; industrial and healthcare are
+defended proof-validated instantiations; autonomous vehicles remains
+proof-candidate; navigation is shadow-synthetic; and aerospace remains
+experimental.  The point of the chapter is therefore not to claim ``six
+domains with equivalent guarantees,'' but to show how far one degraded-
+observation repair contract travels before the current proof and evidence
+surface runs out.
 
 This is an evidence chapter, not a second proof chapter.  Its role in the
 monograph is to show that the control objects isolated in the
-universality-completeness chapter---observation packets,
-reliability assessments, observation-consistent state sets, safe-action
-sets, repair maps, and certificates---instantiate coherently beyond the
-battery domain.  The proof burden remains battery; the non-battery rows are
-used to demonstrate defended transfer, promotion gaps, and the outer boundary
-of the current claim.
+universality-completeness chapter---observation packets, reliability
+assessments, observation-consistent state sets, safe-action sets, repair
+maps, and certificates---instantiate coherently beyond the battery domain.
+The proof burden remains battery.  The non-battery rows matter because they
+separate three questions that are often collapsed in broad ``universal''
+claims: whether the interface transfers, whether the runtime semantics hold
+under replay, and whether the stronger theorem obligations are actually
+discharged on that row.
 
 \section{Why the ORIUS Result Is Structurally General}
 
@@ -46,7 +49,11 @@ objects:
 
 None of these objects require SOC, voltage, or Coulomb counting.  Battery
 semantics live in the battery instantiation, while the reusable universal
-claim attaches to the typed kernel shared across domains.
+claim attaches to the typed kernel shared across domains.  ``Structurally
+general'' therefore means that ORIUS factors the degraded-observation control
+problem into the same six runtime objects in every domain; it does
+\emph{not} mean that every domain inherits the full battery proof ladder for
+free.
 
 \section{Mapping Battery Objects to the Universal Adapter}
 
@@ -71,8 +78,8 @@ $a_t^{\text{safe}}$    & SOC-preserving dispatch          & Safety-projected act
 
 \section{What Changes by Domain}
 
-Porting ORIUS to a new domain requires replacing four domain-specific
-components:
+Transfer is non-trivial because four objects are domain-specific and must be
+reinstantiated without breaking the shared control logic:
 
 \begin{description}
   \item[Plant dynamics.] The battery uses a linear SOC integrator;
@@ -93,7 +100,8 @@ components:
 
 \section{What Remains Invariant Across Domains}
 
-Four structural invariants transfer without modification:
+Against those changing domain surfaces, four structural invariants transfer
+without modification:
 
 \begin{enumerate}
   \item \textbf{OQE architecture.}  The feature vector changes; the
@@ -110,22 +118,27 @@ Four structural invariants transfer without modification:
     regardless of what the symbols denote physically.
 \end{enumerate}
 
-\section{How to Port ORIUS to a New Domain}
+\section{Necessary Transfer Work for a New Domain}
 
-A practitioner deploys ORIUS on a new plant by implementing a
-\texttt{DomainAdapter}---the analogue of \texttt{BatteryDomainAdapter}.
-The adapter provides:
+A practitioner does \emph{not} promote a new row by merely wiring up a
+\texttt{DomainAdapter}.  The adapter is only the entry ticket.  A credible
+transfer row must supply:
 
 \begin{enumerate}
   \item A telemetry parser that produces $z_t$.
   \item An OQE feature extractor for the domain's fault families.
   \item A plant model (or learned surrogate) for conformal residual
-    calibration.
+	    calibration.
   \item A constraint specification and projection oracle.
+  \item A defended evidence surface showing that the relevant T11 obligations
+    are discharged at the tier being claimed.
 \end{enumerate}
 
-The ORIUS core---OQE scoring, RAC inflation, certificate issuance---remains
-a shared library, tested once and reused rather than reimplemented per domain.
+The ORIUS core---OQE scoring, RAC inflation, repair, and certificate
+issuance---remains a shared library, tested once and reused rather than
+reimplemented per domain.  What varies by row is not whether the software can
+execute, but how much of the transfer burden is supported by locked data,
+replay, SIL, and theorem-facing soundness evidence.
 
 \section{Cross-Domain Empirical Validation}
 \label{sec:cross-domain-eval}
@@ -137,7 +150,14 @@ aggregate from publication artifacts; and (ii) a shared universal replay
 harness over autonomous-vehicle, industrial, healthcare, navigation, and
 aerospace telemetry.  Each row uses the same shared runtime path, but the
 claim tier is governed by evidence quality rather than by the existence of
-an adapter alone.
+an adapter alone.  Read in that way, the chapter answers a narrow question:
+how far does the ORIUS kernel travel before the current proof and evidence
+surface runs out?
+
+That question is what makes the table intellectually useful.  The shared
+protocol normalizes stress and runtime conditions across rows, while the tier
+labels record how much of the transfer claim survives once row-specific
+constraints, telemetry quality, and replay evidence are taken seriously.
 
 \subsection{Datasets}
 
@@ -191,6 +211,11 @@ non-synthetic telemetry, a verified training surface, a clean
 software-in-loop (SIL) runtime pass, a nontrivial baseline gap, material
 TSVR reduction after repair, and stable behavior across seeds.
 
+The uniform protocol is a stress-test normalizer, not a hidden claim that all
+plants share one natural fault law.  Its purpose is to hold the observation
+channel challenge fixed so that the chapter can compare transfer behavior
+rather than confounding it with row-specific evaluation machinery.
+
 \subsection{Training and Software-in-Loop Readiness}
 
 \IfFileExists{reports/universal_orius_validation/tbl_all_domain_training_metrics.tex}{%
@@ -227,19 +252,25 @@ status table.  All six domains share the same evaluation protocol, but they
 do \emph{not} carry the same theorem burden.  Energy management remains the
 reference proof surface; industrial and healthcare are the defended
 instantiation rows; AV, navigation, and aerospace are retained because they
-show where the universal kernel transfers cleanly and where the current proof
-surface stops.  Industrial and healthcare are proof-validated (SIL pass,
-material TSVR reduction, locked telemetry).  AV remains proof-candidate
-because the current promotion contract is not yet cleared.
-The root cause is a structural constraint-class mismatch: the headway
-constraint $\mathrm{gap}_t \ge d_{\min} + \tau v_t$ is evaluated on the
+make the transfer boundary visible.  Industrial and healthcare are
+proof-validated because they clear the full defended replay contract: SIL
+pass, locked telemetry, and material TSVR reduction under the shared kernel.
+AV remains proof-candidate because the current promotion contract is blocked
+by a structural constraint-class mismatch rather than by a generic runtime or
+coverage failure.
+
+The mismatch is specific and informative.  The headway constraint
+$\mathrm{gap}_t \ge d_{\min} + \tau v_t$ is evaluated on the
 \emph{current} plant state, while the DC3S shield repairs the
 \emph{next-step} acceleration.  The universality-completeness chapter
 formalises why one-dimensional action-space repair is insufficient here and
 identifies three promotion paths: augmented state repair, TTC
-reformulation, or a predictive entry barrier.  Until one of those is
-instantiated, the 2.78\% AV residual TSVR is a structural artefact, not a
-conformal-coverage shortfall.
+reformulation, or a predictive entry barrier.  The residual 2.78\% AV TSVR
+therefore functions as a useful negative result: it shows that the typed
+kernel transfers, but that transfer alone does not discharge the
+safe-action-soundness obligation when the constraint class is misaligned with
+the repair surface.
+
 Navigation provides simulation-backed portability evidence, and aerospace
 remains experimental pending promotion-gate completion.
 
@@ -285,6 +316,12 @@ Aerospace (experimental) & Adapter and replay path execute on the current experi
 }
 
 
+
+The results table should be read as a transfer diagnostic rather than a
+league table.  The strongest rows are the ones that preserve the battery
+story under non-battery telemetry and constraints; the weaker rows are useful
+because they show exactly which obligation or evidence boundary still blocks
+promotion.
 
 \begin{figure}[htbp]
   \centering
@@ -350,7 +387,7 @@ navigation).
 
 \subsection{Implications}
 
-These results support four monograph-level conclusions:
+These results support five monograph-level conclusions:
 
 \begin{enumerate}
   \item \textbf{The proof burden remains battery.} The cross-domain rows do not
@@ -358,16 +395,21 @@ These results support four monograph-level conclusions:
     instantiates cleanly, where defended replay evidence is already strong,
     and where additional control design is still required.
   \item \textbf{Portability without kernel redesign.} Each new domain required
-    only a typed domain instantiation; the shared kernel in
-    \path{src/orius/universal_theory/} was not modified.  All adapters share
-    the same five-stage runtime, the same reliability-to-uncertainty logic,
-    and the same certificate surface.
+    a typed domain instantiation, but not a redesign of the shared kernel in
+    \path{src/orius/universal_theory/}.  All adapters share the same
+    five-stage runtime, the same reliability-to-uncertainty logic, and the
+    same certificate surface.
   \item \textbf{Tiered evidence, not equal guarantees.} The defended claim
     surface is battery reference plus industrial/healthcare proof-validation.
     AV remains proof-candidate, navigation remains shadow-synthetic, and
     aerospace remains experimental.  The common result is a reusable
     degraded-observation repair contract under one protocol, not six domains
     with equivalent proof depth.
+  \item \textbf{Negative results are structurally informative.} The AV row is
+    not dead weight.  It isolates a specific mismatch between the repaired
+    action surface and the governing safety constraint, which is exactly the
+    kind of failure an honest transfer chapter should expose rather than
+    average away.
   \item \textbf{Open gaps are localized rather than diffuse.} The remaining
     thesis-level gaps are identifiable and structural: AV needs a larger
     repair surface, navigation needs locked real telemetry, and aerospace
@@ -386,8 +428,13 @@ These results support four monograph-level conclusions:
 All six domains are presented below through a common evidence template:
 a physical context paragraph, key adapter parameters, the DC3S result
 under the unified fault schedule, and the standard supporting figures
-available for that tier.  Navigation appears last as a simulation-backed
-portability profile without a trained forecasting model.
+available for that tier.  The purpose of these profiles is diagnostic:
+they show how the shared kernel appears once instantiated against
+domain-specific telemetry, constraint geometry, and fallback logic.
+They do not supersede the governing tier table above, and they should
+not be read as six interchangeable proofs.  Navigation appears last as
+a simulation-backed portability profile without a trained forecasting
+model.
 
 %% =========================================================================
 \subsection{Energy Management (Battery / Grid Dispatch)}
@@ -457,6 +504,14 @@ The target state is longitudinal speed ($v_t$, m/s); the safety constraint
 is a posted speed limit enforced as $v_t \leq v_{\max}$ with
 $v_{\max} = 11.0$~m/s (operational urban cruise limit).  Telemetry faults
 model GPS dropouts and stale odometry readings.
+
+This local adapter profile is intentionally narrower than the defended
+cross-domain promotion question.  It demonstrates that the typed ORIUS
+kernel, reliability inflation, and repair logic execute coherently on an
+AV row with a speed-cap predicate.  The chapter-wide proof-candidate
+status is governed by the stricter headway-based safety surface in the
+governing validation table above.  That stricter surface is what exposes
+the current constraint-class mismatch and blocks promotion.
 
 \textbf{Adapter parameters.}
 Constraint: $\mathtt{speed\_max\_mps} = 11.0$~m/s;
@@ -691,8 +746,11 @@ to the six validated domains and indicates the evidence tier supporting
 each claim.  All theorems are stated in domain-agnostic notation using
 only Assumptions~A1--A8 (Chapters~\ref{ch:theorem-oasg}--\ref{ch:temporal-extensions}).
 The battery domain carries formal proofs with battery-specific
-instantiation; the remaining five domains carry equivalent empirical
-validation.
+instantiation; the remaining rows contribute defended replay evidence,
+architectural transfer evidence, or portability evidence depending on
+tier.  The table therefore records where each theorem's runtime-facing
+obligations are supported, not where full proof closure has been
+reproduced outside the battery witness.
 
 \begin{table*}[htbp]
 \centering
@@ -727,13 +785,17 @@ Theorems T3, T5, and T6 are marked~\textbf{A} (architectural) for
 non-battery domains because their statements and proofs depend only on
 $\alpha$, $\bar{w}$, and~$T$---quantities that carry no domain semantics.
 The bound $\mathbb{E}[V] \le \alpha(1-\bar{w})T$ holds for any CPS
-that satisfies the adapter contract, without requiring domain-specific
-derivation.
+that satisfies the adapter contract, without requiring a new plant-side
+derivation on each row.
 
 Theorems T1, T4, T7, and T8 involve domain-specific constructions
 (fault injection, boundary proximity, fallback existence) and therefore
 require per-domain empirical validation.  The cross-domain replay results
-in Table~\ref{tab:cross-domain-scorecard} below provide this evidence.
+in Table~\ref{tab:cross-domain-scorecard} below provide this evidence at
+the tier claimed by each row.  In particular, a non-battery \textbf{E}
+entry means that the corresponding replay obligation is defended on that
+row's evidence surface; it does not mean that the battery proof ladder
+has been duplicated in full.
 
 %% =========================================================================
 \section{Cross-Domain Metrics Scorecard}
@@ -744,7 +806,10 @@ performance metrics for all six domains (battery reference plus five
 non-battery domains) into a single committee-readable scorecard.  All
 non-battery rows use $N = 2000$ fault-stressed steps under the unified
 fault schedule (dropout~15\%, spike~8\%, stale~10\%).  Battery is
-reported as the locked publication aggregate.
+reported as the locked publication aggregate.  This scorecard is a
+comparative transfer diagnostic.  It is intentionally subordinate to the
+governing tier table: strong local TSVR reduction is necessary, but not
+sufficient, for promotion.
 
 \begin{table*}[htbp]
 \centering
@@ -769,12 +834,15 @@ Navigation (sim.)           & 25.80 & 9.25  & 100.0 & 0.773 & --    & --     & $
 \end{tabular}
 \end{table*}
 
-The scorecard confirms three quantitative claims: (i) DC3S reduces TSVR by
-a factor of $\geq\!10$ in every non-simulation domain; (ii) conformal
-coverage (PICP$_{90}$) meets or exceeds the nominal 0.90 target in all
-domains with a trained forecasting surface; (iii) pipeline latency is
-sub-millisecond across all domains, confirming runtime suitability for fast
-control loops.
+The scorecard confirms three narrower quantitative claims: (i) on the
+strongest replay rows, DC3S materially reduces TSVR under degraded
+observation; (ii) conformal coverage (PICP$_{90}$) meets or exceeds the
+nominal 0.90 target in all domains with a trained forecasting surface;
+and (iii) pipeline latency is sub-millisecond across all domains,
+confirming that the shared kernel is operationally lightweight.  What the
+scorecard does \emph{not} do is erase the tier boundary: AV still remains
+proof-candidate because its stricter safety surface is not yet discharged,
+navigation remains portability-only, and aerospace remains experimental.
 
 %% =========================================================================
 \section{Chapter Summary}
@@ -796,9 +864,12 @@ reliability traces under fault injection.  The training audit
 (Table~\ref{tab:domain-sil-summary}) confirm that each domain's
 forecasting and runtime surfaces are reproducible and execution-verified
 at its assigned evidence tier.  All six domains share the same
-evaluation protocol, artifact types, and evidence tier structure.  The
-theorem-to-code-to-artifact lineage
-established in the preceding chapters for energy management
-(Chapters~\ref{ch:forecasting}--\ref{ch:no-free-safety}) applies equally
-to each domain through the shared adapter contract.  Navigation provides
-additional simulation-backed portability evidence.
+evaluation protocol, artifact types, and evidence tier structure, but
+they do not share the same proof status.  The theorem-to-code-to-artifact
+lineage established in the preceding chapters for energy management
+(Chapters~\ref{ch:forecasting}--\ref{ch:no-free-safety}) provides the
+reference witness; the non-battery rows show how much of that lineage is
+transported, defended, or still open once the universal contract is
+instantiated on a new plant.  Navigation provides additional
+simulation-backed portability evidence, while the AV and aerospace rows
+make the current transfer boundary explicit rather than hiding it.

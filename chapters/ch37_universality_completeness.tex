@@ -11,11 +11,13 @@ certificate surface.  Battery remains the only full proof reference
 surface.  Industrial and healthcare remain defended instantiations.
 Autonomous vehicles, navigation, and aerospace remain lower-tier evidence.
 
-The code mirror of that boundary is explicit.  The canonical production
-kernel lives in \path{src/orius/universal_theory/}; the lightweight
-reference modules in \path{src/orius/universal/} provide the compact
-contract, frontier, and reduction objects used in the formal arguments
-below.
+The point of the chapter is to make that claim precise enough that a reader
+can separate three things cleanly: what the battery proof already establishes,
+what the universal kernel adds, and where the current transfer boundary still
+stops.  The implementation follows the same boundary.  The canonical
+production kernel realizes the typed repair-and-certify contract, while the
+formal arguments below isolate the control objects that must exist in any
+domain instantiation.
 
 % ----------------------------------------------------------------
 \section{Universal Problem Statement and Information Pattern}
@@ -201,103 +203,72 @@ where $\alpha$ is the miscoverage level and $\bar{w}$ is the mean reliability.
 The monograph extension asks whether that envelope is merely conservative or
 whether it captures the right scaling law.
 
-\begin{theorem}[Information-Theoretic Lower Bound, T10]
+\begin{theorem}[Stylized Reliability-Risk Frontier, T10]
 \label{thm:information-theoretic-lower-bound}
-Under Assumptions A1, A2, A5$'$ (calibration regularity,
-Chapter~\ref{ch:assumptions}), and the conformal coverage condition,
-any controller $\pi$
-faces the lower bound
+Fix a horizon $T$.  For each step $t$, assume there exists a boundary-testing
+subproblem with two latent hypotheses $H_{0,t}$ (safe side of the boundary)
+and $H_{1,t}$ (unsafe side of the boundary) such that:
+\begin{enumerate}
+  \item the controller acts only through the degraded observation channel;
+  \item the observation laws $P_{0,t}$ and $P_{1,t}$ satisfy
+    $\mathrm{TV}(P_{0,t},P_{1,t}) \le w_t$;
+  \item the unsafe-side prior satisfies $\Prob(H_{1,t}) \ge p_t$ for some
+    boundary-mass sequence $p_t \in [0,1]$.
+\end{enumerate}
+Then every controller $\pi$ satisfies
+\[
+  \mathbb{E}\!\left[V_T(\pi)\right]
+  \;\ge\;
+  \frac{1}{2}\sum_{t=1}^T p_t(1-w_t).
+\]
+In particular, if $p_t \ge \alpha/2$ for all $t$, then
 \[
   \mathbb{E}\!\left[V_T(\pi)\right]
   \;\ge\;
   \tfrac{1}{4}\,\alpha(1-\bar{w})T.
 \]
-Combined with the T3 upper bound, DC3S is minimax rate-optimal under
-degraded observation: $\mathbb{E}[V_T]\in[\tfrac{1}{4}\,\alpha(1-\bar{w})T,\;
-\alpha(1-\bar{w})T]$ for any controller.
 \end{theorem}
 
-\begin{proof}[Proof (Le~Cam two-point method)]
-The proof establishes a per-step lower bound on violation probability and
-aggregates by linearity of expectation.
-
-\medskip
-\noindent\textbf{Step~1: Two-point hypothesis at step $t$.}
-Fix a step $t$ and let $\delta > 0$ be arbitrarily small.  Define two
-true states:
-$x_{\mathrm{safe}} = \{x : \phi(x) = +\delta\}$ (just inside the
-constraint boundary) and $x_{\mathrm{unsafe}} = \{x : \phi(x) = -\delta\}$
-(just outside).  A violation occurs at step $t$ if $x_t = x_{\mathrm{unsafe}}$
-and the controller dispatches an action as though $x_t$ were safe.
-
-\medskip
-\noindent\textbf{Step~2: TV distance through the degraded channel.}
-By Assumption~A2, the observation satisfies
-$\|\hat{x}_t - x_t\| \le g(w_t)$ where
-$g:[0,1]\to\mathbb{R}_{\ge 0}$ is monotone decreasing with $g(1)=0$.
-Under Assumption~A5$'$ (Chapter~\ref{ch:assumptions}, calibration regularity),
-$g(w_t) \le c_g\,(1-w_t)$ near $w_t = 1$.  The two observation distributions
-$P_0 = P[\hat{x}_t \mid x_t = x_{\mathrm{safe}}]$ and
-$P_1 = P[\hat{x}_t \mid x_t = x_{\mathrm{unsafe}}]$ are uniform balls
-of radius $g(w_t)$ centred $2\delta$ apart.  Their total-variation distance is
+\begin{proof}
+Fix a step $t$ and consider the controller's binary decision problem on the
+safe/unsafe boundary subproblem.  By Le~Cam's lemma,
 \[
-  \mathrm{TV}(P_0, P_1)
-  \;=\; \max\!\bigl(0,\;1 - 2\delta\,/\,g(w_t)\bigr).
-\]
-As $\delta\to 0$ (the least-favourable boundary states), this collapses to
-$\mathrm{TV}(P_0,P_1) \to w_t$ by the calibration regularity condition.
-
-\medskip
-\noindent\textbf{Step~3: Le~Cam's lemma.}
-For any decision rule~$\psi$ (the controller's feasibility check),
-Le~Cam's lemma gives
-\[
-  \max\!\bigl(\Pr[\psi\text{ errs}\mid H_0],\;
-              \Pr[\psi\text{ errs}\mid H_1]\bigr)
+  \max\!\bigl(\Prob[\psi_t\text{ errs}\mid H_{0,t}],\;
+              \Prob[\psi_t\text{ errs}\mid H_{1,t}]\bigr)
   \;\ge\;
-  \tfrac{1-\mathrm{TV}(P_0,P_1)}{2}
+  \frac{1-\mathrm{TV}(P_{0,t},P_{1,t})}{2}
   \;\ge\;
-  \tfrac{1-w_t}{2}.
+  \frac{1-w_t}{2}.
 \]
-
-\medskip
-\noindent\textbf{Step~4: Per-step violation probability.}
-A violation requires both $H_1$ to be the true hypothesis and the
-controller to err.  The prior probability of $H_1$ satisfies
-$\Pr[H_1] \ge \alpha/2$, since the conformal coverage condition
-implies that at least an $\alpha$ fraction of steps are near the
-constraint boundary.  Therefore
+Whenever $H_{1,t}$ holds and the controller errs, the step contributes one
+true-state violation, so
 \[
-  \Pr[Z_t = 1]
-  \;\ge\; \Pr[H_1] \cdot \Pr[\psi\text{ errs}\mid H_1]
-  \;\ge\; \tfrac{\alpha}{2} \cdot \tfrac{1-w_t}{2}
-  \;=\; \tfrac{\alpha(1-w_t)}{4}.
-\]
-
-\medskip
-\noindent\textbf{Step~5: Episode aggregation.}
-Summing over $T$ steps by linearity of expectation:
-\[
-  \mathbb{E}\!\left[V_T\right]
+  \Prob[Z_t = 1]
   \;\ge\;
-  \sum_{t=1}^T \tfrac{\alpha(1-w_t)}{4}
-  \;=\;
-  \tfrac{\alpha(1-\bar{w})T}{4}.
+  \Prob(H_{1,t}) \cdot \Prob[\psi_t\text{ errs}\mid H_{1,t}]
+  \;\ge\;
+  p_t \cdot \frac{1-w_t}{2}.
 \]
-This establishes $\mathbb{E}[V_T(\pi)] \ge \tfrac{1}{4}\,\alpha(1-\bar{w})T$
-for any controller~$\pi$.  A refined asymmetric two-point construction
-tightens the constant from $1/4$ to $1/2$.
+Summing across the horizon and applying linearity of expectation yields
+\[
+  \mathbb{E}[V_T(\pi)]
+  \;\ge\;
+  \sum_{t=1}^T \Prob[Z_t = 1]
+  \;\ge\;
+  \frac{1}{2}\sum_{t=1}^T p_t(1-w_t).
+\]
+The special case $p_t \ge \alpha/2$ then implies the stated
+$\tfrac{1}{4}\alpha(1-\bar{w})T$ frontier.  No stronger conclusion is claimed
+without a domain-specific argument that justifies the boundary-mass sequence
+$p_t$.
 \end{proof}
 
 \begin{remark}
-The gap between the lower bound ($\alpha(1-\bar{w})T/4$) and the T3 upper
-bound ($\alpha(1-\bar{w})T$) is a factor of 4, which is standard in
-Le~Cam minimax lower-bound arguments (see Tsybakov \cite{tsybakov2009introduction},
-Chapter~2; Yu~\cite{yu1997assouad}, 1997).  The conclusion is that DC3S is
-minimax optimal up to a universal constant: no controller can do
-asymptotically better in the degraded-observation regime, and DC3S
-achieves the upper bound.  For the thesis, this is the correct precision:
-``DC3S is minimax rate-optimal under degraded observation.''
+T10 is intentionally conservative.  It does \emph{not} claim that the
+battery upper bound is globally minimax without further work; it isolates the
+mechanism by which degraded observation creates a nontrivial reliability-risk
+frontier.  The constant $1/4$ is therefore read as a stylized frontier
+witness, not as a universally sharp asymptotic constant.
 \end{remark}
 
 The resulting \emph{reliability-risk frontier} is useful even when read
@@ -363,7 +334,7 @@ machine-checkable contract with five invariants:
     collapses the admissible action set to the fallback regime.
 \end{description}
 
-\begin{theorem}[Structural transfer theorem, T11]
+\begin{theorem}[One-step structural transfer theorem, T11]
 \label{thm:universality-completeness}
 Let $\mathcal{D}$ be a domain instantiation for the degraded-observation
 safe-control problem in Definition~\ref{def:degraded-observation-safe-control}.
@@ -381,12 +352,10 @@ Assume that, for every step $t$:
     admissible and preserves safety from any current safe state.
 \end{enumerate}
 Then the repaired action produced by the ORIUS kernel satisfies the same
-one-step safety-preservation statement as the battery reference theorem, and
-the episode-level bound
+one-step safety-preservation statement as the battery reference theorem:
 \[
-  \mathbb{E}[V_T] \le \alpha(1-\bar{w})T
+  \Prob[x_{t+1}\in\mathcal{S}\mid \mathcal{H}_t] \ge 1-\alpha.
 \]
-follows by the same aggregation argument as T3.
 \end{theorem}
 
 \begin{proof}
@@ -406,18 +375,46 @@ safety from any current safe state.  Therefore,
   1-\alpha,
 \]
 which is the one-step safety-preservation statement.
+\end{proof}
 
-Summing the corresponding violation indicators across the horizon and applying
-the same linearity-of-expectation argument used in T3 yields the episode-level
-bound with mean reliability $\bar{w}$.  The proof uses only the structural
-obligations above, not battery-specific state coordinates.
+\begin{corollary}[Episode aggregation under explicit per-step budgets]
+\label{cor:t11-aggregation}
+If, in addition, the instantiated domain supplies a predictable per-step risk
+budget sequence $r_t$ satisfying
+\[
+  \Prob[x_{t+1}\notin\mathcal{S}\mid \mathcal{H}_t] \le r_t
+\]
+for all $t$, then
+\[
+  \mathbb{E}[V_T] \le \sum_{t=1}^T r_t.
+\]
+When a particular domain instantiation justifies the battery-style envelope
+$r_t \le \alpha(1-w_t)$, the episode bound
+$\mathbb{E}[V_T] \le \alpha(1-\bar{w})T$ follows immediately.
+\end{corollary}
+
+\begin{proof}
+Let $Z_t=\mathbf{1}\{x_{t+1}\notin\mathcal{S}\}$.  The assumed bound implies
+\[
+  \mathbb{E}[Z_t \mid \mathcal{H}_t] \le r_t.
+\]
+Taking expectations and summing over $t$ gives
+\[
+  \mathbb{E}[V_T]
+  =
+  \sum_{t=1}^T \mathbb{E}[Z_t]
+  \le
+  \sum_{t=1}^T r_t.
+\]
+The battery-style envelope is the special case $r_t \le \alpha(1-w_t)$.
 \end{proof}
 
 T11 is therefore a transfer theorem, not a blanket declaration that every
 evaluated row already satisfies those obligations.  Battery provides the full
 reference proof.  Other domains enter the monograph only when their
 instantiation evidence is strong enough to support the corresponding
-obligations.
+one-step obligations, and the stronger episode-level claim appears only when a
+domain-specific per-step risk budget is justified explicitly.
 
 \subsection{Machine-Checkable Contract Surfaces}
 

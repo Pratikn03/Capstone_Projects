@@ -5,14 +5,15 @@
 This chapter establishes the formal scaffolding for Part~III.  It fixes
 notation that is stable across all theorems, catalogues the eight
 standing assumptions, defines the proof dependency matrix, and sets the
-disciplinary standards that every subsequent proof must satisfy.  The
+disciplinary standards that every subsequent proof must satisfy.  The point of
+the chapter is not to enlarge the formal inventory for its own sake; it is to
+make the later results readable as one coherent theorem program.  The
 flagship DC3S ladder in Chapters~\ref{ch:theorem-oasg}--\ref{ch:temporal-extensions}
-contains eight principal theorems (T1--T8), but it is not the entire theorem
-surface of the dissertation.  Part~I establishes two foundational precursor
-theorems (S1: illusion existence under dropout; S2: informal DC3S guarantee);
-the flagship chapters add 5~lemmas, 10~corollaries, and 7~propositions; and
-16~standing assumptions ground every formal claim.  The integrated surface
-totals \textbf{67 formal items} (18~theorems, 5~lemmas, 7~propositions,
+contains the battery reference theorems (T1--T8), but the full dissertation
+surface is broader: Part~I contributes the precursor results, the later
+chapters add lemmas, propositions, and corollaries, and the monograph
+extension closes with T9--T11.  The integrated surface totals
+\textbf{67 formal items} (18~theorems, 5~lemmas, 7~propositions,
 10~corollaries, 11~definitions, 16~assumptions), all audited in
 Appendix~\ref{app:integrated-theorem-surface-register} and summarised in
 Table~\ref{tab:integrated-theorem-surface-summary} at the end of this chapter.
@@ -137,13 +138,13 @@ because SOC is unchanged (up to model error).
 \end{assumption}
 
 \paragraph{Executable universal kernel.}
-The canonical code surface for these assumptions now lives in
-\path{src/orius/universal_theory/}.  That package exposes typed runtime
-objects for observation packets, reliability assessments,
-observation-consistent state sets, safe-action sets, repair decisions, and
-safety certificates.  The battery-domain proofs remain the reference
-instantiation, but the reusable universal claim now attaches to this typed
-kernel rather than to an untyped adapter narrative.
+These assumptions are not merely declarative.  Their runtime realization is
+concentrated in the typed ORIUS kernel, whose implementation surface records
+observation packets, reliability assessments, observation-consistent state
+sets, safe-action sets, repair decisions, and safety certificates.  The
+battery-domain proofs remain the reference instantiation, but the reusable
+universal claim now attaches to that typed kernel rather than to an informal
+adapter narrative.
 
 \IfFileExists{reports/publication/assumption_code_traceability.tex}{%
   \input{reports/publication/assumption_code_traceability}%
@@ -188,11 +189,11 @@ control-theory question and introduces an explicit new obligation.
 \toprule
 \textbf{Theorem} & \textbf{Question answered} & \textbf{New assumptions} & \textbf{Role} \\
 \midrule
-T9 & Is reliability-aware repair structurally necessary under persistent degradation? & A6$'$ + boundary reachability from A4 & Necessity theorem for degraded-observation control \\
+T9 & Is reliability-aware repair structurally necessary under persistent degradation? & A6$'$ + boundary reachability witness & Necessity theorem for degraded-observation control \\
 \addlinespace
-T10 & Can the $\alpha(1-\bar{w})T$ envelope be improved by a different controller alone? & A5$'$ + conformal coverage condition & Lower-bound scaling theorem \\
+T10 & When does degraded observation force a nontrivial reliability-risk frontier? & Explicit boundary prior and observation indistinguishability assumptions & Stylized lower-bound frontier theorem \\
 \addlinespace
-T11 & Which structural obligations let the battery argument transfer to a new domain? & Explicit soundness, repair-membership, and fallback obligations & Template transfer theorem \\
+T11 & Which structural obligations let the battery safety argument transfer to a new domain? & Explicit soundness, repair-membership, and fallback obligations & One-step structural transfer theorem \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -215,9 +216,9 @@ Observed-state safety can disagree with true-state safety. & S1, T1, T2 & Observ
 \addlinespace
 Ignoring reliability may still look operationally attractive. & T4, T9 & Necessity of reliability-aware repair under persistent degradation & Closed as a structural impossibility result; battery remains the witness surface. \\
 \addlinespace
-The $\alpha(1-\bar{w})T$ envelope may be only a loose upper bound. & T3, T10 & Upper/lower bound pair for degraded-observation risk & Closed up to a universal constant factor. \\
+The $\alpha(1-\bar{w})T$ envelope may be only a loose upper bound. & T3, T10 & Reliability-risk frontier under explicit boundary-indistinguishability assumptions & Closed conservatively on a stylized frontier model; full sharpness remains battery-anchored. \\
 \addlinespace
-Cross-domain portability could be mistaken for equal proof depth. & T11 + tier tables & Explicit structural transfer obligations & Closed at the contract level; empirical discharge remains tiered by domain. \\
+Cross-domain portability could be mistaken for equal proof depth. & T11 + tier tables & Explicit one-step transfer obligations and tiered discharge rules & Closed at the contract level; empirical discharge remains tiered by domain. \\
 \addlinespace
 The AV residual could be misread as a contradiction of the theory. & Universality-completeness chapter (constraint-class mismatch analysis) & Constraint-class mismatch diagnosis & Open promotion gap, but not a contradiction of T1--T11. \\
 \addlinespace
@@ -239,9 +240,12 @@ A critical distinction throughout Part~III:
     additional distributional assumptions.
 \end{description}
 
-The ORIUS theorems are stated under marginal coverage.  Where conditional
-coverage is needed (e.g., for the per-step risk lemma), we explicitly
-invoke the monotone inflation assumption~(A5) as a surrogate.
+The ORIUS theorems are stated under marginal coverage unless a stronger
+conditioning statement is written explicitly into the theorem assumptions.
+The battery reference ladder uses monotone inflation to preserve the base
+coverage surface.  The universal transfer theorem (T11) is kept at the
+one-step level for exactly this reason: it does not silently upgrade
+marginal coverage into a stronger episode-level conditioning claim.
 
 \section{One-Step Versus Multi-Step Claims}
 
@@ -251,9 +255,11 @@ conditionally on the current state.  The core bound
 (Chapter~\ref{ch:core-bound}) aggregates per-step risks into an
 episode-level expectation via linearity of expectation.
 
-Multi-step claims (certificate horizon, graceful degradation) require
-additional assumptions about temporal dependence; these are stated
-explicitly in Chapter~\ref{ch:temporal-extensions}.
+Multi-step claims (certificate horizon, graceful degradation, and any
+episode-level transfer bound) require additional assumptions about temporal
+dependence or explicit per-step risk budgets; these are stated explicitly in
+Chapter~\ref{ch:temporal-extensions} and in the aggregation corollaries that
+follow the relevant one-step theorems.
 
 \section{The Theorem Ladder}
 
