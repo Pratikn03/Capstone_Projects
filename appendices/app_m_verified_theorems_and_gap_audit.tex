@@ -7,8 +7,7 @@
 
 This appendix covers the full T1--T11 theorem set.  T1--T8 form the
 governance-critical battery proof spine; T9--T11 are the monograph
-extension theorems added in
-Chapter~\ref{ch:universality-completeness}.
+extension theorems added in the universality-completeness chapter.
 Appendix~\ref{app:integrated-theorem-surface-register} audits the full
 theorem-like inventory.  The complete set is:
 \begin{enumerate}
@@ -152,7 +151,7 @@ the per-window violation probability.
 
 \textbf{Code anchor.} No dedicated module; the battery
 \texttt{cpsbench\_iot/runner.py} provides the reference witness;
-the proof is in Chapter~\ref{ch:universality-completeness},
+the proof is in the universality-completeness chapter,
 Section~\ref{sec:t9-universal-impossibility}.
 
 \subsection{Theorem 10: Information-Theoretic Lower Bound}
@@ -228,6 +227,30 @@ T11 Universality Completeness & Template proof & Yes & Yes & Structural transfer
 \bottomrule
 \end{tabular}
 \end{table}
+
+\section{Remaining Claim-Boundary Gaps}
+
+The audit above separates proof completeness from promotion completeness.
+The remaining gaps that still bound the dissertation's final claim are
+therefore explicit:
+\begin{enumerate}
+  \item \textbf{Autonomous vehicles.} The current AV row is blocked by the
+    constraint-class mismatch analysed in
+    the universality-completeness chapter: one-dimensional acceleration
+    repair does not discharge the current-step headway metric.  This is a
+    promotion gap, not a contradiction of T1--T11.
+  \item \textbf{Navigation.} The navigation row remains shadow-synthetic
+    because the typed kernel is exercised only on a bounded synthetic surface.
+    It therefore contributes portability evidence, not proof-validating replay
+    evidence.
+  \item \textbf{Aerospace.} The aerospace row remains experimental because the
+    adapter and replay path execute, but the promotion contract and defended
+    soundness surface are not yet closed.
+\end{enumerate}
+
+These are the remaining thesis-level gaps after the monograph theorem pass.
+They do not weaken the battery proof witness; they bound how far the transfer
+claim is currently allowed to extend.
 
 \section{Locked Empirical Evidence}
 

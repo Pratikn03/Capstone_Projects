@@ -5,23 +5,30 @@ The central finding of this thesis is concrete: when telemetry degrades,
 a controller can satisfy its observed constraints while violating the true
 physical envelope of the system.  This hidden gap---the
 Observation-Action Safety Gap (OASG)---is measurable, operationally
-meaningful, and correctable.  ORIUS demonstrates this across six peer cyber-physical domains.  Three
-proof-validated domains---energy management, industrial process control,
-and medical monitoring---achieve zero true-state violations under DC3S.
-The navigation domain provides simulation-backed portability evidence
-(TSVR~0.69\%), while the autonomous vehicle and aerospace domains are
-classified as proof-candidate and experimental surfaces respectively.
+meaningful, and correctable.  The dissertation's final claim is now
+sharper than a generic ``six-domain framework'' result: ORIUS isolates a
+domain-agnostic repair-and-certify kernel for safe control under degraded
+observation, proves that kernel completely on the battery reference surface,
+and then carries it across a tiered evidence ladder whose rows do not share
+the same proof burden.
 
-\section{Universal Framework Outcome}
+\section{Kernel-Level Outcome}
 
-The ORIUS framework demonstrates that the OASG phenomenon is not a
-battery-specific artifact.  It is a structural consequence of any
-closed-loop controller that optimises against degraded telemetry.  The
-five-stage DC3S pipeline---Detect, Calibrate, Constrain, Shield,
-Certify---operates on domain-abstract objects (observation vector,
-reliability score, conformal region, feasible set, projected action) and
-therefore transfers to any CPS for which a \texttt{DomainAdapter} can be
-implemented.
+ORIUS shows that the OASG phenomenon is not a battery-specific artefact.
+It is a structural consequence of closed-loop control under degraded
+telemetry.  The dissertation now states that result at three levels:
+\begin{enumerate}
+  \item \textbf{Battery proof witness (T1--T8).} The battery chapters prove
+    gap existence, one-step safety preservation, the core bound, the
+    no-free-safety barrier, and the temporal extensions on one complete
+    reference surface.
+  \item \textbf{Monograph extension (T9--T11).} The universality chapter adds
+    a necessity theorem, a lower-bound theorem, and a typed structural
+    transfer theorem.
+  \item \textbf{Tiered cross-domain instantiation.} The shared kernel is then
+    exercised across defended, proof-candidate, shadow-synthetic, and
+    experimental rows without claiming equal proof closure.
+\end{enumerate}
 
 \section{Domain Coverage and Empirical Results}
 
@@ -71,14 +78,14 @@ established in Part~I before the formal ladder:
 \end{itemize}
 
 The eight principal theorems of the formal DC3S ladder (T1--T8) are then
-stated, proved, and connected to code artifacts in
-Chapters~\ref{ch:theorem-oasg}--\ref{ch:temporal-extensions}.
-The Domain Instantiation subsections in each of those chapters demonstrate
-that no battery-specific assumption is required: each abstract object
-($z_t$, $w_t$, $C_t^{\text{RAC}}$, $\mathcal{A}_t$, $a_t^{\text{safe}}$,
-$v(\cdot)$) maps directly to its domain-specific counterpart in AV,
-industrial, healthcare, and aerospace.  All 18 theorems pass the integrated
-theorem gate with locked code anchors and artifact traceability
+stated, proved, and connected to code artefacts in
+Chapters~\ref{ch:theorem-oasg}--\ref{ch:temporal-extensions}.  The final
+monograph layer adds T9--T11: observation-aware control is structurally
+necessary under persistent degradation, the $\alpha(1-\bar{w})T$ envelope has
+the correct first-order scaling law, and transfer beyond battery depends on
+explicit structural obligations rather than an informal adapter story.
+The integrated theorem gate therefore covers both the battery ladder and the
+monograph extension surface with locked code anchors and artefact traceability
 (see \texttt{reports/publication/integrated\_theorem\_gate.csv}).
 
 \section{Final Boundary}
@@ -100,13 +107,18 @@ that:
     the proof-validated peers; AV is proof-candidate; aerospace is
     experimental; and navigation provides simulation-backed portability
     evidence.
+  \item The remaining open gaps are explicit and localized rather than
+    foundational: AV still needs a larger repair surface, navigation still
+    lacks locked real telemetry, and aerospace still lacks a defended
+    promotion contract.
 \end{enumerate}
 
 \section{Closing Statement}
 
-The ORIUS thesis ends where a rigorous framework contribution should: with
-a locked, traceable, battery-anchored tiered safety package, with
-industrial and healthcare as proof-validated peers, AV as proof-candidate,
-aerospace as experimental, navigation as simulation-backed portability
-evidence, and deeper domain-specific validation still required at each
-deployment site.
+The dissertation ends at a defensible control-theory boundary: battery is the
+full proof witness, T9--T11 make the universal kernel explicit, industrial and
+healthcare defend transfer under the current evidence lock, and the remaining
+rows are kept at lower tiers until their open structural gaps are discharged.
+That is the intended thesis-level result: one precise degraded-observation
+safety kernel, one complete reference proof surface, and one honest
+cross-domain frontier rather than six domains with equal guarantees.

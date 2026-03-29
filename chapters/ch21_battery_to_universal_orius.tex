@@ -15,8 +15,8 @@ one typed runtime contract whose strongest theorem-to-artifact lineage
 remains anchored to the battery reference surface.
 
 This is an evidence chapter, not a second proof chapter.  Its role in the
-monograph is to show that the control objects isolated in
-Chapter~\ref{ch:universality-completeness}---observation packets,
+monograph is to show that the control objects isolated in the
+universality-completeness chapter---observation packets,
 reliability assessments, observation-consistent state sets, safe-action
 sets, repair maps, and certificates---instantiate coherently beyond the
 battery domain.  The proof burden remains battery; the non-battery rows are
@@ -234,13 +234,12 @@ because the current promotion contract is not yet cleared.
 The root cause is a structural constraint-class mismatch: the headway
 constraint $\mathrm{gap}_t \ge d_{\min} + \tau v_t$ is evaluated on the
 \emph{current} plant state, while the DC3S shield repairs the
-\emph{next-step} acceleration.
-Proposition~\ref{prop:constraint-class-mismatch}
-(Chapter~\ref{ch:universality-completeness}) formalises why one-dimensional
-action-space repair is insufficient here and identifies three promotion
-paths: augmented state repair, TTC reformulation, or a predictive entry
-barrier.  Until one of those is instantiated, the 2.78\% AV residual
-TSVR is a structural artefact, not a conformal-coverage shortfall.
+\emph{next-step} acceleration.  The universality-completeness chapter
+formalises why one-dimensional action-space repair is insufficient here and
+identifies three promotion paths: augmented state repair, TTC
+reformulation, or a predictive entry barrier.  Until one of those is
+instantiated, the 2.78\% AV residual TSVR is a structural artefact, not a
+conformal-coverage shortfall.
 Navigation provides simulation-backed portability evidence, and aerospace
 remains experimental pending promotion-gate completion.
 
@@ -249,6 +248,33 @@ remains experimental pending promotion-gate completion.
 }{%
   \input{../reports/universal_orius_validation/tbl_domain_proof_status}%
 }
+
+\subsection{How the Evidence Tiers Map to T11}
+
+The evidence labels in Table~\ref{tab:domain-validation-summary} are not
+marketing tiers; they are shorthand for how much of the T11 transfer burden
+is currently discharged on each row.
+
+\begin{table}[htbp]
+\centering
+\caption{Interpretation of evidence tiers through the T11 transfer obligations.}
+\label{tab:t11-tier-interpretation}
+\begin{tabular}{p{2.6cm}p{3.9cm}p{3.5cm}p{1.9cm}}
+\toprule
+\textbf{Tier / row} & \textbf{What is discharged} & \textbf{What is still open} & \textbf{Resulting status} \\
+\midrule
+Battery (reference) & All four T11 obligations are proved on the reference surface: uncertainty-set coverage, safe-action soundness, repair membership, and safe fallback. & None within the dissertation claim boundary. & Full proof witness \\
+\addlinespace
+Industrial and healthcare (proof-validated) & Locked replay, software-in-loop pass, material TSVR reduction, and typed-kernel execution defend the transfer obligations for the shipped adapters. & No new domain-specific proof ladder beyond the defended instantiation surface. & Defended instantiations \\
+\addlinespace
+Autonomous vehicles (proof-candidate) & Coverage, repair, and fallback logic execute under locked replay; the shared kernel still runs as designed. & The current-step headway metric does not discharge the safe-action soundness obligation for one-dimensional acceleration repair. & Promotion blocked by constraint-class mismatch \\
+\addlinespace
+Navigation (shadow-synthetic) & The typed contract executes and the portability surface is visible under a synthetic closed-loop environment. & No locked real telemetry and no proof-validating replay row. & Portability evidence only \\
+\addlinespace
+Aerospace (experimental) & Adapter and replay path execute on the current experimental surface. & Promotion contract, defended soundness surface, and stronger data boundary remain open. & Experimental evidence only \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Results}
 
@@ -342,6 +368,11 @@ These results support four monograph-level conclusions:
     aerospace remains experimental.  The common result is a reusable
     degraded-observation repair contract under one protocol, not six domains
     with equivalent proof depth.
+  \item \textbf{Open gaps are localized rather than diffuse.} The remaining
+    thesis-level gaps are identifiable and structural: AV needs a larger
+    repair surface, navigation needs locked real telemetry, and aerospace
+    needs a defended promotion contract.  None of these open items undermines
+    the battery proof witness or the typed transfer kernel itself.
   \item \textbf{Overhead is negligible.} Sub-millisecond pipeline latency
     (P95~$<\!0.1$~ms across all domains) makes ORIUS suitable for
     fast-control-loop applications (AV at 1~Hz, industrial at hourly cadence,

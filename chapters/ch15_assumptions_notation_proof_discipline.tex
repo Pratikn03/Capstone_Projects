@@ -197,6 +197,35 @@ T11 & Which structural obligations let the battery argument transfer to a new do
 \end{tabular}
 \end{table}
 
+\subsection{Gap-Closure Map}
+
+The theorem program is easier to audit if each thesis-level gap claim is tied
+to the theorem that closes it and to the residual boundary that still
+remains.  Table~\ref{tab:gap-closure-map} makes that dependency explicit.
+
+\begin{table}[htbp]
+\centering
+\caption{From gap statement to theorem closure and current claim boundary.}
+\label{tab:gap-closure-map}
+\begin{tabular}{p{3.0cm}p{2.3cm}p{3.1cm}p{3.6cm}}
+\toprule
+\textbf{Gap statement} & \textbf{Closing result} & \textbf{Formal object introduced} & \textbf{Current status} \\
+\midrule
+Observed-state safety can disagree with true-state safety. & S1, T1, T2 & Observation-consistent state set and repaired safe action & Closed on the battery reference surface. \\
+\addlinespace
+Ignoring reliability may still look operationally attractive. & T4, T9 & Necessity of reliability-aware repair under persistent degradation & Closed as a structural impossibility result; battery remains the witness surface. \\
+\addlinespace
+The $\alpha(1-\bar{w})T$ envelope may be only a loose upper bound. & T3, T10 & Upper/lower bound pair for degraded-observation risk & Closed up to a universal constant factor. \\
+\addlinespace
+Cross-domain portability could be mistaken for equal proof depth. & T11 + tier tables & Explicit structural transfer obligations & Closed at the contract level; empirical discharge remains tiered by domain. \\
+\addlinespace
+The AV residual could be misread as a contradiction of the theory. & Universality-completeness chapter (constraint-class mismatch analysis) & Constraint-class mismatch diagnosis & Open promotion gap, but not a contradiction of T1--T11. \\
+\addlinespace
+Navigation and aerospace rows could be over-read as proof peers. & Claim-boundary discipline in Chapter~\ref{ch:battery-to-orius} & Evidence-tier interpretation & Intentionally outside the proof-validating surface. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{Marginal Versus Conditional Coverage}
 
 A critical distinction throughout Part~III:
@@ -282,10 +311,12 @@ that a careless proof might exhibit:
 \section{Integrated Theorem Surface Summary}
 
 Table~\ref{tab:integrated-theorem-surface-summary} enumerates the full
-formal surface of the dissertation.  The ten unique theorems (S1, S2,
-T1--T8) and their appendix restatements (C.1--C.9) all pass the
-integrated theorem gate: source file exists, code anchor verified,
-artifact locked, and appendix mapping confirmed.
+formal surface of the dissertation.  That count now includes the
+foundational precursor results (S1--S2), the battery proof ladder (T1--T8),
+and the monograph extension theorems (T9--T11).  The integrated theorem gate
+still enforces the same minimum standard for every item: source file exists,
+code anchor verified, artifact locked when applicable, and appendix mapping
+confirmed.
 
 \IfFileExists{reports/publication/theorem_surface_summary.tex}{%
   \input{reports/publication/theorem_surface_summary}%
