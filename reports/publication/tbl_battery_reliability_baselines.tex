@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Locked battery controller-family comparison aggregated from \texttt{reports/publication/dc3s\_main\_table.csv} across six telemetry-fault scenarios and five seeds. The comparison is limited to replay-backed controllers that are actually promoted in the locked artifact family; weighted and Mondrian dispatch rows are not synthesized.}
+\label{tab:battery_reliability_controller_compare}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.05}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrrrrr}
+\toprule
+Controller & True TSVR (\%) & Controller TSVR (\%) & PICP@90 & Width (MW) & Repair (\%) & Cost (\$M) \\
+\midrule
+ORIUS FTIT & 0.00 & 0.00 & 0.972 & 3906.5 & 2.80 & 394.18 \\
+ORIUS Wrapped & 0.00 & 0.00 & 0.884 & 559.9 & 0.00 & 393.98 \\
+Adaptive Conformal + Repair & 0.00 & 0.00 & 0.963 & 2824.3 & 1.39 & 394.16 \\
+Deterministic LP & 3.91 & 3.91 & 0.883 & 503.1 & 0.00 & 394.06 \\
+Robust Fixed Interval & 25.58 & 25.58 & 0.883 & 503.1 & 0.00 & 393.98 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}

@@ -1,0 +1,152 @@
+{
+  "deltas_vs_reference": {
+    "adaptive_conformal_repair": {
+      "delta_coverage_90": -0.009126933333333365,
+      "delta_expected_cost_usd": -26346.02456229925,
+      "delta_mean_interval_width_mw": -1082.2953133000005,
+      "delta_observed_state_violation_rate": 0.0,
+      "delta_repair_rate": -0.014087499999999996,
+      "delta_true_state_violation_rate": 0.0
+    },
+    "deterministic_no_repair": {
+      "delta_coverage_90": -0.08829370000000003,
+      "delta_expected_cost_usd": -123582.65741944313,
+      "delta_mean_interval_width_mw": -3403.4169438,
+      "delta_observed_state_violation_rate": 0.03908723333333333,
+      "delta_repair_rate": -0.027976233333333333,
+      "delta_true_state_violation_rate": 0.03908723333333333
+    },
+    "orius_repair": {
+      "delta_coverage_90": 0.0,
+      "delta_expected_cost_usd": 0.0,
+      "delta_mean_interval_width_mw": 0.0,
+      "delta_observed_state_violation_rate": 0.0,
+      "delta_repair_rate": 0.0,
+      "delta_true_state_violation_rate": 0.0
+    },
+    "orius_wrapped": {
+      "delta_coverage_90": -0.08750010000000008,
+      "delta_expected_cost_usd": -198262.57956904173,
+      "delta_mean_interval_width_mw": -3346.6267775333336,
+      "delta_observed_state_violation_rate": 0.0,
+      "delta_repair_rate": -0.027976233333333333,
+      "delta_true_state_violation_rate": 0.0
+    },
+    "robust_fixed_interval": {
+      "delta_coverage_90": -0.08829370000000003,
+      "delta_expected_cost_usd": -204150.86510574818,
+      "delta_mean_interval_width_mw": -3403.4169438,
+      "delta_observed_state_violation_rate": 0.25575380000000003,
+      "delta_repair_rate": -0.027976233333333333,
+      "delta_true_state_violation_rate": 0.25575380000000003
+    }
+  },
+  "metrics_by_method": {
+    "adaptive_conformal_repair": {
+      "coverage_90": 0.9625000666666665,
+      "display_name": "Adaptive Conformal + Repair",
+      "expected_cost_musd": 394.1565306681136,
+      "expected_cost_usd": 394156530.6681136,
+      "family": "adaptive conformal",
+      "hidden_gap_rate": 0.0,
+      "mean_interval_width_mw": 2824.2524354999996,
+      "method_id": "adaptive_conformal_repair",
+      "n_runs": 30,
+      "observed_state_violation_rate": 0.0,
+      "repair_enabled": true,
+      "repair_rate": 0.013888733333333337,
+      "source_controller": "aci_conformal",
+      "true_state_violation_rate": 0.0
+    },
+    "deterministic_no_repair": {
+      "coverage_90": 0.8833332999999999,
+      "display_name": "Deterministic LP",
+      "expected_cost_musd": 394.05929403525647,
+      "expected_cost_usd": 394059294.03525645,
+      "family": "point forecast",
+      "hidden_gap_rate": 0.0,
+      "mean_interval_width_mw": 503.1308050000001,
+      "method_id": "deterministic_no_repair",
+      "n_runs": 30,
+      "observed_state_violation_rate": 0.03908723333333333,
+      "repair_enabled": false,
+      "repair_rate": 0.0,
+      "source_controller": "deterministic_lp",
+      "true_state_violation_rate": 0.03908723333333333
+    },
+    "orius_repair": {
+      "coverage_90": 0.9716269999999999,
+      "display_name": "ORIUS FTIT",
+      "expected_cost_musd": 394.1828766926759,
+      "expected_cost_usd": 394182876.6926759,
+      "family": "repair-and-certify",
+      "hidden_gap_rate": 0.0,
+      "mean_interval_width_mw": 3906.5477488,
+      "method_id": "orius_repair",
+      "n_runs": 30,
+      "observed_state_violation_rate": 0.0,
+      "repair_enabled": true,
+      "repair_rate": 0.027976233333333333,
+      "source_controller": "dc3s_ftit",
+      "true_state_violation_rate": 0.0
+    },
+    "orius_wrapped": {
+      "coverage_90": 0.8841268999999998,
+      "display_name": "ORIUS Wrapped",
+      "expected_cost_musd": 393.98461411310683,
+      "expected_cost_usd": 393984614.11310685,
+      "family": "repair-and-certify",
+      "hidden_gap_rate": 0.0,
+      "mean_interval_width_mw": 559.9209712666667,
+      "method_id": "orius_wrapped",
+      "n_runs": 30,
+      "observed_state_violation_rate": 0.0,
+      "repair_enabled": true,
+      "repair_rate": 0.0,
+      "source_controller": "dc3s_wrapped",
+      "true_state_violation_rate": 0.0
+    },
+    "robust_fixed_interval": {
+      "coverage_90": 0.8833332999999999,
+      "display_name": "Robust Fixed Interval",
+      "expected_cost_musd": 393.97872582757014,
+      "expected_cost_usd": 393978725.82757014,
+      "family": "static interval",
+      "hidden_gap_rate": 0.0,
+      "mean_interval_width_mw": 503.1308050000001,
+      "method_id": "robust_fixed_interval",
+      "n_runs": 30,
+      "observed_state_violation_rate": 0.25575380000000003,
+      "repair_enabled": false,
+      "repair_rate": 0.0,
+      "source_controller": "robust_fixed_interval",
+      "true_state_violation_rate": 0.25575380000000003
+    }
+  },
+  "notes": [
+    "Summary derived from the real locked battery controller-family artifact reports/publication/dc3s_main_table.csv.",
+    "The promoted replay-backed comparison surface currently contains deterministic LP, robust fixed interval, adaptive conformal with repair, and the two ORIUS/DC3S variants.",
+    "Separate weighted or Mondrian dispatch controllers are not synthesized here because they are not present as promoted replay-backed rows in the locked artifact family.",
+    "observed_state_violation_rate is the controller-side violation_rate emitted by the CPSBench battery replay harness."
+  ],
+  "ordered_methods": [
+    "orius_repair",
+    "orius_wrapped",
+    "adaptive_conformal_repair",
+    "deterministic_no_repair",
+    "robust_fixed_interval"
+  ],
+  "outputs": {
+    "figure_png": "reports/publication/fig_battery_reliability_baselines.png",
+    "paper_figure_png": "paper/assets/figures/fig59_battery_reliability_baselines.png",
+    "paper_table_tex": "paper/assets/tables/generated/tbl_battery_reliability_baselines.tex",
+    "summary_csv": "reports/publication/battery_reliability_baselines_summary.csv",
+    "summary_json": "reports/publication/battery_reliability_baselines_summary.json",
+    "table_tex": "reports/publication/tbl_battery_reliability_baselines.tex"
+  },
+  "reference_method": "orius_repair",
+  "source_artifact": "reports/publication/dc3s_main_table.csv",
+  "source_artifact_sha256": "dc7ee5123fbd1c618c10d8302d01978d86f0a55326e16924305a6f0f1e8dfc89",
+  "source_family": "locked_battery_controller_table",
+  "study": "battery_reliability_baselines"
+}

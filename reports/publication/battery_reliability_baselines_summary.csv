@@ -1,0 +1,6 @@
+method_id,display_name,source_controller,family,repair_enabled,n_runs,true_state_violation_rate,observed_state_violation_rate,hidden_gap_rate,coverage_90,mean_interval_width_mw,repair_rate,expected_cost_usd,expected_cost_musd
+orius_repair,ORIUS FTIT,dc3s_ftit,repair-and-certify,True,30,0.000000,0.000000,0.000000,0.971627,3906.547749,0.027976,394182876.692676,394.182877
+orius_wrapped,ORIUS Wrapped,dc3s_wrapped,repair-and-certify,True,30,0.000000,0.000000,0.000000,0.884127,559.920971,0.000000,393984614.113107,393.984614
+adaptive_conformal_repair,Adaptive Conformal + Repair,aci_conformal,adaptive conformal,True,30,0.000000,0.000000,0.000000,0.962500,2824.252435,0.013889,394156530.668114,394.156531
+deterministic_no_repair,Deterministic LP,deterministic_lp,point forecast,False,30,0.039087,0.039087,0.000000,0.883333,503.130805,0.000000,394059294.035256,394.059294
+robust_fixed_interval,Robust Fixed Interval,robust_fixed_interval,static interval,False,30,0.255754,0.255754,0.000000,0.883333,503.130805,0.000000,393978725.827570,393.978726
