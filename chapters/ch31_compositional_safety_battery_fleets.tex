@@ -3,7 +3,9 @@
 
 This chapter keeps the thesis inside the battery domain while pushing beyond
 the single-asset case.  The current locked extension is a two-battery shared
-transformer study, packaged through
+transformer study, executed through the canonical multi-agent scenario and
+packaged through
+\path{reports/fleet/protocol_compare.csv},
 \path{reports/fleet/fleet_composition_two_battery.csv} and
 \path{reports/fleet/two_battery_composition_metrics.csv}.
 
@@ -30,14 +32,22 @@ The fleet extension keeps the ORIUS battery logic local to each unit:
 This is the battery-operational meaning of composition: preserve local safety
 while making sure the shared export path never becomes the new hidden gap.
 
-\section{Locked Two-Battery Stress Output}
+\section{Locked Two-Battery Composition Surface}
 
-The present wrapper-generated fleet metrics report:
+The fleet wrapper now uses one executable source of truth:
+\texttt{src/orius/multi\_agent/scenarios.py}.  The chapter-facing script
+\texttt{scripts/run\_two\_battery\_fleet.py} runs that scenario, keeps the
+step log under the historical fleet filename for compatibility, and derives
+the summary metrics directly from the protocol comparison.  It no longer mixes
+the chapter claims with the separate curtailment-only wrapper path.
+
+The resulting bounded summary reports:
 
 \begin{itemize}
-  \item 56 joint over-limit steps,
-  \item a maximum curtailment of 10.0\,MW, and
-  \item 4513.97\,MWh of useful work preserved.
+  \item 24 independent joint-violation steps,
+  \item 0 centralized joint-violation steps,
+  \item 0 distributed joint-violation steps, and
+  \item 1920\,MWh of useful work under coordination.
 \end{itemize}
 
 These values come directly from
@@ -51,9 +61,10 @@ These values come directly from
 \toprule
 \textbf{Metric} & \textbf{Value} & \textbf{Battery consequence} \\
 \midrule
-Joint over-limit steps & 56 & Shared export stress appears repeatedly \\
-Max curtailment (MW) & 10.0 & Coordination trims peak aggregate dispatch \\
-Useful work preserved (MWh) & 4513.97 & Safety does not force total shutdown \\
+Independent joint-violation steps & 24 & Local certificates do not compose at the shared feeder \\
+Centralized joint-violation steps & 0 & Coordinated ORIUS repair closes the two-battery gap here \\
+Distributed joint-violation steps & 0 & Negotiated coordination matches centralized closure here \\
+Coordinated useful work (MWh) & 1920 & Safety repair does not force total shutdown in this bounded case \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -76,10 +87,11 @@ preserving the same useful work output.
 
 The important battery result is not that the fleet chapter is ``finished'' as
 a full theorem-backed composition theory.  It is that the repo now contains a
-locked, chapter-facing composition run showing exactly where shared
-infrastructure stress emerges and how much useful work remains after
-coordination.  That closes a practical gap between single-battery safety and
-fleet operation without pretending that all composition questions are solved.
+locked, chapter-facing composition run showing exactly where local
+certificate composition fails and how coordination removes those feeder
+violations without reducing useful work in the present two-battery stress
+case.  That closes a practical gap between single-battery safety and fleet
+operation without pretending that all composition questions are solved.
 
 \section{What Remains Open}
 
@@ -87,8 +99,8 @@ The present fleet package is intentionally narrow:
 
 \begin{itemize}
   \item It is a two-battery study, not a heterogeneous multi-asset proof.
-  \item It reports aggregate stress and preserved work, not a full fairness or
-    degradation-allocation frontier.
+  \item It reports one shared-feeder counterexample and its coordinated repair,
+    not a full fairness or degradation-allocation frontier.
   \item It motivates the quality-score gossip and coordinated fallback ideas,
     but does not yet prove their optimality.
 \end{itemize}
@@ -96,8 +108,9 @@ The present fleet package is intentionally narrow:
 \section{Summary}
 
 The battery thesis now includes a real fleet-composition artifact rather than
-only a conceptual extension.  The locked two-battery study shows repeated
-shared-transformer stress, bounded curtailment, and non-trivial useful work
-preservation.  For the battery book, that is the correct claim: composition
-has moved from future-work rhetoric into an auditable battery extension, while
-still remaining narrower than a full universal coordination theory.
+only a conceptual extension.  The locked two-battery study shows a concrete
+non-composition counterexample, zero-violation coordinated repair, and
+preserved useful work on the same executable scenario surface.  For the
+battery book, that is the correct claim: composition has moved from
+future-work rhetoric into an auditable battery extension, while still
+remaining narrower than a full universal coordination theory.

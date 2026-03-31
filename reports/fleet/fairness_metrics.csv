@@ -1,0 +1,4 @@
+protocol,fairness,margin_quality,degradation_allocation_quality,joint_violations,useful_work_mwh
+independent,1.0,0.0,0.0,24,1920.0
+centralized,1.0,1.0,1.0,0,1920.0
+distributed,1.0,1.0,1.0,0,1920.0

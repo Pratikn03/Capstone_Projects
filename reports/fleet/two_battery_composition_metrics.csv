@@ -1,2 +1,2 @@
-joint_over_limit_steps,max_curtailed_mw,useful_work_preserved_mwh
-56,10.0,4513.969528893013
+n_steps,feeder_capacity_mw,proposal_per_agent_mw,total_proposed_discharge_mw,independent_joint_violation_steps,centralized_joint_violation_steps,distributed_joint_violation_steps,centralized_violation_reduction_steps,distributed_violation_reduction_steps,independent_useful_work_mwh,centralized_useful_work_mwh,distributed_useful_work_mwh,centralized_margin_quality,distributed_margin_quality
+24,80.0,60.0,120.0,24,0,0,24,24,1920.0,1920.0,1920.0,1.0,1.0

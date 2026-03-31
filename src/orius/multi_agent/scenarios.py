@@ -196,3 +196,44 @@ def run_transformer_capacity_scenario(
                 })
 
     return results
+
+
+def summarize_transformer_capacity_results(
+    results: Mapping[str, Mapping[str, Any]],
+    *,
+    feeder_capacity_mw: float,
+    proposal_per_agent_mw: float,
+    n_steps: int,
+) -> dict[str, float | int]:
+    """Build a bounded chapter-facing summary from scenario outputs.
+
+    The summary intentionally stays close to what the executable scenario can
+    support directly: one two-battery, shared-feeder counterexample with three
+    coordination protocols. It does not claim optimality or general N-agent
+    composition.
+    """
+
+    independent = results.get("independent", {})
+    centralized = results.get("centralized", {})
+    distributed = results.get("distributed", {})
+
+    independent_joint = int(independent.get("joint_violations", 0))
+    centralized_joint = int(centralized.get("joint_violations", 0))
+    distributed_joint = int(distributed.get("joint_violations", 0))
+
+    return {
+        "n_steps": int(n_steps),
+        "feeder_capacity_mw": float(feeder_capacity_mw),
+        "proposal_per_agent_mw": float(proposal_per_agent_mw),
+        "total_proposed_discharge_mw": float(2.0 * proposal_per_agent_mw),
+        "independent_joint_violation_steps": independent_joint,
+        "centralized_joint_violation_steps": centralized_joint,
+        "distributed_joint_violation_steps": distributed_joint,
+        "centralized_violation_reduction_steps": independent_joint - centralized_joint,
+        "distributed_violation_reduction_steps": independent_joint - distributed_joint,
+        "independent_useful_work_mwh": float(independent.get("useful_work_mwh", 0.0)),
+        "centralized_useful_work_mwh": float(centralized.get("useful_work_mwh", 0.0)),
+        "distributed_useful_work_mwh": float(distributed.get("useful_work_mwh", 0.0)),
+        "centralized_margin_quality": float(centralized.get("margin_quality", 0.0)),
+        "distributed_margin_quality": float(distributed.get("margin_quality", 0.0)),
+    }

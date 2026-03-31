@@ -74,6 +74,27 @@ def main() -> None:
                 "useful_work_mwh": data.get("useful_work_mwh", 0),
             })
 
+    # Sync publication copy (same schema as protocol_compare)
+    pub_dir = Path("reports/publication")
+    pub_dir.mkdir(parents=True, exist_ok=True)
+    pub_scenario_path = pub_dir / "multi_agent_transformer_scenario.csv"
+    with open(pub_scenario_path, "w", newline="") as f:
+        w = csv.DictWriter(
+            f,
+            fieldnames=["protocol", "joint_violations", "local_violations", "useful_work_mwh", "fairness", "margin_quality", "degradation_allocation_quality"],
+        )
+        w.writeheader()
+        for proto, data in results.items():
+            w.writerow({
+                "protocol": proto,
+                "joint_violations": data.get("joint_violations", 0),
+                "local_violations": data.get("local_violations", 0),
+                "useful_work_mwh": data.get("useful_work_mwh", 0),
+                "fairness": data.get("fairness", 0),
+                "margin_quality": data.get("margin_quality", 0),
+                "degradation_allocation_quality": data.get("degradation_allocation_quality", data.get("margin_quality", 0)),
+            })
+
     print("=== Multi-Agent Non-Composition Counterexample ===")
     for proto, s in summary.items():
         print(f"  {proto:30s} | violations={s['joint_violations']} "
