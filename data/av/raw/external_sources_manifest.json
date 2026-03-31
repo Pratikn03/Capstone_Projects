@@ -1,0 +1,29 @@
+{
+  "domain": "av",
+  "canonical_source": "waymo_open_motion",
+  "companion_sources": [
+    "argoverse2_motion",
+    "argoverse2_sensor"
+  ],
+  "external_env_var": "ORIUS_EXTERNAL_DATA_ROOT",
+  "expected_layout": {
+    "waymo_open_motion": "waymo_open_motion/",
+    "argoverse2_motion": "argoverse2_motion/",
+    "argoverse2_sensor": "argoverse2_sensor/"
+  },
+  "canonical_processed_output": "data/av/processed/av_trajectories_orius.csv",
+  "required_contract_columns": [
+    "vehicle_id",
+    "step",
+    "position_m",
+    "speed_mps",
+    "speed_limit_mps",
+    "lead_position_m",
+    "ts_utc"
+  ],
+  "notes": [
+    "Full raw payloads stay outside git.",
+    "Prepared tabular exports derived from official raw files may be placed under the external source directories.",
+    "Synthetic AV data remains available only by explicit request."
+  ]
+}

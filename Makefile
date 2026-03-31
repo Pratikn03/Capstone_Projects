@@ -1,4 +1,4 @@
-.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark
+.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets navigation-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark
 
 PYTHON ?= $(if $(wildcard .venv/bin/python3),.venv/bin/python3,python3)
 PROFILE ?= standard
@@ -6,6 +6,7 @@ PROOF_SEEDS ?= 1
 PROOF_HORIZON ?= 24
 # Canonical longform paper build, not the retired 300+ page thesis surface.
 PAPER_MIN_PAGES ?= 150
+ORIUS_AV_SOURCE ?= waymo_motion
 
 setup:
 	$(PYTHON) -m venv .venv && . .venv/bin/activate && .venv/bin/pip install -r requirements.lock.txt
@@ -386,9 +387,13 @@ publish-audit-isolated:
 analyze-artifact:
 	$(PYTHON) scripts/analyze_agent_artifact.py
 
-# Download AV datasets for ORIUS vehicles extension (synthetic by default)
+# Build the canonical AV processed dataset from the configured source.
 av-datasets:
-	$(PYTHON) scripts/download_av_datasets.py --source synthetic
+	$(PYTHON) scripts/download_av_datasets.py --source $(ORIUS_AV_SOURCE)
+
+# Build the navigation processed dataset from external KITTI raw data.
+navigation-datasets:
+	$(PYTHON) scripts/build_navigation_real_dataset.py
 
 # Download Industrial datasets (CCPP or synthetic)
 industrial-datasets:
@@ -402,7 +407,8 @@ healthcare-datasets:
 aerospace-datasets:
 	$(PYTHON) scripts/download_aerospace_datasets.py
 
-# Download all multi-domain datasets (AV + Industrial + Healthcare + Aerospace)
+# Download all multi-domain datasets (AV + Industrial + Healthcare + Aerospace).
+# Navigation remains opt-in because it requires external KITTI raw data.
 multi-domain-datasets: av-datasets industrial-datasets healthcare-datasets aerospace-datasets
 
 # Build features for all multi-domain datasets (run after multi-domain-datasets)
