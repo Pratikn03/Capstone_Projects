@@ -2,87 +2,115 @@
 \label{ch:graceful-degradation}
 
 This chapter upgrades the battery extension from a single fallback trace to a
-four-policy comparison.  The theorem-level object remains the graceful
-degradation result in Chapter~\ref{ch:temporal-extensions}; the goal here is
-to show what the current locked battery evidence says about prolonged
-blindness once several concrete fallback policies are placed side by side.
+four-policy benchmark over prolonged blindness.  The theorem-level object
+remains the graceful-degradation result in
+Chapter~\ref{ch:temporal-extensions}; the task here is narrower and empirical:
+show what the current locked battery benchmark actually says once several
+concrete fallback policies are evaluated on one common blackout surface.
 
 \section{Why Prolonged Blindness Matters}
 
 When telemetry reliability~$w_t$ falls below a minimum threshold
-$w_{\min}$, the DC3S shield cannot guarantee safety of any non-trivial
-dispatch action.  A battery runtime then faces a policy choice:
+$w_{\min}$, the DC3S shield cannot defend arbitrary non-trivial dispatch.
+A battery runtime then faces a concrete policy choice:
 
 \begin{enumerate}
   \item continue blindly,
   \item shut down immediately,
   \item ramp down conservatively, or
-  \item execute an explicit optimized graceful-fallback policy.
+  \item execute an optimized graceful fallback.
 \end{enumerate}
 
-\section{Four-Policy Battery Comparison}
+\section{Canonical Benchmark Surface}
 
-The locked comparison artifact is
-\texttt{reports/publication/graceful\_four\_policy\_metrics.csv}.  The four
+The canonical Paper~3 artifact family is now anchored to one benchmark:
+\texttt{reports/paper3/policy\_compare.csv} records the detailed surface over
+blackout durations of 4, 8, 12, 24, and 48 hours, while
+\texttt{reports/publication/graceful\_four\_policy\_metrics.csv} is the
+promoted summary derived directly from that detailed surface.  The four
 policies are:
 
 \begin{description}
   \item[Blind persistence.] Continue dispatching with the last trusted control
-    logic even though observation quality has collapsed.
-  \item[Hard shutdown.] Immediately drive action to zero and accept a total
-    loss of useful work.
-  \item[Ramp-down.] Monotonically reduce power toward a benign hold.
-  \item[Optimized graceful.] Use the graceful planner to retain bounded useful
-    work while descending toward a certifiable safe regime.
+    even though observation quality has collapsed.
+  \item[Immediate shutdown.] Immediately drive action to zero and accept a
+    total loss of useful work.
+  \item[Simple ramp-down.] Monotonically reduce power toward a benign hold
+    using the heuristic taper.
+  \item[Optimized graceful.] Use the constructive graceful planner to retain
+    as much useful work as possible while still consuming the remaining safe
+    horizon.
 \end{description}
 
 \section{Locked Comparative Results}
 
 \begin{table}[ht]
 \centering
-\caption{Four-policy graceful-degradation comparison from
+\caption{Promoted four-policy summary derived from
+  \texttt{reports/paper3/policy\_compare.csv} and published as
   \texttt{reports/publication/graceful\_four\_policy\_metrics.csv}.}
 \label{tab:graceful-four-policy}
-\begin{tabular}{lrrrrr}
+\begin{tabular}{lrrrr}
 \toprule
-\textbf{Policy} & \textbf{GDQ} & \textbf{TSVR} & \textbf{Useful work (MWh)} &
-  \textbf{Retained cost} & \textbf{Descent stability} \\
+\textbf{Policy} & \textbf{Mean GDQ} & \textbf{Mean TSVR} &
+  \textbf{Mean useful work (MWh)} & \textbf{Longest zero-TSVR blackout (h)} \\
 \midrule
-Blind persistence & 0.488 & 0.000 & 2000 & 0.500 & 0.975 \\
-Hard shutdown     & 0.000 & 0.000 &    0 & 0.000 & 1.000 \\
-Ramp-down         & 0.226 & 0.000 &  950 & 0.238 & 0.953 \\
-Optimized graceful& 0.250 & 0.000 & 1050 & 0.263 & 0.951 \\
+Blind persistence & 0.987 & 0.013 & 19.2 & 24 \\
+Immediate shutdown& 1.000 & 0.000 &  0.0 & 48 \\
+Simple ramp-down  & 1.000 & 0.000 &  5.05 & 48 \\
+Optimized graceful& 1.000 & 0.000 & 10.1 & 48 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
+The detailed benchmark surface sharpens the interpretation of the promoted
+table.  Blind persistence retains the most useful work, but it is also the
+only policy with residual risk on the canonical surface.  The failure appears
+at the 48-hour frontier, where blind persistence drops to GDQ~=~0.933,
+TSVR~=~0.0667, and mean severity~=~102.35\,MWh in
+\texttt{reports/paper3/policy\_compare.csv}.  Immediate shutdown remains the
+zero-work safety baseline.  The two ramped policies and immediate shutdown
+stay at zero TSVR across all measured blackout durations, while optimized
+graceful retains roughly twice the useful work of the simple ramp-down
+heuristic on the promoted surface.
+
 \section{Comparative Figure}
 
-Figure~\ref{fig:graceful-four-policy} visualises the same comparison.
+Figure~\ref{fig:graceful-four-policy} visualises the same canonical benchmark
+surface over blackout duration.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.88\textwidth]{reports/publication/fig_graceful_four_policies.png}
-\caption{Four-policy graceful-degradation comparison.  The current locked
-  battery trace differentiates the policies primarily by useful work retained
-  and descent quality, not by observed safety loss in the measured horizon.}
+\caption{Four-policy graceful-degradation benchmark over blackout duration.
+  The promoted publication figure is generated from the same canonical
+  benchmark surface as \texttt{reports/paper3/policy\_compare.csv}, so the
+  chapter-facing figure and the lower-level Paper~3 artifacts describe the
+  same bounded trade-off.}
 \label{fig:graceful-four-policy}
 \end{figure}
 
 \section{Operational Interpretation}
 
-Three battery-facing points matter:
+Three battery-facing points matter.
 
 \begin{enumerate}
-  \item \textbf{Hard shutdown is safe but wasteful.}  It preserves the
-    battery envelope at the cost of zero useful work.
-  \item \textbf{Optimized graceful improves on simple ramp-down.}  In the
-    current trace it retains 1050\,MWh versus 950\,MWh while maintaining
-    similar descent stability and zero TSVR.
-  \item \textbf{Blind persistence is not the defended runtime contract.}
-    It retains the most useful work in this measured trace, but it does not
-    provide the explicit certificate expiry, fallback, and audit semantics
-    required by the runtime story promoted in Chapter~\ref{ch:certos-runtime}.
+  \item \textbf{Immediate shutdown is the zero-work safety floor.}  It remains
+    at zero TSVR across the measured blackout window, but preserves no useful
+    work.
+  \item \textbf{Optimized graceful materially improves on simple ramp-down.}
+    On the promoted surface it retains 10.1\,MWh on average versus
+    5.05\,MWh for the heuristic ramp-down while matching its zero-TSVR
+    performance through the measured blackout window.
+  \item \textbf{Graceful fallback dominates blind persistence on the hidden
+    safety gap.}  Blind persistence is the only policy that acquires residual
+    mean violation rate and severity on the canonical benchmark.
+  \item \textbf{Blind persistence is operationally attractive but not the
+    defended runtime contract.}  It retains the most useful work, yet it is
+    also the only policy that acquires severe residual violation rate and
+    severity on the canonical benchmark, and it does not provide the explicit
+    certificate-expiry and audit semantics required by the runtime story
+    promoted in Chapter~\ref{ch:certos-runtime}.
 \end{enumerate}
 
 \section{Bounded Claim}
@@ -90,10 +118,16 @@ Three battery-facing points matter:
 The current empirical chapter supports a bounded claim:
 
 \begin{itemize}
-  \item the repo now contains a four-policy battery comparison rather than a
-    single fallback anecdote,
-  \item graceful fallback retains materially more useful work than immediate
-    shutdown in the locked trace, and
+  \item the repo now contains a canonical four-policy battery benchmark rather
+    than a single fallback anecdote,
+  \item the promoted publication table now comes from the same benchmark
+    surface as the lower-level Paper~3 artifacts,
+  \item optimized graceful fallback retains more useful work than both
+    immediate shutdown and the simple ramp-down heuristic while preserving
+    zero TSVR on the measured blackout surface, and
+  \item blind persistence remains outside the defended runtime contract because
+    the canonical benchmark shows residual violation risk at the prolonged
+    48-hour frontier, and
   \item the theorem-level dominance claim still lives in
     Chapter~\ref{ch:temporal-extensions}, not in this single measured trace.
 \end{itemize}
@@ -101,7 +135,11 @@ The current empirical chapter supports a bounded claim:
 \section{Summary}
 
 The battery extension is now stronger than a single safe-landing anecdote.
-The locked evidence compares four prolonged-blindness policies directly and
-shows the practical trade-off surface: shutdown is safest but wasteful,
-ramp-down is conservative, and the optimized graceful policy retains more
-useful work while staying inside the current measured safety envelope.
+The locked evidence compares four prolonged-blindness policies on one common
+benchmark surface and exposes the practical trade-off: immediate shutdown is
+the zero-work safety baseline, blind persistence is the uncontrolled failure
+mode, and the graceful policies sit between them by keeping bounded useful
+work while avoiding measured violations through the 48-hour window.  Within
+that bounded surface, optimized graceful improves on the simple ramp-down
+heuristic, while blind persistence ceases to be defensible once the blackout
+horizon stretches far enough.

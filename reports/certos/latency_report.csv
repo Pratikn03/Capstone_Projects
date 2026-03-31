@@ -1,3 +1,3 @@
 metric,value
-step_latency_ms,0.59
-throughput_steps_per_sec,1691.70
+step_latency_ms,1.97
+throughput_steps_per_sec,507.07

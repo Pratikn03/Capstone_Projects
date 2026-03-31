@@ -1,5 +1,5 @@
 policy,gdq_mean,useful_work_mwh_mean,violation_rate_mean,severity_mwh_mean
-blind_persistence,0.0,19.2,1.0,55.6674
+blind_persistence,0.986667,19.2,0.013333,20.470743
 immediate_shutdown,1.0,0.0,0.0,0.0
-simple_ramp_down,0.815833,0.76,0.184167,1.819031
-optimized_graceful,0.815833,0.76,0.184167,1.819031
+simple_ramp_down,1.0,5.05,0.0,0.0
+optimized_graceful,1.0,10.1,0.0,0.0

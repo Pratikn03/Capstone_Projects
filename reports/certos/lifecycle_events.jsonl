@@ -1,96 +1,96 @@
-{"step": 0, "status": "valid", "fallback": false}
-{"step": 1, "status": "valid", "fallback": false}
-{"step": 2, "status": "valid", "fallback": false}
-{"step": 3, "status": "valid", "fallback": false}
-{"step": 4, "status": "valid", "fallback": false}
-{"step": 5, "status": "valid", "fallback": false}
-{"step": 6, "status": "valid", "fallback": false}
-{"step": 7, "status": "valid", "fallback": false}
-{"step": 8, "status": "valid", "fallback": false}
-{"step": 9, "status": "valid", "fallback": false}
-{"step": 10, "status": "valid", "fallback": false}
-{"step": 11, "status": "valid", "fallback": false}
-{"step": 12, "status": "valid", "fallback": false}
-{"step": 13, "status": "valid", "fallback": false}
-{"step": 14, "status": "valid", "fallback": false}
-{"step": 15, "status": "valid", "fallback": false}
-{"step": 16, "status": "valid", "fallback": false}
-{"step": 17, "status": "valid", "fallback": false}
-{"step": 18, "status": "valid", "fallback": false}
-{"step": 19, "status": "valid", "fallback": false}
-{"step": 20, "status": "valid", "fallback": false}
-{"step": 21, "status": "valid", "fallback": false}
-{"step": 22, "status": "valid", "fallback": false}
-{"step": 23, "status": "valid", "fallback": false}
-{"step": 24, "status": "valid", "fallback": false}
-{"step": 25, "status": "valid", "fallback": false}
-{"step": 26, "status": "valid", "fallback": false}
-{"step": 27, "status": "valid", "fallback": false}
-{"step": 28, "status": "valid", "fallback": false}
-{"step": 29, "status": "valid", "fallback": false}
-{"step": 30, "status": "valid", "fallback": false}
-{"step": 31, "status": "valid", "fallback": false}
-{"step": 32, "status": "valid", "fallback": false}
-{"step": 33, "status": "valid", "fallback": false}
-{"step": 34, "status": "valid", "fallback": false}
-{"step": 35, "status": "valid", "fallback": false}
-{"step": 36, "status": "valid", "fallback": false}
-{"step": 37, "status": "valid", "fallback": false}
-{"step": 38, "status": "valid", "fallback": false}
-{"step": 39, "status": "valid", "fallback": false}
-{"step": 40, "status": "fallback", "fallback": true}
-{"step": 41, "status": "fallback", "fallback": true}
-{"step": 42, "status": "fallback", "fallback": true}
-{"step": 43, "status": "fallback", "fallback": true}
-{"step": 44, "status": "fallback", "fallback": true}
-{"step": 45, "status": "fallback", "fallback": true}
-{"step": 46, "status": "fallback", "fallback": true}
-{"step": 47, "status": "fallback", "fallback": true}
-{"step": 48, "status": "fallback", "fallback": true}
-{"step": 49, "status": "fallback", "fallback": true}
-{"step": 50, "status": "fallback", "fallback": true}
-{"step": 51, "status": "fallback", "fallback": true}
-{"step": 52, "status": "fallback", "fallback": true}
-{"step": 53, "status": "fallback", "fallback": true}
-{"step": 54, "status": "fallback", "fallback": true}
-{"step": 55, "status": "fallback", "fallback": true}
-{"step": 56, "status": "valid", "fallback": false}
-{"step": 57, "status": "degraded", "fallback": false}
-{"step": 58, "status": "valid", "fallback": false}
-{"step": 59, "status": "valid", "fallback": false}
-{"step": 60, "status": "valid", "fallback": false}
-{"step": 61, "status": "valid", "fallback": false}
-{"step": 62, "status": "degraded", "fallback": false}
-{"step": 63, "status": "valid", "fallback": false}
-{"step": 64, "status": "degraded", "fallback": false}
-{"step": 65, "status": "degraded", "fallback": false}
-{"step": 66, "status": "valid", "fallback": false}
-{"step": 67, "status": "degraded", "fallback": false}
-{"step": 68, "status": "degraded", "fallback": false}
-{"step": 69, "status": "degraded", "fallback": false}
-{"step": 70, "status": "degraded", "fallback": false}
-{"step": 71, "status": "degraded", "fallback": false}
-{"step": 72, "status": "degraded", "fallback": false}
-{"step": 73, "status": "fallback", "fallback": true}
-{"step": 74, "status": "degraded", "fallback": false}
-{"step": 75, "status": "degraded", "fallback": false}
-{"step": 76, "status": "fallback", "fallback": true}
-{"step": 77, "status": "fallback", "fallback": true}
-{"step": 78, "status": "degraded", "fallback": false}
-{"step": 79, "status": "degraded", "fallback": false}
-{"step": 80, "status": "degraded", "fallback": false}
-{"step": 81, "status": "fallback", "fallback": true}
-{"step": 82, "status": "fallback", "fallback": true}
-{"step": 83, "status": "degraded", "fallback": false}
-{"step": 84, "status": "fallback", "fallback": true}
-{"step": 85, "status": "fallback", "fallback": true}
-{"step": 86, "status": "fallback", "fallback": true}
-{"step": 87, "status": "fallback", "fallback": true}
-{"step": 88, "status": "fallback", "fallback": true}
-{"step": 89, "status": "fallback", "fallback": true}
-{"step": 90, "status": "fallback", "fallback": true}
-{"step": 91, "status": "fallback", "fallback": true}
-{"step": 92, "status": "fallback", "fallback": true}
-{"step": 93, "status": "fallback", "fallback": true}
-{"step": 94, "status": "fallback", "fallback": true}
-{"step": 95, "status": "fallback", "fallback": true}
+{"step": 0, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "772bc8aa0b4eadf4", "prev_hash": null}
+{"step": 1, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "e7c6279e5c4838d9", "prev_hash": "772bc8aa0b4eadf4"}
+{"step": 2, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "702b48824206f1cb", "prev_hash": "e7c6279e5c4838d9"}
+{"step": 3, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "24d8327c415d1531", "prev_hash": "702b48824206f1cb"}
+{"step": 4, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "668e2728d8ca2747", "prev_hash": "24d8327c415d1531"}
+{"step": 5, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "572eb4dffef299f9", "prev_hash": "668e2728d8ca2747"}
+{"step": 6, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "1b134a8dd3b31cae", "prev_hash": "572eb4dffef299f9"}
+{"step": 7, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "e73a201f0469edac", "prev_hash": "1b134a8dd3b31cae"}
+{"step": 8, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "55d113b89d76151d", "prev_hash": "e73a201f0469edac"}
+{"step": 9, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "9452d0d8291f2bc5", "prev_hash": "55d113b89d76151d"}
+{"step": 10, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "de6e28d391d4e879", "prev_hash": "9452d0d8291f2bc5"}
+{"step": 11, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "f53e9baa13b9c2d2", "prev_hash": "de6e28d391d4e879"}
+{"step": 12, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "dc4620e279476ed1", "prev_hash": "f53e9baa13b9c2d2"}
+{"step": 13, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "70e92b2c37975886", "prev_hash": "dc4620e279476ed1"}
+{"step": 14, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "8c3669e98c65822f", "prev_hash": "70e92b2c37975886"}
+{"step": 15, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "a5b20c557c6c6944", "prev_hash": "8c3669e98c65822f"}
+{"step": 16, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "546605b8c3bbad78", "prev_hash": "a5b20c557c6c6944"}
+{"step": 17, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "6864f85d786f7656", "prev_hash": "546605b8c3bbad78"}
+{"step": 18, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "db743e6baac9f08d", "prev_hash": "6864f85d786f7656"}
+{"step": 19, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "e67ccb647ac635c3", "prev_hash": "db743e6baac9f08d"}
+{"step": 20, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "5fb8943fab1b5e4b", "prev_hash": "e67ccb647ac635c3"}
+{"step": 21, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "756bb20391a1d2bf", "prev_hash": "5fb8943fab1b5e4b"}
+{"step": 22, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "609b37fa0ce3fca9", "prev_hash": "756bb20391a1d2bf"}
+{"step": 23, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "577456b8c8eba5e5", "prev_hash": "609b37fa0ce3fca9"}
+{"step": 24, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "e3aab26c6ef5df0b", "prev_hash": "577456b8c8eba5e5"}
+{"step": 25, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "d032b0dcd7efd9ee", "prev_hash": "e3aab26c6ef5df0b"}
+{"step": 26, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "b9ef6e7b412769d3", "prev_hash": "d032b0dcd7efd9ee"}
+{"step": 27, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "92d74ef5a26cd244", "prev_hash": "b9ef6e7b412769d3"}
+{"step": 28, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "8b55ce9bd2d9958b", "prev_hash": "92d74ef5a26cd244"}
+{"step": 29, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "27beaad4fddb6e54", "prev_hash": "8b55ce9bd2d9958b"}
+{"step": 30, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "8a2310613bf3f3f0", "prev_hash": "27beaad4fddb6e54"}
+{"step": 31, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "b6a2de8855114892", "prev_hash": "8a2310613bf3f3f0"}
+{"step": 32, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "3e425175917df0b0", "prev_hash": "b6a2de8855114892"}
+{"step": 33, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "1673c62a3d1cfaa9", "prev_hash": "3e425175917df0b0"}
+{"step": 34, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "7adfc6c174eb704a", "prev_hash": "1673c62a3d1cfaa9"}
+{"step": 35, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "d23af4583f6d5792", "prev_hash": "7adfc6c174eb704a"}
+{"step": 36, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "9054e5bf85a43c66", "prev_hash": "d23af4583f6d5792"}
+{"step": 37, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "9f9449c90919576c", "prev_hash": "9054e5bf85a43c66"}
+{"step": 38, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "9d9456e637a2debf", "prev_hash": "9f9449c90919576c"}
+{"step": 39, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "2735ce30b3f78794", "prev_hash": "9d9456e637a2debf"}
+{"step": 40, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "9a6599e916a367f1", "prev_hash": "2735ce30b3f78794"}
+{"step": 41, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "52fdc7f570d42429", "prev_hash": "9a6599e916a367f1"}
+{"step": 42, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "5dcfe9540acaf0c0", "prev_hash": "52fdc7f570d42429"}
+{"step": 43, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "1b5585eeb78771d2", "prev_hash": "5dcfe9540acaf0c0"}
+{"step": 44, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "da417f281c460b0e", "prev_hash": "1b5585eeb78771d2"}
+{"step": 45, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "266da8addfbfd129", "prev_hash": "da417f281c460b0e"}
+{"step": 46, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "129a0c41262d3cdb", "prev_hash": "266da8addfbfd129"}
+{"step": 47, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "6a98e3a40fa6c34f", "prev_hash": "129a0c41262d3cdb"}
+{"step": 48, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "0195ddb3ca85fc2f", "prev_hash": "6a98e3a40fa6c34f"}
+{"step": 49, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "36d09159259004b2", "prev_hash": "0195ddb3ca85fc2f"}
+{"step": 50, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "5c38932ff63e6a16", "prev_hash": "36d09159259004b2"}
+{"step": 51, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "952eaaecc395ab13", "prev_hash": "5c38932ff63e6a16"}
+{"step": 52, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "91930f62f74618e8", "prev_hash": "952eaaecc395ab13"}
+{"step": 53, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "ce69323e69d80157", "prev_hash": "91930f62f74618e8"}
+{"step": 54, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "b6ea93377c0b4375", "prev_hash": "ce69323e69d80157"}
+{"step": 55, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "2dd669bef5deaf79", "prev_hash": "b6ea93377c0b4375"}
+{"step": 56, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "ace777c908cfc54b", "prev_hash": "2dd669bef5deaf79"}
+{"step": 57, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "174a867c04e2a030", "prev_hash": "ace777c908cfc54b"}
+{"step": 58, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "f64bbbaac582d825", "prev_hash": "174a867c04e2a030"}
+{"step": 59, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "886342ddc82b331a", "prev_hash": "f64bbbaac582d825"}
+{"step": 60, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "c97108eabc364c6a", "prev_hash": "886342ddc82b331a"}
+{"step": 61, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "b106457dc39c4319", "prev_hash": "c97108eabc364c6a"}
+{"step": 62, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "f5557748c4de1b76", "prev_hash": "b106457dc39c4319"}
+{"step": 63, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "e2c07508fe7bd6e9", "prev_hash": "f5557748c4de1b76"}
+{"step": 64, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "99a510c4ac0d5411", "prev_hash": "e2c07508fe7bd6e9"}
+{"step": 65, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "bac8b7f8a8f3ebc9", "prev_hash": "99a510c4ac0d5411"}
+{"step": 66, "status": "valid", "lifecycle_op": "ISSUE", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "ISSUE"], "cert_hash": "156769dc0f9ed0b6", "prev_hash": "bac8b7f8a8f3ebc9"}
+{"step": 67, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "1119638561226471", "prev_hash": "156769dc0f9ed0b6"}
+{"step": 68, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "2d18ee821131fe9d", "prev_hash": "1119638561226471"}
+{"step": 69, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "0cbe0475a1f22956", "prev_hash": "2d18ee821131fe9d"}
+{"step": 70, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "996782ff8b05cc00", "prev_hash": "0cbe0475a1f22956"}
+{"step": 71, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "dd3fcac83d3e52a5", "prev_hash": "996782ff8b05cc00"}
+{"step": 72, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "ebbcf7c4a718dd71", "prev_hash": "dd3fcac83d3e52a5"}
+{"step": 73, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "9754ae5847804caa", "prev_hash": "ebbcf7c4a718dd71"}
+{"step": 74, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "57011023c89e315c", "prev_hash": "9754ae5847804caa"}
+{"step": 75, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "71f4cf3ced2c8da0", "prev_hash": "57011023c89e315c"}
+{"step": 76, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "de52da2261fae9f9", "prev_hash": "71f4cf3ced2c8da0"}
+{"step": 77, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "bd9ca9ac27a0847c", "prev_hash": "de52da2261fae9f9"}
+{"step": 78, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "fc9030ab5f23bd04", "prev_hash": "bd9ca9ac27a0847c"}
+{"step": 79, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "c996add60152e1d9", "prev_hash": "fc9030ab5f23bd04"}
+{"step": 80, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": true, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "8f2dbb8b0fa45a4b", "prev_hash": "c996add60152e1d9"}
+{"step": 81, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "569a20ba5ca391b6", "prev_hash": "8f2dbb8b0fa45a4b"}
+{"step": 82, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "69de9408359d5893", "prev_hash": "569a20ba5ca391b6"}
+{"step": 83, "status": "degraded", "lifecycle_op": "RENEW", "fallback": false, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "RENEW"], "cert_hash": "0153d59399bac579", "prev_hash": "69de9408359d5893"}
+{"step": 84, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "3b398bfdd1b1aa1b", "prev_hash": "0153d59399bac579"}
+{"step": 85, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "3f53c3ab592ba63a", "prev_hash": "3b398bfdd1b1aa1b"}
+{"step": 86, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "310a9e65e02bb5a5", "prev_hash": "3f53c3ab592ba63a"}
+{"step": 87, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "e2184bed425b31b8", "prev_hash": "310a9e65e02bb5a5"}
+{"step": 88, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "7e57aa8a0ea270f4", "prev_hash": "e2184bed425b31b8"}
+{"step": 89, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "b08ba42012f3a494", "prev_hash": "7e57aa8a0ea270f4"}
+{"step": 90, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "b87c2c3e53d959a0", "prev_hash": "b08ba42012f3a494"}
+{"step": 91, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "f89415f93bba744a", "prev_hash": "b87c2c3e53d959a0"}
+{"step": 92, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "5fcc3a9927d5753d", "prev_hash": "f89415f93bba744a"}
+{"step": 93, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "38316f2fef1d62b0", "prev_hash": "5fcc3a9927d5753d"}
+{"step": 94, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "e28543f549fb6637", "prev_hash": "38316f2fef1d62b0"}
+{"step": 95, "status": "fallback", "lifecycle_op": "FALLBACK", "fallback": true, "validation_passed": false, "hash_chain_ok": true, "audit_ops": ["VALIDATE", "EXPIRE", "FALLBACK"], "cert_hash": "50542faffc9258f3", "prev_hash": "e28543f549fb6637"}

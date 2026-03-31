@@ -13,7 +13,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import math
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -71,6 +71,11 @@ def main() -> None:
             "step": t,
             "validity_horizon": state.validity_horizon,
             "status": state.status,
+            "lifecycle_op": state.lifecycle_op,
+            "validation_passed": state.validation_passed,
+            "hash_chain_ok": state.hash_chain_ok,
+            "cert_hash": state.cert_hash or "",
+            "prev_hash": state.prev_hash or "",
             "discharge_mw": discharge,
             "soc_mwh": round(soc, 2),
             "fallback": state.fallback_active,
@@ -87,13 +92,19 @@ def main() -> None:
     # Audit ops (Step 6.2: lifecycle operation evidence)
     audit_path = out / "audit_ops.jsonl"
     with open(audit_path, "w") as f:
-        for entry in rt.audit_log:
-            f.write(json.dumps({"op": entry["op"], "step": entry["step"]}) + "\n")
+        for entry in rt.raw_audit_log:
+            f.write(json.dumps(entry) + "\n")
 
     # Summary
     n_valid = sum(1 for r in rows if r["status"] == "valid")
     n_degraded = sum(1 for r in rows if r["status"] == "degraded")
     n_fallback = sum(1 for r in rows if r["status"] == "fallback")
+    fallback_to_valid = sum(
+        1
+        for prev, curr in zip(rows, rows[1:])
+        if prev["status"] == "fallback" and curr["status"] == "valid"
+    )
+    raw_ops = Counter(entry["op"] for entry in rt.raw_audit_log)
     summary = {
         "total_steps": args.steps,
         "valid_steps": n_valid,
@@ -101,6 +112,16 @@ def main() -> None:
         "fallback_steps": n_fallback,
         "interventions": rt.intervention_count,
         "audit_entries": len(rt.audit_log),
+        "raw_audit_entries": len(rt.raw_audit_log),
+        "hash_chain_ok": all(r["hash_chain_ok"] for r in rows),
+        "validation_events": raw_ops.get("VALIDATE", 0),
+        "validation_failures": sum(1 for entry in rt.raw_audit_log if entry["op"] == "VALIDATE" and not entry.get("meta", {}).get("result", False)),
+        "issue_events": raw_ops.get("ISSUE", 0),
+        "renew_events": raw_ops.get("RENEW", 0),
+        "expire_events": raw_ops.get("EXPIRE", 0),
+        "revoke_events": raw_ops.get("REVOKE", 0),
+        "fallback_events": raw_ops.get("FALLBACK", 0),
+        "fallback_to_valid_transitions": fallback_to_valid,
     }
     summary_path = out / "certos_summary.json"
     with open(summary_path, "w") as f:

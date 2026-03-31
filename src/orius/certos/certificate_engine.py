@@ -42,9 +42,14 @@ class CertificateEngine:
         self._fallback_active = False
         return cert
 
-    def validate(self, cert: Mapping[str, Any]) -> bool:
+    def validate(
+        self,
+        cert: Mapping[str, Any],
+        current_horizon: int | None = None,
+    ) -> bool:
         """VALIDATE: Check certificate is still valid."""
-        return cert.get("status") == "valid" and cert.get("validity_horizon", 0) > 0
+        horizon = cert.get("validity_horizon", 0) if current_horizon is None else current_horizon
+        return cert.get("status") == "valid" and horizon > 0
 
     def expire(self) -> Mapping[str, Any] | None:
         """EXPIRE: Mark certificate as expired."""
@@ -62,7 +67,16 @@ class CertificateEngine:
         validity_horizon: int = 1,
     ) -> Mapping[str, Any]:
         """RENEW: Issue a new certificate (replacement)."""
-        return self.issue(proposed_action, safe_action, validity_horizon)
+        cert = {
+            "op": LifecycleOp.RENEW.value,
+            "proposed_action": dict(proposed_action),
+            "safe_action": dict(safe_action),
+            "validity_horizon": validity_horizon,
+            "status": "valid",
+        }
+        self._current = cert
+        self._fallback_active = False
+        return cert
 
     def revoke(self) -> Mapping[str, Any] | None:
         """REVOKE: Invalidate the certificate."""
@@ -89,6 +103,18 @@ class CertificateEngine:
         if self._current and self.validate(self._current):
             return self._current.get("safe_action")
         return None
+
+    @property
+    def current_certificate(self) -> Mapping[str, Any] | None:
+        """Expose the active certificate without allowing direct mutation."""
+        if self._current is None:
+            return None
+        return dict(self._current)
+
+    def replace_current(self, cert: Mapping[str, Any]) -> None:
+        """Store a fully materialized certificate snapshot as current."""
+        self._current = dict(cert)
+        self._fallback_active = False
 
     def require_action(self) -> Mapping[str, Any]:
         """Enforce invariant: no action without certificate/fallback."""

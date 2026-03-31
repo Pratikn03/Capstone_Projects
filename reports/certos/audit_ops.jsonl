@@ -1,96 +1,225 @@
-{"op": "ISSUE", "step": 0}
-{"op": "ISSUE", "step": 1}
-{"op": "ISSUE", "step": 2}
-{"op": "ISSUE", "step": 3}
-{"op": "ISSUE", "step": 4}
-{"op": "ISSUE", "step": 5}
-{"op": "ISSUE", "step": 6}
-{"op": "ISSUE", "step": 7}
-{"op": "ISSUE", "step": 8}
-{"op": "ISSUE", "step": 9}
-{"op": "ISSUE", "step": 10}
-{"op": "ISSUE", "step": 11}
-{"op": "ISSUE", "step": 12}
-{"op": "ISSUE", "step": 13}
-{"op": "ISSUE", "step": 14}
-{"op": "ISSUE", "step": 15}
-{"op": "ISSUE", "step": 16}
-{"op": "ISSUE", "step": 17}
-{"op": "ISSUE", "step": 18}
-{"op": "ISSUE", "step": 19}
-{"op": "ISSUE", "step": 20}
-{"op": "ISSUE", "step": 21}
-{"op": "ISSUE", "step": 22}
-{"op": "ISSUE", "step": 23}
-{"op": "ISSUE", "step": 24}
-{"op": "ISSUE", "step": 25}
-{"op": "ISSUE", "step": 26}
-{"op": "ISSUE", "step": 27}
-{"op": "ISSUE", "step": 28}
-{"op": "ISSUE", "step": 29}
-{"op": "ISSUE", "step": 30}
-{"op": "ISSUE", "step": 31}
-{"op": "ISSUE", "step": 32}
-{"op": "ISSUE", "step": 33}
-{"op": "ISSUE", "step": 34}
-{"op": "ISSUE", "step": 35}
-{"op": "ISSUE", "step": 36}
-{"op": "ISSUE", "step": 37}
-{"op": "ISSUE", "step": 38}
-{"op": "ISSUE", "step": 39}
-{"op": "FALLBACK", "step": 40}
-{"op": "FALLBACK", "step": 41}
-{"op": "FALLBACK", "step": 42}
-{"op": "FALLBACK", "step": 43}
-{"op": "FALLBACK", "step": 44}
-{"op": "FALLBACK", "step": 45}
-{"op": "FALLBACK", "step": 46}
-{"op": "FALLBACK", "step": 47}
-{"op": "FALLBACK", "step": 48}
-{"op": "FALLBACK", "step": 49}
-{"op": "FALLBACK", "step": 50}
-{"op": "FALLBACK", "step": 51}
-{"op": "FALLBACK", "step": 52}
-{"op": "FALLBACK", "step": 53}
-{"op": "FALLBACK", "step": 54}
-{"op": "FALLBACK", "step": 55}
-{"op": "ISSUE", "step": 56}
-{"op": "RENEW", "step": 57}
-{"op": "ISSUE", "step": 58}
-{"op": "ISSUE", "step": 59}
-{"op": "ISSUE", "step": 60}
-{"op": "ISSUE", "step": 61}
-{"op": "RENEW", "step": 62}
-{"op": "ISSUE", "step": 63}
-{"op": "RENEW", "step": 64}
-{"op": "RENEW", "step": 65}
-{"op": "ISSUE", "step": 66}
-{"op": "RENEW", "step": 67}
-{"op": "RENEW", "step": 68}
-{"op": "RENEW", "step": 69}
-{"op": "RENEW", "step": 70}
-{"op": "RENEW", "step": 71}
-{"op": "RENEW", "step": 72}
-{"op": "FALLBACK", "step": 73}
-{"op": "RENEW", "step": 74}
-{"op": "RENEW", "step": 75}
-{"op": "FALLBACK", "step": 76}
-{"op": "FALLBACK", "step": 77}
-{"op": "RENEW", "step": 78}
-{"op": "RENEW", "step": 79}
-{"op": "RENEW", "step": 80}
-{"op": "FALLBACK", "step": 81}
-{"op": "FALLBACK", "step": 82}
-{"op": "RENEW", "step": 83}
-{"op": "FALLBACK", "step": 84}
-{"op": "FALLBACK", "step": 85}
-{"op": "FALLBACK", "step": 86}
-{"op": "FALLBACK", "step": 87}
-{"op": "FALLBACK", "step": 88}
-{"op": "FALLBACK", "step": 89}
-{"op": "FALLBACK", "step": 90}
-{"op": "FALLBACK", "step": 91}
-{"op": "FALLBACK", "step": 92}
-{"op": "FALLBACK", "step": 93}
-{"op": "FALLBACK", "step": 94}
-{"op": "FALLBACK", "step": 95}
+{"op": "VALIDATE", "step": 0, "cert_hash": null, "meta": {"reason": "no_active_certificate", "validity_horizon": 18, "result": false}}
+{"op": "ISSUE", "step": 0, "cert_hash": "772bc8aa0b4eadf4", "meta": {"prev_hash": null, "validation_passed": false, "reason": "no_active_certificate", "validity_horizon": 18, "result": false}}
+{"op": "VALIDATE", "step": 1, "cert_hash": "772bc8aa0b4eadf4", "meta": {"reason": "current_certificate_checked", "validity_horizon": 21, "current_status": "valid", "current_cert_hash": "772bc8aa0b4eadf4", "result": true}}
+{"op": "ISSUE", "step": 1, "cert_hash": "e7c6279e5c4838d9", "meta": {"prev_hash": "772bc8aa0b4eadf4", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 21, "current_status": "valid", "current_cert_hash": "772bc8aa0b4eadf4", "result": true}}
+{"op": "VALIDATE", "step": 2, "cert_hash": "e7c6279e5c4838d9", "meta": {"reason": "current_certificate_checked", "validity_horizon": 21, "current_status": "valid", "current_cert_hash": "e7c6279e5c4838d9", "result": true}}
+{"op": "ISSUE", "step": 2, "cert_hash": "702b48824206f1cb", "meta": {"prev_hash": "e7c6279e5c4838d9", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 21, "current_status": "valid", "current_cert_hash": "e7c6279e5c4838d9", "result": true}}
+{"op": "VALIDATE", "step": 3, "cert_hash": "702b48824206f1cb", "meta": {"reason": "current_certificate_checked", "validity_horizon": 20, "current_status": "valid", "current_cert_hash": "702b48824206f1cb", "result": true}}
+{"op": "ISSUE", "step": 3, "cert_hash": "24d8327c415d1531", "meta": {"prev_hash": "702b48824206f1cb", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 20, "current_status": "valid", "current_cert_hash": "702b48824206f1cb", "result": true}}
+{"op": "VALIDATE", "step": 4, "cert_hash": "24d8327c415d1531", "meta": {"reason": "current_certificate_checked", "validity_horizon": 19, "current_status": "valid", "current_cert_hash": "24d8327c415d1531", "result": true}}
+{"op": "ISSUE", "step": 4, "cert_hash": "668e2728d8ca2747", "meta": {"prev_hash": "24d8327c415d1531", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 19, "current_status": "valid", "current_cert_hash": "24d8327c415d1531", "result": true}}
+{"op": "VALIDATE", "step": 5, "cert_hash": "668e2728d8ca2747", "meta": {"reason": "current_certificate_checked", "validity_horizon": 21, "current_status": "valid", "current_cert_hash": "668e2728d8ca2747", "result": true}}
+{"op": "ISSUE", "step": 5, "cert_hash": "572eb4dffef299f9", "meta": {"prev_hash": "668e2728d8ca2747", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 21, "current_status": "valid", "current_cert_hash": "668e2728d8ca2747", "result": true}}
+{"op": "VALIDATE", "step": 6, "cert_hash": "572eb4dffef299f9", "meta": {"reason": "current_certificate_checked", "validity_horizon": 17, "current_status": "valid", "current_cert_hash": "572eb4dffef299f9", "result": true}}
+{"op": "ISSUE", "step": 6, "cert_hash": "1b134a8dd3b31cae", "meta": {"prev_hash": "572eb4dffef299f9", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 17, "current_status": "valid", "current_cert_hash": "572eb4dffef299f9", "result": true}}
+{"op": "VALIDATE", "step": 7, "cert_hash": "1b134a8dd3b31cae", "meta": {"reason": "current_certificate_checked", "validity_horizon": 20, "current_status": "valid", "current_cert_hash": "1b134a8dd3b31cae", "result": true}}
+{"op": "ISSUE", "step": 7, "cert_hash": "e73a201f0469edac", "meta": {"prev_hash": "1b134a8dd3b31cae", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 20, "current_status": "valid", "current_cert_hash": "1b134a8dd3b31cae", "result": true}}
+{"op": "VALIDATE", "step": 8, "cert_hash": "e73a201f0469edac", "meta": {"reason": "current_certificate_checked", "validity_horizon": 17, "current_status": "valid", "current_cert_hash": "e73a201f0469edac", "result": true}}
+{"op": "ISSUE", "step": 8, "cert_hash": "55d113b89d76151d", "meta": {"prev_hash": "e73a201f0469edac", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 17, "current_status": "valid", "current_cert_hash": "e73a201f0469edac", "result": true}}
+{"op": "VALIDATE", "step": 9, "cert_hash": "55d113b89d76151d", "meta": {"reason": "current_certificate_checked", "validity_horizon": 16, "current_status": "valid", "current_cert_hash": "55d113b89d76151d", "result": true}}
+{"op": "ISSUE", "step": 9, "cert_hash": "9452d0d8291f2bc5", "meta": {"prev_hash": "55d113b89d76151d", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 16, "current_status": "valid", "current_cert_hash": "55d113b89d76151d", "result": true}}
+{"op": "VALIDATE", "step": 10, "cert_hash": "9452d0d8291f2bc5", "meta": {"reason": "current_certificate_checked", "validity_horizon": 18, "current_status": "valid", "current_cert_hash": "9452d0d8291f2bc5", "result": true}}
+{"op": "ISSUE", "step": 10, "cert_hash": "de6e28d391d4e879", "meta": {"prev_hash": "9452d0d8291f2bc5", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 18, "current_status": "valid", "current_cert_hash": "9452d0d8291f2bc5", "result": true}}
+{"op": "VALIDATE", "step": 11, "cert_hash": "de6e28d391d4e879", "meta": {"reason": "current_certificate_checked", "validity_horizon": 20, "current_status": "valid", "current_cert_hash": "de6e28d391d4e879", "result": true}}
+{"op": "ISSUE", "step": 11, "cert_hash": "f53e9baa13b9c2d2", "meta": {"prev_hash": "de6e28d391d4e879", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 20, "current_status": "valid", "current_cert_hash": "de6e28d391d4e879", "result": true}}
+{"op": "VALIDATE", "step": 12, "cert_hash": "f53e9baa13b9c2d2", "meta": {"reason": "current_certificate_checked", "validity_horizon": 18, "current_status": "valid", "current_cert_hash": "f53e9baa13b9c2d2", "result": true}}
+{"op": "ISSUE", "step": 12, "cert_hash": "dc4620e279476ed1", "meta": {"prev_hash": "f53e9baa13b9c2d2", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 18, "current_status": "valid", "current_cert_hash": "f53e9baa13b9c2d2", "result": true}}
+{"op": "VALIDATE", "step": 13, "cert_hash": "dc4620e279476ed1", "meta": {"reason": "current_certificate_checked", "validity_horizon": 18, "current_status": "valid", "current_cert_hash": "dc4620e279476ed1", "result": true}}
+{"op": "ISSUE", "step": 13, "cert_hash": "70e92b2c37975886", "meta": {"prev_hash": "dc4620e279476ed1", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 18, "current_status": "valid", "current_cert_hash": "dc4620e279476ed1", "result": true}}
+{"op": "VALIDATE", "step": 14, "cert_hash": "70e92b2c37975886", "meta": {"reason": "current_certificate_checked", "validity_horizon": 18, "current_status": "valid", "current_cert_hash": "70e92b2c37975886", "result": true}}
+{"op": "ISSUE", "step": 14, "cert_hash": "8c3669e98c65822f", "meta": {"prev_hash": "70e92b2c37975886", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 18, "current_status": "valid", "current_cert_hash": "70e92b2c37975886", "result": true}}
+{"op": "VALIDATE", "step": 15, "cert_hash": "8c3669e98c65822f", "meta": {"reason": "current_certificate_checked", "validity_horizon": 18, "current_status": "valid", "current_cert_hash": "8c3669e98c65822f", "result": true}}
+{"op": "ISSUE", "step": 15, "cert_hash": "a5b20c557c6c6944", "meta": {"prev_hash": "8c3669e98c65822f", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 18, "current_status": "valid", "current_cert_hash": "8c3669e98c65822f", "result": true}}
+{"op": "VALIDATE", "step": 16, "cert_hash": "a5b20c557c6c6944", "meta": {"reason": "current_certificate_checked", "validity_horizon": 16, "current_status": "valid", "current_cert_hash": "a5b20c557c6c6944", "result": true}}
+{"op": "ISSUE", "step": 16, "cert_hash": "546605b8c3bbad78", "meta": {"prev_hash": "a5b20c557c6c6944", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 16, "current_status": "valid", "current_cert_hash": "a5b20c557c6c6944", "result": true}}
+{"op": "VALIDATE", "step": 17, "cert_hash": "546605b8c3bbad78", "meta": {"reason": "current_certificate_checked", "validity_horizon": 14, "current_status": "valid", "current_cert_hash": "546605b8c3bbad78", "result": true}}
+{"op": "ISSUE", "step": 17, "cert_hash": "6864f85d786f7656", "meta": {"prev_hash": "546605b8c3bbad78", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 14, "current_status": "valid", "current_cert_hash": "546605b8c3bbad78", "result": true}}
+{"op": "VALIDATE", "step": 18, "cert_hash": "6864f85d786f7656", "meta": {"reason": "current_certificate_checked", "validity_horizon": 18, "current_status": "valid", "current_cert_hash": "6864f85d786f7656", "result": true}}
+{"op": "ISSUE", "step": 18, "cert_hash": "db743e6baac9f08d", "meta": {"prev_hash": "6864f85d786f7656", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 18, "current_status": "valid", "current_cert_hash": "6864f85d786f7656", "result": true}}
+{"op": "VALIDATE", "step": 19, "cert_hash": "db743e6baac9f08d", "meta": {"reason": "current_certificate_checked", "validity_horizon": 16, "current_status": "valid", "current_cert_hash": "db743e6baac9f08d", "result": true}}
+{"op": "ISSUE", "step": 19, "cert_hash": "e67ccb647ac635c3", "meta": {"prev_hash": "db743e6baac9f08d", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 16, "current_status": "valid", "current_cert_hash": "db743e6baac9f08d", "result": true}}
+{"op": "VALIDATE", "step": 20, "cert_hash": "e67ccb647ac635c3", "meta": {"reason": "current_certificate_checked", "validity_horizon": 15, "current_status": "valid", "current_cert_hash": "e67ccb647ac635c3", "result": true}}
+{"op": "ISSUE", "step": 20, "cert_hash": "5fb8943fab1b5e4b", "meta": {"prev_hash": "e67ccb647ac635c3", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 15, "current_status": "valid", "current_cert_hash": "e67ccb647ac635c3", "result": true}}
+{"op": "VALIDATE", "step": 21, "cert_hash": "5fb8943fab1b5e4b", "meta": {"reason": "current_certificate_checked", "validity_horizon": 14, "current_status": "valid", "current_cert_hash": "5fb8943fab1b5e4b", "result": true}}
+{"op": "ISSUE", "step": 21, "cert_hash": "756bb20391a1d2bf", "meta": {"prev_hash": "5fb8943fab1b5e4b", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 14, "current_status": "valid", "current_cert_hash": "5fb8943fab1b5e4b", "result": true}}
+{"op": "VALIDATE", "step": 22, "cert_hash": "756bb20391a1d2bf", "meta": {"reason": "current_certificate_checked", "validity_horizon": 13, "current_status": "valid", "current_cert_hash": "756bb20391a1d2bf", "result": true}}
+{"op": "ISSUE", "step": 22, "cert_hash": "609b37fa0ce3fca9", "meta": {"prev_hash": "756bb20391a1d2bf", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 13, "current_status": "valid", "current_cert_hash": "756bb20391a1d2bf", "result": true}}
+{"op": "VALIDATE", "step": 23, "cert_hash": "609b37fa0ce3fca9", "meta": {"reason": "current_certificate_checked", "validity_horizon": 17, "current_status": "valid", "current_cert_hash": "609b37fa0ce3fca9", "result": true}}
+{"op": "ISSUE", "step": 23, "cert_hash": "577456b8c8eba5e5", "meta": {"prev_hash": "609b37fa0ce3fca9", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 17, "current_status": "valid", "current_cert_hash": "609b37fa0ce3fca9", "result": true}}
+{"op": "VALIDATE", "step": 24, "cert_hash": "577456b8c8eba5e5", "meta": {"reason": "current_certificate_checked", "validity_horizon": 15, "current_status": "valid", "current_cert_hash": "577456b8c8eba5e5", "result": true}}
+{"op": "ISSUE", "step": 24, "cert_hash": "e3aab26c6ef5df0b", "meta": {"prev_hash": "577456b8c8eba5e5", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 15, "current_status": "valid", "current_cert_hash": "577456b8c8eba5e5", "result": true}}
+{"op": "VALIDATE", "step": 25, "cert_hash": "e3aab26c6ef5df0b", "meta": {"reason": "current_certificate_checked", "validity_horizon": 15, "current_status": "valid", "current_cert_hash": "e3aab26c6ef5df0b", "result": true}}
+{"op": "ISSUE", "step": 25, "cert_hash": "d032b0dcd7efd9ee", "meta": {"prev_hash": "e3aab26c6ef5df0b", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 15, "current_status": "valid", "current_cert_hash": "e3aab26c6ef5df0b", "result": true}}
+{"op": "VALIDATE", "step": 26, "cert_hash": "d032b0dcd7efd9ee", "meta": {"reason": "current_certificate_checked", "validity_horizon": 14, "current_status": "valid", "current_cert_hash": "d032b0dcd7efd9ee", "result": true}}
+{"op": "ISSUE", "step": 26, "cert_hash": "b9ef6e7b412769d3", "meta": {"prev_hash": "d032b0dcd7efd9ee", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 14, "current_status": "valid", "current_cert_hash": "d032b0dcd7efd9ee", "result": true}}
+{"op": "VALIDATE", "step": 27, "cert_hash": "b9ef6e7b412769d3", "meta": {"reason": "current_certificate_checked", "validity_horizon": 16, "current_status": "valid", "current_cert_hash": "b9ef6e7b412769d3", "result": true}}
+{"op": "ISSUE", "step": 27, "cert_hash": "92d74ef5a26cd244", "meta": {"prev_hash": "b9ef6e7b412769d3", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 16, "current_status": "valid", "current_cert_hash": "b9ef6e7b412769d3", "result": true}}
+{"op": "VALIDATE", "step": 28, "cert_hash": "92d74ef5a26cd244", "meta": {"reason": "current_certificate_checked", "validity_horizon": 13, "current_status": "valid", "current_cert_hash": "92d74ef5a26cd244", "result": true}}
+{"op": "ISSUE", "step": 28, "cert_hash": "8b55ce9bd2d9958b", "meta": {"prev_hash": "92d74ef5a26cd244", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 13, "current_status": "valid", "current_cert_hash": "92d74ef5a26cd244", "result": true}}
+{"op": "VALIDATE", "step": 29, "cert_hash": "8b55ce9bd2d9958b", "meta": {"reason": "current_certificate_checked", "validity_horizon": 13, "current_status": "valid", "current_cert_hash": "8b55ce9bd2d9958b", "result": true}}
+{"op": "ISSUE", "step": 29, "cert_hash": "27beaad4fddb6e54", "meta": {"prev_hash": "8b55ce9bd2d9958b", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 13, "current_status": "valid", "current_cert_hash": "8b55ce9bd2d9958b", "result": true}}
+{"op": "VALIDATE", "step": 30, "cert_hash": "27beaad4fddb6e54", "meta": {"reason": "current_certificate_checked", "validity_horizon": 13, "current_status": "valid", "current_cert_hash": "27beaad4fddb6e54", "result": true}}
+{"op": "ISSUE", "step": 30, "cert_hash": "8a2310613bf3f3f0", "meta": {"prev_hash": "27beaad4fddb6e54", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 13, "current_status": "valid", "current_cert_hash": "27beaad4fddb6e54", "result": true}}
+{"op": "VALIDATE", "step": 31, "cert_hash": "8a2310613bf3f3f0", "meta": {"reason": "current_certificate_checked", "validity_horizon": 12, "current_status": "valid", "current_cert_hash": "8a2310613bf3f3f0", "result": true}}
+{"op": "ISSUE", "step": 31, "cert_hash": "b6a2de8855114892", "meta": {"prev_hash": "8a2310613bf3f3f0", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 12, "current_status": "valid", "current_cert_hash": "8a2310613bf3f3f0", "result": true}}
+{"op": "VALIDATE", "step": 32, "cert_hash": "b6a2de8855114892", "meta": {"reason": "current_certificate_checked", "validity_horizon": 10, "current_status": "valid", "current_cert_hash": "b6a2de8855114892", "result": true}}
+{"op": "ISSUE", "step": 32, "cert_hash": "3e425175917df0b0", "meta": {"prev_hash": "b6a2de8855114892", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 10, "current_status": "valid", "current_cert_hash": "b6a2de8855114892", "result": true}}
+{"op": "VALIDATE", "step": 33, "cert_hash": "3e425175917df0b0", "meta": {"reason": "current_certificate_checked", "validity_horizon": 12, "current_status": "valid", "current_cert_hash": "3e425175917df0b0", "result": true}}
+{"op": "ISSUE", "step": 33, "cert_hash": "1673c62a3d1cfaa9", "meta": {"prev_hash": "3e425175917df0b0", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 12, "current_status": "valid", "current_cert_hash": "3e425175917df0b0", "result": true}}
+{"op": "VALIDATE", "step": 34, "cert_hash": "1673c62a3d1cfaa9", "meta": {"reason": "current_certificate_checked", "validity_horizon": 14, "current_status": "valid", "current_cert_hash": "1673c62a3d1cfaa9", "result": true}}
+{"op": "ISSUE", "step": 34, "cert_hash": "7adfc6c174eb704a", "meta": {"prev_hash": "1673c62a3d1cfaa9", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 14, "current_status": "valid", "current_cert_hash": "1673c62a3d1cfaa9", "result": true}}
+{"op": "VALIDATE", "step": 35, "cert_hash": "7adfc6c174eb704a", "meta": {"reason": "current_certificate_checked", "validity_horizon": 10, "current_status": "valid", "current_cert_hash": "7adfc6c174eb704a", "result": true}}
+{"op": "ISSUE", "step": 35, "cert_hash": "d23af4583f6d5792", "meta": {"prev_hash": "7adfc6c174eb704a", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 10, "current_status": "valid", "current_cert_hash": "7adfc6c174eb704a", "result": true}}
+{"op": "VALIDATE", "step": 36, "cert_hash": "d23af4583f6d5792", "meta": {"reason": "current_certificate_checked", "validity_horizon": 13, "current_status": "valid", "current_cert_hash": "d23af4583f6d5792", "result": true}}
+{"op": "ISSUE", "step": 36, "cert_hash": "9054e5bf85a43c66", "meta": {"prev_hash": "d23af4583f6d5792", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 13, "current_status": "valid", "current_cert_hash": "d23af4583f6d5792", "result": true}}
+{"op": "VALIDATE", "step": 37, "cert_hash": "9054e5bf85a43c66", "meta": {"reason": "current_certificate_checked", "validity_horizon": 13, "current_status": "valid", "current_cert_hash": "9054e5bf85a43c66", "result": true}}
+{"op": "ISSUE", "step": 37, "cert_hash": "9f9449c90919576c", "meta": {"prev_hash": "9054e5bf85a43c66", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 13, "current_status": "valid", "current_cert_hash": "9054e5bf85a43c66", "result": true}}
+{"op": "VALIDATE", "step": 38, "cert_hash": "9f9449c90919576c", "meta": {"reason": "current_certificate_checked", "validity_horizon": 10, "current_status": "valid", "current_cert_hash": "9f9449c90919576c", "result": true}}
+{"op": "ISSUE", "step": 38, "cert_hash": "9d9456e637a2debf", "meta": {"prev_hash": "9f9449c90919576c", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 10, "current_status": "valid", "current_cert_hash": "9f9449c90919576c", "result": true}}
+{"op": "VALIDATE", "step": 39, "cert_hash": "9d9456e637a2debf", "meta": {"reason": "current_certificate_checked", "validity_horizon": 12, "current_status": "valid", "current_cert_hash": "9d9456e637a2debf", "result": true}}
+{"op": "ISSUE", "step": 39, "cert_hash": "2735ce30b3f78794", "meta": {"prev_hash": "9d9456e637a2debf", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 12, "current_status": "valid", "current_cert_hash": "9d9456e637a2debf", "result": true}}
+{"op": "VALIDATE", "step": 40, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "valid", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 40, "cert_hash": "9a6599e916a367f1", "meta": {"prev_hash": "2735ce30b3f78794", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "valid", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 40, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "9a6599e916a367f1", "validation_passed": false}}
+{"op": "VALIDATE", "step": 41, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 41, "cert_hash": "52fdc7f570d42429", "meta": {"prev_hash": "9a6599e916a367f1", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 41, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "52fdc7f570d42429", "validation_passed": false}}
+{"op": "VALIDATE", "step": 42, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 42, "cert_hash": "5dcfe9540acaf0c0", "meta": {"prev_hash": "52fdc7f570d42429", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 42, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "5dcfe9540acaf0c0", "validation_passed": false}}
+{"op": "VALIDATE", "step": 43, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 43, "cert_hash": "1b5585eeb78771d2", "meta": {"prev_hash": "5dcfe9540acaf0c0", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 43, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "1b5585eeb78771d2", "validation_passed": false}}
+{"op": "VALIDATE", "step": 44, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 44, "cert_hash": "da417f281c460b0e", "meta": {"prev_hash": "1b5585eeb78771d2", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 44, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "da417f281c460b0e", "validation_passed": false}}
+{"op": "VALIDATE", "step": 45, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 45, "cert_hash": "266da8addfbfd129", "meta": {"prev_hash": "da417f281c460b0e", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 45, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "266da8addfbfd129", "validation_passed": false}}
+{"op": "VALIDATE", "step": 46, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 46, "cert_hash": "129a0c41262d3cdb", "meta": {"prev_hash": "266da8addfbfd129", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 46, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "129a0c41262d3cdb", "validation_passed": false}}
+{"op": "VALIDATE", "step": 47, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 47, "cert_hash": "6a98e3a40fa6c34f", "meta": {"prev_hash": "129a0c41262d3cdb", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 47, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "6a98e3a40fa6c34f", "validation_passed": false}}
+{"op": "VALIDATE", "step": 48, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 48, "cert_hash": "0195ddb3ca85fc2f", "meta": {"prev_hash": "6a98e3a40fa6c34f", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 48, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "0195ddb3ca85fc2f", "validation_passed": false}}
+{"op": "VALIDATE", "step": 49, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 49, "cert_hash": "36d09159259004b2", "meta": {"prev_hash": "0195ddb3ca85fc2f", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 49, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "36d09159259004b2", "validation_passed": false}}
+{"op": "VALIDATE", "step": 50, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 50, "cert_hash": "5c38932ff63e6a16", "meta": {"prev_hash": "36d09159259004b2", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 50, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "5c38932ff63e6a16", "validation_passed": false}}
+{"op": "VALIDATE", "step": 51, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 51, "cert_hash": "952eaaecc395ab13", "meta": {"prev_hash": "5c38932ff63e6a16", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 51, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "952eaaecc395ab13", "validation_passed": false}}
+{"op": "VALIDATE", "step": 52, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 52, "cert_hash": "91930f62f74618e8", "meta": {"prev_hash": "952eaaecc395ab13", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 52, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "91930f62f74618e8", "validation_passed": false}}
+{"op": "VALIDATE", "step": 53, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 53, "cert_hash": "ce69323e69d80157", "meta": {"prev_hash": "91930f62f74618e8", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 53, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "ce69323e69d80157", "validation_passed": false}}
+{"op": "VALIDATE", "step": 54, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 54, "cert_hash": "b6ea93377c0b4375", "meta": {"prev_hash": "ce69323e69d80157", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 54, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "b6ea93377c0b4375", "validation_passed": false}}
+{"op": "VALIDATE", "step": 55, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "EXPIRE", "step": 55, "cert_hash": "2dd669bef5deaf79", "meta": {"prev_hash": "b6ea93377c0b4375", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "FALLBACK", "step": 55, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "2dd669bef5deaf79", "validation_passed": false}}
+{"op": "VALIDATE", "step": 56, "cert_hash": "2735ce30b3f78794", "meta": {"reason": "current_certificate_checked", "validity_horizon": 6, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "ISSUE", "step": 56, "cert_hash": "ace777c908cfc54b", "meta": {"prev_hash": "2dd669bef5deaf79", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 6, "current_status": "expired", "current_cert_hash": "2735ce30b3f78794", "result": false}}
+{"op": "VALIDATE", "step": 57, "cert_hash": "ace777c908cfc54b", "meta": {"reason": "current_certificate_checked", "validity_horizon": 4, "current_status": "valid", "current_cert_hash": "ace777c908cfc54b", "result": true}}
+{"op": "RENEW", "step": 57, "cert_hash": "174a867c04e2a030", "meta": {"prev_hash": "ace777c908cfc54b", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 4, "current_status": "valid", "current_cert_hash": "ace777c908cfc54b", "result": true}}
+{"op": "VALIDATE", "step": 58, "cert_hash": "174a867c04e2a030", "meta": {"reason": "current_certificate_checked", "validity_horizon": 7, "current_status": "valid", "current_cert_hash": "174a867c04e2a030", "result": true}}
+{"op": "ISSUE", "step": 58, "cert_hash": "f64bbbaac582d825", "meta": {"prev_hash": "174a867c04e2a030", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 7, "current_status": "valid", "current_cert_hash": "174a867c04e2a030", "result": true}}
+{"op": "VALIDATE", "step": 59, "cert_hash": "f64bbbaac582d825", "meta": {"reason": "current_certificate_checked", "validity_horizon": 7, "current_status": "valid", "current_cert_hash": "f64bbbaac582d825", "result": true}}
+{"op": "ISSUE", "step": 59, "cert_hash": "886342ddc82b331a", "meta": {"prev_hash": "f64bbbaac582d825", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 7, "current_status": "valid", "current_cert_hash": "f64bbbaac582d825", "result": true}}
+{"op": "VALIDATE", "step": 60, "cert_hash": "886342ddc82b331a", "meta": {"reason": "current_certificate_checked", "validity_horizon": 7, "current_status": "valid", "current_cert_hash": "886342ddc82b331a", "result": true}}
+{"op": "ISSUE", "step": 60, "cert_hash": "c97108eabc364c6a", "meta": {"prev_hash": "886342ddc82b331a", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 7, "current_status": "valid", "current_cert_hash": "886342ddc82b331a", "result": true}}
+{"op": "VALIDATE", "step": 61, "cert_hash": "c97108eabc364c6a", "meta": {"reason": "current_certificate_checked", "validity_horizon": 6, "current_status": "valid", "current_cert_hash": "c97108eabc364c6a", "result": true}}
+{"op": "ISSUE", "step": 61, "cert_hash": "b106457dc39c4319", "meta": {"prev_hash": "c97108eabc364c6a", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 6, "current_status": "valid", "current_cert_hash": "c97108eabc364c6a", "result": true}}
+{"op": "VALIDATE", "step": 62, "cert_hash": "b106457dc39c4319", "meta": {"reason": "current_certificate_checked", "validity_horizon": 4, "current_status": "valid", "current_cert_hash": "b106457dc39c4319", "result": true}}
+{"op": "RENEW", "step": 62, "cert_hash": "f5557748c4de1b76", "meta": {"prev_hash": "b106457dc39c4319", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 4, "current_status": "valid", "current_cert_hash": "b106457dc39c4319", "result": true}}
+{"op": "VALIDATE", "step": 63, "cert_hash": "f5557748c4de1b76", "meta": {"reason": "current_certificate_checked", "validity_horizon": 7, "current_status": "valid", "current_cert_hash": "f5557748c4de1b76", "result": true}}
+{"op": "ISSUE", "step": 63, "cert_hash": "e2c07508fe7bd6e9", "meta": {"prev_hash": "f5557748c4de1b76", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 7, "current_status": "valid", "current_cert_hash": "f5557748c4de1b76", "result": true}}
+{"op": "VALIDATE", "step": 64, "cert_hash": "e2c07508fe7bd6e9", "meta": {"reason": "current_certificate_checked", "validity_horizon": 4, "current_status": "valid", "current_cert_hash": "e2c07508fe7bd6e9", "result": true}}
+{"op": "RENEW", "step": 64, "cert_hash": "99a510c4ac0d5411", "meta": {"prev_hash": "e2c07508fe7bd6e9", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 4, "current_status": "valid", "current_cert_hash": "e2c07508fe7bd6e9", "result": true}}
+{"op": "VALIDATE", "step": 65, "cert_hash": "99a510c4ac0d5411", "meta": {"reason": "current_certificate_checked", "validity_horizon": 3, "current_status": "valid", "current_cert_hash": "99a510c4ac0d5411", "result": true}}
+{"op": "RENEW", "step": 65, "cert_hash": "bac8b7f8a8f3ebc9", "meta": {"prev_hash": "99a510c4ac0d5411", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 3, "current_status": "valid", "current_cert_hash": "99a510c4ac0d5411", "result": true}}
+{"op": "VALIDATE", "step": 66, "cert_hash": "bac8b7f8a8f3ebc9", "meta": {"reason": "current_certificate_checked", "validity_horizon": 6, "current_status": "valid", "current_cert_hash": "bac8b7f8a8f3ebc9", "result": true}}
+{"op": "ISSUE", "step": 66, "cert_hash": "156769dc0f9ed0b6", "meta": {"prev_hash": "bac8b7f8a8f3ebc9", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 6, "current_status": "valid", "current_cert_hash": "bac8b7f8a8f3ebc9", "result": true}}
+{"op": "VALIDATE", "step": 67, "cert_hash": "156769dc0f9ed0b6", "meta": {"reason": "current_certificate_checked", "validity_horizon": 3, "current_status": "valid", "current_cert_hash": "156769dc0f9ed0b6", "result": true}}
+{"op": "RENEW", "step": 67, "cert_hash": "1119638561226471", "meta": {"prev_hash": "156769dc0f9ed0b6", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 3, "current_status": "valid", "current_cert_hash": "156769dc0f9ed0b6", "result": true}}
+{"op": "VALIDATE", "step": 68, "cert_hash": "1119638561226471", "meta": {"reason": "current_certificate_checked", "validity_horizon": 1, "current_status": "valid", "current_cert_hash": "1119638561226471", "result": true}}
+{"op": "RENEW", "step": 68, "cert_hash": "2d18ee821131fe9d", "meta": {"prev_hash": "1119638561226471", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 1, "current_status": "valid", "current_cert_hash": "1119638561226471", "result": true}}
+{"op": "VALIDATE", "step": 69, "cert_hash": "2d18ee821131fe9d", "meta": {"reason": "current_certificate_checked", "validity_horizon": 3, "current_status": "valid", "current_cert_hash": "2d18ee821131fe9d", "result": true}}
+{"op": "RENEW", "step": 69, "cert_hash": "0cbe0475a1f22956", "meta": {"prev_hash": "2d18ee821131fe9d", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 3, "current_status": "valid", "current_cert_hash": "2d18ee821131fe9d", "result": true}}
+{"op": "VALIDATE", "step": 70, "cert_hash": "0cbe0475a1f22956", "meta": {"reason": "current_certificate_checked", "validity_horizon": 4, "current_status": "valid", "current_cert_hash": "0cbe0475a1f22956", "result": true}}
+{"op": "RENEW", "step": 70, "cert_hash": "996782ff8b05cc00", "meta": {"prev_hash": "0cbe0475a1f22956", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 4, "current_status": "valid", "current_cert_hash": "0cbe0475a1f22956", "result": true}}
+{"op": "VALIDATE", "step": 71, "cert_hash": "996782ff8b05cc00", "meta": {"reason": "current_certificate_checked", "validity_horizon": 1, "current_status": "valid", "current_cert_hash": "996782ff8b05cc00", "result": true}}
+{"op": "RENEW", "step": 71, "cert_hash": "dd3fcac83d3e52a5", "meta": {"prev_hash": "996782ff8b05cc00", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 1, "current_status": "valid", "current_cert_hash": "996782ff8b05cc00", "result": true}}
+{"op": "VALIDATE", "step": 72, "cert_hash": "dd3fcac83d3e52a5", "meta": {"reason": "current_certificate_checked", "validity_horizon": 2, "current_status": "valid", "current_cert_hash": "dd3fcac83d3e52a5", "result": true}}
+{"op": "RENEW", "step": 72, "cert_hash": "ebbcf7c4a718dd71", "meta": {"prev_hash": "dd3fcac83d3e52a5", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 2, "current_status": "valid", "current_cert_hash": "dd3fcac83d3e52a5", "result": true}}
+{"op": "VALIDATE", "step": 73, "cert_hash": "ebbcf7c4a718dd71", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "valid", "current_cert_hash": "ebbcf7c4a718dd71", "result": false}}
+{"op": "EXPIRE", "step": 73, "cert_hash": "9754ae5847804caa", "meta": {"prev_hash": "ebbcf7c4a718dd71", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "valid", "current_cert_hash": "ebbcf7c4a718dd71", "result": false}}
+{"op": "FALLBACK", "step": 73, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "9754ae5847804caa", "validation_passed": false}}
+{"op": "VALIDATE", "step": 74, "cert_hash": "ebbcf7c4a718dd71", "meta": {"reason": "current_certificate_checked", "validity_horizon": 3, "current_status": "expired", "current_cert_hash": "ebbcf7c4a718dd71", "result": false}}
+{"op": "RENEW", "step": 74, "cert_hash": "57011023c89e315c", "meta": {"prev_hash": "9754ae5847804caa", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 3, "current_status": "expired", "current_cert_hash": "ebbcf7c4a718dd71", "result": false}}
+{"op": "VALIDATE", "step": 75, "cert_hash": "57011023c89e315c", "meta": {"reason": "current_certificate_checked", "validity_horizon": 2, "current_status": "valid", "current_cert_hash": "57011023c89e315c", "result": true}}
+{"op": "RENEW", "step": 75, "cert_hash": "71f4cf3ced2c8da0", "meta": {"prev_hash": "57011023c89e315c", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 2, "current_status": "valid", "current_cert_hash": "57011023c89e315c", "result": true}}
+{"op": "VALIDATE", "step": 76, "cert_hash": "71f4cf3ced2c8da0", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "valid", "current_cert_hash": "71f4cf3ced2c8da0", "result": false}}
+{"op": "EXPIRE", "step": 76, "cert_hash": "de52da2261fae9f9", "meta": {"prev_hash": "71f4cf3ced2c8da0", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "valid", "current_cert_hash": "71f4cf3ced2c8da0", "result": false}}
+{"op": "FALLBACK", "step": 76, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "de52da2261fae9f9", "validation_passed": false}}
+{"op": "VALIDATE", "step": 77, "cert_hash": "71f4cf3ced2c8da0", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "71f4cf3ced2c8da0", "result": false}}
+{"op": "EXPIRE", "step": 77, "cert_hash": "bd9ca9ac27a0847c", "meta": {"prev_hash": "de52da2261fae9f9", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "71f4cf3ced2c8da0", "result": false}}
+{"op": "FALLBACK", "step": 77, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "bd9ca9ac27a0847c", "validation_passed": false}}
+{"op": "VALIDATE", "step": 78, "cert_hash": "71f4cf3ced2c8da0", "meta": {"reason": "current_certificate_checked", "validity_horizon": 1, "current_status": "expired", "current_cert_hash": "71f4cf3ced2c8da0", "result": false}}
+{"op": "RENEW", "step": 78, "cert_hash": "fc9030ab5f23bd04", "meta": {"prev_hash": "bd9ca9ac27a0847c", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 1, "current_status": "expired", "current_cert_hash": "71f4cf3ced2c8da0", "result": false}}
+{"op": "VALIDATE", "step": 79, "cert_hash": "fc9030ab5f23bd04", "meta": {"reason": "current_certificate_checked", "validity_horizon": 2, "current_status": "valid", "current_cert_hash": "fc9030ab5f23bd04", "result": true}}
+{"op": "RENEW", "step": 79, "cert_hash": "c996add60152e1d9", "meta": {"prev_hash": "fc9030ab5f23bd04", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 2, "current_status": "valid", "current_cert_hash": "fc9030ab5f23bd04", "result": true}}
+{"op": "VALIDATE", "step": 80, "cert_hash": "c996add60152e1d9", "meta": {"reason": "current_certificate_checked", "validity_horizon": 2, "current_status": "valid", "current_cert_hash": "c996add60152e1d9", "result": true}}
+{"op": "RENEW", "step": 80, "cert_hash": "8f2dbb8b0fa45a4b", "meta": {"prev_hash": "c996add60152e1d9", "validation_passed": true, "reason": "current_certificate_checked", "validity_horizon": 2, "current_status": "valid", "current_cert_hash": "c996add60152e1d9", "result": true}}
+{"op": "VALIDATE", "step": 81, "cert_hash": "8f2dbb8b0fa45a4b", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "valid", "current_cert_hash": "8f2dbb8b0fa45a4b", "result": false}}
+{"op": "EXPIRE", "step": 81, "cert_hash": "569a20ba5ca391b6", "meta": {"prev_hash": "8f2dbb8b0fa45a4b", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "valid", "current_cert_hash": "8f2dbb8b0fa45a4b", "result": false}}
+{"op": "FALLBACK", "step": 81, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "569a20ba5ca391b6", "validation_passed": false}}
+{"op": "VALIDATE", "step": 82, "cert_hash": "8f2dbb8b0fa45a4b", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "8f2dbb8b0fa45a4b", "result": false}}
+{"op": "EXPIRE", "step": 82, "cert_hash": "69de9408359d5893", "meta": {"prev_hash": "569a20ba5ca391b6", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "8f2dbb8b0fa45a4b", "result": false}}
+{"op": "FALLBACK", "step": 82, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "69de9408359d5893", "validation_passed": false}}
+{"op": "VALIDATE", "step": 83, "cert_hash": "8f2dbb8b0fa45a4b", "meta": {"reason": "current_certificate_checked", "validity_horizon": 2, "current_status": "expired", "current_cert_hash": "8f2dbb8b0fa45a4b", "result": false}}
+{"op": "RENEW", "step": 83, "cert_hash": "0153d59399bac579", "meta": {"prev_hash": "69de9408359d5893", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 2, "current_status": "expired", "current_cert_hash": "8f2dbb8b0fa45a4b", "result": false}}
+{"op": "VALIDATE", "step": 84, "cert_hash": "0153d59399bac579", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "valid", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "EXPIRE", "step": 84, "cert_hash": "3b398bfdd1b1aa1b", "meta": {"prev_hash": "0153d59399bac579", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "valid", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "FALLBACK", "step": 84, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "3b398bfdd1b1aa1b", "validation_passed": false}}
+{"op": "VALIDATE", "step": 85, "cert_hash": "0153d59399bac579", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "EXPIRE", "step": 85, "cert_hash": "3f53c3ab592ba63a", "meta": {"prev_hash": "3b398bfdd1b1aa1b", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "FALLBACK", "step": 85, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "3f53c3ab592ba63a", "validation_passed": false}}
+{"op": "VALIDATE", "step": 86, "cert_hash": "0153d59399bac579", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "EXPIRE", "step": 86, "cert_hash": "310a9e65e02bb5a5", "meta": {"prev_hash": "3f53c3ab592ba63a", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "FALLBACK", "step": 86, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "310a9e65e02bb5a5", "validation_passed": false}}
+{"op": "VALIDATE", "step": 87, "cert_hash": "0153d59399bac579", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "EXPIRE", "step": 87, "cert_hash": "e2184bed425b31b8", "meta": {"prev_hash": "310a9e65e02bb5a5", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "FALLBACK", "step": 87, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "e2184bed425b31b8", "validation_passed": false}}
+{"op": "VALIDATE", "step": 88, "cert_hash": "0153d59399bac579", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "EXPIRE", "step": 88, "cert_hash": "7e57aa8a0ea270f4", "meta": {"prev_hash": "e2184bed425b31b8", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "FALLBACK", "step": 88, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "7e57aa8a0ea270f4", "validation_passed": false}}
+{"op": "VALIDATE", "step": 89, "cert_hash": "0153d59399bac579", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "EXPIRE", "step": 89, "cert_hash": "b08ba42012f3a494", "meta": {"prev_hash": "7e57aa8a0ea270f4", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "FALLBACK", "step": 89, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "b08ba42012f3a494", "validation_passed": false}}
+{"op": "VALIDATE", "step": 90, "cert_hash": "0153d59399bac579", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "EXPIRE", "step": 90, "cert_hash": "b87c2c3e53d959a0", "meta": {"prev_hash": "b08ba42012f3a494", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "FALLBACK", "step": 90, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "b87c2c3e53d959a0", "validation_passed": false}}
+{"op": "VALIDATE", "step": 91, "cert_hash": "0153d59399bac579", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "EXPIRE", "step": 91, "cert_hash": "f89415f93bba744a", "meta": {"prev_hash": "b87c2c3e53d959a0", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "FALLBACK", "step": 91, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "f89415f93bba744a", "validation_passed": false}}
+{"op": "VALIDATE", "step": 92, "cert_hash": "0153d59399bac579", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "EXPIRE", "step": 92, "cert_hash": "5fcc3a9927d5753d", "meta": {"prev_hash": "f89415f93bba744a", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "FALLBACK", "step": 92, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "5fcc3a9927d5753d", "validation_passed": false}}
+{"op": "VALIDATE", "step": 93, "cert_hash": "0153d59399bac579", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "EXPIRE", "step": 93, "cert_hash": "38316f2fef1d62b0", "meta": {"prev_hash": "5fcc3a9927d5753d", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "FALLBACK", "step": 93, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "38316f2fef1d62b0", "validation_passed": false}}
+{"op": "VALIDATE", "step": 94, "cert_hash": "0153d59399bac579", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "EXPIRE", "step": 94, "cert_hash": "e28543f549fb6637", "meta": {"prev_hash": "38316f2fef1d62b0", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "FALLBACK", "step": 94, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "e28543f549fb6637", "validation_passed": false}}
+{"op": "VALIDATE", "step": 95, "cert_hash": "0153d59399bac579", "meta": {"reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "EXPIRE", "step": 95, "cert_hash": "50542faffc9258f3", "meta": {"prev_hash": "e28543f549fb6637", "validation_passed": false, "reason": "current_certificate_checked", "validity_horizon": 0, "current_status": "expired", "current_cert_hash": "0153d59399bac579", "result": false}}
+{"op": "FALLBACK", "step": 95, "cert_hash": null, "meta": {"reason": "expired_certificate", "expired_cert_hash": "50542faffc9258f3", "validation_passed": false}}

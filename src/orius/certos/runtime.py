@@ -1,7 +1,7 @@
 """CertOS runtime orchestrator (Paper 6).
 
 High-level loop that combines all nine CertOS engines into a single
-step-by-step runtime.  Enforces the three CertOS invariants:
+step-by-step runtime. Enforces the three CertOS invariants:
 
     INV-1: No dispatch without a valid or fallback certificate
     INV-2: Certificate hash chain is unbroken
@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
@@ -45,6 +45,11 @@ class CertOSState:
     certificate: dict[str, Any]
     fallback_active: bool
     audit_count: int
+    lifecycle_op: str = ""
+    validation_passed: bool = False
+    hash_chain_ok: bool = True
+    cert_hash: str | None = None
+    prev_hash: str | None = None
 
 
 def _to_json_safe(obj: Any) -> Any:
@@ -92,15 +97,26 @@ class CertOSRuntime:
         validity_horizon: int,
     ) -> CertOSState:
         """ISSUE: create a certificate and advance step."""
-        cert = self._cert_engine.issue(proposed_action, safe_action, validity_horizon)
-        h = _cert_hash(cert)
-        cert["prev_hash"] = self._prev_hash
-        cert["cert_hash"] = h
-        self._prev_hash = h
+        cert = self._issue_chained_certificate(
+            LifecycleOp.ISSUE,
+            proposed_action,
+            safe_action,
+            validity_horizon,
+        )
         self._last_validity = validity_horizon
-
-        self._audit.append(LifecycleOp.ISSUE.value, self._step, h)
-        state = self._snapshot("valid", safe_action, cert)
+        self._audit.append(
+            LifecycleOp.ISSUE.value,
+            self._step,
+            cert["cert_hash"],
+            meta={"prev_hash": cert.get("prev_hash"), "validation_passed": False},
+        )
+        state = self._snapshot(
+            "valid",
+            safe_action,
+            cert,
+            lifecycle_op=LifecycleOp.ISSUE.value,
+            validation_passed=False,
+        )
         self._step += 1
         return state
 
@@ -112,22 +128,59 @@ class CertOSRuntime:
         validity_horizon: int,
     ) -> CertOSState:
         """Main per-step entry: validate current, decide lifecycle op."""
-        # Compute status
+        del observed_soc_mwh
+
+        validation_passed, validation_meta = self._validate_current(validity_horizon)
         if validity_horizon <= 0:
-            return self._handle_expired(safe_action)
-        elif validity_horizon <= self.cfg.degraded_threshold:
-            return self._handle_degraded(proposed_action, safe_action, validity_horizon)
-        else:
-            return self._handle_valid(proposed_action, safe_action, validity_horizon)
+            return self._handle_expired(safe_action, validation_passed, validation_meta)
+        if validity_horizon <= self.cfg.degraded_threshold:
+            return self._handle_degraded(
+                proposed_action,
+                safe_action,
+                validity_horizon,
+                validation_passed,
+                validation_meta,
+            )
+        return self._handle_valid(
+            proposed_action,
+            safe_action,
+            validity_horizon,
+            validation_passed,
+            validation_meta,
+        )
 
     def revoke(self) -> CertOSState:
         """REVOKE: force invalidate current certificate."""
         cert = self._cert_engine.revoke()
-        h = _cert_hash(cert) if cert else None
-        self._audit.append(LifecycleOp.REVOKE.value, self._step, h)
+        revoked_cert: dict[str, Any] = {}
+        if cert is not None:
+            revoked_cert = dict(cert)
+            revoked_cert["prev_hash"] = self._prev_hash
+            revoked_cert["cert_hash"] = _cert_hash(revoked_cert)
+            self._prev_hash = revoked_cert["cert_hash"]
+            self._audit.append(
+                LifecycleOp.REVOKE.value,
+                self._step,
+                revoked_cert["cert_hash"],
+                meta={"prev_hash": revoked_cert.get("prev_hash")},
+            )
+
         fb_action = {"charge_mw": 0.0, "discharge_mw": 0.0}
         self._cert_engine.fallback(fb_action)
-        return self._snapshot("fallback", fb_action, cert or {})
+        self._audit.append(
+            LifecycleOp.FALLBACK.value,
+            self._step,
+            meta={"reason": "revoked_certificate", "revoked_cert_hash": revoked_cert.get("cert_hash")},
+        )
+        self._last_validity = 0
+        return self._snapshot(
+            "fallback",
+            fb_action,
+            revoked_cert,
+            fallback=True,
+            lifecycle_op=LifecycleOp.FALLBACK.value,
+            validation_passed=False,
+        )
 
     def recover(self) -> dict[str, Any]:
         """Attempt to recover from fallback state."""
@@ -138,11 +191,21 @@ class CertOSRuntime:
 
     @property
     def audit_log(self) -> Sequence[dict[str, Any]]:
+        """Step-level public audit view for compatibility with existing tests."""
+        return self._coalesce_audit_entries(self._audit.entries())
+
+    @property
+    def raw_audit_log(self) -> Sequence[dict[str, Any]]:
+        """Uncollapsed lifecycle stream used for artifact generation."""
         return self._audit.entries()
 
     @property
     def intervention_count(self) -> int:
-        return self._audit.intervention_count()
+        return sum(
+            1
+            for entry in self.audit_log
+            if entry.get("op") in (LifecycleOp.FALLBACK.value, LifecycleOp.REVOKE.value, LifecycleOp.EXPIRE.value)
+        )
 
     @property
     def step(self) -> int:
@@ -154,19 +217,14 @@ class CertOSRuntime:
         """Return list of violated invariant names (empty = all OK)."""
         violations = []
 
-        # INV-1: No dispatch without valid or fallback cert
         action = state.safe_action
         if action.get("discharge_mw", 0) > 0 or action.get("charge_mw", 0) > 0:
             if state.status not in ("valid", "degraded", "fallback"):
                 violations.append("INV-1")
 
-        # INV-2: Hash chain linkage (check most recent cert)
-        cert = state.certificate
-        if cert and cert.get("prev_hash") is not None:
-            # prev_hash should match the previously recorded hash
-            pass  # chain verified during issue/renew
+        if not self._verify_hash_chain():
+            violations.append("INV-2")
 
-        # INV-3: Fallback iff H_t ≤ 0
         if state.validity_horizon <= 0 and not state.fallback_active:
             violations.append("INV-3")
         if state.validity_horizon > 0 and state.fallback_active:
@@ -181,15 +239,28 @@ class CertOSRuntime:
         proposed: Mapping[str, float],
         safe: Mapping[str, float],
         h_t: int,
+        validation_passed: bool,
+        validation_meta: Mapping[str, Any],
     ) -> CertOSState:
-        cert = self._cert_engine.issue(proposed, safe, h_t)
-        h = _cert_hash(cert)
-        cert["prev_hash"] = self._prev_hash
-        cert["cert_hash"] = h
-        self._prev_hash = h
+        cert = self._issue_chained_certificate(LifecycleOp.ISSUE, proposed, safe, h_t)
         self._last_validity = h_t
-        self._audit.append(LifecycleOp.ISSUE.value, self._step, h)
-        state = self._snapshot("valid", safe, cert)
+        self._audit.append(
+            LifecycleOp.ISSUE.value,
+            self._step,
+            cert["cert_hash"],
+            meta={
+                "prev_hash": cert.get("prev_hash"),
+                "validation_passed": validation_passed,
+                **dict(validation_meta),
+            },
+        )
+        state = self._snapshot(
+            "valid",
+            safe,
+            cert,
+            lifecycle_op=LifecycleOp.ISSUE.value,
+            validation_passed=validation_passed,
+        )
         self._step += 1
         return state
 
@@ -198,24 +269,75 @@ class CertOSRuntime:
         proposed: Mapping[str, float],
         safe: Mapping[str, float],
         h_t: int,
+        validation_passed: bool,
+        validation_meta: Mapping[str, Any],
     ) -> CertOSState:
-        cert = self._cert_engine.renew(proposed, safe, h_t)
-        h = _cert_hash(cert)
-        cert["prev_hash"] = self._prev_hash
-        cert["cert_hash"] = h
-        self._prev_hash = h
+        cert = self._issue_chained_certificate(LifecycleOp.RENEW, proposed, safe, h_t)
         self._last_validity = h_t
-        self._audit.append(LifecycleOp.RENEW.value, self._step, h)
-        state = self._snapshot("degraded", safe, cert)
+        self._audit.append(
+            LifecycleOp.RENEW.value,
+            self._step,
+            cert["cert_hash"],
+            meta={
+                "prev_hash": cert.get("prev_hash"),
+                "validation_passed": validation_passed,
+                **dict(validation_meta),
+            },
+        )
+        state = self._snapshot(
+            "degraded",
+            safe,
+            cert,
+            lifecycle_op=LifecycleOp.RENEW.value,
+            validation_passed=validation_passed,
+        )
         self._step += 1
         return state
 
-    def _handle_expired(self, safe: Mapping[str, float]) -> CertOSState:
-        self._cert_engine.expire()
+    def _handle_expired(
+        self,
+        safe: Mapping[str, float],
+        validation_passed: bool,
+        validation_meta: Mapping[str, Any],
+    ) -> CertOSState:
+        expired_cert = self._cert_engine.expire()
+        cert_for_state: dict[str, Any] = {"status": "expired"}
+        if expired_cert is not None:
+            cert_for_state = dict(expired_cert)
+            cert_for_state["prev_hash"] = self._prev_hash
+            cert_for_state["cert_hash"] = _cert_hash(cert_for_state)
+            self._prev_hash = cert_for_state["cert_hash"]
+            self._audit.append(
+                LifecycleOp.EXPIRE.value,
+                self._step,
+                cert_for_state["cert_hash"],
+                meta={
+                    "prev_hash": cert_for_state.get("prev_hash"),
+                    "validation_passed": validation_passed,
+                    **dict(validation_meta),
+                },
+            )
+
         fb_action = {"charge_mw": 0.0, "discharge_mw": 0.0}
         self._cert_engine.fallback(fb_action)
-        self._audit.append(LifecycleOp.FALLBACK.value, self._step)
-        state = self._snapshot("fallback", fb_action, {"status": "expired"}, fallback=True)
+        self._audit.append(
+            LifecycleOp.FALLBACK.value,
+            self._step,
+            meta={
+                "reason": "expired_certificate",
+                "expired_cert_hash": cert_for_state.get("cert_hash"),
+                "validation_passed": validation_passed,
+            },
+        )
+        self._last_validity = 0
+        state = self._snapshot(
+            "fallback",
+            fb_action,
+            cert_for_state,
+            fallback=True,
+            lifecycle_op=LifecycleOp.FALLBACK.value,
+            validation_passed=validation_passed,
+        )
         self._step += 1
         return state
 
@@ -225,6 +347,8 @@ class CertOSRuntime:
         action: Mapping[str, float],
         cert: Mapping[str, Any],
         fallback: bool = False,
+        lifecycle_op: str = "",
+        validation_passed: bool = False,
     ) -> CertOSState:
         return CertOSState(
             step=self._step,
@@ -234,4 +358,92 @@ class CertOSRuntime:
             certificate=dict(cert),
             fallback_active=fallback,
             audit_count=len(self._audit.entries()),
+            lifecycle_op=lifecycle_op,
+            validation_passed=validation_passed,
+            hash_chain_ok=self._verify_hash_chain(),
+            cert_hash=cert.get("cert_hash"),
+            prev_hash=cert.get("prev_hash"),
         )
+
+    def _issue_chained_certificate(
+        self,
+        op: LifecycleOp,
+        proposed: Mapping[str, float],
+        safe: Mapping[str, float],
+        validity_horizon: int,
+    ) -> dict[str, Any]:
+        if op is LifecycleOp.ISSUE:
+            cert = dict(self._cert_engine.issue(proposed, safe, validity_horizon))
+        elif op is LifecycleOp.RENEW:
+            cert = dict(self._cert_engine.renew(proposed, safe, validity_horizon))
+        else:
+            raise ValueError(f"Unsupported certificate op for chaining: {op}")
+
+        cert["prev_hash"] = self._prev_hash
+        cert["cert_hash"] = _cert_hash(cert)
+        self._cert_engine.replace_current(cert)
+        self._prev_hash = cert["cert_hash"]
+        return cert
+
+    def _validate_current(self, validity_horizon: int) -> tuple[bool, dict[str, Any]]:
+        current = self._cert_engine.current_certificate
+        if current is None:
+            meta = {"reason": "no_active_certificate", "validity_horizon": validity_horizon, "result": False}
+            self._audit.append(LifecycleOp.VALIDATE.value, self._step, meta=meta)
+            return False, meta
+
+        passed = self._cert_engine.validate(current, current_horizon=validity_horizon)
+        meta = {
+            "reason": "current_certificate_checked",
+            "validity_horizon": validity_horizon,
+            "current_status": current.get("status"),
+            "current_cert_hash": current.get("cert_hash"),
+            "result": passed,
+        }
+        self._audit.append(
+            LifecycleOp.VALIDATE.value,
+            self._step,
+            current.get("cert_hash"),
+            meta=meta,
+        )
+        return passed, meta
+
+    def _verify_hash_chain(self) -> bool:
+        last_hash: str | None = None
+        for entry in self._audit.entries():
+            if entry.get("op") not in {
+                LifecycleOp.ISSUE.value,
+                LifecycleOp.RENEW.value,
+                LifecycleOp.EXPIRE.value,
+                LifecycleOp.REVOKE.value,
+            }:
+                continue
+
+            cert_hash = entry.get("cert_hash")
+            if cert_hash is None:
+                return False
+
+            prev_hash = entry.get("meta", {}).get("prev_hash")
+            if prev_hash != last_hash:
+                return False
+
+            last_hash = cert_hash
+        return True
+
+    def _coalesce_audit_entries(
+        self,
+        entries: Sequence[Mapping[str, Any]],
+    ) -> list[dict[str, Any]]:
+        collapsed: list[dict[str, Any]] = []
+        grouped: dict[int, list[Mapping[str, Any]]] = {}
+        for entry in entries:
+            grouped.setdefault(int(entry["step"]), []).append(entry)
+
+        for step in sorted(grouped):
+            step_entries = grouped[step]
+            primary = dict(step_entries[-1])
+            meta = dict(primary.get("meta") or {})
+            meta["ops_for_step"] = [entry["op"] for entry in step_entries]
+            primary["meta"] = meta
+            collapsed.append(primary)
+        return collapsed
