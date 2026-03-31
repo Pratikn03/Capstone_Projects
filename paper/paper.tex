@@ -28,6 +28,8 @@
 \usepackage{subcaption}
 \usepackage{cleveref}
 \usepackage{setspace}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
 
 \onehalfspacing
 \microtypesetup{nopatch=footnote}
@@ -249,17 +251,48 @@ A forecasting model can have strong RMSE while still inducing unsafe dispatch if
   \item \textbf{Problem formalization.} We formulate degraded-observation safe control as a mismatch between observed feasibility and true physical safety, and make that gap the primary object of analysis rather than a side effect of forecast error.
   \item \textbf{Typed repair-and-certify kernel.} We present ORIUS as one typed Detect--Calibrate--Constrain--Shield--Certify kernel for safe control under degraded observation, with explicit runtime objects for observation-consistent state sets, repaired actions, and causal safety certificates.
   \item \textbf{Battery reference witness.} We establish the battery-domain hidden-gap result as the reference scientific witness: deterministic dispatch violates true SOC at 3.9\% of steps with P95 severity of 333\,MWh while appearing safe on observed state.
+  \item \textbf{Program-first extension spine (Papers 2--6).} Beyond the battery witness, the dissertation contributes a second explicit ORIUS program block: Paper~2 develops temporal validity and blackout safe-hold semantics, Paper~3 closes the graceful-fallback benchmark surface, Paper~4 formalizes ORIUS-Bench as an evaluation contract, Paper~5 adds a bounded shared-constraint composition surface, and Paper~6 adds bounded runtime-governance and certificate-lifecycle evidence.
   \item \textbf{Tiered cross-domain instantiation.} We evaluate the same kernel across a six-row evidence package, with industrial and healthcare clearing the proof-validated gate, autonomous vehicles remaining proof-candidate, navigation remaining shadow-synthetic, and aerospace remaining experimental.
-  \item \textbf{Auditable implementation surface.} We tie the formal kernel to a typed runtime implementation so that theorem-facing objects, evidence tiers, and reported quantities remain inspectable without making implementation inventory the main scientific claim.
+  \item \textbf{Auditable implementation surface.} We tie the formal kernel and the program extensions to typed runtime implementations so that theorem-facing objects, extension layers, evidence tiers, and reported quantities remain inspectable without making implementation inventory the main scientific claim.
 \end{enumerate}
 
 \subsection{Contribution Boundary}
 
 The central scientific contribution is a battery-anchored degraded-observation safety result together with a transferable kernel, not a claim of equal guarantees across six domains. ORIUS is the reusable degraded-observation kernel; battery is the formal reference row; industrial and healthcare are the strongest non-battery defended instantiations; autonomous vehicles remains proof-candidate; navigation remains shadow-synthetic; and aerospace remains experimental. The bounded formal layer consists of the ORIUS theorem package together with typed runtime contracts and explicit transfer obligations. \Cref{thm:rac_coverage} explains why monotone inflation preserves coverage under the shared uncertainty construction, \Cref{thm:conditional_coverage} motivates the reliability-group calibration audits, and \Cref{thm:safety_margin} with \Cref{cor:zero_violation} explain why reliability-conditioned margins and repair can eliminate true-state failures on the reference battery surface. These results support a reusable degraded-observation contract; they do not imply closed-loop stability, optimal inflation scheduling, or equal proof closure for every instantiated domain.
 
+For the dissertation as a whole, that boundary is implemented through two
+explicit contribution spines. Paper~1 provides the battery proof witness and
+the formal hidden-gap result. Papers~2--6 then extend ORIUS across temporal
+validity, graceful fallback, benchmark discipline, bounded composition, and
+runtime governance. Those extensions are thesis contributions in their own
+right, but they do not all carry the same proof burden: Papers~2 and~3 depend
+on the temporal battery ladder, Paper~4 is an evaluation-contract layer,
+Paper~5 is a bounded composition extension, and Paper~6 is a bounded
+runtime-governance extension.
+
 \subsection{Paper Roadmap}
 
-Sections~\ref{sec:related}--\ref{sec:problem} position ORIUS and define the battery reference setting that motivated the framework. Sections~\ref{sec:forecasting_uq} and~\ref{sec:safe_dispatch} describe the forecasting, calibration, and shield mechanics. Sections~\ref{sec:experiments}--\ref{sec:us_analysis} carry the main battery evidence, baseline diagnosis, and regime analysis. \Cref{sec:universal} then asks the narrower transfer question: which parts of the same repair contract survive beyond the battery witness once replay, software-in-loop execution, and theorem obligations are all gated together? The later sections document the implementation surface, hardening, and governance needed to keep that evidence auditable, while the closing sections restate the bounded claim boundary explicitly: battery reference, industrial and healthcare proof-validated, AV proof-candidate, navigation shadow-synthetic, aerospace experimental.
+Sections~\ref{sec:related}--\ref{sec:problem} position ORIUS and define the
+battery reference setting that motivated the framework. Sections
+~\ref{sec:forecasting_uq} and~\ref{sec:safe_dispatch} describe the
+forecasting, calibration, and shield mechanics. Sections~\ref{sec:experiments}
+--\ref{sec:us_analysis} carry the main battery evidence, baseline diagnosis,
+and regime analysis.
+
+The canonical long-form thesis then proceeds in two blocks. The first block is
+Paper~1: the battery theorem witness and its proof-facing chapters
+(Chapters~15--20 in the imported long-form surface). The second block is the
+explicit ORIUS program extension: Paper~2 contributes temporal validity and
+blackout safe-hold, Paper~3 contributes graceful fallback, Paper~4 contributes
+ORIUS-Bench evaluation discipline, Paper~5 contributes bounded
+shared-constraint composition, and Paper~6 contributes bounded runtime
+governance and certificate lifecycle. \Cref{sec:universal} situates those
+extensions inside the narrower transfer question: which parts of the same
+repair contract survive beyond the battery witness once replay,
+software-in-loop execution, and theorem obligations are all gated together?
+The closing sections restate the bounded claim boundary explicitly: battery
+reference, industrial and healthcare proof-validated, AV proof-candidate,
+navigation shadow-synthetic, aerospace experimental.
 
 \section{Related Work}\label{sec:related}
 
@@ -639,7 +672,7 @@ By A2, $\hat{C}_t(\alpha) \subseteq \hat{C}_t^{\mathrm{RAC}}(\alpha)$ pointwise,
 \noindent\textit{Operational meaning.}\enspace The shield can only widen forecast intervals, so any outcome covered by the base conformal predictor remains covered after RAC-Cert inflation. No reliability event can erode the calibrated guarantee.
 
 \paragraph{Contribution boundary.}
-\Cref{thm:rac_coverage} is a correctness condition for the RAC-Cert construction, not the paper's primary novelty. It confirms that monotone inflation cannot erode the base conformal guarantee. The primary contribution is systems-oriented: coupling reliability-adaptive inflation with dispatch-level action repair to close the hidden safety gap.
+\Cref{thm:rac_coverage} is a correctness condition for the RAC-Cert construction. It confirms that monotone inflation cannot erode the base conformal guarantee. The deeper quantitative guarantees --- finite-sample coverage under degraded observations (\Cref{thm:finite-sample}), necessity of reliability awareness (\Cref{thm:separation}), and adaptive inflation regret (\Cref{thm:regret}) --- are stated in \Cref{sec:deep_guarantees_paper}. The primary contribution remains systems-oriented: coupling reliability-adaptive inflation with dispatch-level action repair to close the hidden safety gap.
 
 \subsection{Conditional Coverage Under Reliability Grouping}
 
@@ -710,6 +743,52 @@ T8 & Graceful Degradation Dominance & \path{src/orius/dc3s/temporal_theorems.py}
 \bottomrule
 \end{tabular}
 \end{table}
+
+\subsection{Deep Theoretical Guarantees}\label{sec:deep_guarantees_paper}
+
+The correctness conditions above (T1--T8) establish that the DC\textsuperscript{3}S construction is sound. The following three results go further, from correctness to \emph{quantitative guarantees}.
+
+\begin{theorem}[Finite-sample coverage under reliability degradation]\label{thm:finite-sample}
+Let $\{(X_i, Y_i)\}_{i=1}^n$ be calibration data with reliability weights $w_i \in [w_{\min}, 1]$. Let $\hat{C}_t^w$ be the DC\textsuperscript{3}S conformal set at level $1 - \alpha$. For any $\delta > 0$:
+\[
+  \Pr\!\bigl(Y_{n+1} \in \hat{C}_{n+1}^w\bigr) \ge 1 - \alpha - \sqrt{\frac{\ln(2/\delta)}{2\,n_{\mathrm{eff}}}}
+\]
+where $n_{\mathrm{eff}} = \lfloor n \cdot w_{\min} \rfloor$, with probability $\ge 1 - \delta$.
+\end{theorem}
+\begin{proof}
+By weighted exchangeability, the reliability-weighted conformal quantile achieves exact $1-\alpha$ coverage under correct specification. Under degradation, effective sample size is $n_{\mathrm{eff}} = n \cdot w_{\min}$. Hoeffding on the weighted coverage indicator gives $\epsilon = \sqrt{\ln(2/\delta)/(2\,n_{\mathrm{eff}})}$.
+\end{proof}
+
+\Cref{tab:wmin_sweep} shows how the bound tightens as $w_{\min}$ increases for the locked DE calibration ($n=2{,}608$). At $w_{\min}=0.50$ the coverage guarantee is $\ge 0.862$; at $w_{\min}=1.0$ (perfect telemetry) it reaches $0.873$. The executable witness is \texttt{dc3s/theoretical\_guarantees.py: compute\_finite\_sample\_coverage\_bound()}.
+
+\input{../reports/publication/tbl_wmin_sweep.tex}
+
+\begin{theorem}[Separation --- necessity of reliability awareness]\label{thm:separation}
+For any controller $\pi_{\mathrm{blind}}$ using a fixed uncertainty set $\mathcal{U}$ (not conditioned on $w_t$), there exist degradation sequences such that either:
+\textup{(a)} $\mathrm{TSVR}(\pi_{\mathrm{blind}}) \ge \alpha(1-w_{\min})/2$, or
+\textup{(b)} $\mathrm{IR}(\pi_{\mathrm{blind}}) \ge \mathrm{IR}(\mathrm{DC}^3\mathrm{S}) + (1-w_{\min})/2$.
+\end{theorem}
+\begin{proof}
+By construction: alternate $w_t=1$ and $w_t=w_{\min}$. A narrow fixed set under-covers degraded steps (case~a); a wide fixed set over-intervenes during clean steps (case~b). DC\textsuperscript{3}S avoids both by conditioning on $w_t$.
+\end{proof}
+
+\noindent\textit{Operational meaning.}\enspace Reliability conditioning is \emph{necessary}: any controller that ignores observation quality is Pareto-dominated. For $w_{\min}=0.05$, the lower bound on the gap is $0.475$ in either violations or interventions.
+
+\begin{theorem}[Adaptive inflation regret]\label{thm:regret}
+Let $I_t^*$ be the oracle-optimal inflation and $I_t$ the DC\textsuperscript{3}S inflation under smoothing constant $\tau$, $\gamma = 1 - e^{-1/\tau}$. Then:
+\[
+  R_T = \sum_{t=1}^T (I_t - I_t^*)^2 \le \tau \cdot \Delta_{\max}^2 (1 + \ln T) + \Delta_{\max}^2/\gamma^2
+\]
+where $\Delta_{\max} = \max_t |I_t^* - I_{t-1}^*|$. Per-step regret: $R_T/T = O(\tau \ln T / T) \to 0$.
+\end{theorem}
+\begin{proof}
+Exponential smoothing with rate $\gamma$ has tracking error bounded by $(1-\gamma)^k \Delta_{\max}$ after $k$ steps from a jump. Squaring and summing with geometric decay gives the $\tau \ln T$ tracking term.
+\end{proof}
+
+\noindent\textit{Operational meaning.}\enspace DC\textsuperscript{3}S with $\tau=30$ (locked value) tracks the oracle with vanishing per-step error. For $T=500$, $\Delta_{\max}=0.3$: $R_T/T \le 0.082$.
+
+\paragraph{Theorem summary (T9--T11).}
+T9 provides a computable finite-sample coverage guarantee; T10 proves reliability conditioning is necessary (lower bound); T11 proves the adaptive mechanism tracks the oracle. Together they elevate the contribution from correctness conditions to quantitative guarantees. Code witnesses: \texttt{dc3s/theoretical\_guarantees.py}; test suite: \texttt{tests/test\_theoretical\_guarantees.py} (28 tests).
 
 \subsection{Alternative Inflation Laws}
 
@@ -1443,29 +1522,101 @@ The shared runtime contract is exercised across all six rows: one fault protocol
 
 Navigation and aerospace remain in the canonical harness, but not in the proof-validated claim set. Navigation is still shadow-synthetic because the current trace is synthetic rather than locked telemetry. Aerospace remains experimental because the current replay surface executes correctly but does not yet satisfy the promotion contract. AV remains between those tiers: it is a proof-candidate row with locked telemetry, training, and SIL evidence, but it does not yet clear the full promotion gate. These rows remain valuable for adapter hardening and externalization planning, but they are intentionally outside the reference + proof-validated claim set used for the strongest universal wording in this manuscript.
 
-\paragraph{Papers 2--6 module mapping.}
-The ORIUS program extends beyond the core DC\textsuperscript{3}S shield. \Cref{tab:papers26_modules} maps each extension paper to its implementation modules under \texttt{src/orius/}.
+\paragraph{Integrated ORIUS layers.}
+The ORIUS program extends beyond the core DC\textsuperscript{3}S shield, but
+the implementation should be read as one layered codebase rather than as five
+separate mini-papers. \Cref{tab:orius_layers_modules} maps the main extension
+layers to their implementation modules under \texttt{src/orius/}. The purpose
+of the table is practical: it lets a reader move from the manuscript's claims
+about temporal validity, graceful fallback, benchmark discipline,
+shared-constraint coordination, and runtime governance directly into the
+corresponding code paths.
 
 \begin{table}[htbp]
 \centering\small
-\caption{Papers 2--6 extension modules and implementation paths.}
-\label{tab:papers26_modules}
+\caption{Integrated ORIUS extension layers and implementation paths.}
+\label{tab:orius_layers_modules}
 \begin{tabular}{p{2.2cm}p{3.2cm}p{6.8cm}}
 \toprule
-Paper & Extension & Primary paths \\
+Layer & Role in the integrated system & Primary paths \\
 \midrule
-Paper 2 & Certificate half-life, reachability & \path{src/orius/dc3s/half_life.py}, \path{src/orius/dc3s/reachability.py} \\
-Paper 3 & Graceful degradation planner & \path{src/orius/dc3s/graceful.py}, \path{src/orius/optimizer/fallback_dispatch.py} \\
-Paper 4 & ORIUS-Bench evaluation harness & \path{src/orius/orius_bench/} (adapter, fault\_engine, metrics\_engine, battery\_track, navigation\_track) \\
-Paper 5 & Multi-agent shared-constraint safety & \path{src/orius/multi_agent/} (plant, protocol, margin\_allocation, scenarios) \\
-Paper 6 & CertOS runtime certificate lifecycle & \path{src/orius/certos/} (runtime, certificate\_engine, audit\_ledger, recovery\_manager, belief\_engine, graceful\_planner) \\
+Temporal validity & Certificate half-life, reachability, and bounded blackout semantics & \path{src/orius/dc3s/half_life.py}, \path{src/orius/dc3s/reachability.py} \\
+Controlled degradation & Graceful fallback planner and safe landing logic under prolonged blindness & \path{src/orius/dc3s/graceful.py}, \path{src/orius/optimizer/fallback_dispatch.py} \\
+Evaluation discipline & ORIUS-Bench replay harness, metric engine, and governed benchmark tracks & \path{src/orius/orius_bench/} (adapter, fault\_engine, metrics\_engine, battery\_track, navigation\_track) \\
+Shared-constraint coordination & Fleet-level composition layer for batteries sharing transformer or feeder limits & \path{src/orius/multi_agent/} (plant, protocol, margin\_allocation, scenarios) \\
+Runtime governance & CertOS runtime, certificate chain, audit ledger, and recovery path & \path{src/orius/certos/} (runtime, certificate\_engine, audit\_ledger, recovery\_manager, belief\_engine, graceful\_planner) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
+Read in that integrated way, the repository has a simple structure. The
+reference scientific witness stays in the battery path and the theorem-facing
+DC\textsuperscript{3}S logic. Around that core, ORIUS adds five operational
+layers: temporal certificate reasoning, graceful fallback, benchmark
+formalization, shared-constraint coordination, and runtime governance. Some of
+those layers are theorem-backed, some are bounded empirical extensions, and
+some are primarily deployment-facing. Keeping them inside one table makes the
+codebase easier to audit without forcing the manuscript itself to read like a
+bundle of numbered sub-papers.
+
+\PaperFigureWide{FIG46_ORIUS_PROGRAM}{Program-first ORIUS dissertation spine. Paper~1 provides the battery proof witness; Papers~2--6 extend ORIUS across temporal validity, graceful fallback, evaluation discipline, shared-constraint coordination, and runtime governance under explicitly bounded claim tiers.}
+
+\paragraph{Program contribution map.}
+The canonical thesis is therefore not a battery-only document with optional
+late extensions. It is a two-spine dissertation: Paper~1 establishes the
+reference scientific witness, and Papers~2--6 make the temporal, fallback,
+benchmark, compositional, and runtime layers explicit as defended thesis
+contributions.
+
+\begin{table*}[htbp]
+\centering\small
+\caption{Paper-to-thesis contribution map for the canonical ORIUS dissertation.}
+\label{tab:orius_program_map}
+\begin{tabular}{p{1.1cm}p{2.6cm}p{3.8cm}p{3.0cm}p{4.0cm}}
+\toprule
+Paper & Main thesis chapters & Central claim & Evidence status & Role in the thesis \\
+\midrule
+Paper 1 & Chs.~11, 15--20 & Battery OASG witness and T1--T8 ladder & locked theorem gate + battery artifacts & Reference scientific witness \\
+Paper 2 & Chs.~20, 28 & Certificate horizon, expiration bound, blackout safe-hold & theorem + bounded blackout artifacts & Temporal validity layer \\
+Paper 3 & Chs.~20, 29 & Graceful fallback benchmark under prolonged blindness & canonical four-policy benchmark & Controlled degradation layer \\
+Paper 4 & Chs.~10, 30 & ORIUS-Bench replay contract and benchmark discipline & replay + schema artifacts & Evaluation discipline layer \\
+Paper 5 & Ch.~31 & Shared-feeder non-composition counterexample and coordinated repair & multi-agent scenario artifacts & Bounded composition layer \\
+Paper 6 & Sec.~\ref{sec:governance}, Chs.~27, 32 & CertOS runtime lifecycle, audit chain, and recovery path & runtime + HIL artifacts & Runtime-governance layer \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table}[htbp]
+\centering\small
+\caption{Papers~2--6 inclusion audit in the canonical thesis narrative.}
+\label{tab:papers26_inclusion_audit}
+\begin{tabular}{lcccl}
+\toprule
+Paper & Code & Artifacts & Main text & Classification \\
+\midrule
+Paper 2 & yes & yes & yes & fully integrated \\
+Paper 3 & yes & yes & yes & fully integrated \\
+Paper 4 & yes & yes & yes & fully integrated \\
+Paper 5 & yes & yes & yes & fully integrated \\
+Paper 6 & yes & yes & yes & fully integrated \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{What Papers 2--6 add to the thesis.}
+Paper~2 turns certificate validity into an explicit temporal object with a
+bounded expiration and blackout-safe-hold story. Paper~3 adds the canonical
+four-policy graceful-fallback benchmark and constrains its claim surface to
+that executable battery benchmark. Paper~4 makes ORIUS-Bench a replayable
+evaluation contract rather than a loose benchmarking appendix. Paper~5 adds a
+bounded shared-feeder counterexample showing that local certificates do not
+compose automatically, while Paper~6 adds the runtime-governance layer that
+tracks validation, expiry, fallback, audit continuity, and recovery as
+explicit lifecycle events.
+
 \input{longform/theorem_block_longform.tex}
 
-\section{Governance and Reproducibility}\label{sec:governance}\label{ch:certos-runtime}
+\section{Governance and Reproducibility}\label{sec:governance}
 
 \subsection{Source of Truth}
 
@@ -1539,8 +1690,6 @@ The deployment includes a Prometheus + Grafana observability stack (\texttt{dock
 
 \PaperFigure{FIG45_MODEL_DRIFT_METRIC}{Model drift metrics over time. Forecast accuracy degradation is tracked by rolling RMSE and coverage deviation, enabling proactive retraining decisions.}
 
-\PaperFigure{FIG46_RESIDUAL_ZSCORE}{Residual $z$-score timeline for the anomaly detection pipeline. Scores exceeding $\pm 3\sigma$ are flagged as anomalous and fed into the reliability scorer.}
-
 \paragraph{Operator dashboard.}
 A Next.js/React frontend (\texttt{frontend/}) provides an operator-facing view over forecasting, optimization, monitoring, anomaly detection, and carbon tracking. Its \texttt{DC3SLiveCard} component displays the live shield state---reliability weight $w_t$, inflation factor, controller type, and intervention status---with configurable auto-refresh (5--60\,s). The dashboard reads from the same FastAPI endpoints (\texttt{services/api/routers/}) used in batch evaluation, which keeps the interactive view aligned with the locked experimental path.
 
@@ -1602,9 +1751,9 @@ The main internal-validity risk is manuscript-artifact drift. This is mitigated 
 This paper is intentionally scoped as a tiered universal ORIUS manuscript, not as a claim of universal dominance. The strongest evidence set is limited to the battery reference row and the two proof-validated peers (industrial process control and medical monitoring). AV remains proof-candidate, navigation remains shadow-synthetic, and aerospace remains experimental. Battery still carries the locked economic narrative and the deepest theorem-to-artifact lineage.
 \subsection{Threats to Construct and Conclusion Validity}
 
-Construct validity depends on the proxy cost and carbon signals being appropriate enough for comparative analysis. Conclusion validity depends on scenario design and calibration definitions remaining stable. The formal results (\Cref{thm:rac_coverage,thm:conditional_coverage,thm:safety_margin}) should not be overstated: \Cref{thm:rac_coverage} gives marginal coverage preservation under monotone inflation; \Cref{thm:conditional_coverage} gives group-conditional coverage under a Mondrian partition; and \Cref{thm:safety_margin} establishes safety-margin monotonicity and true-SOC feasibility under reliability-conditioned margins. Together they formalize why the DC\textsuperscript{3}S construction is correct, but they do not establish closed-loop stability, optimal inflation, or finite-time convergence.
+Construct validity depends on the proxy cost and carbon signals being appropriate enough for comparative analysis. Conclusion validity depends on scenario design and calibration definitions remaining stable. The original formal results (\Cref{thm:rac_coverage,thm:conditional_coverage,thm:safety_margin}) formalize correctness conditions for the DC\textsuperscript{3}S construction: coverage preservation, group-conditional coverage, and safety-margin monotonicity. The deep guarantees (\Cref{thm:finite-sample,thm:separation,thm:regret}) go further: T9 gives a finite-sample coverage bound, T10 proves necessity of reliability conditioning, and T11 bounds adaptive inflation regret. Together they do not establish closed-loop stability or optimal inflation in the LQR/Lyapunov sense, but they do provide quantitative, computable safety guarantees that go beyond pure correctness conditions.
 
-The theorems should be read as correctness conditions for the safety shield's construction, not as a standalone contribution in conformal prediction theory. They do not prove that the chosen inflation law is optimal among all monotone laws, do not guarantee minimum intervention rate, and do not remove the need for empirical validation. The practical safety of the system depends on how reliability scoring, drift behavior, forecast quality, optimization, and action repair interact under realistic faults. The empirical evidence in \Cref{sec:main_result} and the ablation study in \Cref{sec:ablation} provide the primary safety validation. Accordingly, the paper's contribution is systems-oriented: the theorems validate the construction, while the locked benchmark results validate the method.
+The theorems should be read as a tiered guarantee structure: T1--T8 validate the \emph{construction}; T9--T11 provide \emph{quantitative bounds} on coverage, separation, and adaptation. They do not prove that the chosen inflation law is optimal among all monotone laws, do not guarantee minimum intervention rate, and do not remove the need for empirical validation. The practical safety of the system depends on how reliability scoring, drift behavior, forecast quality, optimization, and action repair interact under realistic faults. The empirical evidence in \Cref{sec:main_result} and the ablation study in \Cref{sec:ablation} provide the primary safety validation.
 
 \section{Limitations and Future Work}\label{sec:limitations}\label{sec:future_work}
 
@@ -1614,7 +1763,7 @@ The theorems should be read as correctness conditions for the safety shield's co
   \item Battery, AV, industrial, and healthcare are defended in this release; navigation and aerospace are explicitly not.
   \item The manuscript now includes controller-in-the-loop runtime rehearsal and software-in-loop validation, but not production field deployment. Physical battery control, inverter integration, BMS-level constraint enforcement, vehicle actuation, and clinical-device integration remain outside the current evidence lock.
   \item Cost and carbon signals are engineering proxies rather than full settlement models, so the strongest economic interpretation remains the battery domain.
-  \item The formal results (\Cref{thm:rac_coverage,thm:conditional_coverage,thm:safety_margin}) formalize correctness of the ORIUS construction but do not establish closed-loop stability, optimal inflation, or universal performance guarantees.
+  \item The correctness theorems (T1--T8) validate the DC\textsuperscript{3}S construction; the deep guarantees (T9--T11) provide finite-sample coverage bounds, a separation lower bound, and an adaptive regret bound. Together they establish quantitative safety guarantees but do not prove closed-loop stability, optimal inflation selection, or universal performance dominance.
   \item The non-battery promoted domains clear the current promotion gate, but some of them do so with high repair rates. The defended claim is therefore safety preservation under degraded observation, not uniform conditional-conservatism behavior across every domain.
 \end{enumerate}
 

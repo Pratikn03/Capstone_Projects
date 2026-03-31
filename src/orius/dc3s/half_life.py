@@ -9,6 +9,7 @@ Implements the temporal safety certificate logic for DC3S (Paper 2):
 """
 from __future__ import annotations
 
+import math
 from typing import Any, Dict
 
 MAX_HORIZON_STEPS: int = 4096
@@ -57,15 +58,19 @@ def compute_validity_horizon(
 def compute_half_life_from_horizon(tau_t: float, decay_rate: float) -> Dict[str, Any]:
     """Convert a validity horizon into a half-life.
 
-    Uses the geometric decay model: half_life = tau_t * decay_rate / (1 - decay_rate).
-    At decay_rate=0.5 this yields half_life = tau_t (intuitive: half-life equals horizon).
+    Uses the same log-based decay transform as the battery helper:
+    half_life = tau_t * ln(2) / |ln(decay_rate)|.
+    For invalid decay rates outside (0, 1), the helper conservatively
+    falls back to the raw horizon.
 
     Returns dict with keys: tau_t, half_life_steps.
     """
-    if decay_rate <= 0.0 or decay_rate >= 1.0:
+    if tau_t <= 0:
+        half_life_steps = 0.0
+    elif decay_rate <= 0.0 or decay_rate >= 1.0:
         half_life_steps = float(tau_t)
     else:
-        half_life_steps = tau_t * decay_rate / (1.0 - decay_rate)
+        half_life_steps = tau_t * math.log(2.0) / abs(math.log(decay_rate))
     return {"tau_t": tau_t, "half_life_steps": half_life_steps}
 
 

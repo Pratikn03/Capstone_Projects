@@ -51,6 +51,18 @@ from .reachability import (
     compute_validity_horizon_from_reachability,
     compute_expiration_bound,
 )
+from .theoretical_guarantees import (
+    compute_finite_sample_coverage_bound,
+    assert_finite_sample_bound,
+    compute_coverage_bound_surface,
+    compute_separation_gap,
+    assert_separation,
+    simulate_separation_construction,
+    compute_adaptive_regret_bound,
+    assert_sublinear_regret,
+    simulate_adaptive_tracking,
+    THEOREM_REGISTER,
+)
 
 __all__ = [
     "compute_reliability",
@@ -97,4 +109,14 @@ __all__ = [
     "DomainAdapter",
     "BatteryDomainAdapter",
     "run_dc3s_step",
+    "compute_finite_sample_coverage_bound",
+    "assert_finite_sample_bound",
+    "compute_coverage_bound_surface",
+    "compute_separation_gap",
+    "assert_separation",
+    "simulate_separation_construction",
+    "compute_adaptive_regret_bound",
+    "assert_sublinear_regret",
+    "simulate_adaptive_tracking",
+    "THEOREM_REGISTER",
 ]

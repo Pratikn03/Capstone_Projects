@@ -92,7 +92,7 @@ figures:
   FIG43_INTERVAL_WIDTH_BY_HORIZON: {path: paper/assets/figures/fig43_interval_width_by_horizon.png, caption: "Interval width by horizon.", status: provisional}
   FIG44_DATA_DRIFT_KS: {path: paper/assets/figures/fig44_data_drift_ks.png, caption: "Data drift KS.", status: provisional}
   FIG45_MODEL_DRIFT_METRIC: {path: paper/assets/figures/fig45_model_drift_metric.png, caption: "Model drift metric.", status: provisional}
-  FIG46_RESIDUAL_ZSCORE: {path: paper/assets/figures/fig46_residual_zscore.png, caption: "Residual z-score.", status: provisional}
+  FIG46_ORIUS_PROGRAM: {path: paper/assets/figures/fig46_orius_program_spine.png, caption: "ORIUS program spine.", status: locked}
   FIG47_ERROR_DISTRIBUTION: {path: paper/assets/figures/fig47_error_distribution.png, caption: "Error distribution.", status: provisional}
   FIG48_SEASONALITY_ERROR_HEATMAP: {path: paper/assets/figures/fig48_seasonality_error_heatmap.png, caption: "Seasonality error heatmap.", status: provisional}
   FIG49_ROBUSTNESS_REGRET_BOXPLOT: {path: paper/assets/figures/fig49_robustness_regret_boxplot.png, caption: "Robustness regret boxplot.", status: provisional}
@@ -186,14 +186,15 @@ notes:
   metric_policy: "Numeric claims in prose should use \\PaperMetric keys and default to locked values until retraining refreshes metrics_values.tex."
   longform_structure:
     - "paper/longform/theorem_block_longform.tex imports thesis chapters ch15-ch20 into the primary paper build."
-    - "paper/longform/hardening_block_longform.tex imports thesis chapters ch21-ch32 into the primary paper build."
-    - "paper/longform/closing_block_longform.tex imports thesis chapters ch33-ch36 into the primary paper build."
+    - "paper/longform/hardening_block_longform.tex imports the program-extension thesis chapters: ch21-ch31 plus ch32_certos_runtime_certificate_lifecycle."
+    - "paper/longform/closing_block_longform.tex imports thesis chapters ch33-ch36 into the primary paper build as the closing ORIUS program block."
     - "paper/longform/appendix_block_longform.tex imports selected thesis appendices into the primary paper build."
   coverage_map: "reports/publication/paper_thesis_coverage_map.csv"
   refresh_flow:
     - "python scripts/verify_integrated_theorem_surface.py"
     - "python scripts/run_universal_orius_validation.py"
     - "python scripts/generate_architecture_diagram.py --paper paper/assets/figures/fig01_architecture"
+    - "python scripts/generate_orius_program_figure.py"
     - "python scripts/generate_paper_figures_fig12_fig13_fig58.py"
     - "python scripts/sync_paper_figures.py"
     - "python scripts/generate_multi_domain_figure.py"

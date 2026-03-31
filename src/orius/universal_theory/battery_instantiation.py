@@ -237,9 +237,11 @@ def should_expire_certificate(
 ) -> dict[str, bool | int | str]:
     """Return True when the battery certificate has expired."""
     remaining = max(0, tau_t - steps_since_renewal)
+    expiration_reason = "tau_t_exhausted" if remaining <= 0 else ""
     return {
         "should_expire": bool(remaining <= 0),
         "remaining_certified_steps": int(remaining),
         "tau_t": int(tau_t),
-        "expiration_reason": "certificate_horizon_elapsed" if remaining <= 0 else "",
+        "expiration_trigger_reason": expiration_reason,
+        "expiration_reason": expiration_reason,
     }

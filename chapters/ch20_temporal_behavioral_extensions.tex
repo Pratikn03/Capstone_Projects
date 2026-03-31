@@ -11,8 +11,8 @@ graceful degradation dominance.  These results are integrated with a broader
 theorem-like surface that also includes precursor statements, chapter-local
 supporting results, and appendix restatements catalogued in
 Appendix~\ref{app:integrated-theorem-surface-register}.  The certificate
-half-life result remains a corollary, and safe-budget monotonicity remains a
-proposition.
+half-life result remains a conservative proxy corollary, and safe-budget
+monotonicity remains a proposition.
 
 %% ---------------------------------------------------------------
 %%  Part 1: Temporal extension
@@ -120,10 +120,11 @@ be an integer, the floor provides the bound.
 
 \subsection{Certificate Half-Life Corollary}
 
-\begin{corollary}[Certificate half-life]
+\begin{corollary}[Certificate half-life proxy]
 \label{cor:half-life}
-The certificate half-life $\tau_{1/2}$---the horizon at which the
-safety probability drops below $(1 - \alpha)/2$---satisfies
+The certificate half-life proxy $\tau_{1/2}$---a conservative mapping from
+reliability-inflated interval width and drift to an equivalent decay
+horizon---satisfies
 \[
   \tau_{1/2} \;\ge\;
   \frac{q_{\mathrm{eff},t}^2}
@@ -136,10 +137,10 @@ reliability-inflated half-width.
 \end{corollary}
 
 \begin{proof}
-The safety probability at horizon $\Delta$ is
-$1 - 2\exp(-q_{\mathrm{eff},t}^2 / (2\sigma_d^2\Delta))$ by the
-sub-Gaussian tail bound.  Setting this equal to $(1 - \alpha)/2$
-and solving for $\Delta$ yields the half-life expression.
+The expression is a conservative tail-based proxy derived from the same
+sub-Gaussian envelope that underpins the validity-horizon bound.  It is not
+presented as an empirically fitted physical half-life law.  Solving the tail
+expression for the half-coverage crossover yields the stated proxy.
 \end{proof}
 
 \section{Temporal Summary Table}
@@ -147,22 +148,24 @@ and solving for $\Delta$ yields the half-life expression.
 \begin{table}[ht]
 \centering
 \caption{Temporal extension results: validity horizon, expiration bound,
-  and half-life under representative conditions
+  and half-life proxy under representative conditions
   ($\sigma_d = 1.55$~MW, $q_{\text{eff}} = 8.2$~MWh, $\alpha = 0.10$).}
 \label{tab:temporal-summary}
 \begin{tabular}{lrr}
 \toprule
-\textbf{Quantity} & \textbf{Analytical bound} & \textbf{Empirical estimate} \\
+\textbf{Quantity} & \textbf{Analytical bound} & \textbf{Locked evidence} \\
 \midrule
 Validity horizon $\tau_t$ & $\ge 28$ steps (4.7~h) & 32 steps (5.3~h) \\
 Expiration bound & $\ge 28$ steps & --- \\
-Half-life $\tau_{1/2}$ & $\ge 32$ h & $\approx 36$~h \\
+Half-life proxy $\tau_{1/2}$ & $\ge 32$ h & $\approx 36$~h \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The empirical estimates (from Chapter~\ref{ch:cert-half-life-blackout})
-exceed the analytical bounds, confirming that the theory is conservative.
+The blackout evidence (from Chapter~\ref{ch:cert-half-life-blackout}) is
+best read as a bounded safe-hold study: the observed hold time exceeds the
+analytical bound, but it should not be interpreted as an empirically
+identified half-life law.
 
 %% ---------------------------------------------------------------
 %%  Part 2: Behavioral extension
@@ -286,8 +289,8 @@ minimal grid disruption.
 \includegraphics[width=0.85\textwidth]{reports/publication/fig_coverage_width_tradeoff.png}
 \caption{Coverage--width tradeoff under temporal extension.  As the
   certificate ages (horizontal axis), the coverage probability decreases
-  while the interval width increases.  The half-life (vertical dashed
-  line) marks the crossover point.}
+  while the interval width increases.  The half-life proxy (vertical dashed
+  line) marks the conservative crossover point.}
 \label{fig:temporal-evidence}
 \end{figure}
 
@@ -297,9 +300,10 @@ minimal grid disruption.
   \item The certificate validity horizon is a \emph{lower bound} on
     the true safe horizon; the actual safe horizon may be longer
     because drift is typically sub-maximal.
-  \item The half-life corollary assumes sub-Gaussian drift; heavy-tailed
-    drift distributions would require a different tail bound and would
-    yield a shorter half-life.
+  \item The half-life proxy is derived from the same sub-Gaussian tail
+    envelope as the horizon bound.  Heavy-tailed drift distributions
+    would require a different tail bound and would generally shorten the
+    proxy.
   \item The graceful degradation dominance result compares to an
     \emph{uncontrolled} baseline.  A more sophisticated adaptive
     controller that is not quality-ignorant but uses a different
@@ -316,16 +320,16 @@ minimal grid disruption.
 
 This chapter extends the ORIUS safety guarantee from per-step claims
 to temporal and behavioral horizons.  Three temporal results---certificate
-validity horizon (Theorem~\ref{thm:cert-horizon}), expiration bound
-(Theorem~\ref{thm:cert-expiration}), and half-life corollary
-(Corollary~\ref{cor:half-life})---quantify how long a safety certificate
-remains valid after issuance.  Three behavioral results---fallback
+  validity horizon (Theorem~\ref{thm:cert-horizon}), expiration bound
+  (Theorem~\ref{thm:cert-expiration}), and half-life proxy corollary
+  (Corollary~\ref{cor:half-life})---quantify how long a safety certificate
+  remains valid after issuance.  Three behavioral results---fallback
 existence (Theorem~\ref{thm:fallback-existence}), graceful degradation
 dominance (Theorem~\ref{thm:graceful-dominance}), and safe-budget
 monotonicity (Proposition~\ref{prop:budget-monotonicity})---formalise
 the landing protocol and prove it is strictly safer than uncontrolled
-dispatch.  Together, these extensions complete the theorem ladder
-initiated in Chapter~\ref{ch:theorem-oasg}.
+  dispatch.  Together, these extensions complete the conservative temporal
+  and behavioral ladder initiated in Chapter~\ref{ch:theorem-oasg}.
 
 \begingroup
 \def\domainblockid{t5t8}

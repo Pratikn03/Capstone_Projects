@@ -123,8 +123,10 @@
         "src/orius/orius_bench/navigation_track.py"
       ],
       "tests": ["tests/test_orius_bench.py"],
-      "scripts": ["scripts/run_orius_bench_release.py"],
-      "test_count": 34
+      "scripts": ["scripts/run_orius_bench_release.py", "scripts/verify_orius_bench_replay.py"],
+      "test_count": 34,
+      "thesis_role": "evaluation discipline layer",
+      "closure_scope": "benchmark contract, replayability, schema discipline"
     },
     "phase4": {
       "name": "Paper 5: Multi-agent shared-constraint safety",
@@ -138,11 +140,13 @@
       ],
       "tests": ["tests/test_multi_agent.py"],
       "scripts": ["scripts/run_multi_agent_counterexample.py"],
-      "test_count": 14
+      "test_count": 14,
+      "thesis_role": "bounded composition layer",
+      "closure_scope": "shared-feeder non-composition counterexample and coordinated repair"
     },
     "phase5": {
       "name": "Paper 6: CertOS runtime layer",
-      "status": "implemented",
+      "status": "completed",
       "package": "src/orius/certos/",
       "modules": [
         "src/orius/certos/runtime.py",
@@ -157,8 +161,10 @@
         "src/orius/certos/graceful_planner.py"
       ],
       "tests": ["tests/test_certos.py"],
-      "scripts": ["scripts/run_certos_lifecycle.py"],
-      "test_count": 25
+      "scripts": ["scripts/run_certos_lifecycle.py", "scripts/build_certos_artifacts.py"],
+      "test_count": 25,
+      "thesis_role": "runtime governance layer",
+      "closure_scope": "bounded lifecycle semantics, audit chain, fallback, recovery"
     },
     "phase6": {
       "name": "Edge/HIL evidence layer",

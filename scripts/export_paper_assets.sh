@@ -41,6 +41,8 @@ copy_first_available "paper/assets/figures/fig01_architecture.png" \
   "reports/figures/architecture.png" \
   "reports/publication/figures/fig01_geographic_scope.png"
 
+"$PYTHON_BIN" "scripts/generate_orius_program_figure.py"
+
 copy_first_available "paper/assets/figures/fig02_dc3s_step.png" \
   "reports/publication/figures/fig11_dispatch_comparison.png" \
   "reports/figures/dispatch_compare.png" \

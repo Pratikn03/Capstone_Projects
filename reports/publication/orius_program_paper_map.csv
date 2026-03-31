@@ -1,0 +1,7 @@
+Paper,Main Thesis Chapters,Central Claim,Evidence Status,Role in Thesis
+Paper 1,"ch11, ch15-ch20","Battery OASG witness and T1-T8 ladder","locked theorem gate + battery artifacts","reference scientific witness"
+Paper 2,"ch20, ch28","Certificate horizon, expiration bound, blackout safe-hold","theorem + bounded blackout artifacts","temporal validity layer"
+Paper 3,"ch20, ch29","Graceful fallback benchmark under prolonged blindness","canonical four-policy benchmark","controlled degradation layer"
+Paper 4,"ch10, ch30","ORIUS-Bench replay contract and benchmark discipline","replay + schema artifacts","evaluation discipline layer"
+Paper 5,"ch31","Shared-feeder non-composition counterexample and coordinated repair","multi-agent scenario artifacts","bounded composition layer"
+Paper 6,"sec:governance, ch27, ch32","CertOS runtime lifecycle, audit chain, and recovery path","runtime + HIL artifacts","runtime governance layer"

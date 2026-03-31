@@ -102,11 +102,10 @@ The OQE scores telemetry quality using anomaly detection and inter-arrival
 timing.  If the OQE's own input channel is manipulated --- for example, an
 adversary injects a valid-looking packet with a false reliability signal
 --- the shield adapts to the wrong $w_t$.  Active probing
-(Chapter~\ref{ch:adversarial-robustness}) partially addresses this by
-detecting injected patterns, but it does not constitute a complete
-adversarial hardness proof.  The OQE's trust model is that the channel is
-Byzantine-fault-free; adversarial completeness under a Dolev--Yao attacker
-remains outside the current evidence package.
+partially addresses this by detecting injected patterns, but it does not
+constitute a complete adversarial hardness proof.  The OQE's trust model is
+that the channel is Byzantine-fault-free; adversarial completeness under a
+Dolev--Yao attacker remains outside the current evidence package.
 
 \paragraph{3. Calibration distributional shift.}
 The conformal guarantee holds under approximate exchangeability between the

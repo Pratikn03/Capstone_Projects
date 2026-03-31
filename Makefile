@@ -266,7 +266,8 @@ paper3-four-policy-benchmark:
 	$(PYTHON) scripts/run_paper3_four_policy_benchmark.py
 
 paper-compile:
-	rm -f paper/paper.pdf paper/paper.log
+	rm -f paper/paper.pdf paper/paper.log paper/paper.aux paper/paper.out
+	- cd paper && pdflatex -interaction=nonstopmode paper.tex
 	- cd paper && pdflatex -interaction=nonstopmode paper.tex
 	- cd paper && pdflatex -interaction=nonstopmode paper.tex
 	test -f paper/paper.pdf
