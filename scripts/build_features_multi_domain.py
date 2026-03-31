@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build features for all multi-domain datasets (AV, Industrial, Healthcare, Aerospace).
+"""Build features for all multi-domain datasets.
 
 Run before training: python scripts/build_features_multi_domain.py
 
@@ -8,6 +8,7 @@ Requires datasets to exist. Run first:
   make industrial-datasets
   make healthcare-datasets
   python scripts/download_aerospace_datasets.py
+  python scripts/build_navigation_real_dataset.py
 """
 from __future__ import annotations
 
@@ -26,6 +27,7 @@ def main() -> int:
     from orius.data_pipeline.build_features_industrial import build_features as build_industrial
     from orius.data_pipeline.build_features_healthcare import build_features as build_healthcare
     from orius.data_pipeline.build_features_aerospace import build_features as build_aerospace
+    from orius.data_pipeline.build_features_navigation import build_features as build_navigation
 
     results = []
 
@@ -60,6 +62,14 @@ def main() -> int:
         results.append(("Aerospace", "OK"))
     else:
         results.append(("Aerospace", "SKIP (run: python scripts/download_aerospace_datasets.py)"))
+
+    # Navigation
+    nav_csv = REPO_ROOT / "data" / "navigation" / "processed" / "navigation_orius.csv"
+    if nav_csv.exists():
+        build_navigation(nav_csv, nav_csv.parent)
+        results.append(("Navigation", "OK"))
+    else:
+        results.append(("Navigation", "SKIP (run: python scripts/build_navigation_real_dataset.py)"))
 
     print("\nMulti-domain build summary:")
     for domain, status in results:

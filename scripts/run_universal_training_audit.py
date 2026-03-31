@@ -32,12 +32,20 @@ from _dataset_registry import DATASET_REGISTRY, DatasetConfig, REPO_ROOT
 from train_dataset import _configured_model_types, _configured_targets, _load_training_cfg
 
 
-DOMAIN_DATASET_MAP: tuple[tuple[str, str], ...] = (
+BASE_DOMAIN_DATASET_MAP: tuple[tuple[str, str], ...] = (
     ("av", "AV"),
     ("industrial", "INDUSTRIAL"),
     ("healthcare", "HEALTHCARE"),
     ("aerospace", "AEROSPACE"),
 )
+
+
+def _domain_dataset_map() -> tuple[tuple[str, str], ...]:
+    pairs = list(BASE_DOMAIN_DATASET_MAP)
+    nav_cfg = DATASET_REGISTRY.get("NAVIGATION")
+    if nav_cfg is not None and (REPO_ROOT / nav_cfg.features_path).exists():
+        pairs.append(("navigation", "NAVIGATION"))
+    return tuple(pairs)
 
 
 def _tex_escape(value: object) -> str:
@@ -261,7 +269,7 @@ def main() -> int:
     logs_dir.mkdir(parents=True, exist_ok=True)
 
     rows: list[dict[str, object]] = []
-    for domain, dataset_key in DOMAIN_DATASET_MAP:
+    for domain, dataset_key in _domain_dataset_map():
         cfg = DATASET_REGISTRY[dataset_key]
         verify_ok, verify_log = _verify_training(cfg)
         split_counts = _split_counts(cfg)

@@ -109,6 +109,13 @@ def test_ercot_dataset_uses_eia930_authority_code() -> None:
     assert td.DATASET_REGISTRY["US_ERCOT"].ba_code == "ERCO"
 
 
+def test_dataset_registry_includes_navigation_trainable_row() -> None:
+    cfg = td.DATASET_REGISTRY["NAVIGATION"]
+    assert cfg.name == "NAVIGATION"
+    assert cfg.features_path == "data/navigation/processed/features.parquet"
+    assert cfg.reports_dir == "reports/navigation"
+
+
 def test_configured_model_types_include_new_conference_baselines() -> None:
     cfg = {
         "models": {

@@ -180,6 +180,19 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         raw_data_path="data/aerospace/processed/aerospace_orius.csv",
         feature_module="orius.data_pipeline.build_features_aerospace",
     ),
+    "NAVIGATION": DatasetConfig(
+        name="NAVIGATION",
+        display_name="Navigation Trajectories",
+        config_file="configs/train_forecast_navigation.yaml",
+        features_path="data/navigation/processed/features.parquet",
+        splits_path="data/navigation/processed/splits",
+        models_dir="artifacts/models_navigation",
+        reports_dir="reports/navigation",
+        uncertainty_dir="artifacts/uncertainty/navigation",
+        backtests_dir="artifacts/backtests/navigation",
+        raw_data_path="data/navigation/processed/navigation_orius.csv",
+        feature_module="orius.data_pipeline.build_features_navigation",
+    ),
 }
 
 AGGRESSIVE_DEFAULTS = {
@@ -191,6 +204,7 @@ AGGRESSIVE_DEFAULTS = {
     "INDUSTRIAL": {"n_trials": 50, "top_pct": 0.20, "max_seeds": 2},
     "HEALTHCARE": {"n_trials": 50, "top_pct": 0.20, "max_seeds": 2},
     "AEROSPACE": {"n_trials": 50, "top_pct": 0.20, "max_seeds": 2},
+    "NAVIGATION": {"n_trials": 50, "top_pct": 0.20, "max_seeds": 2},
 }
 
 

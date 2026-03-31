@@ -53,6 +53,10 @@ DATASET_PATHS: dict[str, dict[str, Any]] = {
         "features": Path("data/aerospace/processed/features.parquet"),
         "splits_dir": Path("data/aerospace/processed/splits"),
     },
+    "NAVIGATION": {
+        "features": Path("data/navigation/processed/features.parquet"),
+        "splits_dir": Path("data/navigation/processed/splits"),
+    },
 }
 
 
@@ -117,12 +121,17 @@ def _split_boundaries(path: Path) -> dict[str, Any]:
 
 def _discover_raw_files() -> list[Path]:
     raw_root = REPO_ROOT / "data" / "raw"
-    if not raw_root.exists():
-        return []
     patterns = ("**/*.csv", "**/*.json", "**/*.zip", "**/*.xlsx", "**/*.parquet")
     files: list[Path] = []
-    for pattern in patterns:
-        files.extend(sorted(p for p in raw_root.glob(pattern) if p.is_file()))
+    if raw_root.exists():
+        for pattern in patterns:
+            files.extend(sorted(p for p in raw_root.glob(pattern) if p.is_file()))
+
+    # External raw sources are tracked through lightweight manifests under each
+    # domain's raw directory rather than by hashing the full external payload.
+    for domain_raw in sorted((REPO_ROOT / "data").glob("*/raw")):
+        for pattern in ("**/*manifest*.json", "**/*metadata*.json"):
+            files.extend(sorted(p for p in domain_raw.glob(pattern) if p.is_file()))
     return sorted(set(files))
 
 
@@ -193,7 +202,7 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build deterministic data identity manifest")
     parser.add_argument(
         "--dataset",
-        choices=["DE", "US", "US_MISO", "US_PJM", "US_ERCOT", "AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE", "ALL"],
+        choices=["DE", "US", "US_MISO", "US_PJM", "US_ERCOT", "AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE", "NAVIGATION", "ALL"],
         default="ALL",
     )
     parser.add_argument("--output", default="data/dashboard/data_manifest.json")
@@ -203,7 +212,7 @@ def _parse_args() -> argparse.Namespace:
 def main() -> None:
     args = _parse_args()
     if args.dataset == "ALL":
-        datasets = ["DE", "US_MISO", "US_PJM", "US_ERCOT", "AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE"]
+        datasets = ["DE", "US_MISO", "US_PJM", "US_ERCOT", "AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE", "NAVIGATION"]
     else:
         datasets = [args.dataset]
     datasets = ["US_MISO" if dataset == "US" else dataset for dataset in datasets]

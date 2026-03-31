@@ -548,7 +548,7 @@ def validate_features_schema(cfg: DatasetConfig, report_path: Path | None = None
     # Multi-domain datasets use different target columns
     train_cfg = _load_training_cfg(cfg)
     targets = _configured_targets(train_cfg)
-    if targets and cfg.name in ("AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE"):
+    if targets and cfg.name in ("AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE", "NAVIGATION"):
         cmd.extend(["--required-cols", ",".join(targets)])
     return run_command(cmd, f"Validating features schema for {cfg.display_name}")
 
@@ -676,7 +676,7 @@ def generate_reports(cfg: DatasetConfig, run_layout: RunLayout | None = None) ->
                 "--current-dataset", cfg.name,
             ]
         )
-        if cfg.name in ("AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE"):
+        if cfg.name in ("AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE", "NAVIGATION"):
             train_cfg = _load_training_cfg(cfg)
             targets = _configured_targets(train_cfg)
             if targets:
@@ -715,7 +715,7 @@ def verify_training_outputs(cfg: DatasetConfig, run_layout: RunLayout, *, models
     targets = _configured_targets(train_cfg)
     uncertainty_targets = _configured_uncertainty_targets()
     # Multi-domain datasets use their own targets; energy uses uncertainty.yaml targets
-    if cfg.name in ("AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE"):
+    if cfg.name in ("AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE", "NAVIGATION"):
         uncertainty_targets = targets
     else:
         uncertainty_targets = uncertainty_targets or targets
