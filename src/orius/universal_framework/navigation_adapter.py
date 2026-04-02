@@ -1,47 +1,39 @@
-"""Navigation domain adapter for ORIUS Universal Framework.
-
-2D robot navigation in a bounded arena. Safety predicates:
-- x in [0, arena_size]
-- y in [0, arena_size]
-- distance from any obstacle centre > obstacle_radius
-
-Repair logic: clamp (ax, ay) so that the predicted next position stays within
-the safe arena and outside forbidden obstacle zones.
-"""
+"""Navigation domain adapter for the ORIUS universal runtime."""
 from __future__ import annotations
 
-import hashlib
 import math
-from datetime import datetime, timezone
 from typing import Any, Mapping, Sequence
 
+from orius.dc3s.certificate import make_certificate
 from orius.dc3s.domain_adapter import DomainAdapter
 from orius.dc3s.quality import compute_reliability
-from orius.dc3s.certificate import make_certificate
 
 
-def _f(x: Any, default: float) -> float:
+def _f(value: Any, default: float) -> float:
     try:
-        return float(x)
+        return float(value)
     except (TypeError, ValueError):
         return float(default)
 
 
 class NavigationDomainAdapter(DomainAdapter):
-    """DomainAdapter for 2D navigation / robotics domain."""
+    """DomainAdapter for bounded 2D navigation and guidance."""
 
     def __init__(self, cfg: Mapping[str, Any] | None = None):
         self._cfg = dict(cfg or {})
-        nav = self._cfg.get("navigation", {})
-        self._arena_size = _f(nav.get("arena_size"), 10.0)
-        self._speed_limit = _f(nav.get("speed_limit"), 1.0)
-        self._dt = _f(nav.get("dt"), 0.25)
-        self._obs_centres: list[tuple[float, float]] = list(
-            nav.get("obstacle_centres", [(5.0, 5.0)])
-        )
-        self._obs_radius = _f(nav.get("obstacle_radius"), 1.0)
+        nav_cfg = self._cfg.get("navigation", {})
+        self._arena_size = _f(nav_cfg.get("arena_size"), 10.0)
+        self._speed_limit = _f(nav_cfg.get("speed_limit"), 1.0)
+        self._dt_s = _f(nav_cfg.get("dt_s", nav_cfg.get("dt")), 0.25)
+        self._boundary_margin = _f(nav_cfg.get("boundary_margin"), 0.05)
+        self._obstacle_radius = _f(nav_cfg.get("obstacle_radius"), 1.0)
+        centres = nav_cfg.get("obstacle_centres", [(5.0, 5.0)])
+        self._obstacle_centres = [
+            (float(pair[0]), float(pair[1]))
+            for pair in centres
+            if isinstance(pair, Sequence) and len(pair) == 2
+        ]
         self._expected_cadence_s = _f(self._cfg.get("expected_cadence_s"), 0.25)
-        self._margin = _f(nav.get("boundary_margin"), 0.05)
 
     def capability_profile(self) -> Mapping[str, Any]:
         return {
@@ -52,63 +44,75 @@ class NavigationDomainAdapter(DomainAdapter):
             "supports_certos_eval": False,
         }
 
-    # ------------------------------------------------------------------
-    # 1. Ingest telemetry
-    # ------------------------------------------------------------------
+    def _in_safe_region(self, x: float, y: float) -> bool:
+        lo = self._boundary_margin
+        hi = self._arena_size - self._boundary_margin
+        if not (lo <= x <= hi and lo <= y <= hi):
+            return False
+        for cx, cy in self._obstacle_centres:
+            if math.hypot(x - cx, y - cy) < self._obstacle_radius:
+                return False
+        return True
+
+    def true_constraint_violated(self, state: Mapping[str, Any]) -> bool | None:
+        return not self._in_safe_region(_f(state.get("x"), 0.0), _f(state.get("y"), 0.0))
+
+    def observed_constraint_satisfied(self, observed_state: Mapping[str, Any]) -> bool | None:
+        return self._in_safe_region(
+            _f(observed_state.get("x"), 0.0),
+            _f(observed_state.get("y"), 0.0),
+        )
+
+    def constraint_margin(self, state: Mapping[str, Any]) -> float | None:
+        x = _f(state.get("x"), 0.0)
+        y = _f(state.get("y"), 0.0)
+        lo = self._boundary_margin
+        hi = self._arena_size - self._boundary_margin
+        boundary_margin = min(x - lo, hi - x, y - lo, hi - y)
+        obstacle_margin = min(
+            (
+                math.hypot(x - cx, y - cy) - self._obstacle_radius
+                for cx, cy in self._obstacle_centres
+            ),
+            default=boundary_margin,
+        )
+        return float(min(boundary_margin, obstacle_margin))
 
     def ingest_telemetry(self, raw_packet: Mapping[str, Any]) -> Mapping[str, Any]:
-        """Parse raw navigation packet into state vector z_t."""
-        out: dict[str, Any] = {}
-        for k in ("x", "y", "vx", "vy", "ts_utc"):
-            v = raw_packet.get(k)
-            if v is None or (isinstance(v, float) and math.isnan(v)):
-                out[k] = raw_packet.get(f"_hold_{k}", 0.0 if k != "ts_utc" else "")
-            else:
-                out[k] = v
-        # Canonical OQE mapping: x -> load_mw (proxy for positional signal)
-        if "load_mw" not in out:
-            out["load_mw"] = out.get("x", 0.0)
-        if "ts_utc" not in out and "timestamp" in raw_packet:
-            out["ts_utc"] = str(raw_packet["timestamp"])
-        return out
-
-    # ------------------------------------------------------------------
-    # 2. Compute OQE reliability
-    # ------------------------------------------------------------------
+        return {
+            "x": raw_packet.get("x", raw_packet.get("_hold_x", 0.0)),
+            "y": raw_packet.get("y", raw_packet.get("_hold_y", 0.0)),
+            "vx": raw_packet.get("vx", raw_packet.get("_hold_vx", 0.0)),
+            "vy": raw_packet.get("vy", raw_packet.get("_hold_vy", 0.0)),
+            "ts_utc": raw_packet.get("ts_utc", raw_packet.get("timestamp", "")),
+        }
 
     def compute_oqe(
         self,
         state: Mapping[str, Any],
         history: Sequence[Mapping[str, Any]] | None = None,
     ) -> tuple[float, Mapping[str, Any]]:
-        """Compute reliability w_t. Map x -> load_mw for OQE."""
         event = {
             "ts_utc": state.get("ts_utc", ""),
-            "load_mw": state.get("x", state.get("load_mw", 0.0)),
-            "renewables_mw": state.get("y", 0.0),
+            "load_mw": _f(state.get("x"), 0.0),
+            "renewables_mw": _f(state.get("y"), 0.0),
         }
         last_event = None
         if history:
             prev = history[-1]
             last_event = {
                 "ts_utc": prev.get("ts_utc", ""),
-                "load_mw": prev.get("x", prev.get("load_mw", 0.0)),
-                "renewables_mw": prev.get("y", 0.0),
+                "load_mw": _f(prev.get("x"), 0.0),
+                "renewables_mw": _f(prev.get("y"), 0.0),
             }
-        reliability_cfg = self._cfg.get("reliability", {})
-        ftit_cfg = self._cfg.get("ftit", {})
         w_t, flags = compute_reliability(
             event,
             last_event,
             expected_cadence_s=self._expected_cadence_s,
-            reliability_cfg=reliability_cfg,
-            ftit_cfg=ftit_cfg,
+            reliability_cfg=self._cfg.get("reliability", {}),
+            ftit_cfg=self._cfg.get("ftit", {}),
         )
         return float(w_t), {"flags": flags}
-
-    # ------------------------------------------------------------------
-    # 3. Build uncertainty set
-    # ------------------------------------------------------------------
 
     def build_uncertainty_set(
         self,
@@ -120,26 +124,30 @@ class NavigationDomainAdapter(DomainAdapter):
         drift_flag: bool | None = None,
         prev_meta: Mapping[str, Any] | None = None,
     ) -> tuple[Mapping[str, Any], Mapping[str, Any]]:
-        """Conformal box over (x, y) inflated by w_t."""
-        x = _f(state.get("x"), 5.0)
-        y = _f(state.get("y"), 5.0)
+        x = _f(state.get("x"), 0.0)
+        y = _f(state.get("y"), 0.0)
+        vx = _f(state.get("vx"), 0.0)
+        vy = _f(state.get("vy"), 0.0)
         w = max(0.05, float(reliability_w))
-        margin = max(0.1, float(quantile) / (w + 1e-9))
-        margin = min(margin, 2.0)
+        inflation = max(1.0, 1.0 / w)
+        margin = min(max(0.05, (float(quantile) / 100.0) * inflation), self._arena_size / 2.0)
         uncertainty = {
-            "x_lower": max(0.0, x - margin),
-            "x_upper": min(self._arena_size, x + margin),
-            "y_lower": max(0.0, y - margin),
-            "y_upper": min(self._arena_size, y + margin),
+            "x_lower": x - margin,
+            "x_upper": x + margin,
+            "y_lower": y - margin,
+            "y_upper": y + margin,
+            "vx_lower": vx - margin,
+            "vx_upper": vx + margin,
+            "vy_lower": vy - margin,
+            "vy_upper": vy + margin,
             "margin": margin,
-            "meta": {"inflation": margin, "w_t": w},
+            "meta": {
+                "inflation": inflation,
+                "w_t": w,
+                "drift_flag": bool(drift_flag),
+            },
         }
-        meta = {"inflation": margin, "w_t": w}
-        return uncertainty, meta
-
-    # ------------------------------------------------------------------
-    # 4. Tighten action set
-    # ------------------------------------------------------------------
+        return uncertainty, dict(uncertainty["meta"])
 
     def tighten_action_set(
         self,
@@ -148,16 +156,11 @@ class NavigationDomainAdapter(DomainAdapter):
         *,
         cfg: Mapping[str, Any],
     ) -> Mapping[str, Any]:
-        """Arena and obstacle constraints on (ax, ay)."""
         return {
             "uncertainty": dict(uncertainty),
             "constraints": dict(constraints),
             "cfg": dict(cfg),
         }
-
-    # ------------------------------------------------------------------
-    # 5. Repair action
-    # ------------------------------------------------------------------
 
     def repair_action(
         self,
@@ -169,81 +172,80 @@ class NavigationDomainAdapter(DomainAdapter):
         constraints: Mapping[str, Any],
         cfg: Mapping[str, Any],
     ) -> tuple[Mapping[str, float], Mapping[str, Any]]:
-        """Clamp (ax, ay) to keep robot within arena and away from obstacles.
+        unc = tightened_set.get("uncertainty", uncertainty)
+        cstr = tightened_set.get("constraints", constraints)
 
-        Repair strategy: predict next position = (x + ax*dt, y + ay*dt) and
-        clamp each component to stay inside [margin, arena - margin].
-        Also avoid entering obstacle zones.
-        """
-        ax = _f(candidate_action.get("ax", 0.0), 0.0)
-        ay = _f(candidate_action.get("ay", 0.0), 0.0)
+        orig_ax = _f(candidate_action.get("ax"), 0.0)
+        orig_ay = _f(candidate_action.get("ay"), 0.0)
+        ax = orig_ax
+        ay = orig_ay
 
-        # Use uncertainty UPPER BOUND for conservative worst-case repair decision.
-        # This ensures DC3S brakes early even when sensor bias under-reports position.
-        x_obs = _f(state.get("x"), 5.0)
-        y_obs = _f(state.get("y"), 5.0)
-        margin_val = _f(uncertainty.get("margin", 1.0), 1.0)
-        x = _f(uncertainty.get("x_upper"), x_obs + margin_val)
-        y = _f(uncertainty.get("y_upper"), y_obs + margin_val)
+        speed_limit = _f(cstr.get("max_speed", cstr.get("speed_limit")), self._speed_limit)
+        arena_min = _f(cstr.get("arena_min"), self._boundary_margin)
+        arena_max = _f(cstr.get("arena_max"), self._arena_size - self._boundary_margin)
+        obstacle_radius = _f(cstr.get("obstacle_radius"), self._obstacle_radius)
+        dt = _f(cstr.get("dt_s", cfg.get("dt", cfg.get("dt_s"))), self._dt_s)
 
-        arena = _f(constraints.get("arena_size", self._arena_size), self._arena_size)
-        dt = _f(cfg.get("dt", self._dt), self._dt)
-        margin = self._margin
+        reason_parts: list[str] = []
 
-        # Predict next position
-        nx = x + ax * dt
-        ny = y + ay * dt
-
-        ax_safe = ax
-        ay_safe = ay
-        intervention_reason: list[str] = []
-
-        # Clamp to arena bounds
-        if nx < margin:
-            ax_safe = (margin - x) / dt if dt > 0 else 0.0
-            intervention_reason.append("arena_x_min")
-        elif nx > arena - margin:
-            ax_safe = (arena - margin - x) / dt if dt > 0 else 0.0
-            intervention_reason.append("arena_x_max")
-
-        if ny < margin:
-            ay_safe = (margin - y) / dt if dt > 0 else 0.0
-            intervention_reason.append("arena_y_min")
-        elif ny > arena - margin:
-            ay_safe = (arena - margin - y) / dt if dt > 0 else 0.0
-            intervention_reason.append("arena_y_max")
-
-        # Also enforce speed limit
-        speed_limit = _f(constraints.get("speed_limit", self._speed_limit), self._speed_limit)
-        mag = math.hypot(ax_safe, ay_safe)
-        if mag > speed_limit + 1e-6:
+        mag = math.hypot(ax, ay)
+        if mag > speed_limit > 0:
             scale = speed_limit / mag
-            ax_safe *= scale
-            ay_safe *= scale
-            intervention_reason.append("speed_limit")
+            ax *= scale
+            ay *= scale
+            reason_parts.append("speed_limit")
 
-        # Blackout guard: if position is NaN-filled state (from zero-order hold), be conservative
-        x_raw = candidate_action.get("ax")
-        if x_raw is not None and isinstance(x_raw, float) and math.isnan(x_raw):
-            ax_safe = 0.0
-            ay_safe = 0.0
-            intervention_reason.append("blackout_stop")
+        x_hi = _f(unc.get("x_upper"), _f(state.get("x"), 0.0))
+        x_lo = _f(unc.get("x_lower"), _f(state.get("x"), 0.0))
+        y_hi = _f(unc.get("y_upper"), _f(state.get("y"), 0.0))
+        y_lo = _f(unc.get("y_lower"), _f(state.get("y"), 0.0))
 
-        repaired = abs(ax_safe - ax) > 1e-9 or abs(ay_safe - ay) > 1e-9
+        if x_hi + ax * dt > arena_max:
+            ax = min(ax, (arena_max - x_hi) / max(dt, 1e-9))
+            reason_parts.append("arena_x_max")
+        if x_lo + ax * dt < arena_min:
+            ax = max(ax, (arena_min - x_lo) / max(dt, 1e-9))
+            reason_parts.append("arena_x_min")
+        if y_hi + ay * dt > arena_max:
+            ay = min(ay, (arena_max - y_hi) / max(dt, 1e-9))
+            reason_parts.append("arena_y_max")
+        if y_lo + ay * dt < arena_min:
+            ay = max(ay, (arena_min - y_lo) / max(dt, 1e-9))
+            reason_parts.append("arena_y_min")
+
+        next_x = _f(state.get("x"), 0.0) + ax * dt
+        next_y = _f(state.get("y"), 0.0) + ay * dt
+        obstacle_hit = False
+        for cx, cy in self._obstacle_centres:
+            dist = math.hypot(next_x - cx, next_y - cy)
+            if dist < obstacle_radius:
+                obstacle_hit = True
+                away_x = next_x - cx
+                away_y = next_y - cy
+                away_mag = math.hypot(away_x, away_y)
+                if away_mag > 1e-9:
+                    scale = min(speed_limit, obstacle_radius / max(dt, 1e-9)) / away_mag
+                    ax = away_x * scale
+                    ay = away_y * scale
+                else:
+                    ax = 0.0
+                    ay = 0.0
+                reason_parts.append("obstacle_avoidance")
+                break
+
+        repaired = abs(ax - orig_ax) > 1e-9 or abs(ay - orig_ay) > 1e-9
         meta = {
-            "mode": "arena_clamp",
+            "mode": "projection",
             "repaired": repaired,
-            "original_ax": ax,
-            "original_ay": ay,
+            "original_ax": orig_ax,
+            "original_ay": orig_ay,
+            "obstacle_hit_predicted": obstacle_hit,
         }
-        if intervention_reason:
-            meta["intervention_reason"] = ",".join(intervention_reason)
-
-        return {"ax": float(ax_safe), "ay": float(ay_safe)}, meta
-
-    # ------------------------------------------------------------------
-    # 6. Emit certificate
-    # ------------------------------------------------------------------
+        if repaired:
+            meta["intervention_reason"] = (
+                ",".join(reason_parts) if reason_parts else "arena_bound_clamp"
+            )
+        return {"ax": float(ax), "ay": float(ay)}, meta
 
     def emit_certificate(
         self,
@@ -263,9 +265,6 @@ class NavigationDomainAdapter(DomainAdapter):
         repair_meta: Mapping[str, Any] | None = None,
         guarantee_meta: Mapping[str, Any] | None = None,
     ) -> Mapping[str, Any]:
-        """Emit certificate with navigation action fields."""
-        model_hash = str(cfg.get("model_hash", ""))
-        config_hash = str(cfg.get("config_hash", ""))
         intervened = bool(repair_meta.get("repaired")) if isinstance(repair_meta, Mapping) else None
         intervention_reason = repair_meta.get("intervention_reason") if isinstance(repair_meta, Mapping) else None
         reliability_w = float(reliability.get("w_t", reliability.get("w", 1.0)))
@@ -281,8 +280,8 @@ class NavigationDomainAdapter(DomainAdapter):
             uncertainty=uncertainty,
             reliability=reliability,
             drift=drift,
-            model_hash=model_hash,
-            config_hash=config_hash,
+            model_hash=str(cfg.get("model_hash", "")),
+            config_hash=str(cfg.get("config_hash", "")),
             prev_hash=prev_hash,
             dispatch_plan=dispatch_plan,
             intervened=intervened,

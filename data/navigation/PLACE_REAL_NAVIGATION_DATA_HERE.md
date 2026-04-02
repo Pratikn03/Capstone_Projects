@@ -3,9 +3,15 @@
 Current status:
 
 - The navigation benchmark track still exists for synthetic portability work.
-- The canonical real-data source is now `KITTI Odometry` via an external raw-data root.
+- The canonical real-data source is `KITTI Odometry`.
+- Repo-local raw placement is now preferred.
 
-External raw-data contract:
+Repo-local raw-data contract:
+
+- Place KITTI Odometry under:
+  - `data/navigation/raw/kitti_odometry/`
+
+External fallback contract:
 
 - Set `ORIUS_EXTERNAL_DATA_ROOT=/path/to/external/datasets`
 - Place KITTI Odometry under:
@@ -33,6 +39,7 @@ Minimum processed fields should look like:
 Notes:
 
 - Full KITTI raw payloads should not be copied into git.
+- The builder emits `data/navigation/raw/kitti_odometry_provenance.json`.
 - Navigation remains a lower-tier thesis row until the full train and validation path is completed.
 - The raw-source metadata contract for this row is tracked in:
   - `data/navigation/raw/external_sources_manifest.json`

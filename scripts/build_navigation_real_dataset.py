@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Build ORIUS navigation trajectories from external KITTI Odometry raw data."""
+"""Build ORIUS navigation trajectories from repo-local or external KITTI Odometry raw data."""
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -16,10 +15,19 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from orius.data_pipeline.external_raw import EXTERNAL_DATA_ROOT_ENV, get_external_dataset_dir
+from orius.data_pipeline.external_raw import EXTERNAL_DATA_ROOT_ENV
+from orius.data_pipeline.real_data_contract import (
+    build_provenance_manifest,
+    resolve_repo_or_external_raw_dir,
+    summarize_csv_output,
+    summarize_files,
+    write_json,
+)
 
 
 DEFAULT_OUT = REPO_ROOT / "data" / "navigation" / "processed" / "navigation_orius.csv"
+RAW_DIR = REPO_ROOT / "data" / "navigation" / "raw"
+PROVENANCE_PATH = RAW_DIR / "kitti_odometry_provenance.json"
 
 
 def _find_poses_dir(root: Path) -> Path:
@@ -95,6 +103,17 @@ def _sequence_frame(sequence_id: str, times: np.ndarray, poses: np.ndarray) -> p
     )
 
 
+def _resolve_navigation_raw_source(*, external_root: Path | None = None):
+    raw_source = resolve_repo_or_external_raw_dir(
+        RAW_DIR / "kitti_odometry",
+        external_dataset_key="kitti_odometry",
+        explicit_root=external_root,
+        required=True,
+    )
+    assert raw_source is not None
+    return raw_source
+
+
 def build_navigation_dataset(
     out_path: Path,
     *,
@@ -103,8 +122,8 @@ def build_navigation_dataset(
     manifest_out: Path | None = None,
 ) -> Path:
     """Convert KITTI Odometry sequences into the ORIUS navigation contract."""
-    root = get_external_dataset_dir("kitti_odometry", external_root, required=True)
-    assert root is not None
+    raw_source = _resolve_navigation_raw_source(external_root=external_root)
+    root = raw_source.path
     poses_dir = _find_poses_dir(root)
 
     if sequences:
@@ -128,23 +147,40 @@ def build_navigation_dataset(
     out_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_path, index=False)
 
+    output_summary = summarize_csv_output(out_path)
+    write_json(out_path.parent / f"{out_path.stem}_row_summary.json", output_summary)
+
+    provenance = build_provenance_manifest(
+        domain="navigation",
+        dataset_key="kitti_odometry",
+        provider="KITTI Odometry",
+        version="poses+times",
+        raw_source=raw_source,
+        processed_output=out_path,
+        output_summary=output_summary,
+        raw_inventory=summarize_files(raw_source.path),
+        source_urls=[
+            "https://www.cvlibs.net/datasets/kitti/eval_odometry.php",
+        ],
+        license_notes="Follow KITTI usage terms; keep full raw payloads out of git history.",
+        access_notes="Repo-local raw layout is preferred. External raw storage remains supported as a fallback.",
+        canonical_source=True,
+        used_fallback=False,
+        notes=[
+            "navigation remains lower-tier until the full train and validation path is completed",
+            "timestamps are reconstructed from KITTI sequence times.txt files",
+        ],
+        extras={
+            "dataset": "KITTI Odometry",
+            "sequences": wanted,
+            "rows_per_sequence": sequence_rows,
+            "source_env": EXTERNAL_DATA_ROOT_ENV,
+        },
+    )
+    write_json(PROVENANCE_PATH, provenance)
+
     if manifest_out is not None:
-        manifest_out.parent.mkdir(parents=True, exist_ok=True)
-        manifest_out.write_text(
-            json.dumps(
-                {
-                    "dataset": "KITTI Odometry",
-                    "external_root": str(root),
-                    "sequences": wanted,
-                    "rows_per_sequence": sequence_rows,
-                    "output_csv": str(out_path),
-                    "source_env": EXTERNAL_DATA_ROOT_ENV,
-                },
-                indent=2,
-            )
-            + "\n",
-            encoding="utf-8",
-        )
+        write_json(manifest_out, provenance)
     return out_path
 
 
@@ -162,7 +198,7 @@ def main() -> int:
     parser.add_argument(
         "--manifest-out",
         type=Path,
-        default=REPO_ROOT / "data" / "navigation" / "raw" / "external_build_manifest.json",
+        default=PROVENANCE_PATH,
         help="Write lightweight build metadata here",
     )
     args = parser.parse_args()

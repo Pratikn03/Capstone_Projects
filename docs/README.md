@@ -16,9 +16,11 @@ Comprehensive documentation for the ORIUS universal safety framework, thesis pac
 | [UNIVERSAL_BENCHMARK_SPEC.md](UNIVERSAL_BENCHMARK_SPEC.md) | ORIUS-Bench v2 schema, metrics, and evaluation protocol |
 | [UNIVERSAL_GOVERNANCE_SPEC.md](UNIVERSAL_GOVERNANCE_SPEC.md) | CertOS governance model, manuscript authority, and claim-lock rules |
 | [ORIUS_THESIS_TERMINOLOGY_GUIDE.md](ORIUS_THESIS_TERMINOLOGY_GUIDE.md) | Canonical universal terminology and battery-only language boundaries |
+| [BOUNDED_UNIVERSAL_CLOSURE_PROGRAM.md](BOUNDED_UNIVERSAL_CLOSURE_PROGRAM.md) | Promotion gate, per-domain blockers, and the active six-domain closure target |
 | [production_readiness.md](production_readiness.md) | Production deployment checklist |
 | [AI_RESEARCH_WORKFLOW.md](AI_RESEARCH_WORKFLOW.md) | Official AI-tool workflow for ORIUS research, coding, and writing |
 | [AI_ARTIFACT_SANITIZATION_CHECKLIST.md](AI_ARTIFACT_SANITIZATION_CHECKLIST.md) | Upload-safety checklist for hosted AI tools |
+| [REAL_DATA_PLUGIN_ACCESS_PLAN.md](REAL_DATA_PLUGIN_ACCESS_PLAN.md) | Minimal plugin stack and real-data access policy for universal-depth closure |
 
 ## Related Documentation
 

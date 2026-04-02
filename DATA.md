@@ -1,77 +1,163 @@
 # Data Guide (Sources, Layout, Licensing)
 
-This repository **does not include raw datasets**. You are responsible for downloading them from the original providers and agreeing to their terms.
+This repository does **not** vendor all raw datasets. ORIUS stores manuscript,
+publication, and processed release artifacts in git, while large or restricted
+raw datasets remain outside the repository under provider terms.
 
-## 1) Datasets Used
+## 1. Canonical policy
 
-### A) OPSD Germany (Load / Wind / Solar)
-- **Provider:** Open Power System Data (OPSD)
-- **Typical signals:** load, wind generation, solar generation (hourly time series)
-- **Where to place raw file:** `data/raw/time_series_60min_singleindex.csv`
-- **How to prepare:** run the data pipeline in the README
+- Raw external datasets stay outside git whenever size, licensing, or provider
+  terms make redistribution inappropriate.
+- Repo-local raw staging is now the default contract for real-data builders:
+  `data/<domain>/raw/<dataset_key>/`.
+- `ORIUS_EXTERNAL_DATA_ROOT=/path/to/external/datasets` remains supported only
+  as a fallback when repo-local storage is intentionally not used.
+- The current source-of-truth surfaces for dataset access are:
+  - `data/DATASET_DOWNLOAD_GUIDE.md`
+  - `data/av/PLACE_REAL_AV_DATA_HERE.md`
+  - `data/navigation/PLACE_REAL_NAVIGATION_DATA_HERE.md`
+  - `data/aerospace/PLACE_REAL_AEROSPACE_DATA_HERE.md`
+  - `docs/REAL_DATA_PLUGIN_ACCESS_PLAN.md`
+  - `reports/publication/orius_equal_domain_parity_matrix.csv`
 
-### B) EIA Form 930 (USA; optional)
-- **Provider:** U.S. Energy Information Administration (EIA)
-- **Typical signals:** balancing‑authority demand + generation
-- **Where to place raw files:** `data/raw/us_eia930/` (zipped CSVs)
-- **How to prepare:** run:
-  ```bash
-  python -m orius.data_pipeline.build_features_eia930 --in data/raw/us_eia930 --out data/processed/us_eia930 --ba MISO
-  ```
+## 2. Minimum plugin stack
 
-### C) Weather (Optional)
-- **Provider:** Open‑Meteo (Berlin hourly)
-- **Usage:** optional feature enrichment
- - **Download:**
-   ```bash
-   python -m orius.data_pipeline.download_weather --out data/raw --start 2015-01-01 --end 2020-09-30
-   ```
-   The default hourly list includes temperature, humidity, precipitation, cloud cover, wind speed/gusts, pressure, radiation, and snow depth.
+ORIUS does **not** require many plugins to obtain real datasets. The main
+blockers are provider access, storage capacity, and missing domain pipelines.
 
-### C2) Holidays (Optional)
-- **Provider:** `python-holidays` package (offline calendar)
-- **Usage:** adds `is_holiday`, `is_pre_holiday`, `is_post_holiday` features
-- **Generate:**
-  ```bash
-  python scripts/generate_holidays.py --country DE --start-year 2015 --end-year 2020 --out data/raw/holidays_de.csv
-  ```
+- Required operational plugin: `GitHub`
+- High-value support plugin: `Hugging Face`
+- Optional support plugin: `Google Drive`
+- Not needed for dataset closure: `Figma`, `Canva`, `Netlify`
+- PM-only: `Linear`, `Notion`
 
-### D) Price + Carbon Signals (Recommended)
-- **What:** optional time‑aligned price and carbon intensity series for more realistic optimization.
-- **Where to place:** any CSV/Parquet file; pass its path to `build_features` via `--signals`.
-- **Required columns:** `timestamp` plus any of:
-  - `price_eur_mwh` or `price_usd_mwh`
-  - `carbon_kg_per_mwh` (or `carbon_gco2_kwh`)
-  - `moer_kg_per_mwh` (optional marginal emissions)
-- **How to use:**
-  ```bash
-  python -m orius.data_pipeline.build_features --in data/raw --out data/processed \
-    --signals data/raw/price_carbon_signals.csv
-  ```
-  Signals are merged by timestamp and take precedence over the OPSD price column.
+Use `docs/REAL_DATA_PLUGIN_ACCESS_PLAN.md` for the reasoning and domain-level
+breakdown.
 
-#### Real carbon options
-- **Electricity Maps**: download via API using `scripts/download_emaps_carbon.py` (token required) or export a CSV and convert with `scripts/prepare_emaps_carbon.py`.
-- **SMARD (Germany)**: use `scripts/download_smard_carbon.py` to compute hourly carbon intensity from the public SMARD generation mix (no token).
-- **WattTime MOER**: use `scripts/download_watttime_moer.py` to fetch marginal emissions (MOER) and merge via `scripts/merge_signals.py`.
+## 3. Canonical domain sources
 
-## 2) What This Repo Stores
-- **Processed features:** `data/processed/` (Parquet)
-- **Splits:** `data/processed/splits/`
-- **Models:** `artifacts/models/` (git‑ignored)
-- **Reports/figures:** `reports/` (git‑ignored by default)
+| Domain | Current canonical source | Current status |
+| --- | --- | --- |
+| Battery | OPSD + SMARD / EIA-family release surfaces | Reference row |
+| Autonomous vehicles | Waymo Open Motion | Real-data contract defined |
+| AV companions | Argoverse 2 Motion, Argoverse 2 Sensor | Secondary validation surfaces |
+| Industrial | Current defended processed row; raw-source cleanup still mixed | Proof-validated, cleanup still needed |
+| Healthcare | PhysioNet BIDMC | Real-data path active |
+| Navigation | KITTI Odometry | Real-data contract defined, row still blocked |
+| Aerospace | NASA C-MAPSS FD001-FD004 (trainable) plus pending multi-flight runtime telemetry | Trainable row active, defended runtime closure pending |
 
-## 3) Licensing & Attribution
-- Data is owned by the original providers.
-- Do **not** redistribute raw data files in this repo.
-- Always follow the provider’s license/terms and include attribution when publishing results.
+Important boundary:
 
-## 4) Reproducible Downloads (Optional)
-If you use the built‑in downloader:
+- Navigation is still blocked by the real-data validation gap.
+- Aerospace is still blocked by the missing real multi-flight telemetry row.
+- Do not claim equal-domain universality until those rows clear the same gate as
+  the defended domains.
+
+## 4. Optional external raw-data fallback
+
+When repo-local raw staging is intentionally not used, stage fallback datasets
+under:
+
+```text
+$ORIUS_EXTERNAL_DATA_ROOT/
+├── waymo_open_motion/
+├── argoverse2_motion/
+├── argoverse2_sensor/
+├── kitti_odometry/
+└── aerospace_flight_telemetry/
+```
+
+Notes:
+
+- The AV and navigation builders now check repo-local raw storage first and use
+  `ORIUS_EXTERNAL_DATA_ROOT` only as a fallback.
+- The aerospace external directory remains reserved for the future defended
+  runtime telemetry replay surface.
+- Full raw payloads should not be copied into git.
+
+## 5. Repo-local preflight
+
+Run this before attempting the full all-domain real-data program:
+
+```bash
+python scripts/verify_real_data_preflight.py
+```
+
+This check verifies:
+
+- free disk against the repo-local corpus threshold
+- required CLIs: `git`, `hf`, `kaggle`
+- required Python modules: `pandas`, `pyarrow`, `openpyxl`, `wfdb`, `huggingface_hub`
+- presence of the expected raw directories for each domain
+
+## 6. Domain-specific placement manifests
+
+Use the domain placement guides before building processed rows:
+
+- `data/av/PLACE_REAL_AV_DATA_HERE.md`
+- `data/navigation/PLACE_REAL_NAVIGATION_DATA_HERE.md`
+- `data/aerospace/PLACE_REAL_AEROSPACE_DATA_HERE.md`
+
+These documents define the processed target file, expected raw layout, and the
+minimum contract columns for each domain.
+
+## 7. Energy-source commands still supported
+
+### OPSD Germany
+
+- Provider: Open Power System Data (OPSD)
+- Typical signals: load, wind generation, solar generation
+- Raw location: `data/raw/time_series_60min_singleindex.csv`
+
+Optional reproducible download:
+
 ```bash
 python -m orius.data_pipeline.download_opsd --out data/raw
 ```
 
-## 5) Notes
-- Missing columns (e.g., price) are treated as optional.
-- If price/carbon series are not present, optimization cost savings may be near zero.
+### EIA Form 930
+
+- Provider: U.S. Energy Information Administration
+- Typical signals: balancing-authority demand and generation
+- Raw location: `data/raw/us_eia930/`
+
+Build example:
+
+```bash
+python -m orius.data_pipeline.build_features_eia930 \
+  --in data/raw/us_eia930 \
+  --out data/processed/us_eia930 \
+  --ba MISO
+```
+
+### Optional weather
+
+```bash
+python -m orius.data_pipeline.download_weather \
+  --out data/raw \
+  --start 2015-01-01 \
+  --end 2020-09-30
+```
+
+### Optional holidays
+
+```bash
+python scripts/generate_holidays.py \
+  --country DE \
+  --start-year 2015 \
+  --end-year 2020 \
+  --out data/raw/holidays_de.csv
+```
+
+## 8. Licensing and attribution
+
+- Data is owned by the original providers.
+- Do not redistribute raw provider data in this repository.
+- Always follow the provider license and attribution rules when publishing
+  results or release bundles.
+
+## 9. Availability boundary
+
+The final submission claims depend on tracked manuscript and publication
+artifacts, not on ignored local caches or private snapshots. The parity matrix
+and publication bundle define the current defended evidence boundary.

@@ -5,6 +5,7 @@
     "argoverse2_motion",
     "argoverse2_sensor"
   ],
+  "repo_local_preferred": true,
   "external_env_var": "ORIUS_EXTERNAL_DATA_ROOT",
   "expected_layout": {
     "waymo_open_motion": "waymo_open_motion/",
@@ -22,8 +23,10 @@
     "ts_utc"
   ],
   "notes": [
-    "Full raw payloads stay outside git.",
-    "Prepared tabular exports derived from official raw files may be placed under the external source directories.",
+    "Repo-local placement under data/av/raw/<dataset_key>/ is the default contract.",
+    "ORIUS_EXTERNAL_DATA_ROOT remains an optional fallback for the same directory names.",
+    "Full raw payloads stay outside git history.",
+    "Prepared tabular exports derived from official raw files may be placed under either approved source layout.",
     "Synthetic AV data remains available only by explicit request."
   ]
 }

@@ -16,7 +16,26 @@ env/
 *~
 
 # Project Data & Artifacts (large files)
-data/
+data/*
+!data/DATASET_DOWNLOAD_GUIDE.md
+!data/av/
+data/av/*
+!data/av/PLACE_REAL_AV_DATA_HERE.md
+!data/av/raw/
+data/av/raw/*
+!data/av/raw/external_sources_manifest.json
+!data/navigation/
+data/navigation/*
+!data/navigation/PLACE_REAL_NAVIGATION_DATA_HERE.md
+!data/navigation/raw/
+data/navigation/raw/*
+!data/navigation/raw/external_sources_manifest.json
+!data/aerospace/
+data/aerospace/*
+!data/aerospace/PLACE_REAL_AEROSPACE_DATA_HERE.md
+!data/aerospace/raw/
+data/aerospace/raw/*
+!data/aerospace/raw/external_sources_manifest.json
 artifacts/
 .env
 .ipynb_checkpoints
@@ -61,7 +80,20 @@ paper/*.aux
 paper/*.fdb_latexmk
 paper/*.fls
 paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.lof
+paper/*.lot
+paper/*.toc
 paper/paper_r1.pdf
+paper/chapters/
+paper/appendices/
+paper/backmatter/
+paper/monograph/*.aux
+paper/review/*.aux
+paper/review/*.out
+paper/review/*.toc
+paper/review/*.log
 paper/~$*.docx
 
 # Logs

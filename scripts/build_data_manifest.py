@@ -205,7 +205,7 @@ def _parse_args() -> argparse.Namespace:
         choices=["DE", "US", "US_MISO", "US_PJM", "US_ERCOT", "AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE", "NAVIGATION", "ALL"],
         default="ALL",
     )
-    parser.add_argument("--output", default="data/dashboard/data_manifest.json")
+    parser.add_argument("--output", default="paper/assets/data/data_manifest.json")
     return parser.parse_args()
 
 

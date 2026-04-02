@@ -7,9 +7,48 @@ import pandas as pd
 import pytest
 
 import scripts.download_av_datasets as av_builder
+import scripts.download_aerospace_datasets as aerospace_builder
 import scripts.build_navigation_real_dataset as nav_builder
 from scripts._dataset_registry import DATASET_REGISTRY
 from orius.data_pipeline.build_features_navigation import build_features as build_navigation_features
+from orius.data_pipeline import real_data_contract
+
+
+def test_waymo_repo_local_fixture_preferred_over_external(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    repo_raw = tmp_path / "repo_raw"
+    repo_waymo = repo_raw / "waymo_open_motion" / "train"
+    repo_waymo.mkdir(parents=True)
+    external_root = tmp_path / "external"
+    external_waymo = external_root / "waymo_open_motion" / "train"
+    external_waymo.mkdir(parents=True)
+
+    monkeypatch.setattr(av_builder, "RAW_DIR", repo_raw)
+    pd.DataFrame(
+        {
+            "track_id": ["repo-veh", "repo-veh"],
+            "frame_index": [0, 1],
+            "center_x": [1.0, 2.0],
+            "velocity_x": [5.0, 5.5],
+            "timestamp": ["2026-01-01T00:00:00Z", "2026-01-01T00:00:01Z"],
+        }
+    ).to_csv(repo_waymo / "repo.csv", index=False)
+    pd.DataFrame(
+        {
+            "track_id": ["external-veh", "external-veh"],
+            "frame_index": [0, 1],
+            "center_x": [100.0, 101.0],
+            "velocity_x": [9.0, 9.5],
+            "timestamp": ["2026-01-01T00:00:00Z", "2026-01-01T00:00:01Z"],
+        }
+    ).to_csv(external_waymo / "external.csv", index=False)
+
+    out_path = tmp_path / "av_repo_local.csv"
+    av_builder.build_real_av_dataset("waymo_motion", out_path, external_root=external_root)
+
+    df = pd.read_csv(out_path)
+    assert df["vehicle_id"].tolist() == ["repo-veh", "repo-veh"]
+    manifest = json.loads((repo_raw / "waymo_open_motion_provenance.json").read_text())
+    assert manifest["source_kind"] == "repo_local"
 
 
 def test_waymo_external_fixture_builds_canonical_av_csv(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -52,6 +91,9 @@ def test_waymo_external_fixture_builds_canonical_av_csv(tmp_path: Path, monkeypa
     summary = json.loads((raw_dir / "waymo_motion_build_summary.json").read_text())
     assert summary["source"] == "waymo_motion"
     assert summary["rows"] == 3
+    manifest = json.loads((raw_dir / "waymo_open_motion_provenance.json").read_text())
+    assert manifest["source_kind"] == "external"
+    assert manifest["canonical_source"] is True
 
 
 def test_navigation_builder_and_feature_pipeline_from_kitti_fixture(tmp_path: Path) -> None:
@@ -96,6 +138,37 @@ def test_navigation_builder_and_feature_pipeline_from_kitti_fixture(tmp_path: Pa
     manifest = json.loads(manifest_out.read_text())
     assert manifest["dataset"] == "KITTI Odometry"
     assert manifest["rows_per_sequence"]["00"] == 4
+    assert manifest["canonical_source"] is True
+
+
+def test_aerospace_cmapss_fixture_builds_real_processed_surface(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    raw_dir = tmp_path / "raw"
+    processed_dir = tmp_path / "processed"
+    raw_dir.mkdir(parents=True)
+    processed_dir.mkdir(parents=True)
+
+    sample = "\n".join(
+        [
+            "1 1 0.1 0.2 100.0 518.67 641.82 1589.70 1400.60 14.62 21.61 554.36 2388.06 9046.19 1.30 47.47 521.66 2388.02 8138.62 8.4195 0.03 392 2388 100.00 39.06 23.4190",
+            "1 2 0.2 0.3 100.0 518.67 642.15 1591.82 1403.14 14.62 21.61 553.75 2388.04 9044.07 1.30 47.49 522.28 2388.07 8131.49 8.4318 0.03 392 2388 100.00 39.00 23.4236",
+        ]
+    ) + "\n"
+    for filename in aerospace_builder.CMAPSS_TRAIN_FILES:
+        (raw_dir / filename).write_text(sample, encoding="utf-8")
+
+    monkeypatch.setattr(aerospace_builder, "RAW_DIR", raw_dir)
+    monkeypatch.setattr(aerospace_builder, "PROCESSED_DIR", processed_dir)
+    monkeypatch.setattr(aerospace_builder, "PROVENANCE_PATH", raw_dir / "cmapss_provenance.json")
+
+    out_path = processed_dir / "aerospace_orius.csv"
+    aerospace_builder.convert_cmapss_to_orius(out_path)
+
+    df = pd.read_csv(out_path)
+    assert set(["flight_id", "step", "altitude_m", "airspeed_kt", "bank_angle_deg", "fuel_remaining_pct", "ts_utc"]).issubset(df.columns)
+    assert len(df) == 8
+    manifest = json.loads((raw_dir / "cmapss_provenance.json").read_text())
+    assert manifest["canonical_source"] is True
+    assert manifest["used_fallback"] is False
 
 
 def test_dataset_registry_includes_navigation_row() -> None:
@@ -103,3 +176,24 @@ def test_dataset_registry_includes_navigation_row() -> None:
     assert cfg.config_file == "configs/train_forecast_navigation.yaml"
     assert cfg.raw_data_path == "data/navigation/processed/navigation_orius.csv"
     assert cfg.feature_module == "orius.data_pipeline.build_features_navigation"
+    assert cfg.provenance_path == "data/navigation/raw/kitti_odometry_provenance.json"
+
+
+def test_tool_status_finds_project_venv_tools_without_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    repo_root = tmp_path / "repo"
+    module_path = repo_root / "src" / "orius" / "data_pipeline" / "real_data_contract.py"
+    module_path.parent.mkdir(parents=True)
+    module_path.write_text("# synthetic test path\n", encoding="utf-8")
+    tool_dir = repo_root / ".venv" / "bin"
+    tool_dir.mkdir(parents=True)
+    tool_path = tool_dir / "hf"
+    tool_path.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    tool_path.chmod(0o755)
+
+    monkeypatch.setenv("PATH", "")
+    monkeypatch.setattr(real_data_contract, "__file__", str(module_path))
+    monkeypatch.setattr(real_data_contract.sys, "executable", str(repo_root / "python-bin" / "python"))
+
+    status = real_data_contract.tool_status(("hf", "kaggle"))
+    assert status["hf"] == str(tool_path)
+    assert status["kaggle"] is None

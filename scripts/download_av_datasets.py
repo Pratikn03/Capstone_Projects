@@ -2,7 +2,7 @@
 """Normalize AV datasets into the canonical ORIUS longitudinal contract.
 
 Canonical real-data source:
-- Waymo Open Motion Dataset via external raw storage
+- Waymo Open Motion Dataset from repo-local raw storage
 
 Secondary sources:
 - Argoverse 2 Motion for compatibility checks
@@ -10,7 +10,7 @@ Secondary sources:
 
 Legacy/testing sources:
 - HEE raw CSV already in-repo
-- explicit synthetic generation
+- explicit synthetic generation, opt-in only
 """
 from __future__ import annotations
 
@@ -30,13 +30,57 @@ if str(REPO_ROOT / "src") not in sys.path:
 
 from orius.data_pipeline.external_raw import (
     EXTERNAL_DATA_ROOT_ENV,
-    get_external_dataset_dir,
+)
+from orius.data_pipeline.real_data_contract import (
+    ResolvedRawSource,
+    build_provenance_manifest,
+    resolve_repo_or_external_raw_dir,
+    summarize_csv_output,
+    summarize_files,
+    utc_now_iso,
+    write_json,
 )
 
 
 DATA_AV = REPO_ROOT / "data" / "av"
 RAW_DIR = DATA_AV / "raw"
 PROCESSED_DIR = DATA_AV / "processed"
+
+REAL_SOURCE_CONFIG: dict[str, dict[str, object]] = {
+    "waymo_motion": {
+        "dataset_dir": "waymo_open_motion",
+        "external_dataset_key": "waymo_open_motion",
+        "provider": "Waymo Open Dataset",
+        "version": "motion",
+        "source_urls": [
+            "https://waymo.com/open/data/motion/",
+            "https://waymo.com/open/faq/",
+        ],
+        "license_notes": "Waymo Open Dataset license applies; raw payloads must not be redistributed in git.",
+        "access_notes": "Registration and license acceptance are typically required.",
+        "canonical_source": True,
+    },
+    "argoverse2_motion": {
+        "dataset_dir": "argoverse2_motion",
+        "external_dataset_key": "argoverse2_motion",
+        "provider": "Argoverse 2",
+        "version": "motion",
+        "source_urls": ["https://www.argoverse.org/av2.html"],
+        "license_notes": "Argoverse 2 license applies; raw payloads remain untracked.",
+        "access_notes": "Use as a companion motion corpus; not the canonical AV source.",
+        "canonical_source": False,
+    },
+    "argoverse2_sensor": {
+        "dataset_dir": "argoverse2_sensor",
+        "external_dataset_key": "argoverse2_sensor",
+        "provider": "Argoverse 2",
+        "version": "sensor",
+        "source_urls": ["https://www.argoverse.org/av2.html"],
+        "license_notes": "Argoverse 2 license applies; raw payloads remain untracked.",
+        "access_notes": "Companion sensor corpus used for inventory and fault metadata.",
+        "canonical_source": False,
+    },
+}
 
 COLUMN_ALIASES: dict[str, tuple[str, ...]] = {
     "vehicle_id": ("vehicle_id", "track_id", "object_id", "Vehicle_ID"),
@@ -56,6 +100,56 @@ COLUMN_ALIASES: dict[str, tuple[str, ...]] = {
 def ensure_dirs() -> None:
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _row_summary_path(out_path: Path) -> Path:
+    return out_path.parent / f"{out_path.stem}_row_summary.json"
+
+
+def _resolve_real_source(source_key: str, *, external_root: Path | None = None) -> tuple[dict[str, object], ResolvedRawSource]:
+    cfg = REAL_SOURCE_CONFIG[source_key]
+    raw_source = resolve_repo_or_external_raw_dir(
+        RAW_DIR / str(cfg["dataset_dir"]),
+        external_dataset_key=str(cfg["external_dataset_key"]),
+        explicit_root=external_root,
+        required=True,
+    )
+    assert raw_source is not None
+    return cfg, raw_source
+
+
+def _write_build_artifacts(
+    *,
+    source_key: str,
+    source_cfg: dict[str, object],
+    raw_source: ResolvedRawSource,
+    out_path: Path,
+    extra_payload: dict[str, object] | None = None,
+) -> dict[str, object]:
+    output_summary = summarize_csv_output(out_path)
+    write_json(_row_summary_path(out_path), output_summary)
+    manifest = build_provenance_manifest(
+        domain="av",
+        dataset_key=str(source_cfg["dataset_dir"]),
+        provider=str(source_cfg["provider"]),
+        version=str(source_cfg["version"]),
+        raw_source=raw_source,
+        processed_output=out_path,
+        output_summary=output_summary,
+        raw_inventory=summarize_files(raw_source.path),
+        source_urls=[str(url) for url in source_cfg["source_urls"]],
+        license_notes=str(source_cfg["license_notes"]),
+        access_notes=str(source_cfg["access_notes"]),
+        canonical_source=bool(source_cfg["canonical_source"]),
+        used_fallback=False,
+        notes=[
+            "repo-local raw layout is preferred; external raw storage is a fallback only",
+            "synthetic data is opt-in and not eligible for strict real-data closure",
+        ],
+        extras=extra_payload,
+    )
+    write_json(RAW_DIR / f"{source_cfg['dataset_dir']}_provenance.json", manifest)
+    return output_summary
 
 
 def _first_matching(df: pd.DataFrame, *aliases: str) -> str | None:
@@ -186,12 +280,8 @@ def _infer_split(path: Path, dataset_dir: Path) -> str:
 
 
 def build_real_av_dataset(source_key: str, out_path: Path, *, external_root: Path | None = None) -> Path:
-    dataset_key = {
-        "waymo_motion": "waymo_open_motion",
-        "argoverse2_motion": "argoverse2_motion",
-    }[source_key]
-    dataset_dir = get_external_dataset_dir(dataset_key, external_root, required=True)
-    assert dataset_dir is not None
+    source_cfg, raw_source = _resolve_real_source(source_key, external_root=external_root)
+    dataset_dir = raw_source.path
     candidate_files = _candidate_tabular_files(dataset_dir)
     if not candidate_files:
         raise FileNotFoundError(
@@ -213,31 +303,50 @@ def build_real_av_dataset(source_key: str, out_path: Path, *, external_root: Pat
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out.to_csv(out_path, index=False)
 
-    summary_path = RAW_DIR / f"{source_key}_build_summary.json"
-    summary_path.write_text(
-        json.dumps(
-            {
-                "source": source_key,
-                "external_root": str(dataset_dir),
-                "output_csv": str(out_path),
-                "rows": int(len(out)),
-                "files": sources,
-                "env": EXTERNAL_DATA_ROOT_ENV,
-            },
-            indent=2,
-        )
-        + "\n",
-        encoding="utf-8",
+    output_summary = _write_build_artifacts(
+        source_key=source_key,
+        source_cfg=source_cfg,
+        raw_source=raw_source,
+        out_path=out_path,
+        extra_payload={
+            "source_key": source_key,
+            "normalized_files": sources,
+            "contract_columns": [
+                "vehicle_id",
+                "step",
+                "position_m",
+                "speed_mps",
+                "speed_limit_mps",
+                "lead_position_m",
+                "ts_utc",
+                "source_split",
+            ],
+        },
+    )
+    write_json(
+        RAW_DIR / f"{source_key}_build_summary.json",
+        {
+            "source": source_key,
+            "raw_source_kind": raw_source.source_kind,
+            "raw_root": str(dataset_dir),
+            "checked_locations": list(raw_source.checked_locations),
+            "output_csv": str(out_path),
+            "rows": int(output_summary["rows"]),
+            "files": sources,
+            "external_env_var": EXTERNAL_DATA_ROOT_ENV,
+        },
     )
     return out_path
 
 
 def build_sensor_summary(out_path: Path, *, external_root: Path | None = None) -> Path:
-    dataset_dir = get_external_dataset_dir("argoverse2_sensor", external_root, required=True)
-    assert dataset_dir is not None
+    source_cfg, raw_source = _resolve_real_source("argoverse2_sensor", external_root=external_root)
+    dataset_dir = raw_source.path
     summary = {
         "source": "argoverse2_sensor",
-        "external_root": str(dataset_dir),
+        "raw_source_kind": raw_source.source_kind,
+        "raw_root": str(dataset_dir),
+        "checked_locations": list(raw_source.checked_locations),
         "files_by_suffix": {},
     }
     for path in dataset_dir.rglob("*"):
@@ -247,6 +356,29 @@ def build_sensor_summary(out_path: Path, *, external_root: Path | None = None) -
         summary["files_by_suffix"][path.suffix or "<none>"] += 1
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    manifest = build_provenance_manifest(
+        domain="av",
+        dataset_key=str(source_cfg["dataset_dir"]),
+        provider=str(source_cfg["provider"]),
+        version=str(source_cfg["version"]),
+        raw_source=raw_source,
+        processed_output=out_path,
+        output_summary={
+            "processed_output": str(out_path),
+            "generated_at_utc": utc_now_iso(),
+            "rows": 0,
+            "columns": [],
+        },
+        raw_inventory=summarize_files(raw_source.path),
+        source_urls=[str(url) for url in source_cfg["source_urls"]],
+        license_notes=str(source_cfg["license_notes"]),
+        access_notes=str(source_cfg["access_notes"]),
+        canonical_source=bool(source_cfg["canonical_source"]),
+        used_fallback=False,
+        notes=["sensor summary only; no trainable ORIUS surface is produced from this output"],
+        extras={"files_by_suffix": summary["files_by_suffix"]},
+    )
+    write_json(RAW_DIR / "argoverse2_sensor_provenance.json", manifest)
     return out_path
 
 
@@ -294,6 +426,27 @@ def generate_synthetic_trajectories(out_path: Path, n_vehicles: int = 50, steps_
         )
         writer.writeheader()
         writer.writerows(rows)
+    output_summary = summarize_csv_output(out_path)
+    write_json(_row_summary_path(out_path), output_summary)
+    write_json(
+        RAW_DIR / "synthetic_provenance.json",
+        {
+            "generated_at_utc": output_summary["generated_at_utc"],
+            "domain": "av",
+            "dataset_key": "synthetic",
+            "provider": "generated",
+            "version": "seed-42",
+            "source_kind": "synthetic",
+            "processed_output": str(out_path),
+            "canonical_source": False,
+            "used_fallback": True,
+            "output_summary": output_summary,
+            "notes": [
+                "synthetic output is opt-in only",
+                "synthetic output is not eligible for strict all-domain real-data closure",
+            ],
+        },
+    )
     return out_path
 
 
@@ -303,6 +456,7 @@ def convert_ngsim_to_orius(csv_path: Path, out_path: Path) -> Path:
     out = _normalize_longitudinal_frame(raw, default_split="legacy")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out.to_csv(out_path, index=False)
+    write_json(_row_summary_path(out_path), summarize_csv_output(out_path))
     return out_path
 
 
@@ -323,6 +477,30 @@ def convert_hee_to_orius(out_path: Path) -> Path:
     out = _normalize_longitudinal_frame(raw, default_split="hee")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out.to_csv(out_path, index=False)
+    output_summary = summarize_csv_output(out_path)
+    write_json(_row_summary_path(out_path), output_summary)
+    raw_source = ResolvedRawSource(
+        path=RAW_DIR / "hee_dataset",
+        source_kind="repo_local",
+        checked_locations=(str(RAW_DIR / "hee_dataset"),),
+    )
+    manifest = build_provenance_manifest(
+        domain="av",
+        dataset_key="hee_dataset",
+        provider="Bosch Research HEE",
+        version="objectposition.csv",
+        raw_source=raw_source,
+        processed_output=out_path,
+        output_summary=output_summary,
+        raw_inventory=summarize_files(raw_source.path),
+        source_urls=["https://github.com/boschresearch/hee_dataset"],
+        license_notes="See data/av/raw/hee_dataset/LICENSE.txt for the dataset terms.",
+        access_notes="Legacy compatibility source only; not the canonical AV corpus.",
+        canonical_source=False,
+        used_fallback=False,
+        notes=["HEE remains available for bounded compatibility only"],
+    )
+    write_json(RAW_DIR / "hee_dataset_provenance.json", manifest)
     return out_path
 
 

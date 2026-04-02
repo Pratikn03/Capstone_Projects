@@ -1,6 +1,7 @@
 {
   "domain": "navigation",
   "canonical_source": "kitti_odometry",
+  "repo_local_preferred": true,
   "external_env_var": "ORIUS_EXTERNAL_DATA_ROOT",
   "expected_layout": {
     "kitti_odometry": "kitti_odometry/"
@@ -16,8 +17,10 @@
     "ts_utc"
   ],
   "notes": [
-    "Full KITTI raw payloads stay outside git.",
-    "The repo converter reads KITTI odometry pose and times files from the external raw root.",
+    "Repo-local placement under data/navigation/raw/kitti_odometry/ is the default contract.",
+    "ORIUS_EXTERNAL_DATA_ROOT remains an optional fallback for the same directory name.",
+    "Full KITTI raw payloads stay outside git history.",
+    "The repo converter reads KITTI odometry pose and times files from either repo-local or approved fallback storage.",
     "Navigation remains shadow-synthetic unless the full real-data train and validation chain is completed."
   ]
 }

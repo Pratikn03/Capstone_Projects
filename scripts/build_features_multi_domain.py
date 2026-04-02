@@ -9,6 +9,9 @@ Requires datasets to exist. Run first:
   make healthcare-datasets
   python scripts/download_aerospace_datasets.py
   python scripts/build_navigation_real_dataset.py
+
+For repo-local corpus readiness checks, run:
+  python scripts/verify_real_data_preflight.py
 """
 from __future__ import annotations
 

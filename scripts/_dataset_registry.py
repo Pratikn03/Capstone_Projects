@@ -34,6 +34,7 @@ class DatasetConfig:
     start_date: Optional[str] = None    # Date filter start
     end_date: Optional[str] = None      # Date filter end
     alias_of: Optional[str] = None      # Backward-compatible dataset alias
+    provenance_path: Optional[str] = None  # Standardized real-data manifest when available
 
 
 def _us_dataset(
@@ -63,6 +64,7 @@ def _us_dataset(
         feature_module="orius.data_pipeline.build_features_eia930",
         ba_code=ba_code,
         alias_of=alias_of,
+        provenance_path=f"{processed_dir}/dataset_provenance.json",
     )
 
 
@@ -80,6 +82,7 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         backtests_dir="artifacts/backtests",
         raw_data_path="data/raw",
         feature_module="orius.data_pipeline.build_features",
+        provenance_path="data/raw/opsd_germany_provenance.json",
     ),
     "US_MISO": _us_dataset(
         key="US_MISO",
@@ -140,6 +143,7 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         backtests_dir="artifacts/backtests/av",
         raw_data_path="data/av/processed/av_trajectories_orius.csv",
         feature_module="orius.data_pipeline.build_features_av",
+        provenance_path="data/av/raw/waymo_open_motion_provenance.json",
     ),
     "INDUSTRIAL": DatasetConfig(
         name="INDUSTRIAL",
@@ -153,6 +157,7 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         backtests_dir="artifacts/backtests/industrial",
         raw_data_path="data/industrial/processed/industrial_orius.csv",
         feature_module="orius.data_pipeline.build_features_industrial",
+        provenance_path="data/industrial/raw/ccpp_provenance.json",
     ),
     "HEALTHCARE": DatasetConfig(
         name="HEALTHCARE",
@@ -166,6 +171,7 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         backtests_dir="artifacts/backtests/healthcare",
         raw_data_path="data/healthcare/processed/healthcare_orius.csv",
         feature_module="orius.data_pipeline.build_features_healthcare",
+        provenance_path="data/healthcare/raw/bidmc_provenance.json",
     ),
     "AEROSPACE": DatasetConfig(
         name="AEROSPACE",
@@ -179,6 +185,7 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         backtests_dir="artifacts/backtests/aerospace",
         raw_data_path="data/aerospace/processed/aerospace_orius.csv",
         feature_module="orius.data_pipeline.build_features_aerospace",
+        provenance_path="data/aerospace/raw/cmapss_provenance.json",
     ),
     "NAVIGATION": DatasetConfig(
         name="NAVIGATION",
@@ -192,6 +199,7 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         backtests_dir="artifacts/backtests/navigation",
         raw_data_path="data/navigation/processed/navigation_orius.csv",
         feature_module="orius.data_pipeline.build_features_navigation",
+        provenance_path="data/navigation/raw/kitti_odometry_provenance.json",
     ),
 }
 

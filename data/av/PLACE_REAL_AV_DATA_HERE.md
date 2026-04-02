@@ -2,11 +2,19 @@
 
 Current status:
 
-- Raw HEE dataset is present at `data/av/raw/hee_dataset/`.
+- Raw HEE dataset is present at `data/av/raw/hee_dataset/` as legacy compatibility data.
 - The canonical processed ORIUS file is `data/av/processed/av_trajectories_orius.csv`.
-- The canonical real-data source is now `Waymo Open Motion` via an external raw-data root.
+- The canonical real-data source is `Waymo Open Motion`.
+- Repo-local raw placement is now preferred.
 
-External raw-data contract:
+Repo-local raw-data contract:
+
+- Place full raw or prepared tabular exports derived from the official raw files under:
+  - `data/av/raw/waymo_open_motion/`
+  - `data/av/raw/argoverse2_motion/`
+  - `data/av/raw/argoverse2_sensor/`
+
+External fallback contract:
 
 - Set `ORIUS_EXTERNAL_DATA_ROOT=/path/to/external/datasets`
 - Place full raw or prepared tabular exports under:
@@ -36,7 +44,8 @@ Expected ORIUS longitudinal contract:
 
 Notes:
 
-- Full Waymo / Argoverse raw payloads should not be copied into git.
+- Full Waymo / Argoverse raw payloads should not be copied into git history.
+- The real-data builders emit provenance manifests under `data/av/raw/`.
 - Synthetic AV trajectories remain available only by explicit request:
   - `python scripts/download_av_datasets.py --source synthetic`
 - Legacy CSV conversion remains available for bounded compatibility:

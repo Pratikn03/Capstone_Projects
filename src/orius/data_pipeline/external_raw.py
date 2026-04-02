@@ -44,6 +44,11 @@ EXTERNAL_DATASETS: dict[str, ExternalDatasetSpec] = {
         directory_name="kitti_odometry",
         description="KITTI Odometry raw root",
     ),
+    "aerospace_flight_telemetry": ExternalDatasetSpec(
+        key="aerospace_flight_telemetry",
+        directory_name="aerospace_flight_telemetry",
+        description="Aerospace real multi-flight telemetry raw root",
+    ),
 }
 
 
@@ -93,4 +98,3 @@ def get_external_dataset_dir(
 def repo_manifest_path(domain: str) -> Path:
     """Return the lightweight repo-tracked manifest for a domain's external raw source."""
     return REPO_ROOT / "data" / domain / "raw" / "external_sources_manifest.json"
-

@@ -1,0 +1,31 @@
+{
+  "domain": "aerospace",
+  "canonical_source": "nasa_cmapss_fd001_fd004",
+  "runtime_validation_source": "aerospace_flight_telemetry",
+  "repo_local_preferred": true,
+  "external_env_var": "ORIUS_EXTERNAL_DATA_ROOT",
+  "expected_layout": {
+    "nasa_cmapss_fd001_fd004": [
+      "train_FD001.txt",
+      "train_FD002.txt",
+      "train_FD003.txt",
+      "train_FD004.txt"
+    ],
+    "aerospace_flight_telemetry": "aerospace_flight_telemetry/"
+  },
+  "canonical_processed_output": "data/aerospace/processed/aerospace_orius.csv",
+  "required_contract_columns": [
+    "flight_id",
+    "step",
+    "altitude_m",
+    "airspeed_kt",
+    "bank_angle_deg",
+    "fuel_remaining_pct",
+    "ts_utc"
+  ],
+  "notes": [
+    "NASA C-MAPSS FD001-FD004 now backs the trainable aerospace row in this repo.",
+    "A separate provider-approved multi-flight telemetry surface is still required for defended runtime replay closure.",
+    "Equal-domain aerospace closure is not claimed until both surfaces are locked into the validation gate."
+  ]
+}
