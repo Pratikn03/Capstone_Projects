@@ -2,8 +2,8 @@
 
 Computes the seven Paper-4 benchmark metrics across an episode trajectory:
 
-1. TSVR  – True-SOC Violation Rate
-2. OASG  – Online Adaptation Speed Gap
+1. TSVR  – True-State Violation Rate
+2. OASG  – Observation-Action Safety Gap
 3. CVA   – Certificate Validity Accuracy
 4. GDQ   – Graceful Degradation Quality
 5. IR    – Intervention Rate
@@ -12,7 +12,7 @@ Computes the seven Paper-4 benchmark metrics across an episode trajectory:
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Sequence
 
 import numpy as np
@@ -26,15 +26,43 @@ class StepRecord:
     true_state: dict[str, float]
     observed_state: dict[str, float]
     action: dict[str, float]
-    soc_after: float
-    soc_min: float = 0.1
-    soc_max: float = 0.9
+    true_constraint_violated: bool | None = None
+    observed_constraint_satisfied: bool | None = None
+    true_margin: float | None = None
+    observed_margin: float | None = None
+    intervened: bool = False
+    fallback_used: bool = False
     certificate_valid: bool = True
     certificate_predicted_valid: bool = True
-    fallback_active: bool = False
     useful_work: float = 0.0
     audit_fields_present: int = 0
     audit_fields_required: int = 1
+    latency_us: float | None = None
+    domain_metrics: dict[str, float] = field(default_factory=dict)
+    # Legacy compatibility input fields. New code should use the canonical
+    # domain-agnostic fields above.
+    soc_after: float | None = None
+    soc_min: float = 0.1
+    soc_max: float = 0.9
+    fallback_active: bool = False
+
+    def resolved_true_constraint_violated(self) -> bool:
+        if self.true_constraint_violated is not None:
+            return bool(self.true_constraint_violated)
+        if self.soc_after is None:
+            return False
+        return bool(self.soc_after < self.soc_min or self.soc_after > self.soc_max)
+
+    def resolved_observed_constraint_satisfied(self) -> bool | None:
+        if self.observed_constraint_satisfied is not None:
+            return bool(self.observed_constraint_satisfied)
+        return bool(self.certificate_predicted_valid)
+
+    def resolved_fallback_used(self) -> bool:
+        return bool(self.fallback_used or self.fallback_active)
+
+    def resolved_intervened(self) -> bool:
+        return bool(self.intervened or self.resolved_fallback_used())
 
 
 @dataclass
@@ -53,32 +81,32 @@ class BenchmarkMetrics:
 
 
 def compute_tsvr(records: Sequence[StepRecord]) -> float:
-    """True-SOC Violation Rate: fraction of steps with SOC outside bounds."""
+    """True-State Violation Rate: fraction of steps with true constraint violation."""
     if not records:
         return 0.0
-    violations = sum(
-        1 for r in records if r.soc_after < r.soc_min or r.soc_after > r.soc_max
-    )
+    violations = sum(1 for r in records if r.resolved_true_constraint_violated())
     return violations / len(records)
 
 
 def compute_oasg(records: Sequence[StepRecord], window: int = 12) -> float:
-    """Online Adaptation Speed Gap.
+    """Observation-Action Safety Gap.
 
-    Measures how quickly the controller adapts after a fault starts by
-    comparing useful-work before and after fault onset.  Returns the
-    average ratio of post-fault to pre-fault useful-work over a sliding
-    window.  1.0 = no gap; lower = slower adaptation.
+    Fraction of comparable steps where the observed state appears safe while
+    the true state is already violating the constraint surface.
     """
-    if len(records) < 2 * window:
-        return 1.0  # too short to measure
-
-    works = np.array([r.useful_work for r in records])
-    pre = works[:window].mean()
-    if pre == 0:
-        return 1.0
-    post = works[window : 2 * window].mean()
-    return float(np.clip(post / pre, 0.0, 1.0))
+    del window
+    comparable = [
+        r for r in records
+        if r.resolved_observed_constraint_satisfied() is not None
+    ]
+    if not comparable:
+        return 0.0
+    gaps = sum(
+        1
+        for r in comparable
+        if bool(r.resolved_observed_constraint_satisfied()) and r.resolved_true_constraint_violated()
+    )
+    return gaps / len(comparable)
 
 
 def compute_cva(records: Sequence[StepRecord]) -> float:
@@ -110,7 +138,7 @@ def compute_gdq(records: Sequence[StepRecord]) -> float:
 
     # Descent stability: fraction of consecutive fallback steps with
     # non-increasing action magnitude (domain-agnostic: sum of abs of numeric values)
-    fb_steps = [r for r in records if r.fallback_active]
+    fb_steps = [r for r in records if r.resolved_fallback_used()]
     if len(fb_steps) < 2:
         descent = 1.0
     else:
@@ -133,7 +161,7 @@ def compute_intervention_rate(records: Sequence[StepRecord]) -> float:
     """Fraction of steps where the fallback overrode the controller."""
     if not records:
         return 0.0
-    return sum(1 for r in records if r.fallback_active) / len(records)
+    return sum(1 for r in records if r.resolved_intervened()) / len(records)
 
 
 def compute_audit_completeness(records: Sequence[StepRecord]) -> float:

@@ -337,6 +337,10 @@ def _run_episode(
 
         new_state = adapter.step(action)
         violation = adapter.check_violation(new_state)
+        observed_safe = adapter.observed_constraint_satisfied(obs)
+        true_margin = adapter.constraint_margin(new_state)
+        observed_margin = adapter.constraint_margin(obs)
+        fallback_used = bool(faults and faults[0].kind == "blackout")
 
         if adapter.domain_name == "battery":
             soc_after = new_state.get("soc", 0.5)
@@ -354,12 +358,18 @@ def _run_episode(
             true_state=dict(ts),
             observed_state=dict(obs),
             action=dict(action),
+            true_constraint_violated=bool(violation["violated"]),
+            observed_constraint_satisfied=observed_safe,
+            true_margin=true_margin,
+            observed_margin=observed_margin,
+            intervened=fallback_used,
+            fallback_used=fallback_used,
             soc_after=soc_after,
             soc_min=0.1,
             soc_max=0.9,
             certificate_valid=not violation["violated"],
             certificate_predicted_valid=not violation["violated"],
-            fallback_active=bool(faults and faults[0].kind == "blackout"),
+            fallback_active=fallback_used,
             useful_work=0.0 if math.isnan(useful_work) else useful_work,
             audit_fields_present=1,
             audit_fields_required=1,
@@ -425,6 +435,10 @@ def _run_domain_proof_episode(
 
         new_state = track.step(action)
         violation = track.check_violation(new_state)
+        observed_safe = track.observed_constraint_satisfied(obs)
+        true_margin = track.constraint_margin(new_state)
+        observed_margin = track.constraint_margin(obs)
+        fallback_used = bool(faults and faults[0].kind == "blackout")
         soc_after = 0.5 if not violation["violated"] else 0.0
 
         step_rec_d = {**dict(new_state), **dict(action)}
@@ -436,12 +450,18 @@ def _run_domain_proof_episode(
             true_state=ts,
             observed_state=dict(obs),
             action=action,
+            true_constraint_violated=bool(violation["violated"]),
+            observed_constraint_satisfied=observed_safe,
+            true_margin=true_margin,
+            observed_margin=observed_margin,
+            intervened=fallback_used,
+            fallback_used=fallback_used,
             soc_after=soc_after,
             soc_min=0.1,
             soc_max=0.9,
             certificate_valid=not violation["violated"],
             certificate_predicted_valid=not violation["violated"],
-            fallback_active=bool(faults and faults[0].kind == "blackout"),
+            fallback_active=fallback_used,
             useful_work=0.0 if math.isnan(useful_work) else useful_work,
             audit_fields_present=1,
             audit_fields_required=1,

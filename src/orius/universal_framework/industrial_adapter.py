@@ -35,6 +35,15 @@ class IndustrialDomainAdapter(DomainAdapter):
         self._power_max = _f(ind.get("power_max_mw"), 500.0)
         self._expected_cadence_s = _f(self._cfg.get("expected_cadence_s"), 3600.0)
 
+    def capability_profile(self) -> Mapping[str, Any]:
+        return {
+            "safety_surface_type": "power_temperature_envelope",
+            "repair_mode": "one_dim_projection",
+            "fallback_mode": "power_cap",
+            "supports_multi_agent_eval": True,
+            "supports_certos_eval": True,
+        }
+
     def ingest_telemetry(self, raw_packet: Mapping[str, Any]) -> Mapping[str, Any]:
         """Parse raw industrial packet into state vector z_t."""
         out = {}

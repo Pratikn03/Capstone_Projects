@@ -43,6 +43,15 @@ class NavigationDomainAdapter(DomainAdapter):
         self._expected_cadence_s = _f(self._cfg.get("expected_cadence_s"), 0.25)
         self._margin = _f(nav.get("boundary_margin"), 0.05)
 
+    def capability_profile(self) -> Mapping[str, Any]:
+        return {
+            "safety_surface_type": "arena_obstacle_bounds",
+            "repair_mode": "vector_projection",
+            "fallback_mode": "hold_position",
+            "supports_multi_agent_eval": False,
+            "supports_certos_eval": False,
+        }
+
     # ------------------------------------------------------------------
     # 1. Ingest telemetry
     # ------------------------------------------------------------------

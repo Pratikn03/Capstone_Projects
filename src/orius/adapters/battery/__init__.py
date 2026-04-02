@@ -3,6 +3,10 @@
 Re-exports from current implementations. New code should import from here:
 
     from orius.adapters.battery import BatteryDomainAdapter, BatteryTrackAdapter
+
+Battery-only theorem helpers now live under:
+
+    from orius.adapters.battery.theory import forward_tube
 """
 from __future__ import annotations
 

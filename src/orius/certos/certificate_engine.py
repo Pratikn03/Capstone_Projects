@@ -23,6 +23,7 @@ class CertificateEngine:
     def __init__(self):
         self._current: Mapping[str, Any] | None = None
         self._fallback_active = False
+        self._fallback_action: Mapping[str, Any] | None = None
 
     def issue(
         self,
@@ -40,6 +41,7 @@ class CertificateEngine:
         }
         self._current = cert
         self._fallback_active = False
+        self._fallback_action = None
         return cert
 
     def validate(
@@ -76,6 +78,7 @@ class CertificateEngine:
         }
         self._current = cert
         self._fallback_active = False
+        self._fallback_action = None
         return cert
 
     def revoke(self) -> Mapping[str, Any] | None:
@@ -90,6 +93,7 @@ class CertificateEngine:
     def fallback(self, fallback_action: Mapping[str, Any]) -> Mapping[str, Any]:
         """FALLBACK: Use fallback action when certificate invalid."""
         self._fallback_active = True
+        self._fallback_action = dict(fallback_action)
         return {
             "op": LifecycleOp.FALLBACK.value,
             "action": dict(fallback_action),
@@ -99,6 +103,8 @@ class CertificateEngine:
     def get_safe_action(self) -> Mapping[str, Any] | None:
         """Return the current safe action (certificate or fallback)."""
         if self._fallback_active:
+            if self._fallback_action is not None:
+                return dict(self._fallback_action)
             return {"charge_mw": 0.0, "discharge_mw": 0.0}
         if self._current and self.validate(self._current):
             return self._current.get("safe_action")
@@ -115,6 +121,7 @@ class CertificateEngine:
         """Store a fully materialized certificate snapshot as current."""
         self._current = dict(cert)
         self._fallback_active = False
+        self._fallback_action = None
 
     def require_action(self) -> Mapping[str, Any]:
         """Enforce invariant: no action without certificate/fallback."""

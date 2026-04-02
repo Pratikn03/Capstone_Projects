@@ -88,6 +88,10 @@ def _run_episode(
         # Step the environment
         new_state = adapter.step(action)
         violation = adapter.check_violation(new_state)
+        observed_safe = adapter.observed_constraint_satisfied(obs)
+        true_margin = adapter.constraint_margin(new_state)
+        observed_margin = adapter.constraint_margin(obs)
+        fallback_used = bool(faults and faults[0].kind == "blackout")
 
         # soc_after: battery uses actual SOC; other domains use 0.5 if safe else 0.0 for TSVR
         if adapter.domain_name == "battery":
@@ -113,12 +117,18 @@ def _run_episode(
                 true_state=dict(ts),
                 observed_state=dict(obs),
                 action=dict(action),
+                true_constraint_violated=bool(violation["violated"]),
+                observed_constraint_satisfied=observed_safe,
+                true_margin=true_margin,
+                observed_margin=observed_margin,
+                intervened=fallback_used,
+                fallback_used=fallback_used,
                 soc_after=soc_after,
                 soc_min=0.1,
                 soc_max=0.9,
                 certificate_valid=not violation["violated"],
                 certificate_predicted_valid=not violation["violated"],
-                fallback_active=bool(faults and faults[0].kind == "blackout"),
+                fallback_active=fallback_used,
                 useful_work=0.0 if is_nan else useful_work,
                 audit_fields_present=1,
                 audit_fields_required=1,
@@ -193,7 +203,11 @@ def main() -> None:
 
     # Write run metadata for replayability audit
     run_metadata = {
-        "schema_version": "1.0.0",
+        "schema_version": "2.0.0",
+        "metric_semantics": {
+            "tsvr": "true_state_violation_rate",
+            "oasg": "observation_action_safety_gap",
+        },
         "timestamp_iso": datetime.now(timezone.utc).isoformat(),
         "command_line": " ".join(sys.argv) if sys.argv else "",
         "seeds": list(range(1000, 1000 + args.seeds)),

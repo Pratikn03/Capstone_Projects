@@ -58,6 +58,7 @@ from orius.orius_bench.metrics_engine import (
     compute_cva,
     compute_gdq,
     compute_intervention_rate,
+    compute_oasg,
     compute_recovery_latency,
     compute_tsvr,
 )
@@ -125,10 +126,13 @@ class TestMetricsEngine:
                 true_state={"soc": soc},
                 observed_state={"soc": soc},
                 action={"charge_mw": 0, "discharge_mw": 50},
+                true_constraint_violated=violated,
+                observed_constraint_satisfied=not violated,
+                intervened=fallback,
+                fallback_used=fallback,
                 soc_after=soc,
                 certificate_valid=not violated,
                 certificate_predicted_valid=not violated,
-                fallback_active=fallback,
                 useful_work=1.0,
                 audit_fields_present=1,
                 audit_fields_required=1,
@@ -141,8 +145,29 @@ class TestMetricsEngine:
         assert compute_tsvr(recs) == 0.0
 
     def test_tsvr_all_violations(self):
-        recs = self._make_records(10, soc=0.05)  # below min 0.1
+        recs = self._make_records(10, soc=0.05, violated=True)
         assert compute_tsvr(recs) == 1.0
+
+    def test_oasg_counts_observation_action_safety_gap(self):
+        recs = [
+            StepRecord(
+                step=0,
+                true_state={"soc": 0.05},
+                observed_state={"soc": 0.5},
+                action={"discharge_mw": 50},
+                true_constraint_violated=True,
+                observed_constraint_satisfied=True,
+            ),
+            StepRecord(
+                step=1,
+                true_state={"soc": 0.5},
+                observed_state={"soc": 0.5},
+                action={"discharge_mw": 0},
+                true_constraint_violated=False,
+                observed_constraint_satisfied=True,
+            ),
+        ]
+        assert compute_oasg(recs) == 0.5
 
     def test_cva_perfect(self):
         recs = self._make_records(10)

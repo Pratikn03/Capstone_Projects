@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
@@ -23,15 +23,22 @@ from orius.certos.recovery_manager import RecoveryManager
 
 @dataclass
 class CertOSConfig:
-    """Configuration for the CertOS runtime."""
+    """Configuration for the CertOS runtime.
 
-    soc_min_mwh: float = 20.0
-    soc_max_mwh: float = 180.0
-    capacity_mwh: float = 200.0
-    sigma_d: float = 5.0
+    The SOC/MWh fields remain only for backward compatibility with older
+    battery-facing scripts. New runtime logic is driven through the
+    ``governance_policy`` surface instead.
+    """
+
     degraded_threshold: int = 4
     fallback_horizon: int = 12
     alpha: float = 0.10
+    governance_policy: "DomainGovernancePolicy" = field(default_factory=lambda: DomainGovernancePolicy())
+    # Legacy compatibility fields. Deprecated for new code.
+    soc_min_mwh: float | None = 20.0
+    soc_max_mwh: float | None = 180.0
+    capacity_mwh: float | None = 200.0
+    sigma_d: float | None = 5.0
 
 
 @dataclass
@@ -70,6 +77,39 @@ def _cert_hash(cert: Mapping[str, Any]) -> str:
     safe = _to_json_safe(cert)
     payload = json.dumps(safe, sort_keys=True, default=str)
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
+
+
+@dataclass
+class DomainGovernancePolicy:
+    """Domain-neutral CertOS governance hooks."""
+
+    def is_actuation(self, action: Mapping[str, Any]) -> bool:
+        return CertOSRuntime._action_has_nonzero_effect(action)
+
+    def fallback_action(
+        self,
+        constraints: Mapping[str, Any] | None = None,
+        state: Mapping[str, Any] | None = None,
+    ) -> dict[str, float]:
+        basis = state if state else constraints
+        return CertOSRuntime._zero_action_like(basis if isinstance(basis, Mapping) else None)
+
+    def horizon_update(
+        self,
+        certificate: Mapping[str, Any] | None,
+        reliability: float | None,
+        drift: bool | None,
+        constraints: Mapping[str, Any] | None,
+        validity_horizon: int,
+    ) -> int | None:
+        del certificate, reliability, drift, constraints
+        return int(validity_horizon)
+
+    def required_certificate_fields(self) -> set[str]:
+        return {"status", "op", "safe_action", "proposed_action"}
+
+    def integrity_projection(self, action: Mapping[str, Any]) -> dict[str, Any]:
+        return dict(_to_json_safe(action))
 
 
 class CertOSRuntime:
@@ -122,29 +162,54 @@ class CertOSRuntime:
 
     def validate_and_step(
         self,
-        observed_soc_mwh: float,
+        observed_soc_mwh: float | None,
         proposed_action: Mapping[str, float],
         safe_action: Mapping[str, float],
         validity_horizon: int,
+        *,
+        observed_state: Mapping[str, Any] | None = None,
+        reliability: float | None = None,
+        drift_flag: bool | None = None,
+        constraints: Mapping[str, Any] | None = None,
     ) -> CertOSState:
-        """Main per-step entry: validate current, decide lifecycle op."""
+        """Main per-step entry using a domain-neutral governance policy.
+
+        ``observed_soc_mwh`` is retained as a deprecated positional parameter for
+        older battery-facing call sites and is ignored by the core runtime.
+        """
         del observed_soc_mwh
 
-        validation_passed, validation_meta = self._validate_current(validity_horizon)
-        if validity_horizon <= 0:
-            return self._handle_expired(safe_action, validation_passed, validation_meta)
-        if validity_horizon <= self.cfg.degraded_threshold:
+        governance_policy = self.cfg.governance_policy
+        resolved_horizon = governance_policy.horizon_update(
+            self._cert_engine.current_certificate,
+            reliability,
+            drift_flag,
+            constraints,
+            validity_horizon,
+        )
+        h_t = validity_horizon if resolved_horizon is None else int(resolved_horizon)
+
+        validation_passed, validation_meta = self._validate_current(h_t)
+        if h_t <= 0:
+            return self._handle_expired(
+                safe_action,
+                validation_passed,
+                validation_meta,
+                constraints=constraints,
+                observed_state=observed_state,
+            )
+        if h_t <= self.cfg.degraded_threshold:
             return self._handle_degraded(
                 proposed_action,
                 safe_action,
-                validity_horizon,
+                h_t,
                 validation_passed,
                 validation_meta,
             )
         return self._handle_valid(
             proposed_action,
             safe_action,
-            validity_horizon,
+            h_t,
             validation_passed,
             validation_meta,
         )
@@ -165,7 +230,11 @@ class CertOSRuntime:
                 meta={"prev_hash": revoked_cert.get("prev_hash")},
             )
 
-        fb_action = {"charge_mw": 0.0, "discharge_mw": 0.0}
+        fallback_basis = revoked_cert.get("safe_action") if revoked_cert else None
+        fb_action = self.cfg.governance_policy.fallback_action(
+            constraints=None,
+            state=fallback_basis if isinstance(fallback_basis, Mapping) else None,
+        )
         self._cert_engine.fallback(fb_action)
         self._audit.append(
             LifecycleOp.FALLBACK.value,
@@ -218,7 +287,7 @@ class CertOSRuntime:
         violations = []
 
         action = state.safe_action
-        if action.get("discharge_mw", 0) > 0 or action.get("charge_mw", 0) > 0:
+        if self.cfg.governance_policy.is_actuation(action):
             if state.status not in ("valid", "degraded", "fallback"):
                 violations.append("INV-1")
 
@@ -299,6 +368,9 @@ class CertOSRuntime:
         safe: Mapping[str, float],
         validation_passed: bool,
         validation_meta: Mapping[str, Any],
+        *,
+        constraints: Mapping[str, Any] | None = None,
+        observed_state: Mapping[str, Any] | None = None,
     ) -> CertOSState:
         expired_cert = self._cert_engine.expire()
         cert_for_state: dict[str, Any] = {"status": "expired"}
@@ -318,7 +390,7 @@ class CertOSRuntime:
                 },
             )
 
-        fb_action = {"charge_mw": 0.0, "discharge_mw": 0.0}
+        fb_action = self.cfg.governance_policy.fallback_action(constraints=constraints, state=observed_state or safe)
         self._cert_engine.fallback(fb_action)
         self._audit.append(
             LifecycleOp.FALLBACK.value,
@@ -372,10 +444,12 @@ class CertOSRuntime:
         safe: Mapping[str, float],
         validity_horizon: int,
     ) -> dict[str, Any]:
+        projected_proposed = self.cfg.governance_policy.integrity_projection(proposed)
+        projected_safe = self.cfg.governance_policy.integrity_projection(safe)
         if op is LifecycleOp.ISSUE:
-            cert = dict(self._cert_engine.issue(proposed, safe, validity_horizon))
+            cert = dict(self._cert_engine.issue(projected_proposed, projected_safe, validity_horizon))
         elif op is LifecycleOp.RENEW:
-            cert = dict(self._cert_engine.renew(proposed, safe, validity_horizon))
+            cert = dict(self._cert_engine.renew(projected_proposed, projected_safe, validity_horizon))
         else:
             raise ValueError(f"Unsupported certificate op for chaining: {op}")
 
@@ -392,12 +466,16 @@ class CertOSRuntime:
             self._audit.append(LifecycleOp.VALIDATE.value, self._step, meta=meta)
             return False, meta
 
-        passed = self._cert_engine.validate(current, current_horizon=validity_horizon)
+        required_fields = self.cfg.governance_policy.required_certificate_fields()
+        missing_fields = sorted(field for field in required_fields if field not in current)
+        passed = not missing_fields and self._cert_engine.validate(current, current_horizon=validity_horizon)
         meta = {
             "reason": "current_certificate_checked",
             "validity_horizon": validity_horizon,
             "current_status": current.get("status"),
             "current_cert_hash": current.get("cert_hash"),
+            "required_certificate_fields": sorted(required_fields),
+            "missing_certificate_fields": missing_fields,
             "result": passed,
         }
         self._audit.append(
@@ -447,3 +525,27 @@ class CertOSRuntime:
             primary["meta"] = meta
             collapsed.append(primary)
         return collapsed
+
+    @staticmethod
+    def _zero_action_like(action: Mapping[str, Any] | None) -> dict[str, float]:
+        if action:
+            zero_like: dict[str, float] = {}
+            for key, value in action.items():
+                try:
+                    float(value)
+                except (TypeError, ValueError):
+                    continue
+                zero_like[str(key)] = 0.0
+            if zero_like:
+                return zero_like
+        return {"charge_mw": 0.0, "discharge_mw": 0.0}
+
+    @staticmethod
+    def _action_has_nonzero_effect(action: Mapping[str, Any]) -> bool:
+        for value in action.values():
+            try:
+                if abs(float(value)) > 1e-9:
+                    return True
+            except (TypeError, ValueError):
+                continue
+        return False

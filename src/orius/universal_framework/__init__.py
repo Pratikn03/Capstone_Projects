@@ -10,13 +10,14 @@ Provides a domain-agnostic pipeline for:
  Domains: energy (battery), av (vehicle), navigation, industrial, healthcare, surgical_robotics, aerospace.
 """
 from .pipeline import run_universal_step, PIPELINE_STAGES
-from .domain_registry import get_adapter, list_domains, register_domain
+from .domain_registry import get_adapter, get_domain_capabilities, list_domains, register_domain
 from .tables import DOMAIN_STATE_TABLE, DOMAIN_SAFETY_TABLE, FAULT_TAXONOMY_TABLE
 
 __all__ = [
     "run_universal_step",
     "PIPELINE_STAGES",
     "get_adapter",
+    "get_domain_capabilities",
     "list_domains",
     "register_domain",
     "DOMAIN_STATE_TABLE",

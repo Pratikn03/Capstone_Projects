@@ -35,6 +35,15 @@ class AerospaceDomainAdapter(DomainAdapter):
         self._fuel_min_pct = _f(ac.get("fuel_min_pct"), 10.0)
         self._expected_cadence_s = _f(self._cfg.get("expected_cadence_s"), 1.0)
 
+    def capability_profile(self) -> Mapping[str, Any]:
+        return {
+            "safety_surface_type": "approach_energy_envelope_placeholder",
+            "repair_mode": "bounded_projection",
+            "fallback_mode": "envelope_hold",
+            "supports_multi_agent_eval": False,
+            "supports_certos_eval": False,
+        }
+
     def ingest_telemetry(self, raw_packet: Mapping[str, Any]) -> Mapping[str, Any]:
         """Parse raw flight telemetry into state vector z_t."""
         out = {}

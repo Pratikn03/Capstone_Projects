@@ -11,6 +11,8 @@ then emits a compact bundle that answers:
   - which domain is the validated reference surface,
   - which peer-domain domains are proof-validated,
   - which domains remain proof-candidate, shadow, or experimental,
+  - which domains clear the explicit closure matrix gates,
+  - how Paper 5 and Paper 6 port across supported domains,
   - where the training, SIL, and validation artifacts live, and
   - how the before/after domain metrics summarize in one register.
 """
@@ -104,11 +106,27 @@ def main() -> None:
         ],
         cwd=repo_root,
     )
+    _run(
+        [
+            sys.executable,
+            "scripts/build_domain_closure_matrix.py",
+            "--validation-report",
+            str(validation_dir / "validation_report.json"),
+            "--training-report",
+            str(training_dir / "training_audit_report.json"),
+            "--out",
+            str(validation_dir),
+        ],
+        cwd=repo_root,
+    )
 
     validation_report_path = validation_dir / "validation_report.json"
     proof_report_path = validation_dir / "proof_domain_report.json"
     training_report_path = training_dir / "training_audit_report.json"
     sil_report_path = sil_dir / "sil_validation_report.json"
+    closure_matrix_path = validation_dir / "domain_closure_matrix.csv"
+    p5_matrix_path = validation_dir / "paper5_cross_domain_matrix.csv"
+    p6_matrix_path = validation_dir / "paper6_cross_domain_matrix.csv"
     theorem_gate_path = repo_root / "reports" / "publication" / "integrated_theorem_gate.json"
     validation_report = json.loads(validation_report_path.read_text(encoding="utf-8"))
     proof_report = json.loads(proof_report_path.read_text(encoding="utf-8"))
@@ -166,6 +184,9 @@ def main() -> None:
                 "sil_audit_artifact": _display_path(sil_report_path, repo_root),
                 "validation_artifact": _display_path(validation_report_path, repo_root),
                 "proof_artifact": _display_path(proof_report_path, repo_root),
+                "closure_matrix_artifact": _display_path(closure_matrix_path, repo_root),
+                "paper5_matrix_artifact": _display_path(p5_matrix_path, repo_root),
+                "paper6_matrix_artifact": _display_path(p6_matrix_path, repo_root),
             }
         )
 
@@ -192,6 +213,9 @@ def main() -> None:
         "sil_report": _display_path(sil_report_path, repo_root),
         "validation_report": _display_path(validation_report_path, repo_root),
         "proof_report": _display_path(proof_report_path, repo_root),
+        "domain_closure_matrix": _display_path(closure_matrix_path, repo_root),
+        "paper5_cross_domain_matrix": _display_path(p5_matrix_path, repo_root),
+        "paper6_cross_domain_matrix": _display_path(p6_matrix_path, repo_root),
         "artifact_register": _display_path(artifact_csv, repo_root),
         "domain_controller_summary": _display_path(summary_csv, repo_root),
         "seeds": args.seeds,
@@ -222,6 +246,9 @@ def main() -> None:
                 "## Generated artifacts",
                 f"- Universal validation report: `{_display_path(validation_report_path, repo_root)}`",
                 f"- Proof-domain report: `{_display_path(proof_report_path, repo_root)}`",
+                f"- Domain closure matrix: `{_display_path(closure_matrix_path, repo_root)}`",
+                f"- Paper 5 cross-domain matrix: `{_display_path(p5_matrix_path, repo_root)}`",
+                f"- Paper 6 cross-domain matrix: `{_display_path(p6_matrix_path, repo_root)}`",
                 f"- Integrated theorem gate: `{_display_path(theorem_gate_path, repo_root)}`",
                 f"- Training audit report: `{_display_path(training_report_path, repo_root)}`",
                 f"- SIL audit report: `{_display_path(sil_report_path, repo_root)}`",

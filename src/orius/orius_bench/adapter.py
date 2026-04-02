@@ -46,6 +46,25 @@ class BenchmarkAdapter(ABC):
         Returns {"violated": bool, "severity": float}.
         """
 
+    def true_constraint_violated(self, state: Mapping[str, Any]) -> bool:
+        """Canonical true-state safety predicate for the benchmark harness."""
+        return bool(self.check_violation(state).get("violated", False))
+
+    def observed_constraint_satisfied(self, observed_state: Mapping[str, Any]) -> bool | None:
+        """Canonical observation-space safety predicate.
+
+        Returns ``None`` when the observed state cannot be evaluated under the
+        domain's constraint model, for example under severe telemetry corruption.
+        """
+        try:
+            return not bool(self.check_violation(observed_state).get("violated", False))
+        except Exception:
+            return None
+
+    def constraint_margin(self, state: Mapping[str, Any]) -> float | None:
+        """Optional scalar safety margin used by the domain-agnostic schema."""
+        return None
+
     @property
     @abstractmethod
     def domain_name(self) -> str:

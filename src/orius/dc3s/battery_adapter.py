@@ -20,6 +20,15 @@ from orius.domain.battery_adapter import repair_battery_action
 class BatteryDomainAdapter(DomainAdapter):
     """DomainAdapter implementation using the existing battery/DC3S logic."""
 
+    def capability_profile(self) -> Mapping[str, Any]:
+        return {
+            "safety_surface_type": "soc_power_envelope",
+            "repair_mode": "one_dim_projection",
+            "fallback_mode": "safe_hold",
+            "supports_multi_agent_eval": True,
+            "supports_certos_eval": True,
+        }
+
     def ingest_telemetry(self, raw_packet: Mapping[str, Any]) -> Mapping[str, Any]:
         # For the current battery path, telemetry is already a dict with
         # numeric fields consumed directly by compute_reliability and
@@ -220,4 +229,3 @@ class BatteryDomainAdapter(DomainAdapter):
             assumptions_version=str(cfg.get("assumptions_version")) if cfg.get("assumptions_version") is not None else None,
         )
         return certificate
-

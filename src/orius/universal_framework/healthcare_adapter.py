@@ -35,6 +35,15 @@ class HealthcareDomainAdapter(DomainAdapter):
         self._rr_max = _f(hc.get("rr_max"), 30.0)
         self._expected_cadence_s = _f(self._cfg.get("expected_cadence_s"), 1.0)
 
+    def capability_profile(self) -> Mapping[str, Any]:
+        return {
+            "safety_surface_type": "vital_alert_envelope",
+            "repair_mode": "one_dim_projection",
+            "fallback_mode": "max_alert",
+            "supports_multi_agent_eval": False,
+            "supports_certos_eval": True,
+        }
+
     def ingest_telemetry(self, raw_packet: Mapping[str, Any]) -> Mapping[str, Any]:
         """Parse raw vital signs packet into state vector z_t."""
         out = {}

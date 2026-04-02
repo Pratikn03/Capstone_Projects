@@ -35,22 +35,15 @@ RUN_ID_RE = re.compile(r"\b20\d{6}_\d{6}\b")
 # Verified claims with canonical_value must match metrics_manifest (the lock).
 # When claim_matrix is intentionally changed, validator fails.
 CLAIM_TO_MANIFEST_PATH: dict[str, str] = {
-    "C001": "canonical_metrics.de.impact.cost_savings_pct_display",
-    "C002": "canonical_metrics.de.impact.carbon_reduction_pct_display",
-    "C003": "canonical_metrics.de.impact.peak_shaving_pct_display",
-    "C004": "canonical_metrics.us.impact.cost_savings_pct_display",
-    "C005": "canonical_metrics.us.impact.carbon_reduction_pct_display",
-    "C006": "canonical_metrics.us.impact.peak_shaving_pct_display",
-    "C007": "canonical_metrics.de.stochastic.evpi_robust_display",
-    "C008": "canonical_metrics.de.stochastic.evpi_deterministic_display",
-    "C009": "canonical_metrics.de.stochastic.vss_display",
-    "C010": "canonical_metrics.us.stochastic.evpi_robust_display",
-    "C011": "canonical_metrics.us.stochastic.evpi_deterministic_display",
-    "C012": "canonical_metrics.us.stochastic.vss_display",
-    "C015": "dataset_profiles.de.rows",
-    "C016": "dataset_profiles.us.rows",
-    "C019": "dataset_profiles.de.feature_count",
-    "C020": "dataset_profiles.us.feature_count",
+    "C001": "claim_family.schema_version",
+    "C002": "metric_policy.master_manuscript",
+    "C003": "universal_claims.dataset_profiles.de_rows",
+    "C004": "universal_claims.dataset_profiles.us_rows",
+    "C005": "universal_claims.dataset_profiles.de_feature_count",
+    "C006": "universal_claims.dataset_profiles.us_feature_count",
+    "C007": "universal_claims.benchmark_summary.nominal_dc3s_ftit_tsvr",
+    "C008": "universal_claims.benchmark_summary.full_dc3s_step_p95_ms",
+    "C009": "universal_claims.artifact_provenance.release_manifest_frozen_at_utc",
 }
 
 

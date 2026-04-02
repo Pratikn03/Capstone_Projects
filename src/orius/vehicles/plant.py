@@ -1,7 +1,7 @@
 """1D longitudinal vehicle plant for ORIUS prototype.
 
 Simple discrete-time integrator: position and speed along a lane.
-Safety: speed limit, optional headway to lead vehicle.
+Safety: speed limit and TTC-style lead-vehicle barrier.
 """
 from __future__ import annotations
 
@@ -27,6 +27,7 @@ class VehiclePlant:
         accel_max_mps2: float = 3.0,
         min_headway_m: float = 5.0,
         headway_time_s: float = 2.0,
+        ttc_min_s: float | None = None,
     ):
         self._dt = dt_s
         self._v_limit = speed_limit_mps
@@ -34,7 +35,7 @@ class VehiclePlant:
         self._a_min = accel_min_mps2
         self._a_max = accel_max_mps2
         self._d_min = min_headway_m
-        self._t_headway = headway_time_s
+        self._ttc_min_s = float(ttc_min_s if ttc_min_s is not None else headway_time_s)
         self._x = 0.0
         self._v = 0.0
         self._lead_x: float | None = None
@@ -80,9 +81,14 @@ class VehiclePlant:
             violated = True
             severity = max(severity, self._v - self._v_limit_t)
         if self._lead_x is not None:
-            d_min = self._d_min + self._t_headway * self._v
             gap = self._lead_x - self._x
-            if gap < d_min - 1e-9:
+            gap_budget = gap - self._d_min
+            if gap_budget <= 0.0:
                 violated = True
-                severity = max(severity, d_min - gap)
+                severity = max(severity, abs(gap_budget))
+            else:
+                ttc = gap_budget / max(self._v, 1e-9)
+                if ttc < self._ttc_min_s - 1e-9:
+                    violated = True
+                    severity = max(severity, self._ttc_min_s - ttc)
         return {"violated": violated, "severity": severity}

@@ -91,7 +91,45 @@ class TestVehicleDomainAdapterRepairAction:
         assert abs(safe["acceleration_mps2"] - 1.0) < 1e-6
         assert meta["repaired"] is False
 
-    def test_headway_clamp_brakes_when_gap_is_tight(self) -> None:
+    def test_ttc_clamp_brakes_when_gap_is_tight(self) -> None:
+        adapter = VehicleDomainAdapter()
+        candidate = {"acceleration_mps2": 2.0}
+        tightened = {
+            "uncertainty": {
+                "position_upper_m": 40.0,
+                "speed_lower_mps": 12.0,
+                "speed_upper_mps": 12.0,
+                "lead_position_lower_m": 65.0,
+            },
+            "constraints": {
+                "accel_max_mps2": 3.0,
+                "accel_min_mps2": -5.0,
+                "speed_limit_mps": 30.0,
+                "dt_s": 0.25,
+                "min_headway_m": 5.0,
+                "ttc_min_s": 2.0,
+            },
+        }
+        state = {
+            "position_m": 40.0,
+            "speed_mps": 12.0,
+            "speed_limit_mps": 30.0,
+            "lead_position_m": 65.0,
+        }
+        safe, meta = adapter.repair_action(
+            candidate,
+            tightened,
+            state=state,
+            uncertainty=tightened["uncertainty"],
+            constraints=tightened["constraints"],
+            cfg={},
+        )
+        assert safe["acceleration_mps2"] < 0.0
+        assert meta["repaired"] is True
+        assert meta["intervention_reason"] == "ttc_clamp"
+        assert meta["repair_surface"] == "ttc_predictive_barrier"
+
+    def test_predictive_entry_barrier_triggers_when_one_step_safe_region_is_gone(self) -> None:
         adapter = VehicleDomainAdapter()
         candidate = {"acceleration_mps2": 2.0}
         tightened = {
@@ -107,7 +145,7 @@ class TestVehicleDomainAdapterRepairAction:
                 "speed_limit_mps": 30.0,
                 "dt_s": 0.25,
                 "min_headway_m": 5.0,
-                "headway_time_s": 2.0,
+                "ttc_min_s": 2.0,
             },
         }
         state = {
@@ -124,9 +162,10 @@ class TestVehicleDomainAdapterRepairAction:
             constraints=tightened["constraints"],
             cfg={},
         )
-        assert safe["acceleration_mps2"] < 0.0
+        assert safe["acceleration_mps2"] == -5.0
         assert meta["repaired"] is True
-        assert meta["intervention_reason"] == "headway_clamp"
+        assert meta["intervention_reason"] == "predictive_entry_barrier"
+        assert meta["entry_barrier_triggered"] is True
 
 
 class TestVehicleDomainAdapterEmitCertificate:

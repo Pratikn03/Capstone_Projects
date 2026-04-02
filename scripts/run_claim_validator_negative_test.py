@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run claim validator negative test: prove it fails when a locked claim is changed.
 
-Temporarily corrupts C001 canonical_value (7.11% -> 8.00%), runs validator,
+Temporarily corrupts C001 canonical_value (2.0.0 -> 9.9.9), runs validator,
 captures output to reports/claim_validator_negative_test.log, then restores.
 """
 from __future__ import annotations
@@ -18,15 +18,12 @@ LOG_PATH = REPO_ROOT / "reports" / "claim_validator_negative_test.log"
 def main() -> int:
     content = CLAIM_MATRIX.read_text(encoding="utf-8")
     original = content
-    # Corrupt C001: 7.11% -> 8.00%
-    corrupted = content.replace("C001,Verified,Decision Impact", "C001,Verified,Decision Impact")
     # Replace only the C001 row's canonical_value
     lines = content.splitlines()
     out_lines = []
     for line in lines:
         if line.startswith("C001,"):
-            # Replace 7.11% with 8.00% in this row
-            line = line.replace("7.11%", "8.00%", 1)
+            line = line.replace(",2.0.0,", ",9.9.9,", 1)
         out_lines.append(line)
     corrupted = "\n".join(out_lines) + "\n"
 
@@ -41,10 +38,10 @@ def main() -> int:
         )
         log_content = f"""# Claim validator negative test
 # Proves validator fails when a locked claim (C001) is intentionally changed.
-# Procedure: C001 canonical_value 7.11% -> 8.00%, run validator, capture output.
+# Procedure: C001 canonical_value 2.0.0 -> 9.9.9, run validator, capture output.
 
 ## Corrupted state
-C001 canonical_value was temporarily changed from 7.11% to 8.00%.
+C001 canonical_value was temporarily changed from 2.0.0 to 9.9.9.
 
 ## Validator output (exit code {result.returncode})
 stdout:

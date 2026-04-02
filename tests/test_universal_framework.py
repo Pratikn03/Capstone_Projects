@@ -90,15 +90,15 @@ def test_run_universal_step_aerospace() -> None:
     assert "bank_deg" in safe
 
 
-def test_run_universal_step_vehicle_repairs_tight_headway() -> None:
+def test_run_universal_step_vehicle_repairs_tight_ttc_case() -> None:
     adapter = get_adapter("av", {})
     result = run_universal_step(
         domain_adapter=adapter,
         raw_telemetry={
-            "position_m": 44.0,
-            "speed_mps": 10.0,
+            "position_m": 40.0,
+            "speed_mps": 12.0,
             "speed_limit_mps": 30.0,
-            "lead_position_m": 50.0,
+            "lead_position_m": 75.0,
             "ts_utc": "2026-01-01T00:00:00Z",
         },
         history=None,
@@ -109,12 +109,12 @@ def test_run_universal_step_vehicle_repairs_tight_headway() -> None:
             "accel_max_mps2": 3.0,
             "dt_s": 0.25,
             "min_headway_m": 5.0,
-            "headway_time_s": 2.0,
+            "ttc_min_s": 2.0,
         },
         quantile=0.9,
     )
     assert result["repair_meta"]["repaired"] is True
-    assert result["repair_meta"]["intervention_reason"] == "headway_clamp"
+    assert result["repair_meta"]["intervention_reason"] == "ttc_clamp"
     assert result["safe_action"]["acceleration_mps2"] < 0.0
 
 

@@ -1,3 +1,9 @@
+"""Legacy adapter surface retained for compatibility only.
+
+New runtime and universal code should use ``orius.dc3s.domain_adapter.DomainAdapter``.
+This module remains to avoid breaking older plant/optimizer integrations during
+the migration window.
+"""
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Callable
@@ -46,10 +52,11 @@ class Optimizer(ABC):
 
 class DomainAdapter(ABC):
     """
-    Abstract base class for a domain-specific adapter.
+    Legacy abstract base class for a domain-specific adapter.
 
     This interface bundles all the domain-specific components (physics model,
     controller, safety rules, metrics) required by the generic Orius framework.
+    It is not the canonical runtime adapter contract anymore.
     """
 
     def __init__(self, config: Config):
@@ -97,4 +104,3 @@ class DomainAdapter(ABC):
         from a raw telemetry event.
         """
         pass
-

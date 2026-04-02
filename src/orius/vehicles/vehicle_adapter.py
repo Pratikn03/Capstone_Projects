@@ -28,8 +28,20 @@ class VehicleDomainAdapter(DomainAdapter):
         self._accel_min = _f(self._cfg.get("vehicles", {}).get("accel_min_mps2"), -5.0)
         self._accel_max = _f(self._cfg.get("vehicles", {}).get("accel_max_mps2"), 3.0)
         self._min_headway_m = _f(self._cfg.get("vehicles", {}).get("min_headway_m"), 5.0)
-        self._headway_time_s = _f(self._cfg.get("vehicles", {}).get("headway_time_s"), 2.0)
+        self._ttc_min_s = _f(
+            self._cfg.get("vehicles", {}).get("ttc_min_s"),
+            self._cfg.get("vehicles", {}).get("headway_time_s", 2.0),
+        )
         self._expected_cadence_s = _f(self._cfg.get("expected_cadence_s"), 1.0)
+
+    def capability_profile(self) -> Mapping[str, Any]:
+        return {
+            "safety_surface_type": "ttc_entry_barrier",
+            "repair_mode": "one_dim_projection",
+            "fallback_mode": "full_brake",
+            "supports_multi_agent_eval": False,
+            "supports_certos_eval": True,
+        }
 
     def ingest_telemetry(self, raw_packet: Mapping[str, Any]) -> Mapping[str, Any]:
         """Parse raw vehicle packet into state vector z_t. Zero-order hold for NaN."""
@@ -114,7 +126,7 @@ class VehicleDomainAdapter(DomainAdapter):
         *,
         cfg: Mapping[str, Any],
     ) -> Mapping[str, Any]:
-        """Feasible acceleration set A_t from speed-limit and headway."""
+        """Feasible acceleration set A_t from speed-limit and TTC barrier."""
         return {
             "uncertainty": dict(uncertainty),
             "constraints": dict(constraints),
@@ -133,9 +145,10 @@ class VehicleDomainAdapter(DomainAdapter):
     ) -> tuple[Mapping[str, float], Mapping[str, Any]]:
         """Clip acceleration to the vehicle-safe set.
 
-        The repair step enforces both speed-limit and headway predicates under a
-        worst-case one-step uncertainty box so the AV proof-domain path uses the
-        same explicit safety semantics as the track itself.
+        The repair step enforces both speed-limit and TTC predicates under a
+        worst-case one-step uncertainty box. A predictive entry barrier forces
+        maximum braking when the observed state is already outside the one-step
+        controllable set.
         """
         a = _f(candidate_action.get("acceleration_mps2"), 0.0)
         unc = tightened_set.get("uncertainty", uncertainty)
@@ -144,15 +157,19 @@ class VehicleDomainAdapter(DomainAdapter):
         spd_hi = _f(unc.get("speed_upper_mps"), 50.0)
         pos_hi = _f(unc.get("position_upper_m"), state.get("position_m", 0.0))
         lead_lo = unc.get("lead_position_lower_m", state.get("lead_position_m"))
+        lead_speed = _f(state.get("lead_speed_mps"), cstr.get("lead_speed_mps", 0.0))
         v_limit = _f(state.get("speed_limit_mps"), cstr.get("speed_limit_mps", 30.0))
         a_min = _f(cstr.get("accel_min_mps2"), self._accel_min)
         a_max = _f(cstr.get("accel_max_mps2"), self._accel_max)
         dt = _f(cstr.get("dt_s"), self._default_dt_s)
         min_headway_m = _f(cstr.get("min_headway_m"), self._min_headway_m)
-        headway_time_s = _f(cstr.get("headway_time_s"), self._headway_time_s)
+        ttc_min_s = _f(cstr.get("ttc_min_s"), cstr.get("headway_time_s", self._ttc_min_s))
 
         a_safe = max(a_min, min(a_max, a))
         reason = None
+        ttc_current = None
+        ttc_next = None
+        entry_barrier_triggered = False
 
         telemetry_vals = (spd_lo, spd_hi, pos_hi, v_limit)
         if any(isinstance(v, float) and math.isnan(v) for v in telemetry_vals):
@@ -175,13 +192,31 @@ class VehicleDomainAdapter(DomainAdapter):
             gap_budget = lead_lo_f - pos_hi - min_headway_m
             if gap_budget <= 0:
                 a_safe = a_min
-                reason = reason or "headway_clamp"
+                reason = "predictive_entry_barrier"
+                entry_barrier_triggered = True
             else:
-                max_next_speed = gap_budget / max(dt + headway_time_s, 1e-9)
-                a_headway = (max_next_speed - spd_hi) / max(dt, 1e-9)
-                if a_headway < a_safe - 1e-9:
-                    a_safe = a_headway
-                    reason = reason or "headway_clamp"
+                closing_speed = max(spd_hi - lead_speed, 1e-9)
+                ttc_current = gap_budget / closing_speed
+
+                max_next_speed = (gap_budget / max(dt + ttc_min_s, 1e-9)) + lead_speed
+                a_ttc = (max_next_speed - spd_hi) / max(dt, 1e-9)
+                if a_ttc < a_safe - 1e-9:
+                    a_safe = a_ttc
+                    reason = reason or "ttc_clamp"
+
+                full_brake_speed = max(lead_speed, spd_hi + a_min * dt)
+                unavoidable_gap_budget = lead_lo_f - (pos_hi + full_brake_speed * dt) - min_headway_m
+                if unavoidable_gap_budget <= 0.0:
+                    a_safe = a_min
+                    reason = "predictive_entry_barrier"
+                    entry_barrier_triggered = True
+
+                next_speed = max(lead_speed, spd_hi + a_safe * dt)
+                next_gap_budget = lead_lo_f - (pos_hi + next_speed * dt) - min_headway_m
+                if next_gap_budget > 0.0:
+                    ttc_next = next_gap_budget / max(next_speed - lead_speed, 1e-9)
+                else:
+                    ttc_next = 0.0
 
         a_safe = max(a_min, min(a_max, a_safe))
 
@@ -190,11 +225,16 @@ class VehicleDomainAdapter(DomainAdapter):
             "mode": "projection",
             "repaired": repaired,
             "original_acceleration_mps2": a,
+            "repair_surface": "ttc_predictive_barrier",
         }
         if repaired:
             meta["intervention_reason"] = reason or "acceleration_clamp"
         if lead_lo is not None and not (isinstance(lead_lo, float) and math.isnan(lead_lo)):
             meta["worst_case_gap_budget_m"] = float(_f(lead_lo, pos_hi) - pos_hi - min_headway_m)
+            meta["ttc_min_s"] = float(ttc_min_s)
+            meta["ttc_seconds_current"] = float(ttc_current) if ttc_current is not None else None
+            meta["ttc_seconds_next"] = float(ttc_next) if ttc_next is not None else None
+            meta["entry_barrier_triggered"] = bool(entry_barrier_triggered)
         return {"acceleration_mps2": float(a_safe)}, meta
 
     def emit_certificate(

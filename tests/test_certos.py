@@ -14,7 +14,15 @@ import pytest
 from orius.certos.audit_ledger import AuditLedger
 from orius.certos.certificate_engine import CertificateEngine, LifecycleOp
 from orius.certos.recovery_manager import RecoveryManager
-from orius.certos.runtime import CertOSConfig, CertOSRuntime, CertOSState
+from orius.certos.runtime import CertOSConfig, CertOSRuntime, CertOSState, DomainGovernancePolicy
+
+
+class DiscreteAlertPolicy(DomainGovernancePolicy):
+    def is_actuation(self, action):
+        return bool(action.get("alert_level", 0.0))
+
+    def fallback_action(self, constraints=None, state=None):
+        return {"alert_level": 0.0}
 
 
 # ── Certificate Engine ────────────────────────────────────────────────
@@ -175,6 +183,18 @@ class TestCertOSRuntime:
         rt.validate_and_step(100.0, {"discharge_mw": 50}, {"discharge_mw": 45}, 10)
         assert rt.step == 2
 
+    def test_validate_and_step_supports_discrete_policy(self):
+        rt = CertOSRuntime(config=CertOSConfig(governance_policy=DiscreteAlertPolicy()))
+        state = rt.validate_and_step(
+            None,
+            {"alert_level": 1.0},
+            {"alert_level": 1.0},
+            2,
+            observed_state={"alert_level": 1.0},
+        )
+        assert state.status == "degraded"
+        assert state.safe_action["alert_level"] == 1.0
+
 
 # ── Invariant Enforcement ─────────────────────────────────────────────
 
@@ -213,6 +233,25 @@ class TestInvariants:
         state = rt.validate_and_step(100.0, {"discharge_mw": 50}, {"discharge_mw": 45}, 0)
         violations = rt.check_invariants(state)
         assert violations == []
+
+    def test_inv2_detects_hash_chain_tamper(self):
+        rt = CertOSRuntime()
+        rt.issue({"discharge_mw": 50}, {"discharge_mw": 45}, 10)
+        rt.validate_and_step(100.0, {"discharge_mw": 50}, {"discharge_mw": 45}, 6)
+        tampered = rt.raw_audit_log[-1]
+        tampered["meta"]["prev_hash"] = "tampered"
+        violations = rt.check_invariants(
+            CertOSState(
+                step=rt.step,
+                validity_horizon=6,
+                status="valid",
+                safe_action={"discharge_mw": 45},
+                certificate={},
+                fallback_active=False,
+                audit_count=len(rt.audit_log),
+            )
+        )
+        assert "INV-2" in violations
 
 
 # ── Multi-Step Lifecycle ──────────────────────────────────────────────

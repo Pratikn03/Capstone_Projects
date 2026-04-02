@@ -1,6 +1,7 @@
 """ORIUS-Bench vehicle track — 1D longitudinal AV domain.
 
-Wraps VehiclePlant. Safety: speed limit, headway. Fault injection on position/speed.
+Wraps VehiclePlant. Safety: speed limit, TTC entry barrier. Fault injection on
+position/speed.
 """
 from __future__ import annotations
 
@@ -21,10 +22,12 @@ class VehicleTrackAdapter(BenchmarkAdapter):
         speed_limit_mps: float = 30.0,
         dt_s: float = 0.25,
         min_headway_m: float = 5.0,
+        ttc_min_s: float = 2.0,
     ):
         self._speed_limit = speed_limit_mps
         self._dt = dt_s
         self._headway = min_headway_m
+        self._ttc_min_s = ttc_min_s
         self._plant: VehiclePlant | None = None
         self._rng: np.random.Generator | None = None
 
@@ -34,6 +37,7 @@ class VehicleTrackAdapter(BenchmarkAdapter):
             dt_s=self._dt,
             speed_limit_mps=self._speed_limit,
             min_headway_m=self._headway,
+            ttc_min_s=self._ttc_min_s,
         )
         self._plant.reset(position_m=0.0, speed_mps=5.0, lead_position_m=50.0)
         return self.true_state()
@@ -112,11 +116,16 @@ class VehicleTrackAdapter(BenchmarkAdapter):
             violated = True
             severity = max(severity, v - v_limit)
         if lead_x is not None:
-            d_min = self._headway + 2.0 * v
             gap = lead_x - x
-            if gap < d_min - 1e-9:
+            gap_budget = gap - self._headway
+            if gap_budget <= 0.0:
                 violated = True
-                severity = max(severity, d_min - gap)
+                severity = max(severity, abs(gap_budget))
+            else:
+                ttc = gap_budget / max(v, 1e-9)
+                if ttc < self._ttc_min_s - 1e-9:
+                    violated = True
+                    severity = max(severity, self._ttc_min_s - ttc)
         return {"violated": violated, "severity": severity}
 
     @property

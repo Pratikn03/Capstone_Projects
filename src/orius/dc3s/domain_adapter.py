@@ -1,7 +1,7 @@
 """DomainAdapter abstraction for ORIUS/DC3S pipeline stages.
 
-This module introduces a code-level interface that mirrors the
-BatteryDomainAdapter specification in the LaTeX appendix:
+This module introduces the canonical code-level interface for domain-specific
+runtime adapters:
 
 - ingest_telemetry: raw packet -> parsed state vector z_t
 - compute_oqe: state history -> reliability score w_t and auxiliary flags
@@ -21,6 +21,38 @@ from typing import Any, Mapping, Sequence
 
 class DomainAdapter(ABC):
     """Abstract interface for domain-specific ORIUS/DC3S adapters."""
+
+    def capability_profile(self) -> Mapping[str, Any]:
+        """Return conservative portability metadata for cross-domain evaluation.
+
+        Concrete adapters may override this to expose a richer domain contract.
+        The default keeps optional portability layers disabled unless an adapter
+        explicitly opts in.
+        """
+        return {
+            "safety_surface_type": "unknown",
+            "repair_mode": "projection",
+            "fallback_mode": "unspecified",
+            "supports_multi_agent_eval": False,
+            "supports_certos_eval": False,
+        }
+
+    def true_constraint_violated(self, state: Mapping[str, Any]) -> bool | None:
+        """Optional benchmark-facing true-state violation predicate.
+
+        Runtime adapters are not required to participate in ORIUS-Bench
+        directly, but exposing the hook keeps the domain contract aligned with
+        the canonical thesis-facing benchmark semantics.
+        """
+        return None
+
+    def observed_constraint_satisfied(self, observed_state: Mapping[str, Any]) -> bool | None:
+        """Optional benchmark-facing observed-state satisfiability predicate."""
+        return None
+
+    def constraint_margin(self, state: Mapping[str, Any]) -> float | None:
+        """Optional scalar safety margin for domain-agnostic reporting."""
+        return None
 
     @abstractmethod
     def ingest_telemetry(self, raw_packet: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -90,4 +122,3 @@ class DomainAdapter(ABC):
         guarantee_meta: Mapping[str, Any] | None = None,
     ) -> Mapping[str, Any]:
         """Emit a per-step certificate payload for persistence and audit."""
-
