@@ -94,6 +94,12 @@ paper/review/*.aux
 paper/review/*.out
 paper/review/*.toc
 paper/review/*.log
+paper/slides/*.aux
+paper/slides/*.nav
+paper/slides/*.out
+paper/slides/*.snm
+paper/slides/*.toc
+paper/slides/*.log
 paper/~$*.docx
 
 # Logs
