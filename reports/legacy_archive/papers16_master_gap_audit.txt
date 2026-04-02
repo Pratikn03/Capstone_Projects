@@ -1,0 +1,1 @@
+Legacy archive notice: this file is retained only as a pointer to earlier program-era audits. Canonical monograph surfaces are the parity matrix, domain closure matrix, universal claim matrix, and monograph chapter map.
