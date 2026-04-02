@@ -1,0 +1,18 @@
+\begin{table*}[htbp]
+\centering
+\small
+\caption{Shared cross-domain support layer for compiled Chapters 40--44. Training counts come from the verified multi-domain training audit where available, while tier and blocker language come from the governed parity and closure artifacts.}
+\label{tab:ch40-44-cross-domain-support}
+\begin{tabular}{p{2.6cm}rrrrp{1.8cm}p{1.8cm}p{2.2cm}p{3.0cm}}
+\toprule
+\textbf{Domain} & \textbf{Train} & \textbf{Cal} & \textbf{Val} & \textbf{Test} & \textbf{Target} & \textbf{PICP$_{90}$} & \textbf{Tier} & \textbf{Exact blocker}\\
+\midrule
+Battery Energy Storage & 12,163 & 868 & n/a & 2,537 & load\_mw & 0.924 & reference & battery\_reference\_row\\
+Autonomous Vehicles & 85 & 6 & 12 & 19 & speed\_mps & 0.947 & proof\_validated & multi\_lane\_and\_higher\_dimensional\_repair\_open\\
+Industrial Process Control & 6,680 & 477 & 954 & 1,433 & power\_mw & 0.896 & proof\_validated & bounded\_to\_current\_plant\_family\\
+Medical and Healthcare Monitoring & 319 & 22 & 45 & 71 & hr\_bpm & 0.930 & proof\_validated & bounded\_to\_current\_monitoring\_and\_intervention\_contract\\
+Navigation and Guidance & n/a & n/a & n/a & n/a & n/a & n/a & shadow\_synthetic & navigation\_real\_data\_row\_missing\\
+Aerospace Control & 3,483 & 248 & 497 & 748 & airspeed\_kt & 0.000 & experimental & real\_multi\_flight\_safety\_task\_missing\\
+\bottomrule
+\end{tabular}
+\end{table*}

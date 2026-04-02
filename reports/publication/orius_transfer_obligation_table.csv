@@ -1,0 +1,7 @@
+domain,required_transfer_obligation
+Battery Energy Storage,"Other domains must match battery on telemetry realism, replay discipline, certificate semantics, and closure under the universal benchmark before they can claim equal validation depth."
+Autonomous Vehicles,"Future promotion work must preserve the single-contract TTC semantics, replay-backed soundness checks, and explicit fallback compatibility instead of reopening multiple competing repair formulations."
+Industrial Process Control,"Future industrial extensions must retain real telemetry, replay closure, and explicit certificate semantics rather than relying on architecture-only analogies."
+Medical and Healthcare Monitoring,"Future medical promotion requires stronger outcome semantics, wider patient cohorts, and explicit regulatory traceability beyond the current replay-centered scope."
+Navigation and Guidance,"Promotion requires locked real-data navigation telemetry, verified replay surfaces, and the same certificate semantics enforced elsewhere in the book."
+Aerospace Control,"Promotion requires stronger plant realism, better envelope repair, and a nontrivial post-repair gain under the tracked protocol."

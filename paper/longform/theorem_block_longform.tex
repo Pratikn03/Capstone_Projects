@@ -20,31 +20,30 @@ reference thesis build.
 \PaperImportStructuredFile{longform/ch24_universal_portability.tex}
 \PaperImportStructuredFile{longform/ch25_deep_theoretical_guarantees.tex}
 
-\paragraph{From battery ladder to ORIUS program.}
-The theorem ladder above is Paper~1's contribution: a locked battery proof
-witness anchored by T1--T8.  Papers~2--6 extend specific rungs of that ladder
-into the five ORIUS program layers:
+\paragraph{From battery witness to universal ORIUS layers.}
+The theorem ladder above is the locked battery proof witness anchored by
+T1--T8.  The same scaffold supports the defended ORIUS extension layers:
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{Paper~2 (temporal validity):} takes the certificate horizon
+  \item \textbf{Temporal validity:} takes the certificate horizon
         theorem (T5) and the expiration bound (T6) and turns them into a
         runtime validity-horizon engine
         (\texttt{dc3s/half\_life.py}, \texttt{dc3s/reachability.py}).
-  \item \textbf{Paper~3 (graceful fallback):} takes the fallback existence
+  \item \textbf{Graceful fallback:} takes the fallback existence
         theorem (T7) and the zero-dispatch safe-hold and builds a constructive
         four-policy degradation planner (\texttt{dc3s/graceful.py}).
-  \item \textbf{Paper~4 (benchmark discipline):} formalizes the evaluation
+  \item \textbf{Benchmark discipline:} formalizes the evaluation
         contract that the battery witness depends on into a replayable,
         schema-governed ORIUS-Bench (\texttt{orius\_bench/}).
-  \item \textbf{Paper~5 (composition):} shows that the local certificate
+  \item \textbf{Bounded composition:} shows that the local certificate
         guarantee from the battery ladder does \emph{not} compose under shared
         feeder constraints, and provides centralized and distributed repair
         protocols (\texttt{multi\_agent/}).
-  \item \textbf{Paper~6 (runtime governance):} wraps the full certificate
+  \item \textbf{Runtime governance:} wraps the full certificate
         lifecycle in a CertOS runtime with three invariants (INV-1, INV-2,
         INV-3) and an auditable hash chain (\texttt{certos/}).
 \end{itemize}
-Each extension stays bounded: Papers~2 and~3 are theorem-backed within the
-battery domain; Paper~4 is a benchmark-contract contribution; Paper~5 is a
-bounded composition counterexample; Paper~6 is a bounded runtime-governance
-layer.  They do not upgrade bounded evidence into theorem closure.
-
+Each extension stays bounded: temporal validity and graceful fallback remain
+theorem-backed within the battery witness, benchmark discipline fixes the
+evaluation contract, bounded composition remains a counterexample-plus-repair
+surface, and runtime governance remains a bounded lifecycle layer.  They do
+not upgrade bounded evidence into equal-domain theorem closure.

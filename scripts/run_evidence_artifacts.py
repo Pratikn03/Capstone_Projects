@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Run Paper 2, Paper 3, and CertOS evidence artifacts.
+"""Run bounded evidence-artifact workflows for temporal validity, graceful fallback, and CertOS.
 
 Produces artifact-backed outputs for:
-- Paper 2: certificate_half_life_blackout.csv, certificate_half_life_metrics.json
-- Paper 3: graceful_degradation_trace.csv (via generate_priority2_artifacts if 48h_trace exists)
-- Paper 6: certos_lifecycle.csv, certos_summary.json
+- certificate_half_life_blackout.csv, certificate_half_life_metrics.json
+- graceful_degradation_trace.csv (via generate_priority2_artifacts if 48h_trace exists)
+- certos_lifecycle.csv, certos_summary.json
 
 Usage:
     python scripts/run_evidence_artifacts.py [--skip-graceful]
@@ -45,19 +45,19 @@ def main() -> int:
     ok = 0
     total = 0
 
-    # Paper 2: half-life + blackout
+    # Temporal validity: half-life + blackout
     total += 1
-    if _run([str(py), "scripts/run_certificate_half_life_blackout.py", "--seeds", "42", "--horizons", "0", "4", "12"], "Paper 2 half-life blackout"):
+    if _run([str(py), "scripts/run_certificate_half_life_blackout.py", "--seeds", "42", "--horizons", "0", "4", "12"], "temporal-validity half-life blackout"):
         csv = REPO / "reports/publication/certificate_half_life_blackout.csv"
         if csv.exists() and csv.stat().st_size > 0:
             ok += 1
-            print(f"  PASS Paper 2: {csv}")
+            print(f"  PASS temporal validity: {csv}")
         else:
-            print(f"  FAIL Paper 2: artifact missing or empty")
+            print(f"  FAIL temporal validity: artifact missing or empty")
     else:
-        print(f"  BLOCKED Paper 2: script failed")
+        print(f"  BLOCKED temporal validity: script failed")
 
-    # Paper 6: CertOS lifecycle
+    # Runtime governance: CertOS lifecycle
     total += 1
     if _run([str(py), "scripts/run_certos_lifecycle.py", "--steps", "96", "--out", "reports/certos"], "CertOS lifecycle"):
         csv = REPO / "reports/certos/certos_lifecycle.csv"
@@ -70,22 +70,22 @@ def main() -> int:
     else:
         print(f"  BLOCKED CertOS: script failed")
 
-    # Paper 3: graceful degradation (depends on 48h_trace)
+    # Graceful fallback: depends on 48h_trace
     if not args.skip_graceful:
         total += 1
         trace_48 = REPO / "reports/publication/48h_trace.csv"
         if trace_48.exists():
-            if _run([str(py), "scripts/generate_priority2_artifacts.py"], "Paper 3 graceful"):
+            if _run([str(py), "scripts/generate_priority2_artifacts.py"], "graceful fallback"):
                 gd = REPO / "reports/publication/graceful_degradation_trace.csv"
                 if gd.exists() and gd.stat().st_size > 0:
                     ok += 1
-                    print(f"  PASS Paper 3: {gd}")
+                    print(f"  PASS graceful fallback: {gd}")
                 else:
-                    print(f"  FAIL Paper 3: artifact missing")
+                    print(f"  FAIL graceful fallback: artifact missing")
             else:
-                print(f"  BLOCKED Paper 3: generate_priority2_artifacts failed")
+                print(f"  BLOCKED graceful fallback: generate_priority2_artifacts failed")
         else:
-            print(f"  BLOCKED Paper 3: 48h_trace.csv missing (run generate_48h_trace first)")
+            print(f"  BLOCKED graceful fallback: 48h_trace.csv missing (run generate_48h_trace first)")
 
     print(f"\n=== Evidence artifacts: {ok}/{total} PASS ===")
     return 0 if ok == total else 1

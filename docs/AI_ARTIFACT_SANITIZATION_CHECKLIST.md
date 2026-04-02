@@ -1,4 +1,4 @@
-lets do deep resracher inthe file we have and find the gap and how far we are done with the resarcher for orius and implemnet all paper1-6 as idea or soemthing so it become solid and we can write in main tgeisi s# AI Artifact Sanitization Checklist
+# AI Artifact Sanitization Checklist
 
 Use this checklist before sending any ORIUS artifact to a hosted AI system.
 
@@ -6,13 +6,13 @@ Use this checklist before sending any ORIUS artifact to a hosted AI system.
 
 | Artifact class | Default policy | Safe hosted form |
 |---|---|---|
-| `paper/` manuscript excerpts | Upload allowed | Only the exact excerpt needed |
-| `chapters/` longform excerpts | Upload allowed | Only the exact excerpt needed |
-| `reports/publication/` tables and figures | Upload allowed | Public-facing tables, figures, and metric summaries |
+| `paper/` excerpts | Upload allowed | Only the exact excerpt needed |
+| `paper/monograph/` excerpts | Upload allowed | Only the exact excerpt needed |
+| `reports/publication/` tables and figures | Upload allowed | Public-facing tables, figures, parity matrices, and aggregate summaries |
 | `configs/` | Usually allowed | Exclude secrets and private paths |
 | `src/` code | Conditional | Only the relevant file excerpt or interface |
 | `reports/runs/` | Local-only by default | Aggregate metrics only |
-| `data/*/processed/` | Local-only by default | Schema, row counts, aggregate stats only |
+| `data/*/processed/` | Local-only by default | Schema, row counts, and aggregate stats only |
 | `data/*/raw/` | Local-only | Do not upload |
 | audit ledgers / runtime traces | Local-only by default | Small redacted snippets only if necessary |
 
@@ -66,7 +66,6 @@ Answer all of these before upload:
 - Have raw rows been removed?
 - Have identifiers been removed?
 - Have I reduced the artifact to schema, summary, or the exact failing lines?
-- Would I be comfortable with this exact payload appearing in a reviewer
-  appendix?
+- Would I be comfortable with this exact payload appearing in a reviewer appendix?
 
 If any answer is `no`, do not upload the artifact yet.

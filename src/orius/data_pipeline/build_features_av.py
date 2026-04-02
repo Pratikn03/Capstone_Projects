@@ -40,8 +40,12 @@ def build_features(
     v0 = df[df["vehicle_id"] == df["vehicle_id"].iloc[0]].copy()
     v0 = v0.sort_values("step").reset_index(drop=True)
 
-    # Timestamp from step (0.1s per step for synthetic)
-    v0["timestamp"] = pd.to_datetime("2026-01-01") + pd.to_timedelta(v0["step"] * 0.1, unit="s")
+    # Prefer explicit timestamps from real corpora; keep a synthetic fallback.
+    if "ts_utc" in v0.columns:
+        v0["timestamp"] = pd.to_datetime(v0["ts_utc"], errors="coerce", utc=True)
+    else:
+        v0["timestamp"] = pd.to_datetime("2026-01-01") + pd.to_timedelta(v0["step"] * 0.1, unit="s")
+    v0 = v0.dropna(subset=["timestamp"]).reset_index(drop=True)
 
     # Lag features
     for lag in LAG_STEPS:

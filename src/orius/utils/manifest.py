@@ -110,7 +110,7 @@ def create_run_manifest(
     output_dir: Path | str,
     run_id: str | None = None,
     extra_metadata: dict[str, Any] | None = None,
-    data_manifest_path: Path | str | None = "data/dashboard/data_manifest.json",
+    data_manifest_path: Path | str | None = "paper/assets/data/data_manifest.json",
     data_manifest_sha256: str | None = None,
     split_boundaries: dict[str, Any] | None = None,
     schema_hash: str | None = None,

@@ -2,49 +2,52 @@
 \addcontentsline{toc}{chapter}{Abstract}
 
 This thesis presents ORIUS (Observation--Reality Integrity for Universal Safety), a
-framework for safe action under degraded observation in cyber-physical systems (CPS).
-The central claim is that a controller can appear safe on observed state while being
-physically unsafe on true state when the observation channel degrades.  This
-observation--action safety gap (OASG) is latent in any CPS that separates sensing from
-actuation, and ORIUS provides a domain-agnostic architecture for detecting, bounding, and
-eliminating it.
+universal safety layer for physical AI under degraded observation. The central claim is
+that a controller can appear safe on the observed state while becoming physically unsafe
+on the true state when the observation channel degrades. ORIUS treats that
+observation--action safety gap (OASG) as a first-class runtime object and addresses it
+through one typed Detect--Calibrate--Constrain--Shield--Certify kernel: detect degraded
+telemetry, widen the observation-consistent state set, tighten the admissible action
+set, repair or replace the candidate action, and emit a causal certificate that can be
+audited after the fact.
 
-The framework is evaluated across six CPS domains under a tiered evidence model: energy management (grid-scale
-battery dispatch), autonomous vehicles, industrial process control, medical monitoring,
-aerospace control, and navigation.  All six share the same five-stage DC3S pipeline---Detect,
-Calibrate, Constrain, Shield, Certify---instantiated through a common \texttt{DomainAdapter}
-interface.  The evaluation harness, CPSBench, maintains separate truth and observed
-trajectories across all domains so that hidden safety failure becomes measurable
-rather than implicit.
+The book is organized as a universal-first monograph rather than as a battery-centered
+thesis with later extensions. It develops one common architecture, one benchmark and
+runtime-governance discipline, one theorem bridge, and six first-class domain chapters:
+battery energy storage, autonomous vehicles, industrial process control, medical and
+healthcare monitoring, navigation and guidance, and aerospace control. Each domain is
+forced through the same safety-layer template: domain problem, degraded-observation
+hazard, ORIUS instantiation, safety object, dataset and training surface, replay and
+evidence surface, fallback behavior, and explicit non-claims.
 
-The energy management domain provides the formally locked theorem-to-artifact surface.
-Under degraded telemetry, a quality-ignorant deterministic controller produces a true-state
-violation rate (TSVR) of 3.9\% with P95 severity of 333.4~MWh, while appearing perfectly
-safe in observed state.  DC3S eliminates all true-state violations (TSVR~$= 0$\%) for the energy management
-domain, with an intervention rate of only 2.8\%, demonstrating that the OASG is both
-real and closable.  TSVR reductions to zero are confirmed under the locked three-seed
-evaluation protocol across the industrial process control and medical monitoring domains
-(proof-validated).  The autonomous vehicle and aerospace domains do not achieve
-TSVR~$= 0$\% under the locked protocol---AV remains at 2.78\% baseline (constraint
-structure mismatch; classified proof-candidate) and aerospace at 9.72\% (experimental
-surface)---and are distinguished from the proof-validated tier accordingly.
-The navigation domain provides simulation-backed portability evidence (0.69\% TSVR).
+The formal contribution is a domain-agnostic safe-control kernel under degraded
+observation. The thesis proves that hidden true-state violations can arise even when
+observed-state legality appears intact, that reliability-aware action repair is
+structurally necessary, and that the ORIUS repair-and-certify stack admits explicit
+quantitative safety bounds and transfer obligations under stated assumptions. The
+current theorem-to-code-to-artifact chain remains deepest on the battery reference row,
+but the monograph packages the broader result as one universal architectural and
+semantic claim rather than as a collection of disconnected domain papers.
 
-The thesis establishes a four-theorem safety ladder: (T1) OASG existence, (T2)
-one-step safety preservation, (T3) the ORIUS core safety bound
-$\mathbb{E}[V] \le \alpha(1-\bar{w})T$, and (T4) no-free-safety necessity.  The
-finite-sample correction $\varepsilon_n = O(1/\sqrt{n})$ tightens the bound for
-calibration sets of finite size.  These theorems are artifact-backed: each is linked
-to a locked experimental trace that confirms the predicted behaviour with measurable
-empirical slack.
+The empirical contribution is governed by one equal-domain parity gate. Battery remains
+the deepest reference row. Industrial process control and healthcare monitoring are
+defended proof-validated rows under bounded contracts. The current autonomous-vehicle
+row clears bounded proof-validation under a TTC plus predictive-entry-barrier contract.
+Navigation remains gated by the absence of a defended real-data row, and aerospace
+remains gated by an experimental placeholder flight-task surface. This explicit parity
+matrix prevents the universal-first narrative from outrunning the evidence.
 
-The thesis further characterises DC3S through fault-performance stress tests,
-latency benchmarking, conditional coverage audits, hyperparameter stability analysis,
-software-in-the-loop trials, certificate half-life studies, graceful degradation protocols,
-compositional safety for multi-unit fleets, and adversarial robustness via active probing.
-Across the three proof-validated domains and under all tested fault conditions,
-DC3S achieves the core safety guarantee while preserving dispatch performance.
-The framework demonstrates that the observation--action safety gap is a universal
-CPS phenomenon with a principled remedy---closable on the reference and
-proof-validated rows, partially resolved on proof-candidate surfaces, and
-structurally addressed on experimental surfaces.
+The manuscript is intentionally conservative about where theory is stronger than
+evidence. The runtime contract and theorem bridge are broader than the current
+cross-domain empirical closure, so claims outside the defended rows are written as
+bounded architectural or semantic statements rather than as equal-domain validation
+claims. The reviewer-analysis appendix is included only as an editorial audit and
+revision-traceability aid; it is not part of the scientific evidence surface.
+
+Across the defended rows, ORIUS shows that degraded observation can be turned into a
+runtime safety problem with explicit repair, fallback, and certificate semantics rather
+than treated as a vague robustness concern. The broader contribution of the thesis is
+therefore not a claim that every physical-AI domain is already equally mature. It is
+the stronger and more durable claim that one universal safety-layer grammar can govern
+all of them, while a visible parity gate determines how far each domain may currently be
+promoted.

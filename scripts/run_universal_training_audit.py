@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Audit and optionally build peer-domain training surfaces for universal ORIUS.
+"""Audit and optionally build canonical-domain training surfaces for ORIUS.
 
 This script is the forecasting-side counterpart to the universal runtime gate.
-It verifies that each promoted peer domain has:
+It verifies that each canonical ORIUS domain has:
   - non-empty train/calibration/val/test splits,
   - a model bundle,
   - conformal / backtest artifacts,
@@ -33,19 +33,17 @@ from train_dataset import _configured_model_types, _configured_targets, _load_tr
 
 
 BASE_DOMAIN_DATASET_MAP: tuple[tuple[str, str], ...] = (
+    ("battery", "DE"),
     ("av", "AV"),
     ("industrial", "INDUSTRIAL"),
     ("healthcare", "HEALTHCARE"),
+    ("navigation", "NAVIGATION"),
     ("aerospace", "AEROSPACE"),
 )
 
 
 def _domain_dataset_map() -> tuple[tuple[str, str], ...]:
-    pairs = list(BASE_DOMAIN_DATASET_MAP)
-    nav_cfg = DATASET_REGISTRY.get("NAVIGATION")
-    if nav_cfg is not None and (REPO_ROOT / nav_cfg.features_path).exists():
-        pairs.append(("navigation", "NAVIGATION"))
-    return tuple(pairs)
+    return BASE_DOMAIN_DATASET_MAP
 
 
 def _tex_escape(value: object) -> str:
@@ -166,6 +164,9 @@ def _domain_row(domain: str, cfg: DatasetConfig, *, verify_log: str, train_statu
     figures_exist = (reports_dir / "figures").exists()
     uncertainty_exists = _has_any(uncertainty_dir, "gbm_*_conformal.json")
     backtests_exist = _has_any(backtests_dir, "gbm_*_test.npz")
+    provenance_exists = bool(cfg.provenance_path) and (REPO_ROOT / str(cfg.provenance_path)).exists()
+    processed_surface_exists = (REPO_ROOT / cfg.raw_data_path).exists()
+    real_data_backed = provenance_exists and processed_surface_exists
     training_verified = (
         "✓ All checks PASSED" in verify_log
         and split_valid
@@ -177,8 +178,11 @@ def _domain_row(domain: str, cfg: DatasetConfig, *, verify_log: str, train_statu
         and uncertainty_exists
         and backtests_exist
     )
+    training_surface_closed = training_verified and real_data_backed
 
     note_parts: list[str] = []
+    if not processed_surface_exists:
+        note_parts.append("processed_surface_missing")
     if not split_valid:
         note_parts.append(
             "invalid_splits:" + ",".join(f"{k}={v}" for k, v in split_counts.items())
@@ -191,6 +195,8 @@ def _domain_row(domain: str, cfg: DatasetConfig, *, verify_log: str, train_statu
         note_parts.append("uncertainty_missing")
     if not backtests_exist:
         note_parts.append("backtests_missing")
+    if not provenance_exists and cfg.provenance_path:
+        note_parts.append("provenance_missing")
     if not training_verified and not note_parts:
         note_parts.append("verify_script_failed")
 
@@ -211,7 +217,11 @@ def _domain_row(domain: str, cfg: DatasetConfig, *, verify_log: str, train_statu
         "week2_metrics_exists": week2_exists,
         "preflight_exists": preflight_exists,
         "figures_exist": figures_exist,
+        "provenance_exists": provenance_exists,
+        "processed_surface_exists": processed_surface_exists,
+        "real_data_backed": real_data_backed,
         "training_verified": training_verified,
+        "training_surface_closed": training_surface_closed,
         "train_status": train_status,
         "train_command": train_command or "",
         "primary_target": metrics["primary_target"] or "",
@@ -237,7 +247,7 @@ def _write_tex(path: Path, rows: list[dict[str, object]]) -> None:
     lines = [
         r"\begin{table}[htbp]",
         r"\centering",
-        r"\caption{Forecasting-training audit for the peer ORIUS domains.}",
+        r"\caption{Forecasting-training audit for the canonical ORIUS domains.}",
         r"\label{tab:domain-training-audit}",
         r"\begin{tabular}{lrrrrllll}",
         r"\toprule",
@@ -300,8 +310,11 @@ def main() -> int:
     summary = {
         "domains": [row["domain"] for row in rows],
         "training_verified_domains": [row["domain"] for row in rows if row["training_verified"]],
+        "training_surface_closed_domains": [row["domain"] for row in rows if row["training_surface_closed"]],
+        "real_data_backed_domains": [row["domain"] for row in rows if row["real_data_backed"]],
         "failed_domains": [row["domain"] for row in rows if not row["training_verified"]],
-        "all_passed": all(bool(row["training_verified"]) for row in rows),
+        "real_data_gap_domains": [row["domain"] for row in rows if not row["real_data_backed"]],
+        "all_passed": all(bool(row["training_surface_closed"]) for row in rows),
         "summary_csv": str(out_dir / "domain_training_summary.csv"),
         "summary_tex": str(out_dir / "tbl_domain_training_audit.tex"),
     }
@@ -312,7 +325,7 @@ def main() -> int:
     print("=== Universal Training Audit ===")
     for row in rows:
         print(
-            f"  {row['domain']}: verified={row['training_verified']} "
+            f"  {row['domain']}: verified={row['training_verified']} real_data={row['real_data_backed']} "
             f"splits=({row['train_rows']},{row['calibration_rows']},{row['val_rows']},{row['test_rows']}) "
             f"rmse={row['rmse'] if row['rmse'] is not None else 'n/a'} note={row['note']}"
         )

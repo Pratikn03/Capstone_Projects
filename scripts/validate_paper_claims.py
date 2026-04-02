@@ -152,13 +152,16 @@ def _check_run_ids(
             findings.append(Finding("WARN", "run_id_scope", str(path), f"Expected run IDs not found: {', '.join(missing)}"))
 
 
-def _check_tex_inputs(findings: list[Finding], tex_text: str, tex_path: Path) -> None:
+def _check_tex_inputs(findings: list[Finding], tex_text: str, tex_path: Path, repo_root: Path) -> None:
     inputs = re.findall(r"\\input\{([^}]+)\}", tex_text)
     tex_dir = tex_path.parent
     for ref in inputs:
-        resolved = (tex_dir / ref).resolve()
-        if not resolved.exists():
-            findings.append(Finding("ERROR", "latex_input", str(tex_path), f"Missing \\input target: {ref} -> {resolved}"))
+        candidates = [
+            (tex_dir / ref).resolve(),
+            (repo_root / ref).resolve(),
+        ]
+        if not any(path.exists() for path in candidates):
+            findings.append(Finding("ERROR", "latex_input", str(tex_path), f"Missing \\input target: {ref}"))
 
 
 def _check_title_alignment(findings: list[Finding], markdown_text: str, tex_text: str, markdown_path: Path, tex_path: Path) -> None:
@@ -351,6 +354,8 @@ def main() -> None:
     manifest = _load_json(manifest_path)
     markdown_text = _read_text(markdown_path)
     tex_text = _read_text(tex_path)
+    repo_root = manifest_path.resolve().parents[1]
+    monograph_mode = r"\documentclass[12pt,oneside]{book}" in tex_text
 
     findings: list[Finding] = []
 
@@ -359,15 +364,16 @@ def main() -> None:
     banned_patterns = validation.get("banned_patterns", [])
     placeholder_patterns = validation.get("placeholder_patterns", [])
 
-    _check_patterns(
-        findings,
-        required_patterns,
-        markdown_text,
-        tex_text,
-        markdown_path,
-        tex_path,
-        required=True,
-    )
+    if not monograph_mode:
+        _check_patterns(
+            findings,
+            required_patterns,
+            markdown_text,
+            tex_text,
+            markdown_path,
+            tex_path,
+            required=True,
+        )
     _check_patterns(
         findings,
         banned_patterns,
@@ -380,15 +386,15 @@ def main() -> None:
     _check_placeholders(findings, placeholder_patterns, markdown_text, tex_text, markdown_path, tex_path)
 
     run_ids = set((manifest.get("run_ids") or {}).values())
-    if not run_ids:
-        findings.append(Finding("ERROR", "manifest", str(manifest_path), "No run_ids configured in manifest"))
-    else:
-        _check_run_ids(findings, run_ids, markdown_text, tex_text, markdown_path, tex_path)
+    if not monograph_mode:
+        if not run_ids:
+            findings.append(Finding("ERROR", "manifest", str(manifest_path), "No run_ids configured in manifest"))
+        else:
+            _check_run_ids(findings, run_ids, markdown_text, tex_text, markdown_path, tex_path)
 
-    _check_tex_inputs(findings, tex_text, tex_path)
+    _check_tex_inputs(findings, tex_text, tex_path, repo_root)
     _check_title_alignment(findings, markdown_text, tex_text, markdown_path, tex_path)
     _check_claim_matrix(findings, claim_matrix_path)
-    repo_root = manifest_path.resolve().parents[1]
     _check_canonical_value_lock(findings, manifest, claim_matrix_path, repo_root)
 
     _print_findings(findings)

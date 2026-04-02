@@ -87,12 +87,12 @@ exceeds baseline TSVR (0.8750) for the battery reference domain.  Is DC3S
 \emph{harmful} for the primary application?
 
 \textbf{Response.}
-The battery domain uses the locked DE/US benchmark from Paper~1, where the baseline
+The battery domain uses the locked DE/US witness benchmark, where the baseline
 controller is a \emph{deliberately conservative} deterministic LP that already
 avoids many SOC violations.  In this regime, DC3S occasionally tightens the action
 set further than necessary, leading to a slightly higher \emph{observed} violation
 rate on the battery track — but a \emph{lower} true-SOC violation rate on the
-hidden physical model (the key metric in Paper~1's locked results).
+hidden physical model (the key metric in the locked battery witness results).
 
 The ORIUS-Bench battery track measures TSVR on the observed state, not the hidden
 state, so the sign reversal is expected and is a known limitation of the synthetic

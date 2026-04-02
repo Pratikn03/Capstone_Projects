@@ -313,7 +313,7 @@ Eight pages: Overview · Forecasting · Optimization · Carbon · Anomalies · M
 | `configs/` | YAML configuration for training, optimisation, monitoring |
 | `data/processed/` | Feature-engineered Parquet files |
 | `data/processed/splits/` | Train / validation / test splits |
-| `data/dashboard/` | Pre-computed JSON for frontend |
+| `paper/assets/data/` | Tracked manuscript-facing data identity artifacts |
 | `data/audit/` | DuckDB audit stores (IoT loop, certificates) |
 | `artifacts/models/` | Trained model files (GBM `.pkl`, DL `.pt`) |
 | `artifacts/uncertainty/` | Conformal calibration parameters |
@@ -322,6 +322,10 @@ Eight pages: Overview · Forecasting · Optimization · Carbon · Anomalies · M
 | `reports/` | Evaluation reports, figures, model cards |
 | `reports/figures/` | Publication-ready plots (300 DPI PNG) |
 | `reports/publication/` | Governed deployment evidence artifacts |
+
+Frontend-facing report and dashboard data is served from backend research
+endpoints backed by tracked publication artifacts. Old `data/dashboard/`
+snapshots remain legacy cache material only.
 
 ---
 

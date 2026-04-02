@@ -1,98 +1,81 @@
-
 \chapter{ORIUS Program Architecture and Remaining Frontier}
 \label{ch:roadmap}
 
-This chapter no longer serves as a speculative future roadmap.  The canonical
-thesis has already consolidated ORIUS as a program-first dissertation, so the
-purpose here is different: to state how Papers~1--6 fit together as one
-research program, to show which parts of that program are reference versus
-bounded layers, and to isolate the open frontier that remains after the
-current package.
+This chapter treats ORIUS as one universal-first research program rather than
+as a queue of disconnected papers. The purpose is to state the current
+architecture of the contribution, identify which layers are already defended in
+repo truth, and isolate the frontier that still blocks equal-domain
+universality.
 
-\section{Paper~1 as the Reference Scientific Witness}
+\section{The Universal Safety-Layer Spine}
 
-Paper~1 remains the scientific anchor of the dissertation.  It establishes the
-battery-domain OASG witness, the T1--T8 theorem ladder, the locked
-theorem-to-code-to-artifact lineage, and the strongest causal statement of the
-work: under degraded telemetry, a controller can be observationally safe while
-physically unsafe, and the DC\textsuperscript{3}S repair-and-certify kernel
-can remove that hidden violation surface on the battery reference row.
-
-\section{Papers~2--6 as the Explicit Second Thesis Spine}
-
-The dissertation is therefore not battery-only.  It has a second explicit
-program spine:
+The ORIUS spine now has one reader-facing structure:
 
 \begin{enumerate}
-  \item \textbf{Paper~2: temporal validity.}  This layer contributes
-    certificate horizon, expiration, and blackout safe-hold semantics.  Its
-    status is a bounded temporal theorem extension over the battery ladder.
-  \item \textbf{Paper~3: graceful fallback.}  This layer contributes the
-    canonical four-policy degradation benchmark under prolonged blindness.
-    Its status is a bounded empirical benchmark surface rather than a general
-    fallback-dominance theorem.
-  \item \textbf{Paper~4: ORIUS-Bench.}  This layer contributes replayability,
-    schema discipline, metric discipline, and multi-domain benchmark
-    reproducibility.  Its status is a benchmark-contract contribution.
-  \item \textbf{Paper~5: bounded composition.}  This layer contributes the
-    shared-feeder non-composition counterexample and coordinated repair
-    protocols.  Its status is a bounded composition extension, not a full
-    composition theorem.
-  \item \textbf{Paper~6: runtime governance.}  This layer contributes
-    certificate lifecycle, fallback, audit continuity, and recovery as
-    explicit runtime semantics.  Its status is a bounded
-    runtime-governance extension.
+  \item a universal degraded-observation hazard,
+  \item a typed repair-and-certify runtime contract,
+  \item a theorem layer that explains why the hazard matters and when repair is
+    possible,
+  \item six domain chapters that instantiate the same runtime object,
+  \item and one governed parity gate that determines how strong the current
+    cross-domain claim may be.
 \end{enumerate}
 
-\section{Layer Dependency Order}
+That architecture is stronger than an older witness-centered roadmap because it
+lets the reader understand ORIUS as a reusable safety layer from the start,
+while still keeping the strongest proof language anchored to the deepest
+available evidence row.
 
-These layers do not carry the same proof burden, but they do depend on one
-another in a strict order:
+\section{Current Defended Layers}
+
+The present package already contains several defended layers that belong in the
+main thesis argument:
 
 \begin{enumerate}
-  \item Paper~1 provides the battery witness and the theorem-facing kernel.
-  \item Papers~2 and~3 extend that same battery-centered kernel temporally and
-    operationally.
-  \item Paper~4 turns the evaluation surface into a reusable benchmark
-    contract.
-  \item Paper~5 adds a bounded multi-agent coordination layer on top of local
-    certificate semantics.
-  \item Paper~6 adds bounded runtime governance around issuance, validation,
-    expiry, fallback, audit, and recovery.
+  \item \textbf{Reference witness depth.} The battery row remains the deepest
+    theorem-to-code-to-artifact lineage and therefore carries the strongest
+    proof-facing burden.
+  \item \textbf{Temporal validity and bounded fallback.} Certificate horizon,
+    expiration, blackout safe-hold, and graceful degradation are now part of
+    the defended runtime story rather than future add-ons.
+  \item \textbf{Benchmark discipline.} ORIUS-Bench supplies the replayable
+    evaluation contract that keeps multi-domain comparison disciplined.
+  \item \textbf{Bounded composition and bounded runtime governance.} Shared
+    constraint coordination and the CertOS lifecycle now belong to the main
+    scientific surface of the dissertation, albeit under bounded claim tiers.
 \end{enumerate}
 
-Read in that order, the ORIUS program is already a coherent dissertation
-architecture rather than a queue of future work items.
+\section{What Remains Open}
 
-\section{What Remains Open After the Current Program}
-
-The remaining gaps are now frontier gaps, not missing Papers~2--6 layers:
+The remaining work is no longer about inventing missing layers. It is about
+closing explicit frontier rows:
 
 \begin{enumerate}
-  \item \textbf{Autonomous vehicles.}  AV remains proof-candidate because the
-    current repair surface does not yet close the constraint-class mismatch.
-  \item \textbf{Navigation.}  Navigation remains shadow-synthetic until its
-    real-data trainable row and defended telemetry path are complete.
-  \item \textbf{Aerospace.}  Aerospace remains experimental until the replay
-    surface and promotion contract are strengthened beyond the current
-    experimental row.
-  \item \textbf{Deployment beyond bounded runtime governance.}  CertOS
-    currently closes bounded lifecycle, audit, fallback, and recovery
-    semantics.  Full field deployment remains outside the present claim
-    boundary.
+  \item \textbf{Navigation.} The parity gate remains open until the real-data
+    navigation row clears a full train/validate/replay chain with no synthetic
+    fallback in the defended path.
+  \item \textbf{Aerospace.} The row remains open until the placeholder surface
+    is replaced by a real multi-flight safety task with non-degenerate replay
+    and fallback evidence.
+  \item \textbf{Equal-domain universality.} The book may only claim equal-peer
+    universality after every row clears the same governed parity matrix.
+  \item \textbf{Deployment beyond bounded runtime governance.} The current
+    CertOS layer closes bounded lifecycle, audit, fallback, and recovery
+    semantics; full field deployment remains outside the current evidence.
 \end{enumerate}
 
-\section{What This Chapter Contributes}
+\section{How to Read the Frontier Honestly}
 
-The role of this chapter is therefore architectural rather than speculative.
-It makes the current thesis easier to defend by separating three things that
-older drafts blurred together:
+The right scientific posture is therefore not to downplay ambition but to keep
+it governed. ORIUS can now be presented as a universal-first monograph with a
+strong common kernel and multiple defended instantiations, while the final
+equal-domain claim remains tied to explicit closure obligations instead of
+narrative pressure.
 
-\begin{enumerate}
-  \item the \textbf{reference proof witness} (Paper~1),
-  \item the \textbf{bounded defended program layers} (Papers~2--6),
-  \item and the \textbf{open frontier rows} (AV, navigation, aerospace, and
-    field deployment).
-\end{enumerate}
+\section{Summary}
 
-That separation is the honest program-first stance of the final dissertation.
+The ORIUS roadmap is now architectural rather than speculative. The universal
+runtime layer, theorem ladder, benchmark contract, bounded composition, and
+runtime governance surfaces already exist as defended parts of the dissertation.
+The remaining frontier is concentrated in specific parity-gate obligations,
+especially navigation and aerospace, not in a missing conceptual spine.

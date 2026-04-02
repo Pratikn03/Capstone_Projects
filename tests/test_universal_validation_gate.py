@@ -2,8 +2,7 @@
 
 Multi-Domain Universal Framework maturity model:
   reference         → battery
-  proof_validated   → industrial, healthcare
-  proof_candidate   → vehicle
+  proof_validated   → industrial, healthcare, vehicle
   shadow_synthetic  → navigation
   experimental      → aerospace
 """
@@ -177,9 +176,10 @@ def test_validation_cli_reports_all_domain_tiers(tmp_path: Path) -> None:
     assert report["harness_pass"]         is True
     assert report["evidence_pass"]        is True
     assert report["all_proof_domains_pass"] is True
-    assert report["defended_domains"]     == ["industrial", "healthcare"]
-    assert report["proof_candidate_domains"] == ["vehicle"]
+    assert report["defended_domains"]     == ["industrial", "healthcare", "vehicle"]
+    assert report["proof_candidate_domains"] == []
     assert report["shadow_synthetic_domains"] == ["navigation"]
+    assert report["bounded_universal_target_ready"] is False
 
     # ---- Canonical claim tiers ----
     domain_rows = {row["domain"]: row for row in report["domain_results"]}
@@ -187,14 +187,16 @@ def test_validation_cli_reports_all_domain_tiers(tmp_path: Path) -> None:
     assert domain_rows["battery"]["validation_status"]     == "reference_validated"
     assert domain_rows["industrial"]["validation_status"] == "proof_validated"
     assert domain_rows["healthcare"]["validation_status"] == "proof_validated"
-    assert domain_rows["vehicle"]["validation_status"]    == "proof_candidate"
+    assert domain_rows["vehicle"]["validation_status"]    == "proof_validated"
     assert domain_rows["navigation"]["validation_status"] == "shadow_synthetic"
     assert domain_rows["aerospace"]["validation_status"]  == "experimental"
+    assert domain_rows["vehicle"]["closure_target_tier"] == "defended_bounded_row"
+    assert domain_rows["navigation"]["closure_blocker"] == "navigation_real_data_row_missing"
+    assert domain_rows["aerospace"]["closure_blocker"] == "real_multi_flight_safety_task_missing"
 
     # validated_domains contains battery + defended domains that passed
-    for d in ("battery", "healthcare", "industrial"):
+    for d in ("battery", "healthcare", "industrial", "vehicle"):
         assert d in report["validated_domains"], f"{d} not in validated_domains"
-    assert "vehicle" not in report["validated_domains"]
     assert "navigation" not in report["validated_domains"]
     assert "aerospace" not in report["validated_domains"]
 
@@ -218,8 +220,8 @@ def test_validation_cli_reports_all_domain_tiers(tmp_path: Path) -> None:
         )
 
     # ---- Proof-domain report (vehicle candidate) ----
-    assert proof_report["proof_validated_domains"] == ["industrial", "healthcare"]
-    assert proof_report["evaluated_proof_candidates"] == ["vehicle"]
+    assert proof_report["proof_validated_domains"] == ["industrial", "healthcare", "vehicle"]
+    assert proof_report["evaluated_proof_candidates"] == []
     assert proof_report["proof_domain"]   == "vehicle"
 
     # ---- Portability report ----

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CertOS lifecycle demonstration runner (Paper 6).
+"""CertOS lifecycle demonstration runner.
 
 Simulates a battery dispatch loop with the CertOS runtime. The
 validity horizon decays over time, triggering degraded → fallback

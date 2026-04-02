@@ -1,0 +1,257 @@
+artifact,category,role
+48h_trace.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+48h_trace_de.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+48h_trace_final_de.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+48h_trace_final_us.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+48h_trace_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+48h_trace_us.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+README.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+ablation_sensitivity.png,other,Tracked publication artifact used for other in the universal monograph.
+ablation_summary.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+ablation_table.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+active_probing_spoofing_detection.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+adversarial_probe_trace.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+adversarial_probing_robustness_table.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+adversarial_threat_model.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+aging_aware_calibration_design.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+aging_calibration_outputs.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+ambiguity_calibration_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+appendices_hq_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+appendices_hq_manifest_de_us.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+artifact_traceability_table.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+asset_preservation_proxy_table.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+assumption_code_traceability.tex,LaTeX table,Tracked publication artifact used for LaTeX table in the universal monograph.
+assumption_register_de_us.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+baseline_comparison_all.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+baseline_comparison_all.tex,LaTeX table,Tracked publication artifact used for LaTeX table in the universal monograph.
+baseline_comparison_de.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+baseline_comparison_de.tex,LaTeX table,Tracked publication artifact used for LaTeX table in the universal monograph.
+baseline_comparison_status.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+baseline_comparison_us.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+baseline_comparison_us.tex,LaTeX table,Tracked publication artifact used for LaTeX table in the universal monograph.
+baseline_lock_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+baseline_lock_manifest_de_us.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+battery_checklist_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+battery_checklist_verified.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+battery_claim_evidence_register.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+battery_leaderboard.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+battery_plan_gap_audit.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+battery_plan_gap_audit.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+battery_rank_reversal.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+battery_reliability_baselines_summary.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+battery_reliability_baselines_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+battery_soft_boundary_ecm_note.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+battery_theorem_checklist.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+battery_theorem_checklist.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+blackout_half_life.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+blackout_half_life.png,other,Tracked publication artifact used for other in the universal monograph.
+blackout_study.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+calibration_plot.png,other,Tracked publication artifact used for other in the universal monograph.
+certificate_half_life_blackout.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+certificate_half_life_metrics.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+ch19_ch20_figure_links_de_us.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+chapter_coverage_register.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+chapter_theorem_traceability.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+chapter_theorem_traceability.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+chapters40_44_closure_register.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+chapters40_44_domain_evidence_register.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+claim_evidence_matrix.csv,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+claim_evidence_matrix_de_us.csv,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+conference_figure_inventory.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+core_chapter_token_map.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+core_claim_lock.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+cost_safety_pareto.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+cpsbench_merged_sweep.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+cqr_calibration_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+cqr_group_coverage.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+cross_region_transfer.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+cross_region_transfer.png,other,Tracked publication artifact used for other in the universal monograph.
+cross_region_transfer_summary.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+dataset_cards.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+dc3s_ablation_detailed.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+dc3s_ablation_table.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+dc3s_ablation_table.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+dc3s_ablation_table.tex,LaTeX table,Tracked publication artifact used for LaTeX table in the universal monograph.
+dc3s_fault_breakdown.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+dc3s_killer_table.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+dc3s_latency_summary.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+dc3s_latency_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+dc3s_main_table.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+dc3s_main_table_ci.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+dc3s_main_table_ci.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+dc3s_main_table_ci.tex,LaTeX table,Tracked publication artifact used for LaTeX table in the universal monograph.
+dc3s_run_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+dc3s_step_trace.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+dc3s_theory_appendix.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+deployment_evidence_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+deployment_evidence_map.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+distributional_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+fault_performance_packet_drop.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+fault_performance_pivot.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+fault_performance_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+fault_performance_table.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+fig46_orius_program_spine.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_48h_trace.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_48h_trace_de.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_48h_trace_final_de.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_48h_trace_final_us.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_48h_trace_us.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_aerospace_chapter_snapshot.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_av_chapter_snapshot.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_battery_reliability_baselines.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_blackout_halflife.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_calibration_tradeoff.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_cost_safety_pareto.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_coverage_width.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_coverage_width_tradeoff.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_cqr_group_coverage.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_distributional_vs_cqr.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_graceful_four_policies.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_healthcare_chapter_snapshot.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_industrial_chapter_snapshot.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_integrated_theorem_gate.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_navigation_chapter_snapshot.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_orius_equal_domain_parity_matrix.png,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+fig_orius_theory_runtime_domain_flow.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_rac_sensitivity_vs_width.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_region_dataset_cards.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_sweep_heatmap_ir.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_sweep_heatmap_tsvr.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_transfer_coverage.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_transfer_generalization.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_true_soc_severity_p95_vs_dropout.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_true_soc_violation_vs_dropout.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_violation_rate.png,other,Tracked publication artifact used for other in the universal monograph.
+fig_violation_severity_p95.png,other,Tracked publication artifact used for other in the universal monograph.
+final_battery_only_package_FINAL_20260317T024839Z.tar.gz,other,Tracked publication artifact used for other in the universal monograph.
+final_battery_only_package_FINAL_20260317T030715Z.tar.gz,other,Tracked publication artifact used for other in the universal monograph.
+final_battery_only_package_FINAL_BAT12_20260317T040740Z.tar.gz,other,Tracked publication artifact used for other in the universal monograph.
+final_battery_only_package_FINAL_BATTERY_FULL_20260317T052750Z.tar.gz,other,Tracked publication artifact used for other in the universal monograph.
+final_battery_only_package_FINAL_DEUS_20260317T034523Z.tar.gz,other,Tracked publication artifact used for other in the universal monograph.
+final_lock_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+final_lock_manifest_battery_full_completion.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+final_lock_manifest_battery_master_12phase.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+final_lock_manifest_de_us_full_thesis.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+final_lock_manifest_full_thesis.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+fleet_composition_two_battery.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+github_issue_specs.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+github_issue_specs.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+graceful_degradation_trace.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+graceful_degradation_trace.png,other,Tracked publication artifact used for other in the universal monograph.
+graceful_four_policy_metrics.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+hil_fault_response_trace.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+hil_hardware_table.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+hil_timing_table.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+hyperparameter_surface.png,other,Tracked publication artifact used for other in the universal monograph.
+hyperparameter_surfaces.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+integrated_theorem_gate.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+integrated_theorem_gate.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+integrated_theorem_gate_matrix.tex,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+integrated_theorem_gate_summary.tex,LaTeX table,Tracked publication artifact used for LaTeX table in the universal monograph.
+lock_current_truth_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+multi_agent_transformer_scenario.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+orius_93plus_closure_program.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+orius_93plus_gap_matrix.csv,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+orius_93plus_reviewer_rerun.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+orius_annotated_bibliography.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+orius_artifact_appendix.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+orius_bench_battery_leaderboard.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+orius_bench_battery_schema_table.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+orius_calibration_diagnostics_matrix.csv,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+orius_cross_domain_design_principles.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+orius_deployment_validation_scope.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+orius_domain_closure_matrix.csv,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+orius_equal_domain_parity_matrix.csv,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+orius_framework_gap_matrix.csv,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+orius_governance_lifecycle_matrix.csv,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+orius_literature_matrix.csv,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+orius_maturity_matrix.csv,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+orius_module_claim_crosswalk.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+orius_monograph_chapter_map.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+orius_publication_artifact_index.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+orius_review_dossier.pdf,other,Tracked publication artifact used for other in the universal monograph.
+orius_review_global_gap_matrix.csv,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+orius_review_remediation_report.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+orius_reviewer_scorecards.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+orius_runtime_budget_matrix.csv,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+orius_submission_scorecard.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+orius_submission_scorecard.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+orius_submission_scorecard.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+orius_transfer_obligation_table.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+orius_universal_claim_matrix.csv,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+paper_length_comparison.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+paper_thesis_coverage_map.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+part1to4_lock_manifest_de_us.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+part5_chapter_links_de_us.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+part5_hardening_lock_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+part5_hardening_lock_manifest_de_us.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+part6_extension_lock_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+part6_extension_lock_manifest_de_us.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+per_ba_dispatch_impact.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+phase0_core_lock_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+phase0_lock_current_truth_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+phase10_manuscript_integrity_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+phase10_manuscript_integrity_status.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+phase1_benchmark_hardening_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+phase1_gap_audit_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+phase2_systems_hardening_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+phase3_rebuild_battery_evidence_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+phase3_uncertainty_hardening_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+phase4_physics_hardening_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+phase5_chapter_traceability_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+phase5_temporal_extension_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+phase6_benchmark_formalization_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+phase6_manuscript_validation_status.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+phase7_composition_extension_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+phase8_adversarial_robustness_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+phase9_hil_finalization_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+priority2_artifacts_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+priority3_artifacts_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+quality_score_gossip_protocol.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+rac_cert_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+real_price_grounding_runs.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+regional_grounding_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+release_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+reliability_group_coverage.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+reliability_group_coverage.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+reliability_group_coverage_phase3.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+reliability_group_coverage_phase3.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+reliability_group_input.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+run_id_policy.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+run_id_policy_de_us.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+runtime_footprint_table.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+runtime_path_diagram.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+safe_landing_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+sensitivity_grid.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+sensitivity_summary_ci.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+sensitivity_summary_ci.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+shadow_mode_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+stats_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+streaming_validation_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+table13_dc3s_summary.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+table13_dc3s_summary.md,narrative evidence,Tracked publication artifact used for narrative evidence in the universal monograph.
+table13_dc3s_summary.tex,LaTeX table,Tracked publication artifact used for LaTeX table in the universal monograph.
+table1_main.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+table2_ablations.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+table3_group_coverage.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+table4_region_compare.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+table5_transfer.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+table_cqr_distributional_compare.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+tbl_battery_reliability_baselines.tex,LaTeX table,Tracked publication artifact used for LaTeX table in the universal monograph.
+tbl_orius_calibration_diagnostics.tex,LaTeX table,Tracked publication artifact used for LaTeX table in the universal monograph.
+tbl_orius_deployment_validation_scope.tex,LaTeX table,Tracked publication artifact used for LaTeX table in the universal monograph.
+tbl_orius_equal_domain_parity_matrix.tex,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+tbl_orius_governance_lifecycle_matrix.tex,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+tbl_orius_runtime_budget_matrix.tex,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+tbl_orius_submission_readiness.tex,LaTeX table,Tracked publication artifact used for LaTeX table in the universal monograph.
+tbl_wmin_sweep.tex,LaTeX table,Tracked publication artifact used for LaTeX table in the universal monograph.
+theorem_surface_register.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+theorem_surface_register.tex,LaTeX table,Tracked publication artifact used for LaTeX table in the universal monograph.
+theorem_surface_summary.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+theorem_surface_summary.tex,LaTeX table,Tracked publication artifact used for LaTeX table in the universal monograph.
+theorem_to_evidence_map_de_us.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+transfer_stress.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+transfer_stress_summary.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+two_battery_composition_metrics.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
+violation_vs_cost_curve.png,other,Tracked publication artifact used for other in the universal monograph.
+wilcoxon_tests.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.

@@ -1,0 +1,19 @@
+\begin{table*}[htbp]
+\centering
+\scriptsize
+\caption{Cross-domain governance lifecycle matrix for the ORIUS 93+ closure program. Composition and lifecycle breadth are recorded separately so unsupported rows remain visibly gated.}
+\label{tab:orius-governance-lifecycle-matrix}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}}
+\toprule
+\textbf{Domain} & \textbf{Lifecycle surface} & \textbf{Hash chain and invariants} & \textbf{CertOS status} & \textbf{Shared-constraint status} & \textbf{Audit continuity} & \textbf{Completeness} & \textbf{Exact limit}\\
+\midrule
+Battery Energy Storage & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & evaluated & shared\_feeder\_capacity (evaluated) & tracked runtime audit continuity & 97 & battery\_reference\_row\\
+Autonomous Vehicles & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & evaluated & (gated) & tracked runtime audit continuity & 94 & multi\_lane\_and\_higher\_dimensional\_repair\_open\\
+Industrial Process Control & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & evaluated & shared\_power\_budget (evaluated) & tracked runtime audit continuity & 95 & bounded\_to\_current\_plant\_family\\
+Medical and Healthcare Monitoring & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & evaluated & (gated) & tracked runtime audit continuity & 92 & bounded\_to\_current\_monitoring\_and\_intervention\_contract\\
+Navigation and Guidance & gated\_or\_not\_yet\_supported & gated & gated & (gated) & bounded\_or\_gated & 58 & navigation\_real\_data\_row\_missing\\
+Aerospace Control & gated\_or\_not\_yet\_supported & gated & gated & (gated) & bounded\_or\_gated & 55 & real\_multi\_flight\_safety\_task\_missing\\
+\bottomrule
+\end{tabular}}
+\end{table*}

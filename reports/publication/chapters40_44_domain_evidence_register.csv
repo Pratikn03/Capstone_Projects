@@ -1,0 +1,7 @@
+domain,chapter,train_rows,calibration_rows,validation_rows,test_rows,primary_target,baseline_tsvr,orius_tsvr,replay_status,safe_action_soundness,fallback_mode,resulting_tier,exact_blocker
+Battery Energy Storage,Battery witness/supporting chapter,12163,868,,2537,load_mw,3.90,0.00,pass,reference_witness,safe_hold,reference,battery_reference_row
+Autonomous Vehicles,Chapter 40,85,6,12,19,speed_mps,2.78,0.00,pass,pass,full_brake,proof_validated,multi_lane_and_higher_dimensional_repair_open
+Industrial Process Control,Chapter 41,6680,477,954,1433,power_mw,21.53,0.00,pass,pass,power_cap,proof_validated,bounded_to_current_plant_family
+Medical and Healthcare Monitoring,Chapter 42,319,22,45,71,hr_bpm,6.25,0.00,pass,pass,max_alert,proof_validated,bounded_to_current_monitoring_and_intervention_contract
+Navigation and Guidance,Chapter 43,,,,,,18.06,0.69,pass,blocked_real_data_gap,hold_position,shadow_synthetic,navigation_real_data_row_missing
+Aerospace Control,Chapter 44,3483,248,497,748,airspeed_kt,9.72,9.72,pass,experimental_placeholder,envelope_hold,experimental,real_multi_flight_safety_task_missing

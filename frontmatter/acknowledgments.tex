@@ -1,12 +1,17 @@
 \chapter*{Acknowledgments}
 \addcontentsline{toc}{chapter}{Acknowledgments}
 
-This thesis exists as part of a larger research effort centred on certificate-aware safety in
-physical AI systems.  The battery-domain work was chosen as the first reference domain
-because it provides a concrete, interpretable, and reproducible surface on which the hidden
-gap between observed-state safety and true-state safety can be measured clearly.
+This thesis was assembled as a solo research project around one question: how should a
+physical-AI system behave when the observation channel is no longer trustworthy, but the
+consequences of action remain physical and irreversible?  ORIUS was built to answer that
+question with a runtime contract rather than a domain-specific controller.
 
-The broader ORIUS research vision extends beyond batteries into benchmark design, temporal
-certificate validity, graceful degradation, composition across interacting agents, and runtime
-deployment support.  This project file is structured so those future directions can be appended
-cleanly rather than rewritten from scratch.
+The deepest current evidence still comes from the battery witness row because it offers the
+cleanest theorem-to-code-to-artifact surface in the repository.  The broader contribution of
+the book, however, depends on carrying that safety grammar across autonomous vehicles,
+industrial control, healthcare monitoring, navigation, and aerospace without letting the prose
+outrun the evidence.
+
+The open-source systems, datasets, and research communities behind the methods cited in this
+book made that synthesis possible.  Their work is visible throughout the bibliography, the
+artifact index, and the reviewer-facing appendices that helped harden the final manuscript.

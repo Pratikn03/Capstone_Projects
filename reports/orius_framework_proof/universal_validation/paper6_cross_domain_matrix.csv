@@ -1,0 +1,7 @@
+domain,supported,issue_seen,validate_seen,expire_seen,fallback_seen,hash_chain_ok,invariants_pass,status
+battery,yes,True,True,True,True,True,True,evaluated
+industrial,yes,True,True,True,True,True,True,evaluated
+healthcare,yes,True,True,True,True,True,True,evaluated
+vehicle,yes,True,True,True,True,True,True,evaluated
+navigation,no,,,,,,,gated
+aerospace,no,,,,,,,gated

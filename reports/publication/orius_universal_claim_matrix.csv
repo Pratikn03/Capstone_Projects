@@ -1,0 +1,6 @@
+claim_family,claim_id,scope,governing_artifact,status,notes
+universal_safety,U001,canonical manuscript,paper/paper.tex,governing,Book-class monograph is the active canonical manuscript.
+universal_safety,U002,parity gate,reports/publication/orius_equal_domain_parity_matrix.csv,governing,Equal-domain rhetoric is governed by the parity matrix rather than prose-first promotion.
+universal_safety,U003,artifact provenance,reports/publication/release_manifest.json,governing,Tracked release artifacts remain authoritative.
+universal_safety,U004,review package,paper/review/orius_review_dossier.tex,governing,"Separate five-reviewer, three-wave R1 dossier accompanies the monograph."
+universal_safety,U005,bibliography,paper/bibliography/orius_monograph.bib,governing,Monograph bibliography combines legacy ORIUS entries with curated external literature.

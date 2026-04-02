@@ -1,178 +1,65 @@
 \chapter{What the Monograph Proves and What It Does Not}
 \label{ch:what-battery-thesis-proves}
 
-This chapter draws a strict line between the central theorem contribution of
-the dissertation and the surrounding evidence package.  The main value of the
-work is not that it claims equal proof closure across six domains; it is that
-it isolates one degraded-observation safety kernel, proves it completely on a
-battery reference surface, extends it with necessity and lower-bound results,
-and then instantiates it across tiered cross-domain evidence rows with an
-explicit claim boundary.
+The monograph now treats battery as the deepest witness row inside a
+universal-first book, not as the conceptual center of the project. This
+chapter states the resulting proof boundary precisely.
 
 \section{Central Theorem Contribution}
 
-The monograph establishes the following theorem program:
+The central theorem contribution is a domain-agnostic degraded-observation
+safety kernel:
 
 \begin{enumerate}
-  \item \textbf{The observation--reality gap is the control object.}  The
-    observation-action safety gap is not a battery-only accident.  It arises
-    whenever a controller proposes actions from degraded telemetry while
-    safety is evaluated on the true plant state.  T1 identifies this gap on
-    the reference surface, and T9 shows that a quality-ignorant controller
-    cannot remove the resulting violation scaling by tuning alone.
-
-  \item \textbf{Battery is the full proof witness.}  The battery chapters
-    provide the only complete reference proof ladder: gap existence, one-step
-    safety preservation, the episode-level risk envelope, no-free-safety,
-    certificate horizon results, fallback existence, and graceful-degradation
-    dominance.  This is the governance-critical proof spine of the
-    dissertation.
-
-  \item \textbf{The universal extension is formal, not rhetorical.}  T10
-    proves that the degraded-observation risk envelope has the correct
-    first-order scaling law, and T11 states the exact structural obligations
-    under which the battery argument transfers to a new domain.  The
-    dissertation therefore claims a domain-agnostic kernel for safe control
-    under degraded observation, not a solved theory of generic universal safe
-    control.
-
-  \item \textbf{The safety bound is quantitative and verifiable.}
-    Theorem~\ref{thm:core-bound} on the battery reference surface establishes
-    $\mathbb{E}[V] \le \alpha(1-\bar{w})T$ under Assumptions A1--A7.  The
-    T10 lower bound shows the same dependence is minimax-rate tight up to a
-    universal constant.  The bound is therefore both operational and
-    theoretically non-accidental.
-
-  \item \textbf{Cross-domain evidence is tiered and explicit.}  Industrial
-    process control and healthcare are defended instantiations of the same
-    kernel.  Autonomous vehicles remain proof-candidate because of the
-    constraint-class mismatch analysed in the monograph's universality
-    chapter.  Navigation remains
-    shadow-synthetic portability evidence, and aerospace remains
-    experimental.  These rows support the transfer claim at different levels;
-    they do not carry the same proof burden as battery.
-
-  \item \textbf{Traceability is end-to-end.}  Each major theorem group is
-    tied to code anchors and locked artifacts.  The integrated theorem surface
-    register (Appendix~\ref{app:integrated-theorem-surface-register}) maps
-    claim to code to artifact for every strongest-claim result.
+  \item the observation--action gap is the right control object;
+  \item reliability-aware uncertainty inflation and safe-action repair are not
+    cosmetic additions but structural requirements under degraded telemetry;
+  \item the battery row supplies the deepest complete theorem-to-code-to-artifact
+    witness for that kernel;
+  \item the universality extension is formal only where the current transfer
+    obligations and replay surfaces are actually discharged.
 \end{enumerate}
 
-\section{What Is Established Empirically}
+\section{Empirical Meaning}
 
-The empirical package supports the theorem program in a tiered way:
+The empirical package supports the theorem layer in a stratified way:
+
 \begin{enumerate}
-  \item the battery row is the reference witness where the theorem ladder and
-    executable artifacts are both deepest;
-  \item industrial and healthcare defend the transfer story with locked
-    replay, SIL pass, and material TSVR reduction;
-  \item AV, navigation, and aerospace show the practical boundary of the
-    kernel and help locate where additional control design or stronger data is
-    still required.
+  \item battery is the deepest witness row;
+  \item industrial, healthcare, and the bounded AV contract defend the same
+    runtime grammar under their current parity gates;
+  \item navigation and aerospace mark the current frontier rather than
+    completed equal-peer closure.
 \end{enumerate}
 
-\section{How Papers~2--6 Fit the Monograph Boundary}
+\section{What the Result Does Not Claim}
 
-The monograph keeps Paper~1 as the only full proof witness, but it does not
-hide the rest of the program in footnotes.  Papers~2--6 are explicit and
-first-class in the dissertation under bounded roles:
+The monograph does \emph{not} claim:
 
 \begin{enumerate}
-  \item Paper~2 is the bounded temporal extension.
-  \item Paper~3 is the bounded graceful-fallback benchmark surface.
-  \item Paper~4 is the evaluation-contract layer.
-  \item Paper~5 is the bounded composition counterexample layer.
-  \item Paper~6 is the bounded runtime-governance layer.
-\end{enumerate}
-
-This is the correct monograph boundary.  The program is broad and coherent,
-but the proof burden is stratified rather than flattened.
-
-\section{Theorem-to-Empirical Correspondence}
-
-Table~\ref{tab:theorem-empirical-correspondence} maps the four core theorems
-to their empirical confirmations across domains.
-
-\begin{table}[htbp]
-\centering
-\caption{Core theorem ladder and empirical confirmation across the tiered six-row runtime package.}
-\label{tab:theorem-empirical-correspondence}
-\begin{tabular}{p{3.8cm}p{5.5cm}p{4.5cm}}
-\toprule
-\textbf{Theorem} & \textbf{Prediction} & \textbf{Empirical confirmation} \\
-\midrule
-T1 -- OASG Existence
-  & TSVR $> 0$ under quality-ignorant controller
-  & 2.78\%--21.53\% baseline TSVR across the locked non-battery runtime rows \\
-\addlinespace
-T2 -- Safety Preservation
-  & $\Pr[\phi_{\text{true}}(a_t) = 1] \ge 1-\alpha$ per step
-  & TSVR $= 0$\% across the three proof-validated domains (energy management, industrial, healthcare) \\
-\addlinespace
-T3 -- Core Bound
-  & $\mathbb{E}[V] \le \alpha(1-\bar{w})T$
-  & Runtime TSVRs stay within the conservative battery-anchored envelope \\
-\addlinespace
-T4 -- No-Free-Safety
-  & Any safe-in-observation-only policy has TSVR $> 0$
-  & Rule-based baselines confirm non-zero TSVR on the locked runtime rows \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\section{What the Result Means}
-
-The ORIUS result is strong because it ties every major theorem object to an
-operational consequence.  Hidden violations are not abstract pathologies; they
-correspond to unsafe physical outcomes such as damaging battery discharge,
-vehicle over-speed, process power exceedance, ICU alarm suppression failure,
-or aircraft envelope breach.  Reliability-aware interval inflation is not
-only a calibration device; it widens the safe-action margin in proportion to
-degradation severity.  Action repair is not merely a projection lemma; it is
-the mechanism that prevents unsafe actuation when the observation channel is
-too optimistic.  Certificates are not audit theatre; they make the causal
-assumptions behind each repaired action explicit.
-
-\section{What Is Not Established}
-
-The monograph does \emph{not} establish the following:
-\begin{enumerate}
-  \item a generic universal stability theory for all safe-control problems;
-  \item equal proof closure across the six evaluated domains;
-  \item production-readiness for every adapter without further engineering and
-    validation;
-  \item adversarial completeness beyond the bounded degradation and replay
-    assumptions stated in Chapter~\ref{ch:assumptions};
-  \item a replacement for full CBF, robust MPC, or viability theory in their
-    native settings.
+  \item equal-domain proof closure across all six rows,
+  \item universal deployment readiness,
+  \item adversarial completeness outside the stated degradation model,
+  \item or a replacement for native barrier, MPC, or viability methods in
+    their strongest domain-specific settings.
 \end{enumerate}
 
 \section{Scope of the Final Claim}
 
-The final claim is precisely bounded:
+The final claim is therefore:
 
 \begin{quote}
-Under degraded telemetry, observed safety can diverge from true safety.
-ORIUS addresses this gap with a domain-agnostic repair-and-certify kernel
-built on reliability-aware uncertainty inflation, safe-action repair, and
-causal runtime certificates.  In this monograph, battery is the complete
-formal reference lineage; industrial and healthcare are defended
-instantiations; AV remains proof-candidate; aerospace remains experimental;
-and navigation remains shadow-synthetic portability evidence.
+Under degraded telemetry, observed safety can diverge from true physical
+safety. ORIUS addresses this gap with a domain-agnostic repair-and-certify
+kernel built on reliability-aware uncertainty inflation, safe-action repair,
+fallback semantics, and causal runtime certificates. The book is
+universal-first in structure, but evidence promotion remains governed by one
+explicit parity matrix.
 \end{quote}
-
-This claim is supported by code, artifacts, and chapter-level alignment.  It
-does not extend to production deployment, adversarial completeness, or
-heterogeneous multi-domain composition without further engineering validation
-(Chapter~\ref{ch:outside-current-evidence}).
 
 \section{Summary}
 
-The dissertation now ends at the right level of precision.  Its main theorem
-contribution is a domain-agnostic degraded-observation safety kernel with one
-full proof witness, one necessity theorem, one lower-bound theorem, and one
-explicit transfer theorem.  The battery domain remains the complete proof
-surface.  Industrial and healthcare defend the same kernel at a lower proof
-burden.  AV, navigation, and aerospace map the current frontier of the claim
-rather than inflating it.  That is monograph-grade scope: narrow enough to be
-defensible, broad enough to matter.
+The monograph is broad because it organizes one universal safety layer across
+multiple domains. It is defensible because it keeps equal-domain closure tied
+to explicit evidence gates rather than treating every row as already equivalent
+to the witness surface.

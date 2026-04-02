@@ -8,8 +8,8 @@ instantiated across six cyber-physical domains---energy management,
 autonomous vehicles, industrial process control, medical monitoring,
 aerospace, and navigation---but the resulting claim is tiered rather than
 uniform.  Battery remains the reference witness; industrial and healthcare are
-defended proof-validated instantiations; autonomous vehicles remains a
-proof-candidate row under the current TTC closure contract; navigation is
+defended proof-validated instantiations; autonomous vehicles is a defended
+bounded row under the current TTC closure contract; navigation is
 shadow-synthetic; and aerospace remains
 experimental.  The point of the chapter is therefore not to claim ``six
 domains with equivalent guarantees,'' but to show how far one degraded-
@@ -206,7 +206,7 @@ readings.  For each domain, $N = 2000$ telemetry steps are replayed
 through the DC3S pipeline; the candidate action and the repaired action
 are evaluated under the same row-wise truth surface.  We report:
 baseline TSVR, post-shield TSVR, repair rate, mean reliability
-$\bar{w}_t$, and latency.  Promotion from \emph{proof candidate} to
+$\bar{w}_t$, and latency.  Promotion from \emph{bounded proof validation} to
 \emph{proof validated} requires six conditions simultaneously: locked
 non-synthetic telemetry, a verified training surface, a clean
 software-in-loop (SIL) runtime pass, a nontrivial baseline gap, material
@@ -249,23 +249,22 @@ without runtime failure.
 }
 
 Table~\ref{tab:domain-closure-matrix} is the canonical promotion source.  It
-locks the final tier to replay, soundness, fallback, and bounded Paper~5 /
-Paper~6 portability checks rather than to raw TSVR alone.  All six domains
+locks the final tier to replay, soundness, fallback, and bounded composition /
+runtime-governance portability checks rather than to raw TSVR alone.  All six domains
 share the same evaluation protocol, but they do \emph{not} carry the same
 theorem burden.  Energy management remains the reference proof surface;
-industrial and healthcare remain the defended instantiation rows; AV remains
-a proof-candidate row under the TTC~+ predictive-entry-barrier contract; navigation
+industrial and healthcare remain the defended instantiation rows; AV is now a
+bounded proof-validated row under the TTC~+ predictive-entry-barrier contract; navigation
 remains shadow-synthetic; and aerospace remains experimental.
 
-Industrial and healthcare are proof-validated because they clear the full
-defended replay contract: SIL pass, locked telemetry, and material TSVR
-reduction under the shared kernel.  AV improves substantially under the TTC
-reformulation, but it remains a proof-candidate row: the bounded replay is
-encouraging, the predictive-entry-barrier probe improves soundness, and the
-shared CertOS lifecycle executes cleanly on the adapter surface, but the
-current closure contract is still narrower than the defended instantiation
-standard used for industrial and healthcare.  The AV row therefore remains
-important as a frontier row rather than as a promoted proof peer.
+Industrial, healthcare, and the current bounded AV contract are proof-validated
+because they clear the defended replay contract under their present safety
+objects: SIL pass, locked or verified telemetry, material TSVR reduction under
+the shared kernel, and bounded fallback/runtime-governance compatibility.  The
+AV row remains narrower than a full autonomous-driving claim because its closure
+surface is still the TTC plus predictive-entry-barrier contract, but within
+that bounded setting it now qualifies as a defended row rather than merely a
+frontier candidate.
 
 Navigation still provides only portability evidence because the real-data row
 is not yet locked end to end, and aerospace remains experimental because the
@@ -290,7 +289,7 @@ Battery (reference) & All four T11 obligations are proved on the reference surfa
 \addlinespace
 Industrial and healthcare (proof-validated) & Locked replay, software-in-loop pass, material TSVR reduction, and typed-kernel execution defend the transfer obligations for the shipped adapters. & No new domain-specific proof ladder beyond the defended instantiation surface. & Defended instantiations \\
 \addlinespace
-Autonomous vehicles (proof-candidate) & Locked replay, TTC-based repair, predictive-entry-barrier probing, and bounded runtime-governance checks show substantial closure progress on the current one-step contract. & Richer multi-lane and higher-dimensional repair surfaces remain open, so the promotion gate is not yet fully cleared. & Proof-candidate frontier \\
+Autonomous vehicles (bounded proof-validated) & Locked replay, TTC-based repair, predictive-entry-barrier probing, and bounded runtime-governance checks now clear the defended gate for the current one-step contract. & Richer multi-lane and higher-dimensional repair surfaces remain open, so the validated claim stays explicitly bounded to the present TTC contract. & Defended bounded row \\
 \addlinespace
 Navigation (shadow-synthetic) & The typed contract executes and the portability surface is visible under a synthetic closed-loop environment. & No locked real telemetry and no proof-validating replay row. & Portability evidence only \\
 \addlinespace
@@ -343,7 +342,7 @@ trading away latency to obtain the safety gains reported above.
   \includegraphics[width=0.88\linewidth]{paper/assets/figures/fig_multi_domain_validation.png}
   \caption{Cross-domain validation surface from the canonical universal
     evidence tier table.  The labels encode the defended claim boundary:
-    reference, proof-validated, proof-candidate, shadow-synthetic, and
+    reference, proof-validated, bounded proof-validated, shadow-synthetic, and
     experimental.}
   \label{fig:multi-domain-validation}
 \end{figure}
@@ -393,7 +392,7 @@ These results support five monograph-level conclusions:
     same certificate surface.
   \item \textbf{Tiered evidence, not equal guarantees.} The defended claim
     surface is battery reference plus industrial/healthcare
-    proof-validation, with AV retained as proof-candidate. Navigation remains shadow-synthetic, and
+    proof-validation, with AV retained as a bounded proof-validated row. Navigation remains shadow-synthetic, and
     aerospace remains experimental.  The common result is a reusable
     degraded-observation repair contract under one protocol, not six domains
     with equivalent proof depth.
@@ -501,7 +500,7 @@ model GPS dropouts and stale odometry readings.
 This local adapter profile is intentionally narrower than the defended
 cross-domain promotion question.  It demonstrates that the typed ORIUS
 kernel, reliability inflation, and repair logic execute coherently on an
-AV row with a speed-cap predicate.  The chapter-wide proof-candidate
+AV row with a speed-cap predicate.  The chapter-wide bounded proof-validation
 status is governed by the stricter TTC~+ predictive-entry-barrier safety
 surface in the closure matrix above.  That bounded contract is the
 current frontier route; the earlier headway mismatch remains useful as the
@@ -515,7 +514,7 @@ clipping to $(v_{\max} - v_t)/\Delta t$.
 \textbf{DC3S result.}
 Baseline TSVR~3.65\% $\rightarrow$ 0.0\% post-shield (99.6\% repair rate,
 mean $\bar{w}_t = 0.768$, $N = 2000$).  This result is intentionally treated
-as bounded proof-candidate evidence rather than as full promotion, because the
+as bounded proof-validated evidence rather than as an unrestricted promotion, because the
 current row still depends on the narrower TTC safety surface.
 
 \begin{figure}[htbp]
@@ -840,7 +839,7 @@ scorecard does \emph{not} do is erase the tier boundary: navigation remains
 portability-only until the real-data row is locked, and aerospace remains
 experimental until a defended telemetry and replay surface replaces the
 placeholder row.  AV advances beyond the earlier negative result, but it
-remains a proof-candidate row; no stronger multi-lane or higher-dimensional
+remains a bounded proof-validated row; no stronger multi-lane or higher-dimensional
 vehicle claim is inferred from the current TTC-bounded result.
 
 %% =========================================================================

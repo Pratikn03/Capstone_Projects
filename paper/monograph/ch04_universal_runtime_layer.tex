@@ -1,0 +1,26 @@
+\chapter{ORIUS as a Universal Safety Layer}
+\label{ch:universal-runtime-layer}
+
+ORIUS is organized as a typed runtime contract rather than as a monolithic controller.
+The contract takes in raw telemetry, evaluates observation reliability, inflates the
+uncertainty set around the state that could be physically true, tightens the admissible
+action set, repairs or replaces the candidate action, and emits a certificate that can
+be audited downstream.  This is the Detect-Calibrate-Constrain-Shield-Certify kernel.
+
+The critical design choice is adapterization.  Domain logic enters the framework
+through a narrow interface: telemetry parsing, uncertainty semantics, action feasibility,
+repair projection, and certificate payload construction.  Everything else belongs to the
+universal safety layer itself.  That is why the monograph can treat batteries,
+vehicles, industrial systems, healthcare monitoring, navigation, and aerospace as
+separate domain chapters while still defending one architectural object.
+
+\paragraph{Adapter contract}\label{par:monograph-adapter-contract}
+The adapter contract is the single runtime boundary that every domain must satisfy.
+It is intentionally narrow so that all domain-specific logic is isolated from the
+universal kernel while still producing comparable benchmark and certificate surfaces.
+
+The layer is intentionally post-nominal.  ORIUS does not assume ownership of the
+upstream forecaster, planner, or optimizer.  It wraps them.  This makes the framework
+more realistic for operational deployment because most real systems inherit legacy
+nominal controllers that cannot be rewritten from scratch simply to accommodate a new
+safety argument.

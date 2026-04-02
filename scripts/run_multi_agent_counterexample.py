@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Multi-agent non-composition counterexample runner (Paper 5).
+"""Multi-agent non-composition counterexample runner for bounded composition.
 
 Demonstrates that local DC3S certificates do NOT compose when agents
 share feeder capacity. Outputs CSV and summary JSON.

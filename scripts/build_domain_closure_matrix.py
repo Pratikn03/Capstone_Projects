@@ -32,6 +32,14 @@ from orius.universal_framework import get_adapter, get_domain_capabilities, run_
 
 
 DOMAIN_ORDER = ("battery", "industrial", "healthcare", "vehicle", "navigation", "aerospace")
+TARGET_TIER = {
+    "battery": "witness_row",
+    "industrial": "defended_bounded_row",
+    "healthcare": "defended_bounded_row",
+    "vehicle": "defended_bounded_row",
+    "navigation": "defended_bounded_row",
+    "aerospace": "defended_bounded_row",
+}
 REGISTRY_DOMAIN_IDS = {
     "battery": "energy",
     "industrial": "industrial",
@@ -510,16 +518,17 @@ def build_closure_matrix(
             exact_blocker = "ttc_replay_or_soundness_gate_open" if not all_av_gates else "promoted"
         elif domain == "navigation":
             nav_pass = data_status == "real_data_ready" and replay_status == "pass" and typed_kernel_status == "pass"
-            resulting_tier = "experimental" if nav_pass else "shadow_synthetic"
+            resulting_tier = "proof_validated" if nav_pass else "shadow_synthetic"
             exact_blocker = "navigation_real_data_gap" if not nav_pass else "real_data_row_cleared"
         elif domain == "aerospace":
             aero_pass = data_status != "placeholder_synthetic" and replay_status == "pass" and typed_kernel_status == "pass"
-            resulting_tier = "proof_candidate" if aero_pass else "experimental"
+            resulting_tier = "proof_validated" if aero_pass else "experimental"
             exact_blocker = "aerospace_experimental_placeholder" if not aero_pass else "real_multi_flight_row_cleared"
 
         closure_rows.append(
             {
                 "domain": domain,
+                "closure_target_tier": TARGET_TIER[domain],
                 "adapter_correctness": "pass",
                 "training_data_status": data_status,
                 "replay_status": replay_status,
@@ -532,6 +541,7 @@ def build_closure_matrix(
                 "repair_mode": caps.get("repair_mode", ""),
                 "fallback_mode": caps.get("fallback_mode", ""),
                 "resulting_tier": resulting_tier,
+                "closure_target_ready": resulting_tier in {"reference", "proof_validated"},
                 "exact_blocker": exact_blocker,
             }
         )
@@ -551,9 +561,10 @@ def build_closure_matrix(
         closure_tex,
         caption="Canonical domain-closure matrix for universal ORIUS promotion. Promotion follows this table rather than prose-first widening.",
         label="tab:domain-closure-matrix",
-        column_spec="p{1.5cm}p{1.7cm}p{1.2cm}p{1.5cm}p{1.1cm}p{1.1cm}p{1.4cm}p{2.3cm}",
+        column_spec="p{1.5cm}p{1.8cm}p{1.7cm}p{1.2cm}p{1.5cm}p{1.1cm}p{1.1cm}p{1.4cm}p{2.3cm}",
         headers=[
             "Domain",
+            "Target tier",
             "Train/data",
             "Replay",
             "Soundness",
@@ -565,6 +576,7 @@ def build_closure_matrix(
         rows=[
             [
                 row["domain"],
+                row["closure_target_tier"],
                 row["training_data_status"],
                 row["replay_status"],
                 row["safe_action_soundness_status"],
@@ -578,7 +590,7 @@ def build_closure_matrix(
     )
     _write_tex_table(
         p5_tex,
-        caption="Bounded Paper~5 cross-domain composition evaluation surface. Only domains with an explicit shared-constraint scenario are counted as evaluated.",
+        caption="Bounded cross-domain composition evaluation surface. Only domains with an explicit shared-constraint scenario are counted as evaluated.",
         label="tab:paper5-cross-domain",
         column_spec="p{1.7cm}p{1.4cm}p{3.4cm}p{3.6cm}p{1.3cm}",
         headers=["Domain", "Supported", "Shared constraint", "Bounded claim", "Status"],
@@ -595,7 +607,7 @@ def build_closure_matrix(
     )
     _write_tex_table(
         p6_tex,
-        caption="Bounded Paper~6 cross-domain runtime-governance evaluation surface. The table records where the CertOS lifecycle was actually exercised under an adapter-supported action surface.",
+        caption="Bounded cross-domain runtime-governance evaluation surface. The table records where the CertOS lifecycle was actually exercised under an adapter-supported action surface.",
         label="tab:paper6-cross-domain",
         column_spec="p{1.7cm}p{1.4cm}p{1.0cm}p{1.0cm}p{1.0cm}p{1.1cm}p{1.1cm}p{1.3cm}",
         headers=["Domain", "Supported", "Issue", "Validate", "Expire", "Fallback", "INV-2", "Status"],
@@ -641,13 +653,13 @@ def build_closure_matrix(
     lines.extend(
         [
             "",
-            "## Paper 5 support",
+            "## Bounded composition support",
             *[
                 f"- `{row['domain']}` → `{row['status']}` ({row['bounded_claim']})"
                 for row in p5_rows
             ],
             "",
-            "## Paper 6 support",
+            "## Runtime-governance support",
             *[
                 f"- `{row['domain']}` → `{row['status']}`"
                 for row in p6_rows
@@ -669,7 +681,9 @@ def build_closure_matrix(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build the ORIUS domain closure matrix and Paper 5/6 cross-domain artifacts")
+    parser = argparse.ArgumentParser(
+        description="Build the ORIUS domain closure matrix and the bounded composition/runtime-governance cross-domain artifacts"
+    )
     parser.add_argument(
         "--validation-report",
         default="reports/universal_orius_validation/validation_report.json",

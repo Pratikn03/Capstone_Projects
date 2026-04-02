@@ -1,187 +1,64 @@
-
 \chapter{What This Thesis Proves and What It Leaves Open}
 \label{ch:what-proves}
 
-A dissertation that claims a universal principle and validates it across multiple
-domains must be explicit about the boundary between proven and projected.
-This chapter draws that boundary for the ORIUS framework.
+This chapter draws the boundary between the proved kernel of ORIUS and the
+broader research program that surrounds it. The thesis is strongest when this
+boundary is explicit.
 
-\section{The Full Formal Apparatus}
+\section{What Is Proved}
 
-The formal surface of this dissertation is larger than the T1--T8 label
-suggests.  The integrated audit (Table~\ref{tab:integrated-theorem-surface-summary})
-records \textbf{67 formal items}: 18~theorems, 5~lemmas, 7~propositions,
-10~corollaries, 11~definitions, and 16~standing assumptions.  All 18
-theorems pass the integrated theorem gate with locked code anchors and
-artifact traceability.
-
-The foundational theorems precede the formal DC3S ladder:
-
-\begin{description}
-  \item[\textbf{S1} (Existence of the Illusion under Dropout).]
-    Established in Chapter~\ref{ch:safety-illusion},
-    S1 proves that under any positive dropout rate a deterministic
-    controller can satisfy its observed constraint while violating the
-    true physical envelope.  This is the phenomenon that motivates
-    the entire framework.
-  \item[\textbf{S2} (Informal Safety Guarantee of DC3S).]
-    Also in Chapter~\ref{ch:safety-illusion}, S2 gives
-    the informal correctness claim: DC3S closes the gap S1 identifies
-    by inflating the feasible action set by the reliability-adjusted
-    conformal quantile.
-\end{description}
-
-The eight principal theorems T1--T8 then formalise, quantify, and
-extend this guarantee across one-step, episode-level, and multi-step
-temporal horizons.
-
-\section{What Is Established Across the Tiered Runtime Package}
-
-The following results are established by reproducible experiment on the locked
-CPSBench harness (seed~42, $N = 2000$ fault-stressed steps, unified fault
-schedule: dropout~15\%, spike~8\%, stale~10\%) together with the battery
-reference proofs and the locked tier tables:
+The current dissertation proves a domain-agnostic claim about degraded
+observation:
 
 \begin{enumerate}
-  \item \textbf{OASG existence.}  The Observation-Action Safety Gap is
-    measurably non-zero across the locked runtime rows under the shared fault
-    schedule.
-  \item \textbf{DC3S effectiveness.}  The DC3S shield achieves
-    0.0\% TSVR across the three proof-validated domains (energy management,
-    industrial process control, and medical monitoring) under the locked
-    three-seed evaluation protocol.
-  \item \textbf{Zero true-state violation rate.}  Energy management, industrial
-    process control, and medical monitoring each achieve 0.0\% TSVR under DC3S
-    in the strongest evidence rows.  The autonomous vehicle and aerospace domains
-    are classified as proof-candidate and experimental surfaces respectively; their
-    TSVR remains at baseline under the locked protocol (2.78\% and 9.72\%).
-  \item \textbf{Formal safety bound.}  Theorem~\ref{thm:safety-preservation}
-    guarantees that the true-state violation probability is at most $\alpha$
-    with confidence $1 - \delta$, under exchangeability of the calibration
-    residuals and bounded observation error.  The bound is formalized on the
-    battery reference row and instantiated across the tiered domain maps via
-    the shared domain-adapter construction.
-  \item \textbf{Bounded intervention cost.}  The shield's repair rate remains
-    below 100\% across the five forecasting-capable runtime rows (mean~$\bar{w}_t \in
-    [0.66, 0.81]$), confirming that DC3S does not collapse all actions to a
-    constant fallback.
-  \item \textbf{Sub-millisecond overhead.}  Pipeline latency (P95~$<$~0.1~ms)
-    is consistent across the five forecasting-capable runtime rows, confirming runtime
-    suitability for fast control-loop applications.
+  \item A controller can be observationally safe while physically unsafe when
+    telemetry is stale, missing, delayed, or otherwise degraded.
+  \item A repair-and-certify runtime layer can convert that hidden gap into a
+    bounded control object through reliability-aware uncertainty inflation,
+    safe-action repair, fallback, and certificate semantics.
+  \item The full theorem-to-code-to-artifact depth of that claim is deepest on
+    the battery witness row, where the proof ladder, replay evidence, and
+    executable runtime traces align most completely.
 \end{enumerate}
 
-Navigation remains simulation-backed portability evidence outside this
-forecasting-surface summary.
+\section{What Is Defended Beyond the Witness Row}
 
-\section{How Papers~1--6 Divide the Thesis Burden}
-
-The thesis now states its program structure explicitly rather than leaving it
-implicit in imported long-form blocks:
+The thesis also defends a broader universal program, but under bounded rather
+than flattened claim tiers:
 
 \begin{enumerate}
-  \item \textbf{Paper~1} is the complete proof witness.  It carries the
-    battery OASG result and the T1--T8 ladder.
-  \item \textbf{Paper~2} is a bounded temporal theorem layer.  It adds
-    certificate horizon, expiration, and blackout safe-hold semantics.
-  \item \textbf{Paper~3} is a bounded empirical fallback layer.  It adds the
-    canonical graceful-fallback benchmark under prolonged blindness.
-  \item \textbf{Paper~4} is a benchmark-contract layer.  It formalizes
-    ORIUS-Bench as the replayable evaluation discipline of the thesis.
-  \item \textbf{Paper~5} is a bounded composition counterexample layer.  It
-    shows where local certificates fail to compose and where coordination
-    restores fleet-level safety.
-  \item \textbf{Paper~6} is a bounded runtime-governance layer.  It adds
-    lifecycle semantics, audit continuity, fallback, and recovery.
+  \item industrial process control and healthcare monitoring are defended
+    non-battery instantiations under the current replay and runtime contract;
+  \item the bounded AV row contributes a defended autonomy instantiation under
+    the current TTC entry-barrier contract;
+  \item temporal validity, graceful fallback, benchmark discipline, bounded
+    composition, and runtime governance are part of the defended ORIUS program
+    rather than loose future ideas.
 \end{enumerate}
-
-This program-first structure is maximal in thesis prominence but still
-conservative in proof burden: Papers~2--6 are real defended contributions, yet
-none is promoted to the same theorem class as Paper~1 unless the linked code,
-tests, and artifacts support that stronger claim.
-
-\section{What Is Fully Validated in Battery (Reference Domain)}
-
-The battery domain provides the complete theorem-to-code-to-artifact lineage:
-
-\begin{enumerate}
-  \item \textbf{OASG existence.}  Measurably non-zero at dropout rates
-    as low as~5\%.  Chapter~\ref{ch:main-results} reports TSVR of
-    3.9--4.2\% for the deterministic LP baseline at 20\% dropout.
-  \item \textbf{DC3S effectiveness.}  Exactly 0\% TSVR across all tested
-    dropout rates $d \in [0, 0.30]$, both grid regions, and all fault combinations.
-  \item \textbf{Full formal proof surface.}  Theorems T1--T8 are stated,
-    proved, and connected to code artifacts for the battery domain.
-    Chapter~16--20 each carry domain-instantiation subsections extending
-    each theorem to the four non-battery domains.
-  \item \textbf{Intervention cost bounded.}  Repair rate remains below
-    3.1\% under \texttt{drift\_combo} and below 20\% even at 30\% dropout.
-\end{enumerate}
-
-\section{What Is Partially Proved}
-
-Several claims are supported by evidence but carry caveats:
-
-\begin{enumerate}
-  \item \textbf{Conditional coverage.}  CQR group coverage
-    (Chapter~\ref{ch:conditional-coverage}) is validated on the four
-    tested fault families.  Coverage under \emph{out-of-distribution}
-    faults not in the calibration set has not been verified.
-  \item \textbf{Aging effects.}  Aging-aware recalibration
-    (Chapter~\ref{ch:temporal-extensions}) is demonstrated on synthetic
-    degradation curves.  Multi-year field aging data is not available.
-  \item \textbf{Certificate half-life.}  The blackout study
-    (Chapter~\ref{ch:cert-half-life-blackout}) establishes a bounded
-    safe-hold result; longer horizons (weeks, months) remain extrapolated.
-  \item \textbf{Transfer across regions.}  The US--DE transfer stress
-    test (Chapter~\ref{ch:transfer-generalisation}) shows positive
-    results for two grid regions.  Grids with fundamentally different
-    market structures are untested.
-\end{enumerate}
-
-\section{Why Multi-Domain Validation Strengthens the Core Claim}
-
-The universal validation is not scope-widening---it is confirmation that
-the core claim (DC3S closes the OASG) is not an artefact of battery physics.
-Each additional domain that passes the same promotion gate (locked telemetry,
-verified training surface, SIL trace pass, material TSVR reduction) provides
-independent evidence that the OASG is a structural phenomenon in any CPS with
-degraded telemetry, not a battery-specific measurement anomaly.
-
-Battery provides the canonical instantiation with full theorem lineage.
-Industrial and healthcare provide proof-validated empirical depth under the
-shared universal replay harness.  AV contributes proof-candidate evidence,
-aerospace contributes experimental evidence, and navigation provides
-simulation-backed portability evidence.  Together, the runtime rows provide
-broad evidence of the OASG phenomenon under the ORIUS principle, while the
-final claim boundary still follows the locked tier matrix rather than a flat
-reading of every row.
 
 \section{What Remains Outside the Current Evidence}
 
+The thesis does \emph{not} yet prove:
+
 \begin{enumerate}
-  \item \textbf{Field deployment.}  No domain has been validated on production
-    hardware in a live safety-critical loop.
-  \item \textbf{Heterogeneous multi-asset composition.}  Fleet-level shielding
-    is validated for a two-battery shared-transformer case; cross-domain
-    composition (battery + AV + medical device) is an open problem.
-  \item \textbf{Adversarial completeness.}  The active-probing audit detects
-    the tested spoofing strategy.  Completeness against all adversarial
-    strategies is not claimed.
-  \item \textbf{Non-box constraint geometry.}  All current domain adapters
-    use box or interval constraints.  Polytopic and conic constraint
-    structures are architectural claims, not yet empirically validated.
+  \item equal-domain closure across all six domain chapters,
+  \item real-data navigation closure,
+  \item a real multi-flight aerospace closure surface,
+  \item heterogeneous cross-domain composition guarantees,
+  \item or deployment-grade certification in live safety-critical hardware.
 \end{enumerate}
 
-\section{Chapter Summary}
+\section{Why the Boundary Matters}
 
-This thesis contributes a 67-item formal apparatus (18 theorems, 5 lemmas,
-7 propositions, 10 corollaries, 11 definitions, 16 assumptions) grounded
-in 25 chapter-level traceability rows connecting each formal result to its
-code anchor and artifact evidence.  The ORIUS principle is established on a
-tiered runtime package: the OASG exists across the locked runtime rows,
-DC3S achieves zero TSVR in the battery reference row and the two
-proof-validated peers, AV remains proof-candidate, aerospace remains
-experimental, and navigation adds simulation-backed portability evidence.
-Being explicit about what remains outside the battery reference row and
-proof-validated peer rows protects the core multi-domain result from
-credibility it does not yet claim.
+Being explicit about the boundary does not weaken the thesis. It protects the
+main contribution. ORIUS is not interesting because it pretends every domain is
+already equally mature. It is interesting because it identifies one hidden
+safety hazard, one reusable runtime response, and one governed parity gate for
+deciding how far each domain may currently be promoted.
+
+\section{Summary}
+
+The thesis proves a universal degraded-observation safety kernel with one
+deepest witness row and several defended bounded extensions. It leaves the
+remaining equal-domain frontier open in explicit, localized places rather than
+blurring them into universal rhetoric.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build CertOS artifacts (Paper 6).
+"""Build CertOS runtime-governance artifacts.
 
 Produces:
 - lifecycle_events.jsonl
@@ -154,7 +154,7 @@ def main() -> int:
 
         linkage_path = REPO / "reports" / "paper6_claim_linkage.md"
         linkage_path.write_text(
-            "# Paper 6 Claim Linkage\n\n"
+            "# Runtime-governance claim linkage\n\n"
             f"- Lifecycle source: `{csv_rel}`\n"
             f"- Summary source: `{summary_rel}`\n"
             f"- Audit source: `{audit_rel}`\n"

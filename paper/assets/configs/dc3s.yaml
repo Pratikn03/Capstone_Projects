@@ -4,12 +4,12 @@ dc3s:
   inflation_law: linear
   alpha0: 0.10
   alpha_min: 0.02
-  k_quality: 0.2
-  k_drift: 0.0
-  k_sensitivity: 0.4
+  k_quality: 0.5
+  k_drift: 0.3
+  k_sensitivity: 0.05
   infl_max: 2.0
-  beta_reliability: 0.7
-  beta_sensitivity: 0.5
+  beta_reliability: 0.5
+  beta_sensitivity: 0.3
   cooldown_smoothing: 0.0
   kappa_drift_penalty: 0.5
   ambiguity:
@@ -22,14 +22,14 @@ dc3s:
     max_extra: 1.0
   rac_cert:
     enabled: true
-    beta_reliability: 0.7
-    beta_sensitivity: 0.5
-    k_sensitivity: 0.4
+    beta_reliability: 0.5
+    beta_sensitivity: 0.3
+    k_sensitivity: 0.05
     sensitivity_probe: heuristic
     sens_eps_mw: 25.0
     sens_norm_ref: 0.5
     qhat_shrink_tau: 30.0
-    max_q_multiplier: 3.0
+    max_q_multiplier: 2.0
   expected_cadence_s: 3600
   reliability:
     lambda_delay: 0.002
@@ -64,8 +64,12 @@ dc3s:
     warmup_steps: 48
     cooldown_steps: 24
   shield:
-    mode: projection
+    mode: l2_projection
     reserve_soc_pct_drift: 0.08
+    safe_landing:
+      auto_activate: false
+      w_threshold: 0.10
+      safe_margin_pct: 0.05
     cvar:
       beta: 0.90
       n_scenarios: 20

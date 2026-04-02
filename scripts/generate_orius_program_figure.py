@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Generate the ORIUS thesis program spine figure.
+"""Generate the ORIUS universal monograph spine figure.
 
 The figure is intentionally conceptual rather than data-driven. It is used as a
-navigation surface for the thesis: Paper 1 establishes the battery witness and
-Papers 2--6 extend the program across temporal validity, graceful fallback,
-benchmark discipline, composition, and runtime governance.
+navigation surface for the book: battery remains the deepest witness row, while
+temporal validity, graceful fallback, benchmark discipline, bounded composition,
+and runtime governance extend the same universal safety-layer argument.
 """
 from __future__ import annotations
 
@@ -160,7 +160,7 @@ def build_figure(paper_out: Path, report_out: Path) -> None:
     ax.text(
         0.5,
         0.965,
-        "ORIUS Thesis Program Spine",
+        "ORIUS Universal Safety Monograph Spine",
         ha="center",
         va="center",
         fontsize=20,
@@ -170,7 +170,7 @@ def build_figure(paper_out: Path, report_out: Path) -> None:
     ax.text(
         0.5,
         0.935,
-        "Paper 1 establishes the battery proof witness; Papers 2–6 expand ORIUS into temporal, fallback, benchmark, fleet, and runtime layers.",
+        "Battery is the deepest witness row; temporal validity, graceful fallback, benchmark discipline, bounded composition, and runtime governance extend the same universal runtime layer.",
         ha="center",
         va="center",
         fontsize=10.5,
@@ -184,7 +184,7 @@ def build_figure(paper_out: Path, report_out: Path) -> None:
         0.27,
         0.34,
         [
-            "Paper 1  |  Battery Witness",
+            "Battery Witness Row",
             "Observation–action safety gap",
             "DC3S kernel and T1–T8 ladder",
             "Locked empirical and theorem anchor",
@@ -201,7 +201,7 @@ def build_figure(paper_out: Path, report_out: Path) -> None:
         0.22,
         0.14,
         [
-            "Paper 2",
+            "Temporal validity",
             "Certificate validity horizon",
             "Expiration bound and blackout safe-hold",
             "Ch. 20 + Ch. 28",
@@ -216,7 +216,7 @@ def build_figure(paper_out: Path, report_out: Path) -> None:
         0.22,
         0.14,
         [
-            "Paper 3",
+            "Graceful fallback",
             "Graceful degradation",
             "Safe landing under prolonged blindness",
             "Ch. 20 + Ch. 29",
@@ -231,7 +231,7 @@ def build_figure(paper_out: Path, report_out: Path) -> None:
         0.22,
         0.14,
         [
-            "Paper 4",
+            "Universal benchmark",
             "ORIUS-Bench",
             "Truth-vs-observation benchmark contract",
             "Ch. 10 + Ch. 30",
@@ -246,7 +246,7 @@ def build_figure(paper_out: Path, report_out: Path) -> None:
         0.22,
         0.14,
         [
-            "Paper 5",
+            "Bounded composition",
             "Compositional safety",
             "Shared-constraint battery fleet coordination",
             "Ch. 31",
@@ -261,7 +261,7 @@ def build_figure(paper_out: Path, report_out: Path) -> None:
         0.28,
         0.16,
         [
-            "Paper 6",
+            "Runtime governance",
             "CertOS runtime governance",
             "Certificate lifecycle, audit chain, explicit fallback",
             "Governance block + Ch. 27 + Ch. 32",

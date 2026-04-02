@@ -1,15 +1,17 @@
 \begin{table}[htbp]
 \centering
-\caption{Forecasting-training audit for the peer ORIUS domains.}
+\caption{Forecasting-training audit for the canonical ORIUS domains.}
 \label{tab:domain-training-audit}
 \begin{tabular}{lrrrrllll}
 \toprule
 Domain & Train & Cal & Val & Test & Verified & RMSE & PICP$_{90}$ & Notes \\
 \midrule
-AV Trajectories & 85 & 6 & 12 & 19 & yes & 0.0565 & 0.947 & verified \\
+German OPSD & 12163 & 868 & 1737 & 2537 & no & 262.0110 & 0.882 & verify\_script\_failed \\
+AV Trajectories & 85 & 6 & 12 & 19 & yes & 0.0565 & 0.947 & provenance\_missing \\
 Industrial Process & 6680 & 477 & 954 & 1433 & yes & 3.6095 & 0.896 & verified \\
 Healthcare Vital Signs & 319 & 22 & 45 & 71 & yes & 0.7638 & 0.930 & verified \\
-Aerospace Flight & 3483 & 248 & 497 & 748 & yes & 55.5007 & 0.000 & verified \\
+Navigation Trajectories & 0 & 0 & 0 & 0 & no & -- & -- & processed\_surface\_missing;invalid\_splits:train=0,calibration=0,val=0,test=0;formal\_report\_missing;figures\_missing;uncertainty\_missing;backtests\_missing \\
+Aerospace Flight & 117 & 8 & 16 & 27 & yes & 55.5007 & 0.000 & verified \\
 \bottomrule
 \end{tabular}
 \end{table}

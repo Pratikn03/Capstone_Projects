@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Autonomous Vehicles training and data surface for the compiled chapter evidence block.}
+\label{tab:av-training-surface}
+\begin{tabular}{p{0.31\linewidth}p{0.61\linewidth}}
+\toprule
+\textbf{Field} & \textbf{Value}\\
+\midrule
+Raw/data gate & verified\\
+Features present & yes\\
+Split counts & train 85 / calibration 6 / validation 12 / test 19\\
+Primary target & speed\_mps\\
+Forecast metrics & RMSE 0.056; MAE 0.044; PICP90 0.947; mean width 0.266\\
+Verification state & split valid yes; model bundle yes; uncertainty yes; backtests yes\\
+Artifact lineage & reports/orius\_framework\_proof/training\_audit/domain\_training\_summary.csv; reports/publication/orius\_equal\_domain\_parity\_matrix.csv\\
+\bottomrule
+\end{tabular}
+\end{table}

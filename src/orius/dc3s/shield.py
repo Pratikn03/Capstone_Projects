@@ -1,9 +1,29 @@
 """Generic safety shield that delegates action repair to a domain-specific adapter."""
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Any, Mapping, Protocol
 
-from orius.domain.adapter import Action, DomainAdapter, UncertaintySet
+
+Action = Mapping[str, Any]
+UncertaintySet = Mapping[str, Any]
+
+
+class ProjectionAdapter(Protocol):
+    """Compatibility surface for legacy projection-based shield adapters.
+
+    The canonical runtime boundary is ``orius.dc3s.domain_adapter.DomainAdapter``.
+    This protocol remains only so the battery-oriented shield path can keep
+    working without importing the legacy adapter module into active runtime
+    code.
+    """
+
+    def project_to_safe_set(
+        self,
+        candidate_action: Action,
+        uncertainty_set: UncertaintySet | None,
+        state: Any | None = None,
+    ) -> tuple[Action, dict[str, Any]]:
+        ...
 
 
 def repair_action(
@@ -13,7 +33,7 @@ def repair_action(
     constraints: Mapping[str, Any] | None = None,
     cfg: Mapping[str, Any] | None = None,
     *,
-    domain_adapter: DomainAdapter | None = None,
+    domain_adapter: ProjectionAdapter | None = None,
 ) -> tuple[Action, dict[str, Any]]:
     """
     Repairs a potentially unsafe action.

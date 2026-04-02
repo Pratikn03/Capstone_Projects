@@ -1,11 +1,11 @@
-.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets navigation-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark
+.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets navigation-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark orius-monograph-assets review-compile orius-book orius-evidence-rerun orius-review-pack orius-final
 
 PYTHON ?= $(if $(wildcard .venv/bin/python3),.venv/bin/python3,python3)
 PROFILE ?= standard
 PROOF_SEEDS ?= 1
 PROOF_HORIZON ?= 24
-# Canonical longform paper build, not the retired 300+ page thesis surface.
-PAPER_MIN_PAGES ?= 150
+# Canonical longform paper build is now the ORIUS monograph surface.
+PAPER_MIN_PAGES ?= 450
 ORIUS_AV_SOURCE ?= waymo_motion
 
 setup:
@@ -254,7 +254,10 @@ paper-assets:
 	PYTHONPATH=src $(PYTHON) scripts/build_paper_table_tex.py
 	PYTHONPATH=src $(PYTHON) scripts/update_paper_metrics.py
 
-paper-verify:
+orius-monograph-assets:
+	PYTHONPATH=src $(PYTHON) scripts/build_orius_monograph_assets.py
+
+paper-verify: orius-monograph-assets
 	PYTHONPATH=src $(PYTHON) scripts/verify_paper_manifest.py
 	PYTHONPATH=src $(PYTHON) scripts/validate_paper_claims.py
 
@@ -266,17 +269,19 @@ paper2-blackout-benchmark:
 paper3-four-policy-benchmark:
 	$(PYTHON) scripts/run_paper3_four_policy_benchmark.py
 
-paper-compile:
-	rm -f paper/paper.pdf paper/paper.log paper/paper.aux paper/paper.out
-	- cd paper && pdflatex -interaction=nonstopmode paper.tex
-	- cd paper && pdflatex -interaction=nonstopmode paper.tex
-	- cd paper && pdflatex -interaction=nonstopmode paper.tex
+paper-compile: orius-monograph-assets
+	rm -f paper/paper.pdf paper/paper.log paper/paper.aux paper/paper.out paper/paper.bbl paper/paper.blg paper/paper.toc paper/paper.lof paper/paper.lot
+	mkdir -p paper/monograph paper/chapters paper/appendices paper/backmatter
+	- pdflatex -interaction=nonstopmode -output-directory=paper paper/paper.tex
+	- bibtex paper/paper
+	- pdflatex -interaction=nonstopmode -output-directory=paper paper/paper.tex
+	- pdflatex -interaction=nonstopmode -output-directory=paper paper/paper.tex
 	test -f paper/paper.pdf
 	test -f paper/paper.log
 	cp paper/paper.pdf paper.pdf
 	test -f paper.pdf
 	cmp -s paper/paper.pdf paper.pdf
-	@pages=$$(grep -Eo 'Output written on paper\.pdf \([0-9]+ pages' paper/paper.log | tail -n1 | sed -E 's/.*\(([0-9]+) pages/\1/'); \
+	@pages=$$(grep -Eo 'Output written on paper/paper\.pdf \([0-9]+ pages' paper/paper.log | tail -n1 | sed -E 's/.*\(([0-9]+) pages/\1/'); \
 	if [ -z "$$pages" ]; then \
 		echo "Could not determine page count from paper/paper.log"; \
 		exit 1; \
@@ -287,7 +292,24 @@ paper-compile:
 	fi; \
 	echo "Canonical paper.pdf page count $$pages >= $(PAPER_MIN_PAGES)"
 
+review-compile: orius-monograph-assets
+	rm -f paper/review/orius_review_dossier.pdf paper/review/orius_review_dossier.log paper/review/orius_review_dossier.aux paper/review/orius_review_dossier.out paper/review/orius_review_dossier.toc
+	- pdflatex -interaction=nonstopmode -output-directory=paper/review paper/review/orius_review_dossier.tex
+	- pdflatex -interaction=nonstopmode -output-directory=paper/review paper/review/orius_review_dossier.tex
+	test -f paper/review/orius_review_dossier.pdf
+	cp paper/review/orius_review_dossier.pdf reports/publication/orius_review_dossier.pdf
+	test -f reports/publication/orius_review_dossier.pdf
+
 paper-refresh: paper-assets paper-verify paper-compile
+
+orius-book: paper-verify paper-compile
+
+orius-evidence-rerun: paper-assets orius-monograph-assets
+	@echo "Rebuilt monograph evidence surfaces from tracked publication artifacts."
+
+orius-review-pack: orius-monograph-assets review-compile
+
+orius-final: orius-evidence-rerun orius-book orius-review-pack
 
 paper-freeze:
 ifndef RELEASE_ID
@@ -395,21 +417,29 @@ av-datasets:
 navigation-datasets:
 	$(PYTHON) scripts/build_navigation_real_dataset.py
 
-# Download Industrial datasets (CCPP or synthetic)
+# Build Industrial datasets from real CCPP raw data by default.
 industrial-datasets:
-	$(PYTHON) scripts/download_industrial_datasets.py --source synthetic
+	$(PYTHON) scripts/download_industrial_datasets.py --source ccpp
 
-# Download Healthcare datasets (BIDMC or synthetic)
+# Build Healthcare datasets from the real BIDMC corpus by default.
 healthcare-datasets:
-	$(PYTHON) scripts/download_healthcare_datasets.py --source synthetic
+	$(PYTHON) scripts/download_healthcare_datasets.py --source bidmc
 
-# Download Aerospace synthetic (no real dataset yet)
+# Build Aerospace datasets from the real NASA C-MAPSS corpora by default.
 aerospace-datasets:
 	$(PYTHON) scripts/download_aerospace_datasets.py
 
 # Download all multi-domain datasets (AV + Industrial + Healthcare + Aerospace).
-# Navigation remains opt-in because it requires external KITTI raw data.
+# Navigation remains opt-in because KITTI raw data must be staged locally first.
 multi-domain-datasets: av-datasets industrial-datasets healthcare-datasets aerospace-datasets
+
+# Verify disk, tooling, and repo-local raw-data readiness for all-domain real-data work.
+real-data-preflight:
+	$(PYTHON) scripts/verify_real_data_preflight.py
+
+# Refresh lightweight provenance manifests without rebuilding datasets.
+refresh-real-data-manifests:
+	$(PYTHON) scripts/refresh_real_data_manifests.py
 
 # Build features for all multi-domain datasets (run after multi-domain-datasets)
 multi-domain-build:

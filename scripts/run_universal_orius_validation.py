@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Unified universal ORIUS validation over the canonical tier ladder.
+"""Unified universal ORIUS validation over the canonical bounded-universal ladder.
 
 Tier model
 ----------
 battery        : reference row (locked theorem/economics witness)
-industrial     : proof_validated target
-healthcare     : proof_validated target
-vehicle        : proof_candidate
+industrial     : defended bounded row
+healthcare     : defended bounded row
+vehicle        : defended bounded row
 navigation     : shadow_synthetic
 aerospace      : experimental
 
@@ -27,7 +27,7 @@ Outputs
 - reports/universal_orius_validation/domain_validation_summary.csv
 
 Exit 0 only when harness completes without errors AND every defended domain
-(industrial + healthcare) passes the strong evidence gate.
+(industrial + healthcare + vehicle) passes the strong evidence gate.
 
 Usage:
     python scripts/run_universal_orius_validation.py [--seeds 3] [--horizon 48] \\
@@ -88,8 +88,8 @@ CONTROLLERS = [
 
 REFERENCE_DOMAIN = "battery"
 PROOF_DOMAIN = "vehicle"
-DEFENDED_DOMAINS: list[str] = ["industrial", "healthcare"]
-PROOF_CANDIDATE_DOMAINS: list[str] = ["vehicle"]
+DEFENDED_DOMAINS: list[str] = ["industrial", "healthcare", "vehicle"]
+PROOF_CANDIDATE_DOMAINS: list[str] = []
 SHADOW_SYNTHETIC_DOMAINS: list[str] = ["navigation"]
 EXPERIMENTAL_DOMAINS: list[str] = ["aerospace"]
 PROOF_DOMAINS: list[str] = DEFENDED_DOMAINS + PROOF_CANDIDATE_DOMAINS
@@ -100,9 +100,18 @@ DOMAIN_MATURITY: dict[str, str] = {
     "battery": "reference",
     "industrial": "proof_validated",
     "healthcare": "proof_validated",
-    "vehicle": "proof_candidate",
+    "vehicle": "proof_validated",
     "navigation": "shadow_synthetic",
     "aerospace": "experimental",
+}
+
+CLOSURE_TARGET_TIER: dict[str, str] = {
+    "battery": "witness_row",
+    "industrial": "defended_bounded_row",
+    "healthcare": "defended_bounded_row",
+    "vehicle": "defended_bounded_row",
+    "navigation": "defended_bounded_row",
+    "aerospace": "defended_bounded_row",
 }
 
 # Evidence-gate thresholds for the proof domain
@@ -230,6 +239,42 @@ def _domain_validation_status(
     if maturity_label == "experimental":
         return "experimental"
     return "portability_only"
+
+
+def _closure_target_ready(
+    domain: str,
+    validation_status: str,
+    portability_pass: bool,
+) -> bool:
+    if domain == REFERENCE_DOMAIN:
+        return True
+    if domain in DEFENDED_DOMAINS:
+        return validation_status == "proof_validated"
+    if domain in SHADOW_SYNTHETIC_DOMAINS or domain in EXPERIMENTAL_DOMAINS:
+        return portability_pass and validation_status == "proof_validated"
+    return False
+
+
+def _closure_blocker(
+    domain: str,
+    validation_status: str,
+    proof_report: Mapping[str, Any] | None,
+    portability_report: Mapping[str, Any] | None,
+) -> str:
+    if domain == REFERENCE_DOMAIN:
+        return ""
+    if validation_status == "proof_validated":
+        return ""
+    if domain == "navigation":
+        return "navigation_real_data_row_missing"
+    if domain == "aerospace":
+        return "real_multi_flight_safety_task_missing"
+    reasons = []
+    if proof_report:
+        reasons.extend(str(item) for item in proof_report.get("failure_reasons", []))
+    if portability_report:
+        reasons.extend(str(item) for item in portability_report.get("failure_reasons", []))
+    return reasons[0] if reasons else "promotion_gate_open"
 
 
 # ---------------------------------------------------------------------------
@@ -654,6 +699,14 @@ def main() -> int:
             "domain":                domain,
             "maturity_label":        maturity_label,
             "validation_status":     val_status,
+            "closure_target_tier":   CLOSURE_TARGET_TIER.get(domain, "defended_bounded_row"),
+            "closure_target_ready":  _closure_target_ready(domain, val_status, bool(pv_pass)),
+            "closure_blocker":       _closure_blocker(
+                domain,
+                val_status,
+                domain_proof_reports.get(domain),
+                portability_reports.get(domain),
+            ),
             "harness_status":        summary["harness_status"],
             "baseline_tsvr_mean":    f"{nom_mean:.4f}",
             "baseline_tsvr_std":     f"{nom_std:.4f}",
@@ -769,9 +822,16 @@ def main() -> int:
         "proof_candidate_domains":        PROOF_CANDIDATE_DOMAINS,
         "shadow_synthetic_domains":       SHADOW_SYNTHETIC_DOMAINS,
         "domain_maturity":                DOMAIN_MATURITY,
+        "closure_target_tier":            CLOSURE_TARGET_TIER,
         "validated_domains":              validated_domains,
         "portability_validated_domains":  portability_validated_confirmed,
         "experimental_domains":           EXPERIMENTAL_DOMAINS,
+        "bounded_universal_target_domains": [
+            domain for domain, tier in CLOSURE_TARGET_TIER.items() if tier == "defended_bounded_row"
+        ],
+        "bounded_universal_target_ready": all(
+            bool(row["closure_target_ready"]) for row in domain_rows
+        ),
         "portability_only_domains":       [d for d, lbl in DOMAIN_MATURITY.items() if lbl == "portability_only"],
         "domain_results":                 domain_rows,
         "domain_proof_reports":           domain_proof_reports,

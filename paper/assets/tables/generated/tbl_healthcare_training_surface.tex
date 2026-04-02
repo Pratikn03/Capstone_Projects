@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Medical and Healthcare Monitoring training and data surface for the compiled chapter evidence block.}
+\label{tab:healthcare-training-surface}
+\begin{tabular}{p{0.31\linewidth}p{0.61\linewidth}}
+\toprule
+\textbf{Field} & \textbf{Value}\\
+\midrule
+Raw/data gate & verified\\
+Features present & yes\\
+Split counts & train 319 / calibration 22 / validation 45 / test 71\\
+Primary target & hr\_bpm\\
+Forecast metrics & RMSE 0.764; MAE 0.623; PICP90 0.930; mean width 3.103\\
+Verification state & split valid yes; model bundle yes; uncertainty yes; backtests yes\\
+Artifact lineage & reports/orius\_framework\_proof/training\_audit/domain\_training\_summary.csv; reports/publication/orius\_equal\_domain\_parity\_matrix.csv\\
+\bottomrule
+\end{tabular}
+\end{table}

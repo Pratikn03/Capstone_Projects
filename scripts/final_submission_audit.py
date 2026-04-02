@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -37,6 +38,16 @@ def _scan_terms(path: Path, banned: list[str]) -> list[str]:
     return [term for term in banned if term in text]
 
 
+def _aggregate_monograph_text() -> str:
+    chunks: list[str] = []
+    roots = [REPO_ROOT / "paper" / "paper.tex"]
+    roots.extend(sorted((REPO_ROOT / "paper" / "monograph").glob("*.tex")))
+    for path in roots:
+        if path.exists():
+            chunks.append(path.read_text(encoding="utf-8"))
+    return "\n".join(chunks)
+
+
 def _run_claim_validator() -> tuple[bool, str]:
     proc = subprocess.run(
         [sys.executable, "scripts/validate_paper_claims.py"],
@@ -58,6 +69,7 @@ def _build_checks() -> list[CheckResult]:
     release_manifest = _load_json(REPO_ROOT / "reports" / "publication" / "release_manifest.json")
     artifact_appendix = (REPO_ROOT / "reports" / "publication" / "orius_artifact_appendix.md").read_text(encoding="utf-8")
     paper_tex = (REPO_ROOT / "paper" / "paper.tex").read_text(encoding="utf-8")
+    monograph_text = _aggregate_monograph_text()
 
     checks: list[CheckResult] = []
 
@@ -127,17 +139,17 @@ def _build_checks() -> list[CheckResult]:
     )
 
     tier_phrases = [
-        "Battery remains the reference witness",
-        "industrial and healthcare are proof-validated",
-        "autonomous vehicles remains proof-candidate",
-        "navigation remains shadow-synthetic",
-        "aerospace remains experimental",
+        "battery as the deepest reference row",
+        "industrial process control, and healthcare monitoring",
+        "Autonomous vehicles are proof-validated within the bounded TTC plus predictive-entry-barrier contract",
+        "Navigation remains shadow-synthetic",
+        "Aerospace remains experimental",
     ]
-    missing_tiers = [phrase for phrase in tier_phrases if phrase not in paper_tex]
+    missing_tiers = [phrase for phrase in tier_phrases if phrase not in monograph_text]
     appendix_tiers = [
         "- Battery: reference witness",
         "- Industrial and healthcare: proof-validated",
-        "- AV: proof-candidate",
+        "- AV: proof-validated under the bounded TTC contract",
         "- Navigation: shadow-synthetic",
         "- Aerospace: experimental",
     ]
@@ -149,6 +161,33 @@ def _build_checks() -> list[CheckResult]:
             "manuscript and artifact appendix use the same evidence-tier labels"
             if not missing_tiers and not missing_appendix_tiers
             else f"missing manuscript tiers={missing_tiers}, missing appendix tiers={missing_appendix_tiers}",
+        )
+    )
+
+    bibliography_path = REPO_ROOT / "paper" / "bibliography" / "orius_monograph.bib"
+    bib_entries = 0
+    if bibliography_path.exists():
+        bib_entries = sum(1 for line in bibliography_path.read_text(encoding="utf-8").splitlines() if line.startswith("@"))
+    checks.append(
+        CheckResult(
+            "Bibliography depth",
+            bib_entries >= 150,
+            f"monograph bibliography contains {bib_entries} entries",
+        )
+    )
+
+    legacy_root = "Pa" + "per"
+    legacy_program_pattern = re.compile(
+        legacy_root + r"(?:~|\s)?(?:1|2|3|4|5|6)\b"
+    )
+    lingering_program_refs = sorted(set(legacy_program_pattern.findall(monograph_text)))
+    checks.append(
+        CheckResult(
+            "No active legacy paper-lineage framing",
+            not lingering_program_refs,
+            "active monograph surface contains no legacy paper-lineage framing"
+            if not lingering_program_refs
+            else f"active monograph still contains legacy program terms: {lingering_program_refs}",
         )
     )
 

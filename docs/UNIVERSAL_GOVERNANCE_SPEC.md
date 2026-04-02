@@ -11,8 +11,10 @@ tracked artifact boundary used by the thesis package.
 - canonical metric lock: `paper/metrics_manifest.json`
 - canonical claim register: `paper/claim_matrix.csv`
 
-No thesis-facing claim should depend on ignored local caches such as
-`data/dashboard/*`.
+No thesis-facing claim should depend on ignored local caches or dashboard-era
+JSON snapshots. The canonical data identity surface is the tracked manifest at
+`paper/assets/data/data_manifest.json` plus the backend-served research
+artifact endpoints.
 
 ## CertOS policy surface
 

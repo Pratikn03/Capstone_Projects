@@ -1,0 +1,77 @@
+{
+  "figures": [
+    {
+      "name": "architecture",
+      "selected": "reports/figures/architecture.png",
+      "ready": true,
+      "candidates": [
+        "reports/figures/architecture.png",
+        "paper/assets/figures/fig01_architecture.png",
+        "reports/publication/figures/fig01_geographic_scope.png"
+      ]
+    },
+    {
+      "name": "dc3s_runtime_flow",
+      "selected": "reports/publication/figures/fig11_dispatch_comparison.png",
+      "ready": true,
+      "candidates": [
+        "reports/publication/figures/fig11_dispatch_comparison.png",
+        "reports/figures/dispatch_compare.png"
+      ]
+    },
+    {
+      "name": "region_dataset_cards",
+      "selected": "reports/publication/fig_region_dataset_cards.png",
+      "ready": true,
+      "candidates": [
+        "reports/publication/fig_region_dataset_cards.png"
+      ]
+    },
+    {
+      "name": "calibration_tradeoff",
+      "selected": "reports/publication/fig_calibration_tradeoff.png",
+      "ready": true,
+      "candidates": [
+        "reports/publication/fig_calibration_tradeoff.png"
+      ]
+    },
+    {
+      "name": "fault_violation_rate_sweep",
+      "selected": "reports/publication/fig_true_soc_violation_vs_dropout.png",
+      "ready": true,
+      "candidates": [
+        "reports/publication/fig_true_soc_violation_vs_dropout.png"
+      ]
+    },
+    {
+      "name": "fault_severity_sweep",
+      "selected": "reports/publication/fig_true_soc_severity_p95_vs_dropout.png",
+      "ready": true,
+      "candidates": [
+        "reports/publication/fig_true_soc_severity_p95_vs_dropout.png"
+      ]
+    },
+    {
+      "name": "cost_safety_frontier",
+      "selected": "reports/publication/fig_cost_safety_pareto.png",
+      "ready": true,
+      "candidates": [
+        "reports/publication/fig_cost_safety_pareto.png"
+      ]
+    },
+    {
+      "name": "transfer_generalization",
+      "selected": "reports/publication/fig_transfer_generalization.png",
+      "ready": true,
+      "candidates": [
+        "reports/publication/fig_transfer_generalization.png",
+        "reports/publication/fig_transfer_coverage.png"
+      ]
+    }
+  ],
+  "summary": {
+    "required_total": 8,
+    "ready_total": 8,
+    "ready": true
+  }
+}

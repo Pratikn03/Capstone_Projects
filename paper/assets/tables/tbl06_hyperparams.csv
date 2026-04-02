@@ -10,9 +10,9 @@ train_forecast_us,cross_validation.gap,24,configs/train_forecast_eia930.yaml
 dc3s_rac,sensitivity_probe,heuristic,configs/dc3s.yaml
 dc3s_rac,sens_eps_mw,25.0,configs/dc3s.yaml
 dc3s_rac,sens_norm_ref,0.5,configs/dc3s.yaml
-dc3s_rac,beta_reliability,0.7,configs/dc3s.yaml
-dc3s_rac,beta_sensitivity,0.5,configs/dc3s.yaml
-dc3s_rac,k_sensitivity,0.4,configs/dc3s.yaml
+dc3s_rac,beta_reliability,0.5,configs/dc3s.yaml
+dc3s_rac,beta_sensitivity,0.3,configs/dc3s.yaml
+dc3s_rac,k_sensitivity,0.05,configs/dc3s.yaml
 regime_cqr,enabled,True,configs/uncertainty.yaml
 regime_cqr,n_bins,3,configs/uncertainty.yaml
 regime_cqr,vol_window,24,configs/uncertainty.yaml

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Paper 5: Run multi-agent transformer-capacity scenario.
+"""Run the bounded-composition transformer-capacity scenario.
 
 Non-composition counterexample: two batteries, shared feeder limit.
 Outputs CSV and summary to reports/publication/.
@@ -27,7 +27,7 @@ def main() -> None:
         out_dir=out_dir,
     )
 
-    print("Multi-agent transformer-capacity scenario (Paper 5)")
+    print("Multi-agent transformer-capacity scenario (bounded composition)")
     print("-" * 50)
     for name, r in results.items():
         print(f"  {name:12s}: joint_viol={r['joint_violations']:3d} "

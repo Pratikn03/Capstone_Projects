@@ -1186,7 +1186,7 @@ def main():
     if not features_path.exists():
         raise FileNotFoundError(f"Missing {features_path}. Run build_features first.")
     validation_report_path = Path(args.validation_report or "reports/data_quality_report_features.md")
-    data_manifest_output = Path(args.data_manifest_output or "data/dashboard/data_manifest.json")
+    data_manifest_output = Path(args.data_manifest_output or "paper/assets/data/data_manifest.json")
     task_cfg = cfg.get("task", {}) or {}
     targets = task_cfg.get("targets", [])
     targets = [str(t).strip() for t in targets] if isinstance(targets, list) else []

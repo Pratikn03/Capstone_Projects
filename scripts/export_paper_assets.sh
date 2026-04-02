@@ -132,9 +132,10 @@ with out.open('w', newline='', encoding='utf-8') as f:
 PY
 
 # Data snapshots
-copy_first_available "paper/assets/data/data_manifest.json" \
-  "data/dashboard/manifest.json" \
-  "paper/metrics_manifest.json"
+if [[ ! -f "paper/assets/data/data_manifest.json" ]]; then
+  copy_first_available "paper/assets/data/data_manifest.json" \
+    "paper/metrics_manifest.json"
+fi
 copy_or_die "reports/publication/stats_summary.json" "paper/assets/data/metrics_snapshot.json"
 copy_or_die "paper/claim_matrix.csv" "paper/assets/data/claim_matrix.csv"
 copy_or_die "reports/publication/conference_figure_inventory.json" "paper/assets/data/conference_figure_inventory.json"

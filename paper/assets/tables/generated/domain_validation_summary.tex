@@ -1,0 +1,23 @@
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption{Tiered validation status across the six runtime domains: reference, proof-validated, proof-candidate, shadow-synthetic, and experimental.}
+\label{tab:TBL10_DOMAIN_VALIDATION_STATUS}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.96}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llllrrrrrl}
+\toprule
+domain & maturity\_label & validation\_status & harness\_status & baseline\_tsvr\_mean & baseline\_tsvr\_std & orius\_tsvr\_mean & orius\_tsvr\_std & orius\_reduction\_pct & evidence\_pass \\
+\midrule
+battery & reference & reference\_validated & pass & 0.750000 & 0.000000 & 0.875000 & 0.000000 & -16.700000 & --- \\
+navigation & shadow\_synthetic & shadow\_synthetic & pass & 0.666700 & 0.000000 & 0.000000 & 0.000000 & 100.000000 & True \\
+industrial & proof\_validated & proof\_validated & pass & 1.000000 & 0.000000 & 0.000000 & 0.000000 & 100.000000 & True \\
+healthcare & proof\_validated & proof\_validated & pass & 1.000000 & 0.000000 & 0.583300 & 0.000000 & 41.700000 & True \\
+aerospace & experimental & experimental & pass & 1.000000 & 0.000000 & 0.000000 & 0.000000 & 100.000000 & True \\
+vehicle & proof\_candidate & proof\_candidate & pass & 0.083300 & 0.000000 & 0.000000 & 0.000000 & 100.000000 & True \\
+\bottomrule
+\end{tabular}
+
+}
+\end{table}

@@ -1,0 +1,44 @@
+\chapter{Related Work, Method Families, and the Gap ORIUS Addresses}
+\label{ch:related-work-universal}
+\section{{Conformal and distribution-free uncertainty}}
+Distribution-free predictive inference provides one of the few practical ways to place
+finite-sample uncertainty guards around learned models without assuming a perfectly
+specified parametric error law \cite{vovk2005algorithmic,lei2018distribution,romano2019conformalized,gibbs2021adaptive,angelopoulos2023gentle,barber2023beyond,zaffran2022adaptive,stankeviciute2021conformal,xu2021dynamic,sesia2021comparison,bates2021distribution}.  ORIUS adopts this family not because
+conformal prediction alone solves runtime safety, but because it supplies a principled
+outer shell around the unobserved state.  The gap ORIUS addresses here is the missing
+runtime bridge between nominal predictive coverage and actuation legality under degraded
+telemetry.
+
+\section{{Runtime assurance, supervisory safety, and shields}}
+Runtime assurance and shielding treat safety as a supervisory execution discipline rather
+than a property delegated to the nominal controller \cite{sha2001using,sha1998simplex,desai2019soter,bloem2015shield,bartocci2018introduction,havelund2004runtime,leucker2009brief,schierman2015run,bak2011runtime}.  Simplex-style
+architectures, runtime monitors, and shield synthesis all contribute the idea that
+proposed actions may be intercepted, replaced, or downgraded at runtime.  The gap ORIUS
+addresses here is that most runtime assurance architectures do not explicitly center
+\emph{observation degradation} as the mechanism that makes action legality uncertain in
+the first place.
+
+\section{{Safety filters, barrier methods, and robust control}}
+Control barrier functions, robust MPC, reachable sets, predictive safety filters, and
+constrained control all provide machinery for turning uncertainty into admissible action
+sets \cite{ames2019control,ames2014cbf,wabersich2021predictive,nguyen2016exponential,wang2017safety,fisac2019general,mayne2005robust,langson2004tubes,rawlings2017mpc,ben2009robust,camacho2013model}.  The gap ORIUS addresses here is the missing typed interface
+between telemetry reliability, uncertainty inflation, and a cross-domain repair contract
+that can be audited and reused across multiple physical AI stacks.
+
+\section{{Drift, anomaly detection, and cyber-physical degradation}}
+Change detection, anomaly detection, CPS security, and fault diagnosis provide the
+language needed to recognize when the observation channel is no longer trustworthy
+\cite{rajkumar2010cps,derler2012modeling,baheti2011cyberphysical,pasqualetti2013attack,teixeira2015secure,basseville1993detection,page1954continuous,page1955test,hinkley1971inference,liu2008isolation,breunig2000lof}.  ORIUS depends on that language, but departs from it by treating degraded
+observation not only as a detection problem but as an \emph{action semantics} problem:
+once trust in the observation is degraded, admissible action sets must change.
+
+\section{{Applied domain literatures}}
+The applied rows of the book draw from multiple domain literatures rather than from a
+single benchmark tradition.  Energy and smart-grid control literature motivates the
+reference witness; autonomous-vehicle and robotics literature motivates the need for
+runtime repair under perception uncertainty; industrial process-control literature
+provides real operational envelope constraints; healthcare monitoring shows how degraded
+observation can suppress necessary intervention; and navigation and aerospace show where
+the present closure boundary still ends.  These families collectively justify a universal
+framing, but they also explain why ORIUS must keep evidence tiers explicit instead of
+claiming parity by analogy alone.

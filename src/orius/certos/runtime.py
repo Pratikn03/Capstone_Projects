@@ -1,4 +1,4 @@
-"""CertOS runtime orchestrator (Paper 6).
+"""CertOS runtime orchestrator for the ORIUS governance layer.
 
 High-level loop that combines all nine CertOS engines into a single
 step-by-step runtime. Enforces the three CertOS invariants:
@@ -113,7 +113,7 @@ class DomainGovernancePolicy:
 
 
 class CertOSRuntime:
-    """Paper 6 runtime: orchestrates the full CertOS lifecycle."""
+    """Runtime orchestrator for the full CertOS lifecycle."""
 
     def __init__(
         self,

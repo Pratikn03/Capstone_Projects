@@ -1,7 +1,7 @@
-domain,maturity_label,validation_status,harness_status,baseline_tsvr_mean,baseline_tsvr_std,orius_tsvr_mean,orius_tsvr_std,orius_reduction_pct,evidence_pass
-battery,reference,reference_validated,pass,0.7500,0.0000,0.8750,0.0000,-16.7,
-navigation,shadow_synthetic,shadow_synthetic,pass,0.6667,0.0000,0.0000,0.0000,100.0,true
-industrial,proof_validated,proof_validated,pass,1.0000,0.0000,0.0000,0.0000,100.0,true
-healthcare,proof_validated,proof_validated,pass,1.0000,0.0000,0.5833,0.0000,41.7,true
-aerospace,experimental,experimental,pass,1.0000,0.0000,0.0000,0.0000,100.0,true
-vehicle,proof_candidate,proof_candidate,pass,0.0833,0.0000,0.0000,0.0000,100.0,true
+domain,maturity_label,validation_status,closure_target_tier,closure_target_ready,closure_blocker,harness_status,baseline_tsvr_mean,baseline_tsvr_std,orius_tsvr_mean,orius_tsvr_std,orius_reduction_pct,evidence_pass
+battery,reference,reference_validated,witness_row,True,,pass,0.7500,0.0000,0.8750,0.0000,-16.7,
+navigation,shadow_synthetic,shadow_synthetic,defended_bounded_row,False,navigation_real_data_row_missing,pass,0.6667,0.0000,0.2500,0.0000,62.5,true
+industrial,proof_validated,proof_validated,defended_bounded_row,True,,pass,1.0000,0.0000,0.0000,0.0000,100.0,true
+healthcare,proof_validated,proof_validated,defended_bounded_row,True,,pass,1.0000,0.0000,0.5833,0.0000,41.7,true
+aerospace,experimental,experimental,defended_bounded_row,False,real_multi_flight_safety_task_missing,pass,1.0000,0.0000,0.0000,0.0000,100.0,true
+vehicle,proof_validated,proof_validated,defended_bounded_row,True,,pass,0.0833,0.0000,0.0000,0.0000,100.0,true

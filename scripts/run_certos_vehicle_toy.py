@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CertOS toy second-domain demo (Paper 6 Step 6.4).
+"""CertOS toy second-domain demo for runtime-governance portability.
 
 Runs CertOSRuntime with vehicle-shaped actions to demonstrate
 CertOS works with a peer domain (vehicle). Outputs certos_vehicle_toy.json.

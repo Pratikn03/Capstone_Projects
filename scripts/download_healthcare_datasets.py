@@ -2,13 +2,13 @@
 """Download and convert Healthcare vital-signs datasets for ORIUS multi-domain validation.
 
 Best datasets for vital signs monitoring (HR, SpO2, respiratory rate):
-- BIDMC: PhysioNet PPG and Respiration (53 recordings, 1 Hz numerics)
-- Synthetic: Generated vital signs for immediate use
+- BIDMC: PhysioNet PPG and Respiration (53 recordings, full CSV corpus)
+- Synthetic: Generated vital signs for immediate use, opt-in only
 
 Output: data/healthcare/processed/ in ORIUS format (patient_id, step, hr_bpm, spo2_pct, respiratory_rate, ts_utc).
 
 Usage:
-  python scripts/download_healthcare_datasets.py --source bidmc   # PhysioNet BIDMC (requires wfdb)
+  python scripts/download_healthcare_datasets.py --source bidmc
   python scripts/download_healthcare_datasets.py --source synthetic  # Generate synthetic (no download)
   python scripts/download_healthcare_datasets.py --convert path/to/numerics.csv  # Convert existing CSV
 """
@@ -19,12 +19,23 @@ import csv
 from pathlib import Path
 from urllib.request import urlopen
 
+from orius.data_pipeline.real_data_contract import (
+    ResolvedRawSource,
+    build_provenance_manifest,
+    summarize_csv_output,
+    summarize_files,
+    write_json,
+)
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = REPO_ROOT / "data" / "healthcare"
 RAW_DIR = DATA_DIR / "raw"
 PROCESSED_DIR = DATA_DIR / "processed"
+PROVENANCE_PATH = RAW_DIR / "bidmc_provenance.json"
 
 BIDMC_BASE = "https://physionet.org/files/bidmc/1.0.0/bidmc_csv/"
+BIDMC_PATIENT_IDS = range(1, 54)
+BIDMC_FILE_SUFFIXES = ("Numerics", "Signals", "Breaths")
 
 
 def ensure_dirs() -> None:
@@ -33,25 +44,46 @@ def ensure_dirs() -> None:
 
 
 def _local_bidmc_csv_files() -> list[Path]:
-    return sorted((RAW_DIR / "bidmc").glob("bidmc_*_Numerics.csv"))
+    preferred = RAW_DIR / "bidmc_csv"
+    legacy = RAW_DIR / "bidmc"
+    if preferred.exists():
+        return sorted(preferred.glob("bidmc_*_Numerics.csv"))
+    return sorted(legacy.glob("bidmc_*_Numerics.csv"))
+
+def _row_summary_path(out_path: Path) -> Path:
+    return out_path.parent / f"{out_path.stem}_row_summary.json"
 
 
-def download_bidmc_numerics() -> Path | None:
-    """Download BIDMC Numerics CSVs from PhysioNet (first 5 recordings)."""
-    bidmc_dir = RAW_DIR / "bidmc"
+def _bidmc_raw_source() -> ResolvedRawSource:
+    preferred = RAW_DIR / "bidmc_csv"
+    legacy = RAW_DIR / "bidmc"
+    root = preferred if preferred.exists() else legacy
+    return ResolvedRawSource(path=root, source_kind="repo_local", checked_locations=(str(root),))
+
+
+def download_bidmc_full(*, include_signals: bool = True, include_breaths: bool = True) -> Path | None:
+    """Download the full BIDMC CSV corpus from PhysioNet."""
+    bidmc_dir = RAW_DIR / "bidmc_csv"
     bidmc_dir.mkdir(parents=True, exist_ok=True)
     fetched = []
-    for i in range(1, 6):
-        fname = f"bidmc_{i:02d}_Numerics.csv"
-        url = f"{BIDMC_BASE}{fname}"
-        try:
-            with urlopen(url, timeout=30) as resp:
-                data = resp.read().decode("utf-8")
-            out_path = bidmc_dir / fname
-            out_path.write_text(data, encoding="utf-8")
-            fetched.append(out_path)
-        except Exception as e:
-            print(f"BIDMC {fname} failed: {e}")
+    suffixes = ["Numerics"]
+    if include_signals:
+        suffixes.append("Signals")
+    if include_breaths:
+        suffixes.append("Breaths")
+
+    for patient_id in BIDMC_PATIENT_IDS:
+        for suffix in suffixes:
+            fname = f"bidmc_{patient_id:02d}_{suffix}.csv"
+            url = f"{BIDMC_BASE}{fname}"
+            try:
+                with urlopen(url, timeout=30) as resp:
+                    data = resp.read().decode("utf-8")
+                out_path = bidmc_dir / fname
+                out_path.write_text(data, encoding="utf-8")
+                fetched.append(out_path)
+            except Exception as exc:
+                print(f"BIDMC {fname} failed: {exc}")
     return bidmc_dir if fetched else None
 
 
@@ -88,6 +120,7 @@ def convert_bidmc_to_orius(csv_path: Path, out_path: Path) -> Path:
     out_cols = [c for c in out_cols if c in out.columns]
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out[out_cols].to_csv(out_path, index=False)
+    write_json(_row_summary_path(out_path), summarize_csv_output(out_path))
     print(f"Converted -> {out_path} ({len(out)} rows)")
     return out_path
 
@@ -124,6 +157,34 @@ def convert_bidmc_dir_to_orius(csv_files: list[Path], out_path: Path) -> Path:
     out_cols = [c for c in out_cols if c in out.columns]
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out[out_cols].to_csv(out_path, index=False)
+    output_summary = summarize_csv_output(out_path)
+    write_json(_row_summary_path(out_path), output_summary)
+    raw_source = _bidmc_raw_source()
+    patient_ids = sorted({path.stem.split("_")[1] for path in csv_files if "_" in path.stem})
+    manifest = build_provenance_manifest(
+        domain="healthcare",
+        dataset_key="bidmc",
+        provider="PhysioNet BIDMC PPG and Respiration Dataset",
+        version="1.0.0",
+        raw_source=raw_source,
+        processed_output=out_path,
+        output_summary=output_summary,
+        raw_inventory=summarize_files(raw_source.path),
+        source_urls=["https://physionet.org/content/bidmc/1.0.0/"],
+        license_notes="Follow PhysioNet credential and citation requirements.",
+        access_notes="Repo-local raw layout is canonical for healthcare. Full CSV corpus is expected for real-data mode.",
+        canonical_source=True,
+        used_fallback=False,
+        notes=[
+            "healthcare_orius.csv is built from the BIDMC numerics files",
+            "signals and breaths files are retained as companion raw evidence when present",
+        ],
+        extras={
+            "patient_count": len(patient_ids),
+            "patients": patient_ids,
+        },
+    )
+    write_json(PROVENANCE_PATH, manifest)
     print(f"Converted -> {out_path} ({len(out)} rows)")
     return out_path
 
@@ -154,15 +215,48 @@ def generate_synthetic_vital_signs(out_path: Path, n_patients: int = 10, steps_p
         w = csv.DictWriter(f, fieldnames=["patient_id", "step", "hr_bpm", "spo2_pct", "respiratory_rate", "ts_utc"])
         w.writeheader()
         w.writerows(rows)
+    output_summary = summarize_csv_output(out_path)
+    write_json(_row_summary_path(out_path), output_summary)
+    write_json(
+        RAW_DIR / "synthetic_provenance.json",
+        {
+            "generated_at_utc": output_summary["generated_at_utc"],
+            "domain": "healthcare",
+            "dataset_key": "synthetic",
+            "provider": "generated",
+            "version": "seed-42",
+            "source_kind": "synthetic",
+            "processed_output": str(out_path),
+            "canonical_source": False,
+            "used_fallback": True,
+            "output_summary": output_summary,
+            "notes": [
+                "synthetic healthcare output is opt-in only",
+                "synthetic healthcare output is not eligible for strict all-domain real-data closure",
+            ],
+        },
+    )
     print(f"Synthetic vital signs -> {out_path} ({len(rows)} rows)")
     return out_path
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Download Healthcare datasets for ORIUS")
-    parser.add_argument("--source", choices=["bidmc", "synthetic"], default="synthetic", help="Dataset source")
+    parser.add_argument("--source", choices=["bidmc", "synthetic"], default="bidmc", help="Dataset source")
     parser.add_argument("--convert", type=Path, help="Convert existing BIDMC-format CSV to ORIUS format")
     parser.add_argument("--out", type=Path, default=PROCESSED_DIR / "healthcare_orius.csv", help="Output path")
+    parser.add_argument(
+        "--download-signals",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Download BIDMC Signals CSV files alongside Numerics",
+    )
+    parser.add_argument(
+        "--download-breaths",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Download BIDMC Breaths CSV files alongside Numerics",
+    )
     args = parser.parse_args()
     ensure_dirs()
 
@@ -179,15 +273,17 @@ def main() -> int:
         if csv_files:
             convert_bidmc_dir_to_orius(csv_files, args.out)
             return 0
-        bidmc_dir = download_bidmc_numerics()
+        bidmc_dir = download_bidmc_full(
+            include_signals=args.download_signals,
+            include_breaths=args.download_breaths,
+        )
         if bidmc_dir:
             csv_files = sorted(bidmc_dir.glob("bidmc_*_Numerics.csv"))
             if csv_files:
                 convert_bidmc_dir_to_orius(csv_files, args.out)
                 return 0
-        print("Falling back to synthetic. Run with --source synthetic for immediate use.")
-        generate_synthetic_vital_signs(args.out)
-        return 0
+        print("Unable to build BIDMC healthcare surface. Download or place the full BIDMC CSV corpus under data/healthcare/raw/bidmc_csv/.")
+        return 1
 
     return 0
 

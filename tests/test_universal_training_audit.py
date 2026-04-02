@@ -1,4 +1,4 @@
-"""Regression tests for the non-battery training audit."""
+"""Regression tests for the canonical-domain training audit."""
 from __future__ import annotations
 
 import json
@@ -20,18 +20,26 @@ def test_universal_training_audit_reports_verified_domains(tmp_path: Path) -> No
             str(tmp_path),
         ],
         cwd=REPO_ROOT,
-        check=True,
+        check=False,
         capture_output=True,
         text=True,
     )
     assert "Universal Training Audit" in run.stdout
+    assert run.returncode == 1
 
     report = json.loads((tmp_path / "training_audit_report.json").read_text())
-    assert report["all_passed"] is True
-    assert report["training_verified_domains"] == ["av", "industrial", "healthcare", "aerospace"]
+    assert report["domains"] == ["battery", "av", "industrial", "healthcare", "navigation", "aerospace"]
+    assert report["all_passed"] is False
+    assert "battery" in report["failed_domains"]
+    assert "navigation" in report["failed_domains"]
+    assert "av" in report["real_data_gap_domains"]
+    assert "navigation" in report["real_data_gap_domains"]
+    assert "real_data_backed_domains" in report
+    assert "training_surface_closed_domains" in report
 
     summary_csv = (tmp_path / "domain_training_summary.csv").read_text()
+    assert "battery" in summary_csv
+    assert "navigation" in summary_csv
     assert "industrial" in summary_csv
     assert "healthcare" in summary_csv
     assert "aerospace" in summary_csv
-

@@ -1,0 +1,20 @@
+\begin{table*}[htbp]
+\centering
+\scriptsize
+\caption{Deployment validation scope for the ORIUS 93+ closure program. The table distinguishes defended replay, rehearsal, proxy, and explicitly out-of-scope surfaces so deployment language cannot outrun the tracked artifacts.}
+\label{tab:orius-deployment-validation-scope}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}}
+\toprule
+\textbf{Deployment surface} & \textbf{Governing artifact} & \textbf{Scope type} & \textbf{Current status} & \textbf{Bounded manuscript claim} & \textbf{Exact non-claim or gap}\\
+\midrule
+Battery runtime and HIL rehearsal & reports/publication/dc3s\_latency\_summary.csv; reports/hil/hil\_summary.json & rehearsal\_plus\_hil & bounded\_reference & Battery supports the deepest runtime and HIL-like evidence in the book. & This is still not a full external bench or field deployment package.\\
+Battery aging and half-life & reports/aging/asset\_preservation\_proxy\_table.csv; reports/publication/aging\_aware\_calibration\_design.md & proxy\_plus\_design & partial & The book can defend proxy-backed aging and half-life design reasoning. & It does not yet defend a full live aging-validation stack.\\
+Autonomous-vehicle defended replay & reports/universal\_orius\_validation/domain\_closure\_matrix.csv & bounded\_replay & defended\_bounded & AV can claim bounded proof-validated replay under the TTC entry-barrier contract. & It cannot claim full live-stack road deployment or universal AV closure.\\
+Industrial and healthcare defended replay & reports/universal\_orius\_validation/domain\_closure\_matrix.csv & bounded\_replay & defended\_bounded & Industrial and healthcare can claim bounded defended replay plus runtime governance. & They do not claim universal plant-family closure or regulated clinical deployment.\\
+Navigation field telemetry & data/navigation/PLACE\_REAL\_NAVIGATION\_DATA\_HERE.md; reports/publication/orius\_equal\_domain\_parity\_matrix.csv & real\_data\_required & blocked & Navigation remains a portability row only. & Real KITTI-backed train, replay, soundness, and runtime traces are still missing.\\
+Aerospace flight telemetry & data/aerospace/PLACE\_REAL\_AEROSPACE\_DATA\_HERE.md; reports/publication/orius\_equal\_domain\_parity\_matrix.csv & real\_flight\_required & blocked & Aerospace remains an experimental outer-boundary row. & A defended real multi-flight task and replay improvement are still missing.\\
+OOD and adversarial completeness & chapters/ch34\_outside\_current\_evidence.tex; reports/publication/adversarial\_probing\_robustness\_table.csv & explicit\_non\_claim\_register & bounded\_non\_claim & The monograph can discuss bounded active probing and non-claim discipline. & It does not claim universal adversarial completeness or unrestricted OOD safety.\\
+\bottomrule
+\end{tabular}}
+\end{table*}

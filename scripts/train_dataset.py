@@ -171,7 +171,7 @@ def _resolve_run_layout(cfg: DatasetConfig, *, candidate_run: bool, run_id: str 
         reports_dir=REPO_ROOT / cfg.reports_dir,
         publication_dir=REPO_ROOT / "reports" / "publication",
         validation_report=REPO_ROOT / "reports" / f"data_quality_report_{cfg.name.lower()}_features.md",
-        data_manifest_output=REPO_ROOT / "data" / "dashboard" / "data_manifest.json",
+        data_manifest_output=REPO_ROOT / "paper" / "assets" / "data" / "data_manifest.json",
         walk_forward_report=REPO_ROOT / cfg.reports_dir / "walk_forward_report.json",
         selection_output_dir=REPO_ROOT / "reports" / "publish",
     )
@@ -555,7 +555,7 @@ def validate_features_schema(cfg: DatasetConfig, report_path: Path | None = None
 
 def refresh_data_manifest(cfg: DatasetConfig, output_path: Path | None = None) -> bool:
     """Build deterministic data manifest before model training."""
-    manifest_path = output_path or (REPO_ROOT / "data" / "dashboard" / "data_manifest.json")
+    manifest_path = output_path or (REPO_ROOT / "paper" / "assets" / "data" / "data_manifest.json")
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
         PYTHON_BIN,

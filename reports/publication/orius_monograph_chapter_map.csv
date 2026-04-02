@@ -1,0 +1,7 @@
+unit,main_monograph_sections,central_claim,evidence_status,role_in_book
+Battery witness domain,ch08 plus battery evidence block,Battery provides the deepest theorem-to-artifact witness for degraded-observation safety.,witness_row,deepest empirical and formal witness
+Temporal validity layer,ch20 plus blackout and half-life sections,Certificate validity is a temporal runtime object rather than a single-step assumption.,defended_bounded_layer,temporal extension of the universal safety layer
+Graceful fallback layer,ch29 and synthesis references,Fallback quality can be benchmarked and governed rather than treated as an informal emergency path.,defended_bounded_layer,controlled degradation layer
+Universal benchmark discipline,ch07 and battery benchmark block,"Replay, metrics, and latency are shared across domains under one schema.",defended_bounded_layer,evaluation discipline layer
+Shared-constraint composition,ch31 and synthesis references,Local certificates do not automatically compose under shared resources.,defended_bounded_layer,bounded composition layer
+Runtime governance and audit continuity,"ch07, ch32, and appendices","Certificates require lifecycle, fallback, and audit semantics to become operationally meaningful.",defended_bounded_layer,runtime governance layer

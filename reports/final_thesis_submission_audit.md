@@ -6,7 +6,7 @@
 
 **Evidence-first rule:** all promoted numbers must map to tracked artifacts; no submission-facing claims may depend on ignored local caches.
 
-**Generated:** `2026-04-01T21:09:00.333279+00:00`
+**Generated:** `2026-04-02T18:03:58.486101+00:00`
 
 | Check | Status | Details |
 |---|:---:|---|
@@ -17,6 +17,8 @@
 | Acknowledgments wording | PASS | acknowledgments use thesis wording and contain no draft marker |
 | Abstract wording | PASS | abstract uses thesis wording and contains no draft/dissertation drift |
 | Evidence tier consistency | PASS | manuscript and artifact appendix use the same evidence-tier labels |
+| Bibliography depth | PASS | monograph bibliography contains 183 entries |
+| No active legacy paper-lineage framing | PASS | active monograph surface contains no legacy paper-lineage framing |
 | Claim-critical data sources | PASS | claim-critical governance files do not reference ignored dashboard caches |
 | IEEE bibliography style | PASS | canonical manuscript declares IEEE bibliography style |
 | Submission support files | PASS | artifact appendix includes reproducibility and availability notes |

@@ -23,7 +23,7 @@ A battery runtime then faces a concrete policy choice:
 
 \section{Canonical Benchmark Surface}
 
-The canonical Paper~3 artifact family is now anchored to one benchmark:
+The canonical graceful-degradation artifact family is now anchored to one benchmark:
 \texttt{reports/paper3/policy\_compare.csv} records the detailed surface over
 blackout durations of 4, 8, 12, 24, and 48 hours, while
 \texttt{reports/publication/graceful\_four\_policy\_metrics.csv} is the
@@ -85,7 +85,7 @@ surface over blackout duration.
 \caption{Four-policy graceful-degradation benchmark over blackout duration.
   The promoted publication figure is generated from the same canonical
   benchmark surface as \texttt{reports/paper3/policy\_compare.csv}, so the
-  chapter-facing figure and the lower-level Paper~3 artifacts describe the
+  chapter-facing figure and the lower-level graceful-degradation artifacts describe the
   same bounded trade-off.}
 \label{fig:graceful-four-policy}
 \end{figure}
@@ -121,7 +121,7 @@ The current empirical chapter supports a bounded claim:
   \item the repo now contains a canonical four-policy battery benchmark rather
     than a single fallback anecdote,
   \item the promoted publication table now comes from the same benchmark
-    surface as the lower-level Paper~3 artifacts,
+    surface as the lower-level graceful-degradation artifacts,
   \item optimized graceful fallback retains more useful work than both
     immediate shutdown and the simple ramp-down heuristic while preserving
     zero TSVR on the measured blackout surface, and

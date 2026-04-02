@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Paper 6: Fault-performance table under packet drop.
+"""Fault-performance table under packet drop for runtime-governance stress.
 
 Runs DC3S with varying packet drop rates and records TSVR, intervention rate.
 Output: reports/publication/fault_performance_packet_drop.csv

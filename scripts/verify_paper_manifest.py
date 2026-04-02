@@ -9,23 +9,12 @@ from pathlib import Path
 
 import yaml
 
-REQUIRED_SECTIONS_PREFIX = [
-    "Introduction",
-    "Related Work",
-    "Background",
-    "Problem Formulation",
-    "The Observed-State Safety Illusion",
-    "Forecasting and Uncertainty Method",
-    "Safe Dispatch and DC3S Shield",
-    "Experimental Protocol",
-    "Results",
-    "Deep Baseline Diagnosis",
-    "Cross-Region and US Regime Analysis",
-    "Universal Domain Framework",
-    "Governance and Reproducibility",
-    "Discussion and Threats to Validity",
-    "Limitations and Future Work",
-    "Conclusion",
+REQUIRED_PARTS = [
+    "Why Physical AI Needs a Safety Layer",
+    "ORIUS Architecture",
+    "Theory",
+    "Domain Chapters",
+    "Universality, Limits, and Societal Program",
 ]
 
 
@@ -39,23 +28,27 @@ def _collect_tokens(tex: str, pattern: str) -> set[str]:
 
 
 def _check_sections(tex: str, errors: list[str]) -> None:
-    sections: list[str] = []
+    parts: list[str] = []
     for line in tex.splitlines():
         stripped = line.strip()
-        match = re.match(r"\\section\{([^}]+)\}", stripped)
+        match = re.match(r"\\part\{([^}]+)\}", stripped)
         if match:
-            sections.append(match.group(1))
+            parts.append(match.group(1))
 
-    if len(sections) < len(REQUIRED_SECTIONS_PREFIX):
-        errors.append("Top-level section count is lower than required full battery-manuscript structure.")
+    if len(parts) < len(REQUIRED_PARTS):
+        errors.append("Top-level part count is lower than the required ORIUS monograph structure.")
         return
 
-    for got, exp_prefix in zip(sections[: len(REQUIRED_SECTIONS_PREFIX)], REQUIRED_SECTIONS_PREFIX):
-        if not got.startswith(exp_prefix):
+    for got, exp_prefix in zip(parts[: len(REQUIRED_PARTS)], REQUIRED_PARTS):
+        if got != exp_prefix:
             errors.append(
-                f"Top-level section mismatch: expected prefix '{exp_prefix}' but found '{got}'."
+                f"Top-level part mismatch: expected '{exp_prefix}' but found '{got}'."
             )
             break
+    if r"\documentclass[12pt,oneside]{book}" not in tex:
+        errors.append("paper.tex must declare the book-class monograph surface.")
+    if r"\bibliography{paper/bibliography/orius_monograph}" not in tex:
+        errors.append("paper.tex must use the generated ORIUS monograph bibliography.")
     if "\\appendix" not in tex:
         errors.append("Missing \\appendix marker in paper.tex")
 

@@ -35,24 +35,28 @@ def build_features(
         df[col] = pd.to_numeric(df[col], errors="coerce")
     df = df.dropna(subset=["airspeed_kt"]).reset_index(drop=True)
 
-    df["timestamp"] = pd.to_datetime(df["ts_utc"], errors="coerce")
-    df = df.sort_values("timestamp").reset_index(drop=True)
+    df["timestamp"] = pd.to_datetime(df["ts_utc"], errors="coerce", utc=True)
+    df = df.dropna(subset=["timestamp"]).sort_values(["flight_id", "step"]).reset_index(drop=True)
+
+    # Use one flight trajectory for a clean single-series forecasting surface.
+    flight_id = df["flight_id"].iloc[0]
+    aero = df[df["flight_id"] == flight_id].copy().sort_values("step").reset_index(drop=True)
 
     for lag in LAG_STEPS:
-        df[f"airspeed_kt_lag{lag}"] = df["airspeed_kt"].shift(lag)
-        df[f"altitude_m_lag{lag}"] = df["altitude_m"].shift(lag)
-    df["hour"] = df["timestamp"].dt.hour
-    df["minute"] = df["timestamp"].dt.minute
+        aero[f"airspeed_kt_lag{lag}"] = aero["airspeed_kt"].shift(lag)
+        aero[f"altitude_m_lag{lag}"] = aero["altitude_m"].shift(lag)
+    aero["hour"] = aero["timestamp"].dt.hour
+    aero["minute"] = aero["timestamp"].dt.minute
 
-    df = df.dropna().reset_index(drop=True)
+    aero = aero.dropna().reset_index(drop=True)
     features_path = out_dir / "features.parquet"
     out_dir.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(features_path, index=False)
+    aero.to_parquet(features_path, index=False)
 
     splits_dir = out_dir / "splits"
     splits_dir.mkdir(parents=True, exist_ok=True)
     train, cal, val, test = time_split_with_calibration(
-        df,
+        aero,
         ts_col="timestamp",
         train_ratio=train_ratio,
         calibration_ratio=calibration_ratio,

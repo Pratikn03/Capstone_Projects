@@ -1,0 +1,207 @@
+{
+  "generated_at": "2026-03-30T03:15:16.156374",
+  "scenarios": [
+    "dropout",
+    "drift_combo"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "wilcoxon_threshold_p": 0.01,
+  "bootstrap_ci": 0.95,
+  "min_relative_reduction": 0.1,
+  "comparisons": {
+    "dropout": {
+      "robust_fixed_interval": {
+        "true_soc_violation_rate": {
+          "n_pairs": 10,
+          "baseline_mean": 0.25,
+          "dc3s_mean": 0.29999999999999993,
+          "rel_reduction_mean": -0.19999999999999996,
+          "rel_reduction_ci_low": -0.19999999999999996,
+          "rel_reduction_ci_high": -0.19999999999999996,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.001953125,
+          "passes_10pct": false,
+          "passes_15pct": false,
+          "target_relative_reduction": 0.1,
+          "passes_target": false,
+          "passes_p01": true
+        },
+        "true_soc_violation_severity_p95_mwh": {
+          "n_pairs": 10,
+          "baseline_mean": 0.25,
+          "dc3s_mean": 0.29999999999999993,
+          "rel_reduction_mean": -0.19999999999999996,
+          "rel_reduction_ci_low": -0.19999999999999996,
+          "rel_reduction_ci_high": -0.19999999999999996,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.001953125,
+          "passes_10pct": false,
+          "passes_15pct": false,
+          "target_relative_reduction": 0.1,
+          "passes_target": false,
+          "passes_p01": true
+        }
+      },
+      "deterministic_lp": {
+        "true_soc_violation_rate": {
+          "n_pairs": 10,
+          "baseline_mean": 0.35,
+          "dc3s_mean": 0.29999999999999993,
+          "rel_reduction_mean": 0.14285714285714282,
+          "rel_reduction_ci_low": 0.14285714285714282,
+          "rel_reduction_ci_high": 0.14285714285714282,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.001953125,
+          "passes_10pct": true,
+          "passes_15pct": false,
+          "target_relative_reduction": 0.1,
+          "passes_target": true,
+          "passes_p01": true
+        },
+        "true_soc_violation_severity_p95_mwh": {
+          "n_pairs": 10,
+          "baseline_mean": 0.35,
+          "dc3s_mean": 0.29999999999999993,
+          "rel_reduction_mean": 0.14285714285714282,
+          "rel_reduction_ci_low": 0.14285714285714282,
+          "rel_reduction_ci_high": 0.14285714285714282,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.001953125,
+          "passes_10pct": true,
+          "passes_15pct": false,
+          "target_relative_reduction": 0.1,
+          "passes_target": true,
+          "passes_p01": true
+        }
+      }
+    },
+    "drift_combo": {
+      "robust_fixed_interval": {
+        "true_soc_violation_rate": {
+          "n_pairs": 10,
+          "baseline_mean": 0.25,
+          "dc3s_mean": 0.29999999999999993,
+          "rel_reduction_mean": -0.19999999999999996,
+          "rel_reduction_ci_low": -0.19999999999999996,
+          "rel_reduction_ci_high": -0.19999999999999996,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.001953125,
+          "passes_10pct": false,
+          "passes_15pct": false,
+          "target_relative_reduction": 0.1,
+          "passes_target": false,
+          "passes_p01": true
+        },
+        "true_soc_violation_severity_p95_mwh": {
+          "n_pairs": 10,
+          "baseline_mean": 0.25,
+          "dc3s_mean": 0.29999999999999993,
+          "rel_reduction_mean": -0.19999999999999996,
+          "rel_reduction_ci_low": -0.19999999999999996,
+          "rel_reduction_ci_high": -0.19999999999999996,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.001953125,
+          "passes_10pct": false,
+          "passes_15pct": false,
+          "target_relative_reduction": 0.1,
+          "passes_target": false,
+          "passes_p01": true
+        }
+      },
+      "deterministic_lp": {
+        "true_soc_violation_rate": {
+          "n_pairs": 10,
+          "baseline_mean": 0.35,
+          "dc3s_mean": 0.29999999999999993,
+          "rel_reduction_mean": 0.14285714285714282,
+          "rel_reduction_ci_low": 0.14285714285714282,
+          "rel_reduction_ci_high": 0.14285714285714282,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.001953125,
+          "passes_10pct": true,
+          "passes_15pct": false,
+          "target_relative_reduction": 0.1,
+          "passes_target": true,
+          "passes_p01": true
+        },
+        "true_soc_violation_severity_p95_mwh": {
+          "n_pairs": 10,
+          "baseline_mean": 0.35,
+          "dc3s_mean": 0.29999999999999993,
+          "rel_reduction_mean": 0.14285714285714282,
+          "rel_reduction_ci_low": 0.14285714285714282,
+          "rel_reduction_ci_high": 0.14285714285714282,
+          "wilcoxon_stat": 0.0,
+          "wilcoxon_p": 0.001953125,
+          "passes_10pct": true,
+          "passes_15pct": false,
+          "target_relative_reduction": 0.1,
+          "passes_target": true,
+          "passes_p01": true
+        }
+      }
+    }
+  },
+  "primary_gate": {
+    "scope": "aggregate_fault_sweep",
+    "faulted_only": true,
+    "severity_min": 0.0,
+    "baseline_controller": "robust_fixed_interval",
+    "candidate_controller": "dc3s_wrapped",
+    "n_pairs": 160,
+    "passes_all_thresholds": false,
+    "metrics": {
+      "true_soc_violation_rate": {
+        "metric": "true_soc_violation_rate",
+        "n_pairs": 160,
+        "baseline_mean": 0.25,
+        "dc3s_mean": 0.23000000000000004,
+        "dc3s_ci_low": 0.23000000000000004,
+        "dc3s_ci_high": 0.23000000000000004,
+        "rel_reduction_mean": 0.07999999999999996,
+        "rel_reduction_ci_low": 0.07999999999999996,
+        "rel_reduction_ci_high": 0.07999999999999996,
+        "wilcoxon_stat": 0.0,
+        "wilcoxon_p": 1.1314837902432822e-36,
+        "passes_10pct": false,
+        "passes_15pct": false,
+        "target_relative_reduction": 0.1,
+        "passes_target": false,
+        "passes_p01": true,
+        "passes_metric": false
+      },
+      "true_soc_violation_severity_p95_mwh": {
+        "metric": "true_soc_violation_severity_p95_mwh",
+        "n_pairs": 160,
+        "baseline_mean": 0.25,
+        "dc3s_mean": 0.23000000000000004,
+        "dc3s_ci_low": 0.23000000000000004,
+        "dc3s_ci_high": 0.23000000000000004,
+        "rel_reduction_mean": 0.07999999999999996,
+        "rel_reduction_ci_low": 0.07999999999999996,
+        "rel_reduction_ci_high": 0.07999999999999996,
+        "wilcoxon_stat": 0.0,
+        "wilcoxon_p": 1.1314837902432822e-36,
+        "passes_10pct": false,
+        "passes_15pct": false,
+        "target_relative_reduction": 0.1,
+        "passes_target": false,
+        "passes_p01": true,
+        "passes_metric": false
+      }
+    }
+  },
+  "table2_ablations": "/private/var/folders/pk/ksqc41pj60q3589gfwhqz5tw0000gn/T/pytest-of-pratik_n/pytest-99/test_run_dc3s_ablation_matrix_1/ablation_out/table2_ablations.csv",
+  "overall_pass": false
+}

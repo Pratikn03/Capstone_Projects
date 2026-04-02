@@ -1,0 +1,108 @@
+\chapter{The Observation-Action Safety Gap and Claim Boundary}
+\label{ch:oasg-claim-boundary}
+\label{ch:safety-illusion}
+
+The observation-action safety gap (OASG) is the central organizing object of the
+monograph.  It names the event in which an action is admissible on the observed state
+while unsafe on the true state.  In practical terms, this happens whenever sensing,
+transport, synchronization, or estimation degrades more severely than the downstream
+controller assumes.  The action remains \emph{observationally legitimate} but becomes
+\emph{physically illegitimate}.
+
+\section{A structural hazard rather than a domain bug}
+ORIUS treats this as a universal hazard because the structure is independent of plant
+details.  Battery dispatch exposes it through hidden state-of-charge violations.  Vehicle
+control exposes it through stale headway and closing-speed estimates.  Industrial systems
+expose it through delayed thermal or pressure readings.  Healthcare exposes it through
+stale alarms and delayed physiological updates.  Navigation and aerospace expose it
+through degraded localization or flight-state estimates.  The plant changes, but the
+hidden gap does not.
+
+The key point is that OASG is not a synonym for forecasting error.  A forecast can be
+imperfect while the action remains safe, and a forecast can look adequate while the
+action becomes unsafe because the observation surface itself is no longer truthful enough
+to support legality checks.  ORIUS therefore centers the gap between \emph{what the
+controller is allowed to believe} and \emph{what the plant can actually be}.  That gap
+is a systems object, not a single-model pathology.
+
+\section{Observed legality versus physical legality}
+The intuition can be written compactly even before the full theorem machinery appears.
+Let $\hat{x}_t$ denote the observed state used by the nominal controller and let
+$x_t^\star$ denote the physical state that is actually realized or could plausibly be
+realized given degraded telemetry.  Let $\mathcal{A}(\cdot)$ denote the action set that
+is considered admissible.  The OASG event is the regime in which a candidate action
+satisfies
+\[
+u_t \in \mathcal{A}(\hat{x}_t)
+\qquad \text{but} \qquad
+u_t \notin \mathcal{A}(x_t^\star),
+\]
+or, equivalently, appears safe on observation while violating the safety predicate on the
+true or observation-consistent state.
+
+This notation is intentionally light.  The formal chapters later introduce the precise
+uncertainty-set and repair semantics.  At the level of claim boundary, the important
+point is simply this: once legality depends on a state that may be stale, delayed,
+dropped, or manipulated, the safety argument has to move from nominal action selection to
+explicit runtime mediation.
+
+\section{Why ORIUS turns the gap into a runtime object}
+That runtime mediation is the central design choice of the book.  ORIUS does not say that
+every domain should solve the observability problem with a single estimator, a single
+robust controller, or a single proof technique.  It says that each domain must expose the
+same sequence of safety-relevant objects at runtime: a reliability judgment on the
+observation channel, an uncertainty set for physically plausible state, an admissible
+action set under that uncertainty, a repaired or fallback action, and a certificate that
+records why the step was allowed.
+
+Once those objects are explicit, the universal and domain-specific parts of the argument
+can finally be separated cleanly.  The universal part is the runtime grammar.  The
+domain-specific part is how each adapter instantiates state, constraints, repair, and
+fallback for its own plant.
+
+\section{Claim classes and promotion discipline}
+The claim boundary of the book follows directly from that framing.  ORIUS does not claim
+universal optimality, universal hardware closure, or equal empirical maturity across all
+domains.  It claims a universal \emph{architecture} and a universal \emph{runtime
+contract}.  Evidence is then tiered by what each domain actually clears: witness-depth
+reference, defended bounded peer, portability-only row, or experimental boundary row.
+This separation is not rhetorical caution; it is the mechanism that
+makes a universal monograph defensible under serious review.
+
+The promotion language in the monograph is therefore deliberately typed.  A
+\emph{reference witness} carries the deepest theorem-to-code-to-artifact chain and sets
+the scientific calibration surface for the rest of the book.  A \emph{defended bounded
+peer} clears a domain-specific replay, soundness, fallback, and runtime gate without
+inheriting witness-depth proof language automatically.  A \emph{portability-only row}
+shows that the architecture can travel structurally but does not yet clear a defended
+empirical gate.  An \emph{experimental boundary row} is useful because it marks the edge
+of the current program rather than being hidden behind optimistic prose.
+
+\section{Architecture language versus evidence language}
+The book therefore uses two kinds of language and keeps them separate.  Architecture
+language is universal: true-state violation, constraint margin, repair, certificate,
+degraded observation, and intervention.  Evidence language is domain-specific and
+promotion-sensitive: some rows close the measured violation gap, some only expose the
+structure, and some remain bounded by the current adapter or telemetry surface.  The
+monograph is strongest when it refuses to let those two vocabularies collapse into one.
+
+This is also why the universal-first framing is stronger than a witness-first exposition at
+the level of exposition.  The reader should learn the common hazard and common runtime
+contract first, and only then see how different domains clear different parts of the
+evidence ladder.  Battery remains the deepest witness, but it should not monopolize the
+conceptual story.
+
+\section{What the book does not claim}
+The negative boundary is as important as the positive one.  ORIUS does not claim
+universal optimality, universal plant closure, or a flat statement that every domain row
+has already reached equal maturity.  It does not claim that uncertainty calibration by
+itself proves safety, that runtime certificates replace regulation, or that adapter
+portability is equivalent to empirical closure.  The book instead makes a narrower but
+more durable claim: one universal safety-layer grammar can govern multiple physical-AI
+domains, while a visible parity gate determines how far each domain may currently be
+promoted.
+
+The rest of the monograph is written under that contract.  The architecture chapters
+explain the reusable runtime object, the theory chapters explain the safety logic under
+assumptions, the domain chapters instantiate the contract six times, and the synthesis
+chapters make the asymmetry in evidence explicit instead of hiding it.
