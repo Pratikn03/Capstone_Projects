@@ -1,0 +1,17 @@
+\begin{table}[htbp]
+\centering
+\caption{Canonical domain-closure matrix for universal ORIUS promotion. Promotion follows this table rather than prose-first widening.}
+\label{tab:domain-closure-matrix}
+\begin{tabular}{p{1.5cm}p{1.7cm}p{1.2cm}p{1.5cm}p{1.1cm}p{1.1cm}p{1.4cm}p{2.3cm}}
+\toprule
+\textbf{Domain} & \textbf{Train/data} & \textbf{Replay} & \textbf{Soundness} & \textbf{P5} & \textbf{P6} & \textbf{Tier} & \textbf{Exact blocker} \\
+\midrule
+battery & locked reference & pass & reference witness & evaluated & evaluated & reference & battery reference witness \\
+industrial & verified & pass & pass & evaluated & evaluated & proof validated & industrial train validation chain complete \\
+healthcare & verified & pass & pass & gated & evaluated & proof validated & healthcare train validation chain complete \\
+vehicle & verified & pass & pass & gated & evaluated & proof validated & promoted \\
+navigation & blocked & pass & blocked real data gap & gated & gated & shadow synthetic & navigation real data gap \\
+aerospace & placeholder synthetic & pass & experimental placeholder & gated & gated & experimental & aerospace experimental placeholder \\
+\bottomrule
+\end{tabular}
+\end{table}

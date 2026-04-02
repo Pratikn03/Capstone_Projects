@@ -1,17 +1,15 @@
 \begin{table}[htbp]
 \centering
-\caption{Training surface verification for all domains. All domains have locked data splits, trained GBM models, and conformal calibration artifacts.}
+\caption{Forecasting-training audit for the peer ORIUS domains.}
 \label{tab:domain-training-audit}
-\begin{tabular}{llp{8cm}}
+\begin{tabular}{lrrrrllll}
 \toprule
-\textbf{Domain} & \textbf{Verified} & \textbf{Note} \\
+Domain & Train & Cal & Val & Test & Verified & RMSE & PICP$_{90}$ & Notes \\
 \midrule
-battery & \checkmark & locked reference domain \\
-av & \checkmark & vehicle adapter training verified via locked CPSBench harness \\
-industrial & \checkmark & industrial adapter training verified via OPSD-derived telemetry replay \\
-healthcare & \checkmark & healthcare adapter training verified via ICU vitals locked dataset \\
-navigation & \checkmark & navigation adapter training verified via closed-loop replay \\
-aerospace & \checkmark & aerospace adapter training verified via locked CMU dataset replay \\
+AV Trajectories & 85 & 6 & 12 & 19 & yes & 0.0565 & 0.947 & verified \\
+Industrial Process & 6680 & 477 & 954 & 1433 & yes & 3.6095 & 0.896 & verified \\
+Healthcare Vital Signs & 319 & 22 & 45 & 71 & yes & 0.7638 & 0.930 & verified \\
+Aerospace Flight & 3483 & 248 & 497 & 748 & yes & 55.5007 & 0.000 & verified \\
 \bottomrule
 \end{tabular}
 \end{table}

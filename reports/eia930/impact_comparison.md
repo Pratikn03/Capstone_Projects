@@ -11,24 +11,24 @@ This report compares dispatch outcomes for the same 7‑day forecast window (sel
 | Policy | Cost (USD) | Carbon (kg) | Carbon Cost (USD) |
 |---|---:|---:|---:|
 | Grid‑only baseline | 520,523,500.00 | 4,470,300,483.57 | 223,515,024.18 |
-| Naive battery | 520,517,360.81 | 4,475,197,184.82 | 223,759,859.24 |
-| Peak‑shaving heuristic | 521,914,354.45 | 4,478,499,171.75 | 223,924,958.59 |
-| Price‑greedy (MPC‑style) | 519,021,033.38 | 4,487,898,905.56 | 224,394,945.28 |
-| ORIUS (forecast‑optimized) | 519,973,304.08 | 4,465,273,594.63 | 223,263,679.73 |
-| Oracle upper bound (perfect forecast) | 519,973,304.08 | 4,465,273,594.63 | 223,263,679.73 |
+| Naive battery | 520,612,500.00 | 4,470,923,996.86 | 223,546,199.84 |
+| Peak‑shaving heuristic | 520,874,976.74 | 4,472,648,015.69 | 223,632,400.78 |
+| Price‑greedy (MPC‑style) | 520,629,737.05 | 4,472,815,283.52 | 223,640,764.18 |
+| ORIUS (forecast‑optimized) | 520,262,250.00 | 4,468,230,307.98 | 223,411,515.40 |
+| Oracle upper bound (perfect forecast) | 520,262,250.00 | 4,468,230,307.98 | 223,411,515.40 |
 
 ## Savings vs Baseline (ORIUS vs Grid‑only)
-- Cost savings: 550,195.92 (0.11%)
-- Carbon reduction: 5,026,888.95 kg (0.11%)
+- Cost savings: 261,250.00 (0.05%)
+- Carbon reduction: 2,070,175.59 kg (0.05%)
 
 - Carbon source used for optimization: average
 
 ## Savings vs Naive Battery (ORIUS vs Naive)
-- Cost savings: 544,056.73 (0.10%)
-- Carbon reduction: 9,923,590.20 kg (0.22%)
+- Cost savings: 350,250.00 (0.07%)
+- Carbon reduction: 2,693,688.88 kg (0.06%)
 
 ## Oracle Gap (ORIUS vs Perfect‑Forecast Upper Bound)
-- Oracle cost: 519,973,304.08
+- Oracle cost: 520,262,250.00
 - Gap vs oracle: 0.00
 
 ## Dispatch Comparison
