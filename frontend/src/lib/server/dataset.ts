@@ -5,9 +5,10 @@ import fs from 'fs/promises';
 import path from 'path';
 
 /* ─────────────────────────────────────────────────────────
-   Server-side loader for extracted dashboard data.
-   Reads JSON files produced by scripts/extract_dashboard_data.py
-   from data/dashboard/.
+   Legacy compatibility types for dataset/profile payloads.
+   The frontend now treats backend-served tracked research artifacts
+   as the canonical truth path; local dashboard caches are not an
+   authority surface.
    ───────────────────────────────────────────────────────── */
 
 // ─── Types ───
