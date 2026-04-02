@@ -1,7 +1,7 @@
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-This dissertation presents ORIUS (Observation--Reality Integrity for Universal Safety), a
+This thesis presents ORIUS (Observation--Reality Integrity for Universal Safety), a
 framework for safe action under degraded observation in cyber-physical systems (CPS).
 The central claim is that a controller can appear safe on observed state while being
 physically unsafe on true state when the observation channel degrades.  This
@@ -9,7 +9,7 @@ observation--action safety gap (OASG) is latent in any CPS that separates sensin
 actuation, and ORIUS provides a domain-agnostic architecture for detecting, bounding, and
 eliminating it.
 
-The framework is evaluated across six peer CPS domains: energy management (grid-scale
+The framework is evaluated across six CPS domains under a tiered evidence model: energy management (grid-scale
 battery dispatch), autonomous vehicles, industrial process control, medical monitoring,
 aerospace control, and navigation.  All six share the same five-stage DC3S pipeline---Detect,
 Calibrate, Constrain, Shield, Certify---instantiated through a common \texttt{DomainAdapter}
@@ -30,7 +30,7 @@ structure mismatch; classified proof-candidate) and aerospace at 9.72\% (experim
 surface)---and are distinguished from the proof-validated tier accordingly.
 The navigation domain provides simulation-backed portability evidence (0.69\% TSVR).
 
-The dissertation establishes a four-theorem safety ladder: (T1) OASG existence, (T2)
+The thesis establishes a four-theorem safety ladder: (T1) OASG existence, (T2)
 one-step safety preservation, (T3) the ORIUS core safety bound
 $\mathbb{E}[V] \le \alpha(1-\bar{w})T$, and (T4) no-free-safety necessity.  The
 finite-sample correction $\varepsilon_n = O(1/\sqrt{n})$ tightens the bound for
@@ -38,7 +38,7 @@ calibration sets of finite size.  These theorems are artifact-backed: each is li
 to a locked experimental trace that confirms the predicted behaviour with measurable
 empirical slack.
 
-The dissertation further characterises DC3S through fault-performance stress tests,
+The thesis further characterises DC3S through fault-performance stress tests,
 latency benchmarking, conditional coverage audits, hyperparameter stability analysis,
 software-in-the-loop trials, certificate half-life studies, graceful degradation protocols,
 compositional safety for multi-unit fleets, and adversarial robustness via active probing.

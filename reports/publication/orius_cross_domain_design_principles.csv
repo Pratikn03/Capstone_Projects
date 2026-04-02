@@ -1,0 +1,9 @@
+principle_id,design_principle,extracted_from,relevance_to_orius,repo_hook
+"DP1","Separate shared safety logic from plant-specific semantics","Papers 1-6 plus universal adapter architecture","enables one kernel to travel across domains","src/orius/dc3s/domain_adapter.py"
+"DP2","Make observation reliability a first-class runtime input","OQE plus adaptive conformal literature","connects degraded telemetry directly to safety conservatism","src/orius/dc3s/quality.py"
+"DP3","Express uncertainty as an observation-consistent state set","conformal and runtime repair literature","lets repair reason over truth-vs-observation gaps","src/orius/universal_theory/"
+"DP4","Use repair instead of assuming upstream controller perfection","shielding and runtime assurance literature","supports safe correction without replacing the optimizer","src/orius/dc3s/ + src/orius/universal_theory/"
+"DP5","Emit auditable runtime certificates","CertOS and Simplex-style assurance framing","turns safety actions into governed evidence rather than hidden logic","src/orius/certos/"
+"DP6","Standardize the replay schema before comparing domains","Paper 4 benchmark discipline","prevents each domain from redefining success","src/orius/orius_bench/"
+"DP7","Keep evidence tiers explicit","program manifest and gap audit","prevents overclaiming universality","reports/publication/orius_program_paper_map.csv"
+"DP8","Serve tracked artifacts through one backend truth path","research router and manuscript governance","removes dependence on local dashboard caches","services/api/routers/research.py"

@@ -26,8 +26,9 @@ telemetry.  The dissertation now states that result at three levels:
     a necessity theorem, a lower-bound theorem, and a typed structural
     transfer theorem.
   \item \textbf{Tiered cross-domain instantiation.} The shared kernel is then
-    exercised across defended, proof-candidate, shadow-synthetic, and
-    experimental rows without claiming equal proof closure.
+    exercised across defended, shadow-synthetic, and experimental rows
+    without claiming equal proof closure beyond the domains that actually
+    clear the closure matrix.
 \end{enumerate}
 
 \section{Program Contribution Spine}
@@ -59,10 +60,11 @@ The tiered six-row runtime package was evaluated under a unified fault schedule
     $\rightarrow$ 0.0\% (14.6\% repair rate).
   \item \textbf{Navigation} (simulation-backed): 18.06\% $\rightarrow$ 0.69\%
     (100\% repair rate); portability evidence outside the proof-validated tier.
-  \item \textbf{Autonomous Vehicles} (proof-candidate): 2.78\% baseline TSVR
-    $\rightarrow$ 2.78\% under DC3S.  High repair rate (98.6\%) indicates
-    shield activity but TSVR does not reach zero due to constraint structure
-    mismatch; classified proof-candidate pending further investigation.
+  \item \textbf{Autonomous Vehicles} (proof-validated under bounded TTC contract):
+    8.33\% baseline TSVR $\rightarrow$ 0.0\% under DC3S on the locked
+    validation harness.  Promotion is carried by the TTC~+ predictive-entry-
+    barrier contract, bounded soundness probing, and clean CertOS lifecycle
+    execution; it does not imply a broader multi-lane proof surface.
   \item \textbf{Aerospace (Flight Envelope)} (experimental): 9.72\% $\rightarrow$
     9.72\% (13.9\% repair rate); evaluated on an experimental surface pending
     additional domain data.
@@ -117,22 +119,22 @@ that:
     the six-row package, while claim strength follows the locked tier table
     rather than raw replay metrics alone.
   \item The battery domain provides the complete reference instantiation
-    with full theorem-to-artifact lineage; industrial and healthcare are
-    the proof-validated peers; AV is proof-candidate; aerospace is
-    experimental; and navigation provides simulation-backed portability
-    evidence.
+    with full theorem-to-artifact lineage; industrial, healthcare, and AV
+    are the current proof-validated peers under their bounded contracts;
+    aerospace is experimental; and navigation provides simulation-backed
+    portability evidence.
   \item The remaining open gaps are explicit and localized rather than
-    foundational: AV still needs a larger repair surface, navigation still
-    lacks locked real telemetry, and aerospace still lacks a defended
-    promotion contract.
+    foundational: navigation still lacks locked real telemetry, and
+    aerospace still lacks a defended promotion contract.
 \end{enumerate}
 
 \section{Closing Statement}
 
 The dissertation ends at a defensible control-theory boundary: battery is the
-full proof witness, T9--T11 make the universal kernel explicit, industrial and
-healthcare defend transfer under the current evidence lock, and the remaining
-rows are kept at lower tiers until their open structural gaps are discharged.
-That is the intended thesis-level result: one precise degraded-observation
-safety kernel, one complete reference proof surface, and one honest
-cross-domain frontier rather than six domains with equal guarantees.
+full proof witness, T9--T11 make the universal kernel explicit, industrial,
+healthcare, and the TTC-bounded AV row defend transfer under the current
+evidence lock, and the remaining lower tiers stay lower until their open
+structural gaps are discharged.  That is the intended thesis-level result:
+one precise degraded-observation safety kernel, one complete reference proof
+surface, and one honest cross-domain frontier rather than six domains with
+equal guarantees.

@@ -81,6 +81,17 @@ Important proof/evidence sources:
 - `../appendices/app_s_claim_evidence_registers.tex`
 - `../appendices/app_z_theorem_and_paper_sync_registers.tex`
 
+### Thesis-package synthesis artifacts
+
+The universal-final-project packaging is also tracked through:
+
+- `../reports/publication/orius_literature_matrix.csv`
+- `../reports/publication/orius_cross_domain_design_principles.csv`
+- `../reports/publication/orius_framework_gap_matrix.csv`
+- `../reports/publication/orius_maturity_matrix.csv`
+- `../reports/publication/orius_artifact_appendix.md`
+- `../reports/final_thesis_submission_checklist.md`
+
 ---
 
 ## 4. Tables and figures: source of truth

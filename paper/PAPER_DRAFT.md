@@ -81,10 +81,10 @@ ORIUS is implemented as a forecast-to-dispatch stack whose main layers are data 
 
 ### 3.3 Artifact Contracts and Profile Lock
 The thesis uses a locked artifact family rather than free-floating report values. The main publication interfaces are:
-1. `data/dashboard/de_metrics.json` and `data/dashboard/us_metrics.json`
-2. `data/dashboard/de_stats.json`, `data/dashboard/us_stats.json`, and `data/dashboard/manifest.json`
-3. `reports/impact_summary.csv` and `reports/eia930/impact_summary.csv`
-4. `reports/research_metrics_de.csv` and `reports/research_metrics_us.csv`
+1. `reports/publication/release_manifest.json`
+2. `reports/publication/dc3s_main_table_ci.csv`
+3. `reports/publication/dc3s_latency_summary.csv`
+4. `reports/impact_summary.csv` and `reports/eia930/impact_summary.csv`
 5. publication tables and figures under `reports/publication/`
 
 ### 3.4 Dataset Scope
@@ -93,7 +93,7 @@ The canonical profile lock is:
 2. US dashboard profile: 13,638 hourly rows for the canonical manuscript lock
 3. release-family supporting assets: US_MISO, US_PJM, and US_ERCOT dataset cards
 
-This means the thesis preserves a single locked dashboard story for canonical quantitative claims while acknowledging the broader multi-BA release family in the surrounding analysis.
+This means the thesis preserves a tracked publication story for canonical quantitative claims while acknowledging the broader multi-BA release family in the surrounding analysis.
 
 ### 3.5 Truth vs. Observed State
 The most important preliminaries distinction is between observed and true state:
@@ -541,15 +541,15 @@ The promoted six-model forecasting comparison points in one practical direction:
 ## Appendix B. Artifact Inventory
 | Artifact | Purpose |
 |---|---|
-| `paper/PAPER_DRAFT.md` | Canonical thesis manuscript source |
-| `paper/paper.tex` | Thesis LaTeX twin of the markdown source |
+| `paper/paper.tex` | Canonical manuscript source |
+| `paper/PAPER_DRAFT.md` | Narrative companion synced from the canonical manuscript |
 | `paper/paper_r1.tex` | Shorter conference derivative |
-| `paper/metrics_manifest.json` | Canonical metric lock and display contract |
+| `paper/metrics_manifest.json` | Canonical universal safety lock and display contract |
 | `paper/claim_matrix.csv` | Claim-level provenance and status tracking |
 | `scripts/validate_paper_claims.py` | Cross-file claim validation |
 | `scripts/sync_paper_assets.py` | Paper-asset synchronization audit |
-| `reports/impact_summary.csv` | Locked DE impact values |
-| `reports/eia930/impact_summary.csv` | Locked US impact values |
+| `reports/publication/release_manifest.json` | Canonical tracked release provenance |
+| `reports/publication/dc3s_main_table_ci.csv` | Canonical tracked safety benchmark summary |
 | `reports/research_metrics_de.csv` | DE stochastic summary rows |
 | `reports/research_metrics_us.csv` | US stochastic summary rows |
 

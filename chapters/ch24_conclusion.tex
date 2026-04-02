@@ -71,21 +71,21 @@ dissertation, and it is domain-independent.
 
 \section{What ORIUS Can Become}
 
-The battery result proves the concept.  The adapter architecture
-(Chapter~\ref{ch:battery-to-orius}) provides the blueprint for
-generalisation.  If the ORIUS community delivers on the roadmap of
-Chapter~\ref{ch:roadmap}---a second domain, a public benchmark,
-a deployable runtime---the result is a certification layer that any
-cyber-physical controller can use, regardless of its internal optimisation
-logic.
+ORIUS is no longer only a blueprint for future generalisation.  In the
+program-first dissertation, the battery result remains the reference proof
+witness, while Papers~2--6 already make temporal validity, graceful
+fallback, benchmark discipline, bounded composition, and bounded runtime
+governance explicit parts of the thesis contribution.
 
-This is not a small ambition.  It requires that the conformal coverage
-guarantee survives domain transfer, that the adapter interface is
-expressive enough for nonlinear plants with high-dimensional state, and
-that the runtime meets hard real-time constraints on embedded hardware.
-Each of these is a non-trivial research or engineering challenge.  But
-the structural foundations---domain-abstract scoring, distribution-free
-uncertainty, worst-case projection---are in place.
+What remains open is narrower than older roadmap language suggested.  The
+frontier is not ``whether ORIUS extends beyond battery'' in the abstract; it
+is whether specific open rows and deployment surfaces can be promoted beyond
+their current bounded status.  Autonomous vehicles still face a
+constraint-class mismatch, navigation still lacks the defended real-data row,
+and aerospace still lacks a stronger promotion contract.  The runtime itself
+still requires field deployment work beyond the current bounded governance
+semantics.  Those are real open problems, but they now sit on top of a
+substantive program rather than ahead of it.
 
 \section{Final Remarks}
 
@@ -96,5 +96,8 @@ domain and argued structurally for others, is that safety must be
 quantifying the resulting uncertainty, and restricting actions to those
 that remain safe under the worst case.
 
-The battery domain was the right place to start.  It will not be the
-last place ORIUS is needed.
+The battery domain was the right place to start, and the present dissertation
+already shows how ORIUS extends beyond that start through Papers~2--6 without
+pretending those extensions carry equal proof closure.  That is the right
+thesis boundary: one full witness, one explicit research program, and one
+honest frontier.

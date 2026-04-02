@@ -20,6 +20,16 @@ ORIUS closes the OASG via **DC3S** (*Degradation-Conditioned Conformal Safety Sh
 
 A formal safety theorem establishes that TSVR is bounded by α(1 − w̄)T (Theorem T3), where α is the conformal miscoverage rate and w̄ is the mean OQE reliability score. That theorem is anchored to the battery reference surface, and the locked universal replay tables show how the six runtime rows relate to the same conservative envelope under one fault protocol. The theorem surface comprises 18 verified items (theorems, lemmas, propositions, corollaries, definitions, and standing assumptions), each anchored to source code in `src/orius/dc3s/` and locked experimental artifacts in `reports/`.
 
+## AI Research Workflow
+
+The official AI-assisted operating guide for this repo is in:
+
+- [`docs/AI_RESEARCH_WORKFLOW.md`](docs/AI_RESEARCH_WORKFLOW.md)
+- [`docs/AI_ARTIFACT_SANITIZATION_CHECKLIST.md`](docs/AI_ARTIFACT_SANITIZATION_CHECKLIST.md)
+
+Use those documents for tool-role separation, upload-safety rules, and the
+default ORIUS code/theorem/manuscript workflow.
+
 ---
 
 ## The OASG Problem

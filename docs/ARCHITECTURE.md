@@ -1,6 +1,8 @@
 # ORIUS / DC³S — System Architecture
 
 > **Version**: March 2026 · Generated diagram: `reports/figures/architecture.png`
+>
+> **Scope note**: this document describes the energy-management instantiation of ORIUS. The canonical domain-agnostic framing now lives in `docs/UNIVERSAL_KERNEL_ARCHITECTURE.md`; use this file when you need the shared thesis-facing kernel, benchmark, and governance architecture.
 
 ## Overview
 

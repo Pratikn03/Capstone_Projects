@@ -567,10 +567,10 @@ The shield's admissible set $\mathcal{A}_t$ therefore provides no mechanism
 to avoid the step-$t$ violation; it only constrains step-$(t+1)$.
 \end{proof}
 
-\begin{corollary}[AV promotion requirements]
+\begin{corollary}[AV promotion routes from the original headway mismatch]
 \label{cor:av-promotion}
-Promotion of the autonomous-vehicle domain from proof-candidate to
-proof-validated requires at least one of the following:
+Discharging the original autonomous-vehicle headway mismatch requires at
+least one of the following:
 \begin{enumerate}[label=(\alph*)]
   \item \emph{Augmented state repair}: the shield solves a two-dimensional
     quadratic program over $(a, v)$ that explicitly enforces
@@ -585,10 +585,20 @@ proof-validated requires at least one of the following:
     that refuses to enter states from which $\phi(x_{t+1}) = \mathrm{False}$
     is unavoidable, reducing the observed TSVR to the T3 envelope.
 \end{enumerate}
-Until one of these is in place, the 2.78\% TSVR in the AV row is a
-\emph{structural} residual, not a conformal-coverage residual, and the domain
-correctly remains at the proof-candidate tier.
+Without one of these routes, the AV residual is a \emph{structural} residual,
+not a conformal-coverage residual.
 \end{corollary}
+
+\paragraph{Current closure route.}
+This dissertation adopts the TTC reformulation together with the predictive
+entry barrier as the canonical AV promotion path.  The two-dimensional
+$(a,v)$ repair remains a valid future route, but it is not the route claimed
+here.  Under the bounded TTC contract, the closure matrix now records the AV
+row as proof-validated: locked replay reduces TSVR to zero on the canonical
+validation harness, the conservative entry-barrier soundness cases clear, and
+the CertOS lifecycle executes on the same adapter surface.  This promotion is
+deliberately narrow.  It does not promote every richer headway, lane-change,
+or multi-agent vehicle setting to equal proof depth.
 
 % ----------------------------------------------------------------
 \section{Chapter Summary}

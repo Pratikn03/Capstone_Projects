@@ -378,7 +378,7 @@ figure-inventory-audit:
 	$(PYTHON) scripts/audit_figure_inventory.py --out-dir reports/publish --manifest paper/metrics_manifest.json
 
 publish-audit:
-	$(PYTHON) scripts/final_publish_audit.py --config configs/publish_audit.yaml
+	$(PYTHON) scripts/final_submission_audit.py
 
 publish-audit-isolated:
 	bash scripts/run_publish_audit_isolated.sh --config configs/publish_audit.yaml --run-hooks --baseline-ref origin/main --max-runtime-hours 6 --iot-steps 72

@@ -1,17 +1,32 @@
 {
-  "manifest_version": "1.0.0",
-  "generated_at_utc": "2026-02-19T00:00:00Z",
+  "manifest_version": "2.0.0",
+  "generated_at_utc": "2026-04-01T00:00:00Z",
+  "claim_family": {
+    "name": "universal_safety",
+    "schema_version": "2.0.0",
+    "description": "Canonical release claims are domain-agnostic safety, governance, and provenance claims backed by tracked publication artifacts."
+  },
   "metric_policy": {
-    "name": "dataset_scoped_latest",
-    "description": "Canonical manuscript values remain pinned to the latest frozen dataset-scoped artifacts as of 2026-02-17 while the conference-main R1 release family is rebuilt in candidate runs.",
-    "master_manuscript": "paper/PAPER_DRAFT.md",
+    "name": "tracked_publication_universal",
+    "description": "Canonical manuscript values are locked to tracked publication artifacts and universal safety releases rather than local dashboard caches.",
+    "master_manuscript": "paper/paper.tex",
+    "narrative_companion": "paper/PAPER_DRAFT.md",
     "release_family": {
-      "name": "conference_main_r1_transition",
-      "status": "pending_rebuild",
-      "notes": "Do not replace canonical run_ids until DE plus multi-region US candidate runs pass release gates."
+      "name": "universal_safety_release",
+      "status": "tracked_publication",
+      "notes": "Canonical governance resolves against tracked publication artifacts and the release manifest."
     }
   },
   "sources": {
+    "release_manifest": {
+      "path": "reports/publication/release_manifest.json"
+    },
+    "benchmark_main": {
+      "path": "reports/publication/dc3s_main_table_ci.csv"
+    },
+    "latency_summary": {
+      "path": "reports/publication/dc3s_latency_summary.csv"
+    },
     "de_impact": {
       "path": "reports/impact_summary.csv",
       "fields": [
@@ -81,14 +96,16 @@
       "timestamp_utc": "2026-02-17T18:23:06.287827"
     },
     "de_profile": {
-      "path": "data/dashboard/de_stats.json"
+      "path": "reports/publication/release_manifest.json",
+      "locator": "dataset_profiles.de"
     },
     "us_profile": {
-      "path": "data/dashboard/us_stats.json"
+      "path": "reports/publication/release_manifest.json",
+      "locator": "dataset_profiles.us"
     },
     "dashboard_manifest": {
-      "path": "data/dashboard/manifest.json",
-      "generated_at": "2026-02-17T11:15:38.623283"
+      "path": "reports/publication/release_manifest.json",
+      "generated_at": "2026-03-29T03:43:35.825681+00:00"
     }
   },
   "run_ids": {
@@ -238,6 +255,23 @@
       "calendar_feature_count": 6,
       "date_start_utc": "2024-07-01T06:00:00+00:00",
       "date_end_utc": "2026-01-20T11:00:00+00:00"
+    }
+  },
+  "universal_claims": {
+    "benchmark_schema_version": "2.0.0",
+    "master_manuscript": "paper/paper.tex",
+    "dataset_profiles": {
+      "de_rows": 17377,
+      "us_rows": 13638,
+      "de_feature_count": 94,
+      "us_feature_count": 114
+    },
+    "benchmark_summary": {
+      "nominal_dc3s_ftit_tsvr": "0.000000",
+      "full_dc3s_step_p95_ms": "0.1193"
+    },
+    "artifact_provenance": {
+      "release_manifest_frozen_at_utc": "2026-03-29T03:43:35.825681+00:00"
     }
   },
   "validation": {

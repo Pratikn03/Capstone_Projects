@@ -1,13 +1,17 @@
 \chapter{Compositional Safety for Battery Fleets}
 \label{ch:compositional-safety-fleets}
 
-This chapter keeps the thesis inside the battery domain while pushing beyond
-the single-asset case.  The current locked extension is a two-battery shared
-transformer study, executed through the canonical multi-agent scenario and
-packaged through
+This chapter keeps the thesis anchored in the battery domain while making the
+Paper~5 claim surface explicit.  The reference composition witness is still a
+two-battery shared-transformer study, executed through the canonical
+multi-agent scenario and packaged through
 \path{reports/fleet/protocol_compare.csv},
 \path{reports/fleet/fleet_composition_two_battery.csv} and
-\path{reports/fleet/two_battery_composition_metrics.csv}.
+\path{reports/fleet/two_battery_composition_metrics.csv}.  In the present
+pass, Paper~5 also receives a bounded cross-domain portability surface through
+the universal closure matrix: battery and industrial now expose explicit
+shared-constraint evaluation rows, while healthcare, vehicle, navigation, and
+aerospace remain gated until they gain a defended shared-resource scenario.
 
 \section{Why Composition Matters}
 
@@ -83,15 +87,21 @@ preserving the same useful work output.
 \input{assets/tables/generated/tbl_multi_agent}%
 }
 
+\IfFileExists{reports/universal_orius_validation/tbl_paper5_cross_domain_matrix.tex}{%
+\input{reports/universal_orius_validation/tbl_paper5_cross_domain_matrix}%
+}{%
+\input{../reports/universal_orius_validation/tbl_paper5_cross_domain_matrix}%
+}
+
 \section{Interpretation}
 
-The important battery result is not that the fleet chapter is ``finished'' as
-a full theorem-backed composition theory.  It is that the repo now contains a
-locked, chapter-facing composition run showing exactly where local
-certificate composition fails and how coordination removes those feeder
-violations without reducing useful work in the present two-battery stress
-case.  That closes a practical gap between single-battery safety and fleet
-operation without pretending that all composition questions are solved.
+The important result is not that Paper~5 is now a universal theorem-backed
+composition theory.  It is that the repo contains one locked reference
+counterexample in battery and one bounded portability row in industrial,
+showing exactly where local certificates fail to compose and how coordination
+removes those shared-constraint violations in supported settings.  That
+closes a practical gap between single-asset safety and coordinated operation
+without pretending that all composition questions are solved.
 
 \section{What Remains Open}
 
@@ -107,10 +117,10 @@ The present fleet package is intentionally narrow:
 
 \section{Summary}
 
-The battery thesis now includes a real fleet-composition artifact rather than
-only a conceptual extension.  The locked two-battery study shows a concrete
-non-composition counterexample, zero-violation coordinated repair, and
-preserved useful work on the same executable scenario surface.  For the
-battery book, that is the correct claim: composition has moved from
-future-work rhetoric into an auditable battery extension, while still
-remaining narrower than a full universal coordination theory.
+The thesis now includes a real Paper~5 composition layer rather than only a
+conceptual extension.  The locked two-battery study remains the reference
+counterexample, while the cross-domain matrix records where shared-constraint
+evaluation has actually been exercised beyond battery.  The correct claim is
+therefore bounded and program-first: composition has moved from future-work
+rhetoric into auditable scenario evidence, while still remaining narrower
+than a full universal coordination theorem.

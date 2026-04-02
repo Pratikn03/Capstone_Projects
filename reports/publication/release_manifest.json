@@ -369,7 +369,7 @@
   },
   "paper_metric_policy": {
     "description": "Use latest dataset-scoped artifacts as of 2026-02-17: DE stochastic run 20260217_165756 and US stochastic run 20260217_182305; impact from latest impact_summary files.",
-    "master_manuscript": "paper/PAPER_DRAFT.md",
+    "master_manuscript": "paper/paper.tex",
     "name": "dataset_scoped_latest"
   },
   "paper_run_ids": {

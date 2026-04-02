@@ -10,7 +10,7 @@ dimensions from correctness conditions to \emph{quantitative guarantees}.
 
 \subsubsection{Theorem T9: Reliability-Conditioned Finite-Sample Coverage Bound}
 
-\begin{theorem}[Finite-Sample Coverage Under Reliability Degradation]\label{thm:finite-sample}
+\begin{theorem}[Finite-Sample Coverage Under Reliability Degradation]\label{thm:deep-finite-sample}
 Let $\{(X_i, Y_i)\}_{i=1}^n$ be calibration data with reliability weights
 $w_i \in [w_{\min}, 1]$.  Let $\hat{C}_t^w$ be the DC\textsuperscript{3}S
 conformal set constructed with reliability-weighted quantile at level
@@ -24,7 +24,7 @@ at least $1 - \delta$.
 \end{theorem}
 
 \begin{proof}[Proof sketch]
-By weighted exchangeability~\cite{tibshirani2019conformal}, the
+By weighted exchangeability~\cite{tibshirani2019covariate}, the
 reliability-weighted conformal quantile achieves exact $1 - \alpha$ coverage
 under correct weight specification.  Under degradation, the effective sample
 size for the weighted empirical CDF is $n_{\mathrm{eff}} = n \cdot w_{\min}$
@@ -49,7 +49,7 @@ compute\_finite\_sample\_coverage\_bound()}.
 
 \subsubsection{Theorem T10: Separation --- Necessity of Reliability Awareness}
 
-\begin{theorem}[Separation]\label{thm:separation}
+\begin{theorem}[Separation]\label{thm:deep-separation}
 For any controller $\pi_{\mathrm{blind}}$ that uses a fixed uncertainty set
 $\mathcal{U}$ (not conditioned on $w_t$), there exist degradation sequences
 $\{w_t\}$ and disturbance sequences $\{d_t\}$ such that either:
@@ -90,7 +90,7 @@ meaningful gap.  The executable witness is
 
 \subsubsection{Theorem T11: Adaptive Inflation Regret Bound}
 
-\begin{theorem}[Adaptive Inflation Regret]\label{thm:regret}
+\begin{theorem}[Adaptive Inflation Regret]\label{thm:deep-regret}
 Let $I_t^*$ be the oracle-optimal inflation factor at step $t$ (known only in
 hindsight) and $I_t$ the DC\textsuperscript{3}S inflation factor under
 exponential smoothing with time constant $\tau$ and rate

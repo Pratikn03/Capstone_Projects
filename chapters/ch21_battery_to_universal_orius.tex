@@ -8,8 +8,9 @@ instantiated across six cyber-physical domains---energy management,
 autonomous vehicles, industrial process control, medical monitoring,
 aerospace, and navigation---but the resulting claim is tiered rather than
 uniform.  Battery remains the reference witness; industrial and healthcare are
-defended proof-validated instantiations; autonomous vehicles remains
-proof-candidate; navigation is shadow-synthetic; and aerospace remains
+defended proof-validated instantiations; autonomous vehicles remains a
+proof-candidate row under the current TTC closure contract; navigation is
+shadow-synthetic; and aerospace remains
 experimental.  The point of the chapter is therefore not to claim ``six
 domains with equivalent guarantees,'' but to show how far one degraded-
 observation repair contract travels before the current proof and evidence
@@ -241,48 +242,39 @@ without runtime failure.
 
 \subsection{Validation Status by Domain}
 
-\IfFileExists{reports/universal_orius_validation/tbl_domain_validation_summary.tex}{%
-  \input{reports/universal_orius_validation/tbl_domain_validation_summary}%
+\IfFileExists{reports/universal_orius_validation/tbl_domain_closure_matrix.tex}{%
+  \input{reports/universal_orius_validation/tbl_domain_closure_matrix}%
 }{%
-  \input{../reports/universal_orius_validation/tbl_domain_validation_summary}%
+  \input{../reports/universal_orius_validation/tbl_domain_closure_matrix}%
 }
 
-Table~\ref{tab:domain-validation-summary} is the governing cross-domain
-status table.  All six domains share the same evaluation protocol, but they
-do \emph{not} carry the same theorem burden.  Energy management remains the
-reference proof surface; industrial and healthcare are the defended
-instantiation rows; AV, navigation, and aerospace are retained because they
-make the transfer boundary visible.  Industrial and healthcare are
-proof-validated because they clear the full defended replay contract: SIL
-pass, locked telemetry, and material TSVR reduction under the shared kernel.
-AV remains proof-candidate because the current promotion contract is blocked
-by a structural constraint-class mismatch rather than by a generic runtime or
-coverage failure.
+Table~\ref{tab:domain-closure-matrix} is the canonical promotion source.  It
+locks the final tier to replay, soundness, fallback, and bounded Paper~5 /
+Paper~6 portability checks rather than to raw TSVR alone.  All six domains
+share the same evaluation protocol, but they do \emph{not} carry the same
+theorem burden.  Energy management remains the reference proof surface;
+industrial and healthcare remain the defended instantiation rows; AV remains
+a proof-candidate row under the TTC~+ predictive-entry-barrier contract; navigation
+remains shadow-synthetic; and aerospace remains experimental.
 
-The mismatch is specific and informative.  The headway constraint
-$\mathrm{gap}_t \ge d_{\min} + \tau v_t$ is evaluated on the
-\emph{current} plant state, while the DC3S shield repairs the
-\emph{next-step} acceleration.  The universality-completeness chapter
-formalises why one-dimensional action-space repair is insufficient here and
-identifies three promotion paths: augmented state repair, TTC
-reformulation, or a predictive entry barrier.  The residual 2.78\% AV TSVR
-therefore functions as a useful negative result: it shows that the typed
-kernel transfers, but that transfer alone does not discharge the
-safe-action-soundness obligation when the constraint class is misaligned with
-the repair surface.
+Industrial and healthcare are proof-validated because they clear the full
+defended replay contract: SIL pass, locked telemetry, and material TSVR
+reduction under the shared kernel.  AV improves substantially under the TTC
+reformulation, but it remains a proof-candidate row: the bounded replay is
+encouraging, the predictive-entry-barrier probe improves soundness, and the
+shared CertOS lifecycle executes cleanly on the adapter surface, but the
+current closure contract is still narrower than the defended instantiation
+standard used for industrial and healthcare.  The AV row therefore remains
+important as a frontier row rather than as a promoted proof peer.
 
-Navigation provides simulation-backed portability evidence, and aerospace
-remains experimental pending promotion-gate completion.
-
-\IfFileExists{reports/universal_orius_validation/tbl_domain_proof_status.tex}{%
-  \input{reports/universal_orius_validation/tbl_domain_proof_status}%
-}{%
-  \input{../reports/universal_orius_validation/tbl_domain_proof_status}%
-}
+Navigation still provides only portability evidence because the real-data row
+is not yet locked end to end, and aerospace remains experimental because the
+current replay surface is still a placeholder rather than a defended
+multi-flight telemetry row.
 
 \subsection{How the Evidence Tiers Map to T11}
 
-The evidence labels in Table~\ref{tab:domain-validation-summary} are not
+The evidence labels in Table~\ref{tab:domain-closure-matrix} are not
 marketing tiers; they are shorthand for how much of the T11 transfer burden
 is currently discharged on each row.
 
@@ -298,7 +290,7 @@ Battery (reference) & All four T11 obligations are proved on the reference surfa
 \addlinespace
 Industrial and healthcare (proof-validated) & Locked replay, software-in-loop pass, material TSVR reduction, and typed-kernel execution defend the transfer obligations for the shipped adapters. & No new domain-specific proof ladder beyond the defended instantiation surface. & Defended instantiations \\
 \addlinespace
-Autonomous vehicles (proof-candidate) & Coverage, repair, and fallback logic execute under locked replay; the shared kernel still runs as designed. & The current-step headway metric does not discharge the safe-action soundness obligation for one-dimensional acceleration repair. & Promotion blocked by constraint-class mismatch \\
+Autonomous vehicles (proof-candidate) & Locked replay, TTC-based repair, predictive-entry-barrier probing, and bounded runtime-governance checks show substantial closure progress on the current one-step contract. & Richer multi-lane and higher-dimensional repair surfaces remain open, so the promotion gate is not yet fully cleared. & Proof-candidate frontier \\
 \addlinespace
 Navigation (shadow-synthetic) & The typed contract executes and the portability surface is visible under a synthetic closed-loop environment. & No locked real telemetry and no proof-validating replay row. & Portability evidence only \\
 \addlinespace
@@ -400,21 +392,22 @@ These results support five monograph-level conclusions:
     five-stage runtime, the same reliability-to-uncertainty logic, and the
     same certificate surface.
   \item \textbf{Tiered evidence, not equal guarantees.} The defended claim
-    surface is battery reference plus industrial/healthcare proof-validation.
-    AV remains proof-candidate, navigation remains shadow-synthetic, and
+    surface is battery reference plus industrial/healthcare
+    proof-validation, with AV retained as proof-candidate. Navigation remains shadow-synthetic, and
     aerospace remains experimental.  The common result is a reusable
     degraded-observation repair contract under one protocol, not six domains
     with equivalent proof depth.
   \item \textbf{Negative results are structurally informative.} The AV row is
-    not dead weight.  It isolates a specific mismatch between the repaired
-    action surface and the governing safety constraint, which is exactly the
-    kind of failure an honest transfer chapter should expose rather than
-    average away.
+    not dead weight.  The earlier headway mismatch isolated a specific
+    incompatibility between the repaired action surface and the governing
+    safety constraint, and the TTC~+ predictive-entry-barrier route shows how
+    that incompatibility can be discharged without widening the theorem
+    surface.
   \item \textbf{Open gaps are localized rather than diffuse.} The remaining
-    thesis-level gaps are identifiable and structural: AV needs a larger
-    repair surface, navigation needs locked real telemetry, and aerospace
-    needs a defended promotion contract.  None of these open items undermines
-    the battery proof witness or the typed transfer kernel itself.
+    thesis-level gaps are identifiable and structural: navigation still needs
+    locked real telemetry, and aerospace still needs a defended promotion
+    contract.  None of these open items undermines the battery proof witness
+    or the typed transfer kernel itself.
   \item \textbf{Overhead is negligible.} Sub-millisecond pipeline latency
     (P95~$<\!0.1$~ms across all domains) makes ORIUS suitable for
     fast-control-loop applications (AV at 1~Hz, industrial at hourly cadence,
@@ -509,9 +502,10 @@ This local adapter profile is intentionally narrower than the defended
 cross-domain promotion question.  It demonstrates that the typed ORIUS
 kernel, reliability inflation, and repair logic execute coherently on an
 AV row with a speed-cap predicate.  The chapter-wide proof-candidate
-status is governed by the stricter headway-based safety surface in the
-governing validation table above.  That stricter surface is what exposes
-the current constraint-class mismatch and blocks promotion.
+status is governed by the stricter TTC~+ predictive-entry-barrier safety
+surface in the closure matrix above.  That bounded contract is the
+current frontier route; the earlier headway mismatch remains useful as the
+negative result that justified this reformulation.
 
 \textbf{Adapter parameters.}
 Constraint: $\mathtt{speed\_max\_mps} = 11.0$~m/s;
@@ -520,7 +514,9 @@ clipping to $(v_{\max} - v_t)/\Delta t$.
 
 \textbf{DC3S result.}
 Baseline TSVR~3.65\% $\rightarrow$ 0.0\% post-shield (99.6\% repair rate,
-mean $\bar{w}_t = 0.768$, $N = 2000$).
+mean $\bar{w}_t = 0.768$, $N = 2000$).  This result is intentionally treated
+as bounded proof-candidate evidence rather than as full promotion, because the
+current row still depends on the narrower TTC safety surface.
 
 \begin{figure}[htbp]
   \centering
@@ -840,9 +836,12 @@ observation; (ii) conformal coverage (PICP$_{90}$) meets or exceeds the
 nominal 0.90 target in all domains with a trained forecasting surface;
 and (iii) pipeline latency is sub-millisecond across all domains,
 confirming that the shared kernel is operationally lightweight.  What the
-scorecard does \emph{not} do is erase the tier boundary: AV still remains
-proof-candidate because its stricter safety surface is not yet discharged,
-navigation remains portability-only, and aerospace remains experimental.
+scorecard does \emph{not} do is erase the tier boundary: navigation remains
+portability-only until the real-data row is locked, and aerospace remains
+experimental until a defended telemetry and replay surface replaces the
+placeholder row.  AV advances beyond the earlier negative result, but it
+remains a proof-candidate row; no stronger multi-lane or higher-dimensional
+vehicle claim is inferred from the current TTC-bounded result.
 
 %% =========================================================================
 \section{Chapter Summary}

@@ -3,12 +3,18 @@
 \label{ch:related-work}
 
 This chapter surveys the literatures that converge on the problem
-addressed in this dissertation: battery dispatch optimisation, telemetry
-faults in cyber-physical systems, uncertainty quantification via conformal
-methods, and runtime safety assurance.  For each strand, we identify the
-specific gap that the ORIUS framework fills.
+addressed in this dissertation: safe control under degraded observation,
+telemetry faults in cyber-physical systems, uncertainty quantification via
+conformal methods, runtime safety assurance, and the applied domain
+instantiations that make those ideas operational.  Battery dispatch remains
+the deepest empirical witness in the dissertation, but it is not the
+organizing concept of the chapter.  The organizing concept is broader:
+controllers across domains can appear safe on the observed channel while
+being unsafe on the physical plant when the sensing path degrades.  For
+each literature family, we identify the gap that the ORIUS framework fills
+and the design principles that carry across domains.
 
-\section{Battery Dispatch and Renewable-Aware Control}
+\section{Applied Domain Literature: Energy Management and Smart Grids}
 
 Grid-scale battery dispatch is the problem of choosing charge and
 discharge actions to maximise economic value (arbitrage, ancillary
@@ -99,6 +105,50 @@ sensors, Kalman-based imputation for dropouts.  None synthesise the
 fault signals into a \emph{unified reliability score} that feeds back
 into the safety layer.  The Observation Quality Engine (OQE) introduced
 in this dissertation fills this gap.
+
+\section{Applied Cross-Domain Control Contexts}
+
+\subsection{Robotics and Navigation}
+
+Mobile robots and navigation stacks expose the same structural hazard as the
+battery witness, but under different state and actuation geometry.  The
+controller reasons over pose, velocity, obstacle clearance, and waypoint
+tracking rather than over state of charge; yet the core failure mode is the
+same when GPS, odometry, or localization degrade.  Runtime shields and safe
+RL methods have shown that online repair can prevent unsafe actions, but they
+typically assume that the shield has access to a trustworthy state estimate.
+ORIUS extends that line of work by treating observation quality itself as the
+object that determines uncertainty inflation and repair aggressiveness.
+
+\subsection{Industrial Automation}
+
+Industrial control systems already recognize that delayed, stale, or spoofed
+telemetry can destabilize a plant or silently invalidate alarm logic.  What
+is less developed is a single contract that carries telemetry trust,
+uncertainty construction, repaired action selection, and certificate audit in
+one runtime loop.  The industrial ORIUS row therefore matters as more than a
+port of the battery code: it demonstrates that the same typed repair
+contract can sit on process-control telemetry without inheriting battery-only
+assumptions about state or action.
+
+\subsection{Healthcare Monitoring}
+
+Medical monitoring surfaces the same observation-trust problem in a different
+form.  The measured variables are physiological rather than electrical, but
+dropout, stale readings, and transient corruption still create a gap between
+what appears clinically safe on the monitor and what is true in the patient.
+ORIUS does not claim a complete clinical intervention theory; it claims a
+portable safety architecture in which reliability, uncertainty, repair, and
+certificate semantics remain explicit under degraded observation.
+
+\subsection{IoT and Cyber-Physical Monitoring}
+
+IoT-heavy cyber-physical systems make the observation channel even more
+fragile because sensing, transport, and control are often distributed across
+networked services.  That distribution amplifies the need for standardized
+runtime objects and reproducible evidence surfaces.  The universal ORIUS
+claim therefore depends not only on control logic but also on adapter
+discipline, benchmark schema stability, and tracked artifact governance.
 
 \section{Uncertainty Quantification and Conformal Methods}
 
@@ -206,18 +256,20 @@ dominates the overall quality.
 \section{Evaluation Protocols and the Benchmark Gap}
 
 Standard battery dispatch benchmarks evaluate controllers on economic
-metrics (revenue, regret) and observed constraint satisfaction.  None
-maintain a parallel truth trajectory, so they \emph{cannot detect the
-OASG} by construction.  The CPSBench harness introduced in this
-dissertation (Chapter~\ref{ch:orius-bench-battery}) addresses this gap by
-running every controller on both the observed and true state machines
-simultaneously, reporting True-State Violation Rate (TSVR) alongside
-Observed-State Violation Rate (OSVR).
+metrics (revenue, regret) and observed constraint satisfaction.  More
+broadly, many CPS benchmarks compare controller outputs on observed state
+without maintaining a parallel truth surface.  They therefore \emph{cannot
+detect the OASG} by construction.  The ORIUS-Bench harness introduced in
+this dissertation addresses this gap by running every controller on both the
+observed and true state machines simultaneously, reporting True-State
+Violation Rate (TSVR) alongside the observation--action safety gap rather
+than relying only on observed-state feasibility.
 
 \section{The Novelty Gap}
 
 Table~\ref{tab:novelty-gap} summarises the positioning of DC3S relative
-to the prior art.
+to the prior art.  The table should be read as a universal design-principles
+comparison rather than as a battery-only leaderboard.
 
 \begin{table}[ht]
 \centering

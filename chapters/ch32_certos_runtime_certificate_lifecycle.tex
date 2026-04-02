@@ -7,7 +7,10 @@ intentionally narrow.  CertOS is \emph{not} presented here as a universal
 runtime proof or a deployment announcement.  It is presented as a battery
 reference runtime that enforces certificate-aware execution, maintains an
 append-only audit chain, and falls back safely when certificate validity is
-exhausted.
+exhausted.  In the present pass, Paper~6 also receives a bounded
+cross-domain evaluation surface: battery remains the reference runtime row,
+industrial, healthcare, and vehicle clear the lifecycle-evaluation gate under
+their supported action surfaces, and navigation/aerospace remain gated.
 
 \section{Why the Runtime Layer Exists}
 
@@ -254,16 +257,18 @@ battery artifact proves completeness for the demo and preserves an
 append-only runtime trail.  It does not yet prove cryptographic immutability
 or fleet-scale storage guarantees.
 
-CertOS also includes a small second-domain toy artifact in
-\path{reports/certos/certos_vehicle_toy.json}.  That artifact records a
-12-step vehicle-shaped run with four fallback steps, twelve audit entries,
-and four interventions.  The role of the toy is narrow: it shows that the
-certificate lifecycle is not hard-coded to battery field names.  It does
-\emph{not} elevate the thesis into a second fully validated proof domain.
+The portability claim is now broader, but still bounded.  The closure pass
+evaluates the CertOS lifecycle on every adapter whose action surface supports
+certificate issuance, validation, expiry, and fallback under the same runtime
+contract.  Battery remains the reference row; industrial, healthcare, and
+vehicle now clear that bounded lifecycle gate; navigation and aerospace stay
+gated because their current rows do not yet supply the required supported
+surface under the conservative promotion contract.
 
 \begin{table}[ht]
 \centering
-\caption{Bounded non-battery portability evidence for the CertOS runtime.}
+\caption{Representative bounded non-battery portability evidence for the
+CertOS runtime.}
 \label{tab:certos-vehicle-toy}
 \begin{tabular}{lr}
 \toprule
@@ -278,6 +283,12 @@ Interventions & 4 \\
 \end{tabular}
 \end{table}
 
+\IfFileExists{reports/universal_orius_validation/tbl_paper6_cross_domain_matrix.tex}{%
+\input{reports/universal_orius_validation/tbl_paper6_cross_domain_matrix}%
+}{%
+\input{../reports/universal_orius_validation/tbl_paper6_cross_domain_matrix}%
+}
+
 \section{Bounded Claim}
 
 The runtime chapter therefore supports five bounded statements:
@@ -290,16 +301,18 @@ The runtime chapter therefore supports five bounded statements:
     explicit fallback behavior,
   \item the prototype runtime is computationally lightweight at the measured
     operating scale, and
-  \item the lifecycle contract ports to a toy second domain without changing
-    the battery thesis into a universal runtime proof.
+  \item the lifecycle contract has now been exercised across additional
+    supported domains without changing the thesis into a universal runtime
+    proof.
 \end{enumerate}
 
 \section{Summary}
 
-CertOS closes the gap between a safe battery action and a runtime that is
-allowed to execute it.  The current chapter does not claim deployment
-completion.  It claims something narrower and stronger: the thesis now has a
-bounded certificate lifecycle chapter with code anchors, runtime invariants,
-measured battery evidence, complete audit coverage, explicit fallback
-semantics, and a small portability demonstration that remains outside the
-main proof boundary.
+CertOS closes the gap between a safe action and a runtime that is allowed to
+execute it.  The current chapter does not claim deployment completion.  It
+claims something narrower and stronger: the thesis now has a bounded
+certificate lifecycle chapter with code anchors, runtime invariants, measured
+battery evidence, complete audit coverage, explicit fallback semantics, and a
+cross-domain evaluation matrix covering every currently supported CertOS
+adapter surface without pretending that runtime governance is universally
+proved.

@@ -1,6 +1,6 @@
 # ORIUS Documentation
 
-Comprehensive documentation for the ORIUS forecasting platform.
+Comprehensive documentation for the ORIUS universal safety framework, thesis package, and supporting research artifacts.
 
 ## Index
 
@@ -12,14 +12,22 @@ Comprehensive documentation for the ORIUS forecasting platform.
 | [RUNBOOK.md](RUNBOOK.md) | Operational procedures and troubleshooting |
 | [TRAINING_PIPELINE.md](TRAINING_PIPELINE.md) | Training pipeline documentation |
 | [ADVANCED_FEATURES.md](ADVANCED_FEATURES.md) | Advanced feature engineering |
+| [UNIVERSAL_KERNEL_ARCHITECTURE.md](UNIVERSAL_KERNEL_ARCHITECTURE.md) | Canonical universal kernel, domain, benchmark, and governance layering |
+| [UNIVERSAL_BENCHMARK_SPEC.md](UNIVERSAL_BENCHMARK_SPEC.md) | ORIUS-Bench v2 schema, metrics, and evaluation protocol |
+| [UNIVERSAL_GOVERNANCE_SPEC.md](UNIVERSAL_GOVERNANCE_SPEC.md) | CertOS governance model, manuscript authority, and claim-lock rules |
+| [ORIUS_THESIS_TERMINOLOGY_GUIDE.md](ORIUS_THESIS_TERMINOLOGY_GUIDE.md) | Canonical universal terminology and battery-only language boundaries |
 | [production_readiness.md](production_readiness.md) | Production deployment checklist |
+| [AI_RESEARCH_WORKFLOW.md](AI_RESEARCH_WORKFLOW.md) | Official AI-tool workflow for ORIUS research, coding, and writing |
+| [AI_ARTIFACT_SANITIZATION_CHECKLIST.md](AI_ARTIFACT_SANITIZATION_CHECKLIST.md) | Upload-safety checklist for hosted AI tools |
 
 ## Related Documentation
 
 - **Root**: [README.md](../README.md) - Quick start guide
 - **Data**: [DATA.md](../DATA.md) - Data sources and formats
 - **Production**: [PRODUCTION_GUIDE.md](../PRODUCTION_GUIDE.md) - Deployment guide
-- **Paper**: [paper/PAPER_DRAFT.md](../paper/PAPER_DRAFT.md) - Research paper draft
+- **Manuscript**: [paper/paper.tex](../paper/paper.tex) - Canonical manuscript authority
+- **Narrative companion**: [paper/PAPER_DRAFT.md](../paper/PAPER_DRAFT.md) - Non-authoritative argument draft
+- **Publication assets**: [reports/publication/README.md](../reports/publication/README.md) - Frozen artifacts and thesis-package matrices
 
 ## Contributing to Documentation
 

@@ -1,118 +1,98 @@
 
-\chapter{Research Roadmap and Deployment Path}
+\chapter{ORIUS Program Architecture and Remaining Frontier}
 \label{ch:roadmap}
 
-This chapter lays out the sequence of work required to move ORIUS from a
-battery-validated prototype to a multi-domain, deployable safety runtime.
-Each milestone is ordered by dependency: later items require earlier ones,
-and no step can be skipped without accumulating technical debt.
+This chapter no longer serves as a speculative future roadmap.  The canonical
+thesis has already consolidated ORIUS as a program-first dissertation, so the
+purpose here is different: to state how Papers~1--6 fit together as one
+research program, to show which parts of that program are reference versus
+bounded layers, and to isolate the open frontier that remains after the
+current package.
 
-\section{Submit the Battery Foundation First}
+\section{Paper~1 as the Reference Scientific Witness}
 
-The immediate priority is to publish the battery-domain results as a
-self-contained contribution.  The submission package comprises the CPSBench
-harness, the DC3S implementation, the dual-trajectory evaluation protocol,
-and the empirical evidence of zero true-state violations.  Peer review of
-the battery result establishes the OASG concept and the DC3S shield in the
-literature before generalisation claims are made.
+Paper~1 remains the scientific anchor of the dissertation.  It establishes the
+battery-domain OASG witness, the T1--T8 theorem ladder, the locked
+theorem-to-code-to-artifact lineage, and the strongest causal statement of the
+work: under degraded telemetry, a controller can be observationally safe while
+physically unsafe, and the DC\textsuperscript{3}S repair-and-certify kernel
+can remove that hidden violation surface on the battery reference row.
 
-\section{Fix Remaining Empirical Gaps}
+\section{Papers~2--6 as the Explicit Second Thesis Spine}
 
-Before extending to new domains, the battery evidence must be hardened:
-
-\begin{enumerate}
-  \item \textbf{Out-of-distribution faults.}  Extend the fault model to
-    include correlated multi-sensor dropout and Byzantine sensor failures.
-    Validate that CQR residuals remain exchangeable under these conditions
-    or document the breakdown.
-  \item \textbf{Long-horizon aging.}  Obtain or simulate multi-year
-    degradation trajectories and verify that the aging-aware recalibration
-    of Chapter~\ref{ch:temporal-extensions} maintains coverage.
-  \item \textbf{Regional breadth.}  Run the full battery on at least two
-    additional grid regions (e.g., ERCOT, NordPool) to confirm that
-    market-structure differences do not invalidate the safety guarantee.
-\end{enumerate}
-
-\section{Extract ORIUS Core Modules}
-
-Refactor the current codebase to separate domain-independent modules
-(OQE scoring, RAC inflation, certificate issuance, audit trail) from
-battery-specific code (SOC dynamics, battery constraints, SCADA parser).
-The result is a \texttt{orius-core} library with a stable API and a
-\texttt{orius-battery} adapter that depends on it.  The separation must
-be enforced by interface boundaries, not merely by convention.
-
-\section{Build the Battery Adapter Package}
-
-Package the battery-specific adapter as a standalone installable module
-that depends on \texttt{orius-core}.  This package includes:
-
-\begin{itemize}
-  \item The SOC integrator plant model.
-  \item The SCADA telemetry parser and OQE feature extractor.
-  \item The box-constraint projection oracle.
-  \item The CPSBench battery plant for regression testing.
-\end{itemize}
-
-Publishing this package demonstrates the adapter pattern in practice and
-provides a template for subsequent domain adapters.
-
-\section{Add a Second Domain}
-
-The second domain should stress the aspects of ORIUS that battery did not
-test: nonlinear dynamics, multi-dimensional state, and non-box constraints.
-Candidates include building HVAC (nonlinear thermal dynamics, polytopic
-comfort constraints) and autonomous vehicle lane-keeping (six-DOF state,
-curvature-dependent road constraints).  The second-domain study must
-reproduce the full evaluation protocol: dual-trajectory simulation, TSVR
-measurement, conformal coverage audit, and intervention-rate analysis.
-
-\section{Add a Third Domain and Beyond}
-
-Each additional domain further validates the invariant core and reveals
-edge cases in the adapter interface.  After the third domain the
-\texttt{orius-core} API should be considered stable; subsequent domains
-become engineering exercises rather than research contributions.
-
-\section{Hardware-in-the-Loop Validation}
-
-The CPSBench harness simulates telemetry faults in software.  Before
-deployment, the DC3S shield must be tested with \emph{real} packet loss,
-delay jitter, and sensor degradation on a hardware-in-the-loop (HIL)
-testbed.  The HIL stage validates:
+The dissertation is therefore not battery-only.  It has a second explicit
+program spine:
 
 \begin{enumerate}
-  \item That the OQE feature extractor behaves correctly on raw network
-    packets, not simulated dropout masks.
-  \item That the shield's latency budget (established in
-    Chapter~\ref{ch:latency}) holds on embedded hardware.
-  \item That the certificate chain persists correctly under power
-    interruptions and storage faults.
+  \item \textbf{Paper~2: temporal validity.}  This layer contributes
+    certificate horizon, expiration, and blackout safe-hold semantics.  Its
+    status is a bounded temporal theorem extension over the battery ladder.
+  \item \textbf{Paper~3: graceful fallback.}  This layer contributes the
+    canonical four-policy degradation benchmark under prolonged blindness.
+    Its status is a bounded empirical benchmark surface rather than a general
+    fallback-dominance theorem.
+  \item \textbf{Paper~4: ORIUS-Bench.}  This layer contributes replayability,
+    schema discipline, metric discipline, and multi-domain benchmark
+    reproducibility.  Its status is a benchmark-contract contribution.
+  \item \textbf{Paper~5: bounded composition.}  This layer contributes the
+    shared-feeder non-composition counterexample and coordinated repair
+    protocols.  Its status is a bounded composition extension, not a full
+    composition theorem.
+  \item \textbf{Paper~6: runtime governance.}  This layer contributes
+    certificate lifecycle, fallback, audit continuity, and recovery as
+    explicit runtime semantics.  Its status is a bounded
+    runtime-governance extension.
 \end{enumerate}
 
-\section{ORIUS-Bench Public Release}
+\section{Layer Dependency Order}
 
-The CPSBench harness should be released as a public benchmark---ORIUS-Bench
----with a standardised evaluation API, a leaderboard, and reference
-implementations for at least two domains.  Public benchmarking invites
-independent reproduction and adversarial stress-testing by the community,
-which no internal audit can substitute.
+These layers do not carry the same proof burden, but they do depend on one
+another in a strict order:
 
-\section{CertOS Runtime Path}
+\begin{enumerate}
+  \item Paper~1 provides the battery witness and the theorem-facing kernel.
+  \item Papers~2 and~3 extend that same battery-centered kernel temporally and
+    operationally.
+  \item Paper~4 turns the evaluation surface into a reusable benchmark
+    contract.
+  \item Paper~5 adds a bounded multi-agent coordination layer on top of local
+    certificate semantics.
+  \item Paper~6 adds bounded runtime governance around issuance, validation,
+    expiry, fallback, audit, and recovery.
+\end{enumerate}
 
-The long-term deployment target is a \emph{CertOS}: a lightweight runtime
-operating system that wraps any black-box controller with the ORIUS
-safety layer.  CertOS would run as a sidecar process, intercept actuation
-commands, evaluate them against the current certificate, and either pass
-or project.  The runtime must satisfy hard real-time constraints, which
-imposes implementation requirements beyond the Python prototype used in
-this dissertation.
+Read in that order, the ORIUS program is already a coherent dissertation
+architecture rather than a queue of future work items.
 
-\section{Chapter Summary}
+\section{What Remains Open After the Current Program}
 
-The roadmap proceeds in strict dependency order: publish the battery
-foundation, harden its empirical gaps, extract the domain-independent
-core, validate on a second and third domain, run hardware-in-the-loop
-tests, release ORIUS-Bench publicly, and ultimately build a deployable
-CertOS runtime.  Each step is necessary; none is sufficient alone.  The
-battery result is the foundation, not the destination.
+The remaining gaps are now frontier gaps, not missing Papers~2--6 layers:
+
+\begin{enumerate}
+  \item \textbf{Autonomous vehicles.}  AV remains proof-candidate because the
+    current repair surface does not yet close the constraint-class mismatch.
+  \item \textbf{Navigation.}  Navigation remains shadow-synthetic until its
+    real-data trainable row and defended telemetry path are complete.
+  \item \textbf{Aerospace.}  Aerospace remains experimental until the replay
+    surface and promotion contract are strengthened beyond the current
+    experimental row.
+  \item \textbf{Deployment beyond bounded runtime governance.}  CertOS
+    currently closes bounded lifecycle, audit, fallback, and recovery
+    semantics.  Full field deployment remains outside the present claim
+    boundary.
+\end{enumerate}
+
+\section{What This Chapter Contributes}
+
+The role of this chapter is therefore architectural rather than speculative.
+It makes the current thesis easier to defend by separating three things that
+older drafts blurred together:
+
+\begin{enumerate}
+  \item the \textbf{reference proof witness} (Paper~1),
+  \item the \textbf{bounded defended program layers} (Papers~2--6),
+  \item and the \textbf{open frontier rows} (AV, navigation, aerospace, and
+    field deployment).
+\end{enumerate}
+
+That separation is the honest program-first stance of the final dissertation.

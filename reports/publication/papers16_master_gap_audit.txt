@@ -1,0 +1,84 @@
+ORIUS Papers 1--6 Master Gap Audit
+==================================
+
+Source surfaces reconciled:
+- paper/orius_program_manifest.json
+- reports/paper2_claim_linkage.md through reports/paper6_claim_linkage.md
+- reports/publication/paper_thesis_coverage_map.csv
+- reports/publication/papers26_inclusion_audit.csv
+- reports/publication/orius_program_paper_map.csv
+
+Program classes:
+- Paper 1: reference scientific witness
+- Paper 2: bounded theorem extension
+- Paper 3: bounded empirical extension
+- Paper 4: benchmark-contract layer
+- Paper 5: bounded empirical extension / bounded composition counterexample
+- Paper 6: runtime-governance layer
+
+Paper-by-paper status:
+- Paper 1
+  theorem_or_contract_status: complete proof witness
+  code_status: complete
+  test_status: complete
+  script_reproducibility_status: complete
+  artifact_status: complete
+  main_thesis_narrative_status: complete
+  claim_class: reference scientific witness
+
+- Paper 2
+  theorem_or_contract_status: bounded temporal theorem layer
+  code_status: complete
+  test_status: complete
+  script_reproducibility_status: complete
+  artifact_status: complete
+  main_thesis_narrative_status: complete
+  claim_class: bounded theorem extension
+
+- Paper 3
+  theorem_or_contract_status: bounded graceful-fallback benchmark layer
+  code_status: complete
+  test_status: complete
+  script_reproducibility_status: complete
+  artifact_status: complete
+  main_thesis_narrative_status: complete
+  claim_class: bounded empirical extension
+
+- Paper 4
+  theorem_or_contract_status: replay and benchmark contract
+  code_status: complete
+  test_status: complete
+  script_reproducibility_status: complete
+  artifact_status: complete
+  main_thesis_narrative_status: complete
+  claim_class: benchmark-contract layer
+
+- Paper 5
+  theorem_or_contract_status: bounded composition counterexample and coordination layer
+  code_status: complete
+  test_status: complete
+  script_reproducibility_status: complete
+  artifact_status: complete
+  main_thesis_narrative_status: complete
+  claim_class: bounded empirical extension
+
+- Paper 6
+  theorem_or_contract_status: bounded lifecycle and runtime-governance layer
+  code_status: complete
+  test_status: complete
+  script_reproducibility_status: complete
+  artifact_status: complete
+  main_thesis_narrative_status: complete
+  claim_class: runtime-governance layer
+
+Frontier rows kept separate from program completeness:
+- AV: proof-candidate, current constraint mismatch still open
+- Navigation: shadow-synthetic until real-data row closes
+- Aerospace: experimental only, not battery-depth
+
+Audit conclusion:
+- Papers 2--6 are already implemented, artifact-backed, and thesis-integrated.
+- The remaining gap is packaging discipline, not missing program layers.
+- Paper 1 remains the only full proof witness.
+- Papers 2, 3, 5, and 6 remain bounded by design.
+- Paper 4 remains evaluation-contract only.
