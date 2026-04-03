@@ -47,24 +47,7 @@ best evidence that the runtime contract is not battery-specific.  It shows
 that the six-domain program preserves sub-millisecond P95 latency while
 keeping certificate rates at 100 percent on all rows.
 
-\begin{table*}[t]
-\centering
-\scriptsize
-\caption{Cross-domain runtime budget from the locked publication matrix.}
-\label{tab:prof-runtime-budget}
-\begin{tabular}{p{2.1cm}p{1.6cm}p{1.7cm}p{1.5cm}p{1.6cm}p{1.5cm}p{1.7cm}p{1.2cm}p{1.8cm}p{1.7cm}}
-\toprule
-\textbf{Domain} & \textbf{P95 latency} & \textbf{Reliability} & \textbf{Repair rate} & \textbf{Cert rate} & \textbf{Error rate} & \textbf{Fallback mode} & \textbf{CertOS} & \textbf{Runtime depth} & \textbf{Limit} \\
-\midrule
-Battery Energy Storage & 0.1193 ms & witness\_reference & n/a & 100.0\% & 0.0\% & safe\_hold & evaluated & reference\_runtime & bounded deployment items remain \\
-Autonomous Vehicles & 0.185 ms & 0.783 & 100.0\% & 100.0\% & 0.0\% & full\_brake & evaluated & proof\_validated & promoted \\
-Industrial Process Control & 0.152 ms & 0.655 & 91.7\% & 100.0\% & 0.0\% & power\_cap & evaluated & proof\_validated & chain complete \\
-Medical and Healthcare Monitoring & 0.137 ms & 0.817 & 16.7\% & 100.0\% & 0.0\% & max\_alert & evaluated & proof\_validated & chain complete \\
-Navigation and Guidance & 0.145 ms & 0.749 & 100.0\% & 100.0\% & 0.0\% & hold\_position & gated & shadow\_synthetic & real data gap \\
-Aerospace Control & 0.168 ms & 0.706 & 18.8\% & 100.0\% & 0.0\% & envelope\_hold & gated & experimental & placeholder \\
-\bottomrule
-\end{tabular}
-\end{table*}
+\input{generated/orius_professor_runtime_governance_table.tex}
 
 This table should stay close to the runtime section in the professor draft
 because it directly supports the claim that the universal runtime layer is
@@ -77,25 +60,6 @@ the domain-closure matrix in \texttt{reports/publication/orius\_domain\_closure\
 Together they show that CertOS is not a decorative abstraction: the same
 issue/validate/expire/fallback logic is observed in the defended rows, while
 navigation and aerospace remain gated by explicit blockers.
-
-\begin{table*}[t]
-\centering
-\scriptsize
-\caption{Cross-domain CertOS lifecycle evidence from the locked publication matrix.}
-\label{tab:prof-governance-lifecycle}
-\begin{tabular}{p{2.1cm}p{2.2cm}p{2.0cm}p{1.5cm}p{2.0cm}p{2.1cm}p{1.2cm}p{1.6cm}}
-\toprule
-\textbf{Domain} & \textbf{Lifecycle surface} & \textbf{Hash chain} & \textbf{CertOS} & \textbf{Shared constraint} & \textbf{Audit continuity} & \textbf{Complete} & \textbf{Limit} \\
-\midrule
-Battery Energy Storage & issue/validate/expire/fallback all seen & ok / invariants pass & evaluated & shared feeder capacity & tracked runtime audit & 97.0\% & bounded to current task surface \\
-Autonomous Vehicles & issue/validate/expire/fallback all seen & ok / invariants pass & evaluated & gated & tracked runtime audit & 93.0\% & promoted \\
-Industrial Process Control & issue/validate/expire/fallback all seen & ok / invariants pass & evaluated & shared power budget & tracked runtime audit & 94.0\% & bounded to current task surface \\
-Medical and Healthcare Monitoring & issue/validate/expire/fallback all seen & ok / invariants pass & evaluated & gated & tracked runtime audit & 93.0\% & chain complete \\
-Navigation and Guidance & gated or not yet supported & gated & gated & gated & bounded or gated & 58.0\% & real data gap \\
-Aerospace Control & gated or not yet supported & gated & gated & gated & bounded or gated & 55.0\% & placeholder \\
-\bottomrule
-\end{tabular}
-\end{table*}
 
 \begin{table}[t]
 \centering
@@ -119,8 +83,31 @@ Step latency & 0.59 ms \\
 
 The appendix should end with the governance boundary spelled out plainly:
 the runtime layer is fully visible, the certificates are auditable, and the
-fallback path is explicit, but the claim remains tiered by domain.  Battery
-is the reference witness; industrial and healthcare are defended bounded
-rows; navigation and aerospace remain gated.  That is enough for a strong
-IEEE draft, and it is more defensible than flattening the evidence into one
-universal-number story.
+fallback path is explicit, but the claim remains tiered by domain. Battery
+is the reference witness; AV, industrial, and healthcare are defended
+bounded rows; navigation and aerospace remain gated. That is enough for a
+strong IEEE draft, and it is more defensible than flattening the evidence
+into one universal-number story.
+
+\subsection{Repository maturity visual}
+Appendix~B is also the right place for one explicit repository-level visual.
+The professor draft should show the reader that ORIUS is not only a narrative
+proposal but a maintained research system with a real public code surface and
+a generated architecture map.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{orius_repo_github_overview}
+\caption{GitHub-style repository overview used as a maturity visual in the
+professor draft. This figure is supplemental and does not carry scientific
+claims by itself.}
+\label{fig:prof-github-overview}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig01_architecture}
+\caption{Repository-backed architecture visual reused in Appendix~B to connect
+the code surface to the runtime stack argued in the main paper.}
+\label{fig:prof-appendix-architecture}
+\end{figure}

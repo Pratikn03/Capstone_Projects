@@ -1,0 +1,75 @@
+\section{Related Work and the Insufficiency of Prior Families}
+\label{sec:prof-related-work}
+
+ORIUS does not claim that prior work ignored uncertainty or safety. The claim is
+narrower and stronger: the major adjacent families solve pieces of the problem, but not
+the full runtime bridge from degraded observation to repaired actuation and auditable
+release.
+
+\subsection{Conformal prediction and calibration are necessary, but not enough}
+Distribution-free and conformal methods provide finite-sample uncertainty surfaces for
+learned predictors \cite{vovk2005algorithmic,lei2018distribution,romano2019conformalized,gibbs2021adaptive,zaffran2022adaptive,angelopoulos2023gentle,barber2023beyond}.
+These tools are indispensable for ORIUS because the runtime must widen the
+observation-consistent set when reliability drops. But they do not, by themselves,
+specify which action remains legal after that widening. A prediction interval is not a
+certificate of actuation legality. ORIUS therefore treats calibration as the input to a
+safety layer rather than as the safety layer itself.
+
+\subsection{Runtime assurance and Simplex-style supervision do not close the observation gap}
+Runtime assurance, supervisory control, and Simplex-style architectures
+\cite{sha1998simplex,sha2001using,desai2019soter,bloem2015shield,bartocci2018introduction,leucker2009brief,havelund2004runtime}
+show that nominal intelligence should not be the final authority over actuation. ORIUS
+inherits that insight directly. The gap is that many supervisory designs begin after a
+candidate action already exists and assume that the state estimate is coherent enough to
+be monitored. ORIUS starts earlier: it treats the observation surface itself as unsafe,
+which forces the runtime to reason jointly about reliability, uncertainty inflation,
+repair geometry, fallback, and certificate validity.
+
+\subsection{Safety filters and constrained control are mathematically strong but plant-local}
+Barrier functions, robust MPC, tube MPC, predictive safety filters, and reachability-
+based controllers can turn model uncertainty into admissible action sets
+\cite{ames2014cbf,ames2019control,wabersich2021predictive,fisac2019general,mayne2005robust,langson2004tubes,camacho2013model,rawlings2017mpc}.
+ORIUS does not compete with that mathematics. It packages those ideas behind a typed
+runtime contract that can host multiple geometries across multiple plants. The
+scientific move is not a new universal controller; it is one reusable way to make
+degraded observation alter actuation semantics.
+
+\subsection{Anomaly, drift, and fault detection stop too early}
+Change detection, drift detection, anomaly scoring, and CPS fault analysis provide the
+language for recognizing when telemetry should no longer be trusted
+\cite{basseville1993detection,page1954continuous,page1955test,hinkley1971inference,breunig2000lof,liu2008isolation,pasqualetti2013attack,teixeira2015secure}.
+Yet many systems stop at an alarm or a reliability score. ORIUS treats that as an
+incomplete runtime response. Once trust has fallen, the system still needs to decide
+which actions remain legal, which actions must be repaired, when fallback is required,
+and how that decision is certified.
+
+\subsection{Domain-specific safety work rarely becomes a universal runtime grammar}
+Energy dispatch, autonomous driving, industrial control, clinical monitoring,
+navigation, and aerospace safety each contain strong plant-level ideas, but most remain
+tied to one domain's state geometry, one benchmark, and one intervention semantics. The
+result is local excellence without a shared runtime object. ORIUS positions itself as a
+cross-domain safety-layer grammar that can sit above those domain-specific methods while
+keeping the data and proof posture explicitly tiered.
+
+\begin{table*}[t]
+\centering
+\small
+\caption{Why prior families remain necessary but insufficient for the ORIUS object.}
+\label{tab:prof-family-gap}
+\begin{tabularx}{\textwidth}{@{}p{0.17\textwidth}p{0.25\textwidth}p{0.50\textwidth}@{}}
+\toprule
+\textbf{Method family} & \textbf{What it contributes} & \textbf{Why it is insufficient for OASG} \\
+\midrule
+Conformal and adaptive calibration & Distribution-free uncertainty and shift-aware coverage control & Does not decide repaired actuation, fallback legality, or certificate release after trust degrades. \\
+Runtime assurance and shielding & Supervisory interception and safety-controller fallback & Often assumes the observation surface is coherent enough to supervise directly. \\
+Safety filters and robust constrained control & Strong admissible-set mathematics under uncertainty & Usually remains plant-local and does not define a reusable benchmark/governance contract. \\
+Anomaly, drift, and fault detection & Detects that telemetry has become unreliable & Stops at alarms or scores unless paired with repair, fallback, and audit semantics. \\
+Domain-specific CPS safety stacks & High-quality local solutions in one plant family & Rarely expose a universal runtime grammar that transfers across domains without changing the scientific object. \\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+The ORIUS thesis is therefore integrative but not vague. The universal object is not
+``safe AI'' in the abstract. It is the typed runtime layer that binds reliability,
+uncertainty, admissible actions, repaired release, and certificate governance under one
+action-semantics problem.

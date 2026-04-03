@@ -1,0 +1,81 @@
+\section{ORIUS Runtime Architecture}
+\label{sec:prof-runtime-architecture}
+
+ORIUS is a post-nominal runtime layer. It does not replace the upstream predictor,
+planner, optimizer, or policy. It wraps them with a narrow contract that begins at raw
+telemetry and ends at certificate-gated release. This is the architectural reason the
+framework can remain domain-agnostic even when the domains do not share nominal models
+or action geometry.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{fig01_architecture}
+\caption{ORIUS as a universal runtime layer between nominal intelligence and physical
+actuation. Domain-specific adapters feed a shared Detect--Calibrate--Constrain--Shield--
+Certify kernel whose outputs are benchmarked and governed under one contract.}
+\label{fig:prof-architecture}
+\end{figure*}
+
+The kernel consists of five stages.
+\begin{enumerate}[leftmargin=1.25em,itemsep=0.2em]
+  \item \textbf{Detect:} estimate reliability \(w_t\) and drift flags from freshness,
+  missingness, cross-sensor consistency, residual behavior, and domain-specific
+  diagnostics.
+  \item \textbf{Calibrate:} inflate the observation-consistent set \(U_t\) rather than
+  trusting a nominal point estimate.
+  \item \textbf{Constrain:} recompute the safe action set under the widened state set.
+  \item \textbf{Shield:} keep, repair, or replace the candidate action.
+  \item \textbf{Certify:} emit a causal certificate and update the governance state.
+\end{enumerate}
+
+The kernel becomes scientific rather than architectural once its objects are written
+explicitly. ORIUS uses a reliability-conditioned uncertainty envelope
+\begin{equation}
+  U_t
+  =
+  \left\{
+    x :
+    m_t(x,\hat{x}_t) \le q_{1-\alpha_t}(w_t,\Delta_t)
+  \right\},
+\end{equation}
+where \(m_t\) is a domain-specific mismatch measure and \(q_{1-\alpha_t}\) is a
+reliability-aware quantile or inflation operator. The tightened action set is
+\begin{equation}
+  \mathcal{A}^{\mathrm{safe}}_t(U_t)
+  =
+  \{a \in \mathcal{A}: g(x,a)\le 0,\ \forall x \in U_t\},
+\end{equation}
+and the certificate-relevant margin is
+\begin{equation}
+  \gamma_t(a)
+  =
+  \inf_{x \in U_t} \phi\!\bigl(f(x,a,0)\bigr),
+\end{equation}
+so that \(\gamma_t(a) \ge 0\) indicates one-step safety for every state in the
+observation-consistent set.
+
+\begin{algorithm}[t]
+\caption{Detect--Calibrate--Constrain--Shield--Certify Runtime Step}
+\label{alg:prof-runtime-step}
+\begin{algorithmic}[1]
+\Require observation packet \(o_t\), history \(\mathcal{H}_t\), candidate action
+\(a_t^{\mathrm{cand}}\)
+\State compute reliability score \(w_t\) and degradation flags from \(o_t\)
+\State build observation-consistent set \(U_t\) using reliability-aware inflation
+\State construct tightened safe-action set \(\mathcal{A}^{\mathrm{safe}}_t(U_t)\)
+\If{\(a_t^{\mathrm{cand}} \in \mathcal{A}^{\mathrm{safe}}_t(U_t)\)}
+  \State \(a_t^{\mathrm{safe}} \gets a_t^{\mathrm{cand}}\)
+\ElsIf{\(\mathcal{A}^{\mathrm{safe}}_t(U_t) \neq \varnothing\)}
+  \State \(a_t^{\mathrm{safe}} \gets \mathcal{R}_t(a_t^{\mathrm{cand}}, \mathcal{A}^{\mathrm{safe}}_t(U_t))\)
+\Else
+  \State \(a_t^{\mathrm{safe}} \gets \mathcal{F}_t(c_t)\)
+\EndIf
+\State emit certificate \(c_t\) with \((w_t,U_t,\gamma_t,\texttt{mode},\texttt{audit\_hash})\)
+\State release \(a_t^{\mathrm{safe}}\) only if certificate is valid or fallback is explicit
+\end{algorithmic}
+\end{algorithm}
+
+This algorithm is the real reusable object in ORIUS. It explains why the framework can
+support batteries, vehicles, industrial plants, healthcare monitoring, navigation, and
+aerospace without pretending those domains share the same nominal control law. What is
+shared is the runtime grammar that mediates degraded observation before actuation.

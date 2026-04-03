@@ -1,73 +1,37 @@
-\section{Battery Witness Results}
+\section{Battery Witness Domain}
 \label{sec:prof-battery-results}
 
-The battery domain remains the strongest empirical witness in ORIUS, but it is
-best read as a witness rather than the conceptual center of the framework.  The
-locked battery artifacts show a clear separation between \emph{controllers that
-can detect and repair under degraded observation} and those that cannot.  That
-separation matters more than any single cost number: the decisive result is
-whether true-state violations disappear under telemetry faults.
+The battery row is the strongest witness in ORIUS because it closes the entire chain
+from assumptions and theorems to controller code, replay artifacts, latency budgets,
+and certificate traces. It is therefore the right place to show the runtime grammar in
+its deepest form without allowing the paper to collapse back into a battery-only
+manuscript.
 
-Table~\ref{tab:prof-battery-summary} condenses the strongest locked battery
-evidence.  The repair-aware ORIUS variants are the only methods in this slice
-that simultaneously eliminate true-state violations and retain meaningful
-coverage.  The deterministic LP and static interval baselines fail on that
-first criterion, while the wrapped and FTIT variants preserve safety at the
-price of modest intervention.
+\subsection{Problem, state, action, and safety object}
+The witness task is storage dispatch under uncertain load, renewable injection, price
+signals, and telemetry faults. The true state includes at least state of charge,
+operational bounds, and dispatch context; the candidate action is charge/discharge
+power. The governing safety object is not cost. It is hidden state violation under
+degraded observation, measured on the true state rather than on controller-visible
+legality.
 
-\begin{table}[t]
-\centering
-\small
-\caption{Compact battery witness summary from locked publication artifacts.
-TSVR is true-state violation rate; coverage is the 90\% predictive interval
-coverage reported by the baseline audit.}
-\label{tab:prof-battery-summary}
-\begin{tabular}{lrrrr}
-\toprule
-\textbf{Controller} & \textbf{TSVR (\%)} & \textbf{Repair / IR (\%)} &
-\textbf{Coverage} & \textbf{Mean width} \\
-\midrule
-ORIUS FTIT & 0.000 & 2.798 & 0.971627 & 3906.548 \\
-ORIUS Wrapped & 0.000 & 0.000 & 0.884127 & 559.921 \\
-Adaptive Conformal + Repair & 0.000 & 1.389 & 0.962500 & 2824.252 \\
-Deterministic LP & 3.909 & 0.000 & 0.883333 & 503.131 \\
-Robust Fixed Interval & 25.575 & 0.000 & 0.883333 & 503.131 \\
-\bottomrule
-\end{tabular}
-\end{table}
+\subsection{Data and replay surface}
+The battery evidence is built on the locked CPSBench-derived replay surface with
+168-hour episodes, fixed seeds, and fault families that include dropout, stale sensing,
+delay, drift, and mixed degradation. This is what makes the battery row useful as a
+witness: it is a repeatable degraded-observation environment rather than a one-off case
+study.
 
-Two points follow directly from the evidence.  First, the safety gain is
-structural: once reliability-aware repair is enabled, the hidden violation rate
-drops to zero across the battery witness package.  Second, the deep quality
-model is not being used as a claim of forecasting superiority.  The deep OQE
-summary is only mildly predictive of fault family (\texttt{fault\_auc} $=0.534$),
-which is precisely why the framework treats quality scoring as a guardrail for
-repair and certificate logic rather than as a standalone predictor.
+\subsection{Witness result}
+The decisive battery result is that ORIUS repair-aware controllers eliminate true-state
+violations under the locked protocol while non-repair baselines do not. The deep OQE
+variant is not presented as a miracle predictor; it is a quality signal routed into a
+repair-and-certify layer that prevents hidden violations.
 
-Figure~\ref{fig:prof-battery-baselines} provides the visual counterpart to the
-table: the battery witness is strongest where the repair-and-certify layer keeps
-the true-state violation surface at zero while leaving the non-repair baselines
-exposed.
+\input{generated/orius_professor_battery_witness_table.tex}
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{fig_battery_reliability_baselines}
-\caption{Battery reliability baselines from the locked publication package.
-The ORIUS repair-aware variants preserve zero true-state violations, while the
-deterministic and static-interval baselines do not.}
-\label{fig:prof-battery-baselines}
-\end{figure}
-
-The chapter-level battery results remain consistent with the publication
-artifacts used elsewhere in the monograph: the locked controller comparison,
-the reliability baseline audit, the 48-hour trace, and the ablation suite all
-point to the same conclusion.  ORIUS is not merely reducing cost or widening
-intervals; it is preventing hidden violations under observation degradation.
-
-\paragraph{Bottom line.}
-For a professor-facing ORIUS manuscript, this is the battery story worth
-retaining in the main text: the battery plant is the cleanest empirical witness
-that the observation-quality signal, repair step, and certificate discipline are
-doing real work.  The detailed traces, fault-family responses, and ablations are
-valuable, but they belong behind the compact result statement rather than
-crowding it.
+The deeper trace, ablation, and raw-sequence evidence remains important, but it belongs
+in Appendix~B. In the main paper the battery row serves one purpose: it proves that the
+runtime safety layer is not merely architectural. It changes the released-action
+semantics and removes true-state failures on the strongest witness surface currently
+available in the repo.

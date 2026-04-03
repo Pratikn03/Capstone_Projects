@@ -1,0 +1,82 @@
+\section{Problem Definition: Degraded Observation and OASG}
+\label{sec:prof-problem}
+
+Consider a discrete-time physical system observed through a degraded telemetry channel:
+\begin{equation}
+  x_{t+1} = f(x_t, a_t, \omega_t), \qquad
+  y_t = h(x_t, \nu_t), \qquad
+  \hat{x}_t = \eta(y_{0:t}),
+\end{equation}
+where \(x_t \in \mathcal{X}\) is the true state, \(y_t\) is the observation packet,
+\(\hat{x}_t\) is the controller-visible state, and \(a_t^{\mathrm{cand}} =
+\pi_t(\hat{x}_t)\) is the candidate action produced by the nominal controller. Let
+\(\mathcal{S} = \{x \in \mathcal{X}: \phi(x) \ge 0\}\) denote the safe set, and let
+\(\mathcal{A}(x)\) denote the set of actions that preserve safety when the true state is
+\(x\).
+
+The observation--action safety gap is the event
+\begin{equation}
+  \OASG_t \equiv \mathbf{1}\!\left[
+  a_t^{\mathrm{cand}} \in \mathcal{A}(\hat{x}_t)
+  \ \land\
+  a_t^{\mathrm{cand}} \notin \mathcal{A}(x_t)
+  \right].
+\end{equation}
+The key point is that OASG is an action-semantics failure, not only a state-estimation
+failure. A better estimator can reduce its frequency, but the safety event itself is
+defined by the legality of released actuation under degraded observation.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_oasg_hero}
+\caption{Degraded observation turns controller legality into a latent safety hazard:
+the candidate action can be valid on the observed state while unsafe on the true state.}
+\label{fig:prof-oasg}
+\end{figure}
+
+ORIUS turns this hazard into a runtime object by making observation quality explicit.
+Let \(w_t \in [0,1]\) be a reliability score computed from freshness, missingness,
+sensor disagreement, residual behavior, or domain-specific degradation signatures. The
+observation-consistent set is then inflated as
+\begin{equation}
+  U_t
+  =
+  \left\{
+    x \in \mathcal{X} :
+    d_t(x,\hat{x}_t) \le \beta_0 + \lambda(1-w_t) + \delta_t
+  \right\},
+\end{equation}
+where \(\beta_0\) is the nominal uncertainty radius, \(\lambda(1-w_t)\) is the
+reliability-conditioned inflation, and \(\delta_t\) captures drift- or history-based
+correction. The universal contract does not insist on a single metric \(d_t\); it
+insists only that the set widens monotonically when reliability falls.
+
+The corresponding tightened safe-action set is
+\begin{equation}
+  \mathcal{A}^{\mathrm{safe}}_t(U_t)
+  =
+  \left\{
+    a \in \mathcal{A} :
+    g(x,a) \le 0,\ \forall x \in U_t
+  \right\},
+\end{equation}
+where \(g(x,a)\) is the domain safety constraint. The released action is then
+\begin{equation}
+  a_t^{\mathrm{safe}}
+  =
+  \begin{cases}
+    a_t^{\mathrm{cand}}, & a_t^{\mathrm{cand}} \in \mathcal{A}^{\mathrm{safe}}_t(U_t), \\
+    \mathcal{R}_t(a_t^{\mathrm{cand}}, \mathcal{A}^{\mathrm{safe}}_t(U_t)), &
+      \mathcal{A}^{\mathrm{safe}}_t(U_t) \neq \varnothing, \\
+    \mathcal{F}_t(c_t), & \mathcal{A}^{\mathrm{safe}}_t(U_t) = \varnothing,
+  \end{cases}
+\end{equation}
+with repair map \(\mathcal{R}_t\), fallback policy \(\mathcal{F}_t\), and certificate
+context \(c_t\).
+
+This yields the central runtime question for the paper: once degraded observation is
+acknowledged, what set of actions remains certifiably safe and auditable? ORIUS answers
+that question with one runtime kernel, one benchmark schema, and one governance
+discipline. The theorem bridge later shows that the resulting safety layer is not a
+heuristic wrapper but a structured bound-preserving construction under explicit
+assumptions.

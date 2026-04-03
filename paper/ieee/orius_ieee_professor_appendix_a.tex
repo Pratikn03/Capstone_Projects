@@ -1,0 +1,35 @@
+\documentclass[10pt,journal,onecolumn]{IEEEtran}
+\input{orius_ieee_preamble.tex}
+
+\title{ORIUS Professor Appendix A: Formal and Algorithmic Surface}
+\author{Author details omitted for professor review draft}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Appendix Overview}
+\label{sec:prof-app-a-overview}
+
+This appendix collects the formal and algorithmic material that sits behind the
+professor-facing ORIUS IEEE draft: notation, assumptions, theorem statements, proof
+maps, adapter semantics, and the strongest local proof surfaces reused from the
+monograph. The appendix is intentionally heavier than a venue supplement. Its role is
+to make every strong theorem-side claim in the main paper traceable to a local formal
+object.
+
+\input{professor_sections/prof_appendix_a_formal.tex}
+\ORIUSReuseInput{../../chapters/ch15_assumptions_notation_proof_discipline.tex}
+\ORIUSReuseInput{../../chapters/ch16_battery_theorem_oasg_existence.tex}
+\ORIUSReuseInput{../../chapters/ch17_battery_theorem_safety_preservation.tex}
+\ORIUSReuseInput{../../chapters/ch18_orius_core_bound_battery.tex}
+\ORIUSReuseInput{../../chapters/ch19_no_free_safety_battery.tex}
+\ORIUSReuseInput{../../chapters/ch20_temporal_behavioral_extensions.tex}
+\ORIUSReuseInput{../../chapters/ch37_universality_completeness.tex}
+\ORIUSReuseInput{../../appendices/app_ac_integrated_theorem_surface_register.tex}
+\ORIUSReuseInput{../monograph/app_ai_formula_and_term_register.tex}
+
+\bibliographystyle{IEEEtran}
+\bibliography{../bibliography/orius_monograph}
+
+\end{document}

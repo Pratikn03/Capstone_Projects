@@ -1,0 +1,31 @@
+\documentclass[10pt,journal,onecolumn]{IEEEtran}
+\input{orius_ieee_preamble.tex}
+
+\title{ORIUS Professor Appendix B: Empirical, Runtime, and Artifact Surface}
+\author{Author details omitted for professor review draft}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Appendix Overview}
+\label{sec:prof-app-b-overview}
+
+This appendix carries the empirical and systems depth behind the main paper: battery
+witness detail, universal benchmark semantics, runtime budgets, CertOS lifecycle
+tables, protocol cards, and one repository maturity visual. It is deliberately
+artifact-grounded and uses the tracked publication surfaces rather than local dashboard
+snapshots.
+
+\input{professor_sections/prof_appendix_b_runtime.tex}
+\input{professor_sections/prof_appendix_b_empirical.tex}
+\ORIUSReuseInput{../monograph/ch07_system_benchmark_governance.tex}
+\ORIUSReuseInput{../../chapters/ch22_latency_systems_footprint.tex}
+\ORIUSReuseInput{../../chapters/ch30_orius_bench_battery_track.tex}
+\ORIUSReuseInput{../../chapters/ch32_certos_runtime_certificate_lifecycle.tex}
+\ORIUSReuseInput{../monograph/app_af_domain_protocol_cards.tex}
+
+\bibliographystyle{IEEEtran}
+\bibliography{../bibliography/orius_monograph}
+
+\end{document}
