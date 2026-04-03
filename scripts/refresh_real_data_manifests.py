@@ -12,6 +12,7 @@ from orius.data_pipeline.real_data_contract import (
     ResolvedRawSource,
     build_provenance_manifest,
     resolve_repo_or_external_raw_dir,
+    resolved_source_has_files,
     summarize_csv_output,
     summarize_files,
     utc_now_iso,
@@ -72,6 +73,30 @@ def _report_row(
     if extras:
         payload.update(extras)
     return payload
+
+
+def _has_raw_files(raw_source: ResolvedRawSource | None) -> bool:
+    return resolved_source_has_files(raw_source)
+
+
+def _kitti_raw_ready(raw_source: ResolvedRawSource | None) -> bool:
+    if not _has_raw_files(raw_source) or raw_source is None:
+        return False
+    root = raw_source.path
+    poses_candidates = [root / "dataset" / "poses", root / "poses"]
+    sequence_candidates = [root / "dataset" / "sequences", root / "sequences"]
+    poses_ready = any(candidate.exists() and any(candidate.glob("*.txt")) for candidate in poses_candidates)
+    times_ready = any(candidate.exists() and any(candidate.glob("*/times.txt")) for candidate in sequence_candidates)
+    return poses_ready and times_ready
+
+
+def _looks_like_public_adsb_proxy(raw_source: ResolvedRawSource | None) -> bool:
+    if raw_source is None or not raw_source.path.exists():
+        return False
+    root = raw_source.path
+    return (root / "tartanaviation_adsb_19k_clean").exists() or any(
+        candidate.name == "tartanaviation_adsb_19k_clean.csv" for candidate in root.rglob("*")
+    )
 
 
 def refresh_battery_manifest() -> dict[str, Any]:
@@ -248,7 +273,8 @@ def refresh_av_manifest() -> dict[str, Any]:
         external_dataset_key="waymo_open_motion",
         required=False,
     )
-    if processed_path.exists() and waymo_source is not None:
+    waymo_ready = processed_path.exists() and _has_raw_files(waymo_source)
+    if waymo_ready and waymo_source is not None:
         manifest = build_provenance_manifest(
             domain="av",
             dataset_key="waymo_open_motion",
@@ -332,12 +358,13 @@ def refresh_navigation_manifest() -> dict[str, Any]:
         external_dataset_key="kitti_odometry",
         required=False,
     )
-    if raw_source is None or not processed_path.exists():
+    raw_ready = _kitti_raw_ready(raw_source)
+    if not raw_ready or not processed_path.exists():
         return _report_row(
             domain="navigation",
             status="blocked",
             manifest_path=manifest_path if manifest_path.exists() else None,
-            canonical_source_present=raw_source is not None,
+            canonical_source_present=raw_ready,
             processed_output_present=processed_path.exists(),
             blocker="navigation_real_data_chain_incomplete",
             notes=[
@@ -388,15 +415,27 @@ def refresh_aerospace_manifest() -> dict[str, Any]:
         external_dataset_key="aerospace_flight_telemetry",
         required=False,
     )
+    runtime_surface_present = _has_raw_files(runtime_surface)
+    public_adsb_manifest = raw_dir / "public_adsb_proxy_provenance.json"
+    public_adsb_support = runtime_surface_present and (public_adsb_manifest.exists() or _looks_like_public_adsb_proxy(runtime_surface))
+    provider_runtime_ready = runtime_surface_present and not public_adsb_support
 
     runtime_contract = {
         "generated_at_utc": utc_now_iso(),
         "domain": "aerospace",
         "contract": "runtime_replay_surface",
         "canonical_source": "provider_approved_multi_flight_telemetry",
-        "present": runtime_surface is not None,
+        "present": runtime_surface_present,
         "checked_locations": [] if runtime_surface is None else list(runtime_surface.checked_locations),
         "raw_root": None if runtime_surface is None else str(runtime_surface.path),
+        "surface_status": (
+            "provider_approved_ready"
+            if provider_runtime_ready
+            else "public_adsb_proxy_only"
+            if public_adsb_support
+            else "missing"
+        ),
+        "public_adsb_proxy_manifest": str(public_adsb_manifest) if public_adsb_manifest.exists() else None,
         "notes": [
             "C-MAPSS is the trainable degradation companion surface only.",
             "Bounded-universal aerospace closure requires a separate multi-flight runtime replay surface.",
@@ -444,12 +483,19 @@ def refresh_aerospace_manifest() -> dict[str, Any]:
         ],
         extras={
             "runtime_contract_path": str(runtime_contract_path),
-            "runtime_replay_surface_present": runtime_surface is not None,
+            "runtime_replay_surface_present": runtime_surface_present,
+            "public_adsb_support": public_adsb_support,
         },
     )
     path = write_json(manifest_path, manifest)
-    status = "refreshed" if runtime_surface is not None else "trainable_only"
-    blocker = "" if runtime_surface is not None else "aerospace_real_multi_flight_runtime_missing"
+    status = (
+        "refreshed"
+        if provider_runtime_ready
+        else "trainable_plus_public_support"
+        if public_adsb_support
+        else "trainable_only"
+    )
+    blocker = "" if provider_runtime_ready else "aerospace_real_multi_flight_runtime_missing"
     return _report_row(
         domain="aerospace",
         status=status,
@@ -459,8 +505,13 @@ def refresh_aerospace_manifest() -> dict[str, Any]:
         blocker=blocker,
         notes=[
             "Aerospace remains blocked on the defended runtime replay surface until multi-flight telemetry is staged.",
+            "A bounded public ADS-B runtime support lane is available." if public_adsb_support else "No bounded public ADS-B runtime support lane is currently staged.",
         ],
-        extras={"runtime_contract_path": str(runtime_contract_path)},
+        extras={
+            "runtime_contract_path": str(runtime_contract_path),
+            "public_adsb_support": public_adsb_support,
+            "provider_runtime_ready": provider_runtime_ready,
+        },
     )
 
 

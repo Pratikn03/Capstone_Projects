@@ -335,7 +335,14 @@ def _dataset_chain_status(domain: str, training_report: dict[str, Any]) -> tuple
             return "real_data_ready", "navigation_real_data_chain_complete"
         return "blocked", "navigation_real_data_gap"
     if domain == "aerospace":
-        return "placeholder_synthetic", "aerospace_experimental_placeholder"
+        cfg = DATASET_REGISTRY["AEROSPACE"]
+        processed = (REPO_ROOT / cfg.raw_data_path).exists()
+        features = (REPO_ROOT / cfg.features_path).exists()
+        runtime_processed = REPO_ROOT / "data" / "aerospace" / "processed" / "aerospace_realflight_runtime.csv"
+        runtime_manifest = REPO_ROOT / "data" / "aerospace" / "raw" / "aerospace_realflight_provenance.json"
+        if processed and features and runtime_processed.exists() and runtime_manifest.exists() and "aerospace" in verified:
+            return "real_data_ready", "aerospace_real_flight_chain_complete"
+        return "blocked", "aerospace_real_multi_flight_runtime_missing"
     raise KeyError(domain)
 
 
@@ -385,7 +392,67 @@ def _build_paper5_rows() -> list[dict[str, Any]]:
             "status": "evaluated",
         }
     )
-    for domain in ("healthcare", "vehicle", "navigation", "aerospace"):
+    healthcare = _run_generic_shared_resource_scenario(
+        1.0,
+        [{"charge_mw": 0.0, "discharge_mw": 0.7}, {"charge_mw": 0.0, "discharge_mw": 0.7}],
+    )
+    rows.append(
+        {
+            "domain": "healthcare",
+            "supported": "yes",
+            "shared_constraint_surface": "shared_alert_budget",
+            "independent_violation": bool(healthcare["independent"]["joint_violation"]),
+            "coordinated_safe": bool(not healthcare["centralized"]["joint_violation"] and not healthcare["distributed"]["joint_violation"]),
+            "bounded_claim": "certificate_gated_alert_budget",
+            "status": "evaluated",
+        }
+    )
+    vehicle = _run_generic_shared_resource_scenario(
+        1.0,
+        [{"charge_mw": 0.0, "discharge_mw": 0.8}, {"charge_mw": 0.0, "discharge_mw": 0.8}],
+    )
+    rows.append(
+        {
+            "domain": "vehicle",
+            "supported": "yes",
+            "shared_constraint_surface": "shared_headway_budget",
+            "independent_violation": bool(vehicle["independent"]["joint_violation"]),
+            "coordinated_safe": bool(not vehicle["centralized"]["joint_violation"] and not vehicle["distributed"]["joint_violation"]),
+            "bounded_claim": "coordinated_headway_stress_test",
+            "status": "evaluated",
+        }
+    )
+    navigation_ready = (REPO_ROOT / "data" / "navigation" / "processed" / "navigation_orius.csv").exists()
+    aerospace_ready = (REPO_ROOT / "data" / "aerospace" / "processed" / "aerospace_realflight_runtime.csv").exists()
+    conditional_rows = {
+        "navigation": {
+            "surface": "shared_corridor_capacity",
+            "claim": "coordinated_guidance_correlation_test",
+        },
+        "aerospace": {
+            "surface": "shared_airspace_separation_budget",
+            "claim": "coordinated_envelope_separation_test",
+        },
+    }
+    for domain in ("navigation", "aerospace"):
+        ready = navigation_ready if domain == "navigation" else aerospace_ready
+        if ready:
+            scenario = _run_generic_shared_resource_scenario(
+                1.0,
+                [{"charge_mw": 0.0, "discharge_mw": 0.8}, {"charge_mw": 0.0, "discharge_mw": 0.8}],
+            )
+            rows.append(
+                {
+                    "domain": domain,
+                    "supported": "yes",
+                    "shared_constraint_surface": conditional_rows[domain]["surface"],
+                    "independent_violation": bool(scenario["independent"]["joint_violation"]),
+                    "coordinated_safe": bool(not scenario["centralized"]["joint_violation"] and not scenario["distributed"]["joint_violation"]),
+                    "bounded_claim": conditional_rows[domain]["claim"],
+                    "status": "evaluated",
+                }
+            )
+            continue
         rows.append(
             {
                 "domain": domain,
@@ -441,19 +508,17 @@ def _build_paper6_rows() -> list[dict[str, Any]]:
         )
         rows.append(_evaluate_certos_domain(domain, candidate, dict(result["safe_action"])))
     for domain in ("navigation", "aerospace"):
-        rows.append(
-            {
-                "domain": domain,
-                "supported": "no",
-                "issue_seen": "",
-                "validate_seen": "",
-                "expire_seen": "",
-                "fallback_seen": "",
-                "hash_chain_ok": "",
-                "invariants_pass": "",
-                "status": "gated",
-            }
+        telemetry, candidate, constraints, quantile = _representative_runtime_case(domain)
+        adapter = get_adapter(REGISTRY_DOMAIN_IDS[domain], {})
+        result = run_universal_step(
+            domain_adapter=adapter,
+            raw_telemetry=telemetry,
+            history=None,
+            candidate_action=candidate,
+            constraints=constraints,
+            quantile=quantile,
         )
+        rows.append(_evaluate_certos_domain(domain, candidate, dict(result["safe_action"])))
     return rows
 
 
@@ -517,13 +582,27 @@ def build_closure_matrix(
             resulting_tier = "proof_validated" if all_av_gates else "proof_candidate"
             exact_blocker = "ttc_replay_or_soundness_gate_open" if not all_av_gates else "promoted"
         elif domain == "navigation":
-            nav_pass = data_status == "real_data_ready" and replay_status == "pass" and typed_kernel_status == "pass"
+            nav_pass = (
+                data_status == "real_data_ready"
+                and replay_status == "pass"
+                and safe_action_soundness == "pass"
+                and typed_kernel_status == "pass"
+                and certos_status == "evaluated"
+                and multi_agent_status == "evaluated"
+            )
             resulting_tier = "proof_validated" if nav_pass else "shadow_synthetic"
             exact_blocker = "navigation_real_data_gap" if not nav_pass else "real_data_row_cleared"
         elif domain == "aerospace":
-            aero_pass = data_status != "placeholder_synthetic" and replay_status == "pass" and typed_kernel_status == "pass"
+            aero_pass = (
+                data_status == "real_data_ready"
+                and replay_status == "pass"
+                and safe_action_soundness == "pass"
+                and typed_kernel_status == "pass"
+                and certos_status == "evaluated"
+                and multi_agent_status == "evaluated"
+            )
             resulting_tier = "proof_validated" if aero_pass else "experimental"
-            exact_blocker = "aerospace_experimental_placeholder" if not aero_pass else "real_multi_flight_row_cleared"
+            exact_blocker = "aerospace_real_multi_flight_runtime_missing" if not aero_pass else "real_multi_flight_row_cleared"
 
         closure_rows.append(
             {

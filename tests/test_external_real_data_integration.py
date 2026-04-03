@@ -8,7 +8,10 @@ import pytest
 
 import scripts.download_av_datasets as av_builder
 import scripts.download_aerospace_datasets as aerospace_builder
+import scripts.build_aerospace_public_adsb_runtime as aerospace_public_builder
+import scripts.build_aerospace_real_flight_dataset as aerospace_real_builder
 import scripts.build_navigation_real_dataset as nav_builder
+import scripts.verify_real_data_preflight as real_data_preflight
 from scripts._dataset_registry import DATASET_REGISTRY
 from orius.data_pipeline.build_features_navigation import build_features as build_navigation_features
 from orius.data_pipeline import real_data_contract
@@ -171,6 +174,131 @@ def test_aerospace_cmapss_fixture_builds_real_processed_surface(tmp_path: Path, 
     assert manifest["used_fallback"] is False
 
 
+def test_aerospace_public_adsb_builder_emits_proxy_runtime_artifacts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    external_root = tmp_path / "external"
+    local_dir = external_root / "aerospace_flight_telemetry" / aerospace_public_builder.HF_LOCAL_DIRNAME
+    local_dir.mkdir(parents=True)
+    pd.DataFrame(
+        {
+            "aircraft_id": ["ac1"] * 8 + ["ac2"] * 8,
+            "year": [2026] * 16,
+            "month": [1] * 16,
+            "day": [2] * 16,
+            "hour": [3] * 16,
+            "minute": [4] * 16,
+            "second": [float(i) for i in range(8)] + [float(i) for i in range(8)],
+            "altitude_ft": [3000 + 25 * i for i in range(16)],
+            "ground_speed_kts": [180 + i for i in range(16)],
+            "heading_deg": [5 * i for i in range(16)],
+            "latitude": [40.0] * 16,
+            "longitude": [-88.0] * 16,
+            "aircraft_tail": ["N1"] * 8 + ["N2"] * 8,
+            "data_age_sec": [0.5] * 16,
+            "range_nm": [12.0] * 16,
+            "bearing_deg": [45.0] * 16,
+            "altitude_is_gnss": [True] * 16,
+        }
+    ).to_csv(local_dir / "tartanaviation_adsb_19k_clean.csv", index=False)
+
+    raw_dir = tmp_path / "repo_raw"
+    processed_dir = tmp_path / "processed"
+    publication_dir = tmp_path / "publication"
+    raw_dir.mkdir(parents=True)
+    processed_dir.mkdir(parents=True)
+    publication_dir.mkdir(parents=True)
+
+    monkeypatch.setattr(aerospace_public_builder, "RAW_DIR", raw_dir)
+    monkeypatch.setattr(aerospace_public_builder, "PROCESSED_DIR", processed_dir)
+    monkeypatch.setattr(aerospace_public_builder, "PUBLICATION_DIR", publication_dir)
+    monkeypatch.setattr(aerospace_public_builder, "PROCESSED_CSV", processed_dir / "aerospace_public_adsb_runtime.csv")
+    monkeypatch.setattr(aerospace_public_builder, "PROVENANCE_PATH", raw_dir / "public_adsb_proxy_provenance.json")
+    monkeypatch.setattr(aerospace_public_builder, "SUMMARY_JSON", publication_dir / "aerospace_public_flight_runtime_summary.json")
+    monkeypatch.setattr(aerospace_public_builder, "SUMMARY_CSV", publication_dir / "aerospace_public_flight_runtime_summary.csv")
+    monkeypatch.setattr(aerospace_public_builder, "SUMMARY_MD", publication_dir / "aerospace_public_flight_runtime_summary.md")
+    monkeypatch.setattr(aerospace_public_builder, "GOVERNANCE_CSV", publication_dir / "aerospace_public_flight_governance_matrix.csv")
+    monkeypatch.setattr(aerospace_public_builder, "CALIBRATION_CSV", publication_dir / "aerospace_public_flight_calibration_diagnostics.csv")
+    monkeypatch.setattr(aerospace_public_builder, "CANDIDATE_PARITY_CSV", publication_dir / "aerospace_public_flight_candidate_parity.csv")
+
+    out_path = aerospace_public_builder.build_public_runtime(
+        external_root=external_root,
+        out_csv=aerospace_public_builder.PROCESSED_CSV,
+        download=False,
+    )
+
+    built = pd.read_csv(out_path)
+    assert {"flight_id", "step", "altitude_m", "airspeed_kt", "bank_angle_deg", "fuel_remaining_pct", "ts_utc"}.issubset(built.columns)
+    assert built["speed_source"].eq("groundspeed_proxy").all()
+    provenance = json.loads((raw_dir / "public_adsb_proxy_provenance.json").read_text())
+    assert provenance["canonical_source"] is False
+    assert provenance["proxy_fields"]["airspeed_kt"] == "populated_from_ground_speed_kts"
+    summary = json.loads((publication_dir / "aerospace_public_flight_runtime_summary.json").read_text())
+    assert summary["lane_type"] == "bounded_public_adsb_runtime"
+    assert (publication_dir / "aerospace_public_flight_governance_matrix.csv").exists()
+    assert (publication_dir / "aerospace_public_flight_calibration_diagnostics.csv").exists()
+    assert (publication_dir / "aerospace_public_flight_candidate_parity.csv").exists()
+
+
+def test_aerospace_public_adsb_builder_defaults_to_external_root_env(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    external_root = tmp_path / "external"
+    local_dir = external_root / "aerospace_flight_telemetry" / aerospace_public_builder.HF_LOCAL_DIRNAME
+    local_dir.mkdir(parents=True)
+    pd.DataFrame(
+        {
+            "aircraft_id": ["ac1"] * 8,
+            "year": [2026] * 8,
+            "month": [1] * 8,
+            "day": [2] * 8,
+            "hour": [3] * 8,
+            "minute": [4] * 8,
+            "second": [float(i) for i in range(8)],
+            "altitude_ft": [3000 + 10 * i for i in range(8)],
+            "ground_speed_kts": [180 + i for i in range(8)],
+            "heading_deg": [5 * i for i in range(8)],
+            "latitude": [40.0] * 8,
+            "longitude": [-88.0] * 8,
+            "aircraft_tail": ["N1"] * 8,
+            "data_age_sec": [0.5] * 8,
+        }
+    ).to_csv(local_dir / "tartanaviation_adsb_19k_clean.csv", index=False)
+
+    raw_dir = tmp_path / "repo_raw"
+    processed_dir = tmp_path / "processed"
+    publication_dir = tmp_path / "publication"
+    raw_dir.mkdir(parents=True)
+    processed_dir.mkdir(parents=True)
+    publication_dir.mkdir(parents=True)
+
+    monkeypatch.setenv(aerospace_public_builder.EXTERNAL_DATA_ROOT_ENV, str(external_root))
+    monkeypatch.setattr(aerospace_public_builder, "RAW_DIR", raw_dir)
+    monkeypatch.setattr(aerospace_public_builder, "PROCESSED_DIR", processed_dir)
+    monkeypatch.setattr(aerospace_public_builder, "PUBLICATION_DIR", publication_dir)
+    monkeypatch.setattr(aerospace_public_builder, "PROCESSED_CSV", processed_dir / "aerospace_public_adsb_runtime.csv")
+    monkeypatch.setattr(aerospace_public_builder, "PROVENANCE_PATH", raw_dir / "public_adsb_proxy_provenance.json")
+    monkeypatch.setattr(aerospace_public_builder, "SUMMARY_JSON", publication_dir / "aerospace_public_flight_runtime_summary.json")
+    monkeypatch.setattr(aerospace_public_builder, "SUMMARY_CSV", publication_dir / "aerospace_public_flight_runtime_summary.csv")
+    monkeypatch.setattr(aerospace_public_builder, "SUMMARY_MD", publication_dir / "aerospace_public_flight_runtime_summary.md")
+    monkeypatch.setattr(aerospace_public_builder, "GOVERNANCE_CSV", publication_dir / "aerospace_public_flight_governance_matrix.csv")
+    monkeypatch.setattr(aerospace_public_builder, "CALIBRATION_CSV", publication_dir / "aerospace_public_flight_calibration_diagnostics.csv")
+    monkeypatch.setattr(aerospace_public_builder, "CANDIDATE_PARITY_CSV", publication_dir / "aerospace_public_flight_candidate_parity.csv")
+
+    out_path = aerospace_public_builder.build_public_runtime(
+        external_root=None,
+        out_csv=aerospace_public_builder.PROCESSED_CSV,
+        download=False,
+    )
+
+    assert out_path.exists()
+    assert (raw_dir / "public_adsb_proxy_provenance.json").exists()
+    summary = json.loads((publication_dir / "aerospace_public_flight_runtime_summary.json").read_text(encoding="utf-8"))
+    assert summary["lane_type"] == "bounded_public_adsb_runtime"
+
+
 def test_dataset_registry_includes_navigation_row() -> None:
     cfg = DATASET_REGISTRY["NAVIGATION"]
     assert cfg.config_file == "configs/train_forecast_navigation.yaml"
@@ -197,3 +325,78 @@ def test_tool_status_finds_project_venv_tools_without_path(tmp_path: Path, monke
     status = real_data_contract.tool_status(("hf", "kaggle"))
     assert status["hf"] == str(tool_path)
     assert status["kaggle"] is None
+
+
+def test_real_data_preflight_prefers_external_root_for_nonempty_dataset(tmp_path: Path) -> None:
+    repo_dir = tmp_path / "repo" / "data" / "navigation" / "raw" / "kitti_odometry"
+    repo_dir.mkdir(parents=True)
+    external_root = tmp_path / "external"
+    external_dir = external_root / "kitti_odometry"
+    external_dir.mkdir(parents=True)
+    (external_dir / "poses.txt").write_text("0 0 0\n", encoding="utf-8")
+
+    check = real_data_preflight._external_dataset_check(
+        repo_dir=repo_dir,
+        external_dataset_key="kitti_odometry",
+        explicit_root=external_root,
+    )
+
+    assert check["exists"] is True
+    assert check["has_files"] is True
+    assert check["source_kind"] == "external"
+    assert check["path"] == str(external_dir)
+
+
+def test_aerospace_real_flight_builder_emits_official_runtime_artifacts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    external_root = tmp_path / "external"
+    provider_dir = external_root / "aerospace_flight_telemetry" / "provider_batch_01"
+    provider_dir.mkdir(parents=True)
+    pd.DataFrame(
+        {
+            "flight_id": ["f1", "f1", "f2", "f2"],
+            "step": [0, 1, 0, 1],
+            "altitude_m": [1000.0, 1010.0, 1200.0, 1215.0],
+            "airspeed_kt": [180.0, 182.0, 190.0, 192.0],
+            "bank_angle_deg": [5.0, 6.0, 3.0, 4.0],
+            "fuel_remaining_pct": [90.0, 89.0, 88.0, 87.0],
+            "ts_utc": [
+                "2026-01-01T00:00:00Z",
+                "2026-01-01T00:00:01Z",
+                "2026-01-01T00:01:00Z",
+                "2026-01-01T00:01:01Z",
+            ],
+        }
+    ).to_csv(provider_dir / "provider_runtime.csv", index=False)
+
+    raw_dir = tmp_path / "repo_raw"
+    processed_dir = tmp_path / "processed"
+    publication_dir = tmp_path / "publication"
+    raw_dir.mkdir(parents=True)
+    processed_dir.mkdir(parents=True)
+    publication_dir.mkdir(parents=True)
+
+    monkeypatch.setattr(aerospace_real_builder, "RAW_DIR", raw_dir)
+    monkeypatch.setattr(aerospace_real_builder, "PROCESSED_DIR", processed_dir)
+    monkeypatch.setattr(aerospace_real_builder, "PUBLICATION_DIR", publication_dir)
+    monkeypatch.setattr(aerospace_real_builder, "PROCESSED_CSV", processed_dir / "aerospace_realflight_runtime.csv")
+    monkeypatch.setattr(aerospace_real_builder, "PROVENANCE_PATH", raw_dir / "aerospace_realflight_provenance.json")
+    monkeypatch.setattr(aerospace_real_builder, "SUMMARY_JSON", publication_dir / "aerospace_realflight_runtime_summary.json")
+    monkeypatch.setattr(aerospace_real_builder, "SUMMARY_CSV", publication_dir / "aerospace_realflight_runtime_summary.csv")
+    monkeypatch.setattr(aerospace_real_builder, "SUMMARY_MD", publication_dir / "aerospace_realflight_runtime_summary.md")
+
+    out_path = aerospace_real_builder.build_real_flight_runtime(
+        external_root=external_root,
+        out_csv=aerospace_real_builder.PROCESSED_CSV,
+    )
+
+    built = pd.read_csv(out_path)
+    assert {"flight_id", "step", "altitude_m", "airspeed_kt", "bank_angle_deg", "fuel_remaining_pct", "ts_utc"}.issubset(built.columns)
+    provenance = json.loads((raw_dir / "aerospace_realflight_provenance.json").read_text(encoding="utf-8"))
+    assert provenance["canonical_source"] is True
+    assert provenance["used_fallback"] is False
+    summary = json.loads((publication_dir / "aerospace_realflight_runtime_summary.json").read_text(encoding="utf-8"))
+    assert summary["lane_type"] == "official_provider_real_flight_runtime"
+    assert summary["flight_count"] == 2

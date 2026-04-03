@@ -8,6 +8,7 @@ demonstrates that the ORIUS metrics generalise beyond batteries.
 from __future__ import annotations
 
 import math
+from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 import numpy as np
@@ -25,6 +26,7 @@ class NavigationTrackAdapter(BenchmarkAdapter):
         obstacle_centres: Sequence[tuple[float, float]] | None = None,
         obstacle_radius: float = 1.0,
         dt: float = 0.25,
+        dataset_path: str | Path | None = None,
     ):
         self._arena = arena_size
         self._speed = speed_limit
@@ -34,15 +36,37 @@ class NavigationTrackAdapter(BenchmarkAdapter):
         self._pos = np.zeros(2)
         self._vel = np.zeros(2)
         self._rng: np.random.Generator | None = None
+        self._real_rows: list[dict[str, float]] = []
+        if dataset_path is not None:
+            from orius.orius_bench.real_data_loader import load_navigation_rows
+
+            self._real_rows = load_navigation_rows(Path(dataset_path))
 
     # -- BenchmarkAdapter ------------------------------------------------
 
     def reset(self, seed: int = 42) -> Mapping[str, Any]:
         self._rng = np.random.default_rng(seed)
+        if self._real_rows:
+            near_limit = [
+                row for row in self._real_rows
+                if abs(float(row.get("x", 0.0))) >= self._arena * 0.75
+                or abs(float(row.get("y", 0.0))) >= self._arena * 0.75
+            ]
+            if not near_limit:
+                near_limit = self._real_rows
+            idx = int(np.random.default_rng(seed).integers(0, len(near_limit)))
+            row = near_limit[idx]
+            self._pos = np.array([float(row["x"]), float(row["y"])], dtype=float)
+            self._vel = np.array([float(row["vx"]), float(row["vy"])], dtype=float)
+            return self.true_state()
         # Start near x-boundary so an aggressive nominal action quickly causes violations
         self._pos = np.array([9.0, 1.0])
         self._vel = np.zeros(2)
         return self.true_state()
+
+    @property
+    def using_real_data(self) -> bool:
+        return bool(self._real_rows)
 
     def true_state(self) -> Mapping[str, Any]:
         return {

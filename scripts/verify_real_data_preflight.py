@@ -5,49 +5,162 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import sys
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT / "src"))
+
+from orius.data_pipeline.external_raw import get_external_data_root
 from orius.data_pipeline.real_data_contract import (
     DEFAULT_MIN_FREE_GIB,
     module_status,
-    summarize_disk_usage,
+    resolve_disk_target,
+    resolve_repo_or_external_raw_dir,
+    resolved_source_has_files,
     tool_status,
     utc_now_iso,
     write_json,
 )
 
-
-REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = REPO_ROOT / "reports" / "real_data_preflight.json"
-
-DOMAIN_PATHS: dict[str, list[Path]] = {
-    "battery": [
-        REPO_ROOT / "data" / "raw" / "time_series_60min_singleindex.csv",
-        REPO_ROOT / "data" / "raw" / "us_eia930",
-    ],
-    "industrial": [REPO_ROOT / "data" / "industrial" / "raw" / "ccpp"],
-    "healthcare": [REPO_ROOT / "data" / "healthcare" / "raw" / "bidmc_csv"],
-    "aerospace": [REPO_ROOT / "data" / "aerospace" / "raw"],
-    "navigation": [REPO_ROOT / "data" / "navigation" / "raw" / "kitti_odometry"],
-    "av": [REPO_ROOT / "data" / "av" / "raw" / "waymo_open_motion"],
-}
 
 REQUIRED_TOOLS = ("git", "hf", "kaggle")
 REQUIRED_MODULES = ("pandas", "pyarrow", "openpyxl", "wfdb", "huggingface_hub")
+DOMAIN_NAMES = ["battery", "av", "industrial", "healthcare", "navigation", "aerospace"]
+
+BATTERY_PATHS = [
+    REPO_ROOT / "data" / "raw" / "time_series_60min_singleindex.csv",
+    REPO_ROOT / "data" / "raw" / "us_eia930",
+]
+INDUSTRIAL_PATHS = [REPO_ROOT / "data" / "industrial" / "raw" / "ccpp"]
+HEALTHCARE_PATHS = [REPO_ROOT / "data" / "healthcare" / "raw" / "bidmc_csv"]
+AEROSPACE_TRAINABLE_PATHS = [
+    REPO_ROOT / "data" / "aerospace" / "raw" / "train_FD001.txt",
+    REPO_ROOT / "data" / "aerospace" / "raw" / "train_FD002.txt",
+    REPO_ROOT / "data" / "aerospace" / "raw" / "train_FD003.txt",
+    REPO_ROOT / "data" / "aerospace" / "raw" / "train_FD004.txt",
+]
 
 
-def _domain_status(domain: str) -> dict[str, object]:
-    paths = DOMAIN_PATHS[domain]
-    items = [
-        {
-            "path": str(path),
-            "exists": path.exists(),
-        }
-        for path in paths
-    ]
+def _path_checks(paths: list[Path]) -> list[dict[str, object]]:
+    return [{"path": str(path), "exists": path.exists()} for path in paths]
+
+
+def _external_dataset_check(
+    *,
+    repo_dir: Path,
+    external_dataset_key: str,
+    explicit_root: Path | None,
+) -> dict[str, object]:
+    raw_source = resolve_repo_or_external_raw_dir(
+        repo_dir,
+        external_dataset_key=external_dataset_key,
+        explicit_root=explicit_root,
+        required=False,
+    )
+    checked_locations = list(raw_source.checked_locations) if raw_source is not None else [str(repo_dir)]
+    if raw_source is None:
+        external_root = get_external_data_root(explicit_root, required=False)
+        if external_root is not None:
+            checked_locations.append(str(external_root / external_dataset_key))
+        else:
+            checked_locations.append(f"$ORIUS_EXTERNAL_DATA_ROOT/{external_dataset_key}")
+    has_files = resolved_source_has_files(raw_source)
+    resolved_path = str(raw_source.path) if raw_source is not None else checked_locations[-1]
+    return {
+        "path": resolved_path,
+        "exists": raw_source is not None,
+        "has_files": has_files,
+        "source_kind": None if raw_source is None else raw_source.source_kind,
+        "checked_locations": checked_locations,
+    }
+
+
+def _kitti_layout_ready(raw_source: dict[str, object]) -> bool:
+    path_value = raw_source.get("path")
+    if not path_value:
+        return False
+    root = Path(str(path_value))
+    poses_candidates = [root / "dataset" / "poses", root / "poses"]
+    sequence_candidates = [root / "dataset" / "sequences", root / "sequences"]
+    poses_ready = any(candidate.exists() and any(candidate.glob("*.txt")) for candidate in poses_candidates)
+    times_ready = any(candidate.exists() and any(candidate.glob("*/times.txt")) for candidate in sequence_candidates)
+    return poses_ready and times_ready
+
+
+def _aerospace_provider_runtime_ready(raw_source: dict[str, object]) -> bool:
+    path_value = raw_source.get("path")
+    if not path_value or not raw_source.get("has_files"):
+        return False
+    root = Path(str(path_value))
+    looks_like_public_proxy = (root / "tartanaviation_adsb_19k_clean").exists() or any(
+        candidate.name == "tartanaviation_adsb_19k_clean.csv" for candidate in root.rglob("*")
+    )
+    return not looks_like_public_proxy
+
+
+def _domain_status(domain: str, *, explicit_root: Path | None) -> dict[str, object]:
+    if domain == "battery":
+        items = _path_checks(BATTERY_PATHS)
+        all_present = all(item["exists"] for item in items)
+    elif domain == "industrial":
+        items = _path_checks(INDUSTRIAL_PATHS)
+        all_present = all(item["exists"] for item in items)
+    elif domain == "healthcare":
+        items = _path_checks(HEALTHCARE_PATHS)
+        all_present = all(item["exists"] for item in items)
+    elif domain == "av":
+        items = [
+            _external_dataset_check(
+                repo_dir=REPO_ROOT / "data" / "av" / "raw" / "waymo_open_motion",
+                external_dataset_key="waymo_open_motion",
+                explicit_root=explicit_root,
+            ),
+            _external_dataset_check(
+                repo_dir=REPO_ROOT / "data" / "av" / "raw" / "argoverse2_motion",
+                external_dataset_key="argoverse2_motion",
+                explicit_root=explicit_root,
+            ),
+            _external_dataset_check(
+                repo_dir=REPO_ROOT / "data" / "av" / "raw" / "argoverse2_sensor",
+                external_dataset_key="argoverse2_sensor",
+                explicit_root=explicit_root,
+            ),
+        ]
+        all_present = all(item["exists"] and item["has_files"] for item in items)
+    elif domain == "navigation":
+        items = [
+            _external_dataset_check(
+                repo_dir=REPO_ROOT / "data" / "navigation" / "raw" / "kitti_odometry",
+                external_dataset_key="kitti_odometry",
+                explicit_root=explicit_root,
+            )
+        ]
+        for item in items:
+            item["canonical_layout_ready"] = _kitti_layout_ready(item)
+        all_present = all(item["exists"] and item["has_files"] and item["canonical_layout_ready"] for item in items)
+    elif domain == "aerospace":
+        items = _path_checks(AEROSPACE_TRAINABLE_PATHS)
+        runtime_check = (
+            _external_dataset_check(
+                repo_dir=REPO_ROOT / "data" / "aerospace" / "raw" / "aerospace_flight_telemetry",
+                external_dataset_key="aerospace_flight_telemetry",
+                explicit_root=explicit_root,
+            )
+        )
+        runtime_check["provider_runtime_ready"] = _aerospace_provider_runtime_ready(runtime_check)
+        items.append(runtime_check)
+        all_present = all(
+            (item["exists"] and item.get("has_files", True) and item.get("provider_runtime_ready", True))
+            for item in items
+        )
+    else:
+        raise KeyError(domain)
     return {
         "domain": domain,
         "checks": items,
-        "all_present": all(item["exists"] for item in items),
+        "all_present": all_present,
     }
 
 
@@ -57,18 +170,23 @@ def main() -> int:
         "--domain",
         dest="domains",
         action="append",
-        choices=sorted(DOMAIN_PATHS.keys()),
+        choices=DOMAIN_NAMES,
         help="Limit checks to one or more domains. Defaults to all.",
     )
+    parser.add_argument("--external-root", type=Path, default=None, help="Override ORIUS_EXTERNAL_DATA_ROOT for this check")
     parser.add_argument("--min-free-gib", type=float, default=DEFAULT_MIN_FREE_GIB)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
 
-    domains = args.domains or sorted(DOMAIN_PATHS.keys())
-    disk = summarize_disk_usage(REPO_ROOT, min_free_gib=args.min_free_gib)
+    domains = args.domains or DOMAIN_NAMES
+    disk = resolve_disk_target(
+        REPO_ROOT,
+        explicit_external_root=args.external_root,
+        min_free_gib=args.min_free_gib,
+    )
     tools = tool_status(REQUIRED_TOOLS)
     modules = module_status(REQUIRED_MODULES)
-    domain_rows = [_domain_status(domain) for domain in domains]
+    domain_rows = [_domain_status(domain, explicit_root=args.external_root) for domain in domains]
 
     report = {
         "generated_at_utc": utc_now_iso(),

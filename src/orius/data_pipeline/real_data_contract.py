@@ -12,7 +12,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
-from orius.data_pipeline.external_raw import EXTERNAL_DATA_ROOT_ENV, get_external_dataset_dir
+from orius.data_pipeline.external_raw import (
+    EXTERNAL_DATA_ROOT_ENV,
+    get_external_data_root,
+    get_external_dataset_dir,
+)
 
 
 DEFAULT_MIN_FREE_GIB = 250.0
@@ -101,6 +105,23 @@ def summarize_disk_usage(target: Path, *, min_free_gib: float = DEFAULT_MIN_FREE
     }
 
 
+def resolve_disk_target(
+    repo_root: Path,
+    *,
+    explicit_external_root: Path | None = None,
+    min_free_gib: float = DEFAULT_MIN_FREE_GIB,
+) -> dict[str, Any]:
+    """Return disk usage for the active raw-data volume.
+
+    When ``ORIUS_EXTERNAL_DATA_ROOT`` is configured and exists, disk checks should
+    evaluate that volume instead of the repo checkout volume. Otherwise fall back
+    to the repo root.
+    """
+    external_root = get_external_data_root(explicit_external_root, required=False)
+    target = external_root if external_root is not None and external_root.exists() else repo_root
+    return summarize_disk_usage(target, min_free_gib=min_free_gib)
+
+
 def require_min_free_space(target: Path, *, min_free_gib: float = DEFAULT_MIN_FREE_GIB) -> dict[str, Any]:
     """Raise if the target volume is below the requested free-space threshold."""
     summary = summarize_disk_usage(target, min_free_gib=min_free_gib)
@@ -147,7 +168,13 @@ def resolve_repo_or_external_raw_dir(
     """Resolve a dataset root using repo-local storage first, then external storage."""
     checked_locations = [str(repo_dir)]
     if repo_dir.exists():
-        return ResolvedRawSource(path=repo_dir, source_kind="repo_local", checked_locations=tuple(checked_locations))
+        repo_source = ResolvedRawSource(
+            path=repo_dir,
+            source_kind="repo_local",
+            checked_locations=tuple(checked_locations),
+        )
+        if resolved_source_has_files(repo_source) or external_dataset_key is None:
+            return repo_source
 
     if external_dataset_key is not None:
         external_dir = get_external_dataset_dir(external_dataset_key, explicit_root, required=False)
@@ -168,6 +195,17 @@ def resolve_repo_or_external_raw_dir(
             "Missing required raw dataset. Checked: " + " ; ".join(checked_locations)
         )
     return None
+
+
+def resolved_source_has_files(raw_source: ResolvedRawSource | None) -> bool:
+    """Return whether a resolved raw source exists and contains at least one file."""
+    if raw_source is None or not raw_source.path.exists():
+        return False
+    try:
+        next(path for path in raw_source.path.rglob("*") if path.is_file())
+    except StopIteration:
+        return False
+    return True
 
 
 def build_provenance_manifest(

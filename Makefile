@@ -1,4 +1,6 @@
-.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets navigation-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark orius-monograph-assets review-compile orius-book orius-evidence-rerun orius-review-pack orius-final
+.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets navigation-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark orius-monograph-assets review-compile orius-book orius-evidence-rerun equal-domain-gate orius-review-pack orius-final ieee-assets ieee-main-compile ieee-appendix-compile ieee-pack orius-flagship-manuscripts battery-deep-novelty pre-clean clean clean-status fresh-research pre-release
+
+PRE_RELEASE_TESTS = tests/test_external_real_data_integration.py tests/test_real_data_manifest_refresh.py tests/test_thesis_package_assets.py
 
 PYTHON ?= $(if $(wildcard .venv/bin/python3),.venv/bin/python3,python3)
 PROFILE ?= standard
@@ -6,7 +8,34 @@ PROOF_SEEDS ?= 1
 PROOF_HORIZON ?= 24
 # Canonical longform paper build is now the ORIUS monograph surface.
 PAPER_MIN_PAGES ?= 450
+# The IEEE flagship track is now a reviewable journal-style main paper plus a separate
+# appendix package. Keep a real main-paper floor without forcing monograph-scale
+# duplication back into the double-column draft.
+IEEE_MIN_PAGES ?= 8
 ORIUS_AV_SOURCE ?= waymo_motion
+
+## Canonical paper/review artifact directories are intentionally retained in repository state.
+
+clean:
+	rm -f paper/*.aux paper/*.log paper/*.out paper/*.fdb_latexmk paper/*.fls paper/*.bbl paper/*.blg paper/*.toc paper/*.lof paper/*.lot
+	rm -f paper/ieee/*.aux paper/ieee/*.log paper/ieee/*.out paper/ieee/*.fdb_latexmk paper/ieee/*.fls paper/ieee/*.bbl paper/ieee/*.blg paper/ieee/*.toc paper/ieee/*.lof paper/ieee/*.lot paper/ieee/*.pdf
+	rm -f paper_r1.aux paper_r1.out paper_r1.log paper_r1.fls paper_r1.fdb_latexmk paper.aux paper.out paper.log paper.fdb_latexmk paper.fls paper.fls.gz
+	rm -f .coverage reports/.coverage
+	rm -rf .coverage_html reports/coverage .pytest_cache reports/coverage/.pytest_cache reports/.pytest_cache
+	rm -rf .ruff_cache .mypy_cache .cache
+	rm -rf frontend/.next node_modules .next
+	rm -rf build dist *.egg-info
+	find . -type d -name "__pycache__" -not -path "./.venv/*" -not -path "./.git/*" -prune -exec rm -rf {} +
+	find . -type f -name "*.pyc" -not -path "./.venv/*" -not -path "./.git/*" -delete
+
+pre-clean: clean
+
+fresh-research: pre-clean orius-evidence-rerun orius-book orius-review-pack paper-verify
+
+orius-full: fresh-research
+
+clean-status:
+	@python3 -c $$'import subprocess, sys\nstatus = subprocess.run(["git", "status", "--short"], check=True, capture_output=True, text=True).stdout.strip().splitlines()\nallowed_prefixes = ("paper/", "reports/publication/")\nunexpected = []\nfor row in status:\n    if len(row) < 3:\n        continue\n    raw_path = row[3:]\n    path = raw_path.split(" -> ")[-1] if " -> " in raw_path else raw_path\n    if not any(path.startswith(prefix) for prefix in allowed_prefixes):\n        unexpected.append(row)\nif not status:\n    print(\"clean-status: repository is clean\")\n    raise SystemExit(0)\nif unexpected:\n    print(\"clean-status: unexpected repo changes detected outside canonical artifacts:\")\n    print(\"\\n\".join(unexpected))\n    raise SystemExit(1)\nprint(\"clean-status: only canonical artifact outputs changed\")'
 
 setup:
 	$(PYTHON) -m venv .venv && . .venv/bin/activate && .venv/bin/pip install -r requirements.lock.txt
@@ -167,6 +196,10 @@ robustness-analysis:
 novelty-full: ablations stats-tables verify-novelty
 	@echo "✅ Advanced features workflow complete"
 
+# Battery-first deep-learning novelty package
+battery-deep-novelty:
+	PYTHONPATH=src $(PYTHON) scripts/run_battery_deep_novelty.py
+
 # ============================================================
 # Load Testing (98/100 Enhancement)
 # ============================================================
@@ -257,6 +290,9 @@ paper-assets:
 orius-monograph-assets:
 	PYTHONPATH=src $(PYTHON) scripts/build_orius_monograph_assets.py
 
+ieee-assets: orius-monograph-assets
+	PYTHONPATH=src $(PYTHON) scripts/build_orius_ieee_assets.py
+
 paper-verify: orius-monograph-assets
 	PYTHONPATH=src $(PYTHON) scripts/verify_paper_manifest.py
 	PYTHONPATH=src $(PYTHON) scripts/validate_paper_claims.py
@@ -292,6 +328,38 @@ paper-compile: orius-monograph-assets
 	fi; \
 	echo "Canonical paper.pdf page count $$pages >= $(PAPER_MIN_PAGES)"
 
+ieee-main-compile: ieee-assets
+	rm -f paper/ieee/orius_ieee_main.pdf paper/ieee/orius_ieee_main.log paper/ieee/orius_ieee_main.aux paper/ieee/orius_ieee_main.out paper/ieee/orius_ieee_main.bbl paper/ieee/orius_ieee_main.blg paper/ieee/orius_ieee_main.toc
+	mkdir -p paper/ieee/generated paper/ieee/sections
+	- pdflatex -interaction=nonstopmode -output-directory=paper/ieee paper/ieee/orius_ieee_main.tex
+	- sh -c 'cd paper/ieee && bibtex orius_ieee_main'
+	- pdflatex -interaction=nonstopmode -output-directory=paper/ieee paper/ieee/orius_ieee_main.tex
+	- pdflatex -interaction=nonstopmode -output-directory=paper/ieee paper/ieee/orius_ieee_main.tex
+	test -f paper/ieee/orius_ieee_main.pdf
+	@pages=$$(grep -Eo 'Output written on paper/ieee/orius_ieee_main\.pdf \([0-9]+ pages' paper/ieee/orius_ieee_main.log | tail -n1 | sed -E 's/.*\(([0-9]+) pages/\1/'); \
+	if [ -z "$$pages" ]; then \
+		echo "Could not determine page count from paper/ieee/orius_ieee_main.log"; \
+		exit 1; \
+	fi; \
+	if [ "$$pages" -lt "$(IEEE_MIN_PAGES)" ]; then \
+		echo "IEEE main page count $$pages is below required minimum $(IEEE_MIN_PAGES)"; \
+		exit 1; \
+	fi; \
+	echo "IEEE main page count $$pages >= $(IEEE_MIN_PAGES)"
+
+ieee-appendix-compile: ieee-assets
+	rm -f paper/ieee/orius_ieee_appendix.pdf paper/ieee/orius_ieee_appendix.log paper/ieee/orius_ieee_appendix.aux paper/ieee/orius_ieee_appendix.out paper/ieee/orius_ieee_appendix.bbl paper/ieee/orius_ieee_appendix.blg paper/ieee/orius_ieee_appendix.toc
+	mkdir -p paper/ieee/generated paper/ieee/sections
+	- pdflatex -interaction=nonstopmode -output-directory=paper/ieee paper/ieee/orius_ieee_appendix.tex
+	- sh -c 'cd paper/ieee && bibtex orius_ieee_appendix'
+	- pdflatex -interaction=nonstopmode -output-directory=paper/ieee paper/ieee/orius_ieee_appendix.tex
+	- pdflatex -interaction=nonstopmode -output-directory=paper/ieee paper/ieee/orius_ieee_appendix.tex
+	test -f paper/ieee/orius_ieee_appendix.pdf
+
+ieee-pack: ieee-main-compile ieee-appendix-compile
+
+orius-flagship-manuscripts: orius-book ieee-pack
+
 review-compile: orius-monograph-assets
 	rm -f paper/review/orius_review_dossier.pdf paper/review/orius_review_dossier.log paper/review/orius_review_dossier.aux paper/review/orius_review_dossier.out paper/review/orius_review_dossier.toc
 	- pdflatex -interaction=nonstopmode -output-directory=paper/review paper/review/orius_review_dossier.tex
@@ -306,6 +374,9 @@ orius-book: paper-verify paper-compile
 
 orius-evidence-rerun: paper-assets orius-monograph-assets
 	@echo "Rebuilt monograph evidence surfaces from tracked publication artifacts."
+
+equal-domain-gate:
+	PYTHONPATH=src $(PYTHON) scripts/run_orius_canonical_closure_refresh.py --mode equal_domain_gate --external-root /Users/pratik_n/orius_external_data --train-missing --repair-invalid-splits --seeds 3 --sil-seeds 3 --sil-rows 96 --horizon 48
 
 orius-review-pack: orius-monograph-assets review-compile
 
@@ -456,9 +527,12 @@ universal-framework-figure:
 ci: lint lint-release test-cov test-integration
 	@echo "✅ CI checks passed"
 
-# Pre-release validation
-pre-release: ci release_check
-	@echo "✅ Pre-release validation complete"
+pre-release:
+	PYTEST_ADDOPTS=--no-cov PYTHONPATH=src .venv/bin/pytest -q $(PRE_RELEASE_TESTS)
+	$(MAKE) paper-verify
+	$(MAKE) orius-book
+	$(MAKE) orius-review-pack
+	$(MAKE) orius-evidence-rerun
 
 # ============================================================
 # R1 Paper Release Family

@@ -76,19 +76,20 @@ def test_domain_closure_matrix_builds_with_bounded_p5_p6_surfaces(tmp_path: Path
     assert closure_by_domain["industrial"]["resulting_tier"] == "proof_validated"
     assert closure_by_domain["healthcare"]["resulting_tier"] == "proof_validated"
     assert closure_by_domain["navigation"]["exact_blocker"] == "navigation_real_data_gap"
-    assert closure_by_domain["aerospace"]["exact_blocker"] == "aerospace_experimental_placeholder"
+    assert closure_by_domain["aerospace"]["exact_blocker"] == "aerospace_real_multi_flight_runtime_missing"
     assert closure_by_domain["vehicle"]["safe_action_soundness_status"] in {"pass", "fail"}
 
     p5_by_domain = {row["domain"]: row for row in p5_rows}
     assert p5_by_domain["battery"]["status"] == "evaluated"
     assert p5_by_domain["industrial"]["status"] == "evaluated"
-    assert p5_by_domain["vehicle"]["status"] == "gated"
+    assert p5_by_domain["healthcare"]["status"] == "evaluated"
+    assert p5_by_domain["vehicle"]["status"] == "evaluated"
 
     p6_by_domain = {row["domain"]: row for row in p6_rows}
     assert p6_by_domain["battery"]["status"] == "evaluated"
     assert p6_by_domain["industrial"]["status"] == "evaluated"
     assert p6_by_domain["healthcare"]["status"] == "evaluated"
     assert p6_by_domain["vehicle"]["status"] == "evaluated"
-    assert p6_by_domain["navigation"]["status"] == "gated"
+    assert p6_by_domain["navigation"]["status"] == "evaluated"
 
     assert payload["vehicle_soundness_rows"]

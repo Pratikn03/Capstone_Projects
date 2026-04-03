@@ -1,5 +1,5 @@
 # /// script
-# dependencies = ["pandas", "pyarrow"]
+# dependencies = ["pandas", "numpy", "huggingface_hub"]
 # ///
 from __future__ import annotations
 
@@ -19,19 +19,15 @@ def run(*args: str) -> None:
 
 
 def main() -> None:
-    run(PYTHON, "scripts/verify_real_data_preflight.py", "--domain", "navigation")
     build_args = [
         PYTHON,
-        "scripts/build_navigation_real_dataset.py",
-        "--out",
-        "data/navigation/processed/navigation_orius.csv",
+        "scripts/build_aerospace_public_adsb_runtime.py",
+        "--download",
     ]
     if EXTERNAL_ROOT:
         build_args.extend(["--external-root", str(Path(EXTERNAL_ROOT).resolve())])
     run(*build_args)
-    run(PYTHON, "scripts/build_data_manifest.py", "--dataset", "NAVIGATION")
-    run(PYTHON, "scripts/train_dataset.py", "--dataset", "NAVIGATION", "--candidate-run", "--run-id", "hf_navigation_realdata")
-    run(PYTHON, "scripts/run_universal_orius_validation.py", "--seeds", "1", "--horizon", "24")
+    run(PYTHON, "scripts/build_orius_monograph_assets.py")
 
 
 if __name__ == "__main__":

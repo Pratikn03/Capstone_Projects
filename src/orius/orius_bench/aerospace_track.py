@@ -6,6 +6,7 @@ Fault injection: bias, noise, stuck_sensor on airspeed_kt.
 from __future__ import annotations
 
 import math
+from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 import numpy as np
@@ -22,6 +23,7 @@ class AerospaceTrackAdapter(BenchmarkAdapter):
         v_max_kt: float = 350.0,
         max_bank_deg: float = 30.0,
         dt: float = 0.25,
+        dataset_path: str | Path | None = None,
     ):
         self._v_min = v_min_kt
         self._v_max = v_max_kt
@@ -32,9 +34,30 @@ class AerospaceTrackAdapter(BenchmarkAdapter):
         self._bank = 5.0
         self._fuel = 80.0
         self._rng: np.random.Generator | None = None
+        self._real_rows: list[dict[str, float]] = []
+        if dataset_path is not None:
+            from orius.orius_bench.real_data_loader import load_aerospace_runtime_rows
+
+            self._real_rows = load_aerospace_runtime_rows(Path(dataset_path))
 
     def reset(self, seed: int = 42) -> Mapping[str, Any]:
         self._rng = np.random.default_rng(seed)
+        if self._real_rows:
+            near_limit = [
+                row for row in self._real_rows
+                if abs(float(row.get("bank_angle_deg", 0.0))) >= self._max_bank * 0.75
+                or float(row.get("airspeed_kt", self._v_min)) <= self._v_min + 15.0
+                or float(row.get("airspeed_kt", self._v_max)) >= self._v_max - 15.0
+            ]
+            if not near_limit:
+                near_limit = self._real_rows
+            idx = int(np.random.default_rng(seed).integers(0, len(near_limit)))
+            row = near_limit[idx]
+            self._airspeed = float(row["airspeed_kt"])
+            self._altitude = float(row["altitude_m"])
+            self._bank = float(row["bank_angle_deg"])
+            self._fuel = float(row["fuel_remaining_pct"])
+            return self.true_state()
         # Safe initial airspeed; bank angle is the primary safety violation axis.
         # Nominal controller proposes extreme bank_deg=90 → always violated.
         # DC3S repair clamps to ±max_bank_deg → zero violations.
@@ -44,6 +67,10 @@ class AerospaceTrackAdapter(BenchmarkAdapter):
         self._bank = 5.0
         self._fuel = 80.0
         return self.true_state()
+
+    @property
+    def using_real_data(self) -> bool:
+        return bool(self._real_rows)
 
     def true_state(self) -> Mapping[str, Any]:
         return {

@@ -1,4 +1,4 @@
-"""Real-dataset loader for ORIUS-Bench industrial and healthcare tracks.
+"""Real-dataset loader for ORIUS-Bench tracks.
 
 Provides two loading paths per domain:
   1. Real CSV  — read from user-supplied file at the canonical path.
@@ -16,6 +16,14 @@ Healthcare (PhysioNet BIDMC):
     data/bidmc/bidmc_vitals.csv
     Columns: HR, SpO2, RR
     Source: https://physionet.org/content/bidmc/1.0.0/
+
+Navigation (KITTI processed ORIUS row):
+    data/navigation/processed/navigation_orius.csv
+    Columns: x, y, vx, vy
+
+Aerospace (official processed real-flight runtime row):
+    data/aerospace/processed/aerospace_realflight_runtime.csv
+    Columns: altitude_m, airspeed_kt, bank_angle_deg, fuel_remaining_pct
 
 Calibrated synthetic parameters
 --------------------------------
@@ -42,6 +50,8 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 CCPP_PATH = REPO_ROOT / "data" / "ccpp" / "CCPP.csv"
 BIDMC_PATH = REPO_ROOT / "data" / "bidmc" / "bidmc_vitals.csv"
+NAVIGATION_PATH = REPO_ROOT / "data" / "navigation" / "processed" / "navigation_orius.csv"
+AEROSPACE_RUNTIME_PATH = REPO_ROOT / "data" / "aerospace" / "processed" / "aerospace_realflight_runtime.csv"
 
 
 # ---------------------------------------------------------------------------
@@ -190,6 +200,52 @@ def get_bidmc_rows(seed: int = 42) -> list[dict[str, float]]:
 
 
 # ---------------------------------------------------------------------------
+# Navigation / aerospace runtime loaders
+# ---------------------------------------------------------------------------
+
+def load_navigation_rows(path: Path | None = None) -> list[dict[str, float]]:
+    """Load processed ORIUS navigation rows."""
+    p = Path(path) if path else NAVIGATION_PATH
+    rows: list[dict[str, float]] = []
+    with p.open(newline="", encoding="utf-8") as fh:
+        reader = csv.DictReader(fh)
+        for row in reader:
+            try:
+                rows.append(
+                    {
+                        "x": float(row["x"]),
+                        "y": float(row["y"]),
+                        "vx": float(row["vx"]),
+                        "vy": float(row["vy"]),
+                    }
+                )
+            except (KeyError, ValueError):
+                continue
+    return rows
+
+
+def load_aerospace_runtime_rows(path: Path | None = None) -> list[dict[str, float]]:
+    """Load processed ORIUS aerospace runtime rows."""
+    p = Path(path) if path else AEROSPACE_RUNTIME_PATH
+    rows: list[dict[str, float]] = []
+    with p.open(newline="", encoding="utf-8") as fh:
+        reader = csv.DictReader(fh)
+        for row in reader:
+            try:
+                rows.append(
+                    {
+                        "altitude_m": float(row["altitude_m"]),
+                        "airspeed_kt": float(row["airspeed_kt"]),
+                        "bank_angle_deg": float(row["bank_angle_deg"]),
+                        "fuel_remaining_pct": float(row["fuel_remaining_pct"]),
+                    }
+                )
+            except (KeyError, ValueError):
+                continue
+    return rows
+
+
+# ---------------------------------------------------------------------------
 # Dataset-info helper (for prepare_datasets.py)
 # ---------------------------------------------------------------------------
 
@@ -225,5 +281,13 @@ def dataset_status() -> dict[str, Any]:
             "real_data": bidmc_real,
             "rows": bidmc_rows,
             "fallback_rows": 4000,
+        },
+        "navigation": {
+            "path": str(NAVIGATION_PATH),
+            "real_data": NAVIGATION_PATH.exists(),
+        },
+        "aerospace_runtime": {
+            "path": str(AEROSPACE_RUNTIME_PATH),
+            "real_data": AEROSPACE_RUNTIME_PATH.exists(),
         },
     }

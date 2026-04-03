@@ -235,9 +235,9 @@ def _domain_validation_status(
     if maturity_label == "proof_candidate":
         return "proof_candidate"
     if maturity_label == "shadow_synthetic":
-        return "shadow_synthetic" if portability_pass else "shadow_synthetic"
+        return "proof_validated" if proof_evidence_pass else "shadow_synthetic"
     if maturity_label == "experimental":
-        return "experimental"
+        return "proof_validated" if proof_evidence_pass else "experimental"
     return "portability_only"
 
 
@@ -535,6 +535,11 @@ def main() -> int:
     parser.add_argument("--out",         default="reports/universal_orius_validation")
     parser.add_argument("--no-fail",     action="store_true", help="Do not exit 1 on failure")
     parser.add_argument(
+        "--equal-domain-gate",
+        action="store_true",
+        help="Require canonical navigation and aerospace real-data rows and promote them only through the same defended-domain gate.",
+    )
+    parser.add_argument(
         "--real-data", action="store_true",
         help="Use real datasets (data/ccpp/CCPP.csv, data/bidmc/bidmc_vitals.csv) "
              "for industrial and healthcare tracks. Falls back to calibrated synthetic "
@@ -546,7 +551,22 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
 
     # Build track list — optionally wire real-data paths
-    from orius.orius_bench.real_data_loader import CCPP_PATH, BIDMC_PATH, get_ccpp_rows, get_bidmc_rows
+    from orius.orius_bench.real_data_loader import (
+        AEROSPACE_RUNTIME_PATH,
+        BIDMC_PATH,
+        CCPP_PATH,
+        NAVIGATION_PATH,
+    )
+    nav_track = NavigationTrackAdapter(dataset_path=NAVIGATION_PATH if NAVIGATION_PATH.exists() else None)
+    aero_track = AerospaceTrackAdapter(dataset_path=AEROSPACE_RUNTIME_PATH if AEROSPACE_RUNTIME_PATH.exists() else None)
+    if args.equal_domain_gate and (not nav_track.using_real_data or not aero_track.using_real_data):
+        missing = []
+        if not nav_track.using_real_data:
+            missing.append(str(NAVIGATION_PATH))
+        if not aero_track.using_real_data:
+            missing.append(str(AEROSPACE_RUNTIME_PATH))
+        print("Equal-domain gate requires canonical real-data rows:", ", ".join(missing))
+        return 1
     if args.real_data:
         # Pre-load to confirm availability and log source
         ccpp_src  = "real" if CCPP_PATH.exists() else "calibrated-synthetic"
@@ -556,11 +576,33 @@ def main() -> int:
         print(f"  [real-data] industrial → {ccpp_src} ({CCPP_PATH})")
         print(f"  [real-data] healthcare → {bidmc_src} ({BIDMC_PATH})")
         active_tracks: list[BenchmarkAdapter] = [
-            BatteryTrackAdapter(), NavigationTrackAdapter(),
-            ind_track, hc_track, AerospaceTrackAdapter(), VehicleTrackAdapter(),
+            BatteryTrackAdapter(),
+            nav_track,
+            ind_track,
+            hc_track,
+            aero_track,
+            VehicleTrackAdapter(),
         ]
     else:
-        active_tracks = list(TRACKS)
+        active_tracks = [
+            BatteryTrackAdapter(),
+            nav_track,
+            IndustrialTrackAdapter(),
+            HealthcareTrackAdapter(),
+            aero_track,
+            VehicleTrackAdapter(),
+        ]
+
+    run_domain_maturity = dict(DOMAIN_MATURITY)
+    promotable_support_domains: list[str] = []
+    if args.equal_domain_gate and nav_track.using_real_data:
+        run_domain_maturity["navigation"] = "proof_validated"
+        promotable_support_domains.append("navigation")
+    if args.equal_domain_gate and aero_track.using_real_data:
+        run_domain_maturity["aerospace"] = "proof_validated"
+        promotable_support_domains.append("aerospace")
+    active_defended_domains = DEFENDED_DOMAINS + promotable_support_domains
+    active_support_domains = [domain for domain in SUPPORT_DOMAINS if domain not in promotable_support_domains]
 
     results:               list[dict[str, Any]] = []
     domain_summary:        dict[str, dict[str, Any]] = {}
@@ -576,7 +618,7 @@ def main() -> int:
             "tsvr_nominal":    [],
             "oasg_dc3s":       [],
             "primary_fault":   "multi",
-            "maturity_label":  DOMAIN_MATURITY.get(domain, "portability_only"),
+            "maturity_label":  run_domain_maturity.get(domain, "portability_only"),
             "harness_status":  "pass",
         }
         try:
@@ -624,7 +666,7 @@ def main() -> int:
 
     # Per-domain strong-gate reports for defended domains and proof candidates
     domain_proof_reports: dict[str, dict[str, Any]] = {}
-    for pd in PROOF_DOMAINS:
+    for pd in active_defended_domains:
         if pd not in domain_summary:
             domain_proof_reports[pd] = {
                 "evidence_pass":   False,
@@ -640,11 +682,11 @@ def main() -> int:
 
     all_proof_pass = all(
         domain_proof_reports.get(domain, {}).get("evidence_pass", False)
-        for domain in DEFENDED_DOMAINS
+        for domain in active_defended_domains
     )
 
     portability_reports: dict[str, dict[str, Any]] = {}
-    for domain in SUPPORT_DOMAINS:
+    for domain in active_support_domains:
         if domain not in domain_summary:
             portability_reports[domain] = {
                 "domain": domain,
@@ -655,7 +697,7 @@ def main() -> int:
             portability_reports[domain] = _evaluate_portability_domain(domain, domain_summary[domain])
     portability_all_pass = all(
         portability_reports.get(domain, {}).get("portability_pass", False)
-        for domain in SHADOW_SYNTHETIC_DOMAINS
+        for domain in [d for d in SHADOW_SYNTHETIC_DOMAINS if d in active_support_domains]
     )
 
     # ------------------------------------------------------------------
@@ -760,7 +802,7 @@ def main() -> int:
                 "reference_domain": REFERENCE_DOMAIN,
                 "proof_domain":     PROOF_DOMAIN,
                 "proof_validated_domains": DEFENDED_DOMAINS,
-                "evaluated_proof_candidates": PROOF_CANDIDATE_DOMAINS,
+                "evaluated_proof_candidates": PROOF_CANDIDATE_DOMAINS + promotable_support_domains,
                 "promoted_proof_candidates": promoted_candidates,
                 "proof_downgraded_domains": proof_downgraded_domains,
                 "locked_protocol":  {
@@ -780,8 +822,8 @@ def main() -> int:
         json.dump(
             {
                 "portability_validated_domains": PORTABILITY_VALIDATED_DOMAINS,
-                "shadow_synthetic_domains":      SHADOW_SYNTHETIC_DOMAINS,
-                "experimental_domains":          EXPERIMENTAL_DOMAINS,
+                "shadow_synthetic_domains":      [d for d in SHADOW_SYNTHETIC_DOMAINS if d in active_support_domains],
+                "experimental_domains":          [d for d in EXPERIMENTAL_DOMAINS if d in active_support_domains],
                 "portability_all_pass":          portability_all_pass,
                 "domain_reports":                portability_reports,
                 "locked_protocol": {
@@ -817,15 +859,15 @@ def main() -> int:
         "all_passed":                     harness_pass and all_proof_pass,
         "reference_domain":               REFERENCE_DOMAIN,
         "proof_domain":                   PROOF_DOMAIN,
-        "proof_domains":                  PROOF_DOMAINS,
-        "defended_domains":               DEFENDED_DOMAINS,
-        "proof_candidate_domains":        PROOF_CANDIDATE_DOMAINS,
-        "shadow_synthetic_domains":       SHADOW_SYNTHETIC_DOMAINS,
-        "domain_maturity":                DOMAIN_MATURITY,
+        "proof_domains":                  active_defended_domains,
+        "defended_domains":               active_defended_domains,
+        "proof_candidate_domains":        PROOF_CANDIDATE_DOMAINS + promotable_support_domains,
+        "shadow_synthetic_domains":       [d for d in SHADOW_SYNTHETIC_DOMAINS if d in active_support_domains],
+        "domain_maturity":                run_domain_maturity,
         "closure_target_tier":            CLOSURE_TARGET_TIER,
         "validated_domains":              validated_domains,
         "portability_validated_domains":  portability_validated_confirmed,
-        "experimental_domains":           EXPERIMENTAL_DOMAINS,
+        "experimental_domains":           [d for d in EXPERIMENTAL_DOMAINS if d in active_support_domains],
         "bounded_universal_target_domains": [
             domain for domain, tier in CLOSURE_TARGET_TIER.items() if tier == "defended_bounded_row"
         ],
@@ -840,7 +882,7 @@ def main() -> int:
         "portability_validation_report":  str(portability_report_path),
         "evidence_failure_reasons":       [
             reason
-            for domain in DEFENDED_DOMAINS
+            for domain in active_defended_domains
             for reason in domain_proof_reports.get(domain, {}).get("failure_reasons", [])
         ],
         "proof_domain_failure_reasons": {
