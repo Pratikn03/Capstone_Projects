@@ -1,0 +1,45 @@
+\section{Theory Bridge and Claim Discipline}
+\label{sec:ieee-theory}
+
+The theorem surface of ORIUS is intentionally narrower than the rhetoric of a fully
+closed universal program. The paper uses theory to justify the shape of the runtime
+layer, not to imply that every domain has already inherited equal proof depth.
+
+The bridge has three parts. First, if admissibility depends on the true state and the
+observation channel can deviate materially from that state, then OASG is a genuine
+safety event rather than a notation trick. Second, if lower reliability produces a
+monotone inflation of the observation-consistent state set, then the admissible action
+set must become smaller or remain unchanged. Third, if the runtime only releases actions
+from that tightened set, or falls back when no such action exists, then the remaining
+true-state violation risk is governed by the soundness of the uncertainty set and the
+repair map rather than by the optimism of the nominal controller.
+
+\begin{table}[t]
+\centering
+\caption{Theory-to-evidence bridge used in the IEEE draft.}
+\label{tab:ieee-theory-bridge}
+\small
+\begin{tabularx}{\columnwidth}{@{}p{0.26\columnwidth}X@{}}
+\toprule
+\textbf{Claim layer} & \textbf{What the paper is willing to claim}\\
+\midrule
+Structural & Degraded observation can create action-semantic failure even when the nominal policy is internally coherent.\\
+Contractual & A typed runtime layer can convert reliability loss into tightened admissible action sets, repair, fallback, and certificate semantics.\\
+Empirical & Battery is the witness row; AV, industrial, and healthcare are defended bounded rows; navigation and aerospace remain gated.\\
+Non-claim & The paper does not claim equal theorem depth, equal deployment readiness, or flat closure across all six domains.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+This distinction is important because ORIUS aims to be scientifically ambitious without
+being careless. The architecture is intentionally written as a universal safety layer
+for Physical AI. The evidence, however, is tiered. That tiering is not a weakness in
+the argument; it is the mechanism that keeps theorem language, benchmark language, and
+runtime language aligned with tracked artifacts.
+
+The practical consequence is straightforward. A domain does not become a defended row
+because it looks structurally compatible with the adapter contract. It becomes defended
+only after the data surface, replay surface, repair semantics, fallback semantics,
+certificate traces, and benchmark outputs all clear the governed promotion gate. That is
+why the universal claim in this paper is architectural and bounded rather than flatly
+equalized across the domain portfolio.

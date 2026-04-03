@@ -56,14 +56,20 @@ def _render_pdf(pdf_path: Path, out_dir: Path) -> list[str]:
 
 def _compile_papers() -> dict[str, Path]:
     outputs: dict[str, Path] = {}
-    for tex_name in ("paper.tex", "paper_r1.tex"):
-        _run(["latexmk", "-pdf", "-interaction=nonstopmode", "-halt-on-error", tex_name], cwd=PAPER_DIR)
-        built_pdf = PAPER_DIR / tex_name.replace(".tex", ".pdf")
-        if tex_name == "paper.tex":
-            shutil.copy2(built_pdf, CANONICAL_PDF)
-            outputs[tex_name] = CANONICAL_PDF
-        else:
-            outputs[tex_name] = built_pdf
+
+    _run(["latexmk", "-pdf", "-interaction=nonstopmode", "-halt-on-error", "paper.tex"], cwd=PAPER_DIR)
+    built_manuscript = PAPER_DIR / "paper.pdf"
+    shutil.copy2(built_manuscript, CANONICAL_PDF)
+    outputs["manuscript"] = CANONICAL_PDF
+
+    ieee_dir = PAPER_DIR / "ieee"
+    for surface, tex_name in (
+        ("ieee_main", "orius_ieee_main.tex"),
+        ("ieee_appendix", "orius_ieee_appendix.tex"),
+    ):
+        _run(["latexmk", "-pdf", "-interaction=nonstopmode", "-halt-on-error", tex_name], cwd=ieee_dir)
+        outputs[surface] = ieee_dir / tex_name.replace(".tex", ".pdf")
+
     return outputs
 
 
@@ -71,35 +77,24 @@ def _freeze_pdfs(
     *,
     release_id: str,
     publication_dir: Path,
-    manuscript_pdf: Path,
-    conference_pdf: Path,
+    outputs: dict[str, Path],
 ) -> dict[str, dict[str, object]]:
     freeze_root = publication_dir / "frozen" / release_id
     review_dir = freeze_root / "review"
     freeze_root.mkdir(parents=True, exist_ok=True)
 
-    frozen_manuscript = freeze_root / f"{release_id}_manuscript.pdf"
-    frozen_conference = freeze_root / f"{release_id}_conference.pdf"
-    shutil.copy2(manuscript_pdf, frozen_manuscript)
-    shutil.copy2(conference_pdf, frozen_conference)
-
-    manuscript_images = _render_pdf(frozen_manuscript, review_dir / "manuscript")
-    conference_images = _render_pdf(frozen_conference, review_dir / "conference")
-
-    return {
-        "manuscript": {
-            "canonical_path": str(manuscript_pdf.relative_to(REPO)),
-            "frozen_path": str(frozen_manuscript.relative_to(REPO)),
-            "sha256": _sha256(frozen_manuscript),
-            "rendered_pages": manuscript_images,
-        },
-        "conference": {
-            "canonical_path": str(conference_pdf.relative_to(REPO)),
-            "frozen_path": str(frozen_conference.relative_to(REPO)),
-            "sha256": _sha256(frozen_conference),
-            "rendered_pages": conference_images,
-        },
-    }
+    frozen_payload: dict[str, dict[str, object]] = {}
+    for surface, pdf_path in outputs.items():
+        frozen_pdf = freeze_root / f"{release_id}_{surface}.pdf"
+        shutil.copy2(pdf_path, frozen_pdf)
+        images = _render_pdf(frozen_pdf, review_dir / surface)
+        frozen_payload[surface] = {
+            "canonical_path": str(pdf_path.relative_to(REPO)),
+            "frozen_path": str(frozen_pdf.relative_to(REPO)),
+            "sha256": _sha256(frozen_pdf),
+            "rendered_pages": images,
+        }
+    return frozen_payload
 
 
 def _update_release_manifest(
@@ -114,17 +109,24 @@ def _update_release_manifest(
     payload["frozen_pdfs"] = frozen_pdfs
     payload["paper_assets"] = payload.get("paper_assets", {})
     payload["paper_assets"].pop("FINAL_THESIS_PDF", None)
+    payload["paper_assets"].pop("FINAL_CONFERENCE_PDF", None)
     payload["paper_assets"]["FINAL_MANUSCRIPT_PDF"] = {
         "paper_path": frozen_pdfs["manuscript"]["canonical_path"],
         "source_artifact": frozen_pdfs["manuscript"]["frozen_path"],
         "build_command": f"{Path(__file__).relative_to(REPO)} --release-id {release_id}",
         "sha256": frozen_pdfs["manuscript"]["sha256"],
     }
-    payload["paper_assets"]["FINAL_CONFERENCE_PDF"] = {
-        "paper_path": frozen_pdfs["conference"]["canonical_path"],
-        "source_artifact": frozen_pdfs["conference"]["frozen_path"],
+    payload["paper_assets"]["FINAL_IEEE_MAIN_PDF"] = {
+        "paper_path": frozen_pdfs["ieee_main"]["canonical_path"],
+        "source_artifact": frozen_pdfs["ieee_main"]["frozen_path"],
         "build_command": f"{Path(__file__).relative_to(REPO)} --release-id {release_id}",
-        "sha256": frozen_pdfs["conference"]["sha256"],
+        "sha256": frozen_pdfs["ieee_main"]["sha256"],
+    }
+    payload["paper_assets"]["FINAL_IEEE_APPENDIX_PDF"] = {
+        "paper_path": frozen_pdfs["ieee_appendix"]["canonical_path"],
+        "source_artifact": frozen_pdfs["ieee_appendix"]["frozen_path"],
+        "build_command": f"{Path(__file__).relative_to(REPO)} --release-id {release_id}",
+        "sha256": frozen_pdfs["ieee_appendix"]["sha256"],
     }
     payload["frozen_at_utc"] = datetime.now(timezone.utc).isoformat()
     manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
@@ -189,8 +191,7 @@ def main() -> int:
     frozen_pdfs = _freeze_pdfs(
         release_id=args.release_id,
         publication_dir=out_dir,
-        manuscript_pdf=compiled["paper.tex"],
-        conference_pdf=compiled["paper_r1.tex"],
+        outputs=compiled,
     )
     manifest_path = _update_release_manifest(
         release_id=args.release_id,

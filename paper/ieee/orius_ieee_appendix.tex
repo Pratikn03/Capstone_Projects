@@ -1,0 +1,29 @@
+\documentclass[10pt,journal,onecolumn]{IEEEtran}
+\input{orius_ieee_preamble.tex}
+
+\title{ORIUS Flagship IEEE Draft: Technical Appendix, Benchmark Appendix, and Editorial Review Appendix}
+\author{Pratik Niroula}
+\date{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Appendix Scope}
+This appendix accompanies the IEEE flagship ORIUS draft and deliberately separates
+technical depth from the main double-column narrative. It gathers theorem surfaces,
+protocol cards, benchmark-corpus material, and the editorial review appendix without
+placing any appendix content after the main paper's conclusion.
+
+\input{sections/ieee_appendix_theory_register.tex}
+\input{sections/ieee_appendix_protocol_cards.tex}
+\ORIUSReuseInput{../monograph/app_ae_expanded_reviewer_gap_analysis.tex}
+\input{generated/orius_benchmark_summary_appendix.tex}
+\input{generated/orius_benchmark_corpus_appendix.tex}
+\input{sections/ieee_appendix_ledgers.tex}
+
+\nocite{*}
+\bibliographystyle{IEEEtran}
+\bibliography{../bibliography/orius_monograph}
+
+\end{document}

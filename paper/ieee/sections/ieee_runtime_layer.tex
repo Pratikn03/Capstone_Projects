@@ -1,0 +1,61 @@
+\section{ORIUS Runtime Architecture}
+\label{sec:ieee-runtime}
+
+ORIUS is organized as a post-nominal runtime layer. It does not replace the upstream
+predictor, planner, or optimizer. It wraps them with a narrow contract that starts at
+raw telemetry and ends at a certificate-gated action release. This keeps the framework
+compatible with legacy controllers while moving the safety argument to the place where
+degraded observation actually matters.
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+  node distance=0.9cm and 0.7cm,
+  stage/.style={draw, rounded corners, minimum width=2.5cm, minimum height=1cm, align=center, fill=gray!8},
+  note/.style={font=\small, align=center}
+]
+\node[stage] (detect) {Detect\\reliability};
+\node[stage, right=of detect] (calibrate) {Calibrate\\state set};
+\node[stage, right=of calibrate] (constrain) {Constrain\\action set};
+\node[stage, right=of constrain] (shield) {Shield\\repair / fallback};
+\node[stage, right=of shield] (certify) {Certify\\release};
+\draw[-{Latex[length=2.5mm]}] (detect) -- (calibrate);
+\draw[-{Latex[length=2.5mm]}] (calibrate) -- (constrain);
+\draw[-{Latex[length=2.5mm]}] (constrain) -- (shield);
+\draw[-{Latex[length=2.5mm]}] (shield) -- (certify);
+\node[note, below=0.65cm of calibrate] {Telemetry, freshness,\\consistency, missingness};
+\node[note, below=0.65cm of shield] {Candidate action, repaired action,\\fallback mode, certificate payload};
+\end{tikzpicture}
+\caption{The ORIUS Detect--Calibrate--Constrain--Shield--Certify kernel. The universal claim is about this runtime grammar rather than about any single nominal controller.}
+\label{fig:ieee-runtime-kernel}
+\end{figure*}
+
+\subsection{Detect}
+The detect stage computes an explicit trust signal from freshness, missingness, timing,
+cross-sensor consistency, and domain-specific degradation indicators. The result is not
+only an anomaly flag. It is a reliability object that changes the semantics of the rest
+of the pipeline.
+
+\subsection{Calibrate}
+The calibrate stage inflates the observation-consistent state set. In the current ORIUS
+implementation this inflation can be driven by conformal or reliability-conditioned
+uncertainty, but the runtime requirement is broader: when observation quality drops, the
+set of physically plausible states must not remain frozen at the nominal point estimate.
+
+\subsection{Constrain}
+The constrain stage recomputes which actions are admissible under the widened state set.
+This is the point at which ORIUS ceases to be an alarming subsystem and becomes a true
+safety layer. The system must translate degraded observation into a smaller safe action
+surface, not merely record that confidence has fallen.
+
+\subsection{Shield and Certify}
+The shield stage repairs the proposed action or falls back to a bounded alternative when
+the tightened set becomes empty. The certify stage records why the released action was
+allowed, which margins and reliability assumptions were used, and which lifecycle state
+the runtime now occupies. That certificate is a scientific object in ORIUS, not a
+deployment afterthought.
+
+The architectural value of this decomposition is that the same pipeline appears in every
+domain chapter even though the state, action, and repair geometry are different. That
+shared pipeline is what makes ORIUS universal in architecture before it is universal in
+evidence depth.

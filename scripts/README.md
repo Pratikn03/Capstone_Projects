@@ -196,4 +196,8 @@ For the final submission freeze, use the release-scoped canonical flow instead o
 make paper-freeze RELEASE_ID=FINAL_20260312T000000Z
 ```
 
-This performs the paper-refresh steps, compiles both `paper.tex` and `paper_r1.tex`, publishes the canonical manuscript to repo-root `paper.pdf`, renders review PNGs, copies immutable frozen PDFs under `reports/publication/frozen/<RELEASE_ID>/`, and records PDF hashes in `reports/publication/release_manifest.json`.
+This performs the paper-refresh steps, compiles the canonical monograph plus the
+flagship IEEE main draft and IEEE appendix, publishes the canonical manuscript to
+repo-root `paper.pdf`, renders review PNGs, copies immutable frozen PDFs under
+`reports/publication/frozen/<RELEASE_ID>/`, and records PDF hashes in
+`reports/publication/release_manifest.json`.

@@ -1,0 +1,24 @@
+\section{Theory Surface Register}
+\label{sec:ieee-app-theory}
+
+The IEEE appendix keeps the theorem material in register form rather than reproducing
+the full monograph proof chain. This makes the draft reviewable while preserving the
+mapping between the paper's claims, the runtime contract, and the strongest current
+artifact surfaces.
+
+\begin{table*}[h]
+\centering
+\caption{Compact theory surface used by the flagship IEEE draft.}
+\label{tab:ieee-appendix-theory}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.18\textwidth}p{0.24\textwidth}p{0.22\textwidth}p{0.28\textwidth}@{}}
+\toprule
+\textbf{Claim family} & \textbf{Runtime interpretation} & \textbf{Strongest current row} & \textbf{Boundary in the IEEE draft}\\
+\midrule
+OASG existence & Degraded observation can make an observed-safe action true-state unsafe & Battery witness & Treated as structural across domains, but most deeply closed in the witness row.\\
+Monotone inflation & Lower reliability widens the observation-consistent state set and tightens admissible actions & Battery witness; bounded transfer elsewhere & Claimed as a contract property, not as equal theorem depth everywhere.\\
+Repair safety & Repaired or fallback actions reduce or bound true-state violations under sound uncertainty and repair maps & Battery plus defended bounded rows & Empirical strength varies by domain maturity.\\
+Governed release & Certificate integrity and lifecycle transitions are part of the scientific safety object & Battery, AV, industrial, healthcare & Navigation and aerospace remain gated on full closure.\\
+\bottomrule
+\end{tabularx}
+\end{table*}

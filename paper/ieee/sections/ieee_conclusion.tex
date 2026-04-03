@@ -1,0 +1,28 @@
+\section{Conclusion}
+\label{sec:ieee-conclusion}
+
+ORIUS argues that the right universal object for Physical AI safety is not a single
+planner, plant, or benchmark. It is a runtime safety layer that mediates the gap
+between degraded observation and physical actuation. Once observation quality becomes a
+source of safety failure, the system must expose reliability, uncertainty inflation,
+action repair, fallback, and certificate semantics as first-class runtime objects.
+
+That is the role of the Detect--Calibrate--Constrain--Shield--Certify kernel. It turns
+OASG from an intuitive failure mode into a measurable and governable runtime event, and
+it does so under one contract that can be instantiated across batteries, autonomous
+vehicles, industrial plants, healthcare monitoring, navigation, and aerospace without
+pretending those domains share the same nominal controller or safety geometry.
+
+The evidence claim is intentionally disciplined. Battery is the witness row. AV,
+industrial, and healthcare are defended bounded rows. Navigation and aerospace remain
+the two visible blockers for equal-domain closure. That asymmetry does not weaken the
+architectural claim. It is what makes the paper scientifically credible: ORIUS can be
+universal in runtime contract while still governed by a public promotion gate.
+
+The field-level implication is larger than any single benchmark number. ORIUS proposes
+that Physical AI should be organized around a reusable runtime safety layer that sits
+between nominal intelligence and actuation, and that this layer should be audited
+through one benchmark schema and one governance surface. If the remaining gated rows are
+closed, the same architecture can support a stronger universality claim. Even before
+that point, ORIUS establishes a reusable safety-layer grammar for Physical AI under
+degraded observation.

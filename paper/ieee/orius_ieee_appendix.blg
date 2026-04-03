@@ -1,0 +1,58 @@
+This is BibTeX, Version 0.99d (TeX Live 2025/Homebrew)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: orius_ieee_appendix.aux
+The style file: IEEEtran.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Database file #1: ../bibliography/orius_monograph.bib
+Reallocated field_info (elt_size=4) to 10014 items from 5000.
+Reallocated field_info (elt_size=4) to 15028 items from 10014.
+-- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
+-- http://www.michaelshell.org/tex/ieeetran/bibtex/
+-- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
+
+Done.
+You've used 231 entries,
+            4087 wiz_defined-function locations,
+            1636 strings with 41496 characters,
+and the built_in function-call counts, 85809 in all, are:
+= -- 6929
+> -- 924
+< -- 0
++ -- 462
+- -- 231
+* -- 2558
+:= -- 15277
+add.period$ -- 462
+call.type$ -- 231
+change.case$ -- 462
+chr.to.int$ -- 0
+cite$ -- 231
+duplicate$ -- 7623
+empty$ -- 8548
+format.name$ -- 231
+if$ -- 19177
+int.to.chr$ -- 0
+int.to.str$ -- 231
+missing$ -- 1848
+newline$ -- 716
+num.names$ -- 231
+pop$ -- 5082
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 2
+skip$ -- 6930
+stack$ -- 0
+substring$ -- 693
+swap$ -- 4158
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 5
+type$ -- 231
+warning$ -- 0
+while$ -- 231
+width$ -- 234
+write$ -- 1870

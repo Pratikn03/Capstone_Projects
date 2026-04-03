@@ -1,0 +1,178 @@
+\section{Appendix B: Extended Battery Evidence}
+\label{app:prof-battery-empirical}
+
+This appendix expands the battery witness with the full publication-facing
+empirical package: controller rankings, reliability diagnostics, raw-sequence
+track results, operational traces, and the failure-analysis surfaces that
+support the compact main-text claim.
+
+\subsection{Locked evaluation scope}
+The battery evidence used in the professor-facing manuscript comes from the
+locked CPSBench package with 168-hour episodes, seed-controlled runs, and fault
+families covering dropout, drift, delay, stale sensing, and combined degraded
+telemetry.  The main result is not that every baseline is competitive; it is
+that the ORIUS repair-aware variants eliminate true-state violations under the
+same locked protocol that exposes failures in the non-repair baselines.
+
+\subsection{Controller ranking on the publication leaderboard}
+Table~\ref{tab:prof-battery-leaderboard} records the battery leaderboard as
+published in the repo.  The zero-violation tier is occupied by the scenario
+methods and the ORIUS repair-aware variants, while the deterministic and static
+interval baselines are separated by their non-zero violation rates.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Battery leaderboard from the tracked publication artifact.}
+\label{tab:prof-battery-leaderboard}
+\begin{tabular}{rlrrr}
+\toprule
+\textbf{Rank} & \textbf{Controller} & \textbf{Viol.\ rate} & \textbf{IR (\%)} & \textbf{Mean PICP$_{90}$} \\
+\midrule
+1 & scenario\_mpc & 0.000000 & 0.000000 & 0.934722 \\
+2 & scenario\_robust & 0.000000 & 0.000000 & 0.975000 \\
+3 & aci\_conformal & 0.000000 & 2.083300 & 0.965278 \\
+4 & dc3s\_wrapped & 0.000000 & 0.000000 & 0.880556 \\
+5 & dc3s\_ftit & 0.000000 & 8.819400 & 0.930555 \\
+6 & deterministic\_lp & 0.129861 & 0.000000 & 0.879861 \\
+7 & cvar\_interval & 0.191667 & 0.000000 & 0.879861 \\
+8 & robust\_fixed\_interval & 0.191667 & 0.000000 & 0.879861 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This ranking is useful because it separates two questions that are often
+conflated.  Rank is driven by both safety and cost, while the thesis claim is
+only about safety under degraded observation.  On that narrower question, the
+important fact is that the ORIUS variants stay in the zero-violation tier and
+the deterministic/static baselines do not.
+
+\subsection{Reliability-conditioned baseline audit}
+Table~\ref{tab:prof-reliability-baselines} expands the same result family with
+coverage and interval-width diagnostics.  The ORIUS FTIT variant is the most
+conservative but also the most coverage-stable.  The wrapped variant is less
+conservative, but it still preserves zero true-state violations.  That tradeoff
+is exactly what the professor-facing manuscript should emphasize: safety is
+robust, while efficiency is controller-dependent.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Reliability-conditioned battery baselines from the locked audit.}
+\label{tab:prof-reliability-baselines}
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Method} & \textbf{TSVR} & \textbf{Obs.\ viol.} & \textbf{Coverage} &
+\textbf{Width} & \textbf{Repair rate} \\
+\midrule
+ORIUS FTIT & 0.000000 & 0.000000 & 0.971627 & 3906.547749 & 0.027976 \\
+ORIUS Wrapped & 0.000000 & 0.000000 & 0.884127 & 559.920971 & 0.000000 \\
+Adaptive Conformal + Repair & 0.000000 & 0.000000 & 0.962500 & 2824.252435 & 0.013889 \\
+Deterministic LP & 0.039087 & 0.039087 & 0.883333 & 503.130805 & 0.000000 \\
+Robust Fixed Interval & 0.255754 & 0.255754 & 0.883333 & 503.130805 & 0.000000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The appendix table also makes clear why the monograph should not oversell the
+deep OQE itself.  The deep reliability model is a useful input to the repair
+pipeline, but the published summary shows only modest fault separability
+(\texttt{fault\_auc} $=0.534$) and no evidence of a dramatic low-reliability
+lift.  In other words, the system is not relying on a miraculous classifier; it
+is relying on a conservative safety layer that behaves well even when the
+quality score is only moderately informative.
+
+\subsection{Deep OQE diagnostic summary}
+Table~\ref{tab:prof-deep-oqe-summary} records the strongest high-level deep OQE
+diagnostics from the publication package.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Deep OQE diagnostic summary.}
+\label{tab:prof-deep-oqe-summary}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Metric} & \textbf{Heuristic} & \textbf{Deep} \\
+\midrule
+Eval reliability MAE & 0.117620 & 0.162228 \\
+Fault AUC & -- & 0.534482 \\
+Low-reliability fault lift & -- & 0.000000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent The value of this table is not that the deep model dominates the
+heuristic.  It does not.  The value is that ORIUS remains safe without needing a
+perfect fault classifier: the quality signal only has to be informative enough
+to steer the repair-and-certify layer away from hidden violations.
+
+\subsection{Raw-sequence track benchmark}
+The raw-sequence benchmark is an important negative result because it shows how
+hard the unengineered sensing problem remains.  Table~\ref{tab:prof-raw-seq}
+compares a reliability-conditioned PatchTST model on raw sequence inputs against
+a GBM on engineered tabular features.  Across load, wind, and solar targets, the
+raw-sequence model is substantially worse in RMSE and MAE, while calibration is
+mixed rather than uniformly superior.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Raw-sequence track benchmark from the publication artifact.}
+\label{tab:prof-raw-seq}
+\begin{tabular}{llrrrr}
+\toprule
+\textbf{Target} & \textbf{Track} & \textbf{Model} & \textbf{RMSE} & \textbf{MAE} & \textbf{PICP$_{90}$} \\
+\midrule
+Load & Raw sequence & PatchTST-reliability & 7414.479 & 5204.866 & 0.610958 \\
+Load & Engineered tabular & GBM & 305.121 & 187.869 & 0.882143 \\
+Wind & Raw sequence & PatchTST-reliability & 6564.913 & 5091.294 & 0.714088 \\
+Wind & Engineered tabular & GBM & 219.108 & 129.362 & 0.936905 \\
+Solar & Raw sequence & PatchTST-reliability & 3769.459 & 2533.273 & 0.866943 \\
+Solar & Engineered tabular & GBM & 240.353 & 117.319 & 0.787698 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_battery_deep_oqe_summary}
+\caption{Deep OQE summary plot from the locked publication package.  The main
+takeaway is not superiority over the heuristic, but the presence of a usable
+quality signal that can be routed into the repair layer.}
+\label{fig:prof-deep-oqe-summary}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_battery_raw_sequence_track_benchmark}
+\caption{Raw-sequence track benchmark from the locked publication package.  The
+benchmark is intentionally hard: the raw-sequence model is materially worse
+than the engineered baseline, which is why ORIUS treats this track as a
+stress-test rather than a victory lap.}
+\label{fig:prof-raw-seq-benchmark}
+\end{figure}
+
+\subsection{Operational trace and failure analysis}
+The 48-hour operational trace and the ablation suite give the strongest
+mechanistic evidence.  In the trace, interventions cluster around telemetry
+degradation rather than random dispatch variation, and the shield is otherwise
+transparent.  In the ablation study, disabling OQE, inflation, or projection
+reduces the quality of the protection layer; disabling FTIT mostly increases
+conservatism rather than breaking safety.
+
+\begin{itemize}
+  \item The 48-hour trace records 47 interventions over 1\,680 steps, or 2.8\%
+  of steps, with clusters tied to dropout bursts and drift peaks.
+  \item The most severe avoided violation in the trace occurs when the LP
+  proposes a large discharge against an over-optimistic observed SOC, while the
+  shield projects the action back to a safe discharge.
+  \item The ablation tables show that OQE and uncertainty inflation are the
+  safety-critical elements; FTIT is a performance refinement, not the main
+  safety barrier.
+\end{itemize}
+
+\noindent In the professor-facing manuscript, this is the right level of detail:
+the appendix should show that the safety story is not a single lucky run, but a
+reproducible pattern across controller rankings, reliability audits, raw-sequence
+stress tests, and trace-level failure avoidance.

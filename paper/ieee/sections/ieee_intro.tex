@@ -1,0 +1,75 @@
+\section{Introduction}
+\label{sec:ieee-introduction}
+
+Physical AI systems do not act on truth. They act on telemetry, state estimates, and
+learned summaries of the world. When that observation channel degrades, the entire
+software stack can remain internally coherent while the physical system becomes
+externally unsafe. Batteries can violate hidden state-of-charge limits, vehicles can
+accelerate on stale headway estimates, industrial plants can cross thermal envelopes,
+clinical monitoring systems can suppress necessary intervention, and guidance systems
+can drift outside feasible corridors. ORIUS is built around the claim that this failure
+mode is not a battery problem, an autonomy problem, or a cyber-security problem in
+isolation. It is a universal \emph{action-semantics} problem for Physical AI.
+
+This draft therefore asks a narrower but more consequential question than most
+controller- or model-centric safety papers: what runtime layer is needed once the
+observation surface itself can no longer be trusted to carry actuation legality? The
+answer proposed here is ORIUS, Observation--Reality Integrity for Universal Safety, a
+typed runtime layer that detects degraded observation, calibrates uncertainty to the
+reduced trust surface, constrains admissible actions, repairs or replaces unsafe
+candidates, and emits an auditable certificate before release. The contribution is not
+one universal policy. It is one universal safety grammar that sits between nominal
+intelligence and physical actuation.
+
+The paper is intentionally universal-first. Battery remains the witness row with the
+deepest theorem-to-code-to-artifact closure, but it is not treated as the conceptual
+center of the argument. Instead, the central object is the observation--action safety
+gap (OASG): the event in which an action is legal on the observed state while unsafe on
+the true state. That object links conformal and distribution-free uncertainty
+\cite{vovk2005algorithmic,romano2019conformalized,gibbs2021adaptive,angelopoulos2023gentle,barber2023beyond},
+runtime assurance and supervisory control
+\cite{sha2001using,sha1998simplex,desai2019soter,bartocci2018introduction,leucker2009brief},
+safety filters and constrained control
+\cite{ames2019control,wabersich2021predictive,fisac2019general,ben2009robust},
+and anomaly- or degradation-aware cyber-physical monitoring
+\cite{rajkumar2010cps,teixeira2015secure,basseville1993detection,pasqualetti2013attack}.
+The manuscript's claim is that none of these families alone supplies the runtime bridge
+from degraded observation to repaired actuation and certificate semantics across
+multiple physical domains.
+
+The technical move is a Detect--Calibrate--Constrain--Shield--Certify kernel. Detect
+degraded telemetry and estimate reliability. Calibrate the observation-consistent state
+set rather than trusting nominal point estimates. Constrain the action set under that
+inflated state uncertainty. Shield the plant by repairing or replacing the candidate
+action. Certify the resulting release so fallback, latency, and audit continuity become
+part of the scientific object rather than operational afterthoughts. ORIUS makes that
+kernel concrete through one adapter contract, one benchmark schema, and one governance
+surface. The adapter contract allows batteries, autonomous vehicles, industrial plants,
+healthcare monitoring, navigation, and aerospace to instantiate the same safety layer
+without pretending they share the same nominal controller or safety objective.
+
+The evidence posture of this flagship draft is intentionally visible. ORIUS already has
+one witness row and several defended bounded rows, but equal-domain universality is
+still gated by missing real-data navigation closure and a stronger aerospace runtime
+surface. The paper therefore argues for a field-level runtime architecture while keeping
+the domain promotion gate explicit in the body text rather than hiding it in editorial
+support material.
+
+The paper makes four contributions.
+\begin{enumerate}[leftmargin=1.25em,itemsep=0.2em]
+\item It defines OASG as a universal safety object for Physical AI and frames degraded
+observation as an action-semantics problem rather than only a detection or estimation
+problem.
+\item It presents ORIUS as a reusable runtime kernel with typed observation,
+uncertainty, action-repair, fallback, and certificate objects.
+\item It unifies benchmark and governance semantics across six domains using one
+true-state-violation schema and one auditable runtime discipline.
+\item It argues, with explicit parity gating, that runtime safety layers are the right
+universal object for Physical AI safety research even when evidence depth remains
+asymmetric across domains.
+\end{enumerate}
+
+The rest of the paper follows that logic. It formalizes OASG, positions ORIUS
+adversarially against adjacent literatures, details the runtime kernel and the theorem
+bridge, walks through six domain instantiations under one shared template, and closes
+with a synthesis that separates universality of contract from equality of evidence.

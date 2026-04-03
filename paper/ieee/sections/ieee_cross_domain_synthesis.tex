@@ -1,0 +1,37 @@
+\section{Cross-Domain Synthesis}
+\label{sec:ieee-synthesis}
+
+The scientific value of ORIUS is not that every row already looks equally complete. It
+is that one runtime grammar survives across very different physical systems while the
+paper remains honest about which rows are defended and which are gated. That distinction
+is what turns ORIUS from a portability story into a candidate field-level safety layer.
+
+\begin{table*}[t]
+\centering
+\caption{What ORIUS standardizes across domains, and what remains domain-specific.}
+\label{tab:ieee-universal-vs-domain}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.20\textwidth}p{0.32\textwidth}p{0.40\textwidth}@{}}
+\toprule
+\textbf{Layer} & \textbf{Shared across all rows} & \textbf{Domain-specific content}\\
+\midrule
+Observation semantics & Reliability assessment, degraded-observation detection, uncertainty widening trigger & Sensor modalities, freshness signals, and consistency features.\\
+Safety geometry & Tightened admissible action set, repair-or-fallback release logic & State constraints, action constraints, safety-object geometry.\\
+Benchmarking & True-state violation, intervention, fallback, certificate validity, latency, domain metrics & Domain-specific margin definitions and auxiliary metrics.\\
+Governance & CertOS lifecycle, certificate integrity, audit continuity & Policy-specific fallback payloads and application-specific certificate fields.\\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+This synthesis yields a sharper universality statement than a transfer-learning claim.
+ORIUS is not saying that one policy transfers across all six rows. It is saying that
+Physical AI systems share a runtime failure mode once observation degrades, and that the
+same kernel can mediate that failure mode while respecting domain-specific safety
+geometry. That is why the architecture can be universal even when the evidence remains
+tiered.
+
+The paper therefore keeps the parity gate visible. Battery is the witness row. AV,
+industrial, and healthcare are defended bounded rows. Navigation and aerospace are
+visible blockers rather than quiet placeholders. This is not defensive writing. It is
+the mechanism that lets the paper make a large architectural claim without pretending
+that universality of contract automatically implies equality of closure.

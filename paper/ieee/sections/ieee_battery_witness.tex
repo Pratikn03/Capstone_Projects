@@ -1,0 +1,50 @@
+\section{Battery as the Witness Domain}
+\label{sec:ieee-battery}
+
+Battery remains the witness domain because it carries the deepest theorem-to-code-to-
+artifact closure in the present ORIUS stack. That status is methodological, not
+conceptual. The paper is not arguing that batteries are the center of Physical AI. It
+is using the battery row to show what a fully specified ORIUS instantiation looks like
+when the theorem chain, benchmark chain, fallback chain, and certificate chain are all
+present in one place.
+
+\subsection{Hazard and safety object}
+The battery hazard is simple to state and representative of the larger ORIUS problem.
+Dispatch can appear legal on the observed state of charge, reserve, or availability
+surface while already violating the true physical envelope. The safety object is
+therefore zero true-state violation of the dispatch and state-of-charge envelope under
+degraded observation.
+
+\subsection{Runtime instantiation}
+The battery adapter uses reliability scoring, uncertainty inflation over feasible state
+of charge, action clipping or safe-hold when the admissible power interval collapses,
+and certificate-gated dispatch release. This makes the witness row useful for more than
+numerical performance. It shows the full semantics of repair, fallback, certificate
+expiry, and audit continuity under a domain where the runtime surface is already mature.
+
+\subsection{Why the battery row matters}
+The witness row earns its role because it exposes all three layers of the ORIUS claim:
+theoretical motivation, benchmarked repair, and governed runtime release. That closure
+depth is what the weaker rows are measured against.
+
+\begin{table}[t]
+\centering
+\caption{Why battery remains the witness row in the IEEE draft.}
+\label{tab:ieee-battery-witness}
+\small
+\begin{tabularx}{\columnwidth}{@{}p{0.30\columnwidth}X@{}}
+\toprule
+\textbf{Surface} & \textbf{Witness-row status}\\
+\midrule
+Formal bridge & Deepest theorem-to-artifact chain in the current ORIUS stack.\\
+Replay evidence & Most complete degraded-observation replay, stress, and runtime traces.\\
+Fallback semantics & Mature safe-hold and bounded repair behavior with certificate traces.\\
+Governance & Strongest CertOS lifecycle and audit continuity evidence.\\
+Role in this paper & Anchors the strongest empirical row without allowing the manuscript to become battery-centric.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+This is the right role for battery in a universal-first paper. It anchors the strongest
+evidence surface while leaving the conceptual center of the manuscript with the runtime
+layer itself.

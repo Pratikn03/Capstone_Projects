@@ -1,0 +1,166 @@
+\section{Theory Bridge and Universality Gate}
+\label{sec:prof-theory-bridge}
+
+This section distills the formal spine of ORIUS for a professor-facing IEEE draft.  It
+connects the battery proof ladder, the universal kernel, and the cross-domain promotion
+logic without reintroducing the full monograph narrative.  The key point is that ORIUS
+is not presented as a battery theorem generalized by analogy.  It is presented as a
+runtime safety grammar whose transfer obligations are explicit, checkable, and separate
+from the evidence hierarchy.
+
+\subsection{Formal setting}
+We consider a partially observed safety-constrained control system on a discrete
+horizon \(t=0,1,\dots,T-1\):
+\[
+  x_{t+1}=f(x_t,a_t,\omega_t), \qquad
+  y_t=h(x_t,\nu_t), \qquad
+  w_t=\psi(y_{0:t}),
+\]
+with true state \(x_t\in\mathcal{X}\), action \(a_t\in\mathcal{A}\), observation
+history \(\mathcal{H}_t=\sigma(y_{0:t})\), and reliability score \(w_t\in[0,1]\).
+The safe set is
+\[
+  \mathcal{S}=\{x\in\mathcal{X}:\phi(x)\ge 0\},
+\]
+and the episode violation count is
+\[
+  V_T=\sum_{t=0}^{T-1}\mathbf{1}[x_t\notin\mathcal{S}].
+\]
+The ORIUS runtime layer takes a nominal candidate action
+\(a_t^{\mathrm{cand}}=\pi_t(\mathcal{H}_t)\), constructs an observation-consistent
+state set \(U_t\), tightens the admissible action set
+\(\mathcal{A}_t^{\mathrm{safe}}(U_t)\), repairs or replaces the candidate action, and
+emits a causal certificate.
+
+\subsection{Universality gate}
+The equal-domain ambition of ORIUS is governed by a universality gate.  A domain
+instantiation is not promoted by rhetorical similarity; it is promoted when it supplies:
+\begin{enumerate}
+  \item a declared observation model and a reproducible replay or experimental protocol;
+  \item a sound observation-consistent set \(U_t\) and a domain-specific safe-action set;
+  \item a repair or fallback operator that is measurable, causal, and certificate-backed;
+  \item a benchmark compatible with the universal schema and a certificate that can be audited;
+  \item a domain-specific safety reduction result that can be checked against the shared contract.
+\end{enumerate}
+This gate is the manuscript's main discipline rule: architecture may be universal before
+evidence is equal, but the equal-domain claim is only allowed once the gate is passed.
+
+\begin{proposition}[Universality gate]
+\label{prop:universality-gate}
+If a domain instantiation satisfies the universal adapter contract and discharges the
+promotion obligations above, then the ORIUS kernel can be interpreted on that domain as a
+runtime safety layer with the same formal objects used in the battery reference proof:
+observation reliability, uncertainty inflation, admissible repair, fallback, and
+certificate semantics.  If those obligations are not discharged, the manuscript may
+retain only a bounded or gated claim.
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+The proposition is a packaging statement, not a new control theorem.  It follows directly
+from the typed kernel and adapter surface described in the universal-completeness chapter:
+the runtime only requires an observation packet, a reliability score, an observation-
+consistent state set, a tightened safe-action set, a repair operator, a fallback, and a
+causal certificate.  Appendix~A lists these objects and their assumption dependencies.
+Once a domain supplies the same objects, the formal language of the battery ladder applies
+without changing the runtime contract; what changes is the evidence status of the domain.
+\end{proof}
+
+\subsection{T9: Reliability-aware repair is structurally necessary}
+The first theoretical claim is that ignoring reliability is not a benign simplification.
+Under persistent observation degradation, a controller that does not adapt its safety
+margin to \(w_t\) cannot eliminate violations by algorithmic tuning alone.
+
+\begin{theorem}[T9: Reliability-aware repair is necessary]
+\label{thm:prof-t9}
+Assume persistent observation degradation with mean rate \(d>0\), a \(\varphi\)-mixing
+fault process, and the standing boundary-reachability assumptions used in the battery
+reference proofs.  Then there exists a constant \(c>0\) such that any controller that
+does not adapt its safety margin to \(w_t\) satisfies
+\[
+  \mathbb{E}[V_T]\ge c\,d\,T.
+\]
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+The battery proof surface shows the core mechanism: if the controller keeps a fixed
+safety margin while the telemetry channel degrades, then the observed state can remain
+legitimate even as the true state crosses the constraint boundary.  The full argument
+uses separated windows and a martingale concentration step to convert per-window
+violation probability into a linear-in-\(T\) lower bound.  The essential point is that
+the degradation process, not the nominal controller class, determines the scaling law.
+\end{proof}
+
+\subsection{T10: Degraded observation induces a reliability-risk frontier}
+The second claim is a lower-bound statement: degraded observation creates a nontrivial
+risk frontier that cannot be removed by a stronger controller alone.
+
+\begin{theorem}[T10: Reliability-risk frontier]
+\label{thm:prof-t10}
+Suppose that for each step \(t\) there is a boundary-testing subproblem with safe and
+unsafe hypotheses \(H_{0,t}\) and \(H_{1,t}\), and that the induced observation laws
+satisfy \(\mathrm{TV}(P_{0,t},P_{1,t})\le w_t\).  If the unsafe-side prior satisfies
+\(\Pr(H_{1,t})\ge p_t\), then every controller \(\pi\) obeys
+\[
+  \mathbb{E}[V_T(\pi)] \ge \frac{1}{2}\sum_{t=1}^T p_t(1-w_t).
+\]
+In particular, if \(p_t\ge \alpha/2\) for all \(t\), then
+\[
+  \mathbb{E}[V_T(\pi)] \ge \tfrac{1}{4}\alpha(1-\bar{w})T.
+\]
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+This is a Le Cam style reduction.  Each step becomes a binary decision problem between a
+safe and unsafe boundary neighborhood.  The smaller the total variation gap between the
+two observation laws, the less information the controller has about which side of the
+boundary it is on.  The lower bound then follows by multiplying the irreducible
+classification error by the mass of the unsafe hypothesis and summing over the horizon.
+The result is intentionally stylized: it isolates the scaling law, not a globally sharp
+minimax constant.
+\end{proof}
+
+\subsection{T11: Structural transfer through the universal adapter contract}
+The third claim is the one that matters most for a universal paper draft.  It says that
+the battery proof pattern can transfer if, and only if, the domain exposes the right
+runtime objects.
+
+\begin{theorem}[T11: Structural transfer]
+\label{thm:prof-t11}
+Let \(\mathcal{D}\) be any domain instantiation that satisfies the universal adapter
+contract: it provides an observation packet, a reliability score \(w_t\), an
+observation-consistent state set \(U_t\), a domain-safe action set
+\(\mathcal{A}_t^{\mathrm{safe}}(U_t)\), a repair map, and a fallback action.  If
+\(\Pr[x_t\in U_t\mid\mathcal{H}_t]\ge 1-\alpha\) and every repaired action lies in the
+tightened safe-action set, then
+\[
+  \Pr[x_{t+1}\in\mathcal{S}\mid\mathcal{H}_t]\ge 1-\alpha.
+\]
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Condition on the observation history.  On the event \(x_t\in U_t\), soundness of the
+tightened safe-action set implies that every admissible repaired action preserves the
+safe set at the next step.  If the tightened set is empty, the fallback action preserves
+safety by contract.  Therefore the only remaining source of failure is the probability
+that the true state lies outside \(U_t\), which is at most \(\alpha\).  Appendix~C and
+the theorem-surface register record the battery proof instances that instantiate this
+logic in the reference domain.
+\end{proof}
+
+\begin{corollary}[Episode aggregation under a domain risk budget]
+\label{cor:prof-episode-aggregation}
+If a domain supplies a predictable per-step risk budget \(r_t\) such that
+\(\Pr[x_{t+1}\notin\mathcal{S}\mid\mathcal{H}_t]\le r_t\), then
+\[
+  \mathbb{E}[V_T]\le \sum_{t=1}^T r_t.
+\]
+When the budget has the battery-style envelope \(r_t\le \alpha(1-w_t)\), the familiar
+upper bound \(\mathbb{E}[V_T]\le \alpha(1-\bar{w})T\) follows immediately.
+\end{corollary}
+
+\subsection{Interpretation for the IEEE draft}
+The practical message for the IEEE manuscript is that the theory bridge does not need to
+be a second thesis chapter.  It needs to do three things well: state the universal
+objects, state the universality gate, and state the proof skeleton that connects the
+reference battery ladder to any new domain that clears the adapter contract.  That is the
+strongest possible version of the claim without inventing unsupported empirical parity.

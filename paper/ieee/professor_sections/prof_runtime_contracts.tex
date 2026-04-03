@@ -1,0 +1,78 @@
+\section{Runtime, Benchmark, and Governance Contracts}
+\label{sec:prof-runtime-contracts}
+
+The professor-facing ORIUS draft should present three contracts as a single
+stack: the adapter contract, the benchmark contract, and the CertOS
+governance contract.  Together they explain how degraded observation is
+converted into a typed runtime safety layer rather than a battery-only
+control recipe.
+
+\subsection{Adapter contract}
+The adapter is the only place where domain-specific telemetry and
+constraints are allowed to enter the universal runtime.  The current
+monograph and supporting design documents make this boundary explicit:
+\texttt{src/orius/certos/runtime.py} provides a domain-neutral governance
+surface, \texttt{docs/UNIVERSAL\_BENCHMARK\_SPEC.md} defines the common
+step schema, and \texttt{docs/UNIVERSAL\_GOVERNANCE\_SPEC.md} requires a
+domain governance policy instead of battery-shaped runtime state.
+
+In practical terms, each domain adapter must expose a true-state violation
+predicate, an observed-state satisfiability predicate, an optional margin
+computation, a fallback action, and certificate-compatible action repair.
+That is the minimum needed to make ORIUS portable across battery energy
+storage, autonomous vehicles, industrial control, healthcare monitoring,
+navigation, and aerospace without changing the meaning of safety at the
+kernel level.
+
+\subsection{Benchmark contract}
+ORIUS-Bench is the manuscript-facing replay contract.  The universal step
+record keeps the same fields across domains: true and observed state,
+candidate action, repaired action, true and observed constraint violation
+flags, true and observed margins, intervention and fallback flags,
+certificate validity, latency, and a nested domain-metrics payload.  The
+metrics family is equally fixed: TSVR, OASG, CVA, GDQ, IR, AC, and RL,
+plus latency percentiles and coverage diagnostics when conformal
+uncertainty is active.
+
+This contract matters because it prevents the professor-facing draft from
+collapsing the whole manuscript into a single battery result table.  It
+also keeps the evidence boundary honest: the same schema can be reused
+across all six rows, but the rows do not carry the same proof depth.
+
+\subsection{CertOS contract}
+CertOS is the runtime governance layer.  Its role is deliberately narrow:
+do not release an action unless the runtime can either validate a current
+certificate or replace the action with an explicit fallback.  The policy
+surface is domain-neutral and consists of five hooks:
+\texttt{is\_actuation(action)},
+\texttt{fallback\_action(constraints, state)},
+\texttt{horizon\_update(certificate, reliability, drift, constraints, validity\_horizon)},
+\texttt{required\_certificate\_fields()}, and
+\texttt{integrity\_projection(action)}.
+
+The invariants are correspondingly small and auditable: no actuation
+without a valid or fallback certificate path, an unbroken certificate hash
+chain, and fallback only when validity collapses.  That is the right level
+of abstraction for a PhD draft that wants to argue for a fundamental safety
+layer.  It is strong enough to be scientific, but it does not overclaim
+deployment readiness or equal-domain parity.
+
+\begin{table}[t]
+\centering
+\caption{Contract stack for the professor-facing ORIUS draft.}
+\label{tab:prof-contract-stack}
+\begin{tabular}{p{2.2cm}p{4.0cm}p{4.4cm}}
+\toprule
+\textbf{Layer} & \textbf{Obligation} & \textbf{Repository anchor} \\
+\midrule
+Adapter & Convert degraded telemetry into typed safety objects and repaired actions & \texttt{src/orius/certos/runtime.py}; \texttt{docs/UNIVERSAL\_BENCHMARK\_SPEC.md} \\
+Benchmark & Keep one step schema and one metric family across all rows & \texttt{docs/UNIVERSAL\_BENCHMARK\_SPEC.md}; \texttt{reports/publication/orius\_domain\_closure\_matrix.csv} \\
+Governance & Release only certified or explicit fallback actions, with audit continuity & \texttt{docs/UNIVERSAL\_GOVERNANCE\_SPEC.md}; \texttt{src/orius/certos/runtime.py} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The professor-facing version should end this section with the claim
+boundary stated plainly: ORIUS is a universal runtime safety contract for
+Physical AI under degraded observation, but the evidence remains tiered by
+domain and should not be presented as equal-depth proof across all rows.

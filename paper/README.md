@@ -13,7 +13,9 @@ Canonical policy:
 - source of truth: `paper/paper.tex`
 - official compiled deliverable: repo-root `paper.pdf`
 - review dossier companion: `paper/review/orius_review_dossier.tex`
-- shorter derivative: `paper/paper_r1.tex`
+- flagship IEEE main draft: `paper/ieee/orius_ieee_main.tex`
+- flagship IEEE appendix: `paper/ieee/orius_ieee_appendix.tex`
+- legacy short derivative: `paper/paper_r1.tex`
 - narrative companion: `paper/PAPER_DRAFT.md`
 
 ---
@@ -23,7 +25,9 @@ Canonical policy:
 | File | Role |
 |---|---|
 | `paper.tex` | Canonical book-length manuscript |
-| `paper_r1.tex` | Shorter derivative / submission variant |
+| `ieee/orius_ieee_main.tex` | Flagship IEEE double-column working draft |
+| `ieee/orius_ieee_appendix.tex` | Separate IEEE appendix / proofs / benchmark appendix |
+| `paper_r1.tex` | Legacy battery-centric short derivative retained for provenance only |
 | `PAPER_DRAFT.md` | Non-authoritative narrative companion |
 | `../paper.pdf` | Canonical compiled monograph |
 | `metrics_manifest.json` | Locked manuscript metrics surface |
@@ -107,6 +111,19 @@ That command owns:
 - `paper/review/`
 - `paper/bibliography/orius_monograph.bib`
 - parity, review, and crosswalk matrices in `reports/publication/`
+
+The IEEE support surfaces are generated separately via:
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/build_orius_ieee_assets.py
+```
+
+That command owns:
+
+- `reports/publication/orius_top_tier_benchmark_corpus.csv`
+- `paper/ieee/generated/`
+- `reports/editorial/orius_claim_delta_ledger.csv`
+- `reports/editorial/orius_flagship_revision_ledger.csv`
 
 Do not hand-edit generator-owned outputs unless the same change is also made in
 `scripts/build_orius_monograph_assets.py`.

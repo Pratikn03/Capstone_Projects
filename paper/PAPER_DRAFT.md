@@ -349,7 +349,7 @@ The paper also now carries the longer treatment of certificate horizon, expirati
 ## 12. Governance and Reproducibility
 
 ### 12.1 Source of Truth
-The canonical manuscript source is `paper/paper.tex`. `paper/PAPER_DRAFT.md` is the narrative companion, `paper/paper_r1.tex` is the shorter conference derivative, and repo-root `paper.pdf` is the official compiled deliverable. Quantitative claims are valid only if they remain traceable to `paper/metrics_manifest.json`, `paper/claim_matrix.csv`, and the locked report artifacts.
+The canonical manuscript source is `paper/paper.tex`. `paper/PAPER_DRAFT.md` is the narrative companion, `paper/ieee/orius_ieee_main.tex` and `paper/ieee/orius_ieee_appendix.tex` are the flagship IEEE derivatives, `paper/paper_r1.tex` is a legacy battery-centric short draft retained only for provenance, and repo-root `paper.pdf` is the official compiled deliverable. Quantitative claims are valid only if they remain traceable to `paper/metrics_manifest.json`, `paper/claim_matrix.csv`, and the locked report artifacts.
 
 ### 12.2 Repo-to-Paper Traceability
 | Repo artifact family | Primary role in the paper | Main paper touchpoint |
@@ -535,7 +535,7 @@ The promoted six-model forecasting comparison points in one practical direction:
 ## Appendix A. Replication Checklist
 1. Run `python3 scripts/validate_paper_claims.py`
 2. Run `python3 scripts/sync_paper_assets.py --check`
-3. Build the LaTeX manuscripts from `paper.tex` and `paper_r1.tex`
+3. Build the LaTeX manuscripts from `paper.tex` and the IEEE family under `paper/ieee/`
 4. Verify that the canonical numbers and run IDs appear consistently across markdown and LaTeX
 
 ## Appendix B. Artifact Inventory
@@ -543,7 +543,9 @@ The promoted six-model forecasting comparison points in one practical direction:
 |---|---|
 | `paper/paper.tex` | Canonical manuscript source |
 | `paper/PAPER_DRAFT.md` | Narrative companion synced from the canonical manuscript |
-| `paper/paper_r1.tex` | Shorter conference derivative |
+| `paper/ieee/orius_ieee_main.tex` | Flagship IEEE double-column working draft |
+| `paper/ieee/orius_ieee_appendix.tex` | Separate IEEE appendix |
+| `paper/paper_r1.tex` | Legacy battery-centric short draft kept only for provenance |
 | `paper/metrics_manifest.json` | Canonical universal safety lock and display contract |
 | `paper/claim_matrix.csv` | Claim-level provenance and status tracking |
 | `scripts/validate_paper_claims.py` | Cross-file claim validation |

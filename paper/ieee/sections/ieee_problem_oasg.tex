@@ -1,0 +1,56 @@
+\section{Problem Definition and Observation--Action Safety Gap}
+\label{sec:ieee-oasg}
+
+ORIUS starts from a narrow safety object with broad consequences. Let $\zt$ denote the
+physically true state, $\ztt$ the state exposed to the nominal controller, and
+$\mathcal{A}(\cdot)$ the set of admissible actions under the relevant safety envelope.
+The observation--action safety gap is the event
+\[
+\OASG_t = \mathbf{1}\{a_t \in \mathcal{A}(\ztt)\ \land\ a_t \notin \mathcal{A}(\zt)\},
+\]
+which means that the controller is internally consistent on the observed state while
+the plant is externally unsafe on the true state. This is the failure mode that
+reappears across battery dispatch, time-to-collision control, process envelopes,
+clinical intervention logic, navigation corridors, and flight-energy bounds.
+
+The defining difficulty is that OASG is not merely a state-estimation problem. A better
+estimator helps, but the safety event is ultimately about actuation semantics. If the
+runtime continues to treat the observed state as authoritative after freshness loss,
+dropout, delayed updates, sensor disagreement, or reliability collapse, then even a
+nominally optimal controller may produce a physically unsafe action. ORIUS therefore
+places the universal object at the boundary between degraded observation and released
+actuation rather than at the forecaster, planner, or dynamics model alone.
+
+This framing also explains why a single universal policy is not the goal. Different
+domains retain different state spaces, action geometries, intervention semantics, and
+fallback policies. What can be shared is the runtime grammar: observation reliability,
+inflated state uncertainty, tightened admissible actions, repaired actuation, and
+certificate semantics. The paper argues that this runtime grammar is the right unit of
+cross-domain reuse for Physical AI safety.
+
+\begin{table}[t]
+\centering
+\caption{Canonical OASG runtime objects used throughout the IEEE draft.}
+\label{tab:ieee-oasg-objects}
+\small
+\begin{tabularx}{\columnwidth}{@{}p{0.20\columnwidth}X@{}}
+\toprule
+\textbf{Object} & \textbf{Role in the runtime safety layer}\\
+\midrule
+$\ztt$ & Observed state or belief state exposed to the nominal controller.\\
+$\zt$ & Physically true state whose envelope determines actual safety.\\
+$w_t$ & Reliability assessment derived from freshness, missingness, and consistency.\\
+$U_t$ & Observation-consistent uncertainty set widened when reliability drops.\\
+$\mathcal{A}_t^{\mathrm{safe}}$ & Tightened admissible action set under degraded observation.\\
+$a_t^{\mathrm{safe}}$ & Repaired or fallback action released by the runtime.\\
+Certificate & Auditable payload recording reliability, margin, repair mode, and lifecycle state.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Two practical consequences follow. First, a runtime layer must expose the quality of
+the observation surface as a first-class object rather than burying it inside model
+residuals. Second, a universal benchmark must score safety on the true state rather
+than on nominal controller legality alone. Those consequences drive the ORIUS runtime
+design, the benchmark schema, and the claim boundary used throughout the rest of the
+paper.

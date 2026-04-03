@@ -1,0 +1,52 @@
+\section{Universal Contracts, Benchmark, and Governance}
+\label{sec:ieee-contracts}
+
+The universal claim only matters if the runtime interface, benchmark interface, and
+governance interface remain stable across domains. ORIUS enforces that stability
+through three public surfaces: a single adapter contract, a single benchmark schema,
+and a single CertOS lifecycle.
+
+\subsection{Adapter contract}
+Every supported domain enters ORIUS through the same narrow boundary. The adapter must
+parse telemetry, expose reliability-conditioned uncertainty semantics, tighten the
+admissible action set, implement repair and fallback, and emit a certificate payload
+compatible with the runtime ledger. This is intentionally smaller than a full controller
+API. ORIUS is not trying to normalize planning logic; it is trying to normalize safety
+interposition.
+
+\subsection{Universal benchmark surface}
+The benchmark contract scores safety on the true state and keeps the runtime outputs
+comparable across domains. The canonical step-level fields are
+\texttt{true\_constraint\_violated}, \texttt{observed\_constraint\_satisfied},
+\texttt{true\_margin}, \texttt{observed\_margin}, \texttt{intervened},
+\texttt{fallback\_used}, \texttt{certificate\_valid}, \texttt{latency\_us}, and
+\texttt{domain\_metrics}. This schema prevents a domain from claiming safety on an
+incompatible metric surface.
+
+\subsection{CertOS governance surface}
+CertOS makes fallback, certificate validity, lifecycle transitions, and audit continuity
+part of the runtime semantics. A domain may choose different repair maps or fallback
+modes, but it does not get to opt out of certificate integrity, audit logging, or
+release-state discipline. This is why ORIUS reads as a systems paper as well as a
+safety paper.
+
+\begin{table*}[t]
+\centering
+\caption{The three canonical ORIUS surfaces used across all domains.}
+\label{tab:ieee-contract-surfaces}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.17\textwidth}p{0.23\textwidth}p{0.52\textwidth}@{}}
+\toprule
+\textbf{Surface} & \textbf{Canonical objects} & \textbf{Purpose in the universal claim}\\
+\midrule
+Runtime adapter & Telemetry ingest, reliability semantics, uncertainty set, safe action set, repair, fallback, certificate payload & Isolates domain-specific safety geometry while keeping the ORIUS kernel itself domain-neutral.\\
+Benchmark schema & True-state violation, observed-state satisfaction, margins, intervention, fallback, certificate validity, latency, domain metrics & Forces all rows to score safety on the true state rather than on controller legality alone.\\
+CertOS governance & Lifecycle state, certificate integrity, fallback semantics, audit continuity, release discipline & Prevents runtime safety from collapsing into an undocumented filter or ad hoc emergency stop.\\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+These interfaces also explain the paper's claim boundary. ORIUS can be universal in
+contract even when domains remain unequal in proof depth or data maturity. The parity
+gate is therefore not a contradiction of the architecture; it is the mechanism that
+stops architectural reuse from being misread as empirical symmetry.

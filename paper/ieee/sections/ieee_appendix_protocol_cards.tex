@@ -1,0 +1,25 @@
+\section{Domain Protocol Cards}
+\label{sec:ieee-app-protocols}
+
+The main paper compresses the six domain rows into one shared narrative. This appendix
+records the protocol-card view used during revision so that each row remains tied to one
+problem statement, one safety object, and one closure boundary.
+
+\begin{table*}[h]
+\centering
+\caption{Protocol-card summary for the six ORIUS domain rows.}
+\label{tab:ieee-appendix-protocols}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.15\textwidth}p{0.22\textwidth}p{0.16\textwidth}p{0.18\textwidth}p{0.21\textwidth}@{}}
+\toprule
+\textbf{Domain} & \textbf{Canonical safety object} & \textbf{Repair mode} & \textbf{Fallback mode} & \textbf{Current closure note}\\
+\midrule
+Battery & State-of-charge and dispatch envelope & One-dimensional projection / clipping & Safe hold & Witness row with deepest runtime and theorem closure.\\
+Autonomous vehicles & TTC and entry-barrier preservation & Bounded longitudinal repair & Full brake / bounded brake & Defended bounded row under the current TTC entry-barrier contract.\\
+Industrial & Operating-envelope preservation & One-dimensional projection & Power cap & Defended bounded row for the current plant family.\\
+Healthcare & Vital-alert and intervention envelope & Bounded intervention projection & Max alert & Defended bounded row for the current monitoring contract.\\
+Navigation & Corridor / obstacle feasibility & Vector projection & Hold position & Gated pending real-data defended replay chain.\\
+Aerospace & Flight-energy or envelope preservation & Bounded projection & Envelope hold & Gated pending real multi-flight runtime validation.\\
+\bottomrule
+\end{tabularx}
+\end{table*}

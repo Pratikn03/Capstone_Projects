@@ -1,0 +1,66 @@
+\section{Related Work and Why Prior Families Are Not Enough}
+\label{sec:ieee-related-work}
+
+ORIUS does not claim that prior literatures ignored safety. The claim is more precise:
+the existing families solve adjacent pieces of the problem, but none by itself closes
+the runtime bridge from degraded observation to repaired actuation and auditable
+release.
+
+\subsection{Conformal and distribution-free uncertainty}
+Distribution-free predictive inference gives a principled way to wrap learned
+predictions with finite-sample uncertainty sets
+\cite{vovk2005algorithmic,lei2018distribution,romano2019conformalized,gibbs2021adaptive,angelopoulos2023gentle,barber2023beyond,zaffran2022adaptive}.
+That is essential for ORIUS because the runtime needs a mechanism for inflating the
+observation-consistent state set when trust falls. But conformal methods alone do not
+decide which action remains legal after that inflation. They are uncertainty tools, not
+actuation semantics.
+
+\subsection{Runtime assurance, supervisory safety, and shields}
+Simplex architectures, supervisory switching, runtime monitoring, and shielding all
+provide a strong language for intercepting unsafe actions before execution
+\cite{sha1998simplex,sha2001using,desai2019soter,bloem2015shield,bartocci2018introduction,leucker2009brief,havelund2004runtime}.
+ORIUS inherits the idea that the nominal controller is not the final authority. The gap
+is that many supervisory schemes start after the candidate action already exists and
+assume that the state estimate is sufficiently coherent for the monitor to interpret.
+ORIUS instead treats the observation surface itself as the thing that becomes unsafe,
+which forces the supervisor to reason jointly about reliability, uncertainty inflation,
+repair geometry, and fallback.
+
+\subsection{Safety filters, barrier methods, and constrained control}
+Barrier functions, robust MPC, predictive safety filters, and reachable-set control
+make it possible to turn uncertainty into admissible action sets
+\cite{ames2019control,ames2014cbf,wabersich2021predictive,fisac2019general,mayne2005robust,langson2004tubes,rawlings2017mpc,camacho2013model}.
+These methods are mathematically strong and domain-critical. What ORIUS adds is not a
+replacement for them, but a typed layer that can host them under one cross-domain
+contract. The key scientific move is to make the runtime objects reusable even when the
+underlying safety geometry differs across domains.
+
+\subsection{Drift, anomaly detection, and degraded telemetry}
+Change detection, anomaly detection, and cyber-physical fault analysis provide the
+language for recognizing when observation should no longer be trusted
+\cite{basseville1993detection,page1954continuous,page1955test,hinkley1971inference,rajkumar2010cps,pasqualetti2013attack,teixeira2015secure,liu2008isolation,breunig2000lof}.
+ORIUS depends on those methods but goes one step further: an alarm is not enough. The
+runtime must translate degraded observation into a different admissible action set and
+record the resulting governance state.
+
+\begin{table*}[t]
+\centering
+\caption{Why adjacent method families are necessary but insufficient for the ORIUS object.}
+\label{tab:ieee-family-gap}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.18\textwidth}p{0.24\textwidth}p{0.50\textwidth}@{}}
+\toprule
+\textbf{Method family} & \textbf{What it contributes} & \textbf{What remains missing for OASG}\\
+\midrule
+Conformal / distribution-free inference & Reliability-aware uncertainty around learned predictions & Does not specify which action remains legal after observation degrades or how fallback is certified.\\
+Runtime assurance / shielding & Supervisory interception and safe-controller override logic & Often assumes the state estimate is already coherent enough to supervise directly.\\
+Safety filters / robust control & Mapping uncertainty into admissible action sets & Usually tied to one plant family or one controller geometry rather than a shared runtime contract.\\
+Anomaly / drift / CPS fault detection & Detecting loss of trust in telemetry or estimation pipelines & Stops at alarms or scores unless paired with actuation repair and governance semantics.\\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+The paper's claim is therefore not that ORIUS supersedes these literatures. It claims
+that Physical AI needs a reusable runtime layer that binds them together around a
+single action-semantics problem: once degraded observation enters the loop, the system
+must decide what may still be safely done, not only whether an anomaly has occurred.
