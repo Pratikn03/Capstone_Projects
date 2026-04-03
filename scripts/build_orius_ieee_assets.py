@@ -20,6 +20,13 @@ BENCHMARK_TEX_PATH = IEEE_GENERATED_DIR / "orius_benchmark_corpus_appendix.tex"
 BENCHMARK_SUMMARY_TEX_PATH = IEEE_GENERATED_DIR / "orius_benchmark_summary_appendix.tex"
 DEPLOYMENT_SCOPE_SOURCE_PATH = PUBLICATION_DIR / "tbl_orius_deployment_validation_scope.tex"
 DEPLOYMENT_SCOPE_TEX_PATH = IEEE_GENERATED_DIR / "orius_deployment_validation_scope.tex"
+PROFESSOR_PARITY_CSV_PATH = PUBLICATION_DIR / "orius_equal_domain_parity_matrix.csv"
+PROFESSOR_RUNTIME_CSV_PATH = PUBLICATION_DIR / "orius_runtime_budget_matrix.csv"
+PROFESSOR_GOVERNANCE_CSV_PATH = PUBLICATION_DIR / "orius_governance_lifecycle_matrix.csv"
+PROFESSOR_BATTERY_CSV_PATH = PUBLICATION_DIR / "table1_main.csv"
+PROFESSOR_PARITY_TEX_PATH = IEEE_GENERATED_DIR / "orius_professor_parity_table.tex"
+PROFESSOR_RUNTIME_GOV_TEX_PATH = IEEE_GENERATED_DIR / "orius_professor_runtime_governance_table.tex"
+PROFESSOR_BATTERY_WITNESS_TEX_PATH = IEEE_GENERATED_DIR / "orius_professor_battery_witness_table.tex"
 CLAIM_LEDGER_CSV_PATH = EDITORIAL_DIR / "orius_claim_delta_ledger.csv"
 CLAIM_LEDGER_MD_PATH = EDITORIAL_DIR / "orius_claim_delta_ledger.md"
 REVISION_LEDGER_CSV_PATH = EDITORIAL_DIR / "orius_flagship_revision_ledger.csv"
@@ -459,12 +466,147 @@ def _write_claim_ledgers() -> None:
     CLAIM_LEDGER_MD_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def _format_pct(value: str, scale: float = 1.0) -> str:
+    try:
+        return f"{float(value) * scale:.1f}"
+    except (TypeError, ValueError):
+        return _tex_escape(value)
+
+
+def _title_case_status(value: str) -> str:
+    status = value.replace("_", " ").strip()
+    mapping = {
+        "reference": "Witness row",
+        "proof validated": "Defended bounded row",
+        "shadow synthetic": "Shadow-synthetic",
+        "experimental": "Experimental",
+        "reference runtime": "Witness row",
+        "witness reference": "Witness row",
+        "n/a reference": "Witness row",
+        "evaluated": "Evaluated",
+        "gated": "Gated",
+    }
+    return mapping.get(status, status.title())
+
+
+def _controller_label(value: str) -> str:
+    labels = {
+        "aci_conformal": "Adaptive conformal + repair",
+        "dc3s_ftit": "ORIUS FTIT",
+        "dc3s_wrapped": "ORIUS wrapped",
+        "deterministic_lp": "Deterministic LP",
+        "robust_fixed_interval": "Robust fixed interval",
+        "scenario_mpc": "Scenario MPC",
+        "scenario_robust": "Scenario robust",
+    }
+    return labels.get(value, value.replace("_", " "))
+
+
+def _write_professor_parity_tex() -> None:
+    rows = _read_rows(PROFESSOR_PARITY_CSV_PATH)
+    lines = [
+        r"\begin{table*}[t]",
+        r"\centering",
+        r"\small",
+        r"\caption{Cross-domain parity and promotion status for the professor-facing ORIUS draft.}",
+        r"\label{tab:prof-cross-domain-status}",
+        r"\begin{tabularx}{\textwidth}{@{}p{0.18\textwidth}p{0.18\textwidth}p{0.27\textwidth}p{0.27\textwidth}@{}}",
+        r"\toprule",
+        r"\textbf{Domain} & \textbf{Current row} & \textbf{What is currently closed} & \textbf{Current blocker or boundary} \\",
+        r"\midrule",
+    ]
+    for row in rows:
+        closed = []
+        if row["adapter_correctness"] == "pass":
+            closed.append("adapter")
+        if row["replay_status"] == "pass":
+            closed.append("replay")
+        if row["certos_lifecycle_support"] == "evaluated":
+            closed.append("CertOS")
+        if row["safe_action_soundness"] in {"pass", "reference_witness"}:
+            closed.append("soundness")
+        closed_text = ", ".join(closed) if closed else "partial runtime portability"
+        lines.append(
+            f"{_tex_escape(row['domain'])} & "
+            f"{_tex_escape(_title_case_status(row['resulting_tier']))} & "
+            f"{_tex_escape(closed_text)} & "
+            f"{_tex_escape(row['exact_blocker'])}\\\\"
+        )
+    lines.extend([r"\bottomrule", r"\end{tabularx}", r"\end{table*}", ""])
+    PROFESSOR_PARITY_TEX_PATH.write_text("\n".join(lines), encoding="utf-8")
+
+
+def _write_professor_runtime_governance_tex() -> None:
+    runtime_rows = {row["domain"]: row for row in _read_rows(PROFESSOR_RUNTIME_CSV_PATH)}
+    governance_rows = {row["domain"]: row for row in _read_rows(PROFESSOR_GOVERNANCE_CSV_PATH)}
+    parity_rows = {row["domain"]: row for row in _read_rows(PROFESSOR_PARITY_CSV_PATH)}
+
+    lines = [
+        r"\begin{table*}[t]",
+        r"\centering",
+        r"\scriptsize",
+        r"\caption{Runtime and governance summary for the professor-facing ORIUS draft.}",
+        r"\label{tab:prof-runtime-governance}",
+        r"\begin{tabularx}{\textwidth}{@{}p{0.18\textwidth}p{0.14\textwidth}p{0.12\textwidth}p{0.11\textwidth}p{0.13\textwidth}p{0.10\textwidth}p{0.15\textwidth}@{}}",
+        r"\toprule",
+        r"\textbf{Domain} & \textbf{Row} & \textbf{P95 latency (ms)} & \textbf{Repair (\%)} & \textbf{Fallback} & \textbf{Audit (\%)} & \textbf{Current limit} \\",
+        r"\midrule",
+    ]
+    for domain in runtime_rows:
+        runtime = runtime_rows[domain]
+        governance = governance_rows.get(domain, {})
+        parity = parity_rows.get(domain, {})
+        lines.append(
+            f"{_tex_escape(domain)} & "
+            f"{_tex_escape(_title_case_status(parity.get('resulting_tier', runtime.get('runtime_budget_depth', ''))))} & "
+            f"{_format_pct(runtime['p95_step_latency_ms'])} & "
+            f"{_format_pct(runtime['repair_rate_pct'])} & "
+            f"{_tex_escape(runtime['fallback_mode'])} & "
+            f"{_format_pct(governance.get('governance_completeness_pct', ''))} & "
+            f"{_tex_escape(runtime['exact_limit'])}\\\\"
+        )
+    lines.extend([r"\bottomrule", r"\end{tabularx}", r"\end{table*}", ""])
+    PROFESSOR_RUNTIME_GOV_TEX_PATH.write_text("\n".join(lines), encoding="utf-8")
+
+
+def _write_professor_battery_witness_tex() -> None:
+    rows = _read_rows(PROFESSOR_BATTERY_CSV_PATH)
+    wanted = ["dc3s_ftit", "dc3s_wrapped", "aci_conformal", "deterministic_lp", "robust_fixed_interval"]
+    selected = [row for row in rows if row["controller"] in wanted]
+    order = {name: idx for idx, name in enumerate(wanted)}
+    selected.sort(key=lambda row: order[row["controller"]])
+
+    lines = [
+        r"\begin{table}[t]",
+        r"\centering",
+        r"\small",
+        r"\caption{Battery witness summary from the tracked main battery result surface.}",
+        r"\label{tab:prof-battery-summary}",
+        r"\begin{tabular}{lrrr}",
+        r"\toprule",
+        r"\textbf{Controller} & \textbf{TSVR} & \textbf{IR (\%)} & \textbf{Cost $\Delta$ (\%)} \\",
+        r"\midrule",
+    ]
+    for row in selected:
+        lines.append(
+            f"{_tex_escape(_controller_label(row['controller']))} & "
+            f"{_format_pct(row['true_soc_violation_rate_mean'])} & "
+            f"{_format_pct(row['intervention_rate_mean'], scale=100)} & "
+            f"{_format_pct(row['cost_delta_pct_mean'], scale=100)}\\\\"
+        )
+    lines.extend([r"\bottomrule", r"\end{tabular}", r"\end{table}", ""])
+    PROFESSOR_BATTERY_WITNESS_TEX_PATH.write_text("\n".join(lines), encoding="utf-8")
+
+
 def _copy_ieee_support_tables() -> None:
     DEPLOYMENT_SCOPE_TEX_PATH.parent.mkdir(parents=True, exist_ok=True)
     DEPLOYMENT_SCOPE_TEX_PATH.write_text(
         DEPLOYMENT_SCOPE_SOURCE_PATH.read_text(encoding="utf-8"),
         encoding="utf-8",
     )
+    _write_professor_parity_tex()
+    _write_professor_runtime_governance_tex()
+    _write_professor_battery_witness_tex()
 
 
 def build() -> None:
