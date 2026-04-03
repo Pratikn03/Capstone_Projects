@@ -1,6 +1,6 @@
 domain,display,data_source,baseline_tsvr_mean,orius_tsvr_mean,repair_rate_pct,certificate_rate_pct,runtime_error_rate_pct,mean_reliability,p95_latency_ms,sil_pass
-av,Autonomous Vehicles,locked_csv,0.0,0.0,100.0,100.0,0.0,0.6821,0.255,True
-industrial,Industrial Process Control,locked_csv,41.67,0.0,83.33,100.0,0.0,0.575,0.579,True
-healthcare,Medical Monitoring (ICU Vitals),locked_csv,4.17,0.0,20.83,100.0,0.0,0.7307,0.763,True
-navigation,Navigation,synthetic,20.83,4.17,100.0,100.0,0.0,0.7988,0.864,True
-aerospace,Aerospace,locked_csv,0.0,0.0,25.0,100.0,0.0,0.7067,0.454,True
+av,Autonomous Vehicles,locked_csv,2.08,0.0,100.0,100.0,0.0,0.7834,0.185,True
+industrial,Industrial Process Control,locked_csv,12.5,0.0,91.67,100.0,0.0,0.6555,0.152,True
+healthcare,Medical Monitoring (ICU Vitals),locked_csv,8.33,0.0,16.67,100.0,0.0,0.8168,0.137,True
+navigation,Navigation,synthetic,25.0,0.0,100.0,100.0,0.0,0.7487,0.145,True
+aerospace,Aerospace,locked_csv,0.0,0.0,18.75,100.0,0.0,0.7062,0.168,True

@@ -1,0 +1,16 @@
+\begin{table*}[htbp]
+\centering
+\scriptsize
+\caption{Two-lane ORIUS refresh discipline. Canonical results govern promotion; supplemental Hugging Face evidence is intentionally separated so support experiments cannot leak into the official parity surface.}
+\label{tab:orius-refresh-lane-status}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}}
+\toprule
+\textbf{Lane} & \textbf{Source contract} & \textbf{Domains in scope} & \textbf{Latest status} & \textbf{Promotion allowed} & \textbf{Exact limit}\\
+\midrule
+official\_canonical\_results & canonical parity-closing raw sources and governed replay artifacts only & battery, av, industrial, healthcare, navigation, aerospace & navigation=blocked; aerospace=trainable\_plus\_public\_support & yes & The official parity matrix may only change when the canonical rows clear train, replay, soundness, fallback, and runtime checks under the existing gate.\\
+supplemental\_hf\_results & small Hugging Face diagnostics and controlled compute templates & navigation and aerospace diagnostics; optional bounded support for other domains & supporting evidence only & no & Supplemental Hugging Face evidence cannot promote navigation or aerospace and cannot override the official parity gate.\\
+aerospace\_public\_flight\_support & public ADS-B runtime support with explicit proxy-field provenance & aerospace chapter depth, runtime diagnostics, governance traces & bounded public-flight support built & no & This lane deepens aerospace evidence but cannot replace provider-approved multi-flight telemetry in the official parity gate.\\
+\bottomrule
+\end{tabular}}
+\end{table*}

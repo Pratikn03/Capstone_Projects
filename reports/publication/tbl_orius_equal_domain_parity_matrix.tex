@@ -8,12 +8,12 @@
 \toprule
 \textbf{Domain} & \textbf{Adapter} & \textbf{Raw/Data} & \textbf{Train} & \textbf{Replay} & \textbf{Soundness} & \textbf{Fallback} & \textbf{CertOS} & \textbf{P5} & \textbf{Tier / Exact blocker}\\
 \midrule
-Battery Energy Storage & pass & locked\_reference & pass & pass & reference\_witness & safe\_hold\_validated & evaluated & evaluated & reference; battery\_reference\_row\\
-Autonomous Vehicles & pass & verified & pass & pass & pass\_under\_ttc\_entry\_barrier\_contract & bounded\_brake\_fallback\_validated & evaluated & gated\_pending\_shared\_constraint\_surface & proof\_validated; multi\_lane\_and\_higher\_dimensional\_repair\_open\\
-Industrial Process Control & pass & verified & pass & pass & pass & bounded\_runtime\_pass & evaluated & evaluated & proof\_validated; bounded\_to\_current\_plant\_family\\
-Medical and Healthcare Monitoring & pass & verified & pass & pass & pass & bounded\_runtime\_pass & evaluated & gated\_pending\_shared\_constraint\_surface & proof\_validated; bounded\_to\_current\_monitoring\_and\_intervention\_contract\\
-Navigation and Guidance & pass & blocked\_real\_data\_gap & blocked\_real\_data\_gap & portability\_only & blocked\_real\_data\_gap & bounded\_runtime\_pass & gated & gated & shadow\_synthetic; navigation\_real\_data\_row\_missing\\
-Aerospace Control & pass & placeholder\_surface & placeholder\_surface & experimental\_replay\_only & experimental\_placeholder & bounded\_runtime\_pass & gated & gated & experimental; real\_multi\_flight\_safety\_task\_missing\\
+Battery Energy Storage & pass & locked\_reference & pass & pass & reference\_witness & paper6\_runtime & evaluated & evaluated & reference; battery\_reference\_witness\\
+Autonomous Vehicles & pass & verified & pass & pass & pass & bounded\_runtime\_pass & evaluated & gated & proof\_validated; promoted\\
+Industrial Process Control & pass & verified & pass & pass & pass & bounded\_runtime\_pass & evaluated & evaluated & proof\_validated; industrial\_train\_validation\_chain\_complete\\
+Medical and Healthcare Monitoring & pass & verified & pass & pass & pass & bounded\_runtime\_pass & evaluated & gated & proof\_validated; healthcare\_train\_validation\_chain\_complete\\
+Navigation and Guidance & pass & blocked & blocked\_real\_data\_gap & pass & blocked\_real\_data\_gap & bounded\_runtime\_pass & gated & gated & shadow\_synthetic; navigation\_real\_data\_gap\\
+Aerospace Control & pass & placeholder\_synthetic & placeholder\_surface & pass & experimental\_placeholder & bounded\_runtime\_pass & gated & gated & experimental; aerospace\_experimental\_placeholder\\
 \bottomrule
 \end{tabular}}
 \end{table}

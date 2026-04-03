@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -86,16 +88,62 @@ def test_final_project_artifacts_exist() -> None:
         REPO_ROOT / "reports" / "publication" / "orius_93plus_gap_matrix.csv",
         REPO_ROOT / "reports" / "publication" / "orius_93plus_reviewer_rerun.csv",
         REPO_ROOT / "reports" / "publication" / "orius_93plus_closure_program.md",
+        REPO_ROOT / "reports" / "publication" / "orius_refresh_lane_status.csv",
+        REPO_ROOT / "reports" / "publication" / "orius_supplemental_hf_evidence.csv",
+        REPO_ROOT / "reports" / "publication" / "orius_supplemental_hf_evidence.md",
+        REPO_ROOT / "reports" / "publication" / "orius_fresh_results_package.md",
+        REPO_ROOT / "reports" / "publication" / "orius_refresh_execution.json",
+        REPO_ROOT / "reports" / "publication" / "orius_refresh_execution.md",
         REPO_ROOT / "reports" / "publication" / "orius_artifact_appendix.md",
+        REPO_ROOT / "reports" / "publication" / "battery_deep_oqe_summary.csv",
+        REPO_ROOT / "reports" / "publication" / "battery_deep_oqe_summary.json",
+        REPO_ROOT / "reports" / "publication" / "battery_deep_oqe_summary.md",
+        REPO_ROOT / "reports" / "publication" / "battery_deep_oqe_buckets.csv",
+        REPO_ROOT / "reports" / "publication" / "battery_deep_oqe_safety_metrics.csv",
+        REPO_ROOT / "reports" / "publication" / "battery_deep_oqe_safety_metrics.md",
+        REPO_ROOT / "reports" / "publication" / "battery_raw_sequence_track_benchmark.csv",
+        REPO_ROOT / "reports" / "publication" / "battery_raw_sequence_track_benchmark.md",
+        REPO_ROOT / "reports" / "publication" / "battery_raw_sequence_track_slices.csv",
+        REPO_ROOT / "reports" / "publication" / "battery_deep_learning_novelty_register.json",
+        REPO_ROOT / "reports" / "publication" / "battery_deep_learning_novelty_register.md",
+        REPO_ROOT / "reports" / "publication" / "fig_battery_deep_oqe_summary.png",
+        REPO_ROOT / "reports" / "publication" / "fig_battery_deep_oqe_safety_metrics.png",
+        REPO_ROOT / "reports" / "publication" / "fig_battery_raw_sequence_track_benchmark.png",
+        REPO_ROOT / "reports" / "publication" / "fig_orius_equal_domain_gate_timeline.png",
+        REPO_ROOT / "reports" / "publication" / "fig_orius_calibration_coverage_matrix.png",
+        REPO_ROOT / "reports" / "publication" / "fig_orius_runtime_governance_matrix.png",
+        REPO_ROOT / "reports" / "publication" / "aerospace_public_flight_runtime_summary.json",
+        REPO_ROOT / "reports" / "publication" / "aerospace_public_flight_runtime_summary.csv",
+        REPO_ROOT / "reports" / "publication" / "aerospace_public_flight_runtime_summary.md",
+        REPO_ROOT / "reports" / "publication" / "aerospace_public_flight_governance_matrix.csv",
+        REPO_ROOT / "reports" / "publication" / "aerospace_public_flight_calibration_diagnostics.csv",
+        REPO_ROOT / "reports" / "publication" / "aerospace_public_flight_candidate_parity.csv",
         REPO_ROOT / "reports" / "final_thesis_submission_checklist.md",
         REPO_ROOT / "reports" / "final_thesis_submission_audit.md",
         REPO_ROOT / "reports" / "final_submission_reproducibility_note.md",
         REPO_ROOT / "reports" / "final_code_data_availability_statement.md",
         REPO_ROOT / "scripts" / "hf_jobs" / "README.md",
+        REPO_ROOT / "scripts" / "hf_jobs" / "canonical_closure_refresh_job.py",
         REPO_ROOT / "scripts" / "hf_jobs" / "navigation_realdata_closure_job.py",
         REPO_ROOT / "scripts" / "hf_jobs" / "aerospace_flight_closure_job.py",
+        REPO_ROOT / "scripts" / "hf_jobs" / "aerospace_public_adsb_runtime_job.py",
+        REPO_ROOT / "scripts" / "hf_jobs" / "deep_learning_novelty_job.py",
         REPO_ROOT / "scripts" / "hf_jobs" / "calibration_diagnostics_job.py",
         REPO_ROOT / "scripts" / "hf_jobs" / "runtime_governance_trace_job.py",
+        REPO_ROOT / "scripts" / "build_aerospace_public_adsb_runtime.py",
+        REPO_ROOT / "scripts" / "build_aerospace_real_flight_dataset.py",
+        REPO_ROOT / "scripts" / "run_orius_canonical_closure_refresh.py",
+        REPO_ROOT / "scripts" / "run_battery_deep_novelty.py",
+        REPO_ROOT / "src" / "orius" / "dc3s" / "deep_oqe.py",
+        REPO_ROOT / "paper" / "assets" / "tables" / "generated" / "tbl_battery_deep_oqe_summary.tex",
+        REPO_ROOT / "paper" / "assets" / "tables" / "generated" / "tbl_battery_deep_oqe_safety_metrics.tex",
+        REPO_ROOT / "paper" / "assets" / "tables" / "generated" / "tbl_battery_raw_sequence_track.tex",
+        REPO_ROOT / "paper" / "assets" / "figures" / "fig_battery_deep_oqe_summary.png",
+        REPO_ROOT / "paper" / "assets" / "figures" / "fig_battery_deep_oqe_safety_metrics.png",
+        REPO_ROOT / "paper" / "assets" / "figures" / "fig_battery_raw_sequence_track_benchmark.png",
+        REPO_ROOT / "paper" / "assets" / "figures" / "fig_orius_equal_domain_gate_timeline.png",
+        REPO_ROOT / "paper" / "assets" / "figures" / "fig_orius_calibration_coverage_matrix.png",
+        REPO_ROOT / "paper" / "assets" / "figures" / "fig_orius_runtime_governance_matrix.png",
     ]
 
     missing = [str(path.relative_to(REPO_ROOT)) for path in required if not path.exists()]
@@ -161,8 +209,10 @@ def test_monograph_depth_floor_is_preserved() -> None:
     bib_entries = sum(
         1 for line in (REPO_ROOT / "paper" / "bibliography" / "orius_monograph.bib").read_text(encoding="utf-8").splitlines() if line.startswith("@")
     )
-    paper_log = (REPO_ROOT / "paper" / "paper.log").read_text(encoding="utf-8")
-    match = re.search(r"Output written on paper/paper\.pdf \((\d+) pages", paper_log)
+    paper_log_path = REPO_ROOT / "paper" / "paper.log"
+    match = None
+    if paper_log_path.exists():
+        match = re.search(r"Output written on paper/paper\.pdf \((\d+) pages", paper_log_path.read_text(encoding="utf-8"))
     pdf_pages = None
     if match is None:
         completed = subprocess.run(
@@ -206,10 +256,17 @@ def test_compiled_chapters_40_to_44_are_evidence_complete() -> None:
         assert f"fig_{domain_id}_chapter_snapshot.png" in text
 
     synthesis = (REPO_ROOT / "paper" / "monograph" / "ch14_cross_domain_synthesis.tex").read_text(encoding="utf-8")
+    roadmap = (REPO_ROOT / "paper" / "monograph" / "ch15_societal_impact_and_roadmap.tex").read_text(encoding="utf-8")
     assert "fig_orius_equal_domain_parity_matrix.png" in synthesis
+    assert "fig_orius_equal_domain_gate_timeline.png" in synthesis
+    assert "fig_orius_calibration_coverage_matrix.png" in synthesis
     assert "tbl_ch40_44_cross_domain_support" in synthesis
     assert "tbl_orius_submission_readiness" in synthesis
     assert "tbl_orius_calibration_diagnostics" in synthesis
+    assert "fig_orius_runtime_governance_matrix.png" in roadmap
+    aerospace = (REPO_ROOT / "paper" / "monograph" / "ch13_aerospace_domain.tex").read_text(encoding="utf-8")
+    assert "tbl_aerospace_public_flight_support" in aerospace
+    assert "Bounded public-flight support lane" in aerospace
 
 
 def test_93plus_support_tables_are_referenced_in_manuscript_and_scripts() -> None:
@@ -219,11 +276,79 @@ def test_93plus_support_tables_are_referenced_in_manuscript_and_scripts() -> Non
     hf_jobs_readme = (REPO_ROOT / "scripts" / "hf_jobs" / "README.md").read_text(encoding="utf-8")
 
     assert "tbl_orius_submission_readiness" in synthesis
+    assert "tbl_orius_refresh_lane_status" in synthesis
     assert "tbl_orius_calibration_diagnostics" in synthesis
     assert "tbl_orius_runtime_budget_matrix" in roadmap
     assert "tbl_orius_governance_lifecycle_matrix" in roadmap
     assert "tbl_orius_deployment_validation_scope" in roadmap
     assert "bounded_93_candidate" in scorecard
+    assert "public_flight_93_candidate" in scorecard
     assert "equal_domain_93" in scorecard
+    assert "official canonical lane" in (REPO_ROOT / "reports" / "publication" / "orius_fresh_results_package.md").read_text(encoding="utf-8").lower()
     assert "navigation_realdata_closure_job.py" in hf_jobs_readme
     assert "aerospace_flight_closure_job.py" in hf_jobs_readme
+    assert "aerospace_public_adsb_runtime_job.py" in hf_jobs_readme
+    assert "canonical_closure_refresh_job.py" in hf_jobs_readme
+
+
+def test_canonical_closure_refresh_script_help_runs() -> None:
+    completed = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "scripts" / "run_orius_canonical_closure_refresh.py"), "--help"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert "--mode" in completed.stdout
+    assert "canonical_plus_hf_support" in completed.stdout
+    assert "equal_domain_gate" in completed.stdout
+
+
+def test_canonical_refresh_execution_manifest_has_no_user_path_leaks() -> None:
+    payload = json.loads(
+        (REPO_ROOT / "reports" / "publication" / "orius_refresh_execution.json").read_text(encoding="utf-8")
+    )
+    found: list[str] = []
+
+    def _walk(value: Any) -> None:
+        if isinstance(value, dict):
+            for child in value.values():
+                _walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                _walk(child)
+        elif isinstance(value, str):
+            if "/Users/" in value:
+                found.append(value)
+
+    _walk(payload)
+
+    assert found == []
+
+
+def test_battery_deep_learning_novelty_surfaces_are_referenced() -> None:
+    chapter = (REPO_ROOT / "chapters" / "ch08_forecasting_calibration.tex").read_text(encoding="utf-8")
+    hf_jobs_readme = (REPO_ROOT / "scripts" / "hf_jobs" / "README.md").read_text(encoding="utf-8")
+
+    assert "Why Deep Models Do Not Win on the Engineered Track" in chapter
+    assert "Battery-Scoped Deep-Learning Novelty Track" in chapter
+    assert "DeepOQE: Learned Telemetry Reliability" in chapter
+    assert "Raw-Sequence Probabilistic Forecasting" in chapter
+    assert "Safety-Metric Evaluation" in chapter
+    assert "tbl_battery_deep_oqe_summary.tex" in chapter
+    assert "tbl_battery_deep_oqe_safety_metrics.tex" in chapter
+    assert "tbl_battery_raw_sequence_track.tex" in chapter
+    assert "fig_battery_deep_oqe_summary.png" in chapter
+    assert "fig_battery_deep_oqe_safety_metrics.png" in chapter
+    assert "fig_battery_raw_sequence_track_benchmark.png" in chapter
+    assert "deep_learning_novelty_job.py" in hf_jobs_readme
+
+
+def test_run_battery_deep_novelty_help_runs() -> None:
+    completed = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "scripts" / "run_battery_deep_novelty.py"), "--help"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert "--deep-oqe-epochs" in completed.stdout
+    assert "--forecast-epochs" in completed.stdout

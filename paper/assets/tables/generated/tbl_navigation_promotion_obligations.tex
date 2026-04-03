@@ -7,7 +7,7 @@
 \toprule
 \textbf{Obligation} & \textbf{Current state} & \textbf{What must happen next}\\
 \midrule
-Real raw-source contract & blocked\_real\_data\_gap & Install the canonical KITTI-backed real-data row under ORIUS\_EXTERNAL\_DATA\_ROOT and retire synthetic fallback from the defended path.\\
+Real raw-source contract & blocked\_real\_data\_gap & Install the canonical KITTI-backed real-data row under data/navigation/raw/kitti\_odometry/ or the optional ORIUS\_EXTERNAL\_DATA\_ROOT fallback and retire synthetic fallback from the defended path.\\
 Deterministic processed/train chain & blocked\_real\_data\_gap & Produce a locked navigation\_orius.csv, verified splits, model bundle, uncertainty outputs, and backtests from the real-data row.\\
 Replay and safe-action soundness & blocked\_real\_data\_gap & Re-run universal replay and soundness checks on the real row so promotion is governed by the same closure matrix as the defended domains.\\
 Parity promotion artifact & shadow\_synthetic & Update the parity and closure artifacts only after the real-data train/validate/replay chain passes end to end.\\

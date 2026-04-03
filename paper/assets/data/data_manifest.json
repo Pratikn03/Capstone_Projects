@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-02T19:04:46.837947+00:00",
+  "generated_at": "2026-04-02T23:14:06.912519+00:00",
   "datasets": {
     "DE": {
       "features_path": "data/processed/features.parquet",
@@ -528,35 +528,35 @@
     {
       "path": "data/processed/features.parquet",
       "size_bytes": 5257704,
-      "mtime_utc": "2026-04-02T19:04:38.462904+00:00",
+      "mtime_utc": "2026-04-02T23:13:59.481653+00:00",
       "sha256": "e9c82ab359b3e41a643a7abdbd8b39dd941cb85709bcf5e284f7043ef9e33d99",
       "schema_hash": "87ebe940b39e5f6c6c3fd7bd728eb820960b1b1d6c6d544a291c763eb8ce0c8d"
     },
     {
       "path": "data/processed/splits/calibration.parquet",
       "size_bytes": 306819,
-      "mtime_utc": "2026-04-02T19:04:38.822448+00:00",
+      "mtime_utc": "2026-04-02T23:13:59.783412+00:00",
       "sha256": "1d5575ff0c055afccc709c940658ca3703a5b0b8a2134fbdc15e20ffab26b81d",
       "schema_hash": "87ebe940b39e5f6c6c3fd7bd728eb820960b1b1d6c6d544a291c763eb8ce0c8d"
     },
     {
       "path": "data/processed/splits/test.parquet",
       "size_bytes": 838968,
-      "mtime_utc": "2026-04-02T19:04:38.834742+00:00",
+      "mtime_utc": "2026-04-02T23:13:59.797123+00:00",
       "sha256": "9d306bcb5703304009d50353837ddfa92c17d9ce697e834f36aaf756d872d293",
       "schema_hash": "87ebe940b39e5f6c6c3fd7bd728eb820960b1b1d6c6d544a291c763eb8ce0c8d"
     },
     {
       "path": "data/processed/splits/train.parquet",
       "size_bytes": 3693665,
-      "mtime_utc": "2026-04-02T19:04:38.817331+00:00",
+      "mtime_utc": "2026-04-02T23:13:59.775221+00:00",
       "sha256": "3dcffca37ef959f7ee82cadfd92bb55f1bddf994c2b4d714a67c8c4f1d21b041",
       "schema_hash": "87ebe940b39e5f6c6c3fd7bd728eb820960b1b1d6c6d544a291c763eb8ce0c8d"
     },
     {
       "path": "data/processed/splits/val.parquet",
       "size_bytes": 587180,
-      "mtime_utc": "2026-04-02T19:04:38.827861+00:00",
+      "mtime_utc": "2026-04-02T23:13:59.790626+00:00",
       "sha256": "774df479569c5f44fd9c7075951923bf1c2dc5fb072bb76b7f548f957a98e201",
       "schema_hash": "87ebe940b39e5f6c6c3fd7bd728eb820960b1b1d6c6d544a291c763eb8ce0c8d"
     },
@@ -717,8 +717,8 @@
     {
       "path": "data/raw/opsd_germany_provenance.json",
       "size_bytes": 3829,
-      "mtime_utc": "2026-04-02T18:43:42.400647+00:00",
-      "sha256": "a0a9ad83d4599062367fbcae6093f7d2b22bf637afe63d494dab21a42f44dccf",
+      "mtime_utc": "2026-04-02T23:13:57.223782+00:00",
+      "sha256": "de3562fb126968201a7ab0bead43d568a7d76d69da7919afda75bc6e58f2c732",
       "schema_hash": null
     },
     {
@@ -1605,5 +1605,5 @@
     }
   },
   "schema_hash": "8c54bcdc52f56bf4f69f2095a85ecd63318cece8720318d7d773be8b847687d1",
-  "manifest_sha256": "154056c71fb1faac007e47d58d05d47ff52f283e3f6f7ea4b1a22e2e21d1a9bd"
+  "manifest_sha256": "243919a22da0f85467c7e56737502e38ade6a3f3d9d129cbe4ab4f9b3bef034f"
 }

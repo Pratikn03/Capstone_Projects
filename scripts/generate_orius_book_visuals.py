@@ -17,6 +17,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
 PAPER_FIG_DIR = REPO_ROOT / "paper" / "assets" / "figures"
 PARITY_CSV = PUBLICATION_DIR / "orius_equal_domain_parity_matrix.csv"
+CALIBRATION_CSV = PUBLICATION_DIR / "orius_calibration_diagnostics_matrix.csv"
+RUNTIME_CSV = PUBLICATION_DIR / "orius_runtime_budget_matrix.csv"
+GOVERNANCE_CSV = PUBLICATION_DIR / "orius_governance_lifecycle_matrix.csv"
+GATE_LEDGER_CSV = PUBLICATION_DIR / "orius_equal_domain_gate_ledger.csv"
+REFRESH_EXECUTION_JSON = PUBLICATION_DIR / "orius_refresh_execution.json"
 
 
 STATUS_COLOR = {
@@ -241,9 +246,117 @@ def build_flow_figure() -> None:
     plt.close(fig)
 
 
+def _binary_from_text(value: str) -> float:
+    lowered = str(value).strip().lower()
+    if not lowered:
+        return 0.0
+    blockers = ("blocked", "placeholder", "gated", "experimental", "portability_only", "shadow_synthetic")
+    return 0.0 if any(token in lowered for token in blockers) else 1.0
+
+
+def build_closure_timeline_figure() -> None:
+    steps: list[dict[str, object]] = []
+    if GATE_LEDGER_CSV.exists():
+        with GATE_LEDGER_CSV.open("r", encoding="utf-8", newline="") as handle:
+            steps = list(csv.DictReader(handle))
+    elif REFRESH_EXECUTION_JSON.exists():
+        import json
+
+        payload = json.loads(REFRESH_EXECUTION_JSON.read_text(encoding="utf-8"))
+        steps = payload.get("steps", [])
+    if not steps:
+        return
+
+    labels = [str(step.get("step", step.get("label", ""))) for step in steps]
+    values = [1 if str(step.get("ok", "")).lower() == "true" or step.get("ok") is True else 0 for step in steps]
+    colors = ["#2e7d32" if value == 1 else "#c62828" for value in values]
+
+    fig_height = max(3.6, 0.45 * len(labels))
+    fig, ax = plt.subplots(figsize=(10.5, fig_height))
+    y_pos = list(range(len(labels)))
+    ax.barh(y_pos, [1] * len(labels), color=colors, edgecolor="white")
+    ax.set_yticks(y_pos, labels)
+    ax.set_xlim(0, 1)
+    ax.set_xticks([0, 1], ["fail", "pass"])
+    ax.set_title("ORIUS Equal-Domain Gate Timeline", fontsize=15, weight="bold", pad=12)
+    ax.invert_yaxis()
+    ax.grid(axis="x", alpha=0.2, linestyle="--")
+    for idx, value in enumerate(values):
+        ax.text(0.5, idx, "pass" if value == 1 else "fail", ha="center", va="center", color="white", weight="bold", fontsize=9)
+
+    _write_png(fig, PUBLICATION_DIR / "fig_orius_equal_domain_gate_timeline.png")
+    _write_png(fig, PAPER_FIG_DIR / "fig_orius_equal_domain_gate_timeline.png")
+    plt.close(fig)
+
+
+def build_calibration_matrix_figure() -> None:
+    if not CALIBRATION_CSV.exists():
+        return
+    rows = list(csv.DictReader(CALIBRATION_CSV.open("r", encoding="utf-8", newline="")))
+    if not rows:
+        return
+    domains = [row["domain"] for row in rows]
+    matrix = [
+        [
+            _binary_from_text(row.get("coverage_by_fault_mode", "")),
+            _binary_from_text(row.get("coverage_by_oqe_bucket", "")),
+            min(max(float(row.get("calibration_completeness_pct", "0") or 0.0), 0.0), 100.0) / 100.0,
+        ]
+        for row in rows
+    ]
+    fig, ax = plt.subplots(figsize=(9.5, max(4.0, 0.7 * len(domains))))
+    image = ax.imshow(matrix, aspect="auto", cmap="YlGnBu", vmin=0.0, vmax=1.0)
+    ax.set_yticks(range(len(domains)), domains)
+    ax.set_xticks(range(3), ["Fault slices", "OQE buckets", "Completeness"])
+    ax.set_title("ORIUS Calibration Coverage Matrix", fontsize=15, weight="bold", pad=12)
+    for row_idx, row in enumerate(rows):
+        ax.text(2, row_idx, f"{float(row.get('calibration_completeness_pct', '0') or 0.0):.1f}%", ha="center", va="center", color="white", fontsize=9, weight="bold")
+    fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
+
+    _write_png(fig, PUBLICATION_DIR / "fig_orius_calibration_coverage_matrix.png")
+    _write_png(fig, PAPER_FIG_DIR / "fig_orius_calibration_coverage_matrix.png")
+    plt.close(fig)
+
+
+def build_runtime_governance_matrix_figure() -> None:
+    if not (RUNTIME_CSV.exists() and GOVERNANCE_CSV.exists()):
+        return
+    runtime_rows = list(csv.DictReader(RUNTIME_CSV.open("r", encoding="utf-8", newline="")))
+    governance_rows = {row["domain"]: row for row in csv.DictReader(GOVERNANCE_CSV.open("r", encoding="utf-8", newline=""))}
+    if not runtime_rows:
+        return
+    domains = [row["domain"] for row in runtime_rows]
+    matrix = []
+    for row in runtime_rows:
+        governance = governance_rows.get(row["domain"], {})
+        matrix.append(
+            [
+                _binary_from_text(row.get("certos_status", "")),
+                _binary_from_text(governance.get("shared_constraint_status", "")),
+                min(max(float(governance.get("governance_completeness_pct", "0") or 0.0), 0.0), 100.0) / 100.0,
+            ]
+        )
+    fig, ax = plt.subplots(figsize=(9.5, max(4.0, 0.7 * len(domains))))
+    image = ax.imshow(matrix, aspect="auto", cmap="YlOrBr", vmin=0.0, vmax=1.0)
+    ax.set_yticks(range(len(domains)), domains)
+    ax.set_xticks(range(3), ["CertOS", "Shared constraint", "Completeness"])
+    ax.set_title("ORIUS Runtime and Governance Matrix", fontsize=15, weight="bold", pad=12)
+    for row_idx, domain in enumerate(domains):
+        completeness = float(governance_rows.get(domain, {}).get("governance_completeness_pct", "0") or 0.0)
+        ax.text(2, row_idx, f"{completeness:.1f}%", ha="center", va="center", color="white", fontsize=9, weight="bold")
+    fig.colorbar(image, ax=ax, fraction=0.046, pad=0.04)
+
+    _write_png(fig, PUBLICATION_DIR / "fig_orius_runtime_governance_matrix.png")
+    _write_png(fig, PAPER_FIG_DIR / "fig_orius_runtime_governance_matrix.png")
+    plt.close(fig)
+
+
 def main() -> None:
     build_parity_figure()
     build_flow_figure()
+    build_closure_timeline_figure()
+    build_calibration_matrix_figure()
+    build_runtime_governance_matrix_figure()
     print("Generated ORIUS book visuals.")
 
 

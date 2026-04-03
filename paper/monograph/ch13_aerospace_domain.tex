@@ -26,7 +26,7 @@ narrative memory.  Table~\ref{tab:ch40-44-cross-domain-support} gives the shared
 support layer for compiled Chapters~40--44, while the table below isolates the current row.
 
 \section{{Feature, split, and training protocol}}
-The aerospace training artifacts are presented precisely because they reveal the current boundary: features, splits, and week-two metrics exist, but the parity gate still marks the row as placeholder-level until a real multi-flight telemetry source and stronger safety task are installed.
+The aerospace training artifacts are presented precisely because they reveal the current boundary: features, splits, and week-two metrics exist, but the parity gate still marks the row as placeholder-level until a real multi-flight telemetry source and stronger safety task are installed. In parallel, the bounded public-flight runtime lane converts public ADS-B telemetry into the ORIUS runtime contract with explicit proxy labels on groundspeed-derived airspeed, heading-rate bank-angle estimates, and normalized fuel-progress fields.
 
 \IfFileExists{paper/assets/tables/generated/tbl_aerospace_training_surface.tex}{%
 \input{paper/assets/tables/generated/tbl_aerospace_training_surface}%
@@ -58,7 +58,20 @@ The tracked status table keeps aerospace at the experimental tier because the cu
 Aerospace currently uses envelope-hold fallback semantics to prevent overtly unsafe releases, but the row remains experimental until the flight-task surface is strengthened.
 
 \section{{Evidence tier and promotion blocker}}
-The aerospace row is valuable because it exposes the outer boundary of the universal contract. The current placeholder training and replay surfaces are strong enough to discuss scope, fallback, and promotion requirements, but not strong enough to claim defended aerospace closure.
+The aerospace row is valuable because it exposes the outer boundary of the universal contract. The current placeholder training and replay surfaces are strong enough to discuss scope, fallback, and promotion requirements, but not strong enough to claim defended aerospace closure. A bounded public-flight ADS-B support lane now contributes 8 rows across 1 flights with a bounded contract-pass rate of 1.000, but that lane is explicitly marked supplemental and non-promotional.
+
+
+\paragraph{Bounded public-flight support lane}
+The official aerospace row remains blocked on provider-approved multi-flight telemetry.
+In parallel, the book now records a bounded public-flight ADS-B runtime lane as supplemental
+support evidence only.  It deepens the chapter's runtime, governance, and proxy-field
+discussion while leaving the official parity gate unchanged.
+
+\IfFileExists{paper/assets/tables/generated/tbl_aerospace_public_flight_support.tex}{%
+\input{paper/assets/tables/generated/tbl_aerospace_public_flight_support}%
+}{%
+\input{assets/tables/generated/tbl_aerospace_public_flight_support}%
+}
 
 
 \IfFileExists{paper/assets/tables/generated/tbl_aerospace_promotion_obligations.tex}{%

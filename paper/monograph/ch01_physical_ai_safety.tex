@@ -4,9 +4,9 @@ ORIUS is motivated by a simple but under-specified fact: modern physical AI syst
 do not act on truth, they act on telemetry.  The deeper the software stack becomes,
 the easier it is to hide the sensing contract that makes every downstream prediction,
 optimization, and control action appear legitimate even when the observation channel is
-degraded.  The monograph therefore begins with a universal statement rather than a
-battery statement: whenever action legality is evaluated on an observed state that can
-diverge from the physical state, a hidden safety failure mode exists.
+degraded.  The manuscript therefore opens with a universal statement rather than a
+witness-row statement: whenever action legality is evaluated on an observed state that
+can diverge from the physical state, a hidden safety failure mode exists.
 
 \section{Why physical AI safety is structurally different}
 A physical AI stack does not end at prediction quality or planner confidence.  It ends
@@ -61,7 +61,7 @@ plausible state set, tightens the admissible action set, forces a repair, trigge
 fallback, and records a certificate.  The reusable object is therefore not a universal
 planner but a universal safety grammar.
 
-\section{What this monograph sets out to prove}
+\section{What the flagship ORIUS argument must establish}
 That distinction matters for societal contribution.  The most credible path to broad
 impact in physical AI is not another domain-specific optimizer, but a reusable,
 auditable, and explicitly bounded safety layer that can sit between nominal intelligence
@@ -69,7 +69,7 @@ and real actuation.  ORIUS is written as that layer: a runtime contract that can
 instantiated repeatedly, promoted cautiously, and reviewed by people who care as much
 about failure semantics as about nominal performance.
 
-The opening chapters therefore do four jobs for the rest of the book.  First, they name
+The opening chapters therefore do four jobs for the rest of the manuscript.  First, they name
 the universal hazard: actions can be legal on observation while illegal in reality.
 Second, they define the runtime object that addresses that hazard: a Detect--Calibrate--
 Constrain--Shield--Certify kernel.  Third, they establish the claim boundary: ORIUS is

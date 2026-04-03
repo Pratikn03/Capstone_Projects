@@ -32,10 +32,15 @@ dc3s:
     max_q_multiplier: 2.0
   expected_cadence_s: 3600
   reliability:
+    backend: heuristic
     lambda_delay: 0.002
     spike_beta: 0.25
     ooo_gamma: 0.35
     min_w: 0.05
+    deep:
+      model_path: artifacts/deep_oqe/battery_deepoqe.pt
+      seq_len: 8
+      strict: false
   ftit:
     decay: 0.98
     decay_e: 0.95
