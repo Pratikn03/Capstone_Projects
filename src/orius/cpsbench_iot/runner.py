@@ -1044,7 +1044,9 @@ def run_single(
     horizon: int = 168,
     fault_overrides: dict[str, Any] | None = None,
     dc3s_overrides: Mapping[str, Any] | None = None,
-) -> dict[str, list[dict[str, Any]]]:
+    return_controller_buffers: bool = False,
+    controllers_filter: Iterable[str] | None = None,
+) -> dict[str, Any]:
     """Run one scenario+seed pair and return metrics row payloads."""
     x_obs, x_true, event_log = generate_episode(
         scenario=scenario,
@@ -1071,6 +1073,12 @@ def run_single(
     n = len(load_obs)
     stepwise_controllers = ("deterministic_lp", "robust_fixed_interval", "cvar_interval", "dc3s_wrapped", "dc3s_ftit")
     controllers = stepwise_controllers + ("aci_conformal", "scenario_robust", "scenario_mpc")
+    if controllers_filter is not None:
+        requested = tuple(dict.fromkeys(str(item) for item in controllers_filter))
+        controllers = tuple(controller for controller in controllers if controller in requested)
+        stepwise_controllers = tuple(controller for controller in stepwise_controllers if controller in requested)
+        if not controllers:
+            raise ValueError("controllers_filter did not match any known CPSBench controller")
     cqr_group_metrics = _compute_cqr_group_metrics(load_true, load_obs)
     sigma_sq_episode = float(np.var(np.abs(load_true - load_obs)))
 
@@ -1223,124 +1231,127 @@ def run_single(
 
         results[controller] = buf
 
-    aci_result = aci_conformal_dispatch(
-        load_forecast=load_obs,
-        renewables_forecast=renew_obs,
-        load_true=load_true,
-        telemetry_events=telemetry_events,
-        price=price,
-        optimization_cfg=optimization_cfg,
-        command_prefix=f"{scenario}-{seed}-aci_conformal",
-    )
-    aci_buf = _init_controller_buffers(n)
-    aci_buf["proposed_charge_mw"] = np.asarray(aci_result["proposed_charge_mw"], dtype=float)
-    aci_buf["proposed_discharge_mw"] = np.asarray(aci_result["proposed_discharge_mw"], dtype=float)
-    aci_buf["safe_charge_mw"] = np.asarray(aci_result["safe_charge_mw"], dtype=float)
-    aci_buf["safe_discharge_mw"] = np.asarray(aci_result["safe_discharge_mw"], dtype=float)
-    aci_buf["soc_true_mwh"] = np.asarray(aci_result["soc_mwh"], dtype=float)
-    aci_buf["soc_observed_mwh"] = np.asarray(aci_result["soc_mwh"], dtype=float)
-    aci_buf["interval_lower"] = np.asarray(aci_result["interval_lower"], dtype=float)
-    aci_buf["interval_upper"] = np.asarray(aci_result["interval_upper"], dtype=float)
-    aci_buf["interval_width"] = aci_buf["interval_upper"] - aci_buf["interval_lower"]
-    aci_buf["certificates"] = list(aci_result["certificates"])
-    aci_buf["solver_status"] = ["ok"] * n
     dt = float(constraints.get("time_step_hours", 1.0))
     deg = float(constraints.get("degradation_cost_per_mwh", 10.0))
-    aci_grid_import_true = np.maximum(
-        0.0,
-        load_true - renew_true - aci_buf["safe_discharge_mw"] + aci_buf["safe_charge_mw"],
-    )
-    aci_expected_cost = float(
-        np.sum(price * aci_grid_import_true * dt + deg * (np.abs(aci_buf["safe_charge_mw"]) + np.abs(aci_buf["safe_discharge_mw"])) * dt)
-    )
-    aci_carbon = float(np.sum(carbon * aci_grid_import_true * dt))
-    aci_result["expected_cost_usd"] = aci_expected_cost
-    aci_result["carbon_kg"] = aci_carbon
-    if isinstance(aci_result.get("dispatch_plan"), dict):
-        aci_result["dispatch_plan"]["expected_cost_usd"] = aci_expected_cost
-        aci_result["dispatch_plan"]["carbon_kg"] = aci_carbon
-    aci_buf["expected_cost_usd"] = aci_expected_cost
-    aci_buf["carbon_kg"] = aci_carbon
-    results["aci_conformal"] = aci_buf
 
-    scenario_robust_result = scenario_robust_dispatch(
-        load_forecast=load_obs,
-        renewables_forecast=renew_obs,
-        load_true=load_true,
-        price=price,
-        optimization_cfg=optimization_cfg,
-        seed=seed,
-    )
-    scenario_buf = _init_controller_buffers(n)
-    scenario_buf["proposed_charge_mw"] = np.asarray(scenario_robust_result["proposed_charge_mw"], dtype=float)
-    scenario_buf["proposed_discharge_mw"] = np.asarray(scenario_robust_result["proposed_discharge_mw"], dtype=float)
-    scenario_buf["safe_charge_mw"] = np.asarray(scenario_robust_result["safe_charge_mw"], dtype=float)
-    scenario_buf["safe_discharge_mw"] = np.asarray(scenario_robust_result["safe_discharge_mw"], dtype=float)
-    scenario_buf["soc_true_mwh"] = np.asarray(scenario_robust_result["soc_mwh"], dtype=float)
-    scenario_buf["soc_observed_mwh"] = np.asarray(scenario_robust_result["soc_mwh"], dtype=float)
-    scenario_buf["interval_lower"] = np.asarray(scenario_robust_result["interval_lower"], dtype=float)
-    scenario_buf["interval_upper"] = np.asarray(scenario_robust_result["interval_upper"], dtype=float)
-    scenario_buf["interval_width"] = scenario_buf["interval_upper"] - scenario_buf["interval_lower"]
-    scenario_buf["certificates"] = list(scenario_robust_result["certificates"])
-    scenario_status = str(scenario_robust_result.get("dispatch_plan", {}).get("solver_status", "ok"))
-    scenario_buf["solver_status"] = [scenario_status] * n
-    scenario_grid_import_true = np.maximum(
-        0.0,
-        load_true - renew_true - scenario_buf["safe_discharge_mw"] + scenario_buf["safe_charge_mw"],
-    )
-    scenario_expected_cost = float(
-        np.sum(price * scenario_grid_import_true * dt + deg * (np.abs(scenario_buf["safe_charge_mw"]) + np.abs(scenario_buf["safe_discharge_mw"])) * dt)
-    )
-    scenario_carbon = float(np.sum(carbon * scenario_grid_import_true * dt))
-    scenario_robust_result["expected_cost_usd"] = scenario_expected_cost
-    scenario_robust_result["carbon_kg"] = scenario_carbon
-    if isinstance(scenario_robust_result.get("dispatch_plan"), dict):
-        scenario_robust_result["dispatch_plan"]["expected_cost_usd"] = scenario_expected_cost
-        scenario_robust_result["dispatch_plan"]["carbon_kg"] = scenario_carbon
-    scenario_buf["expected_cost_usd"] = scenario_expected_cost
-    scenario_buf["carbon_kg"] = scenario_carbon
-    results["scenario_robust"] = scenario_buf
+    if "aci_conformal" in controllers:
+        aci_result = aci_conformal_dispatch(
+            load_forecast=load_obs,
+            renewables_forecast=renew_obs,
+            load_true=load_true,
+            telemetry_events=telemetry_events,
+            price=price,
+            optimization_cfg=optimization_cfg,
+            command_prefix=f"{scenario}-{seed}-aci_conformal",
+        )
+        aci_buf = _init_controller_buffers(n)
+        aci_buf["proposed_charge_mw"] = np.asarray(aci_result["proposed_charge_mw"], dtype=float)
+        aci_buf["proposed_discharge_mw"] = np.asarray(aci_result["proposed_discharge_mw"], dtype=float)
+        aci_buf["safe_charge_mw"] = np.asarray(aci_result["safe_charge_mw"], dtype=float)
+        aci_buf["safe_discharge_mw"] = np.asarray(aci_result["safe_discharge_mw"], dtype=float)
+        aci_buf["soc_true_mwh"] = np.asarray(aci_result["soc_mwh"], dtype=float)
+        aci_buf["soc_observed_mwh"] = np.asarray(aci_result["soc_mwh"], dtype=float)
+        aci_buf["interval_lower"] = np.asarray(aci_result["interval_lower"], dtype=float)
+        aci_buf["interval_upper"] = np.asarray(aci_result["interval_upper"], dtype=float)
+        aci_buf["interval_width"] = aci_buf["interval_upper"] - aci_buf["interval_lower"]
+        aci_buf["certificates"] = list(aci_result["certificates"])
+        aci_buf["solver_status"] = ["ok"] * n
+        aci_grid_import_true = np.maximum(
+            0.0,
+            load_true - renew_true - aci_buf["safe_discharge_mw"] + aci_buf["safe_charge_mw"],
+        )
+        aci_expected_cost = float(
+            np.sum(price * aci_grid_import_true * dt + deg * (np.abs(aci_buf["safe_charge_mw"]) + np.abs(aci_buf["safe_discharge_mw"])) * dt)
+        )
+        aci_carbon = float(np.sum(carbon * aci_grid_import_true * dt))
+        aci_result["expected_cost_usd"] = aci_expected_cost
+        aci_result["carbon_kg"] = aci_carbon
+        if isinstance(aci_result.get("dispatch_plan"), dict):
+            aci_result["dispatch_plan"]["expected_cost_usd"] = aci_expected_cost
+            aci_result["dispatch_plan"]["carbon_kg"] = aci_carbon
+        aci_buf["expected_cost_usd"] = aci_expected_cost
+        aci_buf["carbon_kg"] = aci_carbon
+        results["aci_conformal"] = aci_buf
 
-    # --- scenario_mpc: receding-horizon MPC baseline ---
-    mpc_result = scenario_mpc_dispatch(
-        load_forecast=load_obs,
-        renewables_forecast=renew_obs,
-        load_true=load_true,
-        price=price,
-        optimization_cfg=optimization_cfg,
-        seed=seed,
-    )
-    mpc_buf = _init_controller_buffers(n)
-    mpc_buf["proposed_charge_mw"] = np.asarray(mpc_result["proposed_charge_mw"], dtype=float)
-    mpc_buf["proposed_discharge_mw"] = np.asarray(mpc_result["proposed_discharge_mw"], dtype=float)
-    mpc_buf["safe_charge_mw"] = np.asarray(mpc_result["safe_charge_mw"], dtype=float)
-    mpc_buf["safe_discharge_mw"] = np.asarray(mpc_result["safe_discharge_mw"], dtype=float)
-    mpc_buf["soc_true_mwh"] = np.asarray(mpc_result["soc_mwh"], dtype=float)
-    mpc_buf["soc_observed_mwh"] = np.asarray(mpc_result["soc_mwh"], dtype=float)
-    mpc_buf["interval_lower"] = np.asarray(mpc_result["interval_lower"], dtype=float)
-    mpc_buf["interval_upper"] = np.asarray(mpc_result["interval_upper"], dtype=float)
-    mpc_buf["interval_width"] = mpc_buf["interval_upper"] - mpc_buf["interval_lower"]
-    mpc_buf["certificates"] = list(mpc_result["certificates"])
-    mpc_status = str(mpc_result.get("dispatch_plan", {}).get("solver_status", "ok"))
-    mpc_buf["solver_status"] = [mpc_status] * n
-    mpc_grid_import_true = np.maximum(
-        0.0,
-        load_true - renew_true - mpc_buf["safe_discharge_mw"] + mpc_buf["safe_charge_mw"],
-    )
-    mpc_expected_cost = float(
-        np.sum(price * mpc_grid_import_true * dt + deg * (np.abs(mpc_buf["safe_charge_mw"]) + np.abs(mpc_buf["safe_discharge_mw"])) * dt)
-    )
-    mpc_carbon = float(np.sum(carbon * mpc_grid_import_true * dt))
-    mpc_result["expected_cost_usd"] = mpc_expected_cost
-    mpc_result["carbon_kg"] = mpc_carbon
-    if isinstance(mpc_result.get("dispatch_plan"), dict):
-        mpc_result["dispatch_plan"]["expected_cost_usd"] = mpc_expected_cost
-        mpc_result["dispatch_plan"]["carbon_kg"] = mpc_carbon
-    mpc_buf["expected_cost_usd"] = mpc_expected_cost
-    mpc_buf["carbon_kg"] = mpc_carbon
-    results["scenario_mpc"] = mpc_buf
+    if "scenario_robust" in controllers:
+        scenario_robust_result = scenario_robust_dispatch(
+            load_forecast=load_obs,
+            renewables_forecast=renew_obs,
+            load_true=load_true,
+            price=price,
+            optimization_cfg=optimization_cfg,
+            seed=seed,
+        )
+        scenario_buf = _init_controller_buffers(n)
+        scenario_buf["proposed_charge_mw"] = np.asarray(scenario_robust_result["proposed_charge_mw"], dtype=float)
+        scenario_buf["proposed_discharge_mw"] = np.asarray(scenario_robust_result["proposed_discharge_mw"], dtype=float)
+        scenario_buf["safe_charge_mw"] = np.asarray(scenario_robust_result["safe_charge_mw"], dtype=float)
+        scenario_buf["safe_discharge_mw"] = np.asarray(scenario_robust_result["safe_discharge_mw"], dtype=float)
+        scenario_buf["soc_true_mwh"] = np.asarray(scenario_robust_result["soc_mwh"], dtype=float)
+        scenario_buf["soc_observed_mwh"] = np.asarray(scenario_robust_result["soc_mwh"], dtype=float)
+        scenario_buf["interval_lower"] = np.asarray(scenario_robust_result["interval_lower"], dtype=float)
+        scenario_buf["interval_upper"] = np.asarray(scenario_robust_result["interval_upper"], dtype=float)
+        scenario_buf["interval_width"] = scenario_buf["interval_upper"] - scenario_buf["interval_lower"]
+        scenario_buf["certificates"] = list(scenario_robust_result["certificates"])
+        scenario_status = str(scenario_robust_result.get("dispatch_plan", {}).get("solver_status", "ok"))
+        scenario_buf["solver_status"] = [scenario_status] * n
+        scenario_grid_import_true = np.maximum(
+            0.0,
+            load_true - renew_true - scenario_buf["safe_discharge_mw"] + scenario_buf["safe_charge_mw"],
+        )
+        scenario_expected_cost = float(
+            np.sum(price * scenario_grid_import_true * dt + deg * (np.abs(scenario_buf["safe_charge_mw"]) + np.abs(scenario_buf["safe_discharge_mw"])) * dt)
+        )
+        scenario_carbon = float(np.sum(carbon * scenario_grid_import_true * dt))
+        scenario_robust_result["expected_cost_usd"] = scenario_expected_cost
+        scenario_robust_result["carbon_kg"] = scenario_carbon
+        if isinstance(scenario_robust_result.get("dispatch_plan"), dict):
+            scenario_robust_result["dispatch_plan"]["expected_cost_usd"] = scenario_expected_cost
+            scenario_robust_result["dispatch_plan"]["carbon_kg"] = scenario_carbon
+        scenario_buf["expected_cost_usd"] = scenario_expected_cost
+        scenario_buf["carbon_kg"] = scenario_carbon
+        results["scenario_robust"] = scenario_buf
 
-    baseline_cost = float(results["deterministic_lp"]["expected_cost_usd"])
+    if "scenario_mpc" in controllers:
+        mpc_result = scenario_mpc_dispatch(
+            load_forecast=load_obs,
+            renewables_forecast=renew_obs,
+            load_true=load_true,
+            price=price,
+            optimization_cfg=optimization_cfg,
+            seed=seed,
+        )
+        mpc_buf = _init_controller_buffers(n)
+        mpc_buf["proposed_charge_mw"] = np.asarray(mpc_result["proposed_charge_mw"], dtype=float)
+        mpc_buf["proposed_discharge_mw"] = np.asarray(mpc_result["proposed_discharge_mw"], dtype=float)
+        mpc_buf["safe_charge_mw"] = np.asarray(mpc_result["safe_charge_mw"], dtype=float)
+        mpc_buf["safe_discharge_mw"] = np.asarray(mpc_result["safe_discharge_mw"], dtype=float)
+        mpc_buf["soc_true_mwh"] = np.asarray(mpc_result["soc_mwh"], dtype=float)
+        mpc_buf["soc_observed_mwh"] = np.asarray(mpc_result["soc_mwh"], dtype=float)
+        mpc_buf["interval_lower"] = np.asarray(mpc_result["interval_lower"], dtype=float)
+        mpc_buf["interval_upper"] = np.asarray(mpc_result["interval_upper"], dtype=float)
+        mpc_buf["interval_width"] = mpc_buf["interval_upper"] - mpc_buf["interval_lower"]
+        mpc_buf["certificates"] = list(mpc_result["certificates"])
+        mpc_status = str(mpc_result.get("dispatch_plan", {}).get("solver_status", "ok"))
+        mpc_buf["solver_status"] = [mpc_status] * n
+        mpc_grid_import_true = np.maximum(
+            0.0,
+            load_true - renew_true - mpc_buf["safe_discharge_mw"] + mpc_buf["safe_charge_mw"],
+        )
+        mpc_expected_cost = float(
+            np.sum(price * mpc_grid_import_true * dt + deg * (np.abs(mpc_buf["safe_charge_mw"]) + np.abs(mpc_buf["safe_discharge_mw"])) * dt)
+        )
+        mpc_carbon = float(np.sum(carbon * mpc_grid_import_true * dt))
+        mpc_result["expected_cost_usd"] = mpc_expected_cost
+        mpc_result["carbon_kg"] = mpc_carbon
+        if isinstance(mpc_result.get("dispatch_plan"), dict):
+            mpc_result["dispatch_plan"]["expected_cost_usd"] = mpc_expected_cost
+            mpc_result["dispatch_plan"]["carbon_kg"] = mpc_carbon
+        mpc_buf["expected_cost_usd"] = mpc_expected_cost
+        mpc_buf["carbon_kg"] = mpc_carbon
+        results["scenario_mpc"] = mpc_buf
+
+    baseline_cost = float(results["deterministic_lp"]["expected_cost_usd"]) if "deterministic_lp" in results else float("nan")
 
     main_rows: list[dict[str, Any]] = []
     fault_rows: list[dict[str, Any]] = []
@@ -1366,7 +1377,7 @@ def run_single(
         )
 
         cost_delta_pct = None
-        if baseline_cost > 0:
+        if np.isfinite(baseline_cost) and baseline_cost > 0:
             cost_delta_pct = 100.0 * (float(res["expected_cost_usd"]) - baseline_cost) / baseline_cost
 
         cvar_eta_vals = np.asarray(res["cvar_eta"], dtype=float)
@@ -1437,7 +1448,20 @@ def run_single(
                 }
             )
 
-    return {"main_rows": main_rows, "fault_rows": fault_rows}
+    payload: dict[str, Any] = {"main_rows": main_rows, "fault_rows": fault_rows}
+    if return_controller_buffers:
+        payload.update(
+            {
+                "controller_buffers": results,
+                "event_log": event_log,
+                "load_true": load_true,
+                "load_obs": load_obs,
+                "renew_true": renew_true,
+                "renew_obs": renew_obs,
+                "constraints": constraints,
+            }
+        )
+    return payload
 
 
 def _plot_calibration(main_df: pd.DataFrame, out_path: Path) -> None:

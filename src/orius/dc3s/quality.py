@@ -16,7 +16,10 @@ import math
 import statistics
 import warnings
 from datetime import datetime
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping, MutableMapping, Sequence
+
+import numpy as np
+import torch
 
 from .ftit import FTIT_FAULT_KEYS, preview_fault_state
 
@@ -63,13 +66,17 @@ def _is_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
 
 
+def _is_numeric_or_nan(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
 def _signal_keys(event: Mapping[str, Any], last_event: Mapping[str, Any] | None) -> list[str]:
     keys: set[str] = set()
     for payload in (event, last_event or {}):
         for key, value in payload.items():
             if key in _TS_KEYS or key in _NON_SIGNAL_KEYS:
                 continue
-            if value is None or _is_number(value):
+            if value is None or _is_numeric_or_nan(value):
                 keys.add(key)
     return sorted(keys)
 
@@ -179,6 +186,7 @@ def compute_reliability(
     spike_beta = float(cfg.get("spike_beta", 0.25))
     ooo_gamma = float(cfg.get("ooo_gamma", 0.35))
     min_w = float(cfg.get("min_w", 0.05))
+    backend = str(cfg.get("backend", "heuristic")).strip().lower()
     ftit_cfg_map = _ftit_cfg(ftit_cfg)
     ftit_law = str(ftit_cfg_map.get("law", "linear")).strip().lower()
     stale_tol = float(ftit_cfg_map.get("stale_tol", 1.0e-9))
@@ -196,20 +204,26 @@ def compute_reliability(
     ts_prev = _extract_ts(last_event or {})
     delay_seconds = 0.0
     out_of_order = False
+    timestamp_missing = False
     if ts_now is None:
         # No recognised timestamp key found in the event (checked: ts_utc,
         # utc_timestamp, timestamp, ts).  Delay and OOO penalties cannot be
-        # computed, so they will default to zero — making the reliability score
-        # appear healthy even if data is stale.  Add the correct key to the
-        # event payload or extend _TS_KEYS to suppress this warning.
+        # computed from telemetry timing, so apply a conservative synthetic
+        # penalty instead of letting the reliability score appear healthy even
+        # if data is stale.  Add the correct key to the event payload or
+        # extend _TS_KEYS to suppress this warning.
         warnings.warn(
             f"DC3S reliability: no timestamp key found in telemetry event "
-            f"(checked: {_TS_KEYS}).  Delay/OOO penalties will be zero. "
+            f"(checked: {_TS_KEYS}).  Conservative delay/OOO penalties will "
+            "be applied. "
             "Set a recognised timestamp key (e.g. 'ts_utc') to enable "
             "accurate staleness detection.",
             UserWarning,
             stacklevel=2,
         )
+        timestamp_missing = True
+        delay_seconds = float(expected_cadence_s)
+        out_of_order = True
     if ts_now is not None and ts_prev is not None:
         delta = (ts_now - ts_prev).total_seconds()
         if delta < 0:
@@ -297,6 +311,7 @@ def compute_reliability(
         "missing_fraction": float(missing_fraction),
         "delay_seconds": float(delay_seconds),
         "out_of_order": bool(out_of_order),
+        "timestamp_missing": bool(timestamp_missing),
         "spike_detected": bool(spike_detected),
         "spike_ratio": float(spike_ratio),
         "components": {
@@ -327,6 +342,67 @@ def compute_reliability(
         "ooo_fraction_in_order": float(ooo_fraction_in_order),
         "reliability_rule": "ftit_ro" if preview is not None and ftit_law == "ftit_ro" else "linear",
     }
+    heuristic_w_t = float(w_t)
+
+    if backend == "deep":
+        deep_cfg = dict(cfg.get("deep", {}))
+        model_path = str(
+            deep_cfg.get("model_path")
+            or cfg.get("deep_model_path")
+            or ""
+        ).strip()
+        strict = bool(deep_cfg.get("strict", cfg.get("deep_strict", False)))
+        seq_len = int(deep_cfg.get("seq_len", 8))
+        try:
+            if not model_path:
+                raise FileNotFoundError("no DeepOQE model_path configured")
+            from .deep_oqe import extract_feature_vector, load_model, prepare_sequence, update_history
+
+            feature = extract_feature_vector(
+                event=event,
+                last_event=last_event,
+                missing_fraction=float(missing_fraction),
+                delay_seconds=float(delay_seconds),
+                out_of_order=bool(out_of_order),
+                spike_ratio=float(spike_ratio),
+                ooo_fraction_in_order=float(ooo_fraction_in_order),
+                stale_tracker=stale_tracker,
+                fault_flags=fault_flags,
+            )
+            sequence = prepare_sequence(feature, adaptive_state=adaptive_state, seq_len=seq_len)
+            model, deep_model_cfg, metadata = load_model(model_path)
+            with torch.no_grad():
+                tensor = torch.from_numpy(sequence).unsqueeze(0)
+                deep_w, fault_logit = model(tensor)
+            update_history(adaptive_state if isinstance(adaptive_state, MutableMapping) else None, feature, seq_len=deep_model_cfg.seq_len)
+            w_t = float(np.clip(float(deep_w.detach().cpu().item()), float(deep_model_cfg.min_w), 1.0))
+            fault_prob = float(torch.sigmoid(fault_logit).detach().cpu().item())
+            flags.update(
+                {
+                    "backend_requested": "deep",
+                    "backend_used": "deep",
+                    "deep_model_path": model_path,
+                    "deep_fault_probability": fault_prob,
+                    "deep_sequence_length": int(deep_model_cfg.seq_len),
+                    "deep_metadata": metadata,
+                    "heuristic_w_t": heuristic_w_t,
+                }
+            )
+            return w_t, flags
+        except Exception as exc:
+            if strict:
+                raise
+            flags.update(
+                {
+                    "backend_requested": "deep",
+                    "backend_used": "heuristic_fallback",
+                    "deep_failure": str(exc),
+                    "heuristic_w_t": heuristic_w_t,
+                }
+            )
+            return w_t, flags
+
+    flags.update({"backend_requested": backend, "backend_used": "heuristic"})
     return w_t, flags
 
 

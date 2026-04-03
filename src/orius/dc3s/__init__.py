@@ -1,6 +1,7 @@
 """DC3S: Drift-Calibrated Conformal Safety Shield components."""
 
 from .quality import compute_reliability
+from .deep_oqe import DeepOQEConfig, DeepOQEModel, FEATURE_NAMES as DEEP_OQE_FEATURE_NAMES
 from .ftit import FTIT_FAULT_KEYS, preview_fault_state, update as update_ftit_state
 from .drift import PageHinkleyDetector, AdaptivePageHinkleyDetector
 from .calibration import inflate_interval, inflate_q, build_uncertainty_set
@@ -66,6 +67,9 @@ from .theoretical_guarantees import (
 
 __all__ = [
     "compute_reliability",
+    "DeepOQEConfig",
+    "DeepOQEModel",
+    "DEEP_OQE_FEATURE_NAMES",
     "FTIT_FAULT_KEYS",
     "preview_fault_state",
     "update_ftit_state",

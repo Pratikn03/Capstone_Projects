@@ -298,6 +298,174 @@ bridges the calibration gap for the safety claim even when it cannot close
 the statistical coverage gap.
 
 % ----------------------------------------------------------------
+\section{Why Deep Models Do Not Win on the Engineered Track}
+\label{sec:deep-on-engineered-track}
+
+The locked six-model comparison in Table~\ref{tab:TBL08_FORECAST_BASELINES}
+already explains why ``adding another transformer'' is not, by itself, a
+novel contribution in this repository.  The promoted battery forecasting
+surface is not a raw-signal sequence regime; it is a feature-rich tabular
+regime with one-hour, 24-hour, and 168-hour lags, rolling statistics,
+calendar indicators, and weather/carbon covariates materialized before the
+model ever sees the data.  On this surface GBM remains the strongest
+operational model, while LSTM, TFT, and PatchTST operate largely as
+re-discoveries of structure already injected by the feature pipeline.
+
+That result is important rather than embarrassing: it closes the door on an
+unproductive novelty strategy.  The monograph's physical-AI claim is not
+``deep learning forecasts better than trees.''  It is that safety under
+degraded observation depends on turning telemetry reliability, interval
+validity, and intervention burden into first-class runtime objects.  The
+deep-learning novelty surface must therefore live where the current stack is
+still heuristic or statistically weak: learned reliability estimation,
+fault-aware probabilistic forecasting under degradation, and safety-metric
+evaluation.
+
+% ----------------------------------------------------------------
+\section{Battery-Scoped Deep-Learning Novelty Track}
+\label{sec:battery-dl-novelty}
+
+The bounded battery-scoped novelty package introduced in this revision keeps
+the engineered-tabular GBM row frozen as the systems baseline and adds a
+separate raw degraded-observation track.  The purpose is not to replace the
+locked operational forecaster.  It is to ask a different scientific question:
+\emph{can a learned reliability-conditioned model reduce intervention burden
+or validity loss while preserving the existing safety boundary under degraded
+telemetry?}
+
+\subsection{DeepOQE: Learned Telemetry Reliability}
+\label{sec:deepoqe}
+
+The first novelty object is \emph{DeepOQE}, a small GRU-based telemetry
+reliability encoder that replaces the hand-designed OQE heuristic only behind
+the existing runtime contract.  It consumes the same fault-relevant evidence
+already surfaced by ORIUS at each step: missingness fraction, stale-count
+tracker state, delay magnitude, out-of-order history, spike ratio, explicit
+fault flags, and short-horizon telemetry deltas.  The runtime still receives
+the same bounded scalar $w_t \in [w_{\min}, 1]$ plus diagnostic flags, so the
+governance and replay layers do not change.
+
+This preserves an important claim boundary.  DeepOQE is not allowed to widen
+the official parity gate by itself.  The heuristic OQE path remains the locked
+baseline and fallback.  The learned backend is only promoted when it improves
+reliability estimation and downstream safety metrics on held-out degraded
+episodes.
+
+\IfFileExists{paper/assets/tables/generated/tbl_battery_deep_oqe_summary.tex}{%
+\input{paper/assets/tables/generated/tbl_battery_deep_oqe_summary}%
+}{%
+\IfFileExists{assets/tables/generated/tbl_battery_deep_oqe_summary.tex}{%
+\input{assets/tables/generated/tbl_battery_deep_oqe_summary}%
+}{}%
+}
+
+\begin{figure}[htbp]
+\centering
+\IfFileExists{paper/assets/figures/fig_battery_deep_oqe_summary.png}{%
+  \includegraphics[width=0.90\linewidth]{paper/assets/figures/fig_battery_deep_oqe_summary.png}%
+}{%
+  \IfFileExists{assets/figures/fig_battery_deep_oqe_summary.png}{%
+    \includegraphics[width=0.90\linewidth]{assets/figures/fig_battery_deep_oqe_summary.png}%
+  }{}%
+}
+\caption{Battery DeepOQE diagnostics on held-out degraded-telemetry episodes. The learned scorer is judged by reliability error and fault discrimination, not by forecast RMSE.}
+\label{fig:battery-deep-oqe-summary}
+\end{figure}
+
+Table~\ref{tab:battery-deep-oqe-summary} and
+Figure~\ref{fig:battery-deep-oqe-summary} make the target explicit.  The
+learned scorer is evaluated on reliability MAE, fault AUC, and the lift
+obtained by routing clearly faulty packets into the low-reliability bucket.
+This is aligned with ORIUS itself: the learned model is novel only if it
+improves the \emph{quality of the safety signal}, not if it merely replicates
+the heuristic score with a larger parameter count.
+
+\subsection{Raw-Sequence Probabilistic Forecasting}
+\label{sec:raw-sequence-probabilistic}
+
+The second novelty object is a raw-sequence PatchTST-style probabilistic
+forecaster.  Unlike the engineered-track benchmark, this lane intentionally
+withholds the heavy lag/rolling feature stack and feeds the model only the
+recent target history, minimal operational covariates, explicit fault tokens,
+and the learned reliability state.  This gives the deep model temporal
+structure to learn that is not already hard-coded upstream.
+
+\IfFileExists{paper/assets/tables/generated/tbl_battery_raw_sequence_track.tex}{%
+\input{paper/assets/tables/generated/tbl_battery_raw_sequence_track}%
+}{%
+\IfFileExists{assets/tables/generated/tbl_battery_raw_sequence_track.tex}{%
+\input{assets/tables/generated/tbl_battery_raw_sequence_track}%
+}{}%
+}
+
+\begin{figure}[htbp]
+\centering
+\IfFileExists{paper/assets/figures/fig_battery_raw_sequence_track_benchmark.png}{%
+  \includegraphics[width=0.92\linewidth]{paper/assets/figures/fig_battery_raw_sequence_track_benchmark.png}%
+}{%
+  \IfFileExists{assets/figures/fig_battery_raw_sequence_track_benchmark.png}{%
+    \includegraphics[width=0.92\linewidth]{assets/figures/fig_battery_raw_sequence_track_benchmark.png}%
+  }{}%
+}
+\caption{Engineered-tabular versus raw-sequence battery forecasting tracks. GBM remains the strongest operational model on the engineered track; the raw-sequence lane is the bounded deep-learning novelty surface.}
+\label{fig:battery-raw-sequence-track}
+\end{figure}
+
+The resulting comparison must be read correctly.  If GBM remains strongest on
+the engineered track, that is consistent with the repo's prior findings and
+does not weaken the deep-learning contribution.  The novelty claim lives on
+the raw degraded-observation track, where the model is conditioned on the
+learned reliability state and evaluated for interval behavior under telemetry
+degradation rather than only for point accuracy.
+
+\subsection{Safety-Metric Evaluation}
+\label{sec:dl-safety-metrics}
+
+ORIUS does not promote a forecasting model on RMSE alone.  The bounded
+battery-scoped novelty package therefore feeds the learned DeepOQE backend back
+through the existing CPSBench battery loop and evaluates the result with the
+same ORIUS safety metrics used elsewhere in the book: true-state violation
+rate (TSVR), intervention rate (IR), certificate-validity agreement (CVA),
+and graceful-degradation quality (GDQ).  These metrics determine whether a
+learned model improves the runtime object that ORIUS actually cares about.
+
+\IfFileExists{paper/assets/tables/generated/tbl_battery_deep_oqe_safety_metrics.tex}{%
+\input{paper/assets/tables/generated/tbl_battery_deep_oqe_safety_metrics}%
+}{%
+\IfFileExists{assets/tables/generated/tbl_battery_deep_oqe_safety_metrics.tex}{%
+\input{assets/tables/generated/tbl_battery_deep_oqe_safety_metrics}%
+}{}%
+}
+
+\begin{figure}[htbp]
+\centering
+\IfFileExists{paper/assets/figures/fig_battery_deep_oqe_safety_metrics.png}{%
+  \includegraphics[width=0.90\linewidth]{paper/assets/figures/fig_battery_deep_oqe_safety_metrics.png}%
+}{%
+  \IfFileExists{assets/figures/fig_battery_deep_oqe_safety_metrics.png}{%
+    \includegraphics[width=0.90\linewidth]{assets/figures/fig_battery_deep_oqe_safety_metrics.png}%
+  }{}%
+}
+\caption{Battery replay comparison for heuristic versus learned reliability backends. Promotion depends on preserving the true-state safety boundary while reducing intervention burden or degradation quality loss.}
+\label{fig:battery-deep-oqe-safety}
+\end{figure}
+
+This evaluation rule is the key claim discipline.  A learned model that lowers
+MAE but worsens TSVR, increases IR without offsetting benefit, or weakens
+certificate validity is not promoted.  Conversely, a learned reliability
+backend that leaves the true-state safety boundary intact while reducing
+intervention burden or improving degradation quality is a genuine
+deep-learning contribution \emph{inside} ORIUS rather than beside it.
+
+\paragraph{Scope boundary.}
+This battery-scoped novelty package does not alter the official cross-domain
+parity gate, the submission scorecard tiers, or the equal-domain universality
+language.  It strengthens the battery witness row and the monograph's
+deep-learning story.  Cross-domain transfer of the degraded-observation
+encoder is deferred until the battery row is locked and the non-battery rows
+justify that extension.
+
+% ----------------------------------------------------------------
 \section{Chapter Summary}
 
 This chapter described the six forecast model families (GBM, LSTM, TCN,
@@ -306,5 +474,10 @@ CQR conformal calibration layer.  Marginal coverage meets or exceeds the
 nominal level on all targets, but reliability-stratified analysis reveals
 severe conditional under-coverage, particularly for wind (39--49\% vs.\ 90\%
 nominal).  Solar calibration is weakened by diurnal bimodality, and wind by
-regime non-stationarity.  These structural calibration failures motivate the
+regime non-stationarity.  The new bounded deep-learning package narrows the
+novelty question accordingly: DeepOQE learns telemetry reliability directly,
+the raw-sequence probabilistic lane gives the deep model an end-to-end
+degraded-observation problem to solve, and promotion is governed by ORIUS
+safety metrics rather than forecast error alone.  These structural calibration
+failures and reliability-conditioned extensions motivate the
 observation-aware adaptive inflation developed in the next chapter.
