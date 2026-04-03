@@ -1,0 +1,52 @@
+\documentclass[10pt,journal]{IEEEtran}
+\input{orius_ieee_preamble.tex}
+
+\title{ORIUS: A Professor Review Draft on Universal Runtime Safety for Physical AI under Degraded Observation}
+\author{Author details omitted for professor review draft}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+ORIUS treats degraded observation as the fundamental hidden hazard for Physical AI:
+controllers act on telemetry, beliefs, and summaries of the world, while safety is
+judged on the physically true state. This manuscript presents ORIUS, Observation--
+Reality Integrity for Universal Safety, as a reusable runtime layer that detects
+reliability collapse, inflates the observation-consistent state set, tightens the
+admissible action set, repairs or replaces unsafe actions, and emits auditable
+certificates before release. The paper is organized around the universal runtime
+claim rather than a witness-row-specific forecasting claim.
+Its scientific object is a shared runtime grammar grounded in one adapter contract, one
+benchmark schema, one CertOS governance surface, and one theorem bridge. Battery
+remains the witness row with the deepest theorem-to-code-to-artifact closure; AV,
+industrial, and healthcare are defended bounded rows; navigation and aerospace remain
+explicitly gated by missing real-data closure. The central claim is therefore strong
+but disciplined: ORIUS establishes a universal runtime safety layer for Physical AI
+under degraded observation, while equal-domain empirical closure remains a governed
+target rather than a present-tense fact.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Physical AI safety, degraded observation, observation--action safety gap, runtime
+assurance, conformal uncertainty, safety filters, cyber-physical systems, certificates
+\end{IEEEkeywords}
+
+\input{professor_sections/prof_intro.tex}
+\input{professor_sections/prof_problem_oasg.tex}
+\input{professor_sections/prof_related_work.tex}
+\input{professor_sections/prof_runtime_architecture.tex}
+\input{professor_sections/prof_runtime_contracts.tex}
+\input{professor_sections/prof_theory_bridge.tex}
+\input{professor_sections/prof_battery_results.tex}
+\input{professor_sections/prof_results.tex}
+\input{professor_sections/prof_cross_domain.tex}
+\input{professor_sections/prof_evidence_boundary.tex}
+\input{professor_sections/prof_conclusion.tex}
+
+\balance
+\nocite{*}
+\bibliographystyle{IEEEtran}
+\bibliography{../bibliography/orius_monograph}
+
+\end{document}

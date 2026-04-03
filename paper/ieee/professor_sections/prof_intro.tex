@@ -1,0 +1,55 @@
+\section{Introduction and Contribution Statement}
+\label{sec:prof-introduction}
+
+Physical AI systems do not act on truth. They act on telemetry, inferred state, delayed
+measurements, missing packets, stale buffers, and learned surrogates of the world. The
+resulting engineering problem is deeper than forecast error or planner suboptimality:
+the software stack can remain internally coherent while the physical system becomes
+externally unsafe. Batteries may violate hidden state-of-charge limits, vehicles may
+enter unsafe headway regimes on stale perception, industrial plants may cross thermal
+or pressure envelopes, clinical monitoring pipelines may suppress timely intervention,
+and navigation or flight systems may remain locally consistent while drifting outside a
+feasible corridor.
+
+ORIUS is built around the claim that these failures share one universal object:
+degraded observation changes the semantics of what may still be safely done. The field
+therefore needs a runtime layer whose job is not to outperform every planner, but to
+mediate the boundary between degraded observation and physical actuation. ORIUS,
+Observation--Reality Integrity for Universal Safety, is proposed as that layer. It
+detects reliability loss, calibrates the observation-consistent state set, constrains
+the admissible action set, repairs or replaces unsafe candidate actions, and certifies
+release through an auditable lifecycle. The framework is written around the universal
+runtime claim rather than a witness-row-specific framing. Battery is retained as the
+deepest witness row, not as the conceptual center of the claim.
+
+This manuscript positions ORIUS against a precise gap in the literature. Distribution-
+free inference can quantify uncertainty
+\cite{vovk2005algorithmic,lei2018distribution,romano2019conformalized,gibbs2021adaptive,angelopoulos2023gentle,barber2023beyond}.
+Runtime assurance and shields can intercept unsafe behavior
+\cite{sha1998simplex,sha2001using,desai2019soter,bloem2015shield,bartocci2018introduction,leucker2009brief}.
+Safety filters and constrained control can map uncertainty into admissible action sets
+\cite{ames2019control,ames2014cbf,wabersich2021predictive,fisac2019general,mayne2005robust,rawlings2017mpc}.
+Fault, anomaly, and drift detection can identify when observation should no longer be
+trusted \cite{basseville1993detection,page1954continuous,page1955test,hinkley1971inference,pasqualetti2013attack,teixeira2015secure}.
+What none of these families alone provides is a reusable runtime grammar that links
+degraded observation to repaired actuation and auditable certificate release across
+multiple physical domains.
+
+The paper therefore makes four contributions.
+\begin{enumerate}[leftmargin=1.25em,itemsep=0.2em]
+  \item It defines the observation--action safety gap (OASG) as the right universal
+  hazard object for Physical AI under degraded observation.
+  \item It presents the Detect--Calibrate--Constrain--Shield--Certify kernel as a typed
+  runtime safety layer with explicit formulas, pseudocode, and certificate semantics.
+  \item It unifies domain evaluation through one adapter contract, one benchmark schema,
+  and one CertOS governance surface.
+  \item It argues for a bounded-universal evidence posture: battery is the witness row;
+  AV, industrial, and healthcare are defended bounded rows; navigation and aerospace
+  remain explicitly gated.
+\end{enumerate}
+
+The draft is intentionally ambitious but disciplined. It uses a universal writing
+posture, but it keeps one explicit evidence-boundary section in the main body. It
+includes formulas, theorem statements, proof sketches, runtime pseudocode, decisive
+results tables, and cross-domain synthesis, while pushing proof-depth and artifact-depth
+material into two separate appendices.
