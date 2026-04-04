@@ -1,16 +1,15 @@
 \section{Universal Contracts: Adapter, Benchmark, and CertOS Governance}
 \label{sec:prof-runtime-contracts}
 
-The professor-facing ORIUS draft should present three contracts as a single
-stack: the adapter contract, the benchmark contract, and the CertOS
-governance contract.  Together they explain how degraded observation is
-converted into a typed runtime safety layer rather than a battery-only
-control recipe.
+ORIUS is organized around three contracts: the adapter contract, the
+benchmark contract, and the CertOS governance contract. Together they
+explain how degraded observation is converted into a typed runtime safety
+layer rather than a battery-only control recipe.
 
 \subsection{Adapter contract}
 The adapter is the only place where domain-specific telemetry and
-constraints are allowed to enter the universal runtime.  The current
-monograph and supporting design documents make this boundary explicit:
+constraints are allowed to enter the universal runtime. The repository and
+its supporting design documents make this boundary explicit:
 \texttt{src/orius/certos/runtime.py} provides a domain-neutral governance
 surface, \texttt{docs/UNIVERSAL\_BENCHMARK\_SPEC.md} defines the common
 step schema, and \texttt{docs/UNIVERSAL\_GOVERNANCE\_SPEC.md} requires a
@@ -23,6 +22,18 @@ That is the minimum needed to make ORIUS portable across battery energy
 storage, autonomous vehicles, industrial control, healthcare monitoring,
 navigation, and aerospace without changing the meaning of safety at the
 kernel level.
+
+The adapter can therefore be read as a typed semantic projection
+\[
+  \mathfrak{D}_t:
+  (o_t,\mathcal{H}_t,a_t^{\mathrm{cand}})
+  \mapsto
+  (w_t,U_t,\mathcal{A}^{\mathrm{safe}}_t,\mathcal{R}_t,\mathcal{F}_t,c_t),
+\]
+where telemetry and nominal actions are translated into the universal runtime objects
+that ORIUS knows how to govern. This is one of the most important clarifications in the
+paper: universality does not mean a universal plant model. It means one typed safety
+projection from domain observation to governed actuation.
 
 \subsection{Benchmark contract}
 ORIUS-Bench is the manuscript-facing replay contract. The universal step
@@ -40,10 +51,17 @@ certificate validity accuracy, intervention rate, audit completeness,
 latency percentiles, and coverage diagnostics when conformal uncertainty is
 active.
 
-This contract matters because it prevents the professor-facing draft from
-collapsing the whole manuscript into a single battery result table.  It
-also keeps the evidence boundary honest: the same schema can be reused
-across all six rows, but the rows do not carry the same proof depth.
+The benchmark contract matters because it decides what evidence counts. A step is not
+judged by whether the nominal controller felt confident. It is judged by whether the
+true constraint was violated, whether the observed state looked safe, whether ORIUS
+intervened, whether fallback was used, whether the certificate remained valid, and what
+latency budget was consumed. This prevents the evaluation from collapsing into
+prediction accuracy or task reward while still remaining agnostic to the nominal model.
+
+This contract prevents the argument from collapsing into a single battery
+result table. It also keeps the evidence boundary honest: the same schema
+can be reused across all six rows, but the rows do not carry the same proof
+depth.
 
 \subsection{CertOS governance contract}
 CertOS is the runtime governance layer.  Its role is deliberately narrow:
@@ -62,10 +80,17 @@ chain, and fallback only when validity collapses. That is the right level
 of abstraction for a professor-facing draft that wants to argue for a
 fundamental safety layer.
 
+This is also where ORIUS separates itself from many safety wrappers that are difficult
+to compare scientifically. If a runtime layer cannot explain what is released, under
+what certificate, for how long that certificate remains valid, and how fallback is
+recorded, then it is hard to distinguish principled safety governance from an
+implementation-specific patch. CertOS is deliberately narrow so that those questions are
+answerable.
+
 \begin{algorithm}[t]
 \caption{CertOS Certificate Release and Lifecycle Update}
 \label{alg:prof-certos}
-\begin{algorithmic}[1]
+\begin{algorithmic}
 \Require repaired action \(a_t^{\mathrm{safe}}\), certificate candidate \(c_t\), reliability \(w_t\), constraints \(\kappa_t\)
 \State project \(a_t^{\mathrm{safe}}\) through \texttt{integrity\_projection}
 \If{\texttt{required\_certificate\_fields()} missing}
@@ -83,7 +108,29 @@ fundamental safety layer.
 \end{algorithmic}
 \end{algorithm}
 
-The professor-facing version should end this section with the claim
-boundary stated plainly: ORIUS is a universal runtime safety contract for
-Physical AI under degraded observation, but the evidence remains tiered by
-domain and should not be presented as equal-depth proof across all rows.
+\begin{table}[t]
+\centering
+\small
+\caption{The three public ORIUS contracts used throughout the professor draft.}
+\label{tab:prof-contract-stack}
+\begin{tabularx}{\columnwidth}{@{}p{0.19\columnwidth}X@{}}
+\toprule
+\textbf{Layer} & \textbf{Contract obligation} \\
+\midrule
+Adapter & Convert degraded telemetry into reliability, uncertainty, safe-action, repair, fallback, and certificate objects. \\
+Benchmark & Keep one true-state safety schema and one metric family across all domains. \\
+CertOS & Release only validated or explicit fallback actions with audit continuity. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The claim boundary is therefore straightforward: ORIUS is a universal
+runtime safety contract for Physical AI under degraded observation, but the
+evidence remains tiered by domain and is not presented as equal-depth proof
+across all rows.
+
+That methodological discipline matters as much as the API itself. It prevents the paper
+from reading like a battery controller with extra documentation. By freezing the
+adapter boundary, the benchmark record, and the governance hooks, ORIUS defines one
+reproducible scientific object whose meaning does not change from one domain chapter to
+the next.

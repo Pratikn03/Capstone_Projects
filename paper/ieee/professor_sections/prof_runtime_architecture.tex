@@ -28,6 +28,27 @@ The kernel consists of five stages.
   \item \textbf{Certify:} emit a causal certificate and update the governance state.
 \end{enumerate}
 
+\subsection{Execution path through the kernel}
+The practical execution path is simple enough to be implemented in a few typed calls,
+but rich enough to support formal analysis. A telemetry packet enters through the
+domain adapter with time stamps, missingness indicators, residual channels, and any
+domain-specific diagnostics. The detect stage converts those observations into a
+reliability score and degradation flags. The calibrate stage then refuses the usual
+engineering shortcut of keeping a point state estimate when trust has fallen; instead
+it materializes the observation-consistent state set that the controller must now
+respect. The constrain stage computes what actuation remains safe for every state in
+that set. Shielding then either preserves the candidate action, repairs it into the
+safe set, or invokes an explicit fallback. Certify binds the release decision to a
+certificate payload and governance state transition.
+
+That same execution path has different physical interpretations across domains. In
+battery systems it becomes charge or discharge limitation under hidden state-of-charge
+uncertainty. In AV it becomes governed braking or maneuver restriction under degraded
+headway confidence. In healthcare it becomes intervention legality under uncertain
+vital-sign trust. The point of ORIUS is not that these domains share dynamics. The
+point is that they share a release-boundary problem once degraded observation is made
+explicit.
+
 The kernel becomes scientific rather than architectural once its objects are written
 explicitly. ORIUS uses a reliability-conditioned uncertainty envelope
 \begin{equation}
@@ -54,10 +75,17 @@ and the certificate-relevant margin is
 so that \(\gamma_t(a) \ge 0\) indicates one-step safety for every state in the
 observation-consistent set.
 
+The three equations above are the core of the framework. The first says that trust in
+observation is itself a runtime variable. The second says that admissible actuation is
+defined against a set, not only against a point estimate. The third says that the
+certificate is not a paperwork artifact; it is tied to a concrete safety margin over
+that set. Together they turn degraded observation from a monitoring nuisance into a
+first-class control-theoretic and systems object.
+
 \begin{algorithm}[t]
 \caption{Detect--Calibrate--Constrain--Shield--Certify Runtime Step}
 \label{alg:prof-runtime-step}
-\begin{algorithmic}[1]
+\begin{algorithmic}
 \Require observation packet \(o_t\), history \(\mathcal{H}_t\), candidate action
 \(a_t^{\mathrm{cand}}\)
 \State compute reliability score \(w_t\) and degradation flags from \(o_t\)
@@ -79,3 +107,20 @@ This algorithm is the real reusable object in ORIUS. It explains why the framewo
 support batteries, vehicles, industrial plants, healthcare monitoring, navigation, and
 aerospace without pretending those domains share the same nominal control law. What is
 shared is the runtime grammar that mediates degraded observation before actuation.
+
+Two design choices keep this object scientifically clean. First, ORIUS is intentionally
+narrow: it sits between nominal intelligence and release rather than trying to subsume
+forecasting, planning, or identification. Second, the runtime layer is typed all the
+way through. Reliability, uncertainty, repair mode, fallback mode, certificate state,
+and audit continuity are explicit objects. That is why the framework can be benchmarked
+and governed as a reusable safety layer instead of described only as a software pattern.
+
+\subsection{Why the architecture is universal}
+ORIUS achieves universality by freezing the meaning of a few objects and refusing to
+freeze everything else. The meaning of reliability, uncertainty widening, tightened
+action legality, repaired release, fallback, and certificate validity is invariant
+across domains. Telemetry parsers, nominal controllers, local geometry, and domain
+constraints are not invariant and are deliberately delegated to adapters. This split is
+what lets the same runtime layer sit above an optimizer in energy systems, a planner in
+autonomy, a control stack in process industries, or a monitored intervention pipeline
+in healthcare without becoming mathematically empty.

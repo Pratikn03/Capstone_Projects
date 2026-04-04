@@ -48,6 +48,42 @@ The paper therefore makes four contributions.
   remain explicitly gated.
 \end{enumerate}
 
+\subsection{What ORIUS is and is not}
+ORIUS is not a new nominal controller, a new world model, or a universal planner.
+It does not ask every domain to share the same action space, dynamics model, or
+learning stack. Instead it introduces a narrow but rigorous intervention layer at the
+moment where candidate actuation is about to be released. That distinction matters.
+Many physical AI projects already contain estimators, predictors, planners, and local
+guards. What they usually lack is a reusable semantics for what happens when the
+controller-visible state is no longer trustworthy. ORIUS supplies that semantics.
+
+Equally important, ORIUS is not an excuse to hide ad hoc emergency logic behind a new
+name. Every intervention mode in the framework must be typed and auditable: keep,
+repair, fallback, degrade, or reject. The release decision is therefore promoted from
+implementation detail to scientific object. That is the conceptual step that lets the
+paper talk about batteries, vehicles, industrial plants, healthcare monitoring, and
+aerospace within one formal vocabulary.
+
+\subsection{Design principles}
+The framework is organized around four design principles.
+\begin{enumerate}[leftmargin=1.25em,itemsep=0.2em]
+  \item \textbf{Post-nominality:} upstream intelligence remains replaceable; ORIUS is
+  evaluated at the release boundary rather than by forecasting or planning quality.
+  \item \textbf{Typed degradation:} reliability loss, widened uncertainty, repaired
+  action, fallback mode, and certificate status are explicit runtime objects.
+  \item \textbf{Domain-bounded portability:} each adapter owns telemetry semantics and
+  safety geometry, but the kernel and benchmark semantics do not change from one row to
+  the next.
+  \item \textbf{Auditable release:} safety is judged on what actuation is actually
+  released, under what certificate, and with what lifecycle trace.
+\end{enumerate}
+
+These principles explain why ORIUS should be read as infrastructure for Physical AI
+safety rather than as one more domain benchmark result. A battery controller can be
+good or bad; an AV planner can be good or bad; an industrial predictor can be good or
+bad. ORIUS asks a different question: when those nominal systems become observation-
+degraded, what runtime object decides whether the next action remains legally releasable?
+
 The draft is intentionally ambitious but disciplined. It uses a universal writing
 posture, but it keeps one explicit evidence-boundary section in the main body. It
 includes formulas, theorem statements, proof sketches, runtime pseudocode, decisive

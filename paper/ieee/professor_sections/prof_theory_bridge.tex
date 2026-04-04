@@ -8,6 +8,14 @@ is not presented as a battery theorem generalized by analogy.  It is presented a
 runtime safety grammar whose transfer obligations are explicit, checkable, and separate
 from the evidence hierarchy.
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_orius_theory_runtime_domain_flow}
+\caption{The theory bridge separates three levels of the claim: formal runtime objects,
+domain-specific evidence obligations, and promotion status under the parity gate.}
+\label{fig:prof-theory-runtime-domain}
+\end{figure}
+
 \subsection{Formal setting}
 We consider a partially observed safety-constrained control system on a discrete
 horizon \(t=0,1,\dots,T-1\):
@@ -142,7 +150,7 @@ Condition on the observation history.  On the event \(x_t\in U_t\), soundness of
 tightened safe-action set implies that every admissible repaired action preserves the
 safe set at the next step.  If the tightened set is empty, the fallback action preserves
 safety by contract.  Therefore the only remaining source of failure is the probability
-that the true state lies outside \(U_t\), which is at most \(\alpha\).  Appendix~C and
+that the true state lies outside \(U_t\), which is at most \(\alpha\).  Appendix~A and
 the theorem-surface register record the battery proof instances that instantiate this
 logic in the reference domain.
 \end{proof}
@@ -164,3 +172,9 @@ be a second thesis chapter.  It needs to do three things well: state the univers
 objects, state the universality gate, and state the proof skeleton that connects the
 reference battery ladder to any new domain that clears the adapter contract.  That is the
 strongest possible version of the claim without inventing unsupported empirical parity.
+
+This is why the theory bridge belongs in the main paper instead of disappearing into a
+supplement. The ORIUS claim is not merely that a benchmark improved. It is that
+degraded observation changes the structure of what safe release means, and that the
+runtime layer makes that change explicit in a way that can be proved, benchmarked, and
+audited.

@@ -80,3 +80,40 @@ that question with one runtime kernel, one benchmark schema, and one governance
 discipline. The theorem bridge later shows that the resulting safety layer is not a
 heuristic wrapper but a structured bound-preserving construction under explicit
 assumptions.
+
+The same object also governs evaluation. ORIUS measures safety on the true state rather
+than on the observed state alone. At the episode level this yields the true-state
+violation rate
+\begin{equation}
+  \TSVR
+  =
+  \frac{1}{T} \sum_{t=0}^{T-1} \mathbf{1}[x_t \notin \mathcal{S}],
+\end{equation}
+and the runtime intervention rate
+\begin{equation}
+  \IR
+  =
+  \frac{1}{T} \sum_{t=0}^{T-1} \mathbf{1}[a_t^{\mathrm{safe}} \neq a_t^{\mathrm{cand}}].
+\end{equation}
+These metrics make the claim falsifiable. A system cannot claim degraded-observation
+safety if it only looks legal on the observed state, or if it relies on undocumented
+emergency overrides rather than explicit runtime interventions.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Canonical runtime objects for OASG-aware release.}
+\label{tab:prof-oasg-objects}
+\begin{tabularx}{\columnwidth}{@{}p{0.23\columnwidth}X@{}}
+\toprule
+\textbf{Object} & \textbf{Role} \\
+\midrule
+\(w_t\) & Reliability score derived from freshness, missingness, and disagreement. \\
+\(U_t\) & Observation-consistent state set widened when trust falls. \\
+\(\mathcal{A}^{\mathrm{safe}}_t(U_t)\) & Tightened action set that remains legal for every state in \(U_t\). \\
+\(\mathcal{R}_t\) & Repair map used when the candidate action is unsafe but the safe set is non-empty. \\
+\(\mathcal{F}_t\) & Explicit fallback used when no repaired safe action exists. \\
+\(c_t\) & Certificate payload recording margin, reliability, release mode, and audit continuity. \\
+\bottomrule
+\end{tabularx}
+\end{table}

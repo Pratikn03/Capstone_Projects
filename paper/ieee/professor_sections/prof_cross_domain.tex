@@ -11,6 +11,14 @@ and aerospace.
 
 \input{generated/orius_professor_parity_table.tex}
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{fig_orius_equal_domain_parity_matrix}
+\caption{Parity-gated view of the ORIUS program. The architecture is universal now, but
+domain promotion remains governed by closure status rather than by rhetorical symmetry.}
+\label{fig:prof-parity-visual}
+\end{figure*}
+
 The synthesis that follows from this status is narrower and stronger than a generic
 transfer-learning claim.  ORIUS standardizes the runtime objects that matter for
 safety under degraded observation:
@@ -30,31 +38,50 @@ universal safety architecture, but the evidence ladder is still tiered.  The
 architecture is universal in contract; the closure depth is not yet universal in
 proof.  That is exactly the right level of honesty for an R1-grade monograph.
 
+\subsection{Why ORIUS is more than a multi-domain wrapper}
+Many systems can be described across multiple domains if the description remains
+qualitative enough. ORIUS aims at a stronger standard. It keeps the same runtime
+question, the same typed release objects, and the same benchmark semantics across all
+rows. That is why the framework should be understood as universal in \emph{runtime
+logic} rather than merely broad in \emph{application count}. The universal claim does
+not come from listing six domains. It comes from showing that the same degraded-
+observation semantics survive contact with six different action geometries.
+
 \subsection{Autonomous vehicles}
 The AV row treats degraded observation as a time-to-collision and entry-barrier hazard
 under bounded vehicle semantics. Its runtime object is not the full autonomy stack. It
 is the release decision under uncertain headway and environment state. The defended
 bounded-row result matters because it shows the ORIUS contract moving into a
-fast-reacting closed-loop domain without importing battery-specific actuation logic.
+fast-reacting closed-loop domain without importing battery-specific actuation logic. The
+row is bounded intentionally: the claim is about governed braking or maneuver legality,
+not full autonomy closure.
 
 \subsection{Industrial process control}
 The industrial row treats degraded observation as envelope-preservation risk under
 process telemetry loss or drift. The safety object is bounded operation inside process
 constraints with explicit fallback semantics. This row demonstrates that ORIUS can
 govern a plant whose action geometry and monitoring cadence look nothing like a storage
-asset.
+asset. Its universality contribution is that the repair operator can be phrased as
+power-cap or envelope-preserving modification rather than storage dispatch logic.
 
 \subsection{Healthcare monitoring}
 The healthcare row is the clearest reminder that ORIUS is not only about actuation-
 heavy control. Here the danger is intervention suppression or alert illegality under
 degraded vital-sign observation. The defended bounded-row result shows that the same
 runtime grammar still applies when the safety object is intervention legality rather
-than dispatch power.
+than dispatch power. It also marks a clean scientific boundary: the paper is not
+claiming bedside autonomy certification, only monitored intervention legality under a
+bounded runtime contract.
 
-\subsection{Navigation and aerospace as visible gated rows}
-Navigation and aerospace remain part of the universal argument because they make the
-promotion gate concrete. Navigation shows portability of the runtime contract but still
-lacks defended real-data replay closure. Aerospace shows experimental promise but does
-not yet supply the real multi-flight runtime validation surface needed for defended
-promotion. Keeping these rows visible is what prevents the paper from overstating equal-
-domain maturity.
+\subsection{Navigation}
+The navigation row frames degraded observation as corridor or trajectory-feasibility
+risk under degraded localization. The adapter and replay harness already exist, which
+means the runtime contract is portable. What is missing is the defended real-data
+closure row. That is why navigation remains shadow-synthetic in the present paper.
+
+\subsection{Aerospace}
+The aerospace row frames degraded observation as flight-envelope preservation under
+degraded sensing and prognostic uncertainty. Its current role is boundary-setting: the
+runtime objects and fallback semantics are already expressible, but the defended
+multi-flight validation surface is not yet closed. Keeping aerospace visible but gated
+is scientifically stronger than overstating parity.

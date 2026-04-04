@@ -6,8 +6,10 @@ PYTHON ?= $(if $(wildcard .venv/bin/python3),.venv/bin/python3,python3)
 PROFILE ?= standard
 PROOF_SEEDS ?= 1
 PROOF_HORIZON ?= 24
-# Canonical longform paper build is now the ORIUS monograph surface.
-PAPER_MIN_PAGES ?= 450
+# Canonical dissertation build is now a curated 13-chapter monograph rather than the
+# earlier archive-heavy stitched surface, so the page floor should track the rewritten
+# manuscript rather than legacy bulk.
+PAPER_MIN_PAGES ?= 90
 # The IEEE flagship track is now a reviewable journal-style main paper plus a separate
 # appendix package. Keep a real main-paper floor without forcing monograph-scale
 # duplication back into the double-column draft.
