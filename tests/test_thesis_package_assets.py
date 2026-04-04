@@ -229,58 +229,96 @@ def test_monograph_depth_floor_is_preserved() -> None:
 
     assert bib_entries >= 150
     if match is not None:
-        assert int(match.group(1)) >= 450
+        assert int(match.group(1)) >= 90
     if pdf_pages is not None:
-        assert pdf_pages >= 450
+        assert pdf_pages >= 90
 
 
-def test_compiled_chapters_40_to_44_are_evidence_complete() -> None:
-    chapters = {
-        "ch09_av_domain.tex": "av",
-        "ch10_industrial_domain.tex": "industrial",
-        "ch11_healthcare_domain.tex": "healthcare",
-        "ch12_navigation_domain.tex": "navigation",
-        "ch13_aerospace_domain.tex": "aerospace",
-    }
+def test_dissertation_entrypoint_uses_curated_13_chapter_spine() -> None:
+    paper_tex = (REPO_ROOT / "paper" / "paper.tex").read_text(encoding="utf-8")
+    chapter_includes = re.findall(r"\\include\{monograph/([^}]+)\}", paper_tex)
+    appendix_includes = re.findall(r"\\include\{(appendices/[^}]+|monograph/app_[^}]+)\}", paper_tex)
 
-    for filename, domain_id in chapters.items():
-        text = (REPO_ROOT / "paper" / "monograph" / filename).read_text(encoding="utf-8")
-        assert "Dataset and training surface" in text
-        assert "Feature, split, and training protocol" in text
-        assert "Replay and evidence surface" in text
-        assert "Fallback and runtime behavior" in text
-        assert "Evidence tier and promotion blocker" in text
-        assert "Limitations and exact non-claims" in text
-        assert f"tbl_{domain_id}_training_surface" in text
-        assert f"tbl_{domain_id}_replay_surface" in text
-        assert f"fig_{domain_id}_chapter_snapshot.png" in text
+    assert chapter_includes == [
+        "ch01_introduction_and_thesis_claims",
+        "ch02_related_work_and_novelty_gap",
+        "ch03_formal_problem_formulation",
+        "ch04_orius_architecture_dc3s_runtime_layer",
+        "ch05_mathematical_foundations_and_safety_guarantees",
+        "ch06_benchmark_and_reproducibility_protocol",
+        "ch07_witness_domain_implementation",
+        "ch08_witness_results_and_failure_analysis",
+        "ch09_universal_orius_across_domains",
+        "ch10_temporal_certificates_and_graceful_degradation",
+        "ch11_compositional_safety",
+        "ch12_certos_runtime_assurance",
+        "ch13_governance_reproducibility_limitations_and_conclusion",
+        "app_aj_assumption_register",
+        "app_ak_proofs",
+        "app_am_artifact_and_claim_index",
+        "app_an_safety_case_bundle_index",
+    ]
+    assert "\\include{chapters/" not in paper_tex
+    assert appendix_includes == [
+        "monograph/app_aj_assumption_register",
+        "monograph/app_ak_proofs",
+        "appendices/app_f_fault_specs",
+        "monograph/app_am_artifact_and_claim_index",
+        "monograph/app_an_safety_case_bundle_index",
+    ]
 
-    synthesis = (REPO_ROOT / "paper" / "monograph" / "ch14_cross_domain_synthesis.tex").read_text(encoding="utf-8")
-    roadmap = (REPO_ROOT / "paper" / "monograph" / "ch15_societal_impact_and_roadmap.tex").read_text(encoding="utf-8")
-    assert "fig_orius_equal_domain_parity_matrix.png" in synthesis
-    assert "fig_orius_equal_domain_gate_timeline.png" in synthesis
-    assert "fig_orius_calibration_coverage_matrix.png" in synthesis
-    assert "tbl_ch40_44_cross_domain_support" in synthesis
-    assert "tbl_orius_submission_readiness" in synthesis
-    assert "tbl_orius_calibration_diagnostics" in synthesis
-    assert "fig_orius_runtime_governance_matrix.png" in roadmap
-    aerospace = (REPO_ROOT / "paper" / "monograph" / "ch13_aerospace_domain.tex").read_text(encoding="utf-8")
-    assert "tbl_aerospace_public_flight_support" in aerospace
-    assert "Bounded public-flight support lane" in aerospace
+
+def test_dissertation_core_chapters_reference_governed_assets() -> None:
+    chapter7 = (REPO_ROOT / "paper" / "monograph" / "ch07_witness_domain_implementation.tex").read_text(encoding="utf-8")
+    chapter8 = (REPO_ROOT / "paper" / "monograph" / "ch08_witness_results_and_failure_analysis.tex").read_text(encoding="utf-8")
+    chapter9 = (REPO_ROOT / "paper" / "monograph" / "ch09_universal_orius_across_domains.tex").read_text(encoding="utf-8")
+    chapter10 = (REPO_ROOT / "paper" / "monograph" / "ch10_temporal_certificates_and_graceful_degradation.tex").read_text(encoding="utf-8")
+    chapter12 = (REPO_ROOT / "paper" / "monograph" / "ch12_certos_runtime_assurance.tex").read_text(encoding="utf-8")
+    chapter13 = (REPO_ROOT / "paper" / "monograph" / "ch13_governance_reproducibility_limitations_and_conclusion.tex").read_text(encoding="utf-8")
+
+    assert "tbl07_dataset_cards" in chapter7
+    assert "tbl08_forecast_baselines" in chapter7
+    assert "tbl_battery_deep_oqe_summary" in chapter7
+    assert "fig_battery_reliability_baselines.png" in chapter7
+
+    assert "tbl01_main_results" in chapter8
+    assert "tbl02_ablations" in chapter8
+    assert "tbl03_cqr_group_coverage" in chapter8
+    assert "fig_battery_deep_oqe_safety_metrics.png" in chapter8
+    assert "Without ORIUS" in chapter8
+    assert "tbl_battery_raw_sequence_track" not in chapter8
+
+    assert "tbl_orius_equal_domain_parity_matrix" in chapter9
+    assert "fig_multi_domain_validation" in chapter9
+    assert "shared domain template" in chapter9.lower()
+    assert "artifact surface, while canonical raw-data closure remains incomplete" in chapter9
+    assert "tbl_ch40_44_cross_domain_support" not in chapter9
+
+    assert "fig_blackout_halflife.png" in chapter10
+    assert "fig_graceful_four_policies.png" in chapter10
+
+    assert "fig_orius_runtime_governance_matrix.png" in chapter12
+    assert "policy-driven runtime governance layer" in chapter12
+
+    assert "Navigation remains blocked" in chapter13
+    assert "multi-flight runtime validation surface with material post-repair gain" in chapter13
+    assert "tbl_orius_deployment_validation_scope" not in chapter13
 
 
 def test_93plus_support_tables_are_referenced_in_manuscript_and_scripts() -> None:
-    synthesis = (REPO_ROOT / "paper" / "monograph" / "ch14_cross_domain_synthesis.tex").read_text(encoding="utf-8")
-    roadmap = (REPO_ROOT / "paper" / "monograph" / "ch15_societal_impact_and_roadmap.tex").read_text(encoding="utf-8")
+    chapter9 = (REPO_ROOT / "paper" / "monograph" / "ch09_universal_orius_across_domains.tex").read_text(encoding="utf-8")
+    chapter12 = (REPO_ROOT / "paper" / "monograph" / "ch12_certos_runtime_assurance.tex").read_text(encoding="utf-8")
+    chapter13 = (REPO_ROOT / "paper" / "monograph" / "ch13_governance_reproducibility_limitations_and_conclusion.tex").read_text(encoding="utf-8")
     scorecard = (REPO_ROOT / "reports" / "publication" / "orius_submission_scorecard.md").read_text(encoding="utf-8")
     hf_jobs_readme = (REPO_ROOT / "scripts" / "hf_jobs" / "README.md").read_text(encoding="utf-8")
 
-    assert "tbl_orius_submission_readiness" in synthesis
-    assert "tbl_orius_refresh_lane_status" in synthesis
-    assert "tbl_orius_calibration_diagnostics" in synthesis
-    assert "tbl_orius_runtime_budget_matrix" in roadmap
-    assert "tbl_orius_governance_lifecycle_matrix" in roadmap
-    assert "tbl_orius_deployment_validation_scope" in roadmap
+    assert "tbl_orius_equal_domain_parity_matrix" in chapter9
+    assert "fig_multi_domain_validation" in chapter9
+    assert "fig_orius_runtime_governance_matrix.png" in chapter12
+    assert "In that exact sense, the dissertation" in chapter13
+    assert "universal in architecture, tiered in evidence" in chapter13
+    assert "equal-domain closure remains an empirical" in chapter13
+    assert "program that must be earned" in chapter13
     assert "bounded_93_candidate" in scorecard
     assert "public_flight_93_candidate" in scorecard
     assert "equal_domain_93" in scorecard

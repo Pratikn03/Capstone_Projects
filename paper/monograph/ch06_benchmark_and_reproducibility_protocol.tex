@@ -1,0 +1,40 @@
+\chapter{Benchmark and Reproducibility Protocol}
+\label{ch:benchmark-reproducibility-protocol}
+
+\section{Dual-trajectory evaluation as the core benchmark principle}
+ORIUS-Bench is built around dual-trajectory replay. Every evaluation episode distinguishes
+between what the runtime \emph{observes} and what the plant or replay harness treats as
+the \emph{true} safety surface. This is the only reliable way to measure OASG, because
+observed-state legality alone cannot reveal whether the action was physically safe.
+
+\section{Replay, faults, and deterministic schedules}
+The benchmark uses deterministic fault schedules so that replay, comparison, and
+certificate traces remain reproducible. Fault families include dropout, stale holds,
+delay, reordering, spikes, drift, and cross-domain analogs. The important scientific
+point is not merely that faults exist; it is that they can be replayed against the same
+true-vs-observed contract across domains.
+
+\section{ORIUS-Bench metrics}
+The dissertation evaluates ORIUS through a metric family that matches the runtime object:
+true-state violation rate (TSVR), observation-action safety gap, certificate validity,
+graceful degradation quality, intervention burden, audit completeness, and runtime
+latency. These metrics prevent the dissertation from drifting into a pure forecasting or
+pure control performance narrative.
+
+\IfFileExists{paper/assets/tables/generated/cross_domain_oasg_table.tex}{%
+\input{paper/assets/tables/generated/cross_domain_oasg_table}%
+}{%
+\input{assets/tables/generated/cross_domain_oasg_table}%
+}
+
+\section{Artifact provenance and claim locking}
+The benchmark protocol is inseparable from the claim-lock pipeline. The canonical thesis
+surface is \texttt{paper/paper.tex}, but its headline tables and figures are backed by
+manifests, publication matrices, and governed artifact paths. This means the dissertation
+is not ``about'' results in the abstract; it is a storyboard of verifiable evidence.
+
+\section{Strict universal mode}
+For the dissertation, benchmark discipline also means refusing battery-shaped shortcuts in
+universal language. Domain-neutral replay predicates, adapter hooks, and parity gating are
+the canonical surfaces. Legacy compatibility fields can remain for historical or bounded
+support use, but they are not allowed to define the universal benchmark story.

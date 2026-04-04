@@ -1,122 +1,58 @@
-% Auto-generated ORIUS universal monograph entrypoint.
-        \documentclass[12pt,oneside]{book}
-        \input{preamble.tex}
-        \usepackage{alphalph}
-        \graphicspath{{reports/publication/}{reports/hil/}{reports/figures/}{paper/assets/figures/}{reports/universal_orius_validation/}{reports/universal_training_audit/}}
+\documentclass[12pt,oneside]{book}
+\input{preamble.tex}
+\usepackage{alphalph}
+\graphicspath{{reports/publication/}{reports/hil/}{reports/figures/}{paper/assets/figures/}{reports/universal_orius_validation/}{reports/universal_training_audit/}}
 
-        \title{ORIUS: A Universal Safety Layer for Physical AI under Degraded Observation}
-        \author{Pratik Niroula}
-        \date{April 2026}
+\title{ORIUS: Observation--Reality Integrity for Universal Safety: A Certificate-Aware Runtime Safety Layer for Physical AI under Degraded Observation}
+\author{Pratik Niroula}
+\date{April 2026}
 
-        \begin{document}
-        \frontmatter
-        \input{frontmatter/titlepage.tex}
-        \input{frontmatter/abstract.tex}
-        \input{frontmatter/acknowledgments.tex}
-        \tableofcontents
-        \listoftables
-        \listoffigures
+\begin{document}
+\frontmatter
+\input{frontmatter/titlepage.tex}
+\input{frontmatter/abstract.tex}
+\input{frontmatter/acknowledgments.tex}
+\tableofcontents
+\listoftables
+\listoffigures
 
-        \mainmatter
+\mainmatter
 
-        \part{Why Physical AI Needs a Safety Layer}
-        \include{monograph/ch01_physical_ai_safety}
-        \include{monograph/ch02_oasg_claim_boundary}
-        \include{monograph/ch03_related_work_universal}
+\part{Problem, Principle, and Gap}
+\include{monograph/ch01_introduction_and_thesis_claims}
+\include{monograph/ch02_related_work_and_novelty_gap}
+\include{monograph/ch03_formal_problem_formulation}
 
-        \part{ORIUS Architecture}
-        \include{monograph/ch04_universal_runtime_layer}
-        \include{monograph/ch05_detect_calibrate_constrain_shield_certify}
-        \include{monograph/ch07_system_benchmark_governance}
-        \include{chapters/ch05_orius_system_context}
-        \include{chapters/ch06_data_telemetry_scope}
-        \include{chapters/ch30_orius_bench_battery_track}
-        \include{chapters/ch22_latency_systems_footprint}
-        \include{chapters/ch32_certos_runtime_certificate_lifecycle}
+\part{ORIUS Framework and Theorem Ladder}
+\include{monograph/ch04_orius_architecture_dc3s_runtime_layer}
+\include{monograph/ch05_mathematical_foundations_and_safety_guarantees}
+\include{monograph/ch06_benchmark_and_reproducibility_protocol}
 
-        \part{Theory}
-        \include{monograph/ch06_theory_bridge}
-        \include{chapters/ch15_assumptions_notation_proof_discipline}
-        \include{chapters/ch16_battery_theorem_oasg_existence}
-        \include{chapters/ch17_battery_theorem_safety_preservation}
-        \include{chapters/ch18_orius_core_bound_battery}
-        \include{chapters/ch19_no_free_safety_battery}
-        \include{chapters/ch19b_sota_comparison}
-        \include{chapters/ch20_temporal_behavioral_extensions}
-        \include{chapters/ch37_universality_completeness}
+\part{Witness Domain Evidence}
+\include{monograph/ch07_witness_domain_implementation}
+\include{monograph/ch08_witness_results_and_failure_analysis}
 
-        \part{Domain Chapters}
-        \include{monograph/ch08_battery_bridge}
-        \include{chapters/ch07_battery_dynamics_dispatch}
-        \include{chapters/ch08_forecasting_calibration}
-        \include{chapters/ch09_dc3s_battery_adapter}
-        \include{chapters/ch10_cpsbench_battery_track}
-        \include{chapters/ch11_main_battery_results}
-        \include{chapters/ch12_ablations_failure_analysis}
-        \include{chapters/ch13_case_studies_operational_traces}
-        \include{chapters/ch14_battery_lessons_domain_interpretation}
-        \include{chapters/ch21_fault_performance_stress_tests}
-        \include{chapters/ch23_hyperparameter_surface_stability}
-        \include{chapters/ch24_conditional_coverage_subgroups}
-        \include{chapters/ch25_regional_decomposition_real_prices}
-        \include{chapters/ch26_asset_preservation_aging_proxy}
-        \include{chapters/ch27_hardware_in_loop_validation}
-        \include{chapters/ch28_certificate_half_life_blackout}
-        \include{chapters/ch29_graceful_degradation_safe_landing}
-        \include{chapters/ch31_compositional_safety_battery_fleets}
-        \include{chapters/ch32_adversarial_robustness_active_probing}
-        \include{monograph/ch09_av_domain}
-        \include{monograph/ch10_industrial_domain}
-        \include{monograph/ch11_healthcare_domain}
-        \include{monograph/ch12_navigation_domain}
-        \include{monograph/ch13_aerospace_domain}
+\part{Universalization and Extensions}
+\include{monograph/ch09_universal_orius_across_domains}
+\include{monograph/ch10_temporal_certificates_and_graceful_degradation}
+\include{monograph/ch11_compositional_safety}
+\include{monograph/ch12_certos_runtime_assurance}
 
-        \part{Universality, Limits, and Societal Program}
-        \include{monograph/ch14_cross_domain_synthesis}
-        \include{chapters/ch34_outside_current_evidence}
-        \include{chapters/ch35_deployment_path_verification_discipline}
-        \include{monograph/ch15_societal_impact_and_roadmap}
-        \include{monograph/ch16_conclusion_monograph}
+\part{Submission Boundary}
+\include{monograph/ch13_governance_reproducibility_limitations_and_conclusion}
 
-        \appendix
-        \renewcommand{\thechapter}{\alphalph{\value{chapter}}}
-        \include{appendices/app_a_notation}
-\include{appendices/app_b_assumptions}
-\include{appendices/app_c_full_proofs}
-\include{appendices/app_d_extended_results}
-\include{appendices/app_e_reliability_audits}
+\appendix
+\renewcommand{\thechapter}{\alphalph{\value{chapter}}}
+\include{monograph/app_aj_assumption_register}
+\include{monograph/app_ak_proofs}
 \include{appendices/app_f_fault_specs}
-\include{appendices/app_g_adapter_interface}
-\include{appendices/app_domain_coverage_proof}
-\include{appendices/app_domain_instantiation_block}
-\include{appendices/app_j_sweep_and_latency_protocols}
-\include{appendices/app_k_blueprint_coverage_matrix}
-\include{appendices/app_l_artifact_figure_table_index}
-\include{appendices/app_m_verified_theorems_and_gap_audit}
-\include{appendices/app_o_claim_scope_and_citation_policy}
-\include{appendices/app_q_editorial_integration_and_locking}
-\include{appendices/app_r_locked_artifact_hash_registry}
-\include{appendices/app_s_claim_evidence_registers}
-\include{appendices/app_t_certos_artifact_audit}
-\include{appendices/app_u_certos_lifecycle_log}
-\include{appendices/app_v_active_probing_battery_audit}
-\include{appendices/app_w_portability_context_and_roadmap}
-\include{appendices/app_x_full_locked_de_trace}
-\include{appendices/app_y_full_locked_us_trace}
-\include{appendices/app_aa_release_manifest_and_artifact_traceability}
-\include{appendices/app_ab_hil_fault_response_log}
-\include{appendices/app_ac_integrated_theorem_surface_register}
-\include{monograph/app_ad_annotated_bibliography_map}
-\include{monograph/app_ae_expanded_reviewer_gap_analysis}
-\include{monograph/app_af_domain_protocol_cards}
-\include{monograph/app_ag_module_claim_crosswalk}
-\include{monograph/app_ah_publication_artifact_index}
-\include{monograph/app_ai_formula_and_term_register}
+\include{monograph/app_am_artifact_and_claim_index}
+\include{monograph/app_an_safety_case_bundle_index}
 
-        \backmatter
-        \include{backmatter/extended_reading_index}
-        \nocite{*}
-        \bibliographystyle{IEEEtran}
-        \bibliography{paper/bibliography/orius_monograph}
+\backmatter
+\include{backmatter/extended_reading_index}
+\nocite{*}
+\bibliographystyle{IEEEtran}
+\bibliography{paper/bibliography/orius_monograph}
 
-        \end{document}
+\end{document}

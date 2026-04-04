@@ -1,0 +1,60 @@
+\chapter{Mathematical Foundations and Safety Guarantees}
+\label{ch:mathematical-foundations}
+
+\section{Assumptions and theorem discipline}
+The dissertation keeps the theorem surface intentionally explicit. Every strong guarantee
+depends on a named assumption set, and those assumptions are recorded in the assumption
+register in Appendix~\ref{app:assumptions}. The point of the theory chapter is not to
+overclaim generality. It is to show exactly which parts of the ORIUS argument are proved,
+which are validated empirically, and which remain bounded by current evidence.
+
+\section{The theorem ladder}
+The current ORIUS theorem ladder establishes four core ideas:
+\begin{enumerate}
+  \item OASG can arise even when observed-state legality appears intact.
+  \item Reliability-aware repair preserves safety under stated uncertainty and feasibility
+  assumptions.
+  \item The risk envelope tightens as reliability degrades, so intervention pressure is a
+  lawful consequence of degraded observation rather than an arbitrary heuristic.
+  \item There is no free safety: quality-ignorant control can be driven into true-state
+  violation by admissible degradation regimes.
+\end{enumerate}
+The deepest theorem-to-code-to-artifact chain remains battery-backed, but the theorem
+objects themselves are written against universal typed contracts and runtime objects.
+
+\IfFileExists{paper/assets/tables/generated/tbl_theorem_dependency.tex}{%
+\input{paper/assets/tables/generated/tbl_theorem_dependency}%
+}{%
+\input{assets/tables/generated/tbl_theorem_dependency}%
+}
+
+\section{Risk envelope interpretation}
+ORIUS does not prove safety from a single forecast accuracy number. The risk envelope is
+expressed in terms of uncertainty coverage, miscoverage, and mean reliability. That is why
+the dissertation can connect theorem statements to runtime calibration and certificate
+semantics without collapsing them into a purely statistical paper or a purely control
+paper.
+
+\section{Theorem-to-artifact linkage}
+\begin{figure}[htbp]
+\centering
+\IfFileExists{reports/publication/fig_integrated_theorem_gate.png}{%
+\includegraphics[width=0.88\textwidth]{reports/publication/fig_integrated_theorem_gate.png}%
+}{%
+\includegraphics[width=0.88\textwidth]{../reports/publication/fig_integrated_theorem_gate.png}%
+}
+\caption{The integrated theorem gate keeps theorem language aligned to locked code and artifact surfaces rather than to informal prose summaries.}
+\label{fig:integrated-theorem-gate}
+\end{figure}
+
+The dissertation repeatedly returns to one discipline rule: theorem statements must point
+to explicit assumptions, typed runtime objects, and tracked empirical diagnostics. That is
+why the proof surface remains durable even when empirical maturity differs across domains.
+
+\section{Proved, validated, and roadmap claims}
+The theory chapter is also the place where the dissertation's claim boundary becomes
+reader-visible. Proved claims live here and in the proof appendix. Validated claims are
+only promoted when replay, calibration, runtime, and governance artifacts exist. Roadmap
+claims remain in bounded future-work language. This separation is the mechanism that lets
+ORIUS argue for a universal safety layer without pretending that every supported row is
+already equal in empirical closure.

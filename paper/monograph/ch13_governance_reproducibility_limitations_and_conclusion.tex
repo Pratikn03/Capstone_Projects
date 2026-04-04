@@ -1,0 +1,65 @@
+\chapter{Governance, Reproducibility, Limitations, and Conclusion}
+\label{ch:governance-reproducibility-limitations-conclusion}
+
+\section{Limitations and blocked rows}
+The dissertation's strongest limitation is empirical, not conceptual. The runtime grammar is
+broader than the deepest currently defended evidence. Battery remains the witness row with
+the most complete theorem-to-code-to-artifact chain. Industrial process control and
+healthcare monitoring support defended bounded interpretations. The autonomous-vehicle row is
+a defended bounded runtime row under the current artifact surface, while canonical raw-data
+closure remains incomplete. Navigation remains blocked by the absence of a defended
+real-data train--replay chain. Aerospace remains blocked by the absence of a defended
+multi-flight runtime validation surface with material post-repair gain.
+
+Those limits matter because ORIUS is not presented here as a universal optimal controller or
+as a finished equal-domain deployment program. It is presented as a runtime safety layer
+whose strongest current evidence is deep in one witness domain and bounded across several
+others. The open rows should therefore be read as the remaining empirical work required to
+extend the thesis, not as defects that invalidate the defended core.
+
+\section{Reproducibility and evidence boundary}
+The manuscript keeps every headline claim tied to tracked figures, tables, manifests, or
+claim matrices so that the defended surface remains auditable after the fact. The purpose of
+that discipline is simple: a universal safety thesis should be inspectable at the level of
+artifacts, not only persuasive at the level of prose. In that exact sense, the dissertation
+is universal in architecture, tiered in evidence.
+
+The evidence boundary is therefore factual rather than rhetorical. Claims backed by theorem
+statements remain theorem claims. Claims backed by replay, runtime traces, and governed
+artifacts remain validated claims. Claims that depend on future real-data closure for
+navigation or multi-flight aerospace closure remain open research steps and are not promoted
+into defended headline language.
+
+\section{Conclusion}
+ORIUS establishes one durable idea for physical AI: degraded observation should be treated
+as a first-class runtime safety problem rather than as a residual modeling nuisance.
+Whenever observed-state legality and true-state legality can diverge, safe release requires
+more than nominal intelligence. It requires explicit reliability estimation, conservative
+state widening, repaired action or bounded fallback, and certificate-aware release.
+
+The mechanism that makes that claim concrete is explicit in the dissertation. A
+\texttt{DomainAdapter} exposes the domain safety predicate and fallback object. The
+universal benchmark schema exposes one replay contract for truth, observation, intervention,
+fallback, certificate validity, and latency. CertOS exposes the lifecycle semantics that
+determine when repaired action may still be released. Together, those three surfaces are the
+implementation backbone of ORIUS and the reason this thesis is more than a conceptual safety
+manifesto.
+
+ORIUS therefore does not ask every domain to share a controller, a plant model, or an
+optimization objective. It asks every domain to make the release boundary explicit. By doing
+so, it turns true-state violation, intervention burden, fallback usage, certificate
+validity, and runtime latency into scientific objects that can be compared across domains
+without pretending the domains themselves are identical.
+
+The thesis therefore closes on a claim that is both ambitious and disciplined. ORIUS already
+supports a reusable runtime safety layer for physical AI under degraded observation. It does
+not yet support the stronger claim that every supported domain is equally mature. That
+boundary should be treated as a scientific virtue rather than a rhetorical compromise:
+structural universality is defended now, while equal-domain closure remains an empirical
+program that must be earned.
+
+If physical AI is to move beyond domain-by-domain reactive patching, it needs a common
+runtime discipline for deciding what remains safe when the observation channel begins to
+fail. ORIUS provides that discipline in a form that is mathematical enough to be analyzed,
+empirical enough to be tested, and operational enough to govern release. That is the thesis
+claim this dissertation defends.

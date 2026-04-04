@@ -1,4 +1,4 @@
-# ORIUS: A Universal Safety Layer for Physical AI under Degraded Observation
+# ORIUS: Observation--Reality Integrity for Universal Safety A Certificate-Aware Runtime Safety Layer for Physical AI under Degraded Observation
 
 **Author:** Pratik Niroula  
 **Affiliation:** Minnesota State University, Mankato; CIT (Major), Mathematics (Minor)

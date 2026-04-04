@@ -1,0 +1,103 @@
+\chapter{Related Work and the Novelty Gap}
+\label{ch:related-work-novelty-gap}
+
+\section{Conformal prediction and adaptive calibration}
+Conformal prediction and related distribution-free uncertainty methods provide one of the
+few disciplined ways to wrap learned models with coverage-aware uncertainty without
+assuming a perfectly specified error law
+\cite{vovk2005algorithmic,lei2018distribution,romano2019conformalized,gibbs2021adaptive,angelopoulos2023gentle,barber2023beyond}.
+Conformalized quantile regression and adaptive conformal variants extend that logic to
+heteroskedastic and nonstationary settings, which makes them especially relevant once a
+physical system moves through regime changes or degraded telemetry states
+\cite{romano2019conformalized,gibbs2021adaptive,zaffran2022adaptive,stankeviciute2021conformal,xu2021dynamic,sesia2021comparison,bates2021distribution}.
+
+\paragraph{Why this is insufficient for ORIUS.}
+This family solves uncertainty quantification; it does not solve the release-boundary
+question that follows from that uncertainty. Coverage guarantees do not by themselves decide
+how the admissible action set should change, which fallback is allowed, or what evidence
+must accompany release once the observation surface is unreliable. ORIUS therefore uses
+calibration as an input to runtime safety, not as the full safety object.
+
+\section{Runtime assurance and Simplex-style supervision}
+Runtime assurance architectures, supervisory controllers, shielding, and runtime
+verification supply the language of intervention, veto, fallback, and monitored execution
+\cite{sha2001using,sha1998simplex,desai2019soter,bloem2015shield,bartocci2018introduction,havelund2004runtime,leucker2009brief,schierman2015run,bak2011runtime}.
+That line of work is indispensable because it treats safe release as a separate problem from
+nominal policy design.
+
+\paragraph{Why this is insufficient for ORIUS.}
+Most supervisory schemes enter after the nominal controller has already proposed an action
+under a state estimate that is treated as sufficiently meaningful. ORIUS addresses an
+earlier fault line: once observation quality degrades, the assurance layer must reason
+jointly about reliability, widened state uncertainty, repaired action, fallback, and
+certificate semantics. A supervisor without that observation-side logic is still missing the
+central OASG object.
+
+\section{Safety filters, shields, and robust safe control}
+Control barrier functions, predictive safety filters, robust MPC, and tube-based control
+translate model uncertainty into admissible control sets and corrective intervention rules
+\cite{ames2019control,ames2014cbf,wabersich2021predictive,nguyen2016exponential,wang2017safety,fisac2019general,mayne2005robust,langson2004tubes,rawlings2017mpc,ben2009robust,camacho2013model}.
+These methods are the closest classical relatives of ORIUS because they formalize the
+difference between nominal control intent and safe control execution.
+
+\paragraph{Why this is insufficient for ORIUS.}
+This family usually assumes that the uncertainty set and safety object have already been
+defined in a domain-specific way. ORIUS does not replace that work with a universal
+controller. Instead, it provides a typed runtime contract that can host many repair
+mechanisms while keeping reliability estimation, fallback semantics, and certificate
+discipline explicit. The novelty is not the existence of safe control alone; it is the
+runtime composition that makes safe control portable across domains.
+
+\section{Anomaly, drift, and degraded-observation detection}
+Fault diagnosis, change detection, cyber-physical security, and anomaly monitoring provide
+the vocabulary for stale, delayed, reordered, dropped, or corrupted observations
+\cite{rajkumar2010cps,derler2012modeling,baheti2011cyberphysical,pasqualetti2013attack,teixeira2015secure,basseville1993detection,page1954continuous,page1955test,hinkley1971inference,liu2008isolation,breunig2000lof}.
+This literature is essential because degraded observation must first be recognized before it
+can influence action release.
+
+\paragraph{Why this is insufficient for ORIUS.}
+Detection alone does not specify how action semantics should change after trust degrades. A
+drift alarm can tell the system that something is wrong without saying how uncertainty
+inflates, how the safe set tightens, what repair is permitted, or what certificate makes
+the next step auditable. ORIUS uses detection as the opening move in a runtime safety
+sequence, not as the full response.
+
+\section{Domain-specific cyber-physical safety systems}
+Energy systems, autonomous mobility stacks, industrial control, healthcare monitoring, and
+other cyber-physical systems already contain rich safety practice in their own local forms
+\cite{rajkumar2010cps,baheti2011cyberphysical,pasqualetti2013attack,teixeira2015secure,sha2001using,ames2019control}.
+This practice matters because any claim of universality that ignores domain structure is
+empty from the start.
+
+\paragraph{Why this is insufficient for ORIUS.}
+Domain-specific systems typically optimize within one application vocabulary and one local
+evidence regime. They rarely expose a common contract that allows degraded-observation
+replay, repaired action, fallback semantics, certificate validity, and latency to be
+compared across domains. ORIUS addresses that missing cross-domain runtime object rather
+than trying to erase domain structure.
+
+\section{The novelty gap ORIUS addresses}
+The literature becomes most powerful when these families are read together, but it also
+reveals a persistent separation of levels. Uncertainty methods stop at calibrated sets.
+Assurance methods stop at supervisory intervention. Safe-control methods stop at
+plant-specific repair geometry. Detection methods stop at identifying degraded telemetry.
+Domain systems stop at application-local safety practice. What is missing between them is a
+single typed runtime composition that starts with observation reliability and ends with
+repaired action, fallback, certificate semantics, and cross-domain replay under one common
+contract.
+
+That missing composition is ORIUS's novelty claim. The dissertation does not argue that any
+one ORIUS component is unprecedented in isolation. It argues that the combination of
+observation reliability, action repair, certificate semantics, and universal replay has not
+previously been stabilized as one reusable runtime safety layer for physical AI. ORIUS is
+therefore not ``better forecasting,'' ``better perception,'' or ``one more controller.'' It
+is a release-boundary discipline for degraded-observation safety.
+
+The closest plausible rival to ORIUS is not any single paper in these families. It is an
+imagined composition of them: adaptive conformal intervals for uncertainty, a safety filter
+or Simplex supervisor for intervention, anomaly detection for degraded telemetry, and
+runtime verification for logging and policy enforcement. Even that composite stack still
+stops short of ORIUS's central object. It lacks a typed release contract that binds
+observed-state and true-state semantics, repaired action, fallback, certificate lifecycle,
+and cross-domain replay under one explicit interface. That final integration step is the
+novelty claim the dissertation defends.

@@ -1972,7 +1972,7 @@ def _build_93plus_closure_assets() -> None:
         csv.writer(fh).writerows(calibration_rows)
     _write_wide_table(
         PUBLICATION_DIR / "tbl_orius_calibration_diagnostics.tex",
-        caption="Cross-domain calibration diagnostics for the ORIUS 93+ closure program. The table keeps formal calibration, conservative widening, and residual-shift limits separate so weaker rows cannot inherit the witness-domain statistical rhetoric by analogy.",
+        caption="Cross-domain calibration diagnostics for the ORIUS monograph. The table keeps formal calibration, conservative widening, and residual-shift limits separate so weaker rows do not inherit witness-domain statistical rhetoric by analogy.",
         label="tab:orius-calibration-diagnostics",
         header=[
             "Domain",
@@ -2045,7 +2045,7 @@ def _build_93plus_closure_assets() -> None:
         csv.writer(fh).writerows(runtime_rows)
     _write_wide_table(
         PUBLICATION_DIR / "tbl_orius_runtime_budget_matrix.tex",
-        caption="Cross-domain runtime-budget matrix for the ORIUS 93+ closure program. Battery uses the locked witness latency surface; the remaining rows use the SIL summary and domain-closure runtime traces.",
+        caption="Cross-domain runtime-budget matrix for ORIUS. Battery uses the locked witness latency surface, while the remaining rows use SIL summaries and domain-closure runtime traces.",
         label="tab:orius-runtime-budget-matrix",
         header=[
             "Domain",
@@ -2122,7 +2122,7 @@ def _build_93plus_closure_assets() -> None:
         csv.writer(fh).writerows(governance_rows)
     _write_wide_table(
         PUBLICATION_DIR / "tbl_orius_governance_lifecycle_matrix.tex",
-        caption="Cross-domain governance lifecycle matrix for the ORIUS 93+ closure program. Composition and lifecycle breadth are recorded separately so unsupported rows remain visibly gated.",
+        caption="Cross-domain governance lifecycle matrix for ORIUS. Composition and lifecycle breadth are recorded separately so unsupported rows remain visibly gated.",
         label="tab:orius-governance-lifecycle-matrix",
         header=[
             "Domain",
@@ -2232,7 +2232,7 @@ def _build_93plus_closure_assets() -> None:
         csv.writer(fh).writerows(deployment_rows)
     _write_wide_table(
         PUBLICATION_DIR / "tbl_orius_deployment_validation_scope.tex",
-        caption="Deployment validation scope for the ORIUS 93+ closure program. The table distinguishes defended replay, rehearsal, proxy, and explicitly out-of-scope surfaces so deployment language cannot outrun the tracked artifacts.",
+        caption="Deployment validation scope for ORIUS. The table distinguishes defended replay, rehearsal, proxy, and explicitly out-of-scope surfaces so deployment language cannot outrun the tracked artifacts.",
         label="tab:orius-deployment-validation-scope",
         header=[
             "Deployment surface",
@@ -2451,7 +2451,7 @@ def _build_93plus_closure_assets() -> None:
     )
     _write_wide_table(
         PUBLICATION_DIR / "tbl_orius_submission_readiness.tex",
-        caption="ORIUS 93+ submission-readiness gate. The bounded target can pass with explicit gated rows, the bounded public-flight target can deepen aerospace support evidence without promoting the official row, and the equal-domain target cannot pass until the two blocked rows are promoted by artifact, replay, and runtime closure rather than by prose.",
+        caption="Cross-domain claim-readiness summary for ORIUS. The bounded thesis claim can be defended with explicit gated rows, whereas equal-domain closure remains blocked until the open rows close by artifact, replay, and runtime evidence rather than by prose.",
         label="tab:orius-submission-readiness",
         header=[
             "Target tier",
@@ -4457,12 +4457,12 @@ def _build_publication_tables() -> None:
 
     chapter_map_rows = [
         ["unit", "main_monograph_sections", "central_claim", "evidence_status", "role_in_book"],
-        ["Battery witness domain", "ch08 plus battery evidence block", "Battery provides the deepest theorem-to-artifact witness for degraded-observation safety.", "witness_row", "deepest empirical and formal witness"],
-        ["Temporal validity layer", "ch20 plus blackout and half-life sections", "Certificate validity is a temporal runtime object rather than a single-step assumption.", "defended_bounded_layer", "temporal extension of the universal safety layer"],
-        ["Graceful fallback layer", "ch29 and synthesis references", "Fallback quality can be benchmarked and governed rather than treated as an informal emergency path.", "defended_bounded_layer", "controlled degradation layer"],
-        ["Universal benchmark discipline", "ch07 and battery benchmark block", "Replay, metrics, and latency are shared across domains under one schema.", "defended_bounded_layer", "evaluation discipline layer"],
-        ["Shared-constraint composition", "ch31 and synthesis references", "Local certificates do not automatically compose under shared resources.", "defended_bounded_layer", "bounded composition layer"],
-        ["Runtime governance and audit continuity", "ch07, ch32, and appendices", "Certificates require lifecycle, fallback, and audit semantics to become operationally meaningful.", "defended_bounded_layer", "runtime governance layer"],
+        ["Problem, principle, and gap", "paper/monograph/ch01-ch03", "The dissertation opens with degraded observation as the hidden safety contract and defines OASG as the organizing hazard.", "curated_core", "problem statement and claim boundary"],
+        ["ORIUS framework and theorem ladder", "paper/monograph/ch04-ch06", "One runtime kernel, one theorem bridge, and one benchmark protocol connect architecture to defended evidence.", "curated_core_with_generated_artifacts", "architecture, guarantees, and reproducibility spine"],
+        ["Witness domain evidence", "paper/monograph/ch07-ch08", "Battery remains the deepest theorem-to-code-to-artifact witness without becoming the conceptual identity of the dissertation.", "witness_row", "deepest empirical and formal witness"],
+        ["Universalization and extensions", "paper/monograph/ch09-ch12", "Cross-domain validation, temporal certificates, composition, and CertOS extend one runtime grammar across domains while keeping evidence gates explicit.", "curated_core_with_generated_artifacts", "universal transfer and bounded extensions"],
+        ["Submission boundary", "paper/monograph/ch13", "The dissertation closes by separating proved, validated, and roadmap claims under one governed parity boundary.", "curated_core", "final claim discipline and conclusion"],
+        ["Dissertation traceability appendices", "paper/monograph/app_aj-app_an plus appendices/app_f", "Assumptions, proofs, benchmark specifications, and claim bundles remain explicit and auditable.", "generated_index_plus_curated_appendix", "traceability and safety-case support"],
     ]
     with (PUBLICATION_DIR / "orius_monograph_chapter_map.csv").open("w", encoding="utf-8", newline="") as fh:
         csv.writer(fh).writerows(chapter_map_rows)
@@ -4471,7 +4471,7 @@ def _build_publication_tables() -> None:
         ["kind", "title", "labels", "summary", "acceptance"],
         ["parent", "ORIUS: Universal-safety monograph hardening", "research;thesis;orius", "Track the remaining monograph work after the universal-first rewrite so the canonical book stays artifact-strict, parity-gated, and archive-clean.", "The monograph stays universal-first, parity-gated, and free of active paper-lineage scaffolding."],
         ["child", "ORIUS: Keep the parity gate central in the main narrative", "research;thesis;writing", "Keep the abstract, synthesis, reviewer appendix, and conclusion aligned to the same defended-vs-gated domain posture.", "Navigation and aerospace remain gated everywhere until stronger evidence exists."],
-        ["child", "ORIUS: Preserve the generated monograph as the canonical surface", "research;audit;evidence", "Keep generator-owned manuscript assets, matrices, bibliography, and review dossier synchronized through the monograph build script.", "The generator remains the single source of truth for generated monograph assets."],
+        ["child", "ORIUS: Preserve chapter-first dissertation ownership", "research;audit;evidence", "Keep the curated monograph chapters authoritative while the generator continues to own tables, figures, appendix indexes, bibliography maps, and the review dossier.", "The dissertation spine stays chapter-first and claim-locked."],
         ["child", "ORIUS: Close remaining active legacy scaffolding", "research;thesis;cleanup", "Retire or rewrite leftover active text surfaces that still expose stitched-thesis or program-lineage wording.", "Active docs, reports, slides, and manuscript surfaces are monograph-native; legacy material is explicitly archived."],
         ["child", "ORIUS: Plan navigation and aerospace parity closure", "research;frontier;navigation;aerospace", "Track the concrete experiments still needed before equal-domain universality can be claimed as present tense.", "No gated row is promoted without matching data, replay, artifact, and parity updates."],
     ]
@@ -4480,12 +4480,12 @@ def _build_publication_tables() -> None:
 
     coverage_rows = [
         ["monograph_section", "source_surface", "coverage_mode", "status", "notes"],
-        ["universal_hazard_and_related_work", "paper/monograph/ch01-ch03", "generated_monograph", "complete", "Hazard framing, claim boundary, and method families are controlled through the monograph generator."],
-        ["runtime_and_governance_architecture", "paper/monograph/ch04-ch07 plus selected legacy chapters", "mixed_generated_and_curated", "complete", "Runtime kernel, benchmark, latency, and governance are presented as one universal architecture."],
-        ["battery_witness_block", "paper/monograph/ch08 plus chapters/ch07-ch32 battery depth", "mixed_generated_and_curated", "complete", "Battery remains the deepest theorem-to-artifact witness inside the universal-first book."],
-        ["nonbattery_domain_block", "paper/monograph/ch09-ch13", "generated_monograph", "complete", "Each non-battery row follows the common domain template under the parity gate."],
-        ["cross_domain_synthesis_and_limits", "paper/monograph/ch14-ch16 plus chapters/ch22-ch34", "mixed_generated_and_curated", "complete", "Synthesis, claim boundaries, and explicit non-claims stay aligned to the parity matrix."],
-        ["appendix_and_review_surface", "paper/monograph/app_ad-app_ai plus appendices/", "mixed_generated_and_curated", "complete", "Proofs, protocol cards, reviewer analysis, and artifact traceability support the main monograph."],
+        ["problem_principle_and_gap", "paper/monograph/ch01-ch03", "curated_chapter_first", "complete", "Introduction, related work, and formal problem framing are authored directly in the dissertation chapters."],
+        ["framework_and_theorem_ladder", "paper/monograph/ch04-ch06", "curated_chapter_first_with_generated_tables", "complete", "Architecture, guarantees, and benchmark protocol use curated prose plus generated supporting artifacts."],
+        ["witness_domain_evidence", "paper/monograph/ch07-ch08", "curated_chapter_first_with_generated_tables", "complete", "Battery evidence is concentrated into witness-domain implementation and results chapters."],
+        ["universalization_and_extensions", "paper/monograph/ch09-ch12", "curated_chapter_first_with_generated_tables", "complete", "Cross-domain validation, temporal certificates, composition, and runtime governance share one doctrine spine."],
+        ["submission_boundary", "paper/monograph/ch13", "curated_chapter_first_with_generated_tables", "complete", "The final chapter holds the proved-versus-validated boundary, deployment ladder, and conclusion."],
+        ["appendix_and_review_surface", "paper/monograph/app_aj-app_an, appendices/app_f, paper/review/", "mixed_curated_and_generated", "complete", "Traceability appendices are curated around generator-owned indexes and publication artifacts; review assets remain secondary."],
     ]
     with (PUBLICATION_DIR / "paper_thesis_coverage_map.csv").open("w", encoding="utf-8", newline="") as fh:
         csv.writer(fh).writerows(coverage_rows)
@@ -5336,10 +5336,8 @@ def build() -> None:
     _build_domain_evidence_assets()
     _build_93plus_closure_assets()
     _build_hf_job_templates()
-    _build_monograph_chapters()
     _build_monograph_support_assets()
     _build_review_assets()
-    _build_monograph_entrypoint()
 
 
 if __name__ == "__main__":

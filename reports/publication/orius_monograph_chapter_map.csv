@@ -1,7 +1,7 @@
 unit,main_monograph_sections,central_claim,evidence_status,role_in_book
-Battery witness domain,ch08 plus battery evidence block,Battery provides the deepest theorem-to-artifact witness for degraded-observation safety.,witness_row,deepest empirical and formal witness
-Temporal validity layer,ch20 plus blackout and half-life sections,Certificate validity is a temporal runtime object rather than a single-step assumption.,defended_bounded_layer,temporal extension of the universal safety layer
-Graceful fallback layer,ch29 and synthesis references,Fallback quality can be benchmarked and governed rather than treated as an informal emergency path.,defended_bounded_layer,controlled degradation layer
-Universal benchmark discipline,ch07 and battery benchmark block,"Replay, metrics, and latency are shared across domains under one schema.",defended_bounded_layer,evaluation discipline layer
-Shared-constraint composition,ch31 and synthesis references,Local certificates do not automatically compose under shared resources.,defended_bounded_layer,bounded composition layer
-Runtime governance and audit continuity,"ch07, ch32, and appendices","Certificates require lifecycle, fallback, and audit semantics to become operationally meaningful.",defended_bounded_layer,runtime governance layer
+"Problem, principle, and gap",paper/monograph/ch01-ch03,The dissertation opens with degraded observation as the hidden safety contract and defines OASG as the organizing hazard.,curated_core,problem statement and claim boundary
+ORIUS framework and theorem ladder,paper/monograph/ch04-ch06,"One runtime kernel, one theorem bridge, and one benchmark protocol connect architecture to defended evidence.",curated_core_with_generated_artifacts,"architecture, guarantees, and reproducibility spine"
+Witness domain evidence,paper/monograph/ch07-ch08,Battery remains the deepest theorem-to-code-to-artifact witness without becoming the conceptual identity of the dissertation.,witness_row,deepest empirical and formal witness
+Universalization and extensions,paper/monograph/ch09-ch12,"Cross-domain validation, temporal certificates, composition, and CertOS extend one runtime grammar across domains while keeping evidence gates explicit.",curated_core_with_generated_artifacts,universal transfer and bounded extensions
+Submission boundary,paper/monograph/ch13,"The dissertation closes by separating proved, validated, and roadmap claims under one governed parity boundary.",curated_core,final claim discipline and conclusion
+Dissertation traceability appendices,paper/monograph/app_aj-app_an plus appendices/app_f,"Assumptions, proofs, benchmark specifications, and claim bundles remain explicit and auditable.",generated_index_plus_curated_appendix,traceability and safety-case support

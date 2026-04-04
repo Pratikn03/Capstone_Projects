@@ -1,0 +1,67 @@
+\chapter{ORIUS Architecture: DC3S Runtime Layer}
+\label{ch:orius-architecture-dc3s}
+
+ORIUS is implemented as a post-nominal runtime layer. It does not replace the upstream
+forecaster, planner, or controller. It wraps them with a typed safety contract that
+translates degraded observation into repaired action and certificate-aware governance.
+
+\section{Why a runtime layer is needed}
+The dissertation does not assume that every legacy controller can be redesigned around one
+global proof technique. What can be reused is the safety layer that mediates between
+nominal intelligence and actuation. That is the architectural choice that makes ORIUS
+cross-domain: domain-specific intelligence remains domain-specific, while degraded
+observation, action tightening, fallback, and audit semantics are shared.
+
+\section{The Detect--Calibrate--Constrain--Shield--Certify step}
+The universal runtime step consists of five stages.
+\begin{description}
+  \item[Detect] compute observation reliability from freshness, missingness, delay,
+  ordering, spikes, and consistency.
+  \item[Calibrate] widen the observation-consistent state set as reliability drops.
+  \item[Constrain] recompute the admissible action set under the widened uncertainty set.
+  \item[Shield] repair the candidate action or replace it with a fallback when no safe
+  action remains.
+  \item[Certify] emit a causal record describing reliability, uncertainty, repair result,
+  and lifecycle status.
+\end{description}
+This step is deterministic at the contract level even when the nominal controller is
+learned, stochastic, or domain-specific.
+
+\section{Universal runtime flow}
+\begin{figure}[htbp]
+\centering
+\IfFileExists{reports/publication/fig_orius_theory_runtime_domain_flow.png}{%
+\includegraphics[width=0.94\textwidth]{reports/publication/fig_orius_theory_runtime_domain_flow.png}%
+}{%
+\includegraphics[width=0.94\textwidth]{../reports/publication/fig_orius_theory_runtime_domain_flow.png}%
+}
+\caption{ORIUS runtime flow from degraded telemetry to repaired action and governed certificate. The figure is generated from the same publication assets that feed the parity-facing manuscript surfaces.}
+\label{fig:orius-runtime-step}
+\end{figure}
+
+\section{DomainAdapter contract}
+The adapter contract is the narrow universal boundary between plant-specific semantics and
+shared runtime logic. The adapter supplies state interpretation, safety predicates,
+repair/fallback hooks, and certificate details. The kernel supplies reliability handling,
+uncertainty inflation, replay schema compatibility, and lifecycle discipline. This is the
+key design choice behind the dissertation's universality claim: one runtime grammar, many
+domain instantiations.
+
+\IfFileExists{paper/assets/tables/generated/tbl_universal_framework.tex}{%
+\input{paper/assets/tables/generated/tbl_universal_framework}%
+}{%
+\input{assets/tables/generated/tbl_universal_framework}%
+}
+
+\section{Runtime cost and operational realism}
+ORIUS is written for operational deployment rather than only for theorem exposition.
+Runtime overhead, fallback behavior, and auditable certificates are not appendix-only
+concerns. They are part of the scientific object because a safety layer that cannot act in
+time, cannot explain its interventions, or cannot preserve governance continuity is not a
+defensible physical-AI runtime layer.
+
+\section{What the architecture does and does not claim}
+The architecture claims a reusable runtime contract. It does not claim universal optimal
+repair, universal plant realism, or certification compliance. Those stronger statements
+depend on the domain row, benchmark replay, and governed artifact surface that later
+chapters make explicit.

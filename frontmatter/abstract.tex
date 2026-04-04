@@ -1,53 +1,36 @@
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-ORIUS (Observation--Reality Integrity for Universal Safety) is presented here as a
-universal safety layer for physical AI under degraded observation. The central claim is
-that a controller can appear safe on the observed state while becoming physically unsafe
-on the true state when the observation channel degrades. ORIUS treats that
-observation--action safety gap (OASG) as a first-class runtime object and addresses it
-through one typed Detect--Calibrate--Constrain--Shield--Certify kernel: detect degraded
-telemetry, widen the observation-consistent state set, tighten the admissible action
-set, repair or replace the candidate action, and emit a causal certificate that can be
-audited after the fact.
+Physical AI systems do not act on reality directly. They act on measurements, filtered
+state estimates, delayed telemetry, and learned summaries of the world. When that
+observation surface degrades, an action can remain admissible on the observed state while
+already being unsafe on the true state. This dissertation treats that discrepancy as an
+action-semantics safety problem rather than as a prediction problem alone, and names it the
+observation--action safety gap (OASG).
 
-The manuscript is organized as a universal-first monograph rather than as a
-battery-centered thesis with later extensions. It develops one common architecture, one benchmark and
-runtime-governance discipline, one theorem bridge, and six first-class domain chapters:
-battery energy storage, autonomous vehicles, industrial process control, medical and
-healthcare monitoring, navigation and guidance, and aerospace control. Each domain is
-forced through the same safety-layer template: domain problem, degraded-observation
-hazard, ORIUS instantiation, safety object, dataset and training surface, replay and
-evidence surface, fallback behavior, and explicit non-claims.
+Existing lines of work address important parts of this failure mode: conformal uncertainty
+quantifies predictive spread, safe control constrains actions, runtime assurance supervises
+release, and fault monitoring detects degraded telemetry. What is still missing is the
+integrated runtime object that connects those pieces at the moment of physical release.
+ORIUS, Observation--Reality Integrity for Universal Safety, is proposed as that missing
+object: a certificate-aware runtime safety layer for physical AI under degraded
+observation.
 
-The formal contribution is a domain-agnostic safe-control kernel under degraded
-observation. The manuscript proves that hidden true-state violations can arise even when
-observed-state legality appears intact, that reliability-aware action repair is
-structurally necessary, and that the ORIUS repair-and-certify stack admits explicit
-quantitative safety bounds and transfer obligations under stated assumptions. The
-current theorem-to-code-to-artifact chain remains deepest on the battery reference row,
-but the monograph packages the broader result as one universal architectural and
-semantic claim rather than as a collection of disconnected domain papers.
+The dissertation develops ORIUS through three implementation-grounded surfaces. First,
+\texttt{DomainAdapter} makes the domain safety predicate, fallback semantics, and repair
+geometry explicit. Second, a universal benchmark schema turns degraded-observation replay
+into a common evaluation contract across domains. Third, CertOS provides certificate
+lifecycle, audit continuity, and release semantics so that repaired action can be governed
+as a runtime object rather than reported only as controller-side logic. The formal
+contribution is a domain-agnostic theorem ladder connecting degraded observation,
+reliability-conditioned uncertainty, repaired action, fallback, and certificate semantics
+under explicit assumptions.
 
-The empirical contribution is governed by one equal-domain parity gate. Battery remains
-the deepest reference row. Industrial process control and healthcare monitoring are
-defended proof-validated rows under bounded contracts. The current autonomous-vehicle
-row clears bounded proof-validation under a TTC plus predictive-entry-barrier contract.
-Navigation remains gated by the absence of a defended real-data row, and aerospace
-remains gated by an experimental placeholder flight-task surface. This explicit parity
-matrix prevents the universal-first narrative from outrunning the evidence.
-
-The manuscript is intentionally conservative about where theory is stronger than
-evidence. The runtime contract and theorem bridge are broader than the current
-cross-domain empirical closure, so claims outside the defended rows are written as
-bounded architectural or semantic statements rather than as equal-domain validation
-claims. The reviewer-analysis appendix is included only as an editorial audit and
-revision-traceability aid; it is not part of the scientific evidence surface.
-
-Across the defended rows, ORIUS shows that degraded observation can be turned into a
-runtime safety problem with explicit repair, fallback, and certificate semantics rather
-than treated as a vague robustness concern. The broader contribution of the manuscript is
-therefore not a claim that every physical-AI domain is already equally mature. It is
-the stronger and more durable claim that one universal safety-layer grammar can govern
-all of them, while a visible parity gate determines how far each domain may currently be
-promoted.
+Empirically, the dissertation establishes one deep witness row and several bounded
+multi-domain instantiations without changing what ORIUS means at the release boundary.
+Battery provides the strongest theorem-to-runtime closure, and industrial process control
+plus healthcare monitoring support defended bounded rows. The result is a thesis that is
+universal in architecture, tiered in evidence: the autonomous-vehicle row is a defended
+bounded runtime row under the current artifact surface, while canonical raw-data closure
+remains incomplete, and equal-domain closure remains open because navigation and aerospace
+are still gated.

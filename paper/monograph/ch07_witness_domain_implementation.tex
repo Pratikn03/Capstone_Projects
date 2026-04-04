@@ -1,0 +1,65 @@
+\chapter{Witness Domain Implementation}
+\label{ch:witness-domain-implementation}
+
+\section{Why battery is the witness domain}
+Battery remains the deepest witness row because it carries the strongest
+theorem-to-code-to-artifact lineage in the repository. That makes it the right place to
+show the full ORIUS stack end to end without pretending that the dissertation is only
+about energy systems. The witness-domain role is therefore methodological: battery is the
+row where the runtime contract, theorem ladder, replay protocol, and claim-lock pipeline
+are all simultaneously visible.
+
+\section{Data and dataset cards}
+The battery surface is built from tracked regional energy and telemetry artifacts rather
+than from a single benchmark file committed to git. The dissertation keeps the data story
+artifact-first and manifest-driven so that large external datasets can still participate in
+a reproducible thesis pipeline.
+
+\IfFileExists{paper/assets/tables/generated/tbl07_dataset_cards.tex}{%
+\input{paper/assets/tables/generated/tbl07_dataset_cards}%
+}{%
+\input{assets/tables/generated/tbl07_dataset_cards}%
+}
+
+\section{Forecasting, calibration, and reliability surfaces}
+The witness row deliberately separates the engineered forecasting track from the
+degraded-observation novelty track. The current engineered track remains a strong systems
+baseline, while the learned-reliability and raw-sequence surfaces are framed as bounded
+deep-learning novelty inside ORIUS rather than as a replacement thesis identity.
+
+\IfFileExists{paper/assets/tables/generated/tbl08_forecast_baselines.tex}{%
+\input{paper/assets/tables/generated/tbl08_forecast_baselines}%
+}{%
+\input{assets/tables/generated/tbl08_forecast_baselines}%
+}
+
+\IfFileExists{paper/assets/tables/generated/tbl_battery_deep_oqe_summary.tex}{%
+\input{paper/assets/tables/generated/tbl_battery_deep_oqe_summary}%
+}{%
+\input{assets/tables/generated/tbl_battery_deep_oqe_summary}%
+}
+
+\begin{figure}[htbp]
+\centering
+\IfFileExists{reports/publication/fig_battery_reliability_baselines.png}{%
+\includegraphics[width=0.84\textwidth]{reports/publication/fig_battery_reliability_baselines.png}%
+}{%
+\includegraphics[width=0.84\textwidth]{../reports/publication/fig_battery_reliability_baselines.png}%
+}
+\caption{Witness-domain reliability baselines. The engineered forecasting surface and the learned reliability surface are intentionally reported together so the dissertation does not confuse forecasting novelty with degraded-observation novelty.}
+\label{fig:witness-reliability-baselines}
+\end{figure}
+
+\section{Control baselines and adapter implementation}
+Battery is also the cleanest row for showing how the adapter binds state semantics,
+uncertainty construction, action repair, fallback, and certificate emission to a real
+plant envelope. The dissertation uses that row to explain the implementation discipline:
+nominal forecasting and control are replaceable, but the ORIUS adapter boundary and replay
+contract remain fixed.
+
+\section{Locked artifact protocol}
+The witness row is defended through locked artifacts rather than through narrative memory.
+Training surfaces, replay outputs, theorem traces, calibration diagnostics, and runtime
+tables all point back to generated publication assets or manifests. This is the point at
+which the chapter-first dissertation model and the repository's claim-lock machinery meet:
+the prose is curated, but the evidence remains machine-governed.

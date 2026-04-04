@@ -1,0 +1,73 @@
+\chapter{Formal Problem Formulation: OASG under Degraded Observation}
+\label{ch:formal-problem-formulation}
+
+\section{State, observation, action, and constraints}
+Let $x_t^\star$ denote the true physical state, $\hat{x}_t$ the observation available to
+the nominal controller, and $u_t$ the candidate action proposed at time $t$. Let
+$\mathcal{C}(x)$ denote the safety constraints that define admissible actuation for a
+given state. ORIUS is interested in regimes where the observation surface becomes a poor
+enough proxy for the true state that a nominally legal action can become physically
+unsafe.
+
+\section{Observation degradation operator}
+Observation degradation is modeled as a runtime operator that maps truthful telemetry into
+an imperfect observation stream:
+\[
+\hat{x}_t = \mathcal{D}(x_t^\star; \delta_t),
+\]
+where $\delta_t$ summarizes stale packets, packet loss, delay, reordering, spikes, drift,
+or other telemetry faults. The universal object in the dissertation is not a plant model
+alone; it is the pair $(x_t^\star, \hat{x}_t)$ together with the fault process that
+causes them to diverge.
+
+\section{Definition of the observation--action safety gap}
+The central event is the observation--action safety gap:
+\[
+u_t \in \mathcal{C}(\hat{x}_t)
+\qquad \text{but} \qquad
+u_t \notin \mathcal{C}(x_t^\star).
+\]
+In words, an action is safe on the observed state while unsafe on the true state. This is
+the formal object that later chapters measure through true-state violation metrics, repair
+semantics, and certificate validity.
+
+\section{Observation-consistent state sets}
+ORIUS does not try to recover the true state exactly at runtime. Instead, it constructs an
+observation-consistent state set
+\[
+\mathcal{X}_t = \{x : x \text{ remains plausible given } \hat{x}_t \text{ and reliability } w_t\},
+\]
+where $w_t \in [0,1]$ is the runtime reliability score. As reliability decreases,
+$\mathcal{X}_t$ widens, and the admissible action set must tighten accordingly.
+
+\section{Dual-trajectory evaluation}
+This dissertation evaluates ORIUS on \emph{dual trajectories}. The observed trajectory is
+the one seen by the nominal controller. The true trajectory is the one used to determine
+whether the repaired or unrepaired action actually violates the physical envelope. A
+benchmark that only inspects observed-state legality cannot see OASG directly. ORIUS-Bench
+therefore records candidate action, repaired action, true-state violation, observed-state
+satisfaction, fallback/intervention markers, latency, and certificate validity in one
+replay schema.
+
+\section{DomainAdapter grounding}
+The universal formulation is grounded in the repository through the domain adapter
+contract. Each domain supplies:
+\begin{enumerate}
+  \item telemetry parsing and domain state semantics,
+  \item uncertainty or margin construction hooks,
+  \item admissible-action or repair logic,
+  \item true-state violation predicates,
+  \item observed-state satisfaction predicates, and
+  \item certificate payload specifics.
+\end{enumerate}
+That boundary lets the dissertation make a strong universal claim about the runtime
+grammar without pretending that one plant model, one objective, or one controller class
+solves every domain.
+
+\section{Scope and assumptions}
+The problem formulation is intentionally narrower than a claim of general AI safety. ORIUS
+assumes an actionable physical system with explicit safety constraints, an observation
+channel that can degrade, and a runtime layer that can intercept or repair actions before
+release. It does not assume perfect state recovery, universal optimal control, or equal
+empirical maturity across all domains. Those boundaries are what make the later theorem
+and validation claims durable rather than aspirational.

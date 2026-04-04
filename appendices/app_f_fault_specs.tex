@@ -1,24 +1,28 @@
 % =============================================================================
-% Appendix F: Fault Injection Specifications
-% ORIUS/DC3S Battery-Safety Thesis
+% Appendix F: Benchmark Specifications
+% ORIUS Dissertation
 % =============================================================================
-\chapter{Fault Injection Specifications}
+\chapter{Benchmark Specifications}
+\label{app:benchmark-specs}
 \label{app:fault-specs}
 
-This appendix specifies the six fault families used throughout the
-CPSBench battery track (Chapter~\ref{ch:cpsbench}).  Each family
-models a distinct telemetry-degradation mechanism observed in real BMS
-and SCADA deployments.  The combined profile \texttt{drift\_combo}
-superimposes all six families in a single scenario.
+This appendix records the benchmark-facing specifications that make the dissertation
+replayable and auditable.  ORIUS-Bench is universal at the schema level: every episode
+tracks candidate action, repaired action, true-state violation, observed-state
+satisfaction, certificate state, fallback/intervention markers, and runtime cost.  The
+current deepest empirical instantiation remains the battery witness row, so the detailed
+fault-family table below is still battery-grounded.  That grounding is deliberate: it
+shows the strongest defended fault surface while the benchmark contract itself remains
+domain-neutral.
 
-\section{Fault Families}
+\section{Canonical fault families}
 
 Table~\ref{tab:fault-families} defines each fault family, its
 configurable parameters, the tested range, and the battery-domain
 interpretation.
 
 \begin{longtable}{@{}p{2.0cm}p{3.0cm}p{2.5cm}p{5.5cm}@{}}
-\caption{Battery fault families for CPSBench telemetry degradation.}
+\caption{Witness-domain fault families used to instantiate the universal ORIUS-Bench telemetry-degradation contract.}
 \label{tab:fault-families}\\
 \toprule
 \textbf{Fault} & \textbf{Parameters} & \textbf{Range tested} & \textbf{Battery interpretation} \\
@@ -69,13 +73,13 @@ interpretation.
 \\
 \end{longtable}
 
-\section{Combined Profile: \texttt{drift\_combo}}
+\section{Combined profile: \texttt{drift\_combo}}
 
 The \texttt{drift\_combo} profile activates all six fault families
 simultaneously at their mid-range parameter values with a configurable
 dropout rate $d$.  This is the default stress profile used in the main
-results (Chapter~\ref{ch:main-results}) and in the extended controller
-comparison (Appendix~\ref{app:extended-results}).
+results of the witness-domain chapter and in the bounded controller-comparison
+surfaces that accompany the ORIUS publication artifacts.
 
 \begin{table}[htbp]
 \centering
@@ -96,7 +100,7 @@ reorder        & $B$          & 4 steps \\
 \end{tabular}
 \end{table}
 
-\section{Fault Injection Implementation}
+\section{Replay and fault-injection implementation}
 
 Faults are injected by the CPSBench runner
 (\texttt{src/orius/cpsbench\_iot/runner.py}) between the plant's
@@ -119,7 +123,7 @@ Fault parameters are set in \texttt{configs/dc3s.yaml} under the
 profile and parameter snapshot in the certificate metadata for
 reproducibility.
 
-\section{Severity Mapping}
+\section{Severity mapping}
 
 Table~\ref{tab:fault-severity} maps each fault family to its
 primary impact on DC3S pipeline stages.

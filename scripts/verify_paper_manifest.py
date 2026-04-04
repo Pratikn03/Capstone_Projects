@@ -10,11 +10,11 @@ from pathlib import Path
 import yaml
 
 REQUIRED_PARTS = [
-    "Why Physical AI Needs a Safety Layer",
-    "ORIUS Architecture",
-    "Theory",
-    "Domain Chapters",
-    "Universality, Limits, and Societal Program",
+    "Problem, Principle, and Gap",
+    "ORIUS Framework and Theorem Ladder",
+    "Witness Domain Evidence",
+    "Universalization and Extensions",
+    "Submission Boundary",
 ]
 
 

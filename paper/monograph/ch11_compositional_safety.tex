@@ -1,0 +1,29 @@
+\chapter{Compositional Safety}
+\label{ch:compositional-safety}
+
+\section{Why local safety does not automatically compose}
+One of the easiest mistakes in safety argumentation is to assume that individually safe
+controllers remain jointly safe when they share resources or constraints. ORIUS treats
+composition as a bounded extension precisely because this implication fails in general.
+Local certificates can remain valid while shared budgets, timing windows, or coupled plant
+dynamics still create system-level failure.
+
+\section{Shared constraints and negotiated safety}
+The dissertation therefore frames composition around shared constraints: fleet power
+budgets, corridor occupancy, shared actuator authority, or other common resources. The
+point is not to claim a universal composition theorem today. It is to show that ORIUS can
+lift the certificate object into a negotiated or multi-agent setting without pretending
+that local repair semantics are automatically sufficient.
+
+\IfFileExists{paper/assets/tables/generated/tbl_multi_agent.tex}{%
+\input{paper/assets/tables/generated/tbl_multi_agent}%
+}{%
+\input{assets/tables/generated/tbl_multi_agent}%
+}
+
+\section{Bounded extension rather than universal closure}
+Composition remains a defended bounded layer in the dissertation. It matters scientifically
+because it shows that the runtime grammar does not end at single-agent control. At the
+same time, it remains outside the strongest universal claim because cross-domain shared
+constraints still require more defended rows before equal-domain composition language would
+be justified.

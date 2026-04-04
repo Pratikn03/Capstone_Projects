@@ -1,7 +1,7 @@
 monograph_section,source_surface,coverage_mode,status,notes
-universal_hazard_and_related_work,paper/monograph/ch01-ch03,generated_monograph,complete,"Hazard framing, claim boundary, and method families are controlled through the monograph generator."
-runtime_and_governance_architecture,paper/monograph/ch04-ch07 plus selected legacy chapters,mixed_generated_and_curated,complete,"Runtime kernel, benchmark, latency, and governance are presented as one universal architecture."
-battery_witness_block,paper/monograph/ch08 plus chapters/ch07-ch32 battery depth,mixed_generated_and_curated,complete,Battery remains the deepest theorem-to-artifact witness inside the universal-first book.
-nonbattery_domain_block,paper/monograph/ch09-ch13,generated_monograph,complete,Each non-battery row follows the common domain template under the parity gate.
-cross_domain_synthesis_and_limits,paper/monograph/ch14-ch16 plus chapters/ch22-ch34,mixed_generated_and_curated,complete,"Synthesis, claim boundaries, and explicit non-claims stay aligned to the parity matrix."
-appendix_and_review_surface,paper/monograph/app_ad-app_ai plus appendices/,mixed_generated_and_curated,complete,"Proofs, protocol cards, reviewer analysis, and artifact traceability support the main monograph."
+problem_principle_and_gap,paper/monograph/ch01-ch03,curated_chapter_first,complete,"Introduction, related work, and formal problem framing are authored directly in the dissertation chapters."
+framework_and_theorem_ladder,paper/monograph/ch04-ch06,curated_chapter_first_with_generated_tables,complete,"Architecture, guarantees, and benchmark protocol use curated prose plus generated supporting artifacts."
+witness_domain_evidence,paper/monograph/ch07-ch08,curated_chapter_first_with_generated_tables,complete,Battery evidence is concentrated into witness-domain implementation and results chapters.
+universalization_and_extensions,paper/monograph/ch09-ch12,curated_chapter_first_with_generated_tables,complete,"Cross-domain validation, temporal certificates, composition, and runtime governance share one doctrine spine."
+submission_boundary,paper/monograph/ch13,curated_chapter_first_with_generated_tables,complete,"The final chapter holds the proved-versus-validated boundary, deployment ladder, and conclusion."
+appendix_and_review_surface,"paper/monograph/app_aj-app_an, appendices/app_f, paper/review/",mixed_curated_and_generated,complete,Traceability appendices are curated around generator-owned indexes and publication artifacts; review assets remain secondary.
