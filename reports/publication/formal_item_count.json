@@ -1,0 +1,99 @@
+{
+  "counts": {
+    "assumption": 16,
+    "corollary": 12,
+    "definition": 15,
+    "lemma": 5,
+    "proposition": 8,
+    "theorem": 26
+  },
+  "expected": {
+    "assumption": 16,
+    "corollary": 12,
+    "definition": 15,
+    "lemma": 5,
+    "proposition": 8,
+    "theorem": 26
+  },
+  "included_files": [
+    "orius_battery_409page_figures_upgraded_main.tex",
+    "preamble.tex",
+    "frontmatter/titlepage.tex",
+    "frontmatter/abstract.tex",
+    "frontmatter/acknowledgments.tex",
+    "chapters_merged/ch01_introduction.tex",
+    "chapters_merged/ch02_related_work.tex",
+    "chapters_merged/ch03_background.tex",
+    "chapters_merged/ch04_theoretical_foundations.tex",
+    "chapters_merged/ch05_architecture_setup.tex",
+    "chapters_merged/ch06_main_results.tex",
+    "chapters_merged/ch07_universal_validation.tex",
+    "chapters_merged/ch08_conclusion.tex",
+    "chapters/ch19b_sota_comparison.tex",
+    "reports/sota_comparison/tbl_sota_comparison.tex",
+    "chapters/ch37_universality_completeness.tex",
+    "appendices/app_a_notation.tex",
+    "appendices/app_b_assumptions.tex",
+    "appendices/app_c_full_proofs.tex",
+    "appendices/app_d_extended_results.tex",
+    "appendices/app_e_reliability_audits.tex",
+    "appendices/app_f_fault_specs.tex",
+    "appendices/app_g_adapter_interface.tex",
+    "appendices/app_j_sweep_and_latency_protocols.tex",
+    "appendices/app_k_blueprint_coverage_matrix.tex",
+    "appendices/app_m_verified_theorems_and_gap_audit.tex",
+    "reports/publication/integrated_theorem_gate_summary.tex",
+    "reports/publication/integrated_theorem_gate_matrix.tex",
+    "appendices/app_t_certos_artifact_audit.tex",
+    "appendices/app_u_certos_lifecycle_log.tex",
+    "appendices/app_v_active_probing_battery_audit.tex",
+    "appendices/app_w_portability_context_and_roadmap.tex",
+    "appendices/app_x_full_locked_de_trace.tex",
+    "appendices/app_y_full_locked_us_trace.tex",
+    "appendices/app_z_theorem_and_paper_sync_registers.tex",
+    "appendices/app_ac_integrated_theorem_surface_register.tex",
+    "reports/publication/theorem_surface_register.tex",
+    "appendices/app_ad_dataset_cards.tex",
+    "appendices/app_ae_reproducibility_appendix.tex",
+    "backmatter/references.tex",
+    "backmatter/extended_reading_index.tex"
+  ],
+  "master": "orius_battery_409page_figures_upgraded_main.tex",
+  "matches_expected": true,
+  "per_file": {
+    "appendices/app_b_assumptions.tex": {
+      "assumption": 8
+    },
+    "appendices/app_c_full_proofs.tex": {
+      "corollary": 1,
+      "proposition": 1,
+      "theorem": 8
+    },
+    "chapters/ch37_universality_completeness.tex": {
+      "corollary": 2,
+      "definition": 2,
+      "proposition": 1,
+      "theorem": 4
+    },
+    "chapters_merged/ch01_introduction.tex": {
+      "definition": 3
+    },
+    "chapters_merged/ch03_background.tex": {
+      "definition": 3,
+      "proposition": 1,
+      "theorem": 2
+    },
+    "chapters_merged/ch04_theoretical_foundations.tex": {
+      "assumption": 8,
+      "corollary": 9,
+      "definition": 7,
+      "lemma": 5,
+      "proposition": 3,
+      "theorem": 12
+    },
+    "chapters_merged/ch06_main_results.tex": {
+      "proposition": 2
+    }
+  },
+  "total": 82
+}

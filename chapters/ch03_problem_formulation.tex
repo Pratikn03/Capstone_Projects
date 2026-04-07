@@ -34,6 +34,51 @@ state~$\hat{x}_t$; the safety layer's task is to ensure that the
 dispatched action is safe on the \emph{true} state~$x_t$ despite the gap
 between the two.
 
+\section{ORIUS-MDP Formalisation}
+\label{sec:orius-mdp}
+
+\begin{definition}[ORIUS-MDP]
+\label{def:orius-mdp}
+An ORIUS-controlled cyber-physical system is modelled as the 11-tuple
+\[
+  (\mathcal{S}, \mathcal{O}, \mathcal{W}, \mathcal{A}, \mathcal{C},
+   \mathcal{T}, \mathcal{H}, \Omega, \mathcal{R}, \gamma, \mu_0),
+\]
+where $\mathcal{S}$ is the true-state space, $\mathcal{O}$ the observation
+space, $\mathcal{W} = [w_{\min}, 1]$ the observation-quality space,
+$\mathcal{A}$ the action space, and $\mathcal{C}\subsetneq\mathcal{S}$ the
+closed safety set.  The true transition kernel is
+$\mathcal{T}: \mathcal{S}\times\mathcal{A}\to\Delta(\mathcal{S})$, the
+observation kernel is $\mathcal{H}: \mathcal{S}\to\Delta(\mathcal{O})$, the
+quality map is $\Omega: Z^k\to\mathcal{W}$, the reward function is
+$\mathcal{R}: \mathcal{S}\times\mathcal{A}\to\mathbb{R}$, $\gamma\in[0,1)$ is
+the discount factor, and $\mu_0$ is the initial-state distribution.
+
+At each step, the controller receives the pair $(o_t,w_t)$ with
+$o_t\sim\mathcal{H}(x_t)$ and
+$w_t = \Omega(z_{t-k+1:t})$ computed deterministically from the recent
+telemetry history.  A reliability-aware policy is therefore
+$\pi:\mathcal{O}\times\mathcal{W}\to\Delta(\mathcal{A})$, while a
+quality-ignorant policy is the restricted map
+$\bar{\pi}:\mathcal{O}\to\Delta(\mathcal{A})$.
+\end{definition}
+
+\begin{remark}
+The episode semantics are
+$x_0\sim\mu_0$,
+$z_t\leftarrow \mathrm{telemetry}(x_t,\mathrm{fault}_t)$,
+$w_t\leftarrow\Omega(z_{t-k+1:t})$,
+$o_t\leftarrow \mathrm{parse}(z_t)$,
+$a_t\sim\pi(o_t,w_t)$,
+$x_{t+1}\sim\mathcal{T}(x_t,a_t)$,
+and $r_t=\mathcal{R}(x_t,a_t)$.  Safety is measured on the true-state path
+$x_{0:T}$, not on the observation path.  Standard MDPs are recovered when
+$\mathcal{O}=\mathcal{S}$, $\mathcal{H}(x)=\delta_x$, and $w_t\equiv 1$.
+Classical POMDPs are recovered when the observation channel is partial but
+observation quality is not itself exposed to the controller as a runtime
+state variable.
+\end{remark}
+
 \section{The Hidden Safety Gap}
 \label{sec:hidden-gap}
 

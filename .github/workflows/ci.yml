@@ -26,6 +26,8 @@ jobs:
         run: mypy src
       - name: Run tests
         run: pytest -q -m "not slow and not integration" --no-cov
+      - name: Check Formal Item Counts
+        run: python scripts/count_formal_items.py --strict
       - name: Validate Paper Claims
         run: python scripts/validate_paper_claims.py
       - name: Check Paper Asset Sync

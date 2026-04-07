@@ -69,6 +69,186 @@ def bootstrap_ci(
     }
 
 
+def bca_bootstrap(
+    data: np.ndarray,
+    statistic: Callable[[np.ndarray], float] = np.mean,
+    confidence: float = 0.95,
+    n_bootstrap: int = 10000,
+    seed: int = 42,
+) -> dict[str, float]:
+    """Bias-corrected and accelerated bootstrap interval."""
+    values = np.asarray(data, dtype=float)
+    if values.ndim != 1 or values.size < 2:
+        raise ValueError("BCa bootstrap requires a one-dimensional sample of size >= 2")
+    if not (0.0 < confidence < 1.0):
+        raise ValueError("confidence must lie in (0, 1)")
+
+    rng = np.random.default_rng(seed)
+    n = values.size
+    point_est = float(statistic(values))
+    idx = rng.integers(0, n, size=(n_bootstrap, n))
+    boot = np.array([float(statistic(values[sample])) for sample in idx], dtype=float)
+
+    less_fraction = np.clip(np.mean(boot < point_est), 1e-9, 1.0 - 1e-9)
+    z0 = float(stats.norm.ppf(less_fraction))
+
+    jackknife = np.empty(n, dtype=float)
+    for i in range(n):
+        jackknife[i] = float(statistic(np.delete(values, i)))
+    jack_mean = float(np.mean(jackknife))
+    num = np.sum((jack_mean - jackknife) ** 3)
+    den = 6.0 * (np.sum((jack_mean - jackknife) ** 2) ** 1.5 + 1e-12)
+    acceleration = float(num / den) if den > 0 else 0.0
+
+    alpha = 1.0 - confidence
+    z_lo = float(stats.norm.ppf(alpha / 2.0))
+    z_hi = float(stats.norm.ppf(1.0 - alpha / 2.0))
+    adj_lo = float(
+        stats.norm.cdf(z0 + (z0 + z_lo) / max(1.0 - acceleration * (z0 + z_lo), 1e-12))
+    )
+    adj_hi = float(
+        stats.norm.cdf(z0 + (z0 + z_hi) / max(1.0 - acceleration * (z0 + z_hi), 1e-12))
+    )
+    adj_lo = float(np.clip(adj_lo, 0.0, 1.0))
+    adj_hi = float(np.clip(adj_hi, 0.0, 1.0))
+    ci_lower = float(np.quantile(boot, min(adj_lo, adj_hi)))
+    ci_upper = float(np.quantile(boot, max(adj_lo, adj_hi)))
+
+    return {
+        "point_estimate": point_est,
+        "ci_lower": ci_lower,
+        "ci_upper": ci_upper,
+        "confidence": confidence,
+        "n_bootstrap": n_bootstrap,
+        "bias_correction_z0": z0,
+        "acceleration": acceleration,
+    }
+
+
+def paired_bootstrap(
+    baseline: np.ndarray,
+    treatment: np.ndarray,
+    statistic: Callable[[np.ndarray], float] = np.mean,
+    confidence: float = 0.95,
+    n_bootstrap: int = 10000,
+    seed: int = 42,
+) -> dict[str, float]:
+    """Bootstrap confidence interval for paired differences."""
+    base = np.asarray(baseline, dtype=float)
+    treat = np.asarray(treatment, dtype=float)
+    if base.shape != treat.shape:
+        raise ValueError("baseline and treatment must have matching shape")
+    if base.ndim != 1 or base.size < 2:
+        raise ValueError("paired bootstrap requires one-dimensional paired samples of size >= 2")
+
+    diffs = treat - base
+    ci = bootstrap_ci(diffs, statistic=statistic, confidence=confidence, n_bootstrap=n_bootstrap, seed=seed)
+    ci["effect_size"] = float(statistic(diffs))
+    return ci
+
+
+def wilcoxon_signed_rank(
+    sample_a: np.ndarray,
+    sample_b: np.ndarray,
+    alternative: str = "two-sided",
+) -> dict[str, float | bool]:
+    """Convenience wrapper around the paired Wilcoxon signed-rank test."""
+    a = np.asarray(sample_a, dtype=float)
+    b = np.asarray(sample_b, dtype=float)
+    if a.shape != b.shape:
+        raise ValueError("sample_a and sample_b must have matching shape")
+    if np.allclose(a, b):
+        stat = 0.0
+        p_value = 1.0
+    else:
+        stat, p_value = stats.wilcoxon(a, b, alternative=alternative, zero_method="wilcox")
+    return {
+        "statistic": float(stat),
+        "p_value": float(p_value),
+        "significant": bool(p_value < 0.05),
+        "n_pairs": int(a.size),
+    }
+
+
+def mcnemar_test(confusion_matrix: np.ndarray, exact: bool | None = None) -> dict[str, float | bool | str]:
+    """McNemar test for paired binary outcomes.
+
+    Expects a 2x2 table:
+        [[both_correct, a_only],
+         [b_only, both_wrong]]
+    """
+    table = np.asarray(confusion_matrix, dtype=float)
+    if table.shape != (2, 2):
+        raise ValueError("confusion_matrix must be 2x2")
+    b = float(table[0, 1])
+    c = float(table[1, 0])
+    n = b + c
+    use_exact = bool(n < 25) if exact is None else bool(exact)
+    if n == 0:
+        statistic = 0.0
+        p_value = 1.0
+        method = "degenerate"
+    elif use_exact:
+        statistic = min(b, c)
+        p_value = float(2.0 * stats.binomtest(int(min(b, c)), int(n), p=0.5).pvalue)
+        p_value = min(p_value, 1.0)
+        method = "exact"
+    else:
+        statistic = ((abs(b - c) - 1.0) ** 2) / n
+        p_value = float(1.0 - stats.chi2.cdf(statistic, df=1))
+        method = "chi2_cc"
+    return {
+        "statistic": float(statistic),
+        "p_value": float(p_value),
+        "significant": bool(p_value < 0.05),
+        "method": method,
+    }
+
+
+def benjamini_hochberg(p_values: list[float] | np.ndarray, alpha: float = 0.05) -> dict[str, Any]:
+    """Benjamini-Hochberg false-discovery-rate correction."""
+    p = np.asarray(p_values, dtype=float)
+    if p.ndim != 1:
+        raise ValueError("p_values must be one-dimensional")
+    order = np.argsort(p)
+    ranked = p[order]
+    n = len(ranked)
+    thresholds = alpha * (np.arange(1, n + 1) / max(n, 1))
+    passed = ranked <= thresholds
+    k = int(np.max(np.nonzero(passed)[0])) + 1 if np.any(passed) else 0
+    reject_ranked = np.zeros(n, dtype=bool)
+    if k > 0:
+        reject_ranked[:k] = True
+    reject = np.zeros(n, dtype=bool)
+    reject[order] = reject_ranked
+
+    adjusted_ranked = np.minimum.accumulate((ranked * n / np.arange(1, n + 1))[::-1])[::-1]
+    adjusted_ranked = np.clip(adjusted_ranked, 0.0, 1.0)
+    adjusted = np.empty(n, dtype=float)
+    adjusted[order] = adjusted_ranked
+    return {
+        "alpha": alpha,
+        "rejected": reject.tolist(),
+        "adjusted_p_values": adjusted.tolist(),
+        "n_rejected": int(np.sum(reject)),
+    }
+
+
+def bonferroni(p_values: list[float] | np.ndarray, alpha: float = 0.05) -> dict[str, Any]:
+    """Bonferroni family-wise error-rate correction."""
+    p = np.asarray(p_values, dtype=float)
+    if p.ndim != 1:
+        raise ValueError("p_values must be one-dimensional")
+    adjusted = np.clip(p * max(len(p), 1), 0.0, 1.0)
+    rejected = adjusted <= alpha
+    return {
+        "alpha": alpha,
+        "rejected": rejected.tolist(),
+        "adjusted_p_values": adjusted.tolist(),
+        "n_rejected": int(np.sum(rejected)),
+    }
+
+
 def paired_test(
     baseline: np.ndarray,
     treatment: np.ndarray,

@@ -7,7 +7,18 @@ presenting detailed case studies that illustrate \emph{how} DC3S operates
 in practice.  Each trace is drawn from the locked artefact package and
 is reproducible from \texttt{reports/publication/48h\_trace.csv}.
 
-\section{48-Hour Case Study}
+\section{Scope and Methodology}
+
+The following case studies are illustrative operational scenarios used to
+show \emph{how} the DC3S pipeline behaves under stressed telemetry.  Where a
+section is marked \emph{[From locked trace]}, the numerical values are taken
+directly from the locked replay artifacts.  Where a section is marked
+\emph{[Illustrative]}, the scenario structure is representative and calibrated
+to the defended operating envelopes, but it should be interpreted as
+``how ORIUS would respond'' rather than as production telemetry from a
+deployed system.
+
+\section{48-Hour Case Study [From locked trace]}
 
 Figure~\ref{fig:48h-trace} shows a 48-hour window (hours 24--72) of a
 168-hour \texttt{drift\_combo} episode in the DE region.  The trace
@@ -36,7 +47,7 @@ Key observations from the trace:
     becomes transparent ($a^{\text{LP}} = a^{\text{safe}}$).
 \end{enumerate}
 
-\section{7-Day Operational Trace}
+\section{7-Day Operational Trace [From locked trace]}
 
 The full 168-hour (7-day) episode trace summarises the temporal pattern
 of interventions and violations.  Over the complete episode:
@@ -52,7 +63,7 @@ The clustering pattern confirms Proposition~\ref{prop:conditional-conservatism}:
 interventions are not uniformly distributed but concentrate in periods of
 degraded telemetry.
 
-\section{Price--Dispatch Interaction}
+\section{Price--Dispatch Interaction [From locked trace]}
 
 The economic impact of the shield depends on whether interventions
 coincide with high- or low-price periods.  In the DE trace:
@@ -66,7 +77,7 @@ coincide with high- or low-price periods.  In the DE trace:
     that would result from constraint violations.
 \end{itemize}
 
-\section{Reliability Score Evolution}
+\section{Reliability Score Evolution [From locked trace]}
 
 The reliability score $w_t$ evolves smoothly in response to telemetry
 quality changes.  During the 48-hour window:
@@ -80,7 +91,7 @@ quality changes.  During the 48-hour window:
 The OQE's exponential smoothing prevents oscillatory behaviour: $w_t$
 responds to sustained degradation but ignores isolated single-step noise.
 
-\section{Intervention Timing}
+\section{Intervention Timing [From locked trace]}
 
 The timing of shield interventions relative to fault onset is critical
 for understanding the system's responsiveness.  Across the 7-day episode:
@@ -96,7 +107,7 @@ fault clusters.
 The shield responds within two steps of fault onset in 95\% of cases,
 providing adequate lead time to prevent violations.
 
-\section{True Versus Observed SOC Divergence}
+\section{True Versus Observed SOC Divergence [From locked trace]}
 
 The divergence $\delta_t = x_t^{\text{true}} - x_t^{\text{obs}}$ is the
 hidden state error that drives safety risk.  During the 48-hour window:
@@ -111,7 +122,7 @@ The DC3S uncertainty interval $[\hat{x}_t^{\text{lo}}, \hat{x}_t^{\text{hi}}]$
 covers the true SOC in 100\% of steps during this window, confirming that
 the inflated intervals are correctly sized.
 
-\section{Failure Avoided by the Shield}
+\section{Failure Avoided by the Shield [Illustrative reconstruction]}
 
 We identify the single most dangerous moment in the 7-day trace: hour~34,
 step~340.  At this step:

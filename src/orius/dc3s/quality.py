@@ -39,6 +39,17 @@ _NON_SIGNAL_KEYS: frozenset[str] = frozenset({"device_id", "zone_id", "target"})
 #: 20 steps at hourly cadence ≈ 20 hours of packet-ordering history.
 _OOO_HISTORY_WINDOW: int = 20
 
+# Detector-lag contract used by the thesis text and runtime diagnostics.
+_DETECTOR_LAG_STEPS: dict[str, int] = {
+    "dropout": 1,
+    "stale_sensor": 3,
+    "delay_jitter": 2,
+    "out_of_order": 10,
+    "spikes": 1,
+    "drift": 48,
+}
+_DETECTOR_WARNING_RELIABILITY: float = 0.5
+
 
 def _parse_ts(value: Any) -> datetime | None:
     if value is None:
@@ -161,6 +172,19 @@ def _stale_tracker(
         "last_values": next_values,
         "unchanged_counts": next_counts,
     }, stale_detected
+
+
+def _max_stale_count(tracker: Mapping[str, Any]) -> int:
+    counts = tracker.get("unchanged_counts")
+    if not isinstance(counts, Mapping):
+        return 0
+    values: list[int] = []
+    for value in counts.values():
+        try:
+            values.append(int(value))
+        except (TypeError, ValueError):
+            continue
+    return max(values, default=0)
 
 
 def compute_reliability(
@@ -341,8 +365,25 @@ def compute_reliability(
         "ooo_history": ooo_history,
         "ooo_fraction_in_order": float(ooo_fraction_in_order),
         "reliability_rule": "ftit_ro" if preview is not None and ftit_law == "ftit_ro" else "linear",
+        "detector_lag_steps": dict(_DETECTOR_LAG_STEPS),
     }
     heuristic_w_t = float(w_t)
+
+    max_stale_count = _max_stale_count(stale_tracker)
+    stale_tau_max = int(_DETECTOR_LAG_STEPS["stale_sensor"])
+    flags["stale_max_unchanged_steps"] = int(max_stale_count)
+    flags["detector_lag_warning"] = bool(
+        max_stale_count >= stale_tau_max and heuristic_w_t > _DETECTOR_WARNING_RELIABILITY
+    )
+    if flags["detector_lag_warning"]:
+        warnings.warn(
+            "DC3S detector-lag contract warning: stale telemetry persisted for "
+            f"{max_stale_count} steps without reliability dropping below "
+            f"{_DETECTOR_WARNING_RELIABILITY:.2f}. "
+            "Assumption A6 may be violated for the stale-sensor channel.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
 
     if backend == "deep":
         deep_cfg = dict(cfg.get("deep", {}))

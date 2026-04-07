@@ -1,0 +1,19 @@
+\chapter{Reproducibility Appendix}
+\label{app:reproducibility-appendix}
+
+This appendix binds the active release manifest into the thesis and records
+the verification path for reproduced artifacts.
+
+\begin{itemize}
+  \item Release manifest: \path{reports/publication/release_manifest.json}
+  \item Hash verifier: \path{scripts/verify_reproducibility.py}
+  \item TeX generator: \path{scripts/generate_reproducibility_appendix.py}
+\end{itemize}
+
+\IfFileExists{reports/publication/reproducibility_appendix_generated.tex}{%
+  \input{reports/publication/reproducibility_appendix_generated}%
+}{%
+  The generated reproducibility appendix was not present at build time. Run
+  \texttt{python3 scripts/generate\_reproducibility\_appendix.py} to refresh
+  the release-manifest summary before final submission.%
+}

@@ -361,12 +361,11 @@ standing assumptions, defines the proof dependency matrix, and sets the
 disciplinary standards that every subsequent proof must satisfy.  The
 flagship DC3S ladder in Chapters~\ref{ch:theorem-oasg}--\ref{ch:temporal-extensions}
 contains eight principal theorems (T1--T8), but it is not the entire theorem
-surface of the dissertation.  Part~I establishes two foundational precursor
-theorems (S1: illusion existence under dropout; S2: informal DC3S guarantee);
-the flagship chapters add 5~lemmas, 10~corollaries, and 7~propositions; and
-16~standing assumptions ground every formal claim.  The integrated surface
-totals \textbf{67 formal items} (18~theorems, 5~lemmas, 7~propositions,
-10~corollaries, 11~definitions, 16~assumptions), all audited in
+surface of the dissertation.  The live master-manuscript include tree now
+contains additional theorem-carrying merged chapters, appendix restatements,
+and front-loaded formal definitions.  The audited surface therefore contains
+\textbf{82 formal items} (26~theorems, 5~lemmas, 8~propositions,
+12~corollaries, 15~definitions, 16~assumptions), all audited in
 Appendix~\ref{app:integrated-theorem-surface-register} and summarised in
 Table~\ref{tab:integrated-theorem-surface-summary} at the end of this chapter.
 
@@ -441,9 +440,21 @@ for all $w_t \in [0,1]$.
 
 \begin{assumption}[A6: Bounded detector lag]
 \label{assm:A6}
-The OQE reliability score $w_t$ reflects a telemetry fault within at
-most $\ell$ steps of fault onset: if a fault begins at step $t_f$,
-then $w_{t_f + \ell} \le w_{\text{alert}}$.
+The OQE reliability score $w_t$ reflects each telemetry fault within a
+channel-specific lag budget.  If a fault begins at step $t_f$, then the
+runtime detector fires or the reliability score crosses the alert threshold
+within at most $\tau_{\max}(f)$ steps, with
+\[
+  \tau_{\max}(\text{dropout}) = 1,\quad
+  \tau_{\max}(\text{stale}) = 3,\quad
+  \tau_{\max}(\text{delay}) = 2,\quad
+  \tau_{\max}(\text{out-of-order}) = 10,\quad
+  \tau_{\max}(\text{spike}) = 1,\quad
+  \tau_{\max}(\text{drift}) = 48.
+\]
+These constants are mirrored by the runtime diagnostics in
+\texttt{src/orius/dc3s/quality.py} and are intended as the defended detector
+contract for the locked replay surfaces.
 \end{assumption}
 
 \begin{assumption}[A7: Causal certificate update]
@@ -584,8 +595,8 @@ assumptions (A1--A8) are individually justified in both domain-general
 and battery-specific terms, the proof dependency matrix prevents
 circular reasoning, and the theorem-writing discipline ensures that
 every claim is bounded by explicit scope disclaimers.  The integrated
-theorem surface of 67 formal items---spanning 18 theorems, 5 lemmas,
-7 propositions, 10 corollaries, 11 definitions, and 16 assumptions---is
+theorem surface of 82 formal items---spanning 26 theorems, 5 lemmas,
+8 propositions, 12 corollaries, 15 definitions, and 16 assumptions---is
 the formal depth this dissertation contributes to the CPS safety
 literature.
 
@@ -2037,4 +2048,3 @@ monotonicity (Proposition~\ref{prop:budget-monotonicity})---formalise
 the landing protocol and prove it is strictly safer than uncontrolled
 dispatch.  Together, these extensions complete the theorem ladder
 initiated in Chapter~\ref{ch:theorem-oasg}.
-

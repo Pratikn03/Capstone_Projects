@@ -29,6 +29,7 @@ h11==0.16.0
 huggingface-hub==0.36.0
 httptools==0.7.1
 highspy==1.8.1
+hypothesis==6.151.11
 idna==3.11
 importlib_metadata==8.7.1
 importlib_resources==6.5.2

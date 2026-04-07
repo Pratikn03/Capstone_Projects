@@ -12,9 +12,9 @@ flagship DC3S ladder in Chapters~\ref{ch:theorem-oasg}--\ref{ch:temporal-extensi
 contains the battery reference theorems (T1--T8), but the full dissertation
 surface is broader: Part~I contributes the precursor results, the later
 chapters add lemmas, propositions, and corollaries, and the monograph
-extension closes with T9--T11.  The integrated surface totals
-\textbf{67 formal items} (18~theorems, 5~lemmas, 7~propositions,
-10~corollaries, 11~definitions, 16~assumptions), all audited in
+extension closes with T9--T11.  Counting the active master-manuscript include
+tree yields \textbf{82 formal items} (26~theorems, 5~lemmas,
+8~propositions, 12~corollaries, 15~definitions, 16~assumptions), all audited in
 Appendix~\ref{app:integrated-theorem-surface-register} and summarised in
 Table~\ref{tab:integrated-theorem-surface-summary} at the end of this chapter.
 
@@ -104,9 +104,18 @@ score and is used in the information-theoretic lower bound (T10).
 
 \begin{assumption}[A6: Bounded detector lag]
 \label{assm:A6}
-The OQE reliability score $w_t$ reflects a telemetry fault within at
-most $\ell$ steps of fault onset: if a fault begins at step $t_f$,
-then $w_{t_f + \ell} \le w_{\text{alert}}$.
+The OQE and adjacent runtime detectors recognize supported telemetry faults
+within channel-specific finite lags.  The active detector-lag contract is
+\[
+  \tau_{\max}(\text{dropout}) = 1,\;
+  \tau_{\max}(\text{stale}) = 3,\;
+  \tau_{\max}(\text{delay}) = 2,\;
+  \tau_{\max}(\text{OOO}) = 10,\;
+  \tau_{\max}(\text{spike}) = 1,\;
+  \tau_{\max}(\text{drift}) = 48.
+\]
+If a fault begins at step $t_f$, then the corresponding reliability penalty
+or dedicated detector flag must fire by step $t_f + \tau_{\max}$.
 \end{assumption}
 
 \begin{assumption}[A6$'$: $\varphi$-mixing fault process]
@@ -338,7 +347,7 @@ assumptions (A1--A8) are individually justified in both domain-general
 and battery-specific terms, the proof dependency matrix prevents
 circular reasoning, and the theorem-writing discipline ensures that
 every claim is bounded by explicit scope disclaimers.  The integrated
-theorem surface of 67 formal items---spanning 18 theorems, 5 lemmas,
-7 propositions, 10 corollaries, 11 definitions, and 16 assumptions---is
+theorem surface of 82 formal items---spanning 26 theorems, 5 lemmas,
+8 propositions, 12 corollaries, 15 definitions, and 16 assumptions---is
 the formal depth this dissertation contributes to the CPS safety
 literature.

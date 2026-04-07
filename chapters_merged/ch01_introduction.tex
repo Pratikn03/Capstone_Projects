@@ -212,6 +212,40 @@ is a \emph{post-optimiser safety layer}: it takes the dispatch action
 produced by any optimiser and certifies or corrects it before actuation.
 The economic optimiser remains a black box to the shield.
 
+\subsection{Scope and Limitations of the Safety Guarantees}
+
+The main ORIUS theorem statements are marginal coverage guarantees.  They
+bound aggregate true-state risk over the deployment distribution induced by
+observations, telemetry faults, and calibration residuals.  They do not claim
+conditional coverage for every specific observation and fault realization.
+
+That boundary is deliberate.  Conditional coverage is not achievable in full
+generality under arbitrary non-exchangeable distributions, so the thesis keeps
+the flagship results at the strongest level that can be defended on the active
+artifact surface: finite-sample marginal coverage.  Later grouped analyses,
+including reliability-bin and Mondrian-style evaluations, refine that
+guarantee for explicit subpopulations but do not upgrade the core claim into a
+universal per-step worst-case statement.
+
+\subsection{Relationship to Prior Work}
+
+This dissertation supersedes the earlier battery-first ORIUS monograph and its
+associated frozen release bundles.  The earlier package established the
+battery reference surface, the original theorem ladder, and the core
+calibration and drift-monitoring workflow.  Those battery results are retained
+here as the deepest theorem-to-artifact witness rather than being renumbered
+or discarded.
+
+The present thesis extends that prior work in four ways.  First, it isolates a
+domain-agnostic repair-and-certify kernel instead of leaving the argument
+battery-local.  Second, it widens the empirical program into a tiered
+cross-domain package while preserving explicit evidence boundaries for rows
+that have not yet reached parity.  Third, it adds the later necessity,
+lower-bound, and transfer results that clarify what the battery witness does
+and does not imply beyond its home domain.  Fourth, it promotes certificate
+lifecycle and release-manifest governance from appendicial audit material into
+a first-class runtime object through CertOS and the claim-lock discipline.
+
 \subsection{Organisation of the Manuscript}
 
 The remainder of this dissertation is organised as follows:
@@ -274,6 +308,41 @@ boundary}.  Everything upstream of this boundary operates on the observed
 state~$\hat{x}_t$; the safety layer's task is to ensure that the
 dispatched action is safe on the \emph{true} state~$x_t$ despite the gap
 between the two.
+
+\subsection{ORIUS-MDP Formalisation}
+
+\begin{definition}[ORIUS-MDP]
+\label{def:orius-mdp-merged}
+An ORIUS deployment is modelled as the 11-tuple
+\[
+  (\mathcal{S}, \mathcal{O}, \mathcal{W}, \mathcal{A}, \mathcal{C},
+   \mathcal{T}, \mathcal{H}, \Omega, \mathcal{R}, \gamma, \mu_0),
+\]
+where $\mathcal{S}$ is the true-state space, $\mathcal{O}$ the observation
+space, $\mathcal{W}=[w_{\min},1]$ the observation-quality space,
+$\mathcal{A}$ the action space, and $\mathcal{C}\subsetneq\mathcal{S}$ the
+closed safety set.  The true transition kernel is
+$\mathcal{T}: \mathcal{S}\times\mathcal{A}\to\Delta(\mathcal{S})$, the
+observation kernel is $\mathcal{H}: \mathcal{S}\to\Delta(\mathcal{O})$, the
+quality map is $\Omega: Z^k\to\mathcal{W}$, the reward is
+$\mathcal{R}: \mathcal{S}\times\mathcal{A}\to\mathbb{R}$, $\gamma\in[0,1)$ is
+the discount factor, and $\mu_0$ is the initial-state distribution.
+
+At runtime, the controller receives $(o_t,w_t)$ where
+$o_t\sim\mathcal{H}(x_t)$ and $w_t=\Omega(z_{t-k+1:t})$ is computed
+deterministically from the telemetry history.  Reliability-aware policies
+therefore take the form $\pi:\mathcal{O}\times\mathcal{W}\to\Delta(\mathcal{A})$,
+whereas quality-ignorant policies are restricted to
+$\bar{\pi}:\mathcal{O}\to\Delta(\mathcal{A})$.
+\end{definition}
+
+\begin{remark}
+The ORIUS-MDP differs from a classical POMDP not because observation is
+partial, but because observation quality itself is exposed as a runtime state
+component that conditions repair, fallback, and certification.  Safety is
+always measured on the true-state trajectory rather than on the observation
+trajectory.
+\end{remark}
 
 \subsection{The Hidden Safety Gap}
 \label{sec:hidden-gap}
@@ -566,5 +635,3 @@ violation rate.  The scope boundary and dataset scope delimit the claims
 made in subsequent chapters.  Chapter~\ref{ch:safety-illusion} uses these
 definitions to demonstrate the observed-state safety illusion and motivate
 the dual-trajectory evaluation paradigm.
-
-
