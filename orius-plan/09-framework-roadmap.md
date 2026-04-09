@@ -6,11 +6,12 @@
 
 ## 1. Gap Audit Table
 
-Complete status of every item from the Codex plan replace-next queue (§13), cross-referenced with the current repo state.
+Complete status of every item from the extracted implementation plan
+replace-next queue (§13), cross-referenced with the current repo state.
 
 ### Priority 1 — Must replace first
 
-| Item | Codex plan ref | Current status | Target file | Command |
+| Item | Plan ref | Current status | Target file | Command |
 |------|---------------|----------------|-------------|---------|
 | Fault-performance stress table | §7.4, §13.1 | **MISSING** — CPSBench sweep exists but fault-perf pivot not generated | `reports/publication/fault_performance_table.csv` | `python scripts/run_cpsbench.py --config configs/cpsbench_r1_severity.yaml` then pivot |
 | 48-hour operational trace | §7.4, §13.1 | **MISSING** — script does not exist yet | `reports/publication/48h_trace.csv` + `fig_48h_trace.pdf` | Build `scripts/generate_48h_trace.py`, then run it |
@@ -19,7 +20,7 @@ Complete status of every item from the Codex plan replace-next queue (§13), cro
 
 ### Priority 2 — Replace second
 
-| Item | Codex plan ref | Current status | Target file | Command |
+| Item | Plan ref | Current status | Target file | Command |
 |------|---------------|----------------|-------------|---------|
 | Hyperparameter sweep surfaces (α, κ_r, κ_s) | §10.4, §13.2 | **MISSING** — `run_sensitivity_sweeps.py` exists but not for DC3S params | `reports/publication/hyperparam_sweep.csv` | `python scripts/run_sensitivity_sweeps.py` (extend for α/κ) |
 | Reliability-bin / conditional coverage | §6.5, §13.2 | **DONE** — `reliability_group_coverage.csv` locked | — | `python scripts/compute_reliability_group_coverage.py` to re-run |
@@ -28,7 +29,7 @@ Complete status of every item from the Codex plan replace-next queue (§13), cro
 
 ### Priority 3 — Replace third
 
-| Item | Codex plan ref | Current status | Target file | Command |
+| Item | Plan ref | Current status | Target file | Command |
 |------|---------------|----------------|-------------|---------|
 | Battery benchmark leaderboard | §7.4, §13.3 | **PARTIAL** — `cpsbench_merged_sweep.csv` exists; leaderboard format missing | `reports/publication/cpsbench_leaderboard.csv` | Derive from fault-perf table after Priority 1 |
 | Battery fleet composition results | §9.4, §13.3 | **MISSING** — ch31 written, plant not extended to two-battery | `reports/publication/fleet_composition.csv` | Extend `cpsbench_iot/plant.py` + `runner.py` |
@@ -45,7 +46,7 @@ All extensions must be clearly marked in code and manuscript as not part of the 
 
 **Status**: MISSING
 
-**Codex plan ref**: §5.3.1
+**Plan ref**: §5.3.1
 
 **Goal**: Replace constant drift bound `D` with state-dependent `D(x_t, a_t)`.
 
@@ -75,7 +76,7 @@ def compute_dynamic_drift_bound(soc_mwh: float, action_mw: float, cfg) -> float:
 
 **Status**: MISSING
 
-**Codex plan ref**: §5.3.2
+**Plan ref**: §5.3.2
 
 **Goal**: Move from hard SOC walls to a soft electrochemical stress boundary that penalizes depth-of-discharge and power stress.
 
@@ -99,7 +100,7 @@ def _electrochemical_stress_penalty(soc_mwh: float, action_mw: float, cfg) -> fl
 
 **Status**: MISSING — advanced extension, mark clearly as future work
 
-**Codex plan ref**: §5.3.3
+**Plan ref**: §5.3.3
 
 **Goal**: Replace simple linear SOC dynamics with an equivalent circuit model (ECM) that captures voltage sag, internal resistance, temperature effects.
 
@@ -113,7 +114,7 @@ def _electrochemical_stress_penalty(soc_mwh: float, action_mw: float, cfg) -> fl
 
 **Status**: MISSING
 
-**Codex plan ref**: §6.6
+**Plan ref**: §6.6
 
 **Goal**: Rolling conformal recalibration triggered by state-of-health decline.
 
@@ -130,7 +131,7 @@ def _electrochemical_stress_penalty(soc_mwh: float, action_mw: float, cfg) -> fl
 
 **Status**: PARTIAL (chapter written, no simulation runs)
 
-**Codex plan ref**: §9.1
+**Plan ref**: §9.1
 
 **Goal**: Quantify how long a certificate remains valid under SCADA blackout (12h / 24h / 48h).
 
@@ -165,7 +166,7 @@ PY
 
 **Status**: PARTIAL (chapter written, no traces)
 
-**Codex plan ref**: §9.2
+**Plan ref**: §9.2
 
 **Goal**: Demonstrate that DC3S switches from profit-seeking to safe landing mode under extended observation loss.
 
@@ -183,7 +184,7 @@ PY
 
 **Status**: MISSING
 
-**Codex plan ref**: §9.4
+**Plan ref**: §9.4
 
 **Goal**: Compositional safety for a two-battery microgrid sharing a transformer constraint.
 
@@ -215,7 +216,7 @@ class BatteryFleetPlant:
 
 **Status**: MISSING
 
-**Codex plan ref**: §9.5
+**Plan ref**: §9.5
 
 **Goal**: Active sensitivity probing to detect sensor spoofing; adversarial fault injection to test robustness.
 

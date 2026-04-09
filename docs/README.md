@@ -18,8 +18,8 @@ Comprehensive documentation for the ORIUS universal safety framework, thesis pac
 | [ORIUS_THESIS_TERMINOLOGY_GUIDE.md](ORIUS_THESIS_TERMINOLOGY_GUIDE.md) | Canonical universal terminology and battery-only language boundaries |
 | [BOUNDED_UNIVERSAL_CLOSURE_PROGRAM.md](BOUNDED_UNIVERSAL_CLOSURE_PROGRAM.md) | Promotion gate, per-domain blockers, and the active six-domain closure target |
 | [production_readiness.md](production_readiness.md) | Production deployment checklist |
-| [AI_RESEARCH_WORKFLOW.md](AI_RESEARCH_WORKFLOW.md) | Official AI-tool workflow for ORIUS research, coding, and writing |
-| [AI_ARTIFACT_SANITIZATION_CHECKLIST.md](AI_ARTIFACT_SANITIZATION_CHECKLIST.md) | Upload-safety checklist for hosted AI tools |
+| [AI_RESEARCH_WORKFLOW.md](AI_RESEARCH_WORKFLOW.md) | Official assistant-supported workflow for ORIUS research, coding, and writing |
+| [AI_ARTIFACT_SANITIZATION_CHECKLIST.md](AI_ARTIFACT_SANITIZATION_CHECKLIST.md) | Upload-safety checklist for hosted assistant workflows |
 | [REAL_DATA_PLUGIN_ACCESS_PLAN.md](REAL_DATA_PLUGIN_ACCESS_PLAN.md) | Minimal plugin stack and real-data access policy for universal-depth closure |
 
 ## Related Documentation

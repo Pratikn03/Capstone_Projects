@@ -1,5 +1,5 @@
-# CODEX IMPLEMENTATION UPDATE — ORIUS → DC³S + CPSBench-IoT + Closed-Loop IoT Validation
-**Audience:** Codex / coding agent implementing changes in this repo.  
+# IMPLEMENTATION UPDATE — ORIUS → DC³S + CPSBench-IoT + Closed-Loop IoT Validation
+**Audience:** Coding agent implementing changes in this repo.  
 **Repo root:** `Capstone_Projects-main/`  
 **Primary deliverable:** DC³S (Drift-Calibrated Conformal Safety Shield) + CPSBench-IoT benchmark + closed-loop IoT validation.
 
@@ -37,7 +37,7 @@ Currently, tool `execute` functions return hardcoded objects.
 
 ### 1.2 Fix local absolute paths in reports
 **File:** `reports/formal_evaluation_report.md`  
-Line contains: `![](/Users/pratik_n/Downloads/orius/reports/figures/multi_horizon_backtest.png)`
+Line contains: `![](<repo-root>/reports/figures/multi_horizon_backtest.png)`
 
 **Change:** Replace with repo-relative path:
 `![](figures/multi_horizon_backtest.png)`

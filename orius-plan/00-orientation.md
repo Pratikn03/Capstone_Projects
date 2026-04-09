@@ -10,11 +10,14 @@
 
 | # | File | Location | Role |
 |---|------|----------|------|
-| 1 | `orius_battery_409page_figures_upgraded_main.tex` | `/Users/pratik_n/Downloads/orius/` | LaTeX driver for the 409-page ORIUS battery thesis — master document structure reference |
-| 2 | `orius_battery_proofs_tables_figures_expanded_updated.pdf` | `/Users/pratik_n/Downloads/orius/` | Compiled PDF — primary reading surface for reviewers and proofs |
-| 3 | Codex Implementation Plan (pasted from artifact ZIP) | Captured in `01-codex-plan-extracted.md` | 16-section battery-only Codex implementation manual — the canonical agent task list |
+| 1 | `orius_battery_409page_figures_upgraded_main.tex` | `<repo-root>/` | LaTeX driver for the 409-page ORIUS battery thesis — master document structure reference |
+| 2 | `orius_battery_proofs_tables_figures_expanded_updated.pdf` | `<repo-root>/` | Compiled PDF — primary reading surface for reviewers and proofs |
+| 3 | Implementation plan (pasted from artifact ZIP) | Captured in `01-codex-plan-extracted.md` | 16-section battery-only implementation manual — the canonical agent task list |
 
-> The Codex plan that lived **inside** the artifact ZIP is the 16-section document titled "ORIUS Battery-Only Implementation Plan." It was recovered from the ZIP and is re-structured in `01-codex-plan-extracted.md`.
+> The implementation plan that lived **inside** the artifact ZIP is the
+> 16-section document titled "ORIUS Battery-Only Implementation Plan." It was
+> recovered from the ZIP and is re-structured in
+> `01-codex-plan-extracted.md`.
 
 ---
 
@@ -111,7 +114,7 @@ The main LaTeX driver (`orius_battery_409page_figures_upgraded_main.tex`) organi
 
 ## 3. Artifact ZIP → Repo Directory Map
 
-The artifact ZIP contents map directly to the confirmed ORIUS repo at `/Users/pratik_n/Downloads/orius/`.
+The artifact ZIP contents map directly to the confirmed ORIUS repo at `<repo-root>/`.
 
 | Artifact ZIP concept | Repo directory / file | Status |
 |----------------------|-----------------------|--------|
@@ -173,7 +176,7 @@ The artifact ZIP contents map directly to the confirmed ORIUS repo at `/Users/pr
 
 ---
 
-## 5. Highest-Priority Gaps (from Codex plan §10, §13)
+## 5. Highest-Priority Gaps (from the extracted implementation plan §10, §13)
 
 These items are confirmed missing and must be generated before the manuscript is locked:
 
@@ -186,4 +189,5 @@ These items are confirmed missing and must be generated before the manuscript is
 
 ---
 
-*Next: see `01-codex-plan-extracted.md` for the full annotated Codex plan.*
+*Next: see `01-codex-plan-extracted.md` for the full annotated implementation
+plan.*

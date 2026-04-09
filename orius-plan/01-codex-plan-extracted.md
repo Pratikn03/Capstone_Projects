@@ -1,4 +1,4 @@
-# ORIUS Battery Framework — Phase 1: Codex Implementation Plan (Extracted & Annotated)
+# ORIUS Battery Framework — Phase 1: Implementation Plan (Extracted & Annotated)
 
 **Source**: Recovered from the artifact ZIP. Original title: "ORIUS Battery-Only Implementation Plan."
 **Status legend**: `[DONE]` = implemented in repo | `[PARTIAL]` = code exists, output not locked | `[MISSING]` = must build/run
@@ -61,7 +61,8 @@ The system must prove:
 
 ### 3.1 Battery-only scope
 - Use: "battery-domain result", "battery-first validation surface", "reference-domain foundation"
-- Never: "fully universal", "validated across all physical AI", "deployment-complete"
+- Never: "fully universal", "validated across all cyber-physical systems",
+  "deployment-complete"
 
 ### 3.2 Evidence discipline
 Every claim maps to one of: locked run ID | theorem ID | CSV row | known script | stated limitation.
@@ -315,7 +316,7 @@ From `reports/publication/dc3s_latency_summary.csv`:
 
 ### Environment inspection
 ```bash
-cd /Users/pratik_n/Downloads/orius
+cd <repo-root>
 pwd && ls -la
 python -m orius --version  # if CLI exists
 ```
@@ -385,7 +386,7 @@ python scripts/generate_48h_trace.py --region DE --fault stale --window 48
 ### Build policy
 One master source tree — do not create separate stitched versions.
 ```bash
-cd /Users/pratik_n/Downloads/orius/paper
+cd <repo-root>/paper
 pdflatex paper.tex && bibtex paper && pdflatex paper.tex && pdflatex paper.tex
 ```
 

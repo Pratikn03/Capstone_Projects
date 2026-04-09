@@ -1,7 +1,9 @@
-# ChatGPT Deep Research Brief (ORIUS)
+# External Research Verification Brief (ORIUS)
 
 ## Purpose
-Use this brief as the primary context file when asking ChatGPT to run deep research on ORIUS. It points to the latest canonical artifacts in this repository and highlights known evaluation caveats.
+Use this brief as the primary context file when asking an external research
+assistant to audit ORIUS. It points to the latest canonical artifacts in this
+repository and highlights known evaluation caveats.
 
 ## Snapshot Date
 - Brief created: 2026-03-11 (America/Chicago)
@@ -37,7 +39,7 @@ Use this brief as the primary context file when asking ChatGPT to run deep resea
 - Main manuscript: `paper/PAPER_DRAFT.md`
 - Runtime system overview: `README.md`, `docs/ARCHITECTURE.md`, `docs/ASSUMPTIONS_AND_GUARANTEES.md`
 
-## What To Ask ChatGPT Deep Research To Verify
+## What To Ask An External Research Assistant To Verify
 - Whether narrative claims in `README.md` and `paper/PAPER_DRAFT.md` are fully consistent with:
   - `paper/metrics_manifest.json`
   - `reports/publication/release_manifest.json`
@@ -65,4 +67,3 @@ Tasks:
 - Propose exact text edits to make claims evidence-accurate.
 - Provide a final table: claim | source line | evidence file/field | status | corrected wording.
 ```
-

@@ -16,9 +16,8 @@ Final manuscript and publication pipeline was executed and outcomes were classif
 
 - `reports/publication/final_lock_manifest_full_thesis.json`
 - `reports/publication/final_package_FINAL_20260317T030715Z/`
-- `reports/publication/final_battery_only_package_FINAL_20260317T030715Z.tar.gz`
+- `reports/legacy_archive/final_package_FINAL_20260317T030715Z/` (retained extracted archive surface; compressed tarball removed during repo cleanup)
 
 ## Status
 
 - Final audit and package lock status: `COMPLETE`
-

@@ -5,6 +5,7 @@ not part of the active universal-first monograph control surface.
 
 Non-canonical archive classes:
 - frozen `reports/publication/final_package_*` bundles
+- extracted `reports/legacy_archive/final_package_*` directories that replace the old compressed publication tarballs
 - older program-era audit and inclusion files retained only as pointers
 - historical witness-centered or stitched-thesis packaging snapshots
 

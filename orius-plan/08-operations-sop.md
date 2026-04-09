@@ -36,7 +36,7 @@
 ### Step 1 — Clone / navigate to repo
 
 ```bash
-cd /Users/pratik_n/Downloads/orius
+cd <repo-root>
 ```
 
 ### Step 2 — Create virtual environment and install dependencies
@@ -341,7 +341,7 @@ kill %1
 ### Quick paper compile
 
 ```bash
-cd /Users/pratik_n/Downloads/orius/paper
+cd <repo-root>/paper
 pdflatex paper.tex
 bibtex paper
 pdflatex paper.tex
@@ -352,7 +352,7 @@ pdflatex paper.tex
 ### Full refresh (sync assets + compile)
 
 ```bash
-cd /Users/pratik_n/Downloads/orius
+cd <repo-root>
 make paper-refresh
 # Runs: paper-assets + paper-compile
 ```
@@ -633,7 +633,8 @@ Metrics exposed by:
 Follow this order when onboarding to the ORIUS battery system:
 
 1. Read `orius-plan/00-orientation.md` — understand what the system claims and where the files are
-2. Read `orius-plan/01-codex-plan-extracted.md` — understand what is done vs what is missing
+2. Read `orius-plan/01-codex-plan-extracted.md` — this is the extracted
+   implementation plan; use it to understand what is done vs what is missing
 3. Do §1 (environment setup) and §2 (verify locked results) above
 4. Run `make dc3s-demo` and inspect the output
 5. Read `orius-plan/04-core-apis.md` — understand the 12 runtime objects

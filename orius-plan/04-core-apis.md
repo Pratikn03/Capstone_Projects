@@ -6,7 +6,7 @@
 
 ## 1. Runtime Object Reference
 
-All 13 canonical runtime objects from the Codex plan §4.2.
+All 13 canonical runtime objects from the extracted implementation plan §4.2.
 
 ### 1.1 `z_t` — Clean Telemetry
 
