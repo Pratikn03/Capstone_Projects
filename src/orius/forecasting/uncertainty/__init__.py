@@ -1,5 +1,5 @@
 """Uncertainty estimation utilities for forecasting."""
-from .conformal import AdaptiveConformal, ConformalInterval, ConformalConfig, save_conformal, load_conformal
+from .conformal import AdaptiveConformal, ConformalInterval, ConformalConfig, save_conformal, load_conformal, build_runtime_interval
 from .cqr import RegimeCQR, RegimeCQRConfig
 from .distributional import NGBoostConfig, predict_ngboost_quantiles, train_ngboost_distribution
 from .reliability_mondrian import ReliabilityMondrian, ReliabilityMondrianConfig
@@ -17,4 +17,5 @@ __all__ = [
     "ReliabilityMondrianConfig",
     "save_conformal",
     "load_conformal",
+    "build_runtime_interval",
 ]

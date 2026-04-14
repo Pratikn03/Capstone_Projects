@@ -17,6 +17,15 @@ from typing import Any, Literal, Optional, Tuple
 
 import json
 import numpy as np
+from .shift_aware import (
+    AdaptiveQuantileState,
+    ShiftAwareConfig,
+    ShiftAwareIntervalDecision,
+    SubgroupCoverageTracker,
+    apply_interval_policy,
+    compute_validity_score,
+    update_adaptive_quantile,
+)
 
 
 @dataclass
@@ -488,6 +497,7 @@ class ConformalInterval:
         
         return results
 
+
     def evaluate_intervals_cqr(
         self,
         y_true: np.ndarray,
@@ -555,6 +565,89 @@ class ConformalInterval:
         if method in {"residual", "cqr"}:
             inst.method = method
         return inst
+
+
+_SHIFT_TRACKER = SubgroupCoverageTracker()
+_SHIFT_ADAPTIVE_STATE = AdaptiveQuantileState()
+
+
+def build_runtime_interval(
+    y_hat: float,
+    base_half_width: float,
+    reliability_score: float,
+    drift_flag: bool,
+    residual_features: dict[str, float] | None = None,
+    subgroup_context: dict[str, str | int | float] | None = None,
+    fault_context: dict[str, str | int | float] | None = None,
+    config: ShiftAwareConfig | None = None,
+) -> ShiftAwareIntervalDecision:
+    """Build runtime intervals with optional shift-aware validity integration."""
+    cfg = config or ShiftAwareConfig()
+    if not cfg.enabled:
+        adjusted = float(max(base_half_width, 0.0))
+        return ShiftAwareIntervalDecision(
+            lower=float(y_hat - adjusted),
+            upper=float(y_hat + adjusted),
+            base_half_width=float(base_half_width),
+            adjusted_half_width=float(adjusted),
+            inflation_multiplier=1.0,
+            adaptive_quantile=float(cfg.alpha),
+            validity_score=1.0,
+            validity_status="nominal",
+            under_coverage_gap=0.0,
+            applied_policy="legacy_rac_cert",
+        )
+
+    residual_features = residual_features or {}
+    subgroup_context = subgroup_context or {}
+    fault_context = fault_context or {}
+    volatility = float(residual_features.get("volatility", 0.0))
+    abs_residual = float(abs(residual_features.get("abs_residual", 0.0)))
+    was_covered = bool(residual_features.get("covered", True))
+    timestamp = str(subgroup_context.get("timestamp", ""))
+    fault_type = str(fault_context.get("fault_type", subgroup_context.get("fault_type", "none")))
+    group_key = _SHIFT_TRACKER.build_group_key(
+        reliability_score=float(reliability_score),
+        volatility=volatility,
+        fault_type=fault_type,
+        ts=timestamp,
+        custom_key=str(subgroup_context.get("custom_group_key", "")) or None,
+        reliability_bins=int(cfg.reliability_bins),
+        volatility_bins=int(cfg.volatility_bins),
+    )
+    stats = _SHIFT_TRACKER.update(
+        group_key=group_key,
+        covered=was_covered,
+        interval_width=float(2.0 * base_half_width),
+        abs_residual=abs_residual,
+    )
+
+    _SHIFT_ADAPTIVE_STATE.mode = cfg.aci_mode
+    _SHIFT_ADAPTIVE_STATE.base_alpha = float(cfg.alpha)
+    _SHIFT_ADAPTIVE_STATE.learning_rate = float(cfg.adaptation_step)
+    _SHIFT_ADAPTIVE_STATE.alpha_min = float(cfg.alpha_min)
+    _SHIFT_ADAPTIVE_STATE.alpha_max = float(cfg.alpha_max)
+    update_adaptive_quantile(_SHIFT_ADAPTIVE_STATE, miss=not was_covered)
+
+    validity = compute_validity_score(
+        reliability_score=float(reliability_score),
+        drift_magnitude=1.0 if bool(drift_flag) else 0.0,
+        normalized_residual=float(min(abs_residual / max(base_half_width, 1e-9), 1.0)),
+        subgroup_under_coverage_gap=float(stats.under_coverage_gap),
+        adaptation_instability=float(abs(_SHIFT_ADAPTIVE_STATE.effective_alpha - _SHIFT_ADAPTIVE_STATE.base_alpha)),
+        cfg=cfg,
+    )
+    return apply_interval_policy(
+        y_hat=float(y_hat),
+        base_half_width=float(base_half_width),
+        reliability_score=float(reliability_score),
+        drift_signal=1.0 if bool(drift_flag) else 0.0,
+        adaptive_quantile=float(_SHIFT_ADAPTIVE_STATE.effective_alpha),
+        subgroup_under_coverage_gap=float(stats.under_coverage_gap),
+        validity=validity,
+        cfg=cfg,
+        coverage_group_key=group_key,
+    )
 
 
 def save_conformal(path: str | Path, interval: ConformalInterval, meta: Optional[dict[str, Any]] = None) -> None:
