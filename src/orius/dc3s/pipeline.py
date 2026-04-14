@@ -22,6 +22,8 @@ from .drift import PageHinkleyDetector
 from .shield import repair_action
 from .certificate import make_certificate, compute_config_hash
 from .safety_filter_theory import tightened_soc_bounds, reliability_error_bound
+from ..forecasting.uncertainty.conformal import build_runtime_interval
+from ..forecasting.uncertainty.shift_aware import ShiftAwareConfig
 
 
 def run_dc3s_step(
@@ -55,6 +57,7 @@ def run_dc3s_step(
     ftit_cfg = dcfg.get("ftit")
     expected_cadence = float(dcfg.get("expected_cadence_s", 3600))
     assumptions_version = str(dcfg.get("assumptions_version", "dc3s-assumptions-v1"))
+    shift_cfg = ShiftAwareConfig.from_mapping(dcfg.get("shift_aware_uncertainty"))
 
     # ── Stage 1: Detect (OQE) ────────────────────────────────────────
     w_t, reliability_flags = compute_reliability(
@@ -83,6 +86,22 @@ def run_dc3s_step(
         prev_inflation=prev_inflation,
     )
     inflation = float(cal_meta.get("inflation", 1.0))
+    runtime_interval_decision = None
+    if shift_cfg.enabled:
+        runtime_interval_decision = build_runtime_interval(
+            y_hat=float(np.asarray(yhat, dtype=float).reshape(-1)[0]),
+            base_half_width=float(np.asarray(q, dtype=float).reshape(-1)[0]) * inflation,
+            reliability_score=float(w_t),
+            drift_flag=drift_flag,
+            residual_features={
+                "abs_residual": float(abs(residual)) if residual is not None else 0.0,
+                "covered": bool(residual is None or abs(float(residual)) <= float(np.asarray(q, dtype=float).reshape(-1)[0])),
+                "volatility": float(abs(residual)) if residual is not None else 0.0,
+            },
+            subgroup_context={"timestamp": str(event.get("ts", ""))},
+            fault_context={"fault_type": str(event.get("fault_type", "none"))},
+            config=shift_cfg,
+        )
 
     uncertainty_set: dict[str, Any] = {
         "lower": lower,
@@ -150,6 +169,13 @@ def run_dc3s_step(
         reliability_w=float(w_t),
         drift_flag=drift_flag,
         inflation=inflation,
+        validity_score=(runtime_interval_decision.validity_score if runtime_interval_decision else None),
+        adaptive_quantile=(runtime_interval_decision.adaptive_quantile if runtime_interval_decision else None),
+        conditional_coverage_gap=(runtime_interval_decision.under_coverage_gap if runtime_interval_decision else None),
+        runtime_interval_policy=(runtime_interval_decision.applied_policy if runtime_interval_decision else None),
+        coverage_group_key=(runtime_interval_decision.coverage_group_key if runtime_interval_decision else None),
+        shift_alert_flag=(runtime_interval_decision.shift_alert_flag if runtime_interval_decision else None),
+        validity_status=(runtime_interval_decision.validity_status if runtime_interval_decision else None),
         assumptions_version=assumptions_version,
     )
 
@@ -166,4 +192,5 @@ def run_dc3s_step(
         "lower": lower,
         "upper": upper,
         "calibration_meta": cal_meta,
+        "runtime_interval_decision": runtime_interval_decision.to_dict() if runtime_interval_decision else None,
     }
