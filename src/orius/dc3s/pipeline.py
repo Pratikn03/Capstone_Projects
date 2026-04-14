@@ -22,6 +22,8 @@ from .drift import PageHinkleyDetector
 from .shield import repair_action
 from .certificate import make_certificate, compute_config_hash
 from .safety_filter_theory import tightened_soc_bounds, reliability_error_bound
+from orius.forecasting.uncertainty.conformal import build_runtime_interval
+from orius.forecasting.uncertainty.shift_aware import ShiftAwareConfig
 
 
 def run_dc3s_step(
@@ -43,6 +45,9 @@ def run_dc3s_step(
     device_id: str = "battery-0",
     zone_id: str = "zone-0",
     controller: str = "dc3s",
+    shift_aware_cfg: Mapping[str, Any] | None = None,
+    subgroup_context: Mapping[str, Any] | None = None,
+    fault_context: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Execute one full DC3S step and return the dispatch certificate + metadata.
 
@@ -84,6 +89,23 @@ def run_dc3s_step(
     )
     inflation = float(cal_meta.get("inflation", 1.0))
 
+    shift_cfg = ShiftAwareConfig.from_mapping(dict(shift_aware_cfg or {}))
+    base_half_width = float(np.asarray(q, dtype=float).reshape(-1)[0]) if np.asarray(q, dtype=float).size else 0.0
+    shift_decision = build_runtime_interval(
+        y_hat=float(np.asarray(yhat, dtype=float).reshape(-1)[0]),
+        base_half_width=base_half_width,
+        reliability_score=float(w_t),
+        drift_flag=bool(drift_flag),
+        residual_features={
+            "abs_residual": float(abs(residual or 0.0)),
+            "normalized_residual": float(abs(residual or 0.0) / max(1e-6, base_half_width if base_half_width > 0 else 1.0)),
+            "drift_magnitude": float(drift_meta.get("score", 0.0)),
+        },
+        subgroup_context=dict(subgroup_context or {}),
+        fault_context=dict(fault_context or {}),
+        config=shift_cfg,
+    )
+
     uncertainty_set: dict[str, Any] = {
         "lower": lower,
         "upper": upper,
@@ -91,6 +113,11 @@ def run_dc3s_step(
             "w_t": float(w_t),
             "drift_flag": drift_flag,
             "inflation": inflation,
+            "validity_score": shift_decision.validity_score,
+            "validity_status": shift_decision.validity_status,
+            "adaptive_quantile": shift_decision.adaptive_quantile,
+            "conditional_coverage_gap": shift_decision.under_coverage_gap,
+            "runtime_interval_policy": shift_decision.applied_policy,
         },
     }
 
@@ -151,6 +178,13 @@ def run_dc3s_step(
         drift_flag=drift_flag,
         inflation=inflation,
         assumptions_version=assumptions_version,
+        validity_score=shift_decision.validity_score,
+        adaptive_quantile=shift_decision.adaptive_quantile,
+        conditional_coverage_gap=shift_decision.under_coverage_gap,
+        runtime_interval_policy=shift_decision.applied_policy,
+        coverage_group_key=shift_decision.coverage_group_key,
+        shift_alert_flag=shift_decision.shift_alert_flag,
+        validity_status=shift_decision.validity_status,
     )
 
     return {
@@ -166,4 +200,5 @@ def run_dc3s_step(
         "lower": lower,
         "upper": upper,
         "calibration_meta": cal_meta,
+        "shift_aware_decision": shift_decision.to_dict(),
     }

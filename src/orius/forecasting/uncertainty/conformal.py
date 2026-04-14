@@ -18,6 +18,16 @@ from typing import Any, Literal, Optional, Tuple
 import json
 import numpy as np
 
+from .shift_aware import (
+    ShiftAwareConfig,
+    ShiftAwareIntervalDecision,
+    SubgroupCoverageTracker,
+    apply_interval_policy,
+    compute_validity_score,
+    make_aci_state,
+    update_adaptive_quantile,
+)
+
 
 @dataclass
 class ConformalConfig:
@@ -569,3 +579,106 @@ def save_conformal(path: str | Path, interval: ConformalInterval, meta: Optional
 def load_conformal(path: str | Path) -> ConformalInterval:
     payload = json.loads(Path(path).read_text(encoding="utf-8"))
     return ConformalInterval.from_dict(payload)
+
+
+_SHIFT_AWARE_RUNTIME: dict[str, Any] = {}
+
+
+def _get_shift_aware_runtime(config: ShiftAwareConfig) -> dict[str, Any]:
+    key = str(config.to_dict())
+    cached = _SHIFT_AWARE_RUNTIME.get(key)
+    if cached is not None:
+        return cached
+    runtime = {
+        "aci": make_aci_state(config),
+        "tracker": SubgroupCoverageTracker(config=config, target_coverage=1.0 - config.target_alpha),
+    }
+    _SHIFT_AWARE_RUNTIME[key] = runtime
+    return runtime
+
+
+def build_runtime_interval(
+    y_hat: float,
+    base_half_width: float,
+    reliability_score: float,
+    drift_flag: bool,
+    residual_features: dict[str, float] | None = None,
+    subgroup_context: dict[str, str | int | float] | None = None,
+    fault_context: dict[str, str | int | float] | None = None,
+    config: ShiftAwareConfig | None = None,
+) -> ShiftAwareIntervalDecision:
+    cfg = config or ShiftAwareConfig()
+    base = max(0.0, float(base_half_width))
+
+    if not cfg.enabled:
+        lower = float(y_hat) - base
+        upper = float(y_hat) + base
+        return ShiftAwareIntervalDecision(
+            lower=lower,
+            upper=upper,
+            base_half_width=base,
+            adjusted_half_width=base,
+            inflation_multiplier=1.0,
+            adaptive_quantile=1.0,
+            validity_score=float(reliability_score),
+            validity_status="nominal",
+            under_coverage_gap=0.0,
+            applied_policy="legacy_rac_cert",
+            coverage_group_key="legacy",
+            shift_alert_flag=False,
+        )
+
+    runtime = _get_shift_aware_runtime(cfg)
+    aci_state = runtime["aci"]
+    tracker: SubgroupCoverageTracker = runtime["tracker"]
+
+    residual_features = residual_features or {}
+    abs_residual = float(abs(residual_features.get("abs_residual", 0.0)))
+    y_true = residual_features.get("y_true")
+    covered = True
+    if y_true is not None:
+        covered = (float(y_true) >= float(y_hat) - base) and (float(y_true) <= float(y_hat) + base)
+
+    context: dict[str, Any] = {
+        "reliability": reliability_score,
+        "volatility": float(residual_features.get("volatility", 0.0)),
+        "hour": residual_features.get("hour", 0),
+    }
+    if subgroup_context:
+        context.update(subgroup_context)
+    if fault_context and "fault_type" in fault_context:
+        context["fault_type"] = fault_context["fault_type"]
+
+    group = tracker.update(
+        covered=covered,
+        interval_width=2.0 * base,
+        abs_residual=abs_residual,
+        context=context,
+    )
+
+    under_cov_gap = float(group.to_dict()["under_coverage_gap"])
+    drift_magnitude = 1.0 if drift_flag else float(residual_features.get("drift_magnitude", 0.0))
+    normalized_residual = float(residual_features.get("normalized_residual", abs_residual))
+
+    aci_state = update_adaptive_quantile(aci_state, is_miss=not covered, config=cfg)
+    validity = compute_validity_score(
+        reliability_score=float(reliability_score),
+        drift_magnitude=float(drift_magnitude),
+        normalized_residual=float(normalized_residual),
+        under_coverage_gap=float(under_cov_gap),
+        adaptation_instability=float(aci_state.instability),
+        config=cfg,
+    )
+
+    return apply_interval_policy(
+        y_hat=float(y_hat),
+        base_half_width=base,
+        reliability_score=float(reliability_score),
+        drift_signal=float(drift_magnitude),
+        adaptive_quantile=float(aci_state.effective_quantile),
+        under_coverage_gap=float(under_cov_gap),
+        validity=validity,
+        policy_name=cfg.policy_mode,
+        config=cfg,
+        coverage_group_key=group.group_key,
+    )

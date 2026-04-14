@@ -84,3 +84,14 @@ dc3s:
     duckdb_path: data/audit/dc3s_audit.duckdb
     table_name: dispatch_certificates
     state_table_name: dc3s_online_state
+
+shift_aware_uncertainty:
+  enable: false
+  policy_mode: shift_aware_linear
+  aci_mode: aci_clipped
+  adaptation_step_size: 0.02
+  reliability_bin_count: 4
+  volatility_bin_count: 4
+  watch_threshold: 0.75
+  degraded_threshold: 0.5
+  invalid_threshold: 0.3

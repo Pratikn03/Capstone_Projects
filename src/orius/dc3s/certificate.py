@@ -83,6 +83,12 @@ def make_certificate(
     half_life_steps: int | None = None,
     expires_at_step: int | None = None,
     validity_status: str | None = None,
+    validity_score: float | None = None,
+    adaptive_quantile: float | None = None,
+    conditional_coverage_gap: float | None = None,
+    runtime_interval_policy: str | None = None,
+    coverage_group_key: str | None = None,
+    shift_alert_flag: bool | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "command_id": command_id,
@@ -119,6 +125,12 @@ def make_certificate(
         "half_life_steps": int(half_life_steps) if half_life_steps is not None else None,
         "expires_at_step": int(expires_at_step) if expires_at_step is not None else None,
         "validity_status": validity_status,
+        "validity_score": float(validity_score) if validity_score is not None else None,
+        "adaptive_quantile": float(adaptive_quantile) if adaptive_quantile is not None else None,
+        "conditional_coverage_gap": float(conditional_coverage_gap) if conditional_coverage_gap is not None else None,
+        "runtime_interval_policy": runtime_interval_policy,
+        "coverage_group_key": coverage_group_key,
+        "shift_alert_flag": bool(shift_alert_flag) if shift_alert_flag is not None else None,
     }
     payload["certificate_hash"] = _sha256_bytes(_canonical_bytes(payload))
     return _to_json_safe(payload)
@@ -156,7 +168,13 @@ def _ensure_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
             gamma_mw DOUBLE,
             e_t_mwh DOUBLE,
             soc_tube_lower_mwh DOUBLE,
-            soc_tube_upper_mwh DOUBLE
+            soc_tube_upper_mwh DOUBLE,
+            validity_score DOUBLE,
+            adaptive_quantile DOUBLE,
+            conditional_coverage_gap DOUBLE,
+            runtime_interval_policy VARCHAR,
+            coverage_group_key VARCHAR,
+            shift_alert_flag BOOLEAN
         )
         """
     )
@@ -173,6 +191,12 @@ def _ensure_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
     _add_column_if_missing(conn, table_name, "e_t_mwh", "DOUBLE")
     _add_column_if_missing(conn, table_name, "soc_tube_lower_mwh", "DOUBLE")
     _add_column_if_missing(conn, table_name, "soc_tube_upper_mwh", "DOUBLE")
+    _add_column_if_missing(conn, table_name, "validity_score", "DOUBLE")
+    _add_column_if_missing(conn, table_name, "adaptive_quantile", "DOUBLE")
+    _add_column_if_missing(conn, table_name, "conditional_coverage_gap", "DOUBLE")
+    _add_column_if_missing(conn, table_name, "runtime_interval_policy", "VARCHAR")
+    _add_column_if_missing(conn, table_name, "coverage_group_key", "VARCHAR")
+    _add_column_if_missing(conn, table_name, "shift_alert_flag", "BOOLEAN")
 
 
 def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_name: str) -> None:
@@ -202,8 +226,14 @@ def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_na
                 gamma_mw,
                 e_t_mwh,
                 soc_tube_lower_mwh,
-                soc_tube_upper_mwh
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                soc_tube_upper_mwh,
+                validity_score,
+                adaptive_quantile,
+                conditional_coverage_gap,
+                runtime_interval_policy,
+                coverage_group_key,
+                shift_alert_flag
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 str(certificate.get("command_id")),
@@ -224,6 +254,12 @@ def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_na
                 certificate.get("e_t_mwh"),
                 certificate.get("soc_tube_lower_mwh"),
                 certificate.get("soc_tube_upper_mwh"),
+                certificate.get("validity_score"),
+                certificate.get("adaptive_quantile"),
+                certificate.get("conditional_coverage_gap"),
+                certificate.get("runtime_interval_policy"),
+                certificate.get("coverage_group_key"),
+                certificate.get("shift_alert_flag"),
             ],
         )
     finally:

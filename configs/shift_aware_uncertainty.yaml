@@ -1,0 +1,32 @@
+enable: false
+policy_mode: shift_aware_linear
+aci_mode: aci_clipped
+adaptation_step_size: 0.02
+target_alpha: 0.10
+reliability_bin_count: 4
+volatility_bin_count: 4
+subgroup_definitions:
+  include_fault_type: true
+  include_hour_bucket: true
+  custom_key: custom_group
+validity_score_weights:
+  reliability: 0.25
+  residual: 0.25
+  drift: 0.20
+  subgroup: 0.20
+  adaptation: 0.10
+drift_detector_params:
+  ph_delta: 0.01
+  ph_lambda: 5.0
+  warmup_steps: 48
+  cooldown_steps: 24
+widening_cap: 4.0
+watch_threshold: 0.75
+degraded_threshold: 0.50
+invalid_threshold: 0.30
+artifact_output_toggles:
+  reliability_group_coverage: true
+  volatility_group_coverage: true
+  fault_group_coverage: true
+  shift_validity_trace: true
+  adaptive_quantile_trace: true
