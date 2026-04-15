@@ -1,3 +1,4 @@
+from .adaptive import AdaptiveRecalibrationSummary, summarize_weighted_recalibration, weighted_online_recalibration
 from .aci import update_adaptive_quantile
 from .artifacts import write_shift_aware_artifacts
 from .interval_policy import apply_interval_policy
@@ -15,6 +16,7 @@ from .state import (
 from .subgroup import SubgroupCoverageTracker
 
 __all__ = [
+    "AdaptiveRecalibrationSummary",
     "update_adaptive_quantile",
     "write_shift_aware_artifacts",
     "apply_interval_policy",
@@ -23,6 +25,8 @@ __all__ = [
     "ShiftAwareRuntimeState",
     "ComparisonSummary",
     "summarize_legacy_vs_shift",
+    "summarize_weighted_recalibration",
+    "weighted_online_recalibration",
     "write_comparison_package",
     "AdaptiveQuantileState",
     "CoverageWindowStats",

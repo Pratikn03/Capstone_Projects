@@ -18,6 +18,7 @@ from .graceful_planner import plan_fallback as GracefulPlanner
 from .audit_ledger import AuditLedger
 from .recovery_manager import RecoveryManager
 from .runtime import CertOSRuntime, CertOSConfig, CertOSState
+from .verification import load_certificates_from_duckdb, verify_certificates
 
 __all__ = [
     "BeliefEngine",
@@ -33,4 +34,6 @@ __all__ = [
     "CertOSRuntime",
     "CertOSConfig",
     "CertOSState",
+    "load_certificates_from_duckdb",
+    "verify_certificates",
 ]
