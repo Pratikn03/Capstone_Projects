@@ -8,8 +8,9 @@ import math
 from typing import Any, Mapping, Sequence
 
 from orius.dc3s.domain_adapter import DomainAdapter
-from orius.dc3s.quality import compute_reliability
 from orius.dc3s.certificate import make_certificate
+from orius.universal_framework.reliability_runtime import assess_domain_reliability
+from orius.universal_framework.runtime_evidence import resolve_runtime_evidence
 
 
 def _f(x: Any, default: float) -> float:
@@ -24,6 +25,7 @@ class VehicleDomainAdapter(DomainAdapter):
 
     def __init__(self, cfg: Mapping[str, Any] | None = None):
         self._cfg = dict(cfg or {})
+        self.domain_id = "av"
         self._default_dt_s = _f(self._cfg.get("vehicles", {}).get("dt_s"), 0.25)
         self._accel_min = _f(self._cfg.get("vehicles", {}).get("accel_min_mps2"), -5.0)
         self._accel_max = _f(self._cfg.get("vehicles", {}).get("accel_max_mps2"), 3.0)
@@ -33,6 +35,12 @@ class VehicleDomainAdapter(DomainAdapter):
             self._cfg.get("vehicles", {}).get("headway_time_s", 2.0),
         )
         self._expected_cadence_s = _f(self._cfg.get("expected_cadence_s"), 1.0)
+        evidence = resolve_runtime_evidence(self.domain_id, self._cfg)
+        self._runtime_surface = evidence.runtime_surface
+        self._closure_tier = evidence.closure_tier
+        self._maturity_tier = evidence.maturity_tier
+        self._fallback_policy = evidence.fallback_policy
+        self._exact_blocker = evidence.exact_blocker
 
     def capability_profile(self) -> Mapping[str, Any]:
         return {
@@ -41,6 +49,11 @@ class VehicleDomainAdapter(DomainAdapter):
             "fallback_mode": "full_brake",
             "supports_multi_agent_eval": False,
             "supports_certos_eval": True,
+            "runtime_surface": self._runtime_surface,
+            "closure_tier": self._closure_tier,
+            "maturity_tier": self._maturity_tier,
+            "fallback_policy": self._fallback_policy,
+            "exact_blocker": self._exact_blocker,
         }
 
     def ingest_telemetry(self, raw_packet: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -63,30 +76,29 @@ class VehicleDomainAdapter(DomainAdapter):
         state: Mapping[str, Any],
         history: Sequence[Mapping[str, Any]] | None = None,
     ) -> tuple[float, Mapping[str, Any]]:
-        """Compute reliability w_t. Reuse battery OQE with vehicle event shape."""
-        event = {
-            "ts_utc": state.get("ts_utc", ""),
-            "load_mw": state.get("speed_mps", state.get("load_mw", 0.0)),
-            "renewables_mw": state.get("position_m", 0.0),
-        }
-        last_event = None
-        if history:
-            prev = history[-1]
-            last_event = {
-                "ts_utc": prev.get("ts_utc", ""),
-                "load_mw": prev.get("speed_mps", prev.get("load_mw", 0.0)),
-                "renewables_mw": prev.get("position_m", 0.0),
-            }
-        reliability_cfg = self._cfg.get("reliability", {})
-        ftit_cfg = self._cfg.get("ftit", {})
-        w_t, flags = compute_reliability(
-            event,
-            last_event,
+        """Compute reliability from AV-native telemetry signals."""
+        def _lead_gap(payload: Mapping[str, Any]) -> float | None:
+            lead_position = payload.get("lead_position_m")
+            if lead_position is None:
+                return None
+            return _f(lead_position, 0.0) - _f(payload.get("position_m"), 0.0)
+
+        w_t, flags = assess_domain_reliability(
+            domain_id=self.domain_id,
+            state=state,
+            history=history,
+            feature_sources={
+                "ego_speed_mps": "speed_mps",
+                "lead_gap_m": _lead_gap,
+                "speed_limit_mps": "speed_limit_mps",
+            },
             expected_cadence_s=self._expected_cadence_s,
-            reliability_cfg=reliability_cfg,
-            ftit_cfg=ftit_cfg,
+            reliability_cfg=self._cfg.get("reliability", {}),
+            ftit_cfg=self._cfg.get("ftit", {}),
+            runtime_surface=self._runtime_surface,
+            closure_tier=self._closure_tier,
         )
-        return float(w_t), {"flags": flags}
+        return float(w_t), flags
 
     def build_uncertainty_set(
         self,
@@ -127,10 +139,70 @@ class VehicleDomainAdapter(DomainAdapter):
         cfg: Mapping[str, Any],
     ) -> Mapping[str, Any]:
         """Feasible acceleration set A_t from speed-limit and TTC barrier."""
+        unc = dict(uncertainty)
+        cstr = dict(constraints)
+        spd_lo = _f(unc.get("speed_lower_mps"), 0.0)
+        spd_hi = _f(unc.get("speed_upper_mps"), cstr.get("speed_limit_mps", 30.0))
+        pos_hi = _f(unc.get("position_upper_m"), 0.0)
+        lead_lo = unc.get("lead_position_lower_m")
+        lead_speed = _f(cstr.get("lead_speed_mps"), 0.0)
+        v_limit = _f(cstr.get("speed_limit_mps"), 30.0)
+        a_lower = _f(cstr.get("accel_min_mps2"), self._accel_min)
+        a_upper = _f(cstr.get("accel_max_mps2"), self._accel_max)
+        dt = _f(cstr.get("dt_s"), self._default_dt_s)
+        min_headway_m = _f(cstr.get("min_headway_m"), self._min_headway_m)
+        ttc_min_s = _f(cstr.get("ttc_min_s"), cstr.get("headway_time_s", self._ttc_min_s))
+        active_constraints: list[str] = []
+        gap_budget = None
+        entry_barrier_triggered = False
+
+        if spd_hi + a_upper * dt > v_limit + 1e-9:
+            a_upper = min(a_upper, (v_limit - spd_hi) / max(dt, 1e-9))
+            active_constraints.append("speed_limit")
+        if spd_lo + a_lower * dt < 0.0:
+            a_lower = max(a_lower, -spd_lo / max(dt, 1e-9))
+            active_constraints.append("nonnegative_speed")
+
+        if lead_lo is not None and not (isinstance(lead_lo, float) and math.isnan(lead_lo)):
+            lead_lo_f = _f(lead_lo, pos_hi)
+            gap_budget = lead_lo_f - pos_hi - min_headway_m
+            if gap_budget <= 0.0:
+                a_lower = a_upper = _f(cstr.get("accel_min_mps2"), self._accel_min)
+                active_constraints.append("headway_predictive_entry_barrier")
+                entry_barrier_triggered = True
+            else:
+                max_next_speed = (gap_budget / max(dt + ttc_min_s, 1e-9)) + lead_speed
+                a_ttc = (max_next_speed - spd_hi) / max(dt, 1e-9)
+                if a_ttc < a_upper - 1e-9:
+                    a_upper = a_ttc
+                    active_constraints.append("ttc_clamp")
+
+                full_brake_speed = max(lead_speed, spd_hi + a_lower * dt)
+                unavoidable_gap_budget = lead_lo_f - (pos_hi + full_brake_speed * dt) - min_headway_m
+                if unavoidable_gap_budget <= 0.0:
+                    a_lower = a_upper = _f(cstr.get("accel_min_mps2"), self._accel_min)
+                    active_constraints.append("headway_predictive_entry_barrier")
+                    entry_barrier_triggered = True
+
+        fallback_accel = float(_f(cstr.get("accel_min_mps2"), self._accel_min))
+        viable = a_lower <= a_upper + 1e-9
+        if not viable:
+            a_lower = a_upper = fallback_accel
+            active_constraints.append("fallback_collapse")
+            viable = True
         return {
-            "uncertainty": dict(uncertainty),
-            "constraints": dict(constraints),
+            "uncertainty": unc,
+            "constraints": cstr,
             "cfg": dict(cfg),
+            "acceleration_mps2_lower": float(a_lower),
+            "acceleration_mps2_upper": float(a_upper),
+            "fallback_action": {"acceleration_mps2": fallback_accel},
+            "projection_surface": "ttc_predictive_barrier",
+            "active_constraints": active_constraints,
+            "entry_barrier_triggered": bool(entry_barrier_triggered),
+            "worst_case_gap_budget_m": None if gap_budget is None else float(gap_budget),
+            "ttc_min_s": float(ttc_min_s),
+            "viable": bool(viable),
         }
 
     def repair_action(
@@ -150,91 +222,49 @@ class VehicleDomainAdapter(DomainAdapter):
         maximum braking when the observed state is already outside the one-step
         controllable set.
         """
+        if "acceleration_mps2_lower" not in tightened_set or "acceleration_mps2_upper" not in tightened_set:
+            tightened_set = self.tighten_action_set(
+                uncertainty=tightened_set.get("uncertainty", uncertainty),
+                constraints=tightened_set.get("constraints", constraints),
+                cfg=cfg,
+            )
         a = _f(candidate_action.get("acceleration_mps2"), 0.0)
         unc = tightened_set.get("uncertainty", uncertainty)
         cstr = tightened_set.get("constraints", constraints)
-        spd_lo = _f(unc.get("speed_lower_mps"), 0.0)
-        spd_hi = _f(unc.get("speed_upper_mps"), 50.0)
-        pos_hi = _f(unc.get("position_upper_m"), state.get("position_m", 0.0))
-        lead_lo = unc.get("lead_position_lower_m", state.get("lead_position_m"))
-        lead_speed = _f(state.get("lead_speed_mps"), cstr.get("lead_speed_mps", 0.0))
-        v_limit = _f(state.get("speed_limit_mps"), cstr.get("speed_limit_mps", 30.0))
         a_min = _f(cstr.get("accel_min_mps2"), self._accel_min)
-        a_max = _f(cstr.get("accel_max_mps2"), self._accel_max)
-        dt = _f(cstr.get("dt_s"), self._default_dt_s)
-        min_headway_m = _f(cstr.get("min_headway_m"), self._min_headway_m)
-        ttc_min_s = _f(cstr.get("ttc_min_s"), cstr.get("headway_time_s", self._ttc_min_s))
-
-        a_safe = max(a_min, min(a_max, a))
+        a_lower = _f(tightened_set.get("acceleration_mps2_lower"), a_min)
+        a_upper = _f(
+            tightened_set.get("acceleration_mps2_upper"),
+            _f(cstr.get("accel_max_mps2"), self._accel_max),
+        )
+        a_safe = max(a_lower, min(a_upper, a))
+        active_constraints = [str(item) for item in tightened_set.get("active_constraints", ())]
         reason = None
-        ttc_current = None
-        ttc_next = None
-        entry_barrier_triggered = False
-
-        telemetry_vals = (spd_lo, spd_hi, pos_hi, v_limit)
-        if any(isinstance(v, float) and math.isnan(v) for v in telemetry_vals):
-            a_safe = a_min
-            reason = "telemetry_blackout_brake"
-
-        v_next = spd_hi + a_safe * dt
-        if v_next > v_limit + 1e-9:
-            a_cap = (v_limit - spd_hi) / max(dt, 1e-9)
-            a_safe = min(a_safe, a_cap)
-            reason = reason or "speed_limit_clamp"
-        v_next_lo = spd_lo + a_safe * dt
-        if v_next_lo < 0:
-            a_floor = -spd_lo / max(dt, 1e-9)
-            a_safe = max(a_safe, a_floor)
-            reason = reason or "nonnegative_speed_clamp"
-
-        if lead_lo is not None and not (isinstance(lead_lo, float) and math.isnan(lead_lo)):
-            lead_lo_f = _f(lead_lo, pos_hi)
-            gap_budget = lead_lo_f - pos_hi - min_headway_m
-            if gap_budget <= 0:
-                a_safe = a_min
-                reason = "predictive_entry_barrier"
-                entry_barrier_triggered = True
+        if abs(a_safe - a) > 1e-9:
+            if "headway_predictive_entry_barrier" in active_constraints:
+                reason = "headway_predictive_entry_barrier"
+            elif "ttc_clamp" in active_constraints:
+                reason = "ttc_clamp"
+            elif "speed_limit" in active_constraints:
+                reason = "speed_limit_clamp"
+            elif "nonnegative_speed" in active_constraints:
+                reason = "nonnegative_speed_clamp"
             else:
-                closing_speed = max(spd_hi - lead_speed, 1e-9)
-                ttc_current = gap_budget / closing_speed
-
-                max_next_speed = (gap_budget / max(dt + ttc_min_s, 1e-9)) + lead_speed
-                a_ttc = (max_next_speed - spd_hi) / max(dt, 1e-9)
-                if a_ttc < a_safe - 1e-9:
-                    a_safe = a_ttc
-                    reason = reason or "ttc_clamp"
-
-                full_brake_speed = max(lead_speed, spd_hi + a_min * dt)
-                unavoidable_gap_budget = lead_lo_f - (pos_hi + full_brake_speed * dt) - min_headway_m
-                if unavoidable_gap_budget <= 0.0:
-                    a_safe = a_min
-                    reason = "predictive_entry_barrier"
-                    entry_barrier_triggered = True
-
-                next_speed = max(lead_speed, spd_hi + a_safe * dt)
-                next_gap_budget = lead_lo_f - (pos_hi + next_speed * dt) - min_headway_m
-                if next_gap_budget > 0.0:
-                    ttc_next = next_gap_budget / max(next_speed - lead_speed, 1e-9)
-                else:
-                    ttc_next = 0.0
-
-        a_safe = max(a_min, min(a_max, a_safe))
+                reason = "acceleration_clamp"
 
         repaired = abs(a_safe - a) > 1e-9
         meta = {
             "mode": "projection",
             "repaired": repaired,
             "original_acceleration_mps2": a,
-            "repair_surface": "ttc_predictive_barrier",
+            "repair_surface": str(tightened_set.get("projection_surface", "ttc_predictive_barrier")),
         }
         if repaired:
             meta["intervention_reason"] = reason or "acceleration_clamp"
-        if lead_lo is not None and not (isinstance(lead_lo, float) and math.isnan(lead_lo)):
-            meta["worst_case_gap_budget_m"] = float(_f(lead_lo, pos_hi) - pos_hi - min_headway_m)
-            meta["ttc_min_s"] = float(ttc_min_s)
-            meta["ttc_seconds_current"] = float(ttc_current) if ttc_current is not None else None
-            meta["ttc_seconds_next"] = float(ttc_next) if ttc_next is not None else None
-            meta["entry_barrier_triggered"] = bool(entry_barrier_triggered)
+        if tightened_set.get("worst_case_gap_budget_m") is not None:
+            meta["worst_case_gap_budget_m"] = float(tightened_set["worst_case_gap_budget_m"])
+            meta["ttc_min_s"] = float(tightened_set.get("ttc_min_s", self._ttc_min_s))
+            meta["entry_barrier_triggered"] = bool(tightened_set.get("entry_barrier_triggered", False))
         return {"acceleration_mps2": float(a_safe)}, meta
 
     def emit_certificate(
@@ -282,4 +312,7 @@ class VehicleDomainAdapter(DomainAdapter):
             reliability_w=reliability_w,
             drift_flag=drift_flag,
             inflation=inflation,
+            runtime_surface=self._runtime_surface,
+            closure_tier=self._closure_tier,
+            reliability_feature_basis=reliability.get("reliability_feature_basis"),
         )

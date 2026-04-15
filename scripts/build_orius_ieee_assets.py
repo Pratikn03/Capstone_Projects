@@ -70,7 +70,7 @@ CLAIM_LEDGER_ROWS = [
         "problem_definition",
         "OASG is the common hidden hazard across batteries, AV, industrial plants, healthcare monitoring, navigation, and aerospace.",
         "current_repo_supported",
-        "paper/monograph/ch02_oasg_claim_boundary.tex; paper/monograph/ch08_battery_bridge.tex; paper/monograph/ch09_av_domain.tex",
+        "paper/monograph/ch01_introduction_and_thesis_claims.tex; paper/monograph/ch03_formal_problem_formulation.tex; paper/monograph/ch09_universal_orius_across_domains.tex",
         "Keep the hazard universal and plant-agnostic.",
     ),
     (
@@ -84,7 +84,7 @@ CLAIM_LEDGER_ROWS = [
         "runtime_architecture",
         "The Detect--Calibrate--Constrain--Shield--Certify kernel is the dominant technical move of ORIUS.",
         "current_repo_supported",
-        "paper/monograph/ch04_universal_runtime_layer.tex; paper/monograph/ch05_detect_calibrate_constrain_shield_certify.tex",
+        "paper/monograph/ch04_orius_architecture_dc3s_runtime_layer.tex; paper/monograph/ch05_mathematical_foundations_and_safety_guarantees.tex",
         "Retain as the main technical architecture claim.",
     ),
     (
@@ -98,7 +98,7 @@ CLAIM_LEDGER_ROWS = [
         "theorem_bridge",
         "The theory bridge establishes that degraded observation can create true-state violations despite observed-state legality, and that repair is structurally necessary.",
         "current_repo_supported",
-        "paper/monograph/ch06_theory_bridge.tex; appendices/app_c_full_proofs.tex",
+        "paper/monograph/ch05_mathematical_foundations_and_safety_guarantees.tex; paper/monograph/app_ak_proofs.tex",
         "Keep theorem statements scoped to the documented assumptions.",
     ),
     (
@@ -112,21 +112,21 @@ CLAIM_LEDGER_ROWS = [
         "av_section",
         "Autonomous vehicles are a defended bounded row under the TTC plus predictive-entry-barrier contract.",
         "current_repo_supported",
-        "paper/monograph/ch09_av_domain.tex; reports/publication/orius_equal_domain_parity_matrix.csv",
+        "paper/monograph/ch09_universal_orius_across_domains.tex; reports/publication/orius_equal_domain_parity_matrix.csv",
         "Do not expand this to full-stack or multi-lane autonomy claims.",
     ),
     (
         "industrial_section",
         "Industrial control is a defended bounded row with explicit envelope-preserving repair and fallback semantics.",
         "current_repo_supported",
-        "paper/monograph/ch10_industrial_domain.tex; reports/publication/orius_equal_domain_parity_matrix.csv",
+        "paper/monograph/ch09_universal_orius_across_domains.tex; reports/publication/orius_equal_domain_parity_matrix.csv",
         "Keep deployment language bounded to the defended replay surface.",
     ),
     (
         "healthcare_section",
         "Healthcare monitoring is a defended bounded row that treats degraded observation as intervention-suppression risk.",
         "current_repo_supported",
-        "paper/monograph/ch11_healthcare_domain.tex; reports/publication/orius_equal_domain_parity_matrix.csv",
+        "paper/monograph/ch09_universal_orius_across_domains.tex; reports/publication/orius_equal_domain_parity_matrix.csv",
         "Keep the row bounded to monitoring/intervention semantics rather than bedside certification.",
     ),
     (
@@ -161,7 +161,7 @@ CLAIM_LEDGER_ROWS = [
         "conclusion",
         "ORIUS changes the field by establishing runtime safety layers, rather than nominal controllers, as the right universal object for Physical AI safety.",
         "supported_by_primary_literature_only",
-        "paper/bibliography/orius_monograph.bib; paper/monograph/ch16_conclusion_monograph.tex",
+        "paper/bibliography/orius_monograph.bib; paper/monograph/ch13_governance_reproducibility_limitations_and_conclusion.tex",
         "Retain the field-shaping tone while keeping the evidence gate explicit.",
     ),
 ]

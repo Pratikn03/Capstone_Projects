@@ -29,13 +29,13 @@ def main() -> int:
     if de:
         row = {
             "baseline_cost_usd": de["baseline_cost_usd"],
-            "gridpulse_cost_usd": de["orius_cost_usd"],
+            "orius_cost_usd": de["orius_cost_usd"],
             "cost_savings_pct": de["cost_savings_pct_raw"],
             "baseline_carbon_kg": de["baseline_carbon_kg"],
-            "gridpulse_carbon_kg": de["orius_carbon_kg"],
+            "orius_carbon_kg": de["orius_carbon_kg"],
             "carbon_reduction_pct": de["carbon_reduction_pct_raw"],
             "baseline_peak_mw": de["baseline_peak_mw"],
-            "gridpulse_peak_mw": de["orius_peak_mw"],
+            "orius_peak_mw": de["orius_peak_mw"],
             "peak_shaving_pct": de["peak_shaving_pct_raw"],
             "oracle_cost_usd": de["orius_cost_usd"],
             "oracle_gap_pct": 0.0,
@@ -53,13 +53,13 @@ def main() -> int:
     if us:
         row = {
             "baseline_cost_usd": us["baseline_cost_usd"],
-            "gridpulse_cost_usd": us["orius_cost_usd"],
+            "orius_cost_usd": us["orius_cost_usd"],
             "cost_savings_pct": us["cost_savings_pct_raw"],
             "baseline_carbon_kg": us["baseline_carbon_kg"],
-            "gridpulse_carbon_kg": us["orius_carbon_kg"],
+            "orius_carbon_kg": us["orius_carbon_kg"],
             "carbon_reduction_pct": us["carbon_reduction_pct_raw"],
             "baseline_peak_mw": us["baseline_peak_mw"],
-            "gridpulse_peak_mw": us["orius_peak_mw"],
+            "orius_peak_mw": us["orius_peak_mw"],
             "peak_shaving_pct": us["peak_shaving_pct_raw"],
             "oracle_cost_usd": us["orius_cost_usd"],
             "oracle_gap_pct": 0.0,

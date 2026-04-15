@@ -6,7 +6,8 @@ from typing import Any, Mapping, Sequence
 
 from orius.dc3s.certificate import make_certificate
 from orius.dc3s.domain_adapter import DomainAdapter
-from orius.dc3s.quality import compute_reliability
+from orius.universal_framework.reliability_runtime import assess_domain_reliability
+from orius.universal_framework.runtime_evidence import resolve_runtime_evidence
 
 
 def _f(value: Any, default: float) -> float:
@@ -21,6 +22,7 @@ class NavigationDomainAdapter(DomainAdapter):
 
     def __init__(self, cfg: Mapping[str, Any] | None = None):
         self._cfg = dict(cfg or {})
+        self.domain_id = "navigation"
         nav_cfg = self._cfg.get("navigation", {})
         self._arena_size = _f(nav_cfg.get("arena_size"), 10.0)
         self._speed_limit = _f(nav_cfg.get("speed_limit"), 1.0)
@@ -34,6 +36,12 @@ class NavigationDomainAdapter(DomainAdapter):
             if isinstance(pair, Sequence) and len(pair) == 2
         ]
         self._expected_cadence_s = _f(self._cfg.get("expected_cadence_s"), 0.25)
+        evidence = resolve_runtime_evidence(self.domain_id, self._cfg)
+        self._runtime_surface = evidence.runtime_surface
+        self._closure_tier = evidence.closure_tier
+        self._maturity_tier = evidence.maturity_tier
+        self._fallback_policy = evidence.fallback_policy
+        self._exact_blocker = evidence.exact_blocker
 
     def capability_profile(self) -> Mapping[str, Any]:
         return {
@@ -41,7 +49,12 @@ class NavigationDomainAdapter(DomainAdapter):
             "repair_mode": "vector_projection",
             "fallback_mode": "hold_position",
             "supports_multi_agent_eval": False,
-            "supports_certos_eval": False,
+            "supports_certos_eval": True,
+            "runtime_surface": self._runtime_surface,
+            "closure_tier": self._closure_tier,
+            "maturity_tier": self._maturity_tier,
+            "fallback_policy": self._fallback_policy,
+            "exact_blocker": self._exact_blocker,
         }
 
     def _in_safe_region(self, x: float, y: float) -> bool:
@@ -92,27 +105,23 @@ class NavigationDomainAdapter(DomainAdapter):
         state: Mapping[str, Any],
         history: Sequence[Mapping[str, Any]] | None = None,
     ) -> tuple[float, Mapping[str, Any]]:
-        event = {
-            "ts_utc": state.get("ts_utc", ""),
-            "load_mw": _f(state.get("x"), 0.0),
-            "renewables_mw": _f(state.get("y"), 0.0),
-        }
-        last_event = None
-        if history:
-            prev = history[-1]
-            last_event = {
-                "ts_utc": prev.get("ts_utc", ""),
-                "load_mw": _f(prev.get("x"), 0.0),
-                "renewables_mw": _f(prev.get("y"), 0.0),
-            }
-        w_t, flags = compute_reliability(
-            event,
-            last_event,
+        w_t, flags = assess_domain_reliability(
+            domain_id=self.domain_id,
+            state=state,
+            history=history,
+            feature_sources={
+                "x_position_m": "x",
+                "y_position_m": "y",
+                "x_velocity_mps": "vx",
+                "y_velocity_mps": "vy",
+            },
             expected_cadence_s=self._expected_cadence_s,
             reliability_cfg=self._cfg.get("reliability", {}),
             ftit_cfg=self._cfg.get("ftit", {}),
+            runtime_surface=self._runtime_surface,
+            closure_tier=self._closure_tier,
         )
-        return float(w_t), {"flags": flags}
+        return float(w_t), flags
 
     def build_uncertainty_set(
         self,
@@ -156,10 +165,36 @@ class NavigationDomainAdapter(DomainAdapter):
         *,
         cfg: Mapping[str, Any],
     ) -> Mapping[str, Any]:
+        unc = dict(uncertainty)
+        cstr = dict(constraints)
+        speed_limit = _f(cstr.get("max_speed", cstr.get("speed_limit")), self._speed_limit)
+        arena_min = _f(cstr.get("arena_min"), self._boundary_margin)
+        arena_max = _f(cstr.get("arena_max"), self._arena_size - self._boundary_margin)
+        dt = _f(cstr.get("dt_s", cfg.get("dt", cfg.get("dt_s"))), self._dt_s)
+        x_hi = _f(unc.get("x_upper"), 0.0)
+        x_lo = _f(unc.get("x_lower"), 0.0)
+        y_hi = _f(unc.get("y_upper"), 0.0)
+        y_lo = _f(unc.get("y_lower"), 0.0)
+        ax_lower = max(-speed_limit, (arena_min - x_lo) / max(dt, 1e-9))
+        ax_upper = min(speed_limit, (arena_max - x_hi) / max(dt, 1e-9))
+        ay_lower = max(-speed_limit, (arena_min - y_lo) / max(dt, 1e-9))
+        ay_upper = min(speed_limit, (arena_max - y_hi) / max(dt, 1e-9))
+        viable = ax_lower <= ax_upper + 1e-9 and ay_lower <= ay_upper + 1e-9
+        if not viable:
+            ax_lower = ax_upper = 0.0
+            ay_lower = ay_upper = 0.0
+            viable = True
         return {
-            "uncertainty": dict(uncertainty),
-            "constraints": dict(constraints),
+            "uncertainty": unc,
+            "constraints": cstr,
             "cfg": dict(cfg),
+            "ax_lower": float(ax_lower),
+            "ax_upper": float(ax_upper),
+            "ay_lower": float(ay_lower),
+            "ay_upper": float(ay_upper),
+            "fallback_action": {"ax": 0.0, "ay": 0.0},
+            "projection_surface": "arena_obstacle_projection",
+            "viable": bool(viable),
         }
 
     def repair_action(
@@ -172,13 +207,19 @@ class NavigationDomainAdapter(DomainAdapter):
         constraints: Mapping[str, Any],
         cfg: Mapping[str, Any],
     ) -> tuple[Mapping[str, float], Mapping[str, Any]]:
+        if "ax_lower" not in tightened_set or "ax_upper" not in tightened_set:
+            tightened_set = self.tighten_action_set(
+                uncertainty=tightened_set.get("uncertainty", uncertainty),
+                constraints=tightened_set.get("constraints", constraints),
+                cfg=cfg,
+            )
         unc = tightened_set.get("uncertainty", uncertainty)
         cstr = tightened_set.get("constraints", constraints)
 
         orig_ax = _f(candidate_action.get("ax"), 0.0)
         orig_ay = _f(candidate_action.get("ay"), 0.0)
-        ax = orig_ax
-        ay = orig_ay
+        ax = max(_f(tightened_set.get("ax_lower"), -self._speed_limit), min(_f(tightened_set.get("ax_upper"), self._speed_limit), orig_ax))
+        ay = max(_f(tightened_set.get("ay_lower"), -self._speed_limit), min(_f(tightened_set.get("ay_upper"), self._speed_limit), orig_ay))
 
         speed_limit = _f(cstr.get("max_speed", cstr.get("speed_limit")), self._speed_limit)
         arena_min = _f(cstr.get("arena_min"), self._boundary_margin)
@@ -240,6 +281,7 @@ class NavigationDomainAdapter(DomainAdapter):
             "original_ax": orig_ax,
             "original_ay": orig_ay,
             "obstacle_hit_predicted": obstacle_hit,
+            "repair_surface": str(tightened_set.get("projection_surface", "arena_obstacle_projection")),
         }
         if repaired:
             meta["intervention_reason"] = (
@@ -289,4 +331,7 @@ class NavigationDomainAdapter(DomainAdapter):
             reliability_w=reliability_w,
             drift_flag=drift_flag,
             inflation=inflation,
+            runtime_surface=self._runtime_surface,
+            closure_tier=self._closure_tier,
+            reliability_feature_basis=reliability.get("reliability_feature_basis"),
         )

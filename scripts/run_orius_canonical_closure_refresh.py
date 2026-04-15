@@ -18,8 +18,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT / "src"))
+
+from orius.data_pipeline.external_raw import get_external_data_root, get_strict_external_root
+
+
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
 REFRESH_DIR = REPO_ROOT / "reports" / "closure_refresh"
 PYTHON = sys.executable
@@ -36,7 +41,6 @@ SCORECARD_PATH = PUBLICATION_DIR / "orius_submission_scorecard.csv"
 GAP_MATRIX_PATH = PUBLICATION_DIR / "orius_93plus_gap_matrix.csv"
 GATE_LEDGER_JSON_PATH = PUBLICATION_DIR / "orius_equal_domain_gate_ledger.json"
 GATE_LEDGER_CSV_PATH = PUBLICATION_DIR / "orius_equal_domain_gate_ledger.csv"
-STRICT_EXTERNAL_ROOT = Path("/Users/pratik_n/orius_external_data").resolve()
 
 
 def _utc_now_iso() -> str:
@@ -342,17 +346,17 @@ def main() -> int:
     REFRESH_DIR.mkdir(parents=True, exist_ok=True)
     logs_dir = REFRESH_DIR / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
-    external_root = _normalize_external_root(
-        args.external_root or (Path(os.environ.get("ORIUS_EXTERNAL_DATA_ROOT", "")) if os.environ.get("ORIUS_EXTERNAL_DATA_ROOT") else None)
-    )
+    configured_external_root = get_external_data_root(required=False)
+    external_root = _normalize_external_root(args.external_root or configured_external_root)
+    strict_external_root = get_strict_external_root()
     if args.mode == "equal_domain_gate":
         if args.skip_manuscript:
             raise RuntimeError("--skip-manuscript is not allowed in equal_domain_gate mode.")
         if external_root is None:
             raise RuntimeError("equal_domain_gate requires ORIUS_EXTERNAL_DATA_ROOT to be set.")
-        if external_root != STRICT_EXTERNAL_ROOT:
+        if external_root != strict_external_root:
             raise RuntimeError(
-                f"equal_domain_gate requires external root {STRICT_EXTERNAL_ROOT}, got {external_root}."
+                f"equal_domain_gate requires external root {strict_external_root}, got {external_root}."
             )
     run_env = os.environ.copy()
     if external_root is not None:

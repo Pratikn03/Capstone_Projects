@@ -2,7 +2,7 @@
 Tests for the reference unification reductions (orius/universal/unification.py).
 
 Verifies that CBFAsORIUS and RobustMPCAsORIUS:
-  1. Pass all five T11 invariant checks (ContractVerifier.check())
+  1. Pass the five supporting reference-harness checks (ContractVerifier.check())
   2. Reproduce the expected behaviour of the underlying prior frameworks
   3. Demonstrate the limitation (constant / fixed w_t) that ORIUS generalises
 """
@@ -32,11 +32,11 @@ class TestCBFAsORIUS:
         self.q_t = 0.05
 
     def test_passes_all_five_invariants_safe_state(self):
-        """At a safe state, CBFAsORIUS passes all T11 invariant checks."""
+        """At a safe state, CBFAsORIUS passes the supporting harness checks."""
         self.verifier.check(self.z_safe, q_t=self.q_t)
 
     def test_passes_all_five_invariants_near_boundary(self):
-        """Near the constraint boundary, CBFAsORIUS still passes all invariants."""
+        """Near the constraint boundary, CBFAsORIUS still passes all harness invariants."""
         self.verifier.check(self.z_unsafe, q_t=self.q_t)
 
     def test_implements_universal_adapter_protocol(self):
@@ -97,7 +97,7 @@ class TestRobustMPCAsORIUS:
         self.q_t = 0.1
 
     def test_passes_all_five_invariants(self):
-        """RobustMPCAsORIUS with r=0.1 passes all T11 invariant checks."""
+        """RobustMPCAsORIUS with r=0.1 passes the supporting harness checks."""
         self.verifier.check(self.z_t, q_t=self.q_t)
 
     def test_implements_universal_adapter_protocol(self):
@@ -167,8 +167,8 @@ class TestRobustMPCAsORIUS:
 class TestUnificationInterpretation:
     """Verify the formal unification claim at the level of ContractVerifier."""
 
-    def test_cbf_and_robust_mpc_both_pass_t11_contract(self):
-        """Both prior frameworks satisfy T11 — they are valid DC3S adapters."""
+    def test_cbf_and_robust_mpc_both_pass_supporting_contract(self):
+        """Both prior frameworks satisfy the supporting harness used in the reductions."""
         cbf = CBFAsORIUS(h_fn=barrier_h, gamma=1.0)
         rmpc = RobustMPCAsORIUS(0.1, 1.0, -1.0, 1.0)
         z_t = np.array([0.3])

@@ -5,8 +5,9 @@ import numpy as np
 from orius.universal_theory.risk_bounds import (
     assert_coverage_guarantee,
     compute_empirical_coverage,
-    compute_episode_risk_bound as compute_expected_violation_bound,
+    compute_episode_risk_bound,
     evaluate_empirical_core_bound,
+    risk_envelope_assumptions,
     verify_inflation_geq_one,
 )
 
@@ -40,6 +41,20 @@ def inflation_lower_bound(
     return float(max(1.0, infl_min_raw))
 
 
+def compute_expected_violation_bound(
+    reliability: np.ndarray | list[float],
+    *,
+    alpha: float = 0.10,
+) -> dict:
+    """Backward-compatible wrapper for the narrowed T3 risk-envelope helper."""
+    return compute_episode_risk_bound(reliability, alpha=alpha)
+
+
+def get_core_bound_assumptions() -> tuple[str, ...]:
+    """Expose the explicit assumptions behind the core-envelope helper."""
+    return risk_envelope_assumptions()
+
+
 
 
 def mondrian_group_coverage(
@@ -53,8 +68,8 @@ def mondrian_group_coverage(
 ) -> dict:
     """Compute Mondrian (group-conditional) coverage per reliability bin.
 
-    Theorem 9 — Group-Conditional Coverage Under Reliability Partitioning
-    -----------------------------------------------------------------------
+    Legacy auxiliary coverage surface
+    ---------------------------------
     Partition reliability scores w_t into K bins G_1...G_K (low/medium/high).
     For group-specific conformal quantiles q_k drawn from the calibration
     subset { i : w_i in G_k }:
@@ -134,10 +149,10 @@ def hoeffding_violation_bound(
     w_bar: float,
     epsilon: float,
 ) -> dict:
-    """Compute the Hoeffding high-probability violation bound.
+    """Compute a legacy Hoeffding-style high-probability violation envelope.
 
-    Theorem 10 — High-Probability Violation Bound
-    -----------------------------------------------
+    Legacy auxiliary coverage surface
+    ---------------------------------
     For any epsilon > 0 and horizon T, if V_t are i.i.d. bounded violation
     indicators in [0, 1]:
 
@@ -219,6 +234,7 @@ __all__ = [
     "assert_coverage_guarantee",
     "inflation_lower_bound",
     "compute_expected_violation_bound",
+    "get_core_bound_assumptions",
     "evaluate_empirical_core_bound",
     "mondrian_group_coverage",
     "hoeffding_violation_bound",

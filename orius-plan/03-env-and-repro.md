@@ -49,7 +49,7 @@
 ### Option A — Python venv (recommended for scripts-only work)
 
 ```bash
-cd /Users/pratik_n/Downloads/orius
+cd <repo-root>
 
 # Create venv and install all locked deps
 python3 -m venv .venv
@@ -74,7 +74,7 @@ python -c "import fastapi; print(fastapi.__version__)"
 ### Option B — Docker (recommended for full stack with Kafka + Prometheus)
 
 ```bash
-cd /Users/pratik_n/Downloads/orius
+cd <repo-root>
 
 # Dev stack (API + DB only)
 docker compose -f docker/docker-compose.yml up -d
@@ -93,7 +93,7 @@ Available images:
 ### Option C — Frontend only
 
 ```bash
-cd /Users/pratik_n/Downloads/orius/frontend
+cd <repo-root>/frontend
 npm install
 npm run dev   # starts Next.js dev server
 ```
@@ -193,7 +193,7 @@ k_quality = cfg.dc3s.k_quality  # → 0.2
 
 ## 5. CLI Entry Points (Makefile Targets)
 
-All commands run from `/Users/pratik_n/Downloads/orius/` with `.venv` activated.
+All commands run from `<repo-root>/` with `.venv` activated.
 
 ### Setup & verification
 ```bash
@@ -337,11 +337,11 @@ brew install --cask basictex        # minimal, add packages as needed
 pdflatex --version
 
 # Build paper
-cd /Users/pratik_n/Downloads/orius/paper
+cd <repo-root>/paper
 pdflatex paper.tex && bibtex paper && pdflatex paper.tex && pdflatex paper.tex
 
 # Full refresh (sync assets + compile)
-cd /Users/pratik_n/Downloads/orius
+cd <repo-root>
 make paper-refresh
 ```
 

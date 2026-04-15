@@ -44,12 +44,14 @@ breakdown.
 | Industrial | Current defended processed row; raw-source cleanup still mixed | Proof-validated, cleanup still needed |
 | Healthcare | PhysioNet BIDMC | Real-data path active |
 | Navigation | KITTI Odometry | Real-data contract defined, row still blocked |
-| Aerospace | NASA C-MAPSS FD001-FD004 (trainable) plus pending multi-flight runtime telemetry | Trainable row active, defended runtime closure pending |
+| Aerospace | NASA C-MAPSS FD001-FD004 (trainable) plus bounded public ADS-B support lane | Experimental/support-tier only; defended runtime closure pending |
 
 Important boundary:
 
 - Navigation is still blocked by the real-data validation gap.
-- Aerospace is still blocked by the missing real multi-flight telemetry row.
+- Aerospace is still blocked by the missing canonical real-flight runtime row.
+- The bounded public ADS-B lane is support-only and does not promote the defended aerospace row.
+- MIMIC-III is not staged in this repo and is not the active healthcare runtime source.
 - Do not claim equal-domain universality until those rows clear the same gate as
   the defended domains.
 
@@ -72,7 +74,7 @@ Notes:
 - The AV and navigation builders now check repo-local raw storage first and use
   `ORIUS_EXTERNAL_DATA_ROOT` only as a fallback.
 - The aerospace external directory remains reserved for the future defended
-  runtime telemetry replay surface.
+  runtime telemetry replay surface; the current public ADS-B lane is support-only.
 - Full raw payloads should not be copied into git.
 
 ## 5. Repo-local preflight

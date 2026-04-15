@@ -22,7 +22,7 @@ class TestVerifyInflation:
         verify_inflation_geq_one(1.0)
 
     def test_raises_below_one(self):
-        with pytest.raises(ValueError, match="≥ 1"):
+        with pytest.raises(ValueError, match=">= 1"):
             verify_inflation_geq_one(0.5)
 
     def test_boundary_tolerance(self):
@@ -90,7 +90,7 @@ class TestAssertCoverageGuarantee:
         y = np.array([1.0, 2.0, 3.0, 4.0])
         lo = np.array([10.0, 10.0, 10.0, 10.0])
         hi = np.array([20.0, 20.0, 20.0, 20.0])
-        with pytest.raises(AssertionError, match="coverage guarantee violated"):
+        with pytest.raises(AssertionError, match="Empirical coverage="):
             assert_coverage_guarantee(y, lo, hi, alpha=0.10, tolerance=0.01)
 
     def test_tolerance_allows_slack(self):

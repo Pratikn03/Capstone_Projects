@@ -93,14 +93,20 @@ class BatteryDomainAdapter(DomainAdapter):
         *,
         cfg: Mapping[str, Any],
     ) -> Mapping[str, Any]:
-        # The current battery implementation encodes all tightening inside
-        # the shield's projection logic using the uncertainty meta and
-        # constraints. We therefore represent the tightened set as the
-        # pair (uncertainty, constraints) for use by repair_action.
+        max_power = float(constraints.get("max_power_mw", 0.0))
+        max_charge = float(constraints.get("max_charge_mw", max_power))
+        max_discharge = float(constraints.get("max_discharge_mw", max_power))
         return {
             "uncertainty": dict(uncertainty),
             "constraints": dict(constraints),
             "cfg": dict(cfg),
+            "charge_mw_lower": 0.0,
+            "charge_mw_upper": max(0.0, max_charge),
+            "discharge_mw_lower": 0.0,
+            "discharge_mw_upper": max(0.0, max_discharge),
+            "fallback_action": {"charge_mw": 0.0, "discharge_mw": 0.0},
+            "projection_surface": "soc_power_envelope",
+            "viable": True,
         }
 
     def project_to_safe_set(
@@ -110,14 +116,19 @@ class BatteryDomainAdapter(DomainAdapter):
         state: Any,
     ) -> tuple[Mapping[str, float], Mapping[str, Any]]:
         """Shield-compatible projection: clamp action to SOC-safe region."""
+        def _state_value(key: str, default: float) -> float:
+            if isinstance(state, Mapping):
+                return float(state.get(key, default))
+            return float(getattr(state, key, default))
+
         charge = float(candidate_action.get("charge_mw", 0.0))
         discharge = float(candidate_action.get("discharge_mw", 0.0))
 
-        soc = float(getattr(state, "current_soc_mwh", 5000.0))
-        cap = float(getattr(state, "capacity_mwh", 10000.0))
-        soc_min = float(uncertainty_set.get("ftit_soc_min_mwh", getattr(state, "min_soc_mwh", 0.0)))
-        soc_max = float(uncertainty_set.get("ftit_soc_max_mwh", getattr(state, "max_soc_mwh", cap)))
-        max_pw = float(getattr(state, "max_power_mw", 200.0))
+        soc = _state_value("current_soc_mwh", 5000.0)
+        cap = _state_value("capacity_mwh", 10000.0)
+        soc_min = float(uncertainty_set.get("ftit_soc_min_mwh", _state_value("min_soc_mwh", 0.0)))
+        soc_max = float(uncertainty_set.get("ftit_soc_max_mwh", _state_value("max_soc_mwh", cap)))
+        max_pw = _state_value("max_power_mw", 200.0)
 
         room_up = max(0.0, soc_max - soc)
         room_dn = max(0.0, soc - soc_min)

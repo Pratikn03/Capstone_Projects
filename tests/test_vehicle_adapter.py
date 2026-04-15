@@ -164,7 +164,7 @@ class TestVehicleDomainAdapterRepairAction:
         )
         assert safe["acceleration_mps2"] == -5.0
         assert meta["repaired"] is True
-        assert meta["intervention_reason"] == "predictive_entry_barrier"
+        assert meta["intervention_reason"] == "headway_predictive_entry_barrier"
         assert meta["entry_barrier_triggered"] is True
 
 
@@ -186,3 +186,6 @@ class TestVehicleDomainAdapterEmitCertificate:
         assert "certificate_hash" in cert
         assert cert["proposed_action"]["acceleration_mps2"] == 2.0
         assert cert["safe_action"]["acceleration_mps2"] == 1.5
+        assert cert["runtime_surface"] == "waymo_motion_replay_surrogate"
+        assert cert["closure_tier"] == "defended_bounded_row"
+        assert isinstance(cert["reliability_feature_basis"], dict)

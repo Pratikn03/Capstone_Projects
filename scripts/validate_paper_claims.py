@@ -328,6 +328,139 @@ def _check_claim_matrix(findings: list[Finding], claim_matrix_path: Path) -> Non
             )
 
 
+def _check_impact_alignment_with_manifest(
+    findings: list[Finding],
+    manifest: dict,
+    repo_root: Path,
+) -> None:
+    canonical = manifest.get("canonical_metrics", {})
+    tolerance = 1e-6
+    targets = [
+        ("de", repo_root / "reports" / "impact_summary.csv"),
+        ("us", repo_root / "reports" / "eia930" / "impact_summary.csv"),
+    ]
+    for region, csv_path in targets:
+        if not csv_path.exists():
+            findings.append(Finding("ERROR", "impact_alignment", str(csv_path), "Missing impact summary CSV"))
+            continue
+        locked = canonical.get(region, {}).get("impact", {})
+        if not locked:
+            findings.append(Finding("ERROR", "impact_alignment", str(csv_path), f"Missing canonical manifest metrics for region '{region}'"))
+            continue
+        with csv_path.open("r", encoding="utf-8", newline="") as fh:
+            rows = list(csv.DictReader(fh))
+        if not rows:
+            findings.append(Finding("ERROR", "impact_alignment", str(csv_path), "Impact summary CSV is empty"))
+            continue
+        row = rows[0]
+        for field, manifest_key in (
+            ("cost_savings_pct", "cost_savings_pct_raw"),
+            ("carbon_reduction_pct", "carbon_reduction_pct_raw"),
+            ("peak_shaving_pct", "peak_shaving_pct_raw"),
+        ):
+            try:
+                actual = float(row[field])
+                expected = float(locked[manifest_key])
+            except (KeyError, TypeError, ValueError) as exc:
+                findings.append(Finding("ERROR", "impact_alignment", str(csv_path), f"Could not compare {field}: {exc}"))
+                continue
+            if abs(actual - expected) > tolerance:
+                findings.append(
+                    Finding(
+                        "ERROR",
+                        "impact_alignment",
+                        str(csv_path),
+                        f"{field}={actual} diverges from locked manifest value {expected}",
+                    )
+                )
+
+
+def _locked_battery_reference_metrics(repo_root: Path) -> dict[str, float]:
+    table_path = repo_root / "reports" / "publication" / "dc3s_main_table.csv"
+    if not table_path.exists():
+        raise FileNotFoundError(table_path)
+    with table_path.open("r", encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    if not rows:
+        raise ValueError(f"Locked battery witness table is empty: {table_path}")
+
+    def _collect(controller: str) -> list[float]:
+        vals = [
+            float(row["violation_rate"])
+            for row in rows
+            if row.get("scenario") == "nominal" and row.get("controller") == controller
+        ]
+        if not vals:
+            raise ValueError(f"Missing nominal locked battery rows for controller '{controller}'")
+        return vals
+
+    deterministic_vals = _collect("deterministic_lp")
+    dc3s_vals = _collect("dc3s_ftit")
+    return {
+        "baseline_tsvr_mean": sum(deterministic_vals) / len(deterministic_vals),
+        "orius_tsvr_mean": sum(dc3s_vals) / len(dc3s_vals),
+    }
+
+
+def _check_reference_domain_validation_alignment(
+    findings: list[Finding],
+    repo_root: Path,
+) -> None:
+    summary_path = repo_root / "reports" / "universal_orius_validation" / "domain_validation_summary.csv"
+    if not summary_path.exists():
+        findings.append(Finding("ERROR", "reference_validation_alignment", str(summary_path), "Missing universal validation summary"))
+        return
+
+    with summary_path.open("r", encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    battery_row = next((row for row in rows if row.get("domain") == "battery"), None)
+    if battery_row is None:
+        findings.append(Finding("ERROR", "reference_validation_alignment", str(summary_path), "Battery reference row missing from validation summary"))
+        return
+
+    try:
+        locked = _locked_battery_reference_metrics(repo_root)
+    except (FileNotFoundError, ValueError) as exc:
+        findings.append(Finding("ERROR", "reference_validation_alignment", str(summary_path), f"Could not load locked battery witness metrics: {exc}"))
+        return
+
+    try:
+        baseline = float(battery_row["baseline_tsvr_mean"])
+        orius = float(battery_row["orius_tsvr_mean"])
+    except (KeyError, TypeError, ValueError) as exc:
+        findings.append(Finding("ERROR", "reference_validation_alignment", str(summary_path), f"Battery row is malformed: {exc}"))
+        return
+
+    if abs(baseline - locked["baseline_tsvr_mean"]) > 1e-4:
+        findings.append(
+            Finding(
+                "ERROR",
+                "reference_validation_alignment",
+                str(summary_path),
+                f"battery baseline_tsvr_mean={baseline} diverges from locked reference {locked['baseline_tsvr_mean']}",
+            )
+        )
+    if abs(orius - locked["orius_tsvr_mean"]) > 1e-9:
+        findings.append(
+            Finding(
+                "ERROR",
+                "reference_validation_alignment",
+                str(summary_path),
+                f"battery orius_tsvr_mean={orius} diverges from locked reference {locked['orius_tsvr_mean']}",
+            )
+        )
+    metric_surface = (battery_row.get("metric_surface") or "").strip()
+    if metric_surface and metric_surface != "locked_publication_nominal":
+        findings.append(
+            Finding(
+                "ERROR",
+                "reference_validation_alignment",
+                str(summary_path),
+                f"battery metric_surface='{metric_surface}' should be locked_publication_nominal",
+            )
+        )
+
+
 def _print_findings(findings: list[Finding]) -> None:
     if not findings:
         print("[validate_paper_claims] PASS: no findings")
@@ -396,6 +529,8 @@ def main() -> None:
     _check_title_alignment(findings, markdown_text, tex_text, markdown_path, tex_path)
     _check_claim_matrix(findings, claim_matrix_path)
     _check_canonical_value_lock(findings, manifest, claim_matrix_path, repo_root)
+    _check_impact_alignment_with_manifest(findings, manifest, repo_root)
+    _check_reference_domain_validation_alignment(findings, repo_root)
 
     _print_findings(findings)
 

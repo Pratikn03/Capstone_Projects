@@ -34,9 +34,10 @@ def test_universal_sil_validation_writes_summary_and_traces(tmp_path: Path) -> N
     assert report["all_passed"] is True
     assert "av" in report["sil_pass_domains"]
     assert "industrial" in report["sil_pass_domains"]
+    assert report["shadow_synthetic_domains"] == ["navigation"]
+    assert report["experimental_domains"] == ["aerospace"]
 
     summary_csv = (tmp_path / "domain_sil_summary.csv").read_text()
     assert "healthcare" in summary_csv
     assert "navigation" in summary_csv
     assert (tmp_path / "traces" / "av_seed0.csv").exists()
-

@@ -5,11 +5,9 @@ Fault injection: bias, noise, stuck_sensor on spo2_pct.
 
 Real-data mode
 --------------
-Pass ``dataset_path`` to load real PhysioNet BIDMC rows.  ``reset()``
-selects a near-limit row (SpO₂ < 92 %) from the real data to initialise
-the synthetic state (mild hypoxia starting point).  All subsequent
-``step()`` calls use synthetic dynamics so DC3S repair can demonstrate
-improvement.  Real data provides realistic initial conditions only.
+Pass ``dataset_path`` to load the processed healthcare ORIUS row.
+``reset()`` selects a low-SpO₂ operating point from that row and ``step()``
+uses an action-conditioned surrogate anchored to the next real patient row.
 """
 from __future__ import annotations
 
@@ -41,26 +39,34 @@ class HealthcareTrackAdapter(BenchmarkAdapter):
         self._hr = 72.0
         self._rr = 14.0
         self._rng: np.random.Generator | None = None
-        # Real-data mode: rows used for initialization only
-        self._real_rows: list[dict[str, float]] = []
+        self._episodes: list[list[dict[str, float]]] = []
+        self._episode: list[dict[str, float]] = []
+        self._episode_idx = 0
         if dataset_path is not None:
-            from orius.orius_bench.real_data_loader import load_bidmc_rows
-            self._real_rows = load_bidmc_rows(Path(dataset_path))
+            from orius.orius_bench.real_data_loader import load_healthcare_runtime_rows
+
+            rows = load_healthcare_runtime_rows(Path(dataset_path))
+            grouped: dict[str, list[dict[str, float]]] = {}
+            for row in rows:
+                grouped.setdefault(str(row.get("patient_id", "patient-0")), []).append(dict(row))
+            for episode in grouped.values():
+                episode.sort(key=lambda row: int(row.get("step", 0)))
+                self._episodes.append(episode)
 
     def reset(self, seed: int = 42) -> Mapping[str, Any]:
         self._rng = np.random.default_rng(seed)
-        if self._real_rows:
-            # Use real HR/RR for realistic co-morbidity initialization.
-            # SpO2 always starts at near-violation 85 % (benchmark design requirement):
-            # real BIDMC data reflects stabilised ICU patients (SpO2 ≥ 92 %), so using
-            # real SpO2 directly would eliminate baseline violations and prevent DC3S
-            # from demonstrating improvement.
-            rng_idx = np.random.default_rng(seed)
-            idx = int(rng_idx.integers(0, len(self._real_rows)))
-            row = self._real_rows[idx]
-            self._spo2 = 85.0  # deliberate near-violation start (benchmark requirement)
-            self._hr   = float(row["HR"])
-            self._rr   = float(row["RR"])
+        if self._episodes:
+            episode = self._episodes[int(self._rng.integers(0, len(self._episodes)))]
+            low_spo2 = [idx for idx, row in enumerate(episode) if float(row.get("spo2_pct", 100.0)) <= 93.0]
+            if not low_spo2:
+                low_spo2 = [int(np.argmin([float(row.get("spo2_pct", 100.0)) for row in episode]))]
+            self._episode = episode
+            self._episode_idx = int(low_spo2[int(self._rng.integers(0, len(low_spo2)))])
+            row = self._episode[self._episode_idx]
+            row_spo2 = float(row["spo2_pct"])
+            self._spo2 = max(70.0, min(row_spo2 - 4.0, self._spo2_min - 2.0))
+            self._hr = float(row["hr_bpm"])
+            self._rr = float(row["respiratory_rate"])
             return self.true_state()
         # Start in mild hypoxia: SpO2=85 % — clinician must intervene to restore above 90 %
         self._spo2 = 85.0
@@ -70,10 +76,9 @@ class HealthcareTrackAdapter(BenchmarkAdapter):
 
     @property
     def using_real_data(self) -> bool:
-        return bool(self._real_rows)
+        return bool(self._episodes)
 
     def true_state(self) -> Mapping[str, Any]:
-        # Always return synthetic dynamics state
         return {
             "spo2_pct": float(self._spo2),
             "hr_bpm": float(self._hr),
@@ -110,7 +115,30 @@ class HealthcareTrackAdapter(BenchmarkAdapter):
         return {"spo2_min_pct": self._spo2_min}
 
     def step(self, action: Mapping[str, Any]) -> Mapping[str, Any]:
-        # Always use synthetic dynamics — real data only affects initialisation in reset()
+        if self._episodes:
+            alert = float(action.get("alert_level", 0.2))
+            alert = max(0.0, min(1.0, alert))
+            real_next = self._episode[min(self._episode_idx + 1, len(self._episode) - 1)]
+            self._spo2 = float(
+                self._spo2
+                + 0.10 * (float(real_next["spo2_pct"]) - self._spo2)
+                + (2.0 * alert - 0.8)
+            )
+            self._spo2 = max(70.0, min(100.0, self._spo2))
+            self._hr = float(
+                self._hr
+                + 0.20 * (float(real_next["hr_bpm"]) - self._hr)
+                - 3.0 * (alert - 0.2)
+            )
+            self._hr = max(self._hr_min, min(self._hr_max, self._hr))
+            self._rr = float(
+                self._rr
+                + 0.20 * (float(real_next["respiratory_rate"]) - self._rr)
+                - 0.5 * (alert - 0.2)
+            )
+            self._rr = max(4.0, min(60.0, self._rr))
+            self._episode_idx = min(self._episode_idx + 1, len(self._episode) - 1)
+            return dict(self.true_state())
         alert = float(action.get("alert_level", 0.2))
         alert = max(0.0, min(1.0, alert))
         # Dynamics: high alert -> spo2 improves (intervention), low -> natural drift

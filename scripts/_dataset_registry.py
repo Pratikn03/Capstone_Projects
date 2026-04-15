@@ -35,6 +35,18 @@ class DatasetConfig:
     end_date: Optional[str] = None      # Date filter end
     alias_of: Optional[str] = None      # Backward-compatible dataset alias
     provenance_path: Optional[str] = None  # Standardized real-data manifest when available
+    canonical_raw_source_path: Optional[str] = None
+    runtime_domain: Optional[str] = None
+    publication_label: Optional[str] = None
+    closure_target_tier: Optional[str] = None
+    maturity_tier: Optional[str] = None
+    canonical_runtime_path: Optional[str] = None
+    support_runtime_path: Optional[str] = None
+    runtime_provenance_path: Optional[str] = None
+    support_runtime_provenance_path: Optional[str] = None
+    fallback_policy: Optional[str] = None
+    exact_blocker: Optional[str] = None
+    strict_runtime_required: bool = False
 
 
 def _us_dataset(
@@ -65,6 +77,7 @@ def _us_dataset(
         ba_code=ba_code,
         alias_of=alias_of,
         provenance_path=f"{processed_dir}/dataset_provenance.json",
+        canonical_raw_source_path="data/raw/us_eia930",
     )
 
 
@@ -83,6 +96,13 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         raw_data_path="data/raw",
         feature_module="orius.data_pipeline.build_features",
         provenance_path="data/raw/opsd_germany_provenance.json",
+        canonical_raw_source_path="data/raw/time_series_60min_singleindex.csv",
+        runtime_domain="battery",
+        publication_label="Battery Energy Storage",
+        closure_target_tier="witness_row",
+        maturity_tier="reference",
+        fallback_policy="paper6_runtime",
+        exact_blocker="battery_reference_witness",
     ),
     "US_MISO": _us_dataset(
         key="US_MISO",
@@ -144,6 +164,15 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         raw_data_path="data/av/processed/av_trajectories_orius.csv",
         feature_module="orius.data_pipeline.build_features_av",
         provenance_path="data/av/raw/waymo_open_motion_provenance.json",
+        canonical_raw_source_path="data/av/raw/waymo_open_motion",
+        runtime_domain="vehicle",
+        publication_label="Autonomous Vehicles",
+        closure_target_tier="defended_bounded_row",
+        maturity_tier="proof_validated",
+        canonical_runtime_path="data/av/processed/av_trajectories_orius.csv",
+        runtime_provenance_path="data/av/raw/waymo_open_motion_provenance.json",
+        fallback_policy="bounded_runtime_pass",
+        exact_blocker="av_real_row_present",
     ),
     "INDUSTRIAL": DatasetConfig(
         name="INDUSTRIAL",
@@ -158,6 +187,15 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         raw_data_path="data/industrial/processed/industrial_orius.csv",
         feature_module="orius.data_pipeline.build_features_industrial",
         provenance_path="data/industrial/raw/ccpp_provenance.json",
+        canonical_raw_source_path="data/industrial/raw/CCPP.csv",
+        runtime_domain="industrial",
+        publication_label="Industrial Process Control",
+        closure_target_tier="defended_bounded_row",
+        maturity_tier="proof_validated",
+        canonical_runtime_path="data/industrial/processed/industrial_orius.csv",
+        runtime_provenance_path="data/industrial/raw/ccpp_provenance.json",
+        fallback_policy="bounded_runtime_pass",
+        exact_blocker="industrial_train_validation_chain_complete",
     ),
     "HEALTHCARE": DatasetConfig(
         name="HEALTHCARE",
@@ -172,6 +210,15 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         raw_data_path="data/healthcare/processed/healthcare_orius.csv",
         feature_module="orius.data_pipeline.build_features_healthcare",
         provenance_path="data/healthcare/raw/bidmc_provenance.json",
+        canonical_raw_source_path="data/healthcare/raw/bidmc_csv",
+        runtime_domain="healthcare",
+        publication_label="Medical and Healthcare Monitoring",
+        closure_target_tier="defended_bounded_row",
+        maturity_tier="proof_validated",
+        canonical_runtime_path="data/healthcare/processed/healthcare_orius.csv",
+        runtime_provenance_path="data/healthcare/raw/bidmc_provenance.json",
+        fallback_policy="bounded_runtime_pass",
+        exact_blocker="healthcare_train_validation_chain_complete",
     ),
     "AEROSPACE": DatasetConfig(
         name="AEROSPACE",
@@ -186,6 +233,18 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         raw_data_path="data/aerospace/processed/aerospace_orius.csv",
         feature_module="orius.data_pipeline.build_features_aerospace",
         provenance_path="data/aerospace/raw/cmapss_provenance.json",
+        canonical_raw_source_path="data/aerospace/raw",
+        runtime_domain="aerospace",
+        publication_label="Aerospace Control",
+        closure_target_tier="defended_bounded_row",
+        maturity_tier="experimental",
+        canonical_runtime_path="data/aerospace/processed/aerospace_realflight_runtime.csv",
+        support_runtime_path="data/aerospace/processed/aerospace_public_adsb_runtime.csv",
+        runtime_provenance_path="data/aerospace/raw/aerospace_realflight_provenance.json",
+        support_runtime_provenance_path="data/aerospace/raw/public_adsb_proxy_provenance.json",
+        fallback_policy="experimental_support_lane",
+        exact_blocker="aerospace_realflight_runtime_missing",
+        strict_runtime_required=True,
     ),
     "NAVIGATION": DatasetConfig(
         name="NAVIGATION",
@@ -200,6 +259,16 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         raw_data_path="data/navigation/processed/navigation_orius.csv",
         feature_module="orius.data_pipeline.build_features_navigation",
         provenance_path="data/navigation/raw/kitti_odometry_provenance.json",
+        canonical_raw_source_path="data/navigation/raw/kitti_odometry",
+        runtime_domain="navigation",
+        publication_label="Navigation and Guidance",
+        closure_target_tier="defended_bounded_row",
+        maturity_tier="shadow_synthetic",
+        canonical_runtime_path="data/navigation/processed/navigation_orius.csv",
+        runtime_provenance_path="data/navigation/raw/kitti_odometry_provenance.json",
+        fallback_policy="shadow_synthetic_support_tier",
+        exact_blocker="navigation_kitti_runtime_missing",
+        strict_runtime_required=True,
     ),
 }
 
@@ -251,3 +320,57 @@ def iter_trainable_dataset_keys() -> list[str]:
         seen.add(canonical)
         keys.append(registry_key)
     return keys
+
+
+RUNTIME_DOMAIN_DATASET_KEYS: dict[str, str] = {
+    "battery": "DE",
+    "vehicle": "AV",
+    "industrial": "INDUSTRIAL",
+    "healthcare": "HEALTHCARE",
+    "navigation": "NAVIGATION",
+    "aerospace": "AEROSPACE",
+}
+
+
+def repo_path(relative_path: str | None) -> Path | None:
+    if not relative_path:
+        return None
+    return REPO_ROOT / relative_path
+
+
+def get_runtime_dataset_config(domain: str) -> DatasetConfig:
+    try:
+        return DATASET_REGISTRY[RUNTIME_DOMAIN_DATASET_KEYS[domain]]
+    except KeyError as exc:
+        raise KeyError(f"No runtime dataset config registered for domain '{domain}'.") from exc
+
+
+def runtime_domain_configs() -> dict[str, DatasetConfig]:
+    return {
+        domain: DATASET_REGISTRY[key]
+        for domain, key in RUNTIME_DOMAIN_DATASET_KEYS.items()
+    }
+
+
+def get_runtime_dataset_path(domain: str, *, allow_support_tier: bool = False) -> Path | None:
+    cfg = get_runtime_dataset_config(domain)
+    for relative_path in (
+        cfg.canonical_runtime_path,
+        cfg.support_runtime_path if allow_support_tier else None,
+    ):
+        path = repo_path(relative_path)
+        if path is not None and path.exists():
+            return path
+    return None
+
+
+def get_runtime_source_label(domain: str, *, allow_support_tier: bool = False) -> str:
+    cfg = get_runtime_dataset_config(domain)
+    canonical_path = repo_path(cfg.canonical_runtime_path)
+    if canonical_path is not None and canonical_path.exists():
+        return "canonical"
+    if allow_support_tier:
+        support_path = repo_path(cfg.support_runtime_path)
+        if support_path is not None and support_path.exists():
+            return "support"
+    return "missing"

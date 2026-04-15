@@ -1,31 +1,31 @@
 #!/usr/bin/env python3
-"""Dataset preparation utility for ORIUS real-data validation.
+"""Dataset preparation utility for ORIUS industrial/healthcare raw surfaces.
 
-Checks whether real datasets are present at the canonical paths. If absent,
-generates calibrated synthetic fallback files from published distribution
-statistics and writes them to the canonical paths so that the real-data
-validation run can proceed.
+Checks whether the repo-local industrial and healthcare raw surfaces are staged.
+If absent, generates calibrated synthetic fallback files inside the current
+repo-local layout so local validation helpers can proceed without referencing
+dead legacy paths.
 
 Usage
 -----
     python scripts/prepare_datasets.py [--force-synthetic]
 
-Canonical paths
+Canonical repo-local paths
 ---------------
-  data/ccpp/CCPP.csv     — UCI Combined Cycle Power Plant
-  data/bidmc/bidmc_vitals.csv  — PhysioNet BIDMC ICU vitals
+  data/industrial/raw/CCPP.csv          — UCI Combined Cycle Power Plant
+  data/healthcare/raw/bidmc_csv/        — PhysioNet BIDMC ICU numerics corpus
 
 To use REAL data
 ----------------
 1. UCI CCPP:
    - Download from https://archive.ics.uci.edu/ml/datasets/Combined+Cycle+Power+Plant
    - Extract Folds5x2_pp.xlsx, export first sheet as CSV with header AT,V,AP,RH,PE
-   - Place at data/ccpp/CCPP.csv
+   - Place at data/industrial/raw/CCPP.csv
 
 2. PhysioNet BIDMC:
    - Download bidmc_csv.tar.gz from https://physionet.org/content/bidmc/1.0.0/
    - Extract bidmc_*_Numerics.csv files
-   - Concatenate and keep columns HR, SpO2, RR; save as data/bidmc/bidmc_vitals.csv
+   - Place them under data/healthcare/raw/bidmc_csv/
 """
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from orius.orius_bench.real_data_loader import (
-    BIDMC_PATH,
+    BIDMC_SYNTHETIC_PATH,
     CCPP_PATH,
     dataset_status,
     generate_bidmc_synthetic,
@@ -92,13 +92,14 @@ def main() -> int:
         reason = "force-synthetic" if args.force_synthetic else "not found"
         print(f"[BIDMC] Real data {reason}. Generating calibrated synthetic ({bidmc['fallback_rows']} rows)...")
         rows = generate_bidmc_synthetic(n=bidmc["fallback_rows"], seed=42)
-        _write_bidmc(BIDMC_PATH, rows)
-        print(f"[BIDMC] Written to {BIDMC_PATH}")
+        _write_bidmc(BIDMC_SYNTHETIC_PATH, rows)
+        print(f"[BIDMC] Written to {BIDMC_SYNTHETIC_PATH}")
 
     # Verify
     status2 = dataset_status()
     ok = True
-    for name, info in status2.items():
+    for name in ("ccpp", "bidmc"):
+        info = status2[name]
         label = "real" if info["real_data"] else "synthetic-fallback"
         print(f"\n  {name.upper():6s}: {info['rows']} rows ({label})")
         if info["rows"] == 0:

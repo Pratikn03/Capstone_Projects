@@ -319,7 +319,7 @@ def _render_tbl09(token: str, csv_path: Path, title: str) -> str:
         r"\renewcommand{\arraystretch}{0.98}",
         r"\begin{tabular}{llrrr}",
         r"\toprule",
-        r"\textbf{Domain} & \textbf{Faults} & \textbf{Baseline TSVR} & \textbf{ORIUS TSVR} & \textbf{Reduction (\%)} \\",
+        r"\textbf{Domain} & \textbf{Faults} & \textbf{Baseline OASG} & \textbf{ORIUS OASG} & \textbf{Reduction (\%)} \\",
         r"\midrule",
     ]
     for _, row in df.iterrows():

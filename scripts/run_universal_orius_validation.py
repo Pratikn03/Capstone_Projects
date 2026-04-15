@@ -7,8 +7,8 @@ battery        : reference row (locked theorem/economics witness)
 industrial     : defended bounded row
 healthcare     : defended bounded row
 vehicle        : defended bounded row
-navigation     : shadow_synthetic
-aerospace      : experimental
+navigation     : shadow/support-tier until the canonical KITTI replay row is staged
+aerospace      : experimental/support-tier until the canonical real-flight runtime row is staged
 
 NOTE: Energy management validation uses the legacy _run_episode() path with
 the full forecasting stack (CQR + OQPE). All other domains use the universal
@@ -16,7 +16,8 @@ _run_domain_proof_episode() adapter path. This is an intentional design
 distinction: energy management exercises the complete DC3S pipeline including
 the forecaster; the other five domains exercise the safety-shield layer via
 the DomainAdapter interface. Both paths enforce the same degraded-observation
-repair contract, but not all rows carry the same evidence claim.
+repair contract. Legacy support-tier behavior remains available only behind an
+explicit permissive flag.
 
 Outputs
 -------
@@ -27,7 +28,8 @@ Outputs
 - reports/universal_orius_validation/domain_validation_summary.csv
 
 Exit 0 only when harness completes without errors AND every defended domain
-(industrial + healthcare + vehicle) passes the strong evidence gate.
+passes the strong evidence gate. Lower-tier rows may also require
+``--allow-support-tier`` when their canonical runtime surface is not staged.
 
 Usage:
     python scripts/run_universal_orius_validation.py [--seeds 3] [--horizon 48] \\
@@ -42,7 +44,7 @@ import math
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 import numpy as np
 
@@ -65,18 +67,18 @@ from orius.orius_bench.fault_engine import active_faults, generate_fault_schedul
 from orius.orius_bench.metrics_engine import StepRecord, compute_all_metrics
 from orius.universal_framework import run_universal_step
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from _dataset_registry import get_runtime_dataset_config, runtime_domain_configs
+
+REPO_ROOT = SCRIPT_DIR.parent
+BATTERY_REFERENCE_TABLE_CSV = REPO_ROOT / "reports" / "publication" / "dc3s_main_table.csv"
+
 # ---------------------------------------------------------------------------
 # Domain catalogue
 # ---------------------------------------------------------------------------
-
-TRACKS: list[BenchmarkAdapter] = [
-    BatteryTrackAdapter(),
-    NavigationTrackAdapter(),
-    IndustrialTrackAdapter(),
-    HealthcareTrackAdapter(),
-    AerospaceTrackAdapter(),
-    VehicleTrackAdapter(),
-]
 
 CONTROLLERS = [
     NominalController(),
@@ -88,30 +90,43 @@ CONTROLLERS = [
 
 REFERENCE_DOMAIN = "battery"
 PROOF_DOMAIN = "vehicle"
-DEFENDED_DOMAINS: list[str] = ["industrial", "healthcare", "vehicle"]
+RUNTIME_CONFIGS = runtime_domain_configs()
+RUNTIME_DOMAIN_ORDER: tuple[str, ...] = (
+    "battery",
+    "industrial",
+    "healthcare",
+    "vehicle",
+    "navigation",
+    "aerospace",
+)
+DEFENDED_DOMAINS: list[str] = [
+    domain
+    for domain in RUNTIME_DOMAIN_ORDER
+    if RUNTIME_CONFIGS[domain].maturity_tier == "proof_validated"
+]
 PROOF_CANDIDATE_DOMAINS: list[str] = []
-SHADOW_SYNTHETIC_DOMAINS: list[str] = ["navigation"]
-EXPERIMENTAL_DOMAINS: list[str] = ["aerospace"]
+SHADOW_SYNTHETIC_DOMAINS: list[str] = [
+    domain
+    for domain in RUNTIME_DOMAIN_ORDER
+    if RUNTIME_CONFIGS[domain].maturity_tier == "shadow_synthetic"
+]
+EXPERIMENTAL_DOMAINS: list[str] = [
+    domain
+    for domain in RUNTIME_DOMAIN_ORDER
+    if RUNTIME_CONFIGS[domain].maturity_tier == "experimental"
+]
 PROOF_DOMAINS: list[str] = DEFENDED_DOMAINS + PROOF_CANDIDATE_DOMAINS
 SUPPORT_DOMAINS: list[str] = SHADOW_SYNTHETIC_DOMAINS + EXPERIMENTAL_DOMAINS
 PORTABILITY_VALIDATED_DOMAINS: list[str] = []
 
 DOMAIN_MATURITY: dict[str, str] = {
-    "battery": "reference",
-    "industrial": "proof_validated",
-    "healthcare": "proof_validated",
-    "vehicle": "proof_validated",
-    "navigation": "shadow_synthetic",
-    "aerospace": "experimental",
+    domain: str(RUNTIME_CONFIGS[domain].maturity_tier or "portability_only")
+    for domain in RUNTIME_DOMAIN_ORDER
 }
 
 CLOSURE_TARGET_TIER: dict[str, str] = {
-    "battery": "witness_row",
-    "industrial": "defended_bounded_row",
-    "healthcare": "defended_bounded_row",
-    "vehicle": "defended_bounded_row",
-    "navigation": "defended_bounded_row",
-    "aerospace": "defended_bounded_row",
+    domain: str(RUNTIME_CONFIGS[domain].closure_target_tier or "defended_bounded_row")
+    for domain in RUNTIME_DOMAIN_ORDER
 }
 
 # Evidence-gate thresholds for the proof domain
@@ -138,11 +153,31 @@ _DOMAIN_QUANTILES: dict[str, float] = {
 
 # DC3S config passed as `cfg` to run_universal_step.
 _DOMAIN_CFGS: dict[str, dict[str, Any]] = {
-    "vehicle":    {"expected_cadence_s": 0.25},
-    "healthcare": {"expected_cadence_s": 1.0},
-    "industrial": {"expected_cadence_s": 3600.0},
-    "aerospace":  {"expected_cadence_s": 1.0},
-    "navigation": {"expected_cadence_s": 0.25},
+    "vehicle": {
+        "expected_cadence_s": 0.25,
+        "runtime_surface": "waymo_motion_replay_surrogate",
+        "closure_tier": "defended_bounded_row",
+    },
+    "healthcare": {
+        "expected_cadence_s": 1.0,
+        "runtime_surface": "bidmc_processed_replay_surrogate",
+        "closure_tier": "defended_bounded_row",
+    },
+    "industrial": {
+        "expected_cadence_s": 3600.0,
+        "runtime_surface": "uci_ccpp_processed_replay_surrogate",
+        "closure_tier": "defended_bounded_row",
+    },
+    "aerospace": {
+        "expected_cadence_s": 1.0,
+        "runtime_surface": "public_adsb_runtime_support_lane",
+        "closure_tier": "defended_bounded_row",
+    },
+    "navigation": {
+        "expected_cadence_s": 0.25,
+        "runtime_surface": "kitti_odometry_or_support_tier_synthetic",
+        "closure_tier": "defended_bounded_row",
+    },
 }
 
 # Telemetry keys for which zero-order-hold values are injected.
@@ -167,6 +202,45 @@ def _mean_std(values: list[float]) -> tuple[float, float]:
     if not values:
         return 0.0, 0.0
     return float(np.mean(values)), float(np.std(values))
+
+
+def _load_locked_battery_reference_metrics(
+    table_path: Path = BATTERY_REFERENCE_TABLE_CSV,
+) -> dict[str, float]:
+    """Load the canonical battery witness metrics from the locked publication table."""
+    if not table_path.exists():
+        raise FileNotFoundError(
+            f"Locked battery witness table missing: {table_path}"
+        )
+
+    rows = list(csv.DictReader(table_path.open(encoding="utf-8")))
+    if not rows:
+        raise ValueError(f"Locked battery witness table is empty: {table_path}")
+
+    def _collect(controller: str) -> list[float]:
+        vals = [
+            float(row["violation_rate"])
+            for row in rows
+            if row.get("scenario") == "nominal" and row.get("controller") == controller
+        ]
+        if not vals:
+            raise ValueError(
+                f"Missing locked nominal battery rows for controller '{controller}' in {table_path}"
+            )
+        return vals
+
+    baseline_vals = _collect("deterministic_lp")
+    dc3s_vals = _collect("dc3s_ftit")
+    baseline_mean, baseline_std = _mean_std(baseline_vals)
+    dc3s_mean, dc3s_std = _mean_std(dc3s_vals)
+    reduction_pct = (1.0 - dc3s_mean / baseline_mean) * 100.0 if baseline_mean > 0 else 0.0
+    return {
+        "baseline_tsvr_mean": baseline_mean,
+        "baseline_tsvr_std": baseline_std,
+        "orius_tsvr_mean": dc3s_mean,
+        "orius_tsvr_std": dc3s_std,
+        "orius_reduction_pct": reduction_pct,
+    }
 
 
 def _make_domain_adapter(domain: str, cfg: dict[str, Any]) -> Any:
@@ -235,9 +309,9 @@ def _domain_validation_status(
     if maturity_label == "proof_candidate":
         return "proof_candidate"
     if maturity_label == "shadow_synthetic":
-        return "proof_validated" if proof_evidence_pass else "shadow_synthetic"
+        return "shadow_synthetic"
     if maturity_label == "experimental":
-        return "proof_validated" if proof_evidence_pass else "experimental"
+        return "experimental"
     return "portability_only"
 
 
@@ -246,13 +320,10 @@ def _closure_target_ready(
     validation_status: str,
     portability_pass: bool,
 ) -> bool:
+    del portability_pass
     if domain == REFERENCE_DOMAIN:
         return True
-    if domain in DEFENDED_DOMAINS:
-        return validation_status == "proof_validated"
-    if domain in SHADOW_SYNTHETIC_DOMAINS or domain in EXPERIMENTAL_DOMAINS:
-        return portability_pass and validation_status == "proof_validated"
-    return False
+    return validation_status == "proof_validated"
 
 
 def _closure_blocker(
@@ -263,12 +334,11 @@ def _closure_blocker(
 ) -> str:
     if domain == REFERENCE_DOMAIN:
         return ""
-    if validation_status == "proof_validated":
+    if validation_status in {"reference_validated", "proof_validated"}:
         return ""
-    if domain == "navigation":
-        return "navigation_real_data_row_missing"
-    if domain == "aerospace":
-        return "real_multi_flight_safety_task_missing"
+    cfg = get_runtime_dataset_config(domain)
+    if cfg.maturity_tier in {"shadow_synthetic", "experimental"}:
+        return str(cfg.exact_blocker or "support_tier_only")
     reasons = []
     if proof_report:
         reasons.extend(str(item) for item in proof_report.get("failure_reasons", []))
@@ -521,7 +591,116 @@ def _run_vehicle_proof_episode(
     seed: int,
     horizon: int,
 ) -> list[StepRecord]:
-    return _run_domain_proof_episode(VehicleTrackAdapter(), controller, seed, horizon)
+    from orius.orius_bench.real_data_loader import AV_PATH
+
+    track = VehicleTrackAdapter(dataset_path=AV_PATH if AV_PATH.exists() else None)
+    return _run_domain_proof_episode(track, controller, seed, horizon)
+
+
+def _runtime_dataset_path(domain: str, *, allow_support_tier: bool) -> Path | None:
+    from orius.orius_bench import real_data_loader
+
+    if domain == "vehicle":
+        return real_data_loader.AV_PATH if real_data_loader.AV_PATH.exists() else None
+    if domain == "industrial":
+        return (
+            real_data_loader.INDUSTRIAL_RUNTIME_PATH
+            if real_data_loader.INDUSTRIAL_RUNTIME_PATH.exists()
+            else None
+        )
+    if domain == "healthcare":
+        return (
+            real_data_loader.HEALTHCARE_RUNTIME_PATH
+            if real_data_loader.HEALTHCARE_RUNTIME_PATH.exists()
+            else None
+        )
+    if domain == "navigation":
+        return real_data_loader.NAVIGATION_PATH if real_data_loader.NAVIGATION_PATH.exists() else None
+    if domain == "aerospace":
+        if allow_support_tier:
+            return (
+                real_data_loader.AEROSPACE_RUNTIME_PATH
+                if real_data_loader.AEROSPACE_RUNTIME_PATH.exists()
+                else None
+            )
+        return (
+            real_data_loader.AEROSPACE_REALFLIGHT_PATH
+            if real_data_loader.AEROSPACE_REALFLIGHT_PATH.exists()
+            else None
+        )
+    raise KeyError(domain)
+
+
+def _runtime_source_path(domain: str, *, allow_support_tier: bool) -> Path:
+    from orius.orius_bench import real_data_loader
+
+    if domain == "vehicle":
+        return real_data_loader.AV_PATH
+    if domain == "industrial":
+        return real_data_loader.INDUSTRIAL_RUNTIME_PATH
+    if domain == "healthcare":
+        return real_data_loader.HEALTHCARE_RUNTIME_PATH
+    if domain == "navigation":
+        return real_data_loader.NAVIGATION_PATH
+    if domain == "aerospace":
+        return (
+            real_data_loader.AEROSPACE_RUNTIME_PATH
+            if allow_support_tier
+            else real_data_loader.AEROSPACE_REALFLIGHT_PATH
+        )
+    raise KeyError(domain)
+
+
+def _allow_lower_tier_fallback(domain: str, *, allow_support_tier: bool) -> bool:
+    cfg = get_runtime_dataset_config(domain)
+    return bool(allow_support_tier and cfg.maturity_tier in {"shadow_synthetic", "experimental"})
+
+
+def _build_tracks(*, allow_support_tier: bool) -> tuple[list[BenchmarkAdapter], dict[str, str], list[str]]:
+    vehicle_path = _runtime_dataset_path("vehicle", allow_support_tier=allow_support_tier)
+    industrial_path = _runtime_dataset_path("industrial", allow_support_tier=allow_support_tier)
+    healthcare_path = _runtime_dataset_path("healthcare", allow_support_tier=allow_support_tier)
+    navigation_path = _runtime_dataset_path("navigation", allow_support_tier=allow_support_tier)
+    aerospace_path = _runtime_dataset_path("aerospace", allow_support_tier=allow_support_tier)
+
+    vehicle_track = VehicleTrackAdapter(dataset_path=vehicle_path)
+    industrial_track = IndustrialTrackAdapter(dataset_path=industrial_path)
+    healthcare_track = HealthcareTrackAdapter(dataset_path=healthcare_path)
+    navigation_track = NavigationTrackAdapter(dataset_path=navigation_path)
+    aerospace_track = AerospaceTrackAdapter(dataset_path=aerospace_path)
+
+    domain_sources = {
+        "vehicle": str(_runtime_source_path("vehicle", allow_support_tier=allow_support_tier)),
+        "industrial": str(_runtime_source_path("industrial", allow_support_tier=allow_support_tier)),
+        "healthcare": str(_runtime_source_path("healthcare", allow_support_tier=allow_support_tier)),
+        "navigation": str(_runtime_source_path("navigation", allow_support_tier=allow_support_tier)),
+        "aerospace": str(_runtime_source_path("aerospace", allow_support_tier=allow_support_tier)),
+    }
+    missing = []
+    for domain, track in {
+        "vehicle": vehicle_track,
+        "industrial": industrial_track,
+        "healthcare": healthcare_track,
+        "navigation": navigation_track,
+        "aerospace": aerospace_track,
+    }.items():
+        if getattr(track, "using_real_data", False):
+            continue
+        if _allow_lower_tier_fallback(domain, allow_support_tier=allow_support_tier):
+            continue
+        missing.append(f"{domain}={domain_sources[domain]}")
+
+    if missing:
+        return [], domain_sources, missing
+
+    return [
+        BatteryTrackAdapter(),
+        navigation_track,
+        industrial_track,
+        healthcare_track,
+        aerospace_track,
+        vehicle_track,
+    ], domain_sources, missing
 
 
 # ---------------------------------------------------------------------------
@@ -535,74 +714,51 @@ def main() -> int:
     parser.add_argument("--out",         default="reports/universal_orius_validation")
     parser.add_argument("--no-fail",     action="store_true", help="Do not exit 1 on failure")
     parser.add_argument(
-        "--equal-domain-gate",
+        "--allow-support-tier",
         action="store_true",
-        help="Require canonical navigation and aerospace real-data rows and promote them only through the same defended-domain gate.",
+        help="Permit legacy lower-tier navigation/aerospace behavior instead of the defended real-data gate.",
     )
     parser.add_argument(
-        "--real-data", action="store_true",
-        help="Use real datasets (data/ccpp/CCPP.csv, data/bidmc/bidmc_vitals.csv) "
-             "for industrial and healthcare tracks. Falls back to calibrated synthetic "
-             "if files are absent.",
+        "--equal-domain-gate",
+        action="store_true",
+        help="Deprecated alias for the default strict defended gate.",
+    )
+    parser.add_argument(
+        "--real-data",
+        action="store_true",
+        help="Deprecated alias retained for backwards compatibility. Strict defended mode is already the default.",
     )
     args = parser.parse_args()
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
 
-    # Build track list — optionally wire real-data paths
-    from orius.orius_bench.real_data_loader import (
-        AEROSPACE_RUNTIME_PATH,
-        BIDMC_PATH,
-        CCPP_PATH,
-        NAVIGATION_PATH,
+    active_tracks, domain_sources, missing_surfaces = _build_tracks(
+        allow_support_tier=args.allow_support_tier
     )
-    nav_track = NavigationTrackAdapter(dataset_path=NAVIGATION_PATH if NAVIGATION_PATH.exists() else None)
-    aero_track = AerospaceTrackAdapter(dataset_path=AEROSPACE_RUNTIME_PATH if AEROSPACE_RUNTIME_PATH.exists() else None)
-    if args.equal_domain_gate and (not nav_track.using_real_data or not aero_track.using_real_data):
-        missing = []
-        if not nav_track.using_real_data:
-            missing.append(str(NAVIGATION_PATH))
-        if not aero_track.using_real_data:
-            missing.append(str(AEROSPACE_RUNTIME_PATH))
-        print("Equal-domain gate requires canonical real-data rows:", ", ".join(missing))
+    if not active_tracks:
+        print("Strict defended validation requires staged canonical runtime surfaces:")
+        for item in missing_surfaces:
+            print(f"  - {item}")
+        print("Re-run with --allow-support-tier only if you intentionally want the legacy lower-tier path.")
         return 1
-    if args.real_data:
-        # Pre-load to confirm availability and log source
-        ccpp_src  = "real" if CCPP_PATH.exists() else "calibrated-synthetic"
-        bidmc_src = "real" if BIDMC_PATH.exists() else "calibrated-synthetic"
-        ind_track  = IndustrialTrackAdapter(dataset_path=CCPP_PATH  if CCPP_PATH.exists()  else None)
-        hc_track   = HealthcareTrackAdapter(dataset_path=BIDMC_PATH if BIDMC_PATH.exists() else None)
-        print(f"  [real-data] industrial → {ccpp_src} ({CCPP_PATH})")
-        print(f"  [real-data] healthcare → {bidmc_src} ({BIDMC_PATH})")
-        active_tracks: list[BenchmarkAdapter] = [
-            BatteryTrackAdapter(),
-            nav_track,
-            ind_track,
-            hc_track,
-            aero_track,
-            VehicleTrackAdapter(),
-        ]
-    else:
-        active_tracks = [
-            BatteryTrackAdapter(),
-            nav_track,
-            IndustrialTrackAdapter(),
-            HealthcareTrackAdapter(),
-            aero_track,
-            VehicleTrackAdapter(),
-        ]
 
     run_domain_maturity = dict(DOMAIN_MATURITY)
-    promotable_support_domains: list[str] = []
-    if args.equal_domain_gate and nav_track.using_real_data:
-        run_domain_maturity["navigation"] = "proof_validated"
-        promotable_support_domains.append("navigation")
-    if args.equal_domain_gate and aero_track.using_real_data:
-        run_domain_maturity["aerospace"] = "proof_validated"
-        promotable_support_domains.append("aerospace")
-    active_defended_domains = DEFENDED_DOMAINS + promotable_support_domains
-    active_support_domains = [domain for domain in SUPPORT_DOMAINS if domain not in promotable_support_domains]
+    active_defended_domains = list(DEFENDED_DOMAINS)
+    active_support_domains = list(SUPPORT_DOMAINS)
+
+    for domain, source in domain_sources.items():
+        path = Path(source)
+        if path.exists():
+            if args.allow_support_tier and domain == "aerospace" and path.name == "aerospace_public_adsb_runtime.csv":
+                status = "support-tier"
+            else:
+                status = "real-data"
+        elif _allow_lower_tier_fallback(domain, allow_support_tier=args.allow_support_tier):
+            status = "support-tier"
+        else:
+            status = "missing"
+        print(f"  [{status}] {domain} -> {source}")
 
     results:               list[dict[str, Any]] = []
     domain_summary:        dict[str, dict[str, Any]] = {}
@@ -617,6 +773,7 @@ def main() -> int:
             "tsvr_dc3s":       [],
             "tsvr_nominal":    [],
             "oasg_dc3s":       [],
+            "oasg_nominal":    [],
             "primary_fault":   "multi",
             "maturity_label":  run_domain_maturity.get(domain, "portability_only"),
             "harness_status":  "pass",
@@ -639,12 +796,18 @@ def main() -> int:
                         "tsvr":                metrics.tsvr,
                         "oasg":                metrics.oasg,
                         "intervention_rate":   metrics.intervention_rate,
+                        "evidence_surface": (
+                            "orius_bench_harness_noncanonical"
+                            if domain == REFERENCE_DOMAIN
+                            else "universal_validation_harness"
+                        ),
                     })
                     if ctrl.name == "dc3s":
                         domain_summary[domain]["tsvr_dc3s"].append(metrics.tsvr)
                         domain_summary[domain]["oasg_dc3s"].append(metrics.oasg)
                     elif ctrl.name == "nominal":
                         domain_summary[domain]["tsvr_nominal"].append(metrics.tsvr)
+                        domain_summary[domain]["oasg_nominal"].append(metrics.oasg)
 
         except Exception as exc:  # noqa: BLE001
             domain_summary[domain]["harness_status"] = "fail"
@@ -657,7 +820,7 @@ def main() -> int:
     # Primary proof-domain gate (vehicle) — kept for backward-compat keys
     proof_gate: dict[str, Any] = {
         "domain":          PROOF_DOMAIN,
-        "maturity_label":  DOMAIN_MATURITY[PROOF_DOMAIN],
+        "maturity_label":  run_domain_maturity[PROOF_DOMAIN],
         "evidence_pass":   False,
         "failure_reasons": ["proof_domain_not_evaluated"],
     }
@@ -700,6 +863,8 @@ def main() -> int:
         for domain in [d for d in SHADOW_SYNTHETIC_DOMAINS if d in active_support_domains]
     )
 
+    battery_reference_metrics = _load_locked_battery_reference_metrics()
+
     # ------------------------------------------------------------------
     # Build output tables
     # ------------------------------------------------------------------
@@ -712,13 +877,23 @@ def main() -> int:
         dc3s_mean, dc3s_std = _mean_std(tsvr_dc3s)
         nom_mean,  nom_std  = _mean_std(tsvr_nom)
         reduction = (1.0 - dc3s_mean / nom_mean) * 100.0 if nom_mean > 0 else 0.0
+        oasg_dc3s_mean, _ = _mean_std(summary.get("oasg_dc3s", []))
+        oasg_nom_mean, _ = _mean_std(summary.get("oasg_nominal", []))
+        oasg_reduction = (
+            (1.0 - oasg_dc3s_mean / oasg_nom_mean) * 100.0 if oasg_nom_mean > 0 else 0.0
+        )
 
         oasg_rows.append({
             "domain":               domain,
             "primary_fault":        summary["primary_fault"],
-            "oasg_rate_baseline":   f"{nom_mean:.4f}",
-            "oasg_rate_orius":      f"{dc3s_mean:.4f}",
-            "orius_reduction_pct":  f"{reduction:.1f}",
+            "oasg_rate_baseline":   f"{oasg_nom_mean:.4f}",
+            "oasg_rate_orius":      f"{oasg_dc3s_mean:.4f}",
+            "orius_reduction_pct":  f"{oasg_reduction:.1f}",
+            "metric_surface": (
+                "orius_bench_harness_proxy"
+                if domain == REFERENCE_DOMAIN
+                else "universal_validation_harness"
+            ),
         })
 
         maturity_label = str(summary["maturity_label"])
@@ -736,6 +911,14 @@ def main() -> int:
             evidence_row = str(pd_pass).lower()
         elif maturity_label in {"shadow_synthetic", "experimental"}:
             evidence_row = str(pv_pass).lower()
+
+        metric_surface = "locked_publication_nominal" if domain == REFERENCE_DOMAIN else "universal_validation_harness"
+        if domain == REFERENCE_DOMAIN:
+            nom_mean = battery_reference_metrics["baseline_tsvr_mean"]
+            nom_std = battery_reference_metrics["baseline_tsvr_std"]
+            dc3s_mean = battery_reference_metrics["orius_tsvr_mean"]
+            dc3s_std = battery_reference_metrics["orius_tsvr_std"]
+            reduction = battery_reference_metrics["orius_reduction_pct"]
 
         domain_rows.append({
             "domain":                domain,
@@ -756,6 +939,7 @@ def main() -> int:
             "orius_tsvr_std":        f"{dc3s_std:.4f}",
             "orius_reduction_pct":   f"{reduction:.1f}",
             "evidence_pass":         evidence_row,
+            "metric_surface":        metric_surface,
         })
 
     # Write CSV artefacts
@@ -801,8 +985,8 @@ def main() -> int:
             {
                 "reference_domain": REFERENCE_DOMAIN,
                 "proof_domain":     PROOF_DOMAIN,
-                "proof_validated_domains": DEFENDED_DOMAINS,
-                "evaluated_proof_candidates": PROOF_CANDIDATE_DOMAINS + promotable_support_domains,
+                "proof_validated_domains": active_defended_domains,
+                "evaluated_proof_candidates": PROOF_CANDIDATE_DOMAINS,
                 "promoted_proof_candidates": promoted_candidates,
                 "proof_downgraded_domains": proof_downgraded_domains,
                 "locked_protocol":  {
@@ -841,15 +1025,15 @@ def main() -> int:
 
     # All defended domains that passed the strong evidence gate
     validated_domains = [REFERENCE_DOMAIN] + [
-        d for d in DEFENDED_DOMAINS
+        d for d in active_defended_domains
         if domain_proof_reports.get(d, {}).get("evidence_pass", False)
     ]
     # Backward-compat: portability_validated_domains is now empty
     portability_validated_confirmed: list[str] = []
 
     report = {
-        "domains_run":                    len(TRACKS),
-        "domains_passed":                 len(TRACKS) - len(harness_failed_domains),
+        "domains_run":                    len(active_tracks),
+        "domains_passed":                 len(active_tracks) - len(harness_failed_domains),
         "domains_failed":                 len(harness_failed_domains),
         "failed_domains":                 harness_failed_domains,
         "harness_pass":                   harness_pass,
@@ -861,7 +1045,7 @@ def main() -> int:
         "proof_domain":                   PROOF_DOMAIN,
         "proof_domains":                  active_defended_domains,
         "defended_domains":               active_defended_domains,
-        "proof_candidate_domains":        PROOF_CANDIDATE_DOMAINS + promotable_support_domains,
+        "proof_candidate_domains":        PROOF_CANDIDATE_DOMAINS,
         "shadow_synthetic_domains":       [d for d in SHADOW_SYNTHETIC_DOMAINS if d in active_support_domains],
         "domain_maturity":                run_domain_maturity,
         "closure_target_tier":            CLOSURE_TARGET_TIER,
@@ -874,7 +1058,9 @@ def main() -> int:
         "bounded_universal_target_ready": all(
             bool(row["closure_target_ready"]) for row in domain_rows
         ),
-        "portability_only_domains":       [d for d, lbl in DOMAIN_MATURITY.items() if lbl == "portability_only"],
+        "portability_only_domains":       [d for d, lbl in run_domain_maturity.items() if lbl == "portability_only"],
+        "reference_domain_metric_surface": "locked_publication_nominal",
+        "reference_domain_metrics":       battery_reference_metrics,
         "domain_results":                 domain_rows,
         "domain_proof_reports":           domain_proof_reports,
         "domain_support_reports":         portability_reports,
@@ -933,7 +1119,7 @@ def main() -> int:
     print(f"  Domains run:             {len(active_tracks)}")
     print(f"  Harness pass:            {harness_pass}")
     print(f"  Evidence pass (defended): {evidence_pass}")
-    print(f"  All defended domains pass: {all_proof_pass}  {DEFENDED_DOMAINS}")
+    print(f"  All defended domains pass: {all_proof_pass}  {active_defended_domains}")
     print(f"  Harness passed domains:  {report['domains_passed']}")
     print(f"  Harness failed domains:  {report['domains_failed']}")
     if harness_failed_domains:

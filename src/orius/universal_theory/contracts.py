@@ -291,11 +291,26 @@ class UniversalStepResult(Mapping[str, Any]):
         }
 
     def to_mapping(self) -> dict[str, Any]:
+        runtime_surface = self.certificate.get(
+            "runtime_surface",
+            self.reliability.flags.get("runtime_surface", ""),
+        )
+        closure_tier = self.certificate.get(
+            "closure_tier",
+            self.reliability.flags.get("closure_tier", ""),
+        )
+        feature_basis = self.certificate.get(
+            "reliability_feature_basis",
+            self.reliability.flags.get("reliability_feature_basis", {}),
+        )
         return {
             "certificate": self.certificate,
             "safe_action": dict(self.safe_action),
             "reliability_w": float(self.reliability.weight),
             "reliability_flags": dict(self.reliability.flags),
+            "runtime_surface": runtime_surface,
+            "closure_tier": closure_tier,
+            "reliability_feature_basis": dict(feature_basis),
             "drift_flag": bool(self.reliability.drift_flag),
             "drift_meta": dict(self.reliability.drift_meta),
             "uncertainty_set": dict(self.uncertainty_set.raw_uncertainty),

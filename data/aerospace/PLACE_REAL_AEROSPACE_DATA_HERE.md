@@ -35,6 +35,11 @@ Place the defended runtime replay source here:
 data/aerospace/raw/aerospace_flight_telemetry/
 ```
 
+MacBook external SSD helper:
+
+- Run `make external-ssd-setup SSD_VOLUME=<mounted-ssd-root>`
+- Full setup guide: `docs/EXTERNAL_SSD_SETUP.md`
+
 This surface is intentionally separate from C-MAPSS:
 
 - C-MAPSS is the trainable degradation companion corpus.

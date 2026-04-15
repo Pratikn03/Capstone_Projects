@@ -11,8 +11,9 @@ import math
 from typing import Any, Mapping, Sequence
 
 from orius.dc3s.domain_adapter import DomainAdapter
-from orius.dc3s.quality import compute_reliability
 from orius.dc3s.certificate import make_certificate
+from orius.universal_framework.reliability_runtime import assess_domain_reliability
+from orius.universal_framework.runtime_evidence import resolve_runtime_evidence
 
 
 def _f(x: Any, default: float) -> float:
@@ -27,6 +28,7 @@ class HealthcareDomainAdapter(DomainAdapter):
 
     def __init__(self, cfg: Mapping[str, Any] | None = None):
         self._cfg = dict(cfg or {})
+        self.domain_id = "healthcare"
         hc = self._cfg.get("healthcare", {})
         self._hr_min = _f(hc.get("hr_min_bpm"), 40.0)
         self._hr_max = _f(hc.get("hr_max_bpm"), 120.0)
@@ -34,6 +36,12 @@ class HealthcareDomainAdapter(DomainAdapter):
         self._rr_min = _f(hc.get("rr_min"), 8.0)
         self._rr_max = _f(hc.get("rr_max"), 30.0)
         self._expected_cadence_s = _f(self._cfg.get("expected_cadence_s"), 1.0)
+        evidence = resolve_runtime_evidence(self.domain_id, self._cfg)
+        self._runtime_surface = evidence.runtime_surface
+        self._closure_tier = evidence.closure_tier
+        self._maturity_tier = evidence.maturity_tier
+        self._fallback_policy = evidence.fallback_policy
+        self._exact_blocker = evidence.exact_blocker
 
     def capability_profile(self) -> Mapping[str, Any]:
         return {
@@ -42,6 +50,11 @@ class HealthcareDomainAdapter(DomainAdapter):
             "fallback_mode": "max_alert",
             "supports_multi_agent_eval": False,
             "supports_certos_eval": True,
+            "runtime_surface": self._runtime_surface,
+            "closure_tier": self._closure_tier,
+            "maturity_tier": self._maturity_tier,
+            "fallback_policy": self._fallback_policy,
+            "exact_blocker": self._exact_blocker,
         }
 
     def ingest_telemetry(self, raw_packet: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -64,30 +77,23 @@ class HealthcareDomainAdapter(DomainAdapter):
         state: Mapping[str, Any],
         history: Sequence[Mapping[str, Any]] | None = None,
     ) -> tuple[float, Mapping[str, Any]]:
-        """Compute reliability w_t. Map hr_bpm -> load_mw for OQE."""
-        event = {
-            "ts_utc": state.get("ts_utc", ""),
-            "load_mw": state.get("hr_bpm", state.get("load_mw", 0.0)),
-            "renewables_mw": state.get("spo2_pct", 0.0),
-        }
-        last_event = None
-        if history:
-            prev = history[-1]
-            last_event = {
-                "ts_utc": prev.get("ts_utc", ""),
-                "load_mw": prev.get("hr_bpm", prev.get("load_mw", 0.0)),
-                "renewables_mw": prev.get("spo2_pct", 0.0),
-            }
-        reliability_cfg = self._cfg.get("reliability", {})
-        ftit_cfg = self._cfg.get("ftit", {})
-        w_t, flags = compute_reliability(
-            event,
-            last_event,
+        """Compute reliability from healthcare-native telemetry signals."""
+        w_t, flags = assess_domain_reliability(
+            domain_id=self.domain_id,
+            state=state,
+            history=history,
+            feature_sources={
+                "heart_rate_bpm": "hr_bpm",
+                "spo2_pct": "spo2_pct",
+                "respiratory_rate_bpm": "respiratory_rate",
+            },
             expected_cadence_s=self._expected_cadence_s,
-            reliability_cfg=reliability_cfg,
-            ftit_cfg=ftit_cfg,
+            reliability_cfg=self._cfg.get("reliability", {}),
+            ftit_cfg=self._cfg.get("ftit", {}),
+            runtime_surface=self._runtime_surface,
+            closure_tier=self._closure_tier,
         )
-        return float(w_t), {"flags": flags}
+        return float(w_t), flags
 
     def build_uncertainty_set(
         self,
@@ -126,10 +132,23 @@ class HealthcareDomainAdapter(DomainAdapter):
         cfg: Mapping[str, Any],
     ) -> Mapping[str, Any]:
         """Feasible alarm/alert set from vital sign limits."""
+        unc = dict(uncertainty)
+        cstr = dict(constraints)
+        spo2_lo = _f(unc.get("spo2_lower_pct"), self._spo2_min)
+        spo2_min = _f(cstr.get("spo2_min_pct"), self._spo2_min)
+        alert_lower = 0.8 if spo2_lo < spo2_min else 0.0
+        alert_upper = 1.0
+        if alert_lower > alert_upper:
+            alert_lower = alert_upper = 1.0
         return {
-            "uncertainty": dict(uncertainty),
-            "constraints": dict(constraints),
+            "uncertainty": unc,
+            "constraints": cstr,
             "cfg": dict(cfg),
+            "alert_level_lower": float(alert_lower),
+            "alert_level_upper": float(alert_upper),
+            "fallback_action": {"alert_level": 1.0},
+            "projection_surface": "vital_alert_box",
+            "viable": True,
         }
 
     def repair_action(
@@ -143,19 +162,22 @@ class HealthcareDomainAdapter(DomainAdapter):
         cfg: Mapping[str, Any],
     ) -> tuple[Mapping[str, float], Mapping[str, Any]]:
         """Clip alarm threshold to safe bounds. Healthcare: alert_level in [0,1]."""
+        if "alert_level_lower" not in tightened_set or "alert_level_upper" not in tightened_set:
+            tightened_set = self.tighten_action_set(
+                uncertainty=tightened_set.get("uncertainty", uncertainty),
+                constraints=tightened_set.get("constraints", constraints),
+                cfg=cfg,
+            )
         alert = _f(candidate_action.get("alert_level", candidate_action.get("alarm_level", 0.0)), 0.0)
-        unc = tightened_set.get("uncertainty", uncertainty)
-        spo2_lo = _f(unc.get("spo2_lower_pct"), 90.0)
-        spo2_min = _f(constraints.get("spo2_min_pct", self._spo2_min), self._spo2_min)
-        alert_safe = max(0.0, min(1.0, alert))
-        if spo2_lo < spo2_min:
-            # Emergency intervention: boost alert to 0.8 for faster SpO2 recovery
-            alert_safe = max(alert_safe, 0.8)
+        alert_lo = _f(tightened_set.get("alert_level_lower"), 0.0)
+        alert_hi = _f(tightened_set.get("alert_level_upper"), 1.0)
+        alert_safe = max(alert_lo, min(alert_hi, alert))
         repaired = abs(alert_safe - alert) > 1e-9
         meta = {
             "mode": "projection",
             "repaired": repaired,
             "original_alert_level": alert,
+            "repair_surface": str(tightened_set.get("projection_surface", "vital_alert_box")),
         }
         if repaired:
             meta["intervention_reason"] = "alert_clamp"
@@ -206,4 +228,7 @@ class HealthcareDomainAdapter(DomainAdapter):
             reliability_w=reliability_w,
             drift_flag=drift_flag,
             inflation=inflation,
+            runtime_surface=self._runtime_surface,
+            closure_tier=self._closure_tier,
+            reliability_feature_basis=reliability.get("reliability_feature_basis"),
         )

@@ -15,6 +15,7 @@ import scripts.verify_real_data_preflight as real_data_preflight
 from scripts._dataset_registry import DATASET_REGISTRY
 from orius.data_pipeline.build_features_navigation import build_features as build_navigation_features
 from orius.data_pipeline import real_data_contract
+from orius.orius_bench import real_data_loader
 
 
 def test_waymo_repo_local_fixture_preferred_over_external(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -142,6 +143,8 @@ def test_navigation_builder_and_feature_pipeline_from_kitti_fixture(tmp_path: Pa
     assert manifest["dataset"] == "KITTI Odometry"
     assert manifest["rows_per_sequence"]["00"] == 4
     assert manifest["canonical_source"] is True
+    assert manifest["source_kind"] == "external"
+    assert manifest["used_fallback"] is True
 
 
 def test_aerospace_cmapss_fixture_builds_real_processed_surface(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -305,6 +308,28 @@ def test_dataset_registry_includes_navigation_row() -> None:
     assert cfg.raw_data_path == "data/navigation/processed/navigation_orius.csv"
     assert cfg.feature_module == "orius.data_pipeline.build_features_navigation"
     assert cfg.provenance_path == "data/navigation/raw/kitti_odometry_provenance.json"
+    assert cfg.maturity_tier == "shadow_synthetic"
+    assert cfg.exact_blocker == "navigation_kitti_runtime_missing"
+
+
+def test_real_data_loader_uses_repo_local_phase1_paths() -> None:
+    assert real_data_loader.CCPP_PATH == Path("data/industrial/raw/CCPP.csv").resolve()
+    assert real_data_loader.BIDMC_PATH == Path("data/healthcare/raw/bidmc_csv").resolve()
+    assert real_data_loader.INDUSTRIAL_RUNTIME_PATH == Path("data/industrial/processed/industrial_orius.csv").resolve()
+    assert real_data_loader.HEALTHCARE_RUNTIME_PATH == Path("data/healthcare/processed/healthcare_orius.csv").resolve()
+    assert real_data_loader.AEROSPACE_RUNTIME_PATH == Path("data/aerospace/processed/aerospace_public_adsb_runtime.csv").resolve()
+    assert real_data_loader.AEROSPACE_REALFLIGHT_PATH == Path("data/aerospace/processed/aerospace_realflight_runtime.csv").resolve()
+
+
+def test_real_data_preflight_checks_repo_local_ccpp_file() -> None:
+    assert real_data_preflight.INDUSTRIAL_PATHS == [Path("data/industrial/raw/CCPP.csv").resolve()]
+
+
+def test_phase1_runtime_docs_do_not_reference_dead_legacy_paths() -> None:
+    for rel_path in ("README.md", "DATA.md", "data/DATASET_DOWNLOAD_GUIDE.md", "scripts/prepare_datasets.py"):
+        text = (Path(__file__).resolve().parents[1] / rel_path).read_text(encoding="utf-8")
+        assert "data/ccpp" not in text
+        assert "data/bidmc" not in text
 
 
 def test_tool_status_finds_project_venv_tools_without_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

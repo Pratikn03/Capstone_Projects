@@ -80,7 +80,7 @@ All ablation variants maintain 0% TSVR but with different interval widths — sh
 ### Full CPSBench sweep
 
 ```bash
-cd /Users/pratik_n/Downloads/orius
+cd <repo-root>
 source .venv/bin/activate
 
 # Full battery track sweep (all scenarios, all controllers)

@@ -1512,7 +1512,7 @@ def build_formal_report(
     if multi_horizon_plot:
         # Reference the generated plot by path for markdown rendering.
         lines.append("## Multi‑Horizon Backtest (Load)\n")
-        lines.append(f"![]({multi_horizon_plot.as_posix()})\n\n")
+        lines.append(f"![]({multi_horizon_plot.relative_to(ctx.reports_dir).as_posix()})\n\n")
 
     lines.append("## Conclusions\n")
     lines.append("GBM provides a strong baseline on the OPSD data, while sequence models capture temporal structure for longer horizons. Optimization outputs are cost‑ and carbon‑aware and suitable for operator decision support.\n")

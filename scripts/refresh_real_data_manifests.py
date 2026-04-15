@@ -151,17 +151,18 @@ def refresh_battery_manifest() -> dict[str, Any]:
 def refresh_industrial_manifest() -> dict[str, Any]:
     raw_dir = INDUSTRIAL_DATA_DIR / "raw"
     processed_path = INDUSTRIAL_DATA_DIR / "processed" / "industrial_orius.csv"
-    raw_root = raw_dir / "ccpp" if (raw_dir / "ccpp").exists() else raw_dir
-    canonical_source_present = raw_root.exists() and processed_path.exists()
+    canonical_raw_path = raw_dir / "CCPP.csv"
+    raw_root = canonical_raw_path if canonical_raw_path.exists() else raw_dir / "ccpp"
+    canonical_source_present = canonical_raw_path.exists() and processed_path.exists()
     if not canonical_source_present:
         return _report_row(
             domain="industrial",
             status="blocked",
             manifest_path=raw_dir / "ccpp_provenance.json",
-            canonical_source_present=raw_root.exists(),
+            canonical_source_present=canonical_raw_path.exists(),
             processed_output_present=processed_path.exists(),
             blocker="industrial_primary_surface_missing",
-            notes=["Need primary CCPP raw source plus processed industrial_orius.csv."],
+            notes=["Need primary CCPP.csv raw source plus processed industrial_orius.csv."],
         )
 
     raw_source = ResolvedRawSource(
@@ -353,20 +354,49 @@ def refresh_navigation_manifest() -> dict[str, Any]:
     raw_dir = NAVIGATION_DATA_DIR / "raw"
     processed_path = NAVIGATION_DATA_DIR / "processed" / "navigation_orius.csv"
     manifest_path = raw_dir / "kitti_odometry_provenance.json"
+    expected_raw_root = raw_dir / "kitti_odometry"
     raw_source = resolve_repo_or_external_raw_dir(
-        raw_dir / "kitti_odometry",
+        expected_raw_root,
         external_dataset_key="kitti_odometry",
         required=False,
     )
     raw_ready = _kitti_raw_ready(raw_source)
     if not raw_ready or not processed_path.exists():
+        checked_locations = (
+            list(raw_source.checked_locations)
+            if raw_source is not None
+            else [str(expected_raw_root), "$ORIUS_EXTERNAL_DATA_ROOT/kitti_odometry"]
+        )
+        blocked_manifest = {
+            "generated_at_utc": utc_now_iso(),
+            "domain": "navigation",
+            "dataset_key": "kitti_odometry",
+            "provider": "KITTI Odometry",
+            "status": "blocked",
+            "canonical_source": True,
+            "canonical_source_present": bool(raw_ready),
+            "processed_output_present": bool(processed_path.exists()),
+            "blocker": "navigation_kitti_runtime_missing",
+            "source_kind": None if raw_source is None else raw_source.source_kind,
+            "checked_locations": checked_locations,
+            "raw_root": str(expected_raw_root),
+            "processed_output": str(processed_path),
+            "raw_inventory": summarize_files(expected_raw_root),
+            "output_summary": _tabular_summary(processed_path) if processed_path.exists() else None,
+            "notes": [
+                "Navigation remains blocked until the KITTI-backed processed surface and replay chain are both present.",
+                "This placeholder manifest intentionally clears any stale temporary-path provenance from prior fixture runs.",
+            ],
+            "source_urls": ["https://www.cvlibs.net/datasets/kitti/eval_odometry.php"],
+        }
+        path = write_json(manifest_path, blocked_manifest)
         return _report_row(
             domain="navigation",
             status="blocked",
-            manifest_path=manifest_path if manifest_path.exists() else None,
+            manifest_path=path,
             canonical_source_present=raw_ready,
             processed_output_present=processed_path.exists(),
-            blocker="navigation_real_data_chain_incomplete",
+            blocker="navigation_kitti_runtime_missing",
             notes=[
                 "Navigation remains blocked until the KITTI-backed processed surface and replay chain are both present.",
             ],
@@ -407,38 +437,55 @@ def refresh_navigation_manifest() -> dict[str, Any]:
 def refresh_aerospace_manifest() -> dict[str, Any]:
     raw_dir = AEROSPACE_DATA_DIR / "raw"
     processed_path = AEROSPACE_DATA_DIR / "processed" / "aerospace_orius.csv"
+    support_runtime_path = AEROSPACE_DATA_DIR / "processed" / "aerospace_public_adsb_runtime.csv"
+    official_runtime_path = AEROSPACE_DATA_DIR / "processed" / "aerospace_realflight_runtime.csv"
     manifest_path = raw_dir / "cmapss_provenance.json"
     train_files = [raw_dir / name for name in ("train_FD001.txt", "train_FD002.txt", "train_FD003.txt", "train_FD004.txt")]
     train_surface_present = all(path.exists() for path in train_files)
+    public_adsb_manifest = raw_dir / "public_adsb_proxy_provenance.json"
+    official_runtime_manifest = raw_dir / "aerospace_realflight_provenance.json"
     runtime_surface = resolve_repo_or_external_raw_dir(
         raw_dir / "aerospace_flight_telemetry",
         external_dataset_key="aerospace_flight_telemetry",
         required=False,
     )
-    runtime_surface_present = _has_raw_files(runtime_surface)
-    public_adsb_manifest = raw_dir / "public_adsb_proxy_provenance.json"
-    public_adsb_support = runtime_surface_present and (public_adsb_manifest.exists() or _looks_like_public_adsb_proxy(runtime_surface))
-    provider_runtime_ready = runtime_surface_present and not public_adsb_support
+    public_adsb_ready = support_runtime_path.exists() and public_adsb_manifest.exists()
+    provider_runtime_ready = official_runtime_path.exists() and official_runtime_manifest.exists()
+    external_provider_hint = _has_raw_files(runtime_surface) and not _looks_like_public_adsb_proxy(runtime_surface)
+    checked_locations = [] if runtime_surface is None else list(runtime_surface.checked_locations)
+    raw_root = None if runtime_surface is None else str(runtime_surface.path)
+    if provider_runtime_ready and raw_root is None:
+        raw_root = str(official_runtime_path.parent)
+    if provider_runtime_ready and not checked_locations:
+        checked_locations = [str(official_runtime_path)]
+    elif public_adsb_ready and not checked_locations:
+        checked_locations = [str(support_runtime_path)]
 
     runtime_contract = {
         "generated_at_utc": utc_now_iso(),
         "domain": "aerospace",
         "contract": "runtime_replay_surface",
-        "canonical_source": "provider_approved_multi_flight_telemetry",
-        "present": runtime_surface_present,
-        "checked_locations": [] if runtime_surface is None else list(runtime_surface.checked_locations),
-        "raw_root": None if runtime_surface is None else str(runtime_surface.path),
+        "canonical_source": "official_provider_real_flight_runtime",
+        "present": provider_runtime_ready,
+        "checked_locations": checked_locations,
+        "raw_root": raw_root,
         "surface_status": (
             "provider_approved_ready"
             if provider_runtime_ready
             else "public_adsb_proxy_only"
-            if public_adsb_support
+            if public_adsb_ready
+            else "provider_external_raw_only"
+            if external_provider_hint
             else "missing"
         ),
+        "defended_release_surface": bool(provider_runtime_ready),
+        "official_runtime_manifest": str(official_runtime_manifest) if official_runtime_manifest.exists() else None,
         "public_adsb_proxy_manifest": str(public_adsb_manifest) if public_adsb_manifest.exists() else None,
+        "support_lane_present": bool(public_adsb_ready),
         "notes": [
             "C-MAPSS is the trainable degradation companion surface only.",
-            "Bounded-universal aerospace closure requires a separate multi-flight runtime replay surface.",
+            "Bounded public ADS-B replay is a support lane and cannot promote the defended aerospace row.",
+            "Provider-approved multi-flight telemetry remains the canonical defended runtime surface.",
         ],
     }
     runtime_contract_path = write_json(raw_dir / "multi_flight_runtime_contract.json", runtime_contract)
@@ -453,7 +500,7 @@ def refresh_aerospace_manifest() -> dict[str, Any]:
             blocker="aerospace_trainable_surface_missing",
             notes=[
                 "Need C-MAPSS train files plus aerospace_orius.csv for the trainable companion surface.",
-                "Real multi-flight telemetry is still required for defended runtime closure.",
+                "The public ADS-B support lane does not satisfy the defended aerospace runtime requirement.",
             ],
             extras={"runtime_contract_path": str(runtime_contract_path)},
         )
@@ -474,28 +521,42 @@ def refresh_aerospace_manifest() -> dict[str, Any]:
         raw_inventory=summarize_files(raw_source.path),
         source_urls=["https://data.nasa.gov/dataset/c-mapss-aircraft-engine-simulator-data"],
         license_notes="Follow NASA dataset terms; raw corpora remain untracked.",
-        access_notes="C-MAPSS is the trainable aerospace surface only. Multi-flight telemetry governs defended runtime closure.",
+        access_notes="C-MAPSS remains the trainable aerospace companion surface. The official defended runtime surface is the separate real-flight replay lane.",
         canonical_source=True,
         used_fallback=False,
         notes=[
             "aerospace_orius.csv records the trainable degradation companion surface",
-            "real multi-flight telemetry remains a separate required runtime replay contract",
+            "public ADS-B replay is a support lane only and does not satisfy the defended real-flight runtime requirement",
         ],
         extras={
             "runtime_contract_path": str(runtime_contract_path),
-            "runtime_replay_surface_present": runtime_surface_present,
-            "public_adsb_support": public_adsb_support,
+            "support_lane_present": public_adsb_ready,
+            "provider_runtime_ready": provider_runtime_ready,
+            "external_provider_hint": external_provider_hint,
         },
     )
     path = write_json(manifest_path, manifest)
-    status = (
-        "refreshed"
-        if provider_runtime_ready
-        else "trainable_plus_public_support"
-        if public_adsb_support
-        else "trainable_only"
-    )
-    blocker = "" if provider_runtime_ready else "aerospace_real_multi_flight_runtime_missing"
+    if provider_runtime_ready:
+        status = "refreshed"
+        blocker = ""
+        notes = [
+            "Aerospace now has both the trainable C-MAPSS row and the canonical real-flight runtime lane.",
+        ]
+    elif public_adsb_ready:
+        status = "trainable_plus_public_support"
+        blocker = "aerospace_realflight_runtime_missing"
+        notes = [
+            "Aerospace retains the trainable C-MAPSS row plus a bounded public ADS-B support lane.",
+            "The official defended row remains blocked on the canonical real-flight runtime surface.",
+        ]
+    else:
+        status = "trainable_only"
+        blocker = "aerospace_realflight_runtime_missing"
+        notes = [
+            "Aerospace currently has only the trainable C-MAPSS companion surface.",
+            "The official defended row remains blocked on the canonical real-flight runtime surface.",
+        ]
+
     return _report_row(
         domain="aerospace",
         status=status,
@@ -503,13 +564,10 @@ def refresh_aerospace_manifest() -> dict[str, Any]:
         canonical_source_present=True,
         processed_output_present=True,
         blocker=blocker,
-        notes=[
-            "Aerospace remains blocked on the defended runtime replay surface until multi-flight telemetry is staged.",
-            "A bounded public ADS-B runtime support lane is available." if public_adsb_support else "No bounded public ADS-B runtime support lane is currently staged.",
-        ],
+        notes=notes,
         extras={
             "runtime_contract_path": str(runtime_contract_path),
-            "public_adsb_support": public_adsb_support,
+            "public_adsb_ready": public_adsb_ready,
             "provider_runtime_ready": provider_runtime_ready,
         },
     )

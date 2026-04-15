@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build an integrated register of theorem-like environments from LaTeX sources."""
+"""Build an integrated register of theorem-like environments from the active thesis include tree."""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-CHAPTERS_DIR = REPO_ROOT / "chapters"
-APPENDICES_DIR = REPO_ROOT / "appendices"
+MASTER_TEX = REPO_ROOT / "orius_battery_409page_figures_upgraded_main.tex"
+APPENDIX_PROOFS = REPO_ROOT / "appendices" / "app_c_full_proofs.tex"
 REPORTS_DIR = REPO_ROOT / "reports" / "publication"
 
 SUMMARY_CSV = REPORTS_DIR / "theorem_surface_summary.csv"
@@ -30,10 +30,18 @@ ENV_ORDER = [
     "example",
     "assumption",
 ]
+SUMMARY_ENV_ORDER = [
+    "theorem",
+    "lemma",
+    "proposition",
+    "corollary",
+    "definition",
+    "assumption",
+]
 GROUP_ORDER = [
-    "Flagship T1--T8 ladder",
+    "Defended theorem program",
     "Supporting chapter result",
-    "Appendix restatement",
+    "Appendix proof restatement",
     "Assumption register",
 ]
 
@@ -43,15 +51,21 @@ BEGIN_RE = re.compile(
 )
 HEADING_RE = re.compile(r"\\(chapter|section|subsection)\{(.+?)\}")
 
-FLAGSHIP_TITLES = {
-    "OASG Existence": "T1",
-    "Safety Preservation": "T2",
-    "ORIUS Core Bound": "T3",
-    "No Free Safety": "T4",
-    "Certificate validity horizon": "T5",
-    "Certificate expiration bound": "T6",
-    "Feasible fallback existence": "T7",
-    "Graceful degradation dominance": "T8",
+THEOREM_IDS = {
+    "existence of the illusion under dropout": "S1",
+    "informal safety guarantee of dc3s": "S2",
+    "dc3s feasibility guarantee": "S2",
+    "oasg existence": "T1",
+    "safety preservation": "T2",
+    "orius core bound": "T3",
+    "no free safety": "T4",
+    "certificate validity horizon": "T5",
+    "certificate expiration bound": "T6",
+    "feasible fallback existence": "T7",
+    "graceful degradation dominance": "T8",
+    "universal impossibility": "T9",
+    "boundary-indistinguishability lower bound": "T10",
+    "typed structural transfer theorem": "T11",
 }
 
 ASSUMPTION_IDS = {
@@ -109,30 +123,71 @@ def tex_escape(value: str) -> str:
     return "".join(replacements.get(ch, ch) for ch in value)
 
 
-def classify_record(path: Path, environment: str, title: str) -> tuple[str, str]:
-    relative = path.relative_to(REPO_ROOT).as_posix()
-    if path.parent == APPENDICES_DIR and path.name == "app_c_full_proofs.tex":
-        return ("Appendix restatement", "")
+INCLUDE_PATTERN = re.compile(r"\\(?:include|input)\{([^}]+)\}")
+
+
+def _resolve_include(target: str, base_dir: Path) -> Path | None:
+    stem = Path(target)
+    candidates = []
+    if stem.suffix:
+        candidates.append((base_dir / stem).resolve())
+    else:
+        candidates.append((base_dir / f"{target}.tex").resolve())
+        candidates.append((base_dir / target).resolve())
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _walk_include_tree(path: Path, visited: list[Path], seen: set[Path]) -> None:
+    resolved = path.resolve()
+    if resolved in seen:
+        return
+    seen.add(resolved)
+    visited.append(resolved)
+    text = resolved.read_text(encoding="utf-8")
+    for match in INCLUDE_PATTERN.finditer(text):
+        child = _resolve_include(match.group(1), resolved.parent)
+        if child is not None:
+            _walk_include_tree(child, visited, seen)
+
+
+def _normalize_title(value: str) -> str:
+    lowered = clean_text(value).lower()
+    lowered = lowered.replace("---", " ")
+    lowered = lowered.replace("--", " ")
+    return " ".join(lowered.split())
+
+
+def _match_theorem_id(title: str, context: str) -> str:
+    haystacks = [_normalize_title(title), _normalize_title(context)]
+    for haystack in haystacks:
+        for needle, theorem_id in THEOREM_IDS.items():
+            if needle in haystack:
+                return theorem_id
+    return ""
+
+
+def classify_record(path: Path, environment: str, title: str, context: str) -> tuple[str, str]:
+    if path.resolve() == APPENDIX_PROOFS.resolve():
+        return ("Appendix proof restatement", "")
     if environment == "assumption":
         assumption_id = ASSUMPTION_IDS.get(title, "")
         if not assumption_id:
             match = ASSUMPTION_PREFIX_RE.match(title)
             assumption_id = match.group(1) if match else ""
         return ("Assumption register", assumption_id)
-    if relative.startswith("chapters/ch16_") or relative.startswith("chapters/ch17_") or relative.startswith(
-        "chapters/ch18_"
-    ) or relative.startswith("chapters/ch19_") or relative.startswith("chapters/ch20_"):
-        flagship_id = FLAGSHIP_TITLES.get(title, "")
-        if environment == "theorem" and flagship_id:
-            return ("Flagship T1--T8 ladder", flagship_id)
-        return ("Supporting chapter result", "")
+    if environment == "theorem":
+        theorem_id = _match_theorem_id(title, context)
+        if theorem_id:
+            return ("Defended theorem program", theorem_id)
     return ("Supporting chapter result", "")
 
 
 def discover_records() -> list[Record]:
-    files = sorted(CHAPTERS_DIR.glob("*.tex"), key=chapter_sort_key)
-    files.extend(sorted(APPENDICES_DIR.glob("*.tex"), key=appendix_sort_key))
-
+    files: list[Path] = []
+    _walk_include_tree(MASTER_TEX, files, set())
     records: list[Record] = []
     for path in files:
         context = ""
@@ -146,7 +201,7 @@ def discover_records() -> list[Record]:
                 title = clean_text(match.group(2) or "")
                 if title == "restated" and context:
                     title = context
-                group, register_id = classify_record(path, environment, title)
+                group, register_id = classify_record(path, environment, title, context)
                 records.append(
                     Record(
                         register_id=register_id,
@@ -166,9 +221,9 @@ def write_summary_csv(records: list[Record]) -> None:
     with SUMMARY_CSV.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerow(["environment", "count"])
-        for environment in ENV_ORDER:
+        for environment in SUMMARY_ENV_ORDER:
             writer.writerow([environment, counts.get(environment, 0)])
-        writer.writerow(["total", len(records)])
+        writer.writerow(["total", sum(counts.get(environment, 0) for environment in SUMMARY_ENV_ORDER)])
 
 
 def write_register_csv(records: list[Record]) -> None:
@@ -194,19 +249,20 @@ def write_summary_tex(records: list[Record]) -> None:
     lines = [
         r"\begin{table}[htbp]",
         r"\centering",
-        r"\caption{Integrated theorem-like surface counts generated from the thesis sources.}",
+        r"\caption{Integrated theorem-like surface counts generated from the active thesis include tree.}",
         r"\label{tab:integrated-theorem-surface-summary}",
         r"\begin{tabular}{lr}",
         r"\toprule",
         r"\textbf{Environment} & \textbf{Count} \\",
         r"\midrule",
     ]
-    for environment in ENV_ORDER:
+    for environment in SUMMARY_ENV_ORDER:
         lines.append(rf"{tex_escape(environment.title())} & {counts.get(environment, 0)} \\")
+    total = sum(counts.get(environment, 0) for environment in SUMMARY_ENV_ORDER)
     lines.extend(
         [
             r"\midrule",
-            rf"\textbf{{Total}} & \textbf{{{len(records)}}} \\",
+            rf"\textbf{{Total}} & \textbf{{{total}}} \\",
             r"\bottomrule",
             r"\end{tabular}",
             r"\end{table}",
@@ -223,7 +279,7 @@ def write_register_tex(records: list[Record]) -> None:
     lines = [
         r"\begin{small}",
         r"\begin{longtable}{@{}p{1.2cm}p{2.2cm}p{1.7cm}p{3.2cm}p{3.6cm}p{2.1cm}@{}}",
-        r"\caption{Integrated theorem-like surface register generated from chapters and appendices.}",
+        r"\caption{Integrated theorem-like surface register generated from the active thesis include tree.}",
         r"\label{tab:integrated-theorem-surface-register} \\",
         r"\toprule",
         r"\textbf{ID} & \textbf{Group} & \textbf{Kind} & \textbf{Title} & \textbf{Context} & \textbf{Source} \\",

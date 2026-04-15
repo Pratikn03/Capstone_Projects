@@ -27,25 +27,20 @@ A domain adapter that passes ``ContractVerifier.check()`` is compatible with
 the simplified adapter contract used in the universality chapter's reference
 reductions. The defended production claim remains battery-anchored and tiered.
 
-Theorem T11 (Universality Completeness) — informal statement
-------------------------------------------------------------
-For any CPS domain and any DomainAdapter implementation satisfying the five
-invariants below, the DC3S pipeline guarantees:
+Supporting Mini-Harness for Active T11
+--------------------------------------
+The active manuscript's T11 surface is a four-obligation one-step transfer
+theorem plus a separate episode-aggregation corollary that requires an
+explicit per-step risk budget. The five checks below are a compact supporting
+reference harness for theorem miniatures; passing them is evidence that an
+adapter has the right shape, not a standalone proof that the full active T11
+surface or the episode-level T3 envelope has been discharged.
 
-    E[V_T] ≤ α(1 − w̄)T
-
-where V_T is the total true-state violation count, α is the miscoverage rate,
-w̄ is the mean reliability score, and T is the episode length.
-
-The proof uses only these five algebraic properties of the adapter — no
-battery geometry, no domain-specific dynamics, no constraint-structure
-assumptions. Any adapter satisfying the contract inherits the bound.
-
-The Five Invariants (T11)
---------------------------
+The Five Invariants (supporting reference harness)
+--------------------------------------------------
   Inv 1: repair(a, A_t) ∈ A_t            — repair stays in tightened set
   Inv 2: A_t ⊆ A_nominal                  — tightened ⊆ nominal
-  Inv 3: w_t ∈ [0, 1]                    — reliability is a proper probability
+  Inv 3: w_t ∈ [0, 1]                    — reliability is a bounded runtime score
   Inv 4: uncertainty_set(w=1) = conf_set  — calibration consistency at full reliability
   Inv 5: uncertainty_set(w=0).is_empty    — total failure → only fallback admissible
 """
@@ -63,13 +58,14 @@ import numpy as np
 class SafetyBound:
     """Parameters that characterise the DC3S safety guarantee.
 
-    These are the two scalar parameters that appear in T3's bound
-    (α) and in the inflation rule denominator (ε). Holding them in
+    These are the two scalar parameters that appear in the supporting
+    risk-envelope algebra (α) and in the inflation rule denominator (ε). Holding them in
     a frozen dataclass prevents accidental mutation during verification.
 
     Attributes:
         alpha   : target miscoverage rate, e.g. 0.05 for 95% coverage.
-                  The core bound is E[V] ≤ α(1−w̄)T.
+                  The active episode-level bound still needs a separate
+                  predictable per-step risk-budget argument.
         epsilon : numerical stability floor added to the reliability
                   denominator: inflation = q / (w + ε). Prevents
                   division by zero when w_t → 0.
@@ -96,7 +92,7 @@ class TightenedSet:
         upper    : upper bound per action dimension, shape (action_dim,).
         is_empty : True iff the tightened set is empty, meaning no safe
                    action exists and the fallback must be used. This
-                   satisfies T11 Invariant 5 at w_t = 0.
+                   satisfies supporting invariant 5 at w_t = 0.
     """
     lower: np.ndarray
     upper: np.ndarray
@@ -133,12 +129,14 @@ class UniversalAdapterProtocol(Protocol):
       - Runtime: ``isinstance(adapter, UniversalAdapterProtocol)`` checks
         that the four methods exist (but not their return types or invariants).
 
-    Full runtime invariant verification (T11's five conditions) is provided
+    Full runtime invariant verification for this supporting five-invariant
+    mini-harness is provided
     by ContractVerifier, which calls each method and checks the outputs.
 
     Implementation note: the four methods are intentionally minimal. Adapters
     may have additional methods for telemetry parsing, certificate emission, etc.
-    Only these four are required for the T11 guarantee.
+    Only these four are required for the supporting harness; the active T11
+    theorem still needs the four manuscript obligations to be discharged.
     """
 
     def observe(self, raw: dict) -> tuple[np.ndarray, float]:
@@ -229,11 +227,11 @@ class UniversalAdapterProtocol(Protocol):
 # ── Contract verifier ──────────────────────────────────────────────────────────
 
 class ContractVerifier:
-    """Runtime checker for T11's five formal invariants.
+    """Runtime checker for the supporting five-invariant reference harness.
 
-    A domain adapter that passes all five checks is formally covered by
-    the Universality Completeness Theorem (T11) and needs no further
-    domain-specific safety proof.
+    Passing these checks shows that an adapter fits the compact theorem
+    miniature used by the unification chapter. It does not by itself prove
+    that the active manuscript's four T11 obligations hold end to end.
 
     Usage
     -----
@@ -248,12 +246,12 @@ class ContractVerifier:
         z_t = np.array([0.5, 0.3])   # example observed state
         verifier.check(z_t, q_t=0.1) # raises ContractViolation if any invariant fails
 
-        # If no exception is raised, the adapter satisfies T11.
+        # If no exception is raised, the adapter satisfies the supporting harness.
 
     Implementation notes
     --------------------
     - Each of the five private _check_* methods corresponds to exactly one
-      of T11's formal invariants. The mapping is documented in each method.
+      supporting mini-harness invariant. The mapping is documented in each method.
     - The ``tol`` parameter handles floating-point rounding; it is not a
       relaxation of the formal invariant.
     - ContractVerifier is stateless between calls to check() — it does not
@@ -281,7 +279,7 @@ class ContractVerifier:
         self.bound = SafetyBound(alpha=alpha, epsilon=epsilon)
 
     def check(self, z_t: np.ndarray, q_t: float, tol: float = 1e-6) -> None:
-        """Run all five T11 invariant checks at the given test point.
+        """Run all five supporting mini-harness checks at the given test point.
 
         Invariants are checked in dependency order:
           3 (range) → 4 (calibration) → 5 (zero-rel fallback) → 2 (subset) → 1 (repair)
@@ -303,10 +301,11 @@ class ContractVerifier:
     # ── Private invariant checks ───────────────────────────────────────────────
 
     def _check_invariant_3_reliability_range(self, z_t: np.ndarray) -> None:
-        """T11 Invariant 3: reliability score w_t must be in [0, 1].
+        """Supporting invariant 3: reliability score w_t must be in [0, 1].
 
-        Theoretical requirement: w_t is used as a probability weight in the
-        core bound α(1−w_t)T. Values outside [0, 1] break the bound's meaning.
+        Theoretical requirement: w_t is a bounded runtime reliability score
+        that parameterizes tightening and any later risk-envelope algebra.
+        Values outside [0, 1] break that interpretation.
         """
         _, w_t = self.adapter.observe({"state": z_t.tolist()})
         if not (0.0 <= float(w_t) <= 1.0):
@@ -319,7 +318,7 @@ class ContractVerifier:
     def _check_invariant_4_calibration_consistency(
         self, z_t: np.ndarray, q_t: float, tol: float
     ) -> None:
-        """T11 Invariant 4: the width shrinkage from w_t=1 to w_t=0.5 must be ≈ 2·q_t.
+        """Supporting invariant 4: the width shrinkage from w_t=1 to w_t=0.5 must be ≈ 2·q_t.
 
         Theoretical requirement: the inflation rule m_t = q_t / (w_t + ε) gives:
             m_t(w=1)   ≈ q_t       → each side tightened by q_t
@@ -367,7 +366,7 @@ class ContractVerifier:
     def _check_invariant_5_zero_reliability_empty(
         self, z_t: np.ndarray, q_t: float
     ) -> None:
-        """T11 Invariant 5: at w_t = 0 (total observation failure), the tightened
+        """Supporting invariant 5: at w_t = 0 (total observation failure), the tightened
         set must be empty (is_empty = True).
 
         Theoretical requirement: when the observation is completely unreliable,
@@ -387,13 +386,12 @@ class ContractVerifier:
     def _check_invariant_2_tightened_subset(
         self, z_t: np.ndarray, q_t: float, tol: float
     ) -> None:
-        """T11 Invariant 2: the tightened set A_t must be a subset of the nominal
+        """Supporting invariant 2: the tightened set A_t must be a subset of the nominal
         set A_nominal (= uncertainty_set at w_t = 1, the widest permissible set).
 
         Theoretical requirement: tightening is monotone in w_t — lower reliability
         produces a *smaller* (more conservative) action set, never a larger one.
-        This is needed for T2's proof that the repaired action stays within
-        the true safe set.
+        This is supporting evidence for the active T2/T11 proof pattern.
         """
         nominal = self.adapter.uncertainty_set(z_t, w_t=1.0, q_t=q_t)
         tightened = self.adapter.uncertainty_set(z_t, w_t=0.5, q_t=q_t)
@@ -415,10 +413,10 @@ class ContractVerifier:
     def _check_invariant_1_repair_membership(
         self, z_t: np.ndarray, q_t: float, tol: float
     ) -> None:
-        """T11 Invariant 1: the repaired action must lie in the tightened set.
+        """Supporting invariant 1: the repaired action must lie in the tightened set.
 
-        This is the core invariant — it is exactly the condition that T2's proof
-        requires to conclude φ_true(a_t^safe) = 1 with probability ≥ 1 − α.
+        This is the core supporting invariant: it mirrors the repair-membership
+        obligation used in the active one-step transfer proof.
 
         We test it by constructing a candidate action that is *deliberately*
         outside the tightened set (above the upper bound) and checking that
@@ -461,7 +459,7 @@ class ContractVerifier:
 # ── Exception ──────────────────────────────────────────────────────────────────
 
 class ContractViolation(Exception):
-    """Raised when a DomainAdapter fails one of T11's five formal invariant checks.
+    """Raised when a DomainAdapter fails one of the five supporting invariant checks.
 
     The exception message describes which invariant failed, the observed values,
     and a diagnostic hint. Catching this exception programmatically is intentional

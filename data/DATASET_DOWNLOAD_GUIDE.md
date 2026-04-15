@@ -16,12 +16,13 @@ Use this guide with:
 | Industrial | CCPP primary + ZeMA companion | Real-data contract active | Keep both raw-source manifests current |
 | Healthcare | BIDMC / PhysioNet | Real-data contract active | Keep full raw placement and processed lineage stable |
 | Navigation | KITTI Odometry | Blocked real-data gap | Finish full train/validate/replay chain |
-| Aerospace | NASA C-MAPSS FD001-FD004 | Trainable real-data row | Validation parity is still pending |
+| Aerospace | NASA C-MAPSS FD001-FD004 + bounded public ADS-B support lane | Experimental/support-tier only | Stage the canonical real-flight runtime row and rerun parity closure |
 
 Important boundary:
 
 - Navigation is not a defended real-data row until the full pipeline closes.
-- Aerospace now has a real trainable surface, but equal-domain closure is still not claimed.
+- Aerospace has a trainable surface plus a support lane, but equal-domain closure is still not claimed.
+- MIMIC-III is not the current healthcare source in this repo; BIDMC is.
 - Do not use this guide by itself to justify equal-domain universality.
 
 ## Repo-local raw-data root
@@ -34,7 +35,7 @@ data/
 ├── av/raw/argoverse2_motion/
 ├── av/raw/argoverse2_sensor/
 ├── navigation/raw/kitti_odometry/
-├── industrial/raw/ccpp/
+├── industrial/raw/CCPP.csv
 ├── industrial/raw/zema_hydraulic/
 ├── healthcare/raw/bidmc_csv/
 └── aerospace/raw/
@@ -92,7 +93,7 @@ Manifests:
 
 Primary trainable source:
 
-- `data/industrial/raw/ccpp/`
+- `data/industrial/raw/CCPP.csv`
 
 Companion dense source:
 
@@ -180,7 +181,8 @@ Manifest:
 Important boundary:
 
 - C-MAPSS now backs the trainable aerospace surface in this repo
-- theorem-grade or equal-domain aerospace closure is still not claimed
+- the bounded public ADS-B runtime is a support lane only
+- theorem-grade or equal-domain aerospace closure is still not claimed without the canonical real-flight runtime surface
 
 ## Preflight
 

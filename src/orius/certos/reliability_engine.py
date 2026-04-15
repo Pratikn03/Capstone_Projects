@@ -9,6 +9,13 @@ def compute_reliability(
     last_event: Mapping[str, Any] | None,
     **kwargs: Any,
 ) -> tuple[float, Mapping[str, Any]]:
-    """Delegate to orius.dc3s.quality.compute_reliability."""
+    """CertOS-facing reliability wrapper with basic contract checks."""
+    if not isinstance(event, Mapping):
+        raise TypeError("event must be a mapping")
+    if last_event is not None and not isinstance(last_event, Mapping):
+        raise TypeError("last_event must be a mapping or None")
+    if "expected_cadence_s" in kwargs and float(kwargs["expected_cadence_s"]) <= 0.0:
+        raise ValueError("expected_cadence_s must be positive")
     from orius.dc3s.quality import compute_reliability as _compute
-    return _compute(event, last_event, **kwargs)
+    weight, flags = _compute(dict(event), None if last_event is None else dict(last_event), **kwargs)
+    return float(weight), {"engine": "certos.reliability", **dict(flags)}

@@ -104,6 +104,21 @@ def _register_builtins() -> None:
     except ImportError as e:
         logger.warning("Failed to register av domain adapter: %s", e)
     try:
+        from orius.adapters.av_waymo import WaymoAVDomainAdapter
+        register_domain(
+            "av_waymo",
+            lambda cfg: WaymoAVDomainAdapter(cfg),
+            capabilities={
+                "safety_surface_type": "waymo_longitudinal_headway_barrier",
+                "repair_mode": "acceleration_projection",
+                "fallback_mode": "full_brake",
+                "supports_multi_agent_eval": True,
+                "supports_certos_eval": True,
+            },
+        )
+    except ImportError as e:
+        logger.warning("Failed to register av_waymo domain adapter: %s", e)
+    try:
         from orius.adapters.navigation import NavigationDomainAdapter
         register_domain(
             "navigation",
@@ -113,7 +128,7 @@ def _register_builtins() -> None:
                 "repair_mode": "vector_projection",
                 "fallback_mode": "hold_position",
                 "supports_multi_agent_eval": False,
-                "supports_certos_eval": False,
+                "supports_certos_eval": True,
             },
         )
     except ImportError as e:
@@ -165,15 +180,12 @@ def _register_builtins() -> None:
             "aerospace",
             lambda cfg: AerospaceDomainAdapter(cfg),
             capabilities={
-                "safety_surface_type": "approach_energy_envelope_placeholder",
+                "safety_surface_type": "approach_energy_envelope",
                 "repair_mode": "bounded_projection",
                 "fallback_mode": "envelope_hold",
                 "supports_multi_agent_eval": False,
-                "supports_certos_eval": False,
+                "supports_certos_eval": True,
             },
         )
     except ImportError as e:
         logger.warning("Failed to register aerospace domain adapter: %s", e)
-
-
-_register_builtins()

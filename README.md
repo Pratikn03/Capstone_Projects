@@ -23,17 +23,18 @@ The current monograph is **universal-first**, but it is also **artifact-strict**
 - `av` = defended bounded row under the TTC plus predictive-entry-barrier contract
 - `industrial` = defended bounded row
 - `healthcare` = defended bounded row
-- `navigation` = shadow-synthetic row
-- `aerospace` = experimental row
+- `navigation` = shadow/support-tier row until the KITTI-built replay surface is staged
+- `aerospace` = experimental/support-tier row; the bounded public ADS-B lane does not promote the defended row
 
-Equal-domain universality is the program target, not a present-tense claim in the current evidence release.
+Equal-domain universality remains a program target, not a present-tense repository claim. Support-tier execution for blocked rows is explicit opt-in.
 
 The bounded-universal closure target for the next evidence cycle is stricter:
 
 - `battery` remains the witness row
 - `av`, `industrial`, `healthcare`, `navigation`, and `aerospace` must all clear the same defended bounded-row promotion gate
-- navigation is currently blocked by the missing defended KITTI-backed real-data row
-- aerospace is currently blocked by the missing real multi-flight runtime replay surface
+- strict validation fails loudly if the KITTI-backed navigation replay row is not staged
+- strict validation fails loudly if the canonical aerospace real-flight runtime row is not staged
+- the public ADS-B aerospace lane remains support-only and cannot clear the defended promotion gate by itself
 
 ## Canonical surfaces
 
@@ -113,7 +114,7 @@ Promotion to a defended row requires:
 - material safety improvement under the locked protocol
 - latency and runtime audit pass
 
-Battery remains the deepest witness row. Navigation and aerospace remain explicitly gated and must not be described as equal defended peers in active manuscript or documentation surfaces.
+Battery remains the deepest witness row. Navigation and aerospace remain lower-tier until their defended runtime surfaces are staged and revalidated; support-tier outputs do not upgrade those rows by default.
 
 ## Build and verification
 

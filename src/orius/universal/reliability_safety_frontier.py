@@ -1,56 +1,18 @@
-"""
-Reference reliability-safety frontier utilities for the universality program.
-
-The reliability-safety frontier is the fundamental design curve of ORIUS.
-It shows, for a given mean observation reliability w̄, the minimum achievable
-expected violation count E[V_T] under *any* controller — not just DC3S.
+"""Reference reliability-safety frontier utilities for the universality program.
 
 The canonical runtime envelope used by the production kernel lives in
-``orius.universal_theory.risk_bounds``. This module retains the richer
-frontier analysis helpers used by the thesis chapter and the unification
-tests.
+``orius.universal_theory.risk_bounds``.  This module retains the richer
+frontier-analysis helpers used by the thesis chapter and by tests that explore
+the scoped T10 lower-bound surface.
 
-Key result (T3 upper bound + T10 lower bound combined):
--------------------------------------------------------
-    (α/4)(1 − w̄)T   ≤   E[V_T(π)]   ≤   α(1 − w̄)T
-
-where:
-  α   = miscoverage rate (e.g. 0.05)
-  w̄   = mean reliability over the episode
-  T   = episode length
-  π   = any controller (DC3S achieves the upper bound; the lower bound
-         follows from Le Cam's two-point method applied to the degraded
-         observation channel under Assumption A2 + A5')
-
-The factor-of-4 gap between upper and lower bounds is the standard
-Le Cam minimax constant (Tsybakov 2009, Ch. 2; Yu 1997). The correct
-precision for the optimality claim is: "DC3S is minimax rate-optimal
-under degraded observation" — not asymptotically tight coefficient-wise.
-
-The compute_frontier() helper below uses a conservative O(√T log T)
-correction term for the lower bound curve; this is a looser but smoother
-proxy that traces how the lower bound envelope shrinks relative to the
-upper bound as T grows.
-
-This is the research-program characterisation: DC3S is positioned as
-information-theoretically tight up to lower-order O(√T log T) terms under the
-chapter's additional modeling assumptions.
-
-Operational interpretation
---------------------------
-To deploy DC3S and guarantee at most r* expected violations per episode, the
-system integrator must ensure the telemetry infrastructure delivers mean
-reliability w̄ ≥ w̄* = 1 − r* / (α · T). This is a quantitative, domain-agnostic
-infrastructure requirement derived directly from T3.
-
-Senior engineer notes
----------------------
-- This module is intentionally stateless: all functions take explicit parameters.
-  The frontier depends only on (α, w̄, T) — no domain geometry.
-- The lower-order correction term O(√T log T) comes from the sub-Gaussian
-  concentration argument in T10's Fano-inequality reduction. The constant
-  factor c = 2 is conservative; empirically the correction is smaller.
-- All arithmetic uses float64 to avoid precision loss at small α or large T.
+Important scope note:
+- The upper curve is the explicit T3 risk envelope
+  ``E[V_T] <= alpha * (1 - w_bar) * T``.
+- The lower curve is a proxy for the T10 boundary-indistinguishability lower
+  bound, not a globally sharp minimax law for every observation model.
+- Nothing in this module should be read as identifying ``w_bar`` with a
+  probability by definition or as claiming coefficient-wise optimality without
+  the extra T10 boundary-mass and indistinguishability assumptions.
 """
 from __future__ import annotations
 
@@ -66,14 +28,11 @@ class FrontierPoint:
 
     Attributes:
         mean_reliability : w̄ ∈ [0, 1] — mean observation quality.
-        upper_bound      : α(1−w̄)T — DC3S worst-case expected violations (T3).
-                           DC3S achieves this bound; no algorithm exceeds it.
-        lower_bound      : α(1−w̄)T − c·√(T log T) — information-theoretic floor (T10).
-                           No algorithm can achieve fewer violations than this
-                           against a worst-case fault process.
+        upper_bound      : α(1−w̄)T — explicit T3 risk envelope.
+        lower_bound      : proxy lower floor used for T10 illustrations.
         gap              : upper_bound − lower_bound = c·√(T log T).
-                           This is the slack between T3 and T10; it shrinks
-                           relative to T as T → ∞, so the bounds are asymptotically tight.
+                           This is a plotting proxy, not a proof of asymptotic
+                           sharpness for every domain.
         is_feasible      : True iff lower_bound ≥ 0 (always True by construction,
                            since we clamp to 0).
     """
@@ -90,11 +49,11 @@ def compute_frontier(
     w_bar_values: np.ndarray | None = None,
     lower_bound_constant: float = 2.0,
 ) -> list[FrontierPoint]:
-    """Compute the reliability-safety frontier for the given (α, T) regime.
+    """Compute the stylized reliability-safety frontier for the given (α, T) regime.
 
-    The frontier is a 1-D curve parameterised by w̄: for each mean reliability
-    value, it gives the tight interval [lower_bound, upper_bound] of achievable
-    expected violation counts.
+    The frontier is a 1-D curve parameterised by w̄.  The upper curve is the
+    explicit T3 envelope.  The lower curve is a smooth proxy for the chapter's
+    stylized T10 lower-bound discussion.
 
     Args:
         alpha                : miscoverage rate, e.g. 0.05. Must be in (0, 1).
@@ -213,18 +172,16 @@ def is_dc3s_optimal(
 ) -> bool:
     """Test whether an observed violation count is consistent with DC3S optimality.
 
-    An observed violation count is consistent with the T3/T10 tight band iff:
+    An observed violation count is consistent with the explicit T3 envelope iff:
 
         lower_bound ≤ observed_violations ≤ upper_bound × (1 + tolerance)
 
     where:
         upper_bound = α(1−w̄)T         (T3 bound — DC3S should be at or below this)
-        lower_bound = max(0, upper − c√(T log T))  (T10 floor)
+        lower_bound = max(0, upper − c√(T log T))  (stylized T10 proxy)
 
-    The lower bound is not enforced as a *failure* condition: achieving fewer
-    violations than the information-theoretic floor is possible when the domain
-    is easier than the worst case (e.g. when violations never concentrate near
-    the boundary). It is informative, not prescriptive.
+    The lower curve is not enforced as a failure condition.  It is informative,
+    not prescriptive.
 
     Args:
         alpha            : miscoverage rate.

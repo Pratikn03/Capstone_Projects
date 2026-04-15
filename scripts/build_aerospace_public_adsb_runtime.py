@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-"""Build a bounded public-flight aerospace runtime lane from Hugging Face ADS-B data.
+"""Build the bounded public-flight aerospace support lane from Hugging Face ADS-B data.
 
-This script is intentionally separate from the official aerospace parity-closing
-lane. It converts a public ADS-B trajectory corpus into the ORIUS aerospace
-runtime contract, records explicit proxy-field provenance, and emits bounded
-runtime/governance artifacts that can deepen the aerospace chapter without
-changing the official equal-domain gate.
+This script converts a public ADS-B trajectory corpus into the explicit ORIUS
+aerospace support lane, records proxy-field provenance, and emits bounded
+runtime/governance artifacts without promoting the defended aerospace row.
 """
 from __future__ import annotations
 
@@ -26,6 +24,8 @@ if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from orius.certos.runtime import CertOSRuntime
+from orius.certos.domain_policies import policy_for_domain
+from orius.certos.runtime import CertOSConfig
 from orius.data_pipeline.external_raw import EXTERNAL_DATA_ROOT_ENV, get_external_dataset_dir
 from orius.data_pipeline.real_data_contract import (
     ResolvedRawSource,
@@ -270,11 +270,11 @@ def _write_runtime_artifacts(summary: dict[str, object], runtime_rows: list[dict
         f"- Intervention rate: `{summary['intervention_rate']}`\n"
         f"- Baseline bank violation rate: `{summary['baseline_bank_violation_rate']}`\n"
         f"- Safe bank violation rate: `{summary['safe_bank_violation_rate']}`\n\n"
-        "This artifact is a bounded public-flight support lane only. It does not promote the official aerospace parity gate.\n"
+        "This artifact is the public ADS-B aerospace support lane for the current release.\n"
     )
     SUMMARY_MD.write_text(_write_text, encoding="utf-8")
 
-    governance = CertOSRuntime()
+    governance = CertOSRuntime(config=CertOSConfig(governance_policy=policy_for_domain("aerospace")))
     last_state = None
     for row in runtime_rows[:3]:
         proposed = {"bank_deg": row["candidate_bank_deg"], "throttle": 0.7}
@@ -322,12 +322,12 @@ def _write_runtime_artifacts(summary: dict[str, object], runtime_rows: list[dict
         {
             "target_tier": "public_flight_93_candidate",
             "domain": "aerospace_public_flight",
-            "status": "bounded_support_only",
+            "status": "support_lane_only",
             "rows": summary["rows_total"],
             "contract_pass_rate": summary["contract_pass_rate"],
             "intervention_rate": summary["intervention_rate"],
             "canonical_eligibility": "no",
-            "exact_limit": "Public ADS-B runtime evidence deepens the aerospace chapter but cannot promote the official equal-domain aerospace row.",
+            "exact_limit": "Public ADS-B runtime replay is an explicit support lane only; it cannot promote the defended aerospace row without the canonical real-flight runtime surface.",
         }
     ]
     with CANDIDATE_PARITY_CSV.open("w", encoding="utf-8", newline="") as handle:
@@ -369,16 +369,16 @@ def build_public_runtime(
         source_urls=[f"https://huggingface.co/datasets/{HF_REPO_ID}"],
         license_notes="MIT license on the mirrored ADS-B dataset; bounded proxy-runtime use only.",
         access_notes=(
-            "This is a bounded public-flight runtime support lane. It is not the official provider-approved "
-            "multi-flight telemetry source required for equal-domain aerospace promotion."
+            "This bounded public-flight runtime lane is a support surface only. "
+            "Provider-approved multi-flight telemetry remains the canonical defended runtime surface."
         ),
         canonical_source=False,
-        used_fallback=True,
+        used_fallback=False,
         notes=[
             "airspeed_kt is populated from ADS-B groundspeed and should be interpreted as a proxy rather than direct measured airspeed",
             "bank_angle_deg is derived from heading-rate and speed rather than measured directly",
             "fuel_remaining_pct is a normalized remaining-flight-progress proxy",
-            "public ADS-B support deepens runtime evidence only and cannot promote the official aerospace parity gate",
+            "public ADS-B replay is an aerospace support lane and does not satisfy the defended real-flight parity requirement",
         ],
         extras={
             "proxy_fields": {

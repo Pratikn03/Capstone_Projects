@@ -6,6 +6,7 @@ from orius.dc3s.coverage_theorem import (
     compute_expected_violation_bound,
     compute_empirical_coverage,
     evaluate_empirical_core_bound,
+    get_core_bound_assumptions,
     inflation_lower_bound,
     verify_inflation_geq_one,
 )
@@ -14,7 +15,7 @@ from orius.dc3s.coverage_theorem import (
 def test_verify_inflation_geq_one():
     verify_inflation_geq_one(1.5)
     verify_inflation_geq_one(1.0)
-    with pytest.raises(ValueError, match="≥ 1"):
+    with pytest.raises(ValueError, match=">= 1"):
         verify_inflation_geq_one(0.9)
 
 
@@ -61,6 +62,20 @@ def test_compute_expected_violation_bound():
     assert np.isclose(summary["mean_reliability_w"], (1.0 + 0.8 + 0.7) / 3.0)
     assert np.isclose(summary["bound_expected_violations"], 0.05)
     assert np.isclose(summary["bound_tsvr"], 0.05 / 3.0)
+    assert "assumptions_used" in summary
+    assert "risk-budget contract" in summary["interpretation"]
+
+
+def test_core_bound_assumptions_explicitly_rule_out_probability_reading():
+    assumptions = get_core_bound_assumptions()
+    assert "w_t is a runtime reliability score, not a probability by definition." in assumptions
+    assert any("predictable per-step residual-risk budget" in item for item in assumptions)
+
+
+def test_expected_violation_bound_surfaces_same_assumption_list():
+    assumptions = get_core_bound_assumptions()
+    summary = compute_expected_violation_bound([0.9, 0.7], alpha=0.10)
+    assert tuple(summary["assumptions_used"]) == assumptions
 
 
 def test_evaluate_empirical_core_bound():

@@ -1,4 +1,7 @@
-"""Tests for Theorem 9 (Mondrian group coverage) and Theorem 10 (Hoeffding bound).
+"""Tests for legacy auxiliary coverage helpers.
+
+These helpers remain useful for subgroup-coverage and concentration diagnostics,
+but they are not the active T9/T10 theorem surface.
 
 Phase 2 of ORIUS gap-closing plan:
   - mondrian_group_coverage: per-reliability-bin PICP verification

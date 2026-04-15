@@ -1,9 +1,9 @@
 """
-Tests for the reference T11 adapter contract (orius/universal/contract.py).
+Tests for the supporting five-invariant reference harness in
+`orius/universal/contract.py`.
 
-Each test corresponds to one of T11's five formal invariants. The test suite
-also verifies that ContractVerifier correctly detects violations when an
-adapter is intentionally broken.
+Each test corresponds to one of the harness invariants. The active T11 theorem
+surface is narrower and lives in `orius.universal_theory`.
 
 Test structure:
   - TestCompliantAdapter      : a minimal adapter that passes all five checks
@@ -25,7 +25,7 @@ from orius.universal.contract import (
 # ── Minimal compliant adapter ──────────────────────────────────────────────────
 
 class MinimalCompliantAdapter:
-    """A minimal adapter that satisfies all five T11 invariants.
+    """A minimal adapter that satisfies all five supporting harness invariants.
 
     Uses a 1-D box action space in [-1, 1]. The tightened set shrinks
     symmetrically with decreasing w_t, and the repair is L∞ projection.
@@ -40,7 +40,7 @@ class MinimalCompliantAdapter:
 
     def uncertainty_set(self, z_t: np.ndarray, w_t: float, q_t: float) -> TightenedSet:
         if w_t <= 0.0:
-            # T11 Invariant 5: at zero reliability, set is empty.
+            # Supporting invariant 5: at zero reliability, set is empty.
             return TightenedSet(lower=np.zeros(1), upper=np.zeros(1), is_empty=True)
 
         # Inflation: as w_t decreases, the set shrinks.
@@ -60,7 +60,7 @@ class MinimalCompliantAdapter:
         if safe_set.is_empty:
             repaired = self.fallback()
         else:
-            # L∞ projection: satisfies T11 Invariant 1 by construction.
+            # L∞ projection: satisfies supporting invariant 1 by construction.
             repaired = np.clip(candidate, safe_set.lower, safe_set.upper)
         dist = float(np.linalg.norm(repaired - candidate))
         return RepairResult(action=repaired, was_repaired=dist > 1e-9, repair_distance=dist)

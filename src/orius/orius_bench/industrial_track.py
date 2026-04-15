@@ -5,11 +5,10 @@ Fault injection: bias, noise, stuck_sensor on primary state (temp_c).
 
 Real-data mode
 --------------
-Pass ``dataset_path`` to load real UCI CCPP rows.  ``reset()`` selects a
-near-limit operating point from the real data to initialise the synthetic
-state (temp near 110 °C, power from real PE value).  All subsequent
-``step()`` calls use synthetic dynamics so DC3S repair can demonstrate
-improvement.  Real data provides realistic initial conditions only.
+Pass ``dataset_path`` to load the processed industrial ORIUS row.
+``reset()`` selects a high-load operating point from that row and ``step()``
+uses an action-conditioned surrogate anchored to the next real row rather than
+an unrelated synthetic plant.
 """
 from __future__ import annotations
 
@@ -39,44 +38,52 @@ class IndustrialTrackAdapter(BenchmarkAdapter):
         self._dt = dt
         self._temp = 85.0
         self._power = 450.0
+        self._pressure = 1010.0
         self._rng: np.random.Generator | None = None
-        # Real-data mode: rows used for initialization only
-        self._real_rows: list[dict[str, float]] = []
+        self._episodes: list[list[dict[str, float]]] = []
+        self._episode: list[dict[str, float]] = []
+        self._episode_idx = 0
         if dataset_path is not None:
-            from orius.orius_bench.real_data_loader import load_ccpp_rows
-            self._real_rows = load_ccpp_rows(Path(dataset_path))
+            from orius.orius_bench.real_data_loader import load_industrial_runtime_rows
+
+            rows = load_industrial_runtime_rows(Path(dataset_path))
+            grouped: dict[str, list[dict[str, float]]] = {}
+            for row in rows:
+                grouped.setdefault(str(row.get("sensor_id", "sensor-0")), []).append(dict(row))
+            for episode in grouped.values():
+                episode.sort(key=lambda row: int(row.get("step", 0)))
+                self._episodes.append(episode)
 
     def reset(self, seed: int = 42) -> Mapping[str, Any]:
         self._rng = np.random.default_rng(seed)
-        if self._real_rows:
-            # Select near-limit rows (high PE ≥ 480 MW) for realistic near-violation starts
-            near_limit = [r for r in self._real_rows if r.get("PE", 0) >= 480.0]
+        if self._episodes:
+            episode = self._episodes[int(self._rng.integers(0, len(self._episodes)))]
+            near_limit = [idx for idx, row in enumerate(episode) if float(row.get("power_mw", 0.0)) >= 480.0]
             if not near_limit:
-                near_limit = self._real_rows
-            rng_idx = np.random.default_rng(seed)
-            idx = int(rng_idx.integers(0, len(near_limit)))
-            row = near_limit[idx]
-            # Scale AT (ambient temp 1–38 °C) to synthetic near-limit temp (100–115 °C)
-            at = float(row["AT"])
-            at_norm = (at - 1.0) / (38.0 - 1.0)  # normalise to [0, 1]
-            self._temp = 100.0 + at_norm * 15.0   # map to [100, 115] °C (near 120 limit)
-            self._power = float(row["PE"])          # real power value (near-limit)
+                peak_idx = int(np.argmax([float(row.get("power_mw", 0.0)) for row in episode]))
+                near_limit = [peak_idx]
+            self._episode = episode
+            self._episode_idx = int(near_limit[int(self._rng.integers(0, len(near_limit)))])
+            row = self._episode[self._episode_idx]
+            self._temp = float(row["temp_c"])
+            self._power = float(row["power_mw"])
+            self._pressure = float(row["pressure_mbar"])
             return self.true_state()
         # Start near upper temperature bound so over-limit setpoints quickly cause violations
         self._temp = 110.0
         self._power = 450.0
+        self._pressure = 1010.0
         return self.true_state()
 
     @property
     def using_real_data(self) -> bool:
-        return bool(self._real_rows)
+        return bool(self._episodes)
 
     def true_state(self) -> Mapping[str, Any]:
-        # Always return synthetic dynamics state
         return {
             "temp_c": float(self._temp),
             "power_mw": float(self._power),
-            "pressure_mbar": 1010.0,
+            "pressure_mbar": float(self._pressure),
         }
 
     def observe(
@@ -109,7 +116,20 @@ class IndustrialTrackAdapter(BenchmarkAdapter):
         return {"power_max_mw": self._power_max}
 
     def step(self, action: Mapping[str, Any]) -> Mapping[str, Any]:
-        # Always use synthetic dynamics — real data only affects initialisation in reset()
+        if self._episodes:
+            setpoint = float(action.get("power_setpoint_mw", self._power))
+            real_current = self._episode[self._episode_idx]
+            real_next = self._episode[min(self._episode_idx + 1, len(self._episode) - 1)]
+            delta_power = setpoint - float(real_current["power_mw"])
+            self._power = float(setpoint)
+            self._temp = float(
+                self._temp
+                + 0.18 * (float(real_next["temp_c"]) - self._temp)
+                + 0.07 * delta_power
+            )
+            self._pressure = float(real_next["pressure_mbar"]) - 0.015 * delta_power
+            self._episode_idx = min(self._episode_idx + 1, len(self._episode) - 1)
+            return dict(self.true_state())
         setpoint = float(action.get("power_setpoint_mw", 450.0))
         # No internal clipping: violations manifest when setpoint exceeds power_max.
         # DC3S repair is the safety layer that prevents this from happening.

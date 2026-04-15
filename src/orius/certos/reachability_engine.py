@@ -12,13 +12,16 @@ def compute_validity_horizon(
     sigma_d: float,
     max_steps: int = 4096,
 ) -> dict[str, float | int]:
-    """Delegate to orius.dc3s.reachability."""
+    """CertOS-facing reachability wrapper with argument normalization."""
+    if float(interval_lower_mwh) > float(interval_upper_mwh):
+        raise ValueError("interval_lower_mwh must be <= interval_upper_mwh")
     from orius.dc3s.reachability import compute_validity_horizon_from_reachability
-    return compute_validity_horizon_from_reachability(
+    result = compute_validity_horizon_from_reachability(
         interval_lower_mwh=interval_lower_mwh,
         interval_upper_mwh=interval_upper_mwh,
-        safe_action=safe_action,
-        constraints=constraints,
+        safe_action=dict(safe_action),
+        constraints=dict(constraints),
         sigma_d=sigma_d,
         max_steps=max_steps,
     )
+    return {"engine": "certos.reachability", **dict(result)}

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from copy import deepcopy
 import json
 import os
 import statistics
@@ -21,11 +22,20 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+from _dataset_registry import get_runtime_dataset_config, get_runtime_dataset_path
 from run_all_domain_eval import DOMAINS, eval_domain
 
 
 RUNTIME_DOMAINS = ("av", "industrial", "healthcare", "navigation", "aerospace")
 MAX_P95_LATENCY_MS = 50.0
+REGISTRY_DOMAIN_BY_SIL_DOMAIN = {
+    "av": "vehicle",
+    "industrial": "industrial",
+    "healthcare": "healthcare",
+    "navigation": "navigation",
+    "aerospace": "aerospace",
+}
+SUPPORT_MATURITY_TIERS = {"shadow_synthetic", "experimental"}
 
 
 def _mean(values: list[float]) -> float:
@@ -95,6 +105,17 @@ def _write_figure(path: Path, rows: list[dict[str, object]]) -> None:
     plt.close(fig)
 
 
+def _resolve_sil_domain_config(domain: str) -> tuple[dict[str, object], str, bool]:
+    registry_domain = REGISTRY_DOMAIN_BY_SIL_DOMAIN[domain]
+    runtime_cfg = get_runtime_dataset_config(registry_domain)
+    allow_support_tier = runtime_cfg.maturity_tier in SUPPORT_MATURITY_TIERS
+    runtime_path = get_runtime_dataset_path(registry_domain, allow_support_tier=allow_support_tier)
+
+    cfg = deepcopy(DOMAINS[domain])
+    cfg["csv"] = str(runtime_path) if runtime_path is not None else None
+    return cfg, runtime_cfg.maturity_tier, allow_support_tier
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Universal ORIUS software-in-loop validation")
     parser.add_argument("--seeds", type=int, default=3)
@@ -108,12 +129,25 @@ def main() -> int:
     traces_dir.mkdir(parents=True, exist_ok=True)
 
     summary_rows: list[dict[str, object]] = []
+    shadow_synthetic_domains: list[str] = []
+    experimental_domains: list[str] = []
     for domain in RUNTIME_DOMAINS:
-        cfg = DOMAINS[domain]
+        cfg, maturity_tier, allow_support_tier = _resolve_sil_domain_config(domain)
+        if maturity_tier == "shadow_synthetic":
+            shadow_synthetic_domains.append(domain)
+        elif maturity_tier == "experimental":
+            experimental_domains.append(domain)
         episodes = []
         for seed_idx in range(args.seeds):
             rng = np.random.default_rng(5000 + seed_idx)
-            episode = eval_domain(domain, cfg, rng, n_rows=args.rows, capture_trace=True)
+            episode = eval_domain(
+                domain,
+                cfg,
+                rng,
+                n_rows=args.rows,
+                capture_trace=True,
+                allow_support_tier=allow_support_tier,
+            )
             episodes.append(episode)
             trace_rows = episode.get("trace_rows", [])
             if trace_rows:
@@ -123,6 +157,8 @@ def main() -> int:
             {
                 "domain": domain,
                 "display": cfg["display"],
+                "maturity_tier": maturity_tier,
+                "support_tier_enabled": allow_support_tier,
                 "data_source": episodes[0]["data_source"],
                 "baseline_tsvr_mean": round(_mean([float(ep["violation_rate_before_pct"]) for ep in episodes]), 2),
                 "orius_tsvr_mean": round(_mean([float(ep["violation_rate_after_pct"]) for ep in episodes]), 2),
@@ -147,6 +183,8 @@ def main() -> int:
         "domains": [row["domain"] for row in summary_rows],
         "sil_pass_domains": [row["domain"] for row in summary_rows if row["sil_pass"]],
         "failed_domains": [row["domain"] for row in summary_rows if not row["sil_pass"]],
+        "shadow_synthetic_domains": shadow_synthetic_domains,
+        "experimental_domains": experimental_domains,
         "all_passed": all(bool(row["sil_pass"]) for row in summary_rows),
         "summary_csv": str(out_dir / "domain_sil_summary.csv"),
         "summary_tex": str(out_dir / "tbl_domain_sil_summary.tex"),

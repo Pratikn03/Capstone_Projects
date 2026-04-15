@@ -1,21 +1,18 @@
-"""Deep theoretical guarantees for DC³S under degraded observations.
+"""Executable witnesses for the narrowed ORIUS theorem surface.
 
-Three new theorem-level results that elevate the observation-to-truth
-contribution from correctness conditions to quantitative guarantees:
+This module serves two roles:
+1. It keeps a few older deep-theory experiment helpers for coverage envelopes,
+   constructive separations, and adaptive tracking.
+2. It exposes the current theorem-register witnesses for the monograph's
+   T9--T11 surface:
+   - T9: universal impossibility under persistent degraded observation
+   - T10: stylized reliability-risk lower frontier
+   - T11: typed structural transfer
 
-Theorem T9:  Reliability-Conditioned Finite-Sample Coverage Bound
-Theorem T10: Separation — Necessity of Reliability Awareness
-Theorem T11: Adaptive Inflation Regret Bound
-
-Each theorem has:
-  - A compute function (executable witness)
-  - An assertion function (verifiable gate)
-  - A docstring stating the formal result and proof sketch
-
-These results close the gaps identified in the theoretical depth analysis:
-  - T9 turns "monotone inflation can't hurt" into a finite-sample bound
-  - T10 proves any reliability-blind controller is Pareto-dominated
-  - T11 bounds the tracking error of adaptive inflation
+The key integrity rule is that the register now follows the manuscript, not
+the older exploratory numbering.  The older helpers remain available as
+auxiliary analyses, but they are no longer mislabeled as the current T9--T11
+theorem surface.
 """
 from __future__ import annotations
 
@@ -27,7 +24,7 @@ import numpy as np
 
 
 # ──────────────────────────────────────────────────────────────────────
-# Theorem T9: Reliability-Conditioned Finite-Sample Coverage Bound
+# Auxiliary coverage-envelope helper
 # ──────────────────────────────────────────────────────────────────────
 
 def compute_finite_sample_coverage_bound(
@@ -36,7 +33,7 @@ def compute_finite_sample_coverage_bound(
     delta: float,
     w_min: float,
 ) -> dict:
-    r"""Theorem T9 — Reliability-Conditioned Finite-Sample Coverage.
+    r"""Auxiliary finite-sample coverage envelope.
 
     Statement
     ---------
@@ -58,12 +55,12 @@ def compute_finite_sample_coverage_bound(
 
     Proof Sketch
     ------------
-    By weighted exchangeability (Tibshirani et al. 2019), the conformal
-    quantile with weights proportional to w_i achieves exact coverage
-    1 - alpha when the weights are correctly specified.  Under reliability
-    degradation, the effective sample size for the weighted empirical CDF
-    is n_eff = n * w_min (the minimum weight times the sample count).
-    Applying Hoeffding's inequality to the weighted coverage indicator:
+    This helper intentionally uses an effective-sample-size envelope rather
+    than claiming exact weighted conformal validity.  The working assumption is
+    that the calibration subset available at reliability floor w_min behaves
+    like n_eff = floor(n * w_min) usable samples for a Hoeffding-style
+    concentration estimate.  Applying Hoeffding's inequality to the resulting
+    indicator average gives:
 
         P(|PICP - (1-alpha)| > epsilon) <= 2 * exp(-2 * n_eff * epsilon^2)
 
@@ -158,7 +155,7 @@ def compute_coverage_bound_surface(
 
 
 # ──────────────────────────────────────────────────────────────────────
-# Theorem T10: Separation — Necessity of Reliability Awareness
+# Auxiliary constructive separation helper
 # ──────────────────────────────────────────────────────────────────────
 
 @dataclass
@@ -184,7 +181,7 @@ def compute_separation_gap(
     w_min: float = 0.05,
     alpha: float = 0.10,
 ) -> SeparationResult:
-    r"""Theorem T10 — Separation: Necessity of Reliability Awareness.
+    r"""Auxiliary constructive separation witness.
 
     Statement
     ---------
@@ -198,9 +195,9 @@ def compute_separation_gap(
     where TSVR is the true-state violation rate and IR is the
     intervention rate.
 
-    In other words, a reliability-blind controller cannot simultaneously
-    match DC³S on both violations and interventions.  It must either
-    over-intervene (case b) or admit violations (case a).
+    This is a constructive witness calculation for a specific alternating
+    degradation design.  It is useful empirical evidence, but it is not the
+    current manuscript's theorem-level T10.
 
     Proof Sketch
     ------------
@@ -277,14 +274,14 @@ def assert_separation(
     w_min: float = 0.05,
     alpha: float = 0.10,
 ) -> SeparationResult:
-    """Assert that DC³S Pareto-dominates the reliability-blind controller."""
+    """Assert that the constructive witness shows DC³S no worse on either axis."""
     result = compute_separation_gap(
         dc3s_violations, dc3s_interventions,
         blind_violations, blind_interventions,
         w_min, alpha,
     )
     assert result.pareto_dominant, (
-        f"DC³S does not Pareto-dominate blind controller. "
+        f"DC³S does not weakly dominate the blind-controller witness. "
         f"Violation gap: {result.violation_gap:.4f}, "
         f"Intervention gap: {result.intervention_gap:.4f}. "
         f"Theoretical lower bounds: violations >= {result.violation_lower_bound:.4f} "
@@ -390,7 +387,7 @@ def simulate_separation_construction(
 
 
 # ──────────────────────────────────────────────────────────────────────
-# Theorem T11: Adaptive Inflation Regret Bound
+# Auxiliary adaptive-tracking helper
 # ──────────────────────────────────────────────────────────────────────
 
 def compute_adaptive_regret_bound(
@@ -399,7 +396,7 @@ def compute_adaptive_regret_bound(
     max_oracle_jump: float,
     infl_max: float = 2.0,
 ) -> dict:
-    r"""Theorem T11 — Adaptive Inflation Regret Bound.
+    r"""Auxiliary adaptive-tracking regret envelope.
 
     Statement
     ---------
@@ -570,42 +567,187 @@ def simulate_adaptive_tracking(
 
 
 # ──────────────────────────────────────────────────────────────────────
-# Unified theorem register entry
+# Narrowed theorem-surface witnesses (current T9--T11)
 # ──────────────────────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class TransferContractResult:
+    """Outcome of evaluating the typed structural transfer obligations."""
+
+    one_step_transfer_holds: bool
+    episode_bound_available: bool
+    safety_probability_lower_bound: float | None
+    episode_bound: float | None
+    failed_obligations: tuple[str, ...]
+    counterexample: str | None
+    assumptions_used: tuple[str, ...]
+
+
+def compute_universal_impossibility_bound(
+    horizon: int,
+    fault_rate: float,
+    sensitivity_constant: float,
+    *,
+    usable_horizon_fraction: float = 1.0,
+) -> dict:
+    r"""Executable witness for T9's Omega(dT)-style impossibility scaling."""
+    if horizon <= 0:
+        raise ValueError("horizon must be positive")
+    if not (0.0 <= fault_rate <= 1.0):
+        raise ValueError("fault_rate must lie in [0, 1]")
+    if sensitivity_constant < 0.0:
+        raise ValueError("sensitivity_constant must be non-negative")
+    if not (0.0 < usable_horizon_fraction <= 1.0):
+        raise ValueError("usable_horizon_fraction must lie in (0, 1]")
+
+    effective_horizon = float(horizon) * float(usable_horizon_fraction)
+    expected_lower_bound = float(sensitivity_constant * fault_rate * effective_horizon)
+    tail_probability = float(np.exp(-0.5 * sensitivity_constant * fault_rate * effective_horizon))
+    return {
+        "horizon": int(horizon),
+        "effective_horizon": effective_horizon,
+        "fault_rate": float(fault_rate),
+        "sensitivity_constant": float(sensitivity_constant),
+        "expected_lower_bound": expected_lower_bound,
+        "linear_rate_lower_bound": float(expected_lower_bound / max(horizon, 1)),
+        "high_probability_tail": tail_probability,
+        "assumptions_used": [
+            "Persistent degraded observation with non-zero mean fault rate d.",
+            "A witness sensitivity constant c > 0 is available from a boundary-reachability argument.",
+            "Mixing/buffering losses are summarized by usable_horizon_fraction.",
+        ],
+    }
+
+
+def compute_stylized_frontier_lower_bound(
+    reliability: Sequence[float],
+    *,
+    boundary_mass: float | Sequence[float],
+    alpha: float = 0.10,
+) -> dict:
+    r"""Executable witness for T10's stylized reliability-risk frontier."""
+    w = np.asarray(reliability, dtype=float).reshape(-1)
+    if w.size == 0:
+        raise ValueError("reliability must be non-empty")
+    if np.any((w < 0.0) | (w > 1.0)):
+        raise ValueError("reliability must lie in [0, 1]")
+    if not (0.0 < alpha < 1.0):
+        raise ValueError("alpha must lie in (0, 1)")
+
+    if np.isscalar(boundary_mass):
+        p = np.full_like(w, float(boundary_mass), dtype=float)
+    else:
+        p = np.asarray(boundary_mass, dtype=float).reshape(-1)
+        if p.size != w.size:
+            raise ValueError("boundary_mass must be scalar or match reliability length")
+    if np.any((p < 0.0) | (p > 1.0)):
+        raise ValueError("boundary_mass must lie in [0, 1]")
+
+    per_step_terms = 0.5 * p * (1.0 - w)
+    special_case_active = bool(np.all(p >= alpha / 2.0))
+    special_case_lower = float((alpha / 4.0) * np.sum(1.0 - w)) if special_case_active else None
+    return {
+        "horizon": int(w.size),
+        "mean_reliability_w": float(np.mean(w)),
+        "boundary_mass_min": float(np.min(p)),
+        "expected_lower_bound": float(np.sum(per_step_terms)),
+        "per_step_terms": per_step_terms.tolist(),
+        "special_case_active": special_case_active,
+        "special_case_lower_bound": special_case_lower,
+        "assumptions_used": [
+            "Boundary-testing subproblem with latent safe/unsafe hypotheses.",
+            "Observation-law indistinguishability encoded through reliability.",
+            "Boundary mass sequence p_t supplied explicitly; no universal value is assumed.",
+        ],
+    }
+
+
+def evaluate_structural_transfer(
+    *,
+    coverage_holds: bool,
+    sound_safe_action_set: bool,
+    repair_membership_holds: bool,
+    fallback_exists: bool,
+    alpha: float = 0.10,
+    per_step_risk_budget: Sequence[float] | None = None,
+) -> TransferContractResult:
+    """Executable witness for T11's typed structural transfer theorem."""
+    if not (0.0 < alpha < 1.0):
+        raise ValueError("alpha must lie in (0, 1)")
+
+    obligation_map = {
+        "coverage": bool(coverage_holds),
+        "sound_safe_action_set": bool(sound_safe_action_set),
+        "repair_membership": bool(repair_membership_holds),
+        "fallback": bool(fallback_exists),
+    }
+    failed = tuple(name for name, ok in obligation_map.items() if not ok)
+    counterexamples = {
+        "coverage": "The latent state can lie outside U_t more often than allowed, so the repair acts on the wrong uncertainty set.",
+        "sound_safe_action_set": "An action can belong to the purported safe set while still allowing a successor outside the defended safe region.",
+        "repair_membership": "The repair map can return an action outside the safe-action set even when a safe repaired action exists.",
+        "fallback": "The safe-action set can become empty without an admissible fallback release.",
+    }
+
+    one_step_transfer_holds = len(failed) == 0
+    episode_bound = None
+    if one_step_transfer_holds and per_step_risk_budget is not None:
+        budget = np.asarray(list(per_step_risk_budget), dtype=float).reshape(-1)
+        if budget.size == 0 or np.any(budget < 0.0):
+            raise ValueError("per_step_risk_budget must be a non-empty non-negative sequence")
+        episode_bound = float(np.sum(budget))
+
+    return TransferContractResult(
+        one_step_transfer_holds=one_step_transfer_holds,
+        episode_bound_available=episode_bound is not None,
+        safety_probability_lower_bound=float(1.0 - alpha) if one_step_transfer_holds else None,
+        episode_bound=episode_bound,
+        failed_obligations=failed,
+        counterexample=None if not failed else counterexamples[failed[0]],
+        assumptions_used=(
+            "Coverage of the observation-consistent state set.",
+            "Soundness of the tightened safe-action set.",
+            "Repair membership in the tightened safe-action set.",
+            "Existence of a safe fallback when the tightened set is empty.",
+        ),
+    )
+
 
 THEOREM_REGISTER = {
     "T9": {
-        "name": "Reliability-Conditioned Finite-Sample Coverage Bound",
+        "name": "Universal Impossibility Under Persistent Degradation",
         "statement": (
-            "P(Y_{n+1} in C^w_{n+1}) >= 1 - alpha - sqrt(log(2/delta) / (2*n_eff)) "
-            "where n_eff = floor(n * w_min)"
+            "E[V_T] >= c * d * T_eff under persistent degraded observation, "
+            "with c supplied by a witness sensitivity argument."
         ),
-        "type": "quantitative_guarantee",
-        "code_witness": "compute_finite_sample_coverage_bound",
+        "type": "impossibility",
+        "code_witness": "compute_universal_impossibility_bound",
         "module": "orius.dc3s.theoretical_guarantees",
-        "dependencies": ["weighted_exchangeability", "hoeffding_inequality"],
+        "dependencies": ["boundary_reachability_witness", "persistent_fault_rate", "mixing_buffer_accounting"],
     },
     "T10": {
-        "name": "Separation — Necessity of Reliability Awareness",
+        "name": "Stylized Reliability-Risk Frontier",
         "statement": (
-            "Any reliability-blind controller must either admit TSVR >= alpha*(1-w_min)/2 "
-            "or IR >= IR_DC3S + (1-w_min)/2"
+            "E[V_T(pi)] >= (1/2) * sum_t p_t * (1 - w_t), "
+            "and under p_t >= alpha/2 this gives (alpha/4)(1-w_bar)T."
         ),
         "type": "lower_bound",
-        "code_witness": "compute_separation_gap",
+        "code_witness": "compute_stylized_frontier_lower_bound",
         "module": "orius.dc3s.theoretical_guarantees",
-        "dependencies": ["constructive_adversarial_sequence"],
+        "dependencies": ["boundary_mass_sequence", "channel_indistinguishability"],
     },
     "T11": {
-        "name": "Adaptive Inflation Regret Bound",
+        "name": "Typed Structural Transfer",
         "statement": (
-            "R_T = sum (I_t - I*_t)^2 <= tau * max_Delta^2 * (1 + ln T) + O(1), "
-            "giving per-step regret O(tau * ln(T) / T) -> 0"
+            "If coverage, sound safe-action sets, repair membership, and fallback "
+            "all hold, then the one-step safety statement transfers; if any fails, "
+            "the battery proof pattern can break."
         ),
-        "type": "regret_bound",
-        "code_witness": "compute_adaptive_regret_bound",
+        "type": "transfer_theorem",
+        "code_witness": "evaluate_structural_transfer",
         "module": "orius.dc3s.theoretical_guarantees",
-        "dependencies": ["exponential_smoothing_convergence"],
+        "dependencies": ["coverage_obligation", "safe_action_soundness", "repair_membership", "fallback_admissibility"],
     },
 }
 
@@ -621,5 +763,9 @@ __all__ = [
     "compute_adaptive_regret_bound",
     "assert_sublinear_regret",
     "simulate_adaptive_tracking",
+    "compute_universal_impossibility_bound",
+    "compute_stylized_frontier_lower_bound",
+    "evaluate_structural_transfer",
+    "TransferContractResult",
     "THEOREM_REGISTER",
 ]

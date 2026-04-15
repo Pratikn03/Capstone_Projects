@@ -27,7 +27,7 @@ FORMAL_PATTERNS = {
 DEFAULT_EXPECTED = {
     "theorem": 26,
     "lemma": 5,
-    "proposition": 8,
+    "proposition": 9,
     "corollary": 12,
     "definition": 15,
     "assumption": 16,

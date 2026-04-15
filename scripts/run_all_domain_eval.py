@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
 """Run ORIUS Universal Framework on mixed real/synthetic data across domains.
 
-Reads locked repo telemetry CSVs where available, synthesizes a bounded
-navigation trace, injects realistic faults (dropout, spike, stale), runs the
+Reads defended real-data telemetry CSVs, injects realistic faults (dropout,
+spike, stale), runs the
 full 5-stage DC3S pipeline on each row, and produces:
   - reports/multi_domain/all_domain_results.json
   - reports/multi_domain/tbl_all_domain_comparison.tex
   - reports/multi_domain/tbl_all_domain_latency.tex
   - reports/multi_domain/fig_all_domain_comparison.png
 
-The output is a portable-domain audit surface. It is useful for showing that
-the same repair path executes across AV, medical monitoring, industrial
-control, navigation, and aerospace, but it is not a replacement for the locked
-battery proof surface.
+The output is a defended-domain audit surface. Legacy lower-tier behavior is
+available only behind ``--allow-support-tier``.
 
 Usage:
     python scripts/run_all_domain_eval.py [--seed 42] [--rows 200] [--out reports/multi_domain]
+    python scripts/run_all_domain_eval.py --allow-support-tier
 """
 from __future__ import annotations
 
@@ -130,7 +129,7 @@ def _build_navigation_trace(n_rows: int, rng: np.random.Generator) -> pd.DataFra
 
 DOMAINS = {
     "aerospace": {
-        "csv": "data/aerospace/processed/aerospace_orius.csv",
+        "csv": "data/aerospace/processed/aerospace_public_adsb_runtime.csv",
         "adapter_id": "aerospace",
         "telemetry_cols": ["altitude_m", "airspeed_kt", "bank_angle_deg", "fuel_remaining_pct", "ts_utc"],
         "candidate_fn": lambda row: {"throttle": 0.7, "bank_deg": float(row.get("bank_angle_deg", 0.0) or 0.0)},
@@ -305,17 +304,25 @@ def _json_text(payload: object) -> str:
 
 
 def _load_domain_frame(
+    name: str,
     cfg: dict[str, object],
     rng: np.random.Generator,
     n_rows: int,
+    *,
+    allow_support_tier: bool,
 ) -> tuple[pd.DataFrame, str]:
     csv_path_raw = cfg.get("csv")
     if csv_path_raw:
         csv_path = Path(str(csv_path_raw))
         if csv_path.exists():
             return pd.read_csv(csv_path), "locked_csv"
+        if not allow_support_tier:
+            raise FileNotFoundError(
+                f"{name} defended runtime surface missing: {csv_path}. "
+                "Re-run with --allow-support-tier only if you intentionally want the legacy lower-tier path."
+            )
     synthetic_fn = cfg.get("synthetic_fn")
-    if synthetic_fn is None:
+    if synthetic_fn is None or not allow_support_tier:
         return pd.DataFrame(), "missing_csv"
     return synthetic_fn(n_rows, rng), "synthetic"
 
@@ -327,8 +334,9 @@ def eval_domain(
     *,
     n_rows: int,
     capture_trace: bool = False,
+    allow_support_tier: bool = False,
 ) -> dict[str, object]:
-    df, data_source = _load_domain_frame(cfg, rng, n_rows)
+    df, data_source = _load_domain_frame(name, cfg, rng, n_rows, allow_support_tier=allow_support_tier)
     if df.empty:
         return {"domain": name, "status": "missing_csv"}
 
@@ -497,13 +505,14 @@ def eval_domain_rule_based(
     rng: np.random.Generator,
     *,
     n_rows: int,
+    allow_support_tier: bool = False,
 ) -> dict:
     """Evaluate a domain-appropriate rule-based controller WITHOUT the DC3S shield."""
     rule_fn = cfg.get("rule_based_fn")
     if rule_fn is None:
         return {"domain": name, "status": "no_rule_based_fn", "viol_rate_rule_pct": None}
 
-    df, data_source = _load_domain_frame(cfg, rng, n_rows)
+    df, data_source = _load_domain_frame(name, cfg, rng, n_rows, allow_support_tier=allow_support_tier)
     if df.empty:
         return {"domain": name, "status": "missing_csv", "viol_rate_rule_pct": None}
 
@@ -580,8 +589,8 @@ def build_comparison_table(
             r" proportional speed governor (AV), PI setpoint controller (industrial),"
             r" clinical threshold protocol (healthcare), proportional bank limiter (aerospace),"
             r" center-guidance controller (navigation)."
-            r" Source = locked\_csv for locked replay telemetry and synthetic for"
-            r" bounded synthetic traces when no locked dataset is shipped."
+            r" Source = locked\_csv for defended replay telemetry and synthetic only"
+            r" when the legacy support-tier flag is enabled."
             r" DC3S After = TSVR after shield repair.",
             r"\end{minipage}",
             r"\end{table}",
@@ -655,11 +664,16 @@ def build_violation_figure(
     return fig_path
 
 
-def main() -> None:
+def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--rows", type=int, default=DEFAULT_ROWS)
     parser.add_argument("--out", default=str(DEFAULT_OUT))
+    parser.add_argument(
+        "--allow-support-tier",
+        action="store_true",
+        help="Permit legacy lower-tier synthetic fallback when a defended surface is missing.",
+    )
     args = parser.parse_args()
 
     rng = np.random.default_rng(args.seed)
@@ -673,9 +687,25 @@ def main() -> None:
     rule_results: dict[str, dict[str, object]] = {}
     for name, cfg in DOMAINS.items():
         print(f"  Running {cfg['display']}...", flush=True)
-        result = eval_domain(name, cfg, rng, n_rows=args.rows)
+        try:
+            result = eval_domain(
+                name,
+                cfg,
+                rng,
+                n_rows=args.rows,
+                allow_support_tier=args.allow_support_tier,
+            )
+            rule_results[name] = eval_domain_rule_based(
+                name,
+                cfg,
+                rng,
+                n_rows=args.rows,
+                allow_support_tier=args.allow_support_tier,
+            )
+        except FileNotFoundError as exc:
+            print(f"    ERROR: {exc}")
+            return 1
         results.append(result)
-        rule_results[name] = eval_domain_rule_based(name, cfg, rng, n_rows=args.rows)
         if result["status"] == "ok":
             print(
                 f"    source={result['data_source']} "
@@ -709,7 +739,8 @@ def main() -> None:
 
     fig_path = build_violation_figure(results, out, rule_results)
     print(f"  Figure → {fig_path}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

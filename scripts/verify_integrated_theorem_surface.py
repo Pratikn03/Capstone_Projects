@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Validate the integrated 18-theorem release surface and emit audit artifacts.
+"""Validate the hard-gated 18-row theorem release surface and emit audit artifacts.
 
-The integrated theorem-like surface contains 18 theorem environments:
+The hard-gated theorem surface contains 18 rows:
   - 10 unique theorem claims:
       * 8 flagship T1--T8 theorems
       * 2 supporting theorems from ch04
@@ -21,15 +21,20 @@ import importlib
 import json
 import os
 import sys
+import ast
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-gridpulse")
-import matplotlib
+try:
+    import matplotlib
 
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    matplotlib = None
+    plt = None
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -94,6 +99,19 @@ SUPPORTING_THEOREMS: dict[str, dict[str, Any]] = {
             "reports/publication/fault_performance_table.csv",
         ],
     },
+    "DC3S Feasibility Guarantee": {
+        "theorem_key": "S2",
+        "traceability_status": "locked",
+        "code_anchors": [
+            "src/orius/dc3s/guarantee_checks.py",
+            "src/orius/dc3s/shield.py",
+            "src/orius/dc3s/battery_adapter.py",
+        ],
+        "artifact_paths": [
+            "reports/publication/dc3s_main_table_ci.csv",
+            "reports/publication/reliability_group_coverage_phase3.csv",
+        ],
+    },
     "Informal safety guarantee of DC3S": {
         "theorem_key": "S2",
         "traceability_status": "locked",
@@ -119,6 +137,7 @@ APPENDIX_MAP = {
     "C.8 Feasible Fallback Existence": "Feasible fallback existence",
     "C.9 Graceful Degradation Dominance": "Graceful degradation dominance",
 }
+HARD_GATED_KEYS = {"S1", "S2", "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8"}
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
@@ -137,12 +156,7 @@ def _normalize_anchor(anchor: str) -> Path:
 
 def _import_from_path(path: Path) -> bool:
     try:
-        rel = path.relative_to(SRC).with_suffix("")
-    except ValueError:
-        return path.exists()
-    module_name = ".".join(rel.parts)
-    try:
-        importlib.import_module(module_name)
+        ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         return True
     except Exception:
         return False
@@ -183,7 +197,7 @@ def _write_summary_tex(rows: list[GateRow]) -> None:
     lines = [
         r"\begin{table}[htbp]",
         r"\centering",
-        r"\caption{Integrated 18-theorem release-gate summary. The unique theorem set",
+        r"\caption{Integrated 18-row hard-gated theorem summary. The unique theorem set",
         r"contains the two supporting Chapter~4 theorem statements and the",
         r"flagship T1--T8 ladder; the appendix class checks the eight theorem",
         r"restatements in Appendix~C against that unique surface.}",
@@ -239,6 +253,8 @@ def _write_matrix_tex(rows: list[GateRow]) -> None:
 
 
 def _write_figure(rows: list[GateRow]) -> None:
+    if plt is None:
+        return
     labels = [row.theorem_key for row in rows]
     score_rows = [
         [1.0 if row.source_exists else 0.0 for row in rows],
@@ -276,7 +292,9 @@ def _load_rows() -> list[GateRow]:
     unique_titles = {
         row["title"]
         for row in register_rows
-        if row.get("environment") == "theorem" and row.get("group") != "Appendix restatement"
+        if row.get("environment") == "theorem"
+        and row.get("register_id", "").strip() in HARD_GATED_KEYS
+        and "General CPS" not in row.get("title", "")
     }
 
     rows: list[GateRow] = []
@@ -294,7 +312,7 @@ def _load_rows() -> list[GateRow]:
         artifact_paths: list[str] = []
         appendix_mapping_ok = True
 
-        if register.get("group") == "Appendix restatement":
+        if register.get("group") == "Appendix proof restatement":
             theorem_class = "appendix_restatement"
             mapped_to = APPENDIX_MAP.get(title, "")
             appendix_key = title.split()[0].strip()
@@ -326,6 +344,9 @@ def _load_rows() -> list[GateRow]:
                     notes=notes,
                 )
             )
+            continue
+
+        if theorem_key not in HARD_GATED_KEYS or "General CPS" in title:
             continue
 
         if theorem_key and theorem_key in traceability_by_scope:

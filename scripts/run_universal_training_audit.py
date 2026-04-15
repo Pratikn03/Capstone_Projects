@@ -46,6 +46,18 @@ def _domain_dataset_map() -> tuple[tuple[str, str], ...]:
     return BASE_DOMAIN_DATASET_MAP
 
 
+def _sanitize_command(parts: list[str]) -> str:
+    sanitized: list[str] = []
+    for index, part in enumerate(parts):
+        if index == 0 and Path(part).name.startswith("python"):
+            sanitized.append("$PYTHON")
+        elif part.startswith(str(REPO_ROOT) + "/"):
+            sanitized.append(Path(part).relative_to(REPO_ROOT).as_posix())
+        else:
+            sanitized.append(part)
+    return " ".join(sanitized)
+
+
 def _tex_escape(value: object) -> str:
     text = str(value)
     for old, new in (("_", r"\_"), ("%", r"\%"), ("&", r"\&"), ("#", r"\#")):
@@ -141,7 +153,7 @@ def _train_domain(cfg: DatasetConfig, *, rebuild: bool) -> tuple[bool, str, str]
         cmd.append("--rebuild")
     result = _run(cmd, cwd=REPO_ROOT)
     ok = result.returncode == 0
-    return ok, " ".join(cmd), (result.stdout or "") + (result.stderr or "")
+    return ok, _sanitize_command(cmd), (result.stdout or "") + (result.stderr or "")
 
 
 def _has_any(path: Path, pattern: str) -> bool:

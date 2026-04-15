@@ -17,6 +17,11 @@ External fallback contract:
 - Place KITTI Odometry under:
   - `$ORIUS_EXTERNAL_DATA_ROOT/kitti_odometry/`
 
+MacBook external SSD helper:
+
+- Run `make external-ssd-setup SSD_VOLUME=<mounted-ssd-root>`
+- Full setup guide: `docs/EXTERNAL_SSD_SETUP.md`
+
 Canonical build commands:
 
 - `python scripts/build_navigation_real_dataset.py`

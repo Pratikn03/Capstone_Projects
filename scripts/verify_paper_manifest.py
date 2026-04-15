@@ -58,6 +58,11 @@ def main() -> int:
     parser.add_argument("--manifest", default="paper/manifest.yaml")
     parser.add_argument("--paper", default="paper/paper.tex")
     parser.add_argument("--stats", default="paper/assets/data/metrics_snapshot.json")
+    parser.add_argument(
+        "--camera-ready",
+        action="store_true",
+        help="Promote manifest warnings to errors for the camera-ready freeze lane.",
+    )
     args = parser.parse_args()
 
     repo_root = Path.cwd()
@@ -125,16 +130,26 @@ def main() -> int:
     else:
         warnings.append(f"Metrics snapshot not found: {stats_path}")
 
-    # Ensure every manifest token is either used or explicitly marked optional
-    optional_tokens = set(
-        token
-        for section in (manifest.get("figures") or {}, manifest.get("tables") or {})
-        for token, entry in section.items()
-        if (entry or {}).get("optional", False)
-    )
-    unused = sorted(((figure_manifest | table_manifest) - (figure_tokens_used | table_tokens_used)) - optional_tokens)
-    if unused:
-        warnings.append(f"Unused manifest tokens: {unused}")
+    macro_surface_active = bool(figure_tokens_used or table_tokens_used)
+
+    # Ensure every manifest token is either used or explicitly marked optional when
+    # the canonical manuscript still uses the legacy manifest macro surface.
+    if macro_surface_active:
+        optional_tokens = set(
+            token
+            for section in (manifest.get("figures") or {}, manifest.get("tables") or {})
+            for token, entry in section.items()
+            if (entry or {}).get("optional", False)
+        )
+        unused = sorted(((figure_manifest | table_manifest) - (figure_tokens_used | table_tokens_used)) - optional_tokens)
+        if unused:
+            warnings.append(f"Unused manifest tokens: {unused}")
+    else:
+        print("Manifest macro surface inactive in canonical monograph; unused-token audit skipped.")
+
+    if args.camera_ready and warnings:
+        errors.extend(f"camera-ready warning promoted to error: {warning}" for warning in warnings)
+        warnings = []
 
     if warnings:
         print("Warnings:")

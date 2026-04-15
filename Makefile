@@ -1,4 +1,4 @@
-.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets navigation-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark orius-monograph-assets review-compile orius-book orius-evidence-rerun equal-domain-gate orius-review-pack orius-final ieee-assets ieee-main-compile ieee-appendix-compile ieee-pack ieee-prof-assets ieee-prof-main-compile ieee-prof-appa-compile ieee-prof-appb-compile ieee-prof-pack orius-flagship-manuscripts battery-deep-novelty pre-clean clean clean-status fresh-research pre-release
+.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets navigation-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark orius-monograph-assets review-compile orius-book orius-evidence-rerun equal-domain-gate camera-ready-assets camera-ready-verify camera-ready-freeze orius-review-pack orius-final ieee-assets ieee-main-compile ieee-appendix-compile ieee-pack ieee-prof-assets ieee-prof-main-compile ieee-prof-appa-compile ieee-prof-appb-compile ieee-prof-pack orius-flagship-manuscripts battery-deep-novelty external-ssd-setup external-ssd-shell external-ssd-verify external-ssd-preflight full-folder-audit pre-clean clean clean-status fresh-research pre-release
 
 PRE_RELEASE_TESTS = tests/test_external_real_data_integration.py tests/test_real_data_manifest_refresh.py tests/test_thesis_package_assets.py
 
@@ -17,11 +17,18 @@ IEEE_MIN_PAGES ?= 8
 IEEE_PROF_MAIN_MIN_PAGES ?= 20
 IEEE_PROF_APP_MIN_PAGES ?= 20
 ORIUS_AV_SOURCE ?= waymo_motion
+SSD_VOLUME ?= /Volumes/ORIUS_SSD
+SSD_EXTERNAL_ROOT_NAME ?= orius_external_data
+STRICT_EXTERNAL_LINK ?= $(if $(ORIUS_STRICT_EXTERNAL_ROOT),$(ORIUS_STRICT_EXTERNAL_ROOT),$(if $(ORIUS_EXTERNAL_DATA_ROOT),$(ORIUS_EXTERNAL_DATA_ROOT),$(HOME)/orius_external_data))
+SHELL_PROFILE ?= $(HOME)/.zshrc
+EXTERNAL_SSD_ROOT ?= $(if $(ORIUS_EXTERNAL_DATA_ROOT),$(ORIUS_EXTERNAL_DATA_ROOT),$(SSD_VOLUME)/$(SSD_EXTERNAL_ROOT_NAME))
 
 ## Canonical paper/review artifact directories are intentionally retained in repository state.
 
 clean:
 	rm -f paper/*.aux paper/*.log paper/*.out paper/*.fdb_latexmk paper/*.fls paper/*.bbl paper/*.blg paper/*.toc paper/*.lof paper/*.lot
+	find paper/monograph -maxdepth 1 -type f \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
+	find appendices -maxdepth 1 -type f \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
 	rm -f paper/ieee/*.aux paper/ieee/*.log paper/ieee/*.out paper/ieee/*.fdb_latexmk paper/ieee/*.fls paper/ieee/*.bbl paper/ieee/*.blg paper/ieee/*.toc paper/ieee/*.lof paper/ieee/*.lot paper/ieee/*.pdf
 	rm -f paper_r1.aux paper_r1.out paper_r1.log paper_r1.fls paper_r1.fdb_latexmk paper.aux paper.out paper.log paper.fdb_latexmk paper.fls paper.fls.gz
 	rm -f .coverage reports/.coverage
@@ -70,19 +77,38 @@ lint-release:
 	fi
 
 test:
-	pytest -q --no-cov
+	$(PYTHON) -m pytest -x --tb=short --no-cov
 
-# Test with coverage (minimum 80%)
+# Test with Phase 1 coverage bar (minimum 80% on critical validation/data-glue surfaces)
 test-cov:
-	pytest
+	$(PYTHON) -m pytest -q --tb=short \
+		tests/test_coverage_theorem.py \
+		tests/test_universal_validation_gate.py \
+		tests/test_domain_closure_matrix.py \
+		tests/test_external_real_data_integration.py \
+		tests/test_phase1_data_glue.py \
+		tests/test_real_data_manifest_refresh.py \
+		--cov=scripts \
+		--cov=orius \
+		--cov-report= \
+		--cov-fail-under=0
+	$(PYTHON) -m coverage report \
+		--include="scripts/_dataset_registry.py,scripts/refresh_real_data_manifests.py,scripts/build_aerospace_public_adsb_runtime.py,src/orius/orius_bench/real_data_loader.py" \
+		--fail-under=80
+	$(PYTHON) -m coverage html \
+		--include="scripts/_dataset_registry.py,scripts/refresh_real_data_manifests.py,scripts/build_aerospace_public_adsb_runtime.py,src/orius/orius_bench/real_data_loader.py" \
+		-d reports/coverage
+	$(PYTHON) -m coverage xml \
+		--include="scripts/_dataset_registry.py,scripts/refresh_real_data_manifests.py,scripts/build_aerospace_public_adsb_runtime.py,src/orius/orius_bench/real_data_loader.py" \
+		-o reports/coverage.xml
 
 # Quick tests (exclude slow markers)
 test-quick:
-	pytest -q -m "not slow and not integration" --no-cov
+	$(PYTHON) -m pytest -q -m "not slow and not integration" --no-cov
 
 # Integration tests only
 test-integration:
-	pytest -q -m "integration" --no-cov
+	$(PYTHON) -m pytest -q -m "integration" --no-cov
 
 # Training verification
 verify-training:
@@ -204,6 +230,19 @@ novelty-full: ablations stats-tables verify-novelty
 battery-deep-novelty:
 	PYTHONPATH=src $(PYTHON) scripts/run_battery_deep_novelty.py
 
+# External SSD raw-data setup for MacBook workflows
+external-ssd-setup:
+	PYTHONPATH=src $(PYTHON) scripts/setup_external_ssd.py --volume-root $(SSD_VOLUME) --strict-link $(STRICT_EXTERNAL_LINK)
+
+external-ssd-shell:
+	PYTHONPATH=src $(PYTHON) scripts/setup_external_ssd.py --volume-root $(SSD_VOLUME) --strict-link $(STRICT_EXTERNAL_LINK) --append-shell-profile --shell-profile $(SHELL_PROFILE)
+
+external-ssd-verify:
+	PYTHONPATH=src $(PYTHON) scripts/setup_external_ssd.py --volume-root $(SSD_VOLUME) --strict-link $(STRICT_EXTERNAL_LINK) --verify-only
+
+external-ssd-preflight:
+	PYTHONPATH=src $(PYTHON) scripts/verify_real_data_preflight.py --external-root $(EXTERNAL_SSD_ROOT)
+
 # ============================================================
 # Load Testing (98/100 Enhancement)
 # ============================================================
@@ -297,9 +336,18 @@ orius-monograph-assets:
 ieee-assets: orius-monograph-assets
 	PYTHONPATH=src $(PYTHON) scripts/build_orius_ieee_assets.py
 
+camera-ready-assets: ieee-assets
+	PYTHONPATH=src $(PYTHON) scripts/build_camera_ready_tables.py
+	PYTHONPATH=src $(PYTHON) scripts/build_camera_ready_figures.py
+
 paper-verify: orius-monograph-assets
 	PYTHONPATH=src $(PYTHON) scripts/verify_paper_manifest.py
 	PYTHONPATH=src $(PYTHON) scripts/validate_paper_claims.py
+
+camera-ready-verify:
+	PYTHONPATH=src $(PYTHON) scripts/verify_paper_manifest.py --camera-ready
+	PYTHONPATH=src $(PYTHON) scripts/validate_paper_claims.py
+	PYTHONPATH=src $(PYTHON) scripts/verify_camera_ready_logs.py --waivers paper/camera_ready_warning_waivers.yaml
 
 # Paper 2: certificate half-life blackout benchmark
 paper2-blackout-benchmark:
@@ -311,6 +359,8 @@ paper3-four-policy-benchmark:
 
 paper-compile: orius-monograph-assets
 	rm -f paper/paper.pdf paper/paper.log paper/paper.aux paper/paper.out paper/paper.bbl paper/paper.blg paper/paper.toc paper/paper.lof paper/paper.lot
+	find paper/monograph -maxdepth 1 -type f \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
+	find appendices -maxdepth 1 -type f \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
 	mkdir -p paper/monograph paper/chapters paper/appendices paper/backmatter
 	- pdflatex -interaction=nonstopmode -output-directory=paper paper/paper.tex
 	- bibtex paper/paper
@@ -441,7 +491,13 @@ orius-evidence-rerun: paper-assets orius-monograph-assets
 	@echo "Rebuilt monograph evidence surfaces from tracked publication artifacts."
 
 equal-domain-gate:
-	PYTHONPATH=src $(PYTHON) scripts/run_orius_canonical_closure_refresh.py --mode equal_domain_gate --external-root /Users/pratik_n/orius_external_data --train-missing --repair-invalid-splits --seeds 3 --sil-seeds 3 --sil-rows 96 --horizon 48
+	PYTHONPATH=src $(PYTHON) scripts/run_orius_canonical_closure_refresh.py --mode equal_domain_gate --external-root $(STRICT_EXTERNAL_LINK) --train-missing --repair-invalid-splits --seeds 3 --sil-seeds 3 --sil-rows 96 --horizon 48
+
+camera-ready-freeze:
+	PYTHONPATH=src $(PYTHON) scripts/run_camera_ready_freeze.py --external-root $(STRICT_EXTERNAL_LINK) --compute-lane hybrid --train-missing --repair-invalid-splits --seeds 3 --sil-seeds 3 --sil-rows 96 --horizon 48 --warning-waivers paper/camera_ready_warning_waivers.yaml
+
+full-folder-audit:
+	PYTHONPATH=src $(PYTHON) scripts/full_folder_audit.py --out-dir reports/audit
 
 orius-review-pack: orius-monograph-assets review-compile
 

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import importlib.util
 import json
 import os
@@ -43,6 +44,18 @@ def write_json(path: Path, payload: dict[str, Any]) -> Path:
     return path
 
 
+def file_sha256(path: Path, *, chunk_size: int = 1024 * 1024) -> str:
+    """Return the SHA-256 digest for *path*."""
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        while True:
+            chunk = handle.read(chunk_size)
+            if not chunk:
+                break
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def summarize_files(root: Path, *, limit: int = 200) -> dict[str, Any]:
     """Return a compact inventory of files under *root*."""
     if not root.exists():
@@ -51,6 +64,20 @@ def summarize_files(root: Path, *, limit: int = 200) -> dict[str, Any]:
             "total_files": 0,
             "total_bytes": 0,
             "files": [],
+            "truncated": False,
+        }
+
+    if root.is_file():
+        return {
+            "root": str(root),
+            "total_files": 1,
+            "total_bytes": int(root.stat().st_size),
+            "files": [
+                {
+                    "path": root.name,
+                    "size_bytes": int(root.stat().st_size),
+                }
+            ],
             "truncated": False,
         }
 
@@ -201,6 +228,8 @@ def resolved_source_has_files(raw_source: ResolvedRawSource | None) -> bool:
     """Return whether a resolved raw source exists and contains at least one file."""
     if raw_source is None or not raw_source.path.exists():
         return False
+    if raw_source.path.is_file():
+        return True
     try:
         next(path for path in raw_source.path.rglob("*") if path.is_file())
     except StopIteration:

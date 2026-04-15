@@ -37,6 +37,46 @@ def test_refresh_industrial_manifest_writes_primary_provenance(tmp_path: Path, m
     assert result["status"] == "refreshed"
     assert manifest["domain"] == "industrial"
     assert manifest["canonical_source"] is True
+    assert manifest["raw_root"] == str(raw_dir / "CCPP.csv")
+
+
+def test_refresh_navigation_manifest_rewrites_stale_fixture_manifest_as_blocked_placeholder(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    navigation_dir = tmp_path / "data" / "navigation"
+    raw_dir = navigation_dir / "raw"
+    processed_dir = navigation_dir / "processed"
+    raw_dir.mkdir(parents=True)
+    processed_dir.mkdir(parents=True)
+
+    stale_manifest = raw_dir / "kitti_odometry_provenance.json"
+    stale_manifest.write_text(
+        json.dumps(
+            {
+                "raw_root": "/private/var/folders/fake/pytest-navigation/kitti_odometry",
+                "processed_output": "/private/var/folders/fake/pytest-navigation/navigation_orius.csv",
+                "checked_locations": [
+                    "/Users/example/repo/data/navigation/raw/kitti_odometry",
+                    "/private/var/folders/fake/pytest-navigation/kitti_odometry",
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(refresh, "NAVIGATION_DATA_DIR", navigation_dir)
+    monkeypatch.setattr(refresh, "resolve_repo_or_external_raw_dir", lambda *args, **kwargs: None)
+
+    result = refresh.refresh_navigation_manifest()
+    manifest = json.loads(stale_manifest.read_text(encoding="utf-8"))
+
+    assert result["status"] == "blocked"
+    assert result["blocker"] == "navigation_kitti_runtime_missing"
+    assert manifest["status"] == "blocked"
+    assert manifest["raw_root"] == str(raw_dir / "kitti_odometry")
+    assert manifest["processed_output"] == str(processed_dir / "navigation_orius.csv")
+    assert "/private/var/folders/fake/pytest-navigation/kitti_odometry" not in manifest["checked_locations"]
 
 
 def test_refresh_av_manifest_records_legacy_only_when_waymo_missing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -99,7 +139,7 @@ def test_refresh_aerospace_manifest_writes_runtime_contract_when_runtime_surface
     runtime_contract = json.loads((raw_dir / "multi_flight_runtime_contract.json").read_text(encoding="utf-8"))
 
     assert result["status"] == "trainable_only"
-    assert result["blocker"] == "aerospace_real_multi_flight_runtime_missing"
+    assert result["blocker"] == "aerospace_realflight_runtime_missing"
     assert runtime_contract["present"] is False
 
 
@@ -128,6 +168,17 @@ def test_refresh_aerospace_manifest_records_public_adsb_support(
             "ts_utc": ["2026-01-01T00:00:00Z"],
         }
     ).to_csv(processed_dir / "aerospace_orius.csv", index=False)
+    pd.DataFrame(
+        {
+            "flight_id": ["pub-1"],
+            "step": [0],
+            "altitude_m": [3200.0],
+            "airspeed_kt": [175.0],
+            "bank_angle_deg": [4.0],
+            "fuel_remaining_pct": [81.0],
+            "ts_utc": ["2026-01-01T00:00:00Z"],
+        }
+    ).to_csv(processed_dir / "aerospace_public_adsb_runtime.csv", index=False)
     (runtime_dir / "adsb.csv").write_text("flight_id,step\nf1,0\n", encoding="utf-8")
     (raw_dir / "public_adsb_proxy_provenance.json").write_text('{"lane_type":"bounded_public_adsb_runtime"}', encoding="utf-8")
 
@@ -146,8 +197,8 @@ def test_refresh_aerospace_manifest_records_public_adsb_support(
     runtime_contract = json.loads((raw_dir / "multi_flight_runtime_contract.json").read_text(encoding="utf-8"))
 
     assert result["status"] == "trainable_plus_public_support"
-    assert result["blocker"] == "aerospace_real_multi_flight_runtime_missing"
-    assert runtime_contract["present"] is True
+    assert result["blocker"] == "aerospace_realflight_runtime_missing"
+    assert runtime_contract["present"] is False
     assert runtime_contract["surface_status"] == "public_adsb_proxy_only"
     assert runtime_contract["public_adsb_proxy_manifest"] is not None
 
@@ -177,6 +228,18 @@ def test_refresh_aerospace_manifest_transitions_public_support_to_refreshed_when
             "ts_utc": ["2026-01-01T00:00:00Z"],
         }
     ).to_csv(processed_dir / "aerospace_orius.csv", index=False)
+    pd.DataFrame(
+        {
+            "flight_id": ["rf-1"],
+            "step": [0],
+            "altitude_m": [3300.0],
+            "airspeed_kt": [185.0],
+            "bank_angle_deg": [5.0],
+            "fuel_remaining_pct": [82.0],
+            "ts_utc": ["2026-01-01T00:00:00Z"],
+        }
+    ).to_csv(processed_dir / "aerospace_realflight_runtime.csv", index=False)
+    (raw_dir / "aerospace_realflight_provenance.json").write_text('{"lane_type":"official_provider_real_flight_runtime"}', encoding="utf-8")
     (runtime_dir / "provider_trajectory.csv").write_text("flight_id,ts_utc,altitude_ft\n", encoding="utf-8")
 
     monkeypatch.setattr(refresh, "AEROSPACE_DATA_DIR", aerospace_dir)

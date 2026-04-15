@@ -1,7 +1,15 @@
-"""Build features for AV (autonomous vehicle) domain from ORIUS trajectory CSV.
+"""Build AV artifacts.
 
-Reads data/av/processed/av_trajectories_orius.csv, adds lag features,
-produces features.parquet and splits for training.
+Two modes are supported:
+
+1. Scenario-native Waymo validation mode.
+   Input is the repo-local TFRecord shard directory under
+   ``data/orius_av/raw/waymo_motion/validation`` and the output is the Stage 2
+   validation surface in ``data/orius_av/av/processed``.
+
+2. Legacy CSV mode.
+   Input is a processed 1D trajectory CSV and the output is the older
+   ``features.parquet`` plus time-based splits.
 """
 from __future__ import annotations
 
@@ -10,17 +18,18 @@ from pathlib import Path
 
 import pandas as pd
 
+from orius.av_waymo import build_validation_surface
 from orius.data_pipeline.split_time_series import time_split_with_calibration
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_RAW = REPO_ROOT / "data" / "av" / "processed" / "av_trajectories_orius.csv"
-DEFAULT_OUT = REPO_ROOT / "data" / "av" / "processed"
+DEFAULT_RAW = REPO_ROOT / "data" / "orius_av" / "raw" / "waymo_motion" / "validation"
+DEFAULT_OUT = REPO_ROOT / "data" / "orius_av" / "av" / "processed"
 TARGET = "speed_mps"
 LAG_STEPS = [1, 2, 4, 8, 12, 24]
 
 
-def build_features(
+def _build_legacy_features(
     csv_path: Path,
     out_dir: Path,
     *,
@@ -29,7 +38,7 @@ def build_features(
     val_ratio: float = 0.10,
     gap_hours: float = 0.01,
 ) -> Path:
-    """Build AV features and splits."""
+    """Build legacy 1D AV features and splits from a processed CSV."""
     df = pd.read_csv(csv_path)
     for col in ["position_m", "speed_mps", "speed_limit_mps"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
@@ -79,16 +88,57 @@ def build_features(
     return features_path
 
 
+def build_features(
+    input_path: Path,
+    out_dir: Path,
+    *,
+    train_ratio: float = 0.70,
+    calibration_ratio: float = 0.05,
+    val_ratio: float = 0.10,
+    gap_hours: float = 0.01,
+    max_shards: int | None = None,
+    max_scenarios: int | None = None,
+    skip_actor_tracks: bool = False,
+) -> Path:
+    """Dispatch to the scenario-native or legacy AV builder."""
+    if input_path.is_dir() or input_path.suffix.startswith(".tfrecord"):
+        report = build_validation_surface(
+            raw_dir=input_path,
+            out_dir=out_dir,
+            max_shards=max_shards,
+            max_scenarios=max_scenarios,
+            write_actor_tracks=not skip_actor_tracks,
+        )
+        return Path(report["artifacts"]["scenario_index"])
+    return _build_legacy_features(
+        input_path,
+        out_dir,
+        train_ratio=train_ratio,
+        calibration_ratio=calibration_ratio,
+        val_ratio=val_ratio,
+        gap_hours=gap_hours,
+    )
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build AV features for training")
-    parser.add_argument("--in", dest="input", type=Path, default=DEFAULT_RAW, help="Input CSV")
+    parser = argparse.ArgumentParser(description="Build AV features or Waymo validation artifacts")
+    parser.add_argument("--in", dest="input", type=Path, default=DEFAULT_RAW, help="Input CSV or raw TFRecord directory")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="Output directory")
+    parser.add_argument("--max-shards", type=int, default=None, help="Limit raw shard scans in scenario-native mode")
+    parser.add_argument("--max-scenarios", type=int, default=None, help="Limit scenario scans in scenario-native mode")
+    parser.add_argument("--skip-actor-tracks", action="store_true", help="Skip actor_tracks.parquet in scenario-native mode")
     args = parser.parse_args()
     if not args.input.exists():
-        print(f"Input not found: {args.input}. Run: make av-datasets")
+        print(f"Input not found: {args.input}")
         return 1
-    build_features(args.input, args.out)
-    print(f"AV features -> {args.out / 'features.parquet'}")
+    artifact_path = build_features(
+        args.input,
+        args.out,
+        max_shards=args.max_shards,
+        max_scenarios=args.max_scenarios,
+        skip_actor_tracks=args.skip_actor_tracks,
+    )
+    print(f"AV artifact -> {artifact_path}")
     return 0
 
 

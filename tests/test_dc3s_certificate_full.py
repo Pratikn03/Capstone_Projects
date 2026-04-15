@@ -12,7 +12,10 @@ from orius.dc3s.certificate import (
     compute_model_hash,
     get_certificate,
     make_certificate,
+    recompute_certificate_hash,
     store_certificate,
+    verify_certificate,
+    verify_certificate_chain,
 )
 
 
@@ -89,6 +92,41 @@ class TestMakeCertificate:
     def test_guarantee_fail_reasons_populated(self):
         cert = _cert(guarantee_fail_reasons=["soc_invariance", "power_bounds"])
         assert cert["guarantee_fail_reasons"] == ["soc_invariance", "power_bounds"]
+
+    def test_verify_certificate_accepts_untampered_payload(self):
+        cert = _cert()
+        verification = verify_certificate(cert)
+        assert verification["valid"] is True
+        assert verification["expected_hash"] == cert["certificate_hash"]
+
+    def test_verify_certificate_detects_payload_tamper(self):
+        cert = _cert()
+        cert["safe_action"] = {"charge_mw": 99.0, "discharge_mw": 0.0}
+        verification = verify_certificate(cert)
+        assert verification["valid"] is False
+        assert verification["reason"] == "hash_mismatch"
+
+    def test_recompute_certificate_hash_matches_original_hash(self):
+        cert = _cert()
+        assert recompute_certificate_hash(cert) == cert["certificate_hash"]
+
+    def test_verify_certificate_chain_detects_prev_hash_tamper(self):
+        c1 = _cert(cmd_id="1")
+        c2 = _cert(cmd_id="2", prev_hash=c1["certificate_hash"])
+        c3 = _cert(cmd_id="3", prev_hash=c2["certificate_hash"])
+        c3["prev_hash"] = "tampered"
+        c3["certificate_hash"] = recompute_certificate_hash(c3)
+        verification = verify_certificate_chain([c1, c2, c3])
+        assert verification["valid"] is False
+        assert verification["reason"] == "prev_hash_mismatch"
+
+    def test_verify_certificate_chain_detects_hash_tamper(self):
+        c1 = _cert(cmd_id="1")
+        c2 = _cert(cmd_id="2", prev_hash=c1["certificate_hash"])
+        c2["intervention_reason"] = "tampered"
+        verification = verify_certificate_chain([c1, c2])
+        assert verification["valid"] is False
+        assert verification["reason"] == "hash_mismatch"
 
 
 class TestComputeModelHash:

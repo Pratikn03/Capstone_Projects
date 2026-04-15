@@ -12,6 +12,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 EXTERNAL_DATA_ROOT_ENV = "ORIUS_EXTERNAL_DATA_ROOT"
+STRICT_EXTERNAL_ROOT_ENV = "ORIUS_STRICT_EXTERNAL_ROOT"
+DEFAULT_STRICT_EXTERNAL_ROOT = Path.home() / "orius_external_data"
 
 
 @dataclass(frozen=True)
@@ -73,6 +75,29 @@ def get_external_data_root(explicit_root: Path | None = None, *, required: bool 
             f"External data root does not exist: {root}. Set {EXTERNAL_DATA_ROOT_ENV} to a valid directory."
         )
     return root
+
+
+def get_strict_external_root(explicit_root: Path | None = None) -> Path:
+    """Return the canonical strict external root used by gated workflows.
+
+    Resolution order:
+    1. explicit strict root
+    2. ORIUS_STRICT_EXTERNAL_ROOT
+    3. ORIUS_EXTERNAL_DATA_ROOT
+    4. ~/orius_external_data
+    """
+    if explicit_root is not None:
+        return Path(explicit_root).expanduser().resolve()
+
+    strict_env = os.environ.get(STRICT_EXTERNAL_ROOT_ENV, "").strip()
+    if strict_env:
+        return Path(strict_env).expanduser().resolve()
+
+    external_root = get_external_data_root(required=False)
+    if external_root is not None:
+        return external_root.resolve()
+
+    return DEFAULT_STRICT_EXTERNAL_ROOT.expanduser().resolve()
 
 
 def get_external_dataset_dir(

@@ -3,7 +3,9 @@
 A point robot moves in a bounded 2D arena. Safety constraint: stay
 inside the arena and outside forbidden zones (circular obstacles).
 Sensor faults add bias/noise to position readings. The track
-demonstrates that the ORIUS metrics generalise beyond batteries.
+demonstrates that the ORIUS metrics generalise beyond batteries. When a
+processed KITTI row is supplied, the closed-loop surrogate is anchored to the
+next real row instead of the synthetic support-tier trace.
 """
 from __future__ import annotations
 
@@ -36,26 +38,37 @@ class NavigationTrackAdapter(BenchmarkAdapter):
         self._pos = np.zeros(2)
         self._vel = np.zeros(2)
         self._rng: np.random.Generator | None = None
-        self._real_rows: list[dict[str, float]] = []
+        self._episodes: list[list[dict[str, float]]] = []
+        self._episode: list[dict[str, float]] = []
+        self._episode_idx = 0
         if dataset_path is not None:
             from orius.orius_bench.real_data_loader import load_navigation_rows
 
-            self._real_rows = load_navigation_rows(Path(dataset_path))
+            rows = load_navigation_rows(Path(dataset_path))
+            grouped: dict[str, list[dict[str, float]]] = {}
+            for row in rows:
+                key = str(row.get("robot_id", row.get("source_sequence", "robot-0")))
+                grouped.setdefault(key, []).append(dict(row))
+            for episode in grouped.values():
+                episode.sort(key=lambda row: int(row.get("step", 0)))
+                self._episodes.append(episode)
 
     # -- BenchmarkAdapter ------------------------------------------------
 
     def reset(self, seed: int = 42) -> Mapping[str, Any]:
         self._rng = np.random.default_rng(seed)
-        if self._real_rows:
+        if self._episodes:
+            episode = self._episodes[int(self._rng.integers(0, len(self._episodes)))]
             near_limit = [
-                row for row in self._real_rows
-                if abs(float(row.get("x", 0.0))) >= self._arena * 0.75
-                or abs(float(row.get("y", 0.0))) >= self._arena * 0.75
+                idx for idx, row in enumerate(episode)
+                if float(row.get("x", 0.0)) >= self._arena * 0.75
+                or float(row.get("y", 0.0)) >= self._arena * 0.75
             ]
             if not near_limit:
-                near_limit = self._real_rows
-            idx = int(np.random.default_rng(seed).integers(0, len(near_limit)))
-            row = near_limit[idx]
+                near_limit = [0]
+            self._episode = episode
+            self._episode_idx = int(near_limit[int(self._rng.integers(0, len(near_limit)))])
+            row = self._episode[self._episode_idx]
             self._pos = np.array([float(row["x"]), float(row["y"])], dtype=float)
             self._vel = np.array([float(row["vx"]), float(row["vy"])], dtype=float)
             return self.true_state()
@@ -66,7 +79,7 @@ class NavigationTrackAdapter(BenchmarkAdapter):
 
     @property
     def using_real_data(self) -> bool:
-        return bool(self._real_rows)
+        return bool(self._episodes)
 
     def true_state(self) -> Mapping[str, Any]:
         return {
@@ -115,6 +128,23 @@ class NavigationTrackAdapter(BenchmarkAdapter):
         }
 
     def step(self, action: Mapping[str, Any]) -> Mapping[str, Any]:
+        if self._episodes:
+            ax = float(action.get("ax", 0))
+            ay = float(action.get("ay", 0))
+            mag = math.hypot(ax, ay)
+            if mag > self._speed > 0:
+                scale = self._speed / mag
+                ax *= scale
+                ay *= scale
+            real_next = self._episode[min(self._episode_idx + 1, len(self._episode) - 1)]
+            next_vel = self._vel + np.array([ax, ay]) * self._dt
+            next_vel += 0.20 * (np.array([float(real_next["vx"]), float(real_next["vy"])]) - self._vel)
+            self._pos = self._pos + next_vel * self._dt + 0.10 * (
+                np.array([float(real_next["x"]), float(real_next["y"])]) - self._pos
+            )
+            self._vel = next_vel
+            self._episode_idx = min(self._episode_idx + 1, len(self._episode) - 1)
+            return dict(self.true_state())
         ax = float(action.get("ax", 0))
         ay = float(action.get("ay", 0))
         # Clip acceleration

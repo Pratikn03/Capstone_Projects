@@ -24,6 +24,7 @@ def test_domain_closure_matrix_builds_with_bounded_p5_p6_surfaces(tmp_path: Path
             "1",
             "--horizon",
             "24",
+            "--allow-support-tier",
             "--out",
             str(validation_out),
         ],
@@ -75,8 +76,16 @@ def test_domain_closure_matrix_builds_with_bounded_p5_p6_surfaces(tmp_path: Path
     assert closure_by_domain["battery"]["resulting_tier"] == "reference"
     assert closure_by_domain["industrial"]["resulting_tier"] == "proof_validated"
     assert closure_by_domain["healthcare"]["resulting_tier"] == "proof_validated"
-    assert closure_by_domain["navigation"]["exact_blocker"] == "navigation_real_data_gap"
-    assert closure_by_domain["aerospace"]["exact_blocker"] == "aerospace_real_multi_flight_runtime_missing"
+    assert closure_by_domain["navigation"]["resulting_tier"] == "shadow_synthetic"
+    assert closure_by_domain["aerospace"]["resulting_tier"] == "experimental"
+    assert closure_by_domain["navigation"]["exact_blocker"] in {
+        "navigation_kitti_runtime_missing",
+        "real_data_row_cleared",
+    }
+    assert closure_by_domain["aerospace"]["exact_blocker"] in {
+        "aerospace_realflight_runtime_missing",
+        "realflight_row_cleared",
+    }
     assert closure_by_domain["vehicle"]["safe_action_soundness_status"] in {"pass", "fail"}
 
     p5_by_domain = {row["domain"]: row for row in p5_rows}

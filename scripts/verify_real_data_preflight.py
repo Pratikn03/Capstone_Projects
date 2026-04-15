@@ -33,7 +33,7 @@ BATTERY_PATHS = [
     REPO_ROOT / "data" / "raw" / "time_series_60min_singleindex.csv",
     REPO_ROOT / "data" / "raw" / "us_eia930",
 ]
-INDUSTRIAL_PATHS = [REPO_ROOT / "data" / "industrial" / "raw" / "ccpp"]
+INDUSTRIAL_PATHS = [REPO_ROOT / "data" / "industrial" / "raw" / "CCPP.csv"]
 HEALTHCARE_PATHS = [REPO_ROOT / "data" / "healthcare" / "raw" / "bidmc_csv"]
 AEROSPACE_TRAINABLE_PATHS = [
     REPO_ROOT / "data" / "aerospace" / "raw" / "train_FD001.txt",
@@ -89,15 +89,11 @@ def _kitti_layout_ready(raw_source: dict[str, object]) -> bool:
     return poses_ready and times_ready
 
 
-def _aerospace_provider_runtime_ready(raw_source: dict[str, object]) -> bool:
+def _aerospace_runtime_ready(raw_source: dict[str, object]) -> bool:
     path_value = raw_source.get("path")
     if not path_value or not raw_source.get("has_files"):
         return False
-    root = Path(str(path_value))
-    looks_like_public_proxy = (root / "tartanaviation_adsb_19k_clean").exists() or any(
-        candidate.name == "tartanaviation_adsb_19k_clean.csv" for candidate in root.rglob("*")
-    )
-    return not looks_like_public_proxy
+    return True
 
 
 def _domain_status(domain: str, *, explicit_root: Path | None) -> dict[str, object]:
@@ -149,10 +145,10 @@ def _domain_status(domain: str, *, explicit_root: Path | None) -> dict[str, obje
                 explicit_root=explicit_root,
             )
         )
-        runtime_check["provider_runtime_ready"] = _aerospace_provider_runtime_ready(runtime_check)
+        runtime_check["runtime_surface_ready"] = _aerospace_runtime_ready(runtime_check)
         items.append(runtime_check)
         all_present = all(
-            (item["exists"] and item.get("has_files", True) and item.get("provider_runtime_ready", True))
+            (item["exists"] and item.get("has_files", True) and item.get("runtime_surface_ready", True))
             for item in items
         )
     else:

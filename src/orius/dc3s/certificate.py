@@ -89,6 +89,9 @@ def make_certificate(
     half_life_steps: int | None = None,
     expires_at_step: int | None = None,
     validity_status: str | None = None,
+    runtime_surface: str | None = None,
+    closure_tier: str | None = None,
+    reliability_feature_basis: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "command_id": command_id,
@@ -131,9 +134,66 @@ def make_certificate(
         "half_life_steps": int(half_life_steps) if half_life_steps is not None else None,
         "expires_at_step": int(expires_at_step) if expires_at_step is not None else None,
         "validity_status": validity_status,
+        "runtime_surface": None if runtime_surface in (None, "") else str(runtime_surface),
+        "closure_tier": None if closure_tier in (None, "") else str(closure_tier),
+        "reliability_feature_basis": dict(reliability_feature_basis or {}),
     }
     payload["certificate_hash"] = _sha256_bytes(_canonical_bytes(payload))
     return _to_json_safe(payload)
+
+
+def recompute_certificate_hash(certificate: Mapping[str, Any]) -> str:
+    payload = dict(certificate)
+    payload.pop("certificate_hash", None)
+    return _sha256_bytes(_canonical_bytes(payload))
+
+
+def verify_certificate(certificate: Mapping[str, Any]) -> dict[str, Any]:
+    observed_hash = certificate.get("certificate_hash")
+    expected_hash = recompute_certificate_hash(certificate)
+    valid = isinstance(observed_hash, str) and observed_hash == expected_hash
+    return {
+        "valid": bool(valid),
+        "observed_hash": observed_hash,
+        "expected_hash": expected_hash,
+        "reason": None if valid else "hash_mismatch",
+    }
+
+
+def verify_certificate_chain(certificates: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
+    checked = 0
+    previous_hash: str | None = None
+    for index, certificate in enumerate(certificates):
+        verification = verify_certificate(certificate)
+        if not verification["valid"]:
+            return {
+                "valid": False,
+                "checked": checked,
+                "failed_index": index,
+                "reason": str(verification["reason"]),
+                "expected_prev_hash": previous_hash,
+                "observed_prev_hash": certificate.get("prev_hash"),
+            }
+        current_prev_hash = certificate.get("prev_hash")
+        if current_prev_hash != previous_hash:
+            return {
+                "valid": False,
+                "checked": checked,
+                "failed_index": index,
+                "reason": "prev_hash_mismatch",
+                "expected_prev_hash": previous_hash,
+                "observed_prev_hash": current_prev_hash,
+            }
+        previous_hash = str(certificate.get("certificate_hash"))
+        checked += 1
+    return {
+        "valid": True,
+        "checked": checked,
+        "failed_index": None,
+        "reason": None,
+        "expected_prev_hash": previous_hash,
+        "observed_prev_hash": previous_hash,
+    }
 
 
 def _table_columns(conn: duckdb.DuckDBPyConnection, table_name: str) -> set[str]:

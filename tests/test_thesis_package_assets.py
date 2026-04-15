@@ -21,7 +21,36 @@ ACTIVE_SCAN_SUFFIXES = {".md", ".tex", ".csv", ".json", ".py", ".yaml", ".yml", 
 LEGACY_PATTERN = re.compile(
     r"Paper~?[1-6]\b|Papers~?[1-6]|Papers~?2--6|program-first|battery-first"
 )
+ALLOWED_LEGACY_REFERENCES: dict[Path, tuple[re.Pattern[str], ...]] = {
+    REPO_ROOT / "chapters" / "ch01_introduction.tex": (
+        re.compile(r"supersedes the earlier battery-first ORIUS monograph", re.IGNORECASE),
+    ),
+}
 MERGE_MARKER_PATTERN = re.compile(r"^(<<<<<<< .+|=======|>>>>>>> .+)$", re.MULTILINE)
+LEGACY_NONCANONICAL_MONOGRAPH_FILES = [
+    "app_ad_annotated_bibliography_map.tex",
+    "app_ae_expanded_reviewer_gap_analysis.tex",
+    "app_af_domain_protocol_cards.tex",
+    "app_ag_module_claim_crosswalk.tex",
+    "app_ah_publication_artifact_index.tex",
+    "app_ai_formula_and_term_register.tex",
+    "ch01_physical_ai_safety.tex",
+    "ch02_oasg_claim_boundary.tex",
+    "ch03_related_work_universal.tex",
+    "ch04_universal_runtime_layer.tex",
+    "ch05_detect_calibrate_constrain_shield_certify.tex",
+    "ch06_theory_bridge.tex",
+    "ch07_system_benchmark_governance.tex",
+    "ch08_battery_bridge.tex",
+    "ch09_av_domain.tex",
+    "ch10_industrial_domain.tex",
+    "ch11_healthcare_domain.tex",
+    "ch12_navigation_domain.tex",
+    "ch13_aerospace_domain.tex",
+    "ch14_cross_domain_synthesis.tex",
+    "ch15_societal_impact_and_roadmap.tex",
+    "ch16_conclusion_monograph.tex",
+]
 
 
 def _iter_active_text_surfaces() -> list[Path]:
@@ -144,6 +173,12 @@ def test_final_project_artifacts_exist() -> None:
         REPO_ROOT / "paper" / "assets" / "figures" / "fig_orius_equal_domain_gate_timeline.png",
         REPO_ROOT / "paper" / "assets" / "figures" / "fig_orius_calibration_coverage_matrix.png",
         REPO_ROOT / "paper" / "assets" / "figures" / "fig_orius_runtime_governance_matrix.png",
+        REPO_ROOT / "paper" / "review" / "generated" / "review_bibliography_map.tex",
+        REPO_ROOT / "paper" / "review" / "generated" / "review_gap_analysis.tex",
+        REPO_ROOT / "paper" / "review" / "generated" / "review_domain_protocol_cards.tex",
+        REPO_ROOT / "paper" / "review" / "generated" / "review_module_claim_crosswalk.tex",
+        REPO_ROOT / "paper" / "review" / "generated" / "review_publication_artifact_index.tex",
+        REPO_ROOT / "paper" / "review" / "generated" / "review_formula_and_term_register.tex",
     ]
 
     missing = [str(path.relative_to(REPO_ROOT)) for path in required if not path.exists()]
@@ -186,9 +221,12 @@ def test_active_surfaces_are_monograph_native() -> None:
     violations: list[str] = []
     for path in _iter_active_text_surfaces():
         text = path.read_text(encoding="utf-8")
+        filtered_text = text
+        for allowed_pattern in ALLOWED_LEGACY_REFERENCES.get(path, ()):
+            filtered_text = allowed_pattern.sub("", filtered_text)
         if MERGE_MARKER_PATTERN.search(text):
             violations.append(f"merge markers in {path.relative_to(REPO_ROOT)}")
-        if LEGACY_PATTERN.search(text):
+        if LEGACY_PATTERN.search(filtered_text):
             violations.append(f"legacy narrative in {path.relative_to(REPO_ROOT)}")
     assert violations == []
 
@@ -268,6 +306,25 @@ def test_dissertation_entrypoint_uses_curated_13_chapter_spine() -> None:
     ]
 
 
+def test_legacy_noncanonical_monograph_files_are_deleted() -> None:
+    lingering = [
+        name for name in LEGACY_NONCANONICAL_MONOGRAPH_FILES
+        if (REPO_ROOT / "paper" / "monograph" / name).exists()
+    ]
+    assert lingering == []
+
+
+def test_legacy_noncanonical_monograph_build_artifacts_are_absent() -> None:
+    lingering = [
+        path.name
+        for legacy_name in LEGACY_NONCANONICAL_MONOGRAPH_FILES
+        for suffix in (".aux", ".out", ".toc", ".lof", ".lot")
+        for path in [(REPO_ROOT / "paper" / "monograph" / Path(legacy_name).with_suffix(suffix))]
+        if path.exists()
+    ]
+    assert lingering == []
+
+
 def test_dissertation_core_chapters_reference_governed_assets() -> None:
     chapter7 = (REPO_ROOT / "paper" / "monograph" / "ch07_witness_domain_implementation.tex").read_text(encoding="utf-8")
     chapter8 = (REPO_ROOT / "paper" / "monograph" / "ch08_witness_results_and_failure_analysis.tex").read_text(encoding="utf-8")
@@ -290,8 +347,8 @@ def test_dissertation_core_chapters_reference_governed_assets() -> None:
 
     assert "tbl_orius_equal_domain_parity_matrix" in chapter9
     assert "fig_multi_domain_validation" in chapter9
-    assert "shared domain template" in chapter9.lower()
-    assert "artifact surface, while canonical raw-data closure remains incomplete" in chapter9
+    assert "transfer as a recipe" in chapter9.lower()
+    assert "artifact surface. Navigation remains blocked by the missing real-data closure row" in chapter9
     assert "tbl_ch40_44_cross_domain_support" not in chapter9
 
     assert "fig_blackout_halflife.png" in chapter10
@@ -301,7 +358,8 @@ def test_dissertation_core_chapters_reference_governed_assets() -> None:
     assert "policy-driven runtime governance layer" in chapter12
 
     assert "Navigation remains blocked" in chapter13
-    assert "multi-flight runtime validation surface with material post-repair gain" in chapter13
+    assert "defended multi-flight" in chapter13
+    assert "runtime validation surface with material post-repair gain" in chapter13
     assert "tbl_orius_deployment_validation_scope" not in chapter13
 
 
@@ -315,8 +373,8 @@ def test_93plus_support_tables_are_referenced_in_manuscript_and_scripts() -> Non
     assert "tbl_orius_equal_domain_parity_matrix" in chapter9
     assert "fig_multi_domain_validation" in chapter9
     assert "fig_orius_runtime_governance_matrix.png" in chapter12
-    assert "In that exact sense, the dissertation" in chapter13
-    assert "universal in architecture, tiered in evidence" in chapter13
+    assert "In that exact sense," in chapter13
+    assert "the dissertation is universal in architecture, tiered in evidence." in chapter13
     assert "equal-domain closure remains an empirical" in chapter13
     assert "program that must be earned" in chapter13
     assert "bounded_93_candidate" in scorecard

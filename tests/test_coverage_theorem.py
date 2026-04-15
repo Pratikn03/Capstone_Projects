@@ -28,7 +28,7 @@ def test_verify_inflation_geq_one_valid() -> None:
 
 def test_verify_inflation_geq_one_raises_when_below_one() -> None:
     """Inflation < 1 violates the coverage guarantee — must raise."""
-    with pytest.raises(ValueError, match="inflation factor must be"):
+    with pytest.raises(ValueError, match="state inflation must be >= 1"):
         verify_inflation_geq_one(0.5)
 
 
@@ -95,7 +95,7 @@ def test_assert_coverage_guarantee_fails_with_low_coverage() -> None:
     # Intervals far from the true values → essentially 0% coverage
     lo = np.full(500, 100.0)
     hi = np.full(500, 101.0)
-    with pytest.raises(AssertionError, match="coverage guarantee violated"):
+    with pytest.raises(AssertionError, match="Empirical coverage="):
         assert_coverage_guarantee(y, lo, hi, alpha=0.10, tolerance=0.02)
 
 

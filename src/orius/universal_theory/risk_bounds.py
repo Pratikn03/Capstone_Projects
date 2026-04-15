@@ -7,6 +7,14 @@ from typing import Any
 import numpy as np
 
 
+RISK_ENVELOPE_ASSUMPTIONS: tuple[str, ...] = (
+    "A theorem-local predictable per-step residual-risk budget is available.",
+    "The budget may be instantiated as r_t <= alpha * (1 - w_t) when a domain-specific calibration contract justifies that envelope.",
+    "w_t is a runtime reliability score, not a probability by definition.",
+    "The envelope is marginal/expected-episode control, not a conditional coverage guarantee for every observation.",
+)
+
+
 def _as_flat_float_array(values: np.ndarray | list[float], *, name: str) -> np.ndarray:
     arr = np.asarray(values, dtype=float).reshape(-1)
     if arr.size == 0:
@@ -68,11 +76,22 @@ def assert_coverage_guarantee(
 
 
 def compute_step_risk_bound(reliability_w: float, *, alpha: float = 0.10) -> float:
-    """Conservative one-step violation budget under degraded observation."""
+    """Return the chapter-level per-step budget alpha * (1 - w_t).
+
+    This helper computes the battery-style risk-envelope budget used by the
+    narrowed T3 surface.  It does not claim that the budget follows from
+    conformal coverage alone; that interpretation requires a separate
+    theorem-local calibration argument.
+    """
     w = float(min(1.0, max(0.0, reliability_w)))
     if not (0.0 <= float(alpha) <= 1.0):
         raise ValueError("alpha must lie in [0, 1].")
     return float(alpha * (1.0 - w))
+
+
+def risk_envelope_assumptions() -> tuple[str, ...]:
+    """Return the explicit assumptions behind the ORIUS risk-envelope helpers."""
+    return RISK_ENVELOPE_ASSUMPTIONS
 
 
 def compute_episode_risk_bound(
@@ -80,7 +99,11 @@ def compute_episode_risk_bound(
     *,
     alpha: float = 0.10,
 ) -> dict[str, float]:
-    """Episode-level degradation-sensitive envelope E[V] <= alpha (1-w_bar) T."""
+    """Episode-level degradation-sensitive envelope E[V] <= alpha (1-w_bar) T.
+
+    The return payload includes the explicit assumptions used so downstream
+    manuscript and audit surfaces can avoid overstating what this helper proves.
+    """
     w = _as_flat_float_array(reliability, name="reliability")
     if not (0.0 <= float(alpha) <= 1.0):
         raise ValueError("alpha must lie in [0, 1].")
@@ -96,6 +119,9 @@ def compute_episode_risk_bound(
         "mean_reliability_w": mean_reliability,
         "bound_expected_violations": expected_violations,
         "bound_tsvr": float(expected_violations / max(horizon, 1)),
+        "theorem_surface": "T3 risk-envelope aggregation",
+        "interpretation": "Conservative episode-level envelope under an explicit predictable per-step risk-budget contract.",
+        "assumptions_used": list(RISK_ENVELOPE_ASSUMPTIONS),
     }
 
 

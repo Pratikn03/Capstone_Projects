@@ -12,6 +12,9 @@ from .certificate import (
     get_certificate,
     compute_model_hash,
     compute_config_hash,
+    recompute_certificate_hash,
+    verify_certificate,
+    verify_certificate_chain,
 )
 from .state import DC3SStateStore
 from .rac_cert import (
@@ -62,6 +65,10 @@ from .theoretical_guarantees import (
     compute_adaptive_regret_bound,
     assert_sublinear_regret,
     simulate_adaptive_tracking,
+    compute_universal_impossibility_bound,
+    compute_stylized_frontier_lower_bound,
+    evaluate_structural_transfer,
+    TransferContractResult,
     THEOREM_REGISTER,
 )
 
@@ -84,6 +91,9 @@ __all__ = [
     "get_certificate",
     "compute_model_hash",
     "compute_config_hash",
+    "recompute_certificate_hash",
+    "verify_certificate",
+    "verify_certificate_chain",
     "DC3SStateStore",
     "RACCertConfig",
     "RACCertModel",
@@ -122,5 +132,9 @@ __all__ = [
     "compute_adaptive_regret_bound",
     "assert_sublinear_regret",
     "simulate_adaptive_tracking",
+    "compute_universal_impossibility_bound",
+    "compute_stylized_frontier_lower_bound",
+    "evaluate_structural_transfer",
+    "TransferContractResult",
     "THEOREM_REGISTER",
 ]

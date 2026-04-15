@@ -12,8 +12,9 @@ import math
 from typing import Any, Mapping, Sequence
 
 from orius.dc3s.domain_adapter import DomainAdapter
-from orius.dc3s.quality import compute_reliability
 from orius.dc3s.certificate import make_certificate
+from orius.universal_framework.reliability_runtime import assess_domain_reliability
+from orius.universal_framework.runtime_evidence import resolve_runtime_evidence
 
 
 def _f(x: Any, default: float) -> float:
@@ -28,20 +29,32 @@ class AerospaceDomainAdapter(DomainAdapter):
 
     def __init__(self, cfg: Mapping[str, Any] | None = None):
         self._cfg = dict(cfg or {})
+        self.domain_id = "aerospace"
         ac = self._cfg.get("aerospace", {})
         self._v_min_kt = _f(ac.get("v_min_kt"), 60.0)
         self._v_max_kt = _f(ac.get("v_max_kt"), 350.0)
         self._max_bank_deg = _f(ac.get("max_bank_deg"), 30.0)
         self._fuel_min_pct = _f(ac.get("fuel_min_pct"), 10.0)
         self._expected_cadence_s = _f(self._cfg.get("expected_cadence_s"), 1.0)
+        evidence = resolve_runtime_evidence(self.domain_id, self._cfg)
+        self._runtime_surface = evidence.runtime_surface
+        self._closure_tier = evidence.closure_tier
+        self._maturity_tier = evidence.maturity_tier
+        self._fallback_policy = evidence.fallback_policy
+        self._exact_blocker = evidence.exact_blocker
 
     def capability_profile(self) -> Mapping[str, Any]:
         return {
-            "safety_surface_type": "approach_energy_envelope_placeholder",
+            "safety_surface_type": "approach_energy_envelope",
             "repair_mode": "bounded_projection",
             "fallback_mode": "envelope_hold",
             "supports_multi_agent_eval": False,
-            "supports_certos_eval": False,
+            "supports_certos_eval": True,
+            "runtime_surface": self._runtime_surface,
+            "closure_tier": self._closure_tier,
+            "maturity_tier": self._maturity_tier,
+            "fallback_policy": self._fallback_policy,
+            "exact_blocker": self._exact_blocker,
         }
 
     def ingest_telemetry(self, raw_packet: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -64,30 +77,24 @@ class AerospaceDomainAdapter(DomainAdapter):
         state: Mapping[str, Any],
         history: Sequence[Mapping[str, Any]] | None = None,
     ) -> tuple[float, Mapping[str, Any]]:
-        """Compute reliability w_t. Map airspeed_kt -> load_mw for OQE."""
-        event = {
-            "ts_utc": state.get("ts_utc", ""),
-            "load_mw": state.get("airspeed_kt", state.get("load_mw", 0.0)),
-            "renewables_mw": state.get("altitude_m", 0.0) / 1000.0,
-        }
-        last_event = None
-        if history:
-            prev = history[-1]
-            last_event = {
-                "ts_utc": prev.get("ts_utc", ""),
-                "load_mw": prev.get("airspeed_kt", prev.get("load_mw", 0.0)),
-                "renewables_mw": prev.get("altitude_m", 0.0) / 1000.0,
-            }
-        reliability_cfg = self._cfg.get("reliability", {})
-        ftit_cfg = self._cfg.get("ftit", {})
-        w_t, flags = compute_reliability(
-            event,
-            last_event,
+        """Compute reliability from aerospace-native telemetry signals."""
+        w_t, flags = assess_domain_reliability(
+            domain_id=self.domain_id,
+            state=state,
+            history=history,
+            feature_sources={
+                "altitude_m": "altitude_m",
+                "airspeed_kt": "airspeed_kt",
+                "bank_angle_deg": "bank_angle_deg",
+                "fuel_remaining_pct": "fuel_remaining_pct",
+            },
             expected_cadence_s=self._expected_cadence_s,
-            reliability_cfg=reliability_cfg,
-            ftit_cfg=ftit_cfg,
+            reliability_cfg=self._cfg.get("reliability", {}),
+            ftit_cfg=self._cfg.get("ftit", {}),
+            runtime_surface=self._runtime_surface,
+            closure_tier=self._closure_tier,
         )
-        return float(w_t), {"flags": flags}
+        return float(w_t), flags
 
     def build_uncertainty_set(
         self,
@@ -129,10 +136,35 @@ class AerospaceDomainAdapter(DomainAdapter):
         cfg: Mapping[str, Any],
     ) -> Mapping[str, Any]:
         """Feasible command set from flight envelope limits."""
+        unc = dict(uncertainty)
+        cstr = dict(constraints)
+        v_lo = _f(unc.get("v_lower_kt"), self._v_min_kt)
+        fuel_lo = _f(unc.get("fuel_lower_pct"), self._fuel_min_pct)
+        max_bank = _f(cstr.get("max_bank_deg"), self._max_bank_deg)
+        throttle_lower = 0.0
+        throttle_upper = 1.0
+        active_constraints: list[str] = []
+        if v_lo < self._v_min_kt:
+            throttle_upper = min(throttle_upper, 0.8)
+            active_constraints.append("low_speed_uncertainty")
+        if fuel_lo < self._fuel_min_pct:
+            throttle_upper = min(throttle_upper, 0.5)
+            active_constraints.append("low_fuel_uncertainty")
+        fallback_throttle = 0.8 if v_lo < self._v_min_kt else 0.5 if fuel_lo < self._fuel_min_pct else 0.6
+        if throttle_lower > throttle_upper:
+            throttle_lower = throttle_upper = fallback_throttle
         return {
-            "uncertainty": dict(uncertainty),
-            "constraints": dict(constraints),
+            "uncertainty": unc,
+            "constraints": cstr,
             "cfg": dict(cfg),
+            "throttle_lower": float(throttle_lower),
+            "throttle_upper": float(throttle_upper),
+            "bank_deg_lower": float(-max_bank),
+            "bank_deg_upper": float(max_bank),
+            "fallback_action": {"throttle": float(fallback_throttle), "bank_deg": 0.0},
+            "projection_surface": "approach_energy_envelope",
+            "active_constraints": active_constraints,
+            "viable": True,
         }
 
     def repair_action(
@@ -146,22 +178,39 @@ class AerospaceDomainAdapter(DomainAdapter):
         cfg: Mapping[str, Any],
     ) -> tuple[Mapping[str, float], Mapping[str, Any]]:
         """Clip command to safe flight envelope. Aerospace: throttle, bank, pitch."""
+        if "throttle_lower" not in tightened_set or "throttle_upper" not in tightened_set:
+            tightened_set = self.tighten_action_set(
+                uncertainty=tightened_set.get("uncertainty", uncertainty),
+                constraints=tightened_set.get("constraints", constraints),
+                cfg=cfg,
+            )
         throttle = _f(candidate_action.get("throttle", candidate_action.get("throttle_pct", 0.0)), 0.0)
         bank_cmd = _f(candidate_action.get("bank_deg", 0.0), 0.0)
         unc = tightened_set.get("uncertainty", uncertainty)
         v_lo = _f(unc.get("v_lower_kt"), self._v_min_kt)
         fuel_lo = _f(unc.get("fuel_lower_pct"), self._fuel_min_pct)
-        throttle_safe = max(0.0, min(1.0, throttle))
-        bank_safe = max(-self._max_bank_deg, min(self._max_bank_deg, bank_cmd))
+        throttle_safe = max(
+            _f(tightened_set.get("throttle_lower"), 0.0),
+            min(_f(tightened_set.get("throttle_upper"), 1.0), throttle),
+        )
+        bank_safe = max(
+            _f(tightened_set.get("bank_deg_lower"), -self._max_bank_deg),
+            min(_f(tightened_set.get("bank_deg_upper"), self._max_bank_deg), bank_cmd),
+        )
+        active_constraints = [str(item) for item in tightened_set.get("active_constraints", ())]
         v_actual = _f(state.get("airspeed_kt", self._v_min_kt), self._v_min_kt)
+        reason = None
         if v_actual < self._v_min_kt:
             # Recovery mode: actual airspeed is below stall — enforce minimum throttle
             throttle_safe = max(throttle_safe, 0.8)
+            reason = "stall_recovery"
         elif v_lo < self._v_min_kt:
             # Uncertainty suggests possible low-speed condition — cap throttle conservatively
             throttle_safe = min(throttle_safe, 0.8)
+            reason = reason or "low_speed_uncertainty"
         if fuel_lo < self._fuel_min_pct:
             throttle_safe = min(throttle_safe, 0.5)
+            reason = reason or "low_fuel_uncertainty"
         repaired = (
             abs(throttle_safe - throttle) > 1e-9 or abs(bank_safe - bank_cmd) > 1e-9
         )
@@ -170,9 +219,16 @@ class AerospaceDomainAdapter(DomainAdapter):
             "repaired": repaired,
             "original_throttle": throttle,
             "original_bank": bank_cmd,
+            "repair_surface": str(tightened_set.get("projection_surface", "approach_energy_envelope")),
         }
         if repaired:
-            meta["intervention_reason"] = "envelope_clamp"
+            meta["intervention_reason"] = reason or (
+                "low_speed_uncertainty"
+                if "low_speed_uncertainty" in active_constraints
+                else "low_fuel_uncertainty"
+                if "low_fuel_uncertainty" in active_constraints
+                else "envelope_clamp"
+            )
         return {
             "throttle": float(throttle_safe),
             "bank_deg": float(bank_safe),
@@ -223,4 +279,7 @@ class AerospaceDomainAdapter(DomainAdapter):
             reliability_w=reliability_w,
             drift_flag=drift_flag,
             inflation=inflation,
+            runtime_surface=self._runtime_surface,
+            closure_tier=self._closure_tier,
+            reliability_feature_basis=reliability.get("reliability_feature_basis"),
         )

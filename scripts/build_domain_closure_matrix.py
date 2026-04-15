@@ -19,9 +19,10 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from _dataset_registry import DATASET_REGISTRY, REPO_ROOT
+from _dataset_registry import DATASET_REGISTRY, REPO_ROOT, get_runtime_dataset_config, repo_path
 from orius.adapters.vehicle import VehicleTrackAdapter
-from orius.certos.runtime import CertOSRuntime
+from orius.certos.domain_policies import policy_for_domain
+from orius.certos.runtime import CertOSConfig, CertOSRuntime
 from orius.multi_agent.protocol import (
     CentralizedCoordinatorProtocol,
     DistributedNegotiationProtocol,
@@ -313,36 +314,54 @@ def _vehicle_soundness_report() -> dict[str, Any]:
 
 def _dataset_chain_status(domain: str, training_report: dict[str, Any]) -> tuple[str, str]:
     verified = set(training_report.get("training_verified_domains", []))
+    cfg = get_runtime_dataset_config(domain)
     if domain == "battery":
         return "locked_reference", "battery_reference_witness"
     if domain == "industrial":
-        return ("verified", "industrial_train_validation_chain_complete") if "industrial" in verified else ("blocked", "industrial_training_gap")
+        return ("verified", str(cfg.exact_blocker)) if "industrial" in verified else ("blocked", "industrial_training_gap")
     if domain == "healthcare":
-        return ("verified", "healthcare_train_validation_chain_complete") if "healthcare" in verified else ("blocked", "healthcare_training_gap")
+        return ("verified", str(cfg.exact_blocker)) if "healthcare" in verified else ("blocked", "healthcare_training_gap")
     if domain == "vehicle":
-        cfg = DATASET_REGISTRY["AV"]
-        processed = (REPO_ROOT / cfg.raw_data_path).exists()
-        features = (REPO_ROOT / cfg.features_path).exists()
+        av_cfg = DATASET_REGISTRY["AV"]
+        processed = (REPO_ROOT / av_cfg.raw_data_path).exists()
+        features = (REPO_ROOT / av_cfg.features_path).exists()
         if processed and features and "av" in verified:
-            return "verified", "av_real_row_present"
+            return "verified", str(DATASET_REGISTRY["AV"].exact_blocker)
         return "blocked", "av_training_surface_incomplete"
     if domain == "navigation":
-        cfg = DATASET_REGISTRY["NAVIGATION"]
         processed = (REPO_ROOT / cfg.raw_data_path).exists()
         features = (REPO_ROOT / cfg.features_path).exists()
-        manifest = REPO_ROOT / "data" / "navigation" / "raw" / "external_build_manifest.json"
-        if processed and features and manifest.exists() and "navigation" in verified:
-            return "real_data_ready", "navigation_real_data_chain_complete"
-        return "blocked", "navigation_real_data_gap"
+        runtime_manifest = repo_path(cfg.runtime_provenance_path)
+        if processed and features and runtime_manifest is not None and runtime_manifest.exists() and "navigation" in verified:
+            return "real_data_ready", "real_data_row_cleared"
+        return "blocked", str(cfg.exact_blocker)
     if domain == "aerospace":
-        cfg = DATASET_REGISTRY["AEROSPACE"]
         processed = (REPO_ROOT / cfg.raw_data_path).exists()
         features = (REPO_ROOT / cfg.features_path).exists()
-        runtime_processed = REPO_ROOT / "data" / "aerospace" / "processed" / "aerospace_realflight_runtime.csv"
-        runtime_manifest = REPO_ROOT / "data" / "aerospace" / "raw" / "aerospace_realflight_provenance.json"
-        if processed and features and runtime_processed.exists() and runtime_manifest.exists() and "aerospace" in verified:
-            return "real_data_ready", "aerospace_real_flight_chain_complete"
-        return "blocked", "aerospace_real_multi_flight_runtime_missing"
+        runtime_processed = repo_path(cfg.canonical_runtime_path)
+        runtime_manifest = repo_path(cfg.runtime_provenance_path)
+        support_runtime = repo_path(cfg.support_runtime_path)
+        support_manifest = repo_path(cfg.support_runtime_provenance_path)
+        if (
+            processed
+            and features
+            and runtime_processed is not None
+            and runtime_processed.exists()
+            and runtime_manifest is not None
+            and runtime_manifest.exists()
+            and "aerospace" in verified
+        ):
+            return "real_data_ready", "realflight_row_cleared"
+        if (
+            processed
+            and features
+            and support_runtime is not None
+            and support_runtime.exists()
+            and support_manifest is not None
+            and support_manifest.exists()
+        ):
+            return "support_lane_only", str(cfg.exact_blocker)
+        return "blocked", str(cfg.exact_blocker)
     raise KeyError(domain)
 
 
@@ -468,7 +487,7 @@ def _build_paper5_rows() -> list[dict[str, Any]]:
 
 
 def _evaluate_certos_domain(domain: str, proposed: Mapping[str, float], safe: Mapping[str, float]) -> dict[str, Any]:
-    rt = CertOSRuntime()
+    rt = CertOSRuntime(config=CertOSConfig(governance_policy=policy_for_domain(domain)))
     s1 = rt.validate_and_step(100.0, proposed, safe, 8)
     s2 = rt.validate_and_step(100.0, proposed, safe, 2)
     s3 = rt.validate_and_step(100.0, proposed, safe, 0)
@@ -560,17 +579,16 @@ def build_closure_matrix(
         safe_action_soundness = ""
         if domain == "vehicle":
             safe_action_soundness = _bool_status(bool(vehicle_soundness["soundness_pass"]))
-        elif domain in ("industrial", "healthcare", "battery"):
+        elif domain in ("industrial", "healthcare", "battery", "navigation", "aerospace"):
             safe_action_soundness = typed_kernel_status
-        elif domain == "navigation":
-            safe_action_soundness = "blocked_real_data_gap"
-        else:
-            safe_action_soundness = "experimental_placeholder"
 
         multi_agent_status = p5_map[domain]["status"] if domain in p5_map else "gated"
         certos_status = p6_map[domain]["status"] if domain in p6_map else "gated"
 
-        resulting_tier = validation_report.get("domain_maturity", {}).get(domain, "unknown")
+        reported_tier = str(domain_row.get("validation_status") or validation_report.get("domain_maturity", {}).get(domain, "unknown"))
+        if reported_tier == "reference_validated":
+            reported_tier = "reference"
+        resulting_tier = reported_tier
         exact_blocker = blocker
         if domain == "vehicle":
             all_av_gates = (
@@ -590,8 +608,8 @@ def build_closure_matrix(
                 and certos_status == "evaluated"
                 and multi_agent_status == "evaluated"
             )
-            resulting_tier = "proof_validated" if nav_pass else "shadow_synthetic"
-            exact_blocker = "navigation_real_data_gap" if not nav_pass else "real_data_row_cleared"
+            resulting_tier = "proof_validated" if nav_pass else reported_tier
+            exact_blocker = "real_data_row_cleared" if nav_pass else str(get_runtime_dataset_config(domain).exact_blocker)
         elif domain == "aerospace":
             aero_pass = (
                 data_status == "real_data_ready"
@@ -601,8 +619,8 @@ def build_closure_matrix(
                 and certos_status == "evaluated"
                 and multi_agent_status == "evaluated"
             )
-            resulting_tier = "proof_validated" if aero_pass else "experimental"
-            exact_blocker = "aerospace_real_multi_flight_runtime_missing" if not aero_pass else "real_multi_flight_row_cleared"
+            resulting_tier = "proof_validated" if aero_pass else reported_tier
+            exact_blocker = "realflight_row_cleared" if aero_pass else str(get_runtime_dataset_config(domain).exact_blocker)
 
         closure_rows.append(
             {

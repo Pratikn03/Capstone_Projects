@@ -25,11 +25,32 @@ jobs:
       - name: Mypy
         run: mypy src
       - name: Run tests
-        run: pytest -q -m "not slow and not integration" --no-cov
+        run: pytest -q -x --tb=short -m "not slow and not integration" --no-cov
+      - name: Coverage bar
+        run: |
+          pytest -q --tb=short \
+            tests/test_coverage_theorem.py \
+            tests/test_universal_validation_gate.py \
+            tests/test_domain_closure_matrix.py \
+            tests/test_external_real_data_integration.py \
+            tests/test_phase1_data_glue.py \
+            tests/test_real_data_manifest_refresh.py \
+            --cov=scripts \
+            --cov=orius \
+            --cov-report= \
+            --cov-fail-under=0
+          coverage report \
+            --include="scripts/_dataset_registry.py,scripts/refresh_real_data_manifests.py,scripts/build_aerospace_public_adsb_runtime.py,src/orius/orius_bench/real_data_loader.py" \
+            --fail-under=80
+          coverage xml \
+            --include="scripts/_dataset_registry.py,scripts/refresh_real_data_manifests.py,scripts/build_aerospace_public_adsb_runtime.py,src/orius/orius_bench/real_data_loader.py" \
+            -o reports/coverage.xml
       - name: Check Formal Item Counts
         run: python scripts/count_formal_items.py --strict
       - name: Validate Paper Claims
         run: python scripts/validate_paper_claims.py
+      - name: Validate Theory Surface
+        run: python scripts/validate_theorem_surface.py
       - name: Check Paper Asset Sync
         run: python scripts/sync_paper_assets.py --check
       - name: Paper 1 Lock Drift Check

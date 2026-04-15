@@ -1,22 +1,24 @@
 """Regression tests for the universal validation evidence gate.
 
-Multi-Domain Universal Framework maturity model:
-  reference         → battery
-  proof_validated   → industrial, healthcare, vehicle
-  shadow_synthetic  → navigation
-  experimental      → aerospace
+Strict mode now requires defended runtime surfaces for all promoted
+non-battery domains. Legacy support-tier behavior remains available only
+behind ``--allow-support-tier``.
 """
 from __future__ import annotations
 
+import csv
 import importlib.util
 import json
 import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from orius.orius_bench.controller_api import DC3SController, NominalController
 from orius.orius_bench.metrics_engine import compute_all_metrics
 from orius.adapters.vehicle import VehicleTrackAdapter
+from orius.orius_bench import real_data_loader
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -33,6 +35,14 @@ def _load_validation_script():
 
 
 validation_script = _load_validation_script()
+
+
+def _write_csv(path: Path, header: list[str], row: list[object]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        ",".join(header) + "\n" + ",".join(str(item) for item in row) + "\n",
+        encoding="utf-8",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -148,13 +158,87 @@ def test_vehicle_proof_episode_beats_nominal_on_locked_protocol() -> None:
 # End-to-end CLI test
 # ---------------------------------------------------------------------------
 
-def test_validation_cli_reports_all_domain_tiers(tmp_path: Path) -> None:
+def test_build_tracks_requires_missing_defended_surface_by_default(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    av_path = tmp_path / "av.csv"
+    industrial_path = tmp_path / "industrial.csv"
+    healthcare_path = tmp_path / "healthcare.csv"
+    navigation_path = tmp_path / "missing_navigation.csv"
+    aerospace_path = tmp_path / "aerospace.csv"
+
+    _write_csv(
+        av_path,
+        ["vehicle_id", "step", "position_m", "speed_mps", "speed_limit_mps", "lead_position_m", "ts_utc", "source_split"],
+        ["veh-1", 0, 10.0, 8.0, 13.4, 35.0, "2026-01-01T00:00:00Z", "train"],
+    )
+    _write_csv(
+        industrial_path,
+        ["sensor_id", "step", "temp_c", "vacuum_cmhg", "pressure_mbar", "humidity_pct", "power_mw", "ts_utc"],
+        ["sensor-1", 0, 20.0, 40.0, 1010.0, 50.0, 450.0, "2026-01-01T00:00:00Z"],
+    )
+    _write_csv(
+        healthcare_path,
+        ["patient_id", "step", "hr_bpm", "spo2_pct", "respiratory_rate", "ts_utc"],
+        ["patient-1", 0, 72.0, 97.0, 14.0, "2026-01-01T00:00:00Z"],
+    )
+    _write_csv(
+        aerospace_path,
+        ["flight_id", "step", "altitude_m", "airspeed_kt", "bank_angle_deg", "fuel_remaining_pct", "ts_utc"],
+        ["flight-1", 0, 3000.0, 180.0, 5.0, 80.0, "2026-01-01T00:00:00Z"],
+    )
+
+    monkeypatch.setattr(real_data_loader, "AV_PATH", av_path)
+    monkeypatch.setattr(real_data_loader, "INDUSTRIAL_RUNTIME_PATH", industrial_path)
+    monkeypatch.setattr(real_data_loader, "HEALTHCARE_RUNTIME_PATH", healthcare_path)
+    monkeypatch.setattr(real_data_loader, "NAVIGATION_PATH", navigation_path)
+    monkeypatch.setattr(real_data_loader, "AEROSPACE_RUNTIME_PATH", aerospace_path)
+    monkeypatch.setattr(real_data_loader, "AEROSPACE_REALFLIGHT_PATH", tmp_path / "missing_realflight.csv")
+
+    tracks, domain_sources, missing = validation_script._build_tracks(allow_support_tier=False)
+
+    assert tracks == []
+    assert domain_sources["navigation"] == str(navigation_path)
+    assert f"navigation={navigation_path}" in missing
+
+
+def test_validation_cli_requires_support_tier_when_navigation_surface_missing(tmp_path: Path) -> None:
+    navigation_path = REPO_ROOT / "data" / "navigation" / "processed" / "navigation_orius.csv"
+    aerospace_path = REPO_ROOT / "data" / "aerospace" / "processed" / "aerospace_realflight_runtime.csv"
+    if navigation_path.exists() and aerospace_path.exists():
+        pytest.skip("Repository already has both strict lower-tier runtime surfaces staged.")
+
     run = subprocess.run(
         [
             sys.executable,
             str(SCRIPT_PATH),
             "--seeds", "1",
             "--horizon", "24",
+            "--out", str(tmp_path),
+        ],
+        cwd=REPO_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert run.returncode == 1
+    assert "Strict defended validation requires staged canonical runtime surfaces" in run.stdout
+    if not navigation_path.exists():
+        assert "navigation=" in run.stdout
+    if not aerospace_path.exists():
+        assert "aerospace=" in run.stdout
+    assert "--allow-support-tier" in run.stdout
+
+
+def test_validation_cli_reports_all_domain_tiers_under_explicit_support_tier(tmp_path: Path) -> None:
+    run = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT_PATH),
+            "--seeds", "1",
+            "--horizon", "24",
+            "--allow-support-tier",
             "--out", str(tmp_path),
         ],
         cwd=REPO_ROOT,
@@ -191,8 +275,15 @@ def test_validation_cli_reports_all_domain_tiers(tmp_path: Path) -> None:
     assert domain_rows["navigation"]["validation_status"] == "shadow_synthetic"
     assert domain_rows["aerospace"]["validation_status"]  == "experimental"
     assert domain_rows["vehicle"]["closure_target_tier"] == "defended_bounded_row"
-    assert domain_rows["navigation"]["closure_blocker"] == "navigation_real_data_row_missing"
-    assert domain_rows["aerospace"]["closure_blocker"] == "real_multi_flight_safety_task_missing"
+    assert domain_rows["navigation"]["closure_blocker"] == "navigation_kitti_runtime_missing"
+    assert domain_rows["aerospace"]["closure_blocker"] == "aerospace_realflight_runtime_missing"
+    assert domain_rows["battery"]["metric_surface"] == "locked_publication_nominal"
+    assert float(domain_rows["battery"]["baseline_tsvr_mean"]) == pytest.approx(0.0393, abs=1e-4)
+    assert float(domain_rows["battery"]["orius_tsvr_mean"]) == pytest.approx(0.0, abs=1e-9)
+    assert float(domain_rows["battery"]["orius_reduction_pct"]) == pytest.approx(100.0, abs=1e-3)
+    assert report["reference_domain_metric_surface"] == "locked_publication_nominal"
+    assert report["reference_domain_metrics"]["baseline_tsvr_mean"] == pytest.approx(0.0392856, abs=1e-7)
+    assert report["reference_domain_metrics"]["orius_tsvr_mean"] == pytest.approx(0.0, abs=1e-9)
 
     # validated_domains contains battery + defended domains that passed
     for d in ("battery", "healthcare", "industrial", "vehicle"):
@@ -228,3 +319,27 @@ def test_validation_cli_reports_all_domain_tiers(tmp_path: Path) -> None:
     assert port_report["shadow_synthetic_domains"] == ["navigation"]
     assert port_report["experimental_domains"] == ["aerospace"]
     assert port_report["portability_all_pass"] is True
+
+    oasg_rows = {
+        row["domain"]: row
+        for row in csv.DictReader((tmp_path / "cross_domain_oasg_table.csv").open())
+    }
+    per_controller_rows = list(csv.DictReader((tmp_path / "per_controller_tsvr.csv").open()))
+    vehicle_nominal_oasg = [
+        float(row["oasg"])
+        for row in per_controller_rows
+        if row["domain"] == "vehicle" and row["controller"] == "nominal"
+    ]
+    vehicle_dc3s_oasg = [
+        float(row["oasg"])
+        for row in per_controller_rows
+        if row["domain"] == "vehicle" and row["controller"] == "dc3s"
+    ]
+    assert float(oasg_rows["vehicle"]["oasg_rate_baseline"]) == pytest.approx(
+        sum(vehicle_nominal_oasg) / len(vehicle_nominal_oasg),
+        abs=1e-4,
+    )
+    assert float(oasg_rows["vehicle"]["oasg_rate_orius"]) == pytest.approx(
+        sum(vehicle_dc3s_oasg) / len(vehicle_dc3s_oasg),
+        abs=1e-4,
+    )

@@ -34,25 +34,35 @@ class AerospaceTrackAdapter(BenchmarkAdapter):
         self._bank = 5.0
         self._fuel = 80.0
         self._rng: np.random.Generator | None = None
-        self._real_rows: list[dict[str, float]] = []
+        self._episodes: list[list[dict[str, float]]] = []
+        self._episode: list[dict[str, float]] = []
+        self._episode_idx = 0
         if dataset_path is not None:
             from orius.orius_bench.real_data_loader import load_aerospace_runtime_rows
 
-            self._real_rows = load_aerospace_runtime_rows(Path(dataset_path))
+            rows = load_aerospace_runtime_rows(Path(dataset_path))
+            grouped: dict[str, list[dict[str, float]]] = {}
+            for row in rows:
+                grouped.setdefault(str(row.get("flight_id", "flight-0")), []).append(dict(row))
+            for episode in grouped.values():
+                episode.sort(key=lambda row: int(row.get("step", 0)))
+                self._episodes.append(episode)
 
     def reset(self, seed: int = 42) -> Mapping[str, Any]:
         self._rng = np.random.default_rng(seed)
-        if self._real_rows:
+        if self._episodes:
+            episode = self._episodes[int(self._rng.integers(0, len(self._episodes)))]
             near_limit = [
-                row for row in self._real_rows
+                idx for idx, row in enumerate(episode)
                 if abs(float(row.get("bank_angle_deg", 0.0))) >= self._max_bank * 0.75
                 or float(row.get("airspeed_kt", self._v_min)) <= self._v_min + 15.0
                 or float(row.get("airspeed_kt", self._v_max)) >= self._v_max - 15.0
             ]
             if not near_limit:
-                near_limit = self._real_rows
-            idx = int(np.random.default_rng(seed).integers(0, len(near_limit)))
-            row = near_limit[idx]
+                near_limit = [0]
+            self._episode = episode
+            self._episode_idx = int(near_limit[int(self._rng.integers(0, len(near_limit)))])
+            row = self._episode[self._episode_idx]
             self._airspeed = float(row["airspeed_kt"])
             self._altitude = float(row["altitude_m"])
             self._bank = float(row["bank_angle_deg"])
@@ -70,7 +80,7 @@ class AerospaceTrackAdapter(BenchmarkAdapter):
 
     @property
     def using_real_data(self) -> bool:
-        return bool(self._real_rows)
+        return bool(self._episodes)
 
     def true_state(self) -> Mapping[str, Any]:
         return {
@@ -110,6 +120,35 @@ class AerospaceTrackAdapter(BenchmarkAdapter):
         return {"v_min_kt": self._v_min, "v_max_kt": self._v_max}
 
     def step(self, action: Mapping[str, Any]) -> Mapping[str, Any]:
+        if self._episodes:
+            throttle = float(action.get("throttle", 0.7))
+            bank = float(action.get("bank_deg", 3.0))
+            throttle = max(0.0, min(1.0, throttle))
+            real_next = self._episode[min(self._episode_idx + 1, len(self._episode) - 1)]
+            self._airspeed = float(
+                self._airspeed
+                + 0.20 * (float(real_next["airspeed_kt"]) - self._airspeed)
+                + 12.0 * (throttle - 0.5)
+            )
+            self._airspeed = max(0.0, min(600.0, self._airspeed))
+            self._bank = float(bank)
+            self._altitude = float(
+                self._altitude
+                + 0.15 * (float(real_next["altitude_m"]) - self._altitude)
+                + 40.0 * (throttle - 0.4)
+            )
+            self._altitude = max(0.0, self._altitude)
+            self._fuel = max(
+                0.0,
+                min(
+                    100.0,
+                    self._fuel
+                    - 0.5 * throttle
+                    + 0.10 * (float(real_next["fuel_remaining_pct"]) - self._fuel),
+                ),
+            )
+            self._episode_idx = min(self._episode_idx + 1, len(self._episode) - 1)
+            return dict(self.true_state())
         throttle = float(action.get("throttle", 0.7))
         bank = float(action.get("bank_deg", 3.0))
         throttle = max(0.0, min(1.0, throttle))

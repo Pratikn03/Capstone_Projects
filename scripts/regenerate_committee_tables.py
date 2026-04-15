@@ -606,14 +606,20 @@ def main() -> None:
 
     summary = _read_csv(summary_path)
     oasg    = _read_csv(oasg_path)
-    adv     = _read_json(adv_path)
-    lat     = _read_json(lat_path)
+    adv     = _read_json(adv_path) if adv_path.exists() else {}
+    lat     = _read_json(lat_path) if lat_path.exists() else {}
 
     write_all_domain_comparison(summary)
     write_evidence_gate(summary)
     write_oasg_table(oasg)
-    write_latency(lat)
-    write_adversarial(adv)
+    if lat:
+        write_latency(lat)
+    else:
+        print(f"  SKIP tbl_latency_benchmark.tex (missing {lat_path})")
+    if adv:
+        write_adversarial(adv)
+    else:
+        print(f"  SKIP tbl_adversarial_tsvr.tex (missing {adv_path})")
     write_intervention_tradeoff(summary)
 
     # New tables (only generated when their source CSVs exist)

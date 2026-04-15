@@ -73,9 +73,6 @@ exclude_lines =
 # Ignore missing source files
 ignore_errors = True
 
-# Show contexts in HTML report
-show_contexts = True
-
 # Precision for percentages
 precision = 2
 

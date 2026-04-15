@@ -12,7 +12,9 @@ def build_uncertainty_set(
     cfg: Mapping[str, Any] | None = None,
     prev_inflation: float | None = None,
 ) -> tuple[list[float], list[float], dict[str, Any]]:
-    """Delegate to orius.dc3s.calibration.build_uncertainty_set."""
+    """CertOS-facing uncertainty wrapper with normalized outputs."""
+    if float(w_t) < 0.0:
+        raise ValueError("w_t must be non-negative")
     from orius.dc3s.calibration import build_uncertainty_set as _build
     import numpy as np
     lower, upper, meta = _build(
@@ -21,5 +23,5 @@ def build_uncertainty_set(
     return (
         np.asarray(lower).tolist(),
         np.asarray(upper).tolist(),
-        meta,
+        {"engine": "certos.shift", **dict(meta)},
     )

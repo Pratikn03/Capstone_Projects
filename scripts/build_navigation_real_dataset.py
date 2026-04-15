@@ -165,7 +165,7 @@ def build_navigation_dataset(
         license_notes="Follow KITTI usage terms; keep full raw payloads out of git history.",
         access_notes="Repo-local raw layout is preferred. External raw storage remains supported as a fallback.",
         canonical_source=True,
-        used_fallback=False,
+        used_fallback=raw_source.source_kind != "repo_local",
         notes=[
             "navigation remains lower-tier until the full train and validation path is completed",
             "timestamps are reconstructed from KITTI sequence times.txt files",
@@ -177,10 +177,8 @@ def build_navigation_dataset(
             "source_env": EXTERNAL_DATA_ROOT_ENV,
         },
     )
-    write_json(PROVENANCE_PATH, provenance)
-
-    if manifest_out is not None:
-        write_json(manifest_out, provenance)
+    target_manifest = PROVENANCE_PATH if manifest_out is None else manifest_out
+    write_json(target_manifest, provenance)
     return out_path
 
 

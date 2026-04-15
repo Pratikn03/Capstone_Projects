@@ -11,8 +11,9 @@ import math
 from typing import Any, Mapping, Sequence
 
 from orius.dc3s.domain_adapter import DomainAdapter
-from orius.dc3s.quality import compute_reliability
 from orius.dc3s.certificate import make_certificate
+from orius.universal_framework.reliability_runtime import assess_domain_reliability
+from orius.universal_framework.runtime_evidence import resolve_runtime_evidence
 
 
 def _f(x: Any, default: float) -> float:
@@ -27,6 +28,7 @@ class IndustrialDomainAdapter(DomainAdapter):
 
     def __init__(self, cfg: Mapping[str, Any] | None = None):
         self._cfg = dict(cfg or {})
+        self.domain_id = "industrial"
         ind = self._cfg.get("industrial", {})
         self._temp_min = _f(ind.get("temp_min_c"), 0.0)
         self._temp_max = _f(ind.get("temp_max_c"), 50.0)
@@ -34,6 +36,12 @@ class IndustrialDomainAdapter(DomainAdapter):
         self._pressure_max = _f(ind.get("pressure_max_mbar"), 1040.0)
         self._power_max = _f(ind.get("power_max_mw"), 500.0)
         self._expected_cadence_s = _f(self._cfg.get("expected_cadence_s"), 3600.0)
+        evidence = resolve_runtime_evidence(self.domain_id, self._cfg)
+        self._runtime_surface = evidence.runtime_surface
+        self._closure_tier = evidence.closure_tier
+        self._maturity_tier = evidence.maturity_tier
+        self._fallback_policy = evidence.fallback_policy
+        self._exact_blocker = evidence.exact_blocker
 
     def capability_profile(self) -> Mapping[str, Any]:
         return {
@@ -42,6 +50,11 @@ class IndustrialDomainAdapter(DomainAdapter):
             "fallback_mode": "power_cap",
             "supports_multi_agent_eval": True,
             "supports_certos_eval": True,
+            "runtime_surface": self._runtime_surface,
+            "closure_tier": self._closure_tier,
+            "maturity_tier": self._maturity_tier,
+            "fallback_policy": self._fallback_policy,
+            "exact_blocker": self._exact_blocker,
         }
 
     def ingest_telemetry(self, raw_packet: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -64,30 +77,23 @@ class IndustrialDomainAdapter(DomainAdapter):
         state: Mapping[str, Any],
         history: Sequence[Mapping[str, Any]] | None = None,
     ) -> tuple[float, Mapping[str, Any]]:
-        """Compute reliability w_t. Map power_mw -> load_mw for OQE."""
-        event = {
-            "ts_utc": state.get("ts_utc", ""),
-            "load_mw": state.get("power_mw", state.get("load_mw", 0.0)),
-            "renewables_mw": state.get("temp_c", 0.0),
-        }
-        last_event = None
-        if history:
-            prev = history[-1]
-            last_event = {
-                "ts_utc": prev.get("ts_utc", ""),
-                "load_mw": prev.get("power_mw", prev.get("load_mw", 0.0)),
-                "renewables_mw": prev.get("temp_c", 0.0),
-            }
-        reliability_cfg = self._cfg.get("reliability", {})
-        ftit_cfg = self._cfg.get("ftit", {})
-        w_t, flags = compute_reliability(
-            event,
-            last_event,
+        """Compute reliability from industrial-native telemetry signals."""
+        w_t, flags = assess_domain_reliability(
+            domain_id=self.domain_id,
+            state=state,
+            history=history,
+            feature_sources={
+                "power_output_mw": "power_mw",
+                "temperature_c": "temp_c",
+                "pressure_mbar": "pressure_mbar",
+            },
             expected_cadence_s=self._expected_cadence_s,
-            reliability_cfg=reliability_cfg,
-            ftit_cfg=ftit_cfg,
+            reliability_cfg=self._cfg.get("reliability", {}),
+            ftit_cfg=self._cfg.get("ftit", {}),
+            runtime_surface=self._runtime_surface,
+            closure_tier=self._closure_tier,
         )
-        return float(w_t), {"flags": flags}
+        return float(w_t), flags
 
     def build_uncertainty_set(
         self,
@@ -126,10 +132,26 @@ class IndustrialDomainAdapter(DomainAdapter):
         cfg: Mapping[str, Any],
     ) -> Mapping[str, Any]:
         """Feasible setpoint set from temp/pressure/power limits."""
+        unc = dict(uncertainty)
+        cstr = dict(constraints)
+        power_lo = max(0.0, _f(unc.get("power_lower_mw"), 0.0))
+        power_hi = min(
+            _f(cstr.get("power_max_mw"), self._power_max),
+            _f(unc.get("power_upper_mw"), self._power_max),
+        )
+        viable = power_lo <= power_hi + 1e-9
+        if not viable:
+            power_lo = power_hi = max(0.0, min(_f(cstr.get("power_max_mw"), self._power_max), power_lo))
+            viable = True
         return {
-            "uncertainty": dict(uncertainty),
-            "constraints": dict(constraints),
+            "uncertainty": unc,
+            "constraints": cstr,
             "cfg": dict(cfg),
+            "power_setpoint_lower_mw": float(power_lo),
+            "power_setpoint_upper_mw": float(power_hi),
+            "fallback_action": {"power_setpoint_mw": float(power_lo)},
+            "projection_surface": "power_envelope_box",
+            "viable": bool(viable),
         }
 
     def repair_action(
@@ -143,17 +165,22 @@ class IndustrialDomainAdapter(DomainAdapter):
         cfg: Mapping[str, Any],
     ) -> tuple[Mapping[str, float], Mapping[str, Any]]:
         """Clip setpoint to safe bounds. Industrial: power_mw in [0, power_max]."""
+        if "power_setpoint_lower_mw" not in tightened_set or "power_setpoint_upper_mw" not in tightened_set:
+            tightened_set = self.tighten_action_set(
+                uncertainty=tightened_set.get("uncertainty", uncertainty),
+                constraints=tightened_set.get("constraints", constraints),
+                cfg=cfg,
+            )
         power = _f(candidate_action.get("power_setpoint_mw", candidate_action.get("power_mw", 0.0)), 0.0)
-        unc = tightened_set.get("uncertainty", uncertainty)
-        power_lo = _f(unc.get("power_lower_mw"), 0.0)
-        power_hi = _f(unc.get("power_upper_mw"), 500.0)
-        power_max = _f(constraints.get("power_max_mw", state.get("power_max_mw", self._power_max)), self._power_max)
-        power_safe = max(0.0, min(power_max, max(power_lo, min(power_hi, power))))
+        power_lo = _f(tightened_set.get("power_setpoint_lower_mw"), 0.0)
+        power_hi = _f(tightened_set.get("power_setpoint_upper_mw"), self._power_max)
+        power_safe = max(power_lo, min(power_hi, power))
         repaired = abs(power_safe - power) > 1e-9
         meta = {
             "mode": "projection",
             "repaired": repaired,
             "original_power_mw": power,
+            "repair_surface": str(tightened_set.get("projection_surface", "power_envelope_box")),
         }
         if repaired:
             meta["intervention_reason"] = "power_clamp"
@@ -204,4 +231,7 @@ class IndustrialDomainAdapter(DomainAdapter):
             reliability_w=reliability_w,
             drift_flag=drift_flag,
             inflation=inflation,
+            runtime_surface=self._runtime_surface,
+            closure_tier=self._closure_tier,
+            reliability_feature_basis=reliability.get("reliability_feature_basis"),
         )

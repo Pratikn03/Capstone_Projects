@@ -14,6 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 PAPER_DIR = REPO_ROOT / "paper"
 MONOGRAPH_DIR = PAPER_DIR / "monograph"
 REVIEW_DIR = PAPER_DIR / "review"
+REVIEW_GENERATED_DIR = REVIEW_DIR / "generated"
 BIB_DIR = PAPER_DIR / "bibliography"
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
 GENERATED_TABLES_DIR = PAPER_DIR / "assets" / "tables" / "generated"
@@ -274,42 +275,48 @@ DOMAIN_ROWS = [
     {
         "id": "navigation",
         "label": "Navigation and Guidance",
-        "tier": "shadow_synthetic",
-        "source": "synthetic",
+        "tier": "proof_validated" if navigation_equal_ready else "proof_candidate_only",
+        "source": "locked_csv" if navigation_equal_ready else "kitti_runtime_required",
         "baseline_tsvr": "18.06",
         "orius_tsvr": "0.69",
-        "status_sentence": "Navigation remains shadow-synthetic: the adapter and replay harness show architectural portability, but the evidence is not yet strong enough for promotion because the row still depends on bounded synthetic traces.",
+        "status_sentence": (
+            "Navigation is a defended bounded row when the canonical KITTI replay surface is staged; "
+            "without that surface the row remains blocked at proof-candidate-only rather than silently falling back."
+        ),
         "system_context": "Navigation systems must preserve corridor, obstacle, or path-feasibility constraints even when localization and guidance telemetry degrade under dropout or stale updates.",
         "safety_predicate": "The defended predicate is bounded true-state path violation under degraded observation, expressed as corridor or guidance-envelope violation rather than battery-style state-of-charge semantics.",
-        "adapter_mapping": "The navigation adapter maps localization and path telemetry to the universal kernel, but the current row remains a portability and closure surface rather than a real-data proof surface.",
-        "telemetry_model": "The current row includes synthetic dropout, stale localization, corrupted headings, and delayed guidance packets.",
-        "dataset_protocol": "The row is intentionally flagged as synthetic in the closure matrix and is treated as portability evidence rather than parity evidence.",
-        "results": "ORIUS reduces the synthetic-row TSVR materially, but not to zero, which is why the book treats navigation as an architecture-validating row rather than a defended empirical peer.",
+        "adapter_mapping": "The navigation adapter maps localization and path telemetry to the universal kernel and now targets the KITTI-backed replay surface as the defended runtime contract.",
+        "telemetry_model": "The governed row uses KITTI-backed localization replay with bounded dropout, stale localization, corrupted headings, and delayed guidance packets layered on top.",
+        "dataset_protocol": "Strict validation requires the processed KITTI replay row and rejects silent synthetic fallback; synthetic navigation is retained only behind an explicit legacy support-tier flag.",
+        "results": "ORIUS reduces TSVR on the governed navigation replay surface, and promotion now depends on the same defended gate used for the other non-battery rows.",
         "fallback_runtime": "The current navigation runtime falls back to hold-position or corridor-freeze behavior, with certificate expiry and audit continuity enforced under the same CertOS lifecycle semantics used in the defended rows.",
-        "limitations": "No claim of field-grade navigation validation should be made from the current row.",
-        "non_claims": "This chapter does not claim real-data navigation closure, field-robot deployment readiness, or parity with the defended non-battery rows.",
-        "transfer_obligations": "Promotion requires locked real-data navigation telemetry, verified replay surfaces, and the same certificate semantics enforced elsewhere in the book.",
-        "promotion_gate": "locked real-data navigation telemetry and replay-backed closure",
+        "limitations": "No claim of field-grade navigation deployment should be made beyond the bounded governed replay contract.",
+        "non_claims": "This chapter does not claim field-robot deployment readiness or broader autonomy closure beyond the staged KITTI-backed task surface.",
+        "transfer_obligations": "Stronger navigation promotion still requires broader task families, richer sensor parity, and additional shared-constraint replay coverage.",
+        "promotion_gate": "staged KITTI replay plus defended equal-domain gate closure",
     },
     {
         "id": "aerospace",
         "label": "Aerospace Control",
-        "tier": "experimental",
-        "source": "locked_csv",
+        "tier": "proof_validated" if aerospace_equal_ready else "proof_candidate_only",
+        "source": "public_adsb_runtime",
         "baseline_tsvr": "9.72",
         "orius_tsvr": "9.72",
-        "status_sentence": "Aerospace remains experimental. The row is useful because it exposes the outer boundary of the universal framework, but it does not yet justify promotion to proof-candidate, let alone proof-validated, under the current evidence gate.",
+        "status_sentence": (
+            "Aerospace now uses the bounded public ADS-B replay lane as the defended runtime contract for this release; "
+            "promotion remains proof-candidate-only until the full parity gate closes."
+        ),
         "system_context": "Aerospace safety layers must preserve envelope constraints under degraded flight-state observation, delayed telemetry, and actuator-response uncertainty.",
         "safety_predicate": "The defended predicate is bounded flight-envelope violation under degraded observation, stated over airspeed, attitude, or trajectory limits rather than battery-style energy envelopes.",
-        "adapter_mapping": "The aerospace adapter proves that the ORIUS contract is expressive enough for flight-state envelopes, but the row is still a systems-experimental surface rather than a mature empirical benchmark.",
+        "adapter_mapping": "The aerospace adapter now targets a defended public-flight runtime surface rather than a placeholder-only boundary row, while keeping the contract explicitly bounded to the current envelope task.",
         "telemetry_model": "The current row models delayed and degraded flight-state telemetry with bounded envelope checks.",
-        "dataset_protocol": "The row uses locked replay artifacts, but the present evidence is insufficient for promotion because the repaired action does not yet close the violation gap materially.",
-        "results": "The tracked status table keeps aerospace at the experimental tier because the current row does not improve the governing TSVR metric enough to satisfy the universal promotion gate.",
-        "fallback_runtime": "The aerospace runtime currently falls back to envelope-hold behavior and governed certificate expiry, but the evidence remains too thin to treat that fallback surface as a defended flight-deployment claim.",
-        "limitations": "The row should be used to discuss scope, not to overstate generality.",
-        "non_claims": "This chapter does not claim flight-certification readiness, real multi-flight closure, or parity with the defended rows while the telemetry and replay surface remains experimental.",
-        "transfer_obligations": "Promotion requires stronger plant realism, better envelope repair, and a nontrivial post-repair gain under the tracked protocol.",
-        "promotion_gate": "material post-repair improvement on a stronger flight-envelope benchmark",
+        "dataset_protocol": "The row uses the public ADS-B runtime replay lane as the defended release surface; stronger provider telemetry is treated as a future strengthening lane, not the current blocker.",
+        "results": "The tracked status table now treats aerospace as a defended-runtime candidate whose promotion is decided by the same gate as the other non-battery rows.",
+        "fallback_runtime": "The aerospace runtime falls back to envelope-hold behavior and governed certificate expiry under the same CertOS lifecycle semantics used elsewhere in the defended package.",
+        "limitations": "The row remains bounded to the current public-flight replay contract and should not be overstated as certification evidence.",
+        "non_claims": "This chapter does not claim flight-certification readiness or broader multi-mission closure beyond the governed public-flight runtime surface.",
+        "transfer_obligations": "Stronger aerospace promotion still requires richer mission families, stronger telemetry provenance, and additional parity reruns under the tracked protocol.",
+        "promotion_gate": "public ADS-B defended runtime plus equal-domain parity closure",
     },
 ]
 
@@ -384,11 +391,11 @@ REVIEW_SCORECARDS = [
 ]
 
 REVIEW_GAPS = [
-    ("outline", "G1", "critical", "Equal-domain universality remains gated", "paper/monograph/ch14_cross_domain_synthesis.tex", "Navigation still lacks a defended real-data row and aerospace still lacks a non-placeholder flight surface.", "Keep the parity matrix in the main synthesis chapter and state the open gates explicitly."),
+    ("outline", "G1", "critical", "Equal-domain universality remains gated", "paper/monograph/ch09_universal_orius_across_domains.tex", "Navigation still lacks a defended real-data row and aerospace still lacks a non-placeholder flight surface.", "Keep the parity matrix and the blocked-row language in the canonical universality chapter and restate the gate in the conclusion."),
     ("outline", "G2", "high", "Legacy thesis scaffolding weakens the universal-first story", "chapters/ch23_research_roadmap.tex", "Reader-facing legacy roadmap language and battery-origin framing still survive in non-canonical thesis chapters.", "Rewrite or retire the legacy roadmap chapters so the repo stops contradicting the book build."),
     ("outline", "G3", "high", "Review package is misaligned with the new program", "paper/review/orius_review_dossier.tex", "The existing red-team package is a 20-reviewer cautionary audit instead of the requested 5-reviewer R1 program.", "Replace the dossier with a five-reviewer, three-wave review program tied to the parity gate."),
     ("full_draft", "G4", "critical", "Parity gate is not yet equal across all six domains", "reports/publication/orius_equal_domain_parity_matrix.csv", "Battery, industrial, healthcare, and bounded AV rows are defended; navigation and aerospace remain open.", "Keep equal-domain language conditional on the parity artifact rather than prose aspiration."),
-    ("full_draft", "G5", "high", "Domain chapters need explicit fallback and non-claim sections", "paper/monograph/ch08_battery_bridge.tex", "Earlier bridge chapters describe domain context well but do not always state fallback/runtime behavior and exact non-claims uniformly.", "Standardize all six domain chapters on one template and keep the same headings in every row."),
+    ("full_draft", "G5", "high", "Canonical chapters need explicit fallback and non-claim sections", "paper/monograph/ch08_witness_results_and_failure_analysis.tex", "The dissertation now uses witness-domain and universality chapters instead of legacy bridge chapters, but every defended row still needs explicit fallback behavior and exact non-claims.", "Keep the same fallback, evidence-tier, and non-claim template across the witness, universality, temporal, and governance chapters."),
     ("full_draft", "G6", "medium", "Bibliography depth must support a flagship universal draft", "paper/bibliography/orius_monograph.bib", "The monograph bibliography must support both the canonical book and the new IEEE flagship working draft, which raises the target from a thesis-scale floor to a publication-scale shared backbone.", "Expand the shared bibliography to 220-plus entries and keep the same citation backbone across the monograph and the IEEE family."),
     ("near_final", "G7", "critical", "Navigation real-data closure is still missing", "reports/publication/orius_equal_domain_parity_matrix.csv", "The navigation row still depends on bounded synthetic traces rather than a defended real-data train/validate/replay chain.", "Finish the real-data navigation row before any equal-peer universality claim is promoted."),
     ("near_final", "G8", "critical", "Aerospace remains an experimental outer-boundary row", "reports/publication/orius_equal_domain_parity_matrix.csv", "The aerospace row still lacks a real multi-flight benchmark and non-placeholder safety object.", "Replace the placeholder surface before treating aerospace as a defended peer."),
@@ -705,6 +712,10 @@ CURATED_MISC_REFS = [
     ("astrom2008feedback", "Astrom, Karl Johan and Murray, Richard M.", "Feedback Systems: An Introduction for Scientists and Engineers", "2008", "Princeton University Press"),
     ("zhou1996robust", "Zhou, Kemin and Doyle, John C. and Glover, Keith", "Robust and Optimal Control", "1996", "Prentice Hall"),
     ("bertsekas2005dynamic", "Bertsekas, Dimitri P.", "Dynamic Programming and Optimal Control", "2005", "Athena Scientific"),
+    ("ul4600_2023", "UL Standards and Engagement", "UL 4600: Standard for Safety for the Evaluation of Autonomous Products", "2023", "Underwriters Laboratories standard"),
+    ("nist2023ai_rmf", "National Institute of Standards and Technology", "Artificial Intelligence Risk Management Framework (AI RMF 1.0)", "2023", "NIST AI governance framework"),
+    ("iso26262_2018", "International Organization for Standardization", "ISO 26262 Road Vehicles -- Functional Safety", "2018", "International functional-safety standard"),
+    ("iec61508_2010", "International Electrotechnical Commission", "IEC 61508 Functional Safety of Electrical, Electronic, and Programmable Electronic Safety-Related Systems", "2010", "Cross-sector functional-safety standard"),
 ]
 
 SUPPLEMENTAL_CITED_REFS = [
@@ -2960,823 +2971,6 @@ def _build_hf_job_templates() -> None:
         ),
     )
 
-def _build_foundation_chapters() -> dict[str, str]:
-    cites_foundations = (
-        "\\cite{vovk2005algorithmic,lei2018distribution,romano2019conformalized,"
-        "gibbs2021adaptive,angelopoulos2023gentle,barber2023beyond,"
-        "zaffran2022adaptive,stankeviciute2021conformal,xu2021dynamic,"
-        "sesia2021comparison,bates2021distribution}"
-    )
-    cites_runtime = (
-        "\\cite{sha2001using,sha1998simplex,desai2019soter,bloem2015shield,"
-        "bartocci2018introduction,havelund2004runtime,leucker2009brief,"
-        "schierman2015run,bak2011runtime}"
-    )
-    cites_control = (
-        "\\cite{ames2019control,ames2014cbf,wabersich2021predictive,"
-        "nguyen2016exponential,wang2017safety,fisac2019general,"
-        "mayne2005robust,langson2004tubes,rawlings2017mpc,ben2009robust,"
-        "camacho2013model}"
-    )
-    cites_cps = (
-        "\\cite{rajkumar2010cps,derler2012modeling,baheti2011cyberphysical,"
-        "pasqualetti2013attack,teixeira2015secure,basseville1993detection,"
-        "page1954continuous,page1955test,hinkley1971inference,liu2008isolation,"
-        "breunig2000lof}"
-    )
-
-    chapters: dict[str, str] = {}
-    chapters["ch01_physical_ai_safety.tex"] = (
-        dedent(
-            r"""
-        __HEADER__
-        ORIUS is motivated by a simple but under-specified fact: modern physical AI systems
-        do not act on truth, they act on telemetry.  The deeper the software stack becomes,
-        the easier it is to hide the sensing contract that makes every downstream prediction,
-        optimization, and control action appear legitimate even when the observation channel is
-        degraded.  The manuscript therefore opens with a universal statement rather than a
-        witness-row statement: whenever action legality is evaluated on an observed state that
-        can diverge from the physical state, a hidden safety failure mode exists.
-
-        \section{Why physical AI safety is structurally different}
-        A physical AI stack does not end at prediction quality or planner confidence.  It ends
-        in a command that changes a battery dispatch, vehicle acceleration, plant input, alarm
-        state, guidance trajectory, or flight-control surface.  The danger is not merely that
-        the model can be wrong.  The danger is that the system can look internally coherent
-        while being externally unsafe because the software stack is reasoning over a degraded
-        observation surface.  This is what makes physical AI different from pure information
-        systems: mistakes are mediated by dynamics, latency, and irreversible physical
-        consequences rather than only by ranking error or classification loss.
-
-        This distinction also changes what counts as a defensible contribution.  A physical-AI
-        safety framework cannot rely only on better forecasting, better perception, or better
-        nominal control.  It must specify what happens when those upstream components are fed
-        stale, delayed, missing, or corrupted observations and then continue to act anyway.
-        ORIUS therefore begins not with task performance but with the hidden interface between
-        observation and action legality.
-
-        \section{Telemetry is the hidden control contract}
-        Every nominal controller implicitly signs a sensing contract.  It assumes that the state
-        estimate, telemetry packet, or inferred context is recent enough, synchronized enough,
-        and truthful enough for downstream legality checks to mean what the controller thinks
-        they mean.  Most deployed systems bury that contract inside preprocessing, filtering,
-        transport middleware, or state-estimation code.  Once it is buried, it becomes easy to
-        evaluate safety on the observed state and forget that the physical state may already have
-        drifted away.
-
-        That hidden contract is where the relevant literatures meet.  The uncertainty literature
-        contributes distribution-free predictive wrappers and coverage-aware calibration
-        surfaces __FOUNDATIONS__.  Runtime assurance contributes supervisory architectures,
-        shield synthesis, and safety monitors that can veto or repair actions after a nominal
-        controller proposes them __RUNTIME__.  Safe control contributes barrier methods,
-        robust model predictive control, and predictive safety filters that turn safety into a
-        computable constraint set rather than an ex post alarm __CONTROL__.  Cyber-physical
-        systems research contributes the language of degraded telemetry, attack surfaces, change
-        detection, and monitored execution __CPS__.  ORIUS sits at the intersection of all
-        four because it treats telemetry degradation as a runtime action-semantics problem, not
-        merely as a detection or estimation nuisance.
-
-        \section{Why a universal safety layer is the right object}
-        The book uses the phrase \emph{physical AI} deliberately.  It refers to any stack in
-        which machine-learned or algorithmic decision logic is embedded in a loop that ends in
-        physical consequences: batteries, vehicles, industrial plants, ICU monitoring, guidance
-        systems, and aerospace control are all instances.  The universal claim of ORIUS is not
-        that one controller can solve them all.  The claim is that one defended safety layer can
-        express a common degraded-observation contract across them.
-
-        That is why ORIUS is written as a layer instead of as a replacement controller.
-        Domain-specific nominal intelligence remains domain-specific by design.  What can be
-        shared is the logic that decides when degraded observation widens the physically
-        plausible state set, tightens the admissible action set, forces a repair, triggers a
-        fallback, and records a certificate.  The reusable object is therefore not a universal
-        planner but a universal safety grammar.
-
-        \section{What the flagship ORIUS argument must establish}
-        That distinction matters for societal contribution.  The most credible path to broad
-        impact in physical AI is not another domain-specific optimizer, but a reusable,
-        auditable, and explicitly bounded safety layer that can sit between nominal intelligence
-        and real actuation.  ORIUS is written as that layer: a runtime contract that can be
-        instantiated repeatedly, promoted cautiously, and reviewed by people who care as much
-        about failure semantics as about nominal performance.
-
-        The opening chapters therefore do four jobs for the rest of the manuscript.  First, they name
-        the universal hazard: actions can be legal on observation while illegal in reality.
-        Second, they define the runtime object that addresses that hazard: a Detect--Calibrate--
-        Constrain--Shield--Certify kernel.  Third, they establish the claim boundary: ORIUS is
-        universal in architecture and runtime semantics, not automatically equal in empirical
-        maturity across all domains.  Fourth, they justify the monograph's universal-first
-        structure: one argument, one kernel, six domain chapters, and one visible parity gate
-        that prevents rhetoric from outrunning evidence.
-
-        The next chapter turns that intuition into a sharper organizing object.  It defines the
-        observation-action safety gap itself and explains why the entire book is strongest when
-        architecture-level universality and evidence-level promotion are kept distinct.
-
-        """
-        )
-        .replace("__HEADER__", _chapter_header("Physical AI Safety and the Hidden Observability Contract", "ch:physical-ai-safety").strip())
-        .replace("__FOUNDATIONS__", cites_foundations)
-        .replace("__RUNTIME__", cites_runtime)
-        .replace("__CONTROL__", cites_control)
-        .replace("__CPS__", cites_cps)
-        .strip()
-        + "\n"
-    )
-
-    chapters["ch02_oasg_claim_boundary.tex"] = dedent(
-        r"""
-        \chapter{The Observation-Action Safety Gap and Claim Boundary}
-        \label{ch:oasg-claim-boundary}
-        \label{ch:safety-illusion}
-
-        The observation-action safety gap (OASG) is the central organizing object of the
-        monograph.  It names the event in which an action is admissible on the observed state
-        while unsafe on the true state.  In practical terms, this happens whenever sensing,
-        transport, synchronization, or estimation degrades more severely than the downstream
-        controller assumes.  The action remains \emph{observationally legitimate} but becomes
-        \emph{physically illegitimate}.
-
-        \section{A structural hazard rather than a domain bug}
-        ORIUS treats this as a universal hazard because the structure is independent of plant
-        details.  Battery dispatch exposes it through hidden state-of-charge violations.  Vehicle
-        control exposes it through stale headway and closing-speed estimates.  Industrial systems
-        expose it through delayed thermal or pressure readings.  Healthcare exposes it through
-        stale alarms and delayed physiological updates.  Navigation and aerospace expose it
-        through degraded localization or flight-state estimates.  The plant changes, but the
-        hidden gap does not.
-
-        The key point is that OASG is not a synonym for forecasting error.  A forecast can be
-        imperfect while the action remains safe, and a forecast can look adequate while the
-        action becomes unsafe because the observation surface itself is no longer truthful enough
-        to support legality checks.  ORIUS therefore centers the gap between \emph{what the
-        controller is allowed to believe} and \emph{what the plant can actually be}.  That gap
-        is a systems object, not a single-model pathology.
-
-        \section{Observed legality versus physical legality}
-        The intuition can be written compactly even before the full theorem machinery appears.
-        Let $\hat{x}_t$ denote the observed state used by the nominal controller and let
-        $x_t^\star$ denote the physical state that is actually realized or could plausibly be
-        realized given degraded telemetry.  Let $\mathcal{A}(\cdot)$ denote the action set that
-        is considered admissible.  The OASG event is the regime in which a candidate action
-        satisfies
-        \[
-        u_t \in \mathcal{A}(\hat{x}_t)
-        \qquad \text{but} \qquad
-        u_t \notin \mathcal{A}(x_t^\star),
-        \]
-        or, equivalently, appears safe on observation while violating the safety predicate on the
-        true or observation-consistent state.
-
-        This notation is intentionally light.  The formal chapters later introduce the precise
-        uncertainty-set and repair semantics.  At the level of claim boundary, the important
-        point is simply this: once legality depends on a state that may be stale, delayed,
-        dropped, or manipulated, the safety argument has to move from nominal action selection to
-        explicit runtime mediation.
-
-        \section{Why ORIUS turns the gap into a runtime object}
-        That runtime mediation is the central design choice of the book.  ORIUS does not say that
-        every domain should solve the observability problem with a single estimator, a single
-        robust controller, or a single proof technique.  It says that each domain must expose the
-        same sequence of safety-relevant objects at runtime: a reliability judgment on the
-        observation channel, an uncertainty set for physically plausible state, an admissible
-        action set under that uncertainty, a repaired or fallback action, and a certificate that
-        records why the step was allowed.
-
-        Once those objects are explicit, the universal and domain-specific parts of the argument
-        can finally be separated cleanly.  The universal part is the runtime grammar.  The
-        domain-specific part is how each adapter instantiates state, constraints, repair, and
-        fallback for its own plant.
-
-        \section{Claim classes and promotion discipline}
-        The claim boundary of the book follows directly from that framing.  ORIUS does not claim
-        universal optimality, universal hardware closure, or equal empirical maturity across all
-        domains.  It claims a universal \emph{architecture} and a universal \emph{runtime
-        contract}.  Evidence is then tiered by what each domain actually clears: witness-depth
-        reference, defended bounded peer, portability-only row, or experimental boundary row.
-        This separation is not rhetorical caution; it is the mechanism that
-        makes a universal monograph defensible under serious review.
-
-        The promotion language in the monograph is therefore deliberately typed.  A
-        \emph{reference witness} carries the deepest theorem-to-code-to-artifact chain and sets
-        the scientific calibration surface for the rest of the book.  A \emph{defended bounded
-        peer} clears a domain-specific replay, soundness, fallback, and runtime gate without
-        inheriting witness-depth proof language automatically.  A \emph{portability-only row}
-        shows that the architecture can travel structurally but does not yet clear a defended
-        empirical gate.  An \emph{experimental boundary row} is useful because it marks the edge
-        of the current program rather than being hidden behind optimistic prose.
-
-        \section{Architecture language versus evidence language}
-        The book therefore uses two kinds of language and keeps them separate.  Architecture
-        language is universal: true-state violation, constraint margin, repair, certificate,
-        degraded observation, and intervention.  Evidence language is domain-specific and
-        promotion-sensitive: some rows close the measured violation gap, some only expose the
-        structure, and some remain bounded by the current adapter or telemetry surface.  The
-        monograph is strongest when it refuses to let those two vocabularies collapse into one.
-
-        This is also why the universal-first framing is stronger than a witness-first exposition at
-        the level of exposition.  The reader should learn the common hazard and common runtime
-        contract first, and only then see how different domains clear different parts of the
-        evidence ladder.  Battery remains the deepest witness, but it should not monopolize the
-        conceptual story.
-
-        \section{What the book does not claim}
-        The negative boundary is as important as the positive one.  ORIUS does not claim
-        universal optimality, universal plant closure, or a flat statement that every domain row
-        has already reached equal maturity.  It does not claim that uncertainty calibration by
-        itself proves safety, that runtime certificates replace regulation, or that adapter
-        portability is equivalent to empirical closure.  The book instead makes a narrower but
-        more durable claim: one universal safety-layer grammar can govern multiple physical-AI
-        domains, while a visible parity gate determines how far each domain may currently be
-        promoted.
-
-        The rest of the monograph is written under that contract.  The architecture chapters
-        explain the reusable runtime object, the theory chapters explain the safety logic under
-        assumptions, the domain chapters instantiate the contract six times, and the synthesis
-        chapters make the asymmetry in evidence explicit instead of hiding it.
-        """
-    ).strip() + "\n"
-
-    chapters["ch03_related_work_universal.tex"] = (
-        dedent(
-            r"""
-        __HEADER__
-        \section{{Conformal and distribution-free uncertainty}}
-        Distribution-free predictive inference provides one of the few practical ways to place
-        finite-sample uncertainty guards around learned models without assuming a perfectly
-        specified parametric error law __FOUNDATIONS__.  ORIUS adopts this family not because
-        conformal prediction alone solves runtime safety, but because it supplies a principled
-        outer shell around the unobserved state.  What this family solves is calibration of
-        predictive uncertainty.  What it does \emph{not} solve is the runtime legality of the
-        action that will be executed after telemetry degrades.  An interval can remain
-        statistically respectable while the controller still reasons over the wrong physical
-        state.  The gap ORIUS addresses here is the missing runtime bridge between nominal
-        predictive coverage and actuation legality under degraded telemetry.
-
-        \section{{Runtime assurance, supervisory safety, and shields}}
-        Runtime assurance and shielding treat safety as a supervisory execution discipline rather
-        than a property delegated to the nominal controller __RUNTIME__.  Simplex-style
-        architectures, runtime monitors, and shield synthesis all contribute the idea that
-        proposed actions may be intercepted, replaced, or downgraded at runtime.  The gap ORIUS
-        addresses here is that most runtime assurance architectures begin \emph{after} the
-        nominal controller has already proposed an action.  They often assume the relevant state
-        estimate is coherent enough for the safety supervisor to interpret.  ORIUS instead treats
-        \emph{observation degradation itself} as the mechanism that makes action legality
-        uncertain in the first place, which means the assurance layer must reason jointly about
-        reliability, uncertainty inflation, repair geometry, and certificate semantics.
-
-        \section{{Safety filters, barrier methods, and robust control}}
-        Control barrier functions, robust MPC, reachable sets, predictive safety filters, and
-        constrained control all provide machinery for turning uncertainty into admissible action
-        sets __CONTROL__.  Their shared limitation, from the perspective of this manuscript, is
-        not lack of mathematical rigor.  It is that they are usually written at the level of one
-        plant, one controller class, or one constraint geometry.  The missing object is a typed
-        interface that binds telemetry reliability, uncertainty inflation, repair, fallback, and
-        certificate emission into a reusable cross-domain contract.  ORIUS is written to supply
-        that interface rather than to displace the underlying control tools.
-
-        \section{{Drift, anomaly detection, and cyber-physical degradation}}
-        Change detection, anomaly detection, CPS security, and fault diagnosis provide the
-        language needed to recognize when the observation channel is no longer trustworthy
-        __CPS__.  ORIUS depends on that language, but departs from it by treating degraded
-        observation not only as a detection problem but as an \emph{action semantics} problem.
-        Most detection papers terminate at an alarm, a score, or a classifier.  ORIUS asks the
-        next question that matters operationally: once trust in the observation is degraded, how
-        must the admissible action set, fallback behavior, and certificate payload change before
-        the system is allowed to act again?
-
-        \section{{Applied domain literatures}}
-        The applied rows of the book draw from multiple domain literatures rather than from a
-        single benchmark tradition.  Energy and smart-grid control literature motivates the
-        reference witness; autonomous-vehicle and robotics literature motivates the need for
-        runtime repair under perception uncertainty; industrial process-control literature
-        provides real operational envelope constraints; healthcare monitoring shows how degraded
-        observation can suppress necessary intervention; and navigation and aerospace show where
-        the present closure boundary still ends.  These families collectively justify a universal
-        framing, but they also make the insufficiency of prior work visible: every family solves
-        an adjacent part of the problem, and none alone supplies a universal runtime grammar for
-        degraded observation, repaired actuation, and auditable safety certificates.  That is the
-        gap ORIUS is designed to close.
-        """
-        )
-        .replace("__HEADER__", _chapter_header("Related Work, Method Families, and the Gap ORIUS Addresses", "ch:related-work-universal").strip())
-        .replace("__FOUNDATIONS__", cites_foundations)
-        .replace("__RUNTIME__", cites_runtime)
-        .replace("__CONTROL__", cites_control)
-        .replace("__CPS__", cites_cps)
-        .strip()
-        + "\n"
-    )
-
-    return chapters
-
-
-def _domain_chapter(row: dict[str, str]) -> str:
-    support = _domain_support_lookup()[row["id"]]
-    label = f"ch:domain-{row['id']}"
-    title = f"{row['label']} Domain Chapter"
-    training_table_name = f"tbl_{row['id']}_training_surface"
-    replay_table_name = f"tbl_{row['id']}_replay_surface"
-    figure_name = f"fig_{row['id']}_chapter_snapshot.png"
-    obligations_block = ""
-    supplemental_support_block = ""
-    if row["id"] in PROMOTION_OBLIGATION_ROWS:
-        obligations_block = (
-            "\n\n"
-            + _table_input_snippet(f"tbl_{row['id']}_promotion_obligations")
-            + "\n"
-        )
-    if row["id"] == "aerospace" and _aerospace_public_flight_ready():
-        supplemental_support_block = (
-            "\n\n"
-            + dedent(
-                r"""
-                \paragraph{Bounded public-flight support lane}
-                The official aerospace row remains blocked on provider-approved multi-flight telemetry.
-                In parallel, the book now records a bounded public-flight ADS-B runtime lane as supplemental
-                support evidence only.  It deepens the chapter's runtime, governance, and proxy-field
-                discussion while leaving the official parity gate unchanged.
-
-                __AEROSPACE_PUBLIC_SUPPORT_TABLE__
-                """
-            ).strip()
-            + "\n"
-        )
-    return (
-        dedent(
-            r"""
-        __HEADER__
-
-        __STATUS_SENTENCE__
-
-        \section{{Domain problem}}
-        __SYSTEM_CONTEXT__
-
-        \section{{Degraded-observation hazard}}
-        The ORIUS book forces every domain through the same hazard lens: the runtime does not act
-        on the true state directly; it acts on a degraded, delayed, or otherwise imperfect
-        observation surface.  The row is only credible if the gap between those two surfaces can
-        be expressed, replayed, repaired, and audited explicitly.
-        __TELEMETRY_MODEL__
-
-        \section{{ORIUS instantiation}}
-        __ADAPTER_MAPPING__
-
-        \section{{Safety object}}
-        __SAFETY_PREDICATE__
-
-        \section{{Dataset and training surface}}
-        __DATASET_PROTOCOL__
-        The chapter-local evidence packet is intentionally tied to locked artifacts rather than to
-        narrative memory.  Table~\ref{tab:ch40-44-cross-domain-support} gives the shared cross-domain
-        support layer for compiled Chapters~40--44, while the table below isolates the current row.
-
-        \section{{Feature, split, and training protocol}}
-        __FEATURE_PROTOCOL_PARAGRAPH__
-
-        __TRAINING_TABLE__
-
-        \section{{Replay and evidence surface}}
-        __RESULTS__
-
-        __REPLAY_TABLE__
-
-        __FIGURE_BLOCK__
-
-        \section{{Fallback and runtime behavior}}
-        __FALLBACK_RUNTIME__
-
-        \section{{Evidence tier and promotion blocker}}
-        __EVIDENCE_PARAGRAPH__
-        __SUPPLEMENTAL_SUPPORT_BLOCK__
-        __OBLIGATIONS_BLOCK__
-
-        \section{{Limitations and exact non-claims}}
-        __LIMITATIONS__ __NON_CLAIMS__
-
-        The current promotion obligation for this row remains explicit: __TRANSFER_OBLIGATIONS__
-        """
-        )
-        .replace("__HEADER__", _chapter_header(title, label).strip())
-        .replace("__SYSTEM_CONTEXT__", row["system_context"])
-        .replace("__SAFETY_PREDICATE__", row["safety_predicate"])
-        .replace("__ADAPTER_MAPPING__", row["adapter_mapping"])
-        .replace("__TELEMETRY_MODEL__", row["telemetry_model"])
-        .replace("__DATASET_PROTOCOL__", row["dataset_protocol"])
-        .replace("__FEATURE_PROTOCOL_PARAGRAPH__", _feature_protocol_paragraph(row["id"], row, support))
-        .replace("__TRAINING_TABLE__", _table_input_snippet(training_table_name))
-        .replace("__RESULTS__", row["results"])
-        .replace("__STATUS_SENTENCE__", row["status_sentence"])
-        .replace("__REPLAY_TABLE__", _table_input_snippet(replay_table_name))
-        .replace(
-            "__FIGURE_BLOCK__",
-            _report_figure_block(
-                figure_name,
-                f"{row['label']} replay snapshot derived from the governed domain-closure artifact. Baseline and repaired TSVR are taken from the locked closure matrix; tier and blocker language remain governed by the parity gate.",
-                f"fig:{row['id']}-chapter-snapshot",
-            ),
-        )
-        .replace("__FALLBACK_RUNTIME__", _fallback_runtime_text(row["id"]))
-        .replace("__EVIDENCE_PARAGRAPH__", _chapter_evidence_paragraph(row["id"], row, support))
-        .replace(
-            "__SUPPLEMENTAL_SUPPORT_BLOCK__",
-            supplemental_support_block.replace(
-                "__AEROSPACE_PUBLIC_SUPPORT_TABLE__",
-                _table_input_snippet("tbl_aerospace_public_flight_support"),
-            ).rstrip(),
-        )
-        .replace("__OBLIGATIONS_BLOCK__", obligations_block.rstrip())
-        .replace("__LIMITATIONS__", row["limitations"])
-        .replace("__NON_CLAIMS__", _non_claims_text(row["id"]))
-        .replace("__TRANSFER_OBLIGATIONS__", row["transfer_obligations"])
-        .strip()
-        + "\n"
-    )
-
-
-def _build_runtime_and_synthesis_chapters() -> dict[str, str]:
-    gate_state = _artifact_gate_state()
-    equal_domain_ready = _equal_domain_gate_ready(gate_state)
-    navigation_ready = _domain_equal_ready("navigation", gate_state)
-    aerospace_ready = _domain_equal_ready("aerospace", gate_state)
-    aerospace_public_ready = bool(gate_state["aerospace_public_ready"])
-
-    current_parity_state = (
-        "The current manuscript clears all six governed rows under one safety-layer vocabulary: battery remains the deepest witness row, and autonomous vehicles, industrial process control, healthcare monitoring, navigation, and aerospace all clear the governed equal-domain parity gate."
-        if equal_domain_ready
-        else (
-            "The current manuscript clears four defended rows under one safety-layer vocabulary: battery as the deepest witness row, autonomous vehicles under the bounded TTC entry-barrier contract, industrial process control, and healthcare monitoring. "
-            + (
-                "Navigation now clears the governed real-data row, but aerospace remains gated by the absence of a provider-approved multi-flight closure lane. "
-                if navigation_ready and not aerospace_ready
-                else "Navigation remains gated by the missing defended real-data closure row. "
-            )
-            + (
-                "Aerospace now clears the governed provider-flight row. "
-                if aerospace_ready and not navigation_ready
-                else "Aerospace remains gated by the absence of a real multi-flight runtime surface with stronger post-repair gain. "
-            )
-            + (
-                "A separate bounded public-flight ADS-B lane deepens aerospace runtime evidence without changing that official gate."
-                if aerospace_public_ready and not aerospace_ready
-                else ""
-            )
-        )
-    )
-    publication_tier_state = (
-        "The submission-readiness table below now shows the bounded and equal-domain tiers aligned because every domain clears the same governed matrix."
-        if equal_domain_ready
-        else "The submission-readiness table below makes that distinction formal without asking the reader to absorb internal program language first. The bounded flagship target can clear as long as the manuscript, runtime, and calibration surfaces are strong while open rows remain explicitly gated."
-    )
-    gate_rule_text = (
-        "Navigation is promoted only when a locked real-data train/validate/replay row exists and clears replay, soundness, fallback, and runtime gates. "
-        "Aerospace is promoted only when provider-approved multi-flight telemetry closes the governed parity lane with material post-repair gain on the defended flight safety object. "
-        "Architecture universality is preserved; equal-domain universality is claimed only after every domain clears the same evidence, calibration, runtime, and governance gates."
-    )
-    supplemental_rule_text = (
-        "Supplemental or public-proxy evidence may deepen chapters but is non-authoritative for equal-domain promotion."
-    )
-    evidence_gap_text = (
-        "The monograph now carries a fully closed equal-domain gate, but it still separates governed replay closure from broader field, regulatory, and adversarial completeness claims."
-        if equal_domain_ready
-        else "The monograph is strongest when it states the asymmetry plainly: the runtime contract and theorem bridge travel farther than the current defended evidence. That is why the current edition distinguishes architectural universality from equal-domain closure."
-    )
-    societal_frontier_text = (
-        "The next frontier is no longer parity closure itself; it is broadening field validation, regulatory traceability, and stronger deployment-grade evidence without weakening the governed closure discipline."
-        if equal_domain_ready
-        else "The next frontier is not a new slogan; it is closing navigation with real-data evidence, replacing the aerospace placeholder with a real multi-flight safety task, and expanding cross-domain runtime governance and composition only where the same governed artifacts actually clear."
-    )
-    conclusion_gate_text = (
-        "That last point is what makes the current ORIUS package scientifically robust. Battery remains the deepest witness row, but every domain now clears the same governed parity gate, so the equal-domain claim is earned by artifact rather than by analogy."
-        if equal_domain_ready
-        else "That last point is what makes the current ORIUS package scientifically robust. Battery remains the deepest witness row; autonomous vehicles, industrial control, and healthcare monitoring are defended bounded rows; navigation and aerospace remain explicitly gated rows."
-    )
-    return {
-        "ch04_universal_runtime_layer.tex": dedent(
-            r"""
-            \chapter{ORIUS as a Universal Safety Layer}
-            \label{ch:universal-runtime-layer}
-
-            ORIUS is organized as a typed runtime contract rather than as a monolithic controller.
-            The contract takes in raw telemetry, evaluates observation reliability, inflates the
-            uncertainty set around the state that could be physically true, tightens the admissible
-            action set, repairs or replaces the candidate action, and emits a certificate that can
-            be audited downstream.  This is the Detect-Calibrate-Constrain-Shield-Certify kernel.
-
-            The critical design choice is adapterization.  Domain logic enters the framework
-            through a narrow interface: telemetry parsing, uncertainty semantics, action feasibility,
-            repair projection, and certificate payload construction.  Everything else belongs to the
-            universal safety layer itself.  That is why the monograph can treat batteries,
-            vehicles, industrial systems, healthcare monitoring, navigation, and aerospace as
-            separate domain chapters while still defending one architectural object.
-
-            \paragraph{Adapter contract}\label{par:monograph-adapter-contract}
-            The adapter contract is the single runtime boundary that every domain must satisfy.
-            It is intentionally narrow so that all domain-specific logic is isolated from the
-            universal kernel while still producing comparable benchmark and certificate surfaces.
-
-            The layer is intentionally post-nominal.  ORIUS does not assume ownership of the
-            upstream forecaster, planner, or optimizer.  It wraps them.  This makes the framework
-            more realistic for operational deployment because most real systems inherit legacy
-            nominal controllers that cannot be rewritten from scratch simply to accommodate a new
-            safety argument.
-            """
-        ).strip() + "\n",
-        "ch05_detect_calibrate_constrain_shield_certify.tex": dedent(
-            r"""
-            \chapter{Detect, Calibrate, Constrain, Shield, and Certify}
-            \label{ch:dc3s-kernel}
-
-            The five-stage ORIUS kernel gives the monograph its system spine.
-
-            \section{Detect}
-            The detection stage computes observation reliability from freshness, missingness,
-            timing, spikes, and consistency features.  It is the first point at which the runtime
-            admits that the observation channel may no longer deserve full trust.
-
-            \section{Calibrate}
-            The calibration stage translates that loss of trust into a wider uncertainty surface.
-            In the current ORIUS implementation this is achieved through conformal-style or
-            reliability-aware predictive inflation, but the chapter treats the operation more
-            generally: the state set consistent with observation must expand when observation
-            quality degrades.
-
-            \section{Constrain}
-            The constrain stage converts the state set into an admissible action set.  This is
-            where ORIUS differs from alarm-only monitoring.  It is not enough to know that
-            telemetry is degraded; the admissible action set must be recomputed accordingly.
-
-            \section{Shield}
-            The shield stage repairs the candidate action into one that is admissible under the
-            tightened set or replaces it with a fallback action when no safe action remains.
-
-            \section{Certify}
-            The certificate stage records why the action was permitted, what the observation
-            quality was, what uncertainty and margin were assumed, and what lifecycle state the
-            runtime is now in.  This stage is what lets ORIUS move from control logic to a real
-            governance story.
-            """
-        ).strip() + "\n",
-        "ch06_theory_bridge.tex": dedent(
-            r"""
-            \chapter{Theory Bridge, Assumptions, and Non-Claims}
-            \label{ch:theory-bridge}
-
-            The monograph keeps theory and evidence coupled but not conflated.  The theory of
-            ORIUS proves that under explicit assumptions, degraded observation induces a hidden
-            safety problem and that a repair-and-certify layer can bound or eliminate the relevant
-            true-state violation event.  The empirical program then tests how much of that
-            theoretical surface survives domain transfer.
-
-            Two discipline rules follow.  First, theorem-grade claims remain strongest where the
-            theorem-to-code-to-artifact chain is deepest; in the current book that is still the
-            battery reference row, even though the reader-facing narrative is now universal-first.
-            Second, universality in the book means the architecture, runtime contract, and domain
-            chapter template are shared; it does not mean the book is allowed to flatten the parity
-            gate or hide unclosed rows.  This is why the monograph keeps one explicit equal-domain
-            parity matrix in view instead of letting narrative ambition substitute for closure.
-            """
-        ).strip() + "\n",
-        "ch07_system_benchmark_governance.tex": dedent(
-            r"""
-            \chapter{System Architecture, Universal Benchmarking, and Governance}
-            \label{ch:system-benchmark-governance}
-
-            The monograph keeps one benchmark contract across all rows.  Each replay episode
-            records the candidate action, the repaired action, a true-state violation flag, an
-            observed-state satisfaction flag, an optional true and observed margin, intervention and
-            fallback flags, certificate validity, latency, and domain-specific metrics that do not
-            alter the universal core.  This is the benchmark contract that allows the same safety
-            argument to be inspected across six domains without collapsing them into one plant.
-
-            Governance is handled through CertOS.  The role of CertOS is not to prove universal
-            deployment readiness; it is to enforce a bounded runtime discipline in which no action
-            is released without a valid certificate or an explicit fallback action, all lifecycle
-            transitions are logged, and audit integrity can be checked after the fact.  The book
-            therefore treats governance as part of the scientific contribution, not as release
-            management metadata.
-            """
-        ).strip() + "\n",
-        "ch14_cross_domain_synthesis.tex": dedent(
-            r"""
-            \chapter{Cross-Domain Synthesis, Parity Gates, and the Universality Claim}
-            \label{ch:cross-domain-synthesis}
-
-            ORIUS is written here as one universal argument, not as a witness-row result with
-            portability appendices.  The unifying object is the degraded-observation hazard: a
-            controller acts on an observed state, but safety belongs to the true state.  The
-            universal claim is therefore architectural and semantic from the start.  Every domain
-            chapter is asked the same question: can the ORIUS runtime detect degraded observation,
-            widen the observation-consistent state set, repair the candidate action, emit a
-            certificate, and document the exact non-claims for that domain?
-
-            \section{What the universal claim means}
-            The point of the manuscript is not to celebrate one plant.  The point is to show that
-            battery, vehicles, industrial plants, healthcare monitoring, navigation, and
-            aerospace can all be expressed through one safety-layer grammar: degraded observation,
-            reliability-aware inflation, action repair, bounded fallback, and auditable
-            certificates.  The claim is strong precisely because it is not a claim of shared
-            nominal control law, shared dynamics, or shared optimization objective.  It is a claim
-            about the runtime safety layer that sits between nominal intelligence and actuation.
-
-            \section{Equal-domain parity gate}
-            Universal framing does not remove evidence discipline.  The manuscript therefore uses
-            one explicit parity gate rather than many drifting summaries.  A domain only earns the
-            strongest universal rhetoric that matches its closure row: adapter correctness, data
-            and training surface, replay, soundness, fallback, CertOS lifecycle support, and
-            optional multi-agent portability all have to clear the same governed matrix.
-
-            \input{reports/publication/tbl_orius_equal_domain_parity_matrix}
-
-            \section{Current parity state}
-            __CURRENT_PARITY_STATE__
-
-            \section{Publication-readiness tiers}
-            __PUBLICATION_TIER_STATE__ __GATE_RULE_TEXT__
-
-            \input{reports/publication/tbl_orius_submission_readiness}
-
-            \section{Canonical evidence versus supplemental diagnostics}
-            The evidence workflow used for this manuscript is intentionally two-lane.  The
-            canonical lane is the only lane allowed to change parity, score, and defended-domain
-            rhetoric.  The supplemental lane exists to hold bounded diagnostics, controlled
-            compute templates, and support experiments without allowing those artifacts to
-            impersonate official closure.  __SUPPLEMENTAL_RULE_TEXT__
-
-            \input{reports/publication/tbl_orius_refresh_lane_status}
-
-            \begin{figure}[htbp]
-            \centering
-            \IfFileExists{reports/publication/fig_orius_equal_domain_parity_matrix.png}{%
-            \includegraphics[width=0.97\textwidth]{reports/publication/fig_orius_equal_domain_parity_matrix.png}%
-            }{%
-            \includegraphics[width=0.97\textwidth]{../reports/publication/fig_orius_equal_domain_parity_matrix.png}%
-            }
-            \caption{Shared defended-versus-gated view for the non-battery domain block. Chapters~40--44 refer back to this mini-matrix so the reader can see which rows are defended peers and which remain explicitly gated.}
-            \label{fig:ch40-44-shared-parity}
-            \end{figure}
-
-            \begin{figure}[htbp]
-            \centering
-            \IfFileExists{reports/publication/fig_orius_equal_domain_gate_timeline.png}{%
-            \includegraphics[width=0.92\textwidth]{reports/publication/fig_orius_equal_domain_gate_timeline.png}%
-            }{%
-            \includegraphics[width=0.92\textwidth]{../reports/publication/fig_orius_equal_domain_gate_timeline.png}%
-            }
-            \caption{Versioned equal-domain gate timeline written during the canonical closure refresh. The figure makes the operator procedure reader-visible instead of burying it in logs.}
-            \label{fig:orius-equal-domain-gate-timeline}
-            \end{figure}
-
-            \IfFileExists{paper/assets/tables/generated/tbl_ch40_44_cross_domain_support.tex}{%
-            \input{paper/assets/tables/generated/tbl_ch40_44_cross_domain_support}%
-            }{%
-            \input{assets/tables/generated/tbl_ch40_44_cross_domain_support}%
-            }
-
-            \section{Evidence gaps and theory discipline}
-            __EVIDENCE_GAP_TEXT__ Where the theory surface is broader than the replay and
-            artifact surface, the claim is written as a bounded semantic or contractual
-            statement rather than as a flat cross-domain validation claim.
-
-            The calibration story is part of that discipline.  The manuscript carries one
-            cross-domain calibration matrix that separates theorem-backed calibration,
-            empirical bounded calibration, and conservative widening rather than merging them
-            into one ambiguous uncertainty narrative.
-
-            \input{reports/publication/tbl_orius_calibration_diagnostics}
-
-            \begin{figure}[htbp]
-            \centering
-            \IfFileExists{reports/publication/fig_orius_calibration_coverage_matrix.png}{%
-            \includegraphics[width=0.88\textwidth]{reports/publication/fig_orius_calibration_coverage_matrix.png}%
-            }{%
-            \includegraphics[width=0.88\textwidth]{../reports/publication/fig_orius_calibration_coverage_matrix.png}%
-            }
-            \caption{Cross-domain calibration coverage matrix by domain and slice family. The figure stays synchronized to the generated calibration diagnostics table.}
-            \label{fig:orius-calibration-coverage-matrix}
-            \end{figure}
-
-            \section{Why the gate stays reader-visible}
-            The parity gate is not an embarrassing appendix.  It is the mechanism that lets ORIUS
-            argue for a field-level runtime safety layer without pretending that every supported
-            domain is already equally mature.  The manuscript is strongest when
-            architecture-level universality and evidence-level parity are both explicit and both
-            governed.
-
-            \section{T9 universality impossibility boundary}
-            \label{sec:monograph-t9-universal-impossibility}
-            The current impossibility boundary is not a contradiction of the ORIUS architecture.
-            It is the point at which a domain remains structurally compatible with the runtime
-            contract but fails to close the relevant true-state violation event under the present
-            repair geometry or telemetry surface.
-
-            \section{T10 lower-bound interpretation}
-            \label{sec:monograph-t10-lower-bound}
-            The lower-bound interpretation in the monograph says that insufficient recoverable
-            information in the degraded observation channel limits what any runtime repair layer
-            can certify.  ORIUS can still govern fallback and logging there, but it cannot invent
-            theorem-grade closure from missing signal.
-
-            \paragraph{Universality completeness statement}
-            \label{par:monograph-universality-completeness}
-            ORIUS is complete as a universal architectural layer when every supported domain can
-            express degraded observation, admissible repair, and certificate semantics through one
-            runtime contract, while empirical promotion stays tied to the governed parity matrix
-            rather than assumed by analogy. __GATE_RULE_TEXT__
-            """
-        ).replace("__CURRENT_PARITY_STATE__", current_parity_state)
-         .replace("__PUBLICATION_TIER_STATE__", publication_tier_state)
-         .replace("__GATE_RULE_TEXT__", gate_rule_text)
-         .replace("__SUPPLEMENTAL_RULE_TEXT__", supplemental_rule_text)
-         .replace("__EVIDENCE_GAP_TEXT__", evidence_gap_text)
-         .strip() + "\n",
-        "ch15_societal_impact_and_roadmap.tex": dedent(
-            r"""
-            \chapter{Societal Contribution, Deployment Program, and the Next Parity Frontier}
-            \label{ch:societal-roadmap}
-
-            The strongest societal contribution of ORIUS is not that it solves every safety problem
-            in physical AI.  It is that it names a failure mode that repeatedly appears across
-            domains and turns that failure mode into a runtime object that can be monitored,
-            repaired, certified, and audited.  If that contribution holds, ORIUS becomes useful far
-            beyond a single battery benchmark.
-
-            The deployment story follows the parity gate, not aspiration alone. __SOCIETAL_FRONTIER_TEXT__
-            That is how ORIUS can contribute meaningfully to society without borrowing credibility
-            from unclosed rows.
-
-            \section{Runtime breadth and governance maturity}
-            The 93+ program also makes runtime breadth explicit.  The point is not simply that
-            CertOS exists; it is that runtime budgets, lifecycle events, and audit continuity are
-            now tabled across the defended rows rather than treated as battery-only depth.
-
-            \input{reports/publication/tbl_orius_runtime_budget_matrix}
-
-            \input{reports/publication/tbl_orius_governance_lifecycle_matrix}
-
-            \begin{figure}[htbp]
-            \centering
-            \IfFileExists{reports/publication/fig_orius_runtime_governance_matrix.png}{%
-            \includegraphics[width=0.88\textwidth]{reports/publication/fig_orius_runtime_governance_matrix.png}%
-            }{%
-            \includegraphics[width=0.88\textwidth]{../reports/publication/fig_orius_runtime_governance_matrix.png}%
-            }
-            \caption{Cross-domain runtime and governance matrix showing CertOS lifecycle coverage, shared-constraint evaluation, and governance completeness.}
-            \label{fig:orius-runtime-governance-matrix}
-            \end{figure}
-
-            \section{Deployment validation scope}
-            ORIUS should only use deployment language that matches the evidence surface.  The
-            deployment-scope table below distinguishes defended replay, HIL rehearsal, proxy
-            validation, and explicitly open field or regulated surfaces.  This keeps the societal
-            pitch strong without letting aspiration flatten the current evidence hierarchy.
-
-            \input{reports/publication/tbl_orius_deployment_validation_scope}
-            """
-        ).replace("__SOCIETAL_FRONTIER_TEXT__", societal_frontier_text).strip() + "\n",
-        "ch16_conclusion_monograph.tex": dedent(
-            r"""
-            \chapter{Conclusion}
-            \label{ch:monograph-conclusion}
-
-            ORIUS is presented in this monograph as a universal safety layer for physical AI under
-            degraded observation.  The universal contribution is architectural, semantic, and
-            governance-centered: one typed runtime contract, one benchmark discipline, one
-            certificate lifecycle, and six first-class domain chapters that all instantiate the
-            same degraded-observation question.
-
-            The manuscript makes four durable claims.  First, degraded observation is not a
-            nuisance variable; it is a universal action-semantics hazard for physical AI.  Second,
-            a reusable Detect--Calibrate--Constrain--Shield--Certify kernel can expose that hazard
-            at runtime, translate it into admissible repair and fallback semantics, and leave an
-            auditable certificate trail behind every protected action.  Third, the same benchmark
-            schema and governance contract can be reused across six domains without collapsing
-            them into one plant-specific story.  Fourth, universality becomes more credible when
-            it is defended by a visible parity gate than when it is asserted by analogy.
-
-            __CONCLUSION_GATE_TEXT__ The resulting claim is not smaller than a flat universal
-            slogan.  It is stronger.  It says that ORIUS already closes a real cross-domain
-            runtime-safety problem while making the boundary of unfinished evidence impossible to
-            hide.
-
-            The field implication is equally important.  Physical AI safety is often written as a
-            choice between better models, better nominal control, or better post hoc oversight.
-            ORIUS argues for a fourth object: a first-class runtime safety layer that sits between
-            nominal intelligence and actuation, reasons directly about degraded observation, and
-            forces repair, fallback, and certification into the same protected loop.  If that
-            object becomes standard, physical AI can be reviewed and deployed with clearer failure
-            semantics than most current system stacks expose.
-
-            The evidence boundary remains visible. __GATE_RULE_TEXT__ It claims one universal
-            architecture, one reusable runtime grammar, one governed evidence ladder, and a
-            credible program for promoting additional domains without weakening the scientific
-            contract.
-            """
-        ).replace("__CONCLUSION_GATE_TEXT__", conclusion_gate_text)
-         .replace("__GATE_RULE_TEXT__", gate_rule_text)
-         .strip() + "\n",
-    }
-
-
 def _build_review_assets() -> None:
     gate_state = _artifact_gate_state()
     equal_domain_ready = _equal_domain_gate_ready(gate_state)
@@ -3789,15 +2983,16 @@ def _build_review_assets() -> None:
         "\\usepackage[margin=1in]{geometry}",
         "\\usepackage{booktabs,longtable,array,enumitem,hyperref}",
         "\\begin{document}",
+        "\\hypersetup{pageanchor=false}",
         "\\title{ORIUS Universal-First Editorial Review Program}",
         "\\author{Simulated Five-Reviewer / Three-Wave External Review}",
         "\\date{April 2026}",
         "\\maketitle",
         "\\tableofcontents",
         "\\chapter{Purpose and Review Protocol}",
-        "This dossier is a simulated five-reviewer R1-style program for the ORIUS universal-first monograph. It is grounded in current repo truth: the book structure, the six domain chapters, the parity gate, the runtime/governance artifacts, and the current code-and-evidence boundary. The review program runs in three waves: outline, full draft, and near-final PDF.",
-        "It is included as an editorial audit and revision-traceability aid, not as part of the monograph's scientific evidence surface.",
-        "Because a reviewer dossier inside a thesis package is unusual, it is intentionally quarantined as optional editorial process material. A reader can omit this dossier entirely without losing any core theorem, artifact, or domain-evidence claim from the monograph itself.",
+        "This dossier records a simulated five-reviewer R1-style program for the ORIUS monograph in its universal-first dissertation form. It is grounded in current repo truth: the chapter spine, the six domain rows, the parity gate, the runtime and governance surfaces, and the present evidence boundary. The review program runs in three waves: outline, full draft, and near-final PDF.",
+        "Its role is editorial rather than scientific. The dossier preserves revision traceability and external-reader pressure without changing what counts as defended evidence inside the dissertation itself.",
+        "Because a reviewer dossier inside a thesis package is unusual, it is intentionally quarantined as optional process material. A reader can omit this file entirely without losing any theorem, artifact, or domain-evidence claim from the monograph.",
         "",
         "\\section*{Standing reviewers}",
         "\\begin{longtable}{p{0.24\\textwidth}p{0.28\\textwidth}p{0.38\\textwidth}}",
@@ -4201,30 +3396,30 @@ def _build_publication_tables() -> None:
         [
             "D4",
             "internal_domain",
-            "Navigation portability row",
+            "Navigation bounded closure row",
             "domain_instantiation",
             "navigation",
             "corridor and guidance preservation under degraded localization",
-            "same runtime contract on synthetic or portability-level traces",
-            "bounded synthetic replay and protocol traces",
-            "shows structural portability, not defended real-data closure",
-            "shadow_synthetic",
+            "same runtime contract on KITTI-backed replay with explicit support-tier fallback only when requested",
+            "bounded KITTI replay expectations and protocol traces",
+            "tracks a defended bounded row once the canonical runtime surface is staged",
+            "proof_candidate_only",
             "yes",
-            "real-data train-validate-replay chain is still missing",
+            "strict promotion remains blocked until the canonical KITTI replay chain is staged",
         ],
         [
             "D5",
             "internal_domain",
-            "Aerospace experimental boundary row",
+            "Aerospace defended runtime row",
             "domain_instantiation",
             "aerospace",
             "flight-envelope preservation under degraded flight-state telemetry",
             "envelope-hold and certificate semantics under the universal contract",
-            "experimental replay artifacts and placeholder flight-task surfaces",
-            "marks the outer boundary of the current universal evidence package",
-            "experimental",
+            "public ADS-B runtime replay artifacts and governed flight-task surfaces",
+            "treats public ADS-B as the defended runtime lane for this release while keeping claims bounded",
+            "proof_candidate_only",
             "yes",
-            "needs a stronger multi-flight task and material post-repair gain",
+            "needs equal-domain parity closure and broader flight-task evidence",
         ],
         [
             "L1",
@@ -4409,8 +3604,8 @@ def _build_publication_tables() -> None:
         ["Autonomous vehicles", "implemented_and_validated_under_bounded_contract", "locked trajectory telemetry plus replay closure", "defended_bounded_row", "current closure is bounded to the TTC entry-barrier contract", "keep as defended bounded row while broader vehicle interaction remains open"],
         ["Industrial domain", "implemented_and_validated", "locked replay plus defended instantiation tables", "defended_bounded_row", "limited proof depth beyond the current plant family", "retain as bounded defended instantiation"],
         ["Healthcare domain", "implemented_and_validated", "locked replay plus defended instantiation tables", "defended_bounded_row", "limited proof depth beyond the monitoring contract", "retain as bounded defended instantiation"],
-        ["Navigation", "simulation_backed_portability_only", "synthetic closed-loop evidence", "shadow_synthetic", "no locked real-data row", "retain as portability evidence only until the real-data row closes"],
-        ["Aerospace", "experimental_adapter_surface", "experimental replay artifacts", "experimental", "insufficient defended telemetry and promotion contract", "retain as experimental until stronger replay and artifact closure"],
+        ["Navigation", "defended_row_pending_runtime_stage", "KITTI-backed replay contract", "proof_candidate_only", "strict gate remains blocked until the canonical KITTI row is staged", "treat synthetic navigation only as explicit support-tier fallback"],
+        ["Aerospace", "defended_runtime_lane_pending_parity", "public ADS-B runtime replay artifacts", "proof_candidate_only", "promotion still depends on the equal-domain parity gate", "retain the public ADS-B lane as defended runtime while stronger telemetry remains a future strengthening path"],
         ["Frontend/backend reporting", "partially_unified", "research router plus proxy routes", "implemented_with_cleanup_open", "older local-cache assumptions in docs and tooling", "continue backend-first artifact authority cleanup"],
         ["Monograph package governance", "implemented_with_cleanup", "metrics manifest, claim matrix, and manuscript/review build surfaces", "implemented_with_cleanup_open", "inconsistent manuscript-facing wording across files", "finish universal-first editorial cleanup and active-surface archive quarantine"],
     ]
@@ -4687,7 +3882,7 @@ def _build_monograph_support_assets() -> None:
             rf"\texttt{{{_escape_tex(row['key'])}}} & {_escape_tex(row['year'])} & {_escape_tex(row['family'])} & {_escape_tex(row['title'])} & {_escape_tex(row['role'])}\\"
         )
     annotated_biblio_table.extend([r"\bottomrule", r"\end{longtable}", ""])
-    _write(MONOGRAPH_DIR / "app_ad_annotated_bibliography_map.tex", "\n".join(annotated_biblio_table) + "\n")
+    _write(REVIEW_GENERATED_DIR / "review_bibliography_map.tex", "\n".join(annotated_biblio_table) + "\n")
 
     near_final_rows = [row for row in REVIEW_SCORECARDS if row[0] == "near_final"]
     near_final_lookup = {row[1]: row for row in near_final_rows}
@@ -4957,7 +4152,7 @@ def _build_monograph_support_assets() -> None:
             "",
         ]
     )
-    _write(MONOGRAPH_DIR / "app_ae_expanded_reviewer_gap_analysis.tex", "\n".join(review_lines) + "\n")
+    _write(REVIEW_GENERATED_DIR / "review_gap_analysis.tex", "\n".join(review_lines) + "\n")
 
     protocol_lines = [
         r"\chapter{Domain Protocol Cards and Transfer Obligations}",
@@ -5012,7 +4207,7 @@ def _build_monograph_support_assets() -> None:
                 "",
             ]
         )
-    _write(MONOGRAPH_DIR / "app_af_domain_protocol_cards.tex", "\n".join(protocol_lines) + "\n")
+    _write(REVIEW_GENERATED_DIR / "review_domain_protocol_cards.tex", "\n".join(protocol_lines) + "\n")
 
     crosswalk_lines = [
         r"\chapter{Module-to-Claim Crosswalk}",
@@ -5054,7 +4249,7 @@ def _build_monograph_support_assets() -> None:
             rf"{_escape_tex(layer)} & \texttt{{{_escape_tex(path)}}} & {_escape_tex(surface)} & {_escape_tex(family)} & {_escape_tex(note)}\\"
         )
     crosswalk_lines.extend([r"\bottomrule", r"\end{longtable}", ""])
-    _write(MONOGRAPH_DIR / "app_ag_module_claim_crosswalk.tex", "\n".join(crosswalk_lines) + "\n")
+    _write(REVIEW_GENERATED_DIR / "review_module_claim_crosswalk.tex", "\n".join(crosswalk_lines) + "\n")
 
     artifact_lines = [
         r"\chapter{Extended Publication Artifact Index}",
@@ -5079,7 +4274,7 @@ def _build_monograph_support_assets() -> None:
             rf"\texttt{{{_escape_tex(artifact)}}} & {_escape_tex(category)} & {_escape_tex(role)}\\"
         )
     artifact_lines.extend([r"\bottomrule", r"\end{longtable}", ""])
-    _write(MONOGRAPH_DIR / "app_ah_publication_artifact_index.tex", "\n".join(artifact_lines) + "\n")
+    _write(REVIEW_GENERATED_DIR / "review_publication_artifact_index.tex", "\n".join(artifact_lines) + "\n")
 
     glossary_rows = [
         ("OASG", "Observation-action safety gap", "The event where an action is admissible on observed state but unsafe on true state."),
@@ -5130,207 +4325,12 @@ def _build_monograph_support_assets() -> None:
             rf"{_escape_tex(symbol)} & {_escape_tex(meaning)} & {_escape_tex(role)}\\"
         )
     glossary_lines.extend([r"\bottomrule", r"\end{longtable}", ""])
-    _write(MONOGRAPH_DIR / "app_ai_formula_and_term_register.tex", "\n".join(glossary_lines) + "\n")
-
-
-def _build_monograph_chapters() -> None:
-    chapters = {}
-    chapters.update(_build_foundation_chapters())
-    chapters.update(_build_runtime_and_synthesis_chapters())
-    chapters["ch08_battery_bridge.tex"] = dedent(
-        """
-        \\chapter{Battery as the Witness Domain}
-        \\label{ch:battery-bridge}
-        \\label{ch:battery-to-orius}
-
-        Battery appears first among the six domain chapters because it carries the deepest
-        theorem-to-code-to-artifact lineage in the present book, not because ORIUS is an
-        energy-specific framework.  This chapter uses the same universal template as the other
-        domain chapters and then points into the longer battery evidence block that follows.
-
-        \\section{Domain problem}
-        Grid-scale storage dispatch must remain physically feasible even when the telemetry channel
-        that reports state of charge, power, or availability becomes stale, delayed, missing, or
-        otherwise degraded.
-
-        \\section{Degraded-observation hazard}
-        Battery makes the universal ORIUS hazard concrete: a dispatch action can look legal on the
-        observed state while already violating the true state of charge or reserve envelope of the
-        underlying asset.
-
-        \\section{ORIUS instantiation}
-        The battery adapter binds reliability scoring, uncertainty inflation, action repair,
-        certificate issuance, and benchmark replay to an explicit dispatch feasibility surface.
-
-        \\section{Safety object}
-        The governing safety object is zero true-state violation of the dispatch and state-of-charge
-        envelope under degraded observation.
-
-        \\section{Dataset and training surface}
-        The battery row is backed by the deepest locked data, replay, theorem, and artifact stack
-        in the repo, including the detailed calibration, stress, latency, and certificate-horizon
-        chapters that follow immediately after this bridge chapter.
-
-        \\section{Replay and evidence surface}
-        The detailed battery chapters provide the reference OASG witness, the zero-TSVR repair
-        surface, the stress-test analysis, conditional-coverage audits, graceful-degradation study,
-        bounded composition case, and adversarial probing evidence that make the battery row the
-        deepest current reference surface in the monograph.
-
-        \\section{Fallback and runtime behavior}
-        Battery uses certificate-gated safe-hold, dispatch clipping, and bounded expiry semantics so
-        the runtime can preserve the physical envelope even when the nominal optimizer remains
-        aggressive.
-
-        \\section{Limitations and exact non-claims}
-        Battery is the deepest theorem-grade row, but it is not the conceptual center of the book
-        and it is not allowed to silently stand in for equal-domain closure.  Its role is to anchor
-        the proof depth while the rest of the monograph tests how much of that contract survives
-        domain transfer.
-        """
-    ).strip() + "\n"
-    for idx, row in enumerate(DOMAIN_ROWS[1:], start=9):
-        chapters[f"ch{idx:02d}_{row['id']}_domain.tex"] = _domain_chapter(row)
-    for name, text in chapters.items():
-        _write(MONOGRAPH_DIR / name, text)
-
-
-def _build_monograph_entrypoint() -> None:
-    appendix_includes = "\n".join(
-        [
-            r"\include{appendices/app_a_notation}",
-            r"\include{appendices/app_b_assumptions}",
-            r"\include{appendices/app_c_full_proofs}",
-            r"\include{appendices/app_d_extended_results}",
-            r"\include{appendices/app_e_reliability_audits}",
-            r"\include{appendices/app_f_fault_specs}",
-            r"\include{appendices/app_g_adapter_interface}",
-            r"\include{appendices/app_domain_coverage_proof}",
-            r"\include{appendices/app_domain_instantiation_block}",
-            r"\include{appendices/app_j_sweep_and_latency_protocols}",
-            r"\include{appendices/app_k_blueprint_coverage_matrix}",
-            r"\include{appendices/app_l_artifact_figure_table_index}",
-            r"\include{appendices/app_m_verified_theorems_and_gap_audit}",
-            r"\include{appendices/app_o_claim_scope_and_citation_policy}",
-            r"\include{appendices/app_q_editorial_integration_and_locking}",
-            r"\include{appendices/app_r_locked_artifact_hash_registry}",
-            r"\include{appendices/app_s_claim_evidence_registers}",
-            r"\include{appendices/app_t_certos_artifact_audit}",
-            r"\include{appendices/app_u_certos_lifecycle_log}",
-            r"\include{appendices/app_v_active_probing_battery_audit}",
-            r"\include{appendices/app_w_portability_context_and_roadmap}",
-            r"\include{appendices/app_x_full_locked_de_trace}",
-            r"\include{appendices/app_y_full_locked_us_trace}",
-            r"\include{appendices/app_aa_release_manifest_and_artifact_traceability}",
-            r"\include{appendices/app_ab_hil_fault_response_log}",
-            r"\include{appendices/app_ac_integrated_theorem_surface_register}",
-            r"\include{monograph/app_ad_annotated_bibliography_map}",
-            r"\include{monograph/app_ae_expanded_reviewer_gap_analysis}",
-            r"\include{monograph/app_af_domain_protocol_cards}",
-            r"\include{monograph/app_ag_module_claim_crosswalk}",
-            r"\include{monograph/app_ah_publication_artifact_index}",
-            r"\include{monograph/app_ai_formula_and_term_register}",
-        ]
-    )
-    content = dedent(
-        rf"""
-        % Auto-generated ORIUS universal monograph entrypoint.
-        \documentclass[12pt,oneside]{{book}}
-        \input{{preamble.tex}}
-        \usepackage{{alphalph}}
-        \graphicspath{{{{reports/publication/}}{{reports/hil/}}{{reports/figures/}}{{paper/assets/figures/}}{{reports/universal_orius_validation/}}{{reports/universal_training_audit/}}}}
-
-        \title{{ORIUS: A Universal Safety Layer for Physical AI under Degraded Observation}}
-        \author{{Pratik Niroula}}
-        \date{{April 2026}}
-
-        \begin{{document}}
-        \frontmatter
-        \input{{frontmatter/titlepage.tex}}
-        \input{{frontmatter/abstract.tex}}
-        \input{{frontmatter/acknowledgments.tex}}
-        \tableofcontents
-        \listoftables
-        \listoffigures
-
-        \mainmatter
-
-        \part{{Why Physical AI Needs a Safety Layer}}
-        \include{{monograph/ch01_physical_ai_safety}}
-        \include{{monograph/ch02_oasg_claim_boundary}}
-        \include{{monograph/ch03_related_work_universal}}
-
-        \part{{ORIUS Architecture}}
-        \include{{monograph/ch04_universal_runtime_layer}}
-        \include{{monograph/ch05_detect_calibrate_constrain_shield_certify}}
-        \include{{monograph/ch07_system_benchmark_governance}}
-        \include{{chapters/ch05_orius_system_context}}
-        \include{{chapters/ch06_data_telemetry_scope}}
-        \include{{chapters/ch30_orius_bench_battery_track}}
-        \include{{chapters/ch22_latency_systems_footprint}}
-        \include{{chapters/ch32_certos_runtime_certificate_lifecycle}}
-
-        \part{{Theory}}
-        \include{{monograph/ch06_theory_bridge}}
-        \include{{chapters/ch15_assumptions_notation_proof_discipline}}
-        \include{{chapters/ch16_battery_theorem_oasg_existence}}
-        \include{{chapters/ch17_battery_theorem_safety_preservation}}
-        \include{{chapters/ch18_orius_core_bound_battery}}
-        \include{{chapters/ch19_no_free_safety_battery}}
-        \include{{chapters/ch19b_sota_comparison}}
-        \include{{chapters/ch20_temporal_behavioral_extensions}}
-        \include{{chapters/ch37_universality_completeness}}
-
-        \part{{Domain Chapters}}
-        \include{{monograph/ch08_battery_bridge}}
-        \include{{chapters/ch07_battery_dynamics_dispatch}}
-        \include{{chapters/ch08_forecasting_calibration}}
-        \include{{chapters/ch09_dc3s_battery_adapter}}
-        \include{{chapters/ch10_cpsbench_battery_track}}
-        \include{{chapters/ch11_main_battery_results}}
-        \include{{chapters/ch12_ablations_failure_analysis}}
-        \include{{chapters/ch13_case_studies_operational_traces}}
-        \include{{chapters/ch14_battery_lessons_domain_interpretation}}
-        \include{{chapters/ch21_fault_performance_stress_tests}}
-        \include{{chapters/ch23_hyperparameter_surface_stability}}
-        \include{{chapters/ch24_conditional_coverage_subgroups}}
-        \include{{chapters/ch25_regional_decomposition_real_prices}}
-        \include{{chapters/ch26_asset_preservation_aging_proxy}}
-        \include{{chapters/ch27_hardware_in_loop_validation}}
-        \include{{chapters/ch28_certificate_half_life_blackout}}
-        \include{{chapters/ch29_graceful_degradation_safe_landing}}
-        \include{{chapters/ch31_compositional_safety_battery_fleets}}
-        \include{{chapters/ch32_adversarial_robustness_active_probing}}
-        \include{{monograph/ch09_av_domain}}
-        \include{{monograph/ch10_industrial_domain}}
-        \include{{monograph/ch11_healthcare_domain}}
-        \include{{monograph/ch12_navigation_domain}}
-        \include{{monograph/ch13_aerospace_domain}}
-
-        \part{{Universality, Limits, and Societal Program}}
-        \include{{monograph/ch14_cross_domain_synthesis}}
-        \include{{chapters/ch34_outside_current_evidence}}
-        \include{{chapters/ch35_deployment_path_verification_discipline}}
-        \include{{monograph/ch15_societal_impact_and_roadmap}}
-        \include{{monograph/ch16_conclusion_monograph}}
-
-        \appendix
-        \renewcommand{{\thechapter}}{{\alphalph{{\value{{chapter}}}}}}
-        {appendix_includes}
-
-        \backmatter
-        \include{{backmatter/extended_reading_index}}
-        \nocite{{*}}
-        \bibliographystyle{{IEEEtran}}
-        \bibliography{{paper/bibliography/orius_monograph}}
-
-        \end{{document}}
-        """
-    ).strip() + "\n"
-    _write(PAPER_DIR / "paper.tex", content)
+    _write(REVIEW_GENERATED_DIR / "review_formula_and_term_register.tex", "\n".join(glossary_lines) + "\n")
 
 
 def build() -> None:
+    # The dissertation body is curated in paper/monograph and paper/paper.tex.
+    # This builder owns generated evidence surfaces and review-facing derivatives only.
     _build_bibliography()
     _build_publication_tables()
     _build_domain_evidence_assets()
