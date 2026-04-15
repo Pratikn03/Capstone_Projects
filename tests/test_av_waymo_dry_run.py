@@ -16,6 +16,7 @@ from orius.av_waymo import (
     train_dry_run_models,
     write_tfrecord_records,
 )
+from orius.certos.verification import load_certificates_from_duckdb, verify_certificates
 
 
 def _make_scenario_features(*, scenario_id: str, speed_bias: float, gap_bias: float) -> dict[str, list[float | int | bytes]]:
@@ -156,6 +157,7 @@ def test_waymo_dry_run_smoke(tmp_path: Path) -> None:
     training_summary_df = pd.read_csv(reports_dir / "training_summary.csv")
     assert (reports_dir / "training_summary.csv").exists()
     assert (reports_dir / "subgroup_coverage.csv").exists()
+    assert Path(train_report["shift_aware_config_json"]).exists()
     assert "ego_speed_mps_1s" in train_report["artifact_registry"]
     assert training_summary_df["widened_mean_width"].notna().all()
     assert training_summary_df["mean_widening_factor"].notna().all()
@@ -168,8 +170,25 @@ def test_waymo_dry_run_smoke(tmp_path: Path) -> None:
         max_scenarios=1,
     )
     summary_df = pd.read_csv(runtime_report["runtime_summary_csv"])
+    coverage_df = pd.read_csv(runtime_report["fault_family_coverage_csv"])
+    trace_df = pd.read_csv(runtime_report["runtime_traces_csv"])
     assert set(summary_df["controller"]) == {"baseline", "orius"}
+    assert "controller" in coverage_df.columns
+    assert set(coverage_df["controller"]) == {"baseline", "orius"}
+    assert {
+        "trace_id",
+        "shard_id",
+        "reliability_w",
+        "base_pred_ego_speed_lower_mps",
+        "base_pred_relative_gap_lower_m",
+    }.issubset(trace_df.columns)
     assert Path(runtime_report["audit_db_path"]).exists()
+    cert_summary, _, _, _ = verify_certificates(load_certificates_from_duckdb(runtime_report["audit_db_path"]))
+    assert cert_summary["chain_valid"] is True
+    shift_artifacts = runtime_report["shift_aware_artifacts"]
+    assert Path(shift_artifacts["summary_csv"]).exists()
+    assert Path(shift_artifacts["targets"]["ego_speed_mps"]["validity_trace_csv"]).exists()
+    assert Path(shift_artifacts["targets"]["relative_gap_m"]["adaptive_trace_csv"]).exists()
 
 
 def test_waymo_replay_track_faults_only_corrupt_observation(tmp_path: Path) -> None:
