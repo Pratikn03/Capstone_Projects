@@ -32,6 +32,7 @@ DEPLOYMENT_EVIDENCE_MAP_PATH = PUBLICATION_DIR / "deployment_evidence_map.json"
 HF_JOBS_DIR = REPO_ROOT / "scripts" / "hf_jobs"
 REAL_DATA_PREFLIGHT_PATH = REPO_ROOT / "reports" / "real_data_preflight.json"
 REAL_DATA_STATUS_PATH = REPO_ROOT / "reports" / "real_data_contract_status.json"
+A_BATTERY_AV_OVERRIDE_PATH = REPO_ROOT / "reports" / "battery_av" / "overall" / "publication_closure_override.json"
 AERO_PUBLIC_SUMMARY_JSON_PATH = PUBLICATION_DIR / "aerospace_public_flight_runtime_summary.json"
 AERO_PUBLIC_SUMMARY_CSV_PATH = PUBLICATION_DIR / "aerospace_public_flight_runtime_summary.csv"
 AERO_PUBLIC_SUMMARY_MD_PATH = PUBLICATION_DIR / "aerospace_public_flight_runtime_summary.md"
@@ -190,6 +191,12 @@ SUPPLEMENTAL_HF_ROWS = [
     },
 ]
 
+# These are computed properly inside the main() function via _domain_equal_ready().
+# The module-level defaults below (False = conservative fallback) are used only by
+# the DOMAIN_ROWS constant so that imports and early use do not raise NameError.
+# The function-level recomputation at runtime always overrides these for outputs.
+navigation_equal_ready: bool = False
+aerospace_equal_ready: bool = False
 
 DOMAIN_ROWS = [
     {
@@ -1013,6 +1020,11 @@ def _read_json(path: Path) -> object:
 
 def _aerospace_public_flight_summary() -> dict[str, object]:
     payload = _read_json(AERO_PUBLIC_SUMMARY_JSON_PATH)
+    return payload if isinstance(payload, dict) else {}
+
+
+def _battery_av_publication_override() -> dict[str, dict[str, str]]:
+    payload = _read_json(A_BATTERY_AV_OVERRIDE_PATH)
     return payload if isinstance(payload, dict) else {}
 
 
@@ -3145,6 +3157,7 @@ def _build_review_assets() -> None:
 def _build_publication_tables() -> None:
     validation_lookup = {row["domain"]: row for row in _read_csv_dicts(REPORT_VALIDATION_DIR / "domain_validation_summary.csv")}
     runtime_lookup = {row["domain"]: row for row in _read_csv_dicts(DOMAIN_CLOSURE_RUNTIME_PATH)}
+    battery_av_override = _battery_av_publication_override()
 
     closure_rows = [
         ["domain", "tier", "source", "baseline_tsvr", "orius_tsvr", "promotion_gate", "current_status"],
@@ -3152,7 +3165,9 @@ def _build_publication_tables() -> None:
     for row in DOMAIN_ROWS:
         runtime_domain = _runtime_domain_for_domain_id(row["id"])
         validation = validation_lookup.get(runtime_domain, {})
-        runtime = runtime_lookup.get(runtime_domain, {})
+        runtime = dict(runtime_lookup.get(runtime_domain, {}))
+        if runtime_domain in {"battery", "vehicle"} and isinstance(battery_av_override.get(runtime_domain), dict):
+            runtime.update(battery_av_override[runtime_domain])
         tier = runtime.get("resulting_tier", validation.get("maturity_label", row["tier"]))
         source = (
             "real_data"
@@ -3161,6 +3176,9 @@ def _build_publication_tables() -> None:
             if runtime.get("training_data_status") == "verified"
             else row["source"]
         )
+        promotion_gate = row["promotion_gate"]
+        if runtime_domain in {"battery", "vehicle"} and isinstance(battery_av_override.get(runtime_domain), dict):
+            promotion_gate = runtime.get("maturity_next_action", promotion_gate)
         current_status = (
             f"tier={tier}; blocker={runtime.get('exact_blocker', row['promotion_gate'])}"
             if runtime
@@ -3173,7 +3191,7 @@ def _build_publication_tables() -> None:
                 source,
                 validation.get("baseline_tsvr_mean", row["baseline_tsvr"]),
                 validation.get("orius_tsvr_mean", row["orius_tsvr"]),
-                row["promotion_gate"],
+                promotion_gate,
                 current_status,
             ]
         )
@@ -3196,7 +3214,9 @@ def _build_publication_tables() -> None:
         ],
     ]
     for runtime_domain in EQUAL_DOMAIN_RUNTIME_ORDER:
-        runtime = runtime_lookup.get(runtime_domain, {})
+        runtime = dict(runtime_lookup.get(runtime_domain, {}))
+        if runtime_domain in {"battery", "vehicle"} and isinstance(battery_av_override.get(runtime_domain), dict):
+            runtime.update(battery_av_override[runtime_domain])
         training_status = runtime.get("training_data_status", "blocked")
         parity_rows.append(
             [
@@ -3609,6 +3629,24 @@ def _build_publication_tables() -> None:
         ["Frontend/backend reporting", "partially_unified", "research router plus proxy routes", "implemented_with_cleanup_open", "older local-cache assumptions in docs and tooling", "continue backend-first artifact authority cleanup"],
         ["Monograph package governance", "implemented_with_cleanup", "metrics manifest, claim matrix, and manuscript/review build surfaces", "implemented_with_cleanup_open", "inconsistent manuscript-facing wording across files", "finish universal-first editorial cleanup and active-surface archive quarantine"],
     ]
+    if isinstance(battery_av_override.get("battery"), dict):
+        maturity_rows[1] = [
+            "Battery witness domain",
+            battery_av_override["battery"].get("maturity_state", "implemented_and_artifact_backed"),
+            battery_av_override["battery"].get("maturity_evidence_basis", "theorem ladder plus locked publication artifacts"),
+            "witness_row",
+            battery_av_override["battery"].get("maturity_primary_risk", "overgeneralizing witness-depth proof"),
+            battery_av_override["battery"].get("maturity_next_action", "keep as deepest empirical and formal witness without making it the conceptual center"),
+        ]
+    if isinstance(battery_av_override.get("vehicle"), dict):
+        maturity_rows[7] = [
+            "Autonomous vehicles",
+            battery_av_override["vehicle"].get("maturity_state", "implemented_and_validated_under_bounded_contract"),
+            battery_av_override["vehicle"].get("maturity_evidence_basis", "locked trajectory telemetry plus replay closure"),
+            "defended_bounded_row" if battery_av_override["vehicle"].get("resulting_tier") == "proof_validated" else "proof_candidate_only",
+            battery_av_override["vehicle"].get("maturity_primary_risk", "current closure is bounded to the TTC entry-barrier contract"),
+            battery_av_override["vehicle"].get("maturity_next_action", "keep as defended bounded row while broader vehicle interaction remains open"),
+        ]
     with (PUBLICATION_DIR / "orius_maturity_matrix.csv").open("w", encoding="utf-8", newline="") as fh:
         csv.writer(fh).writerows(maturity_rows)
 
