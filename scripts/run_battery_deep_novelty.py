@@ -45,6 +45,7 @@ if str(SRC_DIR) not in os.sys.path:
 from orius.cpsbench_iot.metrics import compute_forecast_metrics
 from orius.cpsbench_iot.runner import _to_telemetry_events, run_single
 from orius.cpsbench_iot.scenarios import DEFAULT_SCENARIOS, generate_episode
+from orius.dc3s.certificate import recompute_certificate_hash, store_certificates_batch
 from orius.dc3s.deep_oqe import (
     DeepOQEConfig,
     DeepOQEModel,
@@ -57,10 +58,10 @@ from orius.forecasting.dl_patchtst import PatchTSTForecaster
 from orius.orius_bench.metrics_engine import StepRecord, compute_all_metrics as compute_bench_metrics
 
 
-OUT_DIR = REPO_ROOT / "reports" / "publication"
-PAPER_TABLE_DIR = REPO_ROOT / "paper" / "assets" / "tables" / "generated"
-PAPER_FIG_DIR = REPO_ROOT / "paper" / "assets" / "figures"
-MODEL_DIR = REPO_ROOT / "artifacts" / "deep_oqe"
+DEFAULT_OUT_DIR = REPO_ROOT / "reports" / "publication"
+DEFAULT_PAPER_TABLE_DIR = REPO_ROOT / "paper" / "assets" / "tables" / "generated"
+DEFAULT_PAPER_FIG_DIR = REPO_ROOT / "paper" / "assets" / "figures"
+DEFAULT_MODEL_DIR = REPO_ROOT / "artifacts" / "deep_oqe"
 ENGINEERED_BASELINE_PATH = REPO_ROOT / "reports" / "week2_metrics.json"
 FEATURES_PATH = REPO_ROOT / "data" / "processed" / "features.parquet"
 
@@ -103,7 +104,10 @@ def _latex_escape(value: Any) -> str:
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the bounded battery-scoped ORIUS deep-learning novelty package.")
-    parser.add_argument("--out-dir", type=Path, default=OUT_DIR)
+    parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
+    parser.add_argument("--model-dir", type=Path, default=DEFAULT_MODEL_DIR)
+    parser.add_argument("--paper-table-dir", type=Path, default=DEFAULT_PAPER_TABLE_DIR)
+    parser.add_argument("--paper-fig-dir", type=Path, default=DEFAULT_PAPER_FIG_DIR)
     parser.add_argument("--features", type=Path, default=FEATURES_PATH)
     parser.add_argument("--engineered-baseline", type=Path, default=ENGINEERED_BASELINE_PATH)
     parser.add_argument("--deep-oqe-epochs", type=int, default=12)
@@ -312,7 +316,13 @@ def _write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) ->
         writer.writerows(rows)
 
 
-def write_deep_oqe_artifacts(result: dict[str, Any], out_dir: Path) -> dict[str, Any]:
+def write_deep_oqe_artifacts(
+    result: dict[str, Any],
+    out_dir: Path,
+    *,
+    paper_table_dir: Path,
+    paper_fig_dir: Path,
+) -> dict[str, Any]:
     eval_frame = result["eval_frame"]
     low_threshold = 0.35
     low_rate_fault = float((eval_frame.loc[eval_frame["fault_present"] == 1, "predicted_w"] < low_threshold).mean())
@@ -411,7 +421,9 @@ def write_deep_oqe_artifacts(result: dict[str, Any], out_dir: Path) -> dict[str,
     fig.savefig(fig_path, dpi=220)
     plt.close(fig)
 
-    table_tex = PAPER_TABLE_DIR / "tbl_battery_deep_oqe_summary.tex"
+    paper_table_dir.mkdir(parents=True, exist_ok=True)
+    paper_fig_dir.mkdir(parents=True, exist_ok=True)
+    table_tex = paper_table_dir / "tbl_battery_deep_oqe_summary.tex"
     table_tex.write_text(
         "\n".join(
             [
@@ -434,7 +446,7 @@ def write_deep_oqe_artifacts(result: dict[str, Any], out_dir: Path) -> dict[str,
         ),
         encoding="utf-8",
     )
-    shutil.copy2(fig_path, PAPER_FIG_DIR / "fig_battery_deep_oqe_summary.png")
+    shutil.copy2(fig_path, paper_fig_dir / "fig_battery_deep_oqe_summary.png")
     return {
         "summary": summary,
         "summary_csv": str(csv_path),
@@ -470,6 +482,8 @@ def _bench_records_for_controller(
             float(constraints.get("charge_efficiency", 1.0)) * proposed_charge
             - proposed_discharge / max(float(constraints.get("discharge_efficiency", 1.0)), 1e-6)
         )
+        true_margin = min(true_soc - min_soc, max_soc - true_soc)
+        observed_margin = min(proposed_next_obs_soc - min_soc, max_soc - proposed_next_obs_soc)
         observed_safe = bool(min_soc - 1e-9 <= proposed_next_obs_soc <= max_soc + 1e-9)
         useful_work = max(
             0.0,
@@ -483,6 +497,8 @@ def _bench_records_for_controller(
                 action={"charge_mw": safe_charge, "discharge_mw": safe_discharge},
                 true_constraint_violated=not true_valid,
                 observed_constraint_satisfied=observed_safe,
+                true_margin=float(true_margin),
+                observed_margin=float(observed_margin),
                 intervened=intervention,
                 fallback_used=intervention and (abs(safe_charge) + abs(safe_discharge) < abs(proposed_charge) + abs(proposed_discharge)),
                 certificate_valid=true_valid,
@@ -496,12 +512,112 @@ def _bench_records_for_controller(
     return records
 
 
+def _battery_dispatch_regime(charge_mw: float, discharge_mw: float) -> str:
+    if charge_mw > discharge_mw + 1e-6:
+        return "charge"
+    if discharge_mw > charge_mw + 1e-6:
+        return "discharge"
+    return "hold"
+
+
+def _battery_runtime_artifacts_for_controller(
+    *,
+    lane: str,
+    scenario: str,
+    seed: int,
+    controller: str,
+    buffers: Mapping[str, Any],
+    constraints: Mapping[str, Any],
+) -> tuple[list[StepRecord], list[dict[str, Any]], list[dict[str, Any]]]:
+    records = _bench_records_for_controller(buffers=buffers, constraints=constraints)
+    trace_rows: list[dict[str, Any]] = []
+    cert_rows: list[dict[str, Any]] = []
+    stored_prev_hash: str | None = None
+    dt_hours = float(constraints.get("time_step_hours", 1.0))
+    charge_eff = float(constraints.get("charge_efficiency", 1.0))
+    discharge_eff = max(float(constraints.get("discharge_efficiency", 1.0)), 1e-6)
+    min_soc = float(constraints.get("min_soc_mwh", 0.0))
+    max_soc = float(constraints.get("max_soc_mwh", 1.0))
+    controller_label = f"{lane}:{controller}"
+
+    for step, record in enumerate(records):
+        cert = buffers["certificates"][step]
+        cert_payload = dict(cert) if isinstance(cert, Mapping) else {}
+        proposed_charge = float(buffers["proposed_charge_mw"][step])
+        proposed_discharge = float(buffers["proposed_discharge_mw"][step])
+        safe_charge = float(buffers["safe_charge_mw"][step])
+        safe_discharge = float(buffers["safe_discharge_mw"][step])
+        true_soc = float(buffers["soc_true_mwh"][step])
+        observed_soc = float(buffers["soc_observed_mwh"][step])
+        proposed_next_obs_soc = observed_soc + dt_hours * (
+            charge_eff * proposed_charge - proposed_discharge / discharge_eff
+        )
+        interval_lower = float(buffers["interval_lower"][step])
+        interval_upper = float(buffers["interval_upper"][step])
+        reliability_w = float(buffers["w_t"][step])
+        drift_score = float(buffers["rac_sensitivity_norm"][step]) if "rac_sensitivity_norm" in buffers else 0.0
+        cert_payload.setdefault("scenario_id", scenario)
+        cert_payload.setdefault("fault_family", scenario)
+        cert_payload.setdefault("lane", lane)
+        cert_payload.setdefault("controller_label", controller_label)
+        cert_payload.setdefault("dispatch_regime", _battery_dispatch_regime(safe_charge, safe_discharge))
+        cert_payload.setdefault("true_margin", float(record.true_margin if record.true_margin is not None else 0.0))
+        cert_payload.setdefault("observed_margin", float(record.observed_margin if record.observed_margin is not None else 0.0))
+        if cert_payload and lane == "deep" and controller == "dc3s_wrapped":
+            cert_payload["prev_hash"] = stored_prev_hash
+            cert_payload["certificate_hash"] = recompute_certificate_hash(cert_payload)
+            stored_prev_hash = str(cert_payload["certificate_hash"])
+            cert_rows.append(cert_payload)
+        inflation_values = buffers.get("rac_inflation")
+        default_inflation = 1.0
+        if isinstance(inflation_values, Sequence) and len(inflation_values) > step:
+            default_inflation = float(inflation_values[step])
+        trace_rows.append(
+            {
+                "trace_id": f"{lane}:{scenario}:{seed}:{controller}:{step}",
+                "lane": lane,
+                "controller": controller,
+                "controller_label": controller_label,
+                "fault_family": scenario,
+                "seed": int(seed),
+                "step_index": int(step),
+                "reliability_w": reliability_w,
+                "widening_factor": float(cert_payload.get("inflation", default_inflation)),
+                "drift_score": drift_score,
+                "dispatch_regime": _battery_dispatch_regime(safe_charge, safe_discharge),
+                "candidate_charge_mw": proposed_charge,
+                "candidate_discharge_mw": proposed_discharge,
+                "safe_charge_mw": safe_charge,
+                "safe_discharge_mw": safe_discharge,
+                "true_value": true_soc,
+                "observed_value": proposed_next_obs_soc,
+                "true_margin": float(record.true_margin if record.true_margin is not None else min(true_soc - min_soc, max_soc - true_soc)),
+                "observed_margin": float(record.observed_margin if record.observed_margin is not None else min(proposed_next_obs_soc - min_soc, max_soc - proposed_next_obs_soc)),
+                "interval_lower": interval_lower,
+                "interval_upper": interval_upper,
+                "true_constraint_violated": bool(record.true_constraint_violated),
+                "observed_constraint_satisfied": bool(record.observed_constraint_satisfied),
+                "intervened": bool(record.intervened),
+                "fallback_used": bool(record.fallback_used),
+                "certificate_valid": bool(record.certificate_valid),
+                "certificate_predicted_valid": bool(record.certificate_predicted_valid),
+                "useful_work": float(record.useful_work),
+            }
+        )
+    return records, trace_rows, cert_rows
+
+
 def build_replay_comparison(
     *,
     model_path: Path,
     out_dir: Path,
+    paper_table_dir: Path,
+    paper_fig_dir: Path,
 ) -> dict[str, Any]:
     rows: list[dict[str, Any]] = []
+    runtime_traces: list[dict[str, Any]] = []
+    runtime_summary_rows: list[dict[str, Any]] = []
+    certificate_rows: list[dict[str, Any]] = []
     lanes = {
         "heuristic": {"reliability": {"backend": "heuristic", "min_w": 0.05}},
         "deep": {
@@ -526,12 +642,18 @@ def build_replay_comparison(
                 main_rows = payload["main_rows"]
                 for controller in ("dc3s_wrapped", "dc3s_ftit"):
                     main_row = next(row for row in main_rows if row["controller"] == controller)
-                    bench = compute_bench_metrics(
-                        _bench_records_for_controller(
-                            buffers=payload["controller_buffers"][controller],
-                            constraints=payload["constraints"],
-                        )
+                    records, trace_rows, cert_rows = _battery_runtime_artifacts_for_controller(
+                        lane=lane_name,
+                        scenario=scenario,
+                        seed=int(seed),
+                        controller=controller,
+                        buffers=payload["controller_buffers"][controller],
+                        constraints=payload["constraints"],
                     )
+                    bench = compute_bench_metrics(records)
+                    runtime_traces.extend(trace_rows)
+                    certificate_rows.extend(cert_rows)
+                    controller_label = f"{lane_name}:{controller}"
                     rows.append(
                         {
                             "lane": lane_name,
@@ -550,10 +672,27 @@ def build_replay_comparison(
                             "recovery_latency": float(bench.recovery_latency),
                         }
                     )
+                    runtime_summary_rows.append(
+                        {
+                            "controller": controller_label,
+                            "tsvr": float(bench.tsvr),
+                            "oasg": float(bench.oasg),
+                            "cva": float(bench.cva),
+                            "gdq": float(bench.gdq),
+                            "intervention_rate": float(bench.intervention_rate),
+                            "audit_completeness": float(bench.audit_completeness),
+                            "recovery_latency": float(bench.recovery_latency),
+                            "n_steps": int(bench.n_steps),
+                        }
+                    )
 
     csv_path = out_dir / "battery_deep_oqe_safety_metrics.csv"
     md_path = out_dir / "battery_deep_oqe_safety_metrics.md"
     fig_path = out_dir / "fig_battery_deep_oqe_safety_metrics.png"
+    runtime_summary_path = out_dir / "runtime_summary.csv"
+    runtime_traces_path = out_dir / "runtime_traces.csv"
+    fault_coverage_path = out_dir / "fault_family_coverage.csv"
+    audit_db_path = out_dir / "battery_runtime.duckdb"
     _write_csv(
         csv_path,
         rows,
@@ -591,6 +730,48 @@ def build_replay_comparison(
         ]
         .mean(numeric_only=True)
     )
+    runtime_summary_df = (
+        pd.DataFrame(runtime_summary_rows)
+        .groupby("controller", as_index=False)
+        .agg(
+            {
+                "tsvr": "mean",
+                "oasg": "mean",
+                "cva": "mean",
+                "gdq": "mean",
+                "intervention_rate": "mean",
+                "audit_completeness": "mean",
+                "recovery_latency": "mean",
+                "n_steps": "sum",
+            }
+        )
+    )
+    runtime_summary_df.to_csv(runtime_summary_path, index=False)
+    trace_df = pd.DataFrame(runtime_traces)
+    trace_df.to_csv(runtime_traces_path, index=False)
+    coverage_rows = []
+    if not trace_df.empty:
+        for (controller_label, fault_family), group in trace_df.groupby(["controller_label", "fault_family"], dropna=False):
+            y_true = group["true_value"].to_numpy(dtype=float)
+            lower = group["interval_lower"].to_numpy(dtype=float)
+            upper = group["interval_upper"].to_numpy(dtype=float)
+            coverage_rows.append(
+                {
+                    "controller": str(controller_label),
+                    "fault_family": str(fault_family),
+                    "target": "soc_mwh",
+                    "coverage": float(np.mean((y_true >= lower) & (y_true <= upper))),
+                    "mean_width": float(np.mean(upper - lower)),
+                }
+            )
+    pd.DataFrame(coverage_rows, columns=["controller", "fault_family", "target", "coverage", "mean_width"]).to_csv(
+        fault_coverage_path,
+        index=False,
+    )
+    if audit_db_path.exists():
+        audit_db_path.unlink()
+    if certificate_rows:
+        store_certificates_batch(certificate_rows, duckdb_path=str(audit_db_path), table_name="dispatch_certificates")
     md_lines = ["# Battery DeepOQE Safety Metrics", ""]
     for _, row in summary_rows.iterrows():
         md_lines.append(
@@ -611,7 +792,9 @@ def build_replay_comparison(
     fig.savefig(fig_path, dpi=220)
     plt.close(fig)
 
-    table_tex = PAPER_TABLE_DIR / "tbl_battery_deep_oqe_safety_metrics.tex"
+    paper_table_dir.mkdir(parents=True, exist_ok=True)
+    paper_fig_dir.mkdir(parents=True, exist_ok=True)
+    table_tex = paper_table_dir / "tbl_battery_deep_oqe_safety_metrics.tex"
     latex_lines = [
         r"\begin{table}[ht]",
         r"\centering",
@@ -628,13 +811,17 @@ def build_replay_comparison(
         )
     latex_lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}", ""]
     table_tex.write_text("\n".join(latex_lines), encoding="utf-8")
-    shutil.copy2(fig_path, PAPER_FIG_DIR / "fig_battery_deep_oqe_safety_metrics.png")
+    shutil.copy2(fig_path, paper_fig_dir / "fig_battery_deep_oqe_safety_metrics.png")
     return {
         "rows": rows,
         "summary": summary_rows.to_dict(orient="records"),
         "csv_path": str(csv_path),
         "figure_path": str(fig_path),
         "table_tex": str(table_tex),
+        "runtime_summary_csv": str(runtime_summary_path),
+        "runtime_traces_csv": str(runtime_traces_path),
+        "fault_family_coverage_csv": str(fault_coverage_path),
+        "audit_db_path": str(audit_db_path),
     }
 
 
@@ -761,6 +948,8 @@ def run_raw_sequence_track(
     features_path: Path,
     model_path: Path,
     out_dir: Path,
+    paper_table_dir: Path,
+    paper_fig_dir: Path,
     epochs: int,
     batch_size: int,
     lookback: int,
@@ -939,7 +1128,9 @@ def run_raw_sequence_track(
     fig.savefig(fig_path, dpi=220)
     plt.close(fig)
 
-    table_tex = PAPER_TABLE_DIR / "tbl_battery_raw_sequence_track.tex"
+    paper_table_dir.mkdir(parents=True, exist_ok=True)
+    paper_fig_dir.mkdir(parents=True, exist_ok=True)
+    table_tex = paper_table_dir / "tbl_battery_raw_sequence_track.tex"
     latex_lines = [
         r"\begin{table}[ht]",
         r"\centering",
@@ -956,7 +1147,7 @@ def run_raw_sequence_track(
         )
     latex_lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}", ""]
     table_tex.write_text("\n".join(latex_lines), encoding="utf-8")
-    shutil.copy2(fig_path, PAPER_FIG_DIR / "fig_battery_raw_sequence_track_benchmark.png")
+    shutil.copy2(fig_path, paper_fig_dir / "fig_battery_raw_sequence_track_benchmark.png")
     return {
         "comparison_rows": comparison_rows,
         "slice_rows": slice_rows,
@@ -1004,39 +1195,96 @@ def write_register(
     )
 
 
-def main() -> None:
-    args = _parse_args()
-    out_dir = args.out_dir
+def run_pipeline(
+    *,
+    out_dir: Path,
+    model_dir: Path,
+    paper_table_dir: Path,
+    paper_fig_dir: Path,
+    features_path: Path,
+    engineered_baseline_path: Path,
+    deep_oqe_epochs: int,
+    forecast_epochs: int,
+    batch_size: int,
+    seq_len: int,
+    lookback: int,
+    horizon: int,
+    train_stride: int,
+    eval_stride: int,
+) -> dict[str, Any]:
     out_dir.mkdir(parents=True, exist_ok=True)
-    MODEL_DIR.mkdir(parents=True, exist_ok=True)
-    PAPER_TABLE_DIR.mkdir(parents=True, exist_ok=True)
-    PAPER_FIG_DIR.mkdir(parents=True, exist_ok=True)
+    model_dir.mkdir(parents=True, exist_ok=True)
+    paper_table_dir.mkdir(parents=True, exist_ok=True)
+    paper_fig_dir.mkdir(parents=True, exist_ok=True)
 
-    deep_frame = build_deep_oqe_training_frame(seq_len=args.seq_len)
-    model_path = MODEL_DIR / "battery_deepoqe.pt"
+    deep_frame = build_deep_oqe_training_frame(seq_len=seq_len)
+    model_path = model_dir / "battery_deepoqe.pt"
     deep_result = train_deep_oqe(
         deep_frame,
-        epochs=args.deep_oqe_epochs,
-        batch_size=args.batch_size,
-        seq_len=args.seq_len,
+        epochs=deep_oqe_epochs,
+        batch_size=batch_size,
+        seq_len=seq_len,
         model_path=model_path,
     )
-    deep_artifacts = write_deep_oqe_artifacts(deep_result, out_dir)
-    replay_artifacts = build_replay_comparison(model_path=model_path, out_dir=out_dir)
-    raw_track_artifacts = run_raw_sequence_track(
-        features_path=args.features,
+    deep_artifacts = write_deep_oqe_artifacts(
+        deep_result,
+        out_dir,
+        paper_table_dir=paper_table_dir,
+        paper_fig_dir=paper_fig_dir,
+    )
+    replay_artifacts = build_replay_comparison(
         model_path=model_path,
         out_dir=out_dir,
-        epochs=args.forecast_epochs,
+        paper_table_dir=paper_table_dir,
+        paper_fig_dir=paper_fig_dir,
+    )
+    raw_track_artifacts = run_raw_sequence_track(
+        features_path=features_path,
+        model_path=model_path,
+        out_dir=out_dir,
+        paper_table_dir=paper_table_dir,
+        paper_fig_dir=paper_fig_dir,
+        epochs=forecast_epochs,
+        batch_size=batch_size,
+        lookback=lookback,
+        horizon=horizon,
+        train_stride=train_stride,
+        eval_stride=eval_stride,
+        engineered_baseline_path=engineered_baseline_path,
+    )
+    write_register(out_dir=out_dir, deep_oqe=deep_artifacts, replay=replay_artifacts, raw_track=raw_track_artifacts)
+    return {
+        "deep_oqe": deep_artifacts,
+        "replay": replay_artifacts,
+        "raw_track": raw_track_artifacts,
+        "register_json": str(out_dir / "battery_deep_learning_novelty_register.json"),
+        "register_md": str(out_dir / "battery_deep_learning_novelty_register.md"),
+        "model_path": str(model_path),
+        "out_dir": str(out_dir),
+        "paper_table_dir": str(paper_table_dir),
+        "paper_fig_dir": str(paper_fig_dir),
+    }
+
+
+def main() -> None:
+    args = _parse_args()
+    result = run_pipeline(
+        out_dir=args.out_dir,
+        model_dir=args.model_dir,
+        paper_table_dir=args.paper_table_dir,
+        paper_fig_dir=args.paper_fig_dir,
+        features_path=args.features,
+        engineered_baseline_path=args.engineered_baseline,
+        deep_oqe_epochs=args.deep_oqe_epochs,
+        forecast_epochs=args.forecast_epochs,
         batch_size=args.batch_size,
+        seq_len=args.seq_len,
         lookback=args.lookback,
         horizon=args.horizon,
         train_stride=args.train_stride,
         eval_stride=args.eval_stride,
-        engineered_baseline_path=args.engineered_baseline,
     )
-    write_register(out_dir=out_dir, deep_oqe=deep_artifacts, replay=replay_artifacts, raw_track=raw_track_artifacts)
-    print(json.dumps({"deep_oqe": deep_artifacts, "replay": replay_artifacts, "raw_track": raw_track_artifacts}, indent=2, sort_keys=True))
+    print(json.dumps(result, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
