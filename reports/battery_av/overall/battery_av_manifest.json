@@ -1,0 +1,144 @@
+{
+  "generated_at_utc": "2026-04-15T21:29:49.284367+00:00",
+  "battery_key_report": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/battery_deep_learning_novelty_register.json",
+  "av_key_report": "reports/orius_av/full_corpus/summary.json",
+  "runtime_db_paths": {
+    "battery": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/battery_runtime.duckdb",
+    "av": "reports/orius_av/full_corpus/dc3s_av_waymo_dryrun.duckdb"
+  },
+  "run_ids": {
+    "battery": "8e5589063ba25ab6",
+    "av": "f1f1b6218ba84189"
+  },
+  "figure_inventory": {
+    "battery": [
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/fig_battery_deep_oqe_safety_metrics.png",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/fig_battery_deep_oqe_summary.png",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/fig_battery_raw_sequence_track_benchmark.png",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/fig_observed_vs_true_counterexamples.png",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/fig_shift_aware_before_after.png",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/paper_assets/figures/fig_battery_deep_oqe_safety_metrics.png",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/paper_assets/figures/fig_battery_deep_oqe_summary.png",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/paper_assets/figures/fig_battery_raw_sequence_track_benchmark.png"
+    ],
+    "av": [
+      "reports/orius_av/full_corpus/fig_observed_vs_true_counterexamples.png",
+      "reports/orius_av/full_corpus/fig_shift_aware_before_after.png",
+      "reports/orius_av/full_corpus/figures/fault_family_coverage.png",
+      "reports/orius_av/full_corpus/figures/runtime_metrics.png",
+      "reports/orius_av/full_corpus/figures/shift_aware_runtime.png",
+      "reports/orius_av/full_corpus/figures/training_interval_widths.png"
+    ]
+  },
+  "table_inventory": {
+    "battery": [
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/battery_deep_oqe_buckets.csv",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/battery_deep_oqe_safety_metrics.csv",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/battery_deep_oqe_summary.csv",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/battery_raw_sequence_track_benchmark.csv",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/battery_raw_sequence_track_slices.csv",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/certificate_expiry_trace.csv",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/certos_verification_failures.csv",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/fault_family_coverage.csv",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/oasg_domain_summary.csv",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/observed_true_counterexamples.csv",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/runtime_governance_summary.csv",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/runtime_summary.csv",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/runtime_traces.csv",
+      "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/subgroup_coverage_before_after.csv"
+    ],
+    "av": [
+      "reports/orius_av/full_corpus/certificate_expiry_trace.csv",
+      "reports/orius_av/full_corpus/certos_verification_failures.csv",
+      "reports/orius_av/full_corpus/fault_family_coverage.csv",
+      "reports/orius_av/full_corpus/oasg_domain_summary.csv",
+      "reports/orius_av/full_corpus/observed_true_counterexamples.csv",
+      "reports/orius_av/full_corpus/runtime_governance_summary.csv",
+      "reports/orius_av/full_corpus/runtime_summary.csv",
+      "reports/orius_av/full_corpus/runtime_traces.csv",
+      "reports/orius_av/full_corpus/shift_aware/ego_speed_mps/adaptive_quantile_trace.csv",
+      "reports/orius_av/full_corpus/shift_aware/ego_speed_mps/fault_group_coverage.csv",
+      "reports/orius_av/full_corpus/shift_aware/ego_speed_mps/reliability_group_coverage.csv",
+      "reports/orius_av/full_corpus/shift_aware/ego_speed_mps/shift_validity_trace.csv",
+      "reports/orius_av/full_corpus/shift_aware/ego_speed_mps/volatility_group_coverage.csv",
+      "reports/orius_av/full_corpus/shift_aware/relative_gap_m/adaptive_quantile_trace.csv",
+      "reports/orius_av/full_corpus/shift_aware/relative_gap_m/fault_group_coverage.csv",
+      "reports/orius_av/full_corpus/shift_aware/relative_gap_m/reliability_group_coverage.csv",
+      "reports/orius_av/full_corpus/shift_aware/relative_gap_m/shift_validity_trace.csv",
+      "reports/orius_av/full_corpus/shift_aware/relative_gap_m/volatility_group_coverage.csv",
+      "reports/orius_av/full_corpus/shift_aware/shift_aware_runtime_summary.csv",
+      "reports/orius_av/full_corpus/subgroup_coverage.csv",
+      "reports/orius_av/full_corpus/subgroup_coverage_before_after.csv",
+      "reports/orius_av/full_corpus/tables/fault_family_coverage_table.csv",
+      "reports/orius_av/full_corpus/tables/runtime_summary_table.csv",
+      "reports/orius_av/full_corpus/tables/shift_aware_runtime_table.csv",
+      "reports/orius_av/full_corpus/tables/split_counts_table.csv",
+      "reports/orius_av/full_corpus/tables/subgroup_coverage_table.csv",
+      "reports/orius_av/full_corpus/tables/training_summary_table.csv",
+      "reports/orius_av/full_corpus/training_summary.csv"
+    ]
+  },
+  "artifacts": {
+    "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/artifact_manifest.json": "41507da3073360c1061dbf136c8e3812182357967544297791d796540a8066b9",
+    "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/summary.json": "83d1feded0eca072f5bf4ff585ad828c7f147c2cdce2576f389b05566c2a4809",
+    "reports/battery_av/overall/publication_closure_override.json": "71e60f678f7c70d55ea1b63696c44ee9636b5150a0275630a42e6c12fb84fc51",
+    "reports/battery_av/overall/release_summary.json": "ed9388933480df02539e03b6ef6be47619e7d61af02b4dac50947e76688281de",
+    "reports/orius_av/full_corpus/artifact_manifest.json": "8e64b6ddc604e842cea130d2da01802dde456637f5ba3559f5948b13d7ba5eaf",
+    "reports/orius_av/full_corpus/summary.json": "da951726464828d96066351b178867aced4c88cf413cee3523ed5ac5c99a4df9",
+    "/Users/pratik_n/Downloads/gridpulse/data/orius_av/av/processed_full_corpus/anchor_features.parquet": "518d160a3e439f1e954614e677e6576a94dcbeab9b8ece782051a64de6b8c8ba",
+    "/Users/pratik_n/Downloads/gridpulse/data/orius_av/av/processed_full_corpus/dry_run_subset_manifest.json": "227cbd47e3b9f4ad28a955262cd258e980b70d360b137fcf3f243f8c9c3c173d",
+    "/Users/pratik_n/Downloads/gridpulse/data/orius_av/av/processed_full_corpus/dry_run_subset_manifest.parquet": "e2cf0c87e83218cc60efd4a6bc27f03082f0173c4ce4a4258720015315824628",
+    "/Users/pratik_n/Downloads/gridpulse/data/orius_av/av/processed_full_corpus/replay_windows.parquet": "870d29c4e67fe1570ead892fa3924b7b79fa1650ab0b309b1ec206876fdaa207",
+    "/Users/pratik_n/Downloads/gridpulse/data/orius_av/av/processed_full_corpus/step_features.parquet": "f624cd9f5f6d5a18882f98c54ae3239984ee5205d8fc694b76c54f01240cc3f3",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/artifact_manifest.json": "8e64b6ddc604e842cea130d2da01802dde456637f5ba3559f5948b13d7ba5eaf",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/figures/fault_family_coverage.png": "4678018f93902613dbaf217fa802b9e5ed7e1aef283a4acdf1d9c6b3a439ba55",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/figures/runtime_metrics.png": "5f1fcc8e5629d778d7a081462ef430a962e173afba3473af5a4472be813119a9",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/figures/shift_aware_runtime.png": "04778d7c1e7f30f5ace38d3ffff9b6d47bd607e4173dba5771b483abbd2f530d",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/figures/training_interval_widths.png": "fdbd41414b6117fbed33d6ee77512d5e99167e8ec0e51c9544167918d1a77758",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/summary.json": "da951726464828d96066351b178867aced4c88cf413cee3523ed5ac5c99a4df9",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/tables/fault_family_coverage_table.csv": "21029c3c4792c43fefa19273bffd60a128e06732662c701d6161b0a1deab1086",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/tables/runtime_summary_table.csv": "e79a5fbbf7c590f1195544757b40d6b77bbdf7bb2db020364ed63489dc143882",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/tables/shift_aware_runtime_table.csv": "a232c049b2d50eef7652aa0ae7e4e94f1771fa01887460fd1d935c72f490143f",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/tables/split_counts_table.csv": "469001349f48525dbdb4ed1c1aa9b9e8a559ac24e25a33cd665452b3bf48e2fc",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/tables/subgroup_coverage_table.csv": "64737edafc0c4c49b959f1df14d9fc73dcd496c8b884cfda43ca78a32855d82b",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/tables/training_summary_table.csv": "b742d05434a32cc9b69f78c2b9d0542c29d74f00701ef478c3561aa71ee644b7"
+  },
+  "pipeline_artifacts": {
+    "/Users/pratik_n/Downloads/gridpulse/data/orius_av/av/processed_full_corpus/anchor_features.parquet": "518d160a3e439f1e954614e677e6576a94dcbeab9b8ece782051a64de6b8c8ba",
+    "/Users/pratik_n/Downloads/gridpulse/data/orius_av/av/processed_full_corpus/dry_run_subset_manifest.json": "227cbd47e3b9f4ad28a955262cd258e980b70d360b137fcf3f243f8c9c3c173d",
+    "/Users/pratik_n/Downloads/gridpulse/data/orius_av/av/processed_full_corpus/dry_run_subset_manifest.parquet": "e2cf0c87e83218cc60efd4a6bc27f03082f0173c4ce4a4258720015315824628",
+    "/Users/pratik_n/Downloads/gridpulse/data/orius_av/av/processed_full_corpus/replay_windows.parquet": "870d29c4e67fe1570ead892fa3924b7b79fa1650ab0b309b1ec206876fdaa207",
+    "/Users/pratik_n/Downloads/gridpulse/data/orius_av/av/processed_full_corpus/step_features.parquet": "f624cd9f5f6d5a18882f98c54ae3239984ee5205d8fc694b76c54f01240cc3f3",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/artifact_manifest.json": "8e64b6ddc604e842cea130d2da01802dde456637f5ba3559f5948b13d7ba5eaf",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/figures/fault_family_coverage.png": "4678018f93902613dbaf217fa802b9e5ed7e1aef283a4acdf1d9c6b3a439ba55",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/figures/runtime_metrics.png": "5f1fcc8e5629d778d7a081462ef430a962e173afba3473af5a4472be813119a9",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/figures/shift_aware_runtime.png": "04778d7c1e7f30f5ace38d3ffff9b6d47bd607e4173dba5771b483abbd2f530d",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/figures/training_interval_widths.png": "fdbd41414b6117fbed33d6ee77512d5e99167e8ec0e51c9544167918d1a77758",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/summary.json": "da951726464828d96066351b178867aced4c88cf413cee3523ed5ac5c99a4df9",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/tables/fault_family_coverage_table.csv": "21029c3c4792c43fefa19273bffd60a128e06732662c701d6161b0a1deab1086",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/tables/runtime_summary_table.csv": "e79a5fbbf7c590f1195544757b40d6b77bbdf7bb2db020364ed63489dc143882",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/tables/shift_aware_runtime_table.csv": "a232c049b2d50eef7652aa0ae7e4e94f1771fa01887460fd1d935c72f490143f",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/tables/split_counts_table.csv": "469001349f48525dbdb4ed1c1aa9b9e8a559ac24e25a33cd665452b3bf48e2fc",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/tables/subgroup_coverage_table.csv": "64737edafc0c4c49b959f1df14d9fc73dcd496c8b884cfda43ca78a32855d82b",
+    "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/tables/training_summary_table.csv": "b742d05434a32cc9b69f78c2b9d0542c29d74f00701ef478c3561aa71ee644b7"
+  },
+  "input_hashes": {
+    "battery": {
+      "/Users/pratik_n/Downloads/gridpulse/data/processed/features.parquet": "e9c82ab359b3e41a643a7abdbd8b39dd941cb85709bcf5e284f7043ef9e33d99",
+      "/Users/pratik_n/Downloads/gridpulse/reports/week2_metrics.json": "2b9a6e6de98b31602bed297e55518549b55dbc84a35ba51b8c34653bbaf1a722"
+    },
+    "av": {
+      "raw_file_hashes": {
+        "validation_tfexample.tfrecord-00000-of-00150": "8312d3677738f656f5f9786188c892a550ad9c58d6b44e6ded0af34f1fd8d974",
+        "validation_tfexample.tfrecord-00001-of-00150": "d66494f5e4f8982aab0438f389041c1b5994cef5bdedfc717d78d699f90df7fe",
+        "validation_tfexample.tfrecord-00002-of-00150": "8d95d2cc219ca5f4d871dc9f21da9f4aa1ab0505fed274bf66bee4e21af48430",
+        "validation_tfexample.tfrecord-00003-of-00150": "6cbc086ab50572e1c3fb7f75ec7055044217700f9768b1d6268a45941874d0df",
+        "validation_tfexample.tfrecord-00004-of-00150": "08fe35f8d8aa6c4fcf601f93926a04e94d857225708065ba1928d24a92e160e4",
+        "validation_tfexample.tfrecord-00005-of-00150": "7d2310366dbd06af855d81dccbc7846dc8f4c9c616336625d6db7a2fcf18e0b5",
+        "validation_tfexample.tfrecord-00006-of-00150": "ee7d70e9f300d8f7b9a05c2b7763b2c584f3224610c7aec262a2856ad03219cf"
+      },
+      "subset_manifest_sha256": "227cbd47e3b9f4ad28a955262cd258e980b70d360b137fcf3f243f8c9c3c173d",
+      "shift_aware_config_sha256": "9972a4b8f174a45732ed3385ea165839c74e4f8ef973914102ce02b2ebe97fdc"
+    }
+  }
+}

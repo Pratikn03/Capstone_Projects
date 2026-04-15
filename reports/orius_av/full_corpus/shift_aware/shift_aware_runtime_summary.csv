@@ -1,0 +1,3 @@
+target,steps,num_groups,max_under_coverage_gap,final_validity_score,final_validity_status,shift_alert_rate
+ego_speed_mps,9348,99,0.0,0.8849727452298017,nominal,0.00032092426187419767
+relative_gap_m,9348,63,0.04634146341463419,0.8878742649383968,nominal,0.0004278990158322636

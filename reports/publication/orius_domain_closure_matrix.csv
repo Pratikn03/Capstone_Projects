@@ -1,7 +1,7 @@
 domain,tier,source,baseline_tsvr,orius_tsvr,promotion_gate,current_status
-Battery Energy Storage,reference,locked_artifact,0.7500,0.8750,retain theorem-grade witness status while serving as the calibration surface for new domains,tier=reference; blocker=battery_reference_witness
-Autonomous Vehicles,proof_validated,verified,0.0833,0.0000,retain proof-validated status while extending TTC closure to richer vehicle interaction settings,tier=proof_validated; blocker=promoted
+Battery Energy Storage,reference,locked_artifact,0.0393,0.0000,keep battery as the witness row while battery+AV closure remains the active promotion lane,tier=reference; blocker=none
+Autonomous Vehicles,proof_validated,real_data,0.1250,0.0417,keep as defended bounded row while broader vehicle interaction remains open,tier=proof_validated; blocker=none
 Industrial Process Control,proof_validated,verified,1.0000,0.0000,retain proof-validated status with broader plant families and stronger controller diversity,tier=proof_validated; blocker=industrial_train_validation_chain_complete
-Medical and Healthcare Monitoring,proof_validated,verified,1.0000,0.5833,multi-cohort clinical validation and richer intervention outcome accounting,tier=proof_validated; blocker=healthcare_train_validation_chain_complete
-Navigation and Guidance,shadow_synthetic,synthetic_support_tier,0.6667,0.2500,locked real-data navigation telemetry and replay-backed closure,tier=shadow_synthetic; blocker=navigation_kitti_runtime_missing
-Aerospace Control,experimental,public_adsb_support_lane,1.0000,0.0000,material post-repair improvement on the canonical real-flight runtime benchmark,tier=experimental; blocker=aerospace_realflight_runtime_missing
+Medical and Healthcare Monitoring,proof_validated,verified,0.2917,0.0417,multi-cohort clinical validation and richer intervention outcome accounting,tier=proof_validated; blocker=healthcare_train_validation_chain_complete
+Navigation and Guidance,shadow_synthetic,kitti_runtime_required,0.6667,0.2500,staged KITTI replay plus defended equal-domain gate closure,tier=shadow_synthetic; blocker=navigation_kitti_runtime_missing
+Aerospace Control,experimental,public_adsb_runtime,1.0000,0.0000,public ADS-B defended runtime plus equal-domain parity closure,tier=experimental; blocker=aerospace_realflight_runtime_missing

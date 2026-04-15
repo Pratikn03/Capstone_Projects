@@ -1,0 +1,29 @@
+{
+  "enabled": true,
+  "policy_mode": "shift_aware_piecewise",
+  "aci_mode": "aci_clipped",
+  "adaptation_step": 0.02,
+  "alpha": 0.1,
+  "alpha_min": 0.05,
+  "alpha_max": 0.2,
+  "reliability_bins": 5,
+  "volatility_bins": 5,
+  "coverage_window_size": 128,
+  "coverage_target": 0.9,
+  "watch_threshold": 0.75,
+  "degraded_threshold": 0.55,
+  "invalid_threshold": 0.35,
+  "max_inflation_multiplier": 3.0,
+  "publication_dir": "reports/orius_av/full_corpus/shift_aware",
+  "runtime_state_path": null,
+  "artifact_toggles": {
+    "enabled": true
+  },
+  "validity_weights": {
+    "residual": 0.25,
+    "subgroup": 0.25,
+    "drift": 0.2,
+    "adaptation": 0.15,
+    "reliability": 0.15
+  }
+}

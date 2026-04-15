@@ -1,0 +1,87 @@
+{
+  "domain": "Autonomous Vehicles",
+  "domain_key": "vehicle",
+  "generated_at_utc": "2026-04-15T21:29:49.203370+00:00",
+  "status": "complete",
+  "canonical_controller": "orius",
+  "required_artifacts": {
+    "runtime_summary": "reports/orius_av/full_corpus/runtime_summary.csv",
+    "runtime_traces": "reports/orius_av/full_corpus/runtime_traces.csv",
+    "fault_family_coverage": "reports/orius_av/full_corpus/fault_family_coverage.csv",
+    "audit_db": "reports/orius_av/full_corpus/dc3s_av_waymo_dryrun.duckdb",
+    "key_report": "reports/orius_av/full_corpus/summary.json"
+  },
+  "missing_artifacts": [],
+  "runtime_trace_rows": 9348,
+  "counterexamples": {
+    "csv": "reports/orius_av/full_corpus/observed_true_counterexamples.csv",
+    "json": "reports/orius_av/full_corpus/observed_true_counterexamples.json",
+    "figure": "reports/orius_av/full_corpus/fig_observed_vs_true_counterexamples.png",
+    "summary_csv": "reports/orius_av/full_corpus/oasg_domain_summary.csv",
+    "counterexample_count": 20,
+    "oasg_case_count": 480
+  },
+  "shift_aware": {
+    "baseline_summary": "reports/orius_av/full_corpus/shift_aware_baseline_summary.json",
+    "adaptive_summary": "reports/orius_av/full_corpus/shift_aware_adaptive_summary.json",
+    "subgroup_csv": "reports/orius_av/full_corpus/subgroup_coverage_before_after.csv",
+    "figure": "reports/orius_av/full_corpus/fig_shift_aware_before_after.png"
+  },
+  "certos": {
+    "summary_json": "reports/orius_av/full_corpus/certos_verification_summary.json",
+    "failures_csv": "reports/orius_av/full_corpus/certos_verification_failures.csv",
+    "expiry_csv": "reports/orius_av/full_corpus/certificate_expiry_trace.csv",
+    "governance_csv": "reports/orius_av/full_corpus/runtime_governance_summary.csv",
+    "summary": {
+      "certificate_rows": 9348,
+      "chain_valid": true,
+      "checked": 9348,
+      "failure_rows": 0,
+      "required_payload_pass_rate": 1.0,
+      "expiry_metadata_presence_rate": 1.0,
+      "expiry_consistency_rate": 1.0,
+      "audit_completeness_rate": 1.0,
+      "failed_index": null,
+      "reason": null
+    }
+  },
+  "run_id": "f1f1b6218ba84189",
+  "figures": [
+    "reports/orius_av/full_corpus/fig_observed_vs_true_counterexamples.png",
+    "reports/orius_av/full_corpus/fig_shift_aware_before_after.png",
+    "reports/orius_av/full_corpus/figures/fault_family_coverage.png",
+    "reports/orius_av/full_corpus/figures/runtime_metrics.png",
+    "reports/orius_av/full_corpus/figures/shift_aware_runtime.png",
+    "reports/orius_av/full_corpus/figures/training_interval_widths.png"
+  ],
+  "tables": [
+    "reports/orius_av/full_corpus/certificate_expiry_trace.csv",
+    "reports/orius_av/full_corpus/certos_verification_failures.csv",
+    "reports/orius_av/full_corpus/fault_family_coverage.csv",
+    "reports/orius_av/full_corpus/oasg_domain_summary.csv",
+    "reports/orius_av/full_corpus/observed_true_counterexamples.csv",
+    "reports/orius_av/full_corpus/runtime_governance_summary.csv",
+    "reports/orius_av/full_corpus/runtime_summary.csv",
+    "reports/orius_av/full_corpus/runtime_traces.csv",
+    "reports/orius_av/full_corpus/shift_aware/ego_speed_mps/adaptive_quantile_trace.csv",
+    "reports/orius_av/full_corpus/shift_aware/ego_speed_mps/fault_group_coverage.csv",
+    "reports/orius_av/full_corpus/shift_aware/ego_speed_mps/reliability_group_coverage.csv",
+    "reports/orius_av/full_corpus/shift_aware/ego_speed_mps/shift_validity_trace.csv",
+    "reports/orius_av/full_corpus/shift_aware/ego_speed_mps/volatility_group_coverage.csv",
+    "reports/orius_av/full_corpus/shift_aware/relative_gap_m/adaptive_quantile_trace.csv",
+    "reports/orius_av/full_corpus/shift_aware/relative_gap_m/fault_group_coverage.csv",
+    "reports/orius_av/full_corpus/shift_aware/relative_gap_m/reliability_group_coverage.csv",
+    "reports/orius_av/full_corpus/shift_aware/relative_gap_m/shift_validity_trace.csv",
+    "reports/orius_av/full_corpus/shift_aware/relative_gap_m/volatility_group_coverage.csv",
+    "reports/orius_av/full_corpus/shift_aware/shift_aware_runtime_summary.csv",
+    "reports/orius_av/full_corpus/subgroup_coverage.csv",
+    "reports/orius_av/full_corpus/subgroup_coverage_before_after.csv",
+    "reports/orius_av/full_corpus/tables/fault_family_coverage_table.csv",
+    "reports/orius_av/full_corpus/tables/runtime_summary_table.csv",
+    "reports/orius_av/full_corpus/tables/shift_aware_runtime_table.csv",
+    "reports/orius_av/full_corpus/tables/split_counts_table.csv",
+    "reports/orius_av/full_corpus/tables/subgroup_coverage_table.csv",
+    "reports/orius_av/full_corpus/tables/training_summary_table.csv",
+    "reports/orius_av/full_corpus/training_summary.csv"
+  ]
+}

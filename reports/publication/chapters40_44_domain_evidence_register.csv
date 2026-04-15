@@ -1,7 +1,7 @@
 domain,chapter,train_rows,calibration_rows,validation_rows,test_rows,primary_target,baseline_tsvr,orius_tsvr,replay_status,safe_action_soundness,fallback_mode,resulting_tier,exact_blocker
-Battery Energy Storage,Battery witness/supporting chapter,12163,868,,2537,load_mw,0.7500,0.8750,pass,reference_witness,safe_hold,reference,battery_reference_witness
-Autonomous Vehicles,Chapter 40,85,6,12,19,speed_mps,0.0833,0.0000,pass,pass,full_brake,proof_validated,promoted
+Battery Energy Storage,Battery witness/supporting chapter,12163,868,,2537,load_mw,0.0393,0.0000,pass,reference_witness,safe_hold,reference,none
+Autonomous Vehicles,Chapter 40,85,6,12,19,speed_mps,0.1250,0.0417,pass,pass,full_brake,proof_validated,none
 Industrial Process Control,Chapter 41,6680,477,954,1433,power_mw,1.0000,0.0000,pass,pass,power_cap,proof_validated,industrial_train_validation_chain_complete
-Medical and Healthcare Monitoring,Chapter 42,319,22,45,71,hr_bpm,1.0000,0.5833,pass,pass,max_alert,proof_validated,healthcare_train_validation_chain_complete
-Navigation and Guidance,Chapter 43,0,0,0,0,,0.6667,0.2500,pass,blocked_real_data_gap,hold_position,shadow_synthetic,navigation_real_data_gap
-Aerospace Control,Chapter 44,117,8,16,27,airspeed_kt,1.0000,0.0000,pass,experimental_placeholder,envelope_hold,experimental,aerospace_experimental_placeholder
+Medical and Healthcare Monitoring,Chapter 42,319,22,45,71,hr_bpm,0.2917,0.0417,pass,pass,max_alert,proof_validated,healthcare_train_validation_chain_complete
+Navigation and Guidance,Chapter 43,0,0,0,0,,0.6667,0.2500,pass,pass,hold_position,shadow_synthetic,navigation_kitti_runtime_missing
+Aerospace Control,Chapter 44,117,8,16,27,airspeed_kt,1.0000,0.0000,pass,pass,envelope_hold,experimental,aerospace_realflight_runtime_missing

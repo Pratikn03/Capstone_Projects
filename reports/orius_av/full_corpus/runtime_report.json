@@ -1,0 +1,23 @@
+{
+  "runtime_summary_csv": "reports/orius_av/full_corpus/runtime_summary.csv",
+  "runtime_traces_csv": "reports/orius_av/full_corpus/runtime_traces.csv",
+  "fault_family_coverage_csv": "reports/orius_av/full_corpus/fault_family_coverage.csv",
+  "audit_db_path": "reports/orius_av/full_corpus/dc3s_av_waymo_dryrun.duckdb",
+  "certificate_count": 9348,
+  "scenario_count": 228,
+  "shift_aware_artifacts": {
+    "summary_csv": "reports/orius_av/full_corpus/shift_aware/shift_aware_runtime_summary.csv",
+    "targets": {
+      "ego_speed_mps": {
+        "group_coverage_csv": "reports/orius_av/full_corpus/shift_aware/ego_speed_mps/fault_group_coverage.csv",
+        "validity_trace_csv": "reports/orius_av/full_corpus/shift_aware/ego_speed_mps/shift_validity_trace.csv",
+        "adaptive_trace_csv": "reports/orius_av/full_corpus/shift_aware/ego_speed_mps/adaptive_quantile_trace.csv"
+      },
+      "relative_gap_m": {
+        "group_coverage_csv": "reports/orius_av/full_corpus/shift_aware/relative_gap_m/fault_group_coverage.csv",
+        "validity_trace_csv": "reports/orius_av/full_corpus/shift_aware/relative_gap_m/shift_validity_trace.csv",
+        "adaptive_trace_csv": "reports/orius_av/full_corpus/shift_aware/relative_gap_m/adaptive_quantile_trace.csv"
+      }
+    }
+  }
+}

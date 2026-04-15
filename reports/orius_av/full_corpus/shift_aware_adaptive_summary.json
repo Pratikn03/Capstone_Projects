@@ -1,0 +1,32 @@
+{
+  "domain": "AV",
+  "targets": {
+    "ego_speed_mps": {
+      "rows": 9348,
+      "base_coverage": 0.923620025673941,
+      "adaptive_coverage": 0.9841677364142063,
+      "base_mean_width": 2.6197086073940077,
+      "adaptive_mean_width": 3.7461131840461057,
+      "coverage_delta": 0.060547710740265326,
+      "width_delta": 1.126404576652098,
+      "mean_adaptive_factor": 1.4268965251614085,
+      "max_adaptive_factor": 2.7633034495605395
+    },
+    "relative_gap_m": {
+      "rows": 9348,
+      "base_coverage": 0.9136713735558408,
+      "adaptive_coverage": 0.9874839537869063,
+      "base_mean_width": 88.3875333931213,
+      "adaptive_mean_width": 125.18190197257834,
+      "coverage_delta": 0.07381258023106552,
+      "width_delta": 36.79436857945704,
+      "mean_adaptive_factor": 1.4218153147417518,
+      "max_adaptive_factor": 2.165
+    }
+  },
+  "overall": {
+    "targets": 2,
+    "coverage_mean": 0.9858258451005564,
+    "width_mean": 64.46400757831222
+  }
+}

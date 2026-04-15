@@ -1,0 +1,33 @@
+{
+  "battery": {
+    "adapter_correctness": "pass",
+    "training_data_status": "locked_artifact",
+    "replay_status": "pass",
+    "safe_action_soundness_status": "pass",
+    "fallback_status": "pass",
+    "certos_portability_status": "pass",
+    "multi_agent_portability_status": "evaluated",
+    "resulting_tier": "reference",
+    "exact_blocker": "none",
+    "maturity_state": "implemented_and_artifact_backed",
+    "maturity_evidence_basis": "battery witness runtime, uncertainty, counterexample, and CertOS artifacts are locked under the canonical combined lane",
+    "maturity_primary_risk": "overgeneralizing witness-depth proof",
+    "maturity_next_action": "keep battery as the witness row while battery+AV closure remains the active promotion lane"
+  },
+  "vehicle": {
+    "adapter_correctness": "pass",
+    "training_data_status": "real_data_ready",
+    "replay_status": "pass",
+    "safe_action_soundness_status": "pass",
+    "fallback_status": "pass",
+    "certos_portability_status": "pass",
+    "multi_agent_portability_status": "evaluated",
+    "resulting_tier": "proof_validated",
+    "exact_blocker": "none",
+    "maturity_state": "implemented_and_validated_under_bounded_contract",
+    "maturity_evidence_basis": "Waymo full-corpus runtime, counterexample, shift-aware, and CertOS artifacts",
+    "maturity_primary_risk": "current closure remains bounded to the TTC entry-barrier contract",
+    "maturity_next_action": "keep as defended bounded row while broader vehicle interaction remains open",
+    "oasg_case_count": 480
+  }
+}
