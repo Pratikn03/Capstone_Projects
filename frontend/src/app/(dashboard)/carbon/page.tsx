@@ -9,6 +9,8 @@ import { useRegion } from '@/components/ui/RegionContext';
 import { Panel } from '@/components/ui/Panel';
 import { StatusBanner } from '@/components/ui/StatusBanner';
 import { formatCurrency } from '@/lib/utils';
+import Link from 'next/link';
+import { ShieldCheck, ChevronRight } from 'lucide-react';
 
 export default function CarbonPage() {
   const { region, setRegion } = useRegion();
@@ -60,6 +62,17 @@ export default function CarbonPage() {
       </div>
 
       <StatusBanner title="Carbon View Status" messages={statusMessages} />
+
+      {/* ORIUS Tradeoff Context */}
+      <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gradient-to-r from-green-500/5 via-transparent to-transparent border border-green-500/10">
+        <ShieldCheck className="w-4 h-4 text-green-400 shrink-0" />
+        <span className="text-[11px] text-slate-400">
+          <span className="text-green-400 font-semibold">T4 No-Free-Safety</span> · Carbon–cost Pareto frontier quantifies the irreducible safety–performance tradeoff · <span className="text-white/70">T5 monotonic tightening</span> ensures bounds improve with data · Battery domain reference witness
+        </span>
+        <Link href="/theorems" className="ml-auto flex items-center gap-1 text-[10px] text-green-400/70 hover:text-green-400 transition-colors shrink-0">
+          Theorem ladder <ChevronRight className="w-3 h-3" />
+        </Link>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <KPICard

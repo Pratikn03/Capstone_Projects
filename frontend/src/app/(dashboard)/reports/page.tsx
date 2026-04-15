@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { Panel } from '@/components/ui/Panel';
 import { KPICard } from '@/components/ui/KPICard';
 import { ArchitectureDiagram } from '@/components/charts/ArchitectureDiagram';
-import { FileText, Download, TrendingUp, BarChart3, Leaf, Zap } from 'lucide-react';
+import { FileText, Download, TrendingUp, BarChart3, Leaf, Zap, ShieldCheck, ChevronRight } from 'lucide-react';
 import { useReportsData } from '@/lib/api/reports-client';
 import { useRegion } from '@/components/ui/RegionContext';
+import Link from 'next/link';
 
 const fallbackReportsList = [
   {
@@ -156,6 +157,17 @@ export default function ReportsPage() {
             </span>
           </div>
         </div>
+      </div>
+
+      {/* ORIUS Thesis Artifacts Context */}
+      <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500/5 via-transparent to-transparent border border-indigo-500/10">
+        <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0" />
+        <span className="text-[11px] text-slate-400">
+          <span className="text-indigo-400 font-semibold">ORIUS Thesis Artifacts</span> · Claims C001–C011 mapped to evidence artifacts · <span className="text-white/70">T8 certificate completeness</span> requires all DC3S stages documented · Battery domain reference + 5 transfer-ready domains
+        </span>
+        <Link href="/domains" className="ml-auto flex items-center gap-1 text-[10px] text-indigo-400/70 hover:text-indigo-400 transition-colors shrink-0">
+          Domain coverage <ChevronRight className="w-3 h-3" />
+        </Link>
       </div>
 
       {/* Summary KPIs */}

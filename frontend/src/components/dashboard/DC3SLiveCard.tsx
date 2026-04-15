@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { ExternalLink, RefreshCcw, ShieldCheck } from 'lucide-react';
 
 import { Panel } from '@/components/ui/Panel';
@@ -26,6 +27,63 @@ function actionFmt(action: { charge_mw?: number; discharge_mw?: number } | undef
   const c = typeof action.charge_mw === 'number' ? action.charge_mw.toFixed(2) : '0.00';
   const d = typeof action.discharge_mw === 'number' ? action.discharge_mw.toFixed(2) : '0.00';
   return `C ${c} / D ${d} MW`;
+}
+
+/** Tiny SVG countdown ring that resets every `seconds` */
+function RefreshCountdown({ seconds }: { seconds: number }) {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (seconds <= 0) return;
+    setElapsed(0);
+    const iv = window.setInterval(() => setElapsed((e) => (e + 1) % seconds), 1000);
+    return () => window.clearInterval(iv);
+  }, [seconds]);
+
+  if (seconds <= 0) return <span>Auto refresh: off</span>;
+
+  const progress = elapsed / seconds;
+  const r = 7;
+  const circ = 2 * Math.PI * r;
+  const dash = circ * (1 - progress);
+
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <svg width="18" height="18" viewBox="0 0 18 18" className="flex-shrink-0">
+        <circle cx="9" cy="9" r={r} fill="none" stroke="#334155" strokeWidth="2" />
+        <circle
+          cx="9" cy="9" r={r}
+          fill="none"
+          stroke="#10b981"
+          strokeWidth="2"
+          strokeDasharray={`${circ}`}
+          strokeDashoffset={dash}
+          strokeLinecap="round"
+          transform="rotate(-90 9 9)"
+          style={{ transition: 'stroke-dashoffset 0.9s linear' }}
+        />
+      </svg>
+      {seconds - elapsed}s
+    </span>
+  );
+}
+
+/** Shows time since component last mounted / data arrived */
+function LastUpdated() {
+  const [mounted] = useState(() => Date.now());
+  const [ago, setAgo] = useState('just now');
+
+  useEffect(() => {
+    const iv = window.setInterval(() => {
+      const diff = Math.floor((Date.now() - mounted) / 1000);
+      if (diff < 5) setAgo('just now');
+      else if (diff < 60) setAgo(`${diff}s ago`);
+      else setAgo(`${Math.floor(diff / 60)}m ago`);
+    }, 5000);
+    return () => window.clearInterval(iv);
+  }, [mounted]);
+
+  return <span>Updated {ago}</span>;
 }
 
 export function DC3SLiveCard({
@@ -144,8 +202,9 @@ export function DC3SLiveCard({
             </div>
           </div>
 
-          <div className="text-[11px] text-slate-500">
-            Auto refresh: {autoRefreshSeconds > 0 ? `${autoRefreshSeconds}s` : 'off'}
+          <div className="flex items-center justify-between text-[11px] text-slate-500">
+            <RefreshCountdown seconds={autoRefreshSeconds} />
+            <LastUpdated />
           </div>
 
           <div className="rounded-lg bg-white/3 p-3 text-xs">

@@ -2,9 +2,10 @@
 
 import {
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Line, ComposedChart,
+  ResponsiveContainer, Line, ComposedChart, ReferenceLine,
 } from 'recharts';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useCallback } from 'react';
 import type { ParetoPoint } from '@/lib/api/mock-data';
 import { formatCurrency, formatMW, formatPercent } from '@/lib/utils';
 
@@ -48,6 +49,7 @@ function CustomTooltip({ active, payload }: any) {
 }
 
 export function CarbonCostPanel({ data, zoneId, summary }: CarbonCostPanelProps) {
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const costSavingsPct = summary?.cost_savings_pct ?? null;
   const costSavingsUsd = summary?.cost_savings_usd ?? null;
   const carbonReductionPct = summary?.carbon_reduction_pct ?? null;
@@ -56,6 +58,20 @@ export function CarbonCostPanel({ data, zoneId, summary }: CarbonCostPanelProps)
   const peakShavingMw = summary?.peak_shaving_mw ?? null;
   const formatMaybe = (value: number | null | undefined, formatter: (value: number) => string) =>
     typeof value === 'number' && Number.isFinite(value) ? formatter(value) : 'N/A';
+
+  const selectedPoint = data && selectedIdx !== null ? data[selectedIdx] : null;
+  const bestCostPoint = data?.length ? data.reduce((a, b) => (a.total_cost_eur < b.total_cost_eur ? a : b)) : null;
+  const bestCarbonPoint = data?.length ? data.reduce((a, b) => (a.total_carbon_kg < b.total_carbon_kg ? a : b)) : null;
+
+  const handleChartClick = useCallback(
+    (state: any) => {
+      if (!data || !state?.activePayload?.length) return;
+      const clicked = state.activePayload[0].payload as ParetoPoint;
+      const idx = data.findIndex((d) => d.carbon_weight === clicked.carbon_weight);
+      setSelectedIdx((prev) => (prev === idx ? null : idx));
+    },
+    [data],
+  );
 
   return (
     <motion.div
@@ -99,7 +115,7 @@ export function CarbonCostPanel({ data, zoneId, summary }: CarbonCostPanelProps)
       <div className="px-5 py-4 h-[260px]">
         {data && data.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+            <ComposedChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }} onClick={handleChartClick}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
               <XAxis
                 dataKey="total_carbon_kg"
@@ -117,9 +133,34 @@ export function CarbonCostPanel({ data, zoneId, summary }: CarbonCostPanelProps)
               />
               <Tooltip content={<CustomTooltip />} />
 
+              {selectedPoint && (
+                <>
+                  <ReferenceLine x={selectedPoint.total_carbon_kg} stroke="#f59e0b" strokeDasharray="4 4" strokeWidth={1} />
+                  <ReferenceLine y={selectedPoint.total_cost_eur} stroke="#f59e0b" strokeDasharray="4 4" strokeWidth={1} />
+                </>
+              )}
+
               <Line
                 type="monotone" dataKey="total_cost_eur"
-                stroke="#10b981" strokeWidth={2} dot={{ r: 5, fill: '#10b981', stroke: '#0f172a', strokeWidth: 2 }}
+                stroke="#10b981" strokeWidth={2}
+                dot={(props: any) => {
+                  const { cx, cy, index } = props;
+                  const isSelected = index === selectedIdx;
+                  const isBestCost = bestCostPoint && data[index]?.carbon_weight === bestCostPoint.carbon_weight;
+                  const isBestCarbon = bestCarbonPoint && data[index]?.carbon_weight === bestCarbonPoint.carbon_weight;
+                  return (
+                    <circle
+                      key={index}
+                      cx={cx} cy={cy}
+                      r={isSelected ? 8 : isBestCost || isBestCarbon ? 6 : 5}
+                      fill={isSelected ? '#f59e0b' : '#10b981'}
+                      stroke={isSelected ? '#fbbf24' : '#0f172a'}
+                      strokeWidth={isSelected ? 3 : 2}
+                      style={{ cursor: 'pointer', transition: 'r 0.2s, fill 0.2s' }}
+                    />
+                  );
+                }}
+                activeDot={{ r: 7, fill: '#34d399', stroke: '#10b981', strokeWidth: 2 }}
                 name="Pareto Front"
               />
             </ComposedChart>
@@ -130,6 +171,55 @@ export function CarbonCostPanel({ data, zoneId, summary }: CarbonCostPanelProps)
           </div>
         )}
       </div>
+
+      {/* Selected operating point detail */}
+      <AnimatePresence>
+        {selectedPoint && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="mx-5 mb-4 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-amber-400">Selected Operating Point</span>
+                <button
+                  onClick={() => setSelectedIdx(null)}
+                  className="text-[10px] text-slate-500 hover:text-white transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="grid grid-cols-4 gap-3 text-xs">
+                <div>
+                  <div className="text-slate-500">Weight</div>
+                  <div className="text-white font-mono">{selectedPoint.carbon_weight}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Cost</div>
+                  <div className="text-white font-mono">€{(selectedPoint.total_cost_eur / 1000).toFixed(0)}k</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Carbon</div>
+                  <div className="text-white font-mono">{(selectedPoint.total_carbon_kg / 1000).toFixed(1)}t</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">vs Best Cost</div>
+                  <div className="text-amber-400 font-mono">
+                    {bestCostPoint
+                      ? `+€${((selectedPoint.total_cost_eur - bestCostPoint.total_cost_eur) / 1000).toFixed(0)}k`
+                      : 'N/A'}
+                    {bestCostPoint
+                      ? ` / −${((bestCostPoint.total_carbon_kg - selectedPoint.total_carbon_kg) / 1000).toFixed(1)}t`
+                      : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

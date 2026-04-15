@@ -1,8 +1,10 @@
 'use client';
 
-import { Globe, Clock, Bell, User, ChevronDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Globe, Clock, Bell, ChevronDown } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
 import { useRegion } from './RegionContext';
+import { NotificationPanel, generateMockNotifications, type Notification as PanelNotification } from './NotificationPanel';
+import { useNotifications } from '@/lib/notifications';
 
 const regions = [
   { id: 'DE', label: 'Germany (OPSD)', flag: '🇩🇪' },
@@ -11,9 +13,35 @@ const regions = [
 
 export function TopBar() {
   const { region, setRegion } = useRegion();
+  const { notifications: ctxNotifs, activeCount: ctxActiveCount, dismiss: ctxDismiss, add: ctxAdd } = useNotifications();
   const [showRegions, setShowRegions] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [localNotifs] = useState<PanelNotification[]>(() => generateMockNotifications());
   const [nowUtc, setNowUtc] = useState(() => new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC');
   const currentRegion = regions.find((r) => r.id === region) || regions[0];
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  // Seed context with mock notifications on first render
+  useEffect(() => {
+    if (ctxNotifs.length === 0) {
+      localNotifs.forEach((n) => {
+        ctxAdd({ type: n.type as any, severity: n.severity as any, title: n.title, message: n.message });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Build panel-compatible notifications from context
+  const panelNotifications: PanelNotification[] = ctxNotifs
+    .filter((n) => !n.dismissed)
+    .map((n) => ({
+      id: n.id,
+      type: n.type as PanelNotification['type'],
+      severity: n.severity as PanelNotification['severity'],
+      title: n.title,
+      message: n.message,
+      timestamp: new Date(n.timestamp).toISOString(),
+    }));
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -22,13 +50,30 @@ export function TopBar() {
     return () => window.clearInterval(timer);
   }, []);
 
+  // Close notification panel on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
+      }
+    }
+    if (showNotifications) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showNotifications]);
+
+  const dismissNotification = (id: string) => {
+    ctxDismiss(id);
+  };
+
+  const criticalCount = panelNotifications.filter((n) => n.severity === 'critical' || n.severity === 'warn').length;
+
   return (
     <header className="h-14 flex items-center justify-between px-6 border-b border-white/6 bg-grid-dark/80 backdrop-blur-sm sticky top-0 z-20">
       {/* Left: Status + Region */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300">
-          <span className="w-2 h-2 rounded-full bg-energy-info animate-pulse" />
-          RESEARCH UI
+          <span className="w-2 h-2 rounded-full bg-energy-primary live-dot" />
+          ORIUS
         </div>
 
         {/* Region Selector */}
@@ -39,10 +84,10 @@ export function TopBar() {
           >
             <Globe className="w-4 h-4 text-energy-info" />
             <span>{currentRegion.flag} {currentRegion.label}</span>
-            <ChevronDown className="w-3 h-3 text-slate-500" />
+            <ChevronDown className={`w-3 h-3 text-slate-500 transition-transform ${showRegions ? 'rotate-180' : ''}`} />
           </button>
           {showRegions && (
-            <div className="absolute top-full mt-1 left-0 glass-panel rounded-lg py-1 min-w-[200px]">
+            <div className="absolute top-full mt-1 left-0 glass-panel-elevated rounded-lg py-1 min-w-[200px] z-50">
               {regions.map((r) => (
                 <button
                   key={r.id}
@@ -65,28 +110,48 @@ export function TopBar() {
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-energy-primary-dim border border-energy-primary/20 text-xs text-energy-primary">
           Shield: DC3S
         </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-xs text-slate-300">
+        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-xs text-slate-300">
           Data: Artifact + Live
         </div>
       </div>
 
       {/* Right: Time + Notifications + Profile */}
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+        <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-400">
           <Clock className="w-3.5 h-3.5" />
           <span className="font-mono">{nowUtc}</span>
         </div>
 
-        <button className="relative p-2 rounded-lg hover:bg-white/5 transition-colors">
-          <Bell className="w-4 h-4 text-slate-400" />
-          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-energy-alert" />
-        </button>
+        {/* Notifications */}
+        <div className="relative" ref={notifRef}>
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className={`relative p-2 rounded-lg transition-colors ${
+              showNotifications ? 'bg-white/10' : 'hover:bg-white/5'
+            }`}
+          >
+            <Bell className="w-4 h-4 text-slate-400" />
+            {panelNotifications.length > 0 && (
+              <span className={`absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center rounded-full text-[9px] font-bold text-white px-1 ${
+                criticalCount > 0 ? 'bg-energy-alert' : 'bg-energy-info'
+              }`}>
+                {panelNotifications.length}
+              </span>
+            )}
+          </button>
+          <NotificationPanel
+            notifications={panelNotifications}
+            open={showNotifications}
+            onClose={() => setShowNotifications(false)}
+            onDismiss={dismissNotification}
+          />
+        </div>
 
         <div className="flex items-center gap-2 pl-3 border-l border-white/10">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-energy-primary to-energy-info flex items-center justify-center text-xs font-bold text-white">
             P
           </div>
-          <span className="text-sm text-slate-300">Pratik N</span>
+          <span className="hidden sm:inline text-sm text-slate-300">Pratik N</span>
         </div>
       </div>
     </header>

@@ -7,6 +7,8 @@ import { StatusBanner } from '@/components/ui/StatusBanner';
 import { useReportsData } from '@/lib/api/reports-client';
 import { useRegion } from '@/components/ui/RegionContext';
 import { useDatasetData, type DriftPoint } from '@/lib/api/dataset-client';
+import Link from 'next/link';
+import { ShieldCheck, ChevronRight } from 'lucide-react';
 
 export default function MonitoringPage() {
   const { region } = useRegion();
@@ -50,6 +52,17 @@ export default function MonitoringPage() {
       </div>
 
       <StatusBanner title="Monitoring Status" messages={statusMessages} />
+
+      {/* ORIUS DC3S Pipeline Context */}
+      <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-500/5 via-transparent to-transparent border border-violet-500/10">
+        <ShieldCheck className="w-4 h-4 text-violet-400 shrink-0" />
+        <span className="text-[11px] text-slate-400">
+          <span className="text-violet-400 font-semibold">DC3S Pipeline</span> · Detect → Calibrate → Constrain → Shield → Certify · <span className="text-white/70">T8 certificate completeness</span> ensures all five stages pass before deployment · Drift → auto-retrain triggers
+        </span>
+        <Link href="/safety" className="ml-auto flex items-center gap-1 text-[10px] text-violet-400/70 hover:text-violet-400 transition-colors shrink-0">
+          Safety & DC3S <ChevronRight className="w-3 h-3" />
+        </Link>
+      </div>
 
       <MLOpsMonitor data={drift} />
 

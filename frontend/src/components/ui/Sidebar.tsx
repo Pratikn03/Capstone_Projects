@@ -14,6 +14,9 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  BookOpen,
+  ShieldCheck,
+  Globe2,
 } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,6 +28,9 @@ const navItems = [
   { href: '/anomalies', label: 'Anomalies', icon: AlertTriangle },
   { href: '/carbon', label: 'Carbon', icon: Leaf },
   { href: '/monitoring', label: 'Monitoring', icon: Activity },
+  { href: '/theorems', label: 'Theorems', icon: BookOpen },
+  { href: '/safety', label: 'Safety & OASG', icon: ShieldCheck },
+  { href: '/domains', label: 'Domains', icon: Globe2 },
   { href: '/reports', label: 'Reports', icon: FileText },
   { href: '/data', label: 'Data Explorer', icon: Database },
 ];

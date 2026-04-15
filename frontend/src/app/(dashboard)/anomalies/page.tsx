@@ -6,6 +6,8 @@ import { Panel } from '@/components/ui/Panel';
 import { StatusBanner } from '@/components/ui/StatusBanner';
 import { useRegion } from '@/components/ui/RegionContext';
 import { useDatasetData } from '@/lib/api/dataset-client';
+import Link from 'next/link';
+import { ShieldCheck, ChevronRight } from 'lucide-react';
 
 export default function AnomaliesPage() {
   const { region } = useRegion();
@@ -40,6 +42,17 @@ export default function AnomaliesPage() {
             </span>
           </div>
         )}
+      </div>
+
+      {/* ORIUS DC3S Detection Context */}
+      <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/5 via-transparent to-transparent border border-amber-500/10">
+        <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+        <span className="text-[11px] text-slate-400">
+          <span className="text-amber-400 font-semibold">DC3S Stage 1 — Detect</span> · OQE fault taxonomy: dropout, stale, spike, delay, drift · <span className="text-white/70">T6 (conformal → anomaly)</span> flags out-of-distribution inputs · z-score residual analysis
+        </span>
+        <Link href="/safety" className="ml-auto flex items-center gap-1 text-[10px] text-amber-400/70 hover:text-amber-400 transition-colors shrink-0">
+          DC3S pipeline <ChevronRight className="w-3 h-3" />
+        </Link>
       </div>
 
       <StatusBanner title="Anomaly View Status" messages={statusMessages} />
