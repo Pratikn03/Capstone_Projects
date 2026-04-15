@@ -1,0 +1,32 @@
+shift_aware_uncertainty:
+  enable: false
+  policy_mode: shift_aware_linear
+  aci_mode: aci_clipped
+  adaptation_step_size: 0.01
+  coverage_window_size: 128
+  runtime_state_path: reports/publication/shift_aware_runtime_state.json
+  reliability_bin_count: 5
+  volatility_bin_count: 5
+  subgroup_definitions:
+    include_fault_type: true
+    include_hour_bucket: true
+    custom_key_field: custom_group_key
+  validity_score_weights:
+    residual: 0.25
+    subgroup: 0.25
+    drift: 0.20
+    adaptation: 0.15
+    reliability: 0.15
+  drift_detector_params:
+    ph_delta: 0.01
+    ph_lambda: 5.0
+    warmup_steps: 48
+    cooldown_steps: 24
+  widening_caps:
+    max_inflation_multiplier: 4.0
+  thresholds:
+    watch: 0.75
+    degraded: 0.55
+    invalid: 0.35
+  artifact_output_toggles:
+    enabled: true
