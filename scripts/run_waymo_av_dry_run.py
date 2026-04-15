@@ -29,6 +29,9 @@ def main() -> int:
     parser.add_argument("--raw-dir", type=Path, default=DEFAULT_RAW)
     parser.add_argument("--processed-dir", type=Path, default=DEFAULT_PROCESSED)
     parser.add_argument("--subset-size", type=int, default=1000)
+    parser.add_argument("--max-validation-shards", type=int, default=None)
+    parser.add_argument("--max-validation-scenarios", type=int, default=None)
+    parser.add_argument("--skip-actor-tracks", action="store_true")
     parser.add_argument("--max-runtime-scenarios", type=int, default=None)
     parser.add_argument("--skip-validation", action="store_true")
     parser.add_argument("--skip-training", action="store_true")
@@ -40,7 +43,13 @@ def main() -> int:
 
     report: dict[str, object] = {}
     if not args.skip_validation:
-        report["validation"] = build_validation_surface(raw_dir=args.raw_dir, out_dir=args.processed_dir)
+        report["validation"] = build_validation_surface(
+            raw_dir=args.raw_dir,
+            out_dir=args.processed_dir,
+            max_shards=args.max_validation_shards,
+            max_scenarios=args.max_validation_scenarios,
+            write_actor_tracks=not args.skip_actor_tracks,
+        )
 
     report["subset"] = build_subset_manifest(
         raw_dir=args.raw_dir,
