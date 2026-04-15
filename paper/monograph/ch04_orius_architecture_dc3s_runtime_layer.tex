@@ -1,31 +1,43 @@
 \chapter{ORIUS Architecture: DC3S Runtime Layer}
 \label{ch:orius-architecture-dc3s}
 
-ORIUS is implemented as a post-nominal runtime layer. It does not replace the upstream
-forecaster, planner, or controller. It wraps them with a typed safety contract that
-translates degraded observation into repaired action and certificate-aware governance.
+ORIUS enters the dissertation at the narrowest and most consequential point in the control
+loop: after nominal intelligence has proposed an action, but before that action is allowed
+to alter a physical plant. That placement is deliberate. Batteries, vehicles, industrial
+systems, healthcare monitors, navigation stacks, and aerospace controllers do not share one
+estimator, one optimizer, or one plant model. What they can share is a disciplined runtime
+treatment of what happens when degraded observation changes the meaning of safe release.
 
-\section{Why a runtime layer is needed}
-The dissertation does not assume that every legacy controller can be redesigned around one
-global proof technique. What can be reused is the safety layer that mediates between
-nominal intelligence and actuation. That is the architectural choice that makes ORIUS
-cross-domain: domain-specific intelligence remains domain-specific, while degraded
-observation, action tightening, fallback, and audit semantics are shared.
+\section{Why a runtime layer is the right object}
+The architectural claim is therefore narrower and stronger than a proposal for a universal
+controller. Degraded observation creates a release-boundary problem that sits between
+inference and actuation. Once telemetry becomes stale, delayed, missing, or corrupted, the
+relevant question is no longer only ``what would the nominal controller do?'' It becomes
+``what action can still be justified for physical release under the observation quality now
+available?'' ORIUS is the layer that answers that second question.
 
-\section{The Detect--Calibrate--Constrain--Shield--Certify step}
-The universal runtime step consists of five stages.
+That framing is what lets the book stay universal without drifting into abstraction. The
+runtime layer leaves domain-specific controllers, estimators, and plant models in place
+while freezing one common control-flow grammar for degraded observation. That grammar is
+Detect, Calibrate, Constrain, Shield, and Certify.
+
+\section{The DC3S release step}
+The universal runtime step has five stages.
 \begin{description}
   \item[Detect] compute observation reliability from freshness, missingness, delay,
-  ordering, spikes, and consistency.
-  \item[Calibrate] widen the observation-consistent state set as reliability drops.
-  \item[Constrain] recompute the admissible action set under the widened uncertainty set.
-  \item[Shield] repair the candidate action or replace it with a fallback when no safe
-  action remains.
-  \item[Certify] emit a causal record describing reliability, uncertainty, repair result,
-  and lifecycle status.
+  ordering, spikes, and consistency markers;
+  \item[Calibrate] widen the observation-consistent state set as reliability falls;
+  \item[Constrain] recompute the admissible action set under the widened uncertainty set;
+  \item[Shield] repair the candidate action or replace it with a bounded fallback when no
+  admissible repaired action remains;
+  \item[Certify] emit a causal certificate describing the reliability state, uncertainty
+  summary, repaired action, fallback status, and lifecycle metadata that govern release.
 \end{description}
-This step is deterministic at the contract level even when the nominal controller is
-learned, stochastic, or domain-specific.
+
+What matters is not that each stage is unprecedented in isolation. The architectural move is
+the typed composition of all five at one runtime boundary. ORIUS treats degraded observation
+as something that must change release semantics immediately, not as a warning signal that
+can be logged while nominal actuation proceeds unchanged.
 
 \section{Universal runtime flow}
 \begin{figure}[htbp]
@@ -35,17 +47,37 @@ learned, stochastic, or domain-specific.
 }{%
 \includegraphics[width=0.94\textwidth]{../reports/publication/fig_orius_theory_runtime_domain_flow.png}%
 }
-\caption{ORIUS runtime flow from degraded telemetry to repaired action and governed certificate. The figure is generated from the same publication assets that feed the parity-facing manuscript surfaces.}
+\caption{ORIUS runtime flow from degraded telemetry to repaired action and governed
+certificate. The figure is generated from the same publication assets that feed the
+manuscript-facing parity and governance surfaces.}
 \label{fig:orius-runtime-step}
 \end{figure}
 
-\section{DomainAdapter contract}
-The adapter contract is the narrow universal boundary between plant-specific semantics and
-shared runtime logic. The adapter supplies state interpretation, safety predicates,
-repair/fallback hooks, and certificate details. The kernel supplies reliability handling,
-uncertainty inflation, replay schema compatibility, and lifecycle discipline. This is the
-key design choice behind the dissertation's universality claim: one runtime grammar, many
-domain instantiations.
+Figure~\ref{fig:orius-runtime-step} makes the runtime object concrete. Reliability is not a
+dashboard number layered on top of an unchanged controller. It changes the admissible state
+set, which changes the admissible action set, which in turn changes whether nominal action
+may be released, whether it must be repaired, or whether the runtime must fall back to a
+safer policy. Certification closes the loop by recording what was released, why it remained
+admissible, and when that justification should expire.
+
+\section{DomainAdapter as the universal boundary}
+The \texttt{DomainAdapter} contract is the narrow interface that makes universality
+credible. The adapter owns the local semantics that should remain local:
+\begin{itemize}
+  \item how raw telemetry is interpreted into state features;
+  \item how true-state violation and observed-state satisfaction are defined;
+  \item how candidate action is repaired or projected;
+  \item what fallback means for the plant; and
+  \item what certificate payload must be preserved for reviewable release.
+\end{itemize}
+The universal kernel owns what should remain shared:
+\begin{itemize}
+  \item reliability handling;
+  \item uncertainty inflation;
+  \item admissible-set tightening;
+  \item benchmark-schema compatibility; and
+  \item certificate lifecycle discipline.
+\end{itemize}
 
 \IfFileExists{paper/assets/tables/generated/tbl_universal_framework.tex}{%
 \input{paper/assets/tables/generated/tbl_universal_framework}%
@@ -53,15 +85,52 @@ domain instantiations.
 \input{assets/tables/generated/tbl_universal_framework}%
 }
 
-\section{Runtime cost and operational realism}
-ORIUS is written for operational deployment rather than only for theorem exposition.
-Runtime overhead, fallback behavior, and auditable certificates are not appendix-only
-concerns. They are part of the scientific object because a safety layer that cannot act in
-time, cannot explain its interventions, or cannot preserve governance continuity is not a
-defensible physical-AI runtime layer.
+This separation is the implementation answer to the universality question. ORIUS does not
+argue that every domain shares one plant geometry. It argues that each domain can expose its
+own geometry through one runtime contract while the safety logic surrounding degraded
+observation remains reusable.
 
-\section{What the architecture does and does not claim}
-The architecture claims a reusable runtime contract. It does not claim universal optimal
-repair, universal plant realism, or certification compliance. Those stronger statements
-depend on the domain row, benchmark replay, and governed artifact surface that later
-chapters make explicit.
+\section{Relationship to supervision and safety filters}
+ORIUS should be read as compatible with, not opposed to, established safety-filter and
+runtime-assurance ideas. Control barrier functions, predictive safety filters, and robust
+MPC show how plant constraints can be translated into admissible control updates
+\cite{ames2019control,ames2014cbf,wabersich2021predictive,mayne2005robust}. Simplex-style
+runtime assurance shows how a high-performance controller can be supervised by a safer
+fallback authority when operating conditions invalidate the nominal control contract
+\cite{sha1998simplex,sha2001using}.
+
+ORIUS differs in emphasis. It freezes degraded observation itself as the opening object of
+the runtime step. Reliability loss is not merely one more disturbance bound; it is the
+mechanism that tells the runtime when the meaning of observed-state legality has changed.
+That is why Detect and Calibrate appear before Shield. The runtime does not only ask how to
+project action back into a safe set. It asks how the safe set should be redefined once the
+observation channel can no longer be trusted at face value.
+
+\section{Certificate emission and operational semantics}
+Certify is not bookkeeping. Once repaired action is released, the runtime must still say
+what assumptions justified release, which fallback would be taken if the certificate
+expired, and how later review can reconstruct the decision. In ORIUS, certificate metadata
+therefore sits inside the same runtime object as reliability, repair, and fallback.
+
+This is what turns ORIUS from a controller-side heuristic into a governed runtime layer. The
+release record must be causal, bounded, and auditable. That discipline is what makes it
+possible to compare domains through runtime artifacts rather than after-the-fact narrative.
+
+\section{Runtime cost and operational realism}
+ORIUS is written for operational settings rather than theorem exposition alone. Runtime
+overhead, fallback behavior, and auditable certificates are therefore part of the scientific
+object. A safety layer that cannot act in time, cannot preserve a coherent lifecycle state,
+or cannot explain why it intervened is not a convincing architecture for physical AI.
+
+That operational constraint is what leads naturally into the next two chapters. Once the
+runtime layer has been fixed as the central object, the next question is what can actually
+be proved about it and how those claims can be measured without confusing nominal coherence
+for physical safety.
+
+\section{Architectural takeaway}
+What this chapter establishes is architectural rather than empirical closure. ORIUS provides
+a reusable runtime contract that translates degraded observation into
+reliability-conditioned uncertainty, tightened action legality, repaired or fallback
+release, and certificate-aware governance. Stronger claims about optimality, plant realism,
+or deployment maturity remain tied to the benchmark rows and governed evidence surfaces that
+follow.

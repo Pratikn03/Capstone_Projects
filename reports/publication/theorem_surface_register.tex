@@ -1,6 +1,6 @@
 \begin{small}
 \begin{longtable}{@{}p{1.2cm}p{2.2cm}p{1.7cm}p{3.2cm}p{3.6cm}p{2.1cm}@{}}
-\caption{Integrated theorem-like surface register generated from chapters and appendices.}
+\caption{Integrated theorem-like surface register generated from the active thesis include tree.}
 \label{tab:integrated-theorem-surface-register} \\
 \toprule
 \textbf{ID} & \textbf{Group} & \textbf{Kind} & \textbf{Title} & \textbf{Context} & \textbf{Source} \\
@@ -19,76 +19,95 @@
 
 \bottomrule
 \endlastfoot
-\multicolumn{6}{@{}l}{\textbf{Flagship T1--T8 ladder} (8; theorem:8)} \\
+\multicolumn{6}{@{}l}{\textbf{Defended theorem program} (17; theorem:17)} \\
 \midrule
-T1 & Flagship T1--T8 ladder & theorem & OASG Existence & Main Theorem: OASG Existence & \path{chapters/ch16_battery_theorem_oasg_existence.tex}:105 \\
-T2 & Flagship T1--T8 ladder & theorem & Safety Preservation & Main Theorem: Safety Preservation & \path{chapters/ch17_battery_theorem_safety_preservation.tex}:83 \\
-T3 & Flagship T1--T8 ladder & theorem & ORIUS Core Bound & Main Theorem: ORIUS Core Bound & \path{chapters/ch18_orius_core_bound_battery.tex}:64 \\
-T4 & Flagship T1--T8 ladder & theorem & No Free Safety & Main Theorem: No Free Safety & \path{chapters/ch19_no_free_safety_battery.tex}:94 \\
-T5 & Flagship T1--T8 ladder & theorem & Certificate validity horizon & Certificate Validity Horizon & \path{chapters/ch20_temporal_behavioral_extensions.tex}:71 \\
-T6 & Flagship T1--T8 ladder & theorem & Certificate expiration bound & Certificate Expiration Bound & \path{chapters/ch20_temporal_behavioral_extensions.tex}:101 \\
-T7 & Flagship T1--T8 ladder & theorem & Feasible fallback existence & Feasible Fallback Existence & \path{chapters/ch20_temporal_behavioral_extensions.tex}:180 \\
-T8 & Flagship T1--T8 ladder & theorem & Graceful degradation dominance & Graceful Degradation Dominance & \path{chapters/ch20_temporal_behavioral_extensions.tex}:206 \\
+S1 & Defended theorem program & theorem & Existence of the illusion under dropout & Formal Statement of the Illusion & \path{chapters_merged/ch03_background.tex}:495 \\
+S2 & Defended theorem program & theorem & DC3S Feasibility Guarantee & Why the Illusion Demands a Runtime Shield & \path{chapters_merged/ch03_background.tex}:658 \\
+T1 & Defended theorem program & theorem & OASG Existence --- General CPS & Domain-Agnostic Statement & \path{chapters_merged/ch04_theoretical_foundations.tex}:681 \\
+T1 & Defended theorem program & theorem & OASG Existence & Main Theorem: OASG Existence & \path{chapters_merged/ch04_theoretical_foundations.tex}:800 \\
+T2 & Defended theorem program & theorem & Safety Preservation --- General CPS & Domain-Agnostic Statement & \path{chapters_merged/ch04_theoretical_foundations.tex}:930 \\
+T2 & Defended theorem program & theorem & Safety Preservation & Main Theorem: Safety Preservation & \path{chapters_merged/ch04_theoretical_foundations.tex}:1039 \\
+T3 & Defended theorem program & theorem & ORIUS Core Bound --- General CPS & Domain-Agnostic Statement & \path{chapters_merged/ch04_theoretical_foundations.tex}:1186 \\
+T3 & Defended theorem program & theorem & ORIUS Core Bound & Main Theorem: ORIUS Core Bound & \path{chapters_merged/ch04_theoretical_foundations.tex}:1274 \\
+T4 & Defended theorem program & theorem & No Free Safety --- General CPS & Domain-Agnostic Statement & \path{chapters_merged/ch04_theoretical_foundations.tex}:1431 \\
+T4 & Defended theorem program & theorem & No Free Safety & Main Theorem: No Free Safety & \path{chapters_merged/ch04_theoretical_foundations.tex}:1537 \\
+T5 & Defended theorem program & theorem & Certificate validity horizon & Main Temporal Theorems & \path{chapters_merged/ch04_theoretical_foundations.tex}:1739 \\
+T6 & Defended theorem program & theorem & Certificate expiration bound & Main Temporal Theorems & \path{chapters_merged/ch04_theoretical_foundations.tex}:1769 \\
+T7 & Defended theorem program & theorem & Feasible fallback existence & Fallback and Graceful Degradation & \path{chapters_merged/ch04_theoretical_foundations.tex}:1848 \\
+T8 & Defended theorem program & theorem & Graceful degradation dominance & Fallback and Graceful Degradation & \path{chapters_merged/ch04_theoretical_foundations.tex}:1874 \\
+T9 & Defended theorem program & theorem & Universal Impossibility, T9 & Observation-Aware Control Is Structurally Necessary (T9) & \path{chapters/ch37_universality_completeness.tex}:109 \\
+T10 & Defended theorem program & theorem & Boundary-indistinguishability lower bound, T10 & Boundary-Indistinguishability Lower Bound (T10) & \path{chapters/ch37_universality_completeness.tex}:206 \\
+T11 & Defended theorem program & theorem & Typed structural transfer theorem, T11 & Typed Structural Transfer and Failure-Mode Converse (T11) & \path{chapters/ch37_universality_completeness.tex}:338 \\
 \addlinespace
-\multicolumn{6}{@{}l}{\textbf{Supporting chapter result} (33; theorem:2, lemma:5, proposition:6, corollary:9, definition:11)} \\
+\multicolumn{6}{@{}l}{\textbf{Supporting chapter result} (43; theorem:1, lemma:5, proposition:8, corollary:11, definition:15, remark:3)} \\
 \midrule
---- & Supporting chapter result & definition & Observation-Action Safety Gap (OASG) & The Observation-Action Safety Gap & \path{chapters/ch01_introduction.tex}:61 \\
---- & Supporting chapter result & definition & Battery-domain OASG & The Hidden Safety Gap & \path{chapters/ch03_problem_formulation.tex}:42 \\
---- & Supporting chapter result & definition & Observed-State Safety Illusion & Formal Statement of the Illusion & \path{chapters/ch04_observed_state_safety_illusion.tex}:70 \\
---- & Supporting chapter result & theorem & Existence of the illusion under dropout & Formal Statement of the Illusion & \path{chapters/ch04_observed_state_safety_illusion.tex}:93 \\
---- & Supporting chapter result & proposition & Insufficiency of observed-state evaluation & Why Standard Evaluation Misses the Problem & \path{chapters/ch04_observed_state_safety_illusion.tex}:166 \\
---- & Supporting chapter result & definition & True-State Violation Rate (TSVR) & CPSBench and Dual-Trajectory Evaluation & \path{chapters/ch04_observed_state_safety_illusion.tex}:204 \\
---- & Supporting chapter result & definition & Intervention Rate (IR) & CPSBench and Dual-Trajectory Evaluation & \path{chapters/ch04_observed_state_safety_illusion.tex}:216 \\
---- & Supporting chapter result & theorem & Informal safety guarantee of DC3S & Why the Illusion Demands a Runtime Shield & \path{chapters/ch04_observed_state_safety_illusion.tex}:256 \\
---- & Supporting chapter result & proposition & Conditional conservatism & Intervention Rate and Conditional Conservatism & \path{chapters/ch11_main_battery_results.tex}:78 \\
---- & Supporting chapter result & proposition & Intervention lead time & Intervention Timing & \path{chapters/ch13_case_studies_operational_traces.tex}:88 \\
---- & Supporting chapter result & definition & Observed safety & Observed and True Safety Predicates & \path{chapters/ch16_battery_theorem_oasg_existence.tex}:29 \\
---- & Supporting chapter result & definition & True safety & Observed and True Safety Predicates & \path{chapters/ch16_battery_theorem_oasg_existence.tex}:42 \\
---- & Supporting chapter result & lemma & Observation gap under dropout & Auxiliary Lemmas & \path{chapters/ch16_battery_theorem_oasg_existence.tex}:71 \\
---- & Supporting chapter result & lemma & Boundary proximity under arbitrage & Auxiliary Lemmas & \path{chapters/ch16_battery_theorem_oasg_existence.tex}:89 \\
---- & Supporting chapter result & corollary & OASG rate lower bound & Corollaries & \path{chapters/ch16_battery_theorem_oasg_existence.tex}:180 \\
---- & Supporting chapter result & corollary & OASG severity & Corollaries & \path{chapters/ch16_battery_theorem_oasg_existence.tex}:188 \\
---- & Supporting chapter result & definition & Tightened safe-action set & Tightened Safe Action Set & \path{chapters/ch17_battery_theorem_safety_preservation.tex}:12 \\
---- & Supporting chapter result & proposition & Margin dominates observation gap & Auxiliary Propositions & \path{chapters/ch17_battery_theorem_safety_preservation.tex}:46 \\
---- & Supporting chapter result & proposition & Tightened feasibility implies true feasibility & Auxiliary Propositions & \path{chapters/ch17_battery_theorem_safety_preservation.tex}:61 \\
---- & Supporting chapter result & corollary & Zero-violation regime & Corollaries & \path{chapters/ch17_battery_theorem_safety_preservation.tex}:158 \\
---- & Supporting chapter result & corollary & Intervention-safety tradeoff & Corollaries & \path{chapters/ch17_battery_theorem_safety_preservation.tex}:165 \\
---- & Supporting chapter result & lemma & Per-step violation probability & Per-Step Risk Lemma & \path{chapters/ch18_orius_core_bound_battery.tex}:28 \\
---- & Supporting chapter result & corollary & Perfect-telemetry collapse & Corollaries & \path{chapters/ch18_orius_core_bound_battery.tex}:145 \\
---- & Supporting chapter result & corollary & Reliability-proportional safety & Corollaries & \path{chapters/ch18_orius_core_bound_battery.tex}:152 \\
---- & Supporting chapter result & corollary & Intervention sufficiency & Corollaries & \path{chapters/ch18_orius_core_bound_battery.tex}:160 \\
---- & Supporting chapter result & definition & Quality-ignorant controller & Quality-Ignorant Controller Class & \path{chapters/ch19_no_free_safety_battery.tex}:14 \\
---- & Supporting chapter result & lemma & Admissible fault sequence existence & Auxiliary Lemmas & \path{chapters/ch19_no_free_safety_battery.tex}:33 \\
---- & Supporting chapter result & lemma & No margin compensation for quality-ignorant controllers & Auxiliary Lemmas & \path{chapters/ch19_no_free_safety_battery.tex}:55 \\
---- & Supporting chapter result & corollary & Reliability awareness is necessary & Corollary & \path{chapters/ch19_no_free_safety_battery.tex}:165 \\
---- & Supporting chapter result & definition & Safety certificate & Certificate Object and Validity Horizon & \path{chapters/ch20_temporal_behavioral_extensions.tex}:23 \\
---- & Supporting chapter result & definition & Forward tube & Forward-Tube Construction & \path{chapters/ch20_temporal_behavioral_extensions.tex}:50 \\
---- & Supporting chapter result & corollary & Certificate half-life & Certificate Half-Life Corollary & \path{chapters/ch20_temporal_behavioral_extensions.tex}:123 \\
---- & Supporting chapter result & proposition & Safe-budget monotonicity & Safe-Budget Monotonicity & \path{chapters/ch20_temporal_behavioral_extensions.tex}:237 \\
+--- & Supporting chapter result & definition & Observation-Action Safety Gap (OASG) & The Observation-Action Safety Gap & \path{chapters_merged/ch01_introduction.tex}:79 \\
+--- & Supporting chapter result & definition & ORIUS-MDP & ORIUS-MDP Formalisation & \path{chapters_merged/ch01_introduction.tex}:315 \\
+--- & Supporting chapter result & remark & --- & ORIUS-MDP Formalisation & \path{chapters_merged/ch01_introduction.tex}:340 \\
+--- & Supporting chapter result & definition & Battery-domain OASG & The Hidden Safety Gap & \path{chapters_merged/ch01_introduction.tex}:353 \\
+--- & Supporting chapter result & definition & Observed-State Safety Illusion & Formal Statement of the Illusion & \path{chapters_merged/ch03_background.tex}:472 \\
+--- & Supporting chapter result & proposition & Insufficiency of observed-state evaluation & Why Standard Evaluation Misses the Problem & \path{chapters_merged/ch03_background.tex}:568 \\
+--- & Supporting chapter result & definition & True-State Violation Rate (TSVR) & CPSBench and Dual-Trajectory Evaluation & \path{chapters_merged/ch03_background.tex}:606 \\
+--- & Supporting chapter result & definition & Intervention Rate (IR) & CPSBench and Dual-Trajectory Evaluation & \path{chapters_merged/ch03_background.tex}:618 \\
+--- & Supporting chapter result & definition & Abstract CPS & Domain-Agnostic Statement & \path{chapters_merged/ch04_theoretical_foundations.tex}:668 \\
+--- & Supporting chapter result & definition & Observed safety & Observed and True Safety Predicates & \path{chapters_merged/ch04_theoretical_foundations.tex}:724 \\
+--- & Supporting chapter result & definition & True safety & Observed and True Safety Predicates & \path{chapters_merged/ch04_theoretical_foundations.tex}:737 \\
+--- & Supporting chapter result & lemma & Observation gap under dropout & Auxiliary Lemmas & \path{chapters_merged/ch04_theoretical_foundations.tex}:766 \\
+--- & Supporting chapter result & lemma & Boundary proximity under arbitrage & Auxiliary Lemmas & \path{chapters_merged/ch04_theoretical_foundations.tex}:784 \\
+--- & Supporting chapter result & corollary & OASG rate lower bound & Corollaries & \path{chapters_merged/ch04_theoretical_foundations.tex}:875 \\
+--- & Supporting chapter result & corollary & OASG severity & Corollaries & \path{chapters_merged/ch04_theoretical_foundations.tex}:883 \\
+--- & Supporting chapter result & definition & Tightened safe-action set & Battery-Domain Instantiation: Tightened Safe Action Set & \path{chapters_merged/ch04_theoretical_foundations.tex}:966 \\
+--- & Supporting chapter result & proposition & Inflated set contains the current state & Auxiliary Propositions & \path{chapters_merged/ch04_theoretical_foundations.tex}:1000 \\
+--- & Supporting chapter result & proposition & Tightened feasibility implies true feasibility & Auxiliary Propositions & \path{chapters_merged/ch04_theoretical_foundations.tex}:1017 \\
+--- & Supporting chapter result & corollary & Zero-violation regime & Corollaries & \path{chapters_merged/ch04_theoretical_foundations.tex}:1121 \\
+--- & Supporting chapter result & corollary & Intervention-safety tradeoff & Corollaries & \path{chapters_merged/ch04_theoretical_foundations.tex}:1128 \\
+--- & Supporting chapter result & lemma & Aggregation under a predictable risk budget & Theorem-Local Risk-Envelope Contract & \path{chapters_merged/ch04_theoretical_foundations.tex}:1246 \\
+--- & Supporting chapter result & corollary & Perfect-telemetry collapse & Corollaries & \path{chapters_merged/ch04_theoretical_foundations.tex}:1358 \\
+--- & Supporting chapter result & corollary & Reliability-proportional safety & Corollaries & \path{chapters_merged/ch04_theoretical_foundations.tex}:1366 \\
+--- & Supporting chapter result & corollary & Intervention sufficiency & Corollaries & \path{chapters_merged/ch04_theoretical_foundations.tex}:1374 \\
+--- & Supporting chapter result & definition & Quality-ignorant controller & Battery-Domain Instantiation: Quality-Ignorant Controller Class & \path{chapters_merged/ch04_theoretical_foundations.tex}:1457 \\
+--- & Supporting chapter result & lemma & Admissible fault sequence existence & Auxiliary Lemmas & \path{chapters_merged/ch04_theoretical_foundations.tex}:1476 \\
+--- & Supporting chapter result & lemma & No margin compensation for quality-ignorant controllers & Auxiliary Lemmas & \path{chapters_merged/ch04_theoretical_foundations.tex}:1498 \\
+--- & Supporting chapter result & corollary & Reliability awareness is necessary & Corollary & \path{chapters_merged/ch04_theoretical_foundations.tex}:1608 \\
+--- & Supporting chapter result & definition & Safety certificate & Certificate Object and Validity Horizon & \path{chapters_merged/ch04_theoretical_foundations.tex}:1691 \\
+--- & Supporting chapter result & definition & Forward tube & Forward-Tube Construction & \path{chapters_merged/ch04_theoretical_foundations.tex}:1718 \\
+--- & Supporting chapter result & corollary & Certificate half-life & Main Temporal Theorems & \path{chapters_merged/ch04_theoretical_foundations.tex}:1791 \\
+--- & Supporting chapter result & proposition & Safe-budget monotonicity & Fallback and Graceful Degradation & \path{chapters_merged/ch04_theoretical_foundations.tex}:1905 \\
+--- & Supporting chapter result & proposition & Conditional conservatism & Intervention Rate and Conditional Conservatism & \path{chapters_merged/ch06_main_results.tex}:82 \\
+--- & Supporting chapter result & proposition & Intervention lead time & Intervention Timing & \path{chapters_merged/ch06_main_results.tex}:591 \\
+--- & Supporting chapter result & definition & Degraded-observation safe-control problem & Universal Problem Statement and Information Pattern & \path{chapters/ch37_universality_completeness.tex}:58 \\
+--- & Supporting chapter result & remark & --- & Observation-Aware Control Is Structurally Necessary (T9) & \path{chapters/ch37_universality_completeness.tex}:175 \\
+--- & Supporting chapter result & remark & --- & Boundary-Indistinguishability Lower Bound (T10) & \path{chapters/ch37_universality_completeness.tex}:266 \\
+--- & Supporting chapter result & definition & Universal adapter contract & Typed Structural Transfer and Failure-Mode Converse (T11) & \path{chapters/ch37_universality_completeness.tex}:300 \\
+--- & Supporting chapter result & corollary & Episode aggregation under explicit per-step budgets & Typed Structural Transfer and Failure-Mode Converse (T11) & \path{chapters/ch37_universality_completeness.tex}:385 \\
+--- & Supporting chapter result & proposition & Failure of any transfer obligation breaks the reference proof pattern & Typed Structural Transfer and Failure-Mode Converse (T11) & \path{chapters/ch37_universality_completeness.tex}:417 \\
+--- & Supporting chapter result & theorem & Unification & Unification: ORIUS Subsumes Prior Frameworks & \path{chapters/ch37_universality_completeness.tex}:486 \\
+--- & Supporting chapter result & proposition & Constraint-class mismatch barrier & Constraint-Class Mismatch: When 1-D Action Repair Is Insufficient & \path{chapters/ch37_universality_completeness.tex}:548 \\
+--- & Supporting chapter result & corollary & AV promotion routes from the original headway mismatch & Constraint-Class Mismatch: When 1-D Action Repair Is Insufficient & \path{chapters/ch37_universality_completeness.tex}:598 \\
 \addlinespace
-\multicolumn{6}{@{}l}{\textbf{Appendix restatement} (10; theorem:8, proposition:1, corollary:1)} \\
+\multicolumn{6}{@{}l}{\textbf{Appendix proof restatement} (10; theorem:8, proposition:1, corollary:1)} \\
 \midrule
---- & Appendix restatement & theorem & C.1 Battery-Domain OASG Existence & C.1 Battery-Domain OASG Existence & \path{appendices/app_c_full_proofs.tex}:28 \\
---- & Appendix restatement & theorem & C.2 One-Step Safety Preservation & C.2 One-Step Safety Preservation & \path{appendices/app_c_full_proofs.tex}:41 \\
---- & Appendix restatement & theorem & C.3 Battery ORIUS Core Bound & C.3 Battery ORIUS Core Bound & \path{appendices/app_c_full_proofs.tex}:54 \\
---- & Appendix restatement & theorem & C.4 No Free Safety & C.4 No Free Safety & \path{appendices/app_c_full_proofs.tex}:64 \\
---- & Appendix restatement & theorem & C.5 Certificate Validity Horizon & C.5 Certificate Validity Horizon & \path{appendices/app_c_full_proofs.tex}:76 \\
---- & Appendix restatement & theorem & C.6 Certificate Expiration Bound & C.6 Certificate Expiration Bound & \path{appendices/app_c_full_proofs.tex}:91 \\
---- & Appendix restatement & corollary & C.7 Certificate Half-Life Corollary & C.7 Certificate Half-Life Corollary & \path{appendices/app_c_full_proofs.tex}:107 \\
---- & Appendix restatement & theorem & C.8 Feasible Fallback Existence & C.8 Feasible Fallback Existence & \path{appendices/app_c_full_proofs.tex}:119 \\
---- & Appendix restatement & theorem & C.9 Graceful Degradation Dominance & C.9 Graceful Degradation Dominance & \path{appendices/app_c_full_proofs.tex}:132 \\
---- & Appendix restatement & proposition & C.10 Safe-Budget Monotonicity Proposition & C.10 Safe-Budget Monotonicity Proposition & \path{appendices/app_c_full_proofs.tex}:148 \\
+--- & Appendix proof restatement & theorem & C.1 Battery-Domain OASG Existence & C.1 Battery-Domain OASG Existence & \path{appendices/app_c_full_proofs.tex}:32 \\
+--- & Appendix proof restatement & theorem & C.2 One-Step Safety Preservation & C.2 One-Step Safety Preservation & \path{appendices/app_c_full_proofs.tex}:45 \\
+--- & Appendix proof restatement & theorem & C.3 Battery ORIUS Core Bound & C.3 Battery ORIUS Core Bound & \path{appendices/app_c_full_proofs.tex}:99 \\
+--- & Appendix proof restatement & theorem & C.4 No Free Safety & C.4 No Free Safety & \path{appendices/app_c_full_proofs.tex}:156 \\
+--- & Appendix proof restatement & theorem & C.5 Certificate Validity Horizon & C.5 Certificate Validity Horizon & \path{appendices/app_c_full_proofs.tex}:185 \\
+--- & Appendix proof restatement & theorem & C.6 Certificate Expiration Bound & C.6 Certificate Expiration Bound & \path{appendices/app_c_full_proofs.tex}:200 \\
+--- & Appendix proof restatement & corollary & C.7 Certificate Half-Life Corollary & C.7 Certificate Half-Life Corollary & \path{appendices/app_c_full_proofs.tex}:216 \\
+--- & Appendix proof restatement & theorem & C.8 Feasible Fallback Existence & C.8 Feasible Fallback Existence & \path{appendices/app_c_full_proofs.tex}:228 \\
+--- & Appendix proof restatement & theorem & C.9 Graceful Degradation Dominance & C.9 Graceful Degradation Dominance & \path{appendices/app_c_full_proofs.tex}:241 \\
+--- & Appendix proof restatement & proposition & C.10 Safe-Budget Monotonicity Proposition & C.10 Safe-Budget Monotonicity Proposition & \path{appendices/app_c_full_proofs.tex}:257 \\
 \addlinespace
 \multicolumn{6}{@{}l}{\textbf{Assumption register} (16; assumption:16)} \\
 \midrule
-A1 & Assumption register & assumption & A1: Bounded model error & Assumption IDs (A1--A8) & \path{chapters/ch15_assumptions_notation_proof_discipline.tex}:50 \\
-A2 & Assumption register & assumption & A2: Bounded telemetry error & Assumption IDs (A1--A8) & \path{chapters/ch15_assumptions_notation_proof_discipline.tex}:57 \\
-A3 & Assumption register & assumption & A3: Feasible safe repair & Assumption IDs (A1--A8) & \path{chapters/ch15_assumptions_notation_proof_discipline.tex}:64 \\
-A4 & Assumption register & assumption & A4: Known dynamics & Assumption IDs (A1--A8) & \path{chapters/ch15_assumptions_notation_proof_discipline.tex}:70 \\
-A5 & Assumption register & assumption & A5: Monotone bounded uncertainty inflation & Assumption IDs (A1--A8) & \path{chapters/ch15_assumptions_notation_proof_discipline.tex}:78 \\
-A6 & Assumption register & assumption & A6: Bounded detector lag & Assumption IDs (A1--A8) & \path{chapters/ch15_assumptions_notation_proof_discipline.tex}:85 \\
-A7 & Assumption register & assumption & A7: Causal certificate update & Assumption IDs (A1--A8) & \path{chapters/ch15_assumptions_notation_proof_discipline.tex}:92 \\
-A8 & Assumption register & assumption & A8: Admissible fallback policy & Assumption IDs (A1--A8) & \path{chapters/ch15_assumptions_notation_proof_discipline.tex}:98 \\
+A1 & Assumption register & assumption & A1: Bounded model error & Assumption IDs (A1--A8) & \path{chapters_merged/ch04_theoretical_foundations.tex}:415 \\
+A2 & Assumption register & assumption & A2: Bounded telemetry error & Assumption IDs (A1--A8) & \path{chapters_merged/ch04_theoretical_foundations.tex}:422 \\
+A3 & Assumption register & assumption & A3: Feasible safe repair & Assumption IDs (A1--A8) & \path{chapters_merged/ch04_theoretical_foundations.tex}:429 \\
+A4 & Assumption register & assumption & A4: Known dynamics & Assumption IDs (A1--A8) & \path{chapters_merged/ch04_theoretical_foundations.tex}:435 \\
+A5 & Assumption register & assumption & A5: Monotone bounded uncertainty inflation & Assumption IDs (A1--A8) & \path{chapters_merged/ch04_theoretical_foundations.tex}:443 \\
+A6 & Assumption register & assumption & A6: Bounded detector lag & Assumption IDs (A1--A8) & \path{chapters_merged/ch04_theoretical_foundations.tex}:450 \\
+A7 & Assumption register & assumption & A7: Causal certificate update & Assumption IDs (A1--A8) & \path{chapters_merged/ch04_theoretical_foundations.tex}:469 \\
+A8 & Assumption register & assumption & A8: Admissible fallback policy & Assumption IDs (A1--A8) & \path{chapters_merged/ch04_theoretical_foundations.tex}:475 \\
 A1 & Assumption register & assumption & A1 --- Bounded model error & Detailed Statements & \path{appendices/app_b_assumptions.tex}:47 \\
 A2 & Assumption register & assumption & A2 --- Bounded telemetry error & Detailed Statements & \path{appendices/app_b_assumptions.tex}:52 \\
 A3 & Assumption register & assumption & A3 --- Feasible safe repair & Detailed Statements & \path{appendices/app_b_assumptions.tex}:57 \\

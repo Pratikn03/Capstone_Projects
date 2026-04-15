@@ -1250,17 +1250,20 @@ coverage is weakest.
 Conditional coverage analysis reveals that marginal 90\% PICP can
 coexist with significant subgroup under-coverage, particularly for
 wind targets.  The reliability-bin stratification confirms that
-DC3S's adaptive intervals achieve exact conditional coverage across
-the full reliability spectrum.  The RAC-Cert inflation mechanism
+DC3S's adaptive intervals materially improve group-conditional coverage on
+the audited reliability bins without upgrading the defended claim into exact
+per-observation conditional coverage.  The RAC-Cert inflation mechanism
 compensates for volatility-group under-coverage by widening intervals
-where needed, ensuring that the safety shield operates with valid
-coverage guarantees in every operating regime.
+where needed, ensuring that the safety shield operates with bounded,
+evidence-backed coverage guarantees in the operating regimes actually
+audited here.
 
 
 % --- Merged from ch25_regional_decomposition_real_prices.tex ---
 
 \section{Regional Decomposition and Real-Price Grounding}
 \label{ch:regional}
+\label{ch:transfer-generalisation}
 
 A safety controller validated only on a single market region risks
 overfitting to local price dynamics, renewable mix, and demand patterns.
@@ -2304,5 +2307,3 @@ bounded certificate lifecycle chapter with code anchors, runtime invariants,
 measured battery evidence, complete audit coverage, explicit fallback
 semantics, and a small portability demonstration that remains outside the
 main proof boundary.
-
-

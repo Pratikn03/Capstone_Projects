@@ -2,18 +2,35 @@
 \label{ch:witness-domain-implementation}
 
 \section{Why battery is the witness domain}
-Battery remains the deepest witness row because it carries the strongest
-theorem-to-code-to-artifact lineage in the repository. That makes it the right place to
-show the full ORIUS stack end to end without pretending that the dissertation is only
-about energy systems. The witness-domain role is therefore methodological: battery is the
-row where the runtime contract, theorem ladder, replay protocol, and claim-lock pipeline
-are all simultaneously visible.
+Battery remains the witness domain because it is the clearest place in the repository where
+the full ORIUS stack can be seen at once: degraded telemetry, reliability estimation,
+uncertainty inflation, repaired dispatch, fallback behavior, certificate traces, replayable
+fault schedules, and claim-locked artifact surfaces. That makes it the right row to
+demonstrate end-to-end doctrine closure without allowing the dissertation to collapse into
+an energy-only story.
 
-\section{Data and dataset cards}
-The battery surface is built from tracked regional energy and telemetry artifacts rather
-than from a single benchmark file committed to git. The dissertation keeps the data story
-artifact-first and manifest-driven so that large external datasets can still participate in
-a reproducible thesis pipeline.
+The witness role is methodological rather than rhetorical. Battery is not the identity of
+ORIUS. It is the row in which the theorem layer, the implementation layer, and the artifact
+layer are all strong enough to support the book's deepest defended argument.
+
+\section{Witness-domain problem and plant semantics}
+The battery plant exposes a particularly clear form of OASG. Dispatch legality is computed
+against observed state of charge, availability, and feeder conditions, but the physical
+asset evolves on the true state. When telemetry becomes stale or corrupted, the optimizer
+can continue to return actions that appear feasible on the observed state while the physical
+asset is already drifting toward an unsafe or infeasible region.
+
+That clarity is useful for a witness row because it makes visible what ORIUS actually
+changes: the release boundary, not merely the forecast. The runtime widens the
+observation-consistent state, recomputes admissible dispatch, repairs or curtails candidate
+action, and emits a certificate describing why release remains justified.
+
+\section{Data surfaces and dataset cards}
+The witness row is artifact-first rather than repository-inline. The battery surface is
+therefore described through tracked dataset cards, manifests, and publication artifacts
+instead of through the fiction that all raw data live inside the git tree. That design is
+not a weakness. It is how a dissertation remains reproducible when its empirical surface
+depends on large external or governed datasets.
 
 \IfFileExists{paper/assets/tables/generated/tbl07_dataset_cards.tex}{%
 \input{paper/assets/tables/generated/tbl07_dataset_cards}%
@@ -21,11 +38,23 @@ a reproducible thesis pipeline.
 \input{assets/tables/generated/tbl07_dataset_cards}%
 }
 
+The dataset-card layer does more than document provenance. It tells the reader which
+geographies, telemetry resolutions, market structures, and operating contexts actually
+support the witness claim. That keeps the battery row from drifting into a false claim of
+energy-system universality.
+
 \section{Forecasting, calibration, and reliability surfaces}
-The witness row deliberately separates the engineered forecasting track from the
-degraded-observation novelty track. The current engineered track remains a strong systems
-baseline, while the learned-reliability and raw-sequence surfaces are framed as bounded
-deep-learning novelty inside ORIUS rather than as a replacement thesis identity.
+The witness row deliberately separates three roles that are often blurred in energy papers:
+\begin{enumerate}
+  \item the forecasting surface that supports nominal dispatch;
+  \item the uncertainty or calibration surface that informs admissible release; and
+  \item the reliability surface that decides how aggressively the runtime must tighten
+  action when telemetry degrades.
+\end{enumerate}
+
+That separation matters because ORIUS is not strongest where it finds the best forecaster.
+It is strongest where reliability, uncertainty, repair, and certificate semantics can be
+shown working together on one defended row.
 
 \IfFileExists{paper/assets/tables/generated/tbl08_forecast_baselines.tex}{%
 \input{paper/assets/tables/generated/tbl08_forecast_baselines}%
@@ -46,20 +75,41 @@ deep-learning novelty inside ORIUS rather than as a replacement thesis identity.
 }{%
 \includegraphics[width=0.84\textwidth]{../reports/publication/fig_battery_reliability_baselines.png}%
 }
-\caption{Witness-domain reliability baselines. The engineered forecasting surface and the learned reliability surface are intentionally reported together so the dissertation does not confuse forecasting novelty with degraded-observation novelty.}
+\caption{Witness-domain reliability baselines. The engineered forecasting surface and the
+learned reliability surface are intentionally reported together so the dissertation does not
+confuse forecasting novelty with degraded-observation novelty.}
 \label{fig:witness-reliability-baselines}
 \end{figure}
 
+Taken together, the tables and figure support a bounded but important point. Even when deep
+forecasting does not dominate the engineered tabular baseline, learned reliability remains a
+scientifically relevant extension because ORIUS cares about release under degraded sensing,
+not only about point prediction quality.
+
 \section{Control baselines and adapter implementation}
-Battery is also the cleanest row for showing how the adapter binds state semantics,
-uncertainty construction, action repair, fallback, and certificate emission to a real
-plant envelope. The dissertation uses that row to explain the implementation discipline:
-nominal forecasting and control are replaceable, but the ORIUS adapter boundary and replay
-contract remain fixed.
+Battery is also the cleanest row for showing the adapter boundary in operational terms. The
+adapter binds:
+\begin{itemize}
+  \item telemetry parsing and state semantics;
+  \item the true-state safety predicate;
+  \item dispatch feasibility and repair geometry;
+  \item certificate payload fields; and
+  \item the bounded fallback policy used when admissible repaired action disappears.
+\end{itemize}
+This is where the implementation philosophy becomes concrete. The nominal forecasting and
+optimization stack can vary, but the ORIUS adapter contract and replay schema remain fixed.
 
 \section{Locked artifact protocol}
-The witness row is defended through locked artifacts rather than through narrative memory.
-Training surfaces, replay outputs, theorem traces, calibration diagnostics, and runtime
-tables all point back to generated publication assets or manifests. This is the point at
-which the chapter-first dissertation model and the repository's claim-lock machinery meet:
-the prose is curated, but the evidence remains machine-governed.
+The witness row is defended through locked artifacts rather than narrative memory. Training
+surfaces, replay outputs, theorem traces, calibration diagnostics, deep-reliability
+summaries, runtime tables, and parity surfaces all point back to generated publication
+artifacts or manifests. This is where the chapter-first dissertation model and the
+repository's claim-lock machinery meet: the prose is curated, but the evidence remains
+machine-governed.
+
+\section{Witness-row scope}
+Battery carries the book's deepest defended claim because it closes the full runtime-safety
+chain from degraded observation to governed release. It does not prove that every battery
+chemistry, market policy, or asset-health objective is universally solved. Instead, it gives
+the dissertation a calibration surface: one row where theorem, runtime, and artifact closure
+can all be inspected together before the argument is lifted across domains.

@@ -1,73 +1,162 @@
-\chapter{Formal Problem Formulation: OASG under Degraded Observation}
+\chapter[Formal Problem Formulation]{Formal Problem Formulation: OASG under Degraded Observation}
 \label{ch:formal-problem-formulation}
 
 \section{State, observation, action, and constraints}
-Let $x_t^\star$ denote the true physical state, $\hat{x}_t$ the observation available to
-the nominal controller, and $u_t$ the candidate action proposed at time $t$. Let
-$\mathcal{C}(x)$ denote the safety constraints that define admissible actuation for a
-given state. ORIUS is interested in regimes where the observation surface becomes a poor
-enough proxy for the true state that a nominally legal action can become physically
-unsafe.
+Let $x_t^\star$ denote the true physical state of the plant at time $t$, let $\hat{x}_t$ denote
+the observation available to the nominal policy, and let $u_t$ denote the candidate action
+proposed for release. Let $\mathcal{C}(x)$ denote the set of admissible actions when the state is
+$x$, or equivalently the safety predicate that separates legal from illegal actuation. ORIUS is
+concerned with regimes in which the software stack continues to evaluate legality on $\hat{x}_t$
+even though the physically relevant state is $x_t^\star$ or a broader observation-consistent set
+around it.
 
-\section{Observation degradation operator}
-Observation degradation is modeled as a runtime operator that maps truthful telemetry into
-an imperfect observation stream:
+This distinction matters because physical safety is defined on the plant, not on the software
+representation alone. If $\hat{x}_t$ lags, omits, or distorts the relevant state variables, then
+the nominal controller can continue producing actions that are legal with respect to the observed
+state while being unsafe with respect to the state that is actually realized. The formal problem
+of the dissertation is therefore not generic uncertainty. It is the mismatch between
+observation-conditioned legality and physical legality.
+
+\section{Observation degradation operator and fault process}
+Observation degradation is modeled as a runtime operator
 \[
-\hat{x}_t = \mathcal{D}(x_t^\star; \delta_t),
+\hat{x}_t = \mathcal{D}(x_t^\star;\delta_t),
 \]
-where $\delta_t$ summarizes stale packets, packet loss, delay, reordering, spikes, drift,
-or other telemetry faults. The universal object in the dissertation is not a plant model
-alone; it is the pair $(x_t^\star, \hat{x}_t)$ together with the fault process that
-causes them to diverge.
+where $\delta_t$ is a fault process that summarizes the degradation mechanisms affecting the
+telemetry channel. In the repository and benchmark, this process includes stale packets, missing
+samples, delay, packet reordering, spikes, drift, transport corruption, and domain-specific
+state-estimation loss. The universal object of the dissertation is therefore not a plant alone;
+it is the coupled pair $(x_t^\star,\hat{x}_t)$ together with the degradation process that can make
+those two states diverge.
+
+Two implications follow. First, the fault process is not merely a nuisance variable to be
+averaged away in nominal performance statistics. It is part of the safety problem definition.
+Second, runtime safety cannot be reduced to point estimation of the true state. Under degraded
+observation, the runtime must reason over a set of plausible physical states rather than rely on
+one best guess.
+
+\section{Fault taxonomy}
+The fault process is treated generically, but the benchmark and adapters instantiate it through a
+shared taxonomy:
+\begin{enumerate}
+  \item \textbf{Freshness faults}: stale or frozen telemetry that preserves coherence while
+  erasing temporal validity.
+  \item \textbf{Availability faults}: missing packets, dropped samples, and partial channel loss.
+  \item \textbf{Timing faults}: delay, jitter, or reordering that breaks synchronization with the
+  physical plant.
+  \item \textbf{Value faults}: spikes, outliers, drift, bias, or corruption that distort the
+  observed state itself.
+  \item \textbf{Inference faults}: estimator or learned-model errors that turn degraded inputs
+  into overconfident downstream summaries.
+\end{enumerate}
+
+This taxonomy is intentionally broad enough to travel across all ORIUS domains. A battery
+controller and an aerospace controller do not share the same raw sensors, but they do share the
+possibility that freshness, timing, value, or inference degradation breaks the semantics of
+observed legality.
 
 \section{Definition of the observation--action safety gap}
-The central event is the observation--action safety gap:
+The central event of the dissertation is the observation--action safety gap:
 \[
 u_t \in \mathcal{C}(\hat{x}_t)
 \qquad \text{but} \qquad
 u_t \notin \mathcal{C}(x_t^\star).
 \]
-In words, an action is safe on the observed state while unsafe on the true state. This is
-the formal object that later chapters measure through true-state violation metrics, repair
-semantics, and certificate validity.
+Equivalently, the action appears safe on the observed state but unsafe on the true physical
+state. This event is what the benchmark later measures through true-state safety violation and
+observed-state satisfaction. It is also what makes degraded observation a first-class runtime
+problem rather than an upstream modeling nuisance.
+
+The OASG formulation is stronger than a generic claim that ``uncertainty matters.'' Uncertainty
+can be large without creating a safety violation if the action remains conservative enough. The
+OASG is the specific regime where the observation channel misleads the release decision itself.
+That is why ORIUS focuses on action mediation, not only on uncertainty reporting.
 
 \section{Observation-consistent state sets}
-ORIUS does not try to recover the true state exactly at runtime. Instead, it constructs an
-observation-consistent state set
+ORIUS does not assume that the true state can be recovered exactly at runtime. Instead, it works
+with an observation-consistent state set
 \[
-\mathcal{X}_t = \{x : x \text{ remains plausible given } \hat{x}_t \text{ and reliability } w_t\},
+\mathcal{X}_t = \left\{x : x \text{ remains plausible given } \hat{x}_t \text{ and runtime reliability } w_t\right\},
 \]
-where $w_t \in [0,1]$ is the runtime reliability score. As reliability decreases,
-$\mathcal{X}_t$ widens, and the admissible action set must tighten accordingly.
+where $w_t \in [0,1]$ is the observation reliability score. As reliability degrades,
+$\mathcal{X}_t$ widens. This widening is the formal bridge between degraded telemetry and safe
+action. Once $\mathcal{X}_t$ expands, the admissible action set must contract:
+\[
+\mathcal{U}_t^{\mathrm{safe}} = \{u : u \in \mathcal{C}(x) \text{ for every } x \in \mathcal{X}_t\}.
+\]
+
+The runtime question is then precise: given a candidate action $u_t$, does it belong to the
+current safe set $\mathcal{U}_t^{\mathrm{safe}}$? If not, can it be repaired by projection or
+replacement? If not, which governed fallback policy must be triggered? This formulation is what
+lets ORIUS connect reliability scoring, uncertainty inflation, safe-set tightening, and
+certificate semantics into one runtime loop.
+
+\section{Repair, fallback, and release}
+Let $\Pi_t$ denote the runtime repair map. Given a candidate action $u_t$, ORIUS computes either
+a repaired action
+\[
+\tilde{u}_t = \Pi_t(u_t,\mathcal{X}_t)
+\]
+that lies inside $\mathcal{U}_t^{\mathrm{safe}}$, or else escalates to a fallback action
+$u_t^{\mathrm{fb}}$ specified by the domain governance policy. The formal point is that the
+runtime layer does not merely observe illegality; it mediates release. This distinguishes ORIUS
+from alarm-only monitoring and from nominal predictive systems that surface confidence but leave
+the release decision unchanged.
+
+The release object is completed by a certificate
+\[
+\kappa_t = (\hat{x}_t, w_t, \mathcal{X}_t, \tilde{u}_t, h_t, g_t),
+\]
+where $h_t$ denotes a validity horizon or half-life proxy and $g_t$ denotes governance metadata
+such as lifecycle state, fallback reason, or audit hash context. Later chapters make that
+certificate operational through CertOS.
 
 \section{Dual-trajectory evaluation}
-This dissertation evaluates ORIUS on \emph{dual trajectories}. The observed trajectory is
-the one seen by the nominal controller. The true trajectory is the one used to determine
-whether the repaired or unrepaired action actually violates the physical envelope. A
-benchmark that only inspects observed-state legality cannot see OASG directly. ORIUS-Bench
-therefore records candidate action, repaired action, true-state violation, observed-state
-satisfaction, fallback/intervention markers, latency, and certificate validity in one
-replay schema.
+The dissertation evaluates ORIUS on dual trajectories. The \emph{observed trajectory} is the one
+visible to the nominal controller and therefore to the candidate action it proposes. The
+\emph{true trajectory} is the one used to determine whether that candidate or repaired action
+actually violates the physical safety envelope. A benchmark that inspects only observed-state
+legality cannot see the OASG directly. ORIUS-Bench therefore records the candidate action, the
+repaired action, true-state violation, observed-state satisfaction, optional true and observed
+margins, fallback and intervention markers, latency, and certificate validity inside one replay
+schema.
+
+This dual-trajectory formulation is the critical measurement move of the dissertation. It keeps
+the benchmark aligned with the formal problem object instead of allowing nominal performance
+metrics to impersonate safety evidence.
 
 \section{DomainAdapter grounding}
-The universal formulation is grounded in the repository through the domain adapter
-contract. Each domain supplies:
+The universal formulation is grounded in the repository through the \texttt{DomainAdapter}
+contract. Each domain must supply:
 \begin{enumerate}
-  \item telemetry parsing and domain state semantics,
+  \item telemetry parsing and state semantics,
   \item uncertainty or margin construction hooks,
   \item admissible-action or repair logic,
   \item true-state violation predicates,
   \item observed-state satisfaction predicates, and
   \item certificate payload specifics.
 \end{enumerate}
-That boundary lets the dissertation make a strong universal claim about the runtime
-grammar without pretending that one plant model, one objective, or one controller class
-solves every domain.
+This boundary is what makes the universal claim scientifically credible. The dissertation does
+not claim that one plant model or one controller solves every domain. It claims that every domain
+can expose the same runtime safety objects and thereby enter the same benchmark and governance
+discipline.
 
 \section{Scope and assumptions}
-The problem formulation is intentionally narrower than a claim of general AI safety. ORIUS
-assumes an actionable physical system with explicit safety constraints, an observation
-channel that can degrade, and a runtime layer that can intercept or repair actions before
-release. It does not assume perfect state recovery, universal optimal control, or equal
-empirical maturity across all domains. Those boundaries are what make the later theorem
-and validation claims durable rather than aspirational.
+The formal problem is intentionally narrower than a claim of general AI safety. ORIUS assumes:
+\begin{itemize}
+  \item an actionable physical system with explicit or computable safety constraints,
+  \item an observation channel that can degrade in ways that matter to release semantics,
+  \item a runtime interposition layer capable of intercepting, repairing, or replacing actions,
+  \item and a governance layer capable of recording why a release remained admissible.
+\end{itemize}
+
+ORIUS does not assume perfect state recovery, universal optimal control, or equal empirical
+maturity across all domains. It also does not assume that uncertainty calibration alone proves
+safety. The later theorem and validation chapters are therefore written under explicit assumptions
+and are tied to specific artifact surfaces rather than left as narrative implication.
+
+\paragraph{Boundary of this chapter.}
+This chapter defines the formal objects that the rest of the dissertation uses: degraded
+observation, observation-consistent state sets, repaired release, and dual-trajectory evaluation.
+It does not yet prove the theorem ladder or claim equal cross-domain closure; those claims remain
+bounded by the assumptions and evidence surfaces introduced in the chapters that follow.

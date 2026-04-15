@@ -1,0 +1,807 @@
+{
+  "authoritative_surfaces": {
+    "statements_t1_t8": "chapters_merged/ch04_theoretical_foundations.tex",
+    "statements_t9_t11": "chapters/ch37_universality_completeness.tex",
+    "proof_copies": "appendices/app_c_full_proofs.tex",
+    "assumption_register": "appendices/app_b_assumptions.tex",
+    "inventory_register": "reports/publication/theorem_surface_register.csv"
+  },
+  "theorems": [
+    {
+      "theorem_id": "T1",
+      "title": "OASG Existence",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:800",
+      "proof_location": "appendices/app_c_full_proofs.tex:31",
+      "assumptions_used": [
+        "A1",
+        "A2",
+        "A4",
+        "Boundary proximity under arbitrage remains non-trivial on the defended battery witness."
+      ],
+      "assumption_locations": [
+        {
+          "assumption": "A1",
+          "location": "appendices/app_b_assumptions.tex:47"
+        },
+        {
+          "assumption": "A2",
+          "location": "appendices/app_b_assumptions.tex:52"
+        },
+        {
+          "assumption": "A4",
+          "location": "appendices/app_b_assumptions.tex:62"
+        }
+      ],
+      "unresolved_assumptions": [
+        "Boundary proximity under arbitrage remains non-trivial on the defended battery witness."
+      ],
+      "dependencies": [
+        "Lemma: Observation gap under dropout",
+        "Lemma: Boundary proximity under arbitrage"
+      ],
+      "weakest_step": "Lemma boundary-proximity only argues that non-zero price variance pushes the controller near a boundary; it does not derive the positive boundary-visit fraction from the dispatch model.",
+      "rigor_rating": "plausible-but-informal",
+      "code_correspondence": "partial",
+      "code_correspondence_detail": "The runtime and metrics code represent observed-vs-true disagreement explicitly, but there is no executable witness for the proof's boundary-reachability step.",
+      "severity_if_broken": "high",
+      "remediation_class": "add assumption",
+      "remediation_detail": "Either register a battery-specific boundary-reachability assumption explicitly or prove it from the dispatch model.",
+      "namespace_drift_note": "",
+      "code_anchors": [
+        {
+          "path": "src/orius/orius_bench/metrics_engine.py",
+          "symbol": "compute_oasg",
+          "location": "src/orius/orius_bench/metrics_engine.py:91",
+          "note": "Counts observation-action safety gaps."
+        },
+        {
+          "path": "src/orius/cpsbench_iot/runner.py",
+          "symbol": "run_single",
+          "location": "src/orius/cpsbench_iot/runner.py:1040",
+          "note": "Empirical witness path with true and observed trajectories."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_orius_bench.py",
+          "symbol": "test_oasg_counts_observation_action_safety_gap",
+          "location": "tests/test_orius_bench.py:151",
+          "note": "Metric-level witness only; not a proof of existence under optimal arbitrage."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T2",
+      "title": "Safety Preservation",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1039",
+      "proof_location": "appendices/app_c_full_proofs.tex:44",
+      "assumptions_used": [
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5",
+        "A7",
+        "The tightening already absorbs the one-step model-error allowance."
+      ],
+      "assumption_locations": [
+        {
+          "assumption": "A1",
+          "location": "appendices/app_b_assumptions.tex:47"
+        },
+        {
+          "assumption": "A2",
+          "location": "appendices/app_b_assumptions.tex:52"
+        },
+        {
+          "assumption": "A3",
+          "location": "appendices/app_b_assumptions.tex:57"
+        },
+        {
+          "assumption": "A4",
+          "location": "appendices/app_b_assumptions.tex:62"
+        },
+        {
+          "assumption": "A5",
+          "location": "appendices/app_b_assumptions.tex:67"
+        },
+        {
+          "assumption": "A7",
+          "location": "appendices/app_b_assumptions.tex:77"
+        }
+      ],
+      "unresolved_assumptions": [
+        "The tightening already absorbs the one-step model-error allowance."
+      ],
+      "dependencies": [
+        "Proposition: Inflated set contains the current state",
+        "Proposition: Tightened feasibility implies true feasibility"
+      ],
+      "weakest_step": "The proof says the model-error allowance is already absorbed by the tightening, but that absorption is asserted in prose rather than derived from the actual FTIT construction.",
+      "rigor_rating": "plausible-but-informal",
+      "code_correspondence": "matches",
+      "code_correspondence_detail": "The main conditional one-step claim matches the guarantee-check and shield surface, even though the earlier general-CPS statement in the same chapter still contains a broader probabilistic line.",
+      "severity_if_broken": "high",
+      "remediation_class": "strengthen proof",
+      "remediation_detail": "Make the model-error buffer explicit in the theorem statement or add a lemma tying the implemented tightening to the residual bound.",
+      "namespace_drift_note": "The same chapter still carries a broader general-CPS statement with an unearned probability line; the active audit selects the main conditional theorem row instead.",
+      "code_anchors": [
+        {
+          "path": "src/orius/dc3s/guarantee_checks.py",
+          "symbol": "check_soc_invariance",
+          "location": "src/orius/dc3s/guarantee_checks.py:54",
+          "note": "Implements the one-step battery safety check."
+        },
+        {
+          "path": "src/orius/dc3s/guarantee_checks.py",
+          "symbol": "evaluate_guarantee_checks",
+          "location": "src/orius/dc3s/guarantee_checks.py:85",
+          "note": "Collects the deterministic safety predicates."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_dc3s_guarantee_checks.py",
+          "symbol": "test_guarantee_checks_pass_for_safe_action",
+          "location": "tests/test_dc3s_guarantee_checks.py:25",
+          "note": "Checks the implemented one-step safety predicate only."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T3",
+      "title": "ORIUS Core Bound",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1274",
+      "proof_location": "appendices/app_c_full_proofs.tex:98",
+      "assumptions_used": [
+        "A1",
+        "A2",
+        "A4",
+        "A5",
+        "A6",
+        "A7",
+        "Battery risk-envelope contract: P[Z_t=1 | H_t] <= alpha * (1 - w_t).",
+        "w_t is a runtime reliability score, not a probability by definition."
+      ],
+      "assumption_locations": [
+        {
+          "assumption": "A1",
+          "location": "appendices/app_b_assumptions.tex:47"
+        },
+        {
+          "assumption": "A2",
+          "location": "appendices/app_b_assumptions.tex:52"
+        },
+        {
+          "assumption": "A4",
+          "location": "appendices/app_b_assumptions.tex:62"
+        },
+        {
+          "assumption": "A5",
+          "location": "appendices/app_b_assumptions.tex:67"
+        },
+        {
+          "assumption": "A6",
+          "location": "appendices/app_b_assumptions.tex:72"
+        },
+        {
+          "assumption": "A7",
+          "location": "appendices/app_b_assumptions.tex:77"
+        }
+      ],
+      "unresolved_assumptions": [
+        "Battery risk-envelope contract: P[Z_t=1 | H_t] <= alpha * (1 - w_t).",
+        "w_t is a runtime reliability score, not a probability by definition."
+      ],
+      "dependencies": [
+        "Lemma: Aggregation under a predictable risk budget",
+        "Battery-specific theorem-local risk budget contract"
+      ],
+      "weakest_step": "The bound is only as rigorous as the unproved battery risk-envelope contract; the proof never derives that contract from conformal coverage, detector lag, or the OQE construction.",
+      "rigor_rating": "has-a-hole",
+      "code_correspondence": "partial",
+      "code_correspondence_detail": "The helpers compute the envelope and expose the missing assumptions honestly, but no code path justifies the battery risk budget from the implemented OQE or calibration stack.",
+      "severity_if_broken": "critical",
+      "remediation_class": "add assumption",
+      "remediation_detail": "Either promote the battery risk-envelope contract to an explicit defended assumption or add a new battery-specific lemma that derives it from the implemented calibration logic.",
+      "namespace_drift_note": "",
+      "code_anchors": [
+        {
+          "path": "src/orius/universal_theory/risk_bounds.py",
+          "symbol": "compute_episode_risk_bound",
+          "location": "src/orius/universal_theory/risk_bounds.py:97",
+          "note": "Implements only the aggregation envelope, not the bridge to the budget contract."
+        },
+        {
+          "path": "src/orius/universal_theory/risk_bounds.py",
+          "symbol": "risk_envelope_assumptions",
+          "location": "src/orius/universal_theory/risk_bounds.py:92",
+          "note": "Makes the missing theorem-local assumptions explicit."
+        },
+        {
+          "path": "src/orius/dc3s/coverage_theorem.py",
+          "symbol": "compute_expected_violation_bound",
+          "location": "src/orius/dc3s/coverage_theorem.py:44",
+          "note": "Backward-compatible wrapper around the narrowed T3 helper."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_dc3s_coverage_theorem.py",
+          "symbol": "test_compute_expected_violation_bound",
+          "location": "tests/test_dc3s_coverage_theorem.py:59",
+          "note": "Verifies the algebraic envelope, not the bridge from runtime reliability to residual-risk probability."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T4",
+      "title": "No Free Safety",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1537",
+      "proof_location": "appendices/app_c_full_proofs.tex:155",
+      "assumptions_used": [
+        "A1",
+        "A2",
+        "A4",
+        "Quality-ignorant controllers admit a fixed effective margin m^pi.",
+        "An admissible concentrated fault window can exceed delta_bnd + m^pi."
+      ],
+      "assumption_locations": [
+        {
+          "assumption": "A1",
+          "location": "appendices/app_b_assumptions.tex:47"
+        },
+        {
+          "assumption": "A2",
+          "location": "appendices/app_b_assumptions.tex:52"
+        },
+        {
+          "assumption": "A4",
+          "location": "appendices/app_b_assumptions.tex:62"
+        }
+      ],
+      "unresolved_assumptions": [
+        "Quality-ignorant controllers admit a fixed effective margin m^pi.",
+        "An admissible concentrated fault window can exceed delta_bnd + m^pi."
+      ],
+      "dependencies": [
+        "Definition: Quality-ignorant controller",
+        "Lemma: Admissible fault sequence existence",
+        "Lemma: No margin compensation for quality-ignorant controllers",
+        "Theorem T1 boundary-proximity witness"
+      ],
+      "weakest_step": "The proof reduces every quality-ignorant controller to a fixed scalar margin m^pi without proving that the whole controller class admits that abstraction.",
+      "rigor_rating": "has-a-hole",
+      "code_correspondence": "partial",
+      "code_correspondence_detail": "The repo has empirical fault generators and quality-ignorant baseline reductions, but no executable battery witness that constructs the exact three-phase adversarial sequence used in the proof.",
+      "severity_if_broken": "high",
+      "remediation_class": "strengthen proof",
+      "remediation_detail": "Define the quality-ignorant controller class more tightly and prove that the fault witness works for that class rather than for an informal fixed-margin caricature.",
+      "namespace_drift_note": "",
+      "code_anchors": [
+        {
+          "path": "src/orius/cpsbench_iot/scenarios.py",
+          "symbol": "generate_episode",
+          "location": "src/orius/cpsbench_iot/scenarios.py:171",
+          "note": "Supplies admissible degraded-observation episodes."
+        },
+        {
+          "path": "src/orius/cpsbench_iot/runner.py",
+          "symbol": "run_single",
+          "location": "src/orius/cpsbench_iot/runner.py:1040",
+          "note": "Runs quality-ignorant baselines against the witness battery plant."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_unification.py",
+          "symbol": "test_unification_argument_w_t_never_drops_below_one",
+          "location": "tests/test_unification.py:65",
+          "note": "Supporting quality-ignorant limitation check, not the theorem's adversarial battery witness."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T5",
+      "title": "Certificate validity horizon",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1739",
+      "proof_location": "appendices/app_c_full_proofs.tex:184",
+      "assumptions_used": [
+        "A1",
+        "A2",
+        "A4",
+        "A5",
+        "A6",
+        "A7",
+        "Future drift remains summarized by the sub-Gaussian sigma_d * sqrt(Delta) tube."
+      ],
+      "assumption_locations": [
+        {
+          "assumption": "A1",
+          "location": "appendices/app_b_assumptions.tex:47"
+        },
+        {
+          "assumption": "A2",
+          "location": "appendices/app_b_assumptions.tex:52"
+        },
+        {
+          "assumption": "A4",
+          "location": "appendices/app_b_assumptions.tex:62"
+        },
+        {
+          "assumption": "A5",
+          "location": "appendices/app_b_assumptions.tex:67"
+        },
+        {
+          "assumption": "A6",
+          "location": "appendices/app_b_assumptions.tex:72"
+        },
+        {
+          "assumption": "A7",
+          "location": "appendices/app_b_assumptions.tex:77"
+        }
+      ],
+      "unresolved_assumptions": [
+        "Future drift remains summarized by the sub-Gaussian sigma_d * sqrt(Delta) tube."
+      ],
+      "dependencies": [
+        "Definition: Safety certificate",
+        "Definition: Forward tube"
+      ],
+      "weakest_step": "The chapter proof jumps from issuance-time coverage to future-step safety probabilities without an explicit temporal bridge beyond the stylized drift tube.",
+      "rigor_rating": "plausible-but-informal",
+      "code_correspondence": "matches",
+      "code_correspondence_detail": "The deterministic horizon helper matches the stated maximal containment problem, even though the probabilistic interpretation in the chapter remains compressed.",
+      "severity_if_broken": "medium",
+      "remediation_class": "strengthen proof",
+      "remediation_detail": "Separate the deterministic tube-containment statement from any future-step probability claim, or prove the temporal concentration step explicitly.",
+      "namespace_drift_note": "",
+      "code_anchors": [
+        {
+          "path": "src/orius/universal_theory/battery_instantiation.py",
+          "symbol": "forward_tube",
+          "location": "src/orius/universal_theory/battery_instantiation.py:34",
+          "note": "Builds the battery forward tube."
+        },
+        {
+          "path": "src/orius/universal_theory/battery_instantiation.py",
+          "symbol": "certificate_validity_horizon",
+          "location": "src/orius/universal_theory/battery_instantiation.py:66",
+          "note": "Searches the maximal horizon whose tube stays inside bounds."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_dc3s_temporal_theorems.py",
+          "symbol": "test_certificate_validity_horizon_matches_expiration_bound_for_zero_action",
+          "location": "tests/test_dc3s_temporal_theorems.py:33",
+          "note": "Checks deterministic containment logic."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T6",
+      "title": "Certificate expiration bound",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1769",
+      "proof_location": "appendices/app_c_full_proofs.tex:199",
+      "assumptions_used": [
+        "A4",
+        "A6",
+        "A7",
+        "The forward-tube boundary crossing is controlled by the drift scale alone."
+      ],
+      "assumption_locations": [
+        {
+          "assumption": "A4",
+          "location": "appendices/app_b_assumptions.tex:62"
+        },
+        {
+          "assumption": "A6",
+          "location": "appendices/app_b_assumptions.tex:72"
+        },
+        {
+          "assumption": "A7",
+          "location": "appendices/app_b_assumptions.tex:77"
+        }
+      ],
+      "unresolved_assumptions": [
+        "The forward-tube boundary crossing is controlled by the drift scale alone."
+      ],
+      "dependencies": [
+        "Definition: Forward tube"
+      ],
+      "weakest_step": "The proof is scalar and conservative, but it silently assumes the action contribution is already frozen inside the issued certificate.",
+      "rigor_rating": "solid",
+      "code_correspondence": "matches",
+      "code_correspondence_detail": "The implemented lower bound is exactly the analytical floor(delta_bnd^2 / sigma_d^2) expression defended in the text.",
+      "severity_if_broken": "medium",
+      "remediation_class": "strengthen proof",
+      "remediation_detail": "Keep the current statement but spell out that the bound is conditioned on the issued safe action and fixed drift model.",
+      "namespace_drift_note": "",
+      "code_anchors": [
+        {
+          "path": "src/orius/universal_theory/battery_instantiation.py",
+          "symbol": "certificate_expiration_bound",
+          "location": "src/orius/universal_theory/battery_instantiation.py:127",
+          "note": "Exact implementation of the analytical lower bound."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_dc3s_temporal_theorems.py",
+          "symbol": "test_certificate_validity_horizon_matches_expiration_bound_for_zero_action",
+          "location": "tests/test_dc3s_temporal_theorems.py:33",
+          "note": "Checks the bound against the validity-horizon helper on the zero-dispatch witness."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T7",
+      "title": "Feasible fallback existence",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1848",
+      "proof_location": "appendices/app_c_full_proofs.tex:227",
+      "assumptions_used": [
+        "A1",
+        "A3",
+        "A4",
+        "A8",
+        "Current state is interior by at least the one-step model-error margin."
+      ],
+      "assumption_locations": [
+        {
+          "assumption": "A1",
+          "location": "appendices/app_b_assumptions.tex:47"
+        },
+        {
+          "assumption": "A3",
+          "location": "appendices/app_b_assumptions.tex:57"
+        },
+        {
+          "assumption": "A4",
+          "location": "appendices/app_b_assumptions.tex:62"
+        },
+        {
+          "assumption": "A8",
+          "location": "appendices/app_b_assumptions.tex:82"
+        }
+      ],
+      "unresolved_assumptions": [
+        "Current state is interior by at least the one-step model-error margin."
+      ],
+      "dependencies": [
+        "Constructive zero-dispatch battery fallback"
+      ],
+      "weakest_step": "The theorem statement says any currently safe state, but both the appendix proof and the code only support interior states with slack against model error.",
+      "rigor_rating": "broken",
+      "code_correspondence": "partial",
+      "code_correspondence_detail": "The battery helper validates zero dispatch only for states that remain safe after adding and subtracting the model-error margin. That is strictly narrower than the theorem statement.",
+      "severity_if_broken": "high",
+      "remediation_class": "narrow statement",
+      "remediation_detail": "Replace 'any safe state' with an interior-state condition that matches the implemented fallback validator and the appendix restatement.",
+      "namespace_drift_note": "",
+      "code_anchors": [
+        {
+          "path": "src/orius/universal_theory/battery_instantiation.py",
+          "symbol": "zero_dispatch_fallback",
+          "location": "src/orius/universal_theory/battery_instantiation.py:150",
+          "note": "Constructive battery fallback."
+        },
+        {
+          "path": "src/orius/universal_theory/battery_instantiation.py",
+          "symbol": "validate_battery_fallback",
+          "location": "src/orius/universal_theory/battery_instantiation.py:155",
+          "note": "Checks fallback preservation only over the interior slack interval."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_dc3s_temporal_theorems.py",
+          "symbol": "test_certify_fallback_existence_passes_for_interior_soc",
+          "location": "tests/test_dc3s_temporal_theorems.py:54",
+          "note": "Positive witness explicitly uses an interior SOC state."
+        },
+        {
+          "path": "tests/test_dc3s_temporal_theorems.py",
+          "symbol": "test_certify_fallback_existence_fails_near_boundary",
+          "location": "tests/test_dc3s_temporal_theorems.py:64",
+          "note": "Negative witness exposes the over-broad theorem statement."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T8",
+      "title": "Graceful degradation dominance",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1874",
+      "proof_location": "appendices/app_c_full_proofs.tex:240",
+      "assumptions_used": [
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5",
+        "A8",
+        "The graceful landing regime makes the safe interior absorbing after landing."
+      ],
+      "assumption_locations": [
+        {
+          "assumption": "A1",
+          "location": "appendices/app_b_assumptions.tex:47"
+        },
+        {
+          "assumption": "A2",
+          "location": "appendices/app_b_assumptions.tex:52"
+        },
+        {
+          "assumption": "A3",
+          "location": "appendices/app_b_assumptions.tex:57"
+        },
+        {
+          "assumption": "A4",
+          "location": "appendices/app_b_assumptions.tex:62"
+        },
+        {
+          "assumption": "A5",
+          "location": "appendices/app_b_assumptions.tex:67"
+        },
+        {
+          "assumption": "A8",
+          "location": "appendices/app_b_assumptions.tex:82"
+        }
+      ],
+      "unresolved_assumptions": [
+        "The graceful landing regime makes the safe interior absorbing after landing."
+      ],
+      "dependencies": [
+        "Theorem T4 witness for the uncontrolled comparator",
+        "Graceful landing absorbs future excursions after the landing phase"
+      ],
+      "weakest_step": "The strict-improvement claim depends on an absorbing safe-landing regime that is asserted by chapter narrative rather than discharged as a theorem-grade dynamics argument.",
+      "rigor_rating": "has-a-hole",
+      "code_correspondence": "partial",
+      "code_correspondence_detail": "The helper compares two violation sequences and can detect strict domination, but it does not prove that the implemented graceful controller always generates the favorable sequence under the same admissible faults.",
+      "severity_if_broken": "medium",
+      "remediation_class": "strengthen proof",
+      "remediation_detail": "Either prove the absorbing-landing argument formally or narrow the theorem to the comparison helper's sequence-level claim.",
+      "namespace_drift_note": "",
+      "code_anchors": [
+        {
+          "path": "src/orius/universal_theory/battery_instantiation.py",
+          "symbol": "evaluate_graceful_degradation_dominance",
+          "location": "src/orius/universal_theory/battery_instantiation.py:182",
+          "note": "Sequence-level dominance checker."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_dc3s_temporal_theorems.py",
+          "symbol": "test_graceful_degradation_dominance_detects_strict_domination",
+          "location": "tests/test_dc3s_temporal_theorems.py:73",
+          "note": "Checks the comparison helper only."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T9",
+      "title": "Universal Impossibility, T9",
+      "statement_location": "chapters/ch37_universality_completeness.tex:109",
+      "proof_location": "appendices/app_c_full_proofs.tex:266",
+      "assumptions_used": [
+        "A4",
+        "A6': phi-mixing fault process with geometric decay.",
+        "A positive witness constant c > 0 is available from the boundary-reachability argument."
+      ],
+      "assumption_locations": [
+        {
+          "assumption": "A4",
+          "location": "appendices/app_b_assumptions.tex:62"
+        }
+      ],
+      "unresolved_assumptions": [
+        "A6': phi-mixing fault process with geometric decay.",
+        "A positive witness constant c > 0 is available from the boundary-reachability argument."
+      ],
+      "dependencies": [
+        "Theorem T4 no-free-safety witness",
+        "Azuma-Hoeffding concentration for separated windows",
+        "Window buffering argument based on phi-mixing"
+      ],
+      "weakest_step": "The proof imports both the phi-mixing assumption A6' and the witness constant c > 0 without deriving either one on the active theorem surface.",
+      "rigor_rating": "broken",
+      "code_correspondence": "partial",
+      "code_correspondence_detail": "The helper reproduces the claimed c * d * T scaling algebra once c is supplied externally, but it does not instantiate the witness constant or the window-separation argument from runtime objects.",
+      "severity_if_broken": "critical",
+      "remediation_class": "downgrade register status",
+      "remediation_detail": "Treat T9 as a proof sketch or structural conjecture until the missing phi-mixing assumption and witness constant are registered and discharged.",
+      "namespace_drift_note": "",
+      "code_anchors": [
+        {
+          "path": "src/orius/dc3s/theoretical_guarantees.py",
+          "symbol": "compute_universal_impossibility_bound",
+          "location": "src/orius/dc3s/theoretical_guarantees.py:587",
+          "note": "Encodes the claimed scaling only after c and effective horizon are handed in."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_theoretical_guarantees.py",
+          "symbol": "test_expected_lower_bound_matches_linear_formula",
+          "location": "tests/test_theoretical_guarantees.py:18",
+          "note": "Algebraic witness test only."
+        },
+        {
+          "path": "tests/test_theoretical_guarantees_hypothesis.py",
+          "symbol": "test_t9_impossibility_bound_matches_linear_scaling",
+          "location": "tests/test_theoretical_guarantees_hypothesis.py:23",
+          "note": "Property test for the helper's formula, not for the proof obligations."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T10",
+      "title": "Boundary-indistinguishability lower bound, T10",
+      "statement_location": "chapters/ch37_universality_completeness.tex:206",
+      "proof_location": "appendices/app_c_full_proofs.tex:306",
+      "assumptions_used": [
+        "Controller acts only through the degraded observation channel.",
+        "TV(P_0,t, P_1,t) <= w_t for the boundary subproblem.",
+        "Unsafe-side prior mass satisfies P(H_1,t) >= p_t.",
+        "The unsafe-side decision error controls true-state violations."
+      ],
+      "assumption_locations": [],
+      "unresolved_assumptions": [
+        "Controller acts only through the degraded observation channel.",
+        "TV(P_0,t, P_1,t) <= w_t for the boundary subproblem.",
+        "Unsafe-side prior mass satisfies P(H_1,t) >= p_t.",
+        "The unsafe-side decision error controls true-state violations."
+      ],
+      "dependencies": [
+        "Le Cam two-point lemma",
+        "Boundary-mass sequence p_t"
+      ],
+      "weakest_step": "Le Cam only lower-bounds the maximum of the two hypothesis error rates, but the proof immediately treats that as a lower bound on the unsafe-side error probability alone.",
+      "rigor_rating": "broken",
+      "code_correspondence": "partial",
+      "code_correspondence_detail": "The helper and frontier utilities reproduce the stylized lower-bound algebra, but they accept boundary mass as an exogenous input and do not repair the invalid one-sided Le Cam step.",
+      "severity_if_broken": "critical",
+      "remediation_class": "narrow statement",
+      "remediation_detail": "Retitle T10 as a stylized lower-bound construction unless a valid unsafe-side error lower bound and a defended boundary-mass model are supplied.",
+      "namespace_drift_note": "",
+      "code_anchors": [
+        {
+          "path": "src/orius/dc3s/theoretical_guarantees.py",
+          "symbol": "compute_stylized_frontier_lower_bound",
+          "location": "src/orius/dc3s/theoretical_guarantees.py:623",
+          "note": "Implements the stylized half-sum formula directly."
+        },
+        {
+          "path": "src/orius/universal/reliability_safety_frontier.py",
+          "symbol": "compute_frontier",
+          "location": "src/orius/universal/reliability_safety_frontier.py:46",
+          "note": "Chapter-facing plotting proxy for the scoped lower-bound surface."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_theoretical_guarantees.py",
+          "symbol": "test_general_formula_matches_half_sum_p_one_minus_w",
+          "location": "tests/test_theoretical_guarantees.py:63",
+          "note": "Formula check only."
+        },
+        {
+          "path": "tests/test_theoretical_guarantees_hypothesis.py",
+          "symbol": "test_t10_frontier_lower_bound_matches_half_sum_formula",
+          "location": "tests/test_theoretical_guarantees_hypothesis.py:50",
+          "note": "Property test for the stylized algebra only."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T11",
+      "title": "Typed structural transfer theorem, T11",
+      "statement_location": "chapters/ch37_universality_completeness.tex:338",
+      "proof_location": "appendices/app_c_full_proofs.tex:350",
+      "assumptions_used": [
+        "Coverage obligation for the observation-consistent state set.",
+        "Soundness of the tightened safe-action set.",
+        "Repair membership in the tightened safe-action set.",
+        "Fallback admissibility when the tightened set is empty."
+      ],
+      "assumption_locations": [],
+      "unresolved_assumptions": [
+        "Coverage obligation for the observation-consistent state set.",
+        "Soundness of the tightened safe-action set.",
+        "Repair membership in the tightened safe-action set.",
+        "Fallback admissibility when the tightened set is empty."
+      ],
+      "dependencies": [
+        "Definition: Universal adapter contract",
+        "Corollary: Episode aggregation under explicit per-step budgets",
+        "Proposition: Failure of any transfer obligation breaks the reference proof pattern"
+      ],
+      "weakest_step": "The forward theorem is a clean one-step transfer under four obligations, but the converse is only a proof-pattern failure argument and the supporting mini-harness still tends to overstate what is actually transferred.",
+      "rigor_rating": "has-a-hole",
+      "code_correspondence": "partial",
+      "code_correspondence_detail": "The authoritative typed contract surface exists, but the executable checks still mix structural method checks, mini-harness invariants, and runtime consistency checks instead of discharging the four theorem obligations directly.",
+      "severity_if_broken": "high",
+      "remediation_class": "narrow statement",
+      "remediation_detail": "Keep T11 as a four-obligation one-step transfer theorem, demote the five-invariant mini-harness to supporting evidence, and avoid implying that passing the mini-harness automatically yields the episode bound.",
+      "namespace_drift_note": "",
+      "code_anchors": [
+        {
+          "path": "src/orius/universal_theory/contracts.py",
+          "symbol": "ContractVerifier.validate_runtime_step",
+          "location": "src/orius/universal_theory/contracts.py:514",
+          "note": "Authoritative typed runtime contract surface."
+        },
+        {
+          "path": "src/orius/dc3s/theoretical_guarantees.py",
+          "symbol": "evaluate_structural_transfer",
+          "location": "src/orius/dc3s/theoretical_guarantees.py:666",
+          "note": "Executable four-obligation witness for the narrowed theorem statement."
+        },
+        {
+          "path": "src/orius/universal/contract.py",
+          "symbol": "ContractVerifier.check",
+          "location": "src/orius/universal/contract.py:281",
+          "note": "Supporting five-invariant reference harness only."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_theoretical_guarantees_hypothesis.py",
+          "symbol": "test_t11_transfer_requires_all_four_obligations",
+          "location": "tests/test_theoretical_guarantees_hypothesis.py:76",
+          "note": "Covers the active four-obligation theorem surface."
+        },
+        {
+          "path": "tests/test_universal_theory.py",
+          "symbol": "test_contract_verifier_accepts_canonical_domain_instantiations",
+          "location": "tests/test_universal_theory.py:25",
+          "note": "Checks the typed runtime contract on canonical adapters."
+        },
+        {
+          "path": "tests/test_universal_contract.py",
+          "symbol": "test_passes_all_five_invariants",
+          "location": "tests/test_universal_contract.py:75",
+          "note": "Supporting mini-harness test, not the full active theorem."
+        }
+      ]
+    }
+  ],
+  "namespace_drift": [
+    {
+      "surface": "src/orius/dc3s/coverage_theorem.py and tests/test_conditional_coverage.py",
+      "issue": "Legacy auxiliary group-coverage and Hoeffding helpers were labeled as Theorem 9 and Theorem 10 even though the active T9/T10 program now means universal impossibility and the boundary-indistinguishability lower bound.",
+      "impact": "Silent theorem-number reuse makes the code surface contradict the active manuscript namespace.",
+      "status": "resolved",
+      "remediation": "Keep these helpers explicitly tagged as legacy auxiliary coverage analyses and never as active T9/T10 witnesses."
+    },
+    {
+      "surface": "src/orius/universal/contract.py, tests/test_universal_contract.py, and tests/test_unification.py",
+      "issue": "The five-invariant reference harness was described as if satisfying it automatically discharged the full active T11 theorem and the episode-level bound.",
+      "impact": "That story is wider than the live manuscript, which transfers only the one-step theorem unless a separate per-step risk budget is provided.",
+      "status": "resolved",
+      "remediation": "Describe the five invariants as supporting reference-harness checks and route theorem-facing claims through the typed T11 surface instead."
+    },
+    {
+      "surface": "reports/publication/theorem_surface_register.csv",
+      "issue": "The register is an inventory, not a one-row-per-theorem program: T1-T4 each appear as both general-CPS and main-theorem rows.",
+      "impact": "Consumers can accidentally pick the broader row and overstate the defended theorem surface.",
+      "status": "open",
+      "remediation": "Use the active T1--T11 audit artifact as the single reconciled theorem map and keep the register as raw inventory only."
+    }
+  ],
+  "summary": {
+    "active_theorem_count": 11,
+    "rigor_counts": {
+      "plausible-but-informal": 3,
+      "has-a-hole": 4,
+      "solid": 1,
+      "broken": 3
+    },
+    "code_correspondence_counts": {
+      "partial": 8,
+      "matches": 3
+    }
+  }
+}

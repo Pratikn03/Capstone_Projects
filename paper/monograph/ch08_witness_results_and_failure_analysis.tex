@@ -1,25 +1,32 @@
 \chapter{Witness Results and Failure Analysis}
 \label{ch:witness-results-failure-analysis}
 
-\section{The governing safety question}
-The battery witness row answers one governing question for the dissertation: when
-telemetry degrades, can a runtime layer reduce true-state safety loss without pretending
-that nominal controller legality is enough? This chapter treats the battery row as the
-deepest defended empirical surface because it closes the full ORIUS loop from degraded
-observation, to repaired action, to governed release.
+\section{The governing empirical question}
+The witness row answers one question for the book as a whole: when telemetry degrades, can a
+runtime layer reduce true-state safety loss without pretending that nominal controller
+legality is sufficient? Battery is the deepest defended empirical surface because it closes
+the full ORIUS loop from degraded observation to repaired action to governed release.
 
-\section{Witness experiment design}
-The witness experiments are not meant to show that ORIUS dominates every plant-specific
-controller under every cost metric. They are designed to test a narrower and more important
-claim: whether a certificate-aware runtime can keep hidden true-state violations from
-passing through a nominally coherent observation surface. The baselines therefore include
-controllers that are cheaper, controllers that are more aggressive, and controllers that
-already include some robustness logic, because the scientific question is not merely who
-optimizes best in nominal conditions. The question is what survives once the observation
-channel itself begins to fail.
+That framing matters for how the results should be read. The point of the witness chapter is
+not to crown one battery optimizer. It is to show, on the row where the evidence chain is
+richest, that the release boundary behaves differently once degraded observation is treated as
+a first-class safety object.
+
+\section{Experiment design and baseline logic}
+The witness experiments are not designed to show that ORIUS is the best optimizer under all
+cost metrics. They are designed to test a narrower and more important claim: whether a
+certificate-aware runtime can keep hidden true-state violations from passing through a
+nominally coherent observation surface. The baseline set is therefore intentionally mixed.
+It includes stronger nominal optimizers, interval-aware baselines, and controller variants
+that already possess some robustness logic.
+
+This is what gives the chapter its value. The scientific question is not simply who
+optimizes best in nominal conditions. It is what remains safe once the observation channel
+itself begins to fail.
 
 \section{Headline result}
-The primary evidence surface is the main safety-and-cost table below.
+The main table should be read as the empirical hinge of the dissertation, because it tests
+the point where the formal argument meets defended runtime evidence.
 
 \IfFileExists{paper/assets/tables/generated/tbl01_main_results.tex}{%
 \input{paper/assets/tables/generated/tbl01_main_results}%
@@ -27,31 +34,33 @@ The primary evidence surface is the main safety-and-cost table below.
 \input{assets/tables/generated/tbl01_main_results}%
 }
 
-The table shows the core ORIUS result in the form that matters most for this dissertation.
 Several plant-specific robust baselines already avoid true-state violations on this witness
-task, so the contribution is not that ORIUS is the only safe controller in the table. The
-contribution is that ORIUS closes the hidden-violation mode while keeping intervention,
-repair, and certificate semantics explicit at runtime. In contrast, the deterministic and
-interval baselines still exhibit material true-state violation rates once telemetry faults
-are introduced, even though they remain internally well-posed optimization procedures.
+task, so the contribution is not that ORIUS is the only safe controller in the comparison.
+The stronger point is architectural. ORIUS closes the hidden violation mode while keeping
+intervention, repair, fallback, and certificate semantics explicit at runtime. Deterministic
+and interval baselines still exhibit material true-state violation once telemetry faults are
+introduced, even though they remain internally coherent optimization procedures on the
+observed state.
 
-That distinction is the witness-domain result. ORIUS is not claiming to replace every
-robust controller with one universal optimizer. It is showing that a runtime layer can sit
-between nominal control and physical release, detect when observation quality has changed
-the meaning of legality, and then either repair the action or deny release under explicit
-certificate semantics.
+That distinction is the witness-domain result. ORIUS is not replacing every robust
+controller with one universal optimizer. It is demonstrating that a runtime layer can sit
+between nominal control and physical release, detect when observation quality has changed the
+meaning of legality, and then repair or deny release under explicit certificate semantics.
 
-\section{Why the result happens}
-The battery witness supports a mechanistic interpretation rather than a leaderboard reading.
-ORIUS changes the release decision in three linked ways. Reliability loss is detected before
-action release, uncertainty is widened before legality is checked, and unsafe actions are
-either repaired or replaced before they reach the plant. The main table is therefore best
-read as evidence that the release boundary changed, not simply as evidence that one model
-forecasted more accurately than another.
+\section{Mechanistic interpretation}
+The witness row supports a mechanistic reading rather than a leaderboard reading. ORIUS
+changes the release decision in three linked ways:
+\begin{enumerate}
+  \item reliability loss is detected before action release;
+  \item uncertainty is widened before legality is checked; and
+  \item unsafe actions are either repaired or replaced before they reach the plant.
+\end{enumerate}
+The headline table is therefore evidence that the release boundary changed, not merely that
+one model forecasted more accurately than another.
 
-\section{Ablation logic}
+\section{Ablations and where the gain comes from}
 The ablation table shows where the runtime stack earns its gains and where those gains still
-depend on the details of the degraded-observation regime.
+depend on the structure of the degraded-observation regime.
 
 \IfFileExists{paper/assets/tables/generated/tbl02_ablations.tex}{%
 \input{paper/assets/tables/generated/tbl02_ablations}%
@@ -59,16 +68,16 @@ depend on the details of the degraded-observation regime.
 \input{assets/tables/generated/tbl02_ablations}%
 }
 
-Some secondary scenarios clear the strict gate and others do not. That pattern matters
-scientifically because it shows where the kernel is buying safety: not through a single
-magic margin, but through a coupling between reliability estimation, uncertainty widening,
-and local repair geometry. The ablations therefore support a sharper claim than simple
-average improvement: ORIUS behaves like a genuine degraded-observation runtime layer whose
-effect depends on the structure of the fault family.
+This table prevents a simplistic reading of the witness result. ORIUS is not buying safety
+through one fixed extra margin. It behaves like a genuine degraded-observation runtime layer
+whose effect depends on the coupling between reliability estimation, uncertainty widening,
+and local repair geometry. Some scenarios clear the strict gate more comfortably than
+others, which is exactly what should happen when the runtime is responding to different
+fault structures rather than papering over them.
 
-\section{Coverage under reliability slices}
-ORIUS depends on reliability-conditioned uncertainty rather than on a single fixed interval.
-The grouped coverage table below is included to show why that distinction matters.
+\section{Conditional coverage and reliability slices}
+ORIUS depends on reliability-conditioned uncertainty rather than on one globally fixed
+interval. The grouped coverage table below shows why that distinction matters.
 
 \IfFileExists{paper/assets/tables/generated/tbl03_cqr_group_coverage.tex}{%
 \input{paper/assets/tables/generated/tbl03_cqr_group_coverage}%
@@ -76,16 +85,24 @@ The grouped coverage table below is included to show why that distinction matter
 \input{assets/tables/generated/tbl03_cqr_group_coverage}%
 }
 
-Coverage quality moves materially across regimes, especially in the harder operating slices.
-That is exactly the pattern ORIUS is designed to take seriously. If interval behavior were
-uniform, a fixed robust margin would be closer to sufficient. Because interval behavior
-changes with regime and reliability, the runtime needs to tighten admissible action as trust
-in the observation surface falls.
+Coverage quality moves materially across operating regimes and reliability buckets. That is
+precisely the pattern ORIUS is designed to take seriously. If interval behavior were
+uniform, a single robust margin would come closer to sufficing. Because interval behavior
+changes with regime and observation trust, the runtime must tighten admissible action as
+confidence in the observation surface falls.
 
-\section{Bounded novelty inside the witness row}
-The witness row also contains a bounded learned-reliability novelty surface. It matters
-here only insofar as it improves the degraded-observation safety argument rather than
-turning the dissertation into a forecasting paper.
+\section{Operational traces and certificate-aware behavior}
+The summary tables matter only because the operational traces explain how the gains are
+earned. Intervention rate, fallback usage, and certificate continuity show whether ORIUS is
+improving safety through disciplined runtime mediation or merely through indiscriminate
+shutdown. That distinction is essential. A controller can always buy apparent safety by
+refusing to act. The witness row matters because ORIUS reduces hidden safety loss while
+keeping intervention bounded, reviewable, and operationally usable.
+
+\section{Bounded deep-learning novelty inside the witness row}
+The witness row also contains a bounded learned-reliability novelty surface. It matters here
+only insofar as it improves the degraded-observation safety argument rather than turning the
+dissertation into a forecasting paper.
 
 \begin{figure}[htbp]
 \centering
@@ -106,22 +123,20 @@ allow nominal action to pass. That is a bounded novelty claim about the observat
 ORIUS, not a replacement for the main witness claim about repaired release under degraded
 telemetry.
 
-\section{Without ORIUS}
+\section{What fails without the runtime layer}
 Without ORIUS, the telemetry fault is treated as a nuisance external to the release
-decision. The deterministic and interval baselines in the headline table expose exactly what
-goes wrong under that assumption: the controller remains computationally coherent while
-true-state violation reappears. Without calibrated widening, the controller checks legality
-against the wrong state set. Without repair, the unsafe action is still released. Without
-certificate discipline, the runtime cannot later explain why the action was allowed or when
-fallback should have taken over.
+decision. The deterministic and interval baselines show what follows from that assumption:
+the controller remains computationally coherent while true-state violation reappears.
+Without calibrated widening, legality is checked against the wrong state set. Without
+repair, unsafe action is still released. Without certificate discipline, the runtime cannot
+later explain why the release was allowed or when fallback should have taken over.
 
-\section{What still remains bounded}
-The battery chapter therefore supports three distinct claims. First, it supports a strong
-witness claim that ORIUS can materially improve degraded-observation safety on a defended
-row. Second, it supports a bounded robustness claim that the kernel remains meaningful across
-multiple telemetry fault families rather than on one curated failure. Third, it supports a
-runtime-governance claim that intervention and certificate behavior are part of the result,
-not merely surrounding instrumentation. Deeper learned-reliability artifacts remain in the
-governed package, but the main witness conclusion is already visible here: once legality on
-the observed state is no longer enough, ORIUS changes the release boundary in a measurable
-and auditable way.
+\section{Witness-row claim boundary}
+The witness chapter supports three claims and no more. First, ORIUS can materially improve
+degraded-observation safety on a defended row. Second, the kernel remains meaningful across
+multiple telemetry fault families rather than on one curated failure. Third, intervention
+and certificate behavior are part of the scientific result, not merely surrounding
+instrumentation. It does not claim that the battery row proves equal-domain closure or
+settles every question about deployment economics, asset aging, or market-optimal dispatch.
+What it does show is that once observed-state legality is no longer enough, ORIUS changes
+the release boundary in a measurable, reviewable, and auditable way.

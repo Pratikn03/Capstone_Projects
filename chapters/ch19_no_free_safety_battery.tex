@@ -4,10 +4,11 @@
 
 This chapter proves the \emph{No Free Safety} theorem: any controller
 that ignores observation quality---that is, treats all telemetry as
-equally reliable---will inevitably suffer true-state violations under
-an admissible fault sequence.  The result establishes that the
-reliability-aware machinery of DC3S is not merely useful but
-\emph{necessary}.
+equally reliable---admits admissible degraded-observation sequences on which
+observed-state legality and true-state safety separate.  The result is
+constructive and class-scoped: it shows that reliability-aware repair is
+necessary within the class of controllers that keep a fixed safety margin
+while the observation channel degrades.
 
 \section{Domain-Agnostic Statement}
 
@@ -19,16 +20,18 @@ Let $(\mathcal{X}, \mathcal{U}, f, \mathcal{S}, \hat{x})$ be a CPS
 satisfying Assumption~A2 with $g(w_t) > 0$ under degraded quality.
 For any quality-ignorant controller
 $\pi : \mathcal{X} \to \mathcal{U}$ (one whose action depends on
-$\hat{x}_t$ but not on $w_t$), and any target violation rate
-$\epsilon \in (0, 0.5)$, there exists an admissible fault sequence
-$\{\xi_t\}_{t=1}^T$ such that
+$\hat{x}_t$ but not on $w_t$), there exists an admissible
+degraded-observation sequence $\{\xi_t\}_{t=1}^T$ and a time index
+$t^\star$ such that
 \[
-  \mathbb{E}[\text{TSVR}_\pi] \;>\; \epsilon.
+  \phi_{\mathrm{obs}}(\pi(\hat{x}_{t^\star})) = 1
+  \qquad\text{and}\qquad
+  \phi_{\mathrm{true}}(\pi(\hat{x}_{t^\star})) = 0.
 \]
-That is, no quality-ignorant controller can achieve arbitrarily low
-violation rates under worst-case but physically realisable faults.
-Quality-aware control is therefore \emph{mathematically necessary},
-not merely beneficial.
+Thus no fixed-margin, quality-ignorant controller can rule out
+observation-action safety gaps across all admissible degraded-observation
+sequences in this class.  The theorem is a constructive separation result,
+not a blanket statement about every possible safe controller architecture.
 \end{theorem}
 
 The proof is constructive: we exhibit a three-phase fault sequence
@@ -181,8 +184,8 @@ Violation & True SOC below SOC$_{\min}$ or above SOC$_{\max}$ \\
 \includegraphics[width=0.85\textwidth]{reports/publication/fig_violation_severity_p95.png}
 \caption{P95 violation severity for quality-ignorant controllers
   (LP, CQR-only) versus DC3S across dropout rates.  Quality-ignorant
-  controllers exhibit non-zero severity at all $d > 0$, confirming
-  Theorem~\ref{thm:no-free-safety}.}
+  controllers exhibit non-zero severity at all $d > 0$, consistent with the
+  constructive witness used in Theorem~\ref{thm:no-free-safety}.}
 \label{fig:no-free-safety-evidence}
 \end{figure}
 
@@ -193,8 +196,9 @@ Violation & True SOC below SOC$_{\min}$ or above SOC$_{\max}$ \\
 For the violation bound $\mathbb{E}[V] \le \alpha(1-\bar{w})T$
 (Theorem~\ref{thm:core-bound}) to hold, the controller must be
 quality-aware: it must use $w_t$ (or an equivalent reliability signal)
-to modulate its safety margin.  No fixed-margin controller can achieve
-$\mathbb{E}[V] = o(T)$ under worst-case admissible faults with $\bar{w} < 1$.
+to modulate its safety margin on the witness class used in this chapter.
+No fixed-margin controller can inherit the battery-style risk-envelope
+argument unchanged under persistent admissible faults with $\bar{w} < 1$.
 \end{corollary}
 
 \begin{proof}
@@ -229,7 +233,9 @@ quality-ignorant controller incurs $\mathbb{E}[V_T] \ge c \cdot d \cdot T$
 expected violations, where $c > 0$ depends only on constraint geometry.
 
 This makes explicit what T4 implies informally: quality-aware inflation is not
-a design convenience but a structural necessity at the $\Omega(T)$ level.
+merely a design convenience on this witness class; it is a structural
+requirement at the $\Omega(T)$ level once persistent degraded observation is
+introduced.
 T9's proof uses Borel-Cantelli on disjoint fault windows, not a single
 adversarial sequence.  In the broader universality program, the constant $c$
 is interpreted as a domain-dependent sensitivity to degraded observation, with
@@ -239,9 +245,9 @@ tiered supporting evidence rather than equal theorem surfaces.
 \section{Chapter Summary}
 
 The No Free Safety theorem is the fourth rung of the theorem ladder.
-It proves that ignoring observation quality is not merely sub-optimal
-but fundamentally unsafe: any quality-ignorant controller can be driven
-to violation by an admissible fault sequence.  The constructive proof
+It proves a constructive witness claim on the battery reference surface:
+a quality-ignorant controller can be driven to violation by an admissible
+fault sequence.  The constructive proof
 identifies the exact mechanism (baiting + fault injection + boundary
 proximity) and the empirical ablation results
 (Chapter~\ref{ch:ablations}) confirm the theorem's prediction: removing

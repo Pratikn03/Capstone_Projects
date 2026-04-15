@@ -1,17 +1,19 @@
 
-\chapter{The ORIUS Core Safety Bound}
+\chapter{The ORIUS Risk-Envelope Bound}
 \label{ch:core-bound}
 
 This chapter derives the central quantitative result of the ORIUS
-framework: an upper bound on the expected number of true-state violations
-over an episode of length~$T$.  The bound links the conformal miscoverage
-level~$\alpha$, the average observation reliability~$\bar{w}$, and the
-horizon~$T$ into a single inequality.  The derivation uses energy
-management notation but is domain-agnostic: it holds for any domain whose
-adapter satisfies the shared contract.  The runtime module
-\texttt{src/orius/dc3s/coverage\_theorem.py} exposes helper functions that
-compute and verify this bound on the battery reference surface and on the
-runtime-evidence rows that instantiate the shared contract.
+framework: a conservative upper bound on the expected number of true-state
+violations over an episode of length~$T$ once a domain supplies an explicit
+per-step residual-risk budget.  The bound links the miscoverage level
+$\alpha$, the average observation reliability~$\bar{w}$, and the horizon~$T$
+into a single envelope, but it does so only under a theorem-local
+calibration contract.  The derivation uses energy management notation but is
+domain-agnostic in structure: any domain that can justify the same predictable
+per-step risk budget inherits the same aggregation argument.  The runtime
+module \texttt{src/orius/dc3s/coverage\_theorem.py} exposes helper functions
+that compute this envelope and record the additional assumptions under which
+it is intended to be read.
 
 \section{Domain-Agnostic Statement}
 
@@ -20,24 +22,30 @@ The Core Bound is stated entirely in domain-agnostic quantities.
 \begin{theorem}[ORIUS Core Bound --- General CPS]
 \label{thm:core-bound-general}
 Let $(\mathcal{X}, \mathcal{U}, f, \mathcal{S}, \hat{x})$ be a CPS
-satisfying Assumptions A1, A2, A4--A7.  Under the DC3S shield with
-reliability-inflated margin $m_t = q_t / (w_t + \epsilon)$, the expected
-total violation count over horizon~$T$ satisfies
+satisfying Assumptions A1, A2, A4--A7.  Suppose the instantiated domain
+supplies a predictable residual-risk budget sequence $r_t$ such that
+\[
+  \Prob[x_{t+1}\notin\mathcal{S}\mid\mathcal{H}_t] \le r_t
+  \qquad\text{for all } t,
+\]
+and suppose further that the domain justifies the battery-style envelope
+$r_t \le \alpha(1-w_t)$.  Then the expected total violation count over
+horizon~$T$ satisfies
 \[
   \mathbb{E}[V] \;\le\; \alpha\,(1 - \bar{w})\,T,
 \]
 where $\alpha$ is the conformal miscoverage level and
 $\bar{w} = T^{-1}\sum_{t=1}^T w_t$ is the episode-average reliability.
-This bound is exact and tight: equality is achieved under a worst-case
-fault sequence that maintains $w_t = \bar{w}$ at every step.
+The theorem is therefore an aggregation result for an explicit risk-envelope
+contract; it is not presented as a direct consequence of vanilla conformal
+exchangeability alone.
 \end{theorem}
 
 \noindent\textbf{Remark.}  The bound depends on~$\alpha$, $\bar{w}$, and~$T$
-only---no plant dynamics, state dimension, or constraint geometry.  This
-makes it a universal design tool: for any target violation rate~$r^*$, a
-system designer can compute the minimum required average reliability
-$\bar{w}^* = 1 - r^*/\alpha$.  The battery-domain derivation below
-provides the concrete per-step risk argument.
+once the per-step budget has already been justified.  That makes it a useful
+design tool, but only after the theorem-local budget contract has been stated.
+The battery-domain derivation below provides exactly that extra step; it does
+not silently identify $w_t$ with a probability by definition.
 
 \section{Battery-Domain Derivation: Violation Process and Horizon Notation}
 
@@ -52,40 +60,63 @@ The total violation count over horizon $T$ is $V = \sum_{t=1}^T Z_t$.
 We seek an upper bound on $\mathbb{E}[V]$ that depends on controllable
 quantities.
 
-\section{Per-Step Risk Lemma}
+\section{Theorem-Local Risk-Envelope Contract}
 
-\begin{lemma}[Per-step violation probability]
-\label{lem:per-step-risk}
-Under the DC3S shield with margin $m_t = q_t / (w_t + \epsilon)$,
-the per-step violation probability satisfies
+\paragraph{Battery risk-envelope contract.}
+For the battery witness surface, the episode argument is carried by the
+predictable per-step envelope
 \[
-  \Pr[Z_t = 1] \;\le\; \alpha\,(1 - w_t),
+  r_t := \alpha(1-w_t),
 \]
-where $\alpha$ is the conformal miscoverage level and $w_t$ is the
-reliability score.
+meaning that the instantiated battery analysis has justified
+\[
+  \Prob[Z_t=1\mid\mathcal{H}_t] \le r_t
+  \qquad\text{and hence}\qquad
+  \Prob[Z_t=1\mid\mathcal{H}_t] \le \alpha(1-w_t).
+\]
+This is a theorem-local calibration contract.  It should be read as a
+summary of the battery witness analysis linking conformal miscoverage,
+reliability-conditioned inflation, detector lag, and boundary proximity to a
+one-step residual-risk budget.  It is not claimed to be implied by marginal
+conformal coverage in isolation.
+
+\begin{lemma}[Aggregation under a predictable risk budget]
+\label{lem:per-step-risk}
+If a predictable nonnegative sequence $r_t$ satisfies
+\[
+  \Prob[Z_t = 1 \mid \mathcal{H}_t] \le r_t
+  \qquad\text{for all } t,
+\]
+then
+\[
+  \mathbb{E}[V] \le \sum_{t=1}^T r_t.
+\]
 \end{lemma}
 
 \begin{proof}
-The conformal guarantee provides
-$\Pr[x_t \notin \hat{C}_t] \le \alpha$.  A violation occurs only if
-both (i)~the true state escapes the conformal interval \emph{and}
-(ii)~the reliability-inflated margin fails to compensate.
-
-When $w_t = 1$ (perfect telemetry), the margin equals the conformal
-quantile, and the violation probability is at most $\alpha$.  When
-$w_t < 1$, the margin is inflated by $1/(w_t + \epsilon)$, which
-reduces the conditional violation probability.  The residual risk is
-proportional to the probability that the true state lies in the gap
-between the conformal boundary and the constraint boundary, which
-scales as $\alpha\,(1 - w_t)$:
-
+Because $Z_t$ is an indicator,
 \[
-  \Pr[Z_t = 1] \;\le\; \alpha \cdot \Pr\!\bigl[\,|x_t - \hat{x}_t| > m_t\,\bigr]
-  \;\le\; \alpha\,(1 - w_t).
+  \mathbb{E}[Z_t \mid \mathcal{H}_t]
+  =
+  \Prob[Z_t=1 \mid \mathcal{H}_t]
+  \le r_t.
 \]
-The second inequality uses the monotone inflation property (A5): higher
-reliability implies wider effective margin, reducing the residual gap
-probability to at most $(1 - w_t)$.
+Taking unconditional expectations preserves the inequality:
+\[
+  \mathbb{E}[Z_t] \le \mathbb{E}[r_t].
+\]
+When the budget sequence is predictable and therefore measurable with respect
+to the information available at step $t$, we may identify $r_t$ with its
+realised budget value in the episode and sum over the horizon:
+\[
+  \mathbb{E}[V]
+  =
+  \sum_{t=1}^T \mathbb{E}[Z_t]
+  \le
+  \sum_{t=1}^T r_t.
+\]
+No temporal independence assumption is required; only conditional
+one-step control of the violation indicator is used.
 \end{proof}
 
 \section{Main Theorem: ORIUS Core Bound}
@@ -98,19 +129,23 @@ violation count under the DC3S shield satisfies
   \mathbb{E}[V] \;\le\; \alpha\,(1 - \bar{w})\,T,
 \]
 where $\bar{w} = T^{-1}\sum_{t=1}^T w_t$ is the episode-average
-reliability score.
+reliability score, provided the battery witness surface justifies the
+predictable one-step risk budget
+$\Prob[Z_t=1\mid\mathcal{H}_t] \le \alpha(1-w_t)$.
 \end{theorem}
 
 \begin{proof}
-By linearity of expectation,
+Apply Lemma~\ref{lem:per-step-risk} with
+$r_t = \alpha(1-w_t)$.  Then
 \begin{align}
-  \mathbb{E}[V] &= \sum_{t=1}^T \Pr[Z_t = 1] \nonumber \\
-  &\le \sum_{t=1}^T \alpha\,(1 - w_t)
-    \quad\text{(Lemma~\ref{lem:per-step-risk})} \nonumber \\
+  \mathbb{E}[V]
+  &\le \sum_{t=1}^T \alpha\,(1 - w_t) \nonumber \\
   &= \alpha \sum_{t=1}^T (1 - w_t) \nonumber \\
   &= \alpha\,T\,\Bigl(1 - \frac{1}{T}\sum_{t=1}^T w_t\Bigr) \nonumber \\
   &= \alpha\,(1 - \bar{w})\,T. \label{eq:core-bound}
 \end{align}
+The proof is therefore an aggregation argument over an explicit theorem-local
+budget contract rather than a direct corollary of marginal conformal coverage.
 \end{proof}
 
 \section{Equivalent Average-Rate Form}
@@ -153,10 +188,10 @@ Total blackout       & 0.00 & 168.0 & 10.00 \\
 \end{tabular}
 \end{table}
 
-At $\bar{w} = 1$ (no degradation), the bound collapses to zero:
-perfect telemetry implies perfect safety.  At $\bar{w} = 0$ (total
-blackout), the bound reduces to $\alpha\,T$, recovering the
-conformal-only guarantee without reliability adaptation.
+At $\bar{w} = 1$ (no degradation), the envelope collapses to zero on the
+battery witness surface because the theorem-local budget vanishes.  At
+$\bar{w} = 0$ (total blackout), the envelope reduces to $\alpha\,T$,
+recovering the most conservative battery-side risk budget considered here.
 
 \section{Artifact-Backed Figure}
 
@@ -174,8 +209,9 @@ conformal-only guarantee without reliability adaptation.
 \begin{corollary}[Perfect-telemetry collapse]
 \label{cor:perfect-telemetry}
 When $\bar{w} = 1$ for all $t$, the core bound gives
-$\mathbb{E}[V] = 0$: the shield introduces no violations
-and the standard conformal guarantee suffices.
+$\mathbb{E}[V] = 0$ on any episode satisfying the battery risk-envelope
+contract.  The corollary should therefore be read as a statement about the
+instantiated budget, not as a universal theorem for all observation models.
 \end{corollary}
 
 \begin{corollary}[Reliability-proportional safety]
@@ -189,9 +225,10 @@ $\alpha\,\Delta w\,T$.
 \begin{corollary}[Intervention sufficiency]
 \label{cor:intervention-sufficiency}
 If the shield's intervention rate satisfies
-$\text{IR} \ge 1 - \bar{w}$, then the bound is achievable:
-the shield intervenes often enough to compensate for the
-average reliability deficit.
+$\text{IR} \ge 1 - \bar{w}$, then the runtime policy is operating in a regime
+consistent with the battery-side budget interpretation: intervention pressure
+tracks the average reliability deficit.  This is an interpretive corollary,
+not a converse optimality theorem.
 \end{corollary}
 
 \section{What This Theorem Does Not Prove}
@@ -201,31 +238,30 @@ average reliability deficit.
     or high-probability violations.  A concentration inequality
     (e.g., via Hoeffding) would tighten the result to a PAC-style
     guarantee at the cost of a $\sqrt{T \ln(1/\delta)}$ term.
-  \item The bound assumes step-level independence of violation events
-    conditioned on $w_t$.  Temporal correlation in fault sequences
-    may cause the empirical violation count to cluster, though the
-    expectation bound remains valid.
+  \item The bound does not follow from conformal exchangeability alone.
+    The extra step is the explicit predictable risk budget
+    $\Prob[Z_t=1\mid\mathcal{H}_t] \le \alpha(1-w_t)$ supplied by the battery
+    witness analysis.
   \item The bound does not account for the shield's ability to
-    \emph{prevent} violations proactively; it only bounds the residual
-    risk.  The empirical TSVR of zero reflects the shield's
-    effectiveness beyond what the bound guarantees.
+    \emph{prevent} violations proactively; it only envelopes the residual
+    risk once the per-step budget has been specified.
 \end{enumerate}
 
-\section{Information-Theoretic Lower Bound and DC3S Optimality (T10)}
+\section{Stylized Reliability-Risk Frontier (T10)}
 \label{sec:t10-lower-bound-ch18}
 
 T3 establishes that DC3S achieves $\mathbb{E}[V] \le \alpha(1-\bar{w})T$.
-The monograph's T10 lower-bound result proves this bound is tight up to a
-universal constant via the Le~Cam two-point method: by constructing
-least-favourable priors at the constraint boundary and computing the
-total-variation distance through the degraded observation channel
-(Assumption~A2), one obtains
+The monograph's T10 lower-bound result adds a \emph{stylized} frontier model:
+by constructing boundary-testing subproblems and computing total-variation
+distance through the degraded observation channel, one obtains
 \[
   \mathbb{E}\!\left[V_T(\pi)\right]
   \;\ge\;
   \tfrac{1}{4}\,\alpha(1-\bar{w})T
 \]
-for any controller~$\pi$.  Combined with the T3 upper bound, the minimax tight band is:
+for any controller~$\pi$ \emph{under the additional boundary-mass and
+indistinguishability assumptions stated in T10}.  Combined with the T3 upper
+bound, this yields the stylized frontier band
 \[
   \tfrac{1}{4}\,\alpha(1-\bar{w})T
   \;\le\;
@@ -233,11 +269,10 @@ for any controller~$\pi$.  Combined with the T3 upper bound, the minimax tight b
   \;\le\;
   \alpha(1-\bar{w})T.
 \]
-The factor-of-4 gap is the standard Le~Cam minimax constant
-\cite{tsybakov2009introduction}; the conclusion is that DC3S is
-minimax rate-optimal under degraded observation.  Any substantial
-improvement to the coefficient would require changing the observation
-model assumptions, not just the repair mechanism.
+The factor-of-4 constant is therefore read as a witness to a nontrivial
+reliability-risk frontier, not as a globally sharp minimax claim for every
+observation model.  Any stronger coefficient claim would require a
+domain-specific argument beyond the theorem-local frontier assumptions.
 
 The \emph{reliability-safety frontier} derived from this pair of bounds gives
 the minimum infrastructure reliability for a target violation rate:
@@ -255,13 +290,14 @@ instances.
 
 \section{Chapter Summary}
 
-The ORIUS Core Bound $\mathbb{E}[V] \le \alpha(1 - \bar{w})T$ is the
-quantitative heart of the ORIUS framework.  It links three observable
+The ORIUS risk-envelope bound $\mathbb{E}[V] \le \alpha(1 - \bar{w})T$ is the
+quantitative heart of the ORIUS framework once the domain supplies an
+explicit predictable risk budget.  It links three observable
 quantities---miscoverage level, average reliability, and horizon---into
-a tight, verifiable upper bound on expected violations.  The battery
-evaluation confirms the bound with substantial empirical slack,
-indicating that the shield is more effective in practice than the
-worst-case theory requires.
+a conservative upper envelope on expected violations.  The battery
+evaluation remains well below that envelope, which is exactly the intended
+reading: the theorem controls residual risk conservatively rather than
+claiming coefficient-wise sharpness in every model.
 
 \begingroup
 \def\domainblockid{t3}

@@ -1,25 +1,37 @@
 \chapter{CertOS Runtime Assurance}
 \label{ch:certos-runtime-assurance}
 
-\section{CertOS as release semantics}
+\section{Why CertOS belongs in the main argument}
 CertOS is the part of ORIUS that turns repaired action into a governed runtime object.
 Without lifecycle state, fallback rules, and an audit chain, certificates would be inert
 metadata. With CertOS, certificate validity becomes part of the release decision itself:
-which action was allowed, under which reliability state, for which horizon, with which
+which action was allowed, under which reliability state, for which horizon, and under which
 fallback if the certificate expires or becomes invalid?
 
-This is the point at which the ORIUS kernel acquires operational semantics.
-\texttt{DomainAdapter} defines the local safety predicate and fallback object that CertOS
-must protect, and the universal benchmark schema defines the replay traces from which
-certificate validity, latency, and lifecycle behavior are evaluated. In that sense, CertOS
-is the computational bridge between repaired action and a safety argument that can later be
-audited.
+This chapter therefore does not read as a deployment appendix. It is the point at which the
+ORIUS kernel acquires operational semantics. \texttt{DomainAdapter} defines the local safety
+predicate and fallback object that CertOS must protect, and the universal benchmark schema
+defines the replay traces from which certificate validity, latency, and lifecycle behavior
+are evaluated.
 
-\section{Lifecycle invariants}
+\section{Lifecycle operations}
+CertOS organizes runtime release through a small but strict lifecycle:
+\begin{itemize}
+  \item issue a certificate only after the repaired or fallback action is shown admissible;
+  \item validate a certificate before each protected release;
+  \item renew a certificate when fresh evidence preserves the release claim;
+  \item expire or revoke a certificate when the underlying assumptions no longer hold; and
+  \item force explicit fallback when no valid certificate remains.
+\end{itemize}
+These operations make ORIUS operationally legible. The runtime is not merely deciding
+whether an action is numerically acceptable; it is managing the validity of the claim under
+which release occurs.
+
+\section{Runtime invariants}
 The lifecycle logic is narrow and strong. A protected action is never released without a
 valid certificate or an explicit fallback. Certificate state must be renewable, expirable,
 revocable, and auditable. Runtime traces must preserve enough information to reconstruct why
-the release was allowed and when the governing assumptions ceased to hold. These are not
+release was allowed and when the governing assumptions ceased to hold. These are not
 administrative conveniences. They are the invariants that keep repaired action tied to a
 reviewable safety argument.
 
@@ -36,24 +48,42 @@ as part of runtime safety rather than as post hoc reporting.}
 \label{fig:runtime-governance-matrix}
 \end{figure}
 
-The figure highlights the right scientific point: governance is not separate from runtime
-safety once release depends on repaired action under degraded observation. What varies across
-rows is the maturity of the evaluated lifecycle surface, not the meaning of the lifecycle
-itself.
+\section{Audit chain and post hoc verification}
+The audit chain matters because ORIUS is not only a forward-looking safety layer. It is also
+a mechanism for reconstructing the justification of past release decisions. Once an unsafe
+event, intervention, or fallback occurs, the system must be able to explain what the
+reliability state was, which repair or fallback was chosen, what certificate was valid, and
+why the runtime believed the action remained admissible. This is why audit completeness is a
+first-class benchmark metric rather than a logging implementation detail.
 
-\section{Architecture-level universality, evidence-tiered maturity}
+\section{Governance alignment, not compliance}
+CertOS aligns the runtime evidence surface with disciplined safety-argument practice without
+claiming compliance with external standards. In that limited and precise sense, the
+governance chapter is legible to readers who care about claim-based safety arguments,
+lifecycle discipline, and trustworthy AI governance
+\cite{ul4600_2023,nist2023ai_rmf,iso26262_2018,iec61508_2010}.
+
+The distinction matters. UL 4600, the NIST AI RMF, ISO 26262, and IEC 61508 are used here
+as evidence-structure and lifecycle analogs only. They motivate why a runtime safety layer
+should make claims, assumptions, evidence, lifecycle transitions, and audit continuity
+explicit. They do not turn the dissertation into a compliance claim, and the manuscript
+must never be read that way.
+
+\section{Universality and evidence-tiered maturity}
 CertOS is universal at the level of release semantics. Every defended ORIUS row needs a
 certificate object, fallback policy, and audit trace. What is not yet universal is equal
-deployment maturity across every domain. Battery, industrial process control, and healthcare
-provide the strongest defended lifecycle surfaces. The autonomous-vehicle row shows a
-defended bounded runtime surface under current artifacts. Navigation and aerospace remain
-gated for the same empirical reasons already stated elsewhere in the dissertation. CertOS
-therefore supplies one common governance object without pretending that all deployment
-surfaces are equally mature today.
+deployment maturity across every domain. Battery, industrial process control, and
+healthcare provide the strongest defended lifecycle surfaces. The autonomous-vehicle row
+shows a defended bounded runtime surface under current artifacts. Navigation and aerospace
+remain gated for the same empirical reasons already stated elsewhere in the dissertation.
+CertOS therefore supplies one common governance object without pretending that all
+deployment surfaces are equally mature today.
 
-\section{Exact governance claim}
-The CertOS claim is exact and intentionally narrower than a flat deployment slogan: ORIUS
+\section{Governance boundary}
+This chapter is one of the places where the non-claim boundary has to remain explicit. ORIUS
 provides a policy-driven runtime governance layer in which repaired action, fallback, and
 certificate validity are coupled, auditable, and recoverable after the fact. That claim is
 scientifically important because a runtime safety layer without release semantics cannot say
-what action was justified once degraded observation has already entered the control loop.
+what action was justified once degraded observation has already entered the control loop. It
+does not claim formal certification compliance, and it does not claim equal deployment
+maturity across every current domain row.

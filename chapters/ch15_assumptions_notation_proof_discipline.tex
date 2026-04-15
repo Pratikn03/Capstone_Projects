@@ -13,8 +13,8 @@ contains the battery reference theorems (T1--T8), but the full dissertation
 surface is broader: Part~I contributes the precursor results, the later
 chapters add lemmas, propositions, and corollaries, and the monograph
 extension closes with T9--T11.  Counting the active master-manuscript include
-tree yields \textbf{82 formal items} (26~theorems, 5~lemmas,
-8~propositions, 12~corollaries, 15~definitions, 16~assumptions), all audited in
+tree yields \textbf{83 formal items} (26~theorems, 5~lemmas,
+9~propositions, 12~corollaries, 15~definitions, 16~assumptions), all audited in
 Appendix~\ref{app:integrated-theorem-surface-register} and summarised in
 Table~\ref{tab:integrated-theorem-surface-summary} at the end of this chapter.
 
@@ -46,6 +46,17 @@ $\bar{w}$ & Episode-average reliability: $\bar{w} = T^{-1}\sum_t w_t$ \\
 \bottomrule
 \end{tabular}
 \end{center}
+
+\paragraph{Semantics of the reliability score.}
+The symbol $w_t$ is treated throughout this dissertation as a
+\emph{runtime reliability score}, not as a probability by definition.
+It records how trustworthy the telemetry channel appears at step $t$
+according to the OQE pipeline and adjacent runtime checks.  A theorem may
+convert $w_t$ into a probabilistic statement only when that conversion is
+spelled out explicitly as an extra theorem-local hypothesis.  In
+particular, later chapter statements do not identify $w_t$ with the
+probability of clean telemetry unless the statement itself introduces a
+calibration or indistinguishability contract that justifies that move.
 
 \paragraph{Battery instantiation.}
 In the battery domain, $x_t = \text{SOC}_t$ (MWh),
@@ -165,24 +176,37 @@ adapter narrative.
 
 Table~\ref{tab:proof-deps} shows which assumptions each theorem requires.
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering
-\caption{Assumption dependencies of main theorems.}
+\caption{Assumption and local-contract dependencies of the full T1--T11 theorem program.}
 \label{tab:proof-deps}
-\begin{tabular}{lccccccccc}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccccccp{4.7cm}}
 \toprule
 \textbf{Theorem} & \textbf{A1} & \textbf{A2} & \textbf{A3} & \textbf{A4}
-  & \textbf{A5} & \textbf{A6} & \textbf{A7} & \textbf{A8} \\
+  & \textbf{A5} & \textbf{A5$'$} & \textbf{A6} & \textbf{A6$'$}
+  & \textbf{A7} & \textbf{A8} & \textbf{Extra local contract or witness} \\
 \midrule
-OASG Existence       & \checkmark & \checkmark &            & \checkmark &            &            &            &            \\
-Safety Preservation  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark &            & \checkmark &            \\
-Core Bound           & \checkmark & \checkmark &            & \checkmark & \checkmark & \checkmark & \checkmark &            \\
-No Free Safety       &            & \checkmark &            &            &            &            &            &            \\
-Certificate Horizon  & \checkmark & \checkmark &            & \checkmark & \checkmark & \checkmark & \checkmark &            \\
-Graceful Degradation & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark &            &            & \checkmark \\
+T1 OASG Existence & \checkmark & \checkmark & & \checkmark & & & & & & & Boundary-reachability witness near the constraint surface \\
+T2 Safety Preservation & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & & & & \checkmark & & Inflated-set containment plus repair membership in the tightened safe set \\
+T3 Core Bound & \checkmark & \checkmark & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Predictable risk-envelope budget $r_t \le \alpha(1-w_t)$ \\
+T4 No Free Safety & & \checkmark & & & & & & & & & Fixed-margin, quality-ignorant controller class and admissible degraded-observation witness \\
+T5 Certificate Horizon & \checkmark & \checkmark & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Forward-tube containment construction \\
+T6 Certificate Expiration Bound & & & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Drift-scale lower-bound argument for certificate expiration \\
+T7 Feasible Fallback Existence & \checkmark & & \checkmark & \checkmark & & & & & & \checkmark & Interior-state fallback construction \\
+T8 Graceful Degradation Dominance & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & & & & & \checkmark & Shared-fault comparison coupling between graceful and uncontrolled release \\
+T9 Universal Impossibility & & & & \checkmark & & & & \checkmark & & & Per-window degraded-observation witness under persistent degradation \\
+T10 Boundary-Indistinguishability Lower Bound & \checkmark & \checkmark & & & & \checkmark & & & & & Boundary prior and observation-law indistinguishability hypothesis \\
+T11 Typed Structural Transfer & & & & & & & & & & & Coverage, soundness, repair-membership, and fallback-admissibility obligations \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
+
+\noindent\textit{Reading note.}  The first ten columns record standing
+assumptions.  The final column records theorem-local contracts or structural
+witnesses that are not promoted to global assumptions because they are only
+needed for the specific theorem in that row.
 
 \subsection{Extended Monograph Theorem Program}
 
@@ -255,6 +279,32 @@ The battery reference ladder uses monotone inflation to preserve the base
 coverage surface.  The universal transfer theorem (T11) is kept at the
 one-step level for exactly this reason: it does not silently upgrade
 marginal coverage into a stronger episode-level conditioning claim.
+
+\section{Theorem-Local Calibration Contracts}
+\label{sec:theorem-local-calibration-contracts}
+
+Two theorem-local contracts are used repeatedly in the tightened theory
+surface:
+\begin{enumerate}
+  \item \textbf{Risk-envelope contract.}  A chapter may introduce a
+    predictable sequence $r_t$ satisfying
+    $\Prob[x_{t+1}\notin\mathcal{S}\mid \mathcal{H}_t] \le r_t$.
+    This is the correct bridge from one-step conditional reasoning to an
+    episode-level expectation bound.  The battery-style envelope
+    $r_t \le \alpha(1-w_t)$ is one such contract, but it is not claimed to
+    follow from vanilla conformal exchangeability alone.
+  \item \textbf{Boundary-indistinguishability contract.}  A chapter may
+    model degraded observation through pairs of latent hypotheses whose
+    observation laws remain close in total variation or another explicit
+    channel metric.  This is the extra ingredient used in the stylized
+    lower-bound theorem (T10); it is not inherited automatically from the
+    definition of $w_t$.
+\end{enumerate}
+
+These contracts are local on purpose.  They keep the theorem program honest:
+coverage language stays marginal unless a stronger conditioning statement is
+written into the theorem, and reliability language stays operational unless a
+calibration or indistinguishability hypothesis is stated alongside it.
 
 \section{One-Step Versus Multi-Step Claims}
 
@@ -347,7 +397,7 @@ assumptions (A1--A8) are individually justified in both domain-general
 and battery-specific terms, the proof dependency matrix prevents
 circular reasoning, and the theorem-writing discipline ensures that
 every claim is bounded by explicit scope disclaimers.  The integrated
-theorem surface of 82 formal items---spanning 26 theorems, 5 lemmas,
-8 propositions, 12 corollaries, 15 definitions, and 16 assumptions---is
+theorem surface of 83 formal items---spanning 26 theorems, 5 lemmas,
+9 propositions, 12 corollaries, 15 definitions, and 16 assumptions---is
 the formal depth this dissertation contributes to the CPS safety
 literature.

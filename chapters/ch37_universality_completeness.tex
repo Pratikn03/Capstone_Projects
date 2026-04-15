@@ -12,7 +12,7 @@ surface.  Industrial and healthcare remain defended instantiations.
 Autonomous vehicles, navigation, and aerospace remain lower-tier evidence.
 
 The point of the chapter is to make that claim precise enough that a reader
-can separate three things cleanly: what the battery proof already establishes,
+can separate three things cleanly: what the reference-row proof already establishes,
 what the universal kernel adds, and where the current transfer boundary still
 stops.  The implementation follows the same boundary.  The canonical
 production kernel realizes the typed repair-and-certify contract, while the
@@ -71,7 +71,7 @@ measurable repair-and-certify map such that:
 \end{definition}
 
 For the control-theory reader, this chapter answers three questions beyond the
-battery ladder:
+reference proof ladder:
 
 \begin{table}[htbp]
 \centering
@@ -85,26 +85,26 @@ T9 & Is reliability-aware repair structurally necessary, or merely useful? & Nec
 \addlinespace
 T10 & Does the ORIUS envelope have the right scaling law, or is it loose? & Lower-bound theorem for degraded-observation risk \\
 \addlinespace
-T11 & Which structural obligations let the battery proof pattern transfer? & Template transfer theorem for new domains \\
+T11 & Which structural obligations let the reference proof pattern transfer? & Template transfer theorem for new domains \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The dependency order is strict.  T1--T8 establish the battery reference
+The dependency order is strict.  T1--T8 establish the reference proof
 ladder.  T9 proves that ignoring reliability breaks safety structurally.
 T10 shows that the $\alpha(1-\bar{w})T$ scaling cannot be removed by a better
 controller alone.  T11 then identifies the obligations under which the same
-repair-and-bound structure transfers beyond battery.
+repair-and-bound structure transfers across domains.
 
 % ----------------------------------------------------------------
 \section{Observation-Aware Control Is Structurally Necessary (T9)}
 \label{sec:t9-universal-impossibility}
 % ----------------------------------------------------------------
 
-Theorem~\ref{thm:no-free-safety} shows, on the battery reference surface, that
+Theorem~\ref{thm:no-free-safety} shows, on the reference proof surface, that
 quality-ignorant safety logic can fail even when observed-state evaluation
 looks safe.  The broader universality claim is that this pathology is not a
-battery accident; it is a structural consequence of degraded observation.
+single-domain accident; it is a structural consequence of degraded observation.
 
 \begin{theorem}[Universal Impossibility, T9]
 \label{thm:universal-impossibility}
@@ -138,7 +138,7 @@ total variation.
 Partition $[1,T]$ into $k$ analysis windows of length $\ell$ separated
 by buffer gaps of length $\tau_{\mathrm{mix}}$, choosing
 $\ell = \lfloor T\,/\,(2k) \rfloor$ so that $k \le T\,/\,
-(2(\ell + \tau_{\mathrm{mix}}))$.  The battery-domain
+(2(\ell + \tau_{\mathrm{mix}}))$.  The reference-domain
 no-free-safety witness (Theorem~\ref{thm:no-free-safety}) is applied
 inside each window: if the controller does not adapt its safety margin
 to the OQE signal $w_t$, the observation gap drives the true state
@@ -191,11 +191,11 @@ replay; the weaker rows remain portability evidence rather than
 theorem-validating peers.
 
 % ----------------------------------------------------------------
-\section{Reliability-Risk Frontier (T10)}
+\section{Boundary-Indistinguishability Lower Bound (T10)}
 \label{sec:t10-lower-bound}
 % ----------------------------------------------------------------
 
-The core ORIUS battery bound is
+The core ORIUS bound from the reference domain is
 \[
   \mathbb{E}\!\left[V_T\right] \;\le\; \alpha(1-\bar{w})T,
 \]
@@ -203,7 +203,7 @@ where $\alpha$ is the miscoverage level and $\bar{w}$ is the mean reliability.
 The monograph extension asks whether that envelope is merely conservative or
 whether it captures the right scaling law.
 
-\begin{theorem}[Stylized Reliability-Risk Frontier, T10]
+\begin{theorem}[Boundary-indistinguishability lower bound, T10]
 \label{thm:information-theoretic-lower-bound}
 Fix a horizon $T$.  For each step $t$, assume there exists a boundary-testing
 subproblem with two latent hypotheses $H_{0,t}$ (safe side of the boundary)
@@ -264,11 +264,12 @@ $p_t$.
 \end{proof}
 
 \begin{remark}
-T10 is intentionally conservative.  It does \emph{not} claim that the
-battery upper bound is globally minimax without further work; it isolates the
-mechanism by which degraded observation creates a nontrivial reliability-risk
-frontier.  The constant $1/4$ is therefore read as a stylized frontier
-witness, not as a universally sharp asymptotic constant.
+T10 is scoped but substantive.  It is an information-theoretic lower bound
+for any controller that only sees the degraded observation channel under the
+explicit boundary-mass and indistinguishability hypotheses above.  It does
+not claim a globally sharp minimax constant for every observation model, but
+it does show that the $\alpha(1-\bar{w})T$ scaling cannot be dismissed as a
+pure artifact of one repair heuristic.
 \end{remark}
 
 The resulting \emph{reliability-risk frontier} is useful even when read
@@ -288,7 +289,7 @@ imposes a quantitative infrastructure requirement, not just a qualitative
 warning.
 
 % ----------------------------------------------------------------
-\section{Typed Kernel and Structural Transfer Theorem (T11)}
+\section{Typed Structural Transfer and Failure-Mode Converse (T11)}
 \label{subsec:adapter-contract}
 % ----------------------------------------------------------------
 
@@ -334,7 +335,7 @@ machine-checkable contract with five invariants:
     collapses the admissible action set to the fallback regime.
 \end{description}
 
-\begin{theorem}[One-step structural transfer theorem, T11]
+\begin{theorem}[Typed structural transfer theorem, T11]
 \label{thm:universality-completeness}
 Let $\mathcal{D}$ be a domain instantiation for the degraded-observation
 safe-control problem in Definition~\ref{def:degraded-observation-safe-control}.
@@ -352,10 +353,14 @@ Assume that, for every step $t$:
     admissible and preserves safety from any current safe state.
 \end{enumerate}
 Then the repaired action produced by the ORIUS kernel satisfies the same
-one-step safety-preservation statement as the battery reference theorem:
+one-step safety-preservation statement as the reference theorem:
 \[
   \Prob[x_{t+1}\in\mathcal{S}\mid \mathcal{H}_t] \ge 1-\alpha.
 \]
+\noindent In this theorem the four listed obligations are the entire transfer
+surface.  No broader episode-level claim is inherited unless the new domain
+also supplies an explicit predictable per-step risk budget as in
+Corollary~\ref{cor:t11-aggregation}.
 \end{theorem}
 
 \begin{proof}
@@ -388,7 +393,7 @@ for all $t$, then
 \[
   \mathbb{E}[V_T] \le \sum_{t=1}^T r_t.
 \]
-When a particular domain instantiation justifies the battery-style envelope
+When a particular domain instantiation justifies the reference-row envelope
 $r_t \le \alpha(1-w_t)$, the episode bound
 $\mathbb{E}[V_T] \le \alpha(1-\bar{w})T$ follows immediately.
 \end{corollary}
@@ -406,15 +411,38 @@ Taking expectations and summing over $t$ gives
   \le
   \sum_{t=1}^T r_t.
 \]
-The battery-style envelope is the special case $r_t \le \alpha(1-w_t)$.
+The reference-row envelope is the special case $r_t \le \alpha(1-w_t)$.
 \end{proof}
 
-T11 is therefore a transfer theorem, not a blanket declaration that every
-evaluated row already satisfies those obligations.  Battery provides the full
-reference proof.  Other domains enter the monograph only when their
-instantiation evidence is strong enough to support the corresponding
-one-step obligations, and the stronger episode-level claim appears only when a
-domain-specific per-step risk budget is justified explicitly.
+\begin{proposition}[Failure of any transfer obligation breaks the reference proof pattern]
+\label{prop:t11-counterexamples}
+If any one of the four T11 obligations fails, then there exists a domain
+instantiation for which the reference transfer argument breaks.
+\end{proposition}
+
+\begin{proof}
+If obligation~(1) fails, the latent state may lie outside $U_t$ with
+probability larger than $\alpha$, so the repair step can be safe only for the
+wrong uncertainty set and the one-step safety argument no longer applies.
+If obligation~(2) fails, an action may belong to the purported tightened set
+while still allowing a successor outside $\mathcal{S}$ for some state in
+$U_t$, so soundness is lost directly.  If obligation~(3) fails, the repair map
+can return an action outside the tightened safe set even when a safe repaired
+action exists, which again breaks the one-step argument.  If obligation~(4)
+fails, the kernel can reach a state where the tightened safe-action set is
+empty and no admissible fallback exists, so the transfer proof has no safe
+release path.  In each case the failure is structural rather than rhetorical:
+the missing obligation removes one of the exact proof steps used in the T11
+forward direction.
+\end{proof}
+
+T11 is therefore a typed structural transfer theorem paired with an explicit
+failure-mode converse, not a blanket declaration that every evaluated row
+already satisfies those obligations.  The energy-management reference row provides the full reference
+proof.  Other domains enter the monograph only when their instantiation
+evidence is strong enough to support the corresponding one-step obligations,
+and the stronger episode-level claim appears only when a domain-specific
+per-step risk budget is justified explicitly.
 
 \subsection{Machine-Checkable Contract Surfaces}
 

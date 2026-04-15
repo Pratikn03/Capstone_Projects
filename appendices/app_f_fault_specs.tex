@@ -7,13 +7,18 @@
 \label{app:fault-specs}
 
 This appendix records the benchmark-facing specifications that make the dissertation
-replayable and auditable.  ORIUS-Bench is universal at the schema level: every episode
+replayable and auditable. ORIUS-Bench is universal at the schema level: every episode
 tracks candidate action, repaired action, true-state violation, observed-state
-satisfaction, certificate state, fallback/intervention markers, and runtime cost.  The
+satisfaction, certificate state, fallback or intervention markers, and runtime cost. The
 current deepest empirical instantiation remains the battery witness row, so the detailed
-fault-family table below is still battery-grounded.  That grounding is deliberate: it
-shows the strongest defended fault surface while the benchmark contract itself remains
+fault-family table below is still battery-grounded. That grounding is deliberate: it shows
+the strongest defended fault surface while the benchmark contract itself remains
 domain-neutral.
+
+Any remaining battery-shaped compatibility fields in the codebase should therefore be read
+as legacy support surfaces, not as the dissertation's definition of the benchmark. The
+canonical benchmark language is the dual-trajectory, adapter-driven contract described in
+Chapter~\ref{ch:benchmark-reproducibility-protocol}.
 
 \section{Canonical fault families}
 

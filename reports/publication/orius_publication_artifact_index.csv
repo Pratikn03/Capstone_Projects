@@ -181,6 +181,9 @@ orius_artifact_appendix.md,narrative evidence,Tracked publication artifact used 
 orius_bench_battery_leaderboard.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
 orius_bench_battery_schema_table.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
 orius_calibration_diagnostics_matrix.csv,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.
+orius_camera_ready_freeze_ledger.json,structured evidence,Tracked publication artifact used for structured evidence in the universal monograph.
+orius_camera_ready_package_manifest.json,manifest,Tracked publication artifact used for manifest in the universal monograph.
+orius_camera_ready_package_manifest.md,manifest,Tracked publication artifact used for manifest in the universal monograph.
 orius_cross_domain_design_principles.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
 orius_deployment_validation_scope.csv,tabular evidence,Tracked publication artifact used for tabular evidence in the universal monograph.
 orius_domain_closure_matrix.csv,governance matrix,Tracked publication artifact used for governance matrix in the universal monograph.

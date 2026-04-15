@@ -1,0 +1,25 @@
+\chapter*{Notation and Conventions}
+\addcontentsline{toc}{chapter}{Notation and Conventions}
+
+This manuscript distinguishes the \emph{true plant state} from the
+\emph{telemetry-delivered state} at every stage of the argument.  The symbol
+$x_t$ denotes the latent physical state, while $\hat{x}_t$ and $z_t$ denote the
+controller-visible observation surface after parsing, delay, or fault
+processing.  The nominal intelligence proposes a candidate action
+$a_t^{\mathrm{cand}}$; ORIUS releases either the repaired action
+$a_t^{\mathrm{safe}}$ or an admissible fallback action.
+
+The reliability score $w_t \in [0,1]$ is a runtime trust signal, not a
+probability by definition.  Whenever a theorem uses $w_t$ inside a probabilistic
+bound, that move is justified by an explicit theorem-local contract.  The
+observation-consistent state set is written as $U_t$ in the universal chapters
+and as the domain-instantiated conformal tube in the reference proofs.  The
+safe set is written as $\mathcal{S}$ or, in the battery witness, through the
+SOC interval constraint.
+
+Formal counts in this dissertation are computed from the active master-manuscript
+include tree, not from every standalone \texttt{.tex} file in the repository.
+This avoids double-counting archived chapter surfaces and keeps the published
+formal inventory aligned to the canonical PDF.  Appendix~\ref{app:notation} and
+Chapter~\ref{ch:assumptions} remain the authoritative sources for the complete
+notation table and the assumption register.

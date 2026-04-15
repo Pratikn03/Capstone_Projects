@@ -4,7 +4,7 @@
     "corollary": 12,
     "definition": 15,
     "lemma": 5,
-    "proposition": 8,
+    "proposition": 9,
     "theorem": 26
   },
   "expected": {
@@ -12,7 +12,7 @@
     "corollary": 12,
     "definition": 15,
     "lemma": 5,
-    "proposition": 8,
+    "proposition": 9,
     "theorem": 26
   },
   "included_files": [
@@ -21,6 +21,9 @@
     "frontmatter/titlepage.tex",
     "frontmatter/abstract.tex",
     "frontmatter/acknowledgments.tex",
+    "frontmatter/preface.tex",
+    "frontmatter/notation_conventions.tex",
+    "frontmatter/empirical_results_note.tex",
     "chapters_merged/ch01_introduction.tex",
     "chapters_merged/ch02_related_work.tex",
     "chapters_merged/ch03_background.tex",
@@ -72,7 +75,7 @@
     "chapters/ch37_universality_completeness.tex": {
       "corollary": 2,
       "definition": 2,
-      "proposition": 1,
+      "proposition": 2,
       "theorem": 4
     },
     "chapters_merged/ch01_introduction.tex": {
@@ -95,5 +98,5 @@
       "proposition": 2
     }
   },
-  "total": 82
+  "total": 83
 }

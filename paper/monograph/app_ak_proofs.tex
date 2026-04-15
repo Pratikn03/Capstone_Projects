@@ -1,61 +1,62 @@
 \chapter{Proofs}
 \label{app:proofs}
 
-This appendix collects the proof-facing surface of the dissertation at the level required
-for manuscript traceability. The full repository still contains a richer battery-era proof
-archive, but the canonical dissertation proof surface is the theorem ladder summarized
-here, tied directly to the new chapter flow.
+This appendix records the proof-facing structure of the dissertation. It is not intended to
+replace the theorem chapter; it is intended to make the proof obligations inspectable and to
+show which claims are formal, which are empirical, and which rely on shared typed runtime
+objects.
 
-\section{Theorem ladder restatement}
-\begin{enumerate}
-  \item \textbf{OASG existence.} Under degraded observation, an action can be safe on the
-  observed state and unsafe on the true state.
-  \item \textbf{Safety preservation under repair.} If the repaired action lies inside the
-  admissible action set generated from the observation-consistent state set, then
-  true-state safety is preserved under the stated assumptions.
-  \item \textbf{Degradation-sensitive risk envelope.} As reliability decreases, the
-  uncertainty set expands and the admissible action budget contracts.
-  \item \textbf{No-free-safety principle.} A quality-ignorant controller cannot guarantee
-  zero true-state safety violation under admissible degraded-observation regimes.
-\end{enumerate}
+\section{Proof map}
+\begin{longtable}{p{0.18\textwidth}p{0.28\textwidth}p{0.18\textwidth}p{0.24\textwidth}}
+\caption{Theorem-to-proof map for the ORIUS dissertation.}\label{tab:proof-map}\\
+\toprule
+\textbf{Result} & \textbf{Main idea} & \textbf{Depends on} & \textbf{Artifact-facing link}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Result} & \textbf{Main idea} & \textbf{Depends on} & \textbf{Artifact-facing link}\\
+\midrule
+\endhead
+Theorem~\ref{thm:oasg-existence} & If observed legality is not informationally sufficient for true-state safety, then there exists a degraded-observation regime that admits an observed-safe but true-unsafe release. & A1, A4, A5 & Dual-trajectory replay and the OASG metric family.\\
+Theorem~\ref{thm:safety-preservation} & If inflation is conservative and the repair or fallback operator respects the tightened set, the released action preserves the defended safety predicate. & A1, A2, A3, A5 & Repair traces, fallback logs, and certificate-valid release surfaces.\\
+Theorem~\ref{thm:risk-envelope} & As reliability falls, uncertainty inflation and admissible-set tightening contract the release envelope lawfully rather than heuristically. & A1, A3, A6 & Calibration diagnostics, theorem gate figure, and runtime intervention traces.\\
+Proposition~\ref{prop:no-free-safety} & Quality-ignorant release can remain observed-safe while incurring true-state failure. & A1, A4, A5 & Witness-row violation tables and fault-family replay.\\
+\bottomrule
+\end{longtable}
 
-\section{Proof skeletons}
-\paragraph{OASG existence}
-Let $\hat{x}_t$ be the observed state and $x_t^\star$ the true state. If telemetry
-degradation makes the observation error nonzero while the nominal controller evaluates
-legality on $\hat{x}_t$ alone, then there exist states for which
-$u_t \in \mathcal{C}(\hat{x}_t)$ but $u_t \notin \mathcal{C}(x_t^\star)$. The proof
-follows by constructing a degradation regime that moves the true state across a safety
-boundary while preserving apparent legality on the observed state.
+\section{Proof sketches}
+\paragraph{OASG existence.}
+The proof proceeds by separating observed-state legality from true-state legality. Once the
+adapter exposes a true-state violation predicate and the replay harness exposes an observed
+state that is not informationally sufficient for that predicate, one can construct a
+degradation regime in which observed legality survives while true-state safety fails. The
+scientific role of the theorem is not to characterize every such regime exhaustively. It is
+to show that the gap is structural rather than anecdotal.
 
-\paragraph{Safety preservation under repair}
-ORIUS avoids that event by replacing the point observation with an
-observation-consistent set $\mathcal{X}_t$. Repair then projects the candidate action into
-an admissible set defined over $\mathcal{X}_t$. If the repair operator is feasible or an
-explicit fallback exists, release of the repaired action preserves the defended safety
-predicate under the assumed uncertainty and dynamics bounds.
+\paragraph{Safety preservation under repair.}
+The second theorem uses the conservativeness of the inflated observation-consistent set. If
+the repair operator only emits actions admissible over that set, or the fallback operator
+replaces release when such action does not exist, then the released action remains safe for
+the latent state whenever the inflation really upper-bounds that state. This is the exact
+point at which fallback becomes part of the proof surface rather than an implementation
+afterthought.
 
-\paragraph{Risk-envelope monotonicity}
-The risk-envelope argument follows from monotone inflation: worse reliability cannot
-justify a smaller state set or a larger admissible action set. This creates a law-like
-relationship between degraded telemetry and intervention pressure, which is why
-intervention is a scientific metric in ORIUS rather than a purely operational nuisance.
+\paragraph{Degradation-sensitive risk envelope.}
+The third theorem formalizes the intuition that reduced trust must shrink release freedom.
+Monotone reliability loss implies monotone widening of the uncertainty set; that widened set
+then implies monotone tightening of admissible release. The theorem does not say
+intervention is free. It says intervention pressure is a lawful consequence of degraded
+observation.
 
-\paragraph{No-free-safety}
-If a controller ignores observation quality, then an admissible degradation process can
-always be constructed that makes its fixed action semantics unsafe on the true state. The
-runtime layer is therefore not optional decoration; it is the mechanism that closes the
-gap between nominal control and physical legality.
+\paragraph{No-free-safety proposition.}
+The proposition follows by contradiction against any controller that checks legality only on
+observed state while ignoring observation degradation. If the degraded observation regime is
+admissible yet insufficiently informative about the latent state, then there exists a
+release that remains locally coherent while still violating the true safety predicate.
 
-\section{Proof-to-artifact linkage}
-Theorems in the dissertation are promoted only when they have both a formal statement and a
-matching artifact surface:
-\begin{itemize}
-  \item theorem dependency table in Chapter~\ref{ch:mathematical-foundations}
-  \item integrated theorem gate figure in Chapter~\ref{ch:mathematical-foundations}
-  \item witness-domain replay and calibration evidence in Chapters~\ref{ch:witness-domain-implementation} and \ref{ch:witness-results-failure-analysis}
-  \item parity and claim-boundary surfaces in Chapters~\ref{ch:universal-orius-across-domains} and \ref{ch:governance-reproducibility-limitations-conclusion}
-\end{itemize}
-
-This is the dissertation's proof discipline: theorem statements, replay evidence, and
-claim promotion remain coupled without being conflated.
+\section{Interpretation}
+These proofs are deliberately modest in scope. They do not prove equal-domain closure and
+they do not replace the need for replay, calibration, runtime, and governance artifacts.
+Their role is to anchor the manuscript's strongest claims to explicit assumptions and typed
+objects so that later empirical chapters can be read as validation of the same runtime
+contract rather than as isolated case studies.

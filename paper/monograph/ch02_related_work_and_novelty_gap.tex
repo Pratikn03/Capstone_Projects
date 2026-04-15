@@ -1,6 +1,16 @@
 \chapter{Related Work and the Novelty Gap}
 \label{ch:related-work-novelty-gap}
 
+ORIUS enters a crowded intellectual landscape, but the relevant literatures are crowded in a
+revealing way. Each contributes a necessary piece of the final argument: uncertainty
+quantification explains what can be said about predictive trust, runtime assurance explains
+why intervention must remain separate from nominal control, safe-control methods explain how
+constraints can reshape action, fault-detection work explains how degradation is recognized,
+and governance frameworks explain how claims and evidence must be bounded. The novelty gap
+appears only when those families are read together. They are rich in local technique yet
+still leave the release-boundary object of degraded observation split across separate
+traditions.
+
 \section{Conformal prediction and adaptive calibration}
 Conformal prediction and related distribution-free uncertainty methods provide one of the
 few disciplined ways to wrap learned models with coverage-aware uncertainty without
@@ -11,12 +21,11 @@ heteroskedastic and nonstationary settings, which makes them especially relevant
 physical system moves through regime changes or degraded telemetry states
 \cite{romano2019conformalized,gibbs2021adaptive,zaffran2022adaptive,stankeviciute2021conformal,xu2021dynamic,sesia2021comparison,bates2021distribution}.
 
-\paragraph{Why this is insufficient for ORIUS.}
-This family solves uncertainty quantification; it does not solve the release-boundary
-question that follows from that uncertainty. Coverage guarantees do not by themselves decide
-how the admissible action set should change, which fallback is allowed, or what evidence
-must accompany release once the observation surface is unreliable. ORIUS therefore uses
-calibration as an input to runtime safety, not as the full safety object.
+What remains missing is the release-boundary question that follows from calibrated
+uncertainty. Coverage guarantees do not by themselves decide how the admissible action set
+should change, which fallback is legitimate, or what evidence must accompany release once
+the observation surface becomes unreliable. ORIUS therefore treats calibration as an input
+to runtime safety rather than as the full safety object.
 
 \section{Runtime assurance and Simplex-style supervision}
 Runtime assurance architectures, supervisory controllers, shielding, and runtime
@@ -25,9 +34,8 @@ verification supply the language of intervention, veto, fallback, and monitored 
 That line of work is indispensable because it treats safe release as a separate problem from
 nominal policy design.
 
-\paragraph{Why this is insufficient for ORIUS.}
-Most supervisory schemes enter after the nominal controller has already proposed an action
-under a state estimate that is treated as sufficiently meaningful. ORIUS addresses an
+Yet most supervisory schemes enter after the nominal controller has already proposed an
+action under a state estimate that is treated as sufficiently meaningful. ORIUS addresses an
 earlier fault line: once observation quality degrades, the assurance layer must reason
 jointly about reliability, widened state uncertainty, repaired action, fallback, and
 certificate semantics. A supervisor without that observation-side logic is still missing the
@@ -40,11 +48,10 @@ translate model uncertainty into admissible control sets and corrective interven
 These methods are the closest classical relatives of ORIUS because they formalize the
 difference between nominal control intent and safe control execution.
 
-\paragraph{Why this is insufficient for ORIUS.}
-This family usually assumes that the uncertainty set and safety object have already been
-defined in a domain-specific way. ORIUS does not replace that work with a universal
-controller. Instead, it provides a typed runtime contract that can host many repair
-mechanisms while keeping reliability estimation, fallback semantics, and certificate
+The remaining gap is that this family usually assumes the uncertainty set and safety object
+have already been defined in a domain-specific way. ORIUS does not replace that work with a
+universal controller. Instead, it provides a typed runtime contract that can host many
+repair mechanisms while keeping reliability estimation, fallback semantics, and certificate
 discipline explicit. The novelty is not the existence of safe control alone; it is the
 runtime composition that makes safe control portable across domains.
 
@@ -55,12 +62,11 @@ the vocabulary for stale, delayed, reordered, dropped, or corrupted observations
 This literature is essential because degraded observation must first be recognized before it
 can influence action release.
 
-\paragraph{Why this is insufficient for ORIUS.}
 Detection alone does not specify how action semantics should change after trust degrades. A
-drift alarm can tell the system that something is wrong without saying how uncertainty
-inflates, how the safe set tightens, what repair is permitted, or what certificate makes
-the next step auditable. ORIUS uses detection as the opening move in a runtime safety
-sequence, not as the full response.
+drift alarm can say that something is wrong without saying how uncertainty inflates, how the
+safe set tightens, what repair is permitted, or what certificate makes the next step
+auditable. ORIUS uses detection as the opening move in a runtime safety sequence, not as
+the full response.
 
 \section{Domain-specific cyber-physical safety systems}
 Energy systems, autonomous mobility stacks, industrial control, healthcare monitoring, and
@@ -69,12 +75,54 @@ other cyber-physical systems already contain rich safety practice in their own l
 This practice matters because any claim of universality that ignores domain structure is
 empty from the start.
 
-\paragraph{Why this is insufficient for ORIUS.}
-Domain-specific systems typically optimize within one application vocabulary and one local
-evidence regime. They rarely expose a common contract that allows degraded-observation
-replay, repaired action, fallback semantics, certificate validity, and latency to be
+What they usually do not expose is a common contract through which degraded-observation
+replay, repaired action, fallback semantics, certificate validity, and latency can be
 compared across domains. ORIUS addresses that missing cross-domain runtime object rather
 than trying to erase domain structure.
+
+\section{Safety-case governance and lifecycle discipline}
+The dissertation also inherits an important lesson from safety-case and lifecycle practice:
+strong safety claims require structured argument, explicit assumptions, traceable evidence,
+and disciplined lifecycle boundaries. ORIUS does not claim compliance with sector-specific
+standards, but its claim-lock pipeline, artifact provenance, and certificate-governance
+surfaces are best understood in conversation with claim-based safety arguments and
+lifecycle-oriented risk management
+\cite{ul4600_2023,nist2023ai_rmf,iso26262_2018,iec61508_2010}.
+
+Governance frameworks say how evidence should be organized and how claims should be bounded;
+they do not themselves provide the runtime object that converts degraded observation into
+repaired or denied release. ORIUS borrows the discipline of explicit evidence structure and
+lifecycle boundaries, but its technical novelty remains the runtime layer that sits between
+observation degradation and actuation.
+
+\section{Benchmark, replay, and reproducibility gaps}
+There is also a measurement gap that cuts across the technical literatures above. Many papers
+report prediction error, control regret, collision rate, or intervention count, but do not
+record the dual-trajectory evidence needed to tell whether an action was only observed-safe or
+was truly safe on the latent physical state. That omission matters because the OASG is
+invisible unless the benchmark keeps both trajectories in view at once.
+
+Without replayable fault schedules, governed intervention traces, and a locked mapping from
+headline claims to artifacts, a physical-AI safety result is difficult to audit and easy to
+overstate. ORIUS therefore treats measurement discipline as part of the contribution rather
+than as packaging around the contribution. The benchmark contract, claim matrix, and manifest
+surfaces are necessary because they keep the monograph grounded in true-state safety rather
+than nominal software coherence.
+
+\section{Why ORIUS is not another forecasting or perception paper}
+The literature also invites a narrower but common misunderstanding: that ORIUS should be read as
+one more attempt to beat a baseline predictor, one more perception stack, or one more
+domain-specific robust controller. The dissertation rejects that framing directly. In the
+strongest witness row, forecasting quality matters because it affects calibrated uncertainty and
+therefore the release boundary, but the main scientific object is still the runtime layer that
+decides what action remains admissible once the observation surface becomes unreliable.
+
+\paragraph{Why this matters for the novelty claim.}
+This distinction prevents ORIUS from collapsing into a model-comparison paper. A new forecaster
+or perception backbone may improve nominal error while leaving the release-boundary question
+unchanged. ORIUS is novel only if it remains centered on degraded observation, admissible
+repair, governed fallback, and certificate semantics. That is why the related-work chapter is
+organized by missing runtime objects rather than by model families alone.
 
 \section{The novelty gap ORIUS addresses}
 The literature becomes most powerful when these families are read together, but it also
@@ -101,3 +149,10 @@ stops short of ORIUS's central object. It lacks a typed release contract that bi
 observed-state and true-state semantics, repaired action, fallback, certificate lifecycle,
 and cross-domain replay under one explicit interface. That final integration step is the
 novelty claim the dissertation defends.
+
+\paragraph{Boundary of this chapter.}
+This chapter establishes a literature gap, not a theorem or a parity result. Its role is to
+show why uncertainty, supervision, safe control, detection, and governance still leave the
+release-boundary object fragmented. The next chapters must still prove and validate that
+ORIUS closes enough of that fragmentation to justify a universal runtime safety-layer claim
+under bounded evidence.

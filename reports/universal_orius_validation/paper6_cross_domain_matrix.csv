@@ -3,5 +3,5 @@ battery,yes,True,True,True,True,True,True,evaluated
 industrial,yes,True,True,True,True,True,True,evaluated
 healthcare,yes,True,True,True,True,True,True,evaluated
 vehicle,yes,True,True,True,True,True,True,evaluated
-navigation,no,,,,,,,gated
-aerospace,no,,,,,,,gated
+navigation,yes,True,True,True,True,True,True,evaluated
+aerospace,yes,True,True,True,True,True,True,evaluated

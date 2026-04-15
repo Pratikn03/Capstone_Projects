@@ -5,16 +5,20 @@
 \begin{document}
 
 \frontmatter
+\hypersetup{pageanchor=false}
 \input{frontmatter/titlepage.tex}
+\clearpage
+\hypersetup{pageanchor=true}
 \input{frontmatter/abstract.tex}
 \input{frontmatter/acknowledgments.tex}
+\input{frontmatter/preface.tex}
+\input{frontmatter/notation_conventions.tex}
+\input{frontmatter/empirical_results_note.tex}
 \tableofcontents
 \listoftables
 \listoffigures
 
 \mainmatter
-
-\part{Problem Formulation and Witness Domains}
 \include{chapters_merged/ch01_introduction}
 \include{chapters_merged/ch02_related_work}
 \include{chapters_merged/ch03_background}
@@ -23,17 +27,7 @@
 \include{chapters_merged/ch06_main_results}
 \include{chapters_merged/ch07_universal_validation}
 \include{chapters_merged/ch08_conclusion}
-
-\part{DC3S Safety Theorem Ladder}
-
-\part{Universal ORIUS Framework and Multi-Domain Validation}
 \include{chapters/ch19b_sota_comparison}
-
-\part{Evidence Hardening and Reproducibility Surface}
-
-\part{Extensions and Runtime Promotion}
-
-\part{Boundary, Governance, and Conclusion}
 \include{chapters/ch37_universality_completeness}
 
 \appendix

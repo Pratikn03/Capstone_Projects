@@ -54,7 +54,7 @@ This report summarizes forecasting performance, backtesting, and decision‑supp
 | moving_average_24h | 3132.034953755044 | 2549.796620734908 | 1.561792529509564 | 8975049881.752747 | 703.498335966092 |
 
 ## Multi‑Horizon Backtest (Load)
-![](/Users/pratik_n/Downloads/gridpulse/reports/eia930/figures/multi_horizon_backtest.png)
+![](figures/multi_horizon_backtest.png)
 
 ## Conclusions
 GBM provides a strong baseline on the OPSD data, while sequence models capture temporal structure for longer horizons. Optimization outputs are cost‑ and carbon‑aware and suitable for operator decision support.

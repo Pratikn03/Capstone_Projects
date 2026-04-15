@@ -18,6 +18,12 @@
 \usetikzlibrary{arrows.meta,calc,positioning,shapes.geometric}
 \graphicspath{{generated/}{../assets/figures/}{../../paper/assets/figures/}{../../reports/publication/}{../../reports/hil/}{../../reports/figures/}{../../reports/universal_orius_validation/}{../../reports/universal_training_audit/}}
 
+\makeatletter
+\AtBeginDocument{%
+  \renewcommand*{\theHALG@line}{\thealgorithm.\arabic{ALG@line}}%
+}
+\makeatother
+
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{proposition}[theorem]{Proposition}

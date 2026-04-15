@@ -5,8 +5,9 @@
 \chapter{Full Proofs}
 \label{app:proofs}
 
-This appendix is the authoritative proof surface for the flagship battery
-theorem ladder.  The flagship battery set contains eight principal theorems:
+This appendix is the authoritative proof surface for the defended ORIUS
+theorem program.  The battery witness remains the deepest proof chain, so the
+full step-by-step derivations below begin with the reference ladder:
 \begin{enumerate}
   \item OASG existence,
   \item one-step safety preservation,
@@ -18,8 +19,11 @@ theorem ladder.  The flagship battery set contains eight principal theorems:
   \item graceful degradation dominance.
 \end{enumerate}
 The certificate half-life result remains a corollary, and safe-budget
-monotonicity remains a proposition rather than part of the flagship T1--T8
-ladder.  The broader integrated theorem-like surface, including precursor
+monotonicity remains a proposition rather than part of the T1--T8 reference
+ladder.  The later extension theorems T9--T11 are also indexed here so that
+Chapter~\ref{ch:universality-completeness}, this appendix, and
+Appendix~\ref{app:verified-theorems-gap-audit} point to the same proof
+surface.  The broader integrated theorem-like surface, including precursor
 results and supporting chapter statements, is catalogued separately in
 Appendix~\ref{app:integrated-theorem-surface-register}.
 
@@ -45,15 +49,16 @@ $\phi(x_{t+1})=1$.
 \begin{proof}
 Fix a step $t$ and assume the standing conditions A1--A5 and A7.  Because
 $x_t\in\Crac$, the true state lies in the reliability-adjusted conformal tube
-issued from the current observation.  In particular, the coverage event gives
+issued from the current observation.  In particular, membership in that tube gives
 \[
   |x_t-\hat{x}_t| \le m_t,
 \]
 where $m_t$ is the inflation-adjusted half-width determined by A2 and A5.
-The shield then computes the tightened safe set $\Aset$ by requiring the
-predicted next state from the observed state to remain at least $m_t$ away
-from each SOC boundary.  Since $\asafe\in\Aset$, the observed-state forward
-prediction satisfies
+This step is deterministic once the theorem is conditioned on $x_t\in\Crac$;
+it does not introduce a new probability statement.  The shield then computes
+the tightened safe set $\Aset$ by requiring the predicted next state from the
+observed state to remain at least $m_t$ away from each SOC boundary.  Since
+$\asafe\in\Aset$, the observed-state forward prediction satisfies
 \[
   \SOC_{\min}+m_t \le \hat{x}_t + \Delta(\asafe) \le \SOC_{\max}-m_t,
 \]
@@ -84,13 +89,17 @@ term is absorbed rather than left exposed.  Therefore
 This is exactly the safety predicate $\phi(x_{t+1})=1$.  The argument uses
 only the current-step information certified by A7 and therefore preserves
 causality.  Hence any action selected from $\Aset$ while the current state is
-inside $\Crac$ keeps the one-step successor in the safe set, as claimed.
+inside $\Crac$ keeps the one-step successor in the safe set.  The theorem
+stops at this one-step conditional statement; it does not itself quantify how
+often $x_t\in\Crac$ occurs.
 \qedhere
 \end{proof}
 
 \section{C.3\quad Battery ORIUS Core Bound}\label{sec:proof-core-bound}
 \begin{theorem}[restated]
-Under A1--A5, A7, $\E[V]\le\alpha\,T\,(1-\bar{w})$.
+Under A1--A5, A7, and the explicit battery risk-envelope contract
+$\Prob[Z_t=1\mid\mathcal{H}_t]\le\alpha(1-w_t)$, one has
+$\E[V]\le\alpha\,T\,(1-\bar{w})$.
 \end{theorem}
 \begin{proof}
 Let
@@ -106,19 +115,14 @@ time, gives
 \[
   \E[V] = \sum_{t=1}^{T}\E[Z_t] = \sum_{t=1}^{T}\Prob[Z_t=1].
 \]
-It therefore suffices to upper-bound each per-step violation probability.
-
-Under A2 and A5, the reliability-adjusted conformal tube widens as telemetry
-quality degrades, and the per-step residual risk is controlled by the
-weighted-coverage argument formalized in
-Lemma~\ref{lem:per-step-risk}.  For every step,
+The theorem-local battery contract supplies the per-step conditional envelope
 \[
-  \Prob[Z_t=1] \le \alpha(1-w_t).
+  \Prob[Z_t=1\mid\mathcal{H}_t] \le \alpha(1-w_t).
 \]
-The interpretation is direct: if reliability is perfect, the inflated set
-collapses to the nominal conformal set and the residual bound vanishes on the
-repair-certified surface; if reliability falls, the bound scales linearly with
-the unreliability mass $(1-w_t)$.
+Taking expectations of both sides gives
+\[
+  \Prob[Z_t=1] = \E[\Prob[Z_t=1\mid\mathcal{H}_t]] \le \alpha(1-w_t).
+\]
 
 Substituting the per-step bound into the expectation identity yields
 \[
@@ -141,11 +145,11 @@ Replacing the bracketed term with $\bar{w}$ gives
   \E[V] \le \alpha\,T\,(1-\bar{w}).
 \]
 This is the desired core bound.  The derivation invokes only finite-horizon
-identities, the per-step weighted-coverage lemma, and the standing
-assumptions required to define $w_t$ and the repair-certified tube; no
-temporal independence assumption is introduced.  Therefore the battery ORIUS
+identities and the explicit theorem-local battery risk budget; no temporal
+independence assumption is introduced.  Therefore the battery ORIUS
 core bound holds for any admissible horizon $T$ on the defended replay
-surface.  \qedhere
+surface whenever that per-step budget contract has been justified.
+\qedhere
 \end{proof}
 
 \section{C.4\quad No Free Safety}\label{sec:proof-no-free}
@@ -154,10 +158,27 @@ Under A1, A2, A4, for any quality-ignorant $\pi$ and $d>0$, $\exists$
 admissible fault sequence with $\TSVR(\pi)>0$.
 \end{theorem}
 \begin{proof}
-Quality-ignorant $\pi$ uses fixed margin.  Construct fault window with
-consecutive dropouts where $|\xi_t|>\delta_{\mathrm{bnd}}$
-(Lemma~\ref{lem:admissible-fault}).  Fixed margin cannot compensate.
-Chapter~\ref{ch:no-free-safety}.  \qedhere
+Fix a quality-ignorant controller $\pi$.  By definition, its effective safety
+margin does not depend on the reliability score, so there exists a constant
+$m^\pi \ge 0$ that upper-bounds the observation buffer implicitly used by the
+controller.  During the baiting phase of
+Chapter~\ref{ch:no-free-safety}, the controller is allowed to move the state
+within $\delta_{\mathrm{bnd}}$ of a safety boundary while telemetry remains
+nominal.
+
+Because $d>0$, Lemma~\ref{lem:admissible-fault} guarantees an admissible fault
+window with sufficiently concentrated degradation.  Choose a step $t^\star$
+inside that window where the accumulated observation error exceeds
+$\delta_{\mathrm{bnd}} + m^\pi$.  At that step the observed state still
+appears feasible relative to the controller's fixed margin, but the true state
+has shifted across the boundary-facing side of the admissible set by more than
+the controller can compensate.
+
+Therefore the action $\pi(\hat{x}_{t^\star})$ remains observed-state legal
+while creating a true-state violation.  This yields an observation-action
+safety gap and hence $\TSVR(\pi)>0$ on the constructed admissible sequence.
+The argument is constructive and finite-horizon, which is exactly the scope
+claimed in T4.  \qedhere
 \end{proof}
 
 \section{C.5\quad Certificate Validity Horizon}\label{sec:proof-cert-valid}
@@ -240,4 +261,128 @@ Under A1--A5, $B_t=|\Aset|\cdot\Delta t$ is monotone increasing in $w_t$.
 $|\Aset|=\SOC_{\max}-\SOC_{\min}-2m_t$ and
 $m_t=q_t/(w_t+\epsilon)$ is monotone decreasing in $w_t$, so $B_t$
 increases with $w_t$.  \qedhere
+\end{proof}
+
+\section{C.11\quad Universal Impossibility (T9)}\label{sec:proof-universal-impossibility}
+\textbf{Theorem reference.}
+The authoritative statement is Theorem~\ref{thm:universal-impossibility} in
+Chapter~\ref{ch:universality-completeness}.  It is repeated here so that the
+full proof appendix covers the complete defended theorem program rather than
+only the battery witness ladder.
+
+\begin{proof}[Appendix proof copy]
+By Assumption~A6$'$, the fault process is $\varphi$-mixing with geometric
+decay, so a buffer gap of length $\tau_{\mathrm{mix}}$ makes sufficiently
+separated windows approximately independent in total variation.  Partition the
+horizon into analysis windows of length $\ell$ separated by those buffers.
+Inside each analysis window, invoke the reference no-free-safety witness from
+Theorem~\ref{thm:no-free-safety}: a controller that does not adapt its safety
+margin to the reliability process admits an admissible degraded-observation
+sequence with positive violation probability.  Boundary reachability packages
+that window-level witness into a constant $c>0$ such that
+$p_{\mathrm{win}} \ge c\,d$ when the mean degradation rate is $d$.
+
+Let $Z_j^{\mathrm{win}}$ indicate whether the $j$th separated window incurs a
+true-state violation and define
+\[
+  D_j =
+  Z_j^{\mathrm{win}} -
+  \mathbb{E}\!\left[
+    Z_j^{\mathrm{win}}
+    \mid
+    \mathcal{F}_{(j-1)(\ell+\tau_{\mathrm{mix}})}
+  \right].
+\]
+The sequence $\{D_j\}$ is a martingale difference sequence with
+$|D_j| \le 1$.  Azuma--Hoeffding therefore yields exponential concentration of
+the centered partial sums around their mean.  Since the expected number of bad
+windows is at least $kcd$ over $k$ separated windows, the probability that the
+total violation count drops below a constant fraction of $kcd$ decays like
+$\exp(-\Omega(dT))$.  Taking expectations gives
+$\mathbb{E}[V_T] \ge \Omega(dT)$, which is the claimed
+$\mathbb{E}[V_T] \ge c\,d\,T$ lower bound up to renaming the constant.
+\end{proof}
+
+\section{C.12\quad Boundary-Indistinguishability Lower Bound (T10)}\label{sec:proof-frontier-lower-bound}
+\textbf{Theorem reference.}
+The authoritative statement is Theorem~\ref{thm:information-theoretic-lower-bound}
+in Chapter~\ref{ch:universality-completeness}.  The proof below preserves its
+scoped interpretation as a lower-bound frontier theorem under explicit extra
+hypotheses.
+
+\begin{proof}[Appendix proof copy]
+Fix a step $t$ and the binary boundary-testing subproblem with latent
+hypotheses $H_{0,t}$ and $H_{1,t}$.  Because the controller only acts through
+the degraded observation channel, its decision is a binary test between the
+observation laws $P_{0,t}$ and $P_{1,t}$.  Le~Cam's lemma gives
+\[
+  \max\!\bigl(
+    \Prob[\psi_t \text{ errs}\mid H_{0,t}],
+    \Prob[\psi_t \text{ errs}\mid H_{1,t}]
+  \bigr)
+  \ge
+  \frac{1-\mathrm{TV}(P_{0,t},P_{1,t})}{2}
+  \ge
+  \frac{1-w_t}{2}.
+\]
+Whenever the unsafe-side hypothesis $H_{1,t}$ holds and the controller makes
+that binary mistake, the step contributes a true-state violation.  Therefore
+\[
+  \Prob[Z_t = 1]
+  \ge
+  \Prob(H_{1,t})\Prob[\psi_t \text{ errs}\mid H_{1,t}]
+  \ge
+  p_t\,\frac{1-w_t}{2}.
+\]
+Summing over the horizon and applying linearity of expectation gives
+\[
+  \mathbb{E}[V_T(\pi)]
+  \ge
+  \frac{1}{2}\sum_{t=1}^T p_t(1-w_t).
+\]
+The special case $p_t \ge \alpha/2$ for all $t$ yields the stated frontier
+$\mathbb{E}[V_T(\pi)] \ge \tfrac{1}{4}\alpha(1-\bar{w})T$.  The proof does not
+claim a sharper constant without a domain-specific argument for the
+boundary-mass sequence $\{p_t\}$, which is exactly why T10 is defended as a
+stylized lower bound rather than as a global minimax theorem.
+\end{proof}
+
+\section{C.13\quad Typed Structural Transfer and Failure-Mode Converse (T11)}\label{sec:proof-typed-transfer}
+\textbf{Theorem reference.}
+The forward theorem is Theorem~\ref{thm:universality-completeness} and the
+converse witness is Proposition~\ref{prop:t11-counterexamples} in
+Chapter~\ref{ch:universality-completeness}.  The appendix copies the key proof
+logic so the full-proofs surface remains self-contained.
+
+\begin{proof}[Appendix proof copy]
+Fix a step $t$ and condition on the causal observation history
+$\mathcal{H}_t$.  Let $E_t = \{x_t \in U_t\}$ denote the event that the latent
+state lies in the constructed observation-consistent set.  By the first T11
+obligation,
+\[
+  \Prob[E_t \mid \mathcal{H}_t] \ge 1-\alpha.
+\]
+On $E_t$, the soundness obligation implies that every action in the tightened
+safe-action set preserves safety at the next step for every state in $U_t$ and
+every admissible disturbance.  If the tightened safe-action set is non-empty,
+the repair-membership obligation guarantees that the released repaired action
+lies inside that set and is therefore safe on $E_t$.  If the tightened
+safe-action set is empty, the fallback-admissibility obligation guarantees a
+safe release path from the current safe state.  In either branch,
+\[
+  \Prob[x_{t+1}\in\mathcal{S}\mid\mathcal{H}_t]
+  \ge
+  \Prob[E_t\mid\mathcal{H}_t]
+  \ge
+  1-\alpha.
+\]
+This proves the one-step transfer direction.  The converse direction is
+structural: if any one of the four obligations fails, the corresponding step
+in the forward proof disappears.  Failure of coverage lets the latent state
+leave $U_t$ too often, failure of soundness permits unsafe actions inside the
+purported tightened set, failure of repair membership allows the kernel to
+release an unsafe action even when a safe one exists, and failure of fallback
+admissibility leaves the kernel with no safe release path when the tightened
+set is empty.  Each failure therefore produces a domain instantiation where
+the reference T2-style argument breaks.
 \end{proof}

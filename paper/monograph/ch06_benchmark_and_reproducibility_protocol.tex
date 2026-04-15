@@ -1,25 +1,57 @@
 \chapter{Benchmark and Reproducibility Protocol}
 \label{ch:benchmark-reproducibility-protocol}
 
-\section{Dual-trajectory evaluation as the core benchmark principle}
-ORIUS-Bench is built around dual-trajectory replay. Every evaluation episode distinguishes
-between what the runtime \emph{observes} and what the plant or replay harness treats as
-the \emph{true} safety surface. This is the only reliable way to measure OASG, because
-observed-state legality alone cannot reveal whether the action was physically safe.
+\section{Why ORIUS-Bench is central to the thesis}
+Once the runtime object has been fixed, the next question is whether it can be measured in a
+way that matches the theory rather than only the software stack. ORIUS-Bench is the answer
+to that question. It is not infrastructure attached after the science; it is the
+measurement contract that makes the dissertation's central object observable. If OASG is the
+gap between observed-state legality and true-state safety, then the benchmark must expose
+both surfaces explicitly. A benchmark that measures only forecast error, controller cost, or
+observed-state success cannot validate the ORIUS claim because it cannot see the hidden
+failure event the book is about.
 
-\section{Replay, faults, and deterministic schedules}
-The benchmark uses deterministic fault schedules so that replay, comparison, and
-certificate traces remain reproducible. Fault families include dropout, stale holds,
-delay, reordering, spikes, drift, and cross-domain analogs. The important scientific
-point is not merely that faults exist; it is that they can be replayed against the same
-true-vs-observed contract across domains.
+\section{Dual-trajectory evaluation}
+Every ORIUS-Bench episode therefore carries two trajectories:
+\begin{itemize}
+  \item the \emph{observed} trajectory available to the runtime after degradation; and
+  \item the \emph{true} trajectory used only by the replay or evaluation harness to judge
+  whether release was physically safe.
+\end{itemize}
+That separation makes the benchmark stricter than a conventional controller comparison. A
+nominal controller may still appear coherent on the observed state while the replay harness
+records a true-state violation. ORIUS-Bench treats that divergence as first-class evidence.
 
-\section{ORIUS-Bench metrics}
-The dissertation evaluates ORIUS through a metric family that matches the runtime object:
-true-state violation rate (TSVR), observation-action safety gap, certificate validity,
-graceful degradation quality, intervention burden, audit completeness, and runtime
-latency. These metrics prevent the dissertation from drifting into a pure forecasting or
-pure control performance narrative.
+\section{Deterministic replay and fault schedules}
+The benchmark uses deterministic fault schedules so that comparisons are reproducible and so
+that certificate traces can be replayed under the same degraded-observation regime. Fault
+families include dropout, stale holds, delay, reordering, spikes, drift, and domain-local
+analogs. The scientific point is not merely that faults exist. It is that the same fault
+grammar can be replayed against one release contract across domains.
+
+Strict replay discipline matters for another reason: it prevents the dissertation from
+hiding behind one-off operational anecdotes. A run must be reproducible through a manifest,
+fault schedule, and artifact family. If a result cannot be regenerated from the tracked
+surface, it is not part of the defended thesis claim.
+
+\section{Metrics that match the runtime object}
+ORIUS-Bench measures the runtime layer through seven core metrics:
+\begin{description}
+  \item[TSVR] true-state violation rate, the primary safety outcome;
+  \item[OASG] the observed-safe / true-unsafe discrepancy rate;
+  \item[CVA] certificate-valid action rate or validity surface;
+  \item[GDQ] graceful degradation quality under fallback or reduced-operation modes;
+  \item[IR] intervention rate, capturing how often the runtime must repair or deny release;
+  \item[AC] audit completeness, measuring whether release is reconstructable after the fact;
+  \item[RL] runtime latency, measuring whether the protection layer remains operationally
+  usable.
+\end{description}
+
+This metric family matters because it keeps the book from collapsing into a single
+leaderboard score. ORIUS is not about RMSE alone, and it is not about controller cost alone.
+It is about safe release under degraded observation. The benchmark therefore measures
+whether release remained safe, whether intervention was required, whether the certificate
+remained meaningful, and whether the runtime stayed fast enough to matter.
 
 \IfFileExists{paper/assets/tables/generated/cross_domain_oasg_table.tex}{%
 \input{paper/assets/tables/generated/cross_domain_oasg_table}%
@@ -27,14 +59,45 @@ pure control performance narrative.
 \input{assets/tables/generated/cross_domain_oasg_table}%
 }
 
+\section{Strict universal mode and legacy compatibility}
+The dissertation adopts a strict universal reading of the benchmark. Domain-neutral
+violation predicates, observed-state legality predicates, and constraint margins must flow
+through the adapter contract. Legacy battery-shaped compatibility fields may remain in the
+codebase for historical or bounded-support reasons, but they are not allowed to define the
+universal benchmark story in the manuscript.
+
+That distinction keeps the witness row from quietly redefining the universal object. Battery
+is the deepest defended row because its evidence chain is strongest, not because the
+benchmark is secretly battery-specific. ORIUS-Bench must therefore be written in
+domain-agnostic terms even when the strongest current replay surface is battery-backed.
+
 \section{Artifact provenance and claim locking}
 The benchmark protocol is inseparable from the claim-lock pipeline. The canonical thesis
 surface is \texttt{paper/paper.tex}, but its headline tables and figures are backed by
-manifests, publication matrices, and governed artifact paths. This means the dissertation
-is not ``about'' results in the abstract; it is a storyboard of verifiable evidence.
+manifests, publication matrices, and governed artifact paths. This is what prevents the
+manuscript from becoming a persuasive story about results that cannot later be checked.
 
-\section{Strict universal mode}
-For the dissertation, benchmark discipline also means refusing battery-shaped shortcuts in
-universal language. Domain-neutral replay predicates, adapter hooks, and parity gating are
-the canonical surfaces. Legacy compatibility fields can remain for historical or bounded
-support use, but they are not allowed to define the universal benchmark story.
+The repository's publication surfaces already enforce this discipline. The parity matrix,
+submission scorecard, runtime/governance matrices, and deployment-validation scope are not
+mere reporting layers. They are the machine-readable surfaces that keep prose aligned with
+evidence status.
+
+\section{Reproducibility checklist}
+For a result to count as defended in this dissertation, the following conditions must hold:
+\begin{enumerate}
+  \item the domain row must have an explicit safety predicate and adapter semantics;
+  \item the replay must expose true and observed trajectories;
+  \item the fault schedule and manifests must be reproducible;
+  \item the result must land in a tracked artifact family; and
+  \item the claim validator must allow the corresponding manuscript language.
+\end{enumerate}
+This checklist is stricter than ``the code ran once.'' It is the mechanism by which ORIUS
+turns software artifacts into scientific evidence.
+
+\section{Benchmark takeaway}
+What this chapter adds to the argument is a measurement discipline equal to the runtime
+object introduced in Chapters~3 and~4. ORIUS-Bench makes degraded-observation safety
+measurable through dual-trajectory replay, deterministic fault injection, runtime metrics
+matched to the release object, and claim-locked provenance. Equal-domain maturity still
+depends on which rows clear those requirements, but the measurement contract itself is now
+stable across the dissertation.

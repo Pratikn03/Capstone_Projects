@@ -2,18 +2,28 @@
 \label{ch:temporal-certificates-graceful-degradation}
 
 \section{Certificate horizon as a runtime object}
-ORIUS certificates are temporal objects, not merely one-step labels. A certificate has a
-validity horizon, an expiration condition, and a bounded interpretation under worsening
-observation. This matters because degraded telemetry can remain acceptable for one step and
-become unacceptable only a short time later. The temporal question is therefore not
-``safe or unsafe forever,'' but ``how long does the runtime have before the current
-certificate no longer justifies release?''
+ORIUS certificates are temporal objects, not one-step labels. A certificate has a validity
+horizon, an expiration condition, and a bounded interpretation under worsening observation.
+This matters because degraded telemetry can remain acceptable for one step and become
+unacceptable only a short time later. The temporal question is therefore not ``safe or
+unsafe forever,'' but ``how long does the runtime have before the current certificate no
+longer justifies release?''
+
+\section{Why temporal safety belongs inside runtime assurance}
+This temporal view is one of the places where ORIUS aligns most clearly with classical
+runtime-assurance intuition. Simplex-style architectures distinguish between high-
+performance nominal control and a safer supervisory authority that must take over when the
+nominal contract is no longer justified \cite{sha1998simplex,sha2001using}. ORIUS extends
+that idea by attaching horizon semantics directly to the certificate object. The runtime is
+not only deciding whether to intervene. It is also deciding how long the present release
+claim is allowed to remain live before fallback becomes mandatory.
 
 \section{Expiration, half-life, and safe-hold}
-The dissertation treats horizon and half-life conservatively. The current evidence is
-strongest for bounded expiration and safe-hold semantics under blackout-style degradation.
-That is the right level of claim: certificate time is measurable and governable, but it is
-not yet promoted into a universal law of every plant and every sensor regime.
+The current evidence supports a conservative temporal reading. Horizon and half-life are
+most strongly defended as bounded expiration and safe-hold semantics under blackout-style
+degradation. That is the right level of claim: certificate time is measurable and
+governable, but it is not yet promoted into a universal law of every plant and sensor
+regime.
 
 \begin{figure}[htbp]
 \centering
@@ -22,15 +32,29 @@ not yet promoted into a universal law of every plant and every sensor regime.
 }{%
 \includegraphics[width=0.80\textwidth]{../reports/publication/fig_blackout_halflife.png}%
 }
-\caption{Blackout half-life surface used to motivate certificate expiration, bounded safe-hold, and temporal intervention discipline.}
+\caption{Blackout half-life surface used to motivate certificate expiration, bounded
+safe-hold, and temporal intervention discipline.}
 \label{fig:blackout-half-life}
 \end{figure}
+
+The half-life framing matters because it gives the runtime a language for degradation that
+is stronger than an unstructured timeout. A certificate can decay in justification even when
+the nominal policy remains capable of producing an action. ORIUS uses that decay to decide
+when safe-hold, curtailment, or reduced-operation behavior should replace ordinary release.
+
+\section{Severe-blackout protocol}
+The severe-blackout setting is the cleanest empirical test of temporal semantics because the
+runtime cannot rely on fresh observation arriving in time to rescue nominal control. The
+question becomes: can the runtime preserve a governed reduced-operation mode long enough to
+avoid unsafe release while still remaining operationally legible? That is why the blackout
+protocol belongs in the main body. It is not a corner-case stress test. It is the clearest
+demonstration that certificates are temporal objects with behavioral consequences.
 
 \section{Graceful degradation policies}
 When no full-quality control action remains justified, ORIUS benchmarks degradation
 policies explicitly rather than treating them as informal emergency behavior. This is the
-runtime-assurance connection in practice: the system needs a governed way to do less,
-safer, and more explainably when observation quality collapses.
+runtime-assurance connection in practice: the system needs a governed way to do less, safer,
+and more explainably when observation quality collapses.
 
 \begin{figure}[htbp]
 \centering
@@ -39,12 +63,19 @@ safer, and more explainably when observation quality collapses.
 }{%
 \includegraphics[width=0.86\textwidth]{../reports/publication/fig_graceful_four_policies.png}%
 }
-\caption{Four-policy graceful degradation comparison. The dissertation uses this family to treat fallback quality as a benchmarked layer instead of an unexamined emergency default.}
+\caption{Four-policy graceful degradation comparison. The dissertation uses this family to
+treat fallback quality as a benchmarked layer instead of an unexamined emergency default.}
 \label{fig:graceful-four-policies}
 \end{figure}
 
-\section{Bounded claim}
-The temporal chapter supports a bounded but important claim: certificate time and graceful
-degradation can be benchmarked and governed as part of the same runtime object as repair
-and fallback. It does not claim a universal optimal degradation policy, and it does not
-erase the domain-specific obligations that remain tied to the parity matrix.
+Benchmarking degradation policies matters scientifically because a runtime could always buy
+safety by immediately collapsing to a maximally conservative shutdown or no-op. ORIUS asks a
+more demanding question: what bounded policy still preserves safety while keeping the system
+operationally interpretable and certificate-governed?
+
+\section{Temporal extension}
+This chapter extends the same runtime object introduced earlier rather than adding a separate
+theory of fallback. Certificate time and graceful degradation become measurable and governable
+parts of the release object itself. The defended claim remains bounded: time-to-expiration,
+safe-hold, and fallback quality now belong to the scientific evaluation surface of ORIUS,
+but no universal optimal degradation policy is claimed here.

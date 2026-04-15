@@ -1,123 +1,173 @@
 \chapter{Introduction and Thesis Claims}
 \label{ch:introduction-thesis-claims}
 
-A battery controller can be shown stale feeder telemetry and continue dispatching as if the
-network were quiet. A vehicle can track a nominal lane geometry after the observation stream
-has already fallen behind the scene. A bedside monitoring system can smooth away a sudden
-physiological transition while its downstream policy still appears internally consistent. In
-each case the failure is structurally the same: the controller acts on an observation
-surface that is coherent enough for computation but no longer trustworthy enough for safe
-release. This dissertation begins from that release-boundary hazard.
+A battery dispatch stack can continue releasing power while feeder telemetry has already gone
+stale enough to hide a true state-of-charge or network violation. A vehicle controller can
+preserve lane-centering behavior even after the scene estimate has fallen behind the physical
+traffic geometry. A bedside monitoring policy can remain internally consistent while its input
+stream smooths away the very transition that should have triggered intervention. These systems
+look different at the level of plant dynamics and domain semantics, but they share one hidden
+law: \emph{physical AI acts on observations, not on reality}. Once the observation surface
+degrades, a system can continue to compute coherent actions while the physical basis for those
+actions has already failed.
 
-\section{From degraded observation to unsafe release}
-Physical AI systems always act through an observation layer. Telemetry arrives late, state
-estimators compress uncertainty, learned models summarize partially observed trajectories,
-and communication channels drop, reorder, or distort critical signals. Most stacks treat
-those effects as nuisances to be absorbed by better prediction, better perception, or better
-control tuning. ORIUS starts from the opposite premise: once degraded observation changes
-what can be known about the physical world, it changes what actions are safe to release.
+This dissertation is organized around that release-boundary hazard. Its central claim is that
+physical-AI safety under degraded observation requires a dedicated runtime layer between nominal
+intelligence and actuation, and that this layer can be expressed through one reusable grammar:
+\emph{Detect}, \emph{Calibrate}, \emph{Constrain}, \emph{Shield}, and \emph{Certify}. ORIUS is
+the implemented form of that grammar. It is not proposed as a universal controller, not as a
+replacement for domain-specific estimation or control, and not as a blanket claim that every
+supported domain has already reached equal empirical maturity. It is proposed as the right
+runtime object for deciding what action remains admissible once observation trust degrades.
 
-The central danger is therefore not forecast error alone and not perception error alone. It
-is the possibility that action legality on the observed state diverges from action legality
-on the true state. ORIUS names that discrepancy the
-\emph{observation--action safety gap} (OASG). The OASG is the dissertation's scientific
-object because it identifies the exact place where nominal intelligence can remain coherent
-while physical safety has already been lost.
+\section{The hidden law of physical AI}
+Physical AI systems never act on truth directly. They act on packets, sensor fusion products,
+state estimators, learned summaries, and communication layers that compress the world into a
+runtime observation object. That compression is unavoidable. It is what allows downstream
+forecasting, planning, optimization, and control to happen at all. But it also creates a
+standing safety debt: the legality of an action is usually evaluated on the observed state even
+though the true physical state may already have diverged.
+
+The dissertation therefore takes a position that differs from the standard performance-first
+framing. The deepest safety problem is not only forecast error, perception error, or nominal
+control error. It is the possibility that a system remains computationally coherent while its
+observation surface is no longer trustworthy enough to justify physical release. In ORIUS, that
+discrepancy is named the \emph{observation--action safety gap} (OASG). The OASG is the primary
+scientific object because it marks the exact point at which internally legal behavior can become
+physically unsafe without obvious software failure.
+
+\section{Why degraded observation is a release-boundary problem}
+Most deployed stacks already include pieces of the response: anomaly scores, confidence
+thresholds, conservative margins, or fallback modes. What they often lack is a single runtime
+discipline that ties those pieces together. Detection alone is not enough, because a system that
+detects degraded telemetry must still decide how uncertainty changes. Wider uncertainty is not
+enough, because the admissible action set must be recomputed under that widened state set.
+Recomputed admissibility is not enough, because unsafe candidate actions must be repaired or
+replaced before release. And none of that is enough if the runtime cannot later explain why an
+action was allowed, for how long, and under which fallback or certificate state.
+
+ORIUS is organized around that full loop. The contribution of the dissertation is therefore not
+``better forecasting'' and not ``better control'' in isolation. It is a runtime safety layer that
+accepts the reality of degraded observation and then turns that reality into governed release
+semantics. This is why the central ORIUS question is not ``what prediction model is best?''
+but ``what action remains safe to release, with what uncertainty, with what repair, and under
+what certificate, once observation quality degrades?''
 
 \section{Thesis claim}
-This dissertation advances one central claim: \emph{physical AI under degraded observation
-requires a runtime safety layer that sits between nominal intelligence and physical release,
-and that layer can be expressed through one reusable grammar of detection, uncertainty
-inflation, safe-set tightening, action repair or fallback, and certificate-aware release.}
-ORIUS is proposed as that layer.
+The thesis claim can be stated compactly:
+\begin{quote}
+\emph{Physical AI under degraded observation requires a certificate-aware runtime safety layer
+that mediates between nominal intelligence and physical release; that layer can be expressed
+through one reusable contract of reliability assessment, uncertainty inflation, admissible-set
+tightening, repaired or fallback action, and governed certificate emission.}
+\end{quote}
 
-The claim is strong but intentionally bounded. ORIUS is not a universal optimal controller,
-not a replacement for domain-specific control design, and not yet a proof of equal-domain
-closure across every supported application. It is a runtime discipline for deciding what
-action may still be released once observation quality has degraded.
-
-\section{ORIUS as the dissertation object}
-The reusable object in this dissertation is a typed
+ORIUS operationalizes that claim through a typed
 Detect--Calibrate--Constrain--Shield--Certify kernel.
 \begin{itemize}
-  \item Detect scores reliability loss in the observation channel.
-  \item Calibrate widens the observation-consistent state set.
-  \item Constrain recomputes admissible action under that widened set.
-  \item Shield repairs or replaces unsafe candidate actions.
-  \item Certify records why the release remains admissible and how long that claim should
-  remain valid.
+  \item \textbf{Detect} scores the reliability of the observation channel.
+  \item \textbf{Calibrate} widens the observation-consistent state set as reliability falls.
+  \item \textbf{Constrain} recomputes admissible action under that widened uncertainty surface.
+  \item \textbf{Shield} repairs unsafe candidate action or escalates to a fallback policy.
+  \item \textbf{Certify} records why release remains admissible, for how long, and under what
+  governance state.
 \end{itemize}
-The important point is that ORIUS does not compete with every controller on the same terms.
-It addresses the release-boundary decision that appears once a controller admits the
-observation channel may already be wrong.
+
+The key point is architectural. ORIUS is written as a post-nominal layer. It wraps inherited
+domain controllers rather than assuming they can all be redesigned from first principles. That
+choice is what makes the framework portable across batteries, vehicles, industrial control,
+healthcare monitoring, navigation, and aerospace without pretending that those domains share one
+plant model or one optimal nominal controller.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\textwidth]{fig_universal_framework}
-\caption{ORIUS as a universal runtime safety layer between nominal intelligence and
-physical release. The same five-stage kernel recurs across domains even though the domains
-do not share a plant model, controller family, or optimization objective.}
+\caption{ORIUS as a universal runtime safety layer between nominal intelligence and physical
+release. The five-stage kernel recurs across domains even though the domains do not share a
+plant model, nominal controller family, or optimization objective.}
 \label{fig:intro-universal-framework}
 \end{figure}
 
-Three implementation-grounded surfaces make this claim more than conceptual language.
-\texttt{DomainAdapter} exposes the domain safety predicate, true-state margin, and fallback
-semantics that the runtime must protect. The universal benchmark schema exposes one replay
-contract for true-state violation, intervention, fallback, certificate validity, and
-latency. CertOS supplies the lifecycle semantics that determine when repaired action can be
-issued, renewed, expired, revoked, or replaced by fallback.
+\section{Why this dissertation is a monograph, not a stitched paper bundle}
+The argument of the dissertation is structurally single-threaded. It begins with one hidden
+hazard, develops one runtime object, formalizes one theorem ladder, measures one benchmark
+contract, and then asks how far that same safety grammar travels across multiple domains.
+Because the argument is unified, the correct dissertation form is a doctrine-driven monograph
+rather than a stitched collection of papers. Battery remains the deepest witness row, but it is
+not the identity of the thesis. Its role is to provide the deepest theorem-to-code-to-artifact
+surface against which the broader universal claim can be calibrated.
 
-Those three surfaces are not supporting details around a more abstract contribution. They
-are the mechanism that makes ORIUS scientifically concrete. Without \texttt{DomainAdapter},
-the safety object stays implicit and domain-local. Without the universal benchmark schema,
-cross-domain degraded-observation claims remain incomparable. Without CertOS, repaired
-action lacks a governed release semantics. Taken together, they are what turns ORIUS from a
-collection of useful ideas into a reusable runtime layer.
+Three implementation-grounded objects make that monograph possible. First, the
+\texttt{DomainAdapter} contract fixes what every domain must expose: telemetry semantics,
+constraint predicates, repair hooks, and certificate payloads. Second, ORIUS-Bench fixes the
+dual-trajectory replay contract through which observed safety and true-state safety can be
+compared. Third, CertOS turns repaired action into a governed release object through lifecycle
+transitions, certificate horizons, and audit records. Taken together, those objects let the
+dissertation defend a reusable runtime layer rather than a loose set of case studies.
 
 \section{Main contributions}
-The dissertation makes exactly four contributions.
+The dissertation makes four contributions.
 \begin{enumerate}
-  \item \textbf{A runtime object.} It defines OASG-centered safety under degraded
-  observation as a first-class runtime problem for physical AI.
-  \item \textbf{A systems object.} It presents the ORIUS kernel as an adapterized runtime
-  safety layer built around \texttt{DomainAdapter}, the universal benchmark schema, and
-  CertOS release semantics.
-  \item \textbf{A formal object.} It develops a theorem bridge from reliability-conditioned
-  uncertainty and repaired action to bounded violation reduction under explicit assumptions.
-  \item \textbf{An empirical object.} It assembles bounded multi-domain evidence with one
-  witness row and explicit defended and gated rows rather than flattening all domains into a
-  false claim of equal maturity.
+  \item \textbf{A problem contribution.} It defines degraded observation as a universal
+  release-boundary hazard for physical AI through the observation--action safety gap.
+  \item \textbf{A systems contribution.} It presents ORIUS as a typed runtime layer that
+  connects reliability assessment, uncertainty inflation, safe-set tightening, repair or
+  fallback, and governed certificate emission.
+  \item \textbf{A formal contribution.} It develops a theorem bridge from reliability-aware
+  uncertainty and repaired action to bounded reduction in true-state safety violation under
+  explicit assumptions.
+  \item \textbf{An empirical contribution.} It assembles a claim-locked benchmark and
+  multi-domain evidence program that distinguishes a deepest witness row from defended bounded
+  peers, portability rows, and explicitly gated rows rather than flattening them into a false
+  equal-maturity claim.
 \end{enumerate}
 
 \section{Claim discipline}
-The manuscript uses three claim classes and keeps them distinct.
+The dissertation uses three claim classes and keeps them visibly separate from the first chapter
+forward.
 \begin{description}
-  \item[Proved claims] theorem-level results under stated assumptions for OASG, repair, and
-  bounded safety improvement.
-  \item[Validated claims] replay-backed and runtime-governed empirical claims tied to
-  tracked artifacts.
-  \item[Roadmap claims] extensions that are structurally motivated but not promoted as
-  defended evidence.
+  \item[Proved claims] are theorem-grade statements under explicit assumptions about degraded
+  observation, uncertainty inflation, repair, and bounded violation reduction.
+  \item[Validated claims] are empirical statements tied to replayable artifacts, runtime traces,
+  and governed benchmark outputs.
+  \item[Roadmap claims] are structurally motivated extensions that are intentionally not promoted
+  as defended evidence.
 \end{description}
-That distinction keeps the dissertation from confusing architectural universality with
-empirical parity. The exact row-by-row maturity boundary is stated in the cross-domain
-chapter and then restated once in the conclusion, rather than repeated throughout the
-manuscript.
 
-\section{Why ORIUS matters beyond one domain}
-The importance of ORIUS is not that batteries, vehicles, industrial plants, healthcare
-systems, navigation stacks, and aerospace controllers secretly reduce to the same plant. The
-importance is that they all face the same release-boundary question once observation trust
-degrades: what action can still be justified, with what margin, and under what fallback and
+This distinction is not only stylistic caution. It prevents a universal architectural argument
+from being mistaken for equal empirical parity, and it keeps the manuscript aligned with the
+repository's claim-lock discipline. Reviewers should be able to tell, at any point in the book,
+whether a statement is theorem-backed, artifact-backed, or explicitly left as future work.
+
+\section{Why ORIUS matters beyond one witness domain}
+The importance of ORIUS is not that batteries, vehicles, industrial plants, healthcare systems,
+navigation stacks, and aerospace controllers secretly reduce to one plant. The importance is
+that they all face the same release-boundary question once observation trust degrades: what
+action can still be justified, with what uncertainty, with what fallback, and under what
 certificate? ORIUS freezes the semantics of that question so that cross-domain comparison
 happens at the level of runtime safety rather than only at the level of application area.
 
+That framing also changes how the thesis relates to adjacent literature. Conformal prediction and
+adaptive calibration provide disciplined uncertainty surfaces \cite{vovk2005algorithmic,romano2019conformalized,gibbs2021adaptive}.
+Runtime assurance contributes supervisory release logic \cite{sha1998simplex,sha2001using}.
+Safety filters and barrier methods provide computable constraint-preserving action geometry
+\cite{ames2019control,ames2014cbf,wabersich2021predictive}. Safety-case governance and risk
+management standards clarify why claims, lifecycle discipline, and auditable evidence matter even
+when formal compliance is not being claimed \cite{ul4600_2023,nist2023ai_rmf,iso26262_2018,iec61508_2010}.
+ORIUS brings those strands together by centering the missing object they all touch but do not
+fully stabilize: the runtime safety layer for degraded observation.
+
 \section{Dissertation organization}
-The rest of the dissertation follows that argument directly. Chapters~\ref{ch:related-work-novelty-gap}
-and~\ref{ch:formal-problem-formulation} define the novelty gap and formal problem object.
+The rest of the dissertation follows the doctrine directly. Chapters~\ref{ch:related-work-novelty-gap}
+and~\ref{ch:formal-problem-formulation} define the novelty gap and the formal OASG object.
 Chapters~\ref{ch:orius-architecture-dc3s} through~\ref{ch:benchmark-reproducibility-protocol}
-present the ORIUS kernel, theorem ladder, and replay protocol. Chapters~\ref{ch:witness-domain-implementation}
+present the ORIUS architecture, theorem ladder, and benchmark contract. Chapters~\ref{ch:witness-domain-implementation}
 and~\ref{ch:witness-results-failure-analysis} defend the battery witness row. Chapters~\ref{ch:universal-orius-across-domains}
-through~\ref{ch:certos-runtime-assurance} test how far the same runtime grammar carries
-across domains and governance surfaces. Chapter~\ref{ch:governance-reproducibility-limitations-conclusion}
-then states the precise evidence boundary and the final thesis claim.
+through~\ref{ch:certos-runtime-assurance} ask how far the same runtime grammar carries across
+domains, temporal certificate semantics, composition, and governance. Chapter~\ref{ch:governance-reproducibility-limitations-conclusion}
+then states the precise submission boundary, reproducibility discipline, and final thesis claim.
+
+\paragraph{Boundary of this chapter.}
+This chapter claims only the dissertation's governing doctrine and contribution structure. It
+does not yet prove the theorem ladder or validate equal-domain parity; those later claims remain
+tied to the benchmark, artifact, and governance surfaces that follow.

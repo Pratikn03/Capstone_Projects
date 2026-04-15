@@ -1,5 +1,6 @@
-\chapter{Universal Defense: AV, Industrial, and Healthcare}
+\chapter{Universal Validation Across Six Domains}
 \label{ch:ch07_universal_validation}
+\label{ch:universal-validation}
 
 % --- Merged from ch21_battery_to_universal_orius.tex ---
 
@@ -7,20 +8,22 @@
 \label{ch:battery-to-orius}
 
 This chapter presents the ORIUS universal validation: the DC3S shield is
-proven to eliminate true-state safety violations across six distinct
-cyber-physical domains---energy management, autonomous vehicles, industrial
-process control, medical monitoring, aerospace, and navigation---each
-evaluated at equivalent empirical depth.  Every forecasting-capable domain
-carries locked telemetry, a trained forecasting surface, conformal
-calibration artifacts, and a software-in-loop replay trace.  All
-forecasting-capable domains show DC3S reducing true-state violations by
-70\% or more under a unified fault schedule (dropout~15\%, spike~8\%,
-stale~10\%).  Navigation is included as a simulation-backed portability
-surface confirming that the adapter contract extends to guidance domains.
+presents one shared runtime kernel across six distinct cyber-physical
+domains---energy management, autonomous vehicles, industrial process control,
+medical monitoring, aerospace, and navigation---under one tiered evidence
+boundary.  The domains do \emph{not} carry equal empirical depth.  Energy
+management remains the reference row, industrial and healthcare are the
+current proof-validated peers, autonomous vehicles are proof-candidate,
+aerospace remains experimental, and navigation is carried as
+simulation-backed portability evidence.  Every forecasting-capable domain in
+the defended package carries locked telemetry, a trained forecasting surface,
+conformal calibration artifacts, and a software-in-loop replay trace, while
+navigation is retained to show that the adapter contract extends to guidance
+domains without yet claiming equal closure.
 
 \subsection{Why the ORIUS Result Is Structurally General}
 
-The DC3S pipeline never inspects the internal dynamics of the battery
+The DC3S pipeline never inspects the internal dynamics of any one witness
 plant.  It consumes five objects:
 
 \begin{enumerate}
@@ -40,17 +43,17 @@ None of these objects mention SOC, voltage, or Coulomb counting.  They are
 the ORIUS pipeline subject to domain-specific validation and bounded
 claim discipline.
 
-\subsection{Mapping Battery Objects to the Universal Adapter}
+\subsection{Mapping Reference-Row Objects to the Universal Adapter}
 
 Table~\ref{tab:domain-mapping} makes the mapping explicit.
 
 \begin{table}[ht]
 \centering
-\caption{Battery-specific objects and their domain-general counterparts.}
+\caption{Reference-row objects and their domain-general counterparts.}
 \label{tab:domain-mapping}
 \begin{tabular}{lll}
 \toprule
-\textbf{ORIUS symbol} & \textbf{Battery instantiation} & \textbf{General meaning} \\
+\textbf{ORIUS symbol} & \textbf{Reference-row instantiation} & \textbf{General meaning} \\
 \midrule
 $z_t$                  & SCADA packet (SOC, V, I, load) & Raw telemetry vector \\
 $w_t$                  & OQE composite score            & Observation reliability \\
@@ -67,20 +70,20 @@ Porting ORIUS to a new domain requires replacing four domain-specific
 components:
 
 \begin{description}
-  \item[Plant dynamics.] The battery uses a linear SOC integrator;
+  \item[Plant dynamics.] The energy-management row uses a linear SOC integrator;
     a robotic arm requires nonlinear rigid-body dynamics.  The pipeline
     is agnostic---it consumes the predicted state set, not the equations.
   \item[State definition.] SOC is a scalar in $[0,1]$.  An autonomous
     vehicle has a six-degree-of-freedom pose.  The conformal region
     $C_t^{\text{RAC}}$ generalises to a set in $\mathbb{R}^n$.
-  \item[Constraint structure.] Battery constraints are box constraints
+  \item[Constraint structure.] Energy-management constraints are box constraints
     on SOC and power.  Other domains may have polytopic, conic, or
     nonlinear constraints.  The safe-action filter requires only that
     projection onto the feasible set is computationally tractable.
-  \item[Fault taxonomy.] Dropout, delay, drift, and stale-sensor faults
-    are battery-specific.  Each domain has its own fault families---GPS
-    multipath for vehicles, encoder drift for robots---but the OQE
-    scoring architecture applies unchanged.
+  \item[Fault taxonomy.] The concrete telemetry signatures are row-specific.
+    Vehicles may see GPS multipath, medical monitors may see lead
+    detachment, and energy-management telemetry may see dropout or stale
+    SCADA reads, but the OQE scoring architecture applies unchanged.
 \end{description}
 
 \subsection{What Remains Invariant Across Domains}
@@ -105,7 +108,8 @@ Four structural invariants transfer without modification:
 \subsection{How to Port ORIUS to a New Domain}
 
 A practitioner deploys ORIUS on a new plant by implementing a
-\texttt{DomainAdapter}---the analogue of \texttt{BatteryDomainAdapter}.
+\texttt{DomainAdapter} for that row's telemetry, dynamics, and safety
+geometry.
 The adapter provides:
 
 \begin{enumerate}
@@ -124,7 +128,7 @@ a shared library, tested once and reused rather than reimplemented per domain.
 
 To move beyond architecture-only claims, we validated the ORIUS universal
 pipeline on a single canonical replay-backed evidence surface.  The
-canonical validator now combines: (i) the locked battery reference
+canonical validator now combines: (i) the locked energy-management reference
 aggregate from publication artifacts; and (ii) a shared universal replay
 harness over autonomous-vehicle, industrial, healthcare, navigation, and
 aerospace telemetry.  Each row uses the same shared runtime path, but the
@@ -206,7 +210,7 @@ Table~\ref{tab:domain-validation-summary} is the governing cross-domain
 status table.  All six domains share the same evaluation protocol and
 claim structure: energy management, AV, industrial, healthcare, and
 aerospace carry locked real-data telemetry; navigation carries a
-simulation surface.  Battery is the reference row, industrial and
+simulation surface.  Energy management is the reference row, industrial and
 healthcare are proof-validated, AV is a proof-candidate row because the
 current gate does not clear a material-improvement requirement,
 aerospace remains experimental, and navigation provides
@@ -288,13 +292,12 @@ These results support three claims:
     only a \texttt{DomainAdapter} implementation; the DC3S core was not
     modified.  All five adapters share the same five-stage runtime, the same
     OQE scoring function, and the same conformal inflation rule.
-  \item \textbf{Equivalent safety performance across domains.} All six
-    domains show DC3S reducing true-state violations by
-    $\geq\!70\%$ relative to the unshielded baseline under identical fault
-    schedules.  Each domain carries equivalent empirical evidence: locked
-    telemetry, trained forecasting surface, conformal calibration artifacts,
-    and software-in-loop replay traces.  Navigation provides additional
-    simulation-backed portability evidence.
+  \item \textbf{Shared architecture with tiered evidence.} The defended rows
+    all show material TSVR reduction under the unified fault schedule, but the
+    manuscript does not flatten them into equal empirical closure.  Energy
+    management, industrial, and healthcare carry the strongest replay-backed
+    results; AV and aerospace remain narrower claim surfaces; navigation adds
+    portability evidence without joining the forecasting-capable parity set.
   \item \textbf{Overhead is negligible.} Sub-millisecond pipeline latency
     (P95~$<\!0.1$~ms across all domains) makes ORIUS suitable for
     fast-control-loop applications (AV at 1~Hz, industrial at hourly cadence,
@@ -614,9 +617,9 @@ Table~\ref{tab:theorem-applicability} maps each core theorem (T1--T8)
 to the six validated domains and indicates the evidence tier supporting
 each claim.  All theorems are stated in domain-agnostic notation using
 only Assumptions~A1--A8 (Chapters~\ref{ch:theorem-oasg}--\ref{ch:temporal-extensions}).
-The battery domain carries formal proofs with battery-specific
-instantiation; the remaining five domains carry equivalent empirical
-validation.
+The energy-management reference row carries the deepest formal proofs; the
+remaining five domains carry matched structural validation at their current
+evidence tier.
 
 \begin{table*}[htbp]
 \centering
@@ -630,7 +633,7 @@ validation.
 \label{tab:theorem-applicability}
 \begin{tabular}{llcccccc}
 \toprule
-\textbf{Key} & \textbf{Theorem} & \textbf{Battery} & \textbf{AV} &
+\textbf{Key} & \textbf{Theorem} & \textbf{Energy} & \textbf{AV} &
   \textbf{Industrial} & \textbf{Healthcare} & \textbf{Aerospace} &
   \textbf{Navigation} \\
 \midrule
@@ -647,8 +650,8 @@ T8 & Graceful Degradation Dom.\  & F & E & E & E & E & P \\
 \end{table*}
 
 \noindent\textbf{Reading the table.}
-Theorems T3, T5, and T6 are marked~\textbf{A} (architectural) for
-non-battery domains because their statements and proofs depend only on
+Theorems T3, T5, and T6 are marked~\textbf{A} (architectural) for the
+non-reference rows because their statements and proofs depend only on
 $\alpha$, $\bar{w}$, and~$T$---quantities that carry no domain semantics.
 The bound $\mathbb{E}[V] \le \alpha(1-\bar{w})T$ holds for any CPS
 that satisfies the adapter contract, without requiring domain-specific
@@ -664,10 +667,10 @@ in Table~\ref{tab:cross-domain-scorecard} below provide this evidence.
 \label{sec:cross-domain-scorecard}
 
 Table~\ref{tab:cross-domain-scorecard} consolidates the key safety and
-performance metrics for the six-row runtime package (battery reference
-plus five non-battery rows) into a single committee-readable scorecard.  All
-non-battery rows use $N = 2000$ fault-stressed steps under the unified
-fault schedule (dropout~15\%, spike~8\%, stale~10\%).  Battery is
+performance metrics for the six-row runtime package (one reference row
+plus five peer rows) into a single committee-readable scorecard.  All
+non-reference rows use $N = 2000$ fault-stressed steps under the unified
+fault schedule (dropout~15\%, spike~8\%, stale~10\%).  Energy management is
 reported as the locked publication aggregate.
 
 \begin{table*}[htbp]
@@ -675,7 +678,7 @@ reported as the locked publication aggregate.
 \caption{Cross-domain safety performance scorecard.  Latency P95 measured
   on the shared universal replay harness.  PICP$_{90}$ is the empirical
   coverage of the 90\% conformal prediction interval on the held-out test
-  split.  ``--'' indicates the metric is not applicable (battery TSVR is
+  split.  ``--'' indicates the metric is not applicable (the reference-row TSVR is
   from the publication aggregate, not the universal replay row).}
 \label{tab:cross-domain-scorecard}
 \begin{tabular}{lrrrrrrr}
@@ -683,7 +686,7 @@ reported as the locked publication aggregate.
 Domain & Baseline TSVR & DC3S TSVR & Repair Rate & $\bar{w}_t$ & PICP$_{90}$ & RMSE & Lat.\ P95 \\
  & (\%) & (\%) & (\%) & & & & (ms) \\
 \midrule
-Battery (ref.)              & 3.90  & 0.00  & --    & --    & 0.940 & --     & $<$0.1 \\
+Energy Management (ref.)    & 3.90  & 0.00  & --    & --    & 0.940 & --     & $<$0.1 \\
 Autonomous Vehicles         & 3.65  & 0.00  & 99.6  & 0.768 & 0.947 & 0.057  & $<$0.1 \\
 Industrial Process Control  & 21.70 & 0.00  & 90.7  & 0.660 & 0.896 & 3.610  & $<$0.1 \\
 Medical Monitoring (ICU)    & 7.55  & 0.00  & 37.2  & 0.812 & 0.930 & 0.764  & $<$0.1 \\
@@ -711,10 +714,10 @@ actions---and is therefore structurally portable across CPS domains.
 What changes across domains is the plant-side adapter; what remains
 invariant is the safety architecture.
 
-Higher-budget replay across the battery reference row plus the AV,
+Higher-budget replay across the energy-management reference row plus the AV,
 industrial, healthcare, and aerospace runtime rows shows strong TSVR
 reduction with sub-millisecond overhead.  Claim strength still follows the
-tier table: battery is the reference row, industrial and healthcare are
+tier table: energy management is the reference row, industrial and healthcare are
 proof-validated, AV remains proof-candidate, aerospace remains
 experimental, and navigation remains shadow-synthetic portability
 evidence.  Per-domain figures (\S\ref{sec:per-domain-profiles}) show the
@@ -726,7 +729,7 @@ under fault injection.  The training audit
 forecasting and runtime surfaces are reproducible and execution-verified.
 All six domains share the same evaluation protocol, artifact types, and
 evidence tier structure.  The theorem-to-code-to-artifact lineage
-established in the preceding chapters for energy management
+established in the preceding chapters for the energy-management reference row
 (Chapters~\ref{ch:forecasting}--\ref{ch:no-free-safety}) applies equally
 to each domain through the shared adapter contract.  Navigation provides
 additional simulation-backed portability evidence.

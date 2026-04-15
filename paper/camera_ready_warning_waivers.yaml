@@ -1,0 +1,35 @@
+logs:
+  paper/paper.log:
+    - "^Package microtype Warning: Unable to apply patch `footnote' on input line 10\\.$"
+    - "^Underfull \\\\hbox .*"
+    - "^Overfull \\\\hbox \\(212\\.44592pt too wide\\) in paragraph at lines 9--21$"
+    - "^Overfull \\\\hbox \\(94\\.74171pt too wide\\) in paragraph at lines 28--40$"
+    - "^Overfull \\\\hbox \\(335\\.59279pt too wide\\) in paragraph at lines 7--21$"
+    - "^Overfull \\\\hbox \\(45\\.69797pt too wide\\) in paragraph at lines 18--18$"
+    - "^Overfull \\\\hbox \\(45\\.23543pt too wide\\) in paragraph at lines 18--18$"
+    - "^Overfull \\\\hbox \\(35\\.83197pt too wide\\) in paragraph at lines 18--18$"
+    - "^Overfull \\\\hbox \\(3\\.6245pt too wide\\) in alignment at lines 10--15$"
+    - "^Overfull \\\\hbox \\(3\\.6245pt too wide\\) in alignment at lines 15--19$"
+    - "^Overfull \\\\hbox \\(3\\.6245pt too wide\\) in alignment at lines 19--27$"
+    - "^Overfull \\\\hbox \\(17\\.19453pt too wide\\) in paragraph at lines 50--51$"
+    - "^Overfull \\\\hbox \\(1\\.3232pt too wide\\) in paragraph at lines 739--742$"
+  paper/review/orius_review_dossier.log:
+    - "^Underfull \\\\hbox .*"
+    - "^Overfull \\\\hbox .*"
+  paper/ieee/orius_ieee_main.log:
+    - "^Underfull \\\\hbox .*"
+    - "^Overfull \\\\hbox .*"
+  paper/ieee/orius_ieee_appendix.log:
+    - "^Underfull \\\\hbox .*"
+    - "^Overfull \\\\hbox .*"
+    - "^LaTeX Warning: `h' float specifier changed to `ht'\\.$"
+  paper/ieee/orius_ieee_professor_main.log:
+    - "^Underfull \\\\hbox .*"
+    - "^Overfull \\\\hbox .*"
+  paper/ieee/orius_ieee_professor_appendix_a.log:
+    - "^Underfull \\\\hbox .*"
+    - "^Overfull \\\\hbox .*"
+    - "^LaTeX Warning: `h' float specifier changed to `ht'\\.$"
+  paper/ieee/orius_ieee_professor_appendix_b.log:
+    - "^Underfull \\\\hbox .*"
+    - "^Overfull \\\\hbox .*"

@@ -4,28 +4,29 @@
 This appendix records the assumptions that delimit the dissertation's strongest claims. The
 purpose is not to hide caveats in the back matter. It is to make the theorem and evidence
 boundary explicit enough that every promoted claim can be traced to the assumptions it
-needs.
+needs, the diagnostics that check those assumptions, and the fallback interpretation used
+when the assumptions become only partially satisfied.
 
-\begin{longtable}{p{0.10\textwidth}p{0.24\textwidth}p{0.26\textwidth}p{0.26\textwidth}}
+\begin{longtable}{p{0.08\textwidth}p{0.18\textwidth}p{0.23\textwidth}p{0.20\textwidth}p{0.19\textwidth}}
 \caption{ORIUS dissertation assumption register.}\label{tab:dissertation-assumptions}\\
 \toprule
-\textbf{ID} & \textbf{Name} & \textbf{Meaning} & \textbf{Where it matters}\\
+\textbf{ID} & \textbf{Name} & \textbf{Meaning} & \textbf{Diagnostics / evidence} & \textbf{Where it matters}\\
 \midrule
 \endfirsthead
 \toprule
-\textbf{ID} & \textbf{Name} & \textbf{Meaning} & \textbf{Where it matters}\\
+\textbf{ID} & \textbf{Name} & \textbf{Meaning} & \textbf{Diagnostics / evidence} & \textbf{Where it matters}\\
 \midrule
 \endhead
-A1 & Bounded observation error surface & Reliability-conditioned uncertainty inflation produces a finite observation-consistent state set. & Chapters~\ref{ch:formal-problem-formulation}, \ref{ch:mathematical-foundations}, and the benchmark appendix.\\
-A2 & Feasible safe repair or fallback & When the admissible set collapses, the runtime can still choose a certified fallback action or safe-hold policy. & Chapters~\ref{ch:orius-architecture-dc3s}, \ref{ch:temporal-certificates-graceful-degradation}, and \ref{ch:certos-runtime-assurance}.\\
-A3 & Causal certificate issuance & Certificates depend only on information available at runtime up to the current step. & Chapters~\ref{ch:orius-architecture-dc3s}, \ref{ch:certos-runtime-assurance}, and the safety-case appendix.\\
-A4 & Dual-trajectory replay fidelity & The benchmark exposes both observed and true safety surfaces strongly enough to measure OASG. & Chapters~\ref{ch:benchmark-reproducibility-protocol}, \ref{ch:witness-results-failure-analysis}, and \ref{ch:universal-orius-across-domains}.\\
-A5 & Adapter faithfulness & Each domain adapter encodes the relevant safety predicate, fallback semantics, and certificate payload honestly for its plant. & Chapters~\ref{ch:orius-architecture-dc3s}, \ref{ch:universal-orius-across-domains}, and \ref{ch:certos-runtime-assurance}.\\
-A6 & Evidence-tier discipline & Architectural universality and empirical parity are not allowed to collapse into one claim. & Chapters~\ref{ch:introduction-thesis-claims}, \ref{ch:universal-orius-across-domains}, and \ref{ch:governance-reproducibility-limitations-conclusion}.\\
+A1 & Bounded observation error surface & Reliability-conditioned uncertainty inflation produces a finite observation-consistent state set. & Reliability summaries, calibration diagnostics, and bounded widening logic in the theorem gate. & Chapters~\ref{ch:formal-problem-formulation}, \ref{ch:mathematical-foundations}, and Appendix~\ref{app:benchmark-specs}.\\
+A2 & Feasible safe repair or fallback & When the admissible set collapses, the runtime can still choose a certified fallback action or safe-hold policy. & Repair traces, fallback tables, and CertOS lifecycle surfaces. & Chapters~\ref{ch:orius-architecture-dc3s}, \ref{ch:temporal-certificates-graceful-degradation}, and \ref{ch:certos-runtime-assurance}.\\
+A3 & Causal certificate issuance & Certificates depend only on information available at runtime up to the current step. & Certificate payload inspection, audit chain reconstruction, and lifecycle verification. & Chapters~\ref{ch:orius-architecture-dc3s}, \ref{ch:certos-runtime-assurance}, and Appendix~\ref{app:safety-case-bundle-index}.\\
+A4 & Dual-trajectory replay fidelity & The benchmark exposes both observed and true safety surfaces strongly enough to measure OASG. & Replay manifests, deterministic fault schedules, and domain closure artifacts. & Chapters~\ref{ch:benchmark-reproducibility-protocol}, \ref{ch:witness-results-failure-analysis}, and \ref{ch:universal-orius-across-domains}.\\
+A5 & Adapter faithfulness & Each domain adapter encodes the relevant safety predicate, fallback semantics, and certificate payload honestly for its plant. & Domain closure matrix, protocol-card review surfaces, and non-claim boundaries for weaker rows. & Chapters~\ref{ch:orius-architecture-dc3s}, \ref{ch:universal-orius-across-domains}, and \ref{ch:certos-runtime-assurance}.\\
+A6 & Evidence-tier discipline & Architectural universality and empirical parity are not allowed to collapse into one claim. & Parity matrix, submission scorecard, gap matrix, and claim validator. & Chapters~\ref{ch:introduction-thesis-claims}, \ref{ch:universal-orius-across-domains}, and \ref{ch:governance-reproducibility-limitations-conclusion}.\\
 \bottomrule
 \end{longtable}
 
-The dissertation's formal claims should be read together with this table. When the
-evidence surface is weaker than the architectural surface, the text is intentionally
-written as a bounded semantic or governance statement rather than as an equal-domain
-validation claim.
+The dissertation's formal claims should always be read together with this table. When the
+evidence surface is weaker than the architectural surface, the text is intentionally written
+as a bounded semantic or governance statement rather than as an equal-domain validation
+claim.

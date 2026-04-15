@@ -1,26 +1,107 @@
 \chapter{Mathematical Foundations and Safety Guarantees}
 \label{ch:mathematical-foundations}
 
-\section{Assumptions and theorem discipline}
-The dissertation keeps the theorem surface intentionally explicit. Every strong guarantee
-depends on a named assumption set, and those assumptions are recorded in the assumption
-register in Appendix~\ref{app:assumptions}. The point of the theory chapter is not to
-overclaim generality. It is to show exactly which parts of the ORIUS argument are proved,
-which are validated empirically, and which remain bounded by current evidence.
+\section{Why the theorem surface is intentionally narrow}
+ORIUS is not defended by one grand theorem claiming safety for every plant, every sensor
+regime, and every domain. The mathematical surface is intentionally narrower and therefore
+more durable. The theorem ladder states what can be proved once degraded observation is
+modeled explicitly, once reliability-conditioned uncertainty is admitted as part of the
+runtime object, and once repaired action or fallback is required before release.
 
-\section{The theorem ladder}
-The current ORIUS theorem ladder establishes four core ideas:
-\begin{enumerate}
-  \item OASG can arise even when observed-state legality appears intact.
-  \item Reliability-aware repair preserves safety under stated uncertainty and feasibility
-  assumptions.
-  \item The risk envelope tightens as reliability degrades, so intervention pressure is a
-  lawful consequence of degraded observation rather than an arbitrary heuristic.
-  \item There is no free safety: quality-ignorant control can be driven into true-state
-  violation by admissible degradation regimes.
-\end{enumerate}
-The deepest theorem-to-code-to-artifact chain remains battery-backed, but the theorem
-objects themselves are written against universal typed contracts and runtime objects.
+The monograph keeps that surface deliberately smaller than the dissertation's
+full formal register. The broader theorem/lemma/proposition lattice is part of
+the thesis governance apparatus; the paper-facing surface only carries the
+claims that remain central after proof hardening and claim-scope reduction.
+
+That discipline matters because it keeps the dissertation from making a false choice
+between abstraction and implementation. The theorem surface is written against typed runtime
+objects, explicit assumptions, and artifact-backed diagnostics. As a result, the strongest
+claims are not merely conceptual and they are not merely empirical.
+
+\section{Notation and assumption discipline}
+The formal objects used in this chapter are simple but exact:
+\begin{itemize}
+  \item a latent physical state $x_t$;
+  \item an observed state or telemetry-derived state $z_t$;
+  \item a candidate action $a_t$ proposed by nominal intelligence;
+  \item a repaired or fallback action $\tilde{a}_t$ released by ORIUS;
+  \item a runtime reliability score $w_t \in [0,1]$ summarizing observation trust; and
+  \item a violation predicate $\mathcal{V}(x_t, a_t)$ defined through the domain adapter.
+\end{itemize}
+
+The score $w_t$ is not interpreted as a probability by definition. Whenever a
+theorem turns $w_t$ into a probabilistic risk or indistinguishability claim,
+that conversion is written as an extra theorem-local assumption.
+
+The dissertation does not hide its assumptions. Every strong statement depends on the
+assumption register in Appendix~\ref{app:assumptions}. The core assumptions are finite
+observation-consistent state inflation, availability of a feasible repaired action or
+bounded fallback, causal certificate issuance, dual-trajectory replay fidelity, adapter
+faithfulness, and evidence-tier discipline. If any of those assumptions is violated, the
+associated theorem is not silently inherited by the runtime row.
+
+\section{Definition of OASG as a formal event}
+\begin{definition}[Observation--Action Safety Gap]
+An observation--action safety gap occurs at time $t$ when the candidate action is admissible
+under the observed state but unsafe under the true physical state:
+\[
+\mathcal{S}_{\mathrm{obs}}(z_t, a_t)=1 \quad \text{and} \quad \mathcal{V}(x_t, a_t)=1.
+\]
+\end{definition}
+
+This definition is deliberately agnostic to plant family. The adapter chooses the local
+meaning of admissibility and true-state violation. The universal layer fixes the semantic
+pattern of the failure event.
+
+\section{The paper-facing theorem surface}
+The paper-facing theory chapter carries four theorem-level statements and
+pushes the longer transfer and lower-bound extensions to the dedicated thesis
+extension chapter and proof appendix.
+
+\begin{theorem}[OASG existence under degraded observation]
+\label{thm:oasg-existence}
+If the observation channel admits a degradation regime in which the observed-state safety
+predicate is no longer informationally sufficient for the true-state safety predicate, then
+there exists an admissible observed-state release that produces a true-state violation.
+\end{theorem}
+
+\begin{theorem}[Safety preservation under repaired release]
+\label{thm:safety-preservation}
+Assume the inflated observation-consistent set is conservative with respect to the latent
+state and assume the repair or fallback operator returns only actions admissible over that
+set. Then the ORIUS release step preserves the defended safety predicate whenever the
+required repair or fallback remains feasible.
+\end{theorem}
+
+\begin{theorem}[Degradation-sensitive risk envelope]
+\label{thm:risk-envelope}
+If uncertainty inflation is monotone in decreasing reliability and the release step is
+monotone in admissible-set tightening, then the risk envelope contracts as reliability
+falls. In other words, intervention pressure is a lawful consequence of degraded
+observation rather than an arbitrary heuristic.
+\end{theorem}
+
+\begin{proposition}[No free safety under quality-ignorant release]
+\label{prop:no-free-safety}
+A controller that ignores observation-quality degradation can remain observed-state legal
+while incurring nonzero true-state violation under admissible degradation regimes, even when
+the nominal controller is internally coherent and locally optimal on the observed state.
+\end{proposition}
+
+The point of this ladder is modest but important. ORIUS does not prove that every plant can
+avoid intervention. It proves that once reliability affects the observation-consistent state
+set, safe release must itself become reliability aware.
+
+The stronger extension results are kept explicit rather than inlined here.
+T10 is defended in the thesis as a boundary-indistinguishability lower bound
+under extra hypotheses, and T11 is defended as a typed structural transfer
+theorem paired with failure-mode counterexamples. Neither is used here as
+paper-facing decoration.
+
+Appendix~\ref{app:proofs} is the authoritative proof index for the defended
+theorem program.  The paper-facing surface intentionally remains narrower: it
+inherits the same assumption language and scoped interpretation as the thesis,
+but it does not reproduce the full 83-item formal register.
 
 \IfFileExists{paper/assets/tables/generated/tbl_theorem_dependency.tex}{%
 \input{paper/assets/tables/generated/tbl_theorem_dependency}%
@@ -29,11 +110,31 @@ objects themselves are written against universal typed contracts and runtime obj
 }
 
 \section{Risk envelope interpretation}
-ORIUS does not prove safety from a single forecast accuracy number. The risk envelope is
-expressed in terms of uncertainty coverage, miscoverage, and mean reliability. That is why
-the dissertation can connect theorem statements to runtime calibration and certificate
-semantics without collapsing them into a purely statistical paper or a purely control
-paper.
+The risk envelope is the most important bridge between formal and empirical language in the
+dissertation. ORIUS does not claim safety from a single forecast error number. It reasons
+through miscoverage, intervention feasibility, and mean reliability. That framing is what
+allows the theorem layer to connect to uncertainty calibration without collapsing into a
+purely statistical dissertation.
+
+In the tightened thesis surface, this bridge is explicit: the episode-level
+bound is read through a per-step residual-risk budget, not as a direct
+consequence of marginal conformal coverage alone.
+
+The uncertainty references in Chapter~\ref{ch:related-work-novelty-gap} matter here. Classic
+conformal prediction supplies the disciplined interpretation of uncertainty sets under
+exchangeability, while adaptive conformal methods show how long-run calibration language can
+be generalized more honestly under nonstationary streams
+\cite{vovk2005algorithmic,romano2019conformalized,gibbs2021adaptive}. ORIUS does not claim
+that these methods alone solve runtime safety. It uses them to clarify what the uncertainty
+set is allowed to mean before repaired release is evaluated.
+
+\section{Why the proofs stay witness-backed but the objects stay universal}
+The energy-management reference row remains the deepest theorem-to-code-to-artifact chain because the witness row
+provides the richest availability of proof-facing diagnostics, replay traces, and locked
+artifacts. That does not make the theorem objects domain-specific. The objects are written
+against reliability, uncertainty inflation, admissible action tightening, repair or
+fallback, and certificate causality. Those are universal runtime objects instantiated
+through the adapter, not energy-management-exclusive definitions.
 
 \section{Theorem-to-artifact linkage}
 \begin{figure}[htbp]
@@ -43,18 +144,20 @@ paper.
 }{%
 \includegraphics[width=0.88\textwidth]{../reports/publication/fig_integrated_theorem_gate.png}%
 }
-\caption{The integrated theorem gate keeps theorem language aligned to locked code and artifact surfaces rather than to informal prose summaries.}
+\caption{The integrated theorem gate keeps theorem language aligned to typed contracts,
+assumptions, and locked artifacts rather than to informal prose alone.}
 \label{fig:integrated-theorem-gate}
 \end{figure}
 
-The dissertation repeatedly returns to one discipline rule: theorem statements must point
-to explicit assumptions, typed runtime objects, and tracked empirical diagnostics. That is
-why the proof surface remains durable even when empirical maturity differs across domains.
+Figure~\ref{fig:integrated-theorem-gate} summarizes the discipline used throughout the
+manuscript. Every theorem is attached to an assumption family, a typed runtime object, and
+at least one artifact-facing diagnostic or replay surface. This is why the dissertation can
+state theorem results without pretending that empirical maturity is equal across all rows.
 
-\section{Proved, validated, and roadmap claims}
-The theory chapter is also the place where the dissertation's claim boundary becomes
-reader-visible. Proved claims live here and in the proof appendix. Validated claims are
-only promoted when replay, calibration, runtime, and governance artifacts exist. Roadmap
-claims remain in bounded future-work language. This separation is the mechanism that lets
-ORIUS argue for a universal safety layer without pretending that every supported row is
-already equal in empirical closure.
+\section{What is proved, validated, and still open}
+The theory chapter therefore ends with an explicit boundary. Theorem statements live here
+and in Appendix~\ref{app:proofs}. Validated claims only advance when replay, calibration,
+runtime, and governance surfaces exist for the relevant domain row. Roadmap claims remain
+outside defended theorem language. That separation is not a stylistic preference. It is the
+mechanism that lets ORIUS argue for a universal runtime safety layer without pretending that
+equal-domain empirical closure has already been earned.

@@ -4,6 +4,9 @@
 !publication/ambiguity_calibration_summary.json
 !publication/cqr_calibration_summary.json
 !publication/distributional_summary.json
+!publication/active_theorem_audit.json
+!publication/active_theorem_audit.md
+!publication/active_theorem_remediation_plan.md
 !publication/rac_cert_summary.json
 !publication/release_manifest.json
 !publication/stats_summary.json

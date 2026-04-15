@@ -1,16 +1,16 @@
 \begin{table}[htbp]
 \centering
-\caption{Software-in-loop (SIL) runtime verification. All five non-battery domains complete a full faulted replay trace without runtime failure and emit valid DC3S certificates.}
+\caption{Software-in-loop validation summary for the peer ORIUS domains.}
 \label{tab:domain-sil-summary}
-\begin{tabular}{lll}
+\begin{tabular}{lrrrrrl}
 \toprule
-\textbf{Domain} & \textbf{SIL Pass} & \textbf{Note} \\
+Domain & Baseline TSVR (\%) & ORIUS TSVR (\%) & Cert. Rate (\%) & Error Rate (\%) & P95 (ms) & SIL pass \\
 \midrule
-av & \checkmark & full faulted replay, certificates emitted, no runtime error \\
-industrial & \checkmark & full faulted replay, certificates emitted, no runtime error \\
-healthcare & \checkmark & full faulted replay, certificates emitted, no runtime error \\
-navigation & \checkmark & closed-loop simulation replay, certificates emitted \\
-aerospace & \checkmark & full faulted replay, certificates emitted, no runtime error \\
+Autonomous Vehicles & 2.08 & 0.00 & 100.00 & 0.00 & 0.255 & yes \\
+Industrial Process Control & 19.44 & 0.00 & 100.00 & 0.00 & 0.255 & yes \\
+Medical Monitoring (ICU Vitals) & 7.64 & 0.00 & 100.00 & 0.00 & 0.724 & yes \\
+Navigation & 22.92 & 0.69 & 100.00 & 0.00 & 0.238 & yes \\
+Aerospace & 2.08 & 0.00 & 100.00 & 0.00 & 0.242 & yes \\
 \bottomrule
 \end{tabular}
 \end{table}

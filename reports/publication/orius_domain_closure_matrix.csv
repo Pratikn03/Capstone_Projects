@@ -3,5 +3,5 @@ Battery Energy Storage,reference,locked_artifact,0.7500,0.8750,retain theorem-gr
 Autonomous Vehicles,proof_validated,verified,0.0833,0.0000,retain proof-validated status while extending TTC closure to richer vehicle interaction settings,tier=proof_validated; blocker=promoted
 Industrial Process Control,proof_validated,verified,1.0000,0.0000,retain proof-validated status with broader plant families and stronger controller diversity,tier=proof_validated; blocker=industrial_train_validation_chain_complete
 Medical and Healthcare Monitoring,proof_validated,verified,1.0000,0.5833,multi-cohort clinical validation and richer intervention outcome accounting,tier=proof_validated; blocker=healthcare_train_validation_chain_complete
-Navigation and Guidance,shadow_synthetic,synthetic,0.6667,0.2500,locked real-data navigation telemetry and replay-backed closure,tier=shadow_synthetic; blocker=navigation_real_data_gap
-Aerospace Control,experimental,locked_csv,1.0000,0.0000,material post-repair improvement on a stronger flight-envelope benchmark,tier=experimental; blocker=aerospace_experimental_placeholder
+Navigation and Guidance,shadow_synthetic,synthetic_support_tier,0.6667,0.2500,locked real-data navigation telemetry and replay-backed closure,tier=shadow_synthetic; blocker=navigation_kitti_runtime_missing
+Aerospace Control,experimental,public_adsb_support_lane,1.0000,0.0000,material post-repair improvement on the canonical real-flight runtime benchmark,tier=experimental; blocker=aerospace_realflight_runtime_missing

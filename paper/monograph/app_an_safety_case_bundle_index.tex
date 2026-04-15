@@ -3,9 +3,11 @@
 
 This appendix maps the dissertation to a safety-case style evidence bundle without making
 any compliance claim. The goal is simple: a reviewer should be able to see which hazard,
-which argument, which evidence packet, and which non-claim boundary belong together.
+which argument, which evidence packet, and which non-claim boundary belong together. The
+appendix is therefore an evidence-structure aid, not a sector-specific certification claim
+\cite{ul4600_2023,nist2023ai_rmf,iso26262_2018,iec61508_2010}.
 
-\begin{longtable}{p{0.20\textwidth}p{0.28\textwidth}p{0.38\textwidth}}
+\begin{longtable}{p{0.18\textwidth}p{0.26\textwidth}p{0.34\textwidth}} 
 \caption{Safety-case bundle index for the ORIUS dissertation.}\label{tab:safety-case-bundle-index}\\
 \toprule
 \textbf{Bundle} & \textbf{Dissertation role} & \textbf{Primary evidence surfaces}\\
@@ -19,12 +21,21 @@ Hazard definition & Defines degraded observation and OASG as the governing safet
 Theorem bundle & States what is proved under explicit assumptions. & Chapter~\ref{ch:mathematical-foundations}, Appendix~\ref{app:proofs}, theorem dependency table, integrated theorem gate figure.\\
 Benchmark bundle & Defines replay, dual trajectories, metrics, and fault families. & Chapter~\ref{ch:benchmark-reproducibility-protocol}, Appendix~\ref{app:benchmark-specs}, domain closure matrix, parity matrix.\\
 Witness bundle & Shows the deepest theorem-to-artifact row. & Chapters~\ref{ch:witness-domain-implementation}--\ref{ch:witness-results-failure-analysis}, battery tables and figures, release manifest.\\
-Cross-domain bundle & Shows structural universality and bounded transfer. & Chapter~\ref{ch:universal-orius-across-domains}, equal-domain parity matrix, submission readiness table, cross-domain support table.\\
-Governance bundle & Shows certificate lifecycle, runtime budgets, fallback, and audit continuity. & Chapter~\ref{ch:certos-runtime-assurance}, governance lifecycle matrix, runtime budget matrix, review dossier support surfaces.\\
+Cross-domain bundle & Shows structural universality and bounded transfer. & Chapter~\ref{ch:universal-orius-across-domains}, equal-domain parity matrix, submission scorecard, runtime/governance matrices.\\
+Governance bundle & Shows certificate lifecycle, runtime budgets, fallback, and audit continuity. & Chapter~\ref{ch:certos-runtime-assurance}, governance lifecycle matrix, runtime budget matrix, review-facing governance derivatives.\\
 Boundary bundle & States what remains gated, roadmap, or non-promotional. & Chapter~\ref{ch:governance-reproducibility-limitations-conclusion}, deployment validation scope, gap matrix, exact non-claim prose.\\
 \bottomrule
 \end{longtable}
 
+\section{How to read the bundle index}
+The bundle index is intentionally orthogonal to the chapter order. A chapter can contribute
+to more than one bundle, and a bundle can span multiple generated artifacts. That structure
+mirrors real safety-argument practice more closely than a chapter-by-chapter checklist: one
+claim family may rely simultaneously on a theorem statement, a replay trace, a runtime
+lifecycle table, and an explicit non-claim boundary.
+
+\section{Interpretive boundary}
 The dissertation uses this bundle index only as an evidence-structure aid. It aligns the
-manuscript with disciplined safety-argument practice without implying certification or
-sector-specific regulatory compliance.
+manuscript with disciplined safety-argument practice and lifecycle-oriented risk governance
+without implying certification or sector-specific regulatory compliance. Its role is to keep
+the argument inspectable, not to relabel the dissertation as a compliance submission.

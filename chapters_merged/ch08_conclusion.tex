@@ -14,12 +14,14 @@ This chapter draws that boundary for the ORIUS framework.
 
 The formal surface of this dissertation is larger than the T1--T8 label
 suggests.  The integrated audit (Table~\ref{tab:integrated-theorem-surface-summary})
-records \textbf{82 formal items}: 26~theorems, 5~lemmas, 8~propositions,
-12~corollaries, 15~definitions, and 16~standing assumptions.  The active
-theorem count is computed over the master-manuscript include tree rather
-than the entire repository, and all 26 theorems pass the integrated theorem
-gate with locked code anchors and
-artifact traceability.
+records \textbf{83 formal items}: 26~theorem environments, 5~lemmas,
+9~propositions, 12~corollaries, 15~definitions, and 16~standing
+assumptions.  Those counts are computed over the active master-manuscript
+include tree rather than the entire repository so that stale standalone
+chapter surfaces are not double-counted.  The full inventory is governed by
+the integrated theorem surface register, while the older hard gate still
+audits the defended source-backed theorem rows rather than every theorem
+environment in the document.
 
 The foundational theorems precede the formal DC3S ladder:
 
@@ -67,12 +69,12 @@ experimental tier matrix:
     proof evidence package.  AV remains proof-candidate and aerospace
     remains experimental even where higher-budget replay shows additional
     repair benefit.
-  \item \textbf{Formal safety bound.}  Theorem~\ref{thm:safety-preservation}
-    guarantees that the true-state violation probability is at most $\alpha$
-    with confidence $1 - \delta$, under exchangeability of the calibration
-    residuals and bounded observation error.  The bound is formalized on the
-    battery reference surface and instantiated across the tiered replay rows
-    via the shared domain-adapter mapping.
+  \item \textbf{Formal safety program.}  The defended theorem program now
+    spans the precursor results S1--S2, the reference ladder T1--T8, and the
+    later necessity, lower-bound, and typed-transfer results T9--T11.  T2 is
+    a one-step conditional shield theorem, T3 is a risk-envelope theorem
+    under an explicit per-step budget contract, and T10--T11 are stated with
+    the narrower scope their proofs actually justify.
   \item \textbf{Bounded intervention cost.}  The shield's repair rate remains
     below 100\% across the five forecasting-capable runtime rows (mean~$\bar{w}_t \in
     [0.66, 0.81]$), confirming that DC3S does not collapse all actions to a
@@ -95,10 +97,11 @@ The battery domain provides the complete theorem-to-code-to-artifact lineage:
     3.9--4.2\% for the deterministic LP baseline at 20\% dropout.
   \item \textbf{DC3S effectiveness.}  Exactly 0\% TSVR across all tested
     dropout rates $d \in [0, 0.30]$, both grid regions, and all fault combinations.
-  \item \textbf{Full formal proof surface.}  Theorems T1--T8 are stated,
-    proved, and connected to code artifacts for the battery domain.
-    Chapter~16--20 each carry domain-instantiation subsections extending
-    each theorem to the peer CPS domains.
+  \item \textbf{Full reference proof witness.}  Theorems T1--T8 are stated,
+    proved, and connected to code artifacts on the battery surface, while
+    Chapter~\ref{ch:universality-completeness} closes the later T9--T11
+    extension on top of that reference witness.  Battery is still the only
+    row with the complete theorem-to-code-to-artifact lineage.
   \item \textbf{Intervention cost bounded.}  Repair rate remains below
     3.1\% under \texttt{drift\_combo} and below 20\% even at 30\% dropout.
 \end{enumerate}
@@ -161,28 +164,26 @@ matrix rather than a flat reading of every row.
 
 \subsection{Chapter Summary}
 
-This thesis contributes a 67-item formal apparatus (18 theorems, 5 lemmas,
-7 propositions, 10 corollaries, 11 definitions, 16 assumptions) grounded
-in 25 chapter-level traceability rows connecting each formal result to its
-code anchor and artifact evidence.  The ORIUS principle is established on a
-tiered runtime package: the OASG exists across the locked runtime rows,
-DC3S achieves zero TSVR in the three highest-confidence rows (battery
-reference, industrial, healthcare), AV remains proof-candidate, aerospace
-remains experimental, and navigation adds simulation-backed portability
-evidence.  Being explicit about what remains outside the battery reference
-row and proof-validated peer rows
-protects the core multi-domain result from credibility it does not yet claim.
+This thesis contributes an 83-item formal apparatus computed from the active
+manuscript include tree and anchored to a narrower defended theorem program:
+the precursor results S1--S2, the reference ladder T1--T8, and the later
+extension theorems T9--T11.  The ORIUS principle is established on a tiered
+runtime package: the OASG exists across the locked runtime rows, DC3S
+achieves zero TSVR in the three highest-confidence rows (battery reference,
+industrial, healthcare), AV remains proof-candidate, aerospace remains
+experimental, and navigation adds portability evidence without entering the
+forecasting-capable parity set.  Keeping the boundary explicit protects the
+universal architecture claim from empirical maturity it has not yet earned.
 
 
 % --- Merged from ch33_what_battery_thesis_proves.tex ---
 \section{What the ORIUS Framework Proves}
 \label{ch:what-battery-thesis-proves}
 
-This chapter draws a strict line between what the ORIUS evidence package
-establishes and what remains outside its current scope.  The value of the
-framework is not breadth of claim, but depth of traceability: every asserted
-result connects from theorem statement through code to artifact, with the
-strength of each cross-domain claim determined by its evidence tier.
+This section is the operational reading of the claim boundary drawn above.
+It does not introduce a second theorem surface.  It explains what the
+defended theorem program means once it is read together with the tiered
+evidence package, the release gate, and the cross-domain adapter contract.
 
 \subsection{What Is Established}
 
@@ -212,11 +213,13 @@ The ORIUS framework proves the following, across the defended evidence package:
     bound for calibration sets of finite size.  Every empirical TSVR lies
     strictly below this bound with measurable slack.
 
-  \item \textbf{Traceability is end-to-end.}  Each theorem group (T1--T8)
-    is linked to a code anchor in \texttt{src/orius/dc3s/} and to a locked
-    artifact trace.  The integrated theorem surface register
-    (Appendix~\ref{app:integrated-theorem-surface-register}) maps claim to code to artifact
-    for every defended result.
+  \item \textbf{Traceability is end-to-end.}  The precursor results, the
+    reference ladder, and the later T9--T11 extension all map to explicit
+    code witnesses, proof locations, and locked artifact surfaces.  The
+    integrated theorem surface register
+    (Appendix~\ref{app:integrated-theorem-surface-register}) inventories the
+    full formal surface, while the defended theorem gate tracks the narrower
+    source-backed release rows.
 
   \item \textbf{The hardening surface is deep.}  Beyond the core TSVR
     result, the energy management domain contributes: fault-performance
@@ -289,17 +292,17 @@ navigation remains shadow-synthetic portability evidence.
 
 This claim is supported by code, artifacts, and chapter-level alignment.  It
 does not extend to production deployment, adversarial completeness, or
-heterogeneous multi-domain composition without further engineering validation
-(Chapter~\ref{ch:outside-current-evidence}).
+heterogeneous multi-domain composition without further engineering validation.
 
 \subsection{Summary}
 
-The ORIUS framework proves that the observation-action safety gap is a
-universal CPS phenomenon with a principled, deployable remedy.  The energy
-management domain provides the formally locked reference surface; four
-additional domains confirm the result with equivalent replay depth.  The
-theorem ladder, finite-sample bound, and cross-domain PICP confirmation
-together constitute a complete, end-to-end safety argument for DC3S-shielded
+The ORIUS framework shows that the observation-action safety gap is a
+universal CPS phenomenon with a principled runtime remedy, but it does not
+pretend that every row has equal closure.  Energy management provides the
+formally locked reference surface; industrial and healthcare provide the
+strongest non-reference confirmation; the remaining rows stay explicitly
+tiered.  The theorem program, bounded risk language, and governed replay
+surfaces together constitute the defended safety argument for DC3S-shielded
 controllers under degraded telemetry.
 
 
@@ -622,10 +625,11 @@ applications on the replay surfaces evaluated here.
 
 \subsection{Formal Apparatus and Theorem Ladder Scope}
 
-The full formal apparatus of this dissertation consists of 26 theorems,
-5 lemmas, 8 propositions, 12 corollaries, 15 definitions, and 16 standing
-assumptions---82 formal items in total.  Two foundational theorems are
-established in Part~I before the formal ladder:
+The full formal apparatus of this dissertation consists of 26 theorem
+environments, 5 lemmas, 9 propositions, 12 corollaries, 15 definitions, and
+16 standing assumptions---83 formal items in total.  Within that inventory,
+the defended unique theorem program is composed of two foundational precursor
+results and the eleven named ORIUS theorems:
 
 \begin{itemize}
   \item \textbf{S1} (Theorem: Existence of the Illusion under Dropout,
@@ -635,18 +639,25 @@ established in Part~I before the formal ladder:
   \item \textbf{S2} (Theorem: Informal Safety Guarantee of DC3S,
     Chapter~\ref{ch:safety-illusion}): establishes the
     informal correctness guarantee that motivates the DC3S design.
+  \item \textbf{T1--T8}: the battery reference ladder for OASG existence,
+    one-step safety preservation, the risk-envelope bound, no-free-safety,
+    temporal certificate behavior, fallback existence, and graceful
+    degradation.
+  \item \textbf{T9--T11}: the later universal extension for necessity under
+    persistent degradation, the scoped lower-bound frontier, and typed
+    structural transfer with failure-mode converse.
 \end{itemize}
 
-The eight principal theorems of the formal DC3S ladder (T1--T8) are then
-stated, proved, and connected to code artifacts in
-Chapters~\ref{ch:theorem-oasg}--\ref{ch:temporal-extensions}.
-The Domain Instantiation subsections in each of those chapters demonstrate
-that no battery-specific assumption is required: each abstract object
-($z_t$, $w_t$, $C_t^{\text{RAC}}$, $\mathcal{A}_t$, $a_t^{\text{safe}}$,
-$v(\cdot)$) maps directly to its domain-specific counterpart in AV,
-industrial, healthcare, and aerospace.  All 18 theorems pass the integrated
-theorem gate with locked code anchors and artifact traceability
-(see \texttt{reports/publication/integrated\_theorem\_gate.csv}).
+The battery ladder is stated, proved, and connected to code artifacts in
+Chapters~\ref{ch:theorem-oasg}--\ref{ch:temporal-extensions}; the later
+extension is closed in Chapter~\ref{ch:universality-completeness} and indexed
+in Appendix~\ref{app:proofs} and
+Appendix~\ref{app:verified-theorems-gap-audit}.  The older defended release
+gate still checks 18 hard-gated theorem rows---the precursor results, the
+reference-ladder theorems, and the Appendix~C theorem restatements---for
+source, code, artifact, and mapping integrity.  The full 26-theorem
+inventory is instead governed by the integrated theorem register and the
+claim-surface validator.
 
 \subsection{Final Boundary}
 

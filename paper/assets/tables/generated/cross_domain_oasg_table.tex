@@ -1,20 +1,17 @@
 \begin{table}[htbp]
 \centering
-\scriptsize
-\caption{Canonical universal replay output. Battery is the locked reference row; industrial and healthcare are proof-validated; AV is bounded proof-validated under the TTC contract; navigation is shadow-synthetic; aerospace is experimental.}
-\label{tab:TBL09_CROSS_DOMAIN_OASG}
-\setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{0.98}
-\begin{tabular}{llrrr}
+\caption{Cross-Domain OASG (Observed-Action Safety Gap) Rates.}
+\label{tbl:cross_domain_oasg}
+\begin{tabular}{lccc}
 \toprule
-\textbf{Domain} & \textbf{Faults} & \textbf{Baseline TSVR} & \textbf{ORIUS TSVR} & \textbf{Reduction (\%)} \\
+\textbf{Domain} & \textbf{Baseline OASG} & \textbf{ORIUS OASG} & \textbf{Reduction} \\
 \midrule
-battery & multi & 0.75 & 0.875 & -16.7 \\
-navigation & multi & 0.6667 & 0.25 & 62.5 \\
-industrial & multi & 1.0 & 0.0 & 100.0 \\
-healthcare & multi & 1.0 & 0.5833 & 41.7 \\
-aerospace & multi & 1.0 & 0.0 & 100.0 \\
-vehicle & multi & 0.0833 & 0.0 & 100.0 \\
+Battery (Ref.) & 0.1250 & 0.2500 & -100.0\% \\
+Navigation & 0.1667 & 0.2083 & -25.0\% \\
+Industrial & 0.2917 & 0.0000 & 100.0\% \\
+Healthcare & 0.2500 & 0.0000 & 100.0\% \\
+Aerospace & 0.2917 & 0.0000 & 100.0\% \\
+Vehicle (AV) & 0.0833 & 0.0000 & 100.0\% \\
 \bottomrule
 \end{tabular}
 \end{table}

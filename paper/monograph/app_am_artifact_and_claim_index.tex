@@ -6,7 +6,7 @@ surfaces. The prose chapters are curated, but every headline statement is expect
 on a theorem object, publication matrix, replay artifact, or explicit non-claim surface.
 
 \section{Claim classes and governing surfaces}
-\begin{longtable}{p{0.18\textwidth}p{0.24\textwidth}p{0.42\textwidth}}
+\begin{longtable}{p{0.16\textwidth}p{0.22\textwidth}p{0.42\textwidth}}
 \caption{Claim classes and their governing artifact surfaces.}\label{tab:artifact-claim-index}\\
 \toprule
 \textbf{Claim class} & \textbf{Primary surface} & \textbf{What governs it}\\
@@ -19,7 +19,27 @@ on a theorem object, publication matrix, replay artifact, or explicit non-claim 
 Proved & Typed universal objects, assumption register, proof appendix & Theorems must point to assumptions, typed runtime objects, and the theorem-to-artifact bridge.\\
 Validated & Publication matrices, replay tables, domain closure rows & Claims may advance only when the corresponding replay, calibration, runtime, and governance artifacts exist.\\
 Governance & CertOS lifecycle surfaces, runtime/governance matrices & Certificate lifecycle, fallback semantics, and audit continuity remain first-class evidence, not narrative-only claims.\\
-Roadmap & Explicit non-claims, parity blockers, promotion obligations & Future work is useful only when it stays outside headline proof/validation language until artifacts close the gap.\\
+Roadmap & Explicit non-claims, parity blockers, promotion obligations & Future work is useful only when it stays outside headline proof or validation language until artifacts close the gap.\\
+\bottomrule
+\end{longtable}
+
+\section{Headline claim families}
+\begin{longtable}{p{0.18\textwidth}p{0.20\textwidth}p{0.44\textwidth}}
+\caption{Headline claim families and their canonical evidence surfaces.}\label{tab:headline-claim-families}\\
+\toprule
+\textbf{Claim family} & \textbf{Chapter anchor} & \textbf{Canonical evidence surfaces}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Claim family} & \textbf{Chapter anchor} & \textbf{Canonical evidence surfaces}\\
+\midrule
+\endhead
+Degraded-observation hazard & Chapters~\ref{ch:introduction-thesis-claims}--\ref{ch:formal-problem-formulation} & Typed adapter semantics, dual-trajectory benchmark contract, and OASG-facing replay logic.\\
+Theorem ladder & Chapter~\ref{ch:mathematical-foundations} & Assumption register, proof appendix, theorem dependency table, integrated theorem gate figure.\\
+Witness-domain validation & Chapters~\ref{ch:witness-domain-implementation}--\ref{ch:witness-results-failure-analysis} & Main results, ablations, grouped coverage tables, learned-reliability surfaces, runtime traces.\\
+Cross-domain universality & Chapter~\ref{ch:universal-orius-across-domains} & Parity matrix, domain closure matrix, cross-domain validation figure, runtime/governance matrices.\\
+Temporal and governance semantics & Chapters~\ref{ch:temporal-certificates-graceful-degradation} and \ref{ch:certos-runtime-assurance} & Blackout half-life figure, graceful degradation figure, governance lifecycle matrix, runtime budget matrix.\\
+Exact non-claims and parity blockers & Chapter~\ref{ch:governance-reproducibility-limitations-conclusion} & Submission scorecard, deployment validation scope, 93-plus gap matrix, parity matrix.\\
 \bottomrule
 \end{longtable}
 
@@ -31,11 +51,12 @@ The following generated surfaces define the defended manuscript state at any giv
   \item \texttt{reports/publication/orius\_governance\_lifecycle\_matrix.csv}
   \item \texttt{reports/publication/orius\_runtime\_budget\_matrix.csv}
   \item \texttt{reports/publication/orius\_deployment\_validation\_scope.csv}
-  \item \texttt{reports/publication/orius\_universal\_claim\_matrix.csv}
+  \item \texttt{reports/publication/orius\_93plus\_gap\_matrix.csv}
 \end{itemize}
 
-\section{Publication-facing summary}
+\section{Interpretation}
 The canonical readiness summary lives in Chapter~\ref{ch:universal-orius-across-domains}
 because parity promotion is part of the main scientific narrative, not an appendix-only
-afterthought. This appendix records the governing surfaces that support that table rather
-than duplicating its label.
+afterthought. This appendix records the governing surfaces that support those statements and
+keeps exact non-claims visible so the dissertation cannot silently promote a bounded row
+into a stronger evidence class.

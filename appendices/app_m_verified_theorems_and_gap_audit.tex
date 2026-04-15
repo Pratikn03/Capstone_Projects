@@ -6,7 +6,7 @@
 \label{app:verified-theorems-gap-audit}
 
 This appendix covers the full T1--T11 theorem set.  T1--T8 form the
-governance-critical battery proof spine; T9--T11 are the monograph
+governance-critical battery proof spine; T9--T11 are the later universal
 extension theorems added in the universality-completeness chapter.
 Appendix~\ref{app:integrated-theorem-surface-register} audits the full
 theorem-like inventory.  The complete set is:
@@ -20,8 +20,8 @@ theorem-like inventory.  The complete set is:
   \item feasible fallback existence (T7),
   \item graceful degradation dominance (T8),
   \item universal impossibility --- martingale/\mbox{$\varphi$-mixing} argument (T9),
-  \item information-theoretic lower bound --- Le~Cam two-point method (T10), and
-  \item universality completeness --- typed adapter contract (T11).
+  \item boundary-indistinguishability lower bound --- Le~Cam two-point method (T10), and
+  \item typed structural transfer plus failure-mode converse (T11).
 \end{enumerate}
 The certificate half-life remains a corollary, and safe-budget monotonicity
 remains a proposition.
@@ -48,8 +48,9 @@ battery state remains safe.
 
 \textbf{Assumptions.} A1--A5, A7.
 
-\textbf{Proof status.} Formal chapter proof plus deterministic runtime
-guarantee checks.
+\textbf{Proof status.} Proved as a conditional one-step theorem plus
+deterministic runtime guarantee checks.  Coverage frequency is supplied
+separately and is not bundled into T2.
 
 \textbf{Code anchor.} \texttt{src/orius/dc3s/guarantee\_checks.py} and
 \texttt{src/orius/dc3s/shield.py}.
@@ -62,19 +63,24 @@ $\mathbb{E}[V] \le \alpha(1-\bar{w})T$.
 
 \textbf{Assumptions.} A1--A5, A7.
 
-\textbf{Proof status.} Formal chapter proof plus explicit runtime helpers for
-computing and checking the empirical bound.
+\textbf{Proof status.} Proved under an explicit theorem-local per-step
+risk-budget contract; explicit runtime helpers compute and check the resulting
+envelope but do not claim that the contract follows from marginal conformal
+coverage alone.
 
 \textbf{Code anchor.} \texttt{src/orius/dc3s/coverage\_theorem.py}.
 
 \subsection{Theorem 4: No Free Safety}
 \label{sec:thm-no-free}
 
-\textbf{Statement.} Any controller maintaining zero true-state violations must accept at least some intervention rate. There is no controller that achieves both zero violations and zero interventions under admissible fault sequences.
+\textbf{Statement.} Within the fixed-margin, quality-ignorant controller
+class, there exists an admissible degraded-observation sequence that produces
+an observation-action safety gap and hence a true-state violation.
 
 \textbf{Assumptions.} A3 (feasible safe repair exists), A8 (admissible fallback policy). Quality-ignorant baselines lack reliability-aware inflation.
 
-\textbf{Proof status.} Conceptual: follows from T1 (OASG existence) and the necessity of repair when observed-safe $\neq$ true-safe. Empirical: DC3S achieves zero violation with non-zero intervention; baselines achieve non-zero violation.
+\textbf{Proof status.} Constructive witness theorem on the battery reference
+surface, plus empirical ablation support.
 
 \textbf{Code anchor.} Supporting evidence in \texttt{baselines.py},
 \texttt{scenarios.py}, and \texttt{runner.py}.
@@ -145,35 +151,36 @@ $\mathbb{E}[V_T(\pi)] \ge c\,d\,T$ for some constant $c > 0$.
 \textbf{Assumptions.} A4 (boundary reachability), A6$'$ ($\varphi$-mixing
 fault process).
 
-\textbf{Proof status.} Formal: martingale difference sequence +
-Azuma--Hoeffding concentration; battery T4 is the reference witness for
-the per-window violation probability.
+\textbf{Proof status.} Proved as a structural impossibility theorem under the
+explicit $\varphi$-mixing and boundary-reachability assumptions; battery T4 is
+the reference witness for the per-window violation probability.
 
 \textbf{Code anchor.} No dedicated module; the battery
 \texttt{cpsbench\_iot/runner.py} provides the reference witness;
 the proof is in the universality-completeness chapter,
 Section~\ref{sec:t9-universal-impossibility}.
 
-\subsection{Theorem 10: Information-Theoretic Lower Bound}
+\subsection{Theorem 10: Boundary-Indistinguishability Lower Bound}
 \label{sec:thm-info-lower-bound}
 
-\textbf{Statement.} For any controller~$\pi$,
+\textbf{Statement.} Under the explicit boundary-mass and
+indistinguishability hypotheses of T10, every controller~$\pi$ satisfies the
+scoped lower bound
 $\mathbb{E}[V_T(\pi)] \ge \tfrac{1}{4}\,\alpha(1-\bar{w})T$.
-Combined with T3, DC3S is minimax rate-optimal up to a universal constant
-under degraded observation.
 
 \textbf{Assumptions.} A1, A2, A5$'$ (calibration regularity), conformal
 coverage condition.
 
-\textbf{Proof status.} Formal: Le~Cam two-point method with explicit
-TV-distance computation through the degraded channel; factor-of-4 gap
-is standard in minimax lower bounds (Tsybakov 2009, Ch.~2).
+\textbf{Proof status.} Proved under extra calibration/indistinguishability
+assumptions via Le~Cam's two-point method.  The theorem is defended as a
+scoped information-theoretic lower bound on degraded-observation control, not
+as a globally sharp minimax constant for every observation model.
 
 \textbf{Code anchor.} \texttt{src/orius/universal/reliability\_safety\_frontier.py}
 (\texttt{compute\_frontier}, \texttt{is\_dc3s\_optimal}); 25 unit tests
 in \texttt{tests/test\_reliability\_frontier.py}.
 
-\subsection{Theorem 11: Universality Completeness}
+\subsection{Theorem 11: Typed Structural Transfer and Failure-Mode Converse}
 \label{sec:thm-universality-completeness}
 
 \textbf{Statement.} Any CPS domain instantiation satisfying the structural
@@ -186,10 +193,9 @@ without new battery-specific algebra.
 obligations stated in Definition~\ref{def:adapter-contract} and
 Theorem~\ref{thm:universality-completeness}.
 
-\textbf{Proof status.} Template proof: the one-step preservation and
-episode-level aggregation arguments depend only on the structural
-obligations above, not on battery-specific state coordinates; each new
-domain must still discharge those obligations explicitly.
+\textbf{Proof status.} Forward theorem plus explicit counterexample
+proposition showing that failure of any transfer obligation breaks the battery
+pattern; each new domain must still discharge those obligations explicitly.
 
 \textbf{Code anchor.} \texttt{src/orius/universal\_theory/contracts.py} and
 \texttt{src/orius/universal\_theory/kernel.py}, with a compact reference
@@ -213,17 +219,17 @@ Table~\ref{tab:theorem-gap-audit} summarises the full T1--T11 theorem set.
 \textbf{Theorem} & \textbf{Proof complete} & \textbf{Empirical validation} & \textbf{Code matches statement} & \textbf{Notes} \\
 \midrule
 T1 OASG Existence & Structural & Yes & Yes & Observed-vs-true split is explicit in benchmark code and locked evidence \\
-T2 One-Step Safety Preservation & Yes & Yes & Yes & Shield + guarantee checks + unit tests anchor the theorem \\
-T3 ORIUS Core Bound & Yes & Yes & Yes & \texttt{coverage\_theorem.py} now computes and evaluates the bound explicitly \\
-T4 No Free Safety & Conceptual & Yes & Partial & Baseline comparison is empirical rather than a dedicated constructive test harness \\
+T2 One-Step Safety Preservation & Yes (conditional one-step) & Yes & Yes & Shield + guarantee checks + unit tests anchor the theorem; coverage frequency handled separately \\
+T3 ORIUS Core Bound & Yes (under explicit risk budget) & Yes & Yes & \texttt{coverage\_theorem.py} computes the envelope and records the extra assumptions used \\
+T4 No Free Safety & Constructive witness & Yes & Partial & Battery proof gives an explicit degraded-observation sequence; broader baseline comparison remains empirical \\
 T5 Certificate Validity Horizon & Yes & Yes & Yes & Forward-tube helper and horizon computation added as theorem-specific anchors \\
 T6 Certificate Expiration Bound & Yes & Partial & Yes & Analytical lower bound is implemented; empirical chapter remains conservative \\
 T7 Feasible Fallback Existence & Yes & Partial & Yes & Constructive zero-dispatch fallback is validated for bounded-error interior states \\
 T8 Graceful Degradation Dominance & Yes & Partial & Yes & Comparison helper and safe-landing implementation exist; evidence remains bounded to current traces \\
 \midrule
-T9 Universal Impossibility & Yes (martingale) & Yes & N/A & $\varphi$-mixing + Azuma--Hoeffding argument; battery T4 is the reference witness; ch37 \S\,\ref{sec:t9-universal-impossibility} \\
-T10 Info.-Theoretic Lower Bound & Yes (Le~Cam) & Partial & N/A & Le~Cam two-point method; minimax rate-optimal up to constant; ch37 \S\,\ref{sec:t10-lower-bound}; \texttt{reliability\_safety\_frontier.py} \\
-T11 Universality Completeness & Template proof & Yes & Yes & Structural transfer obligations; typed kernel + reference harness; ch37 \S\,\ref{subsec:adapter-contract} \\
+T9 Universal Impossibility & Yes (structural impossibility) & Yes & N/A & $\varphi$-mixing + Azuma--Hoeffding argument; battery T4 is the reference witness; ch37 \S\,\ref{sec:t9-universal-impossibility} \\
+T10 Boundary-Indistinguishability Lower Bound & Yes (under extra frontier assumptions) & Partial & N/A & Le~Cam two-point method; scoped lower bound rather than a globally sharp minimax claim; ch37 \S\,\ref{sec:t10-lower-bound}; \texttt{reliability\_safety\_frontier.py} \\
+T11 Typed Structural Transfer & Forward proof + counterexamples & Yes & Yes & Structural transfer obligations plus failure-mode converse; typed kernel + reference harness; ch37 \S\,\ref{subsec:adapter-contract} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -269,9 +275,12 @@ The theorem-to-evidence map is maintained in \texttt{orius-plan/theorem\_to\_evi
 \section{Integrated Release-Gate Status}
 
 The flagship T1--T8 ladder above remains the governance-critical proof spine,
-but the release package now checks the full 18-theorem surface directly.  The
-generated summary below reports the hard-gated release status for the 10
-unique theorem claims plus the 8 Appendix~C theorem restatements.
+and the broader defended theorem program now extends through T11.  The
+generated summary below reports the older hard-gated release status for the 10
+source-backed theorem claims in the precursor plus reference ladder together
+with the 8 Appendix~C theorem restatements.  The larger T1--T11 program is
+kept aligned by the theorem-surface validator and the appendix proof crosswalk
+rather than by that legacy 18-row gate alone.
 
 \IfFileExists{reports/publication/integrated_theorem_gate_summary.tex}{%
   \input{reports/publication/integrated_theorem_gate_summary}%

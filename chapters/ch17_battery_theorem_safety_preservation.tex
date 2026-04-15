@@ -28,13 +28,17 @@ action set
 where $m_t = q_t / (w_t + \epsilon)$ is the reliability-inflated
 conformal margin and $B(m_t)$ is the ball of radius $m_t$.
 
-If the DC3S shield selects $a_t \in \mathcal{A}_t$ at every step, then
+If the current true state lies inside the inflated observation-consistent
+set and the DC3S shield releases an action $a_t \in \mathcal{A}_t$, then the
+resulting one-step successor remains safe:
 \[
-  \Pr\!\bigl[\,\phi_{\text{true}}(a_t) = 1\,\bigr] \;\ge\; 1 - \alpha
-  \quad\text{for all } t = 1, \ldots, T,
+  x_t \in U_t \;\text{ and }\; a_t \in \mathcal{A}_t
+  \quad\Longrightarrow\quad
+  f(x_t, a_t) \in \mathcal{S}.
 \]
-and the expected number of true-state violations satisfies
-$\mathbb{E}[V] \le \alpha\,T$.
+The theorem is therefore a conditional one-step shield theorem.  Any
+probabilistic statement about how often $x_t \in U_t$ occurs is supplied
+separately by the relevant coverage or risk-envelope hypothesis.
 \end{theorem}
 
 The battery domain provides the scalar instantiation below, where
@@ -77,19 +81,21 @@ The Safety Preservation theorem requires:
 
 \section{Auxiliary Propositions}
 
-\begin{proposition}[Margin dominates observation gap]
+\begin{proposition}[Inflated set contains the current state]
 \label{prop:margin-dominates}
-Under Assumptions A2 and A5, the margin satisfies
-$m_t \ge |\hat{x}_t - x_t|$ with probability at least $1 - \alpha$.
+Under Assumptions A2 and A5, if the current state belongs to the
+reliability-adjusted observation-consistent set
+$U_t = [\hat{x}_t - m_t,\hat{x}_t + m_t]$, then
+$|x_t - \hat{x}_t| \le m_t$.
 \end{proposition}
 
 \begin{proof}
-By the conformal guarantee, $x_t \in [\hat{x}_t - q_t, \hat{x}_t + q_t]$
-with probability $\ge 1 - \alpha$.  Since $m_t = q_t / (w_t + \epsilon) \ge q_t$
-when $w_t + \epsilon \le 1$ (which holds for degraded telemetry), and
-the inflated interval $[\hat{x}_t - m_t, \hat{x}_t + m_t]$ contains
-the conformal interval, we have $|x_t - \hat{x}_t| \le m_t$ with
-probability $\ge 1 - \alpha$.
+This is the defining containment property of the inflated observation set.
+Membership $x_t \in U_t$ means exactly that the latent state lies in the
+interval centered at $\hat{x}_t$ with half-width $m_t$, which is equivalent to
+$|x_t-\hat{x}_t| \le m_t$.  Assumptions A2 and A5 justify the construction of
+$m_t$ and its monotone inflation under degraded reliability; the proposition
+uses only the resulting set-membership statement.
 \end{proof}
 
 \begin{proposition}[Tightened feasibility implies true feasibility]
@@ -107,9 +113,9 @@ $\hat{x}_t + \Delta(a_t) \in [\text{SOC}_{\min} + m_t,\,
   [\hat{x}_t - m_t + \Delta(a_t),\; \hat{x}_t + m_t + \Delta(a_t)]
   \;\subseteq\; [\text{SOC}_{\min},\, \text{SOC}_{\max}].
 \]
-Adding the model error $|\epsilon_t| \le \epsilon_{\text{model}}$ and
-noting that the margin implicitly includes a model-error buffer
-completes the bound.
+Adding the model error $|\epsilon_t| \le \epsilon_{\text{model}}$ from A1 and
+using the fact that the tightened set is built with an explicit model-error
+buffer yields the claimed true-state feasibility.
 \end{proof}
 
 \section{Main Theorem: Safety Preservation}
@@ -117,26 +123,31 @@ completes the bound.
 \begin{theorem}[Safety Preservation]
 \label{thm:safety-preservation}
 Under Assumptions A1--A5 and A7, if the DC3S shield selects
-$a_t \in \mathcal{A}_t$ at every step, then
+$a_t \in \mathcal{A}_t$ and the current true state satisfies
+$x_t \in U_t$, then the released action is one-step safe:
 \[
-  \Pr\!\bigl[\,\phi_{\text{true}}(a_t) = 1\,\bigr] \;\ge\; 1 - \alpha
-  \quad\text{for all } t = 1, \ldots, T.
+  x_t \in U_t \;\text{ and }\; a_t \in \mathcal{A}_t
+  \quad\Longrightarrow\quad
+  \phi_{\text{true}}(a_t) = 1.
 \]
-In particular, the expected number of true-state violations satisfies
-$\mathbb{E}[V] \le \alpha\,T$.
+No episode-level expectation claim is made in this theorem; those are derived
+later from an explicit risk-envelope contract.
 \end{theorem}
 
 \begin{proof}
-Fix an arbitrary step $t$.  The DC3S shield selects $a_t \in \mathcal{A}_t$.
-By Proposition~\ref{prop:margin-dominates}, $|x_t - \hat{x}_t| \le m_t$
-with probability $\ge 1 - \alpha$.  Conditioned on this event,
-Proposition~\ref{prop:tightened-implies-true} gives
-$\phi_{\text{true}}(a_t) = 1$.  Hence
-$\Pr[\phi_{\text{true}}(a_t) = 1] \ge 1 - \alpha$.
+Fix a step $t$ and assume the theorem hypotheses.  Because $x_t \in U_t$,
+Proposition~\ref{prop:margin-dominates} gives the deterministic bound
+$|x_t-\hat{x}_t| \le m_t$.  The released action lies in $\mathcal{A}_t$, so
+Definition~\ref{def:tightened-set} ensures that the observed-state forward
+prediction remains at least $m_t$ away from the SOC boundaries after the
+one-step update.  Proposition~\ref{prop:tightened-implies-true} then converts
+that tightened observed-state feasibility statement into true-state safety.
 
-Summing over all steps and applying linearity of expectation:
-$\mathbb{E}[V] = \sum_{t=1}^T \Pr[\phi_{\text{true}}(a_t) = 0]
-\le \alpha\,T$.
+The proof is therefore entirely conditional and one-step: once the latent
+state is covered by the inflated observation-consistent set and the repair map
+returns an element of the tightened safe set, the released action preserves
+safety.  Probabilistic statements about the event $x_t \in U_t$ are handled in
+later chapters through theorem-local coverage or risk-budget assumptions.
 \end{proof}
 
 \section{Scalar SOC Derivation}
@@ -168,10 +179,10 @@ included in the margin computation.
 \toprule
 \textbf{Step} & \textbf{Claim} & \textbf{Relies on} \\
 \midrule
-1 & $|x_t - \hat{x}_t| \le m_t$ w.p.\ $\ge 1-\alpha$ & A2, A5, CQR guarantee \\
-2 & $a_t \in \mathcal{A}_t \Rightarrow$ true feasibility & Prop.~\ref{prop:tightened-implies-true} \\
-3 & Per-step safety $\ge 1-\alpha$ & Steps 1--2 \\
-4 & $\mathbb{E}[V] \le \alpha T$ & Linearity of expectation \\
+1 & $x_t \in U_t \Rightarrow |x_t - \hat{x}_t| \le m_t$ & Prop.~\ref{prop:margin-dominates} \\
+2 & $a_t \in \mathcal{A}_t \Rightarrow$ tightened observed-state feasibility & Def.~\ref{def:tightened-set}, A4 \\
+3 & Steps 1--2 imply one-step true safety & Prop.~\ref{prop:tightened-implies-true}, A1 \\
+4 & Coverage frequency handled elsewhere & Later theorem-local coverage / risk-budget contract \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -182,8 +193,10 @@ included in the margin computation.
 \centering
 \includegraphics[width=0.85\textwidth]{paper/assets/figures/fig04_true_soc_severity_p95_vs_dropout.png}
 \caption{P95 violation severity versus dropout rate.  The DC3S shield
-  (blue) achieves zero severity across all dropout rates, confirming
-  Theorem~\ref{thm:safety-preservation}.}
+  (blue) remains consistent with the one-step safety-preservation theorem:
+  when the inflated uncertainty set covers the latent state and the released
+  action lies in the tightened safe set, violation severity stays at zero on
+  the battery witness surface.}
 \label{fig:safety-preservation-evidence}
 \end{figure}
 
@@ -191,9 +204,9 @@ included in the margin computation.
 
 \begin{corollary}[Zero-violation regime]
 \label{cor:zero-violation}
-If the conformal coverage is exact ($\Pr[x_t \in \hat{C}_t] = 1-\alpha$)
-and the margin includes a model-error buffer, then the empirical
-violation rate converges to zero as $\alpha \to 0$ at rate $O(\alpha)$.
+If the coverage event $x_t \in U_t$ holds at every step of a finite episode
+and the margin includes the required model-error buffer, then the shielded
+trajectory incurs no one-step true-state violations on that episode.
 \end{corollary}
 
 \begin{corollary}[Intervention-safety tradeoff]
@@ -212,20 +225,22 @@ where $w_t < w_{\text{alert}}$.
   \item It does not prove that the intervention rate is \emph{minimal};
     a tighter conformal method could reduce IR without sacrificing
     safety.
-  \item It relies on marginal coverage; conditional coverage would
-    strengthen the result but is not assumed.
+  \item It does not by itself prove how frequently the event $x_t \in U_t$
+    occurs.  That step requires a separate coverage or risk-budget argument,
+    and later chapters keep that dependence explicit.
 \end{enumerate}
 
 \section{Chapter Summary}
 
 The Safety Preservation theorem is the second rung of the theorem ladder.
-It proves that the DC3S shield's tightened action set restores true-state
-safety with probability at least $1 - \alpha$ at every step.  The
-battery-domain scalar derivation shows the mechanism concretely:
+It proves a narrower but more durable statement than the earlier draft:
+once the latent state is covered by the inflated observation-consistent set,
+any action released from the tightened safe set preserves one-step true-state
+safety.  The battery-domain scalar derivation shows the mechanism concretely:
 the reliability-inflated margin absorbs the observation gap, and the
-projection ensures constraint satisfaction.  The empirical evidence
-(TSVR~$= 0$\% across all conditions) confirms the theorem's prediction
-with margin to spare.
+projection ensures constraint satisfaction.  Episode-level probability and
+expectation statements are deferred to the later risk-envelope chapter, where
+the additional calibration assumptions are written explicitly.
 
 \begingroup
 \def\domainblockid{t2}

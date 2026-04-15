@@ -8,12 +8,21 @@ composition as a bounded extension precisely because this implication fails in g
 Local certificates can remain valid while shared budgets, timing windows, or coupled plant
 dynamics still create system-level failure.
 
-\section{Shared constraints and negotiated safety}
-The dissertation therefore frames composition around shared constraints: fleet power
-budgets, corridor occupancy, shared actuator authority, or other common resources. The
-point is not to claim a universal composition theorem today. It is to show that ORIUS can
-lift the certificate object into a negotiated or multi-agent setting without pretending
-that local repair semantics are automatically sufficient.
+\section{A simple counterexample}
+Consider two locally admissible controllers that each satisfy their own state and action
+constraints. If both consume a shared feeder budget, corridor occupancy, or actuator
+authority reserve, their simultaneous release can still violate the system-level constraint
+even though neither local controller is individually unsafe. This is the compositional
+version of OASG: local legality can diverge from system-level safety when the shared
+constraint is not represented in the local release object.
+
+\section{Shared constraints as the right composition surface}
+Composition is therefore framed around shared constraints rather than around an immediate
+claim of universal multi-agent closure. Shared power budgets, corridor occupancy, common
+actuator authority, or coupled timing envelopes are the right first-class objects because
+they say where local certificates stop being sufficient. ORIUS can then lift the
+certificate object into a negotiated setting without pretending that single-agent repair
+theorems automatically solve the multi-agent case.
 
 \IfFileExists{paper/assets/tables/generated/tbl_multi_agent.tex}{%
 \input{paper/assets/tables/generated/tbl_multi_agent}%
@@ -21,9 +30,24 @@ that local repair semantics are automatically sufficient.
 \input{assets/tables/generated/tbl_multi_agent}%
 }
 
-\section{Bounded extension rather than universal closure}
-Composition remains a defended bounded layer in the dissertation. It matters scientifically
-because it shows that the runtime grammar does not end at single-agent control. At the
-same time, it remains outside the strongest universal claim because cross-domain shared
-constraints still require more defended rows before equal-domain composition language would
-be justified.
+\section{Multi-agent certificates and negotiation}
+The composition story in ORIUS is therefore narrow but meaningful. A local certificate says
+that an action is safe given one agent's uncertainty set and fallback semantics. A
+compositional certificate must additionally encode the shared constraint on which multiple
+agents depend. This turns negotiation and fairness from policy afterthoughts into runtime
+objects. If the shared constraint cannot be satisfied jointly, the runtime must decide which
+agents may continue, which must degrade, and which fallbacks remain legitimate.
+
+\section{Why composition remains bounded in the dissertation}
+Composition matters scientifically because it shows that the ORIUS grammar does not end at
+single-agent control. At the same time, it remains outside the strongest universal claim.
+The present dissertation does not defend an equal-domain composition theorem across all six
+rows. It shows that shared constraints can be represented through the same runtime object
+and that local certificates alone are not sufficient once coupling enters the system.
+
+\section{Compositional takeaway}
+What this chapter contributes is a bounded extension, not a new center of gravity for the
+thesis. ORIUS can lift degraded-observation safety into a shared-constraint setting by
+making system-level resources explicit in the release object. It does not claim that local
+safety composes automatically, and it does not claim that every current domain row already
+clears a defended multi-agent parity gate.

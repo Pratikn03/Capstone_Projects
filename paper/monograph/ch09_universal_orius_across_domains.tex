@@ -2,82 +2,83 @@
 \label{ch:universal-orius-across-domains}
 
 \section{What universality means in this dissertation}
-ORIUS is universal in a specific sense. It does not assume that batteries, vehicles,
-industrial plants, healthcare systems, navigation stacks, and aerospace controllers share a
-plant model, control law, or optimization target. It assumes only that each domain must
-answer the same release-boundary question once observation becomes unreliable: what action
-may still be released safely, under what margin, with what fallback, and under what
-certificate? The shared object is therefore not the nominal controller. It is the runtime
-safety logic that mediates degraded observation before actuation.
+ORIUS is universal in a specific and intentionally disciplined sense. It does not assume
+that batteries, vehicles, industrial plants, healthcare systems, navigation stacks, and
+aerospace controllers share a plant model, control law, or optimization target. It assumes
+only that each domain must answer the same release-boundary question once observation
+becomes unreliable: what action may still be released safely, under what margin, with what
+fallback, and under what certificate?
 
-\section{The shared domain template}
-Every domain row in this dissertation is described through the same template:
+The shared object is therefore not the nominal controller. It is the runtime safety logic
+that mediates degraded observation before actuation. This is why the monograph can make a
+strong universality claim without flattening domain structure.
+
+\section{A transfer recipe rather than a portability slogan}
+The dissertation treats domain transfer as a recipe, not a slogan. A new ORIUS row is only
+meaningful if it specifies:
 \begin{enumerate}
   \item the local degraded-observation hazard;
-  \item the ORIUS instantiation wrapped around nominal intelligence;
-  \item the defended safety object;
-  \item the current evidence status; and
-  \item the universality contribution that row makes to the thesis.
+  \item the true-state violation predicate and observed-state legality predicate;
+  \item the action-repair or fallback geometry;
+  \item the certificate payload and lifecycle semantics; and
+  \item the replay and evidence surface through which that row will be judged.
 \end{enumerate}
-That template is what makes cross-domain comparison scientific rather than rhetorical. The
-rows are not interchangeable, but they are comparable because ORIUS forces them to answer
-the same runtime question through one implementation grammar: a \texttt{DomainAdapter}
-binding, one Detect--Calibrate--Constrain--Shield--Certify step, one benchmark schema, and
-one certificate-aware release semantics.
+
+That transfer as a recipe is what converts structural universality into a scientific
+program. Without it, ``universal'' would reduce to analogy. With it, the reader can inspect
+exactly how a domain is instantiated and where its evidence status currently sits.
 
 \section{Cross-domain status at a glance}
 \input{reports/publication/tbl_orius_equal_domain_parity_matrix}
 
-The parity matrix summarizes the current empirical boundary of the dissertation. Battery is
-the witness row. Industrial process control and healthcare monitoring are defended bounded
-rows. The autonomous-vehicle row is a defended bounded runtime row under the current
-artifact surface, while canonical raw-data closure remains incomplete. Navigation remains
-shadow-synthetic, and aerospace remains experimental. The matrix should therefore be read as
-the evidence boundary for a universal runtime architecture, not as proof that every row has
-already reached equal maturity.
+The parity matrix belongs in the main line of the argument because it keeps the universality
+claim honest. Battery is the witness row. Industrial process control and healthcare
+monitoring are defended bounded rows. The autonomous-vehicle row is a defended bounded
+runtime row under the current artifact surface. Navigation remains blocked by the missing
+real-data closure row, and aerospace remains blocked by the absence of a defended
+multi-flight runtime surface with material post-repair gain.
 
 \section{Domain synthesis}
+The point of the synthesis is not to suggest that every row is interchangeable. It is to
+show how the same release-boundary grammar survives contact with different plants, action
+spaces, and safety objects while each row keeps its own evidence ceiling.
+
 \paragraph{Battery energy storage.}
 The battery hazard is hidden constraint violation under degraded feeder, load, or state
 telemetry. ORIUS instantiates the runtime with tight state margins, explicit repair, and
-auditable release over a heavily instrumented control surface. Its evidence status is the
-deepest in the dissertation, which is why battery serves as the witness row. Its
-universality contribution is to show that the full theorem-to-code-to-artifact chain can be
-closed on a real physical control problem.
+auditable release over a heavily instrumented control surface. Its universality contribution
+is to show that the full theorem-to-code-to-artifact chain can be closed on a real physical
+control problem.
 
 \paragraph{Autonomous vehicles.}
 The autonomous-vehicle hazard is unsafe longitudinal release under stale or degraded scene
 understanding. ORIUS instantiates the runtime through bounded time-to-collision and
 predictive-entry-barrier logic, with explicit brake-oriented fallback and certificate-aware
-release checks. Its evidence status is a defended bounded runtime row under the current
-artifact surface, while canonical raw-data closure remains incomplete. Its universality
-contribution is to show that the same release semantics remain meaningful in a fast-horizon,
-continuous-action mobility setting.
+release checks. Its universality contribution is to show that the same release semantics
+remain meaningful in a fast-horizon, continuous-action mobility setting.
 
 \paragraph{Industrial process control.}
 The industrial hazard is constraint excursion under corrupted or delayed plant telemetry.
 ORIUS instantiates the runtime through bounded power or process envelopes, repair against
-shared operating constraints, and governed fallback. Its evidence status is a defended
-bounded row. Its universality contribution is to show that ORIUS can operate in tightly
-regulated process loops where plant constraints are explicit and intervention must remain
-operationally interpretable.
+shared operating constraints, and governed fallback. Its universality contribution is to
+show that ORIUS can operate in tightly regulated process loops where intervention must
+remain operationally interpretable.
 
 \paragraph{Healthcare monitoring.}
 The healthcare hazard is clinically unsafe release under partially observed physiological
 state, especially when alerts and interventions are triggered from noisy or degraded
 streams. ORIUS instantiates the runtime through physiological margin checks, alert fallback,
-and certificate-aware release semantics. Its evidence status is a defended bounded row. Its
-universality contribution is to show that the ORIUS grammar survives in a setting where the
-protected object is patient-facing monitoring behavior rather than actuation on an energy or
-motion platform.
+and certificate-aware release semantics. Its universality contribution is to show that the
+same runtime grammar survives in a setting where the protected object is patient-facing
+monitoring behavior rather than mechanical actuation.
 
 \paragraph{Navigation and guidance.}
 The navigation hazard is trajectory release under degraded localization or scene reference.
 ORIUS instantiates the runtime through hold-position or corridor-preserving fallback logic.
-Its current evidence status remains shadow-synthetic because the defended real-data
-train--replay chain is not yet closed. Its universality contribution is still valuable: it
-shows how the ORIUS release boundary maps onto spatial feasibility problems even before the
-row is fully defended.
+Its current evidence status remains gated because the defended real-data train--replay chain
+is not yet closed. Its universality contribution is still scientifically useful: it shows
+how the ORIUS release boundary maps onto spatial feasibility problems even before the row is
+fully defended.
 
 \paragraph{Aerospace control.}
 The aerospace hazard is unsafe envelope or guidance release under degraded flight
@@ -95,30 +96,32 @@ domains, while each row remains limited by its own defended evidence surface.}
 \label{fig:multi-domain-validation}
 \end{figure}
 
-The figure should be read as an interpretation aid rather than as a replacement for the
-parity table. It makes visible that the same runtime object appears in every domain, even
-though the domains differ sharply in dynamics, sensing, and safety geometry.
-
-\section{Cross-domain interpretation}
+\section{Architecture universality versus parity universality}
 Two conclusions follow from the domain synthesis. First, what transfers is not a controller
 family but a release-boundary grammar: reliability loss, uncertainty inflation, action
 repair, fallback semantics, and certificate-aware release. Second, what remains local is the
 geometry of the safety object itself: a battery margin is not a vehicle headway constraint,
 and a vehicle headway constraint is not a physiological alert threshold or a flight
-envelope. ORIUS matters scientifically because it preserves one runtime meaning while
-allowing those local geometries to remain local.
+envelope.
 
-The most important implication is that universality here is structural rather than
-homogenizing. ORIUS does not make domains identical. It makes them legible under one safety
-question: when reality and observation diverge, what action may still be released, and with
-what certificate? That is why a battery witness row, a bounded vehicle row, industrial and
-healthcare rows, and still-gated navigation and aerospace rows can all belong in one
-dissertation without collapsing into a single benchmark story.
+That is why the book distinguishes architecture universality from parity universality.
+Architecture universality is already defended by the shared adapter contract, kernel,
+benchmark schema, and governance surfaces. Parity universality is an empirical achievement
+that requires every row to clear the same replay, calibration, runtime, and governance
+gates.
 
-\section{Blocked rows and the present thesis boundary}
-The blocked rows are simple to state and should remain visible. Navigation is not yet a
-defended peer because the real-data closure row is still missing. Aerospace is not yet a
-defended peer because the dissertation does not yet contain a defended multi-flight runtime
-surface with material post-repair gain. That boundary does not weaken the universal thesis.
-It clarifies it: ORIUS already establishes a reusable runtime safety grammar across domains,
-while equal-domain closure remains an empirical task rather than a rhetorical shortcut.
+\section{Default proof mode for the dissertation}
+The default proof mode of the dissertation is therefore: \emph{universal in architecture,
+tiered in evidence}. Battery calibrates the deepest witness depth. Industrial control,
+healthcare, and the bounded autonomous-vehicle runtime row show that the same contract is
+not confined to one plant family. Navigation and aerospace remain explicit open rows rather
+than rhetorical symmetry pieces.
+
+\section{Boundary of the universality claim}
+This chapter is the place where the thesis must be most explicit. The universal claim is a
+claim about a reusable runtime grammar, not a claim that every supported row has already
+reached equal maturity. The parity matrix makes that difference visible in one artifact surface. Navigation remains blocked by the missing real-data closure row. Aerospace remains
+blocked by the absence of a defended multi-flight runtime validation surface with material
+post-repair gain. In that exact sense, ORIUS already establishes a reusable runtime safety
+grammar across domains, while equal-domain closure remains an empirical program that must be
+earned.

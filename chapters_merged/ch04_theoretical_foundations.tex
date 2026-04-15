@@ -1,5 +1,6 @@
 \chapter{ORIUS Framework and Theoretical Foundations}
 \label{ch:ch04_theoretical_foundations}
+\label{ch:mathematical-foundations}
 
 % --- Merged from ch09_dc3s_battery_adapter.tex ---
 
@@ -364,7 +365,7 @@ contains eight principal theorems (T1--T8), but it is not the entire theorem
 surface of the dissertation.  The live master-manuscript include tree now
 contains additional theorem-carrying merged chapters, appendix restatements,
 and front-loaded formal definitions.  The audited surface therefore contains
-\textbf{82 formal items} (26~theorems, 5~lemmas, 8~propositions,
+\textbf{83 formal items} (26~theorems, 5~lemmas, 9~propositions,
 12~corollaries, 15~definitions, 16~assumptions), all audited in
 Appendix~\ref{app:integrated-theorem-surface-register} and summarised in
 Table~\ref{tab:integrated-theorem-surface-summary} at the end of this chapter.
@@ -392,6 +393,14 @@ $\bar{w}$ & Episode-average reliability: $\bar{w} = T^{-1}\sum_t w_t$ \\
 \bottomrule
 \end{tabular}
 \end{center}
+
+\paragraph{Semantics of the reliability score.}
+The symbol $w_t$ is treated throughout this dissertation as a
+\emph{runtime reliability score}, not as a probability by definition.
+It records how trustworthy the telemetry channel appears at step $t$
+according to the OQE pipeline and adjacent runtime checks.  A theorem may
+convert $w_t$ into a probabilistic statement only when that conversion is
+spelled out explicitly as an extra theorem-local hypothesis.
 
 \paragraph{Battery instantiation.}
 In the battery domain, $x_t = \text{SOC}_t$ (MWh),
@@ -476,24 +485,37 @@ because SOC is unchanged (up to model error).
 
 Table~\ref{tab:proof-deps} shows which assumptions each theorem requires.
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering
-\caption{Assumption dependencies of main theorems.}
+\caption{Assumption and local-contract dependencies of the full T1--T11 theorem program.}
 \label{tab:proof-deps}
-\begin{tabular}{lccccccccc}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccccccp{4.7cm}}
 \toprule
 \textbf{Theorem} & \textbf{A1} & \textbf{A2} & \textbf{A3} & \textbf{A4}
-  & \textbf{A5} & \textbf{A6} & \textbf{A7} & \textbf{A8} \\
+  & \textbf{A5} & \textbf{A5$'$} & \textbf{A6} & \textbf{A6$'$}
+  & \textbf{A7} & \textbf{A8} & \textbf{Extra local contract or witness} \\
 \midrule
-OASG Existence       & \checkmark & \checkmark &            & \checkmark &            &            &            &            \\
-Safety Preservation  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark &            & \checkmark &            \\
-Core Bound           & \checkmark & \checkmark &            & \checkmark & \checkmark & \checkmark & \checkmark &            \\
-No Free Safety       &            & \checkmark &            &            &            &            &            &            \\
-Certificate Horizon  & \checkmark & \checkmark &            & \checkmark & \checkmark & \checkmark & \checkmark &            \\
-Graceful Degradation & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark &            &            & \checkmark \\
+T1 OASG Existence & \checkmark & \checkmark & & \checkmark & & & & & & & Boundary-reachability witness near the constraint surface \\
+T2 Safety Preservation & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & & & & \checkmark & & Inflated-set containment plus repair membership in the tightened safe set \\
+T3 Core Bound & \checkmark & \checkmark & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Predictable risk-envelope budget $r_t \le \alpha(1-w_t)$ \\
+T4 No Free Safety & & \checkmark & & & & & & & & & Fixed-margin, quality-ignorant controller class and admissible degraded-observation witness \\
+T5 Certificate Horizon & \checkmark & \checkmark & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Forward-tube containment construction \\
+T6 Certificate Expiration Bound & & & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Drift-scale lower-bound argument for certificate expiration \\
+T7 Feasible Fallback Existence & \checkmark & & \checkmark & \checkmark & & & & & & \checkmark & Interior-state fallback construction \\
+T8 Graceful Degradation Dominance & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & & & & & \checkmark & Shared-fault comparison coupling between graceful and uncontrolled release \\
+T9 Universal Impossibility & & & & \checkmark & & & & \checkmark & & & Per-window degraded-observation witness under persistent degradation \\
+T10 Boundary-Indistinguishability Lower Bound & \checkmark & \checkmark & & & & \checkmark & & & & & Boundary prior and observation-law indistinguishability hypothesis \\
+T11 Typed Structural Transfer & & & & & & & & & & & Coverage, soundness, repair-membership, and fallback-admissibility obligations \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
+
+\noindent\textit{Reading note.}  The first ten columns record standing
+assumptions.  The final column records theorem-local contracts or structural
+witnesses that are not promoted to global assumptions because they are only
+needed for the specific theorem in that row.
 
 \subsection{Marginal Versus Conditional Coverage}
 
@@ -508,9 +530,31 @@ A critical distinction throughout Part~III:
     additional distributional assumptions.
 \end{description}
 
-The ORIUS theorems are stated under marginal coverage.  Where conditional
-coverage is needed (e.g., for the per-step risk lemma), we explicitly
-invoke the monotone inflation assumption~(A5) as a surrogate.
+The ORIUS theorems are stated under marginal coverage unless a stronger
+conditioning statement is written explicitly into the theorem assumptions.
+The reference proof ladder uses monotone inflation to preserve the base
+coverage surface.  The transfer theorem is kept at the one-step level for
+exactly this reason: it does not silently upgrade marginal coverage into a
+stronger episode-level conditioning claim.
+
+\subsection{Theorem-Local Calibration Contracts}
+
+Two theorem-local contracts are used repeatedly in the tightened theory
+surface:
+\begin{enumerate}
+  \item \textbf{Risk-envelope contract.}  A chapter may introduce a
+    predictable sequence $r_t$ satisfying
+    $\Prob[x_{t+1}\notin\mathcal{S}\mid \mathcal{H}_t] \le r_t$.
+    The reference-row envelope $r_t \le \alpha(1-w_t)$ is one such
+    contract, but it is not claimed to follow from vanilla conformal
+    exchangeability alone.
+  \item \textbf{Boundary-indistinguishability contract.}  A chapter may
+    model degraded observation through pairs of latent hypotheses whose
+    observation laws remain close in total variation or another explicit
+    channel metric.  This is the extra ingredient used in the stylized
+    lower-bound theorem (T10); it is not inherited automatically from the
+    definition of $w_t$.
+\end{enumerate}
 
 \subsection{One-Step Versus Multi-Step Claims}
 
@@ -553,7 +597,7 @@ Every theorem in this dissertation follows a fixed template:
   \item \textbf{Assumptions used}: list of A-IDs.
   \item \textbf{Proof}: complete derivation.
   \item \textbf{Artifact link}: pointer to the empirical evidence that
-    instantiates the theorem in the battery domain.
+    instantiates the theorem on the reference row.
   \item \textbf{Scope disclaimer}: ``What this theorem does not prove.''
 \end{enumerate}
 
@@ -565,7 +609,7 @@ that a careless proof might exhibit:
 \begin{enumerate}
   \item \emph{Vacuous truth.}  If the assumption set is never satisfied,
     the theorem is true but useless.  We verify non-vacuousness by
-    exhibiting the battery instantiation.
+    exhibiting the reference-row instantiation.
   \item \emph{Circular dependence.}  Theorem~$X$ assumes the conclusion
     of Theorem~$Y$, and vice versa.  The dependency matrix
     (Table~\ref{tab:proof-deps}) prevents this.
@@ -580,10 +624,13 @@ that a careless proof might exhibit:
 \subsection{Integrated Theorem Surface Summary}
 
 Table~\ref{tab:integrated-theorem-surface-summary} enumerates the full
-formal surface of the dissertation.  The ten unique theorems (S1, S2,
-T1--T8) and their appendix restatements (C.1--C.9) all pass the
-integrated theorem gate: source file exists, code anchor verified,
-artifact locked, and appendix mapping confirmed.
+formal surface of the dissertation.  The active master-manuscript include
+tree contains 26 theorem environments and 83 formal items overall.  The
+defended unique theorem program comprises the two precursor results S1--S2,
+the reference ladder T1--T8, and the universal extension T9--T11.  Separate
+from that full inventory, the older hard gate still audits the precursor plus
+reference-ladder theorem rows and their Appendix~C restatements for source,
+code, artifact, and mapping integrity.
 
 \input{reports/publication/theorem_surface_summary}
 
@@ -592,11 +639,11 @@ artifact locked, and appendix mapping confirmed.
 This chapter provides the stable notational, assumptive, and
 methodological foundation for every proof in Part~III.  The eight
 assumptions (A1--A8) are individually justified in both domain-general
-and battery-specific terms, the proof dependency matrix prevents
+and witness-domain terms, the proof dependency matrix prevents
 circular reasoning, and the theorem-writing discipline ensures that
 every claim is bounded by explicit scope disclaimers.  The integrated
-theorem surface of 82 formal items---spanning 26 theorems, 5 lemmas,
-8 propositions, 12 corollaries, 15 definitions, and 16 assumptions---is
+theorem surface of 83 formal items---spanning 26 theorems, 5 lemmas,
+9 propositions, 12 corollaries, 15 definitions, and 16 assumptions---is
 the formal depth this dissertation contributes to the CPS safety
 literature.
 
@@ -897,8 +944,17 @@ If the DC3S shield selects $a_t \in \mathcal{A}_t$ at every step, then
   \Pr\!\bigl[\,\phi_{\text{true}}(a_t) = 1\,\bigr] \;\ge\; 1 - \alpha
   \quad\text{for all } t = 1, \ldots, T,
 \]
-and the expected number of true-state violations satisfies
-$\mathbb{E}[V] \le \alpha\,T$.
+If the current true state lies inside the inflated observation-consistent
+set and the DC3S shield releases an action $a_t \in \mathcal{A}_t$, then the
+resulting one-step successor remains safe:
+\[
+  x_t \in U_t \;\text{ and }\; a_t \in \mathcal{A}_t
+  \quad\Longrightarrow\quad
+  f(x_t, a_t) \in \mathcal{S}.
+\]
+The theorem is therefore a conditional one-step shield theorem.  Any
+probabilistic statement about how often $x_t \in U_t$ occurs is supplied
+separately by the relevant coverage or risk-envelope hypothesis.
 \end{theorem}
 
 The battery domain provides the scalar instantiation below, where
@@ -941,19 +997,21 @@ The Safety Preservation theorem requires:
 
 \subsection{Auxiliary Propositions}
 
-\begin{proposition}[Margin dominates observation gap]
+\begin{proposition}[Inflated set contains the current state]
 \label{prop:margin-dominates}
-Under Assumptions A2 and A5, the margin satisfies
-$m_t \ge |\hat{x}_t - x_t|$ with probability at least $1 - \alpha$.
+Under Assumptions A2 and A5, if the current state belongs to the
+reliability-adjusted observation-consistent set
+$U_t = [\hat{x}_t - m_t,\hat{x}_t + m_t]$, then
+$|x_t - \hat{x}_t| \le m_t$.
 \end{proposition}
 
 \begin{proof}
-By the conformal guarantee, $x_t \in [\hat{x}_t - q_t, \hat{x}_t + q_t]$
-with probability $\ge 1 - \alpha$.  Since $m_t = q_t / (w_t + \epsilon) \ge q_t$
-when $w_t + \epsilon \le 1$ (which holds for degraded telemetry), and
-the inflated interval $[\hat{x}_t - m_t, \hat{x}_t + m_t]$ contains
-the conformal interval, we have $|x_t - \hat{x}_t| \le m_t$ with
-probability $\ge 1 - \alpha$.
+This is the defining containment property of the inflated observation set.
+Membership $x_t \in U_t$ means exactly that the latent state lies in the
+interval centered at $\hat{x}_t$ with half-width $m_t$, which is equivalent to
+$|x_t-\hat{x}_t| \le m_t$.  Assumptions A2 and A5 justify the construction of
+$m_t$ and its monotone inflation under degraded reliability; the proposition
+uses only the resulting set-membership statement.
 \end{proof}
 
 \begin{proposition}[Tightened feasibility implies true feasibility]
@@ -971,9 +1029,9 @@ $\hat{x}_t + \Delta(a_t) \in [\text{SOC}_{\min} + m_t,\,
   [\hat{x}_t - m_t + \Delta(a_t),\; \hat{x}_t + m_t + \Delta(a_t)]
   \;\subseteq\; [\text{SOC}_{\min},\, \text{SOC}_{\max}].
 \]
-Adding the model error $|\epsilon_t| \le \epsilon_{\text{model}}$ and
-noting that the margin implicitly includes a model-error buffer
-completes the bound.
+Adding the model error $|\epsilon_t| \le \epsilon_{\text{model}}$ from A1 and
+using the fact that the tightened set is built with an explicit model-error
+buffer yields the claimed true-state feasibility.
 \end{proof}
 
 \subsection{Main Theorem: Safety Preservation}
@@ -981,26 +1039,31 @@ completes the bound.
 \begin{theorem}[Safety Preservation]
 \label{thm:safety-preservation}
 Under Assumptions A1--A5 and A7, if the DC3S shield selects
-$a_t \in \mathcal{A}_t$ at every step, then
+$a_t \in \mathcal{A}_t$ and the current true state satisfies
+$x_t \in U_t$, then the released action is one-step safe:
 \[
-  \Pr\!\bigl[\,\phi_{\text{true}}(a_t) = 1\,\bigr] \;\ge\; 1 - \alpha
-  \quad\text{for all } t = 1, \ldots, T.
+  x_t \in U_t \;\text{ and }\; a_t \in \mathcal{A}_t
+  \quad\Longrightarrow\quad
+  \phi_{\text{true}}(a_t) = 1.
 \]
-In particular, the expected number of true-state violations satisfies
-$\mathbb{E}[V] \le \alpha\,T$.
+No episode-level expectation claim is made in this theorem; those are derived
+later from an explicit risk-envelope contract.
 \end{theorem}
 
 \begin{proof}
-Fix an arbitrary step $t$.  The DC3S shield selects $a_t \in \mathcal{A}_t$.
-By Proposition~\ref{prop:margin-dominates}, $|x_t - \hat{x}_t| \le m_t$
-with probability $\ge 1 - \alpha$.  Conditioned on this event,
-Proposition~\ref{prop:tightened-implies-true} gives
-$\phi_{\text{true}}(a_t) = 1$.  Hence
-$\Pr[\phi_{\text{true}}(a_t) = 1] \ge 1 - \alpha$.
+Fix a step $t$ and assume the theorem hypotheses.  Because $x_t \in U_t$,
+Proposition~\ref{prop:margin-dominates} gives the deterministic bound
+$|x_t-\hat{x}_t| \le m_t$.  The released action lies in $\mathcal{A}_t$, so
+Definition~\ref{def:tightened-set} ensures that the observed-state forward
+prediction remains at least $m_t$ away from the SOC boundaries after the
+one-step update.  Proposition~\ref{prop:tightened-implies-true} then converts
+that tightened observed-state feasibility statement into true-state safety.
 
-Summing over all steps and applying linearity of expectation:
-$\mathbb{E}[V] = \sum_{t=1}^T \Pr[\phi_{\text{true}}(a_t) = 0]
-\le \alpha\,T$.
+The proof is therefore entirely conditional and one-step: once the latent
+state is covered by the inflated observation-consistent set and the repair map
+returns an element of the tightened safe set, the released action preserves
+safety.  Probabilistic statements about the event $x_t \in U_t$ are handled in
+later chapters through theorem-local coverage or risk-budget assumptions.
 \end{proof}
 
 \subsection{Scalar SOC Derivation}
@@ -1032,10 +1095,10 @@ included in the margin computation.
 \toprule
 \textbf{Step} & \textbf{Claim} & \textbf{Relies on} \\
 \midrule
-1 & $|x_t - \hat{x}_t| \le m_t$ w.p.\ $\ge 1-\alpha$ & A2, A5, CQR guarantee \\
-2 & $a_t \in \mathcal{A}_t \Rightarrow$ true feasibility & Prop.~\ref{prop:tightened-implies-true} \\
-3 & Per-step safety $\ge 1-\alpha$ & Steps 1--2 \\
-4 & $\mathbb{E}[V] \le \alpha T$ & Linearity of expectation \\
+1 & $x_t \in U_t \Rightarrow |x_t - \hat{x}_t| \le m_t$ & Prop.~\ref{prop:margin-dominates} \\
+2 & $a_t \in \mathcal{A}_t \Rightarrow$ tightened observed-state feasibility & Def.~\ref{def:tightened-set}, A4 \\
+3 & Steps 1--2 imply one-step true safety & Prop.~\ref{prop:tightened-implies-true}, A1 \\
+4 & Coverage frequency handled elsewhere & Later theorem-local coverage / risk-budget contract \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1046,8 +1109,10 @@ included in the margin computation.
 \centering
 \includegraphics[width=0.85\textwidth]{paper/assets/figures/fig04_true_soc_severity_p95_vs_dropout.png}
 \caption{P95 violation severity versus dropout rate.  The DC3S shield
-  (blue) achieves zero severity across all dropout rates, confirming
-  Theorem~\ref{thm:safety-preservation}.}
+  (blue) remains consistent with the one-step safety-preservation theorem:
+  when the inflated uncertainty set covers the latent state and the released
+  action lies in the tightened safe set, violation severity stays at zero on
+  the battery witness surface.}
 \label{fig:safety-preservation-evidence}
 \end{figure}
 
@@ -1055,9 +1120,9 @@ included in the margin computation.
 
 \begin{corollary}[Zero-violation regime]
 \label{cor:zero-violation}
-If the conformal coverage is exact ($\Pr[x_t \in \hat{C}_t] = 1-\alpha$)
-and the margin includes a model-error buffer, then the empirical
-violation rate converges to zero as $\alpha \to 0$ at rate $O(\alpha)$.
+If the coverage event $x_t \in U_t$ holds at every step of a finite episode
+and the margin includes the required model-error buffer, then the shielded
+trajectory incurs no one-step true-state violations on that episode.
 \end{corollary}
 
 \begin{corollary}[Intervention-safety tradeoff]
@@ -1076,20 +1141,22 @@ where $w_t < w_{\text{alert}}$.
   \item It does not prove that the intervention rate is \emph{minimal};
     a tighter conformal method could reduce IR without sacrificing
     safety.
-  \item It relies on marginal coverage; conditional coverage would
-    strengthen the result but is not assumed.
+  \item It does not by itself prove how frequently the event $x_t \in U_t$
+    occurs.  That step requires a separate coverage or risk-budget argument,
+    and later chapters keep that dependence explicit.
 \end{enumerate}
 
 \subsection{Chapter Summary}
 
 The Safety Preservation theorem is the second rung of the theorem ladder.
-It proves that the DC3S shield's tightened action set restores true-state
-safety with probability at least $1 - \alpha$ at every step.  The
-battery-domain scalar derivation shows the mechanism concretely:
+It proves a narrower but more durable statement than the earlier draft:
+once the latent state is covered by the inflated observation-consistent set,
+any action released from the tightened safe set preserves one-step true-state
+safety.  The battery-domain scalar derivation shows the mechanism concretely:
 the reliability-inflated margin absorbs the observation gap, and the
-projection ensures constraint satisfaction.  The empirical evidence
-(TSVR~$= 0$\% across all conditions) confirms the theorem's prediction
-with margin to spare.
+projection ensures constraint satisfaction.  Episode-level probability and
+expectation statements are deferred to the later risk-envelope chapter, where
+the additional calibration assumptions are written explicitly.
 
 
 \input{appendices/app_domain_coverage_proof}
@@ -1097,16 +1164,16 @@ with margin to spare.
 
 % --- Merged from ch18_orius_core_bound_battery.tex ---
 
-\section{The ORIUS Core Safety Bound}
+\section{The ORIUS Risk-Envelope Bound}
 \label{ch:core-bound}
 
 This chapter derives the central quantitative result of the ORIUS
-framework: an upper bound on the expected number of true-state violations
-over an episode of length~$T$.  The bound links the conformal miscoverage
-level~$\alpha$, the average observation reliability~$\bar{w}$, and the
-horizon~$T$ into a single inequality.  The derivation uses energy
-management notation but is domain-agnostic: it holds for any domain whose
-adapter satisfies the shared contract.  The runtime module
+framework: a conservative upper bound on the expected number of true-state
+violations over an episode of length~$T$ once a domain supplies an explicit
+per-step residual-risk budget.  The bound links the miscoverage level
+$\alpha$, the average observation reliability~$\bar{w}$, and the horizon~$T$
+into a single envelope, but it does so only under a theorem-local
+calibration contract.  The runtime module
 \texttt{src/orius/dc3s/coverage\_theorem.py} exposes helper functions that
 compute and inspect this bound across the locked runtime rows; the
 strength of the manuscript claim remains governed by the tier matrix in
@@ -1119,24 +1186,30 @@ The Core Bound is stated entirely in domain-agnostic quantities.
 \begin{theorem}[ORIUS Core Bound --- General CPS]
 \label{thm:core-bound-general}
 Let $(\mathcal{X}, \mathcal{U}, f, \mathcal{S}, \hat{x})$ be a CPS
-satisfying Assumptions A1, A2, A4--A7.  Under the DC3S shield with
-reliability-inflated margin $m_t = q_t / (w_t + \epsilon)$, the expected
-total violation count over horizon~$T$ satisfies
+satisfying Assumptions A1, A2, A4--A7.  Suppose the instantiated domain
+supplies a predictable residual-risk budget sequence $r_t$ such that
+\[
+  \Prob[x_{t+1}\notin\mathcal{S}\mid\mathcal{H}_t] \le r_t
+  \qquad\text{for all } t,
+\]
+and suppose further that the domain justifies the reference-row envelope
+$r_t \le \alpha(1-w_t)$.  Then the expected total violation count over
+horizon~$T$ satisfies
 \[
   \mathbb{E}[V] \;\le\; \alpha\,(1 - \bar{w})\,T,
 \]
 where $\alpha$ is the conformal miscoverage level and
 $\bar{w} = T^{-1}\sum_{t=1}^T w_t$ is the episode-average reliability.
-This bound is exact and tight: equality is achieved under a worst-case
-fault sequence that maintains $w_t = \bar{w}$ at every step.
+The theorem is therefore an aggregation result for an explicit risk-envelope
+contract; it is not presented as a direct consequence of vanilla conformal
+exchangeability alone.
 \end{theorem}
 
 \noindent\textbf{Remark.}  The bound depends on~$\alpha$, $\bar{w}$, and~$T$
-only---no plant dynamics, state dimension, or constraint geometry.  This
-makes it a universal design tool: for any target violation rate~$r^*$, a
-system designer can compute the minimum required average reliability
-$\bar{w}^* = 1 - r^*/\alpha$.  The battery-domain derivation below
-provides the concrete per-step risk argument.
+once the per-step budget has already been justified.  That makes it a useful
+design tool, but only after the theorem-local budget contract has been stated.
+The battery-domain derivation below provides exactly that extra step; it does
+not silently identify $w_t$ with a probability by definition.
 
 \subsection{Battery-Domain Derivation: Violation Process and Horizon Notation}
 
@@ -1151,40 +1224,49 @@ The total violation count over horizon $T$ is $V = \sum_{t=1}^T Z_t$.
 We seek an upper bound on $\mathbb{E}[V]$ that depends on controllable
 quantities.
 
-\subsection{Per-Step Risk Lemma}
+\subsection{Theorem-Local Risk-Envelope Contract}
 
-\begin{lemma}[Per-step violation probability]
-\label{lem:per-step-risk}
-Under the DC3S shield with margin $m_t = q_t / (w_t + \epsilon)$,
-the per-step violation probability satisfies
+\paragraph{Battery risk-envelope contract.}
+For the battery witness surface, the episode argument is carried by the
+predictable per-step envelope
 \[
-  \Pr[Z_t = 1] \;\le\; \alpha\,(1 - w_t),
+  r_t := \alpha(1-w_t),
 \]
-where $\alpha$ is the conformal miscoverage level and $w_t$ is the
-reliability score.
+meaning that the instantiated battery analysis has justified
+\[
+  \Prob[Z_t=1\mid\mathcal{H}_t] \le r_t
+  \qquad\text{and hence}\qquad
+  \Prob[Z_t=1\mid\mathcal{H}_t] \le \alpha(1-w_t).
+\]
+This is a theorem-local calibration contract.  It should be read as a
+summary of the battery witness analysis linking conformal miscoverage,
+reliability-conditioned inflation, detector lag, and boundary proximity to a
+one-step residual-risk budget.
+
+\begin{lemma}[Aggregation under a predictable risk budget]
+\label{lem:per-step-risk}
+If a predictable nonnegative sequence $r_t$ satisfies
+\[
+  \Prob[Z_t = 1 \mid \mathcal{H}_t] \le r_t
+  \qquad\text{for all } t,
+\]
+then
+\[
+  \mathbb{E}[V] \le \sum_{t=1}^T r_t.
+\]
 \end{lemma}
 
 \begin{proof}
-The conformal guarantee provides
-$\Pr[x_t \notin \hat{C}_t] \le \alpha$.  A violation occurs only if
-both (i)~the true state escapes the conformal interval \emph{and}
-(ii)~the reliability-inflated margin fails to compensate.
-
-When $w_t = 1$ (perfect telemetry), the margin equals the conformal
-quantile, and the violation probability is at most $\alpha$.  When
-$w_t < 1$, the margin is inflated by $1/(w_t + \epsilon)$, which
-reduces the conditional violation probability.  The residual risk is
-proportional to the probability that the true state lies in the gap
-between the conformal boundary and the constraint boundary, which
-scales as $\alpha\,(1 - w_t)$:
-
+Because $Z_t$ is an indicator,
 \[
-  \Pr[Z_t = 1] \;\le\; \alpha \cdot \Pr\!\bigl[\,|x_t - \hat{x}_t| > m_t\,\bigr]
-  \;\le\; \alpha\,(1 - w_t).
+  \mathbb{E}[Z_t \mid \mathcal{H}_t]
+  =
+  \Prob[Z_t=1 \mid \mathcal{H}_t]
+  \le r_t.
 \]
-The second inequality uses the monotone inflation property (A5): higher
-reliability implies wider effective margin, reducing the residual gap
-probability to at most $(1 - w_t)$.
+Taking unconditional expectations preserves the inequality and summing across
+the horizon yields $\mathbb{E}[V] \le \sum_{t=1}^T r_t$.  No temporal
+independence assumption is required.
 \end{proof}
 
 \subsection{Main Theorem: ORIUS Core Bound}
@@ -1197,19 +1279,22 @@ violation count under the DC3S shield satisfies
   \mathbb{E}[V] \;\le\; \alpha\,(1 - \bar{w})\,T,
 \]
 where $\bar{w} = T^{-1}\sum_{t=1}^T w_t$ is the episode-average
-reliability score.
+reliability score, provided the battery witness surface justifies the
+predictable one-step risk budget
+$\Prob[Z_t=1\mid\mathcal{H}_t] \le \alpha(1-w_t)$.
 \end{theorem}
 
 \begin{proof}
-By linearity of expectation,
+Apply Lemma~\ref{lem:per-step-risk} with $r_t=\alpha(1-w_t)$.  Then
 \begin{align}
-  \mathbb{E}[V] &= \sum_{t=1}^T \Pr[Z_t = 1] \nonumber \\
-  &\le \sum_{t=1}^T \alpha\,(1 - w_t)
-    \quad\text{(Lemma~\ref{lem:per-step-risk})} \nonumber \\
+  \mathbb{E}[V]
+  &\le \sum_{t=1}^T \alpha\,(1 - w_t) \nonumber \\
   &= \alpha \sum_{t=1}^T (1 - w_t) \nonumber \\
   &= \alpha\,T\,\Bigl(1 - \frac{1}{T}\sum_{t=1}^T w_t\Bigr) \nonumber \\
   &= \alpha\,(1 - \bar{w})\,T. \label{eq:core-bound}
 \end{align}
+The proof is therefore an aggregation argument over an explicit theorem-local
+budget contract rather than a direct corollary of marginal conformal coverage.
 \end{proof}
 
 \subsection{Equivalent Average-Rate Form}
@@ -1252,10 +1337,10 @@ Total blackout       & 0.00 & 168.0 & 10.00 \\
 \end{tabular}
 \end{table}
 
-At $\bar{w} = 1$ (no degradation), the bound collapses to zero:
-perfect telemetry implies perfect safety.  At $\bar{w} = 0$ (total
-blackout), the bound reduces to $\alpha\,T$, recovering the
-conformal-only guarantee without reliability adaptation.
+At $\bar{w} = 1$ (no degradation), the envelope collapses to zero on the
+battery witness surface because the theorem-local budget vanishes.  At
+$\bar{w} = 0$ (total blackout), the envelope reduces to $\alpha\,T$,
+recovering the most conservative battery-side risk budget considered here.
 
 \subsection{Artifact-Backed Figure}
 
@@ -1273,8 +1358,9 @@ conformal-only guarantee without reliability adaptation.
 \begin{corollary}[Perfect-telemetry collapse]
 \label{cor:perfect-telemetry}
 When $\bar{w} = 1$ for all $t$, the core bound gives
-$\mathbb{E}[V] = 0$: the shield introduces no violations
-and the standard conformal guarantee suffices.
+$\mathbb{E}[V] = 0$ on any episode satisfying the battery risk-envelope
+contract.  The corollary should therefore be read as a statement about the
+instantiated budget, not as a universal theorem for all observation models.
 \end{corollary}
 
 \begin{corollary}[Reliability-proportional safety]
@@ -1288,9 +1374,10 @@ $\alpha\,\Delta w\,T$.
 \begin{corollary}[Intervention sufficiency]
 \label{cor:intervention-sufficiency}
 If the shield's intervention rate satisfies
-$\text{IR} \ge 1 - \bar{w}$, then the bound is achievable:
-the shield intervenes often enough to compensate for the
-average reliability deficit.
+$\text{IR} \ge 1 - \bar{w}$, then the runtime policy is operating in a regime
+consistent with the battery-side budget interpretation: intervention pressure
+tracks the average reliability deficit.  This is an interpretive corollary,
+not a converse optimality theorem.
 \end{corollary}
 
 \subsection{What This Theorem Does Not Prove}
@@ -1300,25 +1387,25 @@ average reliability deficit.
     or high-probability violations.  A concentration inequality
     (e.g., via Hoeffding) would tighten the result to a PAC-style
     guarantee at the cost of a $\sqrt{T \ln(1/\delta)}$ term.
-  \item The bound assumes step-level independence of violation events
-    conditioned on $w_t$.  Temporal correlation in fault sequences
-    may cause the empirical violation count to cluster, though the
-    expectation bound remains valid.
+  \item The bound does not follow from conformal exchangeability alone.
+    The extra step is the explicit predictable risk budget
+    $\Prob[Z_t=1\mid\mathcal{H}_t] \le \alpha(1-w_t)$ supplied by the battery
+    witness analysis.
   \item The bound does not account for the shield's ability to
-    \emph{prevent} violations proactively; it only bounds the residual
-    risk.  The empirical TSVR of zero reflects the shield's
-    effectiveness beyond what the bound guarantees.
+    \emph{prevent} violations proactively; it only envelopes the residual
+    risk once the per-step budget has been specified.
 \end{enumerate}
 
 \subsection{Chapter Summary}
 
-The ORIUS Core Bound $\mathbb{E}[V] \le \alpha(1 - \bar{w})T$ is the
-quantitative heart of the ORIUS framework.  It links three observable
+The ORIUS risk-envelope bound $\mathbb{E}[V] \le \alpha(1 - \bar{w})T$ is the
+quantitative heart of the ORIUS framework once the domain supplies an
+explicit predictable risk budget.  It links three observable
 quantities---miscoverage level, average reliability, and horizon---into
-a tight, verifiable upper bound on expected violations.  The battery
-evaluation confirms the bound with substantial empirical slack,
-indicating that the shield is more effective in practice than the
-worst-case theory requires.
+a conservative upper envelope on expected violations.  The battery
+evaluation remains well below that envelope, which is exactly the intended
+reading: the theorem controls residual risk conservatively rather than
+claiming coefficient-wise sharpness in every model.
 
 
 \input{appendices/app_domain_coverage_proof}
@@ -1331,10 +1418,11 @@ worst-case theory requires.
 
 This chapter proves the \emph{No Free Safety} theorem: any controller
 that ignores observation quality---that is, treats all telemetry as
-equally reliable---will inevitably suffer true-state violations under
-an admissible fault sequence.  The result establishes that the
-reliability-aware machinery of DC3S is not merely useful but
-\emph{necessary}.
+equally reliable---admits admissible degraded-observation sequences on which
+observed-state legality and true-state safety separate.  The result is
+constructive and class-scoped: it shows that reliability-aware repair is
+necessary within the class of controllers that keep a fixed safety margin
+while the observation channel degrades.
 
 \subsection{Domain-Agnostic Statement}
 
@@ -1346,16 +1434,18 @@ Let $(\mathcal{X}, \mathcal{U}, f, \mathcal{S}, \hat{x})$ be a CPS
 satisfying Assumption~A2 with $g(w_t) > 0$ under degraded quality.
 For any quality-ignorant controller
 $\pi : \mathcal{X} \to \mathcal{U}$ (one whose action depends on
-$\hat{x}_t$ but not on $w_t$), and any target violation rate
-$\epsilon \in (0, 0.5)$, there exists an admissible fault sequence
-$\{\xi_t\}_{t=1}^T$ such that
+$\hat{x}_t$ but not on $w_t$), there exists an admissible
+degraded-observation sequence $\{\xi_t\}_{t=1}^T$ and a time index
+$t^\star$ such that
 \[
-  \mathbb{E}[\text{TSVR}_\pi] \;>\; \epsilon.
+  \phi_{\mathrm{obs}}(\pi(\hat{x}_{t^\star})) = 1
+  \qquad\text{and}\qquad
+  \phi_{\mathrm{true}}(\pi(\hat{x}_{t^\star})) = 0.
 \]
-That is, no quality-ignorant controller can achieve arbitrarily low
-violation rates under worst-case but physically realisable faults.
-Quality-aware control is therefore \emph{mathematically necessary},
-not merely beneficial.
+Thus no fixed-margin, quality-ignorant controller can rule out
+observation-action safety gaps across all admissible degraded-observation
+sequences in this class.  The theorem is a constructive separation result,
+not a blanket statement about every possible safe controller architecture.
 \end{theorem}
 
 The proof is constructive: we exhibit a three-phase fault sequence
@@ -1508,8 +1598,8 @@ Violation & True SOC below SOC$_{\min}$ or above SOC$_{\max}$ \\
 \includegraphics[width=0.85\textwidth]{reports/publication/fig_violation_severity_p95.png}
 \caption{P95 violation severity for quality-ignorant controllers
   (LP, CQR-only) versus DC3S across dropout rates.  Quality-ignorant
-  controllers exhibit non-zero severity at all $d > 0$, confirming
-  Theorem~\ref{thm:no-free-safety}.}
+  controllers exhibit non-zero severity at all $d > 0$, consistent with the
+  constructive witness used in Theorem~\ref{thm:no-free-safety}.}
 \label{fig:no-free-safety-evidence}
 \end{figure}
 
@@ -1520,8 +1610,9 @@ Violation & True SOC below SOC$_{\min}$ or above SOC$_{\max}$ \\
 For the violation bound $\mathbb{E}[V] \le \alpha(1-\bar{w})T$
 (Theorem~\ref{thm:core-bound}) to hold, the controller must be
 quality-aware: it must use $w_t$ (or an equivalent reliability signal)
-to modulate its safety margin.  No fixed-margin controller can achieve
-$\mathbb{E}[V] = o(T)$ under worst-case admissible faults with $\bar{w} < 1$.
+to modulate its safety margin on the witness class used in this chapter.
+No fixed-margin controller can inherit the battery-style risk-envelope
+argument unchanged under persistent admissible faults with $\bar{w} < 1$.
 \end{corollary}
 
 \begin{proof}
@@ -1560,162 +1651,17 @@ reliability-aware inflation from DC3S re-introduces violations.
 
 
 % --- Merged from ch19b_sota_comparison.tex ---
-\section{Comparison to Alternative Safety Approaches}
-\label{ch:sota-comparison}
+\section*{Bridge to Comparative Baselines}
 
-
-
-\subsection{Alternative Safety Strategies}
-
-Three alternatives represent the mainstream literature on safe control under
-uncertainty:
-
-\paragraph{Tube MPC (fixed disturbance tube).}
-Tube MPC handles uncertainty by pre-computing a worst-case disturbance
-bound $\delta$ and adding it as a fixed safety margin to the constraint
-set~\citep{mayne2005robust}.  In our comparison, TubeMPC uses a fixed
-reliability floor $w_{\text{floor}} = 0.5$: the uncertainty set is inflated
-as if telemetry reliability were always 0.5, regardless of the actual OQE
-score.  This captures Tube MPC's defining limitation: the tube is
-domain-calibrated but \emph{constant} across all telemetry conditions.
-
-\paragraph{Control Barrier Function (CBF) filter.}
-A CBF enforces safety by maintaining $h(x_t) \ge 0$ along the trajectory,
-where $h$ is a domain-specific barrier function~\citep{ames2019control}.
-In our comparison, the CBF wrapper sets $w_t = 1.0$ at the uncertainty
-computation stage --- it evaluates the barrier on the \emph{observed} state
-$\hat{x}_t$ rather than correcting for telemetry degradation.  Under
-degraded telemetry, $\hat{x}_t \ne x_t^*$: the observed state is optimistic,
-and the barrier may approve actions that violate the true-state constraint.
-
-\paragraph{Lagrangian / Safe-RL filter.}
-Lagrangian Safe RL trains a policy under a constrained MDP with a penalty
-$\lambda \cdot \max(0, -h(x_t))$ added to the
-reward~\citep{garcia2015comprehensive}.  At deployment, the penalty signal
-comes from the observed state; under degraded telemetry the penalty is
-evaluated on $\hat{x}_t$, not $x_t^*$.  Our Lagrangian wrapper
-additionally relaxes the hard constraint boundaries by a soft-margin
-fraction of $0.25$, capturing the residual softness of a Lagrangian penalty
-that reduces but does not hard-eliminate constraint violations.
-
-\paragraph{DC3S (ORIUS, this work).}
-DC3S uses the live OQE reliability score $w_t$ to inflate the uncertainty
-set in proportion to the current telemetry degradation severity.  When
-$w_t$ is low (faulted sensor), the margin is wide; when $w_t = 1.0$ (clean
-telemetry), the margin collapses to the nominal conformal width.  This
-adaptive inflation is the mechanism that closes the OASG.
-
-\subsection{Experimental Setup}
-
-All four strategies were evaluated on the five universal proof domains
-(autonomous vehicles, industrial process control, medical monitoring,
-aerospace, and navigation) under the standard ORIUS fault schedule: 15\%
-dropout, 8\% spike, 10\% stale.  Each domain ran for two independent seeds
-of 100 steps each.
-
-\textbf{Note on evaluation protocol.}  This comparison uses a quick
-evaluation budget (2 seeds $\times$ 100 steps) to enable tractable
-comparison across four strategies.  The main domain validation results
-reported in Chapter~\ref{ch:battery-to-orius} use the locked framework
-proof protocol (3 seeds $\times$ 48 steps) and should be taken as the
-primary evidence of DC3S effectiveness.  Differences in TSVR between
-this chapter and Chapter~\ref{ch:battery-to-orius} reflect the different
-evaluation budgets rather than inconsistencies in the underlying mechanism.  The nominal aggressive-controller baseline (see
-Chapter~\ref{ch:cpsbench}) proposed actions without any safety
-filter; the four strategies then either repaired or passed through each
-proposed action.
-
-All five domains used the same \texttt{DomainAdapter} interface and the same
-\texttt{run\_universal\_step} pipeline (Chapter~\ref{ch:assumptions}).
-Strategies differ only in which reliability score they pass to
-\texttt{build\_uncertainty\_set} and how they handle constraint boundaries.
-
-\subsection{Results}
-
-Table~\ref{tab:sota-comparison} reports the true-state violation rate (TSVR)
-and intervention rate (IR) for each strategy across all five domains.
-
-\input{reports/sota_comparison/tbl_sota_comparison}
-
-The autonomous vehicles domain provides the cleanest OASG demonstration.
-DC3S achieves TSVR~$= 0.0\%$ with an intervention rate of 34.5\%.
-Tube MPC also achieves TSVR~$= 0.0\%$ but at a higher intervention rate of
-74.5\% --- the fixed $w_{\text{floor}} = 0.5$ tube is conservative in clean
-periods and over-intervenes even when telemetry is reliable.
-CBF and Lagrangian both produce TSVR~$= 0.5\%$ with IR~$= 72\%$: despite
-intervening far more often than DC3S, they still allow true-state violations
-because their barrier evaluations are based on the optimistic observed
-state.
-
-The industrial process control and navigation domains show TSVR~$= 0\%$
-across all strategies: the constraint set for these domains is wide enough
-that any repair filter eliminates violations.  This confirms that the OASG
-is not universal in severity --- it is most dangerous in domains where the
-gap between observed and true state is large relative to the safety margin.
-
-The healthcare and aerospace domains show violations across all strategies.
-For healthcare, the OASG manifests as a \emph{multi-step lag}: by the time
-a one-step repair is applied, the true vital signs have already breached the
-safe range from a prior undetected degraded observation.  The one-step
-repair framework can prevent \emph{future} violations but not retroactively
-correct an already-violated state.  Aerospace is rated experimental
-(Chapter~\ref{ch:outside-current-evidence}) and the 20\% violation rate reflects a
-combination of domain severity and incomplete calibration.
-
-\subsection{Why the Alternatives Fail}
-
-The three alternatives share a root failure: they evaluate safety conditions
-on the observed state $\hat{x}_t$ without correcting for telemetry
-reliability.
-
-\begin{itemize}
-  \item \textbf{Tube MPC} fixes the tube width at $w = w_{\text{floor}}$.
-    If the true fault rate exceeds the assumed disturbance bound, violations
-    occur; if the fault rate is lower, the tube over-constrains and increases
-    economic cost.  Across six domains with different fault profiles, no
-    single $w_{\text{floor}}$ is simultaneously tight and safe.
-
-  \item \textbf{CBF} enforces $h(\hat{x}_t) \ge 0$.  Under degraded
-    telemetry, $\hat{x}_t$ is an optimistic estimate of $x_t^*$.  When the
-    gap $\|\hat{x}_t - x_t^*\|$ exceeds the safety margin, the barrier
-    certifies an unsafe action.  This is exactly the OASG (Definition in
-    Chapter~\ref{ch:safety-illusion}).
-
-  \item \textbf{Lagrangian Safe RL} trains a penalty that penalises
-    $h(\hat{x}_t) < 0$.  At deployment, the penalty signal is still
-    evaluated on $\hat{x}_t$.  The residual softness of the Lagrangian
-    penalty (captured by the $0.25$ soft-margin parameter) means hard
-    constraints are not enforced even on the observed state.
-\end{itemize}
-
-DC3S closes all three failure modes simultaneously.  The OQE score $w_t$
-provides a continuous measurement of telemetry reliability; the
-reliability-aware uncertainty inflation (RUI) scales the safety margin
-proportionally; and the safe-action repair (SAR) enforces hard constraints
-on the inflated set.  The adaptive nature of $w_t$ is what distinguishes
-DC3S from a fixed-tube strategy: the margin widens exactly when telemetry is
-degraded and contracts when telemetry is clean, minimising both violations
-and unnecessary interventions.
-
-\subsection{Intervention Rate and Economic Cost}
-
-A safety strategy that over-intervenes imposes an economic cost even if it
-achieves low TSVR.  Table~\ref{tab:sota-comparison} shows that Tube MPC's
-IR of 74.5\% on the AV domain is more than twice DC3S's 34.5\%.  In an
-energy management context, excessive intervention means unnecessary
-curtailment of battery dispatch, reducing revenue.  In an industrial
-context, it means conservative setpoints that reduce throughput.  DC3S's
-OQE-adaptive margin avoids this trade-off: it is conservative exactly when
-telemetry is degraded and permissive when telemetry is reliable.
-
-\subsection{Summary}
-
-DC3S is the only strategy in this comparison that closes the OASG across
-all proof-validated domains while maintaining a lower intervention rate than
-conservative alternatives.  The three alternative strategies all fail for
-the same reason: they evaluate safety conditions on the observed state and
-cannot account for telemetry degradation severity.  The OQE-to-RUI coupling
-in DC3S is the structural mechanism that resolves this failure mode.
+The controlled comparison against Tube MPC, Control Barrier Functions, and
+Lagrangian Safe RL is retained in the dedicated standalone chapter,
+Chapter~\ref{ch:sota-comparison}, rather than duplicated inside the live
+merged theory surface.  That split is intentional.  The merged chapter is the
+authoritative thesis path for theorem statements, assumption discipline, and
+proof-facing runtime objects.  The baseline chapter is the authoritative
+empirical path for head-to-head controller comparisons.  Keeping those roles
+separate reduces maintenance drift and keeps the theory chapter from quietly
+turning into a second empirical-results chapter.
 
 
 
