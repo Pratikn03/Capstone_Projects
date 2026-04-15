@@ -71,6 +71,12 @@ def make_certificate(
     reliability_w: float | None = None,
     drift_flag: bool | None = None,
     inflation: float | None = None,
+    validity_score: float | None = None,
+    adaptive_quantile: float | None = None,
+    conditional_coverage_gap: float | None = None,
+    runtime_interval_policy: str | None = None,
+    coverage_group_key: str | None = None,
+    shift_alert_flag: bool | None = None,
     guarantee_checks_passed: bool | None = None,
     guarantee_fail_reasons: list[str] | None = None,
     true_soc_violation_after_apply: bool | None = None,
@@ -105,6 +111,12 @@ def make_certificate(
         "reliability_w": float(reliability_w) if reliability_w is not None else None,
         "drift_flag": bool(drift_flag) if drift_flag is not None else None,
         "inflation": float(inflation) if inflation is not None else None,
+        "validity_score": float(validity_score) if validity_score is not None else None,
+        "adaptive_quantile": float(adaptive_quantile) if adaptive_quantile is not None else None,
+        "conditional_coverage_gap": float(conditional_coverage_gap) if conditional_coverage_gap is not None else None,
+        "runtime_interval_policy": runtime_interval_policy,
+        "coverage_group_key": coverage_group_key,
+        "shift_alert_flag": bool(shift_alert_flag) if shift_alert_flag is not None else None,
         "guarantee_checks_passed": bool(guarantee_checks_passed) if guarantee_checks_passed is not None else None,
         "guarantee_fail_reasons": list(guarantee_fail_reasons or []),
         "true_soc_violation_after_apply": (
@@ -149,6 +161,12 @@ def _ensure_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
             reliability_w DOUBLE,
             drift_flag BOOLEAN,
             inflation DOUBLE,
+            validity_score DOUBLE,
+            adaptive_quantile DOUBLE,
+            conditional_coverage_gap DOUBLE,
+            runtime_interval_policy VARCHAR,
+            coverage_group_key VARCHAR,
+            shift_alert_flag BOOLEAN,
             guarantee_checks_passed BOOLEAN,
             guarantee_fail_reasons VARCHAR,
             true_soc_violation_after_apply BOOLEAN,
@@ -165,6 +183,12 @@ def _ensure_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
     _add_column_if_missing(conn, table_name, "reliability_w", "DOUBLE")
     _add_column_if_missing(conn, table_name, "drift_flag", "BOOLEAN")
     _add_column_if_missing(conn, table_name, "inflation", "DOUBLE")
+    _add_column_if_missing(conn, table_name, "validity_score", "DOUBLE")
+    _add_column_if_missing(conn, table_name, "adaptive_quantile", "DOUBLE")
+    _add_column_if_missing(conn, table_name, "conditional_coverage_gap", "DOUBLE")
+    _add_column_if_missing(conn, table_name, "runtime_interval_policy", "VARCHAR")
+    _add_column_if_missing(conn, table_name, "coverage_group_key", "VARCHAR")
+    _add_column_if_missing(conn, table_name, "shift_alert_flag", "BOOLEAN")
     _add_column_if_missing(conn, table_name, "guarantee_checks_passed", "BOOLEAN")
     _add_column_if_missing(conn, table_name, "guarantee_fail_reasons", "VARCHAR")
     _add_column_if_missing(conn, table_name, "true_soc_violation_after_apply", "BOOLEAN")
@@ -195,6 +219,12 @@ def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_na
                 reliability_w,
                 drift_flag,
                 inflation,
+                validity_score,
+                adaptive_quantile,
+                conditional_coverage_gap,
+                runtime_interval_policy,
+                coverage_group_key,
+                shift_alert_flag,
                 guarantee_checks_passed,
                 guarantee_fail_reasons,
                 true_soc_violation_after_apply,
@@ -203,7 +233,7 @@ def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_na
                 e_t_mwh,
                 soc_tube_lower_mwh,
                 soc_tube_upper_mwh
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 str(certificate.get("command_id")),
@@ -216,6 +246,12 @@ def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_na
                 certificate.get("reliability_w"),
                 certificate.get("drift_flag"),
                 certificate.get("inflation"),
+                certificate.get("validity_score"),
+                certificate.get("adaptive_quantile"),
+                certificate.get("conditional_coverage_gap"),
+                certificate.get("runtime_interval_policy"),
+                certificate.get("coverage_group_key"),
+                certificate.get("shift_alert_flag"),
                 certificate.get("guarantee_checks_passed"),
                 json.dumps(certificate.get("guarantee_fail_reasons", []), ensure_ascii=True, sort_keys=True),
                 certificate.get("true_soc_violation_after_apply"),

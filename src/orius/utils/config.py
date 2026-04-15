@@ -198,6 +198,23 @@ class StreamingConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
+class ShiftAwareUncertaintyConfig(BaseModel):
+    enable: bool = False
+    policy_mode: str = "legacy_rac_cert"
+    aci_mode: str = "fixed"
+    adaptation_step_size: float = 0.01
+    reliability_bin_count: int = 5
+    volatility_bin_count: int = 5
+    subgroup_definitions: dict[str, Any] = Field(default_factory=dict)
+    validity_score_weights: dict[str, float] = Field(default_factory=dict)
+    drift_detector_params: dict[str, Any] = Field(default_factory=dict)
+    widening_caps: dict[str, float] = Field(default_factory=dict)
+    thresholds: dict[str, float] = Field(default_factory=dict)
+    artifact_output_toggles: dict[str, bool] = Field(default_factory=dict)
+
+    model_config = ConfigDict(extra="allow")
+
+
 CONFIG_MODELS: dict[str, Type[BaseModel]] = {
     "data.yaml": DataConfig,
     "optimization.yaml": OptimizationConfig,
@@ -207,6 +224,7 @@ CONFIG_MODELS: dict[str, Type[BaseModel]] = {
     "forecast.yaml": ForecastConfig,
     "uncertainty.yaml": UncertaintyConfig,
     "streaming.yaml": StreamingConfig,
+    "shift_aware_uncertainty.yaml": ShiftAwareUncertaintyConfig,
 }
 
 
