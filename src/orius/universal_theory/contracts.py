@@ -700,3 +700,132 @@ class ContractVerifier:
                 + "; ".join(failures)
             )
         return summary
+
+
+# ---------------------------------------------------------------------------
+# Formal Assumption Register  (A1 – A8)
+# ---------------------------------------------------------------------------
+
+ASSUMPTION_REGISTER: dict[str, dict[str, str]] = {
+    "A1": {
+        "tag": "A1",
+        "name": "Lipschitz dynamics",
+        "formal": (
+            "There exists L > 0 such that for all states x, x' in X and "
+            "actions u in U: ||f(x,u) - f(x',u)|| <= L ||x - x'||."
+        ),
+        "role": (
+            "Ensures the conformal prediction region does not need to grow "
+            "faster than linearly with state perturbation, bounding the "
+            "validity horizon decay rate."
+        ),
+    },
+    "A2": {
+        "tag": "A2",
+        "name": "Bounded telemetry cadence",
+        "formal": (
+            "The inter-arrival time Delta_t between consecutive telemetry "
+            "packets satisfies Delta_t <= Delta_max for a known constant "
+            "Delta_max > 0."
+        ),
+        "role": (
+            "Guarantees that the OQE staleness penalty is bounded and that "
+            "the A6 stale-decay reaches w_min in a known number of steps."
+        ),
+    },
+    "A3": {
+        "tag": "A3",
+        "name": "Fallback always feasible",
+        "formal": (
+            "For every reachable state x in X there exists a safe action "
+            "u_fb in U such that f(x, u_fb) in S, where S is the safe set."
+        ),
+        "role": (
+            "Allows the Shield stage to invoke a domain fallback whenever "
+            "the certificate expires, preventing safety-gap escalation."
+        ),
+    },
+    "A4": {
+        "tag": "A4",
+        "name": "Known compact safe set",
+        "formal": (
+            "The safe set S subset R^n is compact, non-empty, and its "
+            "membership predicate is evaluable in O(1) per state query."
+        ),
+        "role": (
+            "Required by the conformal calibration stage to compute "
+            "constraint distances and by the validity-horizon formula."
+        ),
+    },
+    "A5": {
+        "tag": "A5",
+        "name": "Approximate exchangeability",
+        "formal": (
+            "The calibration residuals {e_1, ..., e_n, e_{n+1}} are "
+            "approximately exchangeable: the total-variation distance "
+            "between the joint distribution and any permutation is at "
+            "most epsilon_exch, a known bound."
+        ),
+        "role": (
+            "Core assumption of split-conformal prediction.  Violated "
+            "under distribution shift; the online ACI recalibration and "
+            "Clopper-Pearson finite-sample correction handle mild violations."
+        ),
+    },
+    "A6": {
+        "tag": "A6",
+        "name": "Fault detectable within tau_max",
+        "formal": (
+            "Any single-point telemetry fault (stuck, drift, spike, stale) "
+            "is detectable by the OQE within tau_max steps of onset, where "
+            "tau_max is a domain-configured constant."
+        ),
+        "role": (
+            "Bounds the exposure window before the OQE reduces w_t.  The "
+            "stale-decay theorem shows that after tau_max steps the "
+            "reliability weight decays exponentially toward w_min."
+        ),
+    },
+    "A7": {
+        "tag": "A7",
+        "name": "SHA-256 collision resistance",
+        "formal": (
+            "Finding two distinct inputs m != m' with SHA-256(m) = "
+            "SHA-256(m') requires >= 2^{128} expected operations "
+            "(birthday bound on 256-bit output)."
+        ),
+        "role": (
+            "Underpins the CertOS tamper-evidence proof: any modification "
+            "to a certificate in the hash chain is detectable with "
+            "probability >= 1 - 2^{-128}."
+        ),
+    },
+    "A8": {
+        "tag": "A8",
+        "name": "Repair preserves safe-set membership",
+        "formal": (
+            "For every repair action u_r produced by the Shield stage and "
+            "every state x in S: f(x, u_r) in S."
+        ),
+        "role": (
+            "Ensures that the domain-specific repair (battery clamp, AV "
+            "lane-keep, etc.) does not itself cause a safety violation, "
+            "so the TSVR bound is not invalidated by the repair operator."
+        ),
+    },
+}
+
+
+def verify_assumption_coverage(tags: set[str]) -> dict[str, Any]:
+    """Check which assumptions from A1-A8 are covered by a given tag set.
+
+    Returns dict with keys: covered (list), missing (list), fraction (float).
+    """
+    all_tags = set(ASSUMPTION_REGISTER.keys())
+    covered = sorted(all_tags & tags)
+    missing = sorted(all_tags - tags)
+    return {
+        "covered": covered,
+        "missing": missing,
+        "fraction": len(covered) / len(all_tags) if all_tags else 0.0,
+    }

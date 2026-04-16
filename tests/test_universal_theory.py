@@ -252,3 +252,46 @@ def test_certificate_preserves_causal_payload_and_horizon_metadata() -> None:
     assert cert["source_domain"] == "navigation"
     assert cert.certificate_horizon_steps == 5
     assert cert["assumptions_checked"] == ["A2", "A5", "A7"]
+
+
+# ── PAC Validity Horizon, Conservative Horizon, Assumption Register ─────────
+
+from orius.universal_theory.risk_bounds import pac_validity_horizon_bound
+from orius.dc3s.half_life import compute_conservative_horizon
+from orius.universal_theory.contracts import ASSUMPTION_REGISTER, verify_assumption_coverage
+
+
+def test_pac_validity_horizon_bound() -> None:
+    result = pac_validity_horizon_bound(
+        n_cal=500, alpha=0.1, delta=0.05,
+        sigma_d=10.0, margin=100.0, w_min=0.5,
+    )
+    assert result["pac_holds"] is True
+    assert result["H_conservative"] > 0
+    assert result["total_failure_prob"] < 1.0
+    assert result["epsilon_conformal"] > 0
+
+
+def test_conservative_horizon_vs_heuristic() -> None:
+    from orius.dc3s.half_life import compute_validity_horizon
+    conservative = compute_conservative_horizon(margin=100.0, sigma_d=10.0, delta=0.05)
+    heuristic = compute_validity_horizon(
+        observed_state={"current_soc_mwh": 500.0},
+        quality_score=1.0,
+        safety_margin_mwh=100.0,
+        constraints={"min_soc_mwh": 0.0, "max_soc_mwh": 1000.0},
+        sigma_d=10.0,
+    )
+    assert conservative["H_conservative"] <= heuristic["tau_t"]
+
+
+def test_assumption_register_completeness() -> None:
+    assert set(ASSUMPTION_REGISTER.keys()) == {"A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8"}
+    for tag, entry in ASSUMPTION_REGISTER.items():
+        assert entry["tag"] == tag
+        assert len(entry["formal"]) > 20
+        assert len(entry["role"]) > 10
+
+    cov = verify_assumption_coverage({"A1", "A2", "A5", "A6"})
+    assert cov["fraction"] == 0.5
+    assert "A3" in cov["missing"]
