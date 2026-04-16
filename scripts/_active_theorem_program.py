@@ -539,12 +539,12 @@ ACTIVE_THEOREM_SPECS: tuple[TheoremSpec, ...] = (
         test_anchors=(
             AnchorSpec(
                 "tests/test_theoretical_guarantees.py",
-                "test_general_formula_matches_half_sum_p_one_minus_w",
+                "test_general_formula_matches_sum_p_one_minus_w",
                 "Formula check only.",
             ),
             AnchorSpec(
                 "tests/test_theoretical_guarantees_hypothesis.py",
-                "test_t10_frontier_lower_bound_matches_half_sum_formula",
+                "test_t10_frontier_lower_bound_matches_sum_formula",
                 "Property test for the stylized algebra only.",
             ),
         ),
