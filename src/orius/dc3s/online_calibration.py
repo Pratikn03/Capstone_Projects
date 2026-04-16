@@ -180,6 +180,7 @@ class OnlineCalibrator:
         """Serialisable snapshot for certificate persistence."""
         return {
             "residuals": list(self._window),
+            "window_size": self._window.maxlen,
             "steps_since_drift": self._steps_since_drift,
             "gamma_base": self._gamma_base,
             "gamma_drift": self._gamma_drift,
@@ -191,8 +192,11 @@ class OnlineCalibrator:
 
     @classmethod
     def from_state_dict(cls, state: dict) -> "OnlineCalibrator":
+        window_size = state.get("window_size")
+        if window_size in (None, ""):
+            window_size = max(len(state.get("residuals", [])), _MIN_WINDOW)
         obj = cls(
-            window_size=max(len(state.get("residuals", [])), _MIN_WINDOW),
+            window_size=int(window_size),
             forgetting_factor=float(state.get("gamma_base", 0.98)),
             drift_forgetting_factor=float(state.get("gamma_drift", 0.70)),
             post_drift_steps=int(state.get("post_drift_steps", 30)),

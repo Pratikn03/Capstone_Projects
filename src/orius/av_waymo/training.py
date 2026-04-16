@@ -69,7 +69,7 @@ def _hash_percent(value: str) -> int:
 
 def assign_split(scenario_id: str) -> str:
     bucket = _hash_percent(str(scenario_id))
-    if bucket < 60:
+    if bucket < 70:
         return "train"
     if bucket < 80:
         return "calibration"
