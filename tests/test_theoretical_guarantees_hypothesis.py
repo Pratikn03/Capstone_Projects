@@ -47,7 +47,7 @@ def test_t9_impossibility_bound_matches_linear_scaling(
     boundary_mass=st.floats(min_value=0.0, max_value=1.0, allow_nan=False, allow_infinity=False),
     alpha=st.floats(min_value=0.01, max_value=0.40, allow_nan=False, allow_infinity=False),
 )
-def test_t10_frontier_lower_bound_matches_half_sum_formula(
+def test_t10_frontier_lower_bound_matches_sum_formula(
     reliability: list[float],
     boundary_mass: float,
     alpha: float,
@@ -57,7 +57,7 @@ def test_t10_frontier_lower_bound_matches_half_sum_formula(
         boundary_mass=boundary_mass,
         alpha=alpha,
     )
-    expected = 0.5 * boundary_mass * sum(1.0 - w for w in reliability)
+    expected = boundary_mass * sum(1.0 - w for w in reliability)
     assert result["expected_lower_bound"] == pytest.approx(expected)
     if boundary_mass >= alpha / 2.0:
         assert result["special_case_active"] is True

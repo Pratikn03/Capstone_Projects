@@ -12,6 +12,8 @@ from __future__ import annotations
 import math
 from typing import Any, Dict
 
+from scipy.stats import norm as _norm
+
 MAX_HORIZON_STEPS: int = 4096
 FALLBACK_QUALITY_THRESHOLD: float = 0.05
 
@@ -198,4 +200,83 @@ def time_to_expiration(
         "remaining_steps": remaining_steps,
         "remaining_hours": float(remaining_steps) * dt_hours,
         "expired": expired,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Conservative horizon with formal first-passage-time guarantee
+# ---------------------------------------------------------------------------
+
+
+def compute_conservative_horizon(
+    margin: float,
+    sigma_d: float,
+    delta: float = 0.05,
+) -> Dict[str, Any]:
+    """Compute a conservative validity horizon using first-passage-time theory.
+
+    Under a symmetric random-walk disturbance with per-step standard deviation
+    sigma_d, the probability that the walk exceeds ``margin`` within H steps
+    is bounded via the reflection principle:
+
+        P(max_{k<=H} |W_k| >= margin) <= 2 * Phi(-margin / (sigma_d * sqrt(H)))
+
+    Setting this equal to delta and solving for H gives:
+
+        H = floor( (margin / (sigma_d * z_{1-delta/2}))^2 )
+
+    where z_{1-delta/2} is the standard normal quantile.
+
+    Returns dict: H_conservative (int), z_quantile, delta, margin, sigma_d.
+    """
+    if margin <= 0 or sigma_d <= 0 or delta <= 0 or delta >= 1:
+        return {
+            "H_conservative": 0,
+            "z_quantile": 0.0,
+            "delta": delta,
+            "margin": margin,
+            "sigma_d": sigma_d,
+        }
+
+    z = _norm.ppf(1.0 - delta / 2.0)
+    H = math.floor((margin / (sigma_d * z)) ** 2)
+    H = min(H, MAX_HORIZON_STEPS)
+
+    return {
+        "H_conservative": int(H),
+        "z_quantile": float(z),
+        "delta": delta,
+        "margin": margin,
+        "sigma_d": sigma_d,
+    }
+
+
+def verify_horizon_safety(
+    H_t: int,
+    margin: float,
+    sigma_d: float,
+    delta: float = 0.05,
+) -> Dict[str, Any]:
+    """Verify that a given horizon H_t satisfies the exit-probability bound.
+
+    Checks: P(max_{k<=H_t} |W_k| >= margin) <= delta.
+
+    The exit probability is bounded by:
+        p_exit <= 2 * Phi(-margin / (sigma_d * sqrt(H_t)))
+
+    Returns dict: safe (bool), p_exit_bound (float), delta, H_t.
+    """
+    if H_t <= 0:
+        return {"safe": True, "p_exit_bound": 0.0, "delta": delta, "H_t": H_t}
+
+    if sigma_d <= 0 or margin <= 0:
+        return {"safe": H_t == 0, "p_exit_bound": 1.0, "delta": delta, "H_t": H_t}
+
+    p_exit = 2.0 * _norm.sf(margin / (sigma_d * math.sqrt(H_t)))
+
+    return {
+        "safe": p_exit <= delta,
+        "p_exit_bound": float(p_exit),
+        "delta": delta,
+        "H_t": H_t,
     }

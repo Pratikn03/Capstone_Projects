@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+import numpy as np
+
 
 def _f(value: Any, default: float) -> float:
     try:
@@ -45,8 +47,10 @@ def next_soc(
     """Apply one-step SOC dynamics without clipping."""
     charge = max(0.0, _f(action.get("charge_mw"), 0.0))
     discharge = max(0.0, _f(action.get("discharge_mw"), 0.0))
-    eta_c = max(_f(charge_efficiency, 1.0), 1e-6)
-    eta_d = max(_f(discharge_efficiency, 1.0), 1e-6)
+    # Efficiencies are physical: must be in (0, 1].  Values > 1.0 would
+    # violate thermodynamics and produce nonsensical SOC projections.
+    eta_c = float(np.clip(_f(charge_efficiency, 1.0), 1e-6, 1.0))
+    eta_d = float(np.clip(_f(discharge_efficiency, 1.0), 1e-6, 1.0))
     dt = max(_f(dt_hours, 1.0), 1e-9)
     return float(current_soc + dt * (eta_c * charge - (discharge / eta_d)))
 

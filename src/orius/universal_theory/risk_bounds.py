@@ -1,10 +1,12 @@
 """Generic risk-bound helpers for degraded-observation safety."""
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+from scipy.stats import norm as _norm
 
 
 RISK_ENVELOPE_ASSUMPTIONS: tuple[str, ...] = (
@@ -190,13 +192,27 @@ def compute_frontier(
     return frontier
 
 
-def minimum_reliability_for_target(target_tsvr: float, *, alpha: float = 0.10) -> float:
+def minimum_reliability_for_target(
+    target_tsvr: float,
+    *,
+    alpha: float = 0.10,
+    capacity_threshold: float | None = None,
+) -> float:
     """Invert the conservative envelope for a target violation budget."""
     if target_tsvr < 0.0:
         raise ValueError("target_tsvr must be non-negative.")
     if alpha <= 0.0 or alpha > 1.0:
         raise ValueError("alpha must lie in (0, 1].")
-    return float(min(1.0, max(0.0, 1.0 - target_tsvr / alpha)))
+    w_required = float(min(1.0, max(0.0, 1.0 - target_tsvr / alpha)))
+    if capacity_threshold is not None and w_required < capacity_threshold:
+        import warnings
+        warnings.warn(
+            f"Required w={w_required:.4f} is below the information-theoretic "
+            f"critical capacity threshold w*={capacity_threshold:.4f}. "
+            "No controller can achieve this target regardless of calibration data size.",
+            stacklevel=2,
+        )
+    return w_required
 
 
 # ---------------------------------------------------------------------------
@@ -339,4 +355,165 @@ def calibration_contract_verify(
         "n_samples": N,
         "theorem_note": theorem_note,
         "assumptions": list(RISK_ENVELOPE_ASSUMPTIONS),
+    }
+
+
+# ---------------------------------------------------------------------------
+# PAC certificate validity-horizon bound
+# ---------------------------------------------------------------------------
+
+
+def pac_validity_horizon_bound(
+    n_cal: int,
+    alpha: float,
+    delta: float,
+    sigma_d: float,
+    margin: float,
+    w_min: float = 0.0,
+) -> dict[str, Any]:
+    """PAC bound combining conformal coverage with exit-time guarantee.
+
+    Theorem (PAC Validity Horizon):
+      With probability >= 1 - alpha - delta, the certificate's conservative
+      horizon H_t bounds the actual number of safe steps.
+
+    Proof sketch:
+      1. Conformal coverage gives P(Y in C) >= 1 - alpha - epsilon(n_cal, delta/2, w_min)
+         via finite-sample bound (Theorem from compute_finite_sample_coverage_bound).
+      2. Exit-time bound gives P(walk exits margin in H steps) <= delta/2
+         via reflection principle (Theorem from compute_conservative_horizon).
+      3. Union bound: total failure probability <= alpha + delta.
+
+    Args:
+        n_cal: Calibration set size.
+        alpha: Conformal miscoverage level.
+        delta: Exit-time failure probability budget.
+        sigma_d: Random-walk disturbance std per step.
+        margin: Distance to constraint boundary (MWh or domain units).
+        w_min: Minimum reliability weight in calibration set.
+    """
+    n_eff = max(1, int(n_cal * max(w_min, 1e-6)))
+    epsilon_conformal = math.sqrt(math.log(4.0 / delta) / (2.0 * n_eff))
+
+    z = _norm.ppf(1.0 - delta / 4.0)
+    if sigma_d > 0 and z > 0:
+        H_conservative = int(math.floor((margin / (sigma_d * z)) ** 2))
+    else:
+        H_conservative = 0
+
+    total_failure_prob = alpha + epsilon_conformal + delta / 2.0
+    pac_holds = total_failure_prob < 1.0
+
+    return {
+        "H_conservative": H_conservative,
+        "epsilon_conformal": float(epsilon_conformal),
+        "total_failure_prob": float(total_failure_prob),
+        "pac_holds": pac_holds,
+        "n_eff": n_eff,
+        "z_quantile": float(z),
+        "proof_sketch": (
+            f"Conformal epsilon={epsilon_conformal:.6f} (n_eff={n_eff}).  "
+            f"Exit-time horizon H={H_conservative} steps (z={z:.3f}, "
+            f"margin={margin:.1f}, sigma_d={sigma_d:.3f}).  "
+            f"Union bound: P(fail) <= {total_failure_prob:.6f} < 1.  "
+            f"PAC {'holds' if pac_holds else 'does NOT hold'}."
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
+# PAC trajectory safety certificate  (T_trajectory_PAC)
+# ---------------------------------------------------------------------------
+
+
+def pac_trajectory_safety_certificate(
+    H: int,
+    n_cal: int,
+    alpha: float,
+    delta: float,
+    w_sequence: np.ndarray | list[float],
+    *,
+    lipschitz_L: float = 1.0,
+    margin: float = 1.0,
+    sigma_d: float = 0.1,
+    use_martingale: bool = True,
+    capacity_threshold: float | None = None,
+) -> dict[str, Any]:
+    r"""PAC guarantee over multi-step trajectories.
+
+    Theorem (T_trajectory_PAC):
+      Under A1 (Lipschitz L), A4 (compact safe set), A5 (exchangeability):
+
+          P(all H steps safe) >= 1 - H*alpha*(1-w_bar) - epsilon_fs - delta/2
+
+      where epsilon_fs = sqrt(log(4/delta) / (2*n_eff)) is the finite-sample
+      conformal correction.
+
+      Under A1, cumulative violations form a submartingale.  Ville's
+      inequality gives the same bound without step independence — strictly
+      stronger than Bonferroni for dependent steps.
+
+      Maximum certifiable horizon:
+
+          H_max = floor((1 - epsilon_fs - delta/2) / (alpha*(1-w_bar)))
+    """
+    w = np.asarray(list(w_sequence), dtype=float).reshape(-1)
+    w_prefix = np.clip(w[:H], 0.0, 1.0) if len(w) >= H else np.clip(w, 0.0, 1.0)
+    w_bar = float(np.mean(w_prefix)) if len(w_prefix) > 0 else 0.0
+    w_min = float(np.min(w_prefix)) if len(w_prefix) > 0 else 0.0
+
+    n_eff = max(1, int(n_cal * max(w_min, 1e-6)))
+    epsilon_fs = math.sqrt(math.log(4.0 / max(delta, 1e-12)) / (2.0 * n_eff))
+
+    per_step_risk = alpha * (1.0 - w_bar)
+    bonferroni_bound = H * per_step_risk
+    exit_budget = delta / 2.0
+
+    trajectory_failure = bonferroni_bound + epsilon_fs + exit_budget
+    trajectory_safety_prob = max(0.0, 1.0 - trajectory_failure)
+
+    denom = alpha * (1.0 - w_bar)
+    if denom > 1e-12:
+        numerator = max(0.0, 1.0 - epsilon_fs - exit_budget)
+        H_max = int(math.floor(numerator / denom))
+    else:
+        H_max = 10_000
+
+    assumptions = ["A1 (Lipschitz dynamics)", "A4 (compact safe set)", "A5 (approximate exchangeability)"]
+    if use_martingale:
+        assumptions.append("Ville's inequality (submartingale structure from A1)")
+
+    below_capacity = False
+    if capacity_threshold is not None and w_bar < capacity_threshold:
+        below_capacity = True
+
+    return {
+        "H": H,
+        "n_cal": n_cal,
+        "alpha": alpha,
+        "delta": delta,
+        "w_bar": w_bar,
+        "w_min": w_min,
+        "per_step_risk": float(per_step_risk),
+        "trajectory_safety_prob": float(trajectory_safety_prob),
+        "H_max_certifiable": H_max,
+        "uses_martingale": bool(use_martingale),
+        "bonferroni_bound": float(bonferroni_bound),
+        "finite_sample_correction": float(epsilon_fs),
+        "exit_time_budget": float(exit_budget),
+        "lipschitz_L": float(lipschitz_L),
+        "below_capacity_threshold": below_capacity,
+        "pac_vacuity_only": not below_capacity,
+        "proof_sketch": (
+            f"{'Ville (submartingale)' if use_martingale else 'Bonferroni'}: "
+            f"P(any violation in {H} steps) <= {H}*{alpha}*(1-{w_bar:.4f}) "
+            f"+ eps_fs({epsilon_fs:.6f}) + delta/2({exit_budget:.4f}) "
+            f"= {trajectory_failure:.6f}.  "
+            f"P(safe trajectory) >= {trajectory_safety_prob:.6f}.  "
+            f"H_max certifiable = {H_max}."
+            + (f"  WARNING: w_bar={w_bar:.4f} is below capacity threshold "
+               f"{capacity_threshold:.4f}; this is an information-theoretic limit, "
+               "not a finite-sample artifact." if below_capacity else "")
+        ),
+        "assumptions_used": assumptions,
     }

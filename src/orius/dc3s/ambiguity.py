@@ -26,7 +26,11 @@ def widen_bounds(
         raise ValueError("lower cannot exceed upper")
 
     w_eff = max(float(cfg.min_w), min(float(w_t), 1.0))
-    extra = min(float(cfg.max_extra), max(0.0, 1.0 - w_eff))
+    # Use the raw w_t (not the min_w-floored w_eff) so that genuinely low
+    # reliability produces proportionally wider intervals.  w_eff is kept
+    # only for metadata reporting (w_used).
+    w_raw = float(np.clip(float(w_t), 0.0, 1.0))
+    extra = min(float(cfg.max_extra), max(0.0, 1.0 - w_raw))
     delta = float(cfg.lambda_mw) * extra
 
     lo2 = lo - delta

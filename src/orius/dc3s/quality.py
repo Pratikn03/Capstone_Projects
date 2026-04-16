@@ -15,6 +15,7 @@ from __future__ import annotations
 import math
 import statistics
 import warnings
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Mapping, MutableMapping, Sequence
 
@@ -23,7 +24,42 @@ import torch
 
 from .ftit import FTIT_FAULT_KEYS, preview_fault_state
 
-__all__ = ["compute_reliability", "compute_reliability_robust"]
+__all__ = ["compute_reliability", "compute_reliability_robust", "w_t_as_capacity_proxy"]
+
+
+# ---------------------------------------------------------------------------
+# Threat model  (Part 2 of the formal tamper-detection theory)
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class ThreatModel:
+    """Formal adversarial threat model for OQE sensor fusion.
+
+    Parameters encode the capabilities of a Byzantine adversary operating
+    within the telemetry pipeline.  The model is an input to the detection-
+    bound and OASG-mapping theorems (Theorems 11-B and T_detection).
+
+    Constraint: ``max_byzantine_fraction`` **must** be strictly < 1/3 for
+    the trimmed-mean Byzantine bound to hold.
+    """
+
+    max_byzantine_fraction: float = 0.30
+    max_delay_steps: int = 3
+    can_replay: bool = True
+    can_forge_hashes: bool = False
+    can_alter_dynamics: bool = False
+
+    def __post_init__(self) -> None:
+        if not (0.0 <= self.max_byzantine_fraction < 1 / 3):
+            raise ValueError(
+                f"max_byzantine_fraction must be in [0, 1/3); got {self.max_byzantine_fraction}"
+            )
+        if self.max_delay_steps < 0:
+            raise ValueError(f"max_delay_steps must be >= 0; got {self.max_delay_steps}")
+
+
+DEFAULT_THREAT_MODEL = ThreatModel()
+
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -315,8 +351,11 @@ def compute_reliability(
     ooo_fraction_in_order = sum(ooo_history) / max(len(ooo_history), 1)
     ooo_penalty = max(1.0 - ooo_gamma, ooo_fraction_in_order)
     spike_penalty = 1.0 if spike_ratio <= spike_beta else 1.0 / (1.0 + (spike_ratio - spike_beta))
+    gamma_stale = float(cfg.get("gamma_stale", 0.85))
+    max_stale = _max_stale_count(stale_tracker)
+    stale_penalty = gamma_stale ** max(max_stale - (stale_k - 1), 0) if stale_detected else 1.0
 
-    w_raw = missing_penalty * delay_penalty * ooo_penalty * spike_penalty
+    w_raw = missing_penalty * delay_penalty * ooo_penalty * spike_penalty * stale_penalty
     w_linear = max(min_w, min(1.0, float(w_raw)))
 
     preview = None
@@ -343,10 +382,11 @@ def compute_reliability(
             "delay_penalty": float(delay_penalty),
             "ooo_penalty": float(ooo_penalty),
             "spike_penalty": float(spike_penalty),
+            "stale_penalty": float(stale_penalty),
         },
         "sub_scores": {
             "P_drop": float(missing_penalty),
-            "P_stale": 1.0 - (1.0 if stale_detected else 0.0),
+            "P_stale": float(stale_penalty),
             "P_delay": float(delay_penalty),
             "P_ooo": float(ooo_penalty),
             "P_spike": float(spike_penalty),
@@ -609,3 +649,171 @@ def compute_reliability_robust(
         "adversarial_penalty_applied": float(adv_penalty),
     }
     return w_t, flags
+
+
+# ---------------------------------------------------------------------------
+# Information-theoretic detection bound  (Theorem T_detection)
+# ---------------------------------------------------------------------------
+
+
+def compute_detection_bound(
+    mad_spike_threshold: float,
+    sigma_noise: float,
+    sigma_honest: float,
+) -> dict[str, Any]:
+    """Compute the minimum detectable spoofing magnitude.
+
+    Theorem (T_detection):
+      Spoofing is detectable when the injected bias delta satisfies:
+
+          |delta| > k_mad * 1.4826 * MAD(honest) + sigma_noise
+
+      where k_mad = mad_spike_threshold and 1.4826 is the MAD-to-sigma
+      consistency constant for normal data.  Below this threshold,
+      spoofing is statistically indistinguishable from honest noise.
+
+    Args:
+        mad_spike_threshold: The MAD z-score threshold used by OQE (k_mad).
+        sigma_noise: Measurement noise standard deviation.
+        sigma_honest: Standard deviation of honest sensor readings.
+
+    Returns dict: min_detectable_delta, snr_threshold, sigma_noise, sigma_honest.
+    """
+    mad_of_honest = sigma_honest / 1.4826
+    min_detectable_delta = mad_spike_threshold * 1.4826 * mad_of_honest + sigma_noise
+
+    snr = min_detectable_delta / sigma_noise if sigma_noise > 1e-12 else float("inf")
+
+    return {
+        "min_detectable_delta": float(min_detectable_delta),
+        "snr_threshold": float(snr),
+        "mad_spike_threshold": mad_spike_threshold,
+        "sigma_noise": sigma_noise,
+        "sigma_honest": sigma_honest,
+        "mad_of_honest": float(mad_of_honest),
+        "proof_sketch": (
+            f"MAD of honest readings ≈ {mad_of_honest:.4f}.  "
+            f"The OQE flags a reading when its MAD z-score exceeds "
+            f"k_mad={mad_spike_threshold:.1f}.  This corresponds to "
+            f"|delta| > {min_detectable_delta:.4f}.  Below this, the "
+            f"signal-to-noise ratio is insufficient for reliable detection."
+        ),
+    }
+
+
+def verify_detection_bound_empirical(
+    honest_readings: Sequence[float],
+    spoofed_readings: Sequence[float],
+    mad_spike_threshold: float = 3.0,
+) -> dict[str, Any]:
+    """Empirically verify the detection bound against actual readings."""
+    honest_arr = np.asarray(honest_readings, dtype=float)
+    spoofed_arr = np.asarray(spoofed_readings, dtype=float)
+
+    if len(honest_arr) < 3:
+        return {"detected_fraction": 0.0, "n_spoofed": len(spoofed_arr), "n_detected": 0}
+
+    med = float(np.median(honest_arr))
+    mad = float(np.median(np.abs(honest_arr - med)))
+    if mad < 1e-12:
+        mad = 1e-12
+
+    detected = 0
+    for s in spoofed_arr:
+        z = abs(s - med) / (1.4826 * mad)
+        if z > mad_spike_threshold:
+            detected += 1
+
+    return {
+        "detected_fraction": detected / max(len(spoofed_arr), 1),
+        "n_spoofed": len(spoofed_arr),
+        "n_detected": detected,
+        "median_honest": med,
+        "mad_honest": mad,
+    }
+
+
+# ---------------------------------------------------------------------------
+# OASG adversarial mapping
+# ---------------------------------------------------------------------------
+
+
+def compute_oasg_under_threat(
+    threat_model: ThreatModel,
+    sigma_honest: float,
+    sigma_noise: float,
+    alpha: float,
+    mad_spike_threshold: float = 3.0,
+) -> dict[str, Any]:
+    """Map adversarial capabilities to OASG outcomes.
+
+    Theorem (OASG Adversarial Mapping):
+      - f < 1/3 AND spoofing detectable  -> OASG = 0
+      - f < 1/3 AND sub-detection spoofing -> OASG bounded by alpha * delta / sigma
+      - f >= 1/3 -> OASG unbounded (matches T9 impossibility)
+    """
+    f = threat_model.max_byzantine_fraction
+
+    det = compute_detection_bound(mad_spike_threshold, sigma_noise, sigma_honest)
+    min_delta = det["min_detectable_delta"]
+
+    if f >= 1 / 3:
+        return {
+            "oasg_regime": "unbounded",
+            "oasg_bound": float("inf"),
+            "reason": f"f={f:.3f} >= 1/3: Byzantine majority possible, matches T9 impossibility.",
+            "detection_bound": det,
+        }
+
+    sub_detection_oasg = alpha * min_delta / max(sigma_honest, 1e-12)
+
+    return {
+        "oasg_regime": "bounded" if sub_detection_oasg < alpha else "detectable",
+        "oasg_bound": float(sub_detection_oasg),
+        "min_detectable_delta": min_delta,
+        "reason": (
+            f"f={f:.3f} < 1/3: Byzantine minority.  Sub-detection spoofing "
+            f"contributes at most OASG <= {sub_detection_oasg:.6f}.  "
+            f"Detectable spoofing (|delta| > {min_delta:.4f}) triggers OQE "
+            f"w_t reduction, driving OASG -> 0."
+        ),
+        "detection_bound": det,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Capacity-Bridge Proxy
+# ---------------------------------------------------------------------------
+
+
+def w_t_as_capacity_proxy(
+    w_t: float,
+    kappa_d: float = 1.0,
+    H_X: float = 1.0,
+    alpha: float = 0.10,
+) -> dict[str, float | bool]:
+    """Convert OQE w_t to implied channel capacity via L2 inverse.
+
+    From L2: w_t <= kappa_d * C / H(X), so C >= w_t * H(X) / kappa_d.
+    Also computes whether the implied capacity exceeds the L3 critical
+    threshold C*_d.
+    """
+    if not (0.0 <= w_t <= 1.0):
+        raise ValueError("w_t must lie in [0, 1].")
+    if kappa_d <= 0.0:
+        raise ValueError("kappa_d must be positive.")
+    if H_X <= 0.0:
+        raise ValueError("H_X must be positive.")
+
+    C_implied = w_t * H_X / kappa_d
+    capacity_ratio = C_implied / H_X
+    C_star = H_X * 0.5 / kappa_d
+
+    return {
+        "w_t": float(w_t),
+        "C_implied": float(C_implied),
+        "C_implied_bits": float(C_implied),
+        "capacity_ratio": float(min(capacity_ratio, 1.0)),
+        "C_star_d": float(C_star),
+        "above_critical": bool(C_implied >= C_star),
+    }

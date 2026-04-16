@@ -221,3 +221,71 @@ class TestComponentsDict:
         )
         assert "smooth_rates" in f
         assert set(f["smooth_rates"]) == {"dropout", "stale_sensor", "delay_jitter", "out_of_order", "spikes"}
+
+
+# ── Threat Model, Detection Bound, OASG Mapping ────────────────────────────
+
+import numpy as np
+
+from orius.dc3s.quality import (
+    ThreatModel,
+    DEFAULT_THREAT_MODEL,
+    compute_detection_bound,
+    verify_detection_bound_empirical,
+    compute_oasg_under_threat,
+)
+
+
+class TestThreatModel:
+    def test_dataclass_frozen(self):
+        tm = ThreatModel()
+        assert tm.max_byzantine_fraction == 0.30
+        with pytest.raises(AttributeError):
+            tm.max_byzantine_fraction = 0.5  # type: ignore[misc]
+
+    def test_rejects_invalid_fraction(self):
+        with pytest.raises(ValueError):
+            ThreatModel(max_byzantine_fraction=0.4)
+
+    def test_default_model(self):
+        assert DEFAULT_THREAT_MODEL.max_byzantine_fraction < 1 / 3
+        assert DEFAULT_THREAT_MODEL.can_forge_hashes is False
+
+
+class TestDetectionBound:
+    def test_matches_theory(self):
+        result = compute_detection_bound(
+            mad_spike_threshold=3.0, sigma_noise=0.1, sigma_honest=1.0,
+        )
+        expected_mad = 1.0 / 1.4826
+        expected_delta = 3.0 * 1.4826 * expected_mad + 0.1
+        assert result["min_detectable_delta"] == pytest.approx(expected_delta, rel=1e-6)
+
+    def test_empirical(self):
+        rng = np.random.default_rng(123)
+        honest = rng.normal(0.0, 1.0, size=100).tolist()
+        spoofed = [10.0, 12.0, -15.0, 20.0]
+        result = verify_detection_bound_empirical(honest, spoofed, mad_spike_threshold=3.0)
+        assert result["detected_fraction"] >= 0.75
+        assert result["n_spoofed"] == 4
+
+
+class TestOASGMapping:
+    def test_detectable(self):
+        tm = ThreatModel(max_byzantine_fraction=0.2)
+        result = compute_oasg_under_threat(
+            tm, sigma_honest=1.0, sigma_noise=0.1, alpha=0.1,
+        )
+        assert result["oasg_regime"] in ("bounded", "detectable")
+        assert result["oasg_bound"] < float("inf")
+
+    def test_sub_detection(self):
+        tm = ThreatModel(max_byzantine_fraction=0.1)
+        result = compute_oasg_under_threat(
+            tm, sigma_honest=1.0, sigma_noise=0.5, alpha=0.05,
+        )
+        assert result["oasg_bound"] < float("inf")
+
+    def test_impossible(self):
+        with pytest.raises(ValueError):
+            ThreatModel(max_byzantine_fraction=0.34)
