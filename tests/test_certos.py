@@ -342,3 +342,118 @@ class TestCertOSModuleSurface:
             {"min_soc_mwh": 10, "max_soc_mwh": 90},
         )
         assert len(actions) > 0
+
+
+# ── Formal Validity, Composability, Tamper-Evidence ──────────────────────────
+
+
+from orius.certos.verification import (
+    formal_validity_predicate,
+    ValidityVerdict,
+    verify_certificates,
+    verify_composability,
+    ComposabilityResult,
+    verify_tamper_evidence,
+    TamperEvidenceResult,
+)
+from orius.dc3s.certificate import recompute_certificate_hash
+
+
+def _make_cert_chain(n: int, w_t: float = 0.8, H_t: int = 10) -> list[dict]:
+    """Build a valid chain of n certificates with proper hash linkage."""
+    chain = []
+    prev_hash = None
+    for i in range(n):
+        payload = {
+            "command_id": f"cmd-{i}",
+            "controller": "orius-test",
+            "created_at": f"2026-01-01T{i:02d}:00:00Z",
+            "proposed_action": {"discharge_mw": 50.0},
+            "safe_action": {"discharge_mw": 45.0},
+            "uncertainty": {"width": 5.0},
+            "reliability": w_t,
+            "w_t": w_t,
+            "validity_horizon_H_t": H_t,
+            "prev_hash": prev_hash,
+        }
+        payload["certificate_hash"] = recompute_certificate_hash(payload)
+        chain.append(payload)
+        prev_hash = payload["certificate_hash"]
+    return chain
+
+
+class TestFormalValidityPredicate:
+    def test_accepts_valid_cert(self):
+        chain = _make_cert_chain(2)
+        v = formal_validity_predicate(chain[1], chain[0])
+        assert v.valid is True
+        assert v.hash_integrity is True
+        assert v.chain_continuity is True
+        assert v.safety_semantics is True
+
+    def test_rejects_tampered_cert(self):
+        chain = _make_cert_chain(2)
+        chain[1]["safe_action"] = {"discharge_mw": 999.0}
+        v = formal_validity_predicate(chain[1], chain[0])
+        assert v.valid is False
+        assert v.hash_integrity is False
+
+    def test_rejects_broken_chain(self):
+        chain = _make_cert_chain(2)
+        chain[1]["prev_hash"] = "0000badhash"
+        v = formal_validity_predicate(chain[1], chain[0])
+        assert v.valid is False
+        assert v.chain_continuity is False
+
+    def test_rejects_expired_cert(self):
+        chain = _make_cert_chain(1, w_t=0.8, H_t=0)
+        v = formal_validity_predicate(chain[0], None)
+        assert v.valid is False
+        assert v.safety_semantics is False
+
+    def test_rejects_genesis_certificate_with_non_empty_prev_hash(self):
+        chain = _make_cert_chain(1)
+        chain[0]["prev_hash"] = "unexpected"
+        chain[0]["certificate_hash"] = recompute_certificate_hash(chain[0])
+        v = formal_validity_predicate(chain[0], None)
+        assert v.valid is False
+        assert v.chain_continuity is False
+
+
+class TestComposability:
+    def test_composability_over_episode(self):
+        chain = _make_cert_chain(5, w_t=0.9, H_t=10)
+        result = verify_composability(chain, alpha=0.1, w_min=0.0)
+        assert result.composable is True
+        assert result.all_valid is True
+        assert result.chain_length == 5
+        assert result.episode_tsvr_bound is not None
+        assert result.episode_tsvr_bound == pytest.approx(0.1 * 5 * 0.1, abs=1e-6)
+
+
+class TestTamperEvidence:
+    def test_tamper_evidence_detects_modification(self):
+        chain = _make_cert_chain(3)
+        chain[1]["safe_action"] = {"discharge_mw": 999.0}
+        result = verify_tamper_evidence(chain)
+        assert result.tamper_evident is False
+        assert len(result.broken_links) > 0
+
+    def test_tamper_evidence_intact_chain(self):
+        chain = _make_cert_chain(5)
+        result = verify_tamper_evidence(chain)
+        assert result.tamper_evident is True
+        assert result.detection_probability_lower_bound > 0.999
+        assert len(result.broken_links) == 0
+
+
+class TestBatchVerification:
+    def test_rejects_mid_chain_empty_prev_hash(self):
+        chain = _make_cert_chain(3)
+        chain[1]["prev_hash"] = ""
+        chain[1]["certificate_hash"] = recompute_certificate_hash(chain[1])
+        summary, failures, _, _ = verify_certificates(chain)
+
+        assert summary["chain_valid"] is False
+        assert summary["reason"] == "prev_hash_missing"
+        assert not failures[failures["failure_type"] == "prev_hash_missing"].empty

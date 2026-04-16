@@ -16,7 +16,9 @@ from orius.av_waymo import (
     train_dry_run_models,
     write_tfrecord_records,
 )
+from orius.av_waymo.runtime import _independent_certificate_validity, _predict_certificate_validity
 from orius.certos.verification import load_certificates_from_duckdb, verify_certificates
+from orius.dc3s.certificate import make_certificate
 
 
 def _make_scenario_features(*, scenario_id: str, speed_bias: float, gap_bias: float) -> dict[str, list[float | int | bytes]]:
@@ -167,7 +169,7 @@ def test_waymo_dry_run_smoke(tmp_path: Path) -> None:
         step_features_path=processed_dir / "step_features.parquet",
         models_dir=models_dir,
         out_dir=reports_dir,
-        max_scenarios=1,
+        max_scenarios=2,
     )
     summary_df = pd.read_csv(runtime_report["runtime_summary_csv"])
     coverage_df = pd.read_csv(runtime_report["fault_family_coverage_csv"])
@@ -179,6 +181,7 @@ def test_waymo_dry_run_smoke(tmp_path: Path) -> None:
         "trace_id",
         "shard_id",
         "reliability_w",
+        "certificate_predicted_valid",
         "base_pred_ego_speed_lower_mps",
         "base_pred_relative_gap_lower_m",
     }.issubset(trace_df.columns)
@@ -207,3 +210,31 @@ def test_waymo_replay_track_faults_only_corrupt_observation(tmp_path: Path) -> N
     observed = track.observe(state, {"kind": "spikes"})
     assert observed["ego_speed_mps"] != state["ego_speed_mps"]
     assert track.true_state()["ego_speed_mps"] == state["ego_speed_mps"]
+
+
+def test_av_certificate_prediction_and_post_emit_validation_can_diverge() -> None:
+    certificate = make_certificate(
+        command_id="waymo-cmd-1",
+        device_id="ego-1",
+        zone_id="0",
+        controller="waymo_orius_dry_run",
+        proposed_action={"acceleration_mps2": 0.2},
+        safe_action={"acceleration_mps2": -0.4},
+        uncertainty={"gap_lower_m": 10.0, "gap_upper_m": 15.0},
+        reliability={"w_t": 0.82},
+        drift={"drift": False},
+        model_hash="model",
+        config_hash="cfg",
+        validity_horizon_H_t=5,
+        validity_status="nominal",
+        runtime_surface="waymo_motion_replay_dry_run",
+        closure_tier="defended_bounded_row",
+        reliability_feature_basis={"cadence_ok": True},
+        reliability_w=0.82,
+        intervened=True,
+        intervention_reason="ttc_clamp",
+    )
+
+    assert _predict_certificate_validity(certificate, None) is True
+    certificate["safe_action"] = {"acceleration_mps2": 99.0}
+    assert _independent_certificate_validity(certificate, None) is False

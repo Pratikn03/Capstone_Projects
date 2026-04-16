@@ -193,13 +193,25 @@ class TestStoreAndGet:
 
     def test_typed_columns_persisted(self, tmp_path):
         db = str(tmp_path / "test.duckdb")
-        cert = _cert(reliability_w=0.75, drift_flag=True, inflation=1.8, gamma_mw=4.0)
+        cert = _cert(
+            reliability_w=0.75,
+            drift_flag=True,
+            inflation=1.8,
+            gamma_mw=4.0,
+            validity_horizon_H_t=12,
+            half_life_steps=6,
+            expires_at_step=18,
+            validity_status="nominal",
+            runtime_surface="bounded_runtime",
+            closure_tier="defended_bounded_row",
+            reliability_feature_basis={"cadence_ok": True},
+        )
         store_certificate(cert, db, "certs")
         import duckdb
         conn = duckdb.connect(db)
         try:
             row = conn.execute(
-                "SELECT reliability_w, drift_flag, inflation, gamma_mw FROM certs WHERE command_id = ?",
+                "SELECT reliability_w, drift_flag, inflation, gamma_mw, validity_horizon_H_t, half_life_steps, expires_at_step, validity_status, runtime_surface, closure_tier, reliability_feature_basis FROM certs WHERE command_id = ?",
                 [cert["command_id"]],
             ).fetchone()
         finally:
@@ -208,6 +220,20 @@ class TestStoreAndGet:
         assert bool(row[1]) is True
         assert float(row[2]) == pytest.approx(1.8)
         assert float(row[3]) == pytest.approx(4.0)
+        assert int(row[4]) == 12
+        assert int(row[5]) == 6
+        assert int(row[6]) == 18
+        assert row[7] == "nominal"
+        assert row[8] == "bounded_runtime"
+        assert row[9] == "defended_bounded_row"
+        assert json.loads(row[10]) == {"cadence_ok": True}
+
+    def test_verify_certificate_chain_accepts_empty_string_genesis_prev_hash(self):
+        c1 = _cert(cmd_id="1", prev_hash="")
+        c1["certificate_hash"] = recompute_certificate_hash(c1)
+        c2 = _cert(cmd_id="2", prev_hash=c1["certificate_hash"])
+        verification = verify_certificate_chain([c1, c2])
+        assert verification["valid"] is True
 
     def test_creates_parent_dirs(self, tmp_path):
         db = str(tmp_path / "nested" / "dir" / "test.duckdb")

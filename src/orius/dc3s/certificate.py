@@ -175,7 +175,26 @@ def verify_certificate_chain(certificates: Iterable[Mapping[str, Any]]) -> dict[
                 "observed_prev_hash": certificate.get("prev_hash"),
             }
         current_prev_hash = certificate.get("prev_hash")
-        if current_prev_hash != previous_hash:
+        if index == 0:
+            if current_prev_hash not in (None, ""):
+                return {
+                    "valid": False,
+                    "checked": checked,
+                    "failed_index": index,
+                    "reason": "genesis_prev_hash_present",
+                    "expected_prev_hash": "",
+                    "observed_prev_hash": current_prev_hash,
+                }
+        elif current_prev_hash in (None, ""):
+            return {
+                "valid": False,
+                "checked": checked,
+                "failed_index": index,
+                "reason": "prev_hash_missing",
+                "expected_prev_hash": previous_hash,
+                "observed_prev_hash": current_prev_hash,
+            }
+        elif current_prev_hash != previous_hash:
             return {
                 "valid": False,
                 "checked": checked,
@@ -234,7 +253,14 @@ def _ensure_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
             gamma_mw DOUBLE,
             e_t_mwh DOUBLE,
             soc_tube_lower_mwh DOUBLE,
-            soc_tube_upper_mwh DOUBLE
+            soc_tube_upper_mwh DOUBLE,
+            validity_horizon_H_t INTEGER,
+            half_life_steps INTEGER,
+            expires_at_step INTEGER,
+            validity_status VARCHAR,
+            runtime_surface VARCHAR,
+            closure_tier VARCHAR,
+            reliability_feature_basis VARCHAR
         )
         """
     )
@@ -257,6 +283,13 @@ def _ensure_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
     _add_column_if_missing(conn, table_name, "e_t_mwh", "DOUBLE")
     _add_column_if_missing(conn, table_name, "soc_tube_lower_mwh", "DOUBLE")
     _add_column_if_missing(conn, table_name, "soc_tube_upper_mwh", "DOUBLE")
+    _add_column_if_missing(conn, table_name, "validity_horizon_H_t", "INTEGER")
+    _add_column_if_missing(conn, table_name, "half_life_steps", "INTEGER")
+    _add_column_if_missing(conn, table_name, "expires_at_step", "INTEGER")
+    _add_column_if_missing(conn, table_name, "validity_status", "VARCHAR")
+    _add_column_if_missing(conn, table_name, "runtime_surface", "VARCHAR")
+    _add_column_if_missing(conn, table_name, "closure_tier", "VARCHAR")
+    _add_column_if_missing(conn, table_name, "reliability_feature_basis", "VARCHAR")
 
 
 def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_name: str) -> None:
@@ -296,8 +329,15 @@ def _insert_sql(table_name: str) -> str:
             gamma_mw,
             e_t_mwh,
             soc_tube_lower_mwh,
-            soc_tube_upper_mwh
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            soc_tube_upper_mwh,
+            validity_horizon_H_t,
+            half_life_steps,
+            expires_at_step,
+            validity_status,
+            runtime_surface,
+            closure_tier,
+            reliability_feature_basis
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
 
@@ -328,6 +368,13 @@ def _certificate_row(certificate: Mapping[str, Any]) -> list[Any]:
         certificate.get("e_t_mwh"),
         certificate.get("soc_tube_lower_mwh"),
         certificate.get("soc_tube_upper_mwh"),
+        certificate.get("validity_horizon_H_t"),
+        certificate.get("half_life_steps"),
+        certificate.get("expires_at_step"),
+        certificate.get("validity_status"),
+        certificate.get("runtime_surface"),
+        certificate.get("closure_tier"),
+        json.dumps(certificate.get("reliability_feature_basis", {}), ensure_ascii=True, sort_keys=True),
     ]
 
 

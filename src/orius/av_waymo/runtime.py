@@ -14,6 +14,14 @@ from typing import Any, Mapping
 import numpy as np
 import pandas as pd
 
+from orius.certos.verification import (
+    REQUIRED_CERTIFICATE_FIELDS,
+    certificate_intervention_semantics_valid,
+    count_present_required_certificate_fields,
+    extract_certificate_validity_horizon,
+    formal_validity_predicate,
+    missing_required_certificate_fields,
+)
 from orius.dc3s.certificate import recompute_certificate_hash, store_certificates_batch
 from orius.dc3s.domain_adapter import DomainAdapter
 from orius.dc3s.certificate import make_certificate
@@ -51,6 +59,56 @@ def _finite_float_or_none(value: Any) -> float | None:
     if not math.isfinite(numeric):
         return None
     return numeric
+
+
+def _certificate_reliability_weight(certificate: Mapping[str, Any]) -> float:
+    for key in ("reliability_w", "w_t"):
+        numeric = _finite_float_or_none(certificate.get(key))
+        if numeric is not None:
+            return float(numeric)
+    reliability = certificate.get("reliability")
+    if isinstance(reliability, Mapping):
+        for key in ("w_t", "w", "reliability_w"):
+            numeric = _finite_float_or_none(reliability.get(key))
+            if numeric is not None:
+                return float(numeric)
+        return 0.0
+    numeric = _finite_float_or_none(reliability)
+    return float(numeric) if numeric is not None else 0.0
+
+
+def _certificate_required_field_counts(certificate: Mapping[str, Any] | None) -> tuple[int, int]:
+    return count_present_required_certificate_fields(certificate), len(REQUIRED_CERTIFICATE_FIELDS)
+
+
+def _predict_certificate_validity(
+    certificate: Mapping[str, Any] | None,
+    previous_certificate: Mapping[str, Any] | None,
+) -> bool:
+    if certificate is None or missing_required_certificate_fields(certificate):
+        return False
+    if not certificate_intervention_semantics_valid(certificate):
+        return False
+    current_prev_hash = certificate.get("prev_hash")
+    if previous_certificate is None:
+        if current_prev_hash not in (None, ""):
+            return False
+    elif current_prev_hash != previous_certificate.get("certificate_hash"):
+        return False
+    horizon_value = extract_certificate_validity_horizon(certificate)
+    return horizon_value > 0 and _certificate_reliability_weight(certificate) >= 0.0
+
+
+def _independent_certificate_validity(
+    certificate: Mapping[str, Any] | None,
+    previous_certificate: Mapping[str, Any] | None,
+) -> bool:
+    if certificate is None or missing_required_certificate_fields(certificate):
+        return False
+    if not certificate_intervention_semantics_valid(certificate):
+        return False
+    verdict = formal_validity_predicate(certificate, previous_certificate, w_min=0.0)
+    return bool(verdict.valid)
 
 
 def _scenario_fault_family(scenario_id: str) -> str:
@@ -598,6 +656,23 @@ class WaymoAVDomainAdapter(DomainAdapter):
         repair_meta: Mapping[str, Any] | None = None,
         guarantee_meta: Mapping[str, Any] | None = None,
     ) -> Mapping[str, Any]:
+        reliability_w = _f(reliability.get("w_t", reliability.get("w")), 1.0)
+        validity_status = str(uncertainty.get("meta", {}).get("validity_status", "nominal"))
+        default_horizons = {"invalid": 0, "degraded": 3, "watch": 6, "nominal": 10}
+        validity_horizon = int(
+            cfg.get(
+                "validity_horizon_H_t",
+                default_horizons.get(validity_status, max(1, int(round(10.0 * max(reliability_w, 0.1))))),
+            )
+        )
+        half_life_steps = int(
+            cfg.get(
+                "half_life_steps",
+                0 if validity_horizon <= 1 else max(1, validity_horizon // 2),
+            )
+        )
+        step_index = int(cfg.get("step_index", 0) or 0)
+        expires_at_step = int(cfg.get("expires_at_step", step_index + max(validity_horizon, 0)))
         cert = make_certificate(
             command_id=command_id,
             device_id=device_id,
@@ -614,7 +689,7 @@ class WaymoAVDomainAdapter(DomainAdapter):
             dispatch_plan=dict(dispatch_plan or {}),
             intervened=bool(repair_meta.get("repaired")) if isinstance(repair_meta, Mapping) else None,
             intervention_reason=repair_meta.get("intervention_reason") if isinstance(repair_meta, Mapping) else None,
-            reliability_w=_f(reliability.get("w_t", reliability.get("w")), 1.0),
+            reliability_w=reliability_w,
             drift_flag=bool(drift.get("drift", False)),
             inflation=_f(uncertainty.get("meta", {}).get("widening_factor"), 1.0),
             validity_score=uncertainty.get("meta", {}).get("validity_score"),
@@ -624,6 +699,10 @@ class WaymoAVDomainAdapter(DomainAdapter):
             coverage_group_key=uncertainty.get("meta", {}).get("coverage_group_key"),
             shift_alert_flag=uncertainty.get("meta", {}).get("shift_alert_flag"),
             assumptions_version="waymo-av-shift-aware-v1",
+            validity_horizon_H_t=validity_horizon,
+            half_life_steps=half_life_steps,
+            expires_at_step=expires_at_step,
+            validity_status=validity_status,
             runtime_surface="waymo_motion_replay_dry_run",
             closure_tier="defended_bounded_row",
             reliability_feature_basis=reliability.get("reliability_feature_basis"),
@@ -636,7 +715,7 @@ class WaymoAVDomainAdapter(DomainAdapter):
         cert["widening_factor"] = _f(uncertainty.get("meta", {}).get("widening_factor"), 1.0)
         cert["shift_score"] = _f(cfg.get("shift_score"), 0.0)
         cert["validity_score"] = uncertainty.get("meta", {}).get("validity_score")
-        cert["validity_status"] = uncertainty.get("meta", {}).get("validity_status")
+        cert["validity_status"] = validity_status
         cert["coverage_group_key"] = uncertainty.get("meta", {}).get("coverage_group_key")
         cert["shift_alert_flag"] = uncertainty.get("meta", {}).get("shift_alert_flag")
         cert["true_margin"] = cfg.get("true_margin")
@@ -704,14 +783,15 @@ def _run_episode(
     fault_family: str,
     use_orius: bool,
     adapter: WaymoAVDomainAdapter | None = None,
-) -> tuple[list[StepRecord], list[dict[str, Any]], list[dict[str, Any]]]:
+    previous_certificate: Mapping[str, Any] | None = None,
+) -> tuple[list[StepRecord], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any] | None]:
     adapter = adapter or WaymoAVDomainAdapter({"expected_cadence_s": 0.1})
     feature_lookup = _build_runtime_lookup(step_features)
     scenario_steps = sorted(step_features[step_features["scenario_id"] == scenario_id]["step_index"].astype(int).tolist())
     if not scenario_steps:
         return [], [], []
     track.load_scenario(scenario_id, start_step_index=min(scenario_steps))
-    prev_cert_hash: str | None = None
+    last_certificate = dict(previous_certificate) if previous_certificate is not None else None
     history: list[dict[str, Any]] = []
     records: list[StepRecord] = []
     trace_rows: list[dict[str, Any]] = []
@@ -746,9 +826,12 @@ def _run_episode(
         candidate_action = deterministic_longitudinal_controller(observed)
         latency_start = time.perf_counter_ns()
         certificate_valid = False
+        certificate_predicted_valid = False
         intervened = False
         fallback_used = False
         certificate = None
+        audit_fields_present = 0
+        audit_fields_required = len(REQUIRED_CERTIFICATE_FIELDS)
 
         if use_orius:
             constraints = {
@@ -778,9 +861,10 @@ def _run_episode(
                     "shift_score": observed["shift_score"],
                     "true_margin": true_state.get("true_margin"),
                     "observed_margin": observed["observed_margin"],
+                    "step_index": int(step_index),
                     "intervention_trace_id": f"{scenario_id}-{step_index}",
                 },
-                prev_cert_hash=prev_cert_hash,
+                prev_cert_hash=(last_certificate or {}).get("certificate_hash"),
                 device_id=f"ego-{true_state.get('ego_track_id')}",
                 zone_id=str(true_state.get("shard_id")),
                 controller="waymo_orius_dry_run",
@@ -791,8 +875,10 @@ def _run_episode(
             # its initial payload, so re-hash the final mapping before chaining
             # and persistence.
             certificate["certificate_hash"] = recompute_certificate_hash(certificate)
-            prev_cert_hash = certificate.get("certificate_hash")
-            certificate_valid = True
+            certificate_predicted_valid = _predict_certificate_validity(certificate, last_certificate)
+            certificate_valid = _independent_certificate_validity(certificate, last_certificate)
+            if certificate_valid:
+                last_certificate = dict(certificate)
             intervened = bool(result["repair_meta"]["repaired"])
             adapter.record_shift_aware_step(
                 state=observed,
@@ -825,6 +911,7 @@ def _run_episode(
             trace_speed_upper = float(observed["pred_ego_speed_upper_mps"])
             trace_gap_lower = float(observed["pred_relative_gap_lower_m"])
             trace_gap_upper = float(observed["pred_relative_gap_upper_m"])
+        audit_fields_present, audit_fields_required = _certificate_required_field_counts(certificate)
         latency_us = (time.perf_counter_ns() - latency_start) / 1_000.0
         history.append(dict(observed))
         next_true = dict(track.step(safe_action))
@@ -848,10 +935,10 @@ def _run_episode(
                 intervened=intervened,
                 fallback_used=fallback_used,
                 certificate_valid=certificate_valid,
-                certificate_predicted_valid=certificate_valid,
+                certificate_predicted_valid=certificate_predicted_valid,
                 useful_work=float(max(0.0, next_true.get("ego_x_m", 0.0) - true_state.get("ego_x_m", 0.0))),
-                audit_fields_present=4 if certificate is not None else 0,
-                audit_fields_required=4,
+                audit_fields_present=audit_fields_present,
+                audit_fields_required=audit_fields_required,
                 latency_us=float(latency_us),
                 domain_metrics={
                     "min_gap_m": float(true_metrics["min_gap_m"]),
@@ -874,6 +961,9 @@ def _run_episode(
                 "intervened": bool(intervened),
                 "fallback_used": bool(fallback_used),
                 "certificate_valid": bool(certificate_valid),
+                "certificate_predicted_valid": bool(certificate_predicted_valid),
+                "audit_fields_present": int(audit_fields_present),
+                "audit_fields_required": int(audit_fields_required),
                 "true_constraint_violated": bool(true_metrics["true_constraint_violated"]),
                 "observed_constraint_satisfied": (
                     None if observed_metrics.get("true_constraint_violated") is None else not bool(observed_metrics["true_constraint_violated"])
@@ -908,7 +998,7 @@ def _run_episode(
             cert_rows.append(certificate)
         previous_speed = current_speed
         previous_accel = accel
-    return records, trace_rows, cert_rows
+    return records, trace_rows, cert_rows, last_certificate
 
 
 def run_runtime_dry_run(
@@ -950,6 +1040,7 @@ def run_runtime_dry_run(
     all_records: dict[str, list[StepRecord]] = {"baseline": [], "orius": []}
     all_traces: list[dict[str, Any]] = []
     certificate_count = 0
+    previous_orius_certificate: dict[str, Any] | None = None
     # Pre-load the replay windows once — avoids re-reading 207MB per scenario.
     baseline_track = WaymoReplayTrackAdapter(replay_path)
     orius_track = WaymoReplayTrackAdapter(replay_path)
@@ -959,7 +1050,7 @@ def run_runtime_dry_run(
     try:
         for scenario_id in test_scenarios:
             fault_family = _scenario_fault_family(str(scenario_id))
-            baseline_records, baseline_traces, _ = _run_episode(
+            baseline_records, baseline_traces, _, _ = _run_episode(
                 track=baseline_track,
                 scenario_id=str(scenario_id),
                 step_features=step_features,
@@ -967,7 +1058,7 @@ def run_runtime_dry_run(
                 fault_family=fault_family,
                 use_orius=False,
             )
-            orius_records, orius_traces, orius_certs = _run_episode(
+            orius_records, orius_traces, orius_certs, previous_orius_certificate = _run_episode(
                 track=orius_track,  # noqa: reuse pre-loaded adapter
                 scenario_id=str(scenario_id),
                 step_features=step_features,
@@ -975,6 +1066,7 @@ def run_runtime_dry_run(
                 fault_family=fault_family,
                 use_orius=True,
                 adapter=orius_adapter,
+                previous_certificate=previous_orius_certificate,
             )
             all_records["baseline"].extend(baseline_records)
             all_records["orius"].extend(orius_records)
