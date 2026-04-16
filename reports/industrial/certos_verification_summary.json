@@ -1,0 +1,12 @@
+{
+  "audit_completeness_rate": 1.0,
+  "certificate_rows": 240,
+  "chain_valid": true,
+  "checked": 240,
+  "expiry_consistency_rate": 1.0,
+  "expiry_metadata_presence_rate": 0.0,
+  "failed_index": null,
+  "failure_rows": 0,
+  "reason": null,
+  "required_payload_pass_rate": 1.0
+}
