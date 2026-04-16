@@ -162,6 +162,19 @@ Canonical benchmark fields:
 - `latency_us`
 - `domain_metrics`
 
+## Rate-Distortion Safety Laws (L1-L4)
+
+ORIUS's theoretical foundation is grounded in Shannon rate-distortion theory via four laws that completely characterise the degraded-observation safety problem:
+
+| Law | Statement | Code Witness |
+|-----|-----------|-------------|
+| **L1** Rate-Distortion Safety Law | D*(C) >= alpha * max(0, 1 - C/H(X)). When channel capacity C < state entropy H(X), positive safety loss is unavoidable. | `rate_distortion_safety_law()` |
+| **L2** Capacity Bridge | w_t <= kappa_d * C / H(X). OQE reliability is bounded by normalized channel capacity. | `capacity_bridge()` |
+| **L3** Critical Capacity | Below C*_d = H(X)(1 - eps/alpha)/kappa_d, no controller can certify safety. | `critical_capacity()` |
+| **L4** Achievability-Converse Sandwich | (alpha/K)(1-w_bar) <= TSVR* <= alpha(1-w_bar). DC3S is within constant factor K=2 of optimal. | `achievability_converse_sandwich()` |
+
+All four laws are implemented in [`src/orius/universal_theory/orius_law.py`](src/orius/universal_theory/orius_law.py) with full proof sketches, and the earlier theorems T9, T10, T_minimax, and T_sensor_converse are derived as corollaries. The empirical phase transition sweep across 6 domains validates L1-L4 in [`reports/publication/orius_law_phase_transition.csv`](reports/publication/orius_law_phase_transition.csv).
+
 ## Repository Map
 
 ```text
@@ -181,6 +194,18 @@ Canonical benchmark fields:
 ├── reports/orius_av/           AV runtime/report surfaces
 ├── reports/publication/        Active publication artifacts
 └── reports/legacy_archive/     Historical frozen bundles and provenance-only outputs
+```
+
+## Dashboard Access
+
+**Local Development Dashboard** (running now):
+- **Localhost**: http://localhost:3000
+- **Network Address**: http://192.168.4.108:3000
+- **Port**: 3000
+
+To start the dashboard:
+```bash
+cd frontend && npm run dev
 ```
 
 ## Documentation Map
