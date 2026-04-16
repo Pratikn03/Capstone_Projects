@@ -1,2 +1,3 @@
 domain,status,out_dir,key_report,notes
+battery,complete,/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery,/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/summary.json,witness_row
 av,complete,reports/orius_av/full_corpus,reports/orius_av/full_corpus/summary.json,full_corpus

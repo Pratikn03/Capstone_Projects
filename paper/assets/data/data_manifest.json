@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-02T23:14:06.912519+00:00",
+  "generated_at": "2026-04-16T01:44:38.656889+00:00",
   "datasets": {
     "DE": {
       "features_path": "data/processed/features.parquet",
@@ -170,13 +170,13 @@
       }
     },
     "AV": {
-      "features_path": "data/av/processed/features.parquet",
+      "features_path": "data/orius_av/av/processed/features.parquet",
       "features_schema_hash": "e4932b1d5af30e2615b49caa012ac6cefeafb52a120ab948af9f8e04bce3082f",
       "split_paths": {
-        "train": "data/av/processed/splits/train.parquet",
-        "calibration": "data/av/processed/splits/calibration.parquet",
-        "val": "data/av/processed/splits/val.parquet",
-        "test": "data/av/processed/splits/test.parquet"
+        "train": "data/orius_av/av/processed/splits/train.parquet",
+        "calibration": "data/orius_av/av/processed/splits/calibration.parquet",
+        "val": "data/orius_av/av/processed/splits/val.parquet",
+        "test": "data/orius_av/av/processed/splits/test.parquet"
       },
       "split_boundaries": {
         "train": {
@@ -407,48 +407,6 @@
       "schema_hash": null
     },
     {
-      "path": "data/av/processed/features.parquet",
-      "size_bytes": 25289,
-      "mtime_utc": "2026-04-02T18:47:53.771011+00:00",
-      "sha256": "42a3a6105f16c9adc9429b978d265560f49540df873dcd04c86637e113a9c0af",
-      "schema_hash": "e4932b1d5af30e2615b49caa012ac6cefeafb52a120ab948af9f8e04bce3082f"
-    },
-    {
-      "path": "data/av/processed/splits/calibration.parquet",
-      "size_bytes": 14396,
-      "mtime_utc": "2026-04-02T18:47:53.774567+00:00",
-      "sha256": "823ac413b17ec1dc950b42f3786bbf4d2adbdb9a1e7a53cdf54148695691ef91",
-      "schema_hash": "e4932b1d5af30e2615b49caa012ac6cefeafb52a120ab948af9f8e04bce3082f"
-    },
-    {
-      "path": "data/av/processed/splits/test.parquet",
-      "size_bytes": 16052,
-      "mtime_utc": "2026-04-02T18:47:53.776977+00:00",
-      "sha256": "d4f80b2a78b90fe909a1c865daebd3305c0ae1cae144c72779588c005aabcbfc",
-      "schema_hash": "e4932b1d5af30e2615b49caa012ac6cefeafb52a120ab948af9f8e04bce3082f"
-    },
-    {
-      "path": "data/av/processed/splits/train.parquet",
-      "size_bytes": 22338,
-      "mtime_utc": "2026-04-02T18:47:53.773421+00:00",
-      "sha256": "7e41f120cb239ee22c62e036288b7e1354b89103a1b1f6f47e18e35dd5106e72",
-      "schema_hash": "e4932b1d5af30e2615b49caa012ac6cefeafb52a120ab948af9f8e04bce3082f"
-    },
-    {
-      "path": "data/av/processed/splits/val.parquet",
-      "size_bytes": 15155,
-      "mtime_utc": "2026-04-02T18:47:53.775750+00:00",
-      "sha256": "2d595f5c229b770b3467d44a287c03d32daedb59873300c884c43a27d6553f71",
-      "schema_hash": "e4932b1d5af30e2615b49caa012ac6cefeafb52a120ab948af9f8e04bce3082f"
-    },
-    {
-      "path": "data/av/raw/external_sources_manifest.json",
-      "size_bytes": 1063,
-      "mtime_utc": "2026-04-02T18:59:01.084219+00:00",
-      "sha256": "dd75fe9e5b428e546816c412981265e3eb009385b199a70b4ba58a17fb1ef058",
-      "schema_hash": null
-    },
-    {
       "path": "data/healthcare/processed/features.parquet",
       "size_bytes": 22535,
       "mtime_utc": "2026-04-02T18:47:53.835160+00:00",
@@ -524,6 +482,41 @@
       "mtime_utc": "2026-04-02T18:59:01.084324+00:00",
       "sha256": "5f5637abf1650db080d51922db8d23b56440558ecd22e71e7335563e2ddc5949",
       "schema_hash": null
+    },
+    {
+      "path": "data/orius_av/av/processed/features.parquet",
+      "size_bytes": 25289,
+      "mtime_utc": "2026-04-02T18:47:53.771011+00:00",
+      "sha256": "42a3a6105f16c9adc9429b978d265560f49540df873dcd04c86637e113a9c0af",
+      "schema_hash": "e4932b1d5af30e2615b49caa012ac6cefeafb52a120ab948af9f8e04bce3082f"
+    },
+    {
+      "path": "data/orius_av/av/processed/splits/calibration.parquet",
+      "size_bytes": 14396,
+      "mtime_utc": "2026-04-02T18:47:53.774567+00:00",
+      "sha256": "823ac413b17ec1dc950b42f3786bbf4d2adbdb9a1e7a53cdf54148695691ef91",
+      "schema_hash": "e4932b1d5af30e2615b49caa012ac6cefeafb52a120ab948af9f8e04bce3082f"
+    },
+    {
+      "path": "data/orius_av/av/processed/splits/test.parquet",
+      "size_bytes": 16052,
+      "mtime_utc": "2026-04-02T18:47:53.776977+00:00",
+      "sha256": "d4f80b2a78b90fe909a1c865daebd3305c0ae1cae144c72779588c005aabcbfc",
+      "schema_hash": "e4932b1d5af30e2615b49caa012ac6cefeafb52a120ab948af9f8e04bce3082f"
+    },
+    {
+      "path": "data/orius_av/av/processed/splits/train.parquet",
+      "size_bytes": 22338,
+      "mtime_utc": "2026-04-02T18:47:53.773421+00:00",
+      "sha256": "7e41f120cb239ee22c62e036288b7e1354b89103a1b1f6f47e18e35dd5106e72",
+      "schema_hash": "e4932b1d5af30e2615b49caa012ac6cefeafb52a120ab948af9f8e04bce3082f"
+    },
+    {
+      "path": "data/orius_av/av/processed/splits/val.parquet",
+      "size_bytes": 15155,
+      "mtime_utc": "2026-04-02T18:47:53.775750+00:00",
+      "sha256": "2d595f5c229b770b3467d44a287c03d32daedb59873300c884c43a27d6553f71",
+      "schema_hash": "e4932b1d5af30e2615b49caa012ac6cefeafb52a120ab948af9f8e04bce3082f"
     },
     {
       "path": "data/processed/features.parquet",
@@ -717,8 +710,8 @@
     {
       "path": "data/raw/opsd_germany_provenance.json",
       "size_bytes": 3829,
-      "mtime_utc": "2026-04-02T23:13:57.223782+00:00",
-      "sha256": "de3562fb126968201a7ab0bead43d568a7d76d69da7919afda75bc6e58f2c732",
+      "mtime_utc": "2026-04-14T21:18:17.108843+00:00",
+      "sha256": "58a8ef585f12fd605b72f73812ab06dd3cb2d0a191e42c17e24fe6c4bf0c1a47",
       "schema_hash": null
     },
     {
@@ -1604,6 +1597,6 @@
       }
     }
   },
-  "schema_hash": "8c54bcdc52f56bf4f69f2095a85ecd63318cece8720318d7d773be8b847687d1",
-  "manifest_sha256": "243919a22da0f85467c7e56737502e38ade6a3f3d9d129cbe4ab4f9b3bef034f"
+  "schema_hash": "0e773cf76de1ad9d99203f4ea6db42213b4ecc26d1aa3f9c95ca23b0fa75012e",
+  "manifest_sha256": "2639fa419ce35cf863fb03644a2e6e2ba1218db8b51ad801fe6a68c4c2b6fdad"
 }

@@ -108,7 +108,7 @@ def compute_state_safety_metrics(state: Mapping[str, Any]) -> dict[str, float | 
         lateral_val = abs(float(lateral))
         bumper_gap = longitudinal_val - 0.5 * (ego_length + neighbor_length)
         same_lane = lateral_val <= 0.5 * (ego_width + neighbor_width) + 1.5
-        if same_lane and bumper_gap <= 0.0:
+        if same_lane and longitudinal_val >= 0.0 and bumper_gap <= 0.0:
             overlap = True
         if same_lane and longitudinal_val >= 0.0 and bumper_gap < front_gap:
             front_gap = bumper_gap

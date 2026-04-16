@@ -1,0 +1,91 @@
+% === Section 3: Related Work ===
+\section{Related Work}\label{sec:related}
+
+The ORIUS framework sits at the intersection of several research threads: runtime
+verification, conformal prediction, safety shielding, and CPS telemetry resilience.
+We survey each in turn, highlighting the gap that ORIUS addresses.
+
+\subsection{Runtime Verification and Monitoring}
+
+Runtime-verification (RV) monitors check whether an execution trace satisfies a
+temporal-logic specification~\cite{leucker2009brief,bartocci2018lectures}.  Classic RV
+monitors are \emph{passive}: they flag violations but do not modify the controller's
+action.  The simplex architecture~\cite{sha2001using} introduces a \emph{decision
+module} that switches between a complex controller and a verified-safe baseline, but
+it assumes that the state is accurately known---the observation pipeline is outside
+its trust model.
+
+ORIUS goes beyond passive monitoring by actively computing a
+constraint-tightened action set and repairing unsafe actions.  Crucially, it operates
+on \emph{degraded} observations and inflates the safety envelope accordingly, a
+capability absent from standard simplex or watchdog designs.
+
+\subsection{Conformal Prediction for Safety}
+
+Conformal prediction (CP) constructs distribution-free prediction intervals with
+finite-sample coverage guarantees~\cite{vovk2005algorithmic}.  Adaptive Conformal
+Inference~\cite{gibbs2021adaptive} and related methods handle distribution shift
+online.  Recent work applies CP to robotics~\cite{lindemann2023safe} and
+autonomous driving~\cite{luo2024conformal_av}.
+
+ORIUS uses CP as the \emph{calibration engine} (Stage~2 of \dcs{}) but wraps it in a
+full runtime safety layer with constraint tightening, action shielding, and governance
+certification.  Stand-alone CP only produces intervals; ORIUS consumes them,
+inflates them according to degradation severity, and feeds the result into a formal
+contract stack.
+
+\subsection{Safety Shielding and Control Barrier Functions}
+
+Shield synthesis computes a reactive strategy that enforces a safety specification by
+overriding unsafe controller actions~\cite{bloem2015shield}.  Control Barrier
+Functions (CBFs)~\cite{ames2019control} certify forward invariance of safe sets.
+Both approaches typically require a known, accurate state vector.
+
+ORIUS contributes by coupling the shield to an \emph{observation-consistent state set}
+$\Ut$ rather than a point state estimate.  The constraint-tightening stage
+(\cref{sec:architecture}) is conceptually analogous to robust CBF formulations, but it
+is implemented via interval arithmetic on conformal sets, making it compatible with
+black-box learned models.
+
+\subsection{Telemetry Resilience in CPS}
+
+Fault-tolerant control and networked control systems address packet loss and
+delay~\cite{hespanha2007survey}.  However, these methods typically assume known
+fault models (\eg~Bernoulli packet loss with known rate) and linear dynamics.
+ORIUS's detect stage uses statistical detectors (Page--Hinkley, staleness counters)
+to \emph{assess} the fault type without assuming a parametric model, and the
+calibration stage inflates uncertainty in proportion to the detected severity.
+
+\subsection{Comparison Summary}
+
+\Cref{tab:related_cmp} summarises the coverage of requirements R1--R5 across related
+approaches.
+
+\begin{table}[t]
+\caption{Comparison of ORIUS with related approaches on
+Requirements R1--R5.  \checkmark = addressed, ($\sim$) = partial, $\times$ = not addressed.}
+\label{tab:related_cmp}
+\centering\small
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Approach} & \textbf{R1} & \textbf{R2} & \textbf{R3} & \textbf{R4} & \textbf{R5} \\
+\midrule
+Classic RV monitor          & $\sim$ & $\times$ & $\times$    & $\times$ & $\times$ \\
+Simplex architecture        & $\times$ & $\times$ & $\times$  & \checkmark & $\times$ \\
+Conformal prediction        & $\times$ & \checkmark & $\times$ & $\times$ & $\times$ \\
+CBF / Shield synthesis      & $\times$ & $\times$ & \checkmark & \checkmark & $\times$ \\
+Fault-tolerant NCS          & \checkmark & $\sim$ & $\times$   & $\times$ & $\times$ \\
+\midrule
+\textbf{ORIUS (\dcs{})}    & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Positioning}
+
+ORIUS is, to our knowledge, the first runtime layer that satisfies all five
+requirements simultaneously while remaining domain-agnostic through thin typed
+adapters.  The two-domain validation we present (\cref{sec:battery,sec:av})
+demonstrates that the same kernel---compiled once, configured via adapter---achieves
+zero true-state violations on battery dispatch and closes the OASG on autonomous
+vehicle prediction.

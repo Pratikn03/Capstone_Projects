@@ -102,6 +102,28 @@ The OQE computation is stateless given the rolling buffer and runs in
 $<0.03$\,ms median latency
 (Table~\ref{tab:dc3s-latency}, \texttt{reports/publication/dc3s\_latency\_summary.csv}).
 
+\paragraph{Stale-sensor lag correction (Assumption~A6).}
+When telemetry is stale for multiple consecutive steps, the freshness
+sub-score alone may not decay fast enough to reflect the true reliability
+loss.  A configurable \emph{stale decay rate} parameter
+$\gamma_{\mathrm{stale}} \in (0,1)$ (default $0.85$, set via
+\texttt{stale\_decay\_rate} in \texttt{dc3s.yaml}) multiplicatively
+compounds the freshness penalty at each stale step:
+$w_t^{\mathrm{fresh}} \leftarrow w_t^{\mathrm{fresh}} \cdot \gamma_{\mathrm{stale}}^{s_t}$.
+This ensures that the reliability score drops below the shield threshold
+within a bounded number of stale steps, closing the A6 detector-lag gap
+identified in the reviewer critique.
+
+\paragraph{Adversarial OQE mode.}
+When \texttt{adversarial\_mode} is enabled in the runtime configuration,
+the OQE applies a secondary Byzantine-robust estimator
+(\texttt{compute\_reliability\_robust}) over the most recent 50 signal
+readings.  The final reliability score is
+$w_t = \min(w_t^{\mathrm{heuristic}},\, w_t^{\mathrm{robust}})$,
+ensuring that an adversary who can manipulate individual sub-scores
+cannot raise the aggregate score above the robust estimator's floor.
+See Chapter~\ref{ch:adversarial-robustness} for the threat model.
+
 % ----------------------------------------------------------------
 \section{Calibrate: Reliability-Adaptive Interval Inflation}
 \label{sec:calibrate}
@@ -134,6 +156,23 @@ where:
 The multiplicative form ensures that under nominal conditions
 ($w_t = 1$, $d_t = 0$, $s_t = 0$) the inflated interval collapses to the
 base interval, imposing zero additional conservatism.
+
+\paragraph{Domain-typed inflation factors.}
+Although the RAC-Cert formula is domain-agnostic in form, different CPS
+domains exhibit different baseline uncertainty scales.  A per-domain
+multiplier $\delta_d$ is applied to the raw inflation component:
+\[
+  f_{\mathrm{infl}} = 1 + \delta_d \cdot \bigl[
+    \kappa_r(1-w_t) + \kappa_d\,d_t + \kappa_s\,s_t \bigr],
+\]
+where the domain factors are: battery ($\delta = 1.0$),
+grid ($1.15$), industrial ($1.25$), healthcare ($1.30$),
+navigation ($1.35$), AV ($1.40$), and aerospace ($1.50$).
+The identity factor for battery preserves the nominal conformal surface
+exactly, while safety-critical domains with higher state dimensionality
+receive proportionally wider intervals.
+The \texttt{domain\_id} field in \texttt{DC3SConfig} selects the
+applicable factor.
 
 \paragraph{Inflation diagnostics.}
 The locked evidence in \texttt{reports/publication/dc3s\_main\_table.csv}

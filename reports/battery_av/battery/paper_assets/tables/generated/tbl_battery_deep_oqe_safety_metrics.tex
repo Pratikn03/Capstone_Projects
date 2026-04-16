@@ -1,0 +1,15 @@
+\begin{table}[ht]
+\centering
+\caption{Battery replay comparison for heuristic versus DeepOQE reliability backends.}
+\label{tab:battery-deep-oqe-safety}
+\begin{tabular}{llrrrr}
+\toprule
+Lane & Controller & TSVR & IR & GDQ & CVA \\
+\midrule
+deep & dc3s\_ftit & 0.0000 & 0.0208 & 0.8289 & 0.9931 \\
+deep & dc3s\_wrapped & 0.0000 & 0.0000 & 1.0000 & 0.9792 \\
+heuristic & dc3s\_ftit & 0.0000 & 0.0208 & 0.8289 & 0.9931 \\
+heuristic & dc3s\_wrapped & 0.0000 & 0.0000 & 1.0000 & 0.9792 \\
+\bottomrule
+\end{tabular}
+\end{table}

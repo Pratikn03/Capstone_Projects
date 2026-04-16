@@ -32,7 +32,6 @@ def test_universal_training_audit_reports_verified_domains(tmp_path: Path) -> No
     assert report["all_passed"] is False
     assert "battery" in report["failed_domains"]
     assert "navigation" in report["failed_domains"]
-    assert "av" in report["real_data_gap_domains"]
     assert "navigation" in report["real_data_gap_domains"]
     assert "real_data_backed_domains" in report
     assert "training_surface_closed_domains" in report

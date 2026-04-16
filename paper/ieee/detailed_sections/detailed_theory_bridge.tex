@@ -1,0 +1,356 @@
+% === Section 6: Theorem Bridge ===
+\section{Theorem Bridge: From Contracts to Safety}\label{sec:theory}
+
+This section presents the formal theorem programme that connects the \dcs{} runtime
+contracts to end-to-end safety guarantees.  The programme comprises a \emph{battery
+ladder} (T1--T8) proved via a concrete domain witness, and a \emph{universal
+extension} (T9--T11) that lifts the guarantees to arbitrary domains satisfying the
+adapter contract.
+
+\subsection{Assumptions}\label{sec:assumptions}
+
+The theorem programme rests on eight standing assumptions.  Each assumption is
+testable and its satisfaction is verified programmatically by the test suite.
+
+\begin{assumption}[A1: Bounded Model Error]\label{ass:A1}
+The one-step prediction error of the domain model is bounded:
+$|\epsilon_t| \le \epsilon_{\mathrm{model}}$ for all $t$.
+\end{assumption}
+
+\begin{assumption}[A2: Bounded Telemetry Error]\label{ass:A2}
+The observation error is bounded by a function of the reliability weight:
+$|\hat{x}_t - x_t| \le g(w_t)$, where $g$ is a known, monotonically
+non-increasing function with $g(1) = \bar\epsilon$ (nominal noise floor).
+\end{assumption}
+
+\begin{assumption}[A3: Constraint Expressibility]\label{ass:A3}
+The domain safety specification can be expressed as a finite conjunction of
+state-action constraints evaluable over $\Ut$.
+\end{assumption}
+
+\begin{assumption}[A4: Known Dynamics]\label{ass:A4}
+The controller can evaluate the one-step dynamics map $f(x_t, a_t)$ to compute
+$\Delta(a_t)$.  A fallback action $\asafe$ exists that is safe for all states in
+$\mathcal{X}$.
+\end{assumption}
+
+\begin{assumption}[A5: Monotone Bounded Inflation]\label{ass:A5}
+The reliability-adaptive conformal margin $m_t$ is monotonically non-increasing in
+$w_t$: lower reliability never shrinks the uncertainty set.  The base conformal
+predictor achieves coverage $\ge 1 - \alpha$ on the calibration set.
+\end{assumption}
+
+\begin{assumption}[A6: Bounded Detector Lag]\label{ass:A6}
+The staleness counter and drift detector respond within a bounded lag of
+$\tau_{\mathrm{lag}} < \infty$ steps.
+\end{assumption}
+
+\begin{assumption}[A7: Causal Certificates]\label{ass:A7}
+Each certificate uses only causally available information (no future data).
+The episode horizon is finite: $T < \infty$.
+\end{assumption}
+
+\begin{assumption}[A8: Constraint Continuity]\label{ass:A8}
+The domain safety constraints are continuous in the state space, so that small
+perturbations of the state yield small perturbations of the constraint value.
+\end{assumption}
+
+\paragraph{Usage map.}  \Cref{tab:assumption_usage} shows which theorems depend on
+which assumptions.
+
+\begin{table}[h]
+\caption{Assumption usage map across the theorem programme.}
+\label{tab:assumption_usage}
+\centering\small
+\begin{tabular}{lcccccccc}
+\toprule
+\textbf{Theorem} & \textbf{A1} & \textbf{A2} & \textbf{A3} & \textbf{A4} & \textbf{A5} & \textbf{A6} & \textbf{A7} & \textbf{A8} \\
+\midrule
+T1 OASG Existence         &\checkmark &\checkmark &  &\checkmark &  &  &  &  \\
+T2 Safety Preservation    &\checkmark &\checkmark &\checkmark &  &\checkmark &  &\checkmark &  \\
+T3 ORIUS Core Bound       &\checkmark &\checkmark &  &\checkmark &\checkmark &\checkmark &\checkmark &  \\
+T4 No Free Safety         &  &\checkmark &  &\checkmark &  &  &  &  \\
+T5 Certificate Validity   &  &  &  &  &\checkmark &  &\checkmark &  \\
+T6 Certificate Expiration &  &  &  &  &  &  &\checkmark &  \\
+T7 Feasible Fallback      &  &  &  &\checkmark &  &  &  &  \\
+T8 Graceful Degradation   &  &\checkmark &  &  &\checkmark &  &  &  \\
+T9 Universal Impossibility&  &\checkmark &  &\checkmark &  &  &  &  \\
+T10 Lower Bound           &  &\checkmark &  &  &\checkmark &  &  &  \\
+T11 Typed Transfer        &  &  &\checkmark &\checkmark &\checkmark &  &\checkmark &\checkmark \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%% ----- Battery Ladder: T1--T4 -----
+\subsection{Battery Ladder (T1--T4): The Reference Witness}
+
+The battery domain serves as the \emph{reference witness}: it provides the deepest
+closure of the proof chain because battery dynamics are scalar, linear, and fully
+instrumented.
+
+\begin{theorem}[T1: OASG Existence]\label{thm:T1}
+Let $(\mathcal{X}, \mathcal{U}, f, \mathcal{S}, \hat{x})$ be a CPS satisfying
+A1, A2, and~A4.  Let $\pi$ be any quality-ignorant controller.  If $\pi$ drives
+the state within distance $\delta > 0$ of the safe-set boundary $\partial\mathcal{S}$
+with positive frequency, and the telemetry error satisfies
+$\Prob[\|\xi_t\| > \delta] > 0$, then there exists a time $t^*$ such that
+\begin{equation}\label{eq:oasg_existence}
+  \phi_{\mathrm{obs}}(\pi(\hat{x}_{t^*})) = 1
+  \quad\text{and}\quad
+  \phi_{\mathrm{true}}(\pi(\hat{x}_{t^*})) = 0.
+\end{equation}
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+\emph{Step~1 (Boundary proximity).}
+Under arbitrage-optimal dispatch, the controller drives the SoC within
+$\delta_{\mathrm{bnd}} = P_{\max}\Delta t$ of the constraint boundary with
+positive frequency (Lemma: optimal arbitrage is boundary-seeking).
+
+\emph{Step~2 (Observation gap).}
+Under dropout rate $d > 0$, the observation error satisfies
+$\E[|\xi_t|] \ge d \cdot \sigma_{\mathrm{drift}} \cdot \sqrt{\Delta t}$.
+
+\emph{Step~3 (Witness construction).}
+The intersection of the boundary-proximity event with the observation-error tail
+is non-empty with positive probability.  At any such step $t^*$, the observed
+safety predicate $\phi_{\mathrm{obs}}$ evaluates to safe but the true safety
+predicate $\phi_{\mathrm{true}}$ evaluates to unsafe.
+\end{proof}
+
+\paragraph{Battery instantiation.}
+The true state is $x_t = \SOC_t \in [0, \Emax]$\,(MWh), the action is
+$a_t = (P_t^{\mathrm{chg}}, P_t^{\mathrm{dis}})$, and the one-step dynamics are
+\begin{equation}
+  x_{t+1} = x_t + (\eta_c P_t^{\mathrm{chg}} - \eta_d^{-1} P_t^{\mathrm{dis}})\Delta t + \epsilon_t.
+\end{equation}
+The observed safety predicate evaluates the SoC constraint on $\hat{x}_t$:
+$\phi_{\mathrm{obs}}(a_t) = \mathbf{1}[\SOC_{\min} \le \hat{x}_t + \Delta(a_t) \le \SOC_{\max}]$.
+
+\paragraph{Empirical confirmation.}
+Under the deterministic LP baseline with \texttt{drift\_combo} (20\% dropout),
+the empirical TSVR is 3.9\% (DE) and 4.2\% (US CAISO), confirming
+$\E[\TSVR] > 0$ for quality-ignorant controllers.
+
+\begin{theorem}[T2: One-Step Safety Preservation Under the Shield]\label{thm:T2}
+Under A1--A3, A5, and~A7, define the tightened safe-action set
+\begin{equation}\label{eq:tightened_set}
+  \Aset = \Bigl\{ a \in \mathcal{U} :
+    f(\hat{x}_t, a) \oplus B(m_t) \subseteq \mathcal{S} \Bigr\},
+\end{equation}
+where $m_t = q_t / (w_t + \epsilon)$ is the reliability-inflated conformal margin
+and $B(m_t)$ the ball of radius~$m_t$.  If $x_t \in \Ut$ and
+$a_t \in \Aset$, then $f(x_t, a_t) \in \mathcal{S}$.
+\end{theorem}
+
+\begin{proof}[Proof (battery scalar case)]
+Since $x_t \in \Ut = [\hat{x}_t - m_t, \hat{x}_t + m_t]$, we have
+$|x_t - \hat{x}_t| \le m_t$.  The one-step dynamics give
+\begin{align}
+  s_{t+1} &= s_t + \eta_c P_t^{\mathrm{chg}}\Delta t - \eta_d^{-1}P_t^{\mathrm{dis}}\Delta t + \epsilon_t \notag\\
+  &\ge \hat{s}_t - m_t + \eta_c P_t^{\mathrm{chg}}\Delta t - \eta_d^{-1}P_t^{\mathrm{dis}}\Delta t - \epsilon_{\mathrm{model}} \notag\\
+  &\ge \SOC_{\min} + m_t - m_t - \epsilon_{\mathrm{model}} = \SOC_{\min} - \epsilon_{\mathrm{model}}.
+\end{align}
+Analogously for the upper bound.  Under A1, $\epsilon_{\mathrm{model}}$ is absorbed
+into the margin, yielding $s_{t+1} \in [\SOC_{\min}, \SOC_{\max}]$.
+\end{proof}
+
+\begin{theorem}[T3: ORIUS Core Bound]\label{thm:T3}
+Under A1, A2, A4--A7, the expected total violation count over horizon $T$ is bounded:
+\begin{equation}\label{eq:core_bound}
+  \boxed{\;\E[V_T] \;\le\; \alpha\,(1 - \bar{w})\,T\;}
+\end{equation}
+where $\alpha$ is the conformal miscoverage level and
+$\bar{w} = T^{-1}\sum_{t=1}^{T} w_t$ is the episode-average reliability.
+\end{theorem}
+
+\begin{proof}
+Define the per-step violation indicator $Z_t = \mathbf{1}[f(x_t, a_t^{\mathrm{rel}}) \notin \mathcal{S}]$.
+By the calibration contract (A5), $\Prob[x_t \notin \Ut \mid \mathcal{H}_t] \le \alpha$.
+Given the risk-envelope contract, the per-step risk budget is
+$r_t = \alpha(1 - w_t)$, whence
+$\Prob[Z_t = 1 \mid \mathcal{H}_t] \le \alpha(1 - w_t)$.  Summing:
+\[
+  \E[V_T] = \sum_{t=1}^{T}\E[Z_t]
+  \le \sum_{t=1}^{T}\alpha(1-w_t)
+  = \alpha\sum_{t=1}^{T}(1-w_t)
+  = \alpha(1-\bar{w})T. \qedhere
+\]
+\end{proof}
+
+\paragraph{Numerical example.}
+With $\alpha = 0.10$, $T = 288$ (battery), and $\bar{w} = 0.83$ (moderate degradation):
+$\E[V_T] \le 0.10 \times 0.17 \times 288 = 4.9$ violations.  The \emph{observed}
+violation count is 0, well below the theoretical bound.
+
+\Cref{tab:core_bound_scenarios} illustrates the bound under varying degradation.
+
+\begin{table}[h]
+\caption{ORIUS core bound $\E[V_T] \le \alpha(1-\bar{w})T$ under varying
+degradation scenarios ($\alpha = 0.10$, $T = 288$).}
+\label{tab:core_bound_scenarios}
+\centering\small
+\begin{tabular}{lrrl}
+\toprule
+\textbf{Scenario} & $\bar{w}$ & $\E[V_T]$ bound & \textbf{TSVR bound (\%)} \\
+\midrule
+Perfect telemetry      & 1.00 & 0.0  & 0.00 \\
+Mild degradation       & 0.95 & 1.4  & 0.50 \\
+Moderate degradation   & 0.83 & 4.9  & 1.70 \\
+Severe degradation     & 0.60 & 11.5 & 4.00 \\
+Near-blackout          & 0.20 & 23.0 & 8.00 \\
+Total blackout         & 0.00 & 28.8 & 10.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{theorem}[T4: No Free Safety]\label{thm:T4}
+Under A2 and A4, for any non-trivial fault rate $d > 0$, there exists no
+controller that simultaneously achieves $\TSVR = 0$ and zero intervention rate
+(IR~$= 0$) across all episodes.
+\end{theorem}
+
+\begin{proof}[Proof sketch (constructive witness)]
+Construct a degraded-observation episode where the deterministic LP drives SoC to
+$\SOC_{\max} - \epsilon$ while the telemetry reads $\SOC_{\max} - \epsilon - \xi$
+with $\xi > 0$.  Any controller that does not intervene will commit a dispatch that
+pushes the true SoC above $\SOC_{\max}$.  Hence, maintaining $\TSVR = 0$ requires
+IR~$> 0$.
+\end{proof}
+
+\subsection{Certificate and Temporal Theorems (T5--T8)}
+
+\begin{theorem}[T5: Certificate Validity Horizon]\label{thm:T5}
+Under A5 and A7, the safety certificate remains valid for the largest horizon
+$\tau_t$ whose forward tube stays inside the safe SoC bounds:
+\begin{equation}
+  \tau_t = \left\lfloor \frac{\Emax - E_t}{\sigma_d} \right\rfloor,
+\end{equation}
+where $\sigma_d$ is the drift scale.
+\end{theorem}
+
+\begin{theorem}[T6: Certificate Expiration Lower Bound]\label{thm:T6}
+Under A7, the certificate expiration time satisfies
+$\tau_t \ge \lfloor(\Emax - E_t)/\sigma_d\rfloor$.  Runtime enforcement enters
+fallback when $\tau_t < 1$.
+\end{theorem}
+
+\begin{theorem}[T7: Feasible Fallback Existence]\label{thm:T7}
+Under A4, a constructive fallback exists: zero-dispatch ($P_t = 0$) is admissible
+and preserves safety from any state in the safe-set interior.
+\end{theorem}
+
+\begin{theorem}[T8: Graceful Degradation Dominance]\label{thm:T8}
+Under A2 and A5, the inflation factor $\alpha$ is non-decreasing in degradation
+severity $(1 - w_t)$.  Consequently, as observation quality degrades, the safe
+action set shrinks monotonically, ensuring degradation-proportional conservatism.
+\end{theorem}
+
+%% ----- Universal Extension: T9--T11 -----
+\subsection{Universal Extension (T9--T11)}
+
+The universal theorems lift the battery-domain guarantees to arbitrary domains
+that satisfy the adapter contract.
+
+\begin{theorem}[T9: Universal Impossibility --- Reliability-Aware Repair is
+Necessary]\label{thm:T9}
+Consider a controller that does \emph{not} adapt its safety margin to telemetry
+reliability $w_t$.  Under persistent degradation with non-zero fault rate and
+boundary-reachability assumptions:
+\begin{equation}\label{eq:T9}
+  \E[V_T] \;\ge\; c \cdot d \cdot T,
+\end{equation}
+where $c > 0$ is a domain-dependent constant and $d$ is the mean degradation rate.
+\end{theorem}
+
+\begin{proof}[Proof sketch ($\varphi$-mixing + Azuma--Hoeffding)]
+\emph{(i)} Partition the horizon into $k$ analysis windows separated by
+$\tau_{\mathrm{mix}}$ buffer gaps.
+\emph{(ii)} Within each window, the reference-domain no-free-safety witness
+(T4) yields per-window violation probability $p_{\mathrm{win}} \ge c\,d$.
+\emph{(iii)} Define martingale differences
+$D_j = Z_j^{\mathrm{win}} - \E[Z_j^{\mathrm{win}} \mid \mathcal{F}_{(j-1)(\ell+\tau_{\mathrm{mix}})}]$.
+\emph{(iv)} By Azuma--Hoeffding concentration,
+$\Prob\bigl[\sum_j D_j \le -t\bigr] \le \exp(-2t^2/k)$.
+\emph{(v)} Combining: $\E[V_T] \ge \Omega(d\,T)$.
+\end{proof}
+
+\paragraph{Interpretation.}  T9 establishes that reliability-aware repair is
+\emph{structurally necessary}, not an optional enhancement: any quality-ignorant
+controller accumulates $\Omega(d\,T)$ violations.
+
+\begin{theorem}[T10: Boundary-Indistinguishability Lower Bound]\label{thm:T10}
+Fix horizon $T$.  For each step $t$, consider a binary hypothesis test between
+safe ($H_{0,t}$) and unsafe ($H_{1,t}$) states with observation laws
+$P_{0,t}, P_{1,t}$ satisfying $\mathrm{TV}(P_{0,t}, P_{1,t}) \le w_t$ and unsafe
+prior $\Prob(H_{1,t}) \ge p_t$.  Then every controller $\pi$ satisfies
+\begin{equation}\label{eq:T10}
+  \E[V_T(\pi)] \;\ge\; \frac{1}{2}\sum_{t=1}^{T} p_t\,(1 - w_t).
+\end{equation}
+In particular, if $p_t \ge \alpha/2$ for all $t$:
+\begin{equation}\label{eq:T10_special}
+  \boxed{\;\E[V_T(\pi)] \;\ge\; \tfrac{1}{4}\,\alpha\,(1-\bar{w})\,T.\;}
+\end{equation}
+\end{theorem}
+
+\begin{proof}[Proof (Le Cam's method)]
+At each step $t$, the controller faces a binary classification problem:
+distinguish $H_{0,t}$ (safe) from $H_{1,t}$ (unsafe) based on a single observation.
+By Le~Cam's lemma, the maximum error rate of any test $\psi_t$ is at least
+$(1 - w_t)/2$.  The probability of a violation is
+$\Prob[Z_t = 1] \ge p_t \cdot (1 - w_t)/2$.
+Summing over $T$ steps yields \cref{eq:T10}.
+\end{proof}
+
+\paragraph{Reliability--risk frontier.}
+T10 implies that the minimum mean reliability needed to achieve an episode
+violation budget $r^*$ is
+\begin{equation}
+  \bar{w}^* = 1 - \frac{r^*}{\alpha\,T}.
+\end{equation}
+
+\begin{theorem}[T11: Typed Structural Transfer]\label{thm:T11}
+Let $\mathcal{D}$ be a domain instantiation satisfying the adapter contract
+(\cref{sec:contracts}).  Assume that on every step $t$:
+\begin{enumerate}[nosep,label=(\roman*)]
+  \item \textbf{Coverage}: $\Prob[x_t \in \Ut \mid \mathcal{H}_t] \ge 1 - \alpha$.
+  \item \textbf{Soundness}: Every $a \in \Aset(\Ut)$ keeps $f(x,a) \in \mathcal{S}$
+        for all $x \in \Ut$.
+  \item \textbf{Repair membership}: The repair operator returns
+        $a_t^{\mathrm{safe}} \in \Aset(\Ut)$.
+  \item \textbf{Fallback admissibility}: The fallback action preserves safety from
+        any safe current state.
+\end{enumerate}
+Then:
+\begin{equation}\label{eq:T11}
+  \Prob\bigl[x_{t+1} \in \mathcal{S} \mid \mathcal{H}_t\bigr] \;\ge\; 1 - \alpha.
+\end{equation}
+\end{theorem}
+
+\paragraph{Failure-mode converse.}
+If \emph{any} of the four T11 obligations fails, there exists a domain
+instantiation where the transfer argument breaks and violations accumulate.
+
+\paragraph{Episode aggregation corollary.}
+If the domain instantiation supplies per-step risk budget $r_t$ with
+$\Prob[x_{t+1} \notin \mathcal{S} \mid \mathcal{H}_t] \le r_t$, then
+$\E[V_T] \le \sum_{t=1}^{T} r_t$.  With the battery envelope
+$r_t \le \alpha(1 - w_t)$, this recovers the core bound: $\E[V_T] \le \alpha(1 - \bar{w})T$.
+
+\subsection{Proof Architecture Summary}
+
+The proof programme has a layered structure:
+\begin{itemize}[nosep]
+  \item \textbf{Foundation} (T1, T4): OASG existence + no-free-safety establish
+        the necessity of a runtime layer.
+  \item \textbf{Mechanism} (T2, T3): Safety preservation + core bound show the
+        sufficiency of the \dcs{} kernel.
+  \item \textbf{Temporal} (T5--T8): Certificate validity, expiration, fallback, and
+        graceful degradation provide operational guarantees.
+  \item \textbf{Universal} (T9--T11): Impossibility, lower bound, and typed transfer
+        lift battery guarantees to arbitrary domains.
+\end{itemize}
+
+All assumptions A1--A8 are testable pre-conditions verified by the 1{,}189-test
+suite.  The theorem audit register (\cref{app:theorems}) confirms that all 11
+theorems have complete proofs, empirical validation, and code-level anchors.

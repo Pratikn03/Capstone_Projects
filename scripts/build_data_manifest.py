@@ -38,8 +38,8 @@ DATASET_PATHS: dict[str, dict[str, Any]] = {
     },
     # Multi-domain
     "AV": {
-        "features": Path("data/av/processed/features.parquet"),
-        "splits_dir": Path("data/av/processed/splits"),
+        "features": Path("data/orius_av/av/processed/features.parquet"),
+        "splits_dir": Path("data/orius_av/av/processed/splits"),
     },
     "INDUSTRIAL": {
         "features": Path("data/industrial/processed/features.parquet"),

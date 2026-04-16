@@ -1,4 +1,4 @@
 target_tier,reviewer_composite_10,reviewer_composite_100,critical_gap_count,high_gap_count,calibration_completeness_pct,runtime_governance_completeness_pct,parity_alignment_pct,readiness_score_100,meets_93_gate,verdict
-bounded_93_candidate,9.380,93.8,0,1,93.5,94.2,90.6,93.3,True,achieved_for_bounded_claim_tier
-public_flight_93_candidate,9.380,93.8,0,0,85.2,89.0,92.5,91.6,True,achieved_for_bounded_public_flight_support_tier
-equal_domain_93,8.060,80.6,2,1,75.0,81.7,72.9,78.8,False,blocked_pending_equal_domain_parity
+bounded_93_candidate,9.380,93.8,0,1,94.5,94.8,93.8,94.0,True,achieved_for_bounded_claim_tier
+public_flight_93_candidate,9.380,93.8,0,0,86.0,89.4,95.0,92.2,True,achieved_for_bounded_public_flight_support_tier
+equal_domain_93,8.060,80.6,2,1,75.7,82.0,83.3,80.5,False,blocked_pending_equal_domain_parity

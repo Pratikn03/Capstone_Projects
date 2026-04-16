@@ -265,63 +265,82 @@ def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_na
     conn = duckdb.connect(str(db_path))
     try:
         _ensure_store(conn, table_name)
-        payload_json = json.dumps(certificate, ensure_ascii=True, sort_keys=True)
-        conn.execute(
-            f"""
-            INSERT OR REPLACE INTO {table_name} (
-                command_id,
-                certificate_hash,
-                prev_hash,
-                created_at,
-                payload_json,
-                intervened,
-                intervention_reason,
-                reliability_w,
-                drift_flag,
-                inflation,
-                validity_score,
-                adaptive_quantile,
-                conditional_coverage_gap,
-                runtime_interval_policy,
-                coverage_group_key,
-                shift_alert_flag,
-                guarantee_checks_passed,
-                guarantee_fail_reasons,
-                true_soc_violation_after_apply,
-                assumptions_version,
-                gamma_mw,
-                e_t_mwh,
-                soc_tube_lower_mwh,
-                soc_tube_upper_mwh
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            [
-                str(certificate.get("command_id")),
-                str(certificate.get("certificate_hash")),
-                certificate.get("prev_hash"),
-                str(certificate.get("created_at")),
-                payload_json,
-                certificate.get("intervened"),
-                certificate.get("intervention_reason"),
-                certificate.get("reliability_w"),
-                certificate.get("drift_flag"),
-                certificate.get("inflation"),
-                certificate.get("validity_score"),
-                certificate.get("adaptive_quantile"),
-                certificate.get("conditional_coverage_gap"),
-                certificate.get("runtime_interval_policy"),
-                certificate.get("coverage_group_key"),
-                certificate.get("shift_alert_flag"),
-                certificate.get("guarantee_checks_passed"),
-                json.dumps(certificate.get("guarantee_fail_reasons", []), ensure_ascii=True, sort_keys=True),
-                certificate.get("true_soc_violation_after_apply"),
-                certificate.get("assumptions_version"),
-                certificate.get("gamma_mw"),
-                certificate.get("e_t_mwh"),
-                certificate.get("soc_tube_lower_mwh"),
-                certificate.get("soc_tube_upper_mwh"),
-            ],
-        )
+        conn.execute(_insert_sql(table_name), _certificate_row(certificate))
+    finally:
+        conn.close()
+
+
+def _insert_sql(table_name: str) -> str:
+    return f"""
+        INSERT OR REPLACE INTO {table_name} (
+            command_id,
+            certificate_hash,
+            prev_hash,
+            created_at,
+            payload_json,
+            intervened,
+            intervention_reason,
+            reliability_w,
+            drift_flag,
+            inflation,
+            validity_score,
+            adaptive_quantile,
+            conditional_coverage_gap,
+            runtime_interval_policy,
+            coverage_group_key,
+            shift_alert_flag,
+            guarantee_checks_passed,
+            guarantee_fail_reasons,
+            true_soc_violation_after_apply,
+            assumptions_version,
+            gamma_mw,
+            e_t_mwh,
+            soc_tube_lower_mwh,
+            soc_tube_upper_mwh
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """
+
+
+def _certificate_row(certificate: Mapping[str, Any]) -> list[Any]:
+    payload_json = json.dumps(certificate, ensure_ascii=True, sort_keys=True)
+    return [
+        str(certificate.get("command_id")),
+        str(certificate.get("certificate_hash")),
+        certificate.get("prev_hash"),
+        str(certificate.get("created_at")),
+        payload_json,
+        certificate.get("intervened"),
+        certificate.get("intervention_reason"),
+        certificate.get("reliability_w"),
+        certificate.get("drift_flag"),
+        certificate.get("inflation"),
+        certificate.get("validity_score"),
+        certificate.get("adaptive_quantile"),
+        certificate.get("conditional_coverage_gap"),
+        certificate.get("runtime_interval_policy"),
+        certificate.get("coverage_group_key"),
+        certificate.get("shift_alert_flag"),
+        certificate.get("guarantee_checks_passed"),
+        json.dumps(certificate.get("guarantee_fail_reasons", []), ensure_ascii=True, sort_keys=True),
+        certificate.get("true_soc_violation_after_apply"),
+        certificate.get("assumptions_version"),
+        certificate.get("gamma_mw"),
+        certificate.get("e_t_mwh"),
+        certificate.get("soc_tube_lower_mwh"),
+        certificate.get("soc_tube_upper_mwh"),
+    ]
+
+
+def store_certificates_batch(certificates: Iterable[Mapping[str, Any]], duckdb_path: str, table_name: str) -> None:
+    rows = [_certificate_row(certificate) for certificate in certificates]
+    if not rows:
+        return
+    db_path = Path(duckdb_path)
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = duckdb.connect(str(db_path))
+    try:
+        _ensure_store(conn, table_name)
+        conn.executemany(_insert_sql(table_name), rows)
     finally:
         conn.close()
 

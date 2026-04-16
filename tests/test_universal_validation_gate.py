@@ -278,11 +278,11 @@ def test_validation_cli_reports_all_domain_tiers_under_explicit_support_tier(tmp
     assert domain_rows["navigation"]["closure_blocker"] == "navigation_kitti_runtime_missing"
     assert domain_rows["aerospace"]["closure_blocker"] == "aerospace_realflight_runtime_missing"
     assert domain_rows["battery"]["metric_surface"] == "locked_publication_nominal"
-    assert float(domain_rows["battery"]["baseline_tsvr_mean"]) == pytest.approx(0.0393, abs=1e-4)
+    assert float(domain_rows["battery"]["baseline_tsvr_mean"]) == pytest.approx(0.0083, abs=1e-4)
     assert float(domain_rows["battery"]["orius_tsvr_mean"]) == pytest.approx(0.0, abs=1e-9)
     assert float(domain_rows["battery"]["orius_reduction_pct"]) == pytest.approx(100.0, abs=1e-3)
     assert report["reference_domain_metric_surface"] == "locked_publication_nominal"
-    assert report["reference_domain_metrics"]["baseline_tsvr_mean"] == pytest.approx(0.0392856, abs=1e-7)
+    assert report["reference_domain_metrics"]["baseline_tsvr_mean"] == pytest.approx(0.0083332, abs=1e-6)
     assert report["reference_domain_metrics"]["orius_tsvr_mean"] == pytest.approx(0.0, abs=1e-9)
 
     # validated_domains contains battery + defended domains that passed

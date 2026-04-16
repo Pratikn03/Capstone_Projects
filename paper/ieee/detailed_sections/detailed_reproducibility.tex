@@ -1,0 +1,107 @@
+% === Section 11: Reproducibility ===
+\section{Reproducibility}\label{sec:reproducibility}
+
+All results reported in this paper are fully reproducible from locked artifacts.
+This section documents the reproducibility infrastructure.
+
+\subsection{Artifact Bundle}
+
+The complete artifact bundle is organised under
+\texttt{artifacts/canonical\_runs/} and includes:
+
+\begin{itemize}[nosep]
+  \item Trained LightGBM models (AV) and DeepOQE checkpoints (battery).
+  \item Processed feature files (Parquet format).
+  \item Conformal calibration quantiles.
+  \item Runtime trace CSVs (battery: 288 rows; AV: 18{,}697 rows covering
+        baseline + ORIUS).
+  \item Certificate chains (JSON).
+  \item Report figures (PNG) and tables (CSV).
+  \item Combined manifest (\texttt{combined\_manifest.csv}).
+\end{itemize}
+
+\subsection{Dependency Locking}
+
+Python dependencies are locked in two files:
+\begin{itemize}[nosep]
+  \item \texttt{requirements.txt}: direct dependencies with version pins.
+  \item \texttt{requirements.lock.txt}: fully resolved transitive closure with
+        SHA-256 hashes.
+\end{itemize}
+
+The runtime environment is Python 3.11+ with NumPy, Pandas, LightGBM, and
+Matplotlib as primary dependencies.  No GPU is required.
+
+\subsection{Single-Command Pipelines}
+
+Both domains can be reproduced with a single command:
+
+\paragraph{Battery.}
+\begin{verbatim}
+make battery-pipeline
+\end{verbatim}
+
+\paragraph{AV.}
+\begin{verbatim}
+zsh scripts/run_full_av.sh
+\end{verbatim}
+
+The AV script executes five steps: (1) training and manifest building,
+(2) DC3S runtime on the full corpus, (3) report generation, (4) combined manifest
+rebuild, and (5) test suite execution.
+
+\subsection{Test Suite}
+
+The test suite comprises 1{,}189 tests covering:
+\begin{itemize}[nosep]
+  \item Contract invariant tests (monotone inflation, weight bounds, interval
+        non-degeneracy).
+  \item Kernel round-trip tests (observation $\to$ certificate).
+  \item Adapter-specific tests (battery dispatch, AV prediction).
+  \item Governance surface tests (chain validity, audit completeness).
+  \item Integration tests (full pipeline end-to-end).
+\end{itemize}
+
+All 1{,}189 tests pass; 6 are skipped (environment-dependent tests not applicable
+to the current host).
+
+\subsection{SHA-256 Hashes}
+
+Key artifact hashes are recorded in the combined manifest for tamper detection.
+The manifest is regenerated on each pipeline run and includes:
+\begin{itemize}[nosep]
+  \item Domain name, status, report path, artifact path, and corpus identifier.
+  \item File hashes for models, data files, and configuration.
+\end{itemize}
+
+\subsection{Computational Requirements}
+
+\Cref{tab:compute} summarises the computational cost.
+
+\begin{table}[h]
+\caption{Computational requirements for full pipeline reproduction.}
+\label{tab:compute}
+\centering\small
+\begin{tabular}{lrr}
+\toprule
+\textbf{Stage} & \textbf{Battery} & \textbf{AV} \\
+\midrule
+Training         & $<$10~s     & $\sim$45~s \\
+Runtime          & $<$30~s     & $\sim$55~min \\
+Report gen.      & $<$10~s     & $\sim$30~s \\
+Test suite       & \multicolumn{2}{c}{$\sim$141~s (incl.\ adapter stubs)} \\
+\midrule
+\textbf{Total}   & $<$1~min    & $\sim$58~min \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All benchmarks measured on Apple M-series (single core, 16~GB RAM).
+
+\subsection{LaTeX Compilation}
+
+The manuscript itself is compiled via:
+\begin{verbatim}
+make ieee-detailed-compile
+\end{verbatim}
+which runs \texttt{latexmk} with \texttt{pdflatex} and \texttt{bibtex}.

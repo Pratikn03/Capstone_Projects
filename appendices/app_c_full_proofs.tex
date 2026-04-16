@@ -193,7 +193,11 @@ certified safe action while adding the worst-case sub-Gaussian drift radius
 $\sigma_d\sqrt{\Delta}$.  The certificate remains valid exactly while that
 tube is contained in $[\SOC_{\min},\SOC_{\max}]$.  The runtime helper
 \texttt{certificate\_validity\_horizon()} computes this maximal integer
-horizon directly from the chapter definition.  \qedhere
+horizon directly from the chapter definition.  Both T5 and T6 are
+registered in \texttt{THEOREM\_REGISTER}
+(\texttt{src/orius/dc3s/theoretical\_guarantees.py}) and enforced at
+runtime: the API router checks $\tau_t \ge 1$ at each step and fails the
+guarantee when violated.  \qedhere
 \end{proof}
 
 \section{C.6\quad Certificate Expiration Bound}\label{sec:proof-expiration}

@@ -649,6 +649,124 @@ def build_runtime_interval(
     return decision
 
 
+# ---------------------------------------------------------------------------
+# SPCI-lite Online Quantile Recalibration (Gap 2)
+# ---------------------------------------------------------------------------
+# Reference: Gibbs & Candès (2021), "Adaptive Conformal Inference Under
+# Distribution Shift", §3 — weighted conformal, online variant.
+#
+# Maintains an exponentially-weighted empirical distribution of conformity
+# scores and recomputes the (1-alpha)-quantile at each step.  This makes
+# prediction intervals responsive to distribution shift (not just the
+# miscoverage rate tracked by AdaptiveConformal / FACI).
+#
+#   q_t = inf{q : sum_{i<=t} w_i * 1[s_i <= q] >= (1-alpha)}
+#   w_i = exp(-lambda * (t - i))                (exponential decay)
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class SPCIConfig:
+    """Configuration for the SPCI-lite online quantile updater."""
+    alpha: float = 0.10
+    spci_lambda: float = 0.05
+    max_window: int = 2000
+    eps: float = 1e-9
+
+
+class SPCIUpdater:
+    """Sequential Predictive Confidence Interval (SPCI-lite) updater.
+
+    Lightweight implementation of the weighted conformal quantile from
+    Gibbs & Candès (2021).  At each step *t*, the updater:
+
+    1. Accepts a new conformity score ``s_t = |y_t - yhat_t|``.
+    2. Maintains a bounded deque of ``(score, birth_step)`` pairs.
+    3. Computes exponentially-weighted running quantile q_t.
+    4. Returns an interval ``[yhat - q_t, yhat + q_t]``.
+    """
+
+    def __init__(self, cfg: SPCIConfig | None = None) -> None:
+        c = cfg or SPCIConfig()
+        self.alpha = float(c.alpha)
+        self.spci_lambda = float(c.spci_lambda)
+        self.max_window = int(c.max_window)
+        self.eps = float(c.eps)
+        self._scores: deque[tuple[float, int]] = deque(maxlen=self.max_window)
+        self._step: int = 0
+        self._q_t: float = 0.0
+
+    @property
+    def current_quantile(self) -> float:
+        return self._q_t
+
+    @property
+    def step(self) -> int:
+        return self._step
+
+    def update_online(self, score: float) -> float:
+        """Record a new conformity score and recompute the running quantile.
+
+        Args:
+            score: Absolute conformity score ``|y_t - yhat_t|``.
+
+        Returns:
+            Updated quantile ``q_t``.
+        """
+        self._scores.append((float(score), self._step))
+        self._step += 1
+        self._q_t = self._weighted_quantile()
+        return self._q_t
+
+    def get_interval(
+        self,
+        yhat: float | np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Return ``[yhat - q_t, yhat + q_t]`` using the current quantile."""
+        yhat_arr = np.asarray(yhat, dtype=float)
+        q = max(self._q_t, self.eps)
+        return yhat_arr - q, yhat_arr + q
+
+    def _weighted_quantile(self) -> float:
+        """Compute the (1-alpha)-quantile of the exponentially-weighted score distribution."""
+        if not self._scores:
+            return 0.0
+
+        t = self._step
+        lam = self.spci_lambda
+        target = 1.0 - self.alpha
+
+        # Build (score, weight) pairs and sort by score
+        items: list[tuple[float, float]] = []
+        for s_val, birth in self._scores:
+            w = np.exp(-lam * (t - birth))
+            items.append((s_val, float(w)))
+
+        items.sort(key=lambda x: x[0])
+
+        total_w = sum(w for _, w in items)
+        if total_w < self.eps:
+            return float(items[-1][0]) if items else 0.0
+
+        cumsum = 0.0
+        for s_val, w in items:
+            cumsum += w / total_w
+            if cumsum >= target:
+                return float(s_val)
+
+        return float(items[-1][0])
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "alpha": self.alpha,
+            "spci_lambda": self.spci_lambda,
+            "max_window": self.max_window,
+            "step": self._step,
+            "q_t": self._q_t,
+            "n_scores": len(self._scores),
+        }
+
+
 def save_conformal(path: str | Path, interval: ConformalInterval, meta: Optional[dict[str, Any]] = None) -> None:
     payload = interval.to_dict()
     if meta:

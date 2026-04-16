@@ -372,8 +372,27 @@ def compute_reliability(
     max_stale_count = _max_stale_count(stale_tracker)
     stale_tau_max = int(_DETECTOR_LAG_STEPS["stale_sensor"])
     flags["stale_max_unchanged_steps"] = int(max_stale_count)
+
+    # A6 stale-channel decay: once staleness persists beyond the detection lag
+    # (stale_tau_max steps), exponentially decay w_t toward min_w.  Each
+    # extra step beyond the lag multiplies reliability by a decay factor.
+    # This closes the A6 gap: extended sensor freeze now lowers reliability
+    # proportionally rather than leaving w_t unchanged after initial detection.
+    stale_decay_rate = float(cfg.get("stale_decay_rate", 0.85))
+    if max_stale_count > stale_tau_max:
+        extra_steps = max_stale_count - stale_tau_max
+        decay_factor = stale_decay_rate ** extra_steps
+        w_t = max(min_w, min(float(w_t), float(w_t) * decay_factor))
+        flags["stale_decay_applied"] = True
+        flags["stale_decay_factor"] = float(decay_factor)
+        flags["stale_extra_steps"] = int(extra_steps)
+    else:
+        flags["stale_decay_applied"] = False
+        flags["stale_decay_factor"] = 1.0
+        flags["stale_extra_steps"] = 0
+
     flags["detector_lag_warning"] = bool(
-        max_stale_count >= stale_tau_max and heuristic_w_t > _DETECTOR_WARNING_RELIABILITY
+        max_stale_count >= stale_tau_max and float(w_t) > _DETECTOR_WARNING_RELIABILITY
     )
     if flags["detector_lag_warning"]:
         warnings.warn(
@@ -444,6 +463,44 @@ def compute_reliability(
             return w_t, flags
 
     flags.update({"backend_requested": backend, "backend_used": "heuristic"})
+
+    # --- Adversarial tamper detection (main path) ---
+    # An adversary who knows the OQE formula can craft telemetry that
+    # scores w_t ≈ 1.0 while subtly shifting the true state.  The detection
+    # heuristic: flag when multiple independent fault signals are active
+    # simultaneously (dropout flag + stale flag, or spike + no delay penalty)
+    # yet w_t remains suspiciously high.  Real degraded telemetry almost never
+    # produces all-zero fault flags alongside a high reliability score.
+    tamper_score = 0.0
+    active_faults = sum([
+        bool(fault_flags.get("dropout", False)),
+        bool(fault_flags.get("stale_sensor", False)),
+        bool(fault_flags.get("spikes", False)),
+        bool(fault_flags.get("out_of_order", False)),
+    ])
+    # If multiple faults are simultaneously active but w_t is still high,
+    # the OQE score may have been crafted to appear trustworthy.
+    if active_faults >= 2 and float(w_t) > 0.75:
+        tamper_score = min(1.0, 0.25 * active_faults)
+
+    # Cross-signal inconsistency: a high-quality signal with zero delay but
+    # non-zero OOO fraction is physically implausible (packets can't arrive
+    # both instantly and out-of-order).
+    delay_s = float(flags.get("delay_seconds", 0.0))
+    ooo_frac = float(flags.get("ooo_fraction_in_order", 1.0))
+    if delay_s < 0.1 and ooo_frac < 0.8 and float(w_t) > 0.80:
+        tamper_score = max(tamper_score, 0.20)
+
+    adversarial_mode = bool(cfg.get("adversarial_mode", False))
+    if adversarial_mode and tamper_score > 0.0:
+        w_t = max(min_w, float(w_t) * (1.0 - tamper_score))
+        flags["tamper_detected"] = True
+        flags["tamper_score"] = float(tamper_score)
+        flags["tamper_w_penalty"] = float(tamper_score)
+    else:
+        flags["tamper_detected"] = False
+        flags["tamper_score"] = float(tamper_score)
+
     return w_t, flags
 
 

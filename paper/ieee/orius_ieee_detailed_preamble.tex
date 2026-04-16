@@ -1,0 +1,88 @@
+% ORIUS IEEE Detailed Manuscript Preamble — 40+ page extended version
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{booktabs,longtable,tabularx,multirow,array}
+\usepackage{graphicx,subcaption,float}
+\usepackage{tikz}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{xparse}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usetikzlibrary{arrows.meta,calc,positioning,shapes.geometric}
+\graphicspath{%
+  {generated/}%
+  {../assets/figures/}%
+  {../../paper/assets/figures/}%
+  {../../reports/battery_av/battery/}%
+  {../../reports/orius_av/full_corpus/figures/}%
+  {../../reports/orius_av/full_corpus/}%
+  {../../reports/publication/}%
+  {../../reports/figures/}%
+}
+
+\makeatletter
+\AtBeginDocument{%
+  \renewcommand*{\theHALG@line}{\thealgorithm.\arabic{ALG@line}}%
+}
+\makeatother
+
+% ----- theorem environments -----
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% ----- ORIUS notation macros -----
+\newcommand{\zt}{z_t}
+\newcommand{\ztt}{\tilde{z}_t}
+\newcommand{\ot}{o_t}
+\newcommand{\xt}{x_t}
+\newcommand{\wt}{w_t}
+\newcommand{\dt}{d_t}
+\newcommand{\st}{s_t}
+\newcommand{\Chat}{\hat{C}_t}
+\newcommand{\Crac}{\hat{C}_t^{\mathrm{RAC}}}
+\newcommand{\Ut}{U_t}
+\newcommand{\astar}{a_t^{*}}
+\newcommand{\asafe}{a_t^{\mathrm{safe}}}
+\newcommand{\Aset}{\mathcal{A}_t}
+\newcommand{\dcs}{DC3S}
+\newcommand{\oqe}{OQE}
+\newcommand{\rac}{RAC-Cert}
+\newcommand{\SOC}{\mathrm{SOC}}
+\newcommand{\Emax}{E_{\max}}
+\newcommand{\Pmax}{P_{\max}}
+\newcommand{\Rmax}{R_{\max}}
+\newcommand{\TSVR}{\mathrm{TSVR}}
+\newcommand{\IR}{\mathrm{IR}}
+\newcommand{\OASG}{\mathrm{OASG}}
+\newcommand{\PICP}{\mathrm{PICP}}
+\newcommand{\CVA}{\mathrm{CVA}}
+\newcommand{\GDQ}{\mathrm{GDQ}}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator{\Prob}{\mathbb{P}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+
+% ----- Convenience -----
+\newcommand{\ie}{\textit{i.e.}}
+\newcommand{\eg}{\textit{e.g.}}
+\newcommand{\cf}{\textit{cf.}}
+\newcommand{\vs}{\textit{vs.}}

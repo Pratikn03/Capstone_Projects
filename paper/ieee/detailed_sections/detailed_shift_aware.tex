@@ -1,0 +1,139 @@
+% === Section 7: Shift-Aware Adaptive Uncertainty ===
+\section{Shift-Aware Adaptive Uncertainty}\label{sec:shift}
+
+Standard conformal prediction provides marginal coverage guarantees over the
+\emph{calibration distribution}.  When the test-time distribution drifts---as is
+common in CPS deployments with seasonal patterns, fleet aging, or scenario
+changes---the coverage guarantee may degrade.  ORIUS addresses this through a
+\emph{shift-aware adaptive uncertainty} mechanism that dynamically adjusts the
+inflation factor without requiring offline recalibration.
+
+\subsection{Mechanism Design}
+
+The shift-aware module operates at runtime alongside the \dcs{} kernel and
+maintains, for each prediction target $j$, a set of coverage statistics
+accumulated over a sliding window of recent steps.
+
+\paragraph{Step 1: Subgroup Coverage Tracking.}
+The runtime groups recent steps by stratification variables (\eg~shard ID,
+speed bin, neighbour count).  For each subgroup $g$, it maintains an empirical
+coverage
+\begin{equation}\label{eq:subgroup_cov}
+  \hat{C}_g = \frac{1}{|g|}\sum_{t \in g} \mathbf{1}\bigl[x_t \in \Ut\bigr].
+\end{equation}
+If $\hat{C}_g$ drops below the target coverage $1 - \alpha_{\mathrm{target}}$ for
+any subgroup, the under-coverage gap is recorded.
+
+\paragraph{Step 2: Shift Score Computation.}
+A composite shift score is computed as
+\begin{equation}\label{eq:shift_score}
+  s_{\mathrm{shift}} = \max_{g} \bigl(1 - \alpha_{\mathrm{target}} - \hat{C}_g\bigr)_+,
+\end{equation}
+where $(\cdot)_+$ denotes the positive part.  This score is zero when all
+subgroups meet the coverage target and positive when any subgroup is
+under-covered.
+
+\paragraph{Step 3: Adaptive Inflation.}
+The shift score feeds into the inflation factor via \cref{eq:inflation}:
+\[
+  \alpha = \mathrm{clip}\!\bigl(1.0 + 0.7\,(1-\wt) + 0.5\,s_{\mathrm{shift}},\; 1.0,\; 3.0\bigr).
+\]
+This transparently integrates two sources of conservatism: the reliability
+degradation $(1-\wt)$ and the distributional shift $s_{\mathrm{shift}}$.
+
+\paragraph{Step 4: Validity Assessment.}
+At the end of each runtime window, a \emph{validity score} is computed as the
+fraction of subgroups whose empirical coverage meets the target.  The validity
+status is flagged as \texttt{nominal} if the score exceeds a threshold (typically
+0.85) and \texttt{alert} otherwise.
+
+\subsection{AV Domain: Shift-Aware Runtime Results}
+
+\Cref{tab:shift_aware_av} reports the shift-aware statistics from the full AV
+corpus (9{,}348~steps).
+
+\begin{table}[h]
+\caption{Shift-aware runtime statistics for the AV domain (full corpus).}
+\label{tab:shift_aware_av}
+\centering\small
+\begin{tabular}{lrrrrl}
+\toprule
+\textbf{Target} & \textbf{Steps} & \textbf{Groups} & \textbf{Max gap} & \textbf{Validity} & \textbf{Status} \\
+\midrule
+\texttt{ego\_speed\_mps} & 9{,}348 & 99 & 0.000 & 0.885 & nominal \\
+\texttt{relative\_gap\_m} & 9{,}348 & 63 & 0.046 & 0.888 & nominal \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Both targets achieve \texttt{nominal} validity status.  The
+\texttt{relative\_gap\_m} target shows a small under-coverage gap of 4.6\%
+in one subgroup, but the overall validity score of 0.888 exceeds the nominal
+threshold.
+
+The shift alert rate---the fraction of steps where the adaptive mechanism
+triggered an inflation adjustment---is extremely low: 0.032\% for
+\texttt{ego\_speed\_mps} and 0.043\% for \texttt{relative\_gap\_m}.  This
+indicates that the base conformal intervals are already well-calibrated for
+the Waymo corpus, and the shift-aware mechanism acts as a safety net rather
+than a frequent corrector.
+
+\subsection{Subgroup Coverage Analysis}
+
+The ORIUS pipeline produces a detailed subgroup coverage table stratified by three
+grouping variables:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Shard ID}: each Waymo validation shard (7 shards, $\sim$28--37
+        scenarios each).
+  \item \textbf{Speed bin}: discretised ego speed ($0$--$5$, $5$--$10$, $10$--$15$,
+        $15$--$20$, $20+$ m/s).
+  \item \textbf{Neighbour count bin}: number of surrounding agents ($0$--$1$,
+        $2$--$3$, $4$--$5$, $6+$).
+\end{enumerate}
+
+Key observations from the subgroup analysis:
+\begin{itemize}[nosep]
+  \item \textbf{Shard-level}: base coverage ranges from 0.82 to 0.97; widened coverage
+        lifts all shards to $\ge 0.86$.
+  \item \textbf{Speed bins}: the $15$--$20$ m/s bin has the lowest base coverage (0.80)
+        due to higher prediction difficulty at moderate highway speeds.  Widening
+        recovers this to 0.85.
+  \item \textbf{Neighbour count}: dense scenes ($6+$ neighbours) show slightly
+        lower base coverage (0.94 for ego speed) due to occlusion effects.  All bins
+        achieve $\ge 0.95$ after widening.
+\end{itemize}
+
+\subsection{Battery Domain: Shift-Aware Considerations}
+
+The battery domain (CPSBench 168-hour replay) has stationary operating conditions
+within each episode.  The shift-aware mechanism reports zero shift alerts and a
+constant validity score of 1.0 across all 288 steps.  This is expected: the
+calibration data and test data originate from the same synthetic dispatch profile.
+The shift-aware mechanism thus gracefully degrades to a no-op when there is no
+shift to detect, adding zero overhead to the battery pipeline.
+
+\subsection{Visual Evidence: Before and After Shift Adaptation}
+
+\Cref{fig:shift_aware_before_after_av,fig:shift_aware_before_after_battery}
+present the subgroup coverage heatmaps before and after the shift-aware inflation
+adjustment for both domains.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.90\textwidth]{fig_shift_aware_before_after}
+\caption{AV domain shift-aware coverage: baseline (left) vs.\ adapted (right)
+subgroup coverage across shard, speed, and neighbour bins.  The adaptive mechanism
+closes subgroup coverage gaps without inflating well-covered bins.  Artifact:
+\texttt{reports/orius\_av/full\_corpus/fig\_shift\_aware\_before\_after.png}.}
+\label{fig:shift_aware_before_after_av}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.90\textwidth]{fig_shift_aware_before_after_battery}
+\caption{Battery domain shift-aware coverage: baseline and adapted coverage
+are identical, confirming zero shift under stationary CPSBench replay.  Artifact:
+\texttt{reports/battery\_av/battery/fig\_shift\_aware\_before\_after.png}.}
+\label{fig:shift_aware_before_after_battery}
+\end{figure}

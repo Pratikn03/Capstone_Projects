@@ -510,7 +510,18 @@ class WaymoAVDomainAdapter(DomainAdapter):
             a_upper = min(a_upper, (speed_limit - current_speed) / max(dt_s, 1e-9))
             active.append("speed_limit")
 
-        if gap_lower <= min_headway_m:
+        # --- CBF longitudinal barrier ---
+        cbf_alpha = 0.5
+        d_safe = current_speed ** 2 / 12.0 + 0.2 * current_speed + 0.5
+        h_value = gap_lower - d_safe
+        denom = 0.166 * current_speed + 0.2 + 1e-9
+        cbf_a_upper = (lead_speed - current_speed + cbf_alpha * h_value) / denom
+        if cbf_a_upper < a_upper:
+            a_upper = cbf_a_upper
+            active.append("cbf_longitudinal_barrier")
+
+        # Hard headway entry barrier (emergency backstop when gap critically small)
+        if gap_lower <= max(min_headway_m * 0.4, 1.5):
             a_lower = a_upper = _f(constraints.get("accel_min_mps2"), self._accel_min)
             active.append("headway_predictive_entry_barrier")
         else:
@@ -631,6 +642,17 @@ class WaymoAVDomainAdapter(DomainAdapter):
         cert["true_margin"] = cfg.get("true_margin")
         cert["observed_margin"] = cfg.get("observed_margin")
         cert["intervention_trace_id"] = cfg.get("intervention_trace_id", command_id)
+        # CBF barrier metadata
+        gap_val = _f(uncertainty.get("gap_lower_m"), 30.0)
+        speed_val = _f(uncertainty.get("current_speed_mps"), 0.0)
+        lead_speed_val = _f(uncertainty.get("lead_speed_mps"), speed_val)
+        d_safe_val = speed_val ** 2 / 12.0 + 0.2 * speed_val + 0.5
+        h_val = gap_val - d_safe_val
+        cbf_alpha = 0.5
+        h_dot_val = (lead_speed_val - speed_val) + cbf_alpha * h_val
+        cert["cbf_barrier_h"] = float(h_val)
+        cert["cbf_barrier_h_dot"] = float(h_dot_val)
+        cert["cbf_enforcement_active"] = bool(h_val < d_safe_val * 0.5)
         cert["certificate_hash"] = recompute_certificate_hash(cert)
         return cert
 
@@ -807,7 +829,7 @@ def _run_episode(
         history.append(dict(observed))
         next_true = dict(track.step(safe_action))
 
-        true_metrics = compute_state_safety_metrics(true_state)
+        true_metrics = compute_state_safety_metrics(next_true)
         observed_metrics = compute_state_safety_metrics(observed) if observed.get("min_gap_m") is not None and not (
             isinstance(observed.get("min_gap_m"), float) and math.isnan(observed.get("min_gap_m"))
         ) else {"true_constraint_violated": None}
@@ -928,14 +950,15 @@ def run_runtime_dry_run(
     all_records: dict[str, list[StepRecord]] = {"baseline": [], "orius": []}
     all_traces: list[dict[str, Any]] = []
     certificate_count = 0
+    # Pre-load the replay windows once — avoids re-reading 207MB per scenario.
+    baseline_track = WaymoReplayTrackAdapter(replay_path)
+    orius_track = WaymoReplayTrackAdapter(replay_path)
     gc_was_enabled = gc.isenabled()
     if gc_was_enabled:
         gc.disable()
     try:
         for scenario_id in test_scenarios:
             fault_family = _scenario_fault_family(str(scenario_id))
-            baseline_track = WaymoReplayTrackAdapter(replay_path)
-            orius_track = WaymoReplayTrackAdapter(replay_path)
             baseline_records, baseline_traces, _ = _run_episode(
                 track=baseline_track,
                 scenario_id=str(scenario_id),
@@ -945,7 +968,7 @@ def run_runtime_dry_run(
                 use_orius=False,
             )
             orius_records, orius_traces, orius_certs = _run_episode(
-                track=orius_track,
+                track=orius_track,  # noqa: reuse pre-loaded adapter
                 scenario_id=str(scenario_id),
                 step_features=step_features,
                 bundles=bundles,

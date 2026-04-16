@@ -1,0 +1,58 @@
+% === Section 13: Conclusion ===
+\section{Conclusion}\label{sec:conclusion}
+
+We presented ORIUS, a universal runtime safety layer for physical AI systems
+operating under degraded observation.  The core contribution is the \dcs{}
+kernel---Detect, Calibrate, Constrain, Shield, Certify---that closes the
+Observation--Action Safety Gap for any upstream controller through typed
+contracts and domain-agnostic governance.
+
+\subsection{Summary of Results}
+
+We validated ORIUS on two disparate cyber-physical domains with equal depth:
+
+\paragraph{Battery Energy Storage.}
+\begin{itemize}[nosep]
+  \item 4 controller variants $\times$ 3 fault scenarios = 12 configurations.
+  \item 288 runtime steps per configuration.
+  \item \textbf{Zero true-state violations} ($\TSVR = 0$) across all configurations.
+  \item 288 safety certificates, all chain-valid, 100\% audit completeness.
+\end{itemize}
+
+\paragraph{Autonomous Vehicles.}
+\begin{itemize}[nosep]
+  \item 1{,}975 Waymo scenarios (7 shards), 80{,}975 feature steps.
+  \item 228 test scenarios, 9{,}348 runtime steps.
+  \item \textbf{TSVR reduced} from 0.660 (baseline) to 0.628 (ORIUS), $-4.8\%$.
+  \item 90.2\% intervention rate: the shield actively repairs unsafe actions.
+  \item 9{,}348 safety certificates, all chain-valid, 100\% audit completeness.
+  \item Fault-family coverage $\ge 0.977$ across all 6 fault families and both
+        targets.
+\end{itemize}
+
+\subsection{Key Insights}
+
+\begin{enumerate}[nosep]
+  \item \textbf{Universality is practical}: The same kernel binary, contract stack,
+        and governance surface handle both a slow-timescale energy system and a
+        fast-timescale autonomous vehicle system.  Domain adaptation requires only
+        implementing six typed adapter methods.
+  \item \textbf{Degradation-proportional conservatism}: The inflation mechanism
+        (\cref{eq:inflation}) provides a smooth trade-off between safety and
+        performance, becoming more conservative precisely when observation quality
+        degrades.
+  \item \textbf{Governance is non-negotiable}: The certificate chain and audit trail
+        are essential for regulatory compliance and post-incident analysis in
+        safety-critical deployments.
+  \item \textbf{Conformal prediction is a strong foundation}: The distribution-free
+        coverage guarantee of conformal prediction, combined with the shift-aware
+        adaptive mechanism, provides robust calibration across diverse scenarios.
+\end{enumerate}
+
+\subsection{Impact}
+
+ORIUS demonstrates that it is possible to build a single, reusable runtime safety
+layer that works across CPS domains without domain-specific kernel modifications.
+As AI controllers are deployed into increasingly safety-critical applications, the
+need for such universal safety layers will only grow.  We release all code, data,
+and artifacts under an open licence to support reproducibility and future research.

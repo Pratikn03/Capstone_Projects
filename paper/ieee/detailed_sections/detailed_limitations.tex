@@ -1,0 +1,81 @@
+% === Section 12: Limitations ===
+\section{Limitations and Future Work}\label{sec:limitations}
+
+\subsection{Limitations}
+
+\paragraph{Two-domain scope.}
+This paper validates ORIUS on two CPS domains.  While the kernel is designed to
+be universal, the empirical evidence covers only battery energy storage and
+autonomous vehicles.  Four additional candidate domains (industrial monitoring,
+healthcare, maritime navigation, aerospace) motivated the architecture but have
+\textbf{no locked pipeline artifacts} in this release and are not the basis of any
+empirical claim.  Validation on additional domains is required to strengthen the
+universality claim; until then, T11 (Typed Structural Transfer) is proven
+formally but confirmed empirically only for Battery $\leftrightarrow$ AV.
+
+\paragraph{AV TSVR floor.}
+The AV domain achieves a TSVR of 0.628, which, while improved over the baseline
+(0.660), is still substantial.  The residual violations arise primarily from the 4\,s
+prediction horizon, where complex multi-agent interactions produce true states
+outside even the widened conformal interval.  A more expressive predictor (\eg~a
+transformer-based trajectory model) could lower the base TSVR.  The AV result should
+be read as a \emph{bounded proof-of-mechanism}, not as a claim of zero-violation
+closure.
+
+\paragraph{Conformal coverage assumptions.}
+The finite-sample coverage guarantee of split conformal prediction holds
+\emph{marginally} (averaged over the calibration set) but not \emph{conditionally}
+(for every individual input).  The shift-aware mechanism provides robustness against
+subgroup-level violations but does not eliminate them entirely.  Per-input guarantees
+would require conditional conformal methods not yet integrated.
+
+\paragraph{Shift guarantees are bounded.}
+The shift-aware adaptive mechanism (Section~\ref{sec:shift}) compensates for
+distribution drift within the observed rate during validation (A6).  It has
+\textbf{not} been evaluated under intentionally adversarial telemetry attacks,
+sudden-onset covariate shift, or concept drift that violates the bounded-rate
+assumption.  Guarantees degrade gracefully but may fail silently under pathological
+shift patterns.
+
+\paragraph{Fallback action conservatism.}
+Assumption A4 requires that the fallback action is safe for all states.  In many
+domains, designing a universally safe fallback is straightforward (\eg~zero
+dispatch for battery, maximum braking for AV).  In domains with coupled dynamics,
+identifying a universally safe fallback may be non-trivial.
+
+\paragraph{Single-sensor pipeline.}
+The current detect stage focuses on single-channel telemetry faults.  Cross-sensor
+consistency checks (\eg~lidar--camera fusion disagreement) are not yet implemented
+in the adapter interface.
+
+\paragraph{Computational cost.}
+The AV runtime requires $\sim$55~minutes for 9{,}348~steps on a single CPU core.
+For real-time deployment at 10~Hz, the per-step budget is 100~ms, whereas the
+current implementation averages $\sim$350~ms.  Optimisation (C++ inference,
+batched prediction, GPU acceleration) would be needed for real-time use.
+
+\paragraph{Cross-domain transfer scope.}
+The adapter interface enables structural reuse across domains, but functional
+equivalence (whether the same hyperparameters, calibration windows, and inflation
+schedules are optimal) has not been demonstrated beyond Battery and AV.  Adapting
+to a new domain still requires implementing the six typed adapter methods and
+conducting a domain-specific calibration run.
+
+\subsection{Future Work}
+
+\begin{enumerate}[nosep]
+  \item \textbf{Additional domains}: Extend validation to industrial process
+        control, healthcare monitoring, and autonomous maritime systems.
+  \item \textbf{Stronger predictors}: Replace LightGBM with transformer-based
+        trajectory predictors to lower the base TSVR in the AV domain.
+  \item \textbf{Conditional coverage}: Integrate conditional conformal prediction
+        methods (\eg~locally-adaptive intervals) for per-input guarantees.
+  \item \textbf{Multi-sensor fusion}: Extend the detect stage to perform
+        cross-sensor consistency checks using the adapter interface.
+  \item \textbf{Real-time deployment}: Optimise the runtime for sub-100~ms latency
+        via compiled inference and hardware acceleration.
+  \item \textbf{Formal verification}: Apply model-checking or SMT-based verification
+        to the kernel contracts for certified correctness beyond testing.
+  \item \textbf{Adversarial robustness}: Evaluate ORIUS under intentionally
+        adversarial telemetry attacks beyond the fault-injection families tested here.
+\end{enumerate}

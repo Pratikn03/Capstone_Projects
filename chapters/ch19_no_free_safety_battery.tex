@@ -218,9 +218,12 @@ $\Omega(T)$, exceeding any $o(T)$ bound.
   \item It does not specify the \emph{optimal} form of quality awareness;
     DC3S's inflation rule $m_t = q_t/(w_t + \epsilon)$ is one
     admissible design, not necessarily the unique best.
-  \item It does not address adversarial manipulation of $w_t$ itself;
+  \item It does not fully address adversarial manipulation of $w_t$ itself;
     if the adversary can spoof the reliability score, the theorem's
-    assumptions are violated.
+    assumptions are violated.  The adversarial OQE mode
+    (Chapter~\ref{ch:adversarial-robustness}) partially mitigates this
+    with a Byzantine-robust $\min$-overlay estimator, but complete
+    game-theoretic closure remains open.
 \end{enumerate}
 
 \section{Universal Impossibility (T9)}

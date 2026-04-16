@@ -175,10 +175,16 @@ class NavigationDomainAdapter(DomainAdapter):
         x_lo = _f(unc.get("x_lower"), 0.0)
         y_hi = _f(unc.get("y_upper"), 0.0)
         y_lo = _f(unc.get("y_lower"), 0.0)
-        ax_lower = max(-speed_limit, (arena_min - x_lo) / max(dt, 1e-9))
-        ax_upper = min(speed_limit, (arena_max - x_hi) / max(dt, 1e-9))
-        ay_lower = max(-speed_limit, (arena_min - y_lo) / max(dt, 1e-9))
-        ay_upper = min(speed_limit, (arena_max - y_hi) / max(dt, 1e-9))
+        # Add a one-step speed buffer so the constraint is conservative w.r.t.
+        # the true state potentially being at the outer edge of the OCSS.
+        # Without this buffer, stale telemetry can cause the repaired action to
+        # push the true state past the arena boundary even though the observed
+        # upper-bound stays inside.
+        speed_buffer = speed_limit * dt
+        ax_lower = max(-speed_limit, (arena_min + speed_buffer - x_lo) / max(dt, 1e-9))
+        ax_upper = min(speed_limit, (arena_max - speed_buffer - x_hi) / max(dt, 1e-9))
+        ay_lower = max(-speed_limit, (arena_min + speed_buffer - y_lo) / max(dt, 1e-9))
+        ay_upper = min(speed_limit, (arena_max - speed_buffer - y_hi) / max(dt, 1e-9))
         viable = ax_lower <= ax_upper + 1e-9 and ay_lower <= ay_upper + 1e-9
         if not viable:
             ax_lower = ax_upper = 0.0

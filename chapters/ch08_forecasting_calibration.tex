@@ -250,6 +250,18 @@ Three pathways to closing the gap are pursued in subsequent chapters:
     the conformal quantile is updated online using the most recent
     residuals, partially adapting to distribution shift but without
     observation-quality feedback.
+  \item \textbf{SPCI-lite online quantile} (Chapter~\ref{ch:dc3s-adapter}):
+    an exponentially-weighted online quantile tracker following
+    Gibbs \& Candès~\cite{gibbs2021adaptive} maintains a sliding window
+    of conformity scores with weights
+    $w_i = \exp\!\bigl(-\lambda(t-i)\bigr)$.  The $(1-\alpha)$-quantile
+    is computed as
+    $\hat{q}_t = \inf\!\bigl\{q : \textstyle\sum_i w_i\,\mathbb{1}[s_i \le q]
+    \ge 1-\alpha\bigr\}$,
+    yielding intervals that adapt smoothly to distribution shift without
+    requiring a full recalibration pass.  The {\texttt{SPCIUpdater}} class
+    in {\texttt{conformal.py}} implements this with configurable
+    $\lambda$, window size, and $\alpha$.
 \end{enumerate}
 
 % ----------------------------------------------------------------

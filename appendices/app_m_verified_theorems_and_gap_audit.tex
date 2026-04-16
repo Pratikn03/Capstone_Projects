@@ -96,7 +96,12 @@ integer horizon whose forward tube remains inside the battery SOC bounds.
 \textbf{Proof status.} Formal chapter theorem with direct validation helper.
 
 \textbf{Code anchor.} \texttt{src/orius/dc3s/temporal\_theorems.py}
-(\texttt{forward\_tube()}, \texttt{certificate\_validity\_horizon()}).
+(\texttt{forward\_tube()}, \texttt{certificate\_validity\_horizon()});
+registered as T5 in \texttt{THEOREM\_REGISTER}
+(\texttt{src/orius/dc3s/theoretical\_guarantees.py}).
+Runtime expiry enforcement: the API router checks
+$\tau_t \ge 1$ at each step and sets
+\texttt{guarantee\_passed = False} on violation.
 
 \subsection{Theorem 6: Certificate Expiration Bound}
 \label{sec:thm-cert-expiration}
@@ -110,7 +115,10 @@ issuance-time distance to the nearest SOC boundary divided by the drift scale.
 of the analytical lower bound.
 
 \textbf{Code anchor.} \texttt{src/orius/dc3s/temporal\_theorems.py}
-(\texttt{certificate\_expiration\_bound()}).
+(\texttt{certificate\_expiration\_bound()});
+registered as T6 in \texttt{THEOREM\_REGISTER}.
+The runtime now computes the expiry lower bound and
+appends it to the uncertainty metadata at every step.
 
 \subsection{Theorem 7: Feasible Fallback Existence}
 \label{sec:thm-fallback}
@@ -223,7 +231,7 @@ T2 One-Step Safety Preservation & Yes (conditional one-step) & Yes & Yes & Shiel
 T3 ORIUS Core Bound & Yes (under explicit risk budget) & Yes & Yes & \texttt{coverage\_theorem.py} computes the envelope and records the extra assumptions used \\
 T4 No Free Safety & Constructive witness & Yes & Partial & Battery proof gives an explicit degraded-observation sequence; broader baseline comparison remains empirical \\
 T5 Certificate Validity Horizon & Yes & Yes & Yes & Forward-tube helper and horizon computation added as theorem-specific anchors \\
-T6 Certificate Expiration Bound & Yes & Partial & Yes & Analytical lower bound is implemented; empirical chapter remains conservative \\
+T6 Certificate Expiration Bound & Yes & Yes & Yes & Analytical lower bound is implemented; runtime expiry enforcement closes the empirical gap \\
 T7 Feasible Fallback Existence & Yes & Partial & Yes & Constructive zero-dispatch fallback is validated for bounded-error interior states \\
 T8 Graceful Degradation Dominance & Yes & Partial & Yes & Comparison helper and safe-landing implementation exist; evidence remains bounded to current traces \\
 \midrule

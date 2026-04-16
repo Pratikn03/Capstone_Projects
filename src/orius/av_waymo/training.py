@@ -14,6 +14,7 @@ import pandas as pd
 
 from orius.forecasting.ml_gbm import predict_gbm, train_gbm
 from orius.forecasting.uncertainty.conformal import ConformalConfig, ConformalInterval, save_conformal
+from orius.forecasting.uncertainty.shift_aware import ShiftAwareConfig
 
 
 HORIZON_LABELS: dict[str, int] = {"1s": 10, "2s": 20, "4s": 40}
@@ -44,13 +45,31 @@ class ModelBundle:
     feature_std: dict[str, float]
 
 
+def default_shift_aware_config(*, publication_dir: str | None = None) -> ShiftAwareConfig:
+    cfg = ShiftAwareConfig(
+        enabled=True,
+        policy_mode="shift_aware_piecewise",
+        aci_mode="aci_clipped",
+        adaptation_step=0.02,
+        alpha=0.10,
+        alpha_min=0.05,
+        alpha_max=0.20,
+        coverage_target=0.90,
+        coverage_window_size=128,
+        max_inflation_multiplier=3.0,
+    )
+    if publication_dir is not None:
+        cfg.publication_dir = str(publication_dir)
+    return cfg
+
+
 def _hash_percent(value: str) -> int:
     return int(hashlib.sha256(value.encode("utf-8")).hexdigest()[:8], 16) % 100
 
 
 def assign_split(scenario_id: str) -> str:
     bucket = _hash_percent(str(scenario_id))
-    if bucket < 70:
+    if bucket < 60:
         return "train"
     if bucket < 80:
         return "calibration"
@@ -258,10 +277,10 @@ def _coverage_by_groups(
 def _default_model_params() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     median_params = {
         "backend": "lightgbm",
-        "n_estimators": 160,
-        "learning_rate": 0.05,
-        "max_depth": 6,
-        "num_leaves": 31,
+        "n_estimators": 240,
+        "learning_rate": 0.04,
+        "max_depth": 10,
+        "num_leaves": 63,
         "min_child_samples": 5,
         "verbosity": -1,
     }
@@ -302,6 +321,9 @@ def train_dry_run_models(
     models_path.mkdir(parents=True, exist_ok=True)
     uncertainty_path.mkdir(parents=True, exist_ok=True)
     reports_path.mkdir(parents=True, exist_ok=True)
+    shift_cfg = default_shift_aware_config(publication_dir=str(reports_path / "shift_aware"))
+    shift_cfg_path = reports_path / "shift_aware_config.json"
+    shift_cfg_path.write_text(json.dumps(shift_cfg.to_dict(), indent=2), encoding="utf-8")
 
     median_params, lower_params, upper_params = _default_model_params()
     summary_rows: list[dict[str, Any]] = []
@@ -406,12 +428,14 @@ def train_dry_run_models(
         "feature_std": feature_std,
         "runtime_step_feature_rows": int(len(step_df)),
         "artifact_registry": task_registry,
+        "shift_aware_config": shift_cfg.to_dict(),
     }
     (reports_path / "feature_stats.json").write_text(json.dumps(train_stats, indent=2), encoding="utf-8")
     return {
         "training_summary_csv": str(reports_path / "training_summary.csv"),
         "subgroup_coverage_csv": str(reports_path / "subgroup_coverage.csv"),
         "feature_stats_json": str(reports_path / "feature_stats.json"),
+        "shift_aware_config_json": str(shift_cfg_path),
         "artifact_registry": task_registry,
     }
 

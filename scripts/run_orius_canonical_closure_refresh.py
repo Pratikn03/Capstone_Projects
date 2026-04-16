@@ -398,7 +398,7 @@ def main() -> int:
                         "--source",
                         "waymo_motion",
                         "--out",
-                        "data/av/processed/av_trajectories_orius.csv",
+                        "data/orius_av/av/processed/av_trajectories_orius.csv",
                     ],
                     external_root,
                 ),

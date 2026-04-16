@@ -715,6 +715,31 @@ def evaluate_structural_transfer(
 
 
 THEOREM_REGISTER = {
+    "T5": {
+        "name": "Certificate Validity Horizon",
+        "statement": (
+            "Given an uncertainty tube [L_t, U_t] and a safe action a_t, "
+            "the largest horizon tau_t such that the forward SoC tube "
+            "remains within [soc_min, soc_max] satisfies tau_t >= 0 and "
+            "is computable in O(max_steps) time."
+        ),
+        "type": "constructive_bound",
+        "code_witness": "certificate_validity_horizon",
+        "module": "orius.universal_theory.battery_instantiation",
+        "dependencies": ["forward_tube", "soc_bounds", "uncertainty_interval"],
+    },
+    "T6": {
+        "name": "Certificate Expiration Bound",
+        "statement": (
+            "The battery-domain expiration lower bound tau_expire_lb = "
+            "floor(delta_bnd^2 / sigma_d^2) where delta_bnd is the "
+            "minimum margin between the uncertainty tube and SoC limits."
+        ),
+        "type": "expiration_bound",
+        "code_witness": "certificate_expiration_bound",
+        "module": "orius.universal_theory.battery_instantiation",
+        "dependencies": ["uncertainty_interval", "soc_bounds", "drift_volatility"],
+    },
     "T9": {
         "name": "Universal Impossibility Under Persistent Degradation",
         "statement": (

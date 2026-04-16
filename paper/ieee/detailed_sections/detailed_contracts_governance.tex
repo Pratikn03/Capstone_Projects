@@ -1,0 +1,183 @@
+% === Section 5: Contracts and Governance ===
+\section{Contract Stack and Governance Surface}\label{sec:contracts}
+
+Every \dcs{} step produces intermediate typed objects.  The \textbf{contract stack}
+defines the obligations that each object must satisfy for the step to be valid.  The
+\textbf{governance surface} aggregates per-step certificates into episode- and
+campaign-level summaries that auditors can inspect.
+
+\subsection{Typed Contract Objects}
+
+\Cref{tab:contract_objects} lists the principal contract objects, their
+associated assumptions, and their role in the kernel.
+
+\begin{table}[h]
+\caption{Typed contract objects produced by the \dcs{} kernel.}
+\label{tab:contract_objects}
+\centering\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Contract object} & \textbf{Assumptions} & \textbf{Role} \\
+\midrule
+\texttt{ObservationPacket}            & A1       & Raw telemetry + parsed state \\
+\texttt{ReliabilityAssessment}        & A2, A5, A6 & Detection output: $\wt$, flags \\
+\texttt{ObservationConsistentStateSet} & A2, A5   & Uncertainty envelope $\Ut$ \\
+\texttt{SafetySpec}                   & A3, A4, A8 & Domain constraints + fallback \\
+\texttt{SafeActionSet}               & A3, A4   & Tightened admissible actions \\
+\texttt{RepairDecision}              & A4       & Shield output \\
+\texttt{SafetyCertificate}           & ---      & Auditable record binding all stages \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{ContractVerifier}
+
+The \texttt{ContractVerifier} is a second-pass checker that validates a
+\texttt{SafetyCertificate} against a set of \emph{contract predicates}.  Each
+predicate is a boolean function of the certificate's payload.  The verifier evaluates
+all predicates and returns a \texttt{VerificationResult} with:
+\begin{itemize}[nosep]
+  \item \texttt{chain\_valid}: conjunction of all predicate outcomes.
+  \item \texttt{failure\_rows}: count of certificates that failed at least one predicate.
+  \item \texttt{required\_payload\_pass\_rate}: fraction of certificates with all
+        required fields present.
+  \item \texttt{audit\_completeness\_rate}: fraction of steps with a valid certificate.
+\end{itemize}
+
+\subsection{Contract Predicates}
+
+The predicate set is domain-agnostic.  The following predicates are evaluated for
+every certificate:
+
+\begin{enumerate}[label=\textbf{CP\arabic*},nosep]
+  \item \textbf{Monotone inflation}: the inflation factor $\alpha \ge 1.0$.
+  \item \textbf{Weight bounds}: $\wt \in [0, 1]$.
+  \item \textbf{Interval non-degenerate}: for every target, $\mathrm{upper} \ge
+        \mathrm{lower}$.
+  \item \textbf{Action within bounds}: released action satisfies all tightened
+        constraints.
+  \item \textbf{Certificate completeness}: all required fields are present and
+        non-null.
+  \item \textbf{Timestamp monotonicity}: certificate timestamps are non-decreasing
+        within an episode.
+\end{enumerate}
+
+The contract predicate CP1 (monotone inflation) is the subject of Theorem~T4 and
+was the focus of a bug fix validated with 200/200 trial runs at zero failures.
+
+\subsection{Domain Instantiation Protocol}
+
+A \texttt{DomainInstantiation} protocol class specifies the typed methods that an
+adapter must implement.  The protocol is defined as a Python
+\texttt{typing.Protocol} in \texttt{contracts.py}:
+
+\begin{verbatim}
+class DomainInstantiation(Protocol):
+    @property
+    def domain_id(self) -> str: ...
+    def assess(self, obs: ObservationPacket,
+               history: Sequence[...]) -> ReliabilityAssessment: ...
+    def calibrate(self, state: Mapping, uncertainty: Mapping,
+                  quantile: float,
+                  reliability: ReliabilityAssessment)
+                  -> ObservationConsistentStateSet: ...
+    def constrain(self, ocss: ObservationConsistentStateSet,
+                  spec: SafetySpec) -> SafeActionSet: ...
+    def shield(self, candidate: Mapping, safe_set: SafeActionSet,
+               spec: SafetySpec) -> RepairDecision: ...
+    def certify(self, ...) -> SafetyCertificate: ...
+\end{verbatim}
+
+Any adapter that satisfies this \texttt{Protocol} can be plugged into the kernel.
+
+\subsection{Governance Surface}\label{sec:governance_surface}
+
+At the episode level, the governance surface aggregates certificates into a summary
+\texttt{runtime\_governance\_summary.csv} with the metrics in
+\cref{tab:governance_metrics}.
+
+\begin{table}[h]
+\caption{Governance summary metrics.}
+\label{tab:governance_metrics}
+\centering\small
+\begin{tabular}{ll}
+\toprule
+\textbf{Metric} & \textbf{Value (Battery)} \\
+\midrule
+\texttt{certificate\_rows}            & 288 \\
+\texttt{chain\_valid}                 & 1.0 (true) \\
+\texttt{failure\_rows}                & 0 \\
+\texttt{required\_payload\_pass\_rate} & 1.0 \\
+\texttt{expiry\_metadata\_presence\_rate} & 0.0 \\
+\texttt{expiry\_consistency\_rate}     & 1.0 \\
+\texttt{audit\_completeness\_rate}     & 1.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Both domains achieve 100\% chain validity, zero failure rows, and 100\% audit
+completeness.
+
+\subsection{CertOS Verification}
+
+The CertOS module performs an offline re-verification of the entire certificate chain.
+For each domain:
+\begin{itemize}[nosep]
+  \item \textbf{Battery}: 288 certificates verified, \texttt{chain\_valid = true},
+        0 failures.
+  \item \textbf{AV}: 9{,}348 certificates verified, \texttt{chain\_valid = true},
+        0 failures.
+\end{itemize}
+
+\subsection{Safety Architecture Comparison}
+
+\Cref{tab:safety_comparison} positions ORIUS/\dcs{} against five alternative
+safety-layer paradigms.  The comparison focuses on structural capabilities rather
+than domain-specific numbers.
+
+\begin{table}[h]
+\caption{Safety architecture comparison.  \checkmark = supported natively,
+$\circ$ = partially supported, --- = not supported.}
+\label{tab:safety_comparison}
+\centering\scriptsize
+\begin{tabular}{p{2.4cm}ccccccc}
+\toprule
+\textbf{Capability} & \textbf{DC3S} & \textbf{Simplex} & \textbf{GP-MPC}
+  & \textbf{DRO} & \textbf{Safe RL} & \textbf{Vanilla CQR} \\
+\midrule
+Obs-quality aware           & \checkmark & ---  & ---  & ---  & ---  & --- \\
+Reliability-adaptive margin & \checkmark & ---  & $\circ$ & ---  & ---  & --- \\
+Conformal coverage guarantee& \checkmark & ---  & ---  & ---  & ---  & \checkmark \\
+Domain-agnostic kernel      & \checkmark & $\circ$ & ---  & ---  & ---  & \checkmark \\
+Typed adapter protocol      & \checkmark & ---  & ---  & ---  & ---  & --- \\
+Certificate governance      & \checkmark & ---  & ---  & ---  & ---  & --- \\
+Graceful degradation (T8)   & \checkmark & \checkmark & $\circ$ & ---  & ---  & --- \\
+Formal proof programme      & \checkmark & \checkmark & $\circ$ & \checkmark & $\circ$ & $\circ$ \\
+Runtime overhead $<$ 1\,ms  & \checkmark & \checkmark & ---  & ---  & ---  & \checkmark \\
+Multi-domain validated\textsuperscript{$\dagger$} & \checkmark & ---  & ---  & ---  & ---  & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+{\footnotesize $\dagger$ Validated on two domains (Battery, AV) with locked artifacts; four additional domains are architectural only.}
+
+\paragraph{Key differentiators.}
+\begin{itemize}[nosep]
+  \item \textbf{Simplex}~\cite{sha2001simplex} provides safety switching between a
+        performance controller and a verified safe controller, but does not adapt
+        the safety margin to telemetry reliability.
+  \item \textbf{GP-MPC} (Gaussian Process Model Predictive Control) provides
+        uncertainty-aware control but requires a Gaussian process model per domain,
+        with $O(n^3)$ scaling precluding real-time use at large state dimensions.
+  \item \textbf{DRO} (Distributionally Robust Optimisation) handles distributional
+        ambiguity but does not produce per-step safety certificates or adapt to
+        observation-quality signals.
+  \item \textbf{Safe RL} incorporates safety constraints into the reward, but
+        typically provides asymptotic guarantees rather than per-step certificates.
+  \item \textbf{Vanilla CQR} achieves conformal coverage but is quality-ignorant:
+        the same interval width is used regardless of telemetry degradation.
+\end{itemize}
+
+DC3S is unique in combining observation-quality awareness, reliability-adaptive margins,
+a formal proof programme, domain-agnostic typed adapters, and per-step certificate
+governance in a single runtime layer with sub-millisecond overhead.

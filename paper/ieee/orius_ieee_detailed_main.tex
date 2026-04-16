@@ -1,0 +1,79 @@
+\documentclass[11pt,onecolumn]{IEEEtran}
+\input{orius_ieee_detailed_preamble.tex}
+
+\title{ORIUS: A Universal Runtime Safety Layer for Physical AI\\under Degraded Observation ---\\Comprehensive Two-Domain Validation on Battery Energy Storage\\and Autonomous Vehicles}
+\author{Pratik Niroula}
+\date{April 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Physical AI systems operating in safety-critical domains face a fundamental hazard:
+\emph{degraded observation}.  When telemetry is delayed, dropped, stale, or drifted,
+a controller may evaluate its action as safe with respect to the observed state while
+the true physical state has already crossed a constraint boundary.  We call this the
+\emph{Observation--Action Safety Gap} (OASG).
+
+We present \textbf{ORIUS} (Observation--Reality Integrity for Universal Safety), a
+typed runtime layer that wraps any upstream controller and enforces safety through a
+five-stage kernel: \textbf{Detect}~degraded telemetry, \textbf{Calibrate}~the
+observation-consistent state set, \textbf{Constrain}~the admissible action set,
+\textbf{Shield}~unsafe candidate actions via repair or fallback, and
+\textbf{Certify}~every released action with an auditable safety certificate.
+
+The ORIUS architecture is \emph{universal by design}: the kernel, benchmark schema,
+contract stack, and governance surface are domain-agnostic.  Domain specifics are
+isolated in thin adapter modules that implement six typed methods.  This paper
+provides a comprehensive, equal-depth validation of ORIUS on two distinct
+cyber-physical domains:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Battery Energy Storage}: dispatch optimisation under degraded SoC
+        telemetry, validated on 168-hour CPSBench replay episodes with DeepOQE
+        neural forecasting and five fault families (288~runtime steps, 288~certificates,
+        zero true-state violations).
+  \item \textbf{Autonomous Vehicles}: ego-speed and gap prediction under degraded
+        perception, validated on the full Waymo Open Motion corpus (7~validation
+        shards, 1{,}975~scenarios, 80{,}975~feature steps, 9{,}348~runtime test steps,
+        9{,}348~ certificates, all DC3S contracts satisfied).
+\end{enumerate}
+
+Both domains achieve 100\% certificate chain validity, 100\% audit completeness,
+and zero contract failures.  All results are reproducible from locked
+artifacts with SHA-256 hashes.  We report 11~theorems (T1--T11), the complete
+shift-aware adaptive uncertainty mechanism, and a full cross-domain synthesis
+demonstrating that the same kernel survives domain change without semantic loss.
+\end{abstract}
+
+\begin{IEEEkeywords}
+runtime safety, degraded observation, conformal prediction, safety certificates,
+cyber-physical systems, battery energy storage, autonomous vehicles, OASG
+\end{IEEEkeywords}
+
+\tableofcontents
+\newpage
+
+%% ===== MAIN BODY =====
+\input{detailed_sections/detailed_intro.tex}
+\input{detailed_sections/detailed_problem_oasg.tex}
+\input{detailed_sections/detailed_related_work.tex}
+\input{detailed_sections/detailed_runtime_architecture.tex}
+\input{detailed_sections/detailed_contracts_governance.tex}
+\input{detailed_sections/detailed_theory_bridge.tex}
+\input{detailed_sections/detailed_shift_aware.tex}
+\input{detailed_sections/detailed_battery_validation.tex}
+\input{detailed_sections/detailed_av_validation.tex}
+\input{detailed_sections/detailed_cross_domain.tex}
+\input{detailed_sections/detailed_reproducibility.tex}
+\input{detailed_sections/detailed_limitations.tex}
+\input{detailed_sections/detailed_conclusion.tex}
+
+%% ===== APPENDIX =====
+\appendices
+\input{detailed_sections/detailed_appendix.tex}
+
+\bibliographystyle{IEEEtran}
+\bibliography{../bibliography/orius_monograph}
+
+\end{document}

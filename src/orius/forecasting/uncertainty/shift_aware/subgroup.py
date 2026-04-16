@@ -19,7 +19,11 @@ class SubgroupCoverageTracker:
 
     @staticmethod
     def _bin_idx(value: float, n_bins: int) -> int:
-        v = min(max(float(value), 0.0), 0.999999)
+        import math
+        v = float(value)
+        if math.isnan(v) or math.isinf(v):
+            v = 0.0
+        v = min(max(v, 0.0), 0.999999)
         return int(v * max(int(n_bins), 1))
 
     def build_group_key(
@@ -78,6 +82,9 @@ class SubgroupCoverageTracker:
 
     def group_rows(self) -> list[dict[str, Any]]:
         return [g.to_dict() for _, g in sorted(self._groups.items(), key=lambda kv: kv[0])]
+
+    def get_group_stats(self, group_key: str) -> GroupCoverageStats | None:
+        return self._groups.get(str(group_key))
 
     def max_under_coverage_gap(self) -> float:
         return max((g.under_coverage_gap for g in self._groups.values()), default=0.0)

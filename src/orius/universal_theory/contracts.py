@@ -576,7 +576,7 @@ class ContractVerifier:
                 quantile=float(quantile),
                 cfg=dict(cfg),
                 drift_flag=reliability.drift_flag,
-                prev_meta=None,
+                prev_meta=uncertainty_set.raw_uncertainty,
             )
             degraded_inflation = _extract_inflation(
                 degraded_uncertainty,

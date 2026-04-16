@@ -8,12 +8,12 @@
 \toprule
 \textbf{Domain} & \textbf{Adapter} & \textbf{Raw/Data} & \textbf{Train} & \textbf{Replay} & \textbf{Soundness} & \textbf{Fallback} & \textbf{CertOS} & \textbf{P5} & \textbf{Tier / Exact blocker}\\
 \midrule
-Battery Energy Storage & pass & locked\_reference & pass & pass & reference\_witness & paper6\_runtime & evaluated & evaluated & reference; battery\_reference\_witness\\
-Autonomous Vehicles & pass & verified & pass & pass & pass & bounded\_runtime\_pass & evaluated & gated & proof\_validated; promoted\\
+Battery Energy Storage & pass & locked\_artifact & locked\_artifact & pass & pass & pass & pass & evaluated & reference; none\\
+Autonomous Vehicles & pass & real\_data\_ready & pass & pass & pass & pass & pass & evaluated & proof\_validated; none\\
 Industrial Process Control & pass & verified & pass & pass & pass & bounded\_runtime\_pass & evaluated & evaluated & proof\_validated; industrial\_train\_validation\_chain\_complete\\
-Medical and Healthcare Monitoring & pass & verified & pass & pass & pass & bounded\_runtime\_pass & evaluated & gated & proof\_validated; healthcare\_train\_validation\_chain\_complete\\
-Navigation and Guidance & pass & blocked & blocked\_real\_data\_gap & pass & blocked\_real\_data\_gap & bounded\_runtime\_pass & gated & gated & shadow\_synthetic; navigation\_real\_data\_gap\\
-Aerospace Control & pass & placeholder\_synthetic & placeholder\_surface & pass & experimental\_placeholder & bounded\_runtime\_pass & gated & gated & experimental; aerospace\_experimental\_placeholder\\
+Medical and Healthcare Monitoring & pass & verified & pass & pass & pass & bounded\_runtime\_pass & evaluated & evaluated & proof\_validated; healthcare\_train\_validation\_chain\_complete\\
+Navigation and Guidance & pass & blocked & blocked\_real\_data\_gap & pass & pass & bounded\_runtime\_pass & evaluated & gated & shadow\_synthetic; navigation\_kitti\_runtime\_missing\\
+Aerospace Control & pass & support\_lane\_only & support\_lane\_only & pass & pass & bounded\_runtime\_pass & evaluated & gated & experimental; aerospace\_realflight\_runtime\_missing\\
 \bottomrule
 \end{tabular}}
 \end{table}

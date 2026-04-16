@@ -383,7 +383,7 @@
       "theorem_id": "T6",
       "title": "Certificate expiration bound",
       "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1769",
-      "proof_location": "appendices/app_c_full_proofs.tex:199",
+      "proof_location": "appendices/app_c_full_proofs.tex:203",
       "assumptions_used": [
         "A4",
         "A6",
@@ -439,7 +439,7 @@
       "theorem_id": "T7",
       "title": "Feasible fallback existence",
       "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1848",
-      "proof_location": "appendices/app_c_full_proofs.tex:227",
+      "proof_location": "appendices/app_c_full_proofs.tex:231",
       "assumptions_used": [
         "A1",
         "A3",
@@ -512,7 +512,7 @@
       "theorem_id": "T8",
       "title": "Graceful degradation dominance",
       "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1874",
-      "proof_location": "appendices/app_c_full_proofs.tex:240",
+      "proof_location": "appendices/app_c_full_proofs.tex:244",
       "assumptions_used": [
         "A1",
         "A2",
@@ -584,7 +584,7 @@
       "theorem_id": "T9",
       "title": "Universal Impossibility, T9",
       "statement_location": "chapters/ch37_universality_completeness.tex:109",
-      "proof_location": "appendices/app_c_full_proofs.tex:266",
+      "proof_location": "appendices/app_c_full_proofs.tex:270",
       "assumptions_used": [
         "A4",
         "A6': phi-mixing fault process with geometric decay.",
@@ -640,7 +640,7 @@
       "theorem_id": "T10",
       "title": "Boundary-indistinguishability lower bound, T10",
       "statement_location": "chapters/ch37_universality_completeness.tex:206",
-      "proof_location": "appendices/app_c_full_proofs.tex:306",
+      "proof_location": "appendices/app_c_full_proofs.tex:310",
       "assumptions_used": [
         "Controller acts only through the degraded observation channel.",
         "TV(P_0,t, P_1,t) <= w_t for the boundary subproblem.",
@@ -699,7 +699,7 @@
       "theorem_id": "T11",
       "title": "Typed structural transfer theorem, T11",
       "statement_location": "chapters/ch37_universality_completeness.tex:338",
-      "proof_location": "appendices/app_c_full_proofs.tex:350",
+      "proof_location": "appendices/app_c_full_proofs.tex:354",
       "assumptions_used": [
         "Coverage obligation for the observation-consistent state set.",
         "Soundness of the tightened safe-action set.",

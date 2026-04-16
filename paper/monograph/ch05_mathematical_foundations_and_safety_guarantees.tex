@@ -126,7 +126,11 @@ exchangeability, while adaptive conformal methods show how long-run calibration 
 be generalized more honestly under nonstationary streams
 \cite{vovk2005algorithmic,romano2019conformalized,gibbs2021adaptive}. ORIUS does not claim
 that these methods alone solve runtime safety. It uses them to clarify what the uncertainty
-set is allowed to mean before repaired release is evaluated.
+set is allowed to mean before repaired release is evaluated.  In practice, the online
+conformal layer is an SPCI-lite quantile tracker (Gibbs \& Candès,
+\citeyear{gibbs2021adaptive}) that maintains an exponentially-weighted sliding window of
+conformity scores, yielding intervals that adapt smoothly to distribution shift without a
+full recalibration pass.
 
 \section{Why the proofs stay witness-backed but the objects stay universal}
 The energy-management reference row remains the deepest theorem-to-code-to-artifact chain because the witness row

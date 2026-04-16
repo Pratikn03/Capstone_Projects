@@ -25,7 +25,7 @@ from orius.dc3s.certificate import (
 from orius.dc3s.drift import PageHinkleyDetector
 from orius.dc3s.ftit import update as update_ftit_state
 from orius.dc3s.guarantee_checks import evaluate_guarantee_checks
-from orius.dc3s.quality import compute_reliability
+from orius.dc3s.quality import compute_reliability, compute_reliability_robust
 from orius.dc3s.shield import repair_action
 from orius.dc3s.state import DC3SStateStore
 from orius.forecasting.predict import predict_next_24h
@@ -34,6 +34,10 @@ from orius.iot.store import IoTLoopStore
 from orius.optimizer import optimize_dispatch
 from orius.optimizer.robust_dispatch import optimize_robust_dispatch
 from orius.safety.bms import SafetyLayer, SafetyViolation
+from orius.universal_theory.battery_instantiation import (
+    certificate_expiration_bound,
+    certificate_validity_horizon,
+)
 from services.api.config import get_bms_config, get_conformal_path, load_uncertainty_config
 from services.api.routers.forecast import _cached_bundle, _load_cfg as _load_forecast_cfg, _resolve_model_path
 from services.api.routers.optimize import _build_robust_config, _load_cfg as _load_optimize_cfg
@@ -249,6 +253,33 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
             ftit_cfg=ftit_cfg,
         )
 
+        # Gap 5 — adversarial OQE: when adversarial_mode is enabled, run the
+        # Byzantine-resistant reliability estimator on recent telemetry signal
+        # history and take the minimum of heuristic and robust w_t.
+        reliability_cfg = dc3s_cfg.get("reliability", {})
+        adversarial_mode = bool(reliability_cfg.get("adversarial_mode", False))
+        quality_flags["adversarial_mode"] = adversarial_mode
+        if adversarial_mode:
+            signal_history = list(adaptive_state.get("signal_history", []))
+            # Extract latest signal value from telemetry
+            event_signals = [
+                float(v) for k, v in (req.telemetry_event or {}).items()
+                if isinstance(v, (int, float)) and not isinstance(v, bool)
+                and k not in ("device_id", "zone_id", "target")
+            ]
+            if event_signals:
+                signal_history.append(float(sum(event_signals) / len(event_signals)))
+            if len(signal_history) >= 3:
+                w_robust, robust_flags = compute_reliability_robust(
+                    signal_history[-50:],
+                    min_w=float(reliability_cfg.get("min_w", 0.05)),
+                )
+                quality_flags["robust_w_t"] = float(w_robust)
+                quality_flags["robust_flags"] = robust_flags
+                w_t = min(float(w_t), float(w_robust))
+            # Persist signal history in adaptive state for next step
+            adaptive_state["signal_history"] = signal_history[-50:]
+
         detector = PageHinkleyDetector.from_state(state_row.get("drift_state"), cfg=dc3s_cfg.get("drift", {}))
         drift_info: Dict[str, Any] = {
             "drift": False,
@@ -428,6 +459,35 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
             action=safe_action,
             constraints=constraints,
         )
+
+        # T5/T6 runtime expiry check (Gap 3 — runtime assurance).
+        # Compute the forward certificate validity horizon and expiration
+        # bound *before* issuing the dispatch action.
+        sigma_d = max(float(uncertainty_meta.get("q_eff", 0.0)), 1e-6)
+        t5_result = certificate_validity_horizon(
+            interval_lower_mwh=float(lower[0]),
+            interval_upper_mwh=float(upper[0]),
+            safe_action=safe_action,
+            constraints=constraints,
+            sigma_d=sigma_d,
+        )
+        t6_result = certificate_expiration_bound(
+            interval_lower_mwh=float(lower[0]),
+            interval_upper_mwh=float(upper[0]),
+            soc_min_mwh=float(constraints["min_soc_mwh"]),
+            soc_max_mwh=float(constraints["max_soc_mwh"]),
+            sigma_d=sigma_d,
+        )
+        uncertainty_meta["validity_horizon_tau_t"] = int(t5_result["tau_t"])
+        uncertainty_meta["expiry_lower_bound"] = int(t6_result["tau_expire_lb"])
+        if int(t5_result["tau_t"]) < 1:
+            guarantee_fail_reasons = list(guarantee_fail_reasons or [])
+            guarantee_fail_reasons.append(
+                f"T5 validity_horizon={t5_result['tau_t']}: certificate tube "
+                "breaches SoC bounds at the next step"
+            )
+            guarantee_passed = False
+
         runtime_mode = _resolve_iot_mode(req.telemetry_event or {})
         if runtime_mode == "active" and not guarantee_passed:
             raise HTTPException(

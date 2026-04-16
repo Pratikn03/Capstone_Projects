@@ -7,12 +7,12 @@
 \toprule
 \textbf{Domain} & \textbf{Current row} & \textbf{What is currently closed} & \textbf{Current blocker or boundary} \\
 \midrule
-Battery Energy Storage & Witness row & adapter, replay, CertOS, soundness & battery\_reference\_witness\\
-Autonomous Vehicles & Defended bounded row & adapter, replay, CertOS, soundness & promoted\\
+Battery Energy Storage & Witness row & adapter, replay, soundness & none\\
+Autonomous Vehicles & Defended bounded row & adapter, replay, soundness & none\\
 Industrial Process Control & Defended bounded row & adapter, replay, CertOS, soundness & industrial\_train\_validation\_chain\_complete\\
 Medical and Healthcare Monitoring & Defended bounded row & adapter, replay, CertOS, soundness & healthcare\_train\_validation\_chain\_complete\\
-Navigation and Guidance & Shadow-synthetic & adapter, replay & navigation\_real\_data\_gap\\
-Aerospace Control & Experimental & adapter, replay & aerospace\_experimental\_placeholder\\
+Navigation and Guidance & Shadow-synthetic & adapter, replay, CertOS, soundness & navigation\_kitti\_runtime\_missing\\
+Aerospace Control & Experimental & adapter, replay, CertOS, soundness & aerospace\_realflight\_runtime\_missing\\
 \bottomrule
 \end{tabularx}
 \end{table*}

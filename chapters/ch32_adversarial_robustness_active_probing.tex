@@ -86,8 +86,18 @@ locked artifacts:
   \item The battery implementation includes an active-probing detection path.
   \item That detection path achieves high recall and strong precision on the
     current spoofing audit.
+  \item An adversarial OQE mode (\texttt{adversarial\_mode} in
+    \texttt{dc3s.yaml}) now supplements detection with a real-time
+    Byzantine-robust reliability estimator.  When enabled, the runtime takes
+    $w_t = \min(w_t^{\mathrm{heuristic}},\, w_t^{\mathrm{robust}})$,
+    ensuring that an attacker who can influence individual sub-scores
+    cannot raise the aggregate score above the robust floor computed over
+    a sliding window of recent signal readings via
+    \texttt{compute\_reliability\_robust()}.
   \item The chapter does \emph{not} yet prove adversarial completeness or a
-    full safety frontier against all attack strategies.
+    full safety frontier against all attack strategies; game-theoretic
+    optimality remains open, and the robust estimator provides a bounded
+    defence rather than a provably optimal one.
 \end{itemize}
 
 \section{Summary}

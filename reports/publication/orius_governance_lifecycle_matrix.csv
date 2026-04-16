@@ -1,7 +1,7 @@
 domain,issue_validate_expire_fallback,hash_chain_and_invariants,certos_lifecycle_status,shared_constraint_status,audit_continuity_status,governance_completeness_pct,exact_limit
-Battery Energy Storage,issue/validate/expire/fallback all seen,hash chain ok and invariants pass,evaluated,shared_feeder_capacity (evaluated),tracked runtime audit continuity,97.0,bounded to the current governed task surface
-Autonomous Vehicles,issue/validate/expire/fallback all seen,hash chain ok and invariants pass,evaluated, (gated),tracked runtime audit continuity,93.0,promoted
+Battery Energy Storage,issue/validate/expire/fallback all seen,hash chain ok and invariants pass,pass,shared_feeder_capacity (evaluated),tracked runtime audit continuity,97.0,bounded to the current governed task surface
+Autonomous Vehicles,issue/validate/expire/fallback all seen,hash chain ok and invariants pass,pass,shared_headway_budget (evaluated),tracked runtime audit continuity,94.0,bounded to the current governed task surface
 Industrial Process Control,issue/validate/expire/fallback all seen,hash chain ok and invariants pass,evaluated,shared_power_budget (evaluated),tracked runtime audit continuity,94.0,bounded to the current governed task surface
-Medical and Healthcare Monitoring,issue/validate/expire/fallback all seen,hash chain ok and invariants pass,evaluated, (gated),tracked runtime audit continuity,93.0,healthcare_train_validation_chain_complete
-Navigation and Guidance,gated_or_not_yet_supported,gated,gated, (gated),bounded_or_gated,58.0,navigation_real_data_gap
-Aerospace Control,gated_or_not_yet_supported,gated,gated, (gated),bounded_or_gated,55.0,aerospace_experimental_placeholder
+Medical and Healthcare Monitoring,issue/validate/expire/fallback all seen,hash chain ok and invariants pass,evaluated,shared_alert_budget (evaluated),tracked runtime audit continuity,94.0,bounded to the current governed task surface
+Navigation and Guidance,issue/validate/expire/fallback all seen,hash chain ok and invariants pass,evaluated, (gated),tracked runtime audit continuity,58.0,navigation_kitti_runtime_missing
+Aerospace Control,issue/validate/expire/fallback all seen,hash chain ok and invariants pass,evaluated, (gated),tracked runtime audit continuity,55.0,aerospace_realflight_runtime_missing

@@ -34,13 +34,20 @@ degraded observation actually matters.
 The detect stage computes an explicit trust signal from freshness, missingness, timing,
 cross-sensor consistency, and domain-specific degradation indicators. The result is not
 only an anomaly flag. It is a reliability object that changes the semantics of the rest
-of the pipeline.
+of the pipeline.  A configurable stale-decay rate ensures freshness drops below the
+shield threshold within a bounded number of stale steps, closing Assumption~A6.  An
+optional adversarial mode overlays a Byzantine-robust estimator that prevents a spoofed
+sub-score from inflating the aggregate reliability.
 
 \subsection{Calibrate}
 The calibrate stage inflates the observation-consistent state set. In the current ORIUS
 implementation this inflation can be driven by conformal or reliability-conditioned
 uncertainty, but the runtime requirement is broader: when observation quality drops, the
 set of physically plausible states must not remain frozen at the nominal point estimate.
+Domain-typed inflation multipliers ensure that each CPS domain's baseline uncertainty
+scale is respected, while an online SPCI-lite quantile tracker~\cite{gibbs2021adaptive}
+adapts the conformal interval width to distribution shift without a full recalibration
+pass.
 
 \subsection{Constrain}
 The constrain stage recomputes which actions are admissible under the widened state set.

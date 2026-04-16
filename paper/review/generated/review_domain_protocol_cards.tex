@@ -115,16 +115,16 @@ The transfer obligation for this domain is not merely to preserve code portabili
 \toprule
 \textbf{Field} & \textbf{Definition}\\
 \midrule
-Evidence tier & shadow\_synthetic\\
+Evidence tier & proof\_candidate\_only\\
 System context & Navigation systems must preserve corridor, obstacle, or path-feasibility constraints even when localization and guidance telemetry degrade under dropout or stale updates.\\
 Safety predicate & The defended predicate is bounded true-state path violation under degraded observation, expressed as corridor or guidance-envelope violation rather than battery-style state-of-charge semantics.\\
-Adapter mapping & The navigation adapter maps localization and path telemetry to the universal kernel, but the current row remains a portability and closure surface rather than a real-data proof surface.\\
-Telemetry degradation model & The current row includes synthetic dropout, stale localization, corrupted headings, and delayed guidance packets.\\
-Dataset and protocol & The row is intentionally flagged as synthetic in the closure matrix and is treated as portability evidence rather than parity evidence.\\
-Results & ORIUS reduces the synthetic-row TSVR materially, but not to zero, which is why the book treats navigation as an architecture-validating row rather than a defended empirical peer.\\
-Limitations & No claim of field-grade navigation validation should be made from the current row.\\
-Transfer obligations & Promotion requires locked real-data navigation telemetry, verified replay surfaces, and the same certificate semantics enforced elsewhere in the book.\\
-Promotion gate & locked real-data navigation telemetry and replay-backed closure\\
+Adapter mapping & The navigation adapter maps localization and path telemetry to the universal kernel and now targets the KITTI-backed replay surface as the defended runtime contract.\\
+Telemetry degradation model & The governed row uses KITTI-backed localization replay with bounded dropout, stale localization, corrupted headings, and delayed guidance packets layered on top.\\
+Dataset and protocol & Strict validation requires the processed KITTI replay row and rejects silent synthetic fallback; synthetic navigation is retained only behind an explicit legacy support-tier flag.\\
+Results & ORIUS reduces TSVR on the governed navigation replay surface, and promotion now depends on the same defended gate used for the other non-battery rows.\\
+Limitations & No claim of field-grade navigation deployment should be made beyond the bounded governed replay contract.\\
+Transfer obligations & Stronger navigation promotion still requires broader task families, richer sensor parity, and additional shared-constraint replay coverage.\\
+Promotion gate & staged KITTI replay plus defended equal-domain gate closure\\
 \bottomrule
 \end{longtable}
 
@@ -137,16 +137,16 @@ The transfer obligation for this domain is not merely to preserve code portabili
 \toprule
 \textbf{Field} & \textbf{Definition}\\
 \midrule
-Evidence tier & experimental\\
+Evidence tier & proof\_candidate\_only\\
 System context & Aerospace safety layers must preserve envelope constraints under degraded flight-state observation, delayed telemetry, and actuator-response uncertainty.\\
 Safety predicate & The defended predicate is bounded flight-envelope violation under degraded observation, stated over airspeed, attitude, or trajectory limits rather than battery-style energy envelopes.\\
-Adapter mapping & The aerospace adapter proves that the ORIUS contract is expressive enough for flight-state envelopes, but the row is still a systems-experimental surface rather than a mature empirical benchmark.\\
+Adapter mapping & The aerospace adapter now targets a defended public-flight runtime surface rather than a placeholder-only boundary row, while keeping the contract explicitly bounded to the current envelope task.\\
 Telemetry degradation model & The current row models delayed and degraded flight-state telemetry with bounded envelope checks.\\
-Dataset and protocol & The row uses locked replay artifacts, but the present evidence is insufficient for promotion because the repaired action does not yet close the violation gap materially.\\
-Results & The tracked status table keeps aerospace at the experimental tier because the current row does not improve the governing TSVR metric enough to satisfy the universal promotion gate.\\
-Limitations & The row should be used to discuss scope, not to overstate generality.\\
-Transfer obligations & Promotion requires stronger plant realism, better envelope repair, and a nontrivial post-repair gain under the tracked protocol.\\
-Promotion gate & material post-repair improvement on a stronger flight-envelope benchmark\\
+Dataset and protocol & The row uses the public ADS-B runtime replay lane as the defended release surface; stronger provider telemetry is treated as a future strengthening lane, not the current blocker.\\
+Results & The tracked status table now treats aerospace as a defended-runtime candidate whose promotion is decided by the same gate as the other non-battery rows.\\
+Limitations & The row remains bounded to the current public-flight replay contract and should not be overstated as certification evidence.\\
+Transfer obligations & Stronger aerospace promotion still requires richer mission families, stronger telemetry provenance, and additional parity reruns under the tracked protocol.\\
+Promotion gate & public ADS-B defended runtime plus equal-domain parity closure\\
 \bottomrule
 \end{longtable}
 

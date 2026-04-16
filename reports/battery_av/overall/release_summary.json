@@ -1,10 +1,10 @@
 {
-  "generated_at_utc": "2026-04-15T21:29:49.283908+00:00",
-  "canonical_overall_dir": "reports/battery_av/overall",
+  "generated_at_utc": "2026-04-16T01:43:25.777326+00:00",
+  "canonical_overall_dir": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/overall",
   "battery": {
     "domain": "Battery Energy Storage",
     "domain_key": "battery",
-    "generated_at_utc": "2026-04-15T21:29:49.198518+00:00",
+    "generated_at_utc": "2026-04-16T01:43:25.688289+00:00",
     "status": "complete",
     "canonical_controller": "deep:dc3s_wrapped",
     "required_artifacts": {
@@ -48,7 +48,7 @@
         "reason": null
       }
     },
-    "run_id": "8e5589063ba25ab6",
+    "run_id": "db54a075352c3b69",
     "figures": [
       "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/fig_battery_deep_oqe_safety_metrics.png",
       "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/fig_battery_deep_oqe_summary.png",
@@ -79,7 +79,7 @@
   "av": {
     "domain": "Autonomous Vehicles",
     "domain_key": "vehicle",
-    "generated_at_utc": "2026-04-15T21:29:49.203370+00:00",
+    "generated_at_utc": "2026-04-16T01:43:25.693803+00:00",
     "status": "complete",
     "canonical_controller": "orius",
     "required_artifacts": {

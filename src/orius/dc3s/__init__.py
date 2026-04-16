@@ -5,6 +5,7 @@ from .deep_oqe import DeepOQEConfig, DeepOQEModel, FEATURE_NAMES as DEEP_OQE_FEA
 from .ftit import FTIT_FAULT_KEYS, preview_fault_state, update as update_ftit_state
 from .drift import PageHinkleyDetector, AdaptivePageHinkleyDetector
 from .calibration import inflate_interval, inflate_q, build_uncertainty_set
+from .online_calibration import OnlineCalibrator, calibration_contract_check
 from .shield import repair_action
 from .certificate import (
     make_certificate,

@@ -1,0 +1,4 @@
+metric,heuristic,deep
+eval_reliability_mae,0.1176201846216051,0.16501864790916443
+fault_auc,,0.5395393471355491
+low_reliability_fault_lift,,0.0

@@ -1,4 +1,4 @@
-.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets navigation-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark orius-monograph-assets review-compile orius-book orius-evidence-rerun equal-domain-gate camera-ready-assets camera-ready-verify camera-ready-freeze orius-review-pack orius-final ieee-assets ieee-main-compile ieee-appendix-compile ieee-pack ieee-prof-assets ieee-prof-main-compile ieee-prof-appa-compile ieee-prof-appb-compile ieee-prof-pack orius-flagship-manuscripts battery-deep-novelty external-ssd-setup external-ssd-shell external-ssd-verify external-ssd-preflight full-folder-audit pre-clean clean clean-status fresh-research pre-release
+.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets navigation-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark orius-monograph-assets review-compile orius-book orius-evidence-rerun equal-domain-gate camera-ready-assets camera-ready-verify camera-ready-freeze orius-review-pack orius-final ieee-assets ieee-main-compile ieee-detailed-compile ieee-appendix-compile ieee-pack ieee-prof-assets ieee-prof-main-compile ieee-prof-appa-compile ieee-prof-appb-compile ieee-prof-pack orius-flagship-manuscripts battery-deep-novelty external-ssd-setup external-ssd-shell external-ssd-verify external-ssd-preflight full-folder-audit pre-clean clean clean-status fresh-research pre-release
 
 PRE_RELEASE_TESTS = tests/test_external_real_data_integration.py tests/test_real_data_manifest_refresh.py tests/test_thesis_package_assets.py
 
@@ -14,6 +14,7 @@ PAPER_MIN_PAGES ?= 90
 # appendix package. Keep a real main-paper floor without forcing monograph-scale
 # duplication back into the double-column draft.
 IEEE_MIN_PAGES ?= 8
+IEEE_DETAILED_MIN_PAGES ?= 40
 IEEE_PROF_MAIN_MIN_PAGES ?= 20
 IEEE_PROF_APP_MIN_PAGES ?= 20
 ORIUS_AV_SOURCE ?= waymo_motion
@@ -409,6 +410,25 @@ ieee-appendix-compile: ieee-assets
 	- pdflatex -interaction=nonstopmode -output-directory=paper/ieee paper/ieee/orius_ieee_appendix.tex
 	- pdflatex -interaction=nonstopmode -output-directory=paper/ieee paper/ieee/orius_ieee_appendix.tex
 	test -f paper/ieee/orius_ieee_appendix.pdf
+
+ieee-detailed-compile: ieee-assets
+	rm -f paper/ieee/orius_ieee_detailed_main.pdf paper/ieee/orius_ieee_detailed_main.log paper/ieee/orius_ieee_detailed_main.aux paper/ieee/orius_ieee_detailed_main.out paper/ieee/orius_ieee_detailed_main.bbl paper/ieee/orius_ieee_detailed_main.blg paper/ieee/orius_ieee_detailed_main.toc
+	mkdir -p paper/ieee/generated paper/ieee/detailed_sections
+	- pdflatex -interaction=nonstopmode -output-directory=paper/ieee paper/ieee/orius_ieee_detailed_main.tex
+	- sh -c 'cd paper/ieee && bibtex orius_ieee_detailed_main'
+	- pdflatex -interaction=nonstopmode -output-directory=paper/ieee paper/ieee/orius_ieee_detailed_main.tex
+	- pdflatex -interaction=nonstopmode -output-directory=paper/ieee paper/ieee/orius_ieee_detailed_main.tex
+	test -f paper/ieee/orius_ieee_detailed_main.pdf
+	@pages=$$(grep -Eo 'Output written on paper/ieee/orius_ieee_detailed_main\.pdf \([0-9]+ pages' paper/ieee/orius_ieee_detailed_main.log | tail -n1 | sed -E 's/.*\(([0-9]+) pages/\1/'); \
+	if [ -z "$$pages" ]; then \
+		echo "Could not determine page count from paper/ieee/orius_ieee_detailed_main.log"; \
+		exit 1; \
+	fi; \
+	if [ "$$pages" -lt "$(IEEE_DETAILED_MIN_PAGES)" ]; then \
+		echo "IEEE detailed page count $$pages is below required minimum $(IEEE_DETAILED_MIN_PAGES)"; \
+		exit 1; \
+	fi; \
+	echo "IEEE detailed page count $$pages >= $(IEEE_DETAILED_MIN_PAGES)"
 
 ieee-pack: ieee-main-compile ieee-appendix-compile
 

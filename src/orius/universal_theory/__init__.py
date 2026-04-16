@@ -25,6 +25,7 @@ from .kernel import (
 from .risk_bounds import (
     FrontierPoint,
     assert_coverage_guarantee,
+    calibration_contract_verify,
     compute_empirical_coverage,
     compute_episode_risk_bound,
     compute_frontier,

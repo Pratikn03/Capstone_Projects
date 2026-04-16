@@ -1,11 +1,402 @@
 {
-  "created_at_utc": "2026-04-15T21:28:02.189098+00:00",
+  "created_at_utc": "2026-04-16T01:40:55.907739+00:00",
   "domains": {
+    "battery": {
+      "deep_oqe": {
+        "summary": {
+          "model_path": "/Users/pratik_n/Downloads/gridpulse/artifacts/battery_av/deep_oqe/battery_deepoqe.pt",
+          "eval_reliability_mae": 0.16501864790916443,
+          "heuristic_eval_reliability_mae": 0.1176201846216051,
+          "fault_auc": 0.5395393471355491,
+          "low_reliability_fault_lift": 0.0,
+          "low_reliability_threshold": 0.35,
+          "train_scenarios": [
+            "nominal",
+            "dropout",
+            "delay_jitter",
+            "out_of_order",
+            "spikes",
+            "drift_combo",
+            "stale_sensor"
+          ],
+          "eval_scenarios": [
+            "nominal",
+            "dropout",
+            "delay_jitter",
+            "out_of_order",
+            "spikes",
+            "drift_combo"
+          ]
+        },
+        "summary_csv": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/battery_deep_oqe_summary.csv",
+        "bucket_csv": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/battery_deep_oqe_buckets.csv",
+        "figure": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/fig_battery_deep_oqe_summary.png",
+        "table_tex": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/paper_assets/tables/generated/tbl_battery_deep_oqe_summary.tex"
+      },
+      "replay": {
+        "rows": [
+          {
+            "lane": "heuristic",
+            "scenario": "nominal",
+            "seed": 55,
+            "controller": "dc3s_wrapped",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.0,
+            "certificate_presence_rate": 1.0,
+            "mean_reliability_w": 0.9993442862075419,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 0.9791666666666666,
+            "gdq": 1.0,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          },
+          {
+            "lane": "heuristic",
+            "scenario": "nominal",
+            "seed": 55,
+            "controller": "dc3s_ftit",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.0,
+            "certificate_presence_rate": 1.0,
+            "mean_reliability_w": 1.0,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 0.9791666666666666,
+            "gdq": 1.0,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          },
+          {
+            "lane": "heuristic",
+            "scenario": "dropout",
+            "seed": 55,
+            "controller": "dc3s_wrapped",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.0,
+            "certificate_presence_rate": 1.0,
+            "mean_reliability_w": 0.9993442862075419,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 0.9791666666666666,
+            "gdq": 1.0,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          },
+          {
+            "lane": "heuristic",
+            "scenario": "dropout",
+            "seed": 55,
+            "controller": "dc3s_ftit",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.03125,
+            "certificate_presence_rate": 1.0,
+            "mean_reliability_w": 0.9210539814537692,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 1.0,
+            "gdq": 0.49514812914933065,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          },
+          {
+            "lane": "heuristic",
+            "scenario": "stale_sensor",
+            "seed": 55,
+            "controller": "dc3s_wrapped",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.0,
+            "certificate_presence_rate": 1.0,
+            "mean_reliability_w": 0.995693613979823,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 0.9791666666666666,
+            "gdq": 1.0,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          },
+          {
+            "lane": "heuristic",
+            "scenario": "stale_sensor",
+            "seed": 55,
+            "controller": "dc3s_ftit",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.03125,
+            "certificate_presence_rate": 1.0,
+            "mean_reliability_w": 0.9760090110547742,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 1.0,
+            "gdq": 0.9916794021065843,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          },
+          {
+            "lane": "deep",
+            "scenario": "nominal",
+            "seed": 55,
+            "controller": "dc3s_wrapped",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.0,
+            "certificate_presence_rate": 1.0,
+            "mean_reliability_w": 0.9145780596882105,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 0.9791666666666666,
+            "gdq": 1.0,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          },
+          {
+            "lane": "deep",
+            "scenario": "nominal",
+            "seed": 55,
+            "controller": "dc3s_ftit",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.0,
+            "certificate_presence_rate": 1.0,
+            "mean_reliability_w": 0.9145780596882105,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 0.9791666666666666,
+            "gdq": 1.0,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          },
+          {
+            "lane": "deep",
+            "scenario": "dropout",
+            "seed": 55,
+            "controller": "dc3s_wrapped",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.0,
+            "certificate_presence_rate": 1.0,
+            "mean_reliability_w": 0.9145780596882105,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 0.9791666666666666,
+            "gdq": 1.0,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          },
+          {
+            "lane": "deep",
+            "scenario": "dropout",
+            "seed": 55,
+            "controller": "dc3s_ftit",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.03125,
+            "certificate_presence_rate": 1.0,
+            "mean_reliability_w": 0.9145780596882105,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 1.0,
+            "gdq": 0.49514812914933065,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          },
+          {
+            "lane": "deep",
+            "scenario": "stale_sensor",
+            "seed": 55,
+            "controller": "dc3s_wrapped",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.0,
+            "certificate_presence_rate": 1.0,
+            "mean_reliability_w": 0.9145780596882105,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 0.9791666666666666,
+            "gdq": 1.0,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          },
+          {
+            "lane": "deep",
+            "scenario": "stale_sensor",
+            "seed": 55,
+            "controller": "dc3s_ftit",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.03125,
+            "certificate_presence_rate": 1.0,
+            "mean_reliability_w": 0.9145780596882105,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 1.0,
+            "gdq": 0.9916794021065843,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          }
+        ],
+        "summary": [
+          {
+            "lane": "deep",
+            "controller": "dc3s_ftit",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.020833333333333332,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 0.9930555555555555,
+            "gdq": 0.8289425104186382,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          },
+          {
+            "lane": "deep",
+            "controller": "dc3s_wrapped",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.0,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 0.9791666666666666,
+            "gdq": 1.0,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          },
+          {
+            "lane": "heuristic",
+            "controller": "dc3s_ftit",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.020833333333333332,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 0.9930555555555555,
+            "gdq": 0.8289425104186382,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          },
+          {
+            "lane": "heuristic",
+            "controller": "dc3s_wrapped",
+            "true_soc_violation_rate": 0.0,
+            "intervention_rate": 0.0,
+            "tsvr": 0.0,
+            "oasg": 0.0,
+            "cva": 0.9791666666666666,
+            "gdq": 1.0,
+            "audit_completeness": 1.0,
+            "recovery_latency": 0.0
+          }
+        ],
+        "csv_path": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/battery_deep_oqe_safety_metrics.csv",
+        "figure_path": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/fig_battery_deep_oqe_safety_metrics.png",
+        "table_tex": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/paper_assets/tables/generated/tbl_battery_deep_oqe_safety_metrics.tex",
+        "runtime_summary_csv": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/runtime_summary.csv",
+        "runtime_traces_csv": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/runtime_traces.csv",
+        "fault_family_coverage_csv": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/fault_family_coverage.csv",
+        "audit_db_path": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/battery_runtime.duckdb"
+      },
+      "raw_track": {
+        "comparison_rows": [
+          {
+            "target": "load_mw",
+            "track": "raw_sequence",
+            "model": "patchtst_reliability_conditioned",
+            "rmse": 6157.49513400301,
+            "mae": 4716.085006925207,
+            "picp_90": 0.8160203139427517,
+            "mean_interval_width": 16035.373822804853
+          },
+          {
+            "target": "load_mw",
+            "track": "engineered_tabular",
+            "model": "gbm",
+            "rmse": 305.1209624375309,
+            "mae": 187.86941461742373,
+            "picp_90": 0.8821428571428571,
+            "mean_interval_width": 1070.15878420007
+          },
+          {
+            "target": "wind_mw",
+            "track": "raw_sequence",
+            "model": "patchtst_reliability_conditioned",
+            "rmse": 7477.68911089589,
+            "mae": 5976.748087903249,
+            "picp_90": 0.6026084949215144,
+            "mean_interval_width": 13900.226039558896
+          },
+          {
+            "target": "wind_mw",
+            "track": "engineered_tabular",
+            "model": "gbm",
+            "rmse": 219.1075784147325,
+            "mae": 129.3622766969851,
+            "picp_90": 0.9369047619047619,
+            "mean_interval_width": 833.865010235966
+          },
+          {
+            "target": "solar_mw",
+            "track": "raw_sequence",
+            "model": "patchtst_reliability_conditioned",
+            "rmse": 3466.7106932500783,
+            "mae": 2351.012143009147,
+            "picp_90": 0.8609187442289935,
+            "mean_interval_width": 9733.444846522225
+          },
+          {
+            "target": "solar_mw",
+            "track": "engineered_tabular",
+            "model": "gbm",
+            "rmse": 240.35320950771336,
+            "mae": 117.3193371819155,
+            "picp_90": 0.7876984126984127,
+            "mean_interval_width": 1037.7308100656908
+          }
+        ],
+        "slice_rows": [
+          {
+            "target": "load_mw",
+            "slice": "high_reliability",
+            "picp_90": 0.8160203139427517,
+            "mean_interval_width": 16035.3740234375,
+            "n": 8664
+          },
+          {
+            "target": "wind_mw",
+            "slice": "calm",
+            "picp_90": 0.5926897516614201,
+            "mean_interval_width": 13802.673828125,
+            "n": 5718
+          },
+          {
+            "target": "wind_mw",
+            "slice": "gusty",
+            "picp_90": 0.6218601493550577,
+            "mean_interval_width": 14089.5693359375,
+            "n": 2946
+          },
+          {
+            "target": "solar_mw",
+            "slice": "daytime",
+            "picp_90": 0.8104517271922055,
+            "mean_interval_width": 10745.1044921875,
+            "n": 5645
+          },
+          {
+            "target": "solar_mw",
+            "slice": "nighttime",
+            "picp_90": 0.9552832063597217,
+            "mean_interval_width": 7841.81787109375,
+            "n": 3019
+          }
+        ],
+        "comparison_csv": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/battery_raw_sequence_track_benchmark.csv",
+        "slice_csv": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/battery_raw_sequence_track_slices.csv",
+        "figure_path": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/fig_battery_raw_sequence_track_benchmark.png",
+        "table_tex": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/paper_assets/tables/generated/tbl_battery_raw_sequence_track.tex"
+      },
+      "register_json": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/battery_deep_learning_novelty_register.json",
+      "register_md": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/battery_deep_learning_novelty_register.md",
+      "model_path": "/Users/pratik_n/Downloads/gridpulse/artifacts/battery_av/deep_oqe/battery_deepoqe.pt",
+      "out_dir": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery",
+      "paper_table_dir": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/paper_assets/tables/generated",
+      "paper_fig_dir": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/paper_assets/figures"
+    },
     "av": {
       "subset_mode": "full_corpus",
       "subset_size": 2040,
       "subset": {
-        "generated_at": "2026-04-15T21:28:05.209033+00:00",
+        "generated_at": "2026-04-16T01:41:31.099582+00:00",
         "raw_dir": "/Users/pratik_n/Downloads/gridpulse/data/orius_av/raw/waymo_motion/validation",
         "processed_dir": "data/orius_av/av/processed_full_corpus",
         "target_count": 2040,
@@ -2034,8 +2425,8 @@
       "report": {
         "processed_dir": "data/orius_av/av/processed_full_corpus",
         "reports_dir": "reports/orius_av/full_corpus",
-        "models_dir": "artifacts/models_orius_av_full_corpus",
-        "uncertainty_dir": "artifacts/uncertainty/orius_av_full_corpus",
+        "models_dir": "artifacts/models_orius_av_fullcorpus",
+        "uncertainty_dir": "artifacts/uncertainty/orius_av_fullcorpus",
         "tables": {
           "training_summary": "reports/orius_av/full_corpus/tables/training_summary_table.csv",
           "runtime_summary": "reports/orius_av/full_corpus/tables/runtime_summary_table.csv",
@@ -2067,7 +2458,7 @@
           "reports/orius_av/full_corpus/runtime_traces.csv": "187c445f6bda087542115ee26edc6298124fa8d03d54daf8f6df0c718af1d7ff",
           "reports/orius_av/full_corpus/fault_family_coverage.csv": "3c11316c1f0f5a475605f364ffaf66277a93f73d614558e951a60d1836c53b8a",
           "data/orius_av/av/processed_full_corpus/anchor_features.parquet": "518d160a3e439f1e954614e677e6576a94dcbeab9b8ece782051a64de6b8c8ba",
-          "data/orius_av/av/processed_full_corpus/dry_run_subset_manifest.json": "227cbd47e3b9f4ad28a955262cd258e980b70d360b137fcf3f243f8c9c3c173d",
+          "data/orius_av/av/processed_full_corpus/dry_run_subset_manifest.json": "67a8be91e807a28a722f3e690437b40143cb70b0369328dfec0377eb65859610",
           "reports/orius_av/full_corpus/tables/training_summary_table.csv": "b742d05434a32cc9b69f78c2b9d0542c29d74f00701ef478c3561aa71ee644b7",
           "reports/orius_av/full_corpus/tables/runtime_summary_table.csv": "e79a5fbbf7c590f1195544757b40d6b77bbdf7bb2db020364ed63489dc143882",
           "reports/orius_av/full_corpus/tables/fault_family_coverage_table.csv": "21029c3c4792c43fefa19273bffd60a128e06732662c701d6161b0a1deab1086",
@@ -2078,31 +2469,31 @@
           "reports/orius_av/full_corpus/figures/training_interval_widths.png": "fdbd41414b6117fbed33d6ee77512d5e99167e8ec0e51c9544167918d1a77758",
           "reports/orius_av/full_corpus/figures/fault_family_coverage.png": "4678018f93902613dbaf217fa802b9e5ed7e1aef283a4acdf1d9c6b3a439ba55",
           "reports/orius_av/full_corpus/figures/shift_aware_runtime.png": "04778d7c1e7f30f5ace38d3ffff9b6d47bd607e4173dba5771b483abbd2f530d",
-          "artifacts/models_orius_av_full_corpus/waymo_av_ego_speed_mps_1s_bundle.pkl": "fa7e89b7ef85e7182a34d1fc4b8c0c935978ae622c54d28f8ab254c262f18663",
-          "artifacts/models_orius_av_full_corpus/waymo_av_ego_speed_mps_2s_bundle.pkl": "2de009a02515a8b34d533589ad07910522b922bd56277effe5108029686b31b8",
-          "artifacts/models_orius_av_full_corpus/waymo_av_ego_speed_mps_4s_bundle.pkl": "55cbc2ec5ecd70b2ba5f496f1133cd1ff3ea17d5acc9756fb5fa3b3306392acf",
-          "artifacts/models_orius_av_full_corpus/waymo_av_relative_gap_m_1s_bundle.pkl": "9b488ba1f0b0f758e15a9fe87f1a6ac1f5d9aafc56f94498af7525fd4ab29b26",
-          "artifacts/models_orius_av_full_corpus/waymo_av_relative_gap_m_2s_bundle.pkl": "94bc26b6bdf02bff06dfc8594294cf28dc172329b9decbbc0d71f8ad1783501d",
-          "artifacts/models_orius_av_full_corpus/waymo_av_relative_gap_m_4s_bundle.pkl": "5addcb73b64ec7476a5f4026be5d318e6cfb20de7e542f0f0d954a2a09a7338d",
-          "artifacts/uncertainty/orius_av_full_corpus/waymo_av_ego_speed_mps_1s_conformal.json": "8df40bb93a54e0db1b0e971880dfddf1799a58fa2a4456723616f5597a35283f",
-          "artifacts/uncertainty/orius_av_full_corpus/waymo_av_ego_speed_mps_2s_conformal.json": "48accd2f3277062534615875bcf4ea0321a34167bfb96b3154ce10fcb636fe0b",
-          "artifacts/uncertainty/orius_av_full_corpus/waymo_av_ego_speed_mps_4s_conformal.json": "9d152d5e6c033447387466eafab691583efc5f716b3ba77678dcff9d3b075207",
-          "artifacts/uncertainty/orius_av_full_corpus/waymo_av_relative_gap_m_1s_conformal.json": "a985cbc264d238522d48b5f0da225477a61dd32e6aa138a8905144974fcd7e53",
-          "artifacts/uncertainty/orius_av_full_corpus/waymo_av_relative_gap_m_2s_conformal.json": "d90d1149fd715268c8ccec6e18931851aa9d8549ec70c96a7b0db4e4388e88b7",
-          "artifacts/uncertainty/orius_av_full_corpus/waymo_av_relative_gap_m_4s_conformal.json": "320c1a180f19f49a7c7c48b773c83294546cec4f88d5e195d4cc30b25cd4855e"
+          "artifacts/models_orius_av_fullcorpus/waymo_av_ego_speed_mps_1s_bundle.pkl": "2b08408d8dc249498ae616b07875ee07936fa47d4ea76b40a3a9401586fadf15",
+          "artifacts/models_orius_av_fullcorpus/waymo_av_ego_speed_mps_2s_bundle.pkl": "b804a67b79344571eef0885bd328bae7c22a2ae61b5d030c1600eae040f75db6",
+          "artifacts/models_orius_av_fullcorpus/waymo_av_ego_speed_mps_4s_bundle.pkl": "37fb840ed714549aabdd2f6c0b79fc2f0e2be50d2af74a3dc8d705e7a567ebfe",
+          "artifacts/models_orius_av_fullcorpus/waymo_av_relative_gap_m_1s_bundle.pkl": "20b0a2b9afc9986825252776e13a6f2d537be00a82897feff5e9afd18e20dd81",
+          "artifacts/models_orius_av_fullcorpus/waymo_av_relative_gap_m_2s_bundle.pkl": "dacba147577ca083ae92d4645acf11b53070909c0471d38e5030da06a1357730",
+          "artifacts/models_orius_av_fullcorpus/waymo_av_relative_gap_m_4s_bundle.pkl": "2f888c093c44cfa6180fd1d33036db3f7535b22d92cd2d442e559d58f6862c91",
+          "artifacts/uncertainty/orius_av_fullcorpus/waymo_av_ego_speed_mps_1s_conformal.json": "1221cb6c2434afcbc5e89c0a7474000bfb1ff5b8d407a630f811ffea0d26efa0",
+          "artifacts/uncertainty/orius_av_fullcorpus/waymo_av_ego_speed_mps_2s_conformal.json": "e4539aa33e88f188ea4a6132c8c7f75f25671c2c542ca71ae121ab6338ff8914",
+          "artifacts/uncertainty/orius_av_fullcorpus/waymo_av_ego_speed_mps_4s_conformal.json": "da905a0759958f8d143c2618103b845d6dee872445cfd0756562a012bc11b2e3",
+          "artifacts/uncertainty/orius_av_fullcorpus/waymo_av_relative_gap_m_1s_conformal.json": "f6cb1a70b6424b4726889d30dad1a1ccf3d002a4de6b8b3cb05cb817b8405908",
+          "artifacts/uncertainty/orius_av_fullcorpus/waymo_av_relative_gap_m_2s_conformal.json": "b62b88f7710211017356ca7aabe3cd4e8f2bdc2f342bb7b68d94a36253309670",
+          "artifacts/uncertainty/orius_av_fullcorpus/waymo_av_relative_gap_m_4s_conformal.json": "8a360054cc188814e35fb7146a1224a3436145414e5838067eefb379b4b2c808"
         },
         "artifact_manifest": "reports/orius_av/full_corpus/artifact_manifest.json"
       }
     }
   },
   "closure": {
-    "release_summary": "reports/battery_av/overall/release_summary.json",
-    "publication_override": "reports/battery_av/overall/publication_closure_override.json",
-    "manifest": "reports/battery_av/overall/battery_av_manifest.json",
+    "release_summary": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/overall/release_summary.json",
+    "publication_override": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/overall/publication_closure_override.json",
+    "manifest": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/overall/battery_av_manifest.json",
     "battery": {
       "domain": "Battery Energy Storage",
       "domain_key": "battery",
-      "generated_at_utc": "2026-04-15T21:29:49.198518+00:00",
+      "generated_at_utc": "2026-04-16T01:43:25.688289+00:00",
       "status": "complete",
       "canonical_controller": "deep:dc3s_wrapped",
       "required_artifacts": {
@@ -2146,7 +2537,7 @@
           "reason": null
         }
       },
-      "run_id": "8e5589063ba25ab6",
+      "run_id": "db54a075352c3b69",
       "figures": [
         "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/fig_battery_deep_oqe_safety_metrics.png",
         "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/battery/fig_battery_deep_oqe_summary.png",
@@ -2177,7 +2568,7 @@
     "av": {
       "domain": "Autonomous Vehicles",
       "domain_key": "vehicle",
-      "generated_at_utc": "2026-04-15T21:29:49.203370+00:00",
+      "generated_at_utc": "2026-04-16T01:43:25.693803+00:00",
       "status": "complete",
       "canonical_controller": "orius",
       "required_artifacts": {
@@ -2262,7 +2653,7 @@
       ]
     }
   },
-  "domain_count": 1,
-  "summary_csv": "reports/battery_av/overall/domain_summary.csv",
-  "manifest": "reports/battery_av/overall/battery_av_manifest.json"
+  "domain_count": 2,
+  "summary_csv": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/overall/domain_summary.csv",
+  "manifest": "/Users/pratik_n/Downloads/gridpulse/reports/battery_av/overall/battery_av_manifest.json"
 }

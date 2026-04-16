@@ -1,0 +1,150 @@
+% === Section 2: Problem Formulation — The Observation–Action Safety Gap ===
+\section{Problem Formulation: The Observation--Action Safety Gap}\label{sec:problem}
+
+\subsection{System Model}
+
+Consider a discrete-time cyber-physical system (CPS) with true state
+$x_t \in \mathcal{X} \subseteq \R^n$ evolving under dynamics
+\begin{equation}\label{eq:dynamics}
+  x_{t+1} = f(x_t, a_t, \omega_t),
+\end{equation}
+where $a_t \in \mathcal{A}$ is the control action and $\omega_t$ is an exogenous
+disturbance.  The controller does not observe $x_t$ directly.  Instead it receives a
+\emph{telemetry observation}
+\begin{equation}\label{eq:observation}
+  \zt = h(x_t) + \epsilon_t,
+\end{equation}
+where $h : \mathcal{X} \to \mathcal{Z}$ is the sensor model and
+$\epsilon_t$ is measurement noise.  Under nominal conditions, the safety literature
+assumes $\epsilon_t$ is bounded by some known envelope $\bar\epsilon$.
+
+\subsection{Degraded Observation}
+
+In practice, the observation pipeline introduces additional corruption beyond
+$\epsilon_t$.  We model degraded observation as a map
+\begin{equation}\label{eq:degraded}
+  \ztt = g(\zt, \delta_t),
+\end{equation}
+where $\delta_t$ is an \emph{infrastructure fault vector} drawn from a fault family
+$\mathcal{F}$.  In our implementation, the fault family includes:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Fault family} & \textbf{Description} \\
+\midrule
+\texttt{dropout}        & Complete packet loss for one or more channels \\
+\texttt{stale\_sensor}  & Sensor value frozen at its last known value \\
+\texttt{delay\_jitter}  & Timestamp reordering or variable latency \\
+\texttt{drift\_combo}   & Slow additive or multiplicative calibration drift \\
+\texttt{spikes}         & Transient high-magnitude outlier readings \\
+\texttt{out\_of\_order} & Packet reordering violating causal ordering \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The degraded observation $\ztt$ may differ from $\zt$ by an arbitrarily large amount
+that depends on the fault severity and duration.
+
+\subsection{Formal Definition of the OASG}
+
+\begin{definition}[Observation-Consistent State Set]\label{def:ocss}
+Given a degraded observation $\ztt$ and reliability weight $\wt \in [0,1]$, the
+\emph{observation-consistent state set} is
+\begin{equation}\label{eq:ocss}
+  \Ut(\ztt, \wt) = \Bigl\{x \in \mathcal{X} :
+    \bigl\lVert h(x) - \ztt \bigr\rVert \le r(\wt) \Bigr\},
+\end{equation}
+where $r : [0,1] \to \R_+$ is a monotonically non-increasing function satisfying
+$r(1) = \bar\epsilon$ (nominal radius) and $r(w) \to \infty$ as $w \to 0$ (complete
+loss of trust).
+\end{definition}
+
+In the ORIUS implementation, $r(\wt)$ is realised by conformal prediction intervals
+inflated by the \emph{planned contract factor}
+\begin{equation}\label{eq:inflation}
+  \alpha = \mathrm{clip}\!\bigl(1.0 + 0.7\,(1-\wt) + 0.5\,s_{\mathrm{shift}},\; 1.0,\; 3.0\bigr),
+\end{equation}
+where $s_{\mathrm{shift}}$ is a shift score computed by the adaptive mechanism
+(\cref{sec:shift}).
+
+\begin{definition}[Observation--Action Safety Gap]\label{def:oasg}
+Let $S \subset \mathcal{X}$ be the safe region and let $\pi$ be a controller policy.
+The \emph{OASG} at time $t$ is the event
+\begin{equation}\label{eq:oasg}
+  \OASG_t \;=\; \bigl\{\pi(\ztt) \text{ is safe w.r.t.\ } \ztt\bigr\}
+  \;\wedge\;
+  \bigl\{\exists\, x \in \Ut : f(x, \pi(\ztt), \omega_t) \notin S\bigr\}.
+\end{equation}
+The OASG is non-empty whenever there exists a true state consistent with the
+degraded observation for which the controller's action leads to a safety violation.
+\end{definition}
+
+\subsection{Closing the Gap: Requirements}
+
+Closing the OASG requires the runtime layer to satisfy five requirements:
+
+\begin{enumerate}[label=\textbf{R\arabic*},nosep]
+  \item \textbf{Detection}: At every step, assess the reliability $\wt$ of the
+        current observation using both statistical detectors and history-based
+        heuristics.
+  \item \textbf{Calibration}: Compute $\Ut$ as a conservative superset of the
+        true-state-consistent region.
+  \item \textbf{Constraint Tightening}: Derive a restricted action set
+        $\Aset \subseteq \mathcal{A}$ such that every action in $\Aset$ is safe
+        for \emph{all} states in $\Ut$.
+  \item \textbf{Shielding}: If $\astar = \pi(\ztt) \notin \Aset$, repair or
+        replace $\astar$ with $\asafe \in \Aset$.
+  \item \textbf{Certification}: Produce a safety certificate binding the released
+        action, the observation, the reliability assessment, and the constraint check
+        into an auditable record.
+\end{enumerate}
+
+These five requirements map directly to the five stages of the \dcs{} kernel.
+
+\subsection{True-State Violation Rate (TSVR)}
+
+The primary safety metric is the \emph{true-state violation rate}:
+\begin{equation}\label{eq:tsvr}
+  \TSVR = \frac{1}{T}\sum_{t=1}^{T} \mathbf{1}\bigl[f(x_t, a_t^{\mathrm{released}}, \omega_t) \notin S\bigr].
+\end{equation}
+A runtime layer with $\TSVR = 0$ has zero true-state violations.  In the battery
+domain, all four controller configurations achieve $\TSVR = 0$.  In the AV domain,
+ORIUS reduces the TSVR from 0.660 (baseline) to 0.628, a relative improvement of
+4.8\%.
+
+\subsection{Additional Metrics}
+
+Beyond TSVR, we track:
+\begin{itemize}[nosep]
+  \item \textbf{OASG rate}: fraction of steps where the safety gap is detected and
+        closed.
+  \item \textbf{Coverage Validity Assessment (CVA)}: fraction of steps where the
+        conformal interval contains the true state.
+  \item \textbf{Governance Digest Quality (GDQ)}: composite governance metric measuring
+        certificate completeness and payload validity.
+  \item \textbf{Intervention Rate (IR)}: fraction of steps where the shield modifies
+        the candidate action.
+  \item \textbf{Audit Completeness}: fraction of steps with a valid, non-expired
+        certificate on record.
+\end{itemize}
+
+\subsection{Empirical Witness for the OASG}\label{sec:oasg_witness}
+
+\Cref{fig:oasg_witness} provides the empirical witness for Definition~\ref{def:oasg}:
+under a quality-ignorant baseline, there exist time steps where the controller
+action is safe with respect to the observed state but violates the true-state
+constraint.  The Battery domain exhibits 20 such counterexamples; the AV domain
+exhibits 480 OASG cases out of 9{,}348 steps.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{fig_observed_vs_true_counterexamples}
+\caption{Observed vs.\ true state counterexamples under a quality-ignorant
+baseline.  Each point is a time step where the observed state satisfies
+the safety constraint but the true state does not---the defining signature
+of the OASG (Definition~\ref{def:oasg}).  Battery domain shown; the AV
+counterpart is in \cref{sec:battery}.  Artifact:
+\texttt{reports/battery\_av/battery/fig\_observed\_vs\_true\_counterexamples.png}.}
+\label{fig:oasg_witness}
+\end{figure}

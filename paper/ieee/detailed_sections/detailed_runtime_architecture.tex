@@ -1,0 +1,417 @@
+% === Section 4: DC3S Runtime Architecture ===
+\section{The \dcs{} Runtime Architecture}\label{sec:architecture}
+
+The ORIUS kernel orchestrates five typed stages, each consuming the output of the
+previous stage and producing a well-typed contract object.  We describe each stage,
+its inputs and outputs, the typed contracts involved, and the algorithm that
+implements it.
+
+\subsection{Architecture Overview}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  node distance=0.7cm and 1.5cm,
+  stage/.style={draw, rounded corners, minimum width=2.5cm, minimum height=0.8cm,
+                fill=blue!8, align=center, font=\small\bfseries},
+  data/.style={font=\scriptsize\itshape, text=gray!70!black},
+  arr/.style={-{Stealth[length=3pt]}, thick}
+]
+\node[stage] (D) {Stage 1\\Detect};
+\node[stage, right=of D] (Ca) {Stage 2\\Calibrate};
+\node[stage, right=of Ca] (Co) {Stage 3\\Constrain};
+\node[stage, right=of Co] (S) {Stage 4\\Shield};
+\node[stage, right=of S] (Ce) {Stage 5\\Certify};
+
+\draw[arr] (D) -- (Ca) node[data,midway,above]{$\wt, \mathrm{flags}$};
+\draw[arr] (Ca) -- (Co) node[data,midway,above]{$\Ut$};
+\draw[arr] (Co) -- (S) node[data,midway,above]{$\Aset$};
+\draw[arr] (S) -- (Ce) node[data,midway,above]{$a_t^{\mathrm{rel}}$};
+
+\node[below=0.3cm of D, font=\scriptsize, text=gray] {ObservationPacket};
+\node[below=0.3cm of Ca, font=\scriptsize, text=gray] {ReliabilityAssessment};
+\node[below=0.3cm of Co, font=\scriptsize, text=gray] {ObsConsistentStateSet};
+\node[below=0.3cm of S, font=\scriptsize, text=gray] {SafeActionSet};
+\node[below=0.3cm of Ce, font=\scriptsize, text=gray] {SafetyCertificate};
+\end{tikzpicture}
+\caption{The five stages of the \dcs{} kernel and their inter-stage typed contracts.}
+\label{fig:dc3s_pipeline}
+\end{figure}
+
+\subsection{Stage 1: Detect}\label{sec:detect}
+
+The detect stage assesses the trustworthiness of the incoming telemetry.
+
+\paragraph{Input.}  An \texttt{ObservationPacket} containing the raw telemetry
+$\ztt$, the parsed state dictionary, a UTC timestamp, and the observation
+history length.
+
+\paragraph{Algorithm.}  Three detector families run in parallel:
+\begin{enumerate}[nosep]
+  \item \textbf{Staleness detector}: Checks whether the telemetry timestamp is
+        within a configurable freshness window.  If stale, a binary flag
+        \texttt{is\_stale} is raised and $\wt$ is penalised.
+  \item \textbf{Page--Hinkley drift detector}: Maintains a running mean of each
+        sensor channel and detects upward or downward drift using a cumulative-sum
+        test with configurable threshold $\lambda$ and tolerance
+        $\delta$~\cite{page1954continuous,hinkley1971inference}.
+  \item \textbf{History-based heuristics}: Computes the number of consecutive
+        identical readings (freeze detection), the rate of out-of-order timestamps,
+        and spike magnitude relative to a rolling window.
+\end{enumerate}
+
+\paragraph{Output.}  A \texttt{ReliabilityAssessment} containing:
+\begin{itemize}[nosep]
+  \item $\wt \in [0,1]$: the composite reliability weight, clamped to $[0,1]$.
+  \item \texttt{flags}: a dictionary of boolean detector outputs.
+  \item \texttt{drift\_flag}: a boolean indicating whether drift was detected.
+  \item \texttt{drift\_meta}: metadata from the Page--Hinkley detector
+        (cumulative sum, threshold, direction).
+  \item \texttt{assumption\_tags}: the assumptions activated by this assessment
+        (A2, A5, A6).
+\end{itemize}
+
+\subsection{Stage 2: Calibrate}\label{sec:calibrate}
+
+The calibrate stage computes the observation-consistent state set $\Ut$.
+
+\paragraph{Input.}  The parsed state, the uncertainty dictionary (conformal
+prediction intervals per target per horizon), and the reliability weight $\wt$.
+
+\paragraph{Observation Quality Estimation (OQE).}
+The composite reliability weight is the product of three independent scores:
+\begin{equation}\label{eq:oqe}
+  w_t = w_t^{\mathrm{fresh}} \cdot w_t^{\mathrm{range}} \cdot w_t^{\mathrm{consist}},
+\end{equation}
+where:
+\begin{itemize}[nosep]
+  \item $w_t^{\mathrm{fresh}} = \exp(-\lambda_f \cdot s_t)$, with $\lambda_f$ the
+        freshness decay rate and $s_t$ the staleness counter (seconds since last
+        novel reading).
+  \item $w_t^{\mathrm{range}} = \mathbf{1}[x_t \in [\underline{x}, \bar{x}]]$,
+        the range-validity indicator.
+  \item $w_t^{\mathrm{consist}}$ penalises readings that deviate from the
+        physics-model prediction beyond a configurable tolerance.
+\end{itemize}
+
+\paragraph{Reliability-Adaptive Conformal (RAC) Inflation.}
+The key formula that connects telemetry reliability to the uncertainty set width is
+the \emph{RAC-Cert} inflation:
+\begin{equation}\label{eq:rac_cert}
+  \boxed{\;
+  C_t^{\mathrm{RAC}}(\alpha)
+  \;=\;
+  C_t(\alpha) \cdot \bigl[1 + \kappa_r\,(1 - w_t) + \kappa_d \cdot d_t + \kappa_s \cdot s_t\bigr]
+  \;}
+\end{equation}
+where $C_t(\alpha)$ is the base conformal interval at miscoverage level~$\alpha$,
+$\kappa_r = 0.5$ is the reliability penalty, $\kappa_d = 0.3$ is the drift penalty,
+$d_t$ is the drift indicator, and $\kappa_s = 0.05$ is the staleness scaling with
+$s_t$ the staleness count in seconds.
+
+In the implementation, the simplified inflation factor used is
+\begin{equation}\label{eq:inflation}
+  \alpha = \mathrm{clip}\!\bigl(1.0 + 0.7\,(1 - w_t) + 0.5\,s_{\mathrm{shift}},
+  \; 1.0,\; 3.0\bigr),
+\end{equation}
+which bounds the inflation between~1$\times$ (fully trusted) and~3$\times$ (maximally
+degraded).
+
+\paragraph{Output.}  An \texttt{ObservationConsistentStateSet} with:
+\begin{itemize}[nosep]
+  \item \texttt{observed\_state}: the point estimate from the parsed telemetry.
+  \item \texttt{lower\_bounds}, \texttt{upper\_bounds}: per-target dictionaries.
+  \item \texttt{inflation}: the applied factor $\alpha$.
+  \item \texttt{quantile}: the conformal quantile level.
+  \item \texttt{reliability\_weight}: the $\wt$ that produced this set.
+\end{itemize}
+
+\subsection{Stage 3: Constrain}\label{sec:constrain}
+
+The constrain stage derives the safe action set $\Aset$ from $\Ut$ and the domain
+safety specification.
+
+\paragraph{Input.}  The \texttt{ObservationConsistentStateSet} from Stage~2 and a
+\texttt{SafetySpec} encoding domain-specific constraints and the fallback action.
+
+\paragraph{Algorithm.}  For each constraint in the safety specification:
+\begin{enumerate}[nosep]
+  \item Evaluate the constraint predicate over the worst-case state within $\Ut$.
+  \item If the constraint is violated under worst-case evaluation, mark it as
+        binding.
+  \item The safe action set is the intersection of all non-binding constraint
+        regions.
+\end{enumerate}
+
+In the battery domain, constraints include SoC bounds ($\SOC_{\min} \le \SOC_t \le
+\SOC_{\max}$) and power limits ($|P_t| \le \Pmax$).  In the AV domain, constraints
+include minimum gap maintenance and ego-speed bounds.
+
+\paragraph{Output.}  A \texttt{SafeActionSet} containing the admissible region
+and the list of candidate actions with their tightened constraint evaluations.
+
+\subsection{Stage 4: Shield}\label{sec:shield}
+
+The shield stage intercepts any candidate action that falls outside $\Aset$ and
+either repairs it or substitutes the domain-specific fallback.
+
+\paragraph{Input.}  The candidate action $\astar = \pi(\ztt)$, the
+\texttt{SafeActionSet}, and the \texttt{SafetySpec} (which provides the fallback).
+
+\paragraph{Algorithm.}
+\begin{algorithmic}[1]
+\If{$\astar \in \Aset$}
+  \State \Return $\astar$ \Comment{Action is safe; pass through}
+\Else
+  \State Attempt projection: $a' = \mathrm{proj}_{\Aset}(\astar)$
+  \If{$a'$ satisfies all constraints}
+    \State \Return $a'$ \Comment{Repaired action}
+  \Else
+    \State \Return $\asafe$ \Comment{Fallback action}
+  \EndIf
+\EndIf
+\end{algorithmic}
+
+\paragraph{Output.}  A \texttt{RepairDecision} containing the released action
+$a_t^{\mathrm{rel}}$, whether it was passed through, repaired, or substituted,
+and the delta $\lVert\astar - a_t^{\mathrm{rel}}\rVert$.
+
+\subsection{Stage 5: Certify}\label{sec:certify}
+
+The certify stage produces a \texttt{SafetyCertificate} that binds together all
+previous stage outputs into an auditable record.
+
+\paragraph{Output.}  A \texttt{SafetyCertificate} containing:
+\begin{itemize}[nosep]
+  \item A unique certificate UUID.
+  \item The released action and its provenance (pass-through, repair, fallback).
+  \item The observation packet, reliability assessment, and uncertainty set.
+  \item The constraint evaluation results.
+  \item A timestamp and domain identifier.
+  \item A payload dictionary for domain-specific metadata.
+\end{itemize}
+
+The certificate is appended to an append-only governance log.  The
+\texttt{ContractVerifier} (\cref{sec:contracts}) validates every certificate
+against the contract stack before it is committed to the log.
+
+\subsection{Adapter Interface: The \texttt{DomainInstantiation} Protocol}
+
+Domain-specific behaviour is confined to an adapter that implements six typed
+methods defined by the \texttt{DomainInstantiation} protocol:
+\begin{enumerate}[nosep]
+  \item \texttt{ingest\_telemetry(raw\_bytes) -> ObservationPacket}: parse raw
+        telemetry into a typed observation packet.
+  \item \texttt{compute\_oqe(history) -> ReliabilityAssessment}: evaluate the OQE
+        triple \cref{eq:oqe} and produce the composite weight~$w_t$.
+  \item \texttt{build\_uncertainty\_set(state, w\_t, conformal\_q) ->
+        ObsConsistentStateSet}: inflate the base conformal interval using
+        \cref{eq:rac_cert}.
+  \item \texttt{tighten\_action\_set(U\_t, spec) -> SafeActionSet}: derive $\Aset$
+        via worst-case constraint evaluation over~$\Ut$.
+  \item \texttt{repair\_action(a\_star, A\_t, spec) -> RepairDecision}: project or
+        substitute the candidate action.
+  \item \texttt{emit\_certificate(stages) -> SafetyCertificate}: bind all stage
+        outputs into an auditable certificate.
+\end{enumerate}
+
+The same \dcs{} kernel binary orchestrates both the battery adapter
+(\texttt{src/orius/battery\_adapter.py}) and the AV adapter
+(\texttt{src/orius/av\_adapter.py}).  No kernel code is modified when switching
+domains.
+
+\subsection{The DC3S Kernel Algorithm}
+
+\Cref{alg:dc3s} formalises the five-stage pipeline as a single procedural algorithm.
+
+\begin{algorithm}[h]
+\caption{DC3S Universal Kernel: \texttt{execute\_universal\_step}}\label{alg:dc3s}
+\begin{algorithmic}[1]
+\Require Domain adapter $\mathcal{D}$, raw telemetry $\mathbf{z}_t^{\mathrm{raw}}$,
+         candidate action $a_t^*$, safety spec $\mathcal{C}$,
+         conformal quantile $q_\alpha$, history buffer $\mathcal{H}$
+\Ensure  Released action $a_t^{\mathrm{rel}}$, SafetyCertificate $\mathcal{K}_t$
+\Statex
+\State \textbf{[Stage 1: Detect]}
+\State $\mathrm{obs}_t \gets \mathcal{D}.\texttt{ingest\_telemetry}(\mathbf{z}_t^{\mathrm{raw}})$
+\State $(w_t, \mathrm{flags}, d_t, s_t) \gets \mathcal{D}.\texttt{compute\_oqe}(\mathcal{H} \cup \{\mathrm{obs}_t\})$
+\Statex
+\State \textbf{[Stage 2: Calibrate]}
+\State $C_t(\alpha) \gets \texttt{conformal\_quantile}(q_\alpha, \mathrm{obs}_t)$
+\State $C_t^{\mathrm{RAC}} \gets C_t(\alpha) \cdot [1 + \kappa_r(1-w_t) + \kappa_d d_t + \kappa_s s_t]$
+  \Comment{\cref{eq:rac_cert}}
+\State $\Ut \gets [\mathrm{obs}_t.\hat{x} - C_t^{\mathrm{RAC}},\; \mathrm{obs}_t.\hat{x} + C_t^{\mathrm{RAC}}]$
+\Statex
+\State \textbf{[Stage 3: Constrain]}
+\State $\Aset \gets \mathcal{D}.\texttt{tighten\_action\_set}(\Ut, \mathcal{C})$
+\Statex
+\State \textbf{[Stage 4: Shield]}
+\If{$a_t^* \in \Aset$}
+  \State $a_t^{\mathrm{rel}} \gets a_t^*$ \Comment{Pass-through}
+\Else
+  \State $a' \gets \mathrm{proj}_{\Aset}(a_t^*)$ \Comment{Repair attempt}
+  \If{$a' \in \Aset$}
+    \State $a_t^{\mathrm{rel}} \gets a'$
+  \Else
+    \State $a_t^{\mathrm{rel}} \gets a_{\mathrm{safe}}$ \Comment{Fallback}
+  \EndIf
+\EndIf
+\Statex
+\State \textbf{[Stage 5: Certify]}
+\State $\mathcal{K}_t \gets \mathcal{D}.\texttt{emit\_certificate}(\mathrm{obs}_t, w_t, \Ut, \Aset, a_t^{\mathrm{rel}})$
+\State Append $\mathcal{K}_t$ to governance log
+\State \Return $(a_t^{\mathrm{rel}}, \mathcal{K}_t)$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Battery-Domain Constraint Tightening: FTIT}
+
+In the battery domain, Stage~3 enforces the \emph{Fault-Tolerant Invariant Tube}
+(FTIT), which propagates the uncertainty from Stage~2 through the energy dynamics:
+\begin{align}
+  \bar{E}_{t+k} &= \hat{E}_t + \delta_{\max} + k\,\eta^{+}\,P_{\max}^{+}\,\Delta t, \label{eq:ftit_upper}\\
+  \underline{E}_{t+k} &= \hat{E}_t - \delta_{\max} - k\,P_{\max}^{-}/\eta^{-}\,\Delta t. \label{eq:ftit_lower}
+\end{align}
+The safe-action set for the battery is then:
+\begin{equation}
+  \Aset = \Bigl\{ (P^+, P^-) \;\Big|\;
+    E_{\min} + q_t^{\mathrm{RAC}} \;\le\; \hat{E}_{t+1}(P^+, P^-) \;\le\;
+    E_{\max} - q_t^{\mathrm{RAC}} \Bigr\},
+\end{equation}
+where $q_t^{\mathrm{RAC}}$ is the RAC-inflated safety buffer derived from
+$C_t^{\mathrm{RAC}}$.
+
+\subsection{Latency Profile}
+
+\Cref{tab:dc3s_latency} reports the per-stage latency measured over 12{,}096
+runtime steps (battery pipeline with 42 fault-injected scenarios).
+
+\begin{table}[h]
+\caption{DC3S per-stage latency profile (battery pipeline, 12{,}096 steps).}
+\label{tab:dc3s_latency}
+\centering\small
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Stage} & \textbf{Mean (ms)} & \textbf{Median (ms)} & \textbf{P95 (ms)} & \textbf{Max (ms)} \\
+\midrule
+OQE (Detect)      & 0.026 & 0.024 & 0.030 & 0.210 \\
+Drift detect      & 0.000 & 0.000 & 0.000 & 0.003 \\
+Calibrate         & 0.012 & 0.011 & 0.015 & 0.180 \\
+Repair (Shield)   & 0.002 & 0.002 & 0.003 & 0.090 \\
+\midrule
+\textbf{Full step}& \textbf{0.042} & \textbf{0.037} & \textbf{0.041} & \textbf{2.416} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The mean full-step latency of 0.042\,ms is well within the 10-minute dispatch interval for
+battery systems and the 100\,ms control loop for autonomous vehicles.  Even the P95
+latency of 0.041\,ms leaves ample headroom for real-time deployment.
+
+\subsection{Detailed Stage Walkthrough: Battery Example}
+
+To make the five-stage pipeline concrete, we trace the execution of a single
+battery dispatch step under a stale-sensor fault.
+
+\paragraph{Step context.}  The true SoC is 450\,MWh.  The sensor has been frozen for
+3 intervals, so the telemetry reports \texttt{soc\_mwh = 440} (10~MWh stale error).
+The dispatch controller (DeepOQE) proposes a 50~MW discharge.
+
+\paragraph{Stage 1 (Detect).}
+The staleness detector records 3 consecutive identical readings and raises
+\texttt{is\_stale = true}.  The reliability weight drops to $\wt = 0.976$.  The
+Page--Hinkley detector does not fire because the constant readings mimic a
+zero-drift signal.  Output: $\wt = 0.976$, \texttt{flags = \{is\_stale: true\}}.
+
+\paragraph{Stage 2 (Calibrate).}
+The base conformal interval from DeepOQE is $\Chat = [420, 480]$\,MWh (half-width
+30~MWh).  With $\wt = 0.976$ and $s_{\mathrm{shift}} = 0$:
+\[
+  \alpha = \mathrm{clip}\!\bigl(1.0 + 0.7 \times 0.024 + 0.5 \times 0,\; 1.0,\; 3.0\bigr
+  ) = 1.017.
+\]
+The inflated interval is $\Crac = [419.5, 480.5]$\,MWh.  The true SoC of 450~MWh
+falls within $\Crac$, satisfying T1.
+
+\paragraph{Stage 3 (Constrain).}
+The safety specification requires $\SOC_{\min} = 100$~MWh $\le \SOC \le$
+$\SOC_{\max} = 900$~MWh.  Even under worst-case evaluation ($\SOC = 419.5$~MWh),
+a 50~MW discharge for one interval (10~min) reduces SoC by $\sim$8.3~MWh to
+411.2~MWh, still above $\SOC_{\min}$.  The action is admitted to $\Aset$.
+
+\paragraph{Stage 4 (Shield).}
+Since the candidate action (50~MW discharge) is in $\Aset$, the shield passes it
+through without repair.  Output: \texttt{pass\_through}, delta $= 0$.
+
+\paragraph{Stage 5 (Certify).}
+A certificate is emitted with UUID, the released action (50~MW discharge), the
+stale-sensor flag, $\wt = 0.976$, $\alpha = 1.017$, and the constraint evaluation
+result.  The certificate passes all predicates CP1--CP6.
+
+This walkthrough demonstrates that even moderate degradation (10~MWh stale error) is
+handled gracefully: the interval inflates by 1.7\%, the constraint check passes, and
+no intervention is needed.
+
+\subsection{Detailed Stage Walkthrough: AV Example}
+
+We trace a single AV step under a spike fault.
+
+\paragraph{Step context.}  The ego vehicle is travelling at 12~m/s with a relative
+gap of 45~m.  A spike fault injects a transient reading of $v_{\mathrm{ego}} = 35$
+m/s (23~m/s above truth).
+
+\paragraph{Stage 1 (Detect).}
+The spike detector computes the z-score of 35~m/s against the rolling mean (11.5~m/s)
+and standard deviation (2.3~m/s): $z = (35 - 11.5)/2.3 = 10.2$.  This far exceeds
+the spike threshold ($z > 3$), so \texttt{spike\_detected = true} is raised and
+$\wt$ drops to approximately 0.40.
+
+\paragraph{Stage 2 (Calibrate).}
+With $\wt = 0.40$ and $s_{\mathrm{shift}} = 0$:
+\[
+  \alpha = \mathrm{clip}\!\bigl(1.0 + 0.7 \times 0.60 + 0.5 \times 0,\; 1.0,\; 3.0\bigr
+  ) = 1.42.
+\]
+The base conformal interval for 1\,s ego speed is $\Chat = [8.0, 16.0]$~m/s
+(half-width 4.0~m/s centred on 12~m/s).  After inflation:
+$\Crac = [6.3, 17.7]$~m/s.  The true speed of 12~m/s is contained.
+
+\paragraph{Stage 3 (Constrain).}
+Under worst-case evaluation ($v = 6.3$~m/s), the minimum following gap may be
+violated because the lead vehicle could be closer than expected.  The tightened safe
+action set restricts the ego acceleration to $\le 0.5$~m/s$^2$ (rather than the
+controller's proposed 1.2~m/s$^2$).
+
+\paragraph{Stage 4 (Shield).}
+The candidate acceleration (1.2~m/s$^2$) exceeds the tightened bound (0.5~m/s$^2$).
+The shield projects the action to the boundary: released action = 0.5~m/s$^2$.
+Output: \texttt{repaired}, delta $= 0.7$~m/s$^2$.
+
+\paragraph{Stage 5 (Certify).}
+The certificate records the repair delta, the spike flag, $\wt = 0.40$,
+$\alpha = 1.42$, and the constraint-tightened evaluation.
+
+This walkthrough shows the full shielding pathway: a severe spike triggers a low
+reliability weight, which inflates the interval by 42\%, which tightens the constraint
+set, which triggers an action repair.
+
+\subsection{Kernel Code Structure}
+
+The ORIUS kernel codebase is organised as follows:
+
+\begin{verbatim}
+src/orius/
+  universal_theory/
+    kernel.py          # Five-stage orchestration (~350 lines)
+    contracts.py       # Typed dataclasses + Protocol
+    risk_bounds.py     # T10/T11 risk computations
+  dc3s/
+    drift.py           # Page-Hinkley drift detector
+    runtime.py         # DC3S runtime loop
+  battery_adapter.py   # Battery DomainInstantiation
+  av_adapter.py        # AV DomainInstantiation
+\end{verbatim}
+
+The total kernel (excluding adapters) is under 600~lines of Python.  The two adapters
+add approximately 150--200~lines each.  This compact implementation supports the claim
+that the framework is lightweight and auditable.

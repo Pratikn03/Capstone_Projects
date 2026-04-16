@@ -1,0 +1,4 @@
+controller,fault_family,rows,oasg_cases,max_margin_gap,mean_margin_gap
+dc3s_wrapped,dropout,96,0,211.02231645262435,0.0003639451485994982
+dc3s_wrapped,stale_sensor,96,0,210.48453174304723,2.1677527337925233
+dc3s_wrapped,nominal,96,0,0.629872659278135,-2.2232940279541844

@@ -128,7 +128,7 @@ This file is generated from `scripts/_active_theorem_program.py` and is the reco
 ### T6: Certificate expiration bound
 
 - Statement location: chapters_merged/ch04_theoretical_foundations.tex:1769
-- Proof location: appendices/app_c_full_proofs.tex:199
+- Proof location: appendices/app_c_full_proofs.tex:203
 - Assumptions used: ['A4', 'A6', 'A7', 'The forward-tube boundary crossing is controlled by the drift scale alone.']
 - Unresolved assumptions: ['The forward-tube boundary crossing is controlled by the drift scale alone.']
 - Dependencies: ['Definition: Forward tube']
@@ -145,7 +145,7 @@ This file is generated from `scripts/_active_theorem_program.py` and is the reco
 ### T7: Feasible fallback existence
 
 - Statement location: chapters_merged/ch04_theoretical_foundations.tex:1848
-- Proof location: appendices/app_c_full_proofs.tex:227
+- Proof location: appendices/app_c_full_proofs.tex:231
 - Assumptions used: ['A1', 'A3', 'A4', 'A8', 'Current state is interior by at least the one-step model-error margin.']
 - Unresolved assumptions: ['Current state is interior by at least the one-step model-error margin.']
 - Dependencies: ['Constructive zero-dispatch battery fallback']
@@ -164,7 +164,7 @@ This file is generated from `scripts/_active_theorem_program.py` and is the reco
 ### T8: Graceful degradation dominance
 
 - Statement location: chapters_merged/ch04_theoretical_foundations.tex:1874
-- Proof location: appendices/app_c_full_proofs.tex:240
+- Proof location: appendices/app_c_full_proofs.tex:244
 - Assumptions used: ['A1', 'A2', 'A3', 'A4', 'A5', 'A8', 'The graceful landing regime makes the safe interior absorbing after landing.']
 - Unresolved assumptions: ['The graceful landing regime makes the safe interior absorbing after landing.']
 - Dependencies: ['Theorem T4 witness for the uncontrolled comparator', 'Graceful landing absorbs future excursions after the landing phase']
@@ -181,7 +181,7 @@ This file is generated from `scripts/_active_theorem_program.py` and is the reco
 ### T9: Universal Impossibility, T9
 
 - Statement location: chapters/ch37_universality_completeness.tex:109
-- Proof location: appendices/app_c_full_proofs.tex:266
+- Proof location: appendices/app_c_full_proofs.tex:270
 - Assumptions used: ['A4', "A6': phi-mixing fault process with geometric decay.", 'A positive witness constant c > 0 is available from the boundary-reachability argument.']
 - Unresolved assumptions: ["A6': phi-mixing fault process with geometric decay.", 'A positive witness constant c > 0 is available from the boundary-reachability argument.']
 - Dependencies: ['Theorem T4 no-free-safety witness', 'Azuma-Hoeffding concentration for separated windows', 'Window buffering argument based on phi-mixing']
@@ -199,7 +199,7 @@ This file is generated from `scripts/_active_theorem_program.py` and is the reco
 ### T10: Boundary-indistinguishability lower bound, T10
 
 - Statement location: chapters/ch37_universality_completeness.tex:206
-- Proof location: appendices/app_c_full_proofs.tex:306
+- Proof location: appendices/app_c_full_proofs.tex:310
 - Assumptions used: ['Controller acts only through the degraded observation channel.', 'TV(P_0,t, P_1,t) <= w_t for the boundary subproblem.', 'Unsafe-side prior mass satisfies P(H_1,t) >= p_t.', 'The unsafe-side decision error controls true-state violations.']
 - Unresolved assumptions: ['Controller acts only through the degraded observation channel.', 'TV(P_0,t, P_1,t) <= w_t for the boundary subproblem.', 'Unsafe-side prior mass satisfies P(H_1,t) >= p_t.', 'The unsafe-side decision error controls true-state violations.']
 - Dependencies: ['Le Cam two-point lemma', 'Boundary-mass sequence p_t']
@@ -218,7 +218,7 @@ This file is generated from `scripts/_active_theorem_program.py` and is the reco
 ### T11: Typed structural transfer theorem, T11
 
 - Statement location: chapters/ch37_universality_completeness.tex:338
-- Proof location: appendices/app_c_full_proofs.tex:350
+- Proof location: appendices/app_c_full_proofs.tex:354
 - Assumptions used: ['Coverage obligation for the observation-consistent state set.', 'Soundness of the tightened safe-action set.', 'Repair membership in the tightened safe-action set.', 'Fallback admissibility when the tightened set is empty.']
 - Unresolved assumptions: ['Coverage obligation for the observation-consistent state set.', 'Soundness of the tightened safe-action set.', 'Repair membership in the tightened safe-action set.', 'Fallback admissibility when the tightened set is empty.']
 - Dependencies: ['Definition: Universal adapter contract', 'Corollary: Episode aggregation under explicit per-step budgets', 'Proposition: Failure of any transfer obligation breaks the reference proof pattern']

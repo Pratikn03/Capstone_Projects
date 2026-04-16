@@ -8,12 +8,12 @@
 \toprule
 \textbf{Domain} & \textbf{Lifecycle surface} & \textbf{Hash chain and invariants} & \textbf{CertOS status} & \textbf{Shared-constraint status} & \textbf{Audit continuity} & \textbf{Completeness} & \textbf{Exact limit}\\
 \midrule
-Battery Energy Storage & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & evaluated & shared\_feeder\_capacity (evaluated) & tracked runtime audit continuity & 97.0 & bounded to the current governed task surface\\
-Autonomous Vehicles & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & evaluated & (gated) & tracked runtime audit continuity & 93.0 & promoted\\
+Battery Energy Storage & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & pass & shared\_feeder\_capacity (evaluated) & tracked runtime audit continuity & 97.0 & bounded to the current governed task surface\\
+Autonomous Vehicles & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & pass & shared\_headway\_budget (evaluated) & tracked runtime audit continuity & 94.0 & bounded to the current governed task surface\\
 Industrial Process Control & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & evaluated & shared\_power\_budget (evaluated) & tracked runtime audit continuity & 94.0 & bounded to the current governed task surface\\
-Medical and Healthcare Monitoring & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & evaluated & (gated) & tracked runtime audit continuity & 93.0 & healthcare\_train\_validation\_chain\_complete\\
-Navigation and Guidance & gated\_or\_not\_yet\_supported & gated & gated & (gated) & bounded\_or\_gated & 58.0 & navigation\_real\_data\_gap\\
-Aerospace Control & gated\_or\_not\_yet\_supported & gated & gated & (gated) & bounded\_or\_gated & 55.0 & aerospace\_experimental\_placeholder\\
+Medical and Healthcare Monitoring & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & evaluated & shared\_alert\_budget (evaluated) & tracked runtime audit continuity & 94.0 & bounded to the current governed task surface\\
+Navigation and Guidance & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & evaluated & (gated) & tracked runtime audit continuity & 58.0 & navigation\_kitti\_runtime\_missing\\
+Aerospace Control & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & evaluated & (gated) & tracked runtime audit continuity & 55.0 & aerospace\_realflight\_runtime\_missing\\
 \bottomrule
 \end{tabular}}
 \end{table*}

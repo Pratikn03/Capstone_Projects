@@ -1,0 +1,17 @@
+target,group_col,group_value,stage,n,coverage,mean_width
+soc_mwh,fault_family,dropout,baseline,96,0.0,572.8390450828313
+soc_mwh,fault_family,dropout,adaptive,96,0.0,1101.6911616908978
+soc_mwh,fault_family,nominal,baseline,96,0.0,569.4895152812195
+soc_mwh,fault_family,nominal,adaptive,96,0.0,1046.0644332564257
+soc_mwh,fault_family,stale_sensor,baseline,96,0.0,570.827990101372
+soc_mwh,fault_family,stale_sensor,adaptive,96,0.0,1097.3553256513917
+soc_mwh,reliability_bin,high,baseline,288,0.0,571.0521834884743
+soc_mwh,reliability_bin,high,adaptive,288,0.0,1081.7036401995717
+soc_mwh,drift_bin,low,baseline,287,0.0,570.7558047035635
+soc_mwh,drift_bin,low,adaptive,287,0.0,1080.5243137090001
+soc_mwh,drift_bin,mid,baseline,1,0.0,656.1128947578691
+soc_mwh,drift_bin,mid,adaptive,1,0.0,1420.1703429936315
+soc_mwh,dispatch_regime,discharge,baseline,82,0.0,567.0781114735278
+soc_mwh,dispatch_regime,discharge,adaptive,82,0.0,1078.0543906786568
+soc_mwh,dispatch_regime,hold,baseline,206,0.0,572.6340956497636
+soc_mwh,dispatch_regime,hold,adaptive,206,0.0,1083.156254086538

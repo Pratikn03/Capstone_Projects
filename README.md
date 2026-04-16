@@ -30,12 +30,12 @@ The current committed posture, as recorded in [`reports/publication/orius_equal_
 
 - `battery` = `reference` witness row with the deepest theorem-to-artifact closure
 - `av` = `proof_validated` bounded row under the TTC + predictive-entry-barrier contract
-- `industrial` = `proof_validated` bounded row
-- `healthcare` = `proof_validated` bounded row
+- `industrial` = `architectural_instantiation` only — no locked pipeline artifacts
+- `healthcare` = `architectural_instantiation` only — no locked pipeline artifacts
 - `navigation` = `shadow_synthetic` row with blocker `navigation_kitti_runtime_missing`
 - `aerospace` = `experimental` row with blocker `aerospace_realflight_runtime_missing`
 
-Equal-domain universality remains a governed program target. Rows that are gated in the publication matrices should be read as gated here as well.
+**Submission scope**: Only Battery and AV have locked, SHA256-verified pipeline artifacts. The remaining four domains are future work. No statement in this repository claims equal maturity across all domains.
 
 ## Latest Validated Results
 
@@ -47,8 +47,8 @@ The current battery + AV closure lane is summarized by:
 
 | Domain | Current status | Locked result | Source |
 | --- | --- | --- | --- |
-| Battery Energy Storage | `reference` witness row | TSVR `0.0393 -> 0.0000` | [`reports/publication/orius_domain_closure_matrix.csv`](reports/publication/orius_domain_closure_matrix.csv) |
-| Autonomous Vehicles | `proof_validated` bounded row | TSVR `0.1250 -> 0.0417` | [`reports/publication/orius_domain_closure_matrix.csv`](reports/publication/orius_domain_closure_matrix.csv) |
+| Battery Energy Storage | `reference` witness row | TSVR = 0.0% (all 4 controllers, 288 steps) | [`reports/battery_av/overall/release_summary.json`](reports/battery_av/overall/release_summary.json) |
+| Autonomous Vehicles | `proof_validated` bounded row | TSVR 0.660 → 0.628 (9,348 steps, 228 scenarios) | [`reports/battery_av/overall/release_summary.json`](reports/battery_av/overall/release_summary.json) |
 
 The current committed AV full-corpus release also records:
 

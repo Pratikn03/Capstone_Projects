@@ -44,7 +44,8 @@ article bundle. That means:
 
 1. **clear claim boundary**
    - battery is the witness row with the deepest theorem-to-artifact closure,
-   - AV, industrial, and healthcare are defended bounded rows under the current replay harness,
+   - AV is a defended bounded row under the longitudinal TTC + predictive-entry-barrier contract,
+   - industrial and healthcare have architectural instantiations only (no locked pipeline artifacts),
    - navigation is shadow-synthetic evidence,
    - aerospace is experimental.
 

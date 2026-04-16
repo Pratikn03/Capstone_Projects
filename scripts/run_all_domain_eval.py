@@ -148,7 +148,7 @@ DOMAINS = {
         "safety_range": "[60.0, 350.0] kt and |bank| <= 30 deg",
     },
     "av": {
-        "csv": "data/av/processed/av_trajectories_orius.csv",
+        "csv": "data/orius_av/av/processed/av_trajectories_orius.csv",
         "adapter_id": "av",
         "telemetry_cols": ["position_m", "speed_mps", "speed_limit_mps", "lead_position_m", "ts_utc"],
         "candidate_fn": lambda row: {"acceleration_mps2": min(3.0, 0.6 * (float(row.get("speed_limit_mps", 16.0) or 16.0) - float(row.get("speed_mps", 0.0) or 0.0)))},
@@ -172,8 +172,8 @@ DOMAINS = {
         "adapter_id": "navigation",
         "telemetry_cols": ["x", "y", "vx", "vy", "ts_utc"],
         "candidate_fn": lambda row: {
-            "ax": 2.0 if float(row["x"]) >= 5.0 else -2.0,
-            "ay": 2.0 if float(row["y"]) >= 5.0 else -2.0,
+            "ax": max(-0.8, min(0.8, -0.15 * (float(row.get("x", 5.0)) - 5.0))),
+            "ay": max(-0.8, min(0.8, -0.15 * (float(row.get("y", 5.0)) - 5.0))),
         },
         "rule_based_fn": lambda row: {
             "ax": max(-3.0, min(3.0, -0.5 * (float(row.get("x", 5.0)) - 5.0))),
@@ -189,8 +189,8 @@ DOMAINS = {
         },
         "safety_col": "x",
         "spike_col": "x",
-        "spike_lo": -0.3,
-        "spike_hi": 10.3,
+        "spike_lo": 0.3,
+        "spike_hi": 9.7,
         "display": "Navigation",
         "units": "m",
         "violation_fn": _violates_navigation,

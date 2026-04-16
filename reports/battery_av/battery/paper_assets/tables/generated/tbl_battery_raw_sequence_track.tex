@@ -1,0 +1,17 @@
+\begin{table}[ht]
+\centering
+\caption{Engineered versus raw-sequence battery forecasting tracks. The raw-sequence row is the bounded deep-learning novelty track and is not a replacement for the locked engineered baseline.}
+\label{tab:battery-raw-sequence-track}
+\begin{tabular}{llrrrr}
+\toprule
+Target & Track & Model & RMSE & PICP$_{90}$ & Width \\
+\midrule
+load\_mw & raw\_sequence & patchtst\_reliability\_conditioned & 6157.50 & 0.816 & 16035.4 \\
+load\_mw & engineered\_tabular & gbm & 305.12 & 0.882 & 1070.2 \\
+wind\_mw & raw\_sequence & patchtst\_reliability\_conditioned & 7477.69 & 0.603 & 13900.2 \\
+wind\_mw & engineered\_tabular & gbm & 219.11 & 0.937 & 833.9 \\
+solar\_mw & raw\_sequence & patchtst\_reliability\_conditioned & 3466.71 & 0.861 & 9733.4 \\
+solar\_mw & engineered\_tabular & gbm & 240.35 & 0.788 & 1037.7 \\
+\bottomrule
+\end{tabular}
+\end{table}

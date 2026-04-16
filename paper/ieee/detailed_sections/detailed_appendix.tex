@@ -1,0 +1,275 @@
+% === Appendix ===
+\section{Complete Notation Reference}\label{app:notation}
+
+\begin{longtable}{lll}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} & \textbf{Domain} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Symbol} & \textbf{Meaning} & \textbf{Domain} \\
+\midrule
+\endhead
+$x_t$          & True (hidden) physical state    & All \\
+$\zt$          & Clean telemetry observation      & All \\
+$\ztt$         & Degraded telemetry observation   & All \\
+$\wt$          & Reliability weight $\in [0,1]$   & All \\
+$\Chat$        & Base conformal interval          & All \\
+$\Crac$        & RAC-certified (inflated) interval & All \\
+$\Ut$          & Observation-consistent state set  & All \\
+$\alpha$       & Inflation factor                 & All \\
+$\astar$       & Candidate action from controller & All \\
+$\asafe$       & Fallback safe action             & All \\
+$\Aset$        & Safe action set (tightened)      & All \\
+$s_{\mathrm{shift}}$ & Shift score from adaptive mechanism & All \\
+$\TSVR$        & True-state violation rate        & All \\
+$\OASG$        & Observation--action safety gap rate & All \\
+$\CVA$         & Coverage validity assessment     & All \\
+$\GDQ$         & Governance digest quality        & All \\
+$\IR$          & Intervention rate                & All \\
+$\SOC_t$       & State of charge (MWh)            & Battery \\
+$\Emax$        & Battery capacity                 & Battery \\
+$\Pmax$        & Maximum discharge power          & Battery \\
+$v_t$          & Ego vehicle speed (m/s)          & AV \\
+$g_t$          & Relative gap to lead vehicle (m) & AV \\
+\bottomrule
+\end{longtable}
+
+\section{Assumption Summary}\label{app:assumptions}
+
+\begin{longtable}{lp{10cm}}
+\toprule
+\textbf{ID} & \textbf{Statement} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Statement} \\
+\midrule
+\endhead
+A1 & \textbf{Causal Availability}: At every step $t$, the observation $\ztt$ is causally available before action commitment. \\
+A2 & \textbf{Detector Soundness}: If $\wt = 1$ then $\ztt = \zt$; if $\ztt \ne \zt$ then $\wt < 1$. \\
+A3 & \textbf{Constraint Expressibility}: Safety constraints are a finite conjunction of state-action predicates evaluable over $\Ut$. \\
+A4 & \textbf{Fallback Safety}: $\asafe$ is safe for all $x \in \mathcal{X}$. \\
+A5 & \textbf{Conformal Coverage}: The base conformal predictor achieves coverage $\ge 1 - \alpha_{\mathrm{target}}$ on the calibration set. \\
+A6 & \textbf{Bounded Drift Rate}: Distribution shift rate is bounded within the adaptation window. \\
+A7 & \textbf{Finite Horizon}: Each episode has $T < \infty$. \\
+A8 & \textbf{Constraint Continuity}: Safety constraints are continuous in the state space. \\
+\bottomrule
+\end{longtable}
+
+\section{Theorem Summary}\label{app:theorems}
+
+\begin{longtable}{llll}
+\toprule
+\textbf{ID} & \textbf{Name} & \textbf{Assumptions} & \textbf{Verification} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Name} & \textbf{Assumptions} & \textbf{Verification} \\
+\midrule
+\endhead
+T1  & OASG Existence                    & A1, A2, A4   & Proof + Empirical + Code \\
+T2  & One-Step Safety Preservation      & A1--A3, A5, A7 & Proof + Empirical + Code \\
+T3  & ORIUS Core Bound                  & A1, A2, A4--A7 & Proof + Empirical + Code \\
+T4  & No Free Safety                    & A2, A4       & Proof + Empirical \\
+T5  & Certificate Validity Horizon      & A5, A7       & Proof + Empirical \\
+T6  & Certificate Expiration Lower Bound & A7          & Proof + Empirical \\
+T7  & Feasible Fallback Existence       & A4           & Proof + Code \\
+T8  & Graceful Degradation Dominance    & A2, A5       & Proof + Empirical + Code \\
+T9  & Universal Impossibility           & A2, A4       & Proof (formal only) \\
+T10 & Boundary-Indistinguishability LB  & A2, A5       & Proof + Empirical \\
+T11 & Typed Structural Transfer         & A3--A5, A7, A8 & Proof + Code \\
+\bottomrule
+\end{longtable}
+
+All 11 theorems have complete formal proofs.  The ``Empirical'' tag indicates that
+the theorem's predictions match the observed pipeline metrics.  The ``Code'' tag
+indicates a direct code-level anchor in the kernel or test suite.
+
+\section{Contract Predicate Register}\label{app:predicates}
+
+\begin{longtable}{lp{10cm}}
+\toprule
+\textbf{ID} & \textbf{Predicate} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Predicate} \\
+\midrule
+\endhead
+CP1 & Inflation factor $\alpha \ge 1.0$ (Theorem T4). \\
+CP2 & Reliability weight $\wt \in [0, 1]$. \\
+CP3 & For every target, $\mathrm{upper} \ge \mathrm{lower}$. \\
+CP4 & Released action satisfies all tightened constraints. \\
+CP5 & All required certificate fields are present and non-null. \\
+CP6 & Certificate timestamps are non-decreasing within an episode. \\
+\bottomrule
+\end{longtable}
+
+\section{Complete Battery Results}\label{app:battery_full}
+
+The complete per-step safety metrics for all 12 battery configurations
+(2~lanes $\times$ 3~scenarios $\times$ 2~controllers) are recorded in the artifact
+file \texttt{reports/battery\_av/battery/battery\_deep\_oqe\_safety\_metrics.csv}.
+Each row reports:
+\begin{itemize}[nosep]
+  \item \texttt{lane}: heuristic or deep.
+  \item \texttt{scenario}: nominal, dropout, or stale\_sensor.
+  \item \texttt{controller}: dc3s\_wrapped or dc3s\_ftit.
+  \item \texttt{true\_soc\_violation\_rate}: 0.000 for all 12 rows.
+  \item \texttt{intervention\_rate}: 0.000 (wrapped) or 0.031 (ftit under faults).
+  \item \texttt{mean\_reliability\_w}: 0.905--1.000.
+  \item \texttt{audit\_completeness}: 1.000 for all 12 rows.
+\end{itemize}
+
+\section{Complete AV Fault Coverage Matrix}\label{app:av_fault_full}
+
+The full fault-family coverage matrix (24 rows: 6 fault families $\times$ 2 targets
+$\times$ 2 controllers) is recorded in
+\texttt{reports/orius\_av/full\_corpus/tables/fault\_family\_coverage\_table.csv}.
+The ORIUS controller achieves coverage $\ge 0.977$ in every cell; the baseline ranges
+from 0.881 to 0.958.
+
+\section{Fault Specification Register}\label{app:fault_specs}
+
+\Cref{tab:fault_spec_register} documents the complete parameter space for all six
+fault families used in the AV evaluation.  Each family is parameterised by a severity
+axis; the pipeline sweeps the full severity range.
+
+\begin{longtable}{lp{2.5cm}p{7.5cm}}
+\toprule
+\textbf{Fault Family} & \textbf{Severity Axis} & \textbf{Parameters} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Fault Family} & \textbf{Severity Axis} & \textbf{Parameters} \\
+\midrule
+\endhead
+\texttt{dropout} & Drop rate $d$ &
+  $d \in \{0.05, 0.10, 0.15, 0.20, 0.25, 0.30\}$.
+  At each step, the telemetry reading is replaced with NaN with probability~$d$.
+  The adapter substitutes the last valid reading and marks the observation as
+  degraded. \\
+\midrule
+\texttt{delay\_jitter} & Buffer depth $\tau_b$ &
+  $\tau_b \in \{1, 3, 5, 10\}$ seconds.
+  Telemetry is delayed by a random jitter drawn from $\mathrm{Uniform}(0, \tau_b)$.
+  The adapter detects late-arriving packets via timestamp comparison. \\
+\midrule
+\texttt{spikes} & Spike magnitude $\mu_s$ &
+  $\mu_s \in \{2, 3, 4, 5\}\times\sigma$ of the sensor channel.
+  At each step with probability $p = 0.05$, the reading is perturbed by
+  $\mathcal{N}(0, \mu_s \cdot \sigma)$.  The spike detector uses a z-score test
+  with threshold 3. \\
+\midrule
+\texttt{stale} & Horizon $h$ &
+  $h \in \{2, 4, 6, 8, 12\}$ steps.
+  The sensor freezes at its last value for $h$ consecutive steps.  The staleness
+  counter accumulates and $w_t^{\mathrm{fresh}} = \exp(-\lambda_f \cdot h)$
+  decays accordingly. \\
+\midrule
+\texttt{drift} & Drift rate $\beta$ &
+  $\beta \in \{0.01, 0.02, 0.03, 0.04, 0.05\}$ units/step.
+  A linear bias $\beta \cdot t$ is added to the sensor reading.  The
+  Page--Hinkley detector fires when the cumulative sum exceeds the threshold
+  $\lambda$. \\
+\midrule
+\texttt{reorder} & Window $B$ &
+  $B \in \{2, 4, 6, 8\}$ steps.
+  Timestamps within a window of $B$ steps are randomly permuted.  The adapter
+  detects out-of-order packets and marks the observation accordingly. \\
+\bottomrule
+\end{longtable}
+
+\section{Reliability Audit Protocol}\label{app:reliability_audit}
+
+The reliability audit stratifies the runtime behaviour into five OQE-weight bins and
+verifies that the RAC-Cert inflation responds proportionally to degradation.  For
+each bin, the audit checks:
+\begin{enumerate}[nosep]
+  \item \textbf{Monotone interval width}: lower $w_t$ bins produce wider intervals.
+  \item \textbf{Monotone intervention rate}: lower $w_t$ bins show higher IR.
+  \item \textbf{Coverage maintenance}: all bins maintain coverage $\ge 1 - \alpha$.
+  \item \textbf{No over-conservatism}: the highest $w_t$ bin does not inflate beyond
+        the base conformal interval.
+\end{enumerate}
+
+Both domains pass all four audit checks.  The battery domain shows the clearest
+monotonicity due to its scalar state; the AV domain shows monotonicity in aggregate
+but has slightly noisier per-bin statistics due to multi-dimensional state
+interaction.
+
+\section{Reproducibility Artifact Manifest}\label{app:manifest}
+
+The combined manifest for both domains contains the following artifact checksums:
+
+\begin{longtable}{lp{4cm}l}
+\toprule
+\textbf{Domain} & \textbf{Artifact} & \textbf{SHA-256 prefix (8 chars)} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Domain} & \textbf{Artifact} & \textbf{SHA-256 prefix (8 chars)} \\
+\midrule
+\endhead
+Battery & \texttt{runtime\_governance\_summary.csv} & \texttt{a3b7e1f2} \\
+Battery & \texttt{battery\_deep\_oqe\_safety\_metrics.csv} & \texttt{8d4c2a91} \\
+Battery & \texttt{contract\_verifier\_report.json} & \texttt{f1e09b3c} \\
+Battery & \texttt{combined\_manifest.json} & \texttt{c7d4a8e5} \\
+\midrule
+AV & \texttt{runtime\_governance\_summary.csv} & \texttt{2e8f5b71} \\
+AV & \texttt{fault\_family\_coverage\_table.csv} & \texttt{9a3d7c42} \\
+AV & \texttt{conformal\_training\_summary.csv} & \texttt{b5e12f8d} \\
+AV & \texttt{shift\_aware\_\{target\}\_summary.csv} & \texttt{d4a6c913} \\
+AV & \texttt{combined\_manifest.json} & \texttt{71f3e8b2} \\
+\bottomrule
+\end{longtable}
+
+Full SHA-256 checksums and file sizes are recorded in the respective
+\texttt{combined\_manifest.json} files.  The \texttt{Makefile} target
+\texttt{make verify-manifests} re-computes all checksums and compares against the
+recorded values.
+
+\section{Artifact Policy}\label{app:artifact_policy}
+
+This section documents what is included in the Git-tracked repository, what is
+excluded, and how heavy artifacts can be obtained.
+
+\paragraph{In the repository (Git-tracked).}
+\begin{itemize}[nosep]
+  \item \textbf{Summary artifacts}: all CSV, JSON, and PNG files in
+        \texttt{reports/battery\_av/} and \texttt{reports/orius\_av/full\_corpus/}.
+  \item \textbf{SHA-256 manifests}: \texttt{artifact\_manifest.json} for each domain,
+        plus the combined \texttt{evidence\_freeze\_certificate.json}.
+  \item \textbf{Source code}: the full \texttt{src/orius/} package, adapter
+        implementations, benchmarking harness, and test suite.
+  \item \textbf{Manuscript sources}: all \LaTeX{} files under \texttt{paper/}.
+  \item \textbf{Configuration}: \texttt{pyproject.toml}, \texttt{requirements.lock.txt},
+        \texttt{Makefile}, and all pipeline scripts in \texttt{scripts/}.
+  \item \textbf{Claim ledger}: \texttt{docs/claim\_ledger.md} mapping every
+        empirical claim to its frozen artifact.
+\end{itemize}
+
+\paragraph{Excluded from Git (obtainable on request).}
+\begin{itemize}[nosep]
+  \item \textbf{AV audit database}: \texttt{dc3s\_av\_waymo\_dryrun.duckdb}
+        ($\sim$120~MB).  Regenerate locally via
+        \texttt{scripts/build\_waymo\_av\_dry\_run\_report.py}.
+  \item \textbf{Raw Waymo Motion Dataset shards}: subject to Waymo licence;
+        not redistributable.  Download from \url{https://waymo.com/open}.
+  \item \textbf{Trained model checkpoints}: stored as LightGBM serialised
+        artifacts in \texttt{artifacts/models\_orius\_av\_full\_corpus/}.
+        Included in the repository but can be retrained from processed features.
+\end{itemize}
+
+\paragraph{Delivery path for heavy artifacts.}
+The intended path for oversized files is a tagged GitHub release asset or Git LFS.
+Until that infrastructure is provisioned, the Git-tracked CSV/JSON/PNG surfaces
+serve as the canonical lightweight evidence layer, and the generation scripts serve
+as the reproducibility path for heavy artifacts.
+
+\paragraph{Reproducibility guarantee.}
+A cold-start user with access to the Waymo licence can regenerate all artifacts
+from scratch using the single command \texttt{make pipeline-full}.  The
+\texttt{evidence\_freeze\_certificate.json} records the exact git commit, artifact
+counts, and SHA-256 verification results at freeze time.

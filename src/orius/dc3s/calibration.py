@@ -33,7 +33,25 @@ __all__ = [
     "inflate_q",
     "inflate_interval",
     "calibrate_ambiguity_lambda",
+    "DOMAIN_INFLATION_FACTORS",
 ]
+
+# ---------------------------------------------------------------------------
+# Domain-typed inflation factors (Gap 4 — cross-domain generalization)
+# ---------------------------------------------------------------------------
+# Battery is the reference domain (factor 1.0).  Other domains receive a
+# conservative multiplicative inflation uplift reflecting higher observation
+# uncertainty or sparser calibration data.  All values are tunable via
+# configs/dc3s.yaml → domain_inflation section.
+DOMAIN_INFLATION_FACTORS: dict[str, float] = {
+    "battery": 1.0,
+    "grid": 1.15,
+    "industrial": 1.25,
+    "healthcare": 1.30,
+    "navigation": 1.35,
+    "av": 1.40,
+    "aerospace": 1.50,
+}
 
 
 def _as_1d(value: float | list[float] | np.ndarray, label: str) -> np.ndarray:
@@ -131,6 +149,10 @@ class DC3SConfig:
 
     # --- Reliability ---
     min_w: float = 0.05
+    adversarial_mode: bool = False
+
+    # --- Domain-typed inflation (Gap 4) ---
+    domain_id: str = "battery"
 
     # --- Sensitivity / staleness ---
     sensitivity_t: float = 0.0
@@ -179,6 +201,8 @@ class DC3SConfig:
             infl_max=float(d.get("infl_max", rac_raw.get("infl_max", 2.0))),
             cooldown_smoothing=float(d.get("cooldown_smoothing", 0.0)),
             min_w=float(reliability_raw.get("min_w", 0.05)),
+            adversarial_mode=bool(reliability_raw.get("adversarial_mode", False)),
+            domain_id=str(d.get("domain_id", "battery")).strip().lower(),
             sensitivity_t=float(_cfg_get(d, "sensitivity_t", "runtime_sensitivity_t", default=0.0)),
             sensitivity_norm=_cfg_get(d, "sensitivity_norm", "runtime_sensitivity_norm"),
             staleness_counter=_cfg_get(d, "staleness_counter", "runtime_staleness_counter"),
@@ -279,6 +303,11 @@ def build_uncertainty_set(
         q_multiplier = 1.0
     else:
         infl_raw = 1.0 + k_q * (1.0 - w_eff) + k_d * drift_term + k_s * float(sensitivity_norm_val)
+        # Domain-typed inflation (Gap 4): scale the above-unity component by
+        # the domain factor so that higher-uncertainty domains receive wider
+        # intervals while the battery reference domain stays at factor 1.0.
+        domain_factor = float(DOMAIN_INFLATION_FACTORS.get(dc.domain_id, 1.0))
+        infl_raw = 1.0 + (infl_raw - 1.0) * domain_factor
         inflation = float(np.clip(infl_raw, 1.0, infl_max))
 
         smoothing = dc.cooldown_smoothing
@@ -366,6 +395,9 @@ def build_uncertainty_set(
         "delta": meta_delta,
         "sigma2": meta_sigma2,
         "inflation_rule": law,
+        "domain_id": dc.domain_id,
+        "domain_inflation_factor": float(DOMAIN_INFLATION_FACTORS.get(dc.domain_id, 1.0)),
+        "adversarial_mode": dc.adversarial_mode,
         "inflation_components": {
             "quality": float(k_q * (1.0 - w_eff)) if law != "ftit_ro" else 0.0,
             "drift": float(k_d * drift_term) if law != "ftit_ro" else 0.0,
