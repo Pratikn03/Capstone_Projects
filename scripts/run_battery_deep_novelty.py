@@ -528,11 +528,12 @@ def _battery_runtime_artifacts_for_controller(
     controller: str,
     buffers: Mapping[str, Any],
     constraints: Mapping[str, Any],
-) -> tuple[list[StepRecord], list[dict[str, Any]], list[dict[str, Any]]]:
+    previous_certificate_hash: str | None = None,
+) -> tuple[list[StepRecord], list[dict[str, Any]], list[dict[str, Any]], str | None]:
     records = _bench_records_for_controller(buffers=buffers, constraints=constraints)
     trace_rows: list[dict[str, Any]] = []
     cert_rows: list[dict[str, Any]] = []
-    stored_prev_hash: str | None = None
+    stored_prev_hash = previous_certificate_hash
     dt_hours = float(constraints.get("time_step_hours", 1.0))
     charge_eff = float(constraints.get("charge_efficiency", 1.0))
     discharge_eff = max(float(constraints.get("discharge_efficiency", 1.0)), 1e-6)
@@ -604,7 +605,7 @@ def _battery_runtime_artifacts_for_controller(
                 "useful_work": float(record.useful_work),
             }
         )
-    return records, trace_rows, cert_rows
+    return records, trace_rows, cert_rows, stored_prev_hash
 
 
 def build_replay_comparison(
@@ -618,6 +619,7 @@ def build_replay_comparison(
     runtime_traces: list[dict[str, Any]] = []
     runtime_summary_rows: list[dict[str, Any]] = []
     certificate_rows: list[dict[str, Any]] = []
+    previous_certificate_hash: str | None = None
     lanes = {
         "heuristic": {"reliability": {"backend": "heuristic", "min_w": 0.05}},
         "deep": {
@@ -642,13 +644,14 @@ def build_replay_comparison(
                 main_rows = payload["main_rows"]
                 for controller in ("dc3s_wrapped", "dc3s_ftit"):
                     main_row = next(row for row in main_rows if row["controller"] == controller)
-                    records, trace_rows, cert_rows = _battery_runtime_artifacts_for_controller(
+                    records, trace_rows, cert_rows, previous_certificate_hash = _battery_runtime_artifacts_for_controller(
                         lane=lane_name,
                         scenario=scenario,
                         seed=int(seed),
                         controller=controller,
                         buffers=payload["controller_buffers"][controller],
                         constraints=payload["constraints"],
+                        previous_certificate_hash=previous_certificate_hash,
                     )
                     bench = compute_bench_metrics(records)
                     runtime_traces.extend(trace_rows)

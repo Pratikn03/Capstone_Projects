@@ -2,6 +2,7 @@
 """Generate ORIUS monograph assets, bibliography, and reviewer dossier."""
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import re
@@ -1026,6 +1027,22 @@ def _aerospace_public_flight_summary() -> dict[str, object]:
 def _battery_av_publication_override() -> dict[str, dict[str, str]]:
     payload = _read_json(A_BATTERY_AV_OVERRIDE_PATH)
     return payload if isinstance(payload, dict) else {}
+
+
+def _apply_submission_scope_override(
+    runtime_domain: str,
+    runtime_row: dict[str, str],
+    *,
+    submission_scope: str,
+) -> dict[str, str]:
+    scoped = dict(runtime_row)
+    if submission_scope == "battery_av_only" and runtime_domain in {"industrial", "healthcare"}:
+        scoped["resulting_tier"] = "proof_candidate_only"
+        scoped["exact_blocker"] = "outside_current_submission_scope_battery_av_lane"
+        scoped["maturity_next_action"] = (
+            "keep outside the promoted battery+AV submission lane until the broader submission scope is explicitly reopened"
+        )
+    return scoped
 
 
 def _aerospace_public_flight_ready() -> bool:
@@ -3154,7 +3171,7 @@ def _build_review_assets() -> None:
     )
 
 
-def _build_publication_tables() -> None:
+def _build_publication_tables(*, submission_scope: str = "battery_av_only") -> None:
     validation_lookup = {row["domain"]: row for row in _read_csv_dicts(REPORT_VALIDATION_DIR / "domain_validation_summary.csv")}
     runtime_lookup = {row["domain"]: row for row in _read_csv_dicts(DOMAIN_CLOSURE_RUNTIME_PATH)}
     battery_av_override = _battery_av_publication_override()
@@ -3168,6 +3185,7 @@ def _build_publication_tables() -> None:
         runtime = dict(runtime_lookup.get(runtime_domain, {}))
         if runtime_domain in {"battery", "vehicle"} and isinstance(battery_av_override.get(runtime_domain), dict):
             runtime.update(battery_av_override[runtime_domain])
+        runtime = _apply_submission_scope_override(runtime_domain, runtime, submission_scope=submission_scope)
         tier = runtime.get("resulting_tier", validation.get("maturity_label", row["tier"]))
         source = (
             "real_data"
@@ -3217,6 +3235,7 @@ def _build_publication_tables() -> None:
         runtime = dict(runtime_lookup.get(runtime_domain, {}))
         if runtime_domain in {"battery", "vehicle"} and isinstance(battery_av_override.get(runtime_domain), dict):
             runtime.update(battery_av_override[runtime_domain])
+        runtime = _apply_submission_scope_override(runtime_domain, runtime, submission_scope=submission_scope)
         training_status = runtime.get("training_data_status", "blocked")
         parity_rows.append(
             [
@@ -3647,6 +3666,34 @@ def _build_publication_tables() -> None:
             battery_av_override["vehicle"].get("maturity_primary_risk", "current closure is bounded to the TTC entry-barrier contract"),
             battery_av_override["vehicle"].get("maturity_next_action", "keep as defended bounded row while broader vehicle interaction remains open"),
         ]
+    if submission_scope == "battery_av_only":
+        scoped_rows: list[list[str]] = []
+        for row in maturity_rows:
+            if row[0] == "Industrial domain":
+                scoped_rows.append(
+                    [
+                        "Industrial domain",
+                        "implemented_but_not_promoted_in_current_submission",
+                        "existing industrial artifacts remain outside the promoted battery+AV lane",
+                        "proof_candidate_only",
+                        "outside_current_submission_scope_battery_av_lane",
+                        "keep non-promoted in this submission pass even though broader repo artifacts exist",
+                    ]
+                )
+            elif row[0] == "Healthcare domain":
+                scoped_rows.append(
+                    [
+                        "Healthcare domain",
+                        "implemented_but_not_promoted_in_current_submission",
+                        "existing healthcare artifacts remain outside the promoted battery+AV lane",
+                        "proof_candidate_only",
+                        "outside_current_submission_scope_battery_av_lane",
+                        "keep non-promoted in this submission pass even though broader repo artifacts exist",
+                    ]
+                )
+            else:
+                scoped_rows.append(row)
+        maturity_rows = scoped_rows
     with (PUBLICATION_DIR / "orius_maturity_matrix.csv").open("w", encoding="utf-8", newline="") as fh:
         csv.writer(fh).writerows(maturity_rows)
 
@@ -4366,11 +4413,11 @@ def _build_monograph_support_assets() -> None:
     _write(REVIEW_GENERATED_DIR / "review_formula_and_term_register.tex", "\n".join(glossary_lines) + "\n")
 
 
-def build() -> None:
+def build(*, submission_scope: str = "battery_av_only") -> None:
     # The dissertation body is curated in paper/monograph and paper/paper.tex.
     # This builder owns generated evidence surfaces and review-facing derivatives only.
     _build_bibliography()
-    _build_publication_tables()
+    _build_publication_tables(submission_scope=submission_scope)
     _build_domain_evidence_assets()
     _build_93plus_closure_assets()
     _build_hf_job_templates()
@@ -4379,4 +4426,7 @@ def build() -> None:
 
 
 if __name__ == "__main__":
-    build()
+    parser = argparse.ArgumentParser(description="Build ORIUS monograph and publication assets")
+    parser.add_argument("--submission-scope", type=str, default="battery_av_only")
+    args = parser.parse_args()
+    build(submission_scope=args.submission_scope)

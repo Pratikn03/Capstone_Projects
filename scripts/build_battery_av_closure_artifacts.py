@@ -32,6 +32,7 @@ from orius.forecasting.uncertainty.shift_aware import summarize_weighted_recalib
 DEFAULT_BATTERY_DIR = REPO_ROOT / "reports" / "battery_av" / "battery"
 DEFAULT_AV_DIR = REPO_ROOT / "reports" / "orius_av" / "full_corpus"
 DEFAULT_OVERALL_DIR = REPO_ROOT / "reports" / "battery_av" / "overall"
+DOCS_DIR = REPO_ROOT / "docs"
 
 
 def _utc_now() -> str:
@@ -66,6 +67,209 @@ def _required_map(domain_dir: Path, items: dict[str, str]) -> tuple[dict[str, st
             resolved[key] = None
             missing.append(key)
     return resolved, missing
+
+
+def _runtime_summary_row(runtime_summary_path: Path, controller: str) -> dict[str, Any]:
+    if not runtime_summary_path.exists():
+        return {}
+    runtime_df = pd.read_csv(runtime_summary_path)
+    if runtime_df.empty:
+        return {}
+    candidates = [str(controller)]
+    if ":" in str(controller):
+        candidates.append(str(controller).split(":")[-1])
+    if "controller" in runtime_df.columns:
+        selected = runtime_df[runtime_df["controller"].astype(str).isin(candidates)]
+        if not selected.empty:
+            return selected.iloc[0].to_dict()
+    if "controller_label" in runtime_df.columns:
+        selected = runtime_df[runtime_df["controller_label"].astype(str).isin(candidates)]
+        if not selected.empty:
+            return selected.iloc[0].to_dict()
+    return runtime_df.iloc[0].to_dict()
+
+
+def _runtime_trace_counts(traces_df: pd.DataFrame | None, summary_controller: str) -> tuple[int, int]:
+    if traces_df is None or traces_df.empty:
+        return 0, 0
+    total_rows = int(len(traces_df))
+    canonical_df = pd.DataFrame()
+    candidates = [str(summary_controller)]
+    if ":" in str(summary_controller):
+        candidates.append(str(summary_controller).split(":")[-1])
+    for column in ("controller_label", "controller"):
+        if column in traces_df.columns:
+            candidate_df = traces_df[traces_df[column].astype(str).isin(candidates)].reset_index(drop=True)
+            if not candidate_df.empty:
+                canonical_df = candidate_df
+                break
+    if canonical_df.empty:
+        canonical_df = traces_df
+    return total_rows, int(len(canonical_df))
+
+
+def _artifact_count(manifest_path: Path) -> int:
+    if not manifest_path.exists():
+        return 0
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return 0
+    if not isinstance(payload, dict):
+        return 0
+    artifacts = payload.get("artifacts")
+    return len(artifacts) if isinstance(artifacts, dict) else 0
+
+
+def _pct_text(value: Any) -> str:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return "n/a"
+    return f"{numeric * 100:.1f}%"
+
+
+def _build_executive_summary(
+    *,
+    release_summary: dict[str, Any],
+    override: dict[str, Any],
+    battery_dir: Path,
+    av_dir: Path,
+    submission_scope: str,
+    docs_dir: Path,
+) -> str:
+    battery_release = dict(release_summary.get("battery", {}))
+    av_release = dict(release_summary.get("av", {}))
+    battery_runtime = _runtime_summary_row(battery_dir / "runtime_summary.csv", battery_release.get("canonical_controller", "deep:dc3s_wrapped"))
+    av_baseline_runtime = _runtime_summary_row(av_dir / "runtime_summary.csv", "baseline")
+    av_orius_runtime = _runtime_summary_row(av_dir / "runtime_summary.csv", av_release.get("canonical_controller", "orius"))
+    battery_artifact_count = _artifact_count(battery_dir / "artifact_manifest.json")
+    av_artifact_count = _artifact_count(av_dir / "artifact_manifest.json")
+    battery_chain_valid = bool((((battery_release.get("certos") or {}).get("summary") or {}).get("chain_valid")))
+    av_chain_valid = bool((((av_release.get("certos") or {}).get("summary") or {}).get("chain_valid")))
+    battery_cert_rows = int((((battery_release.get("certos") or {}).get("summary") or {}).get("certificate_rows", 0)))
+    av_cert_rows = int((((av_release.get("certos") or {}).get("summary") or {}).get("certificate_rows", 0)))
+    battery_oasg = int(((battery_release.get("counterexamples") or {}).get("oasg_case_count", 0)))
+    av_oasg = int(((av_release.get("counterexamples") or {}).get("oasg_case_count", 0)))
+
+    lines = [
+        "# ORIUS — Executive Summary",
+        "",
+        "> Generated from the canonical battery + AV closure artifacts.",
+        "",
+        "## What ORIUS Is",
+        "",
+        "ORIUS (Observation–Reality Integrity for Universal Safety) is a runtime safety layer for physical AI systems under degraded observation. It treats the observation–action safety gap as the governing hazard and responds through the Detect → Calibrate → Constrain → Shield → Certify lane.",
+        "",
+        "## Current Submission Scope",
+        "",
+        f"- `submission_scope={submission_scope}`",
+        "- `battery` is the reference witness row.",
+        "- `av` is the bounded proof-validated row under the longitudinal TTC plus predictive-entry-barrier contract.",
+        "- `industrial`, `healthcare`, `navigation`, and `aerospace` are not promoted in this battery+AV submission lane.",
+        "",
+        "## Locked Battery + AV Results",
+        "",
+        "| Domain | Tier | Key Result | Evidence |",
+        "|--------|------|------------|----------|",
+        (
+            f"| **Battery (BESS)** | `{override.get('battery', {}).get('resulting_tier', 'reference')}` | "
+            f"Canonical TSVR = {_pct_text(battery_runtime.get('tsvr'))} on {int(battery_release.get('runtime_rows_canonical_controller', 0)):,} canonical runtime rows; "
+            f"{battery_oasg} OASG cases identified. | {battery_artifact_count} locked artifacts; chain valid = {battery_chain_valid}; certificates = {battery_cert_rows:,} |"
+        ),
+        (
+            f"| **Autonomous Vehicles** | `{override.get('vehicle', {}).get('resulting_tier', 'proof_validated')}` | "
+            f"Baseline TSVR = {_pct_text(av_baseline_runtime.get('tsvr'))}, ORIUS TSVR = {_pct_text(av_orius_runtime.get('tsvr'))} on "
+            f"{int(av_release.get('runtime_rows_canonical_controller', 0)):,} canonical runtime rows "
+            f"({int(av_release.get('runtime_rows_total', 0)):,} total trace rows); {av_oasg} OASG cases identified on the ORIUS AV defended row. | "
+            f"{av_artifact_count} locked artifacts; chain valid = {av_chain_valid}; certificates = {av_cert_rows:,} |"
+        ),
+        "",
+        "## What This Submission Does Not Claim",
+        "",
+        "- Industrial and healthcare are intentionally outside the promoted `battery_av_only` submission lane.",
+        "- AV remains a bounded longitudinal result; it is not a claim of full autonomous-driving closure.",
+        "- Navigation and aerospace remain non-promoted rows.",
+        "- Adversarial completeness and production deployment readiness are not claimed from this surface.",
+        "",
+        "## Canonical Artifacts",
+        "",
+        "- `reports/battery_av/overall/release_summary.json`",
+        "- `reports/battery_av/overall/publication_closure_override.json`",
+        "- `reports/publication/orius_equal_domain_parity_matrix.csv`",
+        "- `reports/battery_av/battery/`",
+        "- `reports/orius_av/full_corpus/`",
+        "",
+    ]
+    path = docs_dir / "executive_summary.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return str(path)
+
+
+def _build_claim_ledger(
+    *,
+    release_summary: dict[str, Any],
+    override: dict[str, Any],
+    battery_dir: Path,
+    av_dir: Path,
+    submission_scope: str,
+    docs_dir: Path,
+) -> str:
+    battery_release = dict(release_summary.get("battery", {}))
+    av_release = dict(release_summary.get("av", {}))
+    battery_runtime = _runtime_summary_row(battery_dir / "runtime_summary.csv", battery_release.get("canonical_controller", "deep:dc3s_wrapped"))
+    av_baseline_runtime = _runtime_summary_row(av_dir / "runtime_summary.csv", "baseline")
+    av_orius_runtime = _runtime_summary_row(av_dir / "runtime_summary.csv", av_release.get("canonical_controller", "orius"))
+    av_oasg = int(((av_release.get("counterexamples") or {}).get("oasg_case_count", 0)))
+    lines = [
+        "# ORIUS Claim Ledger — Battery + AV Submission Lane",
+        "",
+        "> Generated from the canonical closure artifacts.",
+        "",
+        "## Governing Inputs",
+        "",
+        "- `reports/battery_av/overall/release_summary.json`",
+        "- `reports/battery_av/overall/publication_closure_override.json`",
+        "- `reports/publication/orius_equal_domain_parity_matrix.csv`",
+        f"- `submission_scope={submission_scope}`",
+        "",
+        "## Bucket A — Directly Artifact-Backed",
+        "",
+        "| ID | Claim | Governing Artifact |",
+        "|----|-------|-------------------|",
+        f"| A1 | Battery remains the `reference` witness row in the current submission lane. | `publication_closure_override.json` |",
+        f"| A2 | Battery canonical TSVR is {_pct_text(battery_runtime.get('tsvr'))} on {int(battery_release.get('runtime_rows_canonical_controller', 0)):,} canonical runtime rows. | `reports/battery_av/battery/runtime_summary.csv`, `release_summary.json` |",
+        f"| A3 | Battery CertOS chain is valid with {int((((battery_release.get('certos') or {}).get('summary') or {}).get('certificate_rows', 0))):,} certificates. | `reports/battery_av/battery/certos_verification_summary.json` |",
+        f"| A4 | AV remains the bounded `{override.get('vehicle', {}).get('resulting_tier', 'proof_validated')}` row. | `publication_closure_override.json` |",
+        f"| A5 | AV baseline TSVR is {_pct_text(av_baseline_runtime.get('tsvr'))} and ORIUS TSVR is {_pct_text(av_orius_runtime.get('tsvr'))}. | `reports/orius_av/full_corpus/runtime_summary.csv` |",
+        f"| A6 | AV runtime rows total = {int(av_release.get('runtime_rows_total', 0)):,}; canonical ORIUS rows = {int(av_release.get('runtime_rows_canonical_controller', 0)):,}. | `release_summary.json` |",
+        f"| A7 | AV ORIUS OASG cases identified = {av_oasg:,}. | `reports/orius_av/full_corpus/oasg_domain_summary.csv`, `release_summary.json` |",
+        f"| A8 | Only `battery` and `vehicle` are promoted rows under `submission_scope={submission_scope}`. | `reports/publication/orius_equal_domain_parity_matrix.csv` |",
+        "",
+        "## Bucket B — Bounded / Qualified Claims",
+        "",
+        "| ID | Claim | Qualification |",
+        "|----|-------|---------------|",
+        "| B1 | AV proof-validation is real. | It is bounded to the current longitudinal TTC plus predictive-entry-barrier contract. |",
+        "| B2 | Battery remains the deepest witness. | That does not imply equal maturity across domains outside the current battery+AV lane. |",
+        "| B3 | Shift-aware uncertainty is active in both rows. | Conditional coverage under arbitrary shift is not claimed from these artifacts. |",
+        "",
+        "## Bucket C — Explicitly Not Claimed",
+        "",
+        "| ID | Non-Claim | Governing Reason |",
+        "|----|-----------|------------------|",
+        "| C1 | Industrial is promoted in this submission. | `outside_current_submission_scope_battery_av_lane` |",
+        "| C2 | Healthcare is promoted in this submission. | `outside_current_submission_scope_battery_av_lane` |",
+        "| C3 | Navigation is a promoted defended row. | It remains a non-promoted row in the current parity matrix. |",
+        "| C4 | Aerospace is a promoted defended row. | It remains a non-promoted row in the current parity matrix. |",
+        "| C5 | AV is full autonomous-driving closure. | The current AV row is explicitly bounded. |",
+        "",
+    ]
+    path = docs_dir / "claim_ledger.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return str(path)
 
 
 def _reliability_bin(values: pd.Series) -> pd.Series:
@@ -377,6 +581,7 @@ def _build_domain_release(
     manifest_path = domain_dir / "artifact_manifest.json"
     runtime_summary_path = Path(resolved["runtime_summary"]) if resolved.get("runtime_summary") else domain_dir / "runtime_summary.csv"
     runtime_traces_path = Path(resolved["runtime_traces"]) if resolved.get("runtime_traces") else domain_dir / "runtime_traces.csv"
+    runtime_rows_total, runtime_rows_canonical = _runtime_trace_counts(traces_df, summary_controller)
     figures = sorted(str(path) for path in domain_dir.rglob("*.png"))
     tables = sorted(str(path) for path in domain_dir.rglob("*.csv"))
     summary_payload = {
@@ -387,7 +592,9 @@ def _build_domain_release(
         "canonical_controller": summary_controller,
         "required_artifacts": resolved,
         "missing_artifacts": missing,
-        "runtime_trace_rows": int(len(traces_df)) if traces_df is not None else 0,
+        "runtime_rows_total": int(runtime_rows_total),
+        "runtime_rows_canonical_controller": int(runtime_rows_canonical),
+        "runtime_trace_rows": int(runtime_rows_canonical),
         "counterexamples": counterexample_artifacts or {},
         "shift_aware": shift_artifacts or {},
         "certos": certos_artifacts or {},
@@ -462,6 +669,8 @@ def build_closure(
     battery_dir: Path,
     av_dir: Path,
     overall_dir: Path,
+    submission_scope: str = "battery_av_only",
+    docs_dir: Path = DOCS_DIR,
 ) -> dict[str, Any]:
     overall_dir.mkdir(parents=True, exist_ok=True)
 
@@ -480,12 +689,14 @@ def build_closure(
         "key_report": "summary.json",
     }
 
-    battery_traces = pd.read_csv(battery_dir / "runtime_traces.csv") if (battery_dir / "runtime_traces.csv").exists() else None
+    battery_traces_all = pd.read_csv(battery_dir / "runtime_traces.csv") if (battery_dir / "runtime_traces.csv").exists() else None
+    battery_traces = battery_traces_all
     if battery_traces is not None and not battery_traces.empty:
         battery_traces = battery_traces[battery_traces["controller_label"] == "deep:dc3s_wrapped"].reset_index(drop=True)
         battery_traces["reliability_bin"] = _reliability_bin(battery_traces["reliability_w"])
         battery_traces["drift_bin"] = _drift_bin(battery_traces["drift_score"])
-    av_traces = pd.read_csv(av_dir / "runtime_traces.csv") if (av_dir / "runtime_traces.csv").exists() else None
+    av_traces_all = pd.read_csv(av_dir / "runtime_traces.csv") if (av_dir / "runtime_traces.csv").exists() else None
+    av_traces = av_traces_all
     if av_traces is not None and not av_traces.empty:
         av_traces = av_traces[av_traces["controller"] == "orius"].reset_index(drop=True)
         av_traces["reliability_bin"] = _reliability_bin(av_traces["reliability_w"])
@@ -558,7 +769,7 @@ def build_closure(
         domain_name="Battery Energy Storage",
         domain_dir=battery_dir,
         required_artifacts=battery_required,
-        traces_df=battery_traces,
+        traces_df=battery_traces_all,
         summary_controller="deep:dc3s_wrapped",
         counterexample_artifacts=battery_counterexamples,
         shift_artifacts=battery_shift,
@@ -569,7 +780,7 @@ def build_closure(
         domain_name="Autonomous Vehicles",
         domain_dir=av_dir,
         required_artifacts=av_required,
-        traces_df=av_traces,
+        traces_df=av_traces_all,
         summary_controller="orius",
         counterexample_artifacts=av_counterexamples,
         shift_artifacts=av_shift,
@@ -579,6 +790,7 @@ def build_closure(
     release_summary = {
         "generated_at_utc": _utc_now(),
         "canonical_overall_dir": str(overall_dir),
+        "submission_scope": submission_scope,
         "battery": battery_release,
         "av": av_release,
     }
@@ -587,8 +799,25 @@ def build_closure(
     override = _publication_override_from_release(battery_release, av_release)
     override_path = overall_dir / "publication_closure_override.json"
     _write_json(override_path, override)
+    executive_summary_path = _build_executive_summary(
+        release_summary=release_summary,
+        override=override,
+        battery_dir=battery_dir,
+        av_dir=av_dir,
+        submission_scope=submission_scope,
+        docs_dir=docs_dir,
+    )
+    claim_ledger_path = _build_claim_ledger(
+        release_summary=release_summary,
+        override=override,
+        battery_dir=battery_dir,
+        av_dir=av_dir,
+        submission_scope=submission_scope,
+        docs_dir=docs_dir,
+    )
     manifest_payload = {
         "generated_at_utc": _utc_now(),
+        "submission_scope": submission_scope,
         "battery_key_report": battery_release["required_artifacts"].get("key_report"),
         "av_key_report": av_release["required_artifacts"].get("key_report"),
         "runtime_db_paths": {
@@ -607,12 +836,18 @@ def build_closure(
             "battery": battery_release["tables"],
             "av": av_release["tables"],
         },
+        "generated_docs": {
+            "executive_summary": executive_summary_path,
+            "claim_ledger": claim_ledger_path,
+        },
         "artifacts": {
             str(path): _sha256_file(path)
             for path in sorted(
                 {
                     release_summary_path,
                     override_path,
+                    Path(executive_summary_path),
+                    Path(claim_ledger_path),
                     battery_dir / "summary.json",
                     battery_dir / "artifact_manifest.json",
                     av_dir / "summary.json",
@@ -628,6 +863,8 @@ def build_closure(
         "release_summary": str(release_summary_path),
         "publication_override": str(override_path),
         "manifest": str(manifest_path),
+        "executive_summary": executive_summary_path,
+        "claim_ledger": claim_ledger_path,
         "battery": battery_release,
         "av": av_release,
     }
@@ -638,8 +875,16 @@ def main() -> int:
     parser.add_argument("--battery-dir", type=Path, default=DEFAULT_BATTERY_DIR)
     parser.add_argument("--av-dir", type=Path, default=DEFAULT_AV_DIR)
     parser.add_argument("--overall-dir", type=Path, default=DEFAULT_OVERALL_DIR)
+    parser.add_argument("--docs-dir", type=Path, default=DOCS_DIR)
+    parser.add_argument("--submission-scope", type=str, default="battery_av_only")
     args = parser.parse_args()
-    report = build_closure(battery_dir=args.battery_dir, av_dir=args.av_dir, overall_dir=args.overall_dir)
+    report = build_closure(
+        battery_dir=args.battery_dir,
+        av_dir=args.av_dir,
+        overall_dir=args.overall_dir,
+        submission_scope=args.submission_scope,
+        docs_dir=args.docs_dir,
+    )
     print(json.dumps(report, indent=2))
     return 0
 

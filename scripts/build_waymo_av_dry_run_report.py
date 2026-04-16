@@ -151,12 +151,23 @@ def _summary_payload(
     split_counts_df: pd.DataFrame,
     runtime_trace_count: int,
     raw_file_hashes: dict[str, str],
+    canonical_controller: str = "orius",
 ) -> dict[str, Any]:
     best_runtime = runtime_df.set_index("controller").to_dict(orient="index")
+    canonical_rows = 0
+    if "controller" in runtime_df.columns and "n_steps" in runtime_df.columns:
+        canonical_rows = int(
+            pd.to_numeric(
+                runtime_df.loc[runtime_df["controller"] == canonical_controller, "n_steps"],
+                errors="coerce",
+            ).fillna(0).sum()
+        )
     return {
         "runtime": best_runtime,
         "training_rows": int(len(training_df)),
-        "runtime_trace_rows": int(runtime_trace_count),
+        "runtime_rows_total": int(runtime_trace_count),
+        "runtime_rows_canonical_controller": int(canonical_rows),
+        "runtime_trace_rows": int(canonical_rows),
         "split_counts": {
             str(row["split"]): int(row["scenario_count"])
             for row in split_counts_df.to_dict(orient="records")

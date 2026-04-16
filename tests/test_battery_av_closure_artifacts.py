@@ -192,10 +192,17 @@ def test_build_closure_smoke(tmp_path: Path) -> None:
     (av_dir / "summary.json").write_text(json.dumps({"ok": True}), encoding="utf-8")
     _write_certificates(av_dir / "dc3s_av_waymo_dryrun.duckdb")
 
-    report = closure_script.build_closure(battery_dir=battery_dir, av_dir=av_dir, overall_dir=overall_dir)
+    report = closure_script.build_closure(
+        battery_dir=battery_dir,
+        av_dir=av_dir,
+        overall_dir=overall_dir,
+        docs_dir=tmp_path / "docs",
+    )
 
     assert Path(report["release_summary"]).exists()
     assert Path(report["publication_override"]).exists()
+    assert Path(report["executive_summary"]).exists()
+    assert Path(report["claim_ledger"]).exists()
     assert Path(battery_dir / "observed_true_counterexamples.csv").exists()
     assert Path(av_dir / "observed_true_counterexamples.csv").exists()
     assert Path(battery_dir / "shift_aware_adaptive_summary.json").exists()
@@ -204,5 +211,12 @@ def test_build_closure_smoke(tmp_path: Path) -> None:
     assert Path(av_dir / "certos_verification_summary.json").exists()
 
     override = json.loads(Path(report["publication_override"]).read_text(encoding="utf-8"))
+    release = json.loads(Path(report["release_summary"]).read_text(encoding="utf-8"))
     assert override["battery"]["resulting_tier"] == "reference"
     assert override["vehicle"]["resulting_tier"] == "proof_validated"
+    assert release["battery"]["runtime_rows_total"] == 2
+    assert release["battery"]["runtime_rows_canonical_controller"] == 2
+    assert release["battery"]["runtime_trace_rows"] == 2
+    assert release["av"]["runtime_rows_total"] == 2
+    assert release["av"]["runtime_rows_canonical_controller"] == 2
+    assert release["av"]["runtime_trace_rows"] == 2

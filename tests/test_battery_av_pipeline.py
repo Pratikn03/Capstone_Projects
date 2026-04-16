@@ -43,6 +43,7 @@ def test_main_writes_combined_summary_and_manifest(tmp_path: Path, monkeypatch) 
             overall_dir=overall_dir,
             skip_battery=False,
             skip_av=False,
+            submission_scope="battery_av_only",
             battery_out_dir=battery_dir,
             av_reports_dir=av_dir,
         ),
@@ -71,6 +72,8 @@ def test_main_writes_combined_summary_and_manifest(tmp_path: Path, monkeypatch) 
             "av": {"status": "complete"},
         },
     )
+    monkeypatch.setattr(pipeline_script.monograph_assets_script, "build", lambda **_kwargs: None)
+    monkeypatch.setattr(pipeline_script.ieee_assets_script, "build", lambda: None)
 
     assert pipeline_script.main() == 0
 
@@ -178,6 +181,7 @@ def test_main_uses_runtime_summary_when_av_report_summary_is_missing(tmp_path: P
             overall_dir=overall_dir,
             skip_battery=False,
             skip_av=False,
+            submission_scope="battery_av_only",
             battery_out_dir=battery_dir,
             av_reports_dir=av_dir,
         ),
@@ -206,6 +210,8 @@ def test_main_uses_runtime_summary_when_av_report_summary_is_missing(tmp_path: P
             "av": {"status": "incomplete"},
         },
     )
+    monkeypatch.setattr(pipeline_script.monograph_assets_script, "build", lambda **_kwargs: None)
+    monkeypatch.setattr(pipeline_script.ieee_assets_script, "build", lambda: None)
 
     assert pipeline_script.main() == 0
 

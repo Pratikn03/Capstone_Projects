@@ -23,6 +23,8 @@ for candidate in (SRC_DIR, SCRIPT_DIR):
 
 import build_waymo_av_dry_run_report as av_report_script
 import build_battery_av_closure_artifacts as closure_script
+import build_orius_ieee_assets as ieee_assets_script
+import build_orius_monograph_assets as monograph_assets_script
 import run_battery_deep_novelty as battery_script
 from orius.av_waymo import (
     build_feature_tables,
@@ -54,6 +56,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--overall-dir", type=Path, default=DEFAULT_OVERALL, help="Directory for the combined manifest and summary")
     parser.add_argument("--skip-battery", action="store_true", help="Skip the battery training surface")
     parser.add_argument("--skip-av", action="store_true", help="Skip the AV Waymo training surface")
+    parser.add_argument("--submission-scope", type=str, default="battery_av_only")
 
     parser.add_argument("--battery-out-dir", type=Path, default=DEFAULT_BATTERY_OUT)
     parser.add_argument("--battery-model-dir", type=Path, default=DEFAULT_BATTERY_MODEL_DIR)
@@ -289,8 +292,19 @@ def main() -> int:
         battery_dir=args.battery_out_dir,
         av_dir=args.av_reports_dir,
         overall_dir=overall_dir,
+        submission_scope=args.submission_scope,
     )
     combined["closure"] = closure_report
+    monograph_assets_script.build(submission_scope=args.submission_scope)
+    ieee_assets_script.build()
+    combined["publication_assets"] = {
+        "submission_scope": args.submission_scope,
+        "parity_matrix": str(REPO_ROOT / "reports" / "publication" / "orius_equal_domain_parity_matrix.csv"),
+        "domain_closure_matrix": str(REPO_ROOT / "reports" / "publication" / "orius_domain_closure_matrix.csv"),
+        "maturity_matrix": str(REPO_ROOT / "reports" / "publication" / "orius_maturity_matrix.csv"),
+        "executive_summary": str(REPO_ROOT / "docs" / "executive_summary.md"),
+        "claim_ledger": str(REPO_ROOT / "docs" / "claim_ledger.md"),
+    }
 
     if not args.skip_battery:
         summary_rows.append(
