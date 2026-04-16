@@ -65,8 +65,8 @@ This file is generated from `scripts/_active_theorem_program.py` and is the reco
 - Remediation class: strengthen proof - Make the model-error buffer explicit in the theorem statement or add a lemma tying the implemented tightening to the residual bound.
 - Namespace drift note: The same chapter still carries a broader general-CPS statement with an unearned probability line; the active audit selects the main conditional theorem row instead.
 - Code anchors:
-  - src/orius/dc3s/guarantee_checks.py:54 (`check_soc_invariance`) - Implements the one-step battery safety check.
-  - src/orius/dc3s/guarantee_checks.py:85 (`evaluate_guarantee_checks`) - Collects the deterministic safety predicates.
+  - src/orius/dc3s/guarantee_checks.py:58 (`check_soc_invariance`) - Implements the one-step battery safety check.
+  - src/orius/dc3s/guarantee_checks.py:89 (`evaluate_guarantee_checks`) - Collects the deterministic safety predicates.
 - Test anchors:
   - tests/test_dc3s_guarantee_checks.py:25 (`test_guarantee_checks_pass_for_safe_action`) - Checks the implemented one-step safety predicate only.
 
@@ -83,8 +83,8 @@ This file is generated from `scripts/_active_theorem_program.py` and is the reco
 - Severity if broken: critical
 - Remediation class: add assumption - Either promote the battery risk-envelope contract to an explicit defended assumption or add a new battery-specific lemma that derives it from the implemented calibration logic.
 - Code anchors:
-  - src/orius/universal_theory/risk_bounds.py:97 (`compute_episode_risk_bound`) - Implements only the aggregation envelope, not the bridge to the budget contract.
-  - src/orius/universal_theory/risk_bounds.py:92 (`risk_envelope_assumptions`) - Makes the missing theorem-local assumptions explicit.
+  - src/orius/universal_theory/risk_bounds.py:99 (`compute_episode_risk_bound`) - Implements only the aggregation envelope, not the bridge to the budget contract.
+  - src/orius/universal_theory/risk_bounds.py:94 (`risk_envelope_assumptions`) - Makes the missing theorem-local assumptions explicit.
   - src/orius/dc3s/coverage_theorem.py:44 (`compute_expected_violation_bound`) - Backward-compatible wrapper around the narrowed T3 helper.
 - Test anchors:
   - tests/test_dc3s_coverage_theorem.py:59 (`test_compute_expected_violation_bound`) - Verifies the algebraic envelope, not the bridge from runtime reliability to residual-risk probability.
@@ -191,7 +191,7 @@ This file is generated from `scripts/_active_theorem_program.py` and is the reco
 - Severity if broken: critical
 - Remediation class: downgrade register status - Treat T9 as a proof sketch or structural conjecture until the missing phi-mixing assumption and witness constant are registered and discharged.
 - Code anchors:
-  - src/orius/dc3s/theoretical_guarantees.py:587 (`compute_universal_impossibility_bound`) - Encodes the claimed scaling only after c and effective horizon are handed in.
+  - src/orius/dc3s/theoretical_guarantees.py:589 (`compute_universal_impossibility_bound`) - Encodes the claimed scaling only after c and effective horizon are handed in.
 - Test anchors:
   - tests/test_theoretical_guarantees.py:18 (`test_expected_lower_bound_matches_linear_formula`) - Algebraic witness test only.
   - tests/test_theoretical_guarantees_hypothesis.py:23 (`test_t9_impossibility_bound_matches_linear_scaling`) - Property test for the helper's formula, not for the proof obligations.
@@ -209,11 +209,11 @@ This file is generated from `scripts/_active_theorem_program.py` and is the reco
 - Severity if broken: critical
 - Remediation class: narrow statement - Retitle T10 as a stylized lower-bound construction unless a valid unsafe-side error lower bound and a defended boundary-mass model are supplied.
 - Code anchors:
-  - src/orius/dc3s/theoretical_guarantees.py:623 (`compute_stylized_frontier_lower_bound`) - Implements the stylized half-sum formula directly.
+  - src/orius/dc3s/theoretical_guarantees.py:628 (`compute_stylized_frontier_lower_bound`) - Implements the stylized half-sum formula directly.
   - src/orius/universal/reliability_safety_frontier.py:46 (`compute_frontier`) - Chapter-facing plotting proxy for the scoped lower-bound surface.
 - Test anchors:
-  - tests/test_theoretical_guarantees.py:63 (`test_general_formula_matches_half_sum_p_one_minus_w`) - Formula check only.
-  - tests/test_theoretical_guarantees_hypothesis.py:50 (`test_t10_frontier_lower_bound_matches_half_sum_formula`) - Property test for the stylized algebra only.
+  - tests/test_theoretical_guarantees.py:63 (`test_general_formula_matches_sum_p_one_minus_w`) - Formula check only.
+  - tests/test_theoretical_guarantees_hypothesis.py:50 (`test_t10_frontier_lower_bound_matches_sum_formula`) - Property test for the stylized algebra only.
 
 ### T11: Typed structural transfer theorem, T11
 
@@ -229,7 +229,7 @@ This file is generated from `scripts/_active_theorem_program.py` and is the reco
 - Remediation class: narrow statement - Keep T11 as a four-obligation one-step transfer theorem, demote the five-invariant mini-harness to supporting evidence, and avoid implying that passing the mini-harness automatically yields the episode bound.
 - Code anchors:
   - src/orius/universal_theory/contracts.py:514 (`ContractVerifier.validate_runtime_step`) - Authoritative typed runtime contract surface.
-  - src/orius/dc3s/theoretical_guarantees.py:666 (`evaluate_structural_transfer`) - Executable four-obligation witness for the narrowed theorem statement.
+  - src/orius/dc3s/theoretical_guarantees.py:673 (`evaluate_structural_transfer`) - Executable four-obligation witness for the narrowed theorem statement.
   - src/orius/universal/contract.py:281 (`ContractVerifier.check`) - Supporting five-invariant reference harness only.
 - Test anchors:
   - tests/test_theoretical_guarantees_hypothesis.py:76 (`test_t11_transfer_requires_all_four_obligations`) - Covers the active four-obligation theorem surface.

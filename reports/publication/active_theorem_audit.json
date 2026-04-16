@@ -129,13 +129,13 @@
         {
           "path": "src/orius/dc3s/guarantee_checks.py",
           "symbol": "check_soc_invariance",
-          "location": "src/orius/dc3s/guarantee_checks.py:54",
+          "location": "src/orius/dc3s/guarantee_checks.py:58",
           "note": "Implements the one-step battery safety check."
         },
         {
           "path": "src/orius/dc3s/guarantee_checks.py",
           "symbol": "evaluate_guarantee_checks",
-          "location": "src/orius/dc3s/guarantee_checks.py:85",
+          "location": "src/orius/dc3s/guarantee_checks.py:89",
           "note": "Collects the deterministic safety predicates."
         }
       ],
@@ -209,13 +209,13 @@
         {
           "path": "src/orius/universal_theory/risk_bounds.py",
           "symbol": "compute_episode_risk_bound",
-          "location": "src/orius/universal_theory/risk_bounds.py:97",
+          "location": "src/orius/universal_theory/risk_bounds.py:99",
           "note": "Implements only the aggregation envelope, not the bridge to the budget contract."
         },
         {
           "path": "src/orius/universal_theory/risk_bounds.py",
           "symbol": "risk_envelope_assumptions",
-          "location": "src/orius/universal_theory/risk_bounds.py:92",
+          "location": "src/orius/universal_theory/risk_bounds.py:94",
           "note": "Makes the missing theorem-local assumptions explicit."
         },
         {
@@ -617,7 +617,7 @@
         {
           "path": "src/orius/dc3s/theoretical_guarantees.py",
           "symbol": "compute_universal_impossibility_bound",
-          "location": "src/orius/dc3s/theoretical_guarantees.py:587",
+          "location": "src/orius/dc3s/theoretical_guarantees.py:589",
           "note": "Encodes the claimed scaling only after c and effective horizon are handed in."
         }
       ],
@@ -670,7 +670,7 @@
         {
           "path": "src/orius/dc3s/theoretical_guarantees.py",
           "symbol": "compute_stylized_frontier_lower_bound",
-          "location": "src/orius/dc3s/theoretical_guarantees.py:623",
+          "location": "src/orius/dc3s/theoretical_guarantees.py:628",
           "note": "Implements the stylized half-sum formula directly."
         },
         {
@@ -683,13 +683,13 @@
       "test_anchors": [
         {
           "path": "tests/test_theoretical_guarantees.py",
-          "symbol": "test_general_formula_matches_half_sum_p_one_minus_w",
+          "symbol": "test_general_formula_matches_sum_p_one_minus_w",
           "location": "tests/test_theoretical_guarantees.py:63",
           "note": "Formula check only."
         },
         {
           "path": "tests/test_theoretical_guarantees_hypothesis.py",
-          "symbol": "test_t10_frontier_lower_bound_matches_half_sum_formula",
+          "symbol": "test_t10_frontier_lower_bound_matches_sum_formula",
           "location": "tests/test_theoretical_guarantees_hypothesis.py:50",
           "note": "Property test for the stylized algebra only."
         }
@@ -736,7 +736,7 @@
         {
           "path": "src/orius/dc3s/theoretical_guarantees.py",
           "symbol": "evaluate_structural_transfer",
-          "location": "src/orius/dc3s/theoretical_guarantees.py:666",
+          "location": "src/orius/dc3s/theoretical_guarantees.py:673",
           "note": "Executable four-obligation witness for the narrowed theorem statement."
         },
         {
