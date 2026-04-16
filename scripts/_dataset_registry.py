@@ -151,9 +151,11 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         alias_of="US_MISO",
     ),
     # Multi-domain (AV, Industrial, Healthcare, Aerospace)
+    # AV: Waymo Motion full corpus (1,975 scenarios, 179,725 ego rows).
+    # HEE legacy backup is at data/orius_av/av/processed/hee_legacy/ for reversibility.
     "AV": DatasetConfig(
         name="AV",
-        display_name="AV Trajectories",
+        display_name="Waymo Motion AV Trajectories",
         config_file="configs/train_forecast_av.yaml",
         features_path="data/orius_av/av/processed/features.parquet",
         splits_path="data/orius_av/av/processed/splits",

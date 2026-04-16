@@ -1,0 +1,46 @@
+{
+  "domain": "av",
+  "canonical_source": "waymo_motion",
+  "companion_sources": [
+    "argoverse2_motion",
+    "argoverse2_sensor"
+  ],
+  "repo_local_preferred": true,
+  "external_env_var": "ORIUS_EXTERNAL_DATA_ROOT",
+  "expected_layout": {
+    "waymo_motion": "waymo_motion/validation/",
+    "argoverse2_motion": "argoverse2_motion/",
+    "argoverse2_sensor": "argoverse2_sensor/"
+  },
+  "canonical_processed_output": "data/orius_av/av/processed/av_trajectories_orius.csv",
+  "required_contract_columns": [
+    "vehicle_id",
+    "step",
+    "position_m",
+    "speed_mps",
+    "speed_limit_mps",
+    "lead_position_m",
+    "ts_utc"
+  ],
+  "canonical_pipeline": {
+    "stage_1_raw": "data/orius_av/raw/waymo_motion/validation/",
+    "stage_2_processed_full_corpus": "data/orius_av/av/processed_full_corpus/",
+    "stage_3_legacy_schema_bridge": "scripts/build_av_waymo_legacy_bridge.py",
+    "stage_3_outputs": "data/orius_av/av/processed/",
+    "legacy_backup": "data/orius_av/av/processed/hee_legacy/",
+    "bridge_run_date": "2026-04-16",
+    "scenarios": 1975,
+    "training_rows": 88976,
+    "calibration_rows": 13735,
+    "val_rows": 14338,
+    "test_rows": 15276
+  },
+  "notes": [
+    "Repo-local placement under data/orius_av/raw/<dataset_key>/ is the default contract.",
+    "ORIUS_EXTERNAL_DATA_ROOT remains an optional fallback for the same directory names.",
+    "Full raw payloads stay outside git history.",
+    "Prepared tabular exports derived from official raw files may be placed under either approved source layout.",
+    "Synthetic AV data remains available only by explicit request.",
+    "Path A bridge (ego-only 1D speed-limit semantics) is live. Path B (2D RSS collision-gap) is the next stage and will supersede the Path A legacy-schema outputs when complete."
+  ]
+}
