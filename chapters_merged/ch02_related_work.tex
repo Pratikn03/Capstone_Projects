@@ -218,6 +218,42 @@ running every controller on both the observed and true state machines
 simultaneously, reporting True-State Violation Rate (TSVR) alongside
 Observed-State Violation Rate (OSVR).
 
+\subsection{Responsibility-Sensitive Safety and Conformal Control for AV}
+
+The AV domain instantiation of the DC3S shield is grounded in the
+\emph{Responsibility-Sensitive Safety} (RSS) framework.  Shalev-Shwartz
+et al.~\cite{shalev2017formal} define a longitudinal safe-following distance
+$g^{\text{safe}}(v_e, v_\ell)$ that guarantees collision avoidance if the ego
+vehicle brakes at its minimum comfortable deceleration while the lead brakes
+at its maximum.  The ORIUS AV derivation
+(Section~\ref{sec:av-risk-envelope}) shows that the DC3S reliability-conditioned
+inflation $q_\alpha / w_t$ applied to the gap uncertainty set controls the
+residual collision-gap violation probability to $\alpha(1 - w_t)$ per step.
+
+Recent work connects conformal prediction to safe autonomous planning:
+\begin{itemize}
+  \item Lindemann et al.~\cite{lindemann2023conformal} construct conformal
+    prediction regions for multi-agent trajectories and incorporate them into
+    robust planning constraints, achieving PAC-style safety guarantees without
+    distributional assumptions on other agents.
+  \item Dixit et al.~\cite{dixit2023adaptive} extend conformal motion planning
+    to adaptive settings, adjusting prediction set widths online to maintain
+    coverage under distribution shift---conceptually close to the ACI-based
+    reliability adaptation in DC3S.
+  \item Angelopoulos et al.~\cite{angelopoulos2023conformal} formalise
+    \emph{conformal PID control}, a feedback loop that tunes conformal set
+    widths via proportional-integral-derivative logic to hit target coverage
+    rates.
+\end{itemize}
+
+DC3S differs from these approaches in two ways: (i)~the \emph{observation
+quality score}~$w_t$ modulates not only the prediction set width but the
+entire constraint tightening pipeline, enabling fault-type-specific
+degradation response; (ii)~every dispatched action is accompanied by a
+CertOS certificate that records the exact reliability, inflation, and safety
+margin, enabling post-hoc temporal-validity audit that the above methods
+do not address.
+
 \subsection{The Novelty Gap}
 
 Table~\ref{tab:novelty-gap} summarises the positioning of DC3S relative

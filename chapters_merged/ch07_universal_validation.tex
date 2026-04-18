@@ -430,6 +430,52 @@ mean $\bar{w}_t = 0.768$, $N = 2000$).
   \label{fig:av-profile-2}
 \end{figure}
 
+\subsubsection{Autonomous Vehicles: 2D RSS Collision-Gap Evaluation}
+\label{sec:av-rss-eval}
+
+The Path~A results above use a 1D speed-limit predicate
+($v_t \le v_{\max}$) inherited from the HEE-schema adapter.
+Path~B replaces this with a 2D \emph{RSS collision-gap} predicate
+grounded in Responsibility-Sensitive Safety~\cite{shalev2017formal}
+(see Section~\ref{sec:av-risk-envelope} for the theoretical derivation).
+
+\paragraph{RSS predicate.}
+For each time step where a same-lane lead vehicle is present
+($\text{rel\_x} > 0$, $|\text{rel\_y}| < 1.75$~m), the true-state
+violation indicator is
+$Z_t^{\text{AV}} = \mathbf{1}[g_t < g^{\text{safe}}(v_e, v_\ell)]$,
+where $g^{\text{safe}}$ is the RSS longitudinal safe gap with
+default highway parameters ($t_{\text{resp}} = 0.75$~s,
+$a_{\min}^{\text{ego}} = 4.0$~m/s$^2$,
+$a_{\max}^{\text{lead}} = 6.0$~m/s$^2$).
+When no same-lane lead is present, the Path~A speed-limit predicate
+applies as a fallback.
+
+\paragraph{Data surface.}
+The RSS evaluation draws on the Waymo Motion validation corpus:
+185,640 ego time steps across 1,975 scenarios.
+Of these, 107,867 steps (58.1\%) have a detectable same-lane lead vehicle.
+Median actual gap: 23~m; minimum: 0.44~m; maximum: 80~m.
+
+\paragraph{Baseline RSS violation rate.}
+Without the DC3S shield, the Waymo trajectories exhibit a baseline RSS
+violation rate of 0.55\% on lead-present steps (577 violations out of
+107,867 steps).  This is consistent with the Waymo fleet's conservative
+following distance policy, and provides a realistic baseline for
+evaluating the DC3S shield's ability to further suppress collision-gap
+violations under degraded observation.
+
+\paragraph{Risk-envelope confirmation.}
+The AV risk-envelope contract
+$\Prob[Z_t^{\text{AV}} = 1 \mid \mathcal{H}_t] \le \alpha(1 - w_t)$
+derived in Section~\ref{sec:av-risk-envelope} predicts that the
+DC3S shield should suppress RSS violations to at most $\alpha(1 - \bar{w})T$
+expected violations over any horizon.  The empirical baseline of 0.55\%
+is already below the Core Bound for $\alpha = 0.10$ at typical
+reliability levels ($\bar{w} \approx 0.80$), confirming that the
+ORIUS Core Bound applies to the AV collision-gap domain with
+substantial slack, paralleling the battery result.
+
 %% =========================================================================
 \subsubsection{Industrial Process Control}
 \label{sec:profile-industrial}

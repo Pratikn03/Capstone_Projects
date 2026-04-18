@@ -279,24 +279,38 @@ def load_aerospace_runtime_rows(path: Path | None = None) -> list[dict[str, floa
 
 
 def load_vehicle_rows(path: Path | None = None) -> list[dict[str, Any]]:
-    """Load processed AV trajectory rows."""
+    """Load processed AV trajectory rows.
+
+    Supports both Path A (speed-limit-only) and Path B (RSS-augmented)
+    schemas.  RSS columns are optional; missing fields default to None.
+    """
     p = Path(path) if path else AV_PATH
     rows: list[dict[str, Any]] = []
     with p.open(newline="", encoding="utf-8") as fh:
         reader = csv.DictReader(fh)
         for row in reader:
             try:
-                rows.append(
-                    {
-                        "vehicle_id": row.get("vehicle_id", "veh-0"),
-                        "step": int(float(row.get("step", 0))),
-                        "position_m": float(row["position_m"]),
-                        "speed_mps": float(row["speed_mps"]),
-                        "speed_limit_mps": float(row["speed_limit_mps"]),
-                        "lead_position_m": float(row["lead_position_m"]),
-                        "ts_utc": row.get("ts_utc", ""),
-                    }
-                )
+                d: dict[str, Any] = {
+                    "vehicle_id": row.get("vehicle_id", "veh-0"),
+                    "step": int(float(row.get("step", 0))),
+                    "position_m": float(row["position_m"]),
+                    "speed_mps": float(row["speed_mps"]),
+                    "speed_limit_mps": float(row["speed_limit_mps"]),
+                    "lead_position_m": float(row["lead_position_m"]),
+                    "ts_utc": row.get("ts_utc", ""),
+                }
+                # Path B RSS columns (optional)
+                if "lead_present" in row:
+                    d["lead_present"] = row["lead_present"] in ("True", "true", "1")
+                if "lead_rel_x_m" in row and row["lead_rel_x_m"]:
+                    d["lead_rel_x_m"] = float(row["lead_rel_x_m"])
+                if "lead_speed_mps" in row and row["lead_speed_mps"]:
+                    d["lead_speed_mps"] = float(row["lead_speed_mps"])
+                if "rss_safe_gap_m" in row and row["rss_safe_gap_m"]:
+                    d["rss_safe_gap_m"] = float(row["rss_safe_gap_m"])
+                if "rss_violation_true" in row:
+                    d["rss_violation_true"] = row["rss_violation_true"] in ("True", "true", "1")
+                rows.append(d)
             except (KeyError, ValueError):
                 continue
     return rows

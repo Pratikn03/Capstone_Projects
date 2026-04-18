@@ -69,6 +69,11 @@ class VehicleDomainAdapter(DomainAdapter):
             out["load_mw"] = out.get("speed_mps", 0.0)
         if "ts_utc" not in out and "timestamp" in raw_packet:
             out["ts_utc"] = str(raw_packet["timestamp"])
+        # Pass through RSS fields when present (Path B)
+        for k in ("lead_present", "lead_rel_x_m", "lead_speed_mps",
+                   "rss_safe_gap_m", "rss_violation_true"):
+            if k in raw_packet:
+                out[k] = raw_packet[k]
         return out
 
     def compute_oqe(

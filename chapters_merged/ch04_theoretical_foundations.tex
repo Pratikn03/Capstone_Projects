@@ -1396,13 +1396,80 @@ not a converse optimality theorem.
     risk once the per-step budget has been specified.
 \end{enumerate}
 
-\subsection{Chapter Summary}
+\subsection{AV-Domain Derivation: RSS Collision-Gap Risk-Envelope Contract}
+\label{sec:av-risk-envelope}
 
-The ORIUS risk-envelope bound $\mathbb{E}[V] \le \alpha(1 - \bar{w})T$ is the
-quantitative heart of the ORIUS framework once the domain supplies an
-explicit predictable risk budget.  It links three observable
-quantities---miscoverage level, average reliability, and horizon---into
-a conservative upper envelope on expected violations.  The battery
+The battery derivation demonstrates the mechanism for a single scalar boundary
+(SOC limits).  The AV domain requires an analogous but geometrically distinct
+derivation grounded in the RSS longitudinal safe-following distance.  The
+violation indicator becomes
+\[
+  Z_t^{\text{AV}} \;=\; \mathbf{1}\!\bigl[\,g_t < g_t^{\text{safe}}\,\bigr],
+\]
+where $g_t = \|x_{\text{ego},t} - x_{\text{lead},t}\|$ is the actual inter-vehicle
+gap and $g_t^{\text{safe}}$ is the RSS safe gap:
+\[
+  g^{\text{safe}}(v_e, v_\ell)
+  \;=\;
+  \max\!\Bigl(0,\;
+    v_e\,t_{\text{resp}}
+    + \frac{v_e^2}{2\,a_{\min}^{\text{ego}}}
+    - \frac{v_\ell^2}{2\,a_{\max}^{\text{lead}}}
+  \Bigr),
+\]
+following Shalev-Shwartz et al.\ (2017).
+
+\paragraph{AV assumptions.}
+\begin{description}
+  \item[A1\textsubscript{AV}] (\emph{Bounded kinematic tracking}.)
+    The ego state measurement error is bounded:
+    $\|z_t - x_t\| \le \varepsilon_{\text{ego}}$.
+  \item[A2\textsubscript{AV}] (\emph{Bounded lead-observation error}.)
+    The lead gap estimate satisfies
+    $|\hat{g}_t - g_t| \le h(w_t)$, where $h$ is monotone decreasing:
+    better reliability yields tighter perception.
+  \item[A4\textsubscript{AV}] (\emph{Known RSS parameters}.)
+    $t_{\text{resp}}$, $a_{\min}^{\text{ego}}$, $a_{\max}^{\text{lead}}$ are
+    known calibration constants (not learned online).
+  \item[A5\textsubscript{AV}] (\emph{Conformal calibration on gap residuals}.)
+    CQR is calibrated on the per-step lead-gap prediction error at
+    miscoverage level $\alpha$, matching the battery surface's quantile
+    calibration contract.
+\end{description}
+
+\paragraph{Per-step risk-envelope contract.}
+Under A1\textsubscript{AV}--A5\textsubscript{AV}, the RAC-Cert inflation
+$q_\alpha / w_t$ applied to the gap uncertainty set ensures that the
+residual probability of an RSS violation is bounded:
+\[
+  \Prob\!\bigl[Z_t^{\text{AV}} = 1 \mid \mathcal{H}_t\bigr]
+  \;\le\;
+  \alpha\,(1 - w_t).
+\]
+The argument parallels the battery derivation:
+\begin{enumerate}
+  \item An RSS violation requires the actual gap to fall below the safe gap.
+  \item The OQE reliability score $w_t$ proxies the admissible
+    telemetry-error tail: lower $w_t$ implies wider perception noise.
+  \item The conformal inflation $q_\alpha / w_t$ tightens the safe action set
+    so that the controller commands a gap margin exceeding
+    $g^{\text{safe}} + h(w_t)$, leaving residual risk $\le \alpha(1 - w_t)$.
+\end{enumerate}
+
+\paragraph{Aggregation.}
+Applying Lemma~\ref{lem:per-step-risk} with $r_t = \alpha(1-w_t)$ yields
+\[
+  \mathbb{E}\!\bigl[V^{\text{AV}}\bigr]
+  \;\le\;
+  \alpha\,(1 - \bar{w}^{\text{AV}})\,T^{\text{AV}},
+\]
+confirming that the ORIUS Core Bound (Theorem~\ref{thm:core-bound}) applies
+to the AV domain under the RSS collision-gap predicate, not only to the
+battery's SOC boundary predicate.  This closes the ``battery-only contract''
+attack surface: the Core Bound is a domain-agnostic aggregation result once
+each domain supplies its own predictable per-step risk budget.
+
+\subsection{Chapter Summary}
 evaluation remains well below that envelope, which is exactly the intended
 reading: the theorem controls residual risk conservatively rather than
 claiming coefficient-wise sharpness in every model.
