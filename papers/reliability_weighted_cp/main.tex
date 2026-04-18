@@ -1,0 +1,34 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath,amssymb,booktabs,hyperref}
+
+\title{Reliability-Binned Mondrian Conformal Calibration for ORIUS Runtime Monitoring}
+\author{Pratik Niroula}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This note records the defensible conformal-calibration surface currently retained in the ORIUS repository. Rather than claiming a new coverage theorem under inverse-reliability weighting, the paper reframes the method as reliability-binned Mondrian conformal calibration with grouped empirical evaluation. The result is useful for internal benchmarking and external review, but it is explicitly not submission-cleared as a new theorem paper.
+\end{abstract}
+
+\section{Status}
+\textbf{Internal draft only.} This document is kept for external theorist review and implementation traceability. It is not a submission-ready theorem paper, and it makes no claim that inverse-reliability weighting preserves exchangeability or yields a new conditional coverage guarantee.
+
+\section{Motivation}
+Conformal prediction is attractive for ORIUS because it attaches finite-sample uncertainty sets to predictive surfaces under well-specified assumptions \cite{vovk2005algorithmic,romano2019conformalized,angelopoulos2023gentle}. The difficulty is that runtime reliability changes the quality of the observed covariates, so grouped diagnostic performance by reliability regime matters even when a full new theorem is unavailable \cite{gibbs2021adaptive,barber2023beyond}.
+
+\section{Defensible Calibration Surface}
+The retained implementation partitions reliability into bins and calibrates an absolute-residual quantile within each bin. At test time, the interval width is chosen by the test point's reliability bin. This is a Mondrian-style grouped calibration surface rather than a new weighted-exchangeability result \cite{vovk2005algorithmic}. The implementation also enforces a monotonicity heuristic so that lower-reliability bins are not narrower than higher-reliability bins.
+
+\section{What This Draft Does Not Claim}
+The previous draft stated a theorem implying reliability-indexed coverage after inverse-reliability weighting. That theorem has been removed. This draft does not assert any new hybrid conditional-versus-marginal coverage guarantee, does not claim any form of weighted exchangeability, and does not present a proof sketch for a result that has not been externally reviewed.
+
+\section{Evaluation Surface}
+The companion validation script reports empirical grouped coverage and average interval width by reliability bin. Those outputs are implementation diagnostics only. They help determine whether the reliability-binned calibration surface behaves sensibly on ORIUS replay data, but they do not establish a new conformal theory result.
+
+\section{External Review Requirement}
+Any future attempt to promote this note beyond an internal draft requires external conformal-inference review. Relevant prior work includes classical conformal prediction \cite{vovk2005algorithmic}, conformalized quantile regression \cite{romano2019conformalized}, adaptive conformal inference under shift \cite{gibbs2021adaptive}, and recent reviews of beyond-exchangeability settings \cite{barber2023beyond}.
+
+\bibliographystyle{IEEEtran}
+\bibliography{../refs}
+\end{document}

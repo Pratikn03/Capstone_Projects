@@ -1,0 +1,28 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath,amssymb,amsthm,hyperref}
+
+\title{The No Free Safety Principle}
+\author{Pratik Niroula}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This paper states a bounded information-pattern principle for degraded-observation control. If a controller maps observations directly to actions and the observation channel can hide true-state drift behind observationally identical traces, then observation-only legality cannot guarantee uniform true-state safety. The contribution is constructive rather than universal: the accompanying code produces paired executions with identical observation streams, identical controller actions, and divergent true-state safety outcomes.
+\end{abstract}
+
+\section{Principle Statement}
+Let $\pi : \mathcal{O} \to \mathcal{A}$ be a controller with no runtime access to a measurable fidelity statistic. If the observation channel admits a fault process that can leave the observation stream unchanged while perturbing the true state, then there exist two executions with identical observations and identical action sequences but different true-state trajectories. If the safety outcomes differ, $\pi$ fails on at least one execution.
+
+\section{Constructive Counterexample}
+The implementation uses the simplest useful indistinguishability pattern. Both executions present the same frozen observation stream to the controller. The clean execution evolves under nominal dynamics. The faulted execution evolves under the same controller actions but adds hidden drift to the true state. Because the information received by the controller is identical, the emitted action sequence is identical as well. A safety divergence then shows that observation-only control is insufficient.
+
+\section{Relation to Prior Work}
+The principle is consistent with communication-constrained control results showing that information structure matters for stabilizability and safe closed-loop behavior \cite{nair2004stabilizability,tatikonda2004control}. It also aligns with runtime-assurance intuition: if the supervisor cannot observe or estimate channel degradation, then a release decision based solely on the visible observation cannot be uniformly trusted \cite{sha1998simplex,sha2001using}.
+
+\section{Bounded Claim}
+This paper does not claim a full impossibility theorem for all cyber-physical systems. It makes a narrower constructive claim about observational indistinguishability and true-state divergence. That bounded scope is deliberate; it matches the code path and keeps the result reviewable without overstating generality.
+
+\bibliographystyle{IEEEtran}
+\bibliography{../refs}
+\end{document}
