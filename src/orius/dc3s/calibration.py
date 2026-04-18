@@ -33,6 +33,8 @@ __all__ = [
     "inflate_q",
     "inflate_interval",
     "calibrate_ambiguity_lambda",
+    "derived_inflation_factor",
+    "effective_sample_size",
     "DOMAIN_INFLATION_FACTORS",
 ]
 
@@ -52,6 +54,55 @@ DOMAIN_INFLATION_FACTORS: dict[str, float] = {
     "av": 1.40,
     "aerospace": 1.50,
 }
+
+
+@dataclass(frozen=True)
+class DerivedInflationResult:
+    """Opt-in concentration-derived inflation summary."""
+
+    inflation_factor: float
+    effective_sample_size: float
+    concentration_bound: float
+    reliability: float
+
+
+def effective_sample_size(reliability_history: np.ndarray | list[float] | tuple[float, ...]) -> float:
+    """Compute Kish-style effective sample size for a reliability history."""
+
+    history = np.clip(np.asarray(reliability_history, dtype=float).reshape(-1), 0.0, None)
+    sum_w = float(np.sum(history))
+    sum_w_sq = float(np.sum(history**2))
+    if sum_w_sq <= 1.0e-12:
+        return 0.0
+    return float((sum_w**2) / sum_w_sq)
+
+
+def derived_inflation_factor(
+    reliability: float,
+    reliability_history: np.ndarray | list[float] | tuple[float, ...],
+    alpha: float = 0.1,
+    inflation_max: float = 2.0,
+) -> DerivedInflationResult:
+    """Compute the optional concentration-based inflation law."""
+
+    n_eff = effective_sample_size(reliability_history)
+    if n_eff < 1.0:
+        return DerivedInflationResult(
+            inflation_factor=float(inflation_max),
+            effective_sample_size=float(n_eff),
+            concentration_bound=float("inf"),
+            reliability=float(reliability),
+        )
+
+    reliability_scale = 1.0 / max(float(reliability), 0.05)
+    bound = float(np.sqrt((2.0 * reliability_scale / n_eff) * np.log(2.0 / float(alpha))))
+    inflation = float(np.clip(1.0 + bound, 1.0, float(inflation_max)))
+    return DerivedInflationResult(
+        inflation_factor=inflation,
+        effective_sample_size=float(n_eff),
+        concentration_bound=bound,
+        reliability=float(reliability),
+    )
 
 
 def _as_1d(value: float | list[float] | np.ndarray, label: str) -> np.ndarray:
@@ -77,6 +128,13 @@ def _scalar_or_zero(arr: Any) -> float:
     """Return the first scalar element of an array-like, or 0.0 if empty."""
     a = np.asarray(arr, dtype=float).reshape(-1)
     return float(a[0]) if a.size > 0 else 0.0
+
+
+def _float_tuple(values: Any) -> tuple[float, ...]:
+    if values is None:
+        return ()
+    arr = np.asarray(values, dtype=float).reshape(-1)
+    return tuple(float(value) for value in arr)
 
 
 def inflate_q(q: float | list[float] | np.ndarray, inflation: float) -> np.ndarray:
@@ -141,6 +199,7 @@ class DC3SConfig:
 
     # --- Inflation law ---
     law: str = "linear"
+    inflation_law: str = "heuristic"
     k_quality: float = 0.8
     k_drift: float = 0.6
     k_sensitivity: float = 0.0
@@ -150,6 +209,7 @@ class DC3SConfig:
     # --- Reliability ---
     min_w: float = 0.05
     adversarial_mode: bool = False
+    reliability_history: tuple[float, ...] = ()
 
     # --- Domain-typed inflation (Gap 4) ---
     domain_id: str = "battery"
@@ -195,6 +255,7 @@ class DC3SConfig:
 
         return cls(
             law=str(d.get("law", "linear")).strip().lower(),
+            inflation_law=str(d.get("inflation_law", "heuristic")).strip().lower(),
             k_quality=float(d.get("k_quality", d.get("k_q", 0.8))),
             k_drift=float(d.get("k_drift", 0.6)),
             k_sensitivity=float(d.get("k_sensitivity", rac_raw.get("k_sensitivity", 0.0))),
@@ -202,6 +263,7 @@ class DC3SConfig:
             cooldown_smoothing=float(d.get("cooldown_smoothing", 0.0)),
             min_w=float(reliability_raw.get("min_w", 0.05)),
             adversarial_mode=bool(reliability_raw.get("adversarial_mode", False)),
+            reliability_history=_float_tuple(_cfg_get(d, "reliability_history", default=reliability_raw.get("history"))),
             domain_id=str(d.get("domain_id", "battery")).strip().lower(),
             sensitivity_t=float(_cfg_get(d, "sensitivity_t", "runtime_sensitivity_t", default=0.0)),
             sensitivity_norm=_cfg_get(d, "sensitivity_norm", "runtime_sensitivity_norm"),
@@ -236,6 +298,7 @@ def build_uncertainty_set(
     # missing YAML keys are caught at parse time, not silently defaulted.
     dc = DC3SConfig.from_mapping(cfg)
     law = dc.law
+    inflation_selector = dc.inflation_law
     k_q = dc.k_quality
     k_d = dc.k_drift
     k_s = dc.k_sensitivity
@@ -302,13 +365,24 @@ def build_uncertainty_set(
         inflation = infl_raw
         q_multiplier = 1.0
     else:
-        infl_raw = 1.0 + k_q * (1.0 - w_eff) + k_d * drift_term + k_s * float(sensitivity_norm_val)
-        # Domain-typed inflation (Gap 4): scale the above-unity component by
-        # the domain factor so that higher-uncertainty domains receive wider
-        # intervals while the battery reference domain stays at factor 1.0.
         domain_factor = float(DOMAIN_INFLATION_FACTORS.get(dc.domain_id, 1.0))
-        infl_raw = 1.0 + (infl_raw - 1.0) * domain_factor
-        inflation = float(np.clip(infl_raw, 1.0, infl_max))
+        if inflation_selector == "derived":
+            history = np.asarray(dc.reliability_history if dc.reliability_history else (w_eff,), dtype=float)
+            derived = derived_inflation_factor(
+                reliability=float(w_eff),
+                reliability_history=history,
+                alpha=float(rac_cfg.alpha),
+                inflation_max=float(infl_max),
+            )
+            infl_raw = 1.0 + float(derived.concentration_bound)
+            inflation = float(derived.inflation_factor)
+        else:
+            infl_raw = 1.0 + k_q * (1.0 - w_eff) + k_d * drift_term + k_s * float(sensitivity_norm_val)
+            # Domain-typed inflation (Gap 4): scale the above-unity component by
+            # the domain factor so that higher-uncertainty domains receive wider
+            # intervals while the battery reference domain stays at factor 1.0.
+            infl_raw = 1.0 + (infl_raw - 1.0) * domain_factor
+            inflation = float(np.clip(infl_raw, 1.0, infl_max))
 
         smoothing = dc.cooldown_smoothing
         if prev_inflation is not None and 0.0 < smoothing < 1.0:
@@ -395,6 +469,7 @@ def build_uncertainty_set(
         "delta": meta_delta,
         "sigma2": meta_sigma2,
         "inflation_rule": law,
+        "inflation_law_selector": inflation_selector,
         "domain_id": dc.domain_id,
         "domain_inflation_factor": float(DOMAIN_INFLATION_FACTORS.get(dc.domain_id, 1.0)),
         "adversarial_mode": dc.adversarial_mode,
@@ -403,6 +478,7 @@ def build_uncertainty_set(
             "drift": float(k_d * drift_term) if law != "ftit_ro" else 0.0,
             "sensitivity": float(k_s * float(sensitivity_norm_val)) if law != "ftit_ro" else 0.0,
             "q_multiplier_raw": float(q_meta.get("q_multiplier_raw", q_multiplier)) if law != "ftit_ro" else 1.0,
+            "derived_selected": float(inflation_selector == "derived") if law != "ftit_ro" else 0.0,
         },
     }
     return lower, upper, meta

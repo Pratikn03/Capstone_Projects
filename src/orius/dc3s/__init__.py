@@ -4,7 +4,13 @@ from .quality import compute_reliability
 from .deep_oqe import DeepOQEConfig, DeepOQEModel, FEATURE_NAMES as DEEP_OQE_FEATURE_NAMES
 from .ftit import FTIT_FAULT_KEYS, preview_fault_state, update as update_ftit_state
 from .drift import PageHinkleyDetector, AdaptivePageHinkleyDetector
-from .calibration import inflate_interval, inflate_q, build_uncertainty_set
+from .calibration import (
+    build_uncertainty_set,
+    derived_inflation_factor,
+    effective_sample_size,
+    inflate_interval,
+    inflate_q,
+)
 from .online_calibration import OnlineCalibrator, calibration_contract_check
 from .shield import repair_action
 from .certificate import (
@@ -86,6 +92,8 @@ __all__ = [
     "inflate_interval",
     "inflate_q",
     "build_uncertainty_set",
+    "derived_inflation_factor",
+    "effective_sample_size",
     "repair_action",
     "make_certificate",
     "store_certificate",
