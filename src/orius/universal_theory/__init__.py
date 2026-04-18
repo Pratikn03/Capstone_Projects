@@ -22,6 +22,11 @@ from .kernel import (
     derive_safe_action_set,
     execute_universal_step,
 )
+from .no_free_safety import (
+    CounterexampleResult,
+    construct_counterexample,
+    formal_principle_statement,
+)
 from .risk_bounds import (
     FrontierPoint,
     assert_coverage_guarantee,
@@ -64,4 +69,7 @@ __all__ = [
     "FrontierPoint",
     "compute_frontier",
     "minimum_reliability_for_target",
+    "CounterexampleResult",
+    "construct_counterexample",
+    "formal_principle_statement",
 ]
