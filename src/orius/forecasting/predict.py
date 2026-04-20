@@ -6,14 +6,33 @@ from typing import Dict, Any
 
 import numpy as np
 import pandas as pd
-import torch
 
-from orius.forecasting.dl_lstm import LSTMForecaster
-from orius.forecasting.dl_nbeats import NBEATSForecaster
-from orius.forecasting.dl_patchtst import PatchTSTForecaster
-from orius.forecasting.dl_tft import TFTForecaster
-from orius.forecasting.dl_tcn import TCNForecaster
 from orius.utils.scaler import StandardScaler
+
+# ── Lazy torch / DL imports ──
+_torch = None
+_LSTMForecaster = None
+_NBEATSForecaster = None
+_PatchTSTForecaster = None
+_TFTForecaster = None
+_TCNForecaster = None
+
+def _ensure_torch():
+    global _torch, _LSTMForecaster, _NBEATSForecaster, _PatchTSTForecaster, _TFTForecaster, _TCNForecaster
+    if _torch is not None:
+        return
+    import torch as _t
+    from orius.forecasting.dl_lstm import LSTMForecaster
+    from orius.forecasting.dl_nbeats import NBEATSForecaster
+    from orius.forecasting.dl_patchtst import PatchTSTForecaster
+    from orius.forecasting.dl_tft import TFTForecaster
+    from orius.forecasting.dl_tcn import TCNForecaster
+    _torch = _t
+    _LSTMForecaster = LSTMForecaster
+    _NBEATSForecaster = NBEATSForecaster
+    _PatchTSTForecaster = PatchTSTForecaster
+    _TFTForecaster = TFTForecaster
+    _TCNForecaster = TCNForecaster
 
 
 def _normalize_quantile_levels(quantiles: Any) -> list[float]:
@@ -71,7 +90,8 @@ def load_model_bundle(path: str | Path) -> Dict[str, Any]:
         with open(path, "rb") as f:
             bundle = pickle.load(f)
     elif path.suffix == ".pt":
-        bundle = torch.load(path, map_location="cpu")
+        _ensure_torch()
+        bundle = _torch.load(path, map_location="cpu")
     else:
         raise ValueError(f"Unsupported model format: {path.suffix}")
     bundle["_path"] = str(path)
@@ -80,13 +100,14 @@ def load_model_bundle(path: str | Path) -> Dict[str, Any]:
 
 def _build_torch_model(bundle: Dict[str, Any]):
     """Instantiate a Torch model from a saved bundle."""
+    _ensure_torch()
     model_type = bundle.get("model_type")
     feat_cols = bundle.get("feature_cols", [])
     params = bundle.get("model_params", {})
     quantile_levels = _normalize_quantile_levels(bundle.get("quantile_levels"))
     n_quantiles = max(1, int(bundle.get("n_quantiles", len(quantile_levels) or 1)))
     if model_type == "lstm":
-        model = LSTMForecaster(
+        model = _LSTMForecaster(
             n_features=len(feat_cols),
             hidden_size=int(params.get("hidden_size", 128)),
             num_layers=int(params.get("num_layers", 2)),
@@ -98,7 +119,7 @@ def _build_torch_model(bundle: Dict[str, Any]):
             n_quantiles=n_quantiles,
         )
     elif model_type == "tcn":
-        model = TCNForecaster(
+        model = _TCNForecaster(
             n_features=len(feat_cols),
             num_channels=list(params.get("num_channels", [32, 32, 32])),
             kernel_size=int(params.get("kernel_size", 3)),
@@ -109,7 +130,7 @@ def _build_torch_model(bundle: Dict[str, Any]):
             n_quantiles=n_quantiles,
         )
     elif model_type == "nbeats":
-        model = NBEATSForecaster(
+        model = _NBEATSForecaster(
             n_features=len(feat_cols),
             lookback=int(bundle.get("lookback", params.get("lookback", 168))),
             horizon=int(bundle.get("horizon", params.get("horizon", 24))),
@@ -119,7 +140,7 @@ def _build_torch_model(bundle: Dict[str, Any]):
             n_quantiles=n_quantiles,
         )
     elif model_type == "tft":
-        model = TFTForecaster(
+        model = _TFTForecaster(
             n_features=len(feat_cols),
             horizon=int(bundle.get("horizon", params.get("horizon", 24))),
             d_model=int(params.get("d_model", 128)),
@@ -130,7 +151,7 @@ def _build_torch_model(bundle: Dict[str, Any]):
             n_quantiles=n_quantiles,
         )
     elif model_type == "patchtst":
-        model = PatchTSTForecaster(
+        model = _PatchTSTForecaster(
             n_features=len(feat_cols),
             lookback=int(bundle.get("lookback", params.get("lookback", 168))),
             horizon=int(bundle.get("horizon", params.get("horizon", 24))),
@@ -201,8 +222,8 @@ def predict_next_24h(features_df: pd.DataFrame, model_bundle: Dict[str, Any], ho
         X = _maybe_scale_X(X, model_bundle)
         model = _build_torch_model(model_bundle)
         quantile_levels = _normalize_quantile_levels(model_bundle.get("quantile_levels"))
-        with torch.no_grad():
-            xb = torch.from_numpy(X[-lookback:].astype(np.float32)).unsqueeze(0)
+        with _torch.no_grad():
+            xb = _torch.from_numpy(X[-lookback:].astype(np.float32)).unsqueeze(0)
             pred_seq = model(xb).numpy()
             pred_arr, quantile_arrs = _extract_prediction_outputs(
                 pred_seq,

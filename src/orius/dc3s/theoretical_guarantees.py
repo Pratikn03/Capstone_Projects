@@ -1155,10 +1155,11 @@ THEOREM_REGISTER = {
     "T11_Byzantine": {
         "name": "Byzantine-Tolerant OQE Bound",
         "statement": (
-            "For f < 1/3 with trim_frac >= f, the trimmed-mean OQE satisfies "
-            "|mu_trim - mu_true| <= sigma_honest / sqrt(W * (1 - 2f)), where W "
-            "is the window size.  Proof: all adversarial readings fall in the "
-            "minority and are trimmed; apply Hoeffding to the honest subset."
+            "For f < 1/3 with trim_frac >= f and tail-contamination confined "
+            "to the trimmed tails, the trimmed-mean OQE satisfies "
+            "|mu_trim - mu_true| <= 2*sigma_honest / sqrt(W * (1 - 2f)), where "
+            "W is the window size.  Proof: trim away the adversarial tails and "
+            "apply Hoeffding to the honest subset."
         ),
         "type": "robustness_bound",
         "code_witness": "prove_byzantine_bound",
@@ -1209,14 +1210,15 @@ THEOREM_REGISTER = {
         "statement": (
             "P(all H steps safe) >= 1 - H*alpha*(1-w_bar) - epsilon_fs - delta/2, "
             "where epsilon_fs is the finite-sample conformal correction. "
-            "The maximum certifiable horizon is H_max = floor((1-epsilon_fs-delta/2)/(alpha*(1-w_bar))). "
+            "The maximum certifiable horizon is "
+            "H_max = max(0, floor((delta/2-epsilon_fs)/(alpha*(1-w_bar)))). "
             "The executable witness defends the Bonferroni/union-bound surface only."
         ),
         "type": "pac_trajectory",
         "code_witness": "pac_trajectory_safety_certificate",
         "module": "orius.universal_theory.risk_bounds",
         "dependencies": ["conformal_coverage", "exit_time_reflection_principle", "union_bound",
-                         "A1_lipschitz", "A4_compact_safe_set", "A5_exchangeability"],
+                         "A1_model_error", "A4_known_dynamics", "A5_absorbed_tightening", "A9_sub_gaussian"],
         "parent_law": None,
     },
 }

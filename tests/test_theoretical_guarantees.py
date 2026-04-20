@@ -187,6 +187,7 @@ class TestByzantineBound:
     def test_bound_holds_for_small_f(self) -> None:
         result = prove_byzantine_bound(W=20, f=0.2, sigma_honest=1.0)
         assert result["holds"] is True
+        assert result["bound"] == pytest.approx(2.0 / (20.0 * 0.6) ** 0.5)
         assert result["bound"] < 1.0
         assert result["W_effective"] == pytest.approx(20 * 0.6)
 
@@ -326,10 +327,18 @@ class TestTrajectoryPAC:
         )
         assert result["trajectory_safety_prob"] > 0.90
 
-    def test_H_max_certifiable_is_finite(self) -> None:
+    def test_small_calibration_can_make_the_certificate_vacuous(self) -> None:
         result = pac_trajectory_safety_certificate(
             H=50, n_cal=500, alpha=0.10, delta=0.05,
             w_sequence=[0.8] * 50, margin=5.0, sigma_d=0.1,
+        )
+        assert result["H_max_certifiable"] == 0
+        assert result["H_max_nonvacuous"] > 0
+
+    def test_H_max_certifiable_is_positive_when_calibration_and_reliability_are_strong(self) -> None:
+        result = pac_trajectory_safety_certificate(
+            H=50, n_cal=300000, alpha=0.05, delta=0.05,
+            w_sequence=[0.98] * 50, margin=5.0, sigma_d=0.1,
         )
         assert result["H_max_certifiable"] > 0
         assert result["H_max_certifiable"] < 10000

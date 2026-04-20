@@ -6,6 +6,18 @@ from dataclasses import dataclass
 import numpy as np
 
 
+def _split_conformal_quantile(scores: np.ndarray, alpha: float) -> float:
+    values = np.asarray(scores, dtype=float).reshape(-1)
+    if values.size == 0:
+        raise ValueError("split conformal quantile requires at least one score")
+    if not 0.0 <= float(alpha) < 1.0:
+        raise ValueError("alpha must lie in [0, 1) for split conformal quantiles")
+    ordered = np.sort(values, kind="mergesort")
+    rank = int(np.ceil((ordered.size + 1) * (1.0 - float(alpha))))
+    rank = min(max(rank, 1), ordered.size)
+    return float(ordered[rank - 1])
+
+
 @dataclass(frozen=True)
 class ReliabilityMondrianConfig:
     """Configuration for reliability-binned conformal calibration."""
@@ -64,7 +76,7 @@ class ReliabilityMondrian:
         residuals = np.abs(y_true_arr - y_pred_arr)
         self.bin_edges_ = self._compute_edges(reliability_arr)
         self.n_bins_ = int(len(self.bin_edges_) - 1)
-        self.global_q_ = float(np.quantile(residuals, 1.0 - self.config.alpha))
+        self.global_q_ = _split_conformal_quantile(residuals, self.config.alpha)
 
         bin_ids = self._assign_bins(reliability_arr)
         self.q_by_bin_ = {}
@@ -73,7 +85,7 @@ class ReliabilityMondrian:
             if vals.size < max(int(self.config.min_bin_size), 1):
                 self.q_by_bin_[bin_idx] = float(self.global_q_)
             else:
-                self.q_by_bin_[bin_idx] = float(np.quantile(vals, 1.0 - self.config.alpha))
+                self.q_by_bin_[bin_idx] = _split_conformal_quantile(vals, self.config.alpha)
         return self
 
     def predict_interval(self, y_pred: np.ndarray, reliability: np.ndarray) -> tuple[np.ndarray, np.ndarray]:

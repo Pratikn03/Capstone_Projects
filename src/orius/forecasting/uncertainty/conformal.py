@@ -36,6 +36,19 @@ class ConformalConfig:
     eps: float = 1e-6
 
 
+def _split_conformal_quantile(scores: np.ndarray, alpha: float) -> float:
+    """Return the finite-sample split-conformal order statistic."""
+    values = np.asarray(scores, dtype=float).reshape(-1)
+    if values.size == 0:
+        raise ValueError("split conformal quantile requires at least one score")
+    if not 0.0 <= float(alpha) < 1.0:
+        raise ValueError("alpha must lie in [0, 1) for split conformal quantiles")
+    ordered = np.sort(values, kind="mergesort")
+    rank = int(np.ceil((ordered.size + 1) * (1.0 - float(alpha))))
+    rank = min(max(rank, 1), ordered.size)
+    return float(ordered[rank - 1])
+
+
 class AdaptiveConformal:
     """Fully Adaptive Conformal Inference (FACI) with online alpha updates."""
 
@@ -187,14 +200,17 @@ class ConformalInterval:
         _, horizon = resid.shape
 
         if self.cfg.horizon_wise:
-            self.q_h = np.quantile(resid, 1.0 - self.cfg.alpha, axis=0)
-            self.q_global = float(np.quantile(resid.flatten(), 1.0 - self.cfg.alpha))
+            self.q_h = np.array(
+                [_split_conformal_quantile(resid[:, h], self.cfg.alpha) for h in range(horizon)],
+                dtype=float,
+            )
+            self.q_global = _split_conformal_quantile(resid.flatten(), self.cfg.alpha)
             if self.cfg.rolling:
                 self._resid_buffers = [
                     deque(resid[:, h].tolist(), maxlen=self.cfg.rolling_window) for h in range(horizon)
                 ]
         else:
-            self.q_global = float(np.quantile(resid.flatten(), 1.0 - self.cfg.alpha))
+            self.q_global = _split_conformal_quantile(resid.flatten(), self.cfg.alpha)
             if self.cfg.rolling:
                 self._resid_buffers = [deque(resid.flatten().tolist(), maxlen=self.cfg.rolling_window)]
 
@@ -224,13 +240,14 @@ class ConformalInterval:
 
         if self.cfg.horizon_wise:
             self.q_h = np.array([
-                np.quantile(np.array(buf), 1.0 - self.cfg.alpha) for buf in self._resid_buffers
+                _split_conformal_quantile(np.array(buf, dtype=float), self.cfg.alpha)
+                for buf in self._resid_buffers
             ])
             all_vals = np.concatenate([np.array(buf) for buf in self._resid_buffers if len(buf) > 0])
             if all_vals.size:
-                self.q_global = float(np.quantile(all_vals, 1.0 - self.cfg.alpha))
+                self.q_global = _split_conformal_quantile(all_vals, self.cfg.alpha)
         else:
-            self.q_global = float(np.quantile(np.array(self._resid_buffers[0]), 1.0 - self.cfg.alpha))
+            self.q_global = _split_conformal_quantile(np.array(self._resid_buffers[0], dtype=float), self.cfg.alpha)
 
     def fit_calibration_cqr(self, y_true: np.ndarray, q_lo: np.ndarray, q_hi: np.ndarray) -> None:
         """
@@ -251,14 +268,17 @@ class ConformalInterval:
 
         _, horizon = scores.shape
         if self.cfg.horizon_wise:
-            self.q_h = np.quantile(scores, 1.0 - self.cfg.alpha, axis=0)
-            self.q_global = float(np.quantile(scores.flatten(), 1.0 - self.cfg.alpha))
+            self.q_h = np.array(
+                [_split_conformal_quantile(scores[:, h], self.cfg.alpha) for h in range(horizon)],
+                dtype=float,
+            )
+            self.q_global = _split_conformal_quantile(scores.flatten(), self.cfg.alpha)
             if self.cfg.rolling:
                 self._resid_buffers = [
                     deque(scores[:, h].tolist(), maxlen=self.cfg.rolling_window) for h in range(horizon)
                 ]
         else:
-            self.q_global = float(np.quantile(scores.flatten(), 1.0 - self.cfg.alpha))
+            self.q_global = _split_conformal_quantile(scores.flatten(), self.cfg.alpha)
             if self.cfg.rolling:
                 self._resid_buffers = [deque(scores.flatten().tolist(), maxlen=self.cfg.rolling_window)]
 

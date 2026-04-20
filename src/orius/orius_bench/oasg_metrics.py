@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import csv
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable
 
 import numpy as np
@@ -17,6 +19,10 @@ __all__ = [
     "signature_latex_table",
     "signature_report",
 ]
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+BATTERY_TRACE_PATH = REPO_ROOT / "reports" / "publication" / "48h_trace_final_de.csv"
+AV_RUNTIME_TRACE_PATH = REPO_ROOT / "reports" / "orius_av" / "full_corpus" / "runtime_traces.csv"
 
 
 @dataclass(frozen=True)
@@ -200,32 +206,67 @@ def _build_box_surface(
     )
 
 
-def _battery_surface(length: int = 256) -> SubmissionDomainSurface:
-    time = np.linspace(0.0, 6.0 * np.pi, num=length, dtype=float)
-    soc = 105.0 + 62.0 * np.sin(time) + 20.0 * np.sin(time / 2.0)
-    spikes = np.where(np.arange(length) % 29 == 0, 18.0, 0.0)
-    states = (soc + spikes).reshape(-1, 1)
-    reliability = _reliability_from_jumps(states, scale=26.0)
-    return _build_box_surface(
-        states=states,
-        lower=np.array([20.0], dtype=float),
-        upper=np.array([180.0], dtype=float),
-        reliability=reliability,
+def _load_trace_rows(path: Path, *, controller_field: str, controller_value: str) -> list[dict[str, str]]:
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = [
+            row
+            for row in csv.DictReader(handle)
+            if row.get(controller_field) == controller_value
+        ]
+    if not rows:
+        raise ValueError(f"No rows found in {path} for {controller_field}={controller_value!r}")
+    return rows
+
+
+def _battery_surface() -> SubmissionDomainSurface:
+    rows = _load_trace_rows(
+        BATTERY_TRACE_PATH,
+        controller_field="controller",
+        controller_value="deterministic_lp",
+    )
+    true_states = np.asarray([[float(row["soc_true_mwh"])] for row in rows], dtype=float)
+    observations = np.asarray([[float(row["soc_observed_mwh"])] for row in rows], dtype=float)
+    reliability = np.asarray([float(row["reliability_w"]) for row in rows], dtype=float)
+    lower = np.array([0.0], dtype=float)
+    upper = np.array([10000.0], dtype=float)
+
+    def safe_set_check(state: np.ndarray) -> bool:
+        return bool(lower[0] <= state[0] <= upper[0])
+
+    def distance_to_boundary(state: np.ndarray) -> float:
+        return float(max(lower[0] - state[0], state[0] - upper[0], 0.0))
+
+    return SubmissionDomainSurface(
+        true_states=true_states,
+        observations=observations,
+        reliability_scores=np.clip(reliability, 0.0, 1.0),
+        safe_set_check=safe_set_check,
+        distance_to_boundary=distance_to_boundary,
     )
 
 
 def _av_surface() -> SubmissionDomainSurface:
-    rows = load_vehicle_rows()
-    position = np.asarray([row["position_m"] for row in rows], dtype=float)
-    speed = np.asarray([row["speed_mps"] for row in rows], dtype=float)
-    headway = np.asarray([row["lead_position_m"] - row["position_m"] for row in rows], dtype=float)
-    states = np.column_stack([headway, speed])
-    reliability = _reliability_from_jumps(states, scale=8.0)
-    return _build_box_surface(
-        states=states,
-        lower=np.array([12.0, 0.0], dtype=float),
-        upper=np.array([250.0, np.quantile(speed, 0.90)], dtype=float),
-        reliability=reliability,
+    trace_rows = _load_trace_rows(
+        AV_RUNTIME_TRACE_PATH,
+        controller_field="controller",
+        controller_value="baseline",
+    )
+    true_states = np.asarray([[float(row["true_margin"])] for row in trace_rows], dtype=float)
+    observations = np.asarray([[float(row["observed_margin"])] for row in trace_rows], dtype=float)
+    reliability = np.asarray([float(row["reliability_w"]) for row in trace_rows], dtype=float)
+
+    def safe_set_check(state: np.ndarray) -> bool:
+        return bool(state[0] >= 0.0)
+
+    def distance_to_boundary(state: np.ndarray) -> float:
+        return float(max(0.0, -state[0]))
+
+    return SubmissionDomainSurface(
+        true_states=true_states,
+        observations=observations,
+        reliability_scores=np.clip(reliability, 0.0, 1.0),
+        safe_set_check=safe_set_check,
+        distance_to_boundary=distance_to_boundary,
     )
 
 

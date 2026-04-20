@@ -68,18 +68,44 @@ from orius.utils.seed import set_seed
 from orius.utils.scaler import StandardScaler
 from orius.utils.manifest import create_run_manifest, print_manifest_summary
 from orius.forecasting.ml_gbm import train_gbm, predict_gbm
-from orius.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
-from orius.forecasting.dl_lstm import LSTMForecaster
-from orius.forecasting.dl_nbeats import NBEATSForecaster
-from orius.forecasting.dl_patchtst import PatchTSTForecaster
-from orius.forecasting.dl_tft import TFTForecaster
-from orius.forecasting.dl_tcn import TCNForecaster
 from orius.forecasting.backtest import walk_forward_horizon_metrics
 from orius.forecasting.evaluate import time_series_cv_score
 from orius.forecasting.uncertainty.conformal import ConformalConfig, ConformalInterval, save_conformal
 
-import torch
-from torch.utils.data import DataLoader
+# Lazy imports for torch-dependent modules (allows GBM-only training without torch)
+torch = None  # type: ignore[assignment]
+DataLoader = None  # type: ignore[assignment,misc]
+SeqConfig = None  # type: ignore[assignment]
+TimeSeriesWindowDataset = None  # type: ignore[assignment]
+LSTMForecaster = None  # type: ignore[assignment]
+NBEATSForecaster = None  # type: ignore[assignment]
+PatchTSTForecaster = None  # type: ignore[assignment]
+TFTForecaster = None  # type: ignore[assignment]
+TCNForecaster = None  # type: ignore[assignment]
+
+def _ensure_torch():
+    """Import torch and DL modules on first use."""
+    global torch, DataLoader, SeqConfig, TimeSeriesWindowDataset
+    global LSTMForecaster, NBEATSForecaster, PatchTSTForecaster, TFTForecaster, TCNForecaster
+    if torch is not None:
+        return
+    import torch as _torch
+    from torch.utils.data import DataLoader as _DataLoader
+    from orius.forecasting.datasets import SeqConfig as _SeqConfig, TimeSeriesWindowDataset as _TSWD
+    from orius.forecasting.dl_lstm import LSTMForecaster as _LSTM
+    from orius.forecasting.dl_nbeats import NBEATSForecaster as _NBEATS
+    from orius.forecasting.dl_patchtst import PatchTSTForecaster as _PatchTST
+    from orius.forecasting.dl_tft import TFTForecaster as _TFT
+    from orius.forecasting.dl_tcn import TCNForecaster as _TCN
+    torch = _torch
+    DataLoader = _DataLoader
+    SeqConfig = _SeqConfig
+    TimeSeriesWindowDataset = _TSWD
+    LSTMForecaster = _LSTM
+    NBEATSForecaster = _NBEATS
+    PatchTSTForecaster = _PatchTST
+    TFTForecaster = _TFT
+    TCNForecaster = _TCN
 
 
 # ============================================================================
@@ -1273,7 +1299,11 @@ def main():
             manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
     # Choose GPU if available, otherwise CPU.
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    try:
+        _ensure_torch()
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    except ImportError:
+        device = "cpu"
     quantiles = cfg["task"].get("quantiles", [0.1, 0.5, 0.9])
     requested_targets = cfg["task"].get("targets", ["load_mw"])
     if args.targets:

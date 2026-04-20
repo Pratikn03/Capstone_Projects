@@ -564,16 +564,22 @@ def pac_trajectory_safety_certificate(
     r"""PAC-style finite-time lower bound for multi-step trajectories.
 
     Theorem (T_trajectory_PAC):
-      Under A1 (Lipschitz L), A4 (compact safe set), A5 (exchangeability):
+      Under A1, A4, A5, A9, together with the implemented Bonferroni/
+      union-bound trajectory aggregation:
 
           P(all H steps safe) >= 1 - H*alpha*(1-w_bar) - epsilon_fs - delta/2
 
       where epsilon_fs = sqrt(log(4/delta) / (2*n_eff)) is the finite-sample
-      conformal correction.
+      conformal correction and
 
-      Maximum certifiable horizon:
+          n_eff = floor(n_cal * min_t w_t)
 
-          H_max = floor((1 - epsilon_fs - delta/2) / (alpha*(1-w_bar)))
+      The reliability-deflated n_eff is an explicit conservative executable
+      rule rather than an optimal conformal sample-complexity claim.
+
+      Maximum horizon certified at confidence 1-delta:
+
+          H_max = max(0, floor((delta/2 - epsilon_fs) / (alpha*(1-w_bar))))
 
     Scope note:
       The executable witness defends the Bonferroni/union-bound certificate
@@ -603,7 +609,7 @@ def pac_trajectory_safety_certificate(
     w_bar = float(np.mean(w_prefix)) if len(w_prefix) > 0 else 0.0
     w_min = float(np.min(w_prefix)) if len(w_prefix) > 0 else 0.0
 
-    n_eff = max(1, int(n_cal * max(w_min, 1e-6)))
+    n_eff = max(1, int(math.floor(n_cal * max(w_min, 1e-6))))
     epsilon_fs = math.sqrt(math.log(4.0 / max(delta, 1e-12)) / (2.0 * n_eff))
 
     per_step_risk = alpha * (1.0 - w_bar)
@@ -615,20 +621,23 @@ def pac_trajectory_safety_certificate(
 
     denom = alpha * (1.0 - w_bar)
     if denom > 1e-12:
-        numerator = max(0.0, 1.0 - epsilon_fs - exit_budget)
-        H_max = int(math.floor(numerator / denom))
+        H_max_nonvacuous = int(math.floor(max(0.0, 1.0 - epsilon_fs - exit_budget) / denom))
+        H_max = int(math.floor(max(0.0, exit_budget - epsilon_fs) / denom))
     else:
-        H_max = 10_000
+        H_max_nonvacuous = 10_000
+        H_max = 10_000 if trajectory_safety_prob >= 1.0 - delta else 0
 
     if capacity_threshold is not None and not (0.0 <= float(capacity_threshold) <= 1.0):
         raise ValueError("capacity_threshold must lie in [0, 1].")
     below_capacity = bool(capacity_threshold is not None and w_bar < capacity_threshold)
 
     assumptions = [
-        "A1 (Lipschitz dynamics)",
-        "A4 (compact safe set)",
-        "A5 (approximate exchangeability)",
+        "A1 (almost-sure model error bound).",
+        "A4 (known one-step dynamics).",
+        "A5 (absorbed monotone tightening).",
+        "A9 (sub-Gaussian disturbance law).",
         "Union-bound aggregation over the H-step horizon.",
+        "Implemented conservative effective calibration size n_eff = floor(n_cal * min_t w_t).",
     ]
     martingale_note = (
         "Martingale strengthening requested, but the executable witness reports the same "
@@ -647,6 +656,7 @@ def pac_trajectory_safety_certificate(
         "per_step_risk": float(per_step_risk),
         "trajectory_safety_prob": float(trajectory_safety_prob),
         "H_max_certifiable": H_max,
+        "H_max_nonvacuous": H_max_nonvacuous,
         "trajectory_failure_upper_bound": float(trajectory_failure),
         "uses_martingale": bool(use_martingale),
         "bound_style": "bonferroni_union_bound",
@@ -663,7 +673,8 @@ def pac_trajectory_safety_certificate(
             f"+ eps_fs({epsilon_fs:.6f}) + delta/2({exit_budget:.4f}) "
             f"= {trajectory_failure:.6f}.  "
             f"P(safe trajectory) >= {trajectory_safety_prob:.6f}.  "
-            f"H_max certifiable = {H_max}."
+            f"H_max certifiable at confidence 1-delta = {H_max}.  "
+            f"Non-vacuous horizon threshold = {H_max_nonvacuous}."
             + (f"  WARNING: w_bar={w_bar:.4f} is below capacity threshold "
                f"{capacity_threshold:.4f}; this is an information-theoretic limit, "
                "not a finite-sample artifact." if below_capacity else "")

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Multi-domain fault-type ablation benchmark.
+"""Multi-domain fault-type ablation benchmark for the active 3-domain program.
 
-Runs all 6 ORIUS-Bench domains under fault-type isolation to produce a
-per-domain, per-fault-type TSVR breakdown — the multi-domain analog of
-``tbl02_ablations.tex`` (which is battery-only).
+Runs the promoted ORIUS domains under fault-type isolation to produce a
+per-domain, per-fault-type TSVR breakdown. This script is a cross-domain
+runtime-analysis helper; it does not recreate the removed-domain lanes or any
+six-domain parity gate.
 
 Fault types evaluated
 ---------------------
@@ -42,29 +43,20 @@ from orius.orius_bench.adapter import BenchmarkAdapter
 from orius.orius_bench.battery_track import BatteryTrackAdapter
 from orius.orius_bench.vehicle_track import VehicleTrackAdapter
 from orius.orius_bench.healthcare_track import HealthcareTrackAdapter
-from orius.orius_bench.industrial_track import IndustrialTrackAdapter
-from orius.orius_bench.aerospace_track import AerospaceTrackAdapter
-from orius.orius_bench.navigation_track import NavigationTrackAdapter
 from orius.orius_bench.controller_api import NominalController, DC3SController, DomainAwareController
 from orius.orius_bench.fault_engine import FaultEvent, FaultSchedule, active_faults, generate_fault_schedule
 from orius.orius_bench.metrics_engine import StepRecord, compute_all_metrics
 from orius.universal_framework import run_universal_step
 from orius.adapters.vehicle import VehicleDomainAdapter, VehicleTrackAdapter as VehicleAdapter
 from orius.adapters.healthcare import HealthcareDomainAdapter, HealthcareTrackAdapter as HCAdapter
-from orius.adapters.industrial import IndustrialDomainAdapter, IndustrialTrackAdapter as IndAdapter
-from orius.adapters.aerospace import AerospaceDomainAdapter, AerospaceTrackAdapter as AeroAdapter
-from orius.adapters.navigation import NavigationDomainAdapter, NavigationTrackAdapter as NavAdapter
 
 # ---------------------------------------------------------------------------
-# Domain catalogue (same 6 as universal validation)
+# Domain catalogue (same 3 as the active promoted program)
 # ---------------------------------------------------------------------------
 
 TRACKS: list[BenchmarkAdapter] = [
     BatteryTrackAdapter(),
-    NavigationTrackAdapter(),
-    IndustrialTrackAdapter(),
     HealthcareTrackAdapter(),
-    AerospaceTrackAdapter(),
     VehicleTrackAdapter(),
 ]
 
@@ -74,31 +66,22 @@ FAULT_TYPES = ["bias", "noise", "stuck_sensor", "blackout", "multi"]
 _DOMAIN_CFGS: dict[str, dict] = {
     "vehicle":    {"expected_cadence_s": 0.25},
     "healthcare": {"expected_cadence_s": 1.0},
-    "industrial": {"expected_cadence_s": 3600.0},
-    "aerospace":  {"expected_cadence_s": 1.0},
-    "navigation": {"expected_cadence_s": 0.25},
     "battery":    {"expected_cadence_s": 3600.0},
 }
 
 _DOMAIN_QUANTILES: dict[str, float] = {
     "vehicle":    0.9,
     "healthcare": 5.0,
-    "industrial": 30.0,
-    "aerospace":  5.0,
-    "navigation": 1.0,
     "battery":    10.0,
 }
 
 _DOMAIN_HOLD_KEYS: dict[str, tuple[str, ...]] = {
     "vehicle":    ("position_m", "speed_mps", "speed_limit_mps", "lead_position_m"),
     "healthcare": ("hr_bpm", "spo2_pct", "respiratory_rate"),
-    "industrial": ("temp_c", "vacuum_cmhg", "pressure_mbar", "humidity_pct", "power_mw"),
-    "aerospace":  ("altitude_m", "airspeed_kt", "bank_angle_deg", "fuel_remaining_pct"),
-    "navigation": ("x", "y", "vx", "vy"),
     "battery":    ("soc", "load_mw"),
 }
 
-PROOF_DOMAINS = {"vehicle", "healthcare", "industrial", "aerospace", "navigation"}
+PROOF_DOMAINS = {"vehicle", "healthcare"}
 
 
 # ---------------------------------------------------------------------------
@@ -143,12 +126,6 @@ def _make_domain_adapter(domain: str) -> object:
         return VehicleDomainAdapter(cfg)
     if domain == "healthcare":
         return HealthcareDomainAdapter(cfg)
-    if domain == "industrial":
-        return IndustrialDomainAdapter(cfg)
-    if domain == "aerospace":
-        return AerospaceDomainAdapter(cfg)
-    if domain == "navigation":
-        return NavigationDomainAdapter(cfg)
     return None
 
 
@@ -161,12 +138,6 @@ def _make_domain_constraints(domain: str, state: dict) -> dict:
         }
     if domain == "healthcare":
         return {"spo2_min_pct": 90.0, "hr_min_bpm": 40.0, "hr_max_bpm": 120.0}
-    if domain == "industrial":
-        return {"power_max_mw": 500.0, "temp_min_c": 0.0, "temp_max_c": 120.0}
-    if domain == "aerospace":
-        return {"v_min_kt": 60.0, "v_max_kt": 350.0, "max_bank_deg": 30.0}
-    if domain == "navigation":
-        return {"arena_size": 10.0, "speed_limit": 1.0}
     return {}
 
 

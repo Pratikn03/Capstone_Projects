@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import json
+import math
 import os
 from pathlib import Path
 from typing import Any, Mapping
@@ -34,7 +35,10 @@ def _as_array(values: Any, horizon: int | None = None) -> np.ndarray:
 
 def _f(value: Any, default: float) -> float:
     try:
-        return float(value)
+        v = float(value)
+        if not math.isfinite(v):
+            return float(default)
+        return v
     except (TypeError, ValueError):
         return float(default)
 
