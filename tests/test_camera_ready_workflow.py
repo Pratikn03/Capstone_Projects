@@ -4,6 +4,9 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
+
+import scripts.run_camera_ready_freeze as freeze
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -179,3 +182,24 @@ def test_verify_camera_ready_logs_blocks_duplicate_destinations_even_with_waiver
     )
     assert blocked.returncode == 1
     assert "duplicate_destination" in blocked.stderr
+
+
+def test_camera_ready_freeze_uses_canonical_three_domain_refresh() -> None:
+    args = SimpleNamespace(
+        external_root=Path("/tmp/orius_external_data"),
+        train_missing=False,
+        repair_invalid_splits=False,
+        seeds=3,
+        horizon=48,
+        sil_seeds=3,
+        sil_rows=96,
+        warning_waivers=freeze.WAIVER_PATH,
+    )
+
+    steps = freeze._build_steps(args)
+    refresh_step = next(step for step in steps if step[0] == "canonical_three_domain_refresh")
+
+    assert "python" in Path(refresh_step[1][0]).name
+    assert refresh_step[1][1] == "scripts/run_orius_canonical_closure_refresh.py"
+    assert "--mode" in refresh_step[1]
+    assert refresh_step[1][refresh_step[1].index("--mode") + 1] == "canonical"

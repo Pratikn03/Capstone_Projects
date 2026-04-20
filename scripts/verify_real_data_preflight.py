@@ -34,6 +34,26 @@ BATTERY_PATHS = [
     REPO_ROOT / "data" / "raw" / "us_eia930",
 ]
 HEALTHCARE_PATHS = [REPO_ROOT / "data" / "healthcare" / "raw" / "bidmc_csv"]
+AV_DATASET_CHECKS = (
+    {
+        "repo_dir": REPO_ROOT / "data" / "av" / "raw" / "waymo_open_motion",
+        "external_dataset_key": "waymo_open_motion",
+        "required_for_pass": True,
+        "role": "canonical",
+    },
+    {
+        "repo_dir": REPO_ROOT / "data" / "av" / "raw" / "argoverse2_motion",
+        "external_dataset_key": "argoverse2_motion",
+        "required_for_pass": False,
+        "role": "companion",
+    },
+    {
+        "repo_dir": REPO_ROOT / "data" / "av" / "raw" / "argoverse2_sensor",
+        "external_dataset_key": "argoverse2_sensor",
+        "required_for_pass": False,
+        "role": "companion",
+    },
+)
 
 
 def _path_checks(paths: list[Path]) -> list[dict[str, object]]:
@@ -45,6 +65,8 @@ def _external_dataset_check(
     repo_dir: Path,
     external_dataset_key: str,
     explicit_root: Path | None,
+    required_for_pass: bool = True,
+    role: str = "canonical",
 ) -> dict[str, object]:
     raw_source = resolve_repo_or_external_raw_dir(
         repo_dir,
@@ -67,6 +89,8 @@ def _external_dataset_check(
         "has_files": has_files,
         "source_kind": None if raw_source is None else raw_source.source_kind,
         "checked_locations": checked_locations,
+        "required_for_pass": required_for_pass,
+        "role": role,
     }
 
 
@@ -80,22 +104,19 @@ def _domain_status(domain: str, *, explicit_root: Path | None) -> dict[str, obje
     elif domain == "av":
         items = [
             _external_dataset_check(
-                repo_dir=REPO_ROOT / "data" / "av" / "raw" / "waymo_open_motion",
-                external_dataset_key="waymo_open_motion",
+                repo_dir=row["repo_dir"],
+                external_dataset_key=row["external_dataset_key"],
                 explicit_root=explicit_root,
-            ),
-            _external_dataset_check(
-                repo_dir=REPO_ROOT / "data" / "av" / "raw" / "argoverse2_motion",
-                external_dataset_key="argoverse2_motion",
-                explicit_root=explicit_root,
-            ),
-            _external_dataset_check(
-                repo_dir=REPO_ROOT / "data" / "av" / "raw" / "argoverse2_sensor",
-                external_dataset_key="argoverse2_sensor",
-                explicit_root=explicit_root,
-            ),
+                required_for_pass=bool(row["required_for_pass"]),
+                role=str(row["role"]),
+            )
+            for row in AV_DATASET_CHECKS
         ]
-        all_present = all(item["exists"] and item["has_files"] for item in items)
+        all_present = all(
+            bool(item["exists"]) and bool(item["has_files"])
+            for item in items
+            if bool(item["required_for_pass"])
+        )
     else:
         raise KeyError(domain)
     return {

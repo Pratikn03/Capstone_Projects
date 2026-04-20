@@ -63,7 +63,20 @@ def main() -> int:
         _run("refresh_manifests", [PYTHON, "scripts/refresh_real_data_manifests.py"], logs_dir),
         _run("validation", [PYTHON, "scripts/run_universal_orius_validation.py", "--out", "reports/universal_orius_validation"], logs_dir),
         _run("training_audit", [PYTHON, "scripts/run_universal_training_audit.py", "--out", "reports/orius_framework_proof/training_audit"], logs_dir),
-        _run("domain_closure", [PYTHON, "scripts/build_domain_closure_matrix.py"], logs_dir),
+        _run(
+            "domain_closure",
+            [
+                PYTHON,
+                "scripts/build_domain_closure_matrix.py",
+                "--validation-report",
+                "reports/universal_orius_validation/validation_report.json",
+                "--training-report",
+                "reports/orius_framework_proof/training_audit/training_audit_report.json",
+                "--out",
+                "reports/universal_orius_validation",
+            ],
+            logs_dir,
+        ),
         _run("monograph_assets", [PYTHON, "scripts/build_orius_monograph_assets.py"], logs_dir),
     ]
 

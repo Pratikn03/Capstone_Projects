@@ -26,8 +26,8 @@ FREEZE_DIR = REPO_ROOT / "reports" / "camera_ready"
 FREEZE_LOG_DIR = FREEZE_DIR / "logs"
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
 SCORECARD_PATH = PUBLICATION_DIR / "orius_submission_scorecard.csv"
-PARITY_PATH = PUBLICATION_DIR / "orius_equal_domain_parity_matrix.csv"
-GAP_PATH = PUBLICATION_DIR / "orius_93plus_gap_matrix.csv"
+CLOSURE_MATRIX_PATH = PUBLICATION_DIR / "orius_domain_closure_matrix.csv"
+PROGRAM_GAP_PATH = PUBLICATION_DIR / "orius_93plus_gap_matrix.csv"
 REAL_DATA_PREFLIGHT_PATH = REPO_ROOT / "reports" / "real_data_preflight.json"
 PACKAGE_MANIFEST_JSON = PUBLICATION_DIR / "orius_camera_ready_package_manifest.json"
 PACKAGE_MANIFEST_MD = PUBLICATION_DIR / "orius_camera_ready_package_manifest.md"
@@ -179,12 +179,12 @@ def _build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             ],
         ),
         (
-            "equal_domain_gate",
+            "canonical_three_domain_refresh",
             [
                 PYTHON,
                 "scripts/run_orius_canonical_closure_refresh.py",
                 "--mode",
-                "equal_domain_gate",
+                "canonical",
                 "--external-root",
                 external_root,
                 *(["--train-missing"] if args.train_missing else []),
@@ -231,15 +231,15 @@ def _scorecard_summary() -> dict[str, dict[str, str]]:
     return {row["target_tier"]: row for row in _read_csv_rows(SCORECARD_PATH)}
 
 
-def _parity_summary() -> dict[str, dict[str, str]]:
-    return {row["domain"]: row for row in _read_csv_rows(PARITY_PATH)}
+def _closure_summary() -> dict[str, dict[str, str]]:
+    return {row["domain"]: row for row in _read_csv_rows(CLOSURE_MATRIX_PATH)}
 
 
-def _remaining_equal_domain_gaps() -> list[dict[str, str]]:
+def _remaining_program_gaps() -> list[dict[str, str]]:
     return [
         row
-        for row in _read_csv_rows(GAP_PATH)
-        if row.get("target_tier") == "equal_domain_93" and row.get("severity") in {"critical", "high"}
+        for row in _read_csv_rows(PROGRAM_GAP_PATH)
+        if row.get("severity") in {"critical", "high"}
     ]
 
 
@@ -250,10 +250,10 @@ def _write_outputs(
     steps: list[dict[str, Any]],
     status: str,
     failure_step: str | None,
-) -> None:
+    ) -> None:
     scorecard = _scorecard_summary()
-    parity = _parity_summary()
-    gap_rows = _remaining_equal_domain_gaps()
+    closure_rows = _closure_summary()
+    gap_rows = _remaining_program_gaps()
     payload = {
         "generated_at_utc": _utc_now_iso(),
         "freeze_run_id": freeze_run_id,
@@ -264,13 +264,11 @@ def _write_outputs(
         "warning_waivers": str(args.warning_waivers.relative_to(REPO_ROOT)),
         "steps": _sanitize_payload(steps, external_root=args.external_root),
         "scorecard": scorecard,
-        "remaining_equal_domain_gaps": gap_rows,
-        "parity_rows": parity,
+        "remaining_program_gaps": gap_rows,
+        "closure_rows": closure_rows,
         "pdf_outputs": _pdf_manifest(),
         "hf_job_templates": [
             "scripts/hf_jobs/canonical_closure_refresh_job.py",
-            "scripts/hf_jobs/navigation_realdata_closure_job.py",
-            "scripts/hf_jobs/aerospace_flight_closure_job.py",
             "scripts/hf_jobs/deep_learning_novelty_job.py",
             "scripts/hf_jobs/calibration_diagnostics_job.py",
             "scripts/hf_jobs/runtime_governance_trace_job.py",
@@ -279,8 +277,7 @@ def _write_outputs(
     FREEZE_LEDGER_JSON.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     PACKAGE_MANIFEST_JSON.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
-    equal_domain = scorecard.get("equal_domain_93", {})
-    bounded = scorecard.get("bounded_93_candidate", {})
+    three_domain = scorecard.get("three_domain_93_candidate", {})
     PACKAGE_MANIFEST_MD.write_text(
         "\n".join(
             [
@@ -295,10 +292,9 @@ def _write_outputs(
                 "",
                 "## Gate summary",
                 "",
-                f"- `bounded_93_candidate`: `{bounded.get('readiness_score_100', 'n/a')}/100`",
-                f"- `equal_domain_93`: `{equal_domain.get('readiness_score_100', 'n/a')}/100`",
-                f"- Equal-domain critical gaps: `{equal_domain.get('critical_gap_count', 'n/a')}`",
-                f"- Equal-domain high gaps: `{equal_domain.get('high_gap_count', 'n/a')}`",
+                f"- `three_domain_93_candidate`: `{three_domain.get('readiness_score_100', 'n/a')}/100`",
+                f"- Critical gaps: `{three_domain.get('critical_gap_count', 'n/a')}`",
+                f"- High gaps: `{three_domain.get('high_gap_count', 'n/a')}`",
                 "",
                 "## Step status",
                 "",
