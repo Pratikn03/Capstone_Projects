@@ -1,7 +1,4 @@
-domain,supported,shared_constraint_surface,independent_violation,coordinated_safe,bounded_claim,status
-battery,yes,shared_feeder_capacity,True,True,counterexample_plus_coordination,evaluated
-industrial,yes,shared_power_budget,True,True,shared_budget_stress_test,evaluated
-healthcare,yes,shared_alert_budget,True,True,certificate_gated_alert_budget,evaluated
-vehicle,yes,shared_headway_budget,True,True,coordinated_headway_stress_test,evaluated
-navigation,no,,,,not_supported_in_this_pass,gated
-aerospace,no,,,,not_supported_in_this_pass,gated
+domain,status,notes
+battery,evaluated,Three-domain closure keeps the compositional program on the promoted rows only.
+healthcare,evaluated,Three-domain closure keeps the compositional program on the promoted rows only.
+vehicle,evaluated,Three-domain closure keeps the compositional program on the promoted rows only.

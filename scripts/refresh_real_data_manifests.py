@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Refresh and audit real-data provenance manifests without rebuilding datasets."""
+"""Refresh repo-truthful provenance manifests for the active 3-domain ORIUS program."""
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 from typing import Any
 
@@ -28,10 +29,7 @@ BATTERY_PROCESSED_DIR = REPO_ROOT / "data" / "processed"
 BATTERY_MANIFEST_PATH = BATTERY_RAW_DIR / "opsd_germany_provenance.json"
 
 AV_DATA_DIR = REPO_ROOT / "data" / "av"
-INDUSTRIAL_DATA_DIR = REPO_ROOT / "data" / "industrial"
 HEALTHCARE_DATA_DIR = REPO_ROOT / "data" / "healthcare"
-NAVIGATION_DATA_DIR = REPO_ROOT / "data" / "navigation"
-AEROSPACE_DATA_DIR = REPO_ROOT / "data" / "aerospace"
 
 
 def _parquet_summary(path: Path) -> dict[str, object]:
@@ -61,10 +59,16 @@ def _report_row(
     notes: list[str] | None = None,
     extras: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    manifest_text = None
+    if manifest_path is not None:
+        try:
+            manifest_text = str(manifest_path.relative_to(REPO_ROOT))
+        except ValueError:
+            manifest_text = str(manifest_path)
     payload: dict[str, Any] = {
         "domain": domain,
         "status": status,
-        "manifest_path": str(manifest_path) if manifest_path is not None else None,
+        "manifest_path": manifest_text,
         "canonical_source_present": bool(canonical_source_present),
         "processed_output_present": bool(processed_output_present),
         "blocker": blocker or "",
@@ -77,26 +81,6 @@ def _report_row(
 
 def _has_raw_files(raw_source: ResolvedRawSource | None) -> bool:
     return resolved_source_has_files(raw_source)
-
-
-def _kitti_raw_ready(raw_source: ResolvedRawSource | None) -> bool:
-    if not _has_raw_files(raw_source) or raw_source is None:
-        return False
-    root = raw_source.path
-    poses_candidates = [root / "dataset" / "poses", root / "poses"]
-    sequence_candidates = [root / "dataset" / "sequences", root / "sequences"]
-    poses_ready = any(candidate.exists() and any(candidate.glob("*.txt")) for candidate in poses_candidates)
-    times_ready = any(candidate.exists() and any(candidate.glob("*/times.txt")) for candidate in sequence_candidates)
-    return poses_ready and times_ready
-
-
-def _looks_like_public_adsb_proxy(raw_source: ResolvedRawSource | None) -> bool:
-    if raw_source is None or not raw_source.path.exists():
-        return False
-    root = raw_source.path
-    return (root / "tartanaviation_adsb_19k_clean").exists() or any(
-        candidate.name == "tartanaviation_adsb_19k_clean.csv" for candidate in root.rglob("*")
-    )
 
 
 def refresh_battery_manifest() -> dict[str, Any]:
@@ -121,21 +105,10 @@ def refresh_battery_manifest() -> dict[str, Any]:
             "https://open-meteo.com/",
         ],
         license_notes="Follow OPSD, SMARD, and Open-Meteo provider terms.",
-        access_notes="Battery ingestion remains unchanged; this manifest only records provenance.",
+        access_notes="Battery remains the theorem-grade witness row.",
         canonical_source=True,
         used_fallback=False,
-        notes=[
-            "battery remains the reference witness row",
-            "companion weather, holiday, and carbon files stay in data/raw/",
-        ],
-        extras={
-            "companion_files": [
-                str(BATTERY_RAW_DIR / "time_series_60min_singleindex.csv"),
-                str(BATTERY_RAW_DIR / "weather_berlin_hourly.csv"),
-                str(BATTERY_RAW_DIR / "holidays_de.csv"),
-                str(BATTERY_RAW_DIR / "carbon_signals.csv"),
-            ]
-        },
+        notes=["battery remains the deepest witness row"],
     )
     path = write_json(BATTERY_MANIFEST_PATH, manifest)
     return _report_row(
@@ -144,125 +117,7 @@ def refresh_battery_manifest() -> dict[str, Any]:
         manifest_path=path,
         canonical_source_present=True,
         processed_output_present=features_path.exists(),
-        notes=["battery remains the deepest witness row"],
-    )
-
-
-def refresh_industrial_manifest() -> dict[str, Any]:
-    raw_dir = INDUSTRIAL_DATA_DIR / "raw"
-    processed_path = INDUSTRIAL_DATA_DIR / "processed" / "industrial_orius.csv"
-    canonical_raw_path = raw_dir / "CCPP.csv"
-    raw_root = canonical_raw_path if canonical_raw_path.exists() else raw_dir / "ccpp"
-    canonical_source_present = canonical_raw_path.exists() and processed_path.exists()
-    if not canonical_source_present:
-        return _report_row(
-            domain="industrial",
-            status="blocked",
-            manifest_path=raw_dir / "ccpp_provenance.json",
-            canonical_source_present=canonical_raw_path.exists(),
-            processed_output_present=processed_path.exists(),
-            blocker="industrial_primary_surface_missing",
-            notes=["Need primary CCPP.csv raw source plus processed industrial_orius.csv."],
-        )
-
-    raw_source = ResolvedRawSource(
-        path=raw_root,
-        source_kind="repo_local",
-        checked_locations=(str(raw_root),),
-    )
-    manifest = build_provenance_manifest(
-        domain="industrial",
-        dataset_key="ccpp",
-        provider="UCI Combined Cycle Power Plant",
-        version="Folds5x2 primary surface",
-        raw_source=raw_source,
-        processed_output=processed_path,
-        output_summary=_tabular_summary(processed_path),
-        raw_inventory=summarize_files(raw_source.path),
-        source_urls=[
-            "https://archive.ics.uci.edu/dataset/294/combined+cycle+power+plant",
-            "https://archive.ics.uci.edu/dataset/447/condition+monitoring+of+hydraulic+systems",
-        ],
-        license_notes="Follow UCI dataset terms for CCPP and any companion ZeMA assets.",
-        access_notes="CCPP is the canonical industrial row. ZeMA remains a companion robustness corpus.",
-        canonical_source=True,
-        used_fallback=False,
-        notes=[
-            "industrial_orius.csv is the canonical defended industrial processed surface",
-            "ZeMA hydraulic files remain companion raw evidence and are not the primary trainable row",
-        ],
-        extras={
-            "companion_sources": {
-                "zema_hydraulic_present": bool((raw_dir / "zema_hydraulic").exists()),
-                "zema_hydraulic_dir": str(raw_dir / "zema_hydraulic"),
-            }
-        },
-    )
-    path = write_json(raw_dir / "ccpp_provenance.json", manifest)
-    return _report_row(
-        domain="industrial",
-        status="refreshed",
-        manifest_path=path,
-        canonical_source_present=True,
-        processed_output_present=True,
-        notes=["bounded industrial row remains governed by the current plant family and replay protocol"],
-    )
-
-
-def refresh_healthcare_manifest() -> dict[str, Any]:
-    raw_dir = HEALTHCARE_DATA_DIR / "raw"
-    processed_path = HEALTHCARE_DATA_DIR / "processed" / "healthcare_orius.csv"
-    raw_root = raw_dir / "bidmc_csv" if (raw_dir / "bidmc_csv").exists() else raw_dir / "bidmc"
-    canonical_source_present = raw_root.exists() and processed_path.exists()
-    if not canonical_source_present:
-        return _report_row(
-            domain="healthcare",
-            status="blocked",
-            manifest_path=raw_dir / "bidmc_provenance.json",
-            canonical_source_present=raw_root.exists(),
-            processed_output_present=processed_path.exists(),
-            blocker="healthcare_primary_surface_missing",
-            notes=["Need BIDMC raw corpus plus healthcare_orius.csv."],
-        )
-
-    raw_source = ResolvedRawSource(
-        path=raw_root,
-        source_kind="repo_local",
-        checked_locations=(str(raw_root),),
-    )
-    patient_count = None
-    try:
-        patient_count = int(pd.read_csv(processed_path, usecols=["patient_id"])["patient_id"].nunique())
-    except Exception:
-        patient_count = None
-    manifest = build_provenance_manifest(
-        domain="healthcare",
-        dataset_key="bidmc",
-        provider="PhysioNet BIDMC PPG and Respiration Dataset",
-        version="1.0.0",
-        raw_source=raw_source,
-        processed_output=processed_path,
-        output_summary=_tabular_summary(processed_path),
-        raw_inventory=summarize_files(raw_source.path),
-        source_urls=["https://physionet.org/content/bidmc/1.0.0/"],
-        license_notes="Follow PhysioNet credential, access, and citation requirements.",
-        access_notes="Repo-local BIDMC CSV storage is the canonical healthcare raw contract.",
-        canonical_source=True,
-        used_fallback=False,
-        notes=[
-            "healthcare_orius.csv is built from the BIDMC numerics surface",
-            "signals and breaths files remain companion raw evidence when present",
-        ],
-        extras={"patient_count": patient_count},
-    )
-    path = write_json(raw_dir / "bidmc_provenance.json", manifest)
-    return _report_row(
-        domain="healthcare",
-        status="refreshed",
-        manifest_path=path,
-        canonical_source_present=True,
-        processed_output_present=True,
-        notes=["bounded healthcare row remains governed by the current monitoring and intervention contract"],
+        notes=["battery remains the canonical witness row"],
     )
 
 
@@ -275,360 +130,130 @@ def refresh_av_manifest() -> dict[str, Any]:
         required=False,
     )
     waymo_ready = processed_path.exists() and _has_raw_files(waymo_source)
-    if waymo_ready and waymo_source is not None:
-        manifest = build_provenance_manifest(
-            domain="av",
-            dataset_key="waymo_open_motion",
-            provider="Waymo Open Dataset",
-            version="motion",
-            raw_source=waymo_source,
-            processed_output=processed_path,
-            output_summary=_tabular_summary(processed_path),
-            raw_inventory=summarize_files(waymo_source.path),
-            source_urls=[
-                "https://waymo.com/open/data/motion/",
-                "https://waymo.com/open/faq/",
-            ],
-            license_notes="Waymo Open Dataset license applies; raw payloads remain untracked.",
-            access_notes="Waymo Open Motion is the canonical AV closure surface. Argoverse remains companion-only.",
-            canonical_source=True,
-            used_fallback=waymo_source.source_kind != "repo_local",
-            notes=[
-                "av_trajectories_orius.csv is governed by the canonical AV real-data contract",
-                "Argoverse 2 remains a companion robustness surface outside the primary defended row",
-            ],
-        )
-        path = write_json(raw_dir / "waymo_open_motion_provenance.json", manifest)
+    if not waymo_ready or waymo_source is None:
         return _report_row(
             domain="av",
-            status="refreshed",
-            manifest_path=path,
-            canonical_source_present=True,
-            processed_output_present=True,
-            notes=["AV is bounded to the TTC plus predictive-entry-barrier contract in the current defended row"],
-            extras={"source_kind": waymo_source.source_kind},
-        )
-
-    legacy_root = raw_dir / "hee_dataset"
-    legacy_manifest_path = None
-    notes = [
-        "Waymo Open Motion remains the canonical AV closure target.",
-        "Current repo-local HEE data is legacy compatibility material only.",
-    ]
-    if processed_path.exists() and legacy_root.exists():
-        legacy_source = ResolvedRawSource(
-            path=legacy_root,
-            source_kind="repo_local",
-            checked_locations=(str(legacy_root),),
-        )
-        legacy_manifest = build_provenance_manifest(
-            domain="av",
-            dataset_key="hee_legacy",
-            provider="HEE legacy compatibility corpus",
-            version="legacy_repo_fixture",
-            raw_source=legacy_source,
-            processed_output=processed_path,
-            output_summary=_tabular_summary(processed_path),
-            raw_inventory=summarize_files(legacy_root),
-            source_urls=[],
-            license_notes="Legacy compatibility corpus retained for local testing; not the canonical AV closure source.",
-            access_notes="This manifest records legacy lineage only and does not satisfy the bounded-universal AV closure target.",
-            canonical_source=False,
-            used_fallback=True,
-            notes=notes,
-        )
-        legacy_manifest_path = write_json(raw_dir / "hee_legacy_provenance.json", legacy_manifest)
-
-    return _report_row(
-        domain="av",
-        status="legacy_only" if legacy_manifest_path is not None else "blocked",
-        manifest_path=legacy_manifest_path,
-        canonical_source_present=False,
-        processed_output_present=processed_path.exists(),
-        blocker="canonical_waymo_raw_missing",
-        notes=notes,
-    )
-
-
-def refresh_navigation_manifest() -> dict[str, Any]:
-    raw_dir = NAVIGATION_DATA_DIR / "raw"
-    processed_path = NAVIGATION_DATA_DIR / "processed" / "navigation_orius.csv"
-    manifest_path = raw_dir / "kitti_odometry_provenance.json"
-    expected_raw_root = raw_dir / "kitti_odometry"
-    raw_source = resolve_repo_or_external_raw_dir(
-        expected_raw_root,
-        external_dataset_key="kitti_odometry",
-        required=False,
-    )
-    raw_ready = _kitti_raw_ready(raw_source)
-    if not raw_ready or not processed_path.exists():
-        checked_locations = (
-            list(raw_source.checked_locations)
-            if raw_source is not None
-            else [str(expected_raw_root), "$ORIUS_EXTERNAL_DATA_ROOT/kitti_odometry"]
-        )
-        blocked_manifest = {
-            "generated_at_utc": utc_now_iso(),
-            "domain": "navigation",
-            "dataset_key": "kitti_odometry",
-            "provider": "KITTI Odometry",
-            "status": "blocked",
-            "canonical_source": True,
-            "canonical_source_present": bool(raw_ready),
-            "processed_output_present": bool(processed_path.exists()),
-            "blocker": "navigation_kitti_runtime_missing",
-            "source_kind": None if raw_source is None else raw_source.source_kind,
-            "checked_locations": checked_locations,
-            "raw_root": str(expected_raw_root),
-            "processed_output": str(processed_path),
-            "raw_inventory": summarize_files(expected_raw_root),
-            "output_summary": _tabular_summary(processed_path) if processed_path.exists() else None,
-            "notes": [
-                "Navigation remains blocked until the KITTI-backed processed surface and replay chain are both present.",
-                "This placeholder manifest intentionally clears any stale temporary-path provenance from prior fixture runs.",
-            ],
-            "source_urls": ["https://www.cvlibs.net/datasets/kitti/eval_odometry.php"],
-        }
-        path = write_json(manifest_path, blocked_manifest)
-        return _report_row(
-            domain="navigation",
             status="blocked",
-            manifest_path=path,
-            canonical_source_present=raw_ready,
+            manifest_path=raw_dir / "waymo_open_motion_provenance.json",
+            canonical_source_present=bool(waymo_source and _has_raw_files(waymo_source)),
             processed_output_present=processed_path.exists(),
-            blocker="navigation_kitti_runtime_missing",
-            notes=[
-                "Navigation remains blocked until the KITTI-backed processed surface and replay chain are both present.",
-            ],
-            extras={"source_kind": raw_source.source_kind if raw_source is not None else None},
+            blocker="canonical_waymo_raw_missing",
+            notes=["Waymo Open Motion is the only canonical AV raw-data contract on the current branch."],
         )
 
     manifest = build_provenance_manifest(
-        domain="navigation",
-        dataset_key="kitti_odometry",
-        provider="KITTI Odometry",
-        version="odometry benchmark",
-        raw_source=raw_source,
+        domain="av",
+        dataset_key="waymo_open_motion",
+        provider="Waymo Open Dataset",
+        version="motion",
+        raw_source=waymo_source,
         processed_output=processed_path,
         output_summary=_tabular_summary(processed_path),
-        raw_inventory=summarize_files(raw_source.path),
-        source_urls=["https://www.cvlibs.net/datasets/kitti/eval_odometry.php"],
-        license_notes="Follow KITTI usage terms; raw payloads remain untracked.",
-        access_notes="KITTI Odometry is the canonical navigation closure source.",
-        canonical_source=True,
-        used_fallback=raw_source.source_kind != "repo_local",
-        notes=[
-            "navigation_orius.csv is the required processed surface for defended navigation closure",
-            "synthetic navigation traces are not sufficient for the defended bounded row",
+        raw_inventory=summarize_files(waymo_source.path),
+        source_urls=[
+            "https://waymo.com/open/data/motion/",
+            "https://waymo.com/open/faq/",
         ],
+        license_notes="Waymo Open Dataset license applies; raw payloads remain untracked.",
+        access_notes="AV is bounded to the TTC plus predictive-entry-barrier contract.",
+        canonical_source=True,
+        used_fallback=waymo_source.source_kind != "repo_local",
+        notes=["av_trajectories_orius.csv is the canonical AV closure surface"],
     )
-    path = write_json(manifest_path, manifest)
+    path = write_json(raw_dir / "waymo_open_motion_provenance.json", manifest)
     return _report_row(
-        domain="navigation",
+        domain="av",
         status="refreshed",
         manifest_path=path,
         canonical_source_present=True,
         processed_output_present=True,
-        notes=["Navigation still requires replay and artifact refresh beyond raw-data/provenance closure."],
-        extras={"source_kind": raw_source.source_kind},
+        notes=["AV remains a promoted bounded row under the current contract"],
+        extras={"source_kind": waymo_source.source_kind},
     )
 
 
-def refresh_aerospace_manifest() -> dict[str, Any]:
-    raw_dir = AEROSPACE_DATA_DIR / "raw"
-    processed_path = AEROSPACE_DATA_DIR / "processed" / "aerospace_orius.csv"
-    support_runtime_path = AEROSPACE_DATA_DIR / "processed" / "aerospace_public_adsb_runtime.csv"
-    official_runtime_path = AEROSPACE_DATA_DIR / "processed" / "aerospace_realflight_runtime.csv"
-    manifest_path = raw_dir / "cmapss_provenance.json"
-    train_files = [raw_dir / name for name in ("train_FD001.txt", "train_FD002.txt", "train_FD003.txt", "train_FD004.txt")]
-    train_surface_present = all(path.exists() for path in train_files)
-    public_adsb_manifest = raw_dir / "public_adsb_proxy_provenance.json"
-    official_runtime_manifest = raw_dir / "aerospace_realflight_provenance.json"
-    runtime_surface = resolve_repo_or_external_raw_dir(
-        raw_dir / "aerospace_flight_telemetry",
-        external_dataset_key="aerospace_flight_telemetry",
-        required=False,
-    )
-    public_adsb_ready = support_runtime_path.exists() and public_adsb_manifest.exists()
-    provider_runtime_ready = official_runtime_path.exists() and official_runtime_manifest.exists()
-    external_provider_hint = _has_raw_files(runtime_surface) and not _looks_like_public_adsb_proxy(runtime_surface)
-    checked_locations = [] if runtime_surface is None else list(runtime_surface.checked_locations)
-    raw_root = None if runtime_surface is None else str(runtime_surface.path)
-    if provider_runtime_ready and raw_root is None:
-        raw_root = str(official_runtime_path.parent)
-    if provider_runtime_ready and not checked_locations:
-        checked_locations = [str(official_runtime_path)]
-    elif public_adsb_ready and not checked_locations:
-        checked_locations = [str(support_runtime_path)]
-
-    runtime_contract = {
-        "generated_at_utc": utc_now_iso(),
-        "domain": "aerospace",
-        "contract": "runtime_replay_surface",
-        "canonical_source": "official_provider_real_flight_runtime",
-        "present": provider_runtime_ready,
-        "checked_locations": checked_locations,
-        "raw_root": raw_root,
-        "surface_status": (
-            "provider_approved_ready"
-            if provider_runtime_ready
-            else "public_adsb_proxy_only"
-            if public_adsb_ready
-            else "provider_external_raw_only"
-            if external_provider_hint
-            else "missing"
-        ),
-        "defended_release_surface": bool(provider_runtime_ready),
-        "official_runtime_manifest": str(official_runtime_manifest) if official_runtime_manifest.exists() else None,
-        "public_adsb_proxy_manifest": str(public_adsb_manifest) if public_adsb_manifest.exists() else None,
-        "support_lane_present": bool(public_adsb_ready),
-        "notes": [
-            "C-MAPSS is the trainable degradation companion surface only.",
-            "Bounded public ADS-B replay is a support lane and cannot promote the defended aerospace row.",
-            "Provider-approved multi-flight telemetry remains the canonical defended runtime surface.",
-        ],
-    }
-    runtime_contract_path = write_json(raw_dir / "multi_flight_runtime_contract.json", runtime_contract)
-
-    if not (train_surface_present and processed_path.exists()):
+def refresh_healthcare_manifest() -> dict[str, Any]:
+    raw_dir = HEALTHCARE_DATA_DIR / "raw"
+    mimic_dir = HEALTHCARE_DATA_DIR / "mimic3" / "processed"
+    processed_path = mimic_dir / "mimic3_healthcare_orius.csv"
+    manifest_path = mimic_dir / "mimic3_manifest.json"
+    if not (processed_path.exists() and manifest_path.exists()):
         return _report_row(
-            domain="aerospace",
+            domain="healthcare",
             status="blocked",
-            manifest_path=manifest_path if manifest_path.exists() else None,
-            canonical_source_present=train_surface_present,
+            manifest_path=manifest_path,
+            canonical_source_present=manifest_path.exists(),
             processed_output_present=processed_path.exists(),
-            blocker="aerospace_trainable_surface_missing",
-            notes=[
-                "Need C-MAPSS train files plus aerospace_orius.csv for the trainable companion surface.",
-                "The public ADS-B support lane does not satisfy the defended aerospace runtime requirement.",
-            ],
-            extras={"runtime_contract_path": str(runtime_contract_path)},
+            blocker="healthcare_primary_surface_missing",
+            notes=["Need the promoted MIMIC-III manifest plus mimic3_healthcare_orius.csv."],
         )
 
+    raw_root = raw_dir / "mimic3"
     raw_source = ResolvedRawSource(
-        path=raw_dir,
+        path=raw_root,
         source_kind="repo_local",
-        checked_locations=(str(raw_dir),),
+        checked_locations=(str(raw_root),),
     )
+    try:
+        patient_count = int(pd.read_csv(processed_path, usecols=["patient_id"])["patient_id"].nunique())
+    except Exception:
+        patient_count = None
     manifest = build_provenance_manifest(
-        domain="aerospace",
-        dataset_key="cmapss",
-        provider="NASA C-MAPSS",
-        version="FD001-FD004 train corpora",
+        domain="healthcare",
+        dataset_key="mimic3",
+        provider="PhysioNet MIMIC-III Waveform Database Matched Subset",
+        version="matched_subset_bridge",
         raw_source=raw_source,
         processed_output=processed_path,
         output_summary=_tabular_summary(processed_path),
-        raw_inventory=summarize_files(raw_source.path),
-        source_urls=["https://data.nasa.gov/dataset/c-mapss-aircraft-engine-simulator-data"],
-        license_notes="Follow NASA dataset terms; raw corpora remain untracked.",
-        access_notes="C-MAPSS remains the trainable aerospace companion surface. The official defended runtime surface is the separate real-flight replay lane.",
+        raw_inventory=summarize_files(raw_source.path) if raw_source.path.exists() else {},
+        source_urls=[
+            "https://physionet.org/content/mimic3wdb-matched/1.0/",
+            "https://physionet.org/content/mimiciii/1.4/",
+        ],
+        license_notes="Follow PhysioNet credential, access, and citation requirements.",
+        access_notes="Healthcare is promoted only through the bounded MIMIC monitoring row.",
         canonical_source=True,
         used_fallback=False,
         notes=[
-            "aerospace_orius.csv records the trainable degradation companion surface",
-            "public ADS-B replay is a support lane only and does not satisfy the defended real-flight runtime requirement",
+            "mimic3_healthcare_orius.csv is the promoted healthcare runtime and evaluation surface",
+            "BIDMC remains supplemental and is not canonical on this branch",
         ],
-        extras={
-            "runtime_contract_path": str(runtime_contract_path),
-            "support_lane_present": public_adsb_ready,
-            "provider_runtime_ready": provider_runtime_ready,
-            "external_provider_hint": external_provider_hint,
-        },
+        extras={"patient_count": patient_count},
     )
     path = write_json(manifest_path, manifest)
-    if provider_runtime_ready:
-        status = "refreshed"
-        blocker = ""
-        notes = [
-            "Aerospace now has both the trainable C-MAPSS row and the canonical real-flight runtime lane.",
-        ]
-    elif public_adsb_ready:
-        status = "trainable_plus_public_support"
-        blocker = "aerospace_realflight_runtime_missing"
-        notes = [
-            "Aerospace retains the trainable C-MAPSS row plus a bounded public ADS-B support lane.",
-            "The official defended row remains blocked on the canonical real-flight runtime surface.",
-        ]
-    else:
-        status = "trainable_only"
-        blocker = "aerospace_realflight_runtime_missing"
-        notes = [
-            "Aerospace currently has only the trainable C-MAPSS companion surface.",
-            "The official defended row remains blocked on the canonical real-flight runtime surface.",
-        ]
-
     return _report_row(
-        domain="aerospace",
-        status=status,
+        domain="healthcare",
+        status="refreshed",
         manifest_path=path,
         canonical_source_present=True,
         processed_output_present=True,
-        blocker=blocker,
-        notes=notes,
-        extras={
-            "runtime_contract_path": str(runtime_contract_path),
-            "public_adsb_ready": public_adsb_ready,
-            "provider_runtime_ready": provider_runtime_ready,
-        },
+        notes=["healthcare remains a promoted bounded row under MIMIC monitoring semantics"],
     )
 
 
 REFRESHERS = {
     "battery": refresh_battery_manifest,
     "av": refresh_av_manifest,
-    "industrial": refresh_industrial_manifest,
     "healthcare": refresh_healthcare_manifest,
-    "navigation": refresh_navigation_manifest,
-    "aerospace": refresh_aerospace_manifest,
 }
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Refresh and audit real-data manifests")
-    parser.add_argument("--battery-only", action="store_true", help="Refresh battery manifests only")
-    parser.add_argument(
-        "--domain",
-        action="append",
-        choices=sorted(REFRESHERS.keys()),
-        help="Refresh only one or more selected domains.",
-    )
-    parser.add_argument("--out", type=Path, default=STATUS_REPORT_PATH, help="Write a status report to this JSON path")
-    parser.add_argument(
-        "--require-bounded-universal-ready",
-        action="store_true",
-        help="Exit non-zero unless every domain has a canonical source, processed output, and no recorded blocker.",
-    )
+    parser = argparse.ArgumentParser(description="Refresh ORIUS real-data manifests for the active 3-domain program")
+    parser.add_argument("--domain", dest="domains", action="append", choices=sorted(REFRESHERS.keys()))
     args = parser.parse_args()
 
-    if args.battery_only:
-        domains = ["battery"]
-    elif args.domain:
-        domains = args.domain
-    else:
-        domains = ["battery", "av", "industrial", "healthcare", "navigation", "aerospace"]
-
+    domains = args.domains or ["battery", "av", "healthcare"]
     rows = [REFRESHERS[domain]() for domain in domains]
     report = {
         "generated_at_utc": utc_now_iso(),
+        "repo_root": str(REPO_ROOT),
         "domains": rows,
-        "refreshed_domains": [row["domain"] for row in rows if row["status"] == "refreshed"],
-        "blocked_domains": [row["domain"] for row in rows if row["blocker"]],
-        "bounded_universal_raw_contract_ready": all(
-            row["canonical_source_present"] and row["processed_output_present"] and not row["blocker"]
-            for row in rows
-        ),
+        "submission_scope": "battery_av_healthcare",
     }
-    write_json(args.out, report)
-    for row in rows:
-        status = row["status"]
-        blocker = f" blocker={row['blocker']}" if row.get("blocker") else ""
-        print(f"{row['domain']}: {status}{blocker}")
-        if row.get("manifest_path"):
-            print(f"  manifest -> {row['manifest_path']}")
-    print(f"status report -> {args.out}")
-
-    if args.require_bounded_universal_ready and not report["bounded_universal_raw_contract_ready"]:
-        return 1
+    write_json(STATUS_REPORT_PATH, report)
+    print(json.dumps(report, indent=2))
     return 0
 
 

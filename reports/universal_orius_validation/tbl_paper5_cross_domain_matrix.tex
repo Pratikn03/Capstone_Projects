@@ -1,17 +1,14 @@
 \begin{table}[htbp]
 \centering
-\caption{Bounded cross-domain composition evaluation surface. Only domains with an explicit shared-constraint scenario are counted as evaluated.}
-\label{tab:paper5-cross-domain}
-\begin{tabular}{p{1.7cm}p{1.4cm}p{3.4cm}p{3.6cm}p{1.3cm}}
+\caption{Three-domain compositional-safety status table.}
+\label{tab:three-domain-paper5-matrix}
+\begin{tabular}{lll}
 \toprule
-\textbf{Domain} & \textbf{Supported} & \textbf{Shared constraint} & \textbf{Bounded claim} & \textbf{Status} \\
+\textbf{domain} & \textbf{status} & \textbf{notes} \\
 \midrule
-battery & yes & shared feeder capacity & counterexample plus coordination & evaluated \\
-industrial & yes & shared power budget & shared budget stress test & evaluated \\
-healthcare & yes & shared alert budget & certificate gated alert budget & evaluated \\
-vehicle & yes & shared headway budget & coordinated headway stress test & evaluated \\
-navigation & no &  & not supported in this pass & gated \\
-aerospace & no &  & not supported in this pass & gated \\
+battery & evaluated & Three-domain closure keeps the compositional program on the promoted rows only. \\
+healthcare & evaluated & Three-domain closure keeps the compositional program on the promoted rows only. \\
+vehicle & evaluated & Three-domain closure keeps the compositional program on the promoted rows only. \\
 \bottomrule
 \end{tabular}
 \end{table}

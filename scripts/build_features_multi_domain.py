@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
-"""Build features for all multi-domain datasets.
+"""Build features for the active non-battery ORIUS datasets.
 
 Run before training: python scripts/build_features_multi_domain.py
 
 Requires datasets to exist. Run first:
   make av-datasets
-  make industrial-datasets
   make healthcare-datasets
-  python scripts/download_aerospace_datasets.py
-  python scripts/build_navigation_real_dataset.py
 
 For repo-local corpus readiness checks, run:
   python scripts/verify_real_data_preflight.py
@@ -27,10 +24,7 @@ if str(REPO_ROOT / "src") not in sys.path:
 
 def main() -> int:
     from orius.data_pipeline.build_features_av import build_features as build_av
-    from orius.data_pipeline.build_features_industrial import build_features as build_industrial
-    from orius.data_pipeline.build_features_healthcare import build_features as build_healthcare
-    from orius.data_pipeline.build_features_aerospace import build_features as build_aerospace
-    from orius.data_pipeline.build_features_navigation import build_features as build_navigation
+    from orius.data_pipeline.build_features_healthcare import build_promoted_features as build_healthcare
 
     results = []
 
@@ -42,37 +36,14 @@ def main() -> int:
     else:
         results.append(("AV", "SKIP (run: make av-datasets)"))
 
-    # Industrial
-    ind_csv = REPO_ROOT / "data" / "industrial" / "processed" / "industrial_orius.csv"
-    if ind_csv.exists():
-        build_industrial(ind_csv, ind_csv.parent)
-        results.append(("Industrial", "OK"))
-    else:
-        results.append(("Industrial", "SKIP (run: make industrial-datasets)"))
-
     # Healthcare
-    hc_csv = REPO_ROOT / "data" / "healthcare" / "processed" / "healthcare_orius.csv"
+    hc_csv = REPO_ROOT / "data" / "healthcare" / "mimic3" / "processed" / "mimic3_healthcare_orius.csv"
+    hc_out = REPO_ROOT / "data" / "healthcare" / "processed"
     if hc_csv.exists():
-        build_healthcare(hc_csv, hc_csv.parent)
+        build_healthcare(hc_csv, hc_out)
         results.append(("Healthcare", "OK"))
     else:
         results.append(("Healthcare", "SKIP (run: make healthcare-datasets)"))
-
-    # Aerospace
-    aero_csv = REPO_ROOT / "data" / "aerospace" / "processed" / "aerospace_orius.csv"
-    if aero_csv.exists():
-        build_aerospace(aero_csv, aero_csv.parent)
-        results.append(("Aerospace", "OK"))
-    else:
-        results.append(("Aerospace", "SKIP (run: python scripts/download_aerospace_datasets.py)"))
-
-    # Navigation
-    nav_csv = REPO_ROOT / "data" / "navigation" / "processed" / "navigation_orius.csv"
-    if nav_csv.exists():
-        build_navigation(nav_csv, nav_csv.parent)
-        results.append(("Navigation", "OK"))
-    else:
-        results.append(("Navigation", "SKIP (run: python scripts/build_navigation_real_dataset.py)"))
 
     print("\nMulti-domain build summary:")
     for domain, status in results:

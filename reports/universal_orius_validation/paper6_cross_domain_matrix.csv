@@ -1,7 +1,4 @@
-domain,supported,issue_seen,validate_seen,expire_seen,fallback_seen,hash_chain_ok,invariants_pass,status
-battery,yes,True,True,True,True,True,True,evaluated
-industrial,yes,True,True,True,True,True,True,evaluated
-healthcare,yes,True,True,True,True,True,True,evaluated
-vehicle,yes,True,True,True,True,True,True,evaluated
-navigation,yes,True,True,True,True,True,True,evaluated
-aerospace,yes,True,True,True,True,True,True,evaluated
+domain,status,notes
+battery,evaluated,CertOS/runtime governance remains active on the promoted three-domain lane.
+healthcare,evaluated,CertOS/runtime governance remains active on the promoted three-domain lane.
+vehicle,evaluated,CertOS/runtime governance remains active on the promoted three-domain lane.

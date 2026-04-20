@@ -1,12 +1,12 @@
-# Healthcare domain training config
+# Healthcare max-input training config
 dataset:
-  key: HEALTHCARE
-  label: Healthcare Vital Signs (MIMIC-III)
+  key: HEALTHCARE_MAX_INPUT
+  label: Healthcare Vital Signs (BIDMC + MIMIC3 max-input)
   source: ORIUS
   region_group: multi-domain
 
 task:
-  horizon_hours: 0.001  # ~3.6s
+  horizon_hours: 0.001
   lookback_hours: 0.1
   quantiles: [0.1, 0.5, 0.9]
   targets: [hr_bpm, spo2_pct, respiratory_rate, shock_index]
@@ -21,7 +21,7 @@ cross_validation:
   gap: 1
 
 data:
-  processed_path: data/healthcare/processed/features.parquet
+  processed_path: data/healthcare/max_input/features.parquet
   timestamp_col: timestamp
 
 splits:
@@ -64,3 +64,18 @@ models:
     enabled: false
   dl_tft:
     enabled: false
+
+artifacts:
+  out_dir: artifacts/models_healthcare_max_input
+reports:
+  out_dir: reports/healthcare_max_input
+
+backtest:
+  enabled: true
+  out_path: reports/healthcare_max_input/walk_forward_report.json
+
+tuning:
+  enabled: false
+
+tracking:
+  enabled: false

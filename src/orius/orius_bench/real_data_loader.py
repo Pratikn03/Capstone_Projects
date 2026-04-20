@@ -1,34 +1,18 @@
-"""Real-dataset loader for ORIUS-Bench tracks.
+"""Real-dataset loader for the canonical three-domain ORIUS bench.
 
-Provides two loading paths per domain:
-  1. Repo-local canonical raw/runtime surfaces staged under ``data/<domain>/``.
-  2. Calibrated synthetic fallback used only when those staged surfaces are absent.
+The active replay/data surfaces are:
+  - vehicle: ``data/orius_av/av/processed/av_trajectories_orius.csv``
+  - healthcare: ``data/healthcare/mimic3/processed/mimic3_healthcare_orius.csv``
 
-Canonical repo-local surfaces
------------------------------
-Industrial raw (UCI CCPP):
-    data/industrial/raw/CCPP.csv
+Battery remains the witness row but does not rely on this loader module.
+Supplemental BIDMC numerics remain available as a healthcare-side companion
+source for bridge and fallback experiments.
 
-Healthcare raw (PhysioNet BIDMC numerics):
-    data/healthcare/raw/bidmc_csv/*_Numerics.csv
-
-Vehicle runtime:
-    data/av/processed/av_trajectories_orius.csv
-
-Industrial runtime:
-    data/industrial/processed/industrial_orius.csv
-
-Healthcare runtime:
-    data/healthcare/processed/healthcare_orius.csv
-
-Navigation runtime:
-    data/navigation/processed/navigation_orius.csv
-
-Aerospace support/runtime lane:
-    data/aerospace/processed/aerospace_public_adsb_runtime.csv
-
-Aerospace defended runtime lane:
-    data/aerospace/processed/aerospace_realflight_runtime.csv
+Compatibility note
+------------------
+Several maintenance scripts still rely on the legacy industrial, navigation,
+and aerospace helpers. Those APIs remain available here as compatibility
+surfaces even though the promoted runtime lane is now three-domain.
 """
 from __future__ import annotations
 
@@ -56,15 +40,15 @@ def _repo_registry_path(dataset_key: str, attr: str) -> Path:
     return path
 
 
-CCPP_PATH = _repo_registry_path("INDUSTRIAL", "canonical_raw_source_path")
-BIDMC_PATH = _repo_registry_path("HEALTHCARE", "canonical_raw_source_path")
+BIDMC_PATH = REPO_ROOT / "data" / "healthcare" / "raw" / "bidmc_csv"
 BIDMC_SYNTHETIC_PATH = BIDMC_PATH / "_synthetic_bidmc_vitals.csv"
 AV_PATH = _repo_registry_path("AV", "canonical_runtime_path")
-INDUSTRIAL_RUNTIME_PATH = _repo_registry_path("INDUSTRIAL", "canonical_runtime_path")
 HEALTHCARE_RUNTIME_PATH = _repo_registry_path("HEALTHCARE", "canonical_runtime_path")
-NAVIGATION_PATH = _repo_registry_path("NAVIGATION", "canonical_runtime_path")
-AEROSPACE_RUNTIME_PATH = _repo_registry_path("AEROSPACE", "support_runtime_path")
-AEROSPACE_REALFLIGHT_PATH = _repo_registry_path("AEROSPACE", "canonical_runtime_path")
+CCPP_PATH = REPO_ROOT / "data" / "industrial" / "raw" / "CCPP.csv"
+INDUSTRIAL_RUNTIME_PATH = REPO_ROOT / "data" / "industrial" / "processed" / "industrial_orius.csv"
+NAVIGATION_PATH = REPO_ROOT / "data" / "navigation" / "processed" / "navigation_orius.csv"
+AEROSPACE_RUNTIME_PATH = REPO_ROOT / "data" / "aerospace" / "processed" / "aerospace_public_adsb_runtime.csv"
+AEROSPACE_REALFLIGHT_PATH = REPO_ROOT / "data" / "aerospace" / "processed" / "aerospace_realflight_runtime.csv"
 
 
 # ---------------------------------------------------------------------------
@@ -101,41 +85,33 @@ def _ou_series(
 # ---------------------------------------------------------------------------
 
 def load_ccpp_rows(path: Path | None = None) -> list[dict[str, float]]:
-    """Load UCI CCPP rows from CSV.
-
-    Expected columns: AT, V, AP, RH, PE
-    Returns list of dicts with those keys as floats.
-    Skips rows that cannot be parsed.
-    """
+    """Load UCI CCPP rows from CSV."""
     p = Path(path) if path else CCPP_PATH
     rows: list[dict[str, float]] = []
     with p.open(newline="", encoding="utf-8") as fh:
         reader = csv.DictReader(fh)
         for row in reader:
             try:
-                rows.append({
-                    "AT": float(row["AT"]),
-                    "V":  float(row["V"]),
-                    "AP": float(row["AP"]),
-                    "RH": float(row["RH"]),
-                    "PE": float(row["PE"]),
-                })
+                rows.append(
+                    {
+                        "AT": float(row["AT"]),
+                        "V": float(row["V"]),
+                        "AP": float(row["AP"]),
+                        "RH": float(row["RH"]),
+                        "PE": float(row["PE"]),
+                    }
+                )
             except (KeyError, ValueError):
                 continue
     return rows
 
 
 def generate_ccpp_synthetic(n: int = 9568, seed: int = 42) -> list[dict[str, float]]:
-    """Generate calibrated synthetic CCPP data from published OU parameters.
-
-    Correlates AT and PE with a negative relationship (higher temp → lower power)
-    matching the published Pearson r ≈ -0.95.
-    """
+    """Generate calibrated synthetic CCPP data from published OU parameters."""
     at_vals = _ou_series(19.65, 4.83, 0.15, n, seed=seed, clip_lo=1.0, clip_hi=38.0)
     ap_vals = _ou_series(1013.26, 5.94, 0.10, n, seed=seed + 1)
     rh_vals = _ou_series(73.31, 14.55, 0.12, n, seed=seed + 2, clip_lo=25.0, clip_hi=100.0)
-    v_vals  = _ou_series(54.30, 12.71, 0.20, n, seed=seed + 3, clip_lo=25.0, clip_hi=81.6)
-    # PE anticorrelated with AT: pe = mu_pe - 0.85*(at - mu_at) + noise
+    v_vals = _ou_series(54.30, 12.71, 0.20, n, seed=seed + 3, clip_lo=25.0, clip_hi=81.6)
     rng = np.random.default_rng(seed + 4)
     pe_vals: list[float] = []
     for at in at_vals:
@@ -204,9 +180,9 @@ def load_bidmc_rows(path: Path | None = None) -> list[dict[str, float]]:
 
 def generate_bidmc_synthetic(n: int = 4000, seed: int = 42) -> list[dict[str, float]]:
     """Generate calibrated synthetic BIDMC vitals from published OU parameters."""
-    hr_vals   = _ou_series(82.0, 18.0, 0.20, n, seed=seed,     clip_lo=30.0, clip_hi=200.0)
-    spo2_vals = _ou_series(97.5,  1.2, 0.35, n, seed=seed + 1, clip_lo=70.0, clip_hi=100.0)
-    rr_vals   = _ou_series(18.0,  4.0, 0.25, n, seed=seed + 2, clip_lo=4.0,  clip_hi=60.0)
+    hr_vals = _ou_series(82.0, 18.0, 0.20, n, seed=seed, clip_lo=30.0, clip_hi=200.0)
+    spo2_vals = _ou_series(97.5, 1.2, 0.35, n, seed=seed + 1, clip_lo=70.0, clip_hi=100.0)
+    rr_vals = _ou_series(18.0, 4.0, 0.25, n, seed=seed + 2, clip_lo=4.0, clip_hi=60.0)
     return [
         {"HR": hr, "SpO2": spo2, "RR": rr}
         for hr, spo2, rr in zip(hr_vals, spo2_vals, rr_vals)
@@ -225,11 +201,7 @@ def get_bidmc_rows(seed: int = 42) -> list[dict[str, float]]:
     return generate_bidmc_synthetic(seed=seed)
 
 
-# ---------------------------------------------------------------------------
-# Navigation / aerospace runtime loaders
-# ---------------------------------------------------------------------------
-
-def load_navigation_rows(path: Path | None = None) -> list[dict[str, float]]:
+def load_navigation_rows(path: Path | None = None) -> list[dict[str, Any]]:
     """Load processed ORIUS navigation rows."""
     p = Path(path) if path else NAVIGATION_PATH
     rows: list[dict[str, Any]] = []
@@ -254,7 +226,7 @@ def load_navigation_rows(path: Path | None = None) -> list[dict[str, float]]:
     return rows
 
 
-def load_aerospace_runtime_rows(path: Path | None = None) -> list[dict[str, float]]:
+def load_aerospace_runtime_rows(path: Path | None = None) -> list[dict[str, Any]]:
     """Load processed ORIUS aerospace runtime rows."""
     p = Path(path) if path else AEROSPACE_RUNTIME_PATH
     rows: list[dict[str, Any]] = []
@@ -282,7 +254,7 @@ def load_vehicle_rows(path: Path | None = None) -> list[dict[str, Any]]:
     """Load processed AV trajectory rows.
 
     Supports both Path A (speed-limit-only) and Path B (RSS-augmented)
-    schemas.  RSS columns are optional; missing fields default to None.
+    schemas. RSS columns are optional; missing fields default to None.
     """
     p = Path(path) if path else AV_PATH
     rows: list[dict[str, Any]] = []
@@ -290,7 +262,7 @@ def load_vehicle_rows(path: Path | None = None) -> list[dict[str, Any]]:
         reader = csv.DictReader(fh)
         for row in reader:
             try:
-                d: dict[str, Any] = {
+                parsed: dict[str, Any] = {
                     "vehicle_id": row.get("vehicle_id", "veh-0"),
                     "step": int(float(row.get("step", 0))),
                     "position_m": float(row["position_m"]),
@@ -299,18 +271,17 @@ def load_vehicle_rows(path: Path | None = None) -> list[dict[str, Any]]:
                     "lead_position_m": float(row["lead_position_m"]),
                     "ts_utc": row.get("ts_utc", ""),
                 }
-                # Path B RSS columns (optional)
                 if "lead_present" in row:
-                    d["lead_present"] = row["lead_present"] in ("True", "true", "1")
+                    parsed["lead_present"] = row["lead_present"] in ("True", "true", "1")
                 if "lead_rel_x_m" in row and row["lead_rel_x_m"]:
-                    d["lead_rel_x_m"] = float(row["lead_rel_x_m"])
+                    parsed["lead_rel_x_m"] = float(row["lead_rel_x_m"])
                 if "lead_speed_mps" in row and row["lead_speed_mps"]:
-                    d["lead_speed_mps"] = float(row["lead_speed_mps"])
+                    parsed["lead_speed_mps"] = float(row["lead_speed_mps"])
                 if "rss_safe_gap_m" in row and row["rss_safe_gap_m"]:
-                    d["rss_safe_gap_m"] = float(row["rss_safe_gap_m"])
+                    parsed["rss_safe_gap_m"] = float(row["rss_safe_gap_m"])
                 if "rss_violation_true" in row:
-                    d["rss_violation_true"] = row["rss_violation_true"] in ("True", "true", "1")
-                rows.append(d)
+                    parsed["rss_violation_true"] = row["rss_violation_true"] in ("True", "true", "1")
+                rows.append(parsed)
             except (KeyError, ValueError):
                 continue
     return rows
@@ -349,6 +320,22 @@ def load_healthcare_runtime_rows(path: Path | None = None) -> list[dict[str, Any
         reader = csv.DictReader(fh)
         for row in reader:
             try:
+                if {"target", "hr", "resp"}.issubset(row):
+                    step_raw = row.get("step")
+                    if step_raw in {None, ""} and "timestamp" in row:
+                        token = str(row.get("timestamp", ""))
+                        step_raw = token.rsplit("_t", 1)[-1] if "_t" in token else 0
+                    rows.append(
+                        {
+                            "patient_id": row.get("patient_id", "patient-0"),
+                            "step": int(float(step_raw or 0)),
+                            "hr_bpm": float(row["hr"]),
+                            "spo2_pct": float(row["target"]),
+                            "respiratory_rate": float(row["resp"]),
+                            "ts_utc": row.get("ts_utc") or row.get("timestamp", ""),
+                        }
+                    )
+                    continue
                 rows.append(
                     {
                         "patient_id": row.get("patient_id", "patient-0"),
@@ -369,7 +356,7 @@ def load_healthcare_runtime_rows(path: Path | None = None) -> list[dict[str, Any
 # ---------------------------------------------------------------------------
 
 def dataset_status() -> dict[str, Any]:
-    """Return availability status of each dataset."""
+    """Return availability status for active and compatibility datasets."""
     ccpp_real = False
     ccpp_rows = 0
     if CCPP_PATH.exists():
@@ -395,11 +382,19 @@ def dataset_status() -> dict[str, Any]:
             "rows": ccpp_rows,
             "fallback_rows": 9568,
         },
+        "vehicle": {
+            "path": str(AV_PATH),
+            "real_data": AV_PATH.exists(),
+        },
         "bidmc": {
             "path": str(BIDMC_PATH),
             "real_data": bidmc_real,
             "rows": bidmc_rows,
             "fallback_rows": 4000,
+        },
+        "healthcare": {
+            "path": str(HEALTHCARE_RUNTIME_PATH),
+            "real_data": HEALTHCARE_RUNTIME_PATH.exists(),
         },
         "navigation": {
             "path": str(NAVIGATION_PATH),

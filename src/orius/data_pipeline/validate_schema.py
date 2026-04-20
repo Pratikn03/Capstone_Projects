@@ -82,7 +82,7 @@ def main() -> None:
             raise ValueError("Feature schema invalid: timestamp contains null/invalid values.")
         df = df.sort_values("timestamp").reset_index(drop=True)
         dup_ts = int(df["timestamp"].duplicated().sum())
-        if dup_ts > 0:
+        if dup_ts > 0 and "vehicle_id" not in df.columns and "patient_id" not in df.columns:
             raise ValueError(f"Feature schema invalid: duplicate timestamps detected ({dup_ts}).")
 
         miss_frac = df.isna().mean().sort_values(ascending=False).to_string()

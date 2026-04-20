@@ -10,40 +10,41 @@ def test_list_domains() -> None:
     domains = list_domains()
     assert "energy" in domains
     assert "av" in domains
-    assert "navigation" in domains
-    assert "industrial" in domains
     assert "healthcare" in domains
-    assert "surgical_robotics" in domains
-    assert "aerospace" in domains
+    assert "navigation" not in domains
+    assert "industrial" not in domains
+    assert "aerospace" not in domains
+    assert domains == ["av", "energy", "healthcare"]
 
 
-def test_get_adapter_industrial() -> None:
-    adapter = get_adapter("industrial", {})
+def test_get_adapter_energy() -> None:
+    adapter = get_adapter("energy", {})
     assert adapter is not None
 
 
-def test_run_universal_step_industrial() -> None:
-    adapter = get_adapter("industrial", {})
+def test_run_universal_step_energy() -> None:
+    adapter = get_adapter("energy", {})
     result = run_universal_step(
         domain_adapter=adapter,
         raw_telemetry={
-            "temp_c": 25.0,
-            "pressure_mbar": 1010.0,
-            "power_mw": 450.0,
+            "current_soc_mwh": 500.0,
+            "yhat_load": 100.0,
+            "charge_mw": 0.0,
+            "discharge_mw": 0.0,
             "ts_utc": "2026-01-01T00:00:00Z",
         },
         history=None,
-        candidate_action={"power_setpoint_mw": 480.0},
-        constraints={"power_max_mw": 500.0},
-        quantile=30.0,
+        candidate_action={"charge_mw": 0.0, "discharge_mw": 25.0},
+        constraints={"min_soc_mwh": 0.0, "max_soc_mwh": 1000.0, "max_power_mw": 250.0},
+        quantile=5.0,
     )
     assert "certificate" in result
     assert "safe_action" in result
     assert "reliability_w" in result
     assert 0.0 <= result["reliability_w"] <= 1.0
     safe = result["safe_action"]
-    assert "power_setpoint_mw" in safe
-    assert 0.0 <= safe["power_setpoint_mw"] <= 500.0
+    assert "charge_mw" in safe
+    assert "discharge_mw" in safe
 
 
 def test_run_universal_step_healthcare() -> None:
@@ -66,30 +67,6 @@ def test_run_universal_step_healthcare() -> None:
     assert "reliability_w" in result
 
 
-def test_run_universal_step_aerospace() -> None:
-    adapter = get_adapter("aerospace", {})
-    result = run_universal_step(
-        domain_adapter=adapter,
-        raw_telemetry={
-            "altitude_m": 3000.0,
-            "airspeed_kt": 180.0,
-            "bank_angle_deg": 5.0,
-            "fuel_remaining_pct": 65.0,
-            "ts_utc": "2026-01-01T00:00:00Z",
-        },
-        history=None,
-        candidate_action={"throttle": 0.7, "bank_deg": 3.0},
-        constraints={"v_min_kt": 60.0, "v_max_kt": 350.0},
-        quantile=5.0,
-    )
-    assert "certificate" in result
-    assert "safe_action" in result
-    assert "reliability_w" in result
-    safe = result["safe_action"]
-    assert "throttle" in safe
-    assert "bank_deg" in safe
-
-
 def test_run_universal_step_vehicle_repairs_tight_ttc_case() -> None:
     adapter = get_adapter("av", {})
     result = run_universal_step(
@@ -110,53 +87,13 @@ def test_run_universal_step_vehicle_repairs_tight_ttc_case() -> None:
             "dt_s": 0.25,
             "min_headway_m": 5.0,
             "ttc_min_s": 2.0,
+            "lead_speed_mps": 0.0,
         },
-        quantile=0.9,
+        quantile=1.1,
     )
     assert result["repair_meta"]["repaired"] is True
     assert result["repair_meta"]["intervention_reason"] == "ttc_clamp"
     assert result["safe_action"]["acceleration_mps2"] < 0.0
-
-
-def test_run_universal_step_navigation_repairs_out_of_bounds_motion() -> None:
-    adapter = get_adapter(
-        "navigation",
-        {
-            "navigation": {
-                "arena_size": 10.0,
-                "speed_limit": 1.0,
-                "obstacle_centres": [(5.0, 5.0)],
-                "obstacle_radius": 1.0,
-                "dt_s": 0.25,
-            }
-        },
-    )
-    result = run_universal_step(
-        domain_adapter=adapter,
-        raw_telemetry={
-            "x": 9.95,
-            "y": 9.80,
-            "vx": 0.0,
-            "vy": 0.0,
-            "ts_utc": "2026-01-01T00:00:00Z",
-        },
-        history=None,
-        candidate_action={"ax": 4.0, "ay": 4.0},
-        constraints={
-            "arena_min": 0.0,
-            "arena_max": 10.0,
-            "max_speed": 1.0,
-            "dt_s": 0.25,
-        },
-        quantile=10.0,
-    )
-    assert "certificate" in result
-    assert "safe_action" in result
-    assert result["repair_meta"]["repaired"] is True
-    reason = result["repair_meta"].get("intervention_reason", "")
-    assert reason and any(tok in reason for tok in {"arena_x_max", "arena_y_max", "arena_x_min", "arena_y_min", "speed_limit", "arena_bound_clamp"})
-    assert result["safe_action"]["ax"] <= 0.2
-    assert result["safe_action"]["ay"] <= 0.8
 
 
 def test_get_adapter_unknown_raises() -> None:

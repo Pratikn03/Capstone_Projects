@@ -34,10 +34,8 @@ def _step(name: str, fn, *args, **kwargs):
 def check_imports():
     """Verify all core ORIUS imports."""
     def _do():
-        from orius.adapters.aerospace import AerospaceDomainAdapter
         from orius.adapters.battery import BatteryDomainAdapter
         from orius.adapters.healthcare import HealthcareDomainAdapter
-        from orius.adapters.industrial import IndustrialDomainAdapter
         from orius.adapters.vehicle import VehicleDomainAdapter
         from orius.dc3s import (
             compute_reliability,
@@ -53,12 +51,10 @@ def check_imports():
         from orius.cpsbench_iot.scenarios import generate_episode
         assert BatteryDomainAdapter is not None
         assert VehicleDomainAdapter is not None
-        assert IndustrialDomainAdapter is not None
         assert HealthcareDomainAdapter is not None
-        assert AerospaceDomainAdapter is not None
         return True
 
-    _step("Imports (adapters, DC3S, forecasting, optimizer, CPSBench)", _do)
+    _step("Imports (active adapters, DC3S, forecasting, optimizer, CPSBench)", _do)
 
 
 def check_config():
@@ -154,14 +150,10 @@ def check_universal_framework():
         domains = list_domains()
         assert "energy" in domains
         assert "av" in domains
-        assert "navigation" in domains
-        assert "industrial" in domains
         assert "healthcare" in domains
-        assert "surgical_robotics" in domains
-        assert "aerospace" in domains
 
         # Run one step per runtime domain with synthetic telemetry.
-        for domain_id in ["energy", "av", "navigation", "industrial", "healthcare", "aerospace"]:
+        for domain_id in ["energy", "av", "healthcare"]:
             adapter = get_adapter(domain_id, {})
             if domain_id == "energy":
                 telemetry = {"load_mw": 45.0, "renewables_mw": 80.0, "current_soc_mwh": 100.0, "capacity_mwh": 200.0, "yhat_load": 48.0, "ts_utc": "2026-01-01T00:00:00Z"}
@@ -171,22 +163,12 @@ def check_universal_framework():
                 telemetry = {"position_m": 100.0, "speed_mps": 8.0, "speed_limit_mps": 15.0, "lead_position_m": 150.0, "ts_utc": "2026-01-01T00:00:00Z"}
                 candidate = {"acceleration_mps2": 0.5}
                 constraints = {"speed_max_mps": 15.0}
-            elif domain_id == "navigation":
-                telemetry = {"x": 9.95, "y": 9.80, "vx": 0.0, "vy": 0.0, "ts_utc": "2026-01-01T00:00:00Z"}
-                candidate = {"ax": 4.0, "ay": 4.0}
-                constraints = {"arena_min": 0.0, "arena_max": 10.0, "max_speed": 1.0, "dt_s": 0.25}
-            elif domain_id == "industrial":
-                telemetry = {"temp_c": 85.0, "pressure_mbar": 1010.0, "power_mw": 450.0, "ts_utc": "2026-01-01T00:00:00Z"}
-                candidate = {"power_setpoint_mw": 480.0}
-                constraints = {"power_max_mw": 500.0}
             elif domain_id == "healthcare":
                 telemetry = {"hr_bpm": 72.0, "spo2_pct": 97.0, "respiratory_rate": 14.0, "ts_utc": "2026-01-01T00:00:00Z"}
                 candidate = {"alert_level": 0.2}
                 constraints = {"spo2_min_pct": 90.0}
-            else:  # aerospace
-                telemetry = {"altitude_m": 3000.0, "airspeed_kt": 180.0, "bank_angle_deg": 5.0, "fuel_remaining_pct": 65.0, "ts_utc": "2026-01-01T00:00:00Z"}
-                candidate = {"throttle": 0.7, "bank_deg": 3.0}
-                constraints = {"v_min_kt": 60.0, "v_max_kt": 350.0}
+            else:
+                continue
 
             result = run_universal_step(
                 domain_adapter=adapter,
@@ -200,7 +182,7 @@ def check_universal_framework():
             assert "safe_action" in result
         return True
 
-    _step("Universal framework (6 runtime domains)", _do)
+    _step("Universal framework (3 active domains)", _do)
 
 
 def check_locked_evidence():

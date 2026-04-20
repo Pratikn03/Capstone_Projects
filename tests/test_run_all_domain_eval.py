@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 
 
@@ -27,12 +28,14 @@ eval_script = _load_eval_script()
 
 
 def test_load_domain_frame_requires_defended_surface_by_default(tmp_path: Path) -> None:
-    cfg = dict(eval_script.DOMAINS["navigation"])
-    cfg["csv"] = tmp_path / "missing_navigation.csv"
+    cfg = {
+        "csv": tmp_path / "missing_navigation.csv",
+        "synthetic_fn": lambda n_rows, rng: pd.DataFrame({"value": rng.normal(size=n_rows)}),
+    }
 
     with pytest.raises(FileNotFoundError, match="legacy lower-tier path"):
         eval_script._load_domain_frame(
-            "navigation",
+            "support_only",
             cfg,
             np.random.default_rng(42),
             16,
@@ -41,11 +44,13 @@ def test_load_domain_frame_requires_defended_surface_by_default(tmp_path: Path) 
 
 
 def test_load_domain_frame_uses_legacy_synthetic_only_when_explicitly_enabled(tmp_path: Path) -> None:
-    cfg = dict(eval_script.DOMAINS["navigation"])
-    cfg["csv"] = tmp_path / "missing_navigation.csv"
+    cfg = {
+        "csv": tmp_path / "missing_navigation.csv",
+        "synthetic_fn": lambda n_rows, rng: pd.DataFrame({"value": rng.normal(size=n_rows)}),
+    }
 
     frame, source = eval_script._load_domain_frame(
-        "navigation",
+        "support_only",
         cfg,
         np.random.default_rng(42),
         16,
@@ -74,17 +79,18 @@ def test_all_domain_eval_runs_under_explicit_support_tier_and_emits_results(tmp_
         text=True,
     )
 
-    assert "Running Navigation" in proc.stdout
+    assert "Running Autonomous Vehicles" in proc.stdout
+    assert "Running Medical Monitoring (ICU Vitals)" in proc.stdout
     report = json.loads((out_dir / "all_domain_results.json").read_text(encoding="utf-8"))
     rows = {row["domain"]: row for row in report["results"]}
 
-    assert set(rows) == {"aerospace", "av", "navigation", "healthcare", "industrial"}
+    assert set(rows) == {"av", "healthcare"}
     assert all(row["status"] == "ok" for row in rows.values())
-    assert rows["navigation"]["data_source"] in {"locked_csv", "synthetic"}
+    assert rows["healthcare"]["data_source"] == "locked_csv"
     assert any(float(row["mean_reliability"]) < 0.99 for row in rows.values())
 
     comparison_tex = (out_dir / "tbl_all_domain_comparison.tex").read_text(encoding="utf-8")
-    assert "Navigation" in comparison_tex
+    assert "Medical Monitoring (ICU Vitals)" in comparison_tex
     assert "locked\\_csv" in comparison_tex
 
     assert (out_dir / "fig_all_domain_comparison.png").exists()

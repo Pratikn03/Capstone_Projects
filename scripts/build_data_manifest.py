@@ -41,21 +41,9 @@ DATASET_PATHS: dict[str, dict[str, Any]] = {
         "features": Path("data/orius_av/av/processed/features.parquet"),
         "splits_dir": Path("data/orius_av/av/processed/splits"),
     },
-    "INDUSTRIAL": {
-        "features": Path("data/industrial/processed/features.parquet"),
-        "splits_dir": Path("data/industrial/processed/splits"),
-    },
     "HEALTHCARE": {
         "features": Path("data/healthcare/processed/features.parquet"),
         "splits_dir": Path("data/healthcare/processed/splits"),
-    },
-    "AEROSPACE": {
-        "features": Path("data/aerospace/processed/features.parquet"),
-        "splits_dir": Path("data/aerospace/processed/splits"),
-    },
-    "NAVIGATION": {
-        "features": Path("data/navigation/processed/features.parquet"),
-        "splits_dir": Path("data/navigation/processed/splits"),
     },
 }
 
@@ -202,7 +190,7 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build deterministic data identity manifest")
     parser.add_argument(
         "--dataset",
-        choices=["DE", "US", "US_MISO", "US_PJM", "US_ERCOT", "AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE", "NAVIGATION", "ALL"],
+        choices=["DE", "US", "US_MISO", "US_PJM", "US_ERCOT", "AV", "HEALTHCARE", "ALL"],
         default="ALL",
     )
     parser.add_argument("--output", default="paper/assets/data/data_manifest.json")
@@ -212,7 +200,7 @@ def _parse_args() -> argparse.Namespace:
 def main() -> None:
     args = _parse_args()
     if args.dataset == "ALL":
-        datasets = ["DE", "US_MISO", "US_PJM", "US_ERCOT", "AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE", "NAVIGATION"]
+        datasets = ["DE", "US_MISO", "US_PJM", "US_ERCOT", "AV", "HEALTHCARE"]
     else:
         datasets = [args.dataset]
     datasets = ["US_MISO" if dataset == "US" else dataset for dataset in datasets]

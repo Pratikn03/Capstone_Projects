@@ -1,7 +1,4 @@
-domain,primary_fault,oasg_rate_baseline,oasg_rate_orius,orius_reduction_pct,metric_surface
-battery,multi,0.1250,0.2500,-100.0,orius_bench_harness_proxy
-navigation,multi,0.1667,0.2083,-25.0,universal_validation_harness
-industrial,multi,0.2917,0.0000,100.0,universal_validation_harness
-healthcare,multi,0.2500,0.0000,100.0,universal_validation_harness
-aerospace,multi,0.2917,0.0000,100.0,universal_validation_harness
-vehicle,multi,0.0833,0.0000,100.0,universal_validation_harness
+domain,baseline_tsvr_mean,orius_tsvr_mean,orius_reduction_pct,validation_status
+battery,0.0083,0.0000,100.0,reference
+healthcare,0.2917,0.0417,85.7,proof_validated
+vehicle,0.1250,0.0417,66.7,proof_validated

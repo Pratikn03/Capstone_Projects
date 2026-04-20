@@ -1,4 +1,4 @@
-"""Domain registry for ORIUS Universal Framework."""
+"""Domain registry for the canonical three-domain ORIUS runtime."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -65,14 +65,7 @@ def list_domains() -> list[str]:
 
 
 def _register_builtins() -> None:
-    """Register built-in domain adapters. Uses canonical orius.adapters.* paths.
-
-    This function is intentionally idempotent. Some call paths import
-    ``orius.universal_framework`` while a canonical adapter package is still
-    initializing, which can temporarily hide that adapter behind a partial
-    import. Re-running registration after imports settle restores the missing
-    domain without changing external behavior.
-    """
+    """Register the canonical three-domain ORIUS runtime adapters."""
     try:
         from orius.adapters.battery import BatteryDomainAdapter
         register_domain(
@@ -104,51 +97,6 @@ def _register_builtins() -> None:
     except ImportError as e:
         logger.warning("Failed to register av domain adapter: %s", e)
     try:
-        from orius.adapters.av_waymo import WaymoAVDomainAdapter
-        register_domain(
-            "av_waymo",
-            lambda cfg: WaymoAVDomainAdapter(cfg),
-            capabilities={
-                "safety_surface_type": "waymo_longitudinal_headway_barrier",
-                "repair_mode": "acceleration_projection",
-                "fallback_mode": "full_brake",
-                "supports_multi_agent_eval": True,
-                "supports_certos_eval": True,
-            },
-        )
-    except ImportError as e:
-        logger.warning("Failed to register av_waymo domain adapter: %s", e)
-    try:
-        from orius.adapters.navigation import NavigationDomainAdapter
-        register_domain(
-            "navigation",
-            lambda cfg: NavigationDomainAdapter(cfg),
-            capabilities={
-                "safety_surface_type": "arena_obstacle_bounds",
-                "repair_mode": "vector_projection",
-                "fallback_mode": "hold_position",
-                "supports_multi_agent_eval": False,
-                "supports_certos_eval": True,
-            },
-        )
-    except ImportError as e:
-        logger.warning("Failed to register navigation domain adapter: %s", e)
-    try:
-        from orius.universal_framework.industrial_adapter import IndustrialDomainAdapter
-        register_domain(
-            "industrial",
-            lambda cfg: IndustrialDomainAdapter(cfg),
-            capabilities={
-                "safety_surface_type": "power_temperature_envelope",
-                "repair_mode": "one_dim_projection",
-                "fallback_mode": "power_cap",
-                "supports_multi_agent_eval": True,
-                "supports_certos_eval": True,
-            },
-        )
-    except ImportError as e:
-        logger.warning("Failed to register industrial domain adapter: %s", e)
-    try:
         from orius.adapters.healthcare import HealthcareDomainAdapter
         register_domain(
             "healthcare",
@@ -161,31 +109,5 @@ def _register_builtins() -> None:
                 "supports_certos_eval": True,
             },
         )
-        register_domain(
-            "surgical_robotics",
-            lambda cfg: HealthcareDomainAdapter(cfg),
-            capabilities={
-                "safety_surface_type": "vital_alert_envelope",
-                "repair_mode": "one_dim_projection",
-                "fallback_mode": "max_alert",
-                "supports_multi_agent_eval": False,
-                "supports_certos_eval": True,
-            },
-        )
     except ImportError as e:
         logger.warning("Failed to register healthcare domain adapter: %s", e)
-    try:
-        from orius.adapters.aerospace import AerospaceDomainAdapter
-        register_domain(
-            "aerospace",
-            lambda cfg: AerospaceDomainAdapter(cfg),
-            capabilities={
-                "safety_surface_type": "approach_energy_envelope",
-                "repair_mode": "bounded_projection",
-                "fallback_mode": "envelope_hold",
-                "supports_multi_agent_eval": False,
-                "supports_certos_eval": True,
-            },
-        )
-    except ImportError as e:
-        logger.warning("Failed to register aerospace domain adapter: %s", e)

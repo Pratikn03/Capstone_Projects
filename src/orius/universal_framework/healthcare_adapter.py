@@ -18,7 +18,10 @@ from orius.universal_framework.runtime_evidence import resolve_runtime_evidence
 
 def _f(x: Any, default: float) -> float:
     try:
-        return float(x)
+        v = float(x)
+        if not math.isfinite(v):
+            return float(default)
+        return v
     except (TypeError, ValueError):
         return float(default)
 

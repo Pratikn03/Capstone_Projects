@@ -1,17 +1,14 @@
 \begin{table}[htbp]
 \centering
-\caption{Canonical domain-closure matrix for universal ORIUS promotion. Promotion follows this table rather than prose-first widening.}
-\label{tab:domain-closure-matrix}
-\begin{tabular}{p{1.5cm}p{1.8cm}p{1.7cm}p{1.2cm}p{1.5cm}p{1.1cm}p{1.1cm}p{1.4cm}p{2.3cm}}
+\caption{Three-domain ORIUS closure matrix for the promoted Battery + AV + Healthcare program.}
+\label{tab:three-domain-closure-matrix}
+\begin{tabular}{lllll}
 \toprule
-\textbf{Domain} & \textbf{Target tier} & \textbf{Train/data} & \textbf{Replay} & \textbf{Soundness} & \textbf{P5} & \textbf{P6} & \textbf{Tier} & \textbf{Exact blocker} \\
+\textbf{display name} & \textbf{resulting tier} & \textbf{baseline tsvr mean} & \textbf{orius tsvr mean} & \textbf{training surface status} \\
 \midrule
-battery & witness row & locked reference & pass & reference witness & evaluated & evaluated & reference & battery reference witness \\
-industrial & defended bounded row & verified & pass & pass & evaluated & evaluated & proof validated & industrial train validation chain complete \\
-healthcare & defended bounded row & verified & pass & pass & gated & evaluated & proof validated & healthcare train validation chain complete \\
-vehicle & defended bounded row & verified & pass & pass & gated & evaluated & proof validated & promoted \\
-navigation & defended bounded row & blocked & pass & blocked real data gap & gated & gated & shadow synthetic & navigation real data gap \\
-aerospace & defended bounded row & placeholder synthetic & pass & experimental placeholder & gated & gated & experimental & aerospace experimental placeholder \\
+Battery Energy Storage & reference & 0.0083 & 0.0000 & closed \\
+Medical and Healthcare Monitoring & proof validated & 0.2917 & 0.0417 & closed \\
+Autonomous Vehicles & proof validated & 0.1250 & 0.0417 & closed \\
 \bottomrule
 \end{tabular}
 \end{table}

@@ -29,16 +29,18 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from _dataset_registry import DATASET_REGISTRY, DatasetConfig, REPO_ROOT
-from train_dataset import _configured_model_types, _configured_targets, _load_training_cfg
+from train_dataset import (
+    _configured_model_types,
+    _configured_targets,
+    _load_training_cfg,
+    _resolved_uncertainty_targets,
+)
 
 
 BASE_DOMAIN_DATASET_MAP: tuple[tuple[str, str], ...] = (
     ("battery", "DE"),
     ("av", "AV"),
-    ("industrial", "INDUSTRIAL"),
     ("healthcare", "HEALTHCARE"),
-    ("navigation", "NAVIGATION"),
-    ("aerospace", "AEROSPACE"),
 )
 
 
@@ -111,6 +113,7 @@ def _primary_metrics(cfg: DatasetConfig) -> dict[str, object]:
 def _verify_training(cfg: DatasetConfig) -> tuple[bool, str]:
     train_cfg = _load_training_cfg(cfg)
     targets = _configured_targets(train_cfg)
+    uncertainty_targets = _resolved_uncertainty_targets(cfg, train_cfg)
     model_types = _configured_model_types(train_cfg, requested_models={"gbm"})
     cmd = [
         sys.executable,
@@ -128,7 +131,7 @@ def _verify_training(cfg: DatasetConfig) -> tuple[bool, str]:
         "--targets",
         *targets,
         "--uncertainty-targets",
-        *targets,
+        *uncertainty_targets,
         "--model-types",
         *model_types,
     ]
@@ -160,7 +163,34 @@ def _has_any(path: Path, pattern: str) -> bool:
     return any(path.glob(pattern))
 
 
+def _has_expected_uncertainty_artifacts(path: Path, targets: list[str]) -> bool:
+    if not targets:
+        return True
+    for target in targets:
+        if (path / f"gbm_{target}_conformal.json").exists():
+            continue
+        if (path / f"{target}_conformal.json").exists():
+            continue
+        return False
+    return True
+
+
+def _has_expected_backtests(path: Path, targets: list[str]) -> bool:
+    if not targets:
+        return True
+    for target in targets:
+        for suffix in ("calibration", "test"):
+            namespaced = path / f"gbm_{target}_{suffix}.npz"
+            legacy = path / f"{target}_{suffix}.npz"
+            if namespaced.exists() or legacy.exists():
+                continue
+            return False
+    return True
+
+
 def _domain_row(domain: str, cfg: DatasetConfig, *, verify_log: str, train_status: str, train_command: str | None) -> dict[str, object]:
+    train_cfg = _load_training_cfg(cfg)
+    uncertainty_targets = _resolved_uncertainty_targets(cfg, train_cfg)
     split_counts = _split_counts(cfg)
     split_valid = all(split_counts.get(name, 0) > 0 for name in ("train", "calibration", "val", "test"))
     models_dir = REPO_ROOT / cfg.models_dir
@@ -174,8 +204,8 @@ def _domain_row(domain: str, cfg: DatasetConfig, *, verify_log: str, train_statu
     week2_exists = (reports_dir / "week2_metrics.json").exists()
     preflight_exists = (reports_dir / "preflight_dataset_analysis.json").exists()
     figures_exist = (reports_dir / "figures").exists()
-    uncertainty_exists = _has_any(uncertainty_dir, "gbm_*_conformal.json")
-    backtests_exist = _has_any(backtests_dir, "gbm_*_test.npz")
+    uncertainty_exists = _has_expected_uncertainty_artifacts(uncertainty_dir, uncertainty_targets)
+    backtests_exist = _has_expected_backtests(backtests_dir, uncertainty_targets)
     provenance_exists = bool(cfg.provenance_path) and (REPO_ROOT / str(cfg.provenance_path)).exists()
     processed_surface_exists = (REPO_ROOT / cfg.raw_data_path).exists()
     real_data_backed = provenance_exists and processed_surface_exists

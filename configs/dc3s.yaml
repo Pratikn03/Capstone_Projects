@@ -86,11 +86,8 @@ dc3s:
   domain_inflation:
     battery: 1.0
     grid: 1.15
-    industrial: 1.25
     healthcare: 1.30
-    navigation: 1.35
     av: 1.40
-    aerospace: 1.50
   conformal:
     spci_lambda: 0.05
     spci_max_window: 2000

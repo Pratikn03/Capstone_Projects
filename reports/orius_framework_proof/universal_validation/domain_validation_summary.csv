@@ -1,7 +1,4 @@
-domain,maturity_label,validation_status,closure_target_tier,closure_target_ready,closure_blocker,harness_status,baseline_tsvr_mean,baseline_tsvr_std,orius_tsvr_mean,orius_tsvr_std,orius_reduction_pct,evidence_pass,metric_surface
-battery,reference,reference_validated,witness_row,True,,pass,0.0393,0.0273,0.0000,0.0000,100.0,,locked_publication_nominal
-navigation,shadow_synthetic,shadow_synthetic,defended_bounded_row,False,navigation_kitti_runtime_missing,pass,0.6667,0.0000,0.2500,0.0000,62.5,true,universal_validation_harness
-industrial,proof_validated,proof_validated,defended_bounded_row,True,,pass,1.0000,0.0000,0.0000,0.0000,100.0,true,universal_validation_harness
-healthcare,proof_validated,proof_validated,defended_bounded_row,True,,pass,0.2917,0.0000,0.0417,0.0000,85.7,true,universal_validation_harness
-aerospace,experimental,experimental,defended_bounded_row,False,aerospace_realflight_runtime_missing,pass,1.0000,0.0000,0.0000,0.0000,100.0,true,universal_validation_harness
-vehicle,proof_validated,proof_validated,defended_bounded_row,True,,pass,0.1250,0.0000,0.0417,0.0000,66.7,true,universal_validation_harness
+domain,validation_status,maturity_tier,source_dataset,baseline_tsvr_mean,orius_tsvr_mean,orius_reduction_pct,closure_target_ready,closure_blocker
+battery,reference,reference,locked_battery_witness,0.0083,0.0000,100.0,True,battery_reference_witness
+healthcare,proof_validated,proof_validated,real_data,0.2917,0.0417,85.7,True,none
+vehicle,proof_validated,proof_validated,real_data,0.1250,0.0417,66.7,True,none

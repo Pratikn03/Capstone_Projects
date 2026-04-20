@@ -1,9 +1,4 @@
-"""Industrial domain adapter — canonical entrypoint.
-
-Re-exports from current implementations. New code should import from here:
-
-    from orius.adapters.industrial import IndustrialDomainAdapter, IndustrialTrackAdapter
-"""
+"""Industrial domain adapter — compatibility entrypoint."""
 from __future__ import annotations
 
 from orius.universal_framework.industrial_adapter import IndustrialDomainAdapter

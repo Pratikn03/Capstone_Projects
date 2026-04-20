@@ -26,14 +26,11 @@ from _dataset_registry import get_runtime_dataset_config, get_runtime_dataset_pa
 from run_all_domain_eval import DOMAINS, eval_domain
 
 
-RUNTIME_DOMAINS = ("av", "industrial", "healthcare", "navigation", "aerospace")
+RUNTIME_DOMAINS = ("av", "healthcare")
 MAX_P95_LATENCY_MS = 50.0
 REGISTRY_DOMAIN_BY_SIL_DOMAIN = {
     "av": "vehicle",
-    "industrial": "industrial",
     "healthcare": "healthcare",
-    "navigation": "navigation",
-    "aerospace": "aerospace",
 }
 SUPPORT_MATURITY_TIERS = {"shadow_synthetic", "experimental"}
 

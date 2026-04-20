@@ -1,14 +1,7 @@
-"""Navigation domain adapter — canonical entrypoint.
+"""Navigation domain adapter — compatibility entrypoint."""
+from __future__ import annotations
 
-Exports both the BenchmarkTrack and the full DomainAdapter proof implementation.
-
-    from orius.adapters.navigation import NavigationDomainAdapter, NavigationTrackAdapter
-
-Exports both:
-  - NavigationDomainAdapter for the universal runtime path
-  - NavigationTrackAdapter for ORIUS-Bench benchmark runs
-"""
-from orius.orius_bench.navigation_track import NavigationTrackAdapter
 from orius.universal_framework.navigation_adapter import NavigationDomainAdapter
+from orius.orius_bench.navigation_track import NavigationTrackAdapter
 
-__all__ = ["NavigationTrackAdapter", "NavigationDomainAdapter"]
+__all__ = ["NavigationDomainAdapter", "NavigationTrackAdapter"]

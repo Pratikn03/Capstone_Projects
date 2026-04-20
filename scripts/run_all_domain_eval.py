@@ -50,14 +50,6 @@ plt.rcParams.update({
 })
 
 
-def _violates_aerospace(row: pd.Series, action: dict[str, object], constraints: dict[str, object]) -> bool:
-    # DC3S controls bank angle command; airspeed is a plant state not directly actionable in one step.
-    # Violation is evaluated on the commanded bank angle only.
-    bank_cmd = float(action.get("bank_deg", row.get("bank_angle_deg", 0.0)) or 0.0)
-    bank_limit = float(constraints.get("bank_limit_deg", 30.0) or 30.0)
-    return abs(bank_cmd) > bank_limit
-
-
 def _violates_av(row: pd.Series, action: dict[str, object], constraints: dict[str, object]) -> bool:
     speed = row.get("speed_mps")
     if pd.isna(speed):
@@ -69,24 +61,6 @@ def _violates_av(row: pd.Series, action: dict[str, object], constraints: dict[st
     return next_speed > speed_max
 
 
-def _violates_navigation(row: pd.Series, action: dict[str, object], constraints: dict[str, object]) -> bool:
-    x = row.get("x")
-    y = row.get("y")
-    if pd.isna(x) or pd.isna(y):
-        return False
-    dt = float(constraints.get("dt_s", 0.25) or 0.25)
-    next_x = float(x) + float(action.get("ax", 0.0) or 0.0) * dt
-    next_y = float(y) + float(action.get("ay", 0.0) or 0.0) * dt
-    arena_min = float(constraints.get("arena_min", 0.0) or 0.0)
-    arena_max = float(constraints.get("arena_max", 10.0) or 10.0)
-    if next_x < arena_min or next_x > arena_max or next_y < arena_min or next_y > arena_max:
-        return True
-    centre = constraints.get("obstacle_centre", (5.0, 5.0))
-    radius = float(constraints.get("obstacle_radius", 1.0) or 1.0)
-    cx, cy = float(centre[0]), float(centre[1])
-    return float(np.hypot(next_x - cx, next_y - cy)) < radius
-
-
 def _violates_medical(row: pd.Series, action: dict[str, object], constraints: dict[str, object]) -> bool:
     spo2 = row.get("spo2_pct")
     if pd.isna(spo2):
@@ -96,57 +70,7 @@ def _violates_medical(row: pd.Series, action: dict[str, object], constraints: di
     return float(spo2) < spo2_min and alert < 0.5
 
 
-def _violates_industrial(row: pd.Series, action: dict[str, object], constraints: dict[str, object]) -> bool:
-    temp = row.get("temp_c")
-    if not pd.isna(temp) and float(temp) > float(constraints.get("temp_max_c", 120.0) or 120.0):
-        return True
-    power = float(action.get("power_setpoint_mw", row.get("power_mw", 0.0)) or 0.0)
-    return power > float(constraints.get("power_max_mw", 500.0) or 500.0)
-
-
-def _build_navigation_trace(n_rows: int, rng: np.random.Generator) -> pd.DataFrame:
-    start = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    theta = np.linspace(0.0, 4.0 * np.pi, n_rows)
-    x = 8.8 + 0.9 * np.sin(theta) + rng.normal(0.0, 0.08, n_rows)
-    y = 5.0 + 3.1 * np.cos(theta / 1.3) + rng.normal(0.0, 0.08, n_rows)
-    x = np.clip(x, 0.2, 9.85)
-    y = np.clip(y, 0.2, 9.85)
-    vx = np.gradient(x)
-    vy = np.gradient(y)
-    return pd.DataFrame(
-        {
-            "x": x,
-            "y": y,
-            "vx": vx,
-            "vy": vy,
-            "ts_utc": [
-                (start + timedelta(seconds=i)).isoformat().replace("+00:00", "Z")
-                for i in range(n_rows)
-            ],
-        }
-    )
-
-
 DOMAINS = {
-    "aerospace": {
-        "csv": "data/aerospace/processed/aerospace_public_adsb_runtime.csv",
-        "adapter_id": "aerospace",
-        "telemetry_cols": ["altitude_m", "airspeed_kt", "bank_angle_deg", "fuel_remaining_pct", "ts_utc"],
-        "candidate_fn": lambda row: {"throttle": 0.7, "bank_deg": float(row.get("bank_angle_deg", 0.0) or 0.0)},
-        "rule_based_fn": lambda row: {
-            "throttle": 0.7,
-            "bank_deg": max(-18.0, min(18.0, float(row.get("bank_angle_deg", 0.0) or 0.0) * 0.80)),
-        },
-        "constraints": {"v_min_kt": 60.0, "v_max_kt": 350.0, "bank_limit_deg": 20.0},
-        "safety_col": "airspeed_kt",
-        "spike_col": "airspeed_kt",
-        "spike_lo": 55.0,
-        "spike_hi": 360.0,
-        "display": "Aerospace",
-        "units": "kt",
-        "violation_fn": _violates_aerospace,
-        "safety_range": "[60.0, 350.0] kt and |bank| <= 30 deg",
-    },
     "av": {
         "csv": "data/orius_av/av/processed/av_trajectories_orius.csv",
         "adapter_id": "av",
@@ -167,39 +91,9 @@ DOMAINS = {
         "violation_fn": _violates_av,
         "safety_range": "[0.0, 30.0] m/s",
     },
-    "navigation": {
-        "csv": "data/navigation/processed/navigation_orius.csv",
-        "adapter_id": "navigation",
-        "telemetry_cols": ["x", "y", "vx", "vy", "ts_utc"],
-        "candidate_fn": lambda row: {
-            "ax": max(-0.8, min(0.8, -0.15 * (float(row.get("x", 5.0)) - 5.0))),
-            "ay": max(-0.8, min(0.8, -0.15 * (float(row.get("y", 5.0)) - 5.0))),
-        },
-        "rule_based_fn": lambda row: {
-            "ax": max(-3.0, min(3.0, -0.5 * (float(row.get("x", 5.0)) - 5.0))),
-            "ay": max(-3.0, min(3.0, -0.5 * (float(row.get("y", 5.0)) - 5.0))),
-        },
-        "constraints": {
-            "arena_min": 0.0,
-            "arena_max": 10.0,
-            "max_speed": 1.0,
-            "dt_s": 0.25,
-            "obstacle_centre": (5.0, 5.0),
-            "obstacle_radius": 1.0,
-        },
-        "safety_col": "x",
-        "spike_col": "x",
-        "spike_lo": 0.3,
-        "spike_hi": 9.7,
-        "display": "Navigation",
-        "units": "m",
-        "violation_fn": _violates_navigation,
-        "synthetic_fn": _build_navigation_trace,
-        "safety_range": "arena [0, 10] m and obstacle exclusion",
-    },
     "healthcare": {
-        "csv": "data/healthcare/processed/healthcare_orius.csv",
-        "adapter_id": "surgical_robotics",
+        "csv": "data/healthcare/mimic3/processed/mimic3_healthcare_orius.csv",
+        "adapter_id": "healthcare",
         "telemetry_cols": ["hr_bpm", "spo2_pct", "respiratory_rate", "ts_utc"],
         "candidate_fn": lambda row: {"alert_level": 0.1},
         "rule_based_fn": lambda row: {
@@ -219,32 +113,28 @@ DOMAINS = {
         "violation_fn": _violates_medical,
         "safety_range": "SpO2 >= 90%",
     },
-    "industrial": {
-        "csv": "data/industrial/processed/industrial_orius.csv",
-        "adapter_id": "industrial",
-        "telemetry_cols": ["temp_c", "vacuum_cmhg", "pressure_mbar", "humidity_pct", "power_mw", "ts_utc"],
-        "candidate_fn": lambda row: {"power_setpoint_mw": float(row.get("power_mw", 470.0) or 470.0) + 30.0},
-        "rule_based_fn": lambda row: {
-            "power_setpoint_mw": max(430.0, min(500.0,
-                float(row.get("power_mw", 465.0) or 465.0)
-                + 0.3 * (465.0 - float(row.get("power_mw", 465.0) or 465.0))))
-        },
-        "constraints": {"power_max_mw": 500.0, "temp_max_c": 120.0},
-        "safety_col": "power_mw",
-        "spike_col": "power_mw",
-        "spike_lo": 0.0,
-        "spike_hi": 510.0,
-        "display": "Industrial Process Control",
-        "units": "MW",
-        "violation_fn": _violates_industrial,
-        "safety_range": "power <= 500 MW and temp <= 120 C",
-    },
 }
 
 DROPOUT_PROB = 0.15
 SPIKE_PROB = 0.08
 STALE_PROB = 0.10
 STALE_WINDOW = 3
+
+
+def _normalize_domain_frame(name: str, df: pd.DataFrame) -> pd.DataFrame:
+    if name != "healthcare":
+        return df
+
+    rename_map: dict[str, str] = {}
+    if "target" in df.columns and "spo2_pct" not in df.columns:
+        rename_map["target"] = "spo2_pct"
+    if "hr" in df.columns and "hr_bpm" not in df.columns:
+        rename_map["hr"] = "hr_bpm"
+    if "resp" in df.columns and "respiratory_rate" not in df.columns:
+        rename_map["resp"] = "respiratory_rate"
+    if "timestamp" in df.columns and "ts_utc" not in df.columns:
+        rename_map["timestamp"] = "ts_utc"
+    return df.rename(columns=rename_map)
 
 
 def inject_faults(df: pd.DataFrame, cfg: dict[str, object], rng: np.random.Generator) -> pd.DataFrame:
@@ -340,6 +230,7 @@ def eval_domain(
     if df.empty:
         return {"domain": name, "status": "missing_csv"}
 
+    df = _normalize_domain_frame(name, df)
     avail_cols = [c for c in cfg["telemetry_cols"] if c in df.columns]
     df = df.dropna(subset=[c for c in avail_cols if c != "ts_utc"]).reset_index(drop=True)
     df = df.head(n_rows)
@@ -516,6 +407,7 @@ def eval_domain_rule_based(
     if df.empty:
         return {"domain": name, "status": "missing_csv", "viol_rate_rule_pct": None}
 
+    df = _normalize_domain_frame(name, df)
     avail_cols = [c for c in cfg["telemetry_cols"] if c in df.columns]
     df = df.dropna(subset=[c for c in avail_cols if c != "ts_utc"]).reset_index(drop=True)
     df = df.head(n_rows)
@@ -586,9 +478,7 @@ def build_comparison_table(
             r"\begin{minipage}{\linewidth}\footnotesize",
             r"Viol.\ Before = unshielded candidate controller TSVR."
             r" Rule-Based = domain-appropriate rule-based controller (no shield):"
-            r" proportional speed governor (AV), PI setpoint controller (industrial),"
-            r" clinical threshold protocol (healthcare), proportional bank limiter (aerospace),"
-            r" center-guidance controller (navigation)."
+            r" proportional speed governor (AV) and a clinical threshold protocol (healthcare)."
             r" Source = locked\_csv for defended replay telemetry and synthetic only"
             r" when the legacy support-tier flag is enabled."
             r" DC3S After = TSVR after shield repair.",

@@ -9,7 +9,7 @@ task:
   horizon_hours: 0.1  # 6 min at 0.1s steps
   lookback_hours: 1.0
   quantiles: [0.1, 0.5, 0.9]
-  targets: [speed_mps]
+  targets: [speed_mps, position_m, lead_position_m, rss_safe_gap_m]
 
 seed: 42
 seeds: [42, 123]
@@ -21,7 +21,7 @@ cross_validation:
   gap: 1
 
 data:
-  processed_path: data/av/processed/features.parquet
+  processed_path: data/orius_av/av/processed/features.parquet
   timestamp_col: timestamp
 
 splits:

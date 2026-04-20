@@ -104,6 +104,28 @@ def _configured_uncertainty_targets(path: Path = REPO_ROOT / "configs" / "uncert
     return []
 
 
+def _resolved_uncertainty_targets(
+    cfg: DatasetConfig,
+    train_cfg: dict[str, Any] | None = None,
+    *,
+    uncertainty_cfg_path: Path = REPO_ROOT / "configs" / "uncertainty.yaml",
+) -> list[str]:
+    """Resolve the uncertainty-target contract for a dataset.
+
+    Multi-domain datasets use every configured training target for uncertainty
+    artifacts. Energy/battery datasets follow ``configs/uncertainty.yaml`` and
+    only fall back to all training targets if that config is empty.
+    """
+    train_cfg = train_cfg or _load_training_cfg(cfg)
+    targets = _configured_targets(train_cfg)
+    dataset_cfg = train_cfg.get("dataset", {}) if isinstance(train_cfg.get("dataset"), dict) else {}
+    is_multi_domain = str(dataset_cfg.get("region_group", "") or "") == "multi-domain"
+    if is_multi_domain:
+        return targets
+    uncertainty_targets = _configured_uncertainty_targets(uncertainty_cfg_path)
+    return uncertainty_targets or targets
+
+
 def _configured_model_types(train_cfg: dict[str, Any], requested_models: set[str] | None = None) -> list[str]:
     models_cfg = train_cfg.get("models", {}) if isinstance(train_cfg.get("models"), dict) else {}
     model_types: list[str] = []
@@ -473,12 +495,33 @@ def build_features(cfg: DatasetConfig, force: bool = False) -> bool:
         print(f"ℹ️  Features already exist: {features_path}")
         return True
     
-    # Build command based on dataset type
-    cmd = [
-        PYTHON_BIN, "-m", cfg.feature_module,
-        "--in", cfg.raw_data_path,
-        "--out", str(features_path.parent),
-    ]
+    if (
+        cfg.feature_module == "orius.data_pipeline.build_features_healthcare"
+        and str(cfg.raw_data_path).endswith("mimic3_healthcare_orius.csv")
+    ):
+        # The promoted healthcare lane uses bridge-schema inputs that must go
+        # through the max-input builder instead of the legacy single-source path.
+        healthcare_inputs = []
+        for candidate in (
+            Path("data/healthcare/processed/healthcare_bidmc_orius.csv"),
+            Path(cfg.raw_data_path),
+        ):
+            if candidate.exists():
+                healthcare_inputs.append(candidate)
+        if not healthcare_inputs:
+            healthcare_inputs.append(Path(cfg.raw_data_path))
+
+        cmd = [PYTHON_BIN, "-m", cfg.feature_module, "--max-input"]
+        for input_path in healthcare_inputs:
+            cmd.extend(["--in", str(input_path)])
+        cmd.extend(["--out", str(features_path.parent)])
+    else:
+        # Build command based on dataset type
+        cmd = [
+            PYTHON_BIN, "-m", cfg.feature_module,
+            "--in", cfg.raw_data_path,
+            "--out", str(features_path.parent),
+        ]
     
     # Add balancing authority for US data
     if cfg.ba_code:
@@ -713,12 +756,7 @@ def verify_training_outputs(cfg: DatasetConfig, run_layout: RunLayout, *, models
     """Verify that a run produced the expected artifacts and per-target metrics."""
     train_cfg = _load_training_cfg(cfg)
     targets = _configured_targets(train_cfg)
-    uncertainty_targets = _configured_uncertainty_targets()
-    # Multi-domain datasets use their own targets; energy uses uncertainty.yaml targets
-    if cfg.name in ("AV", "INDUSTRIAL", "HEALTHCARE", "AEROSPACE", "NAVIGATION"):
-        uncertainty_targets = targets
-    else:
-        uncertainty_targets = uncertainty_targets or targets
+    uncertainty_targets = _resolved_uncertainty_targets(cfg, train_cfg)
     requested_models = {part.strip().lower() for part in models.split(",") if part.strip()} if models else None
     model_types = _configured_model_types(train_cfg, requested_models=requested_models)
     cmd = [
