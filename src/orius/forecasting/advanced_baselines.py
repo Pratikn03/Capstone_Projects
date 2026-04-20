@@ -168,31 +168,47 @@ class ProphetBaseline(BaselineModel):
     
     def _prepare_prophet_df(self, df: pd.DataFrame, include_y: bool = True) -> pd.DataFrame:
         """Convert DataFrame to Prophet format (ds, y)."""
+        def _first_matching_column(name: str) -> pd.Series:
+            return df.loc[:, df.columns == name].iloc[:, 0]
+
+        # If the DataFrame is already in Prophet format (has 'ds' column), use it directly
+        if "ds" in df.columns:
+            result = pd.DataFrame({"ds": pd.to_datetime(_first_matching_column("ds"))})
+            if include_y and "y" in df.columns:
+                result["y"] = _first_matching_column("y").values
+            elif include_y and self.config.target in df.columns:
+                result["y"] = _first_matching_column(self.config.target).values
+            for reg in self._regressors_fitted:
+                if reg in df.columns:
+                    result[reg] = _first_matching_column(reg).values
+            return result
+
         # Find timestamp column
         ts_col = None
         for col in ["timestamp", "utc_timestamp", "datetime", "date"]:
             if col in df.columns:
                 ts_col = col
                 break
-        
+
         if ts_col is None and df.index.name in ["timestamp", "utc_timestamp"]:
             df = df.reset_index()
             ts_col = df.columns[0]
-        
+
         if ts_col is None:
             raise ValueError("No timestamp column found")
-        
+
         result = pd.DataFrame({"ds": pd.to_datetime(df[ts_col])})
-        
+
         if include_y and self.config.target in df.columns:
             result["y"] = df[self.config.target].values
-        
+
         # Add regressors
         for reg in self._regressors_fitted:
             if reg in df.columns:
                 result[reg] = df[reg].values
-        
+
         return result
+
 
 
 # =============================================================================

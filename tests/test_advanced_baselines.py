@@ -10,9 +10,6 @@ import pytest
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
-# Mark all tests in this module as slow (they involve model training)
-pytestmark = pytest.mark.slow
-
 
 @pytest.fixture
 def sample_timeseries_data():
@@ -87,17 +84,26 @@ class TestProphetBaseline:
         config = ProphetConfig(target="load_mw")
         model = ProphetBaseline(config)
         
-        # Prophet requires specific column names
-        train_prophet = train.rename(columns={"utc_timestamp": "ds", "load_mw": "y"})
-        test_prophet = test.rename(columns={"utc_timestamp": "ds", "load_mw": "y"})
-        
         try:
-            model.fit(train_prophet)
-            predictions = model.predict(test_prophet)
+            model.fit(train)
+            predictions = model.predict(test)
             assert len(predictions) == len(test)
             assert not np.any(np.isnan(predictions))
         except ImportError:
             pytest.skip("Prophet not installed")
+
+    def test_prepare_prophet_df_accepts_duplicate_prophet_labels(self, sample_timeseries_data):
+        """Test Prophet-format fast path tolerates duplicated ds/y labels."""
+        from orius.forecasting.advanced_baselines import ProphetBaseline, ProphetConfig
+
+        model = ProphetBaseline(ProphetConfig(target="load_mw"))
+        duplicated = sample_timeseries_data.head(16).rename(columns={"utc_timestamp": "ds", "load_mw": "y"})
+
+        prepared = model._prepare_prophet_df(duplicated)
+
+        assert list(prepared.columns) == ["ds", "y"]
+        assert prepared["ds"].equals(pd.to_datetime(sample_timeseries_data.head(16)["ds"]))
+        assert np.allclose(prepared["y"].to_numpy(dtype=float), sample_timeseries_data.head(16)["y"].to_numpy(dtype=float))
 
 
 class TestNBEATSBaseline:
