@@ -106,27 +106,37 @@ def _update_release_manifest(
     manifest_path = publication_dir / "release_manifest.json"
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
     payload["release_id"] = release_id
-    payload["frozen_pdfs"] = frozen_pdfs
     payload["paper_assets"] = payload.get("paper_assets", {})
-    payload["paper_assets"].pop("FINAL_THESIS_PDF", None)
-    payload["paper_assets"].pop("FINAL_CONFERENCE_PDF", None)
-    payload["paper_assets"]["FINAL_MANUSCRIPT_PDF"] = {
+    payload.pop("frozen_pdfs", None)
+    for key in [
+        "FINAL_THESIS_PDF",
+        "FINAL_CONFERENCE_PDF",
+        "FINAL_MANUSCRIPT_PDF",
+        "FINAL_IEEE_MAIN_PDF",
+        "FINAL_IEEE_APPENDIX_PDF",
+    ]:
+        payload["paper_assets"].pop(key, None)
+    payload["paper_assets"]["CANONICAL_MONOGRAPH_PDF"] = {
         "paper_path": frozen_pdfs["manuscript"]["canonical_path"],
-        "source_artifact": frozen_pdfs["manuscript"]["frozen_path"],
+        "source_artifact": frozen_pdfs["manuscript"]["canonical_path"],
         "build_command": f"{Path(__file__).relative_to(REPO)} --release-id {release_id}",
         "sha256": frozen_pdfs["manuscript"]["sha256"],
     }
-    payload["paper_assets"]["FINAL_IEEE_MAIN_PDF"] = {
+    payload["paper_assets"]["IEEE_MAIN_PDF"] = {
         "paper_path": frozen_pdfs["ieee_main"]["canonical_path"],
-        "source_artifact": frozen_pdfs["ieee_main"]["frozen_path"],
+        "source_artifact": frozen_pdfs["ieee_main"]["canonical_path"],
         "build_command": f"{Path(__file__).relative_to(REPO)} --release-id {release_id}",
         "sha256": frozen_pdfs["ieee_main"]["sha256"],
     }
-    payload["paper_assets"]["FINAL_IEEE_APPENDIX_PDF"] = {
+    payload["paper_assets"]["IEEE_APPENDIX_PDF"] = {
         "paper_path": frozen_pdfs["ieee_appendix"]["canonical_path"],
-        "source_artifact": frozen_pdfs["ieee_appendix"]["frozen_path"],
+        "source_artifact": frozen_pdfs["ieee_appendix"]["canonical_path"],
         "build_command": f"{Path(__file__).relative_to(REPO)} --release-id {release_id}",
         "sha256": frozen_pdfs["ieee_appendix"]["sha256"],
+    }
+    payload["archive_policy"] = {
+        "historical_frozen_bundle": f"reports/publication/frozen/{release_id}/freeze_summary.json",
+        "active_manifest_policy": "canonical pdfs only; frozen bundles are historical provenance and not active truth surfaces",
     }
     payload["frozen_at_utc"] = datetime.now(timezone.utc).isoformat()
     manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")

@@ -97,7 +97,7 @@ def main() -> None:
 
     print("MULTI-DOMAIN COVERAGE")
     print("-" * 40)
-    domains = ["vehicle", "industrial", "healthcare", "multi-domain", "universal"]
+    domains = ["vehicle", "healthcare", "multi-domain", "universal"]
     for d in domains:
         t_v = t_kw.get(d, 0)
         p_v = p_kw.get(d, 0)

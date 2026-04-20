@@ -4,6 +4,7 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 .venv/
+.venv2/
 venv/
 env/
 .DS_Store
@@ -78,6 +79,17 @@ build/
 /paper_r1.fls
 /paper_r1.out
 /paper_r1.pdf
+/orius_book.aux
+/orius_book.bbl
+/orius_book.blg
+/orius_book.fdb_latexmk
+/orius_book.fls
+/orius_book.lof
+/orius_book.log
+/orius_book.lot
+/orius_book.out
+/orius_book.pdf
+/orius_book.toc
 paper/*.aux
 paper/*.fdb_latexmk
 paper/*.fls

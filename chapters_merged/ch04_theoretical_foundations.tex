@@ -1269,7 +1269,7 @@ the horizon yields $\mathbb{E}[V] \le \sum_{t=1}^T r_t$.  No temporal
 independence assumption is required.
 \end{proof}
 
-\subsection{Main Theorem: ORIUS Core Bound}
+\subsection{Main Theorem T3a: ORIUS Core Bound}
 
 \begin{theorem}[ORIUS Core Bound]
 \label{thm:core-bound}
@@ -1295,6 +1295,9 @@ Apply Lemma~\ref{lem:per-step-risk} with $r_t=\alpha(1-w_t)$.  Then
 \end{align}
 The proof is therefore an aggregation argument over an explicit theorem-local
 budget contract rather than a direct corollary of marginal conformal coverage.
+In the active theorem registry this is the defended T3a derivation surface,
+while the episode-average linear form below is tracked separately as the T3b
+aggregation corollary.
 \end{proof}
 
 \subsection{Equivalent Average-Rate Form}
@@ -1805,41 +1808,46 @@ state drift accumulates as a sub-Gaussian random walk.
 
 \begin{theorem}[Certificate validity horizon]
 \label{thm:cert-horizon}
-Under Assumptions A1, A2, A4, A5, A6, and A7, the certificate
-$\mathcal{C}_t$ guarantees true-state safety for $\Delta$ steps after
-issuance provided that the forward tube remains within the constraint
-set:
+Under Assumptions A1, A2, A4, A5, A6, and A7, define the validity horizon
+$\tau_t$ to be the largest integer horizon for which the forward tube remains
+inside the battery constraint set:
 \[
   \mathcal{F}_{t+\Delta} \;\subseteq\;
   [\text{SOC}_{\min},\, \text{SOC}_{\max}].
 \]
-The maximum such $\Delta$ is the validity horizon:
+Equivalently,
 \[
   \tau_t \;=\; \max\,\bigl\{\,\Delta \ge 0 \;:\;
   \mathcal{F}_{t+\Delta} \subseteq
   [\text{SOC}_{\min},\, \text{SOC}_{\max}]\,\bigr\}.
 \]
+The active theorem audit treats this surface as a constructive definition, not
+as part of the defended headline theorem count.
 \end{theorem}
 
 \begin{proof}
-At step $t + \Delta$, the true state $x_{t+\Delta}$ lies within
-$\mathcal{F}_{t+\Delta}$ with probability $\ge 1 - \alpha$
-by the sub-Gaussian tail bound and the conformal coverage guarantee at
-issuance time.  If $\mathcal{F}_{t+\Delta}$ is entirely within the
-constraint set, then $x_{t+\Delta}$ satisfies $\phi(x_{t+\Delta}) = 1$
-with probability $\ge 1 - \alpha$.  The validity horizon is the largest
-$\Delta$ for which this containment holds.
+This surface is definitional.  The forward tube is already defined as the
+set-valued propagation of the issued interval under the certified safe action
+and the chosen disturbance radius.  The maximal horizon for which that tube
+stays inside $[\text{SOC}_{\min}, \text{SOC}_{\max}]$ is therefore exactly the
+displayed $\tau_t$.  The executable helper
+\texttt{certificate\_validity\_horizon()} computes this maximal integer
+horizon directly and is audited as a definition-level surface rather than as a
+separate defended theorem.
 \end{proof}
 
 \subsubsection{Certificate Expiration Bound}
 
 \begin{theorem}[Certificate expiration bound]
 \label{thm:cert-expiration}
-The validity horizon satisfies the lower bound
+Under Assumption~A9 and confidence level $\delta\in(0,1)$, the validity
+horizon satisfies the lower bound
 \[
   \tau_t \;\ge\;
-  \left\lfloor\,\frac{(\delta_{\text{bnd},t})^2}
-  {\sigma_d^2}\,\right\rfloor,
+  \left\lfloor\,
+    \frac{(\delta_{\text{bnd},t})^2}
+         {2\,\sigma_d^2\,\log(2/\delta)}
+  \,\right\rfloor,
 \]
 where $\delta_{\text{bnd},t} = \min(x_t^{\text{lo}} - \text{SOC}_{\min},\,
 \text{SOC}_{\max} - x_t^{\text{hi}})$ is the distance from the issued
@@ -1847,10 +1855,21 @@ certificate interval to the nearest constraint boundary.
 \end{theorem}
 
 \begin{proof}
-The forward tube reaches a constraint boundary when
-$\sigma_d\sqrt{\Delta} = \delta_{\text{bnd},t}$, giving
-$\Delta = \delta_{\text{bnd},t}^2 / \sigma_d^2$.  Since $\Delta$ must
-be an integer, the floor provides the bound.
+For a $\sigma_d$-sub-Gaussian disturbance, the tail bound
+\[
+  \Prob(|S_\Delta| \ge \delta_{\text{bnd},t})
+  \le
+  2\exp\!\left(
+    -\frac{\delta_{\text{bnd},t}^2}{2\,\sigma_d^2\,\Delta}
+  \right)
+\]
+is at most $\delta$ whenever
+\[
+  \Delta \le
+  \frac{\delta_{\text{bnd},t}^2}
+       {2\,\sigma_d^2\,\log(2/\delta)}.
+\]
+Since $\Delta$ must be an integer, flooring gives the claimed lower bound.
 \end{proof}
 
 \subsubsection{Certificate Half-Life Corollary}
@@ -1940,31 +1959,35 @@ of at least one such safe action, and zero dispatch is always one.
 
 \begin{theorem}[Graceful degradation dominance]
 \label{thm:graceful-dominance}
-Under Assumptions A1--A5 and A8, the graceful degradation protocol
-(monotonic power reduction toward the safe zone) strictly dominates
-the uncontrolled strategy (continue dispatching without adaptation)
-in terms of worst-case violation count:
+Under Assumptions A1--A5 and A8, consider a paired graceful and
+uncontrolled rollout evaluated on the same admissible fault trace.  If the
+graceful controller releases a violation sequence
+$z^{\mathrm{graceful}}_{1:T}$ that is stepwise no worse than the paired
+uncontrolled sequence $z^{\mathrm{uncontrolled}}_{1:T}$, then the cumulative
+violation counts satisfy
 \[
   V^{\text{graceful}} \;\le\; V^{\text{uncontrolled}}
 \]
-for every admissible fault sequence, with strict inequality whenever
-the uncontrolled strategy incurs at least one violation.
+with strict inequality whenever the graceful sequence is strictly smaller on at
+least one step.  This sequence-level comparison is the full defended T8
+surface; the stronger absorbing-landing interpretation remains supporting-only.
 \end{theorem}
 
 \begin{proof}
-The graceful degradation protocol reduces dispatch magnitude
-monotonically, shrinking the SOC excursion at each step.  Since the
-safe zone $\mathcal{X}_{\text{safe}}$ remains absorbing under the
-bounded landing regime described in Chapter~\ref{ch:graceful-degradation},
-the SOC converges toward the interior and no further violations can occur
-after landing.
-
-The uncontrolled strategy, by contrast, continues to dispatch at full
-power.  Under the admissible fault sequence, the accumulated
-observation error pushes the true SOC across the boundary at the
-same rate as in the No Free Safety construction
-(Theorem~\ref{thm:no-free-safety}).  Hence
-$V^{\text{uncontrolled}} \ge 1 > 0 = V^{\text{graceful}}$.
+Summing the paired stepwise inequality
+$z^{\mathrm{graceful}}_t \le z^{\mathrm{uncontrolled}}_t$ over
+$t=1,\dots,T$ gives
+\[
+  \sum_{t=1}^{T} z^{\mathrm{graceful}}_t
+  \le
+  \sum_{t=1}^{T} z^{\mathrm{uncontrolled}}_t,
+\]
+which is exactly $V^{\mathrm{graceful}}\le V^{\mathrm{uncontrolled}}$.
+Strict inequality follows if the graceful sequence is strictly smaller on at
+least one step.  The executable helper
+\texttt{evaluate\_graceful\_degradation\_dominance()} implements precisely
+this paired-sequence comparison and does not claim a standalone
+absorbing-landing dynamics proof.
 \end{proof}
 
 \subsubsection{Safe-Budget Monotonicity}

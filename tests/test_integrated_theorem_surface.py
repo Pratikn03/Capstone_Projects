@@ -19,9 +19,10 @@ def test_integrated_theorem_surface_gate_passes() -> None:
         capture_output=True,
         text=True,
     )
-    assert "PASS: 18/18 theorem rows verified" in run.stdout
+    assert "PASS: 18/18 theorem rows traceability-locked" in run.stdout
 
     summary = json.loads((REPO_ROOT / "reports" / "publication" / "integrated_theorem_gate.json").read_text())
+    assert summary["gate_kind"] == "traceability_release_gate"
     assert summary["total"] == 18
     assert summary["failed"] == 0
     assert summary["passed"] == 18

@@ -1,14 +1,14 @@
 theorem_key,theorem_class,title,source,mapped_to,traceability_status,source_exists,code_anchors_ok,artifacts_ok,appendix_mapping_ok,pass_gate,notes
 S1,unique_theorem,Existence of the illusion under dropout,chapters_merged/ch03_background.tex,Existence of the illusion under dropout,locked,True,True,True,True,True,locked
 S2,unique_theorem,DC3S Feasibility Guarantee,chapters_merged/ch03_background.tex,DC3S Feasibility Guarantee,locked,True,True,True,True,True,locked
-T1,unique_theorem,OASG Existence,chapters_merged/ch04_theoretical_foundations.tex,OASG Existence,locked,True,True,True,True,True,locked
-T2,unique_theorem,Safety Preservation,chapters_merged/ch04_theoretical_foundations.tex,Safety Preservation,locked,True,True,True,True,True,locked
-T3,unique_theorem,ORIUS Core Bound,chapters_merged/ch04_theoretical_foundations.tex,ORIUS Core Bound,locked,True,True,True,True,True,locked
-T4,unique_theorem,No Free Safety,chapters_merged/ch04_theoretical_foundations.tex,No Free Safety,locked,True,True,True,True,True,locked
-T5,unique_theorem,Certificate validity horizon,chapters_merged/ch04_theoretical_foundations.tex,Certificate validity horizon,locked,True,True,True,True,True,locked
-T6,unique_theorem,Certificate expiration bound,chapters_merged/ch04_theoretical_foundations.tex,Certificate expiration bound,locked,True,True,True,True,True,locked
-T7,unique_theorem,Feasible fallback existence,chapters_merged/ch04_theoretical_foundations.tex,Feasible fallback existence,locked,True,True,True,True,True,locked
-T8,unique_theorem,Graceful degradation dominance,chapters_merged/ch04_theoretical_foundations.tex,Graceful degradation dominance,locked,True,True,True,True,True,locked
+T1,unique_theorem,OASG Existence,chapters_merged/ch04_theoretical_foundations.tex,OASG Existence,flagship_defended,True,True,True,True,True,locked
+T2,unique_theorem,Safety Preservation,chapters_merged/ch04_theoretical_foundations.tex,Safety Preservation,flagship_defended,True,True,True,True,True,locked
+T3,unique_theorem,ORIUS Core Bound,chapters_merged/ch04_theoretical_foundations.tex,ORIUS Core Bound,draft_non_defended,True,True,True,True,True,locked
+T4,unique_theorem,No Free Safety,chapters_merged/ch04_theoretical_foundations.tex,No Free Safety,supporting_defended,True,True,True,True,True,locked
+T5,unique_theorem,Certificate validity horizon,chapters_merged/ch04_theoretical_foundations.tex,Certificate validity horizon,flagship_defended,True,True,True,True,True,locked
+T6,unique_theorem,Certificate expiration bound,chapters_merged/ch04_theoretical_foundations.tex,Certificate expiration bound,flagship_defended,True,True,True,True,True,locked
+T7,unique_theorem,Feasible fallback existence,chapters_merged/ch04_theoretical_foundations.tex,Feasible fallback existence,draft_non_defended,True,True,True,True,True,locked
+T8,unique_theorem,Graceful degradation dominance,chapters_merged/ch04_theoretical_foundations.tex,Graceful degradation dominance,draft_non_defended,True,True,True,True,True,locked
 C.1,appendix_restatement,C.1 Battery-Domain OASG Existence,appendices/app_c_full_proofs.tex,OASG Existence,restated,True,True,True,True,True,appendix theorem restatement matches main theorem
 C.2,appendix_restatement,C.2 One-Step Safety Preservation,appendices/app_c_full_proofs.tex,Safety Preservation,restated,True,True,True,True,True,appendix theorem restatement matches main theorem
 C.3,appendix_restatement,C.3 Battery ORIUS Core Bound,appendices/app_c_full_proofs.tex,ORIUS Core Bound,restated,True,True,True,True,True,appendix theorem restatement matches main theorem

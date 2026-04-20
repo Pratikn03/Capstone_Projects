@@ -328,7 +328,7 @@ def main() -> None:
     _arr(ax, _bot(s5), _top(out_box), lw=2.0, color=OUTPUT_EC, ms=15)
 
     # ── Domain adapter pill row ───────────────────────────────────────────
-    domains  = ["Energy", "AV", "Industrial", "Healthcare", "Aerospace", "Navigation"]
+    domains  = ["Energy", "AV", "Healthcare"]
     pill_w, pill_h = 0.090, 0.027
     n_d      = len(domains)
     pill_gap = 0.010

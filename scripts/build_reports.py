@@ -12,8 +12,6 @@ import warnings
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import torch
-from torch.utils.data import DataLoader
 import yaml 
 
 repo_root = Path(__file__).resolve().parents[1]
@@ -25,14 +23,43 @@ from orius.forecasting.baselines import persistence_24h
 from orius.forecasting.ml_gbm import train_gbm, predict_gbm
 from orius.forecasting.backtest import multi_horizon_metrics
 from orius.forecasting.predict import load_model_bundle, predict_next_24h
-from orius.forecasting.dl_lstm import LSTMForecaster
-from orius.forecasting.dl_nbeats import NBEATSForecaster
-from orius.forecasting.dl_patchtst import PatchTSTForecaster
-from orius.forecasting.dl_tft import TFTForecaster
-from orius.forecasting.dl_tcn import TCNForecaster
-from orius.forecasting.datasets import SeqConfig, TimeSeriesWindowDataset
 from orius.optimizer.lp_dispatch import optimize_dispatch
 from orius.forecasting.uncertainty.conformal import load_conformal
+
+# ── Lazy torch / DL imports (only needed when DL models are enabled) ──
+torch = None  # type: ignore[assignment]
+DataLoader = None  # type: ignore[assignment]
+LSTMForecaster = None  # type: ignore[assignment]
+NBEATSForecaster = None  # type: ignore[assignment]
+PatchTSTForecaster = None  # type: ignore[assignment]
+TFTForecaster = None  # type: ignore[assignment]
+TCNForecaster = None  # type: ignore[assignment]
+SeqConfig = None  # type: ignore[assignment]
+TimeSeriesWindowDataset = None  # type: ignore[assignment]
+
+def _ensure_torch():
+    """Import torch and DL modules on first use."""
+    global torch, DataLoader, LSTMForecaster, NBEATSForecaster, PatchTSTForecaster
+    global TFTForecaster, TCNForecaster, SeqConfig, TimeSeriesWindowDataset
+    if torch is not None:
+        return
+    import torch as _torch
+    from torch.utils.data import DataLoader as _DL
+    from orius.forecasting.dl_lstm import LSTMForecaster as _LSTM
+    from orius.forecasting.dl_nbeats import NBEATSForecaster as _NB
+    from orius.forecasting.dl_patchtst import PatchTSTForecaster as _PT
+    from orius.forecasting.dl_tft import TFTForecaster as _TFT
+    from orius.forecasting.dl_tcn import TCNForecaster as _TCN
+    from orius.forecasting.datasets import SeqConfig as _SC, TimeSeriesWindowDataset as _TSWD
+    torch = _torch
+    DataLoader = _DL
+    LSTMForecaster = _LSTM
+    NBEATSForecaster = _NB
+    PatchTSTForecaster = _PT
+    TFTForecaster = _TFT
+    TCNForecaster = _TCN
+    SeqConfig = _SC
+    TimeSeriesWindowDataset = _TSWD
 from orius.optimizer.baselines import (
     grid_only_dispatch,
     naive_battery_dispatch,
@@ -290,6 +317,7 @@ def _load_optimization_config(ctx: ReportContext) -> dict:
 
 
 def _build_torch_model(bundle: dict):
+    _ensure_torch()
     model_type = bundle.get("model_type")
     feat_cols = bundle.get("feature_cols", [])
     params = bundle.get("model_params", {})
@@ -364,6 +392,7 @@ def _build_torch_model(bundle: dict):
 
 
 def _eval_seq_model(bundle: dict, df: pd.DataFrame) -> dict | None:
+    _ensure_torch()
     feat_cols = bundle.get("feature_cols", [])
     target = bundle.get("target")
     lookback = int(bundle.get("lookback", 168))

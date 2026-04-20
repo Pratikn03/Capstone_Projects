@@ -192,7 +192,7 @@ def build_flow_figure() -> None:
     hazard = _box(ax, 0.03, 0.66, 0.15, 0.12, "Physical-AI Hazard\nunder degraded observation", "#eef2ff", "#4f46e5")
     theory = _box(ax, 0.24, 0.66, 0.16, 0.12, "Theory Bridge\nOASG, repair,\ntemporal validity", "#ecfeff", "#0891b2")
     runtime = _box(ax, 0.46, 0.66, 0.17, 0.12, "Runtime Kernel\nDetect · Calibrate ·\nConstrain · Shield · Certify", "#fff7ed", "#c2410c")
-    domains = _box(ax, 0.69, 0.66, 0.14, 0.12, "Domain Adapters\nbattery · AV · industrial\nhealthcare · navigation · aerospace", "#f0fdf4", "#15803d")
+    domains = _box(ax, 0.69, 0.66, 0.14, 0.12, "Domain Adapters\nbattery · AV\nhealthcare", "#f0fdf4", "#15803d")
     parity = _box(ax, 0.86, 0.66, 0.11, 0.12, "Parity Gate\npromotion only\nby evidence", "#fef2f2", "#b91c1c")
 
     for src, dst in ((hazard, theory), (theory, runtime), (runtime, domains), (domains, parity)):

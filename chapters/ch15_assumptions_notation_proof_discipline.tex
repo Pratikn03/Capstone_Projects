@@ -63,7 +63,7 @@ In the battery domain, $x_t = \text{SOC}_t$ (MWh),
 $a_t = (P_t^{\text{chg}}, P_t^{\text{dis}})$ (MW), and
 $\phi(x_t) = \mathbf{1}[\text{SOC}_{\min} \le x_t \le \text{SOC}_{\max}]$.
 
-\section{Assumption IDs (A1--A8)}
+\section{Assumption IDs (A1--A13)}
 
 Each assumption is assigned a permanent identifier and stated in both
 domain-general and battery-specific form.
@@ -178,7 +178,7 @@ Table~\ref{tab:proof-deps} shows which assumptions each theorem requires.
 
 \begin{table}[htbp]
 \centering
-\caption{Assumption and local-contract dependencies of the full T1--T11 theorem program.}
+\caption{Assumption and local-contract dependencies of the active T1--T11 audit surface.  Only a strict subset is defended as flagship or supporting in the June package.}
 \label{tab:proof-deps}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{lccccccccccp{4.7cm}}
@@ -210,9 +210,14 @@ needed for the specific theorem in that row.
 
 \subsection{Extended Monograph Theorem Program}
 
-The flagship dependency matrix above covers the battery proof ladder.  The
-monograph-level extension adds T9--T11, each of which answers a distinct
-control-theory question and introduces an explicit new obligation.
+The dependency matrix above covers the active T1--T11 audit surface, not a
+flat defended ladder.  The registry-canonical defended core is smaller:
+T1, T2, T3a, T4, T11, and T\textsubscript{trajectory\_PAC} carry the
+flagship spine; T3b, T6, T8, T11\textsubscript{Byz}, and
+T\textsubscript{stale} remain supporting defended results; the remaining rows
+stay visible only as draft or scoped extension surfaces.  The monograph-level
+extension adds T9--T11, each of which answers a distinct control-theory
+question and introduces an explicit new obligation.
 
 \begin{table}[htbp]
 \centering
@@ -253,9 +258,9 @@ The $\alpha(1-\bar{w})T$ envelope may be only a loose upper bound. & T3, T10 & R
 \addlinespace
 Cross-domain portability could be mistaken for equal proof depth. & T11 + tier tables & Explicit one-step transfer obligations and tiered discharge rules & Closed at the contract level; empirical discharge remains tiered by domain. \\
 \addlinespace
-The AV residual could be misread as a contradiction of the theory. & Universality-completeness chapter (constraint-class mismatch analysis) & Constraint-class mismatch diagnosis & Open promotion gap, but not a contradiction of T1--T11. \\
+The bounded AV contract could be misread as a contradiction of the defended core. & Universality-completeness chapter (constraint-class mismatch analysis) & Constraint-class mismatch diagnosis & Open promotion gap, but not a contradiction of the defended core. \\
 \addlinespace
-Navigation and aerospace rows could be over-read as proof peers. & Claim-boundary discipline in Chapter~\ref{ch:battery-to-orius} & Evidence-tier interpretation & Intentionally outside the proof-validating surface. \\
+AV and Healthcare could be over-read as proof peers of the battery witness. & Claim-boundary discipline in Chapter~\ref{ch:battery-to-orius} & Evidence-tier interpretation & Bounded defended peers, not equal-depth witness proofs. \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -393,7 +398,7 @@ confirmed.
 
 This chapter provides the stable notational, assumptive, and
 methodological foundation for every proof in Part~III.  The eight
-assumptions (A1--A8) are individually justified in both domain-general
+assumptions (A1--A13) are individually justified in both domain-general
 and battery-specific terms, the proof dependency matrix prevents
 circular reasoning, and the theorem-writing discipline ensures that
 every claim is bounded by explicit scope disclaimers.  The integrated

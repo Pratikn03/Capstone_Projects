@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the hard-gated 18-row theorem release surface and emit audit artifacts.
+"""Validate the hard-gated 18-row theorem traceability surface and emit audit artifacts.
 
 The hard-gated theorem surface contains 18 rows:
   - 10 unique theorem claims:
@@ -7,7 +7,8 @@ The hard-gated theorem surface contains 18 rows:
       * 2 supporting theorems from ch04
   - 8 appendix theorem restatements in Appendix C
 
-This script validates the hard-gated theorem rows and emits:
+This script validates only traceability/release-gate properties of the
+hard-gated theorem rows and emits:
   - reports/publication/integrated_theorem_gate.csv
   - reports/publication/integrated_theorem_gate.json
   - reports/publication/integrated_theorem_gate_summary.tex
@@ -197,7 +198,7 @@ def _write_summary_tex(rows: list[GateRow]) -> None:
     lines = [
         r"\begin{table}[htbp]",
         r"\centering",
-        r"\caption{Integrated 18-row hard-gated theorem summary. The unique theorem set",
+        r"\caption{Integrated 18-row hard-gated theorem traceability summary. The unique theorem set",
         r"contains the two supporting Chapter~4 theorem statements and the",
         r"flagship T1--T8 ladder; the appendix class checks the eight theorem",
         r"restatements in Appendix~C against that unique surface.}",
@@ -221,7 +222,7 @@ def _write_matrix_tex(rows: list[GateRow]) -> None:
     lines = [
         r"\begin{small}",
         r"\begin{longtable}{@{}p{1.3cm}p{2.3cm}p{4.1cm}p{1.4cm}p{1.4cm}p{1.4cm}p{1.4cm}p{1.8cm}@{}}",
-        r"\caption{Integrated theorem release-gate matrix.}",
+        r"\caption{Integrated theorem traceability-gate matrix.}",
         r"\label{tab:integrated-theorem-gate-matrix}\\",
         r"\toprule",
         r"Key & Class & Title & Source & Code & Artifacts & Mapping & Status \\",
@@ -269,7 +270,7 @@ def _write_figure(rows: list[GateRow]) -> None:
     ax.set_xticklabels(labels, rotation=25, ha="right")
     ax.set_yticks(range(5))
     ax.set_yticklabels(["Source", "Code", "Artifacts", "Mapping", "Gate"])
-    ax.set_title("Integrated Theorem Release Gate")
+    ax.set_title("Integrated Theorem Traceability Gate")
     for y, metric in enumerate(score_rows):
         for x, value in enumerate(metric):
             ax.text(x, y, "pass" if value >= 0.5 else "fail", ha="center", va="center", fontsize=7)
@@ -313,6 +314,8 @@ def _load_rows() -> list[GateRow]:
         appendix_mapping_ok = True
 
         if register.get("group") == "Appendix proof restatement":
+            if title not in APPENDIX_MAP:
+                continue
             theorem_class = "appendix_restatement"
             mapped_to = APPENDIX_MAP.get(title, "")
             appendix_key = title.split()[0].strip()
@@ -408,12 +411,13 @@ def main() -> int:
         return 1
 
     with OUT_CSV.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0].to_dict().keys()))
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0].to_dict().keys()), lineterminator="\n")
         writer.writeheader()
         for row in rows:
             writer.writerow(row.to_dict())
 
     summary = {
+        "gate_kind": "traceability_release_gate",
         "total": len(rows),
         "passed": sum(1 for row in rows if row.pass_gate),
         "failed": sum(1 for row in rows if not row.pass_gate),
@@ -433,7 +437,7 @@ def main() -> int:
             print(f"  - {row.theorem_key}: {row.notes}")
         return 1
 
-    print("Integrated theorem gate PASS: 18/18 theorem rows verified.")
+    print("Integrated theorem gate PASS: 18/18 theorem rows traceability-locked.")
     return 0
 
 

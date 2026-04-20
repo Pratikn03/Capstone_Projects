@@ -475,7 +475,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Validate manuscript claims and references")
     parser.add_argument("--manifest", default="paper/metrics_manifest.json", help="Path to metrics manifest JSON")
     parser.add_argument("--markdown", default="paper/PAPER_DRAFT.md", help="Path to master markdown manuscript")
-    parser.add_argument("--tex", default="paper/paper.tex", help="Path to LaTeX manuscript")
+    parser.add_argument("--tex", default="orius_book.tex", help="Path to LaTeX manuscript")
     parser.add_argument("--claim-matrix", default="paper/claim_matrix.csv", help="Path to claim matrix CSV")
     args = parser.parse_args()
 

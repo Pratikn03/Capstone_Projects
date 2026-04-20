@@ -33,6 +33,21 @@ def _optional_display_path(path: Path, repo_root: Path) -> str:
     return _display_path(path, repo_root) if path.exists() else ""
 
 
+def _validation_domain_rows(validation_report: dict[str, object]) -> list[dict[str, object]]:
+    domain_results = validation_report.get("domain_results", {})
+    if isinstance(domain_results, dict):
+        rows: list[dict[str, object]] = []
+        for domain, payload in domain_results.items():
+            if isinstance(payload, dict):
+                row = dict(payload)
+                row.setdefault("domain", domain)
+                rows.append(row)
+        return rows
+    if isinstance(domain_results, list):
+        return [row for row in domain_results if isinstance(row, dict)]
+    return []
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Build a witness-first ORIUS framework proof bundle."
@@ -172,9 +187,10 @@ def main() -> None:
         if maturity in {"shadow", "shadow_synthetic", "portability"}
     ]
     experimental_domains = list(validation_report.get("experimental_domains", []))
+    validation_rows = _validation_domain_rows(validation_report)
 
     domain_controller_summary: list[dict[str, object]] = []
-    for row in validation_report["domain_results"]:
+    for row in validation_rows:
         domain = str(row["domain"])
         maturity = domain_maturity.get(domain, row.get("maturity_label", "unknown"))
         domain_controller_summary.append(
@@ -201,7 +217,7 @@ def main() -> None:
         writer.writerows(domain_controller_summary)
 
     artifact_rows: list[dict[str, str]] = []
-    for row in validation_report["domain_results"]:
+    for row in validation_rows:
         domain = str(row["domain"])
         maturity = domain_maturity.get(domain, row.get("maturity_label", "unknown"))
         artifact_rows.append(

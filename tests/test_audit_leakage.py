@@ -66,3 +66,83 @@ publish_audit:
     assert "overlap_train_val" in types
     assert "features_forbidden" in types
     assert "model_features_forbidden" in types
+
+
+def test_leakage_audit_detects_healthcare_patient_overlap_regressions(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(leakage, "REPO_ROOT", tmp_path)
+    splits_dir = tmp_path / "healthcare_splits"
+    splits_dir.mkdir(parents=True, exist_ok=True)
+    features_path = tmp_path / "healthcare_features.parquet"
+    models_dir = tmp_path / "healthcare_models"
+    models_dir.mkdir(parents=True, exist_ok=True)
+
+    train = pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2026-01-01 00:00", periods=2, freq="h"),
+            "patient_id": ["p080942", "p080942"],
+        }
+    )
+    calibration = pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2026-01-01 03:00", periods=2, freq="h"),
+            "patient_id": ["p080942", "p086383"],
+        }
+    )
+    val = pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2026-01-01 05:00", periods=2, freq="h"),
+            "patient_id": ["p086383", "p092816"],
+        }
+    )
+    test = pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2026-01-01 07:00", periods=2, freq="h"),
+            "patient_id": ["p092816", "p200000"],
+        }
+    )
+    train.to_parquet(splits_dir / "train.parquet", index=False)
+    calibration.to_parquet(splits_dir / "calibration.parquet", index=False)
+    val.to_parquet(splits_dir / "val.parquet", index=False)
+    test.to_parquet(splits_dir / "test.parquet", index=False)
+    pd.DataFrame({"timestamp": pd.date_range("2026-01-01", periods=3, freq="h"), "patient_id": ["p1", "p2", "p3"]}).to_parquet(
+        features_path,
+        index=False,
+    )
+
+    monkeypatch.setattr(
+        leakage,
+        "DATASETS",
+        {
+            "HEALTHCARE": {
+                "splits_dir": splits_dir,
+                "features_path": features_path,
+                "models_dir": models_dir,
+            }
+        },
+    )
+
+    cfg_path = tmp_path / "publish_audit.yaml"
+    cfg_path.write_text(
+        """
+publish_audit:
+  leakage_gates:
+    max_overlap_train_calibration: 0
+    max_overlap_calibration_val: 0
+    max_overlap_calibration_test: 0
+    max_overlap_train_val: 0
+    max_overlap_train_test: 0
+    max_overlap_val_test: 0
+""".strip(),
+        encoding="utf-8",
+    )
+
+    payload = leakage.run_leakage_audit(config_path=cfg_path)
+    assert payload["fail"] is True
+    dataset = payload["datasets"]["HEALTHCARE"]
+    assert dataset["patient_overlap"]["train_calibration"] == 1
+    assert dataset["patient_overlap"]["calibration_val"] == 1
+    assert dataset["patient_overlap"]["val_test"] == 1
+    types = {v["type"] for v in payload["violations"]}
+    assert "patient_overlap_train_calibration" in types
+    assert "patient_overlap_calibration_val" in types
+    assert "patient_overlap_val_test" in types

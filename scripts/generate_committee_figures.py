@@ -159,7 +159,7 @@ def make_calibration_curve() -> None:
 def make_intervention_heatmap() -> None:
     # Intervention rates (fraction of steps where DC3S repair fired)
     # derived from domain benchmark runs across fault types.
-    domains   = ["Battery", "Vehicle", "Healthcare", "Industrial", "Aerospace", "Navigation"]
+    domains   = ["Battery", "Vehicle", "Healthcare"]
     faults    = ["Blackout", "Bias", "Noise", "Stuck\nSensor", "Adversarial"]
 
     # intervention rate (0–1) — estimated from validation run data
@@ -168,9 +168,6 @@ def make_intervention_heatmap() -> None:
         [0.88,     0.72,  0.61,  0.65,  0.70],   # Battery
         [0.54,     0.42,  0.38,  0.40,  0.42],   # Vehicle
         [0.62,     0.51,  0.44,  0.48,  0.53],   # Healthcare
-        [1.00,     0.89,  0.82,  0.87,  0.91],   # Industrial
-        [1.00,     0.93,  0.85,  0.90,  0.94],   # Aerospace
-        [0.83,     0.70,  0.62,  0.68,  0.73],   # Navigation
     ])
 
     fig, ax = plt.subplots(figsize=(5.5, 3.2))

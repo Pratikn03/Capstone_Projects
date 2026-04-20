@@ -110,8 +110,6 @@ PACKAGE_OUTPUT_ALLOWLIST = {
     "paper/ieee/orius_ieee_professor_appendix_b.log",
     "paper/review/orius_review_dossier.pdf",
     "paper/review/orius_review_dossier.log",
-    "paper/slides/orius_public_summary.pdf",
-    "paper/slides/orius_universal_first_defense.pdf",
     "reports/publication/orius_review_dossier.pdf",
 }
 PACKAGE_OUTPUT_PREFIXES = (

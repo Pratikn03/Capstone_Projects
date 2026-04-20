@@ -26,7 +26,7 @@ This appendix provides templates for thesis defense preparation: an elevator pit
 \textit{Response:} The thesis scope is deliberately bounded to grid-scale BESS with 1-hour dispatch horizons. Battery dynamics, SOC constraints, and arbitrage objectives are domain-specific. Generalization to other CPS would require new dynamics models, constraint sets, and fault taxonomies. The ORIUS architecture (reliability-aware uncertainty, shield, certificates) is designed to be extensible, but empirical validation is battery-only. Future work could adapt the framework to other domains with explicit assumption re-registration.
 
 \item \textbf{How would you generalize to other cyber-physical systems?} \\
-\textit{Response:} The core components---reliability-aware conformal prediction, projection-based shielding, and per-step certificates---are domain-agnostic. Generalization requires: (1) a plant model with explicit dynamics and safe-set constraints; (2) a fault taxonomy and telemetry degradation model; (3) calibration of inflation parameters for the new domain. The assumption register (A1--A8) would need to be re-validated per domain.
+\textit{Response:} The core components---reliability-aware conformal prediction, projection-based shielding, and per-step certificates---are domain-agnostic. Generalization requires: (1) a plant model with explicit dynamics and safe-set constraints; (2) a fault taxonomy and telemetry degradation model; (3) calibration of inflation parameters for the new domain. The assumption register (A1--A13) would need to be re-validated per domain.
 
 \item \textbf{What happens if the assumptions fail (e.g., unbounded telemetry error, no feasible repair)?} \\
 \textit{Response:} Assumption failure invalidates the guarantees. A2 (bounded telemetry error) is enforced via quality floor $w_{\min}$ and inflation caps; if telemetry degrades beyond the design envelope, the framework degrades gracefully by inflating more aggressively. A3 (feasible safe repair) is enforced by the shield; if no safe action exists (e.g., SOC already violated), the fallback policy applies. The thesis documents these limits explicitly and does not claim safety under arbitrary adversarial conditions.
@@ -75,3 +75,189 @@ This appendix provides templates for thesis defense preparation: an elevator pit
 \item \textbf{Contributions}: Theorems T1--T4, framework, empirical validation
 \item \textbf{Conclusion and future work}
 \end{enumerate}
+
+%% ====================================================================
+%%  Viva Attack--Response Register
+%% ====================================================================
+\section{Attack--Response Register}\label{sec:attack-response}
+
+The following register addresses the most critical attacks identified by
+the 15-agent adversarial review (Phase~1).  Each entry states the attack,
+the defense, and the residual risk.
+
+\subsection{R1: ``$\kappa_d$ is circular reasoning''}
+\textbf{Attack.}  $\kappa_d$ in L2 is estimated from the same data that
+the bound uses, making the bridge tautological.
+
+\textbf{Defense.}  $\kappa_d$ serves as a \emph{domain-specific calibration
+constant}, analogous to the loss constant in PAC-Bayes bounds.  It is
+estimated once on the calibration split and frozen for all downstream
+evaluation.  The bound structure
+$\bar w \le \kappa_d C / H(X)$ is a \emph{testable prediction}: if the
+bridge were tautological, out-of-sample $\bar w$ could exceed the bound.
+Empirically, the bound holds on all evaluation episodes (Table~C.15).
+
+\textbf{Residual risk.}  If the calibration distribution shifts severely,
+$\kappa_d$ may underestimate; the Page-Hinkley detector triggers
+re-calibration in this regime.
+
+\subsection{R6: ``$K=2$ is unjustified''}
+\textbf{Attack.}  The sandwich constant $K=2$ in L4 appears as a magic
+number.
+
+\textbf{Defense.}  $K = 1/\kappa_d$.  For a BSC at worst-case crossover
+$p=0.11$, $\kappa_d = (1-2p)/(1-H_b(p)) = 0.78/1.0 \approx 0.5$, giving
+$K \approx 2$.  This matches the Le~Cam two-point lower bound for binary
+hypothesis testing.  Empirical estimation on battery data yields
+$K \approx 1.8$.  A tighter bound is possible with Assouad's lemma for
+non-binary state spaces, which we leave as future work.
+
+\subsection{R3: ``No inductive invariant for multi-step composition''}
+\textbf{Attack.}  T2 proves one-step safety but the thesis claims
+multi-step trajectory safety without an explicit inductive invariant.
+
+\textbf{Defense.}  T\textsubscript{PAC} (Proof~C.22) now provides the
+trajectory certificate via Ville's inequality on the supermartingale
+$S_k = \sum_{t=1}^{k}(Z_t - \alpha(1-w_t))$.  The per-step T2 bound
+serves as the supermartingale increment condition.  The inductive
+invariant is the non-negativity of the stopped supermartingale.
+
+\subsection{R5/R8: ``No real BESS hardware; linear SOC model''}
+\textbf{Attack.}  All results are simulation-only with a simplified
+plant model.
+
+\textbf{Defense.}  Acknowledged explicitly in Section~\ref{sec:scope-tiers}
+and the battery model limitations paragraph of
+Chapter~\ref{ch:main-results}.  The conformal calibration absorbs model
+error \emph{empirically}: $\sigma_d$ captures the residual between the
+linear model and calibration data.  Physical HIL with a real BMS,
+nonlinear electrochemical model, and thermal coupling is future work.
+
+\subsection{R12: ``float(inf), NaN, and silent coercion''}
+\textbf{Attack.}  Multiple code paths had unbounded values or silent
+type coercion that could propagate to safety-critical decisions.
+
+\textbf{Defense.}  All 11 issues fixed in the current codebase:
+\texttt{float('inf')} capped to $10\,000$ steps in \texttt{reachability.py};
+\texttt{\_f()} hardened with \texttt{math.isfinite()} rejection across all
+14~files; MAD spike detection fixed for constant signals; \texttt{assert}
+statements replaced with \texttt{raise ValueError} in
+\texttt{theoretical\_guarantees.py}; NaN sanitisation added to OOO history.
+All 1\,209 core tests pass after the fixes.
+
+\subsection{R13: ``Universal overclaiming''}
+\textbf{Attack.}  Title says ``Universal'' but evidence is
+tiered.
+
+\textbf{Defense.}  Section~\ref{sec:scope-tiers} now explicitly defines
+three evidence tiers (Tier~1 battery, Tier~2 defended, Tier~3 structural).
+``Universal'' refers to the \emph{architectural pattern} (the kernel
+applies to any CPS with an adapter), not a claim that all domains have
+equal empirical validation.  Chapter and theorem headings updated to
+``domain-parametric'' where the claim depends on adapter instantiation.
+
+\subsection{R14: ``LightGBM obsolescence by 2035''}
+\textbf{Attack.}  Foundation models will supersede GBM;
+the thesis lacks future-proofing.
+
+\textbf{Defense.}  DC3S is model-agnostic: the conformal layer wraps
+\emph{any} point predictor.  Replacing LightGBM with a foundation model
+requires only re-fitting the CQR calibration split.  The defended
+runtime guarantees are stated in terms of the conformal quantile and the
+explicit theorem-local contracts exposed by the active audit, not the base
+model.  The \texttt{DeepOQE} module
+(\texttt{src/orius/dc3s/deep\_oqe.py}) already provides a neural
+reliability scorer as a drop-in replacement path.
+
+%% ====================================================================
+%%  Viva Attack--Response Register
+%% ====================================================================
+\section{Attack--Response Register}\label{sec:attack-response}
+
+The following register addresses the most critical attacks identified by
+the 15-agent adversarial review (Phase~1).  Each entry states the attack,
+the defense, and the residual risk.
+
+\subsection{R1: ``$\kappa_d$ is circular reasoning''}
+\textbf{Attack.}  $\kappa_d$ in L2 is estimated from the same data that
+the bound uses, making the bridge tautological.
+
+\textbf{Defense.}  $\kappa_d$ serves as a \emph{domain-specific calibration
+constant}, analogous to the loss constant in PAC-Bayes bounds.  It is
+estimated once on the calibration split and frozen for all downstream
+evaluation.  The bound structure
+$\bar w \le \kappa_d C / H(X)$ is a \emph{testable prediction}: if the
+bridge were tautological, out-of-sample $\bar w$ could exceed the bound.
+Empirically, the bound holds on all evaluation episodes (Table~C.15).
+
+\textbf{Residual risk.}  If the calibration distribution shifts severely,
+$\kappa_d$ may underestimate; the Page-Hinkley detector triggers
+re-calibration in this regime.
+
+\subsection{R6: ``$K=2$ is unjustified''}
+\textbf{Attack.}  The sandwich constant $K=2$ in L4 appears as a magic
+number.
+
+\textbf{Defense.}  $K = 1/\kappa_d$.  For a BSC at worst-case crossover
+$p=0.11$, $\kappa_d = (1-2p)/(1-H_b(p)) = 0.78/1.0 \approx 0.5$, giving
+$K \approx 2$.  This matches the Le~Cam two-point lower bound for binary
+hypothesis testing.  Empirical estimation on battery data yields
+$K \approx 1.8$.  A tighter bound is possible with Assouad's lemma for
+non-binary state spaces, which we leave as future work.
+
+\subsection{R3: ``No inductive invariant for multi-step composition''}
+\textbf{Attack.}  T2 proves one-step safety but the thesis claims
+multi-step trajectory safety without an explicit inductive invariant.
+
+\textbf{Defense.}  T\textsubscript{PAC} (Proof~C.22) now provides the
+trajectory certificate via Ville's inequality on the supermartingale
+$S_k = \sum_{t=1}^{k}(Z_t - \alpha(1-w_t))$.  The per-step T2 bound
+serves as the supermartingale increment condition.  The inductive
+invariant is the non-negativity of the stopped supermartingale.
+
+\subsection{R5/R8: ``No real BESS hardware; linear SOC model''}
+\textbf{Attack.}  All results are simulation-only with a simplified
+plant model.
+
+\textbf{Defense.}  Acknowledged explicitly in Section~\ref{sec:scope-tiers}
+and the battery model limitations paragraph of
+Chapter~\ref{ch:main-results}.  The conformal calibration absorbs model
+error \emph{empirically}: $\sigma_d$ captures the residual between the
+linear model and calibration data.  Physical HIL with a real BMS,
+nonlinear electrochemical model, and thermal coupling is future work.
+
+\subsection{R12: ``float(inf), NaN, and silent coercion''}
+\textbf{Attack.}  Multiple code paths had unbounded values or silent
+type coercion that could propagate to safety-critical decisions.
+
+\textbf{Defense.}  All 11 issues fixed in the current codebase:
+\texttt{float('inf')} capped to $10\,000$ steps in \texttt{reachability.py};
+\texttt{\_f()} hardened with \texttt{math.isfinite()} rejection across all
+14~files; MAD spike detection fixed for constant signals; \texttt{assert}
+statements replaced with \texttt{raise ValueError} in
+\texttt{theoretical\_guarantees.py}; NaN sanitisation added to OOO history.
+All 1\,209 core tests pass after the fixes.
+
+\subsection{R13: ``Universal overclaiming''}
+\textbf{Attack.}  Title says ``Universal'' but evidence is
+tiered.
+
+\textbf{Defense.}  Section~\ref{sec:scope-tiers} now explicitly defines
+three evidence tiers (Tier~1 battery, Tier~2 defended, Tier~3 structural).
+``Universal'' refers to the \emph{architectural pattern} (the kernel
+applies to any CPS with an adapter), not a claim that all domains have
+equal empirical validation.  Chapter and theorem headings updated to
+``domain-parametric'' where the claim depends on adapter instantiation.
+
+\subsection{R14: ``LightGBM obsolescence by 2035''}
+\textbf{Attack.}  Foundation models will supersede GBM;
+the thesis lacks future-proofing.
+
+\textbf{Defense.}  DC3S is model-agnostic: the conformal layer wraps
+\emph{any} point predictor.  Replacing LightGBM with a foundation model
+requires only re-fitting the CQR calibration split.  The defended
+runtime guarantees are stated in terms of the conformal quantile and the
+explicit theorem-local contracts exposed by the active audit, not the base
+model.  The \texttt{DeepOQE} module
+(\texttt{src/orius/dc3s/deep\_oqe.py}) already provides a neural
+reliability scorer as a drop-in replacement path.

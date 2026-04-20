@@ -40,7 +40,7 @@ def _scan_terms(path: Path, banned: list[str]) -> list[str]:
 
 def _aggregate_monograph_text() -> str:
     chunks: list[str] = []
-    roots = [REPO_ROOT / "paper" / "paper.tex"]
+    roots = [REPO_ROOT / "orius_book.tex", REPO_ROOT / "paper" / "paper.tex"]
     roots.extend(sorted((REPO_ROOT / "paper" / "monograph").glob("*.tex")))
     for path in roots:
         if path.exists():
@@ -68,7 +68,7 @@ def _build_checks() -> list[CheckResult]:
     metrics_manifest = _load_json(REPO_ROOT / "paper" / "metrics_manifest.json")
     release_manifest = _load_json(REPO_ROOT / "reports" / "publication" / "release_manifest.json")
     artifact_appendix = (REPO_ROOT / "reports" / "publication" / "orius_artifact_appendix.md").read_text(encoding="utf-8")
-    paper_tex = (REPO_ROOT / "paper" / "paper.tex").read_text(encoding="utf-8")
+    paper_tex = (REPO_ROOT / "orius_book.tex").read_text(encoding="utf-8")
     monograph_text = _aggregate_monograph_text()
 
     checks: list[CheckResult] = []
@@ -98,9 +98,9 @@ def _build_checks() -> list[CheckResult]:
     checks.append(
         CheckResult(
             "Canonical manuscript authority",
-            metrics_manifest["metric_policy"]["master_manuscript"] == "paper/paper.tex"
-            and release_manifest["paper_metric_policy"]["master_manuscript"] == "paper/paper.tex",
-            "metrics manifest and release manifest both point to paper/paper.tex",
+            metrics_manifest["metric_policy"]["master_manuscript"] == "orius_book.tex"
+            and release_manifest["paper_metric_policy"]["master_manuscript"] == "orius_book.tex",
+            "metrics manifest and release manifest both point to orius_book.tex",
         )
     )
 
@@ -139,19 +139,16 @@ def _build_checks() -> list[CheckResult]:
     )
 
     tier_phrases = [
-        "battery as the deepest reference row",
-        "industrial process control, and healthcare monitoring",
-        "Autonomous vehicles are proof-validated within the bounded TTC plus predictive-entry-barrier contract",
-        "Navigation remains shadow-synthetic",
-        "Aerospace remains experimental",
+        "battery remains the witness row",
+        "autonomous vehicles",
+        "healthcare",
+        "future additional domains",
     ]
     missing_tiers = [phrase for phrase in tier_phrases if phrase not in monograph_text]
     appendix_tiers = [
-        "- Battery: reference witness",
-        "- Industrial and healthcare: proof-validated",
-        "- AV: proof-validated under the bounded TTC contract",
-        "- Navigation: shadow-synthetic",
-        "- Aerospace: experimental",
+        "- Battery: witness row",
+        "- AV: defended bounded row",
+        "- Healthcare: defended bounded row",
     ]
     missing_appendix_tiers = [phrase for phrase in appendix_tiers if phrase not in artifact_appendix]
     checks.append(

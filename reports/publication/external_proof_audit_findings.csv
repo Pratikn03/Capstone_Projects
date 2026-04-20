@@ -1,0 +1,9 @@
+theorem_id,severity,weakest_step,disposition,status,owner,closure_evidence
+T1,critical,Boundary reachability remains domain-specific and battery-scoped.,pending_external_review,pending_external_review,,
+T2,critical,The absorbed tightening must match the runtime FTIT/shield implementation exactly.,pending_external_review,pending_external_review,,
+T3a,critical,The theorem is only as good as the runtime-to-risk bridge.,pending_external_review,pending_external_review,,
+T4,high,The constructive witness is intentionally class-scoped.,pending_external_review,pending_external_review,,
+T6,high,Multiple legacy horizon helpers existed before the canonical delta-aware helper.,pending_external_review,pending_external_review,,
+T8,medium,The helper proves comparison for supplied paired sequences only.,pending_external_review,pending_external_review,,
+T11,critical,The theorem is forward-only at the active surface.,pending_external_review,pending_external_review,,
+T_trajectory_PAC,high,The certificate is conservative by design because it stacks finite-sample and worst-case reliability corrections.,pending_external_review,pending_external_review,,

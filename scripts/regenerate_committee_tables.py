@@ -318,7 +318,7 @@ CONTROLLER_PRETTY = {
     "naive":    "Naive",
 }
 
-DOMAIN_ORDER = ["battery", "vehicle", "healthcare", "industrial", "aerospace", "navigation"]
+DOMAIN_ORDER = ["battery", "vehicle", "healthcare"]
 
 
 def write_per_domain_controllers(csv_path: Path) -> None:

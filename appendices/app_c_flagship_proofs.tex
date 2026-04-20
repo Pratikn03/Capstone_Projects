@@ -1,0 +1,407 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath, amssymb, amsthm, booktabs, geometry}
+\geometry{margin=1in}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}[section]
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\1}{\mathbf{1}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathbb{P}}
+\renewcommand{\qedsymbol}{$\blacksquare$}
+
+\title{Appendix C: Flagship Proofs for ORIUS (Registry-Canonical Flagship Core)}
+\author{Pratik Niroula}
+\date{March 2026}
+
+\begin{document}
+\maketitle
+
+\paragraph{Scope Note.}
+This standalone article is the registry-canonical flagship-core execution draft
+for ORIUS. It includes exactly the defended flagship core
+$\{T1, T2, T3a, T4, T11, T\_trajectory\_PAC\}$ and follows the active theorem
+registry ahead of stale appendix wording. Supporting defended surfaces such as
+$T3b$, $T6$, and $T8$ remain in
+\texttt{appendices/app\_c\_full\_proofs.tex}; draft and scoped extension rows
+are intentionally excluded here.
+
+\section*{C.1 Strict Topological Notation and Dynamics}
+Every proof below uses the explicit Assumption Register in Appendix B together
+with the active flagship theorem surfaces only.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}llp{9.5cm}@{}}
+\toprule
+Symbol & Type & Meaning \\
+\midrule
+$x_t$ & $\R$ & Latent true state at step $t$. \\
+$\hat{x}_t$ & $\R$ & Observed state at step $t$. \\
+$U_t$ & Set & Observation-consistent / reliability-adjusted uncertainty set at step $t$. \\
+$\mathcal{A}_t$ & Set & Tightened battery safe-action set used by the DC3S shield. \\
+$\mathcal{A}_t^{\mathrm{safe}}(U_t)$ & Set & Typed safe-action set sound for the uncertainty set $U_t$. \\
+$\Delta(a_t)$ & $\R$ & One-step state increment induced by action $a_t$. \\
+$\epsilon_t$ & $\R$ & One-step model residual with $|\epsilon_t| \le \epsilon_{\mathrm{model}}$ under A1. \\
+$\mathcal{S}$ & Set & Generic domain safe set. \\
+$[s_{\min}, s_{\max}]$ & Interval & Battery safe interval. \\
+$\mathcal{H}_t$ & $\sigma$-algebra & Causal observation history up to step $t$. \\
+$Z_t$ & $\{0,1\}$ & True-state violation indicator at step $t$. \\
+$V$ & $\N$ & Total true-state violation count across the horizon. \\
+$w_t$ & $[0,1]$ & Reliability score at step $t$. \\
+$\bar w$ & $[0,1]$ & Episode-average reliability $T^{-1}\sum_{t=1}^T w_t$. \\
+$H$ & $\N$ & Trajectory horizon for the PAC certificate. \\
+$n_{\mathrm{cal}}$ & $\N$ & Calibration sample size. \\
+$n_{\mathrm{eff}}$ & $\N$ & Effective reliability-deflated calibration size. \\
+$\varepsilon_{\mathrm{fs}}$ & $\R_+$ & Finite-sample conformal correction term. \\
+$H_{\max}$ & $\N$ & Maximum certifiable safe horizon under the trajectory certificate. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+
+\section*{C.2 T1 --- OASG Existence}
+
+\begin{theorem}[T1: OASG Existence]\label{thm:t1}
+\textbf{Assumptions.} A1, A2, A4, A11, A12. \\
+\textbf{Statement.} For any dropout rate $d>0$ and any optimal arbitrage
+controller, there exists a time step $t^*$ such that
+\[
+  \phi_{\mathrm{obs}}(a_{t^*}) = 1
+  \qquad\text{and}\qquad
+  \phi_{\mathrm{true}}(a_{t^*}) = 0.
+\]
+That is, the released action is safe in observation but unsafe in truth.
+\end{theorem}
+
+\begin{proof}
+By A11, the battery witness controller can be driven to a boundary-sensitive
+state under admissible demand, so there exists a step where the true SOC lies
+within a boundary distance $\delta_{\mathrm{bnd}}$ of the constraint surface.
+By A2 and the standing dropout rate $d>0$, degraded telemetry admits a
+non-trivial observation gap on an admissible fault window. A12 keeps the fault
+process conditionally independent of the controller action stream given the
+history, so the boundary-sensitive witness step and the admissible telemetry
+fault can co-occur on the same realized history.
+
+Choose such a step $t^*$. The controller releases the action using the observed
+state and therefore treats that action as feasible on the observed side of the
+boundary. The true state, however, is displaced by the admissible observation
+gap beyond the boundary-facing side of the safe set, so the same released
+action crosses the true constraint surface. A4 supplies the shared one-step
+dynamics interpretation needed to compare the observed-state and true-state
+outcomes for that released action. Hence
+\[
+  \phi_{\mathrm{obs}}(a_{t^*}) = 1
+  \qquad\text{and}\qquad
+  \phi_{\mathrm{true}}(a_{t^*}) = 0,
+\]
+which is exactly the battery witness-row OASG phenomenon. \qedhere
+\end{proof}
+
+\section*{C.3 T2 --- Safety Preservation}
+
+\begin{theorem}[T2: Safety Preservation]\label{thm:t2}
+\textbf{Assumptions.} A1, A2, A3, A4, A5, A7. \\
+\textbf{Statement.} If the DC3S shield selects $a_t \in \mathcal{A}_t$ and
+the current true state satisfies $x_t \in U_t$, then the released action is
+one-step safe:
+\[
+  x_t \in U_t \;\text{ and }\; a_t \in \mathcal{A}_t
+  \quad\Longrightarrow\quad
+  x_{t+1} \in [s_{\min}, s_{\max}].
+\]
+No episode-level expectation claim is made in this theorem.
+\end{theorem}
+
+\begin{proof}
+Fix a step $t$ and assume the theorem hypotheses. Because $x_t \in U_t$, the
+current true state lies in the observation-consistent battery tube, so
+\[
+  |x_t - \hat{x}_t| \le m_t.
+\]
+Because $a_t \in \mathcal{A}_t$, the shielded observed-state prediction is
+required to stay inside the absorbed tightened interval:
+\[
+  s_{\min} + m_t + \epsilon_{\mathrm{model}}
+  \le
+  \hat{x}_t + \Delta(a_t)
+  \le
+  s_{\max} - m_t - \epsilon_{\mathrm{model}}.
+\]
+
+Now write the true successor using A4:
+\[
+  x_{t+1} = x_t + \Delta(a_t) + \epsilon_t
+  =
+  \hat{x}_t + \Delta(a_t) + (x_t-\hat{x}_t) + \epsilon_t.
+\]
+Using A1 and the tube bound gives the lower estimate
+\[
+  x_{t+1}
+  \ge
+  (\hat{x}_t + \Delta(a_t)) - |x_t-\hat{x}_t| - |\epsilon_t|
+  \ge
+  (s_{\min} + m_t + \epsilon_{\mathrm{model}}) - m_t - \epsilon_{\mathrm{model}}
+  =
+  s_{\min}.
+\]
+The same substitution yields the upper estimate
+\[
+  x_{t+1}
+  \le
+  (\hat{x}_t + \Delta(a_t)) + |x_t-\hat{x}_t| + |\epsilon_t|
+  \le
+  (s_{\max} - m_t - \epsilon_{\mathrm{model}}) + m_t + \epsilon_{\mathrm{model}}
+  =
+  s_{\max}.
+\]
+Therefore
+\[
+  s_{\min} \le x_{t+1} \le s_{\max},
+\]
+so the released action is one-step safe. The proof uses only current-step
+information and therefore preserves the causal certificate discipline required
+by A7. \qedhere
+\end{proof}
+
+\section*{C.4 T3a --- ORIUS Core Envelope Derivation}
+
+\begin{lemma}[Aggregation under a predictable risk budget]\label{lem:t3a-budget}
+If a predictable nonnegative sequence $r_t$ satisfies
+\[
+  \Prob[Z_t = 1 \mid \mathcal{H}_t] \le r_t
+  \qquad\text{for all } t,
+\]
+then
+\[
+  \E[V] \le \sum_{t=1}^T r_t.
+\]
+\end{lemma}
+
+\begin{proof}
+Because $Z_t$ is an indicator,
+\[
+  \E[Z_t \mid \mathcal{H}_t]
+  =
+  \Prob[Z_t=1 \mid \mathcal{H}_t]
+  \le r_t.
+\]
+Taking unconditional expectations preserves the inequality, and summing across
+the horizon yields $\E[V] \le \sum_{t=1}^T r_t$. No temporal independence
+assumption is required. \qedhere
+\end{proof}
+
+\begin{theorem}[ORIUS Core Bound]\label{thm:t3a}
+\textbf{Assumptions.} A1, A2, A4, A5, A6, A7, A9. \\
+\textbf{Statement.} Under the battery witness-row predictable one-step risk
+budget
+\[
+  \Prob[Z_t=1\mid\mathcal{H}_t] \le \alpha(1-w_t),
+\]
+the expected total violation count under the DC3S shield satisfies
+\[
+  \E[V] \le \alpha(1-\bar w)T,
+\]
+where $\bar w = T^{-1}\sum_{t=1}^T w_t$ is the episode-average reliability.
+\end{theorem}
+
+\begin{proof}
+Apply Lemma~\ref{lem:t3a-budget} with $r_t=\alpha(1-w_t)$. Then
+\begin{align*}
+  \E[V]
+  &\le \sum_{t=1}^T \alpha(1-w_t) \\
+  &= \alpha \sum_{t=1}^T (1-w_t) \\
+  &= \alpha T \left(1 - \frac{1}{T}\sum_{t=1}^T w_t\right) \\
+  &= \alpha(1-\bar w)T.
+\end{align*}
+Thus the flagship T3a surface is an aggregation argument over an explicit
+predictable risk-envelope contract rather than a standalone corollary of
+marginal conformal coverage. \qedhere
+\end{proof}
+
+\paragraph{Registry Note.}
+The active theorem registry treats the theorem above as flagship-defended
+$T3a$. The supporting corollary $T3b$ remains in
+\texttt{appendices/app\_c\_full\_proofs.tex} and is not reproduced in this
+flagship-only appendix.
+
+\section*{C.5 T4 --- No Free Safety}
+
+\begin{theorem}[T4: No Free Safety]\label{thm:t4}
+\textbf{Assumptions.} A1, A2, A4, A11. \\
+\textbf{Statement.} For any fixed-margin quality-ignorant controller $\pi$ and
+any dropout rate $d>0$, there exists an admissible fault sequence and a time
+$t^\star$ such that
+\[
+  \phi_{\mathrm{obs}}(\pi(\hat{x}_{t^\star})) = 1
+  \qquad\text{and}\qquad
+  \phi_{\mathrm{true}}(\pi(\hat{x}_{t^\star})) = 0.
+\]
+Equivalently, the controller incurs at least one true-state violation on the
+constructed admissible sequence.
+\end{theorem}
+
+\begin{proof}
+Fix a quality-ignorant controller $\pi$. By definition, its effective safety
+margin does not depend on the reliability score, so there exists a constant
+$m^\pi \ge 0$ that upper-bounds the observation buffer implicitly used by the
+controller. By A11, the battery witness controller can be driven through a
+boundary-sensitive baiting phase in which the state approaches the constraint
+surface while telemetry remains nominal.
+
+Because $d>0$, A2 admits an admissible degraded-observation fault window with a
+non-trivial observation gap. Choose a step $t^\star$ in that window where the
+accumulated observation error exceeds the controller's fixed margin plus the
+boundary distance available on the baited state. At that step the observed
+state still appears feasible relative to the controller's fixed margin, but the
+true state has shifted across the boundary-facing side of the admissible set by
+more than the controller can compensate. A4 again supplies the shared
+one-step battery dynamics interpretation for the released action.
+
+Therefore the action $\pi(\hat{x}_{t^\star})$ remains observed-state legal
+while creating a true-state violation. This yields an observation-action safety
+gap and hence at least one true-state violation on the constructed admissible
+sequence. The theorem is intentionally class-scoped to fixed-margin,
+quality-ignorant controllers on the battery witness row. \qedhere
+\end{proof}
+
+\section*{C.6 T11 --- Typed Structural Transfer}
+
+\paragraph{Local T11 Notation.}
+In this section, $U_t$ denotes the constructed observation-consistent state set
+and $\mathcal{A}_t^{\mathrm{safe}}(U_t)$ denotes the tightened safe-action set
+that is sound for that uncertainty set.
+
+\begin{theorem}[Typed structural transfer theorem, T11]\label{thm:t11}
+\textbf{Assumptions.} For every step $t$:
+\begin{enumerate}
+  \item the constructed observation-consistent state set satisfies
+    $\Prob[x_t \in U_t \mid \mathcal{H}_t] \ge 1-\alpha$;
+  \item the tightened safe-action set is sound for that uncertainty set, in
+    the sense that every action in $\mathcal{A}_t^{\mathrm{safe}}(U_t)$ keeps
+    the next state inside $\mathcal{S}$ for all $x \in U_t$ and all
+    admissible disturbance;
+  \item the repair map returns an element of
+    $\mathcal{A}_t^{\mathrm{safe}}(U_t)$ whenever that set is non-empty;
+  \item when the tightened safe-action set is empty, the fallback action is
+    admissible and preserves safety from any current safe state.
+\end{enumerate}
+\textbf{Statement.} Let $\mathcal{D}$ be a domain instantiation for the
+degraded-observation safe-control problem. Then the repaired action produced by
+the ORIUS kernel satisfies the same one-step safety-preservation statement as
+the reference theorem:
+\[
+  \Prob[x_{t+1}\in\mathcal{S}\mid \mathcal{H}_t] \ge 1-\alpha.
+\]
+No broader episode-level claim is inherited unless the new domain separately
+supplies an explicit predictable per-step risk budget.
+\end{theorem}
+
+\begin{proof}
+Fix a step $t$ and condition on the observation history $\mathcal{H}_t$. On the
+event
+\[
+  E_t = \{x_t \in U_t\},
+\]
+Assumption~(2) implies that every action in
+$\mathcal{A}_t^{\mathrm{safe}}(U_t)$ preserves membership in the safe set at
+the next step. If the tightened safe-action set is non-empty, then
+Assumption~(3) ensures that the repaired action returned by the kernel lies in
+that set and hence preserves safety on $E_t$. If the tightened safe-action set
+is empty, then Assumption~(4) ensures that the fallback action preserves safety
+from any current safe state. Therefore,
+\[
+  \Prob[x_{t+1}\in\mathcal{S} \mid \mathcal{H}_t]
+  \ge
+  \Prob[E_t \mid \mathcal{H}_t]
+  \ge
+  1-\alpha,
+\]
+which is exactly the forward one-step transfer claim. The converse remains a
+separate structural failure proposition and is not part of active T11.
+\qedhere
+\end{proof}
+
+\section*{C.7 T\_trajectory\_PAC --- PAC Trajectory Certificate}
+
+\begin{theorem}[T\_trajectory\_PAC: PAC Trajectory Certificate]\label{thm:t_trajectory_pac}
+\textbf{Assumptions.} A1, A4, A5, A9, and Bonferroni/union-bound aggregation
+over the horizon. For horizon $H$, calibration size $n_{\mathrm{cal}}$, and
+confidence $1-\delta$:
+\[
+  \Prob\!\bigl[\text{all }H\text{ steps safe}\bigr]
+  \ge
+  1-H\alpha(1-\bar w)-\varepsilon_{\mathrm{fs}}-\delta/2,
+\]
+where
+\[
+  \varepsilon_{\mathrm{fs}}
+  =
+  \sqrt{\ln(4/\delta)/(2n_{\mathrm{eff}})}
+  \qquad\text{and}\qquad
+  n_{\mathrm{eff}} = n_{\mathrm{cal}}\cdot\min_t w_t.
+\]
+The maximum certifiable horizon is
+\[
+  H_{\max}
+  =
+  \left\lfloor
+    \frac{1-\varepsilon_{\mathrm{fs}}-\delta/2}{\alpha(1-\bar w)}
+  \right\rfloor.
+\]
+\end{theorem}
+
+\begin{proof}
+\textbf{Step 1 (per-step risk).}
+By T3a,
+\[
+  \Prob[Z_t=1\mid\mathcal{H}_t]\le\alpha(1-w_t).
+\]
+
+\textbf{Step 2 (trajectory aggregation by union bound).}
+Let $E_t=\{Z_t=1\}$ denote a stepwise true-state violation. Then
+\[
+  \Prob\!\Bigl[\bigcup_{t=1}^{H} E_t\Bigr]
+  \le \sum_{t=1}^{H}\Prob[E_t]
+  \le \sum_{t=1}^{H}\alpha(1-w_t)
+  \le H\alpha(1-\bar w).
+\]
+
+\textbf{Step 3 (finite-sample correction).}
+The conformal quantile $\hat q$ estimated from $n_{\mathrm{cal}}$ points
+satisfies
+\[
+  \Prob[\hat q<q_{\mathrm{true}}]\le\varepsilon_{\mathrm{fs}}.
+\]
+We deflate the effective calibration size by $\min_t w_t$ to account for the
+worst-case reliability in the trajectory.
+
+\textbf{Step 4 (combining).}
+\begin{align*}
+  \Prob[\exists\,t\in[H]:\text{violation}]
+  &\le
+  \underbrace{H\alpha(1-\bar w)}_{\text{risk budget}}
+  +
+  \underbrace{\varepsilon_{\mathrm{fs}}}_{\text{calibration error}}
+  +
+  \underbrace{\delta/2}_{\text{exit-time budget}}.
+\end{align*}
+Hence
+\[
+  \Prob[\text{all safe}]
+  \ge
+  1-H\alpha(1-\bar w)-\varepsilon_{\mathrm{fs}}-\delta/2.
+\]
+Setting the right-hand side nonnegative and solving for $H$ gives the stated
+$H_{\max}$ formula. This is the defended Bonferroni/union-bound certificate and
+nothing stronger; no martingale or Ville-style strengthening is claimed here.
+\qedhere
+\end{proof}
+
+\end{document}

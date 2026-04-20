@@ -1,11 +1,13 @@
-.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets navigation-datasets industrial-datasets healthcare-datasets aerospace-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark orius-monograph-assets review-compile orius-book orius-evidence-rerun equal-domain-gate camera-ready-assets camera-ready-verify camera-ready-freeze orius-review-pack orius-final ieee-assets ieee-main-compile ieee-detailed-compile ieee-appendix-compile ieee-pack ieee-prof-assets ieee-prof-main-compile ieee-prof-appa-compile ieee-prof-appb-compile ieee-prof-pack orius-flagship-manuscripts battery-deep-novelty external-ssd-setup external-ssd-shell external-ssd-verify external-ssd-preflight full-folder-audit pre-clean clean clean-status fresh-research pre-release
+.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets healthcare-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark orius-monograph-assets review-compile orius-book orius-evidence-rerun camera-ready-assets camera-ready-verify camera-ready-freeze orius-review-pack orius-final ieee-assets ieee-main-compile ieee-detailed-compile ieee-appendix-compile ieee-pack ieee-prof-assets ieee-prof-main-compile ieee-prof-appa-compile ieee-prof-appb-compile ieee-prof-pack orius-flagship-manuscripts battery-deep-novelty phase3-proof-book app-c-flagship-proofs app-c-all-theorems external-ssd-setup external-ssd-shell external-ssd-verify external-ssd-preflight full-folder-audit pre-clean clean clean-status fresh-research pre-release appledouble-clean
 
-PRE_RELEASE_TESTS = tests/test_external_real_data_integration.py tests/test_real_data_manifest_refresh.py tests/test_thesis_package_assets.py
+PRE_RELEASE_TESTS = tests/test_submission_artifacts.py tests/test_three_domain_submission_lane.py tests/test_thesis_package_assets.py
 
 PYTHON ?= $(if $(wildcard .venv/bin/python3),.venv/bin/python3,python3)
 PROFILE ?= standard
 PROOF_SEEDS ?= 1
 PROOF_HORIZON ?= 24
+# Reproducibility: fix Python hash seed for deterministic dict/set ordering.
+export PYTHONHASHSEED := 0
 # Canonical dissertation build is now a curated 13-chapter monograph rather than the
 # earlier archive-heavy stitched surface, so the page floor should track the rewritten
 # manuscript rather than legacy bulk.
@@ -26,10 +28,13 @@ EXTERNAL_SSD_ROOT ?= $(if $(ORIUS_EXTERNAL_DATA_ROOT),$(ORIUS_EXTERNAL_DATA_ROOT
 
 ## Canonical paper/review artifact directories are intentionally retained in repository state.
 
+appledouble-clean:
+	find . -path "./.git" -prune -o -name '._*' -delete
+
 clean:
 	rm -f paper/*.aux paper/*.log paper/*.out paper/*.fdb_latexmk paper/*.fls paper/*.bbl paper/*.blg paper/*.toc paper/*.lof paper/*.lot
-	find paper/monograph -maxdepth 1 -type f \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
-	find appendices -maxdepth 1 -type f \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
+	find paper/monograph -maxdepth 1 -type f ! -name '._*' \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
+	find appendices -maxdepth 1 -type f ! -name '._*' \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
 	rm -f paper/ieee/*.aux paper/ieee/*.log paper/ieee/*.out paper/ieee/*.fdb_latexmk paper/ieee/*.fls paper/ieee/*.bbl paper/ieee/*.blg paper/ieee/*.toc paper/ieee/*.lof paper/ieee/*.lot paper/ieee/*.pdf
 	rm -f paper_r1.aux paper_r1.out paper_r1.log paper_r1.fls paper_r1.fdb_latexmk paper.aux paper.out paper.log paper.fdb_latexmk paper.fls paper.fls.gz
 	rm -f .coverage reports/.coverage
@@ -39,6 +44,7 @@ clean:
 	rm -rf build dist *.egg-info
 	find . -type d -name "__pycache__" -not -path "./.venv/*" -not -path "./.git/*" -prune -exec rm -rf {} +
 	find . -type f -name "*.pyc" -not -path "./.venv/*" -not -path "./.git/*" -delete
+	$(MAKE) appledouble-clean
 
 pre-clean: clean
 
@@ -94,13 +100,13 @@ test-cov:
 		--cov-report= \
 		--cov-fail-under=0
 	$(PYTHON) -m coverage report \
-		--include="scripts/_dataset_registry.py,scripts/refresh_real_data_manifests.py,scripts/build_aerospace_public_adsb_runtime.py,src/orius/orius_bench/real_data_loader.py" \
+		--include="scripts/_dataset_registry.py,scripts/refresh_real_data_manifests.py,src/orius/orius_bench/real_data_loader.py" \
 		--fail-under=80
 	$(PYTHON) -m coverage html \
-		--include="scripts/_dataset_registry.py,scripts/refresh_real_data_manifests.py,scripts/build_aerospace_public_adsb_runtime.py,src/orius/orius_bench/real_data_loader.py" \
+		--include="scripts/_dataset_registry.py,scripts/refresh_real_data_manifests.py,src/orius/orius_bench/real_data_loader.py" \
 		-d reports/coverage
 	$(PYTHON) -m coverage xml \
-		--include="scripts/_dataset_registry.py,scripts/refresh_real_data_manifests.py,scripts/build_aerospace_public_adsb_runtime.py,src/orius/orius_bench/real_data_loader.py" \
+		--include="scripts/_dataset_registry.py,scripts/refresh_real_data_manifests.py,src/orius/orius_bench/real_data_loader.py" \
 		-o reports/coverage.xml
 
 # Quick tests (exclude slow markers)
@@ -244,6 +250,15 @@ external-ssd-verify:
 external-ssd-preflight:
 	PYTHONPATH=src $(PYTHON) scripts/verify_real_data_preflight.py --external-root $(EXTERNAL_SSD_ROOT)
 
+phase3-proof-book:
+	$(PYTHON) scripts/build_phase3_flagship_v1_proof_book.py
+
+app-c-flagship-proofs:
+	$(PYTHON) scripts/build_app_c_flagship_proofs.py
+
+app-c-all-theorems:
+	$(PYTHON) scripts/build_app_c_all_theorems.py
+
 # ============================================================
 # Load Testing (98/100 Enhancement)
 # ============================================================
@@ -332,7 +347,10 @@ paper-assets:
 	PYTHONPATH=src $(PYTHON) scripts/update_paper_metrics.py
 
 orius-monograph-assets:
+	PYTHONPATH=src $(PYTHON) scripts/build_active_theorem_audit.py
+	PYTHONPATH=src $(PYTHON) scripts/validate_theorem_surface.py
 	PYTHONPATH=src $(PYTHON) scripts/build_orius_monograph_assets.py
+	PYTHONPATH=src $(PYTHON) scripts/build_missing_tables.py
 
 ieee-assets: orius-monograph-assets
 	PYTHONPATH=src $(PYTHON) scripts/build_orius_ieee_assets.py
@@ -342,8 +360,8 @@ camera-ready-assets: ieee-assets
 	PYTHONPATH=src $(PYTHON) scripts/build_camera_ready_figures.py
 
 paper-verify: orius-monograph-assets
-	PYTHONPATH=src $(PYTHON) scripts/verify_paper_manifest.py
-	PYTHONPATH=src $(PYTHON) scripts/validate_paper_claims.py
+	PYTHONPATH=src $(PYTHON) scripts/verify_paper_manifest.py --paper orius_book.tex
+	PYTHONPATH=src $(PYTHON) scripts/validate_paper_claims.py --tex orius_book.tex
 
 camera-ready-verify:
 	PYTHONPATH=src $(PYTHON) scripts/verify_paper_manifest.py --camera-ready
@@ -360,19 +378,25 @@ paper3-four-policy-benchmark:
 
 paper-compile: orius-monograph-assets
 	rm -f paper/paper.pdf paper/paper.log paper/paper.aux paper/paper.out paper/paper.bbl paper/paper.blg paper/paper.toc paper/paper.lof paper/paper.lot
-	find paper/monograph -maxdepth 1 -type f \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
-	find appendices -maxdepth 1 -type f \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
+	rm -f orius_book.pdf orius_book.log orius_book.aux orius_book.out orius_book.bbl orius_book.blg orius_book.toc orius_book.lof orius_book.lot
+	find paper/monograph -maxdepth 1 -type f ! -name '._*' \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
+	find appendices -maxdepth 1 -type f ! -name '._*' \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
 	mkdir -p paper/monograph paper/chapters paper/appendices paper/backmatter
-	- pdflatex -interaction=nonstopmode -output-directory=paper paper/paper.tex
-	- bibtex paper/paper
-	- pdflatex -interaction=nonstopmode -output-directory=paper paper/paper.tex
-	- pdflatex -interaction=nonstopmode -output-directory=paper paper/paper.tex
-	test -f paper/paper.pdf
-	test -f paper/paper.log
-	cp paper/paper.pdf paper.pdf
+	pdflatex -interaction=nonstopmode orius_book.tex
+	bibtex orius_book
+	pdflatex -interaction=nonstopmode orius_book.tex
+	pdflatex -interaction=nonstopmode orius_book.tex
+	test -f orius_book.pdf
+	test -f orius_book.log
+	cp orius_book.pdf paper/paper.pdf
+	cp orius_book.log paper/paper.log
+	cp orius_book.pdf paper.pdf
 	test -f paper.pdf
 	cmp -s paper/paper.pdf paper.pdf
 	@pages=$$(grep -Eo 'Output written on paper/paper\.pdf \([0-9]+ pages' paper/paper.log | tail -n1 | sed -E 's/.*\(([0-9]+) pages/\1/'); \
+	if [ -z "$$pages" ]; then \
+		pages=$$(grep -Eo 'Output written on orius_book\.pdf \([0-9]+ pages' paper/paper.log | tail -n1 | sed -E 's/.*\(([0-9]+) pages/\1/'); \
+	fi; \
 	if [ -z "$$pages" ]; then \
 		echo "Could not determine page count from paper/paper.log"; \
 		exit 1; \
@@ -382,6 +406,8 @@ paper-compile: orius-monograph-assets
 		exit 1; \
 	fi; \
 	echo "Canonical paper.pdf page count $$pages >= $(PAPER_MIN_PAGES)"
+	rm -f orius_book.pdf orius_book.log orius_book.aux orius_book.out orius_book.bbl orius_book.blg orius_book.toc orius_book.lof orius_book.lot
+	$(MAKE) appledouble-clean
 
 ieee-main-compile: ieee-assets
 	rm -f paper/ieee/orius_ieee_main.pdf paper/ieee/orius_ieee_main.log paper/ieee/orius_ieee_main.aux paper/ieee/orius_ieee_main.out paper/ieee/orius_ieee_main.bbl paper/ieee/orius_ieee_main.blg paper/ieee/orius_ieee_main.toc
@@ -497,11 +523,12 @@ orius-flagship-manuscripts: orius-book ieee-pack ieee-prof-pack
 
 review-compile: orius-monograph-assets
 	rm -f paper/review/orius_review_dossier.pdf paper/review/orius_review_dossier.log paper/review/orius_review_dossier.aux paper/review/orius_review_dossier.out paper/review/orius_review_dossier.toc
-	- pdflatex -interaction=nonstopmode -output-directory=paper/review paper/review/orius_review_dossier.tex
-	- pdflatex -interaction=nonstopmode -output-directory=paper/review paper/review/orius_review_dossier.tex
+	pdflatex -interaction=nonstopmode -output-directory=paper/review paper/review/orius_review_dossier.tex
+	pdflatex -interaction=nonstopmode -output-directory=paper/review paper/review/orius_review_dossier.tex
 	test -f paper/review/orius_review_dossier.pdf
 	cp paper/review/orius_review_dossier.pdf reports/publication/orius_review_dossier.pdf
 	test -f reports/publication/orius_review_dossier.pdf
+	$(MAKE) appledouble-clean
 
 paper-refresh: paper-assets paper-verify paper-compile
 
@@ -509,9 +536,6 @@ orius-book: paper-verify paper-compile
 
 orius-evidence-rerun: paper-assets orius-monograph-assets
 	@echo "Rebuilt monograph evidence surfaces from tracked publication artifacts."
-
-equal-domain-gate:
-	PYTHONPATH=src $(PYTHON) scripts/run_orius_canonical_closure_refresh.py --mode equal_domain_gate --external-root $(STRICT_EXTERNAL_LINK) --train-missing --repair-invalid-splits --seeds 3 --sil-seeds 3 --sil-rows 96 --horizon 48
 
 camera-ready-freeze:
 	PYTHONPATH=src $(PYTHON) scripts/run_camera_ready_freeze.py --external-root $(STRICT_EXTERNAL_LINK) --compute-lane hybrid --train-missing --repair-invalid-splits --seeds 3 --sil-seeds 3 --sil-rows 96 --horizon 48 --warning-waivers paper/camera_ready_warning_waivers.yaml
@@ -625,27 +649,14 @@ analyze-artifact:
 av-datasets:
 	$(PYTHON) scripts/download_av_datasets.py --source $(ORIUS_AV_SOURCE)
 
-# Build the navigation processed dataset from external KITTI raw data.
-navigation-datasets:
-	$(PYTHON) scripts/build_navigation_real_dataset.py
-
-# Build Industrial datasets from real CCPP raw data by default.
-industrial-datasets:
-	$(PYTHON) scripts/download_industrial_datasets.py --source ccpp
-
-# Build Healthcare datasets from the real BIDMC corpus by default.
+# Build Healthcare datasets from the active promoted healthcare sources.
 healthcare-datasets:
 	$(PYTHON) scripts/download_healthcare_datasets.py --source bidmc
 
-# Build Aerospace datasets from the real NASA C-MAPSS corpora by default.
-aerospace-datasets:
-	$(PYTHON) scripts/download_aerospace_datasets.py
+# Download all active multi-domain datasets (AV + Healthcare).
+multi-domain-datasets: av-datasets healthcare-datasets
 
-# Download all multi-domain datasets (AV + Industrial + Healthcare + Aerospace).
-# Navigation remains opt-in because KITTI raw data must be staged locally first.
-multi-domain-datasets: av-datasets industrial-datasets healthcare-datasets aerospace-datasets
-
-# Verify disk, tooling, and repo-local raw-data readiness for all-domain real-data work.
+# Verify disk, tooling, and repo-local raw-data readiness for the active 3-domain program.
 real-data-preflight:
 	$(PYTHON) scripts/verify_real_data_preflight.py
 
@@ -653,12 +664,12 @@ real-data-preflight:
 refresh-real-data-manifests:
 	$(PYTHON) scripts/refresh_real_data_manifests.py
 
-# Build features for all multi-domain datasets (run after multi-domain-datasets)
+# Build features for the active non-battery datasets (run after multi-domain-datasets)
 multi-domain-build:
 	PYTHONPATH=src $(PYTHON) scripts/build_features_multi_domain.py
 
 # Train a multi-domain dataset: make train-dataset DATASET=AV
-# Supported: AV, INDUSTRIAL, HEALTHCARE, AEROSPACE
+# Supported in the active lane: AV, HEALTHCARE
 
 # Generate ORIUS universal framework figure
 universal-framework-figure:

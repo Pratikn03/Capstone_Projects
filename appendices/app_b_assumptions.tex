@@ -1,107 +1,219 @@
 % =============================================================================
 % Appendix B: Assumption Register
-% ORIUS/DC3S Battery-Safety Thesis
+% YAML-canonical A1--A13 surface for the defended ORIUS theorem program
 % =============================================================================
 \chapter{Assumption Register}
 \label{app:assumptions}
 
-This appendix provides the definitive register of every assumption
-invoked in the ORIUS battery-safety proofs.  Each assumption is stated
-in precise mathematical language, and a usage map records which
-theorem chapters depend on it.
+This appendix is the canonical assumption register for the defended ORIUS
+theorem program.  The active theorem registry in
+\texttt{reports/publication/theorem\_registry.yml} references these IDs
+directly, and the audit scripts reject theorem rows that cite an unknown
+assumption label.
 
 \section{How to Read This Register}
 
-Each assumption carries a mnemonic (A1--A8).  The \emph{formal statement}
-gives the mathematical predicate; the \emph{battery interpretation} maps
-it to physical quantities in the ORIUS plant.
-Before reading any proof in Chapters~\ref{ch:theorem-oasg}--\ref{ch:no-free-safety}
-or Appendix~\ref{app:proofs}, locate the \emph{Assumptions Used} section
-and verify each cited assumption here.
+Each assumption is stated as a theorem-facing predicate and then grounded in
+the battery runtime.  The defended headline core is
+\[
+  \{T1,\;T2,\;T3a,\;T4,\;T11,\;T_{\mathrm{trajectory\_PAC}}\},
+\]
+with $T6$ retained as a formal auxiliary theorem.  Draft or scoped extension
+surfaces may cite these assumptions too, but they do not enter defended-core
+counts unless the registry says so.
 
 \section{Master Table}
 
 \begin{table}[htbp]
 \centering
-\caption{Master assumption table (A1--A8).}
+\caption{Canonical assumption table (A1--A13).}
 \label{tab:assumption-master}
 \small
-\begin{tabular}{@{}clp{7.8cm}@{}}
+\begin{tabular}{@{}clp{8.0cm}@{}}
 \toprule
 \textbf{ID} & \textbf{Mnemonic} & \textbf{One-line statement} \\
 \midrule
-A1 & Bounded model error     & $|\epsilon_t| \le \epsilon_{\mathrm{model}}$ for all $t$. \\
-A2 & Bounded telemetry error & $|\hat{x}_t - x_t| \le g(w_t)$ for known bound $g$. \\
-A3 & Feasible safe repair    & $\Aset \neq \emptyset$ whenever $\phi(x_t) = 1$. \\
-A4 & Known dynamics          & Controller can compute $\Delta(a)$ exactly. \\
-A5 & Monotone bounded inflation & $m_t$ monotone decreasing in $w_t$; $m_t \le m_{\max}$. \\
-A6 & Bounded detector lag    & Drift detector flags within $\tau_{\max}$ steps. \\
-A7 & Causal certificate rule & $\mathrm{cert}_t = h(z_1, \ldots, z_t)$. \\
-A8 & Admissible fallback     & $\exists\;\pi_{\mathrm{fb}}$ with $\TSVR(\pi_{\mathrm{fb}}) = 0$. \\
+A1 & Almost-sure model error bound & $|x_{t+1} - f(x_t,a_t)| \le \epsilon_{\mathrm{model}}$ almost surely. \\
+A2 & Telemetry-state bridge & $|\hat{x}_t - x_t| \le g(w_t)$ with known monotone bridge $g$. \\
+A3 & Feasible safe repair & The tightened safe-action set is non-empty whenever repair is invoked. \\
+A4 & Known one-step dynamics & The controller computes the one-step state increment map exactly. \\
+A5 & Absorbed monotone tightening & $m_t^\star = m_t + \epsilon_{\mathrm{model}}$ is monotone non-increasing in $w_t$ and uniformly bounded. \\
+A6 & Bounded detector lag & Runtime degradation detectors fire within a finite fault-dependent lag. \\
+A7 & Causal certificate rule & The certificate update uses only history available at time $t$. \\
+A8 & Safe-interior fallback & A fallback controller attains $\TSVR=0$ from safe-interior states with slack at the fault time. \\
+A9 & Sub-Gaussian disturbance law & Disturbance increments are $\sigma_d$-sub-Gaussian. \\
+A10a & Polynomial mixing & Telemetry dependence decays polynomially, sufficient for weak-mixing arguments. \\
+A10b & Geometric mixing & Telemetry dependence decays geometrically, required by the current T9 windowing proof. \\
+A11 & Arbitrage boundary reachability & The witness controller can be driven to a boundary-sensitive state under admissible demand. \\
+A12 & Controller-fault independence & The reliability process is conditionally independent of the controller action stream given the history. \\
+A13 & TV bridge & $\mathrm{TV}(P_{0,t},P_{1,t}) \le w_t$ for the T10 binary observation laws. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \section{Detailed Statements}
 
-\begin{assumption}[A1 --- Bounded model error]\label{assum:A1}
-$|x_{t+1} - f(x_t, a_t)| \le \epsilon_{\mathrm{model}}$ for all $t$, where $f$ is the nominal dynamics.
-\textbf{Battery:} SOC forecast residuals bounded; enforced by conformal calibration (\texttt{cqr.py}).
+\begin{assumption}[A1 --- Almost-sure model error bound]\label{assum:A1}
+For all $t$,
+\[
+  |x_{t+1} - f(x_t,a_t)| \le \epsilon_{\mathrm{model}}
+\]
+almost surely.  This is stronger than the sub-Gaussian tail control in
+Assumption~A9 and is used when the proof requires a deterministic one-step
+postcondition rather than a high-probability statement.
+\textbf{Battery interpretation:} the one-step battery model error is absorbed
+as an explicit MWh slack in the FTIT/shield tightening margin.
 \end{assumption}
 
-\begin{assumption}[A2 --- Bounded telemetry error]\label{assum:A2}
-$|\hat{x}_t - x_t| \le g(w_t)$, where $g\colon[0,1]\to\R_+$ is monotone decreasing, $g(1)=0$, $g(w_{\min})<\infty$.
-\textbf{Battery:} OQE score $w_t$ tracks degradation; quality floor $w_{\min}=0.05$, cap $m_{\max}$.
+\begin{assumption}[A2 --- Telemetry-state bridge]\label{assum:A2}
+There exists a known monotone function $g\colon[0,1]\to\mathbb{R}_+$ such that
+\[
+  |\hat{x}_t - x_t| \le g(w_t), \qquad g(1)=0,
+\]
+for all $t$.
+\textbf{Battery interpretation:} the OQE reliability score $w_t$ controls the
+worst-case telemetry-state discrepancy used by the tightened SOC tube.
 \end{assumption}
 
 \begin{assumption}[A3 --- Feasible safe repair]\label{assum:A3}
-$\phi(x_t)=1 \Longrightarrow \Aset \neq \emptyset$.
-\textbf{Battery:} Projection repair in \texttt{shield.py} always finds a feasible power setpoint.
+Whenever the runtime invokes repair, the tightened safe-action set is non-empty.
+\textbf{Battery interpretation:} the battery shield projection has at least one
+admissible charge/discharge action inside the FTIT-restricted SOC region.
 \end{assumption}
 
-\begin{assumption}[A4 --- Known dynamics]\label{assum:A4}
-The controller computes $\Delta(a)=f(x,a)-x$ exactly.
-\textbf{Battery:} Linear efficiency model in \texttt{plant.py}: $\SOC_{t+1}=\SOC_t+(\etac P^{\mathrm{chg}}-\etad^{-1}P^{\mathrm{dis}})\Delta t$.
+\begin{assumption}[A4 --- Known one-step dynamics]\label{assum:A4}
+The one-step increment map $\Delta(a)=f(x,a)-x$ is known exactly to the
+controller.
+\textbf{Battery interpretation:} the SOC update induced by charge, discharge,
+step duration, and efficiencies is computed explicitly by the runtime.
 \end{assumption}
 
-\begin{assumption}[A5 --- Monotone bounded inflation]\label{assum:A5}
-$\partial m_t/\partial w_t \le 0$ and $m_t \le m_{\max}$ for all $t$.
-\textbf{Battery:} Config caps: \texttt{infl\_max}, \texttt{rac\_cert.max\_q\_multiplier}.
+\begin{assumption}[A5 --- Absorbed monotone tightening]\label{assum:A5}
+Let $m_t$ denote the reliability-conditioned tightening margin.  The defended
+T2/T3 surface uses the absorbed margin
+\[
+  m_t^\star = m_t + \epsilon_{\mathrm{model}},
+\]
+and assumes $m_t^\star$ is monotone non-increasing in $w_t$ and bounded above
+by a finite constant.
+\textbf{Battery interpretation:} the FTIT margin combines the base
+reliability/certificate slack with the one-step model-error allowance before
+the shield constructs the admissible SOC region.
 \end{assumption}
 
 \begin{assumption}[A6 --- Bounded detector lag]\label{assum:A6}
-$t_{\mathrm{flag}}-t_{\mathrm{onset}} \le \tau_{\max}$.
-\textbf{Battery:} Page--Hinkley detector in \texttt{drift.py}; config: \texttt{drift.ph\_delta}.
+Each supported telemetry fault class is detected within a finite lag
+$\tau_{\max}$ known to the runtime.
+\textbf{Battery interpretation:} dropout, stale, delay, out-of-order, spike,
+and drift channels each have a finite audit-locked response horizon in the
+runtime configuration.
 \end{assumption}
 
-\begin{assumption}[A7 --- Causal certificate]\label{assum:A7}
-$\mathrm{cert}_t = h(z_1,\ldots,z_t)$; no future data used.
-\textbf{Battery:} Hash-chained certificates in \texttt{certificate.py}.
+\begin{assumption}[A7 --- Causal certificate rule]\label{assum:A7}
+The certificate state obeys
+\[
+  \mathrm{cert}_t = h(z_1,\ldots,z_t),
+\]
+for a causal update rule $h$.
+\textbf{Battery interpretation:} certificate issuance, renewal, and runtime
+bookkeeping never use future telemetry.
 \end{assumption}
 
-\begin{assumption}[A8 --- Admissible fallback]\label{assum:A8}
-$\exists\;\pi_{\mathrm{fb}}$ with $\TSVR(\pi_{\mathrm{fb}})=0$ under all admissible faults.
-\textbf{Battery:} Zero-dispatch, robust-fixed, and CVaR controllers serve as fallbacks.
+\begin{assumption}[A8 --- Safe-interior fallback]\label{assum:A8}
+There exists a fallback controller $\pi_{\mathrm{fb}}$ such that
+\[
+  \TSVR(\pi_{\mathrm{fb}})=0
+\]
+whenever the latent state is in the safe interior with at least
+$\epsilon_{\mathrm{model}}$ slack at the moment the fault is handled.
+\textbf{Battery interpretation:} zero-dispatch or equivalent safe holding
+behavior is only claimed from an interior SOC state with explicit room for the
+one-step model error.
 \end{assumption}
 
-\section{Assumption Usage Map by Chapter}
+\begin{assumption}[A9 --- Sub-Gaussian disturbance law]\label{assum:A9}
+The disturbance increments satisfy
+\[
+  \mathbb{E}\!\left[e^{s\epsilon_t}\right] \le e^{s^2\sigma_d^2/2}
+  \quad \text{for all } s\in\mathbb{R}.
+\]
+\textbf{Battery interpretation:} calibrated residuals are modeled with a known
+sub-Gaussian proxy parameter $\sigma_d$, which drives the defended T6 bound and
+the trajectory-PAC helper.
+\end{assumption}
+
+\begin{assumption}[A10a --- Polynomial mixing telemetry]\label{assum:A10a}
+The telemetry process is $\varphi$-mixing with polynomial decay
+\[
+  \varphi(k)=O(k^{-\beta})
+  \quad \text{for some } \beta>1.
+\]
+\textbf{Battery interpretation:} this is the weaker mixing regime used only for
+scoped weak-dependence arguments where polynomial decay is sufficient.
+\end{assumption}
+
+\begin{assumption}[A10b --- Geometric mixing telemetry]\label{assum:A10b}
+The telemetry process is $\varphi$-mixing with geometric decay,
+\[
+  \varphi(k)\le C\rho^k
+  \quad \text{for some } C>0,\; \rho\in(0,1).
+\]
+\textbf{Battery interpretation:} this is the stronger dependence-decay
+assumption required by the current T9 separated-window proof.
+\end{assumption}
+
+\begin{assumption}[A11 --- Arbitrage boundary reachability]\label{assum:A11}
+Under the admissible-demand family, the evaluated controller can be driven to a
+boundary-sensitive witness state where the safety margin is tight enough for an
+OASG/no-free-safety construction.
+\textbf{Battery interpretation:} the witness controller can be steered near the
+relevant SOC boundary without violating the admissible-demand model.
+\end{assumption}
+
+\begin{assumption}[A12 --- Controller-fault independence]\label{assum:A12}
+Conditioned on the available history, the fault/reliability process is
+independent of the controller's action stream.
+\textbf{Battery interpretation:} telemetry degradation is modeled as exogenous
+relative to the dispatch choice, once the observed history is fixed.
+\end{assumption}
+
+\begin{assumption}[A13 --- TV bridge]\label{assum:A13}
+For the T10 binary boundary-testing observation laws,
+\[
+  \mathrm{TV}(P_{0,t}, P_{1,t}) \le w_t
+\]
+for every $t$.
+\textbf{Battery interpretation:} the reliability score is treated as an
+explicit upper bound on total-variation distinguishability for that scoped
+binary lower-bound construction.
+\end{assumption}
+
+\section{Registry Usage Map}
 
 \begin{table}[htbp]
 \centering
-\caption{Assumption usage map: \checkmark\,=\,required, ---\,=\,not used.}
+\caption{Registry-synchronized assumption usage map for active theorem surfaces.}
 \label{tab:assumption-usage}
 \small
-\begin{tabular}{@{}lcccccccc@{}}
+\begin{tabular}{@{}ll@{}}
 \toprule
-\textbf{Chapter / Theorem} & \textbf{A1} & \textbf{A2} & \textbf{A3} & \textbf{A4} & \textbf{A5} & \textbf{A6} & \textbf{A7} & \textbf{A8} \\
+\textbf{Surface} & \textbf{Assumptions used} \\
 \midrule
-Ch.\,16: OASG Existence        & \checkmark & \checkmark & ---        & \checkmark & ---        & ---        & ---        & --- \\
-Ch.\,17: Safety Preservation   & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & ---        & \checkmark & --- \\
-Ch.\,18: Core Bound            & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & ---        & \checkmark & --- \\
-Ch.\,19: No Free Safety        & \checkmark & \checkmark & ---        & \checkmark & ---        & ---        & ---        & --- \\
-Ch.\,20: Temporal Extensions   & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & --- \\
-Ch.\,28: Certificate Half-Life & \checkmark & \checkmark & ---        & ---        & \checkmark & \checkmark & \checkmark & --- \\
-Ch.\,29: Graceful Degradation  & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & ---        & ---        & \checkmark \\
+T1 & A1, A2, A4, A11, A12 \\
+T2 & A1, A2, A3, A4, A5, A7 \\
+T3a & A1, A2, A4, A5, A6, A7, A9 \\
+T3b & A1, A2, A4, A5, A6, A7, A9 \\
+T4 & A1, A2, A4, A11 \\
+T5 & A4, A7, A9 \\
+T6 & A9 \\
+T7 & A1, A8 \\
+T8 & A1, A2, A5, A8 \\
+T9 & A1, A2, A4, A10b, A11, A12 \\
+T10 & A13 \\
+T11 & A2, A8 \\
+T11\textsubscript{Byz} & A9 \\
+T\textsubscript{stale} & A6 \\
+T\textsubscript{trajectory\_PAC} & A1, A4, A5, A9 \\
 \bottomrule
 \end{tabular}
 \end{table}

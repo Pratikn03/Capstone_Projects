@@ -1,10 +1,12 @@
 \chapter{Claim-to-Evidence and Coverage Registers}
 \label{app:claim-evidence-registers}
 
-This appendix consolidates the main governance registers that keep thesis
-claims attached to code, scripts, and artifacts.  The battery manuscript is
-long enough that prose-only traceability is fragile; these tables are the
-practical safeguard against drift.
+This appendix consolidates the governance registers that keep defended ORIUS
+claims attached to code, scripts, and artifacts.  In the June defense posture
+the machine-readable authorities are the active theorem audit
+(\path{reports/publication/active_theorem_audit.*}) and strict defended-core
+outputs (\path{reports/publication/defended_theorem_core.*}).  The tables below
+are the readable companion layer used in the monograph and review dossier.
 
 \section{Primary Claim Matrix}
 
@@ -34,14 +36,23 @@ register.}
 \endlastfoot
 
 \texttt{central\_claim} & deterministic unsafe vs.\ dc3s safe & \path{reports/publication/dc3s_main_table_ci.csv} & csv row & locked \\
-\texttt{theorem\_t1} & oasg existence & \path{src/gridpulse/cpsbench_iot/scenarios.py} & code path & implemented \\
-\texttt{theorem\_t2} & one-step safety preservation & \path{src/gridpulse/dc3s/guarantee_checks.py} & code path & implemented \\
-\texttt{theorem\_t3} & coverage monotonicity plus empirical core-bound audit & \path{src/gridpulse/dc3s/coverage_theorem.py} & code path & implemented \\
-\texttt{theorem\_t4} & no free safety & \path{src/gridpulse/cpsbench_iot/baselines.py} & code path & implemented \\
-\texttt{theorem\_t5} & certificate validity horizon & \path{src/gridpulse/dc3s/temporal_theorems.py} & code path & implemented \\
-\texttt{theorem\_t6} & certificate expiration bound & \path{src/gridpulse/dc3s/temporal_theorems.py} & code path & implemented \\
-\texttt{theorem\_t7} & feasible fallback existence & \path{src/gridpulse/dc3s/temporal_theorems.py} & code path & implemented \\
-\texttt{theorem\_t8} & graceful degradation dominance & \path{src/gridpulse/dc3s/temporal_theorems.py} & code path & implemented \\
+\texttt{theorem\_t1} & oasg existence & \path{src/orius/cpsbench_iot/scenarios.py} & code path & flagship defended \\
+\texttt{theorem\_t2} & one-step safety preservation & \path{src/orius/dc3s/guarantee\_checks.py} & code path & flagship defended \\
+\texttt{theorem\_t3a} & per-step ORIUS core envelope derivation & \path{src/orius/universal\_theory/risk\_bounds.py} & code path & flagship defended \\
+\texttt{theorem\_t3b} & episode ORIUS core aggregation corollary & \path{src/orius/universal\_theory/risk\_bounds.py} & code path & supporting defended \\
+\texttt{theorem\_t4} & no free safety & \path{src/orius/cpsbench\_iot/baselines.py} & code path & flagship defended \\
+\texttt{theorem\_t5} & certificate validity horizon definition & \path{src/orius/universal\_theory/battery\_instantiation.py} & code path & draft / non-defended \\
+\texttt{theorem\_t6} & certificate expiration bound & \path{src/orius/universal\_theory/battery\_instantiation.py} & code path & supporting defended \\
+\texttt{theorem\_t7} & feasible fallback existence & \path{src/orius/dc3s/temporal\_theorems.py} & code path & draft / non-defended \\
+\texttt{theorem\_t8} & graceful degradation dominance & \path{src/orius/universal\_theory/battery\_instantiation.py} & code path & supporting defended \\
+\texttt{theorem\_t11} & typed structural transfer & \path{src/orius/universal\_theory/contracts.py} & code path & flagship defended \\
+\texttt{theorem\_t11\_byz} & Byzantine-tolerant OQE bound & \path{src/orius/dc3s/theoretical_guarantees.py} & code path & supporting defended \\
+\texttt{theorem\_t\_stale} & stale-decay graceful degradation & \path{src/orius/dc3s/theoretical_guarantees.py} & code path & supporting defended \\
+\texttt{theorem\_t\_minimax} & tight OASG minimax tradeoff & \path{src/orius/dc3s/theoretical_guarantees.py} & code path & draft extension \\
+\texttt{theorem\_t\_sensor} & sensor quality converse & \path{src/orius/dc3s/theoretical_guarantees.py} & code path & draft extension \\
+\texttt{theorem\_t\_pac} & PAC trajectory safety certificate & \path{src/orius/universal\_theory/risk\_bounds.py} & code path & flagship defended \\
+\texttt{defended\_theorem\_core} & registry-canonical theorem core & \path{reports/publication/defended_theorem_core.json} & generated audit & canonical \\
+\texttt{active\_theorem\_audit} & full active theorem inventory with rigor ratings & \path{reports/publication/active_theorem_audit.json} & generated audit & canonical \\
 \texttt{priority1\_fault\_table} & fault performance table & \path{reports/publication/fault_performance_table.csv} & artifact file & generated \\
 \texttt{priority1\_trace} & 48h operational trace & \path{reports/publication/48h_trace.csv} & artifact file & generated \\
 \texttt{priority1\_latency} & latency p99 table & \path{reports/publication/dc3s_latency_summary.csv} & artifact file & generated \\
@@ -58,17 +69,18 @@ register.}
 
 \section{Theorem and Chapter Register}
 
-This register intentionally tracks the flagship battery ladder T1--T8 and the
-governance-critical chapter artifacts attached to it.  It is not the full
-inventory of theorem-like statements in the thesis; the integrated surface,
-including supporting lemmas, propositions, corollaries, definitions, and
-appendix restatements, is audited in
+This register intentionally tracks the registry-canonical defended core plus the
+small set of visible draft extensions that remain on the active theorem audit
+surface.  The authority for defended status is
+\path{reports/publication/defended_theorem_core.json}; this appendix is the
+human-readable companion.  The larger integrated surface, including
+definitions, corollaries, and appendix restatements, remains audited in
 Appendix~\ref{app:integrated-theorem-surface-register}.
 
 \begin{small}
 \begin{longtable}{@{}p{1.4cm}p{1.0cm}p{1.4cm}p{3.4cm}p{3.7cm}p{1.3cm}@{}}
-\caption{Battery theorem and chapter evidence register from the locked
-battery claim register.}
+\caption{Registry-canonical defended-core theorem and chapter evidence register
+for the ORIUS defense package.}
 \label{tab:battery-claim-register} \\
 \toprule
 \textbf{Scope} & \textbf{Ch.} & \textbf{Token} & \textbf{Code or script} &
@@ -90,15 +102,22 @@ battery claim register.}
 \bottomrule
 \endlastfoot
 
-T1 & 16 & \texttt{THM\_T1} & \path{src/gridpulse/cpsbench_iot/scenarios.py} & \path{reports/publication/dc3s_main_table_ci.csv} & locked \\
-T2 & 17 & \texttt{THM\_T2} & \path{src/gridpulse/dc3s/guarantee_checks.py} & \path{reports/publication/dc3s_main_table_ci.csv} & locked \\
-T3 & 18 & \texttt{THM\_T3} & \path{src/gridpulse/dc3s/coverage_theorem.py} & \path{reports/publication/reliability_group_coverage_phase3.csv} & locked \\
-T4 & 19 & \texttt{THM\_T4} & \path{src/gridpulse/cpsbench_iot/baselines.py} & \path{reports/publication/fault_performance_table.csv} & locked \\
-T5 & 20 & \texttt{THM\_T5} & \path{src/gridpulse/dc3s/temporal_theorems.py} & \path{reports/blackout/blackout_study.csv} & locked \\
-T6 & 20 & \texttt{THM\_T6} & \path{src/gridpulse/dc3s/temporal_theorems.py} & \path{reports/blackout/blackout_study.csv} & locked \\
-T7 & 20 & \texttt{THM\_T7} & \path{src/gridpulse/dc3s/temporal_theorems.py} & \path{reports/blackout/graceful_degradation_trace.csv} & locked \\
-T8 & 20 & \texttt{THM\_T8} & \path{src/gridpulse/dc3s/temporal_theorems.py} & \path{reports/blackout/graceful_degradation_trace.csv} & locked \\
-A1--A8 & 15 & \texttt{ASM\_REGISTER} & \path{configs/dc3s.yaml} & \path{orius-plan/assumption_register.md} & locked \\
+T1 & 16 & \texttt{THM\_T1} & \path{src/orius/cpsbench\_iot/scenarios.py} & \path{reports/publication/dc3s_main_table_ci.csv} & flagship defended \\
+T2 & 17 & \texttt{THM\_T2} & \path{src/orius/dc3s/guarantee\_checks.py} & \path{reports/publication/dc3s_main_table_ci.csv} & flagship defended \\
+T3a & 18 & \texttt{THM\_T3A} & \path{src/orius/universal\_theory/risk\_bounds.py} & \path{reports/publication/reliability_group_coverage_phase3.csv} & flagship defended \\
+T3b & 18 & \texttt{COR\_T3B} & \path{src/orius/universal\_theory/risk\_bounds.py} & \path{reports/publication/reliability_group_coverage_phase3.csv} & supporting defended \\
+T4 & 19 & \texttt{THM\_T4} & \path{src/orius/cpsbench\_iot/baselines.py} & \path{reports/publication/fault_performance_table.csv} & flagship defended \\
+T5 & 20 & \texttt{DEF\_T5} & \path{src/orius/universal\_theory/battery\_instantiation.py} & \path{reports/blackout/blackout_study.csv} & draft / non-defended \\
+T6 & 20 & \texttt{THM\_T6} & \path{src/orius/universal\_theory/battery\_instantiation.py} & \path{reports/blackout/blackout_study.csv} & supporting defended \\
+T7 & 20 & \texttt{THM\_T7} & \path{src/orius/dc3s/temporal\_theorems.py} & \path{reports/blackout/graceful_degradation_trace.csv} & draft / non-defended \\
+T8 & 20 & \texttt{THM\_T8} & \path{src/orius/universal\_theory/battery\_instantiation.py} & \path{reports/blackout/graceful_degradation_trace.csv} & supporting defended \\
+T11 & 37 & \texttt{THM\_T11} & \path{src/orius/universal\_theory/contracts.py} & \path{reports/publication/orius_transfer_obligation_table.csv} & flagship defended \\
+T11\textsubscript{Byz} & C & \texttt{THM\_T11\_BYZ} & \path{src/orius/dc3s/theoretical_guarantees.py} & App.~C (Proof~C.18) & supporting defended \\
+T\textsubscript{stale} & C & \texttt{THM\_T\_STALE} & \path{src/orius/dc3s/theoretical_guarantees.py} & App.~C (Proof~C.19) & supporting defended \\
+T\textsubscript{minimax} & C & \texttt{THM\_T\_MINIMAX} & \path{src/orius/dc3s/theoretical_guarantees.py} & App.~C (Proof~C.20) & draft extension \\
+T\textsubscript{sensor} & C & \texttt{THM\_T\_SENSOR} & \path{src/orius/dc3s/theoretical_guarantees.py} & App.~C (Proof~C.21) & draft extension \\
+T\textsubscript{PAC} & C & \texttt{THM\_T\_PAC} & \path{src/orius/universal\_theory/risk\_bounds.py} & App.~C (Proof~C.22) & flagship defended \\
+A1--A13 & 15 & \texttt{ASM\_REGISTER} & \path{configs/dc3s.yaml} & \path{orius-plan/assumption_register.md} & locked \\
 TRACE\_48H & 13 & \texttt{FIG\_TRACE\_48H} & \path{scripts/generate_48h_trace.py} & \path{reports/publication/48h_trace_final_de.csv} & locked \\
 HIL & 27 & \texttt{FIG\_HIL} & \path{scripts/generate_hil_evidence.py} & \path{reports/hil/hil_summary.json} & locked \\
 BLACKOUT & 28 & \texttt{FIG\_BLACKOUT} & \path{scripts/run_blackout_study.py} & \path{reports/publication/blackout_study.csv} & locked \\
@@ -148,8 +167,8 @@ PROBING & appV & \texttt{TBL\_PROBING} & \path{scripts/run_spoofing_attack.py} &
 30 & \path{chapters/ch30_orius_bench_battery_track.tex} & \path{reports/publication/orius_bench_battery_leaderboard.csv} & locked \\
 31 & \path{chapters/ch31_compositional_safety_battery_fleets.tex} & \path{reports/fleet/fleet_composition_two_battery.csv} & locked \\
 32 & \path{chapters/ch32_certos_runtime_certificate_lifecycle.tex} & \path{reports/certos/certos_summary.json} & locked runtime \\
-33 & \path{chapters/ch33_what_battery_thesis_proves.tex} & \path{reports/publication/battery_claim_evidence_register.csv} & locked \\
-34 & \path{chapters/ch34_outside_current_evidence.tex} & \path{reports/publication/battery_plan_gap_audit.csv} & locked \\
+33 & \path{chapters/ch33_what_battery_thesis_proves.tex} & \path{reports/publication/defended_theorem_core.json} & locked \\
+34 & \path{chapters/ch34_outside_current_evidence.tex} & \path{reports/publication/active_theorem_audit.json} & locked \\
 35 & \path{chapters/ch35_deployment_path_verification_discipline.tex} & \path{reports/publication/phase3_rebuild_battery_evidence_manifest.json} & locked \\
 36 & \path{chapters/ch36_conclusion.tex} & \path{reports/publication/phase0_lock_current_truth_manifest.json} & locked \\
 \end{longtable}
@@ -157,11 +176,12 @@ PROBING & appV & \texttt{TBL\_PROBING} & \path{scripts/run_spoofing_attack.py} &
 
 \section{Full Claim--Evidence Matrix}
 
-Table~\ref{tab:claim_evidence} provides the complete 22-claim matrix
-generated directly from \path{reports/publication/claim_evidence_matrix.csv}.
-Each row maps a thesis claim to its locked artifact, evidence type, and
-status.  All claims are marked \emph{locked}: the artifact file exists,
-contains real numerical data, and is hash-registered in Appendix~R.
+Table~\ref{tab:claim_evidence} provides the generated claim--evidence matrix
+from \path{reports/publication/claim_evidence_matrix.csv}.  The theorem rows
+are interpreted through the strict defended-core split, so ``implemented'' in
+the raw matrix is not itself a proof-status label.  Defended status lives in
+the active theorem audit and defended-core register; this matrix records where
+the underlying code and artifacts live.
 
 \input{paper/assets/tables/generated/tbl_claim_evidence}
 

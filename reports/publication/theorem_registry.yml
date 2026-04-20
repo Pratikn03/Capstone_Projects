@@ -1,0 +1,1227 @@
+version: 1
+authoritative_surfaces:
+  statements_t1_t8: chapters_merged/ch04_theoretical_foundations.tex
+  statements_t9_t11: chapters/ch37_universality_completeness.tex
+  proof_copies: appendices/app_c_full_proofs.tex
+  assumption_register: appendices/app_b_assumptions.tex
+  inventory_register: reports/publication/theorem_surface_register.csv
+namespace_drift:
+  - surface: src/orius/dc3s/coverage_theorem.py and tests/test_conditional_coverage.py
+    issue: Legacy auxiliary coverage helpers previously reused active T9/T10 numbering.
+    impact: The code namespace could silently contradict the manuscript theorem namespace.
+    status: resolved
+    remediation: Keep those helpers explicitly auxiliary and route theorem-facing claims through the YAML registry.
+  - surface: src/orius/universal/contract.py, tests/test_universal_contract.py, and tests/test_unification.py
+    issue: The five-invariant reference harness was described too broadly relative to active T11.
+    impact: Supporting adapter checks could be mistaken for the full transfer theorem.
+    status: resolved
+    remediation: Treat the mini-harness as supporting evidence only; active T11 flows through the typed four-obligation surface.
+  - surface: reports/publication/theorem_surface_register.csv
+    issue: The legacy register mixed raw inventory and defended-surface interpretation.
+    impact: Downstream tooling could select broader or legacy rows by accident.
+    status: resolved
+    remediation: Keep the register as YAML-generated inventory; use active_theorem_audit.* as the reconciled defended surface.
+surface_register_rows:
+  - register_id: S1
+    group: Defended theorem program
+    environment: theorem
+    title: Existence of the illusion under dropout
+    context: Formal Statement of the Illusion
+    source: chapters_merged/ch03_background.tex
+    needle: '\begin{theorem}[Existence of the illusion under dropout]'
+  - register_id: S2
+    group: Defended theorem program
+    environment: theorem
+    title: DC3S Feasibility Guarantee
+    context: Why the Illusion Demands a Runtime Shield
+    source: chapters_merged/ch03_background.tex
+    needle: '\begin{theorem}[DC3S Feasibility Guarantee]'
+  - register_id: T1
+    group: Defended theorem program
+    environment: theorem
+    title: OASG Existence
+    context: "Main Theorem: OASG Existence"
+    source: chapters_merged/ch04_theoretical_foundations.tex
+    needle: '\begin{theorem}[OASG Existence]'
+  - register_id: T2
+    group: Defended theorem program
+    environment: theorem
+    title: Safety Preservation
+    context: "Main Theorem: Safety Preservation"
+    source: chapters_merged/ch04_theoretical_foundations.tex
+    needle: '\begin{theorem}[Safety Preservation]'
+  - register_id: T3
+    group: Defended theorem program
+    environment: theorem
+    title: ORIUS Core Bound
+    context: "Main Theorem: ORIUS Core Bound"
+    source: chapters_merged/ch04_theoretical_foundations.tex
+    needle: '\begin{theorem}[ORIUS Core Bound]'
+  - register_id: T4
+    group: Defended theorem program
+    environment: theorem
+    title: No Free Safety
+    context: "Main Theorem: No Free Safety"
+    source: chapters_merged/ch04_theoretical_foundations.tex
+    needle: '\begin{theorem}[No Free Safety]'
+  - register_id: T5
+    group: Defended theorem program
+    environment: theorem
+    title: Certificate validity horizon
+    context: Main Temporal Theorems
+    source: chapters_merged/ch04_theoretical_foundations.tex
+    needle: '\begin{theorem}[Certificate validity horizon]'
+  - register_id: T6
+    group: Defended theorem program
+    environment: theorem
+    title: Certificate expiration bound
+    context: Main Temporal Theorems
+    source: chapters_merged/ch04_theoretical_foundations.tex
+    needle: '\begin{theorem}[Certificate expiration bound]'
+  - register_id: T7
+    group: Defended theorem program
+    environment: theorem
+    title: Feasible fallback existence
+    context: Fallback and Graceful Degradation
+    source: chapters_merged/ch04_theoretical_foundations.tex
+    needle: '\begin{theorem}[Feasible fallback existence]'
+  - register_id: T8
+    group: Defended theorem program
+    environment: theorem
+    title: Graceful degradation dominance
+    context: Fallback and Graceful Degradation
+    source: chapters_merged/ch04_theoretical_foundations.tex
+    needle: '\begin{theorem}[Graceful degradation dominance]'
+  - register_id: T9
+    group: Defended theorem program
+    environment: theorem
+    title: Universal Impossibility, T9
+    context: Observation-Aware Control Is Structurally Necessary (T9)
+    source: chapters/ch37_universality_completeness.tex
+    needle: '\begin{theorem}[Universal Impossibility, T9]'
+  - register_id: T10
+    group: Defended theorem program
+    environment: theorem
+    title: Boundary-indistinguishability lower bound, T10
+    context: Boundary-Indistinguishability Lower Bound (T10)
+    source: chapters/ch37_universality_completeness.tex
+    needle: '\begin{theorem}[Boundary-indistinguishability lower bound, T10]'
+  - register_id: T11
+    group: Defended theorem program
+    environment: theorem
+    title: Typed structural transfer theorem, T11
+    context: Typed Structural Transfer and Failure-Mode Converse (T11)
+    source: chapters/ch37_universality_completeness.tex
+    needle: '\begin{theorem}[Typed structural transfer theorem, T11]'
+  - register_id: T3a
+    group: Defended theorem program
+    environment: theorem
+    title: ORIUS Core Envelope Derivation
+    context: "Main Theorem: ORIUS Core Bound"
+    source: chapters_merged/ch04_theoretical_foundations.tex
+    needle: '\begin{theorem}[ORIUS Core Bound]'
+  - register_id: T3b
+    group: Defended theorem program
+    environment: corollary
+    title: ORIUS Core Aggregation Corollary
+    context: Corollaries
+    source: chapters_merged/ch04_theoretical_foundations.tex
+    needle: '\begin{corollary}[Reliability-proportional safety]'
+  - register_id: T_trajectory_PAC
+    group: Defended theorem program
+    environment: theorem
+    title: "T_trajectory_PAC: PAC Trajectory Certificate"
+    context: Appendix proof extension
+    source: appendices/app_c_full_proofs.tex
+    needle: '\begin{theorem}[T\_trajectory\_PAC: PAC Trajectory Certificate]'
+  - register_id: T11_Byzantine
+    group: Defended theorem program
+    environment: theorem
+    title: "T11_Byzantine: Byzantine Trimmed-Mean Bound"
+    context: Appendix proof extension
+    source: appendices/app_c_full_proofs.tex
+    needle: '\begin{theorem}[T11\_Byzantine: Byzantine Trimmed-Mean Bound]'
+  - register_id: T_stale_decay
+    group: Defended theorem program
+    environment: theorem
+    title: "T_stale_decay: Stale-Decay Schedule"
+    context: Appendix proof extension
+    source: appendices/app_c_full_proofs.tex
+    needle: '\begin{theorem}[T\_stale\_decay: Stale-Decay Schedule]'
+  - register_id: T_minimax
+    group: Defended theorem program
+    environment: theorem
+    title: "T_minimax: Minimax OASG Tradeoff"
+    context: Appendix proof extension
+    source: appendices/app_c_full_proofs.tex
+    needle: '\begin{theorem}[T\_minimax: Minimax OASG Tradeoff]'
+  - register_id: T_sensor_converse
+    group: Defended theorem program
+    environment: theorem
+    title: "T_sensor_converse: Sensor Quality Converse"
+    context: Appendix proof extension
+    source: appendices/app_c_full_proofs.tex
+    needle: '\begin{theorem}[T\_sensor\_converse: Sensor Quality Converse]'
+  - register_id: L1
+    group: Defended theorem program
+    environment: theorem
+    title: "L1: Rate-Distortion Safety Law"
+    context: Appendix proof extension
+    source: appendices/app_c_full_proofs.tex
+    needle: '\begin{theorem}[L1: Rate-Distortion Safety Law]'
+  - register_id: L2
+    group: Defended theorem program
+    environment: theorem
+    title: "L2: Capacity Bridge"
+    context: Appendix proof extension
+    source: appendices/app_c_full_proofs.tex
+    needle: '\begin{theorem}[L2: Capacity Bridge]'
+  - register_id: L3
+    group: Defended theorem program
+    environment: theorem
+    title: "L3: Critical Capacity"
+    context: Appendix proof extension
+    source: appendices/app_c_full_proofs.tex
+    needle: '\begin{theorem}[L3: Critical Capacity]'
+  - register_id: L4
+    group: Defended theorem program
+    environment: theorem
+    title: "L4: Achievability-Converse Sandwich"
+    context: Appendix proof extension
+    source: appendices/app_c_full_proofs.tex
+    needle: '\begin{theorem}[L4: Achievability-Converse Sandwich]'
+  - register_id: C1
+    group: Appendix proof restatement
+    environment: theorem
+    title: C.1 Battery-Domain OASG Existence
+    context: Appendix proof copy
+    source: appendices/app_c_full_proofs.tex
+    needle: '\section{C.1\quad Battery-Domain OASG Existence}'
+  - register_id: C2
+    group: Appendix proof restatement
+    environment: theorem
+    title: C.2 One-Step Safety Preservation
+    context: Appendix proof copy
+    source: appendices/app_c_full_proofs.tex
+    needle: '\section{C.2\quad One-Step Safety Preservation}'
+  - register_id: C3
+    group: Appendix proof restatement
+    environment: theorem
+    title: C.3 Battery ORIUS Core Bound
+    context: Appendix proof copy
+    source: appendices/app_c_full_proofs.tex
+    needle: '\section{C.3\quad Battery ORIUS Core Bound}'
+  - register_id: C4
+    group: Appendix proof restatement
+    environment: theorem
+    title: C.4 No Free Safety
+    context: Appendix proof copy
+    source: appendices/app_c_full_proofs.tex
+    needle: '\section{C.4\quad No Free Safety}'
+  - register_id: C5
+    group: Appendix proof restatement
+    environment: theorem
+    title: C.5 Certificate Validity Horizon
+    context: Appendix proof copy
+    source: appendices/app_c_full_proofs.tex
+    needle: '\section{C.5\quad Certificate Validity Horizon}'
+  - register_id: C6
+    group: Appendix proof restatement
+    environment: theorem
+    title: C.6 Certificate Expiration Bound
+    context: Appendix proof copy
+    source: appendices/app_c_full_proofs.tex
+    needle: '\section{C.6\quad Certificate Expiration Bound}'
+  - register_id: C8
+    group: Appendix proof restatement
+    environment: theorem
+    title: C.8 Feasible Fallback Existence
+    context: Appendix proof copy
+    source: appendices/app_c_full_proofs.tex
+    needle: '\section{C.8\quad Feasible Fallback Existence}'
+  - register_id: C9
+    group: Appendix proof restatement
+    environment: theorem
+    title: C.9 Graceful Degradation Dominance
+    context: Appendix proof copy
+    source: appendices/app_c_full_proofs.tex
+    needle: '\section{C.9\quad Graceful Degradation Dominance}'
+theorems:
+  - id: T1
+    title: OASG Existence
+    surface_kind: theorem
+    defense_tier: flagship_defended
+    proof_tier: V1
+    program_role: phenomenon_existence
+    status: active
+    scope_note: Defended as the battery witness-row OASG existence theorem under explicit arbitrage reachability and controller-fault independence assumptions.
+    statement_source:
+      file: chapters_merged/ch04_theoretical_foundations.tex
+      needle: '\begin{theorem}[OASG Existence]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\section{C.1\quad Battery-Domain OASG Existence}'
+    assumptions:
+      - A1
+      - A2
+      - A4
+      - A11
+      - A12
+    unresolved_assumptions: []
+    dependencies:
+      - Lemma: Observation gap under dropout
+      - Lemma: Boundary proximity under arbitrage
+    weakest_step: Boundary reachability remains domain-specific and is discharged here by explicit arbitrage reachability rather than by a generic dispatch argument.
+    rigor_rating: paper_rigorous
+    code_correspondence: partial
+    code_correspondence_detail: Runtime and benchmark code expose observed-vs-true disagreement directly, but the arbitrage reachability step remains a theorem-level assumption rather than a runtime proof object.
+    severity_if_broken: high
+    remediation_class: add assumption
+    remediation_detail: Keep A11 explicit and battery-scoped unless a stronger dispatch-model derivation is written.
+    code_anchors:
+      - path: src/orius/orius_bench/metrics_engine.py
+        symbol: compute_oasg
+        note: Counts observation-action safety gaps.
+      - path: src/orius/cpsbench_iot/runner.py
+        symbol: run_single
+        note: Exposes true and observed trajectories on the battery witness row.
+    test_anchors:
+      - path: tests/test_oasg_metrics.py
+        symbol: test_signature_equals_exposure_times_severity
+        note: Metric-level witness for OASG exposure.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+      - battery_claim_evidence_register
+    claim_evidence:
+      chapter: ch16
+      token: THM_T1
+      artifact_path: reports/publication/dc3s_main_table_ci.csv
+  - id: T2
+    title: Safety Preservation
+    surface_kind: theorem
+    defense_tier: flagship_defended
+    proof_tier: V3
+    program_role: one_step_runtime_guarantee
+    status: active
+    scope_note: Defended as a one-step true-state postcondition whose tightened margin already absorbs the one-step model-error allowance.
+    statement_source:
+      file: chapters_merged/ch04_theoretical_foundations.tex
+      needle: '\begin{theorem}[Safety Preservation]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\section{C.2\quad One-Step Safety Preservation}'
+    assumptions:
+      - A1
+      - A2
+      - A3
+      - A4
+      - A5
+      - A7
+    unresolved_assumptions: []
+    dependencies:
+      - Proposition: Inflated set contains the current state
+      - Proposition: Tightened feasibility implies true feasibility
+    weakest_step: The absorbed tightening must match the runtime FTIT/shield implementation exactly; any separation between theory margin and repair margin breaks the V3 story.
+    rigor_rating: proof_runtime_linked
+    code_correspondence: matches
+    code_correspondence_detail: The battery tightening, repair, guarantee check, and runtime assertion surface all carry the absorbed margin explicitly.
+    severity_if_broken: critical
+    remediation_class: strengthen proof
+    remediation_detail: Keep the absorbed margin explicit in theorem text, repair metadata, and true-state invariance checks.
+    code_anchors:
+      - path: src/orius/dc3s/safety_filter_theory.py
+        symbol: tightened_soc_bounds
+        note: Computes the absorbed tightening margin.
+      - path: src/orius/dc3s/guarantee_checks.py
+        symbol: check_soc_invariance
+        note: Checks the true-state one-step postcondition with model-error slack.
+      - path: src/orius/certos/runtime.py
+        symbol: CertOSRuntime.validate_and_step
+        note: Enforces the runtime theorem hook for one-step safety.
+    test_anchors:
+      - path: tests/test_dc3s_guarantee_checks.py
+        symbol: test_guarantee_checks_pass_for_safe_action
+        note: Safe-action witness.
+      - path: tests/test_t2_absorbed_tightening.py
+        symbol: test_t2_absorbed_tightening_randomized
+        note: Randomized absorbed-margin regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+      - battery_claim_evidence_register
+    claim_evidence:
+      chapter: ch17
+      token: THM_T2
+      artifact_path: reports/publication/dc3s_main_table_ci.csv
+  - id: T3a
+    title: ORIUS Core Envelope Derivation
+    surface_kind: theorem
+    defense_tier: flagship_defended
+    proof_tier: V1
+    program_role: runtime_risk_budget_derivation
+    status: active
+    scope_note: Defended as the per-step envelope derivation under the explicit battery assumptions and the narrowed reliability-score interpretation.
+    statement_source:
+      file: chapters_merged/ch04_theoretical_foundations.tex
+      needle: '\begin{theorem}[ORIUS Core Bound]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\section{C.3\quad Battery ORIUS Core Bound}'
+    assumptions:
+      - A1
+      - A2
+      - A4
+      - A5
+      - A6
+      - A7
+      - A9
+    unresolved_assumptions: []
+    dependencies:
+      - Lemma: Aggregation under a predictable risk budget
+      - Theorem T2 one-step safety preservation
+    weakest_step: The theorem is only as good as the runtime-to-risk bridge; the repo now keeps that bridge explicit and battery-scoped instead of hiding it inside generic conformal language.
+    rigor_rating: paper_rigorous
+    code_correspondence: matches
+    code_correspondence_detail: The runtime now emits an explicit T3a theorem-contract summary that separates executable envelope checks from the declared battery calibration bridge.
+    severity_if_broken: critical
+    remediation_class: strengthen proof
+    remediation_detail: Keep the reliability-score disclaimer explicit and avoid reintroducing weighted-exchangeability overclaims.
+    code_anchors:
+      - path: src/orius/universal_theory/kernel.py
+        symbol: execute_universal_step
+        note: Attaches theorem-contract summaries to the typed runtime result.
+      - path: src/orius/universal_theory/risk_bounds.py
+        symbol: build_t3a_contract_summary
+        note: Canonical theorem-contract summary for the narrowed T3a surface.
+      - path: src/orius/dc3s/coverage_theorem.py
+        symbol: compute_expected_violation_bound
+        note: Backward-compatible wrapper.
+    test_anchors:
+      - path: tests/test_dc3s_coverage_theorem.py
+        symbol: test_compute_expected_violation_bound
+        note: Envelope algebra regression.
+      - path: tests/test_universal_theory.py
+        symbol: test_run_universal_step_returns_structured_result
+        note: Runtime theorem-contract regression.
+    legacy_aliases:
+      - T3
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+      - battery_claim_evidence_register
+    claim_evidence:
+      chapter: ch18
+      token: THM_T3A
+      artifact_path: reports/publication/reliability_group_coverage_phase3.csv
+  - id: T3b
+    title: ORIUS Core Aggregation Corollary
+    surface_kind: corollary
+    defense_tier: supporting_defended
+    proof_tier: V1
+    program_role: runtime_risk_budget_aggregation
+    status: active
+    scope_note: Derived corollary that converts the predictable per-step budget into the episode-average envelope.
+    statement_source:
+      file: chapters_merged/ch04_theoretical_foundations.tex
+      needle: '\begin{corollary}[Reliability-proportional safety]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\section{C.3\quad Battery ORIUS Core Bound}'
+    assumptions:
+      - A1
+      - A2
+      - A4
+      - A5
+      - A6
+      - A7
+      - A9
+    unresolved_assumptions: []
+    dependencies:
+      - T3a
+      - Lemma: Aggregation under a predictable risk budget
+    weakest_step: This row is bookkeeping rather than new theory; the actual burden sits in T3a.
+    rigor_rating: paper_rigorous
+    code_correspondence: matches
+    code_correspondence_detail: The corollary is exactly the aggregation performed by the episode envelope helper.
+    severity_if_broken: medium
+    remediation_class: maintain split
+    remediation_detail: Keep T3b corollary-only and avoid collapsing it back into a single overloaded T3 row.
+    code_anchors:
+      - path: src/orius/universal_theory/risk_bounds.py
+        symbol: compute_episode_risk_bound
+        note: Computes the corollary bound directly.
+    test_anchors:
+      - path: tests/test_active_theorem_audit.py
+        symbol: test_defense_tiers_match_the_rebuilt_core
+        note: Audit regression for the T3 split.
+    legacy_aliases:
+      - T3
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+  - id: T4
+    title: No Free Safety
+    surface_kind: theorem
+    defense_tier: flagship_defended
+    proof_tier: V1
+    program_role: bounded_necessity_witness
+    status: active
+    scope_note: Defended for the fixed-margin quality-ignorant controller class on the battery witness row with explicit arbitrage reachability.
+    statement_source:
+      file: chapters_merged/ch04_theoretical_foundations.tex
+      needle: '\begin{theorem}[No Free Safety]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\section{C.4\quad No Free Safety}'
+    assumptions:
+      - A1
+      - A2
+      - A4
+      - A11
+    unresolved_assumptions: []
+    dependencies:
+      - Definition: Quality-ignorant controller
+      - Lemma: Admissible fault sequence existence
+      - Lemma: No margin compensation for quality-ignorant controllers
+    weakest_step: The constructive witness is intentionally class-scoped; widening the controller class would require a new proof.
+    rigor_rating: paper_rigorous
+    code_correspondence: partial
+    code_correspondence_detail: The repo contains the necessary baseline and witness pieces, but the theorem remains constructive rather than fully executable.
+    severity_if_broken: high
+    remediation_class: keep scope explicit
+    remediation_detail: Preserve the fixed-margin quality-ignorant controller definition as part of the theorem statement.
+    code_anchors:
+      - path: src/orius/dc3s/supporting_results.py
+        symbol: verify_no_margin_compensation
+        note: Executable witness for fixed-margin insufficiency.
+      - path: src/orius/cpsbench_iot/scenarios.py
+        symbol: generate_episode
+        note: Admissible degraded-observation episode generator.
+    test_anchors:
+      - path: tests/test_unification.py
+        symbol: test_unification_argument_w_t_never_drops_below_one
+        note: Supporting quality-ignorant limitation check.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+      - battery_claim_evidence_register
+    claim_evidence:
+      chapter: ch19
+      token: THM_T4
+      artifact_path: reports/publication/fault_performance_table.csv
+  - id: T5
+    title: Certificate Validity Horizon Definition
+    surface_kind: definition
+    defense_tier: draft_non_defended
+    proof_tier: V1
+    program_role: temporal_validity_definition
+    status: active
+    scope_note: Kept as the constructive maximal forward-tube containment definition and excluded from defended theorem counts.
+    statement_source:
+      file: chapters_merged/ch04_theoretical_foundations.tex
+      needle: '\begin{theorem}[Certificate validity horizon]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\section{C.5\quad Certificate Validity Horizon}'
+    assumptions:
+      - A1
+      - A2
+      - A4
+      - A5
+      - A6
+      - A7
+      - A9
+    unresolved_assumptions: []
+    dependencies:
+      - Definition: Safety certificate
+      - Definition: Forward tube
+    weakest_step: This row is intentionally definitional; future-step probability language is kept out of the defended theorem count.
+    rigor_rating: explicit_definition
+    code_correspondence: matches
+    code_correspondence_detail: The helper computes the maximal deterministic containment horizon directly.
+    severity_if_broken: medium
+    remediation_class: keep retiered
+    remediation_detail: Do not promote T5 back into defended headline theorem counts without a separate temporal concentration proof.
+    code_anchors:
+      - path: src/orius/universal_theory/battery_instantiation.py
+        symbol: certificate_validity_horizon
+        note: Deterministic maximal-horizon helper.
+    test_anchors:
+      - path: tests/test_dc3s_temporal_theorems.py
+        symbol: test_certificate_validity_horizon_matches_expiration_bound_for_zero_action
+        note: Deterministic containment regression.
+    legacy_aliases:
+      - T5
+    generator_targets:
+      - active_theorem_audit
+      - theorem_surface_register
+      - battery_claim_evidence_register
+    claim_evidence:
+      chapter: ch20
+      token: DEF_T5
+      artifact_path: reports/blackout/blackout_study.csv
+  - id: T6
+    title: Certificate Expiration Bound
+    surface_kind: theorem
+    defense_tier: supporting_defended
+    proof_tier: V2_linked
+    program_role: auxiliary_expiration_bound
+    status: active
+    scope_note: Defended as the confidence-aware sub-Gaussian issuance-margin lower bound with explicit delta dependence.
+    statement_source:
+      file: chapters_merged/ch04_theoretical_foundations.tex
+      needle: '\begin{theorem}[Certificate expiration bound]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\section{C.6\quad Certificate Expiration Bound}'
+    assumptions:
+      - A4
+      - A7
+      - A9
+    unresolved_assumptions: []
+    dependencies:
+      - Definition: Forward tube
+      - Reflection-principle / sub-Gaussian first-passage bound
+    weakest_step: Multiple legacy horizon helpers existed; the repo now designates the delta-aware battery helper as canonical and treats the others as supplemental.
+    rigor_rating: machine_checked_ready
+    code_correspondence: matches
+    code_correspondence_detail: The exported helper now carries the delta-aware theorem formula and emits fail-closed theorem metadata that forbids legacy no-delta semantics.
+    severity_if_broken: high
+    remediation_class: canonicalize helper
+    remediation_detail: Keep the no-delta legacy semantics out of the theorem-facing API and audit surfaces.
+    code_anchors:
+      - path: src/orius/universal_theory/battery_instantiation.py
+        symbol: certificate_expiration_bound
+        note: Canonical theorem-facing T6 helper.
+      - path: src/orius/dc3s/half_life.py
+        symbol: compute_conservative_horizon
+        note: Supplemental first-passage helper.
+    test_anchors:
+      - path: tests/test_dc3s_temporal_theorems.py
+        symbol: test_certificate_expiration_bound_uses_delta_aware_formula
+        note: Direct theorem formula regression.
+      - path: tests/test_t6_expiration_bound.py
+        symbol: test_t6_empirical_subgaussian_bound
+        note: Empirical confidence check.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+      - battery_claim_evidence_register
+    claim_evidence:
+      chapter: ch20
+      token: THM_T6
+      artifact_path: reports/blackout/blackout_study.csv
+  - id: T7
+    title: Feasible Fallback Existence
+    surface_kind: theorem
+    defense_tier: draft_non_defended
+    proof_tier: V1
+    program_role: fallback_extension
+    status: active
+    scope_note: Visible only as an interior-state fallback theorem with explicit slack against model error.
+    statement_source:
+      file: chapters_merged/ch04_theoretical_foundations.tex
+      needle: '\begin{theorem}[Feasible fallback existence]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\section{C.8\quad Feasible Fallback Existence}'
+    assumptions:
+      - A1
+      - A3
+      - A4
+      - A8
+    unresolved_assumptions: []
+    dependencies:
+      - Constructive zero-dispatch battery fallback
+    weakest_step: The theorem is deliberately narrow and does not claim fallback safety from arbitrary boundary-touching states.
+    rigor_rating: narrowed_supporting_surface
+    code_correspondence: matches
+    code_correspondence_detail: The validator only certifies fallback inside the interior slack region.
+    severity_if_broken: medium
+    remediation_class: keep narrowed
+    remediation_detail: Avoid broadening the statement beyond the interior-state validator semantics.
+    code_anchors:
+      - path: src/orius/universal_theory/battery_instantiation.py
+        symbol: validate_battery_fallback
+        note: Interior-state fallback validator.
+    test_anchors:
+      - path: tests/test_dc3s_temporal_theorems.py
+        symbol: test_certify_fallback_existence_passes_for_interior_soc
+        note: Positive interior witness.
+      - path: tests/test_dc3s_temporal_theorems.py
+        symbol: test_certify_fallback_existence_fails_near_boundary
+        note: Boundary failure witness.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - theorem_surface_register
+      - battery_claim_evidence_register
+    claim_evidence:
+      chapter: ch20
+      token: THM_T7
+      artifact_path: reports/blackout/graceful_degradation_trace.csv
+  - id: T8
+    title: Graceful Degradation Dominance
+    surface_kind: theorem
+    defense_tier: supporting_defended
+    proof_tier: V1
+    program_role: graceful_degradation_extension
+    status: active
+    scope_note: Supporting comparison theorem at the sequence level; the strict absorbing-landing claim is not part of the defended headline core.
+    statement_source:
+      file: chapters_merged/ch04_theoretical_foundations.tex
+      needle: '\begin{theorem}[Graceful degradation dominance]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\section{C.9\quad Graceful Degradation Dominance}'
+    assumptions:
+      - A1
+      - A2
+      - A3
+      - A4
+      - A5
+      - A8
+    unresolved_assumptions: []
+    dependencies:
+      - Sequence comparison helper
+    weakest_step: The helper proves comparison for supplied paired sequences under a shared fault trace, not a full absorbing-landing dynamics theorem.
+    rigor_rating: narrowed_supporting_surface
+    code_correspondence: matches
+    code_correspondence_detail: The executable helper matches the narrowed statement exactly.
+    severity_if_broken: medium
+    remediation_class: keep helper-scoped
+    remediation_detail: Keep strict improvement phrasing tied to supplied paired sequences under the same admissible fault trace.
+    code_anchors:
+      - path: src/orius/universal_theory/battery_instantiation.py
+        symbol: evaluate_graceful_degradation_dominance
+        note: Sequence-level dominance checker.
+    test_anchors:
+      - path: tests/test_dc3s_temporal_theorems.py
+        symbol: test_graceful_degradation_dominance_detects_strict_domination
+        note: Comparison helper regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+      - battery_claim_evidence_register
+    claim_evidence:
+      chapter: ch20
+      token: THM_T8
+      artifact_path: reports/blackout/graceful_degradation_trace.csv
+  - id: T9
+    title: Universal Impossibility, T9
+    surface_kind: theorem
+    defense_tier: draft_non_defended
+    proof_tier: V0
+    program_role: impossibility_extension
+    status: active
+    scope_note: Visible only as a scoped impossibility extension under the explicit geometric-mixing assumption A10b.
+    statement_source:
+      file: chapters/ch37_universality_completeness.tex
+      needle: '\begin{theorem}[Universal Impossibility, T9]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\section{C.11\quad Universal Impossibility (T9)}'
+    assumptions:
+      - A10b
+      - A11
+    unresolved_assumptions: []
+    dependencies:
+      - T4
+      - Azuma-Hoeffding concentration for separated windows
+    weakest_step: The witness constant is still domain-scoped rather than universally instantiated.
+    rigor_rating: scoped_extension
+    code_correspondence: partial
+    code_correspondence_detail: The helper exposes the algebra once the witness constant is provided.
+    severity_if_broken: high
+    remediation_class: keep scoped
+    remediation_detail: Keep T9 out of defended headline counts until the witness constant and mixing bridge are fully discharged.
+    code_anchors:
+      - path: src/orius/dc3s/theoretical_guarantees.py
+        symbol: compute_universal_impossibility_bound
+        note: Scaling witness helper.
+    test_anchors:
+      - path: tests/test_theoretical_guarantees_hypothesis.py
+        symbol: test_t9_impossibility_bound_matches_linear_scaling
+        note: Formula-only regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - theorem_surface_register
+  - id: T10
+    title: Boundary-indistinguishability lower bound, T10
+    surface_kind: theorem
+    defense_tier: draft_non_defended
+    proof_tier: V0
+    program_role: information_lower_bound_extension
+    status: active
+    scope_note: Visible only as a scoped lower-bound frontier under the explicit TV bridge A13 and boundary-mass assumptions.
+    statement_source:
+      file: chapters/ch37_universality_completeness.tex
+      needle: '\begin{theorem}[Boundary-indistinguishability lower bound, T10]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\section{C.12\quad Boundary-Indistinguishability Lower Bound (T10)}'
+    assumptions:
+      - A13
+    unresolved_assumptions:
+      - Unsafe-side boundary-mass sequence p_t is supplied explicitly.
+    dependencies:
+      - Le Cam two-point lemma
+    weakest_step: The theorem stays scoped because the unsafe-side error bridge is not promoted beyond the explicit boundary-mass model.
+    rigor_rating: scoped_extension
+    code_correspondence: partial
+    code_correspondence_detail: The helper implements the stylized lower-bound algebra without overstating it as a universal converse.
+    severity_if_broken: high
+    remediation_class: keep scoped
+    remediation_detail: Preserve the explicit A13 + p_t boundary assumptions in all theorem-facing surfaces.
+    code_anchors:
+      - path: src/orius/dc3s/theoretical_guarantees.py
+        symbol: compute_stylized_frontier_lower_bound
+        note: Scoped lower-bound helper.
+    test_anchors:
+      - path: tests/test_theoretical_guarantees_hypothesis.py
+        symbol: test_t10_frontier_lower_bound_matches_sum_formula
+        note: Formula-only regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - theorem_surface_register
+  - id: T11
+    title: Typed structural transfer theorem, T11
+    surface_kind: theorem
+    defense_tier: flagship_defended
+    proof_tier: V1
+    program_role: typed_transfer_theorem
+    status: active
+    scope_note: Defended as the forward four-obligation one-step transfer theorem; the converse remains a separate structural failure proposition.
+    statement_source:
+      file: chapters/ch37_universality_completeness.tex
+      needle: '\begin{theorem}[Typed structural transfer theorem, T11]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\section{C.13\quad Typed Structural Transfer and Failure-Mode Converse (T11)}'
+    assumptions:
+      - Coverage obligation for the observation-consistent state set.
+      - Soundness of the tightened safe-action set.
+      - Repair membership in the tightened safe-action set.
+      - Fallback admissibility when the tightened set is empty.
+    unresolved_assumptions: []
+    dependencies:
+      - Definition: Universal adapter contract
+      - Proposition: Failure of any transfer obligation breaks the reference proof pattern
+    weakest_step: The theorem is forward-only at the active surface; stronger episode claims require an explicit domain risk budget.
+    rigor_rating: paper_rigorous
+    code_correspondence: matches
+    code_correspondence_detail: The authoritative typed contract now emits a four-obligation theorem-contract summary over runtime artifacts; the five-invariant mini-harness remains supporting-only.
+    severity_if_broken: critical
+    remediation_class: keep forward-only
+    remediation_detail: Do not blur the supporting mini-harness into the active T11 transfer theorem.
+    code_anchors:
+      - path: src/orius/universal_theory/contracts.py
+        symbol: ContractVerifier.validate_runtime_step
+        note: Authoritative typed theorem surface.
+      - path: src/orius/universal_theory/contracts.py
+        symbol: ContractVerifier.build_transfer_theorem_summary
+        note: Four-obligation theorem-contract summary over runtime artifacts.
+      - path: src/orius/dc3s/theoretical_guarantees.py
+        symbol: evaluate_structural_transfer
+        note: Four-obligation executable witness.
+      - path: src/orius/universal/contract.py
+        symbol: ContractVerifier.check
+        note: Supporting five-invariant mini-harness only.
+    test_anchors:
+      - path: tests/test_theoretical_guarantees_hypothesis.py
+        symbol: test_t11_transfer_requires_all_four_obligations
+        note: Active theorem regression.
+      - path: tests/test_universal_contract.py
+        symbol: test_passes_all_five_invariants
+        note: Supporting harness regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+      - battery_claim_evidence_register
+    claim_evidence:
+      chapter: ch37
+      token: THM_T11
+      artifact_path: reports/publication/orius_transfer_obligation_table.csv
+  - id: L1
+    title: "L1: Rate-Distortion Safety Law"
+    surface_kind: scoped_proxy_law
+    defense_tier: draft_non_defended
+    proof_tier: V0
+    program_role: stylized_law_extension
+    status: active
+    scope_note: Scoped surrogate law only.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[L1: Rate-Distortion Safety Law]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[L1: Rate-Distortion Safety Law]'
+    assumptions:
+      - Stylized binary-source surrogate lower envelope.
+    unresolved_assumptions: []
+    dependencies:
+      - Scoped law-helper surrogate definition
+    weakest_step: Surrogate rather than converse.
+    rigor_rating: stylized_surrogate
+    code_correspondence: partial
+    code_correspondence_detail: Arithmetic helper only.
+    severity_if_broken: medium
+    remediation_class: future work
+    remediation_detail: Keep scoped.
+    code_anchors:
+      - path: src/orius/universal_theory/orius_law.py
+        symbol: rate_distortion_safety_law
+        note: Stylized helper.
+    test_anchors:
+      - path: tests/test_orius_law.py
+        symbol: test_positive_loss_below_capacity
+        note: Arithmetic regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - theorem_surface_register
+  - id: L2
+    title: "L2: Capacity Bridge"
+    surface_kind: scoped_proxy_law
+    defense_tier: draft_non_defended
+    proof_tier: V0
+    program_role: stylized_bridge_extension
+    status: active
+    scope_note: Proxy bridge only.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[L2: Capacity Bridge]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[L2: Capacity Bridge]'
+    assumptions:
+      - Domain-scoped proxy constant kappa_d is externally calibrated.
+    unresolved_assumptions: []
+    dependencies:
+      - Scoped kappa_d calibration
+    weakest_step: Proxy bridge rather than derived theorem.
+    rigor_rating: proxy_bridge
+    code_correspondence: partial
+    code_correspondence_detail: Proxy helper only.
+    severity_if_broken: medium
+    remediation_class: future work
+    remediation_detail: Keep scoped.
+    code_anchors:
+      - path: src/orius/universal_theory/orius_law.py
+        symbol: capacity_bridge
+        note: Proxy bridge helper.
+    test_anchors:
+      - path: tests/test_orius_law.py
+        symbol: test_inconsistency_detected
+        note: Proxy consistency regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - theorem_surface_register
+  - id: L3
+    title: "L3: Critical Capacity"
+    surface_kind: scoped_proxy_law
+    defense_tier: draft_non_defended
+    proof_tier: V0
+    program_role: stylized_threshold_extension
+    status: active
+    scope_note: Threshold calculator only.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[L3: Critical Capacity]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[L3: Critical Capacity]'
+    assumptions:
+      - Stylized L2 capacity-proxy bridge.
+    unresolved_assumptions: []
+    dependencies:
+      - L2
+      - T3a
+    weakest_step: Derived threshold, not independent converse.
+    rigor_rating: scoped_extension
+    code_correspondence: partial
+    code_correspondence_detail: Threshold helper only.
+    severity_if_broken: medium
+    remediation_class: future work
+    remediation_detail: Keep scoped.
+    code_anchors:
+      - path: src/orius/universal_theory/orius_law.py
+        symbol: critical_capacity
+        note: Threshold helper.
+    test_anchors:
+      - path: tests/test_orius_law.py
+        symbol: test_critical_capacity_exists
+        note: Arithmetic regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - theorem_surface_register
+  - id: L4
+    title: "L4: Achievability-Converse Sandwich"
+    surface_kind: scoped_proxy_law
+    defense_tier: draft_non_defended
+    proof_tier: V0
+    program_role: stylized_sandwich_extension
+    status: active
+    scope_note: Stylized sandwich only.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[L4: Achievability-Converse Sandwich]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[L4: Achievability-Converse Sandwich]'
+    assumptions:
+      - Executable T3-style upper envelope.
+    unresolved_assumptions: []
+    dependencies:
+      - T3a
+      - L1
+      - L2
+    weakest_step: Lower side remains proxy-based.
+    rigor_rating: scoped_extension
+    code_correspondence: partial
+    code_correspondence_detail: Stylized sandwich helper only.
+    severity_if_broken: medium
+    remediation_class: future work
+    remediation_detail: Keep scoped.
+    code_anchors:
+      - path: src/orius/universal_theory/orius_law.py
+        symbol: achievability_converse_sandwich
+        note: Stylized sandwich helper.
+    test_anchors:
+      - path: tests/test_orius_law.py
+        symbol: test_bounds_consistent
+        note: Arithmetic regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - theorem_surface_register
+  - id: T11_Byzantine
+    title: "T11_Byzantine: Byzantine Trimmed-Mean Bound"
+    surface_kind: theorem
+    defense_tier: supporting_defended
+    proof_tier: V1
+    program_role: robustness_extension
+    status: active
+    scope_note: Supporting bounded Byzantine robustness theorem under the stated trimmed-mean assumptions.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[T11\_Byzantine: Byzantine Trimmed-Mean Bound]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[T11\_Byzantine: Byzantine Trimmed-Mean Bound]'
+    assumptions:
+      - A9
+      - Byzantine fraction f is strictly below 1/3.
+      - Trim fraction beta is at least f.
+      - Tail-contamination model places adversarial readings in the trimmed tails.
+    unresolved_assumptions: []
+    dependencies:
+      - Trimmed-mean robustness argument
+    weakest_step: Simplified bounded-fraction model.
+    rigor_rating: narrowed_supporting_surface
+    code_correspondence: matches
+    code_correspondence_detail: Helper matches appendix scope.
+    severity_if_broken: medium
+    remediation_class: strengthen proof
+    remediation_detail: Keep bounded-fraction scope explicit.
+    code_anchors:
+      - path: src/orius/dc3s/theoretical_guarantees.py
+        symbol: prove_byzantine_bound
+        note: Executable witness.
+    test_anchors:
+      - path: tests/test_theoretical_guarantees.py
+        symbol: test_bound_holds_for_small_f
+        note: Witness regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+  - id: T_stale_decay
+    title: "T_stale_decay: Stale-Decay Schedule"
+    surface_kind: theorem
+    defense_tier: supporting_defended
+    proof_tier: V1
+    program_role: policy_schedule_extension
+    status: active
+    scope_note: Supporting design-schedule theorem for stale-data degradation handling.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[T\_stale\_decay: Stale-Decay Schedule]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[T\_stale\_decay: Stale-Decay Schedule]'
+    assumptions:
+      - A6
+    unresolved_assumptions: []
+    dependencies:
+      - Exponential decay schedule
+      - T3a upper envelope
+    weakest_step: Design schedule rather than physical sensing law.
+    rigor_rating: narrowed_supporting_surface
+    code_correspondence: matches
+    code_correspondence_detail: Helper matches the stated schedule.
+    severity_if_broken: medium
+    remediation_class: keep scoped
+    remediation_detail: Preserve design-schedule wording.
+    code_anchors:
+      - path: src/orius/dc3s/theoretical_guarantees.py
+        symbol: stale_decay_bound
+        note: Decay witness.
+    test_anchors:
+      - path: tests/test_theoretical_guarantees.py
+        symbol: test_reaches_epsilon
+        note: Schedule regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+  - id: T_minimax
+    title: "T_minimax: Minimax OASG Tradeoff"
+    surface_kind: scoped_extension
+    defense_tier: draft_non_defended
+    proof_tier: V0
+    program_role: stylized_minimax_extension
+    status: active
+    scope_note: Visible only as a stylized minimax extension.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[T\_minimax: Minimax OASG Tradeoff]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[T\_minimax: Minimax OASG Tradeoff]'
+    assumptions:
+      - T3a
+      - L1
+      - L2
+    unresolved_assumptions: []
+    dependencies:
+      - Stylized lower-envelope witness
+    weakest_step: Lower side still proxy-based.
+    rigor_rating: scoped_extension
+    code_correspondence: partial
+    code_correspondence_detail: Stylized helper only.
+    severity_if_broken: medium
+    remediation_class: future work
+    remediation_detail: Keep out of defended counts.
+    code_anchors:
+      - path: src/orius/dc3s/theoretical_guarantees.py
+        symbol: compute_tight_impossibility_bound
+        note: Stylized lower-envelope witness.
+    test_anchors:
+      - path: tests/test_theoretical_guarantees.py
+        symbol: test_lower_bound_uses_alpha_and_w_bar
+        note: Formula regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - theorem_surface_register
+  - id: T_sensor_converse
+    title: "T_sensor_converse: Sensor Quality Converse"
+    surface_kind: scoped_extension
+    defense_tier: draft_non_defended
+    proof_tier: V0
+    program_role: stylized_sensor_threshold_extension
+    status: active
+    scope_note: Visible only as a proxy threshold extension.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[T\_sensor\_converse: Sensor Quality Converse]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[T\_sensor\_converse: Sensor Quality Converse]'
+    assumptions:
+      - T3a
+      - L2
+      - L3
+    unresolved_assumptions: []
+    dependencies:
+      - Stylized inverse threshold helper
+    weakest_step: Proxy threshold rather than defended converse.
+    rigor_rating: scoped_extension
+    code_correspondence: partial
+    code_correspondence_detail: Helper exposes the threshold honestly.
+    severity_if_broken: medium
+    remediation_class: future work
+    remediation_detail: Keep out of defended counts.
+    code_anchors:
+      - path: src/orius/dc3s/theoretical_guarantees.py
+        symbol: sensor_quality_converse
+        note: Stylized threshold helper.
+    test_anchors:
+      - path: tests/test_theoretical_guarantees.py
+        symbol: test_converse_holds_when_w_sufficient
+        note: Threshold regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - theorem_surface_register
+  - id: T_trajectory_PAC
+    title: "T_trajectory_PAC: PAC Trajectory Certificate"
+    surface_kind: theorem
+    defense_tier: flagship_defended
+    proof_tier: V1
+    program_role: trajectory_certificate
+    status: active
+    scope_note: Defended as the implemented Bonferroni/union-bound trajectory certificate and nothing stronger.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[T\_trajectory\_PAC: PAC Trajectory Certificate]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{theorem}[T\_trajectory\_PAC: PAC Trajectory Certificate]'
+    assumptions:
+      - A1
+      - A4
+      - A5
+      - A9
+      - Bonferroni/union-bound aggregation over the horizon.
+    unresolved_assumptions: []
+    dependencies:
+      - T3a
+      - Finite-sample conformal correction
+    weakest_step: The certificate is conservative by design because it stacks finite-sample and worst-case reliability corrections.
+    rigor_rating: paper_rigorous
+    code_correspondence: matches
+    code_correspondence_detail: The helper, tests, and appendix all use the same union-bound semantics.
+    severity_if_broken: high
+    remediation_class: keep narrowed
+    remediation_detail: Any future martingale strengthening must appear as a new theorem, not as a silent replacement.
+    code_anchors:
+      - path: src/orius/universal_theory/risk_bounds.py
+        symbol: pac_trajectory_safety_certificate
+        note: Canonical certificate helper.
+    test_anchors:
+      - path: tests/test_theoretical_guarantees.py
+        symbol: test_martingale_flag_set_correctly
+        note: Guards the narrowed semantics.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+      - battery_claim_evidence_register
+    claim_evidence:
+      chapter: appC
+      token: THM_T_TRAJECTORY_PAC
+      artifact_path: reports/publication/reliability_group_coverage_phase3.csv

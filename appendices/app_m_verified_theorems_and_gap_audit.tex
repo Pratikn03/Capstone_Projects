@@ -1,30 +1,29 @@
 % =============================================================================
-% Appendix M: Verified Theorems and Gap Audit
+% Appendix M: Audited Theorems and Gap Register
 % ORIUS/DC3S Battery-Safety Thesis
 % =============================================================================
-\chapter{Verified Theorems and Gap Audit}
+\chapter{Audited Theorems and Gap Register}
 \label{app:verified-theorems-gap-audit}
 
-This appendix covers the full T1--T11 theorem set.  T1--T8 form the
-governance-critical battery proof spine; T9--T11 are the later universal
-extension theorems added in the universality-completeness chapter.
-Appendix~\ref{app:integrated-theorem-surface-register} audits the full
-theorem-like inventory.  The complete set is:
-\begin{enumerate}
-  \item OASG existence (T1),
-  \item one-step safety preservation (T2),
-  \item ORIUS core bound (T3),
-  \item no free safety (T4),
-  \item certificate validity horizon (T5),
-  \item certificate expiration bound (T6),
-  \item feasible fallback existence (T7),
-  \item graceful degradation dominance (T8),
-  \item universal impossibility --- martingale/\mbox{$\varphi$-mixing} argument (T9),
-  \item boundary-indistinguishability lower bound --- Le~Cam two-point method (T10), and
-  \item typed structural transfer plus failure-mode converse (T11).
-\end{enumerate}
+This appendix is the human-readable companion to the machine-generated
+active theorem audit in \texttt{reports/publication/active\_theorem\_audit.*}.
+It does \emph{not} treat the live theorem inventory as one flat ladder.
+Instead it mirrors the registry-canonical split emitted by
+\texttt{defended\_theorem\_core.*}:
+\begin{itemize}
+  \item \textbf{Flagship defended}: T1, T2, T3a, T4, T11, and T\_trajectory\_PAC.
+  \item \textbf{Supporting defended}: T3b, T6, T8, T11\textsubscript{Byz}, and T\textsubscript{stale}.
+  \item \textbf{Draft / non-defended}: T5, T7, T9, T10, L1--L4,
+  T\textsubscript{minimax}, and T\textsubscript{sensor}.
+\end{itemize}
+This appendix audits the full live surface, but only the flagship and
+supporting tiers belong to the defended June core. The draft tier remains
+visible to prevent hidden drift, not to inflate the headline theorem count.
+
 The certificate half-life remains a corollary, and safe-budget monotonicity
-remains a proposition.
+remains a proposition. Appendix~\ref{app:integrated-theorem-surface-register}
+still audits the older hard-gated traceability surface, but it is a
+\emph{traceability gate}, not a proof-soundness gate.
 
 \section{Theorem Statements}
 
@@ -55,20 +54,45 @@ separately and is not bundled into T2.
 \textbf{Code anchor.} \texttt{src/orius/dc3s/guarantee\_checks.py} and
 \texttt{src/orius/dc3s/shield.py}.
 
-\subsection{Theorem 3: ORIUS Core Bound}
+\subsection{Theorem 3a: ORIUS Core Envelope Derivation}
 \label{sec:thm-core-bound}
 
-\textbf{Statement.} The expected battery violation count satisfies
-$\mathbb{E}[V] \le \alpha(1-\bar{w})T$.
+\textbf{Statement.} The active defended T3a surface is the per-step envelope
+\[
+  \Prob[Z_t = 1 \mid \mathcal{H}_t] \le \alpha(1-w_t),
+\]
+under the explicit battery risk-budget contract and the narrowed
+reliability-score interpretation.
 
-\textbf{Assumptions.} A1--A5, A7.
+\textbf{Assumptions.} A1, A2, A4, A5, A6, A7, A9, plus the theorem-local
+battery calibration bridge recorded in the active theorem audit.
 
-\textbf{Proof status.} Proved under an explicit theorem-local per-step
-risk-budget contract; explicit runtime helpers compute and check the resulting
-envelope but do not claim that the contract follows from marginal conformal
-coverage alone.
+\textbf{Proof status.} Paper-rigorous flagship theorem with explicit runtime
+contract reporting.  The code now emits a theorem-contract summary that checks
+the executable envelope algebra and keeps the calibration bridge explicit as a
+declared theorem-local contract rather than hiding it inside generic conformal
+language.
 
-\textbf{Code anchor.} \texttt{src/orius/dc3s/coverage\_theorem.py}.
+\textbf{Code anchor.} \texttt{src/orius/universal\_theory/risk\_bounds.py}
+(\texttt{build\_t3a\_contract\_summary()}), plus the backward-compatible
+wrapper \texttt{src/orius/dc3s/coverage\_theorem.py}.
+
+\subsection{Corollary 3b: ORIUS Core Aggregation Corollary}
+\label{sec:thm-core-bound-aggregation}
+
+\textbf{Statement.} Aggregating the predictable per-step budget from T3a gives
+the episode envelope
+\[
+  \mathbb{E}[V] \le \alpha(1-\bar{w})T.
+\]
+
+\textbf{Assumptions.} The assumptions of T3a, plus linearity of expectation.
+
+\textbf{Proof status.} Supporting defended corollary.  Once T3a is fixed, the
+aggregation is algebraic bookkeeping rather than a new theorem burden.
+
+\textbf{Code anchor.} \texttt{src/orius/universal\_theory/risk\_bounds.py}
+(\texttt{compute\_episode\_risk\_bound()}).
 
 \subsection{Theorem 4: No Free Safety}
 \label{sec:thm-no-free}
@@ -85,40 +109,49 @@ surface, plus empirical ablation support.
 \textbf{Code anchor.} Supporting evidence in \texttt{baselines.py},
 \texttt{scenarios.py}, and \texttt{runner.py}.
 
-\subsection{Theorem 5: Certificate Validity Horizon}
+\subsection{Definition 5: Certificate Validity Horizon}
 \label{sec:thm-cert-horizon}
 
-\textbf{Statement.} A battery certificate remains valid for the largest
-integer horizon whose forward tube remains inside the battery SOC bounds.
+\textbf{Statement.} T5 is kept as the constructive maximal forward-tube
+containment definition: the validity horizon is the largest integer horizon
+whose forward tube remains inside the battery SOC bounds.
 
 \textbf{Assumptions.} A1, A2, A4--A7.
 
-\textbf{Proof status.} Formal chapter theorem with direct validation helper.
+\textbf{Proof status.} Explicit definition, not part of the defended theorem
+count.  The helper computes the maximal containment horizon directly and no
+probabilistic future-step theorem is claimed at this surface.
 
 \textbf{Code anchor.} \texttt{src/orius/dc3s/temporal\_theorems.py}
 (\texttt{forward\_tube()}, \texttt{certificate\_validity\_horizon()});
 registered as T5 in \texttt{THEOREM\_REGISTER}
 (\texttt{src/orius/dc3s/theoretical\_guarantees.py}).
-Runtime expiry enforcement: the API router checks
-$\tau_t \ge 1$ at each step and sets
-\texttt{guarantee\_passed = False} on violation.
+Runtime expiry logic consumes this quantity, but the active theorem audit does
+not count T5 as a defended theorem.
 
 \subsection{Theorem 6: Certificate Expiration Bound}
 \label{sec:thm-cert-expiration}
 
-\textbf{Statement.} The battery certificate horizon is lower-bounded by the
-issuance-time distance to the nearest SOC boundary divided by the drift scale.
+\textbf{Statement.} The battery certificate horizon satisfies the canonical
+delta-aware lower bound
+\[
+  \tau_t \ge
+  \left\lfloor
+    \frac{\delta_{\mathrm{bnd},t}^2}
+    {2\sigma_d^2\log(2/\delta)}
+  \right\rfloor.
+\]
 
 \textbf{Assumptions.} A4--A7.
 
-\textbf{Proof status.} Formal chapter theorem with exact code implementation
-of the analytical lower bound.
+\textbf{Proof status.} Supporting defended auxiliary theorem with
+machine-checkable helper linkage.  The theorem-facing API now requires
+\texttt{delta} explicitly and marks legacy no-\texttt{delta} semantics as
+non-defended.
 
-\textbf{Code anchor.} \texttt{src/orius/dc3s/temporal\_theorems.py}
-(\texttt{certificate\_expiration\_bound()});
-registered as T6 in \texttt{THEOREM\_REGISTER}.
-The runtime now computes the expiry lower bound and
-appends it to the uncertainty metadata at every step.
+\textbf{Code anchor.} \texttt{src/orius/universal\_theory/battery\_instantiation.py}
+(\texttt{certificate\_expiration\_bound()}), which now emits theorem metadata
+and a fail-closed T6 contract summary.
 
 \subsection{Theorem 7: Feasible Fallback Existence}
 \label{sec:thm-fallback}
@@ -128,7 +161,8 @@ safety from an interior SOC state under bounded model error.
 
 \textbf{Assumptions.} A3, A4, A8.
 
-\textbf{Proof status.} Constructive battery fallback theorem.
+\textbf{Proof status.} Constructive battery fallback theorem, currently
+bounded to interior states with sufficient slack against model error.
 
 \textbf{Code anchor.} \texttt{src/orius/dc3s/temporal\_theorems.py}
 (\texttt{zero\_dispatch\_fallback()}, \texttt{certify\_fallback\_existence()}).
@@ -136,18 +170,26 @@ safety from an interior SOC state under bounded model error.
 \subsection{Theorem 8: Graceful Degradation Dominance}
 \label{sec:thm-graceful-dominance}
 
-\textbf{Statement.} The battery graceful-degradation controller incurs no more
-violations than the uncontrolled controller under the same admissible fault
-sequence, with strict improvement whenever the uncontrolled path violates.
+\textbf{Statement.} The defended T8 surface is the paired sequence-level
+comparison: for graceful and uncontrolled violation sequences produced under
+the same admissible fault trace,
+\[
+  z_t^{\mathrm{graceful}} \le z_t^{\mathrm{uncontrolled}} \;\; \forall t
+  \quad\Longrightarrow\quad
+  V^{\mathrm{graceful}} \le V^{\mathrm{uncontrolled}}.
+\]
+Strict improvement is claimed only when the graceful sequence is strictly
+smaller on at least one step.
 
 \textbf{Assumptions.} A1--A5, A8.
 
-\textbf{Proof status.} Formal chapter theorem with theorem-specific comparison
-helper and safe-landing implementation support.
+\textbf{Proof status.} Supporting defended comparison theorem at the
+sequence-comparison level only.  The stronger absorbing-landing interpretation
+remains supporting evidence rather than a promoted theorem.
 
-\textbf{Code anchor.} \texttt{src/orius/dc3s/temporal\_theorems.py}
-(\texttt{evaluate\_graceful\_degradation\_dominance()}) and
-\texttt{src/orius/dc3s/shield.py} (\texttt{safe\_landing} mode).
+\textbf{Code anchor.} \texttt{src/orius/universal\_theory/battery\_instantiation.py}
+(\texttt{evaluate\_graceful\_degradation\_dominance()}), with
+\texttt{safe\_landing} kept as supporting implementation evidence only.
 
 \subsection{Theorem 9: Universal Impossibility}
 \label{sec:thm-universal-impossibility}
@@ -159,9 +201,10 @@ $\mathbb{E}[V_T(\pi)] \ge c\,d\,T$ for some constant $c > 0$.
 \textbf{Assumptions.} A4 (boundary reachability), A6$'$ ($\varphi$-mixing
 fault process).
 
-\textbf{Proof status.} Proved as a structural impossibility theorem under the
-explicit $\varphi$-mixing and boundary-reachability assumptions; battery T4 is
-the reference witness for the per-window violation probability.
+\textbf{Proof status.} Structural impossibility theorem under explicit
+$\varphi$-mixing and boundary-reachability assumptions; battery T4 is the
+reference witness for the per-window violation probability and the witness
+constant remains theorem-local.
 
 \textbf{Code anchor.} No dedicated module; the battery
 \texttt{cpsbench\_iot/runner.py} provides the reference witness;
@@ -179,16 +222,16 @@ $\mathbb{E}[V_T(\pi)] \ge \tfrac{1}{4}\,\alpha(1-\bar{w})T$.
 \textbf{Assumptions.} A1, A2, A5$'$ (calibration regularity), conformal
 coverage condition.
 
-\textbf{Proof status.} Proved under extra calibration/indistinguishability
-assumptions via Le~Cam's two-point method.  The theorem is defended as a
-scoped information-theoretic lower bound on degraded-observation control, not
-as a globally sharp minimax constant for every observation model.
+\textbf{Proof status.} Narrowed stylized lower-bound surface under extra
+calibration/indistinguishability assumptions.  The active audit records that
+the one-sided Le~Cam step remains open, so the code witness is treated as a
+scoped lower-bound calculator rather than a sharp frontier theorem.
 
 \textbf{Code anchor.} \texttt{src/orius/universal/reliability\_safety\_frontier.py}
 (\texttt{compute\_frontier}, \texttt{is\_dc3s\_optimal}); 25 unit tests
 in \texttt{tests/test\_reliability\_frontier.py}.
 
-\subsection{Theorem 11: Typed Structural Transfer and Failure-Mode Converse}
+\subsection{Theorem 11: Typed Structural Transfer}
 \label{sec:thm-universality-completeness}
 
 \textbf{Statement.} Any CPS domain instantiation satisfying the structural
@@ -201,9 +244,10 @@ without new battery-specific algebra.
 obligations stated in Definition~\ref{def:adapter-contract} and
 Theorem~\ref{thm:universality-completeness}.
 
-\textbf{Proof status.} Forward theorem plus explicit counterexample
-proposition showing that failure of any transfer obligation breaks the battery
-pattern; each new domain must still discharge those obligations explicitly.
+\textbf{Proof status.} Forward one-step transfer theorem.  The runtime now
+builds the four T11 obligation checks directly from typed artifacts, while the
+converse is tracked separately as a structural failure-mode proposition rather
+than as part of the defended T11 statement.
 
 \textbf{Code anchor.} \texttt{src/orius/universal\_theory/contracts.py} and
 \texttt{src/orius/universal\_theory/kernel.py}, with a compact reference
@@ -215,29 +259,53 @@ harness in \texttt{src/orius/universal/contract.py}; focused tests in
 
 \section{Gap Audit Table}
 
-Table~\ref{tab:theorem-gap-audit} summarises the full T1--T11 theorem set.
+Table~\ref{tab:theorem-gap-audit} summarises the active T1--T11 audit surface,
+with the understanding that only a strict subset belongs to the June defended core.
 
 \begin{table}[htbp]
 \centering
-\caption{Theorem Gap Audit}
+\caption{Active T1--T11 theorem audit summary with flagship/supporting/draft posture}
 \label{tab:theorem-gap-audit}
 \small
 \begin{tabular}{@{}llllp{3.2cm}@{}}
 \toprule
-\textbf{Theorem} & \textbf{Proof complete} & \textbf{Empirical validation} & \textbf{Code matches statement} & \textbf{Notes} \\
+\textbf{Theorem} & \textbf{Proof status} & \textbf{Empirical validation} & \textbf{Code matches statement} & \textbf{Notes} \\
 \midrule
 T1 OASG Existence & Structural & Yes & Yes & Observed-vs-true split is explicit in benchmark code and locked evidence \\
 T2 One-Step Safety Preservation & Yes (conditional one-step) & Yes & Yes & Shield + guarantee checks + unit tests anchor the theorem; coverage frequency handled separately \\
-T3 ORIUS Core Bound & Yes (under explicit risk budget) & Yes & Yes & \texttt{coverage\_theorem.py} computes the envelope and records the extra assumptions used \\
+T3a ORIUS Core Envelope Derivation & Paper-rigorous & Yes & Yes & Runtime theorem-contract summary now separates executable envelope algebra from the declared calibration bridge \\
+T3b ORIUS Core Aggregation Corollary & Corollary only & Yes & Yes & Supporting aggregation corollary derived from T3a by linearity of expectation \\
 T4 No Free Safety & Constructive witness & Yes & Partial & Battery proof gives an explicit degraded-observation sequence; broader baseline comparison remains empirical \\
-T5 Certificate Validity Horizon & Yes & Yes & Yes & Forward-tube helper and horizon computation added as theorem-specific anchors \\
-T6 Certificate Expiration Bound & Yes & Yes & Yes & Analytical lower bound is implemented; runtime expiry enforcement closes the empirical gap \\
-T7 Feasible Fallback Existence & Yes & Partial & Yes & Constructive zero-dispatch fallback is validated for bounded-error interior states \\
-T8 Graceful Degradation Dominance & Yes & Partial & Yes & Comparison helper and safe-landing implementation exist; evidence remains bounded to current traces \\
+T5 Certificate Validity Horizon Definition & Explicit definition & Yes & Yes & Maximal forward-tube containment helper is constructive and excluded from defended theorem counts \\
+T6 Certificate Expiration Bound & V2-linked auxiliary theorem & Yes & Yes & Canonical helper is delta-aware and rejects legacy no-delta theorem semantics \\
+T7 Feasible Fallback Existence & Narrowed to interior states & Partial & Partial & Constructive zero-dispatch fallback is validated only for bounded-error interior states \\
+T8 Graceful Degradation Dominance & Supporting sequence comparison & Partial & Yes & Defended only as a paired-sequence comparator under a shared fault trace; absorbing landing remains supporting-only \\
 \midrule
-T9 Universal Impossibility & Yes (structural impossibility) & Yes & N/A & $\varphi$-mixing + Azuma--Hoeffding argument; battery T4 is the reference witness; ch37 \S\,\ref{sec:t9-universal-impossibility} \\
-T10 Boundary-Indistinguishability Lower Bound & Yes (under extra frontier assumptions) & Partial & N/A & Le~Cam two-point method; scoped lower bound rather than a globally sharp minimax claim; ch37 \S\,\ref{sec:t10-lower-bound}; \texttt{reliability\_safety\_frontier.py} \\
-T11 Typed Structural Transfer & Forward proof + counterexamples & Yes & Yes & Structural transfer obligations plus failure-mode converse; typed kernel + reference harness; ch37 \S\,\ref{subsec:adapter-contract} \\
+T9 Universal Impossibility & Structural / scoped witness constant & Yes & Partial & $\varphi$-mixing + Azuma windowing remain explicit assumptions; battery T4 is the reference witness; ch37 \S\,\ref{sec:t9-universal-impossibility} \\
+T10 Boundary-Indistinguishability Lower Bound & Narrowed stylized lower bound & Partial & Partial & Le~Cam step remains one-sided; the executable witness is a scoped lower-bound calculator, not a sharp frontier theorem \\
+T11 Typed Structural Transfer & Forward-only one-step transfer & Yes & Yes & Typed runtime artifacts now carry four-obligation summaries; the converse and mini-harness remain separate supporting surfaces \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Audited extension laws and depth-theorem surfaces}
+\label{tab:extension-theorem-gap-audit}
+\small
+\begin{tabular}{@{}llllp{3.1cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Status} & \textbf{Code surface} & \textbf{Audit posture} & \textbf{Notes} \\
+\midrule
+L1 & Broken as standalone converse & \texttt{orius\_law.py} & Stylized surrogate only & Linear lower envelope retained for extension calculators only \\
+L2 & Broken as theorem of live OQE & \texttt{orius\_law.py}, \texttt{quality.py} & Proxy bridge only & Requires external justification of $\kappa_d$ and the capacity proxy \\
+L3 & Has a hole & \texttt{orius\_law.py} & Narrowed threshold calculator & Depends on L2 proxy plus the executable T3 upper envelope \\
+L4 & Has a hole & \texttt{orius\_law.py} & Stylized sandwich & Executable upper side plus proxy lower side; not a closed characterization \\
+T11\_Byzantine & Plausible but informal & \texttt{theoretical\_guarantees.py} & Bounded extension & Matches the trimmed-mean witness and tests \\
+T\_stale\_decay & Plausible but informal & \texttt{theoretical\_guarantees.py} & Bounded extension & Geometric decay is a design schedule, not a derived physical law \\
+T\_minimax & Broken as defended minimax theorem & \texttt{theoretical\_guarantees.py} & Stylized lower-envelope witness & Inherits the open L1/L2 proxy bridge \\
+T\_sensor\_converse & Broken as universal converse & \texttt{theoretical\_guarantees.py} & Stylized inverse threshold & Necessity only holds inside the L2/L3 proxy model \\
+T\_trajectory\_PAC & Plausible but informal & \texttt{risk\_bounds.py} & Defended as Bonferroni certificate & No separate Ville-strengthened theorem is claimed \\
 \bottomrule
 \end{tabular}
 \end{table}

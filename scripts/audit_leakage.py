@@ -32,6 +32,11 @@ DATASETS = {
         "features_path": Path("data/processed/us_eia930/features.parquet"),
         "models_dir": Path("artifacts/models_eia930"),
     },
+    "HEALTHCARE": {
+        "splits_dir": Path("data/healthcare/processed/splits"),
+        "features_path": Path("data/healthcare/processed/features.parquet"),
+        "models_dir": Path("artifacts/models_healthcare"),
+    },
 }
 
 
@@ -58,6 +63,12 @@ def _pair_overlap(a: pd.Series, b: pd.Series) -> int:
     if a.empty or b.empty:
         return 0
     return int(len(set(a.astype(str)) & set(b.astype(str))))
+
+
+def _id_series(df: pd.DataFrame, column: str) -> pd.Series:
+    if column not in df.columns:
+        return pd.Series(dtype="object")
+    return df[column].dropna().astype(str)
 
 
 def _boundaries_ok(
@@ -174,6 +185,10 @@ def run_leakage_audit(*, config_path: Path) -> dict[str, Any]:
         calibration_ts = _to_ts_series(calibration_df)
         val_ts = _to_ts_series(val_df)
         test_ts = _to_ts_series(test_df)
+        train_patients = _id_series(train_df, "patient_id")
+        calibration_patients = _id_series(calibration_df, "patient_id")
+        val_patients = _id_series(val_df, "patient_id")
+        test_patients = _id_series(test_df, "patient_id")
 
         overlap_train_calibration = _pair_overlap(train_ts, calibration_ts)
         overlap_calibration_val = _pair_overlap(calibration_ts, val_ts)
@@ -181,6 +196,12 @@ def run_leakage_audit(*, config_path: Path) -> dict[str, Any]:
         overlap_train_val = _pair_overlap(train_ts, val_ts)
         overlap_train_test = _pair_overlap(train_ts, test_ts)
         overlap_val_test = _pair_overlap(val_ts, test_ts)
+        patient_overlap_train_calibration = _pair_overlap(train_patients, calibration_patients)
+        patient_overlap_calibration_val = _pair_overlap(calibration_patients, val_patients)
+        patient_overlap_calibration_test = _pair_overlap(calibration_patients, test_patients)
+        patient_overlap_train_val = _pair_overlap(train_patients, val_patients)
+        patient_overlap_train_test = _pair_overlap(train_patients, test_patients)
+        patient_overlap_val_test = _pair_overlap(val_patients, test_patients)
 
         boundaries = _boundaries_ok(train_ts, calibration_ts, val_ts, test_ts)
         feature_scan = _scan_feature_names(dcfg["features_path"], forbidden_exact, forbidden_patterns)
@@ -190,21 +211,45 @@ def run_leakage_audit(*, config_path: Path) -> dict[str, Any]:
         if overlap_train_calibration > max_overlap_train_calibration:
             dataset_fail = True
             violations.append({"dataset": name, "type": "overlap_train_calibration", "value": overlap_train_calibration})
+        if patient_overlap_train_calibration > max_overlap_train_calibration:
+            dataset_fail = True
+            violations.append(
+                {"dataset": name, "type": "patient_overlap_train_calibration", "value": patient_overlap_train_calibration}
+            )
         if overlap_calibration_val > max_overlap_calibration_val:
             dataset_fail = True
             violations.append({"dataset": name, "type": "overlap_calibration_val", "value": overlap_calibration_val})
+        if patient_overlap_calibration_val > max_overlap_calibration_val:
+            dataset_fail = True
+            violations.append(
+                {"dataset": name, "type": "patient_overlap_calibration_val", "value": patient_overlap_calibration_val}
+            )
         if overlap_calibration_test > max_overlap_calibration_test:
             dataset_fail = True
             violations.append({"dataset": name, "type": "overlap_calibration_test", "value": overlap_calibration_test})
+        if patient_overlap_calibration_test > max_overlap_calibration_test:
+            dataset_fail = True
+            violations.append(
+                {"dataset": name, "type": "patient_overlap_calibration_test", "value": patient_overlap_calibration_test}
+            )
         if overlap_train_val > max_overlap_train_val:
             dataset_fail = True
             violations.append({"dataset": name, "type": "overlap_train_val", "value": overlap_train_val})
+        if patient_overlap_train_val > max_overlap_train_val:
+            dataset_fail = True
+            violations.append({"dataset": name, "type": "patient_overlap_train_val", "value": patient_overlap_train_val})
         if overlap_train_test > max_overlap_train_test:
             dataset_fail = True
             violations.append({"dataset": name, "type": "overlap_train_test", "value": overlap_train_test})
+        if patient_overlap_train_test > max_overlap_train_test:
+            dataset_fail = True
+            violations.append({"dataset": name, "type": "patient_overlap_train_test", "value": patient_overlap_train_test})
         if overlap_val_test > max_overlap_val_test:
             dataset_fail = True
             violations.append({"dataset": name, "type": "overlap_val_test", "value": overlap_val_test})
+        if patient_overlap_val_test > max_overlap_val_test:
+            dataset_fail = True
+            violations.append({"dataset": name, "type": "patient_overlap_val_test", "value": patient_overlap_val_test})
         if (
             not boundaries["train_calibration_ok"]
             or not boundaries["calibration_val_ok"]
@@ -245,6 +290,14 @@ def run_leakage_audit(*, config_path: Path) -> dict[str, Any]:
                 "train_val": int(overlap_train_val),
                 "train_test": int(overlap_train_test),
                 "val_test": int(overlap_val_test),
+            },
+            "patient_overlap": {
+                "train_calibration": int(patient_overlap_train_calibration),
+                "calibration_val": int(patient_overlap_calibration_val),
+                "calibration_test": int(patient_overlap_calibration_test),
+                "train_val": int(patient_overlap_train_val),
+                "train_test": int(patient_overlap_train_test),
+                "val_test": int(patient_overlap_val_test),
             },
             "boundaries": boundaries,
             "feature_scan": feature_scan,

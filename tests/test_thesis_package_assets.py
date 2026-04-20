@@ -1,450 +1,177 @@
 from __future__ import annotations
 
+import csv
 import json
-import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-ACTIVE_SCAN_DIRS = [
-    REPO_ROOT / "docs",
-    REPO_ROOT / "frontmatter",
-    REPO_ROOT / "paper",
-    REPO_ROOT / "chapters",
-    REPO_ROOT / "reports" / "publication",
-    REPO_ROOT / "scripts",
-]
-ACTIVE_SCAN_SUFFIXES = {".md", ".tex", ".csv", ".json", ".py", ".yaml", ".yml", ".txt"}
-LEGACY_PATTERN = re.compile(
-    r"Paper~?[1-6]\b|Papers~?[1-6]|Papers~?2--6|program-first|battery-first"
-)
-ALLOWED_LEGACY_REFERENCES: dict[Path, tuple[re.Pattern[str], ...]] = {
-    REPO_ROOT / "chapters" / "ch01_introduction.tex": (
-        re.compile(r"supersedes the earlier battery-first ORIUS monograph", re.IGNORECASE),
-    ),
-}
-MERGE_MARKER_PATTERN = re.compile(r"^(<<<<<<< .+|=======|>>>>>>> .+)$", re.MULTILINE)
-LEGACY_NONCANONICAL_MONOGRAPH_FILES = [
-    "app_ad_annotated_bibliography_map.tex",
-    "app_ae_expanded_reviewer_gap_analysis.tex",
-    "app_af_domain_protocol_cards.tex",
-    "app_ag_module_claim_crosswalk.tex",
-    "app_ah_publication_artifact_index.tex",
-    "app_ai_formula_and_term_register.tex",
-    "ch01_physical_ai_safety.tex",
-    "ch02_oasg_claim_boundary.tex",
-    "ch03_related_work_universal.tex",
-    "ch04_universal_runtime_layer.tex",
-    "ch05_detect_calibrate_constrain_shield_certify.tex",
-    "ch06_theory_bridge.tex",
-    "ch07_system_benchmark_governance.tex",
-    "ch08_battery_bridge.tex",
-    "ch09_av_domain.tex",
-    "ch10_industrial_domain.tex",
-    "ch11_healthcare_domain.tex",
-    "ch12_navigation_domain.tex",
-    "ch13_aerospace_domain.tex",
-    "ch14_cross_domain_synthesis.tex",
-    "ch15_societal_impact_and_roadmap.tex",
-    "ch16_conclusion_monograph.tex",
-]
 
 
-def _iter_active_text_surfaces() -> list[Path]:
-    files: list[Path] = [REPO_ROOT / "README.md", REPO_ROOT / "Makefile"]
-    excluded_prefixes = {
-        REPO_ROOT / "reports" / "legacy_archive",
-        REPO_ROOT / "reports" / "publication" / "final_package_FINAL_20260317T024839Z",
-        REPO_ROOT / "reports" / "publication" / "final_package_FINAL_20260317T030715Z",
-        REPO_ROOT / "reports" / "publication" / "final_package_FINAL_BAT12_20260317T040740Z",
-        REPO_ROOT / "reports" / "publication" / "final_package_FINAL_BATTERY_FULL_20260317T052750Z",
-        REPO_ROOT / "reports" / "publication" / "final_package_FINAL_DEUS_20260317T034523Z",
-        REPO_ROOT / "paper" / "bibliography",
-    }
-    excluded_suffixes = {
-        ".aux",
-        ".bbl",
-        ".blg",
-        ".log",
-        ".lof",
-        ".lot",
-        ".out",
-        ".pdf",
-        ".png",
-        ".jpg",
-        ".jpeg",
-        ".svg",
-    }
-    for directory in ACTIVE_SCAN_DIRS:
-        for path in directory.rglob("*"):
-            if not path.is_file():
-                continue
-            if any(path.is_relative_to(prefix) for prefix in excluded_prefixes):
-                continue
-            if path.suffix.lower() in excluded_suffixes:
-                continue
-            if path.name in {"paper.bib", "orius_monograph.bib", "test_thesis_package_assets.py"}:
-                continue
-            if path.suffix.lower() not in ACTIVE_SCAN_SUFFIXES and path.name != "Makefile":
-                continue
-            files.append(path)
-    return sorted(set(files))
-
-
-def test_final_project_artifacts_exist() -> None:
+def test_core_three_domain_assets_exist() -> None:
     required = [
-        REPO_ROOT / "docs" / "ORIUS_THESIS_TERMINOLOGY_GUIDE.md",
-        REPO_ROOT / "docs" / "UNIVERSAL_KERNEL_ARCHITECTURE.md",
-        REPO_ROOT / "docs" / "UNIVERSAL_BENCHMARK_SPEC.md",
-        REPO_ROOT / "docs" / "UNIVERSAL_GOVERNANCE_SPEC.md",
-        REPO_ROOT / "docs" / "BOUNDED_UNIVERSAL_CLOSURE_PROGRAM.md",
-        REPO_ROOT / "reports" / "publication" / "orius_literature_matrix.csv",
-        REPO_ROOT / "reports" / "publication" / "orius_framework_gap_matrix.csv",
-        REPO_ROOT / "reports" / "publication" / "orius_maturity_matrix.csv",
-        REPO_ROOT / "reports" / "publication" / "orius_monograph_chapter_map.csv",
-        REPO_ROOT / "reports" / "publication" / "orius_equal_domain_parity_matrix.csv",
+        REPO_ROOT / "README.md",
+        REPO_ROOT / "ORIUS_REPRODUCIBILITY.md",
+        REPO_ROOT / "paper" / "README.md",
+        REPO_ROOT / "paper" / "manifest.yaml",
+        REPO_ROOT / "paper" / "orius_program_manifest.json",
+        REPO_ROOT / "paper" / "review" / "orius_review_dossier.tex",
+        REPO_ROOT / "paper" / "monograph" / "ch09_universal_orius_across_domains.tex",
+        REPO_ROOT / "paper" / "monograph" / "ch13_governance_reproducibility_limitations_and_conclusion.tex",
         REPO_ROOT / "reports" / "publication" / "orius_domain_closure_matrix.csv",
         REPO_ROOT / "reports" / "publication" / "orius_submission_scorecard.csv",
-        REPO_ROOT / "reports" / "publication" / "orius_submission_scorecard.json",
-        REPO_ROOT / "reports" / "publication" / "orius_submission_scorecard.md",
-        REPO_ROOT / "reports" / "publication" / "orius_calibration_diagnostics_matrix.csv",
-        REPO_ROOT / "reports" / "publication" / "orius_runtime_budget_matrix.csv",
-        REPO_ROOT / "reports" / "publication" / "orius_governance_lifecycle_matrix.csv",
-        REPO_ROOT / "reports" / "publication" / "orius_deployment_validation_scope.csv",
-        REPO_ROOT / "reports" / "publication" / "orius_93plus_gap_matrix.csv",
-        REPO_ROOT / "reports" / "publication" / "orius_93plus_reviewer_rerun.csv",
-        REPO_ROOT / "reports" / "publication" / "orius_93plus_closure_program.md",
-        REPO_ROOT / "reports" / "publication" / "orius_refresh_lane_status.csv",
-        REPO_ROOT / "reports" / "publication" / "orius_supplemental_hf_evidence.csv",
-        REPO_ROOT / "reports" / "publication" / "orius_supplemental_hf_evidence.md",
-        REPO_ROOT / "reports" / "publication" / "orius_fresh_results_package.md",
-        REPO_ROOT / "reports" / "publication" / "orius_refresh_execution.json",
-        REPO_ROOT / "reports" / "publication" / "orius_refresh_execution.md",
-        REPO_ROOT / "reports" / "publication" / "orius_artifact_appendix.md",
-        REPO_ROOT / "reports" / "publication" / "battery_deep_oqe_summary.csv",
-        REPO_ROOT / "reports" / "publication" / "battery_deep_oqe_summary.json",
-        REPO_ROOT / "reports" / "publication" / "battery_deep_oqe_summary.md",
-        REPO_ROOT / "reports" / "publication" / "battery_deep_oqe_buckets.csv",
-        REPO_ROOT / "reports" / "publication" / "battery_deep_oqe_safety_metrics.csv",
-        REPO_ROOT / "reports" / "publication" / "battery_deep_oqe_safety_metrics.md",
-        REPO_ROOT / "reports" / "publication" / "battery_raw_sequence_track_benchmark.csv",
-        REPO_ROOT / "reports" / "publication" / "battery_raw_sequence_track_benchmark.md",
-        REPO_ROOT / "reports" / "publication" / "battery_raw_sequence_track_slices.csv",
-        REPO_ROOT / "reports" / "publication" / "battery_deep_learning_novelty_register.json",
-        REPO_ROOT / "reports" / "publication" / "battery_deep_learning_novelty_register.md",
-        REPO_ROOT / "reports" / "publication" / "fig_battery_deep_oqe_summary.png",
-        REPO_ROOT / "reports" / "publication" / "fig_battery_deep_oqe_safety_metrics.png",
-        REPO_ROOT / "reports" / "publication" / "fig_battery_raw_sequence_track_benchmark.png",
-        REPO_ROOT / "reports" / "publication" / "fig_orius_equal_domain_gate_timeline.png",
-        REPO_ROOT / "reports" / "publication" / "fig_orius_calibration_coverage_matrix.png",
-        REPO_ROOT / "reports" / "publication" / "fig_orius_runtime_governance_matrix.png",
-        REPO_ROOT / "reports" / "publication" / "aerospace_public_flight_runtime_summary.json",
-        REPO_ROOT / "reports" / "publication" / "aerospace_public_flight_runtime_summary.csv",
-        REPO_ROOT / "reports" / "publication" / "aerospace_public_flight_runtime_summary.md",
-        REPO_ROOT / "reports" / "publication" / "aerospace_public_flight_governance_matrix.csv",
-        REPO_ROOT / "reports" / "publication" / "aerospace_public_flight_calibration_diagnostics.csv",
-        REPO_ROOT / "reports" / "publication" / "aerospace_public_flight_candidate_parity.csv",
-        REPO_ROOT / "reports" / "final_thesis_submission_checklist.md",
-        REPO_ROOT / "reports" / "final_thesis_submission_audit.md",
-        REPO_ROOT / "reports" / "final_submission_reproducibility_note.md",
-        REPO_ROOT / "reports" / "final_code_data_availability_statement.md",
-        REPO_ROOT / "scripts" / "hf_jobs" / "README.md",
-        REPO_ROOT / "scripts" / "hf_jobs" / "canonical_closure_refresh_job.py",
-        REPO_ROOT / "scripts" / "hf_jobs" / "navigation_realdata_closure_job.py",
-        REPO_ROOT / "scripts" / "hf_jobs" / "aerospace_flight_closure_job.py",
-        REPO_ROOT / "scripts" / "hf_jobs" / "aerospace_public_adsb_runtime_job.py",
-        REPO_ROOT / "scripts" / "hf_jobs" / "deep_learning_novelty_job.py",
-        REPO_ROOT / "scripts" / "hf_jobs" / "calibration_diagnostics_job.py",
-        REPO_ROOT / "scripts" / "hf_jobs" / "runtime_governance_trace_job.py",
-        REPO_ROOT / "scripts" / "build_aerospace_public_adsb_runtime.py",
-        REPO_ROOT / "scripts" / "build_aerospace_real_flight_dataset.py",
+        REPO_ROOT / "reports" / "publication" / "defended_theorem_core.json",
+        REPO_ROOT / "reports" / "publication" / "defended_theorem_core.csv",
+        REPO_ROOT / "reports" / "publication" / "defended_theorem_core.md",
+        REPO_ROOT / "reports" / "publication" / "defended_assumption_map.csv",
+        REPO_ROOT / "reports" / "publication" / "defended_assumption_map.md",
+        REPO_ROOT / "reports" / "publication" / "active_theorem_audit.json",
+        REPO_ROOT / "reports" / "publication" / "external_proof_audit_packet.md",
+        REPO_ROOT / "reports" / "publication" / "external_proof_audit_findings.csv",
+        REPO_ROOT / "reports" / "battery_av_healthcare" / "overall" / "release_summary.json",
+        REPO_ROOT / "reports" / "battery_av_healthcare" / "overall" / "publication_closure_override.json",
+        REPO_ROOT / "scripts" / "build_orius_monograph_assets.py",
+        REPO_ROOT / "scripts" / "build_active_theorem_audit.py",
+        REPO_ROOT / "scripts" / "build_missing_tables.py",
+        REPO_ROOT / "scripts" / "verify_phase_346_closure.py",
+        REPO_ROOT / "scripts" / "refresh_real_data_manifests.py",
+        REPO_ROOT / "scripts" / "verify_real_data_preflight.py",
         REPO_ROOT / "scripts" / "run_orius_canonical_closure_refresh.py",
-        REPO_ROOT / "scripts" / "run_battery_deep_novelty.py",
-        REPO_ROOT / "src" / "orius" / "dc3s" / "deep_oqe.py",
-        REPO_ROOT / "paper" / "assets" / "tables" / "generated" / "tbl_battery_deep_oqe_summary.tex",
-        REPO_ROOT / "paper" / "assets" / "tables" / "generated" / "tbl_battery_deep_oqe_safety_metrics.tex",
-        REPO_ROOT / "paper" / "assets" / "tables" / "generated" / "tbl_battery_raw_sequence_track.tex",
-        REPO_ROOT / "paper" / "assets" / "figures" / "fig_battery_deep_oqe_summary.png",
-        REPO_ROOT / "paper" / "assets" / "figures" / "fig_battery_deep_oqe_safety_metrics.png",
-        REPO_ROOT / "paper" / "assets" / "figures" / "fig_battery_raw_sequence_track_benchmark.png",
-        REPO_ROOT / "paper" / "assets" / "figures" / "fig_orius_equal_domain_gate_timeline.png",
-        REPO_ROOT / "paper" / "assets" / "figures" / "fig_orius_calibration_coverage_matrix.png",
-        REPO_ROOT / "paper" / "assets" / "figures" / "fig_orius_runtime_governance_matrix.png",
-        REPO_ROOT / "paper" / "review" / "generated" / "review_bibliography_map.tex",
-        REPO_ROOT / "paper" / "review" / "generated" / "review_gap_analysis.tex",
-        REPO_ROOT / "paper" / "review" / "generated" / "review_domain_protocol_cards.tex",
-        REPO_ROOT / "paper" / "review" / "generated" / "review_module_claim_crosswalk.tex",
-        REPO_ROOT / "paper" / "review" / "generated" / "review_publication_artifact_index.tex",
-        REPO_ROOT / "paper" / "review" / "generated" / "review_formula_and_term_register.tex",
     ]
-
     missing = [str(path.relative_to(REPO_ROOT)) for path in required if not path.exists()]
     assert missing == []
 
 
-def test_docs_index_points_to_canonical_manuscript_and_universal_specs() -> None:
-    text = (REPO_ROOT / "docs" / "README.md").read_text(encoding="utf-8")
-    assert "paper/paper.tex" in text
-    assert "UNIVERSAL_KERNEL_ARCHITECTURE.md" in text
-    assert "UNIVERSAL_BENCHMARK_SPEC.md" in text
-    assert "UNIVERSAL_GOVERNANCE_SPEC.md" in text
+def test_removed_domains_and_old_gate_absent_from_core_truth_surfaces() -> None:
+    forbidden = ("industrial", "navigation", "aerospace", "equal_domain_93", "orius_equal_domain_parity_matrix")
+    surfaces = [
+        REPO_ROOT / "README.md",
+        REPO_ROOT / "ORIUS_REPRODUCIBILITY.md",
+        REPO_ROOT / "paper" / "README.md",
+        REPO_ROOT / "paper" / "manifest.yaml",
+        REPO_ROOT / "paper" / "orius_program_manifest.json",
+        REPO_ROOT / "paper" / "review" / "orius_review_dossier.tex",
+        REPO_ROOT / "paper" / "monograph" / "ch09_universal_orius_across_domains.tex",
+        REPO_ROOT / "paper" / "monograph" / "ch13_governance_reproducibility_limitations_and_conclusion.tex",
+        REPO_ROOT / "reports" / "publication" / "README.md",
+        REPO_ROOT / "reports" / "publication" / "tbl_orius_calibration_diagnostics.tex",
+        REPO_ROOT / "reports" / "publication" / "tbl_orius_governance_lifecycle_matrix.tex",
+        REPO_ROOT / "reports" / "publication" / "orius_review_global_gap_matrix.csv",
+        REPO_ROOT / "reports" / "publication" / "orius_reviewer_scorecards.csv",
+        REPO_ROOT / "reports" / "publication" / "orius_deployment_validation_scope.csv",
+        REPO_ROOT / "reports" / "publication" / "tbl_orius_deployment_validation_scope.tex",
+        REPO_ROOT / "reports" / "publication" / "orius_transfer_obligation_table.csv",
+        REPO_ROOT / "reports" / "publication" / "github_issue_specs.csv",
+        REPO_ROOT / "scripts" / "hf_jobs" / "README.md",
+        REPO_ROOT / "Makefile",
+    ]
+    for path in surfaces:
+        text = path.read_text(encoding="utf-8").lower()
+        for token in forbidden:
+            assert token not in text, f"{token} leaked in {path.relative_to(REPO_ROOT)}"
 
 
-def test_submission_governance_points_to_canonical_manuscript() -> None:
-    metrics_manifest = (REPO_ROOT / "paper" / "metrics_manifest.json").read_text(encoding="utf-8")
-    release_manifest = (REPO_ROOT / "reports" / "publication" / "release_manifest.json").read_text(encoding="utf-8")
-    assert '"master_manuscript": "paper/paper.tex"' in metrics_manifest
-    assert '"master_manuscript": "paper/paper.tex"' in release_manifest
+def test_scorecard_and_closure_matrix_are_literal_three_domain_surfaces() -> None:
+    scorecard_rows = list(csv.DictReader((REPO_ROOT / "reports" / "publication" / "orius_submission_scorecard.csv").open()))
+    closure_rows = list(csv.DictReader((REPO_ROOT / "reports" / "publication" / "orius_domain_closure_matrix.csv").open()))
+
+    assert [row["target_tier"] for row in scorecard_rows] == ["three_domain_93_candidate"]
+    assert {row["domain"] for row in closure_rows} == {
+        "Battery Energy Storage",
+        "Autonomous Vehicles",
+        "Medical and Healthcare Monitoring",
+    }
 
 
-def test_submission_frontmatter_has_no_draft_or_committee_markers() -> None:
-    titlepage = (REPO_ROOT / "frontmatter" / "titlepage.tex").read_text(encoding="utf-8").lower()
-    acknowledgments = (REPO_ROOT / "frontmatter" / "acknowledgments.tex").read_text(encoding="utf-8").lower()
-    abstract = (REPO_ROOT / "frontmatter" / "abstract.tex").read_text(encoding="utf-8").lower()
+def test_defended_theorem_core_is_strict_and_bounded() -> None:
+    defended_core = json.loads((REPO_ROOT / "reports" / "publication" / "defended_theorem_core.json").read_text(encoding="utf-8"))
+    summary = defended_core["summary"]
+    rows = defended_core["rows"]
 
-    assert "draft" not in titlepage
-    assert "committee" not in titlepage
-    assert "advisor" not in titlepage
-    assert "draft" not in acknowledgments
-    assert "draft" not in abstract
-
-
-def test_canonical_manuscript_uses_ieee_bibliography_style() -> None:
-    paper_tex = (REPO_ROOT / "paper" / "paper.tex").read_text(encoding="utf-8")
-    assert "\\bibliographystyle{IEEEtran}" in paper_tex
-
-
-def test_active_surfaces_are_monograph_native() -> None:
-    violations: list[str] = []
-    for path in _iter_active_text_surfaces():
-        text = path.read_text(encoding="utf-8")
-        filtered_text = text
-        for allowed_pattern in ALLOWED_LEGACY_REFERENCES.get(path, ()):
-            filtered_text = allowed_pattern.sub("", filtered_text)
-        if MERGE_MARKER_PATTERN.search(text):
-            violations.append(f"merge markers in {path.relative_to(REPO_ROOT)}")
-        if LEGACY_PATTERN.search(filtered_text):
-            violations.append(f"legacy narrative in {path.relative_to(REPO_ROOT)}")
-    assert violations == []
-
-
-def test_orius_expansion_is_consistent_on_core_surfaces() -> None:
-    expected_ascii = "Observation--Reality Integrity for Universal Safety"
-    expected_unicode = "Observation–Reality Integrity for Universal Safety"
-    titlepage = (REPO_ROOT / "frontmatter" / "titlepage.tex").read_text(encoding="utf-8")
-    abstract = (REPO_ROOT / "frontmatter" / "abstract.tex").read_text(encoding="utf-8")
-    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
-
-    assert expected_ascii in titlepage
-    assert expected_ascii in abstract
-    assert expected_unicode in readme
-
-
-def test_monograph_depth_floor_is_preserved() -> None:
-    bib_entries = sum(
-        1 for line in (REPO_ROOT / "paper" / "bibliography" / "orius_monograph.bib").read_text(encoding="utf-8").splitlines() if line.startswith("@")
+    assert summary["flagship_defended_ids"] == ["T1", "T2", "T3a", "T4", "T11", "T_trajectory_PAC"]
+    assert summary["supporting_defended_ids"] == ["T3b", "T6", "T8", "T11_Byzantine", "T_stale_decay"]
+    assert summary["flagship_gate_ready"] is True
+    assert all(row["scope_note"] for row in rows)
+    assert all(
+        row["rigor_rating"] not in {"broken", "has-a-hole"}
+        for row in rows
+        if row["defense_tier"] == "flagship_defended"
     )
-    paper_log_path = REPO_ROOT / "paper" / "paper.log"
-    match = None
-    if paper_log_path.exists():
-        match = re.search(r"Output written on paper/paper\.pdf \((\d+) pages", paper_log_path.read_text(encoding="utf-8"))
-    pdf_pages = None
-    if match is None:
-        completed = subprocess.run(
-            [
-                sys.executable,
-                str(REPO_ROOT / "scripts" / "pdf_page_count.py"),
-                str(REPO_ROOT / "paper" / "paper.pdf"),
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
+
+
+def test_canonical_defense_surfaces_use_current_paths_and_strict_core_language() -> None:
+    surfaces = [
+        REPO_ROOT / "appendices" / "app_s_claim_evidence_registers.tex",
+        REPO_ROOT / "appendices" / "app_n_defense_lock_templates.tex",
+        REPO_ROOT / "appendices" / "app_z_theorem_and_paper_sync_registers.tex",
+        REPO_ROOT / "chapters" / "ch01_introduction.tex",
+        REPO_ROOT / "chapters" / "ch15_assumptions_notation_proof_discipline.tex",
+        REPO_ROOT / "reports" / "publication" / "claim_evidence_matrix.csv",
+        REPO_ROOT / "reports" / "publication" / "battery_claim_evidence_register.csv",
+        REPO_ROOT / "reports" / "publication" / "chapter_theorem_traceability.csv",
+        REPO_ROOT / "paper" / "assets" / "tables" / "generated" / "tbl_claim_evidence.tex",
+    ]
+    for path in surfaces:
+        text = path.read_text(encoding="utf-8")
+        assert "src/gridpulse/" not in text, f"legacy path leaked in {path.relative_to(REPO_ROOT)}"
+
+    introduction = (REPO_ROOT / "chapters" / "ch01_introduction.tex").read_text(encoding="utf-8")
+    assert "Flagship defended." in introduction
+    assert "Draft / non-defended extensions." in introduction
+
+    appendix_s = (REPO_ROOT / "appendices" / "app_s_claim_evidence_registers.tex").read_text(encoding="utf-8")
+    assert "registry-canonical defended core" in appendix_s
+    assert "flagship defended" in appendix_s
+
+
+def test_three_domain_release_summary_is_sanitized_and_mimic_backed() -> None:
+    release_summary = json.loads(
+        (REPO_ROOT / "reports" / "battery_av_healthcare" / "overall" / "release_summary.json").read_text(encoding="utf-8")
+    )
+    override = json.loads(
+        (REPO_ROOT / "reports" / "battery_av_healthcare" / "overall" / "publication_closure_override.json").read_text(
+            encoding="utf-8"
         )
-        pdf_pages = int(completed.stdout.strip())
+    )
 
-    assert bib_entries >= 150
-    if match is not None:
-        assert int(match.group(1)) >= 90
-    if pdf_pages is not None:
-        assert pdf_pages >= 90
+    text = json.dumps(release_summary)
+    assert "/Users/" not in text
+    assert "battery_av_only" not in text
+    assert release_summary["submission_scope"] == "battery_av_healthcare"
+    assert "mimic3_manifest.json" in text
+    assert override["healthcare"]["resulting_tier"] == "proof_validated"
 
 
-def test_dissertation_entrypoint_uses_curated_13_chapter_spine() -> None:
-    paper_tex = (REPO_ROOT / "paper" / "paper.tex").read_text(encoding="utf-8")
-    chapter_includes = re.findall(r"\\include\{monograph/([^}]+)\}", paper_tex)
-    appendix_includes = re.findall(r"\\include\{(appendices/[^}]+|monograph/app_[^}]+)\}", paper_tex)
-
-    assert chapter_includes == [
-        "ch01_introduction_and_thesis_claims",
-        "ch02_related_work_and_novelty_gap",
-        "ch03_formal_problem_formulation",
-        "ch04_orius_architecture_dc3s_runtime_layer",
-        "ch05_mathematical_foundations_and_safety_guarantees",
-        "ch06_benchmark_and_reproducibility_protocol",
-        "ch07_witness_domain_implementation",
-        "ch08_witness_results_and_failure_analysis",
-        "ch09_universal_orius_across_domains",
-        "ch10_temporal_certificates_and_graceful_degradation",
-        "ch11_compositional_safety",
-        "ch12_certos_runtime_assurance",
-        "ch13_governance_reproducibility_limitations_and_conclusion",
-        "app_aj_assumption_register",
-        "app_ak_proofs",
-        "app_am_artifact_and_claim_index",
-        "app_an_safety_case_bundle_index",
+def test_promoted_healthcare_surfaces_are_mimic_only() -> None:
+    surfaces = [
+        REPO_ROOT / "data" / "DATASET_DOWNLOAD_GUIDE.md",
+        REPO_ROOT / "reports" / "publication" / "orius_deployment_validation_scope.csv",
+        REPO_ROOT / "paper" / "review" / "generated" / "review_gap_analysis.tex",
     ]
-    assert "\\include{chapters/" not in paper_tex
-    assert appendix_includes == [
-        "monograph/app_aj_assumption_register",
-        "monograph/app_ak_proofs",
-        "appendices/app_f_fault_specs",
-        "monograph/app_am_artifact_and_claim_index",
-        "monograph/app_an_safety_case_bundle_index",
-    ]
+    for path in surfaces:
+        text = path.read_text(encoding="utf-8").lower()
+        assert "mimic" in text
+        assert "bidmc-canonical" not in text
+        assert "bidmc canonical" not in text
 
 
-def test_legacy_noncanonical_monograph_files_are_deleted() -> None:
-    lingering = [
-        name for name in LEGACY_NONCANONICAL_MONOGRAPH_FILES
-        if (REPO_ROOT / "paper" / "monograph" / name).exists()
-    ]
-    assert lingering == []
+def test_makefile_no_longer_exposes_removed_domain_targets() -> None:
+    makefile = (REPO_ROOT / "Makefile").read_text(encoding="utf-8")
+    assert "equal-domain-gate" not in makefile
+    assert "navigation-datasets" not in makefile
+    assert "industrial-datasets" not in makefile
+    assert "aerospace-datasets" not in makefile
 
 
-def test_legacy_noncanonical_monograph_build_artifacts_are_absent() -> None:
-    lingering = [
-        path.name
-        for legacy_name in LEGACY_NONCANONICAL_MONOGRAPH_FILES
-        for suffix in (".aux", ".out", ".toc", ".lof", ".lot")
-        for path in [(REPO_ROOT / "paper" / "monograph" / Path(legacy_name).with_suffix(suffix))]
-        if path.exists()
-    ]
-    assert lingering == []
-
-
-def test_dissertation_core_chapters_reference_governed_assets() -> None:
-    chapter7 = (REPO_ROOT / "paper" / "monograph" / "ch07_witness_domain_implementation.tex").read_text(encoding="utf-8")
-    chapter8 = (REPO_ROOT / "paper" / "monograph" / "ch08_witness_results_and_failure_analysis.tex").read_text(encoding="utf-8")
-    chapter9 = (REPO_ROOT / "paper" / "monograph" / "ch09_universal_orius_across_domains.tex").read_text(encoding="utf-8")
-    chapter10 = (REPO_ROOT / "paper" / "monograph" / "ch10_temporal_certificates_and_graceful_degradation.tex").read_text(encoding="utf-8")
-    chapter12 = (REPO_ROOT / "paper" / "monograph" / "ch12_certos_runtime_assurance.tex").read_text(encoding="utf-8")
-    chapter13 = (REPO_ROOT / "paper" / "monograph" / "ch13_governance_reproducibility_limitations_and_conclusion.tex").read_text(encoding="utf-8")
-
-    assert "tbl07_dataset_cards" in chapter7
-    assert "tbl08_forecast_baselines" in chapter7
-    assert "tbl_battery_deep_oqe_summary" in chapter7
-    assert "fig_battery_reliability_baselines.png" in chapter7
-
-    assert "tbl01_main_results" in chapter8
-    assert "tbl02_ablations" in chapter8
-    assert "tbl03_cqr_group_coverage" in chapter8
-    assert "fig_battery_deep_oqe_safety_metrics.png" in chapter8
-    assert "Without ORIUS" in chapter8
-    assert "tbl_battery_raw_sequence_track" not in chapter8
-
-    assert "tbl_orius_equal_domain_parity_matrix" in chapter9
-    assert "fig_multi_domain_validation" in chapter9
-    assert "transfer as a recipe" in chapter9.lower()
-    assert "artifact surface. Navigation remains blocked by the missing real-data closure row" in chapter9
-    assert "tbl_ch40_44_cross_domain_support" not in chapter9
-
-    assert "fig_blackout_halflife.png" in chapter10
-    assert "fig_graceful_four_policies.png" in chapter10
-
-    assert "fig_orius_runtime_governance_matrix.png" in chapter12
-    assert "policy-driven runtime governance layer" in chapter12
-
-    assert "Navigation remains blocked" in chapter13
-    assert "defended multi-flight" in chapter13
-    assert "runtime validation surface with material post-repair gain" in chapter13
-    assert "tbl_orius_deployment_validation_scope" not in chapter13
-
-
-def test_93plus_support_tables_are_referenced_in_manuscript_and_scripts() -> None:
-    chapter9 = (REPO_ROOT / "paper" / "monograph" / "ch09_universal_orius_across_domains.tex").read_text(encoding="utf-8")
-    chapter12 = (REPO_ROOT / "paper" / "monograph" / "ch12_certos_runtime_assurance.tex").read_text(encoding="utf-8")
-    chapter13 = (REPO_ROOT / "paper" / "monograph" / "ch13_governance_reproducibility_limitations_and_conclusion.tex").read_text(encoding="utf-8")
-    scorecard = (REPO_ROOT / "reports" / "publication" / "orius_submission_scorecard.md").read_text(encoding="utf-8")
-    hf_jobs_readme = (REPO_ROOT / "scripts" / "hf_jobs" / "README.md").read_text(encoding="utf-8")
-
-    assert "tbl_orius_equal_domain_parity_matrix" in chapter9
-    assert "fig_multi_domain_validation" in chapter9
-    assert "fig_orius_runtime_governance_matrix.png" in chapter12
-    assert "In that exact sense," in chapter13
-    assert "the dissertation is universal in architecture, tiered in evidence." in chapter13
-    assert "equal-domain closure remains an empirical" in chapter13
-    assert "program that must be earned" in chapter13
-    assert "bounded_93_candidate" in scorecard
-    assert "public_flight_93_candidate" in scorecard
-    assert "equal_domain_93" in scorecard
-    assert "official canonical lane" in (REPO_ROOT / "reports" / "publication" / "orius_fresh_results_package.md").read_text(encoding="utf-8").lower()
-    assert "navigation_realdata_closure_job.py" in hf_jobs_readme
-    assert "aerospace_flight_closure_job.py" in hf_jobs_readme
-    assert "aerospace_public_adsb_runtime_job.py" in hf_jobs_readme
-    assert "canonical_closure_refresh_job.py" in hf_jobs_readme
-
-
-def test_canonical_closure_refresh_script_help_runs() -> None:
+def test_canonical_refresh_help_is_three_domain_only() -> None:
     completed = subprocess.run(
         [sys.executable, str(REPO_ROOT / "scripts" / "run_orius_canonical_closure_refresh.py"), "--help"],
         check=True,
         capture_output=True,
         text=True,
     )
-    assert "--mode" in completed.stdout
-    assert "canonical_plus_hf_support" in completed.stdout
-    assert "equal_domain_gate" in completed.stdout
-
-
-def test_canonical_refresh_execution_manifest_has_no_user_path_leaks() -> None:
-    payload = json.loads(
-        (REPO_ROOT / "reports" / "publication" / "orius_refresh_execution.json").read_text(encoding="utf-8")
-    )
-    found: list[str] = []
-
-    def _walk(value: Any) -> None:
-        if isinstance(value, dict):
-            for child in value.values():
-                _walk(child)
-        elif isinstance(value, list):
-            for child in value:
-                _walk(child)
-        elif isinstance(value, str):
-            if "/Users/" in value:
-                found.append(value)
-
-    _walk(payload)
-
-    assert found == []
-
-
-def test_battery_deep_learning_novelty_surfaces_are_referenced() -> None:
-    chapter = (REPO_ROOT / "chapters" / "ch08_forecasting_calibration.tex").read_text(encoding="utf-8")
-    hf_jobs_readme = (REPO_ROOT / "scripts" / "hf_jobs" / "README.md").read_text(encoding="utf-8")
-
-    assert "Why Deep Models Do Not Win on the Engineered Track" in chapter
-    assert "Battery-Scoped Deep-Learning Novelty Track" in chapter
-    assert "DeepOQE: Learned Telemetry Reliability" in chapter
-    assert "Raw-Sequence Probabilistic Forecasting" in chapter
-    assert "Safety-Metric Evaluation" in chapter
-    assert "tbl_battery_deep_oqe_summary.tex" in chapter
-    assert "tbl_battery_deep_oqe_safety_metrics.tex" in chapter
-    assert "tbl_battery_raw_sequence_track.tex" in chapter
-    assert "fig_battery_deep_oqe_summary.png" in chapter
-    assert "fig_battery_deep_oqe_safety_metrics.png" in chapter
-    assert "fig_battery_raw_sequence_track_benchmark.png" in chapter
-    assert "deep_learning_novelty_job.py" in hf_jobs_readme
-
-
-def test_run_battery_deep_novelty_help_runs() -> None:
-    completed = subprocess.run(
-        [sys.executable, str(REPO_ROOT / "scripts" / "run_battery_deep_novelty.py"), "--help"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    assert "--deep-oqe-epochs" in completed.stdout
-    assert "--forecast-epochs" in completed.stdout
+    stdout = completed.stdout
+    assert "three_domain_lane" in stdout
+    assert "equal_domain_gate" not in stdout

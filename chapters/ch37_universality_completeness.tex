@@ -1,15 +1,16 @@
-\chapter{A Domain-Agnostic Kernel for Safe Control Under Degraded Observation}
+\chapter{A Domain-Parametric Kernel for Safe Control Under Degraded Observation}
 \label{ch:universality-completeness}
 
 This chapter is the control-theory extension of the dissertation.  Its
 purpose is not to add more runtime rows; it is to isolate the
-domain-agnostic kernel that the rest of the monograph instantiates.  The
+domain-parametric kernel that the rest of the monograph instantiates.  The
 central claim is deliberately narrow: under degraded observation, safe
 control is governed by an observation-consistent state set, a
 reliability-conditioned tightening law, a repair map, and a causal
 certificate surface.  Battery remains the only full proof reference
-surface.  Industrial and healthcare remain defended instantiations.
-Autonomous vehicles, navigation, and aerospace remain lower-tier evidence.
+surface.  Healthcare remains a defended instantiation, and autonomous
+vehicles remain defended under a bounded contract within the active
+three-domain program.
 
 The point of the chapter is to make that claim precise enough that a reader
 can separate three things cleanly: what the reference-row proof already establishes,
@@ -186,9 +187,9 @@ T9 is the necessity theorem for the universal kernel: whenever safety depends
 on a corrupted observation channel, a controller that ignores reliability
 cannot remove the violation scaling by algorithmic tuning alone.  The defended
 evidence remains tiered.  Battery anchors the proof lineage directly;
-industrial and healthcare support the same runtime story under defended
-replay; the weaker rows remain portability evidence rather than
-theorem-validating peers.
+healthcare and bounded autonomous-vehicle replay support the same runtime
+story under defended contracts; broader portability remains outside the
+active proof-validating surface.
 
 % ----------------------------------------------------------------
 \section{Boundary-Indistinguishability Lower Bound (T10)}
@@ -357,10 +358,11 @@ one-step safety-preservation statement as the reference theorem:
 \[
   \Prob[x_{t+1}\in\mathcal{S}\mid \mathcal{H}_t] \ge 1-\alpha.
 \]
-\noindent In this theorem the four listed obligations are the entire transfer
-surface.  No broader episode-level claim is inherited unless the new domain
-also supplies an explicit predictable per-step risk budget as in
-Corollary~\ref{cor:t11-aggregation}.
+\noindent In this theorem the four listed obligations are the entire forward
+transfer surface.  No broader episode-level claim is inherited unless the new
+domain also supplies an explicit predictable per-step risk budget as in
+Corollary~\ref{cor:t11-aggregation}.  The converse remains a separate
+failure-mode proposition rather than part of T11 itself.
 \end{theorem}
 
 \begin{proof}
@@ -454,7 +456,7 @@ Two levels of executable checking now exist in the repository.
     \texttt{DomainInstantiation} protocol together with a lightweight
     structural verifier.  The focused regression test
     \path{tests/test_universal_theory.py} checks canonical battery,
-    industrial, healthcare, and vehicle adapters against that surface and then
+    healthcare and vehicle adapters against that surface and then
     exercises the new universal step kernel end-to-end.
   \item \textbf{Reference invariant harness.}
     \path{src/orius/universal/contract.py} contains a more explicit invariant
@@ -626,7 +628,8 @@ row as proof-validated: locked replay reduces TSVR to zero on the canonical
 validation harness, the conservative entry-barrier soundness cases clear, and
 the CertOS lifecycle executes on the same adapter surface.  This promotion is
 deliberately narrow.  It does not promote every richer headway, lane-change,
-or multi-agent vehicle setting to equal proof depth.
+or multi-agent vehicle setting to deeper proof depth within the same bounded
+three-domain program.
 
 % ----------------------------------------------------------------
 \section{Chapter Summary}

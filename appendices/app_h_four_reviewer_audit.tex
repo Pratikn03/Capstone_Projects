@@ -1,66 +1,111 @@
 % =============================================================================
-% Appendix H: Five-Reviewer Committee Audit Protocol
+% Appendix H: Simulated 15-Reviewer Audit Protocol
 % ORIUS/DC3S Battery-Safety Thesis
 % =============================================================================
-\chapter{Five-Reviewer Committee Audit Protocol}
+\chapter{Simulated 15-Reviewer Audit Protocol}
 \label{app:four-reviewer-audit}
 
-This appendix defines a structured audit protocol for the ORIUS/DC3S thesis.
-Five independent reviewers assess distinct dimensions of the manuscript and
-its supporting evidence.  The protocol now includes a dedicated reviewer for
-the universal runtime and cross-domain harness so the promoted non-battery
-claims are audited separately from the core battery evidence.
+This appendix records the canonical simulated review program for the live
+ORIUS defense package.  The review is executed in three waves of five
+reviewer lenses each.  Its job is not to declare theorems ``proved'' by
+committee vote; its job is to pressure-test the defended surface against
+logic drift, code/prose mismatch, scope inflation, and artifact drift.
 
-\section{Role Assignments}
+The defended package is the active Battery + AV + Healthcare lane plus the
+registry-canonical theorem-core split:
+\begin{itemize}
+\item \textbf{flagship defended}: T1, T2, T3a, T4, T11, T\_trajectory\_PAC,
+\item \textbf{supporting defended}: T3b, T6, T8, T11\textsubscript{Byz}, T\textsubscript{stale},
+\item \textbf{draft / non-defended}: all remaining extension or open theorem surfaces.
+\end{itemize}
 
-\begin{description}
-\item[R1 --- Empirical Correctness] Verifies that locked results match reported values, CSV integrity is preserved, and figure-to-data correspondence holds. Focus: \texttt{reports/publication/*.csv}, \texttt{dc3s\_main\_table\_ci.csv}, baseline lock manifests.
-\item[R2 --- Theorem and Proof Rigor] Verifies theorem statements, proof steps, assumption usage, and mathematical notation consistency. Focus: ch15--ch19, appendices with full proofs.
-\item[R3 --- Universal Runtime and Cross-Domain Harness] Verifies that the
-  canonical universal replay harness, domain tiers, and promotion gate are
-  internally consistent. Focus: \texttt{scripts/run\_universal\_orius\_validation.py},
-  Chapter~\ref{ch:battery-to-orius}, and the generated domain status tables.
-\item[R4 --- Reproducibility and Release Integrity] Verifies that scripts run,
-  configs are complete, generated artifacts are current, and environment is
-  documented. Focus: \texttt{scripts/}, \texttt{configs/},
-  \texttt{requirements.txt}, release reports, and generated tables/figures.
-\item[R5 --- Scope and Defense Coherence] Verifies claim scope accuracy,
-  notation consistency, limitations, and committee-facing defense coherence.
-  Focus: abstract, introduction, conclusion, scope boundary, and
-  claim-to-evidence linkage.
-\end{description}
+All findings must terminate in exactly one disposition:
+\begin{itemize}
+\item \textbf{fixed in code/tests}: the executable surface was corrected,
+\item \textbf{narrowed in prose/registers}: the claim was reduced to match repo truth, or
+\item \textbf{left open as bounded future work}: the claim remains outside the defended surface.
+\end{itemize}
 
-\section{Audit Checklist}
+\section{Reviewer-Role Matrix}
 
-The release now generates the committee checklist directly from the active
-theorem gate and universal validation reports.
+\begin{longtable}{p{0.09\textwidth}p{0.23\textwidth}p{0.26\textwidth}p{0.28\textwidth}}
+\toprule
+\textbf{Wave} & \textbf{Reviewer lane} & \textbf{Primary attack} & \textbf{Canonical pressure point} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Wave} & \textbf{Reviewer lane} & \textbf{Primary attack} & \textbf{Canonical pressure point} \\
+\midrule
+\endhead
+1 & Logic / mathematics & hidden assumptions, circular dependence, false converse steps & T3, T9, T10, extension-law proofs \\
+1 & Statistics / calibration & coverage semantics, grouped-coverage drift, same-data evaluation & conformal, Mondrian, conditional-coverage prose \\
+1 & Control / safety filtering & fallback semantics, repair soundness, per-step runtime guarantees & shield, AV fallback, T7/T8 \\
+1 & Systems / runtime & build integrity, runtime lifecycle, evidence discipline & \texttt{Makefile}, review build path, artifact generators \\
+1 & Red team / durability & vacuous success, sanitization, silent theorem-helper drift & empty bins, input clamping, half-life surface split \\
+2 & ML / OQE skepticism & heuristic reliability grounding, law-vs-code mismatch & OQE, L1--L4, README and summary prose \\
+2 & Information theory & Fano/Le Cam misuse, proxy bridges presented as proofs & L1, L2, L3, L4, T\_minimax, T\_sensor \\
+2 & Formal methods posture & proof gate vs traceability gate, audited-vs-verified drift & integrated theorem gate, Appendix~M \\
+2 & Scope / overclaim audit & defended-domain inflation, readiness inflation, publication rhetoric & abstract, universality chapters, review package \\
+2 & Cross-theorem consistency & theorem-law dependency drift, stale inventory surfaces & theorem register, Appendix~C, active audit, register CSV \\
+3 & Battery realism & witness-row assumptions, fallback/slack boundaries & battery theorem ladder \\
+3 & AV realism & bounded longitudinal contract vs full-AV wording & AV adapter, TTC contract, closure prose \\
+3 & Healthcare / statistical gaps & evidence tier, calibration posture, domain-status honesty & healthcare row and related tables \\
+3 & Reproducibility / artifacts & hash-locking, generated-asset drift, build determinism & publication artifacts and generators \\
+3 & Long-horizon durability & what survives repo drift in five or ten years & theorem-local assumptions, future-work boundaries \\
+\bottomrule
+\end{longtable}
 
-\IfFileExists{reports/universal_orius_validation/tbl_committee_audit_checklist.tex}{%
-  \input{reports/universal_orius_validation/tbl_committee_audit_checklist}%
-}{%
-  \input{../reports/universal_orius_validation/tbl_committee_audit_checklist}%
-}
+\section{Master Vulnerability Register}
 
-\section{Procedure}
+\begin{longtable}{p{0.09\textwidth}p{0.15\textwidth}p{0.21\textwidth}p{0.19\textwidth}p{0.24\textwidth}}
+\toprule
+\textbf{ID} & \textbf{Severity} & \textbf{Finding} & \textbf{Disposition} & \textbf{Resolution} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Severity} & \textbf{Finding} & \textbf{Disposition} & \textbf{Resolution} \\
+\midrule
+\endhead
+V1 & critical & \texttt{review-compile} and \texttt{paper-compile} failed open on LaTeX errors & fixed in code/tests & removed fail-open shell prefixes in the canonical \texttt{Makefile} build path \\
+V2 & critical & Appendix C claimed a Ville/supermartingale trajectory proof not matched by code & fixed in code/tests & narrowed T\_trajectory\_PAC to the executable Bonferroni/union-bound certificate in code, tests, and Appendix~C \\
+V3 & critical & The integrated theorem gate presented a traceability check as a proof-verification gate & fixed in code/tests & relabeled the gate as a traceability-release gate and preserved proof rigor in the active audit instead \\
+V4 & critical & L1/L2 extension laws were stronger than the repo can defend today & narrowed in prose/registers & Appendix~C, Appendix~M, the law helpers, and the active audit now mark them as stylized/proxy surfaces, not closed converses \\
+V5 & high & T\_minimax and T\_sensor inherited the open L1/L2 bridge but were written as defended converses & fixed in code/tests & theorem helpers now mark the converse gap as open; Appendix~C and Appendix~M preserve the narrower posture \\
+V6 & high & The theorem-law dependency graph and active inventory were stale relative to Appendix~C & fixed in code/tests & the theorem register, theorem-surface validator, and active audit inventory are synchronized to the live appendix surface \\
+V7 & high & Review-package language overstated publication/thesis readiness while the repo still carried open scope gaps & narrowed in prose/registers & the review appendix and generated dossier now describe bounded readiness and explicit dispositions instead of blanket readiness claims \\
+V8 & high & Domain-evidence rhetoric still drifted beyond the governed three-domain posture & narrowed in prose/registers & the defense package now treats Battery as witness row and AV plus Healthcare as the only promoted bounded rows in the live program \\
+V9 & medium & T7/T8/T9/T10/T11 prose was stronger than the executable witnesses & narrowed in prose/registers & Appendix~M now reports scoped / hole / partial status instead of flattening all rows to ``verified'' \\
+V10 & medium & Several extension helpers were algebraically useful but semantically overstated & fixed in code/tests & helper docstrings, summaries, and register metadata now distinguish executable witness, stylized proxy, and defended theorem surfaces \\
+\bottomrule
+\end{longtable}
 
+\section{Response / Concession Matrix}
+
+\begin{tabular}{@{}p{0.22\textwidth}p{0.31\textwidth}p{0.33\textwidth}@{}}
+\toprule
+\textbf{Disposition} & \textbf{What it means} & \textbf{Examples in this pass} \\
+\midrule
+Fixed in code/tests & Runtime semantics, theorem helper, or build path changed and regression tests were updated & fail-closed build; traceability-gate relabel; Bonferroni PAC alignment; parent-law drift removal \\
+Narrowed in prose/registers & Manuscript/register language was reduced to match current executable and artifact truth & Appendix~C law/theorem wording; Appendix~M audit posture; readiness language in the defense package \\
+Bounded future work & Claim remains visible only as an explicit open problem, not a defended contribution & independent converse for L1/L2; sharper minimax lower side; stronger martingale trajectory certificate \\
+\bottomrule
+\end{tabular}
+
+\section{Final Disposition Summary}
+
+The simulated 15-reviewer audit does not certify that every theorem is
+fully rigorous.  It certifies something narrower and more useful:
 \begin{enumerate}
-\item \textbf{Kickoff}: Author provides (a) thesis PDF, (b) \texttt{reports/publication/} tarball, (c) \texttt{scripts/} and \texttt{configs/} snapshot, (d) baseline lock manifest.
-\item \textbf{Parallel review}: Each reviewer completes their assigned audit
-  block using the generated checklist table and the linked evidence files.
-\item \textbf{Reconciliation}: Failures are documented with specific line numbers, file paths, and suggested fixes. Deferred items require explicit justification.
-\item \textbf{Re-audit}: After fixes, only failed items are re-checked. Full pass is required for submission.
+\item the canonical defense package is built on the repo-truthful path
+  (\texttt{make review-compile}),
+\item proof rigor is tracked by the active theorem audit rather than by a
+  traceability gate pretending to be a proof checker,
+\item extension laws and depth theorems are included only with their
+  current bounded posture, and
+\item any row that still lacks code, tests, register alignment, and proof
+  alignment is explicitly narrowed or left open.
 \end{enumerate}
 
-\section{Pass Criteria}
-
-A manuscript passes the five-reviewer audit if:
-\begin{itemize}
-\item No R1 failures (empirical correctness is non-negotiable).
-\item No R2 failures on the integrated 18-theorem release gate.
-\item No R3 failures on the canonical universal replay harness or promoted
-  proof-domain status table.
-\item No R4 failures on artifact generation, release integrity, or script
-  execution.
-\item No R5 failures on scope boundary, limitations, or committee-facing
-  defense coherence.
-\end{itemize}
+That is the defended posture of the live repository after hardening: a
+bounded, auditable theorem-and-artifact surface rather than a rhetorically
+closed one.

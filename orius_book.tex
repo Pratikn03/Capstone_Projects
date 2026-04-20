@@ -1,0 +1,62 @@
+\documentclass[12pt,oneside]{book}
+\input{preamble.tex}
+\usepackage{alphalph}
+\graphicspath{{reports/publication/}{reports/hil/}{reports/figures/}{paper/assets/figures/}{reports/universal_orius_validation/}{reports/universal_training_audit/}}
+
+\title{ORIUS: Observation--Reality Integrity for Universal Safety: A Certificate-Aware Runtime Safety Layer for Physical AI under Degraded Observation}
+\author{Pratik Niroula}
+\date{April 2026}
+
+\begin{document}
+\hypersetup{pageanchor=false}
+\frontmatter
+\input{frontmatter/titlepage.tex}
+\cleardoublepage
+\input{frontmatter/abstract.tex}
+\cleardoublepage
+\input{frontmatter/acknowledgments.tex}
+\tableofcontents
+\listoftables
+\listoffigures
+
+\hypersetup{pageanchor=true}
+\mainmatter
+
+\part{Problem, Principle, and Gap}
+\include{paper/monograph/ch01_introduction_and_thesis_claims}
+\include{paper/monograph/ch02_related_work_and_novelty_gap}
+\include{paper/monograph/ch03_formal_problem_formulation}
+
+\part{ORIUS Framework and Theorem Ladder}
+\include{paper/monograph/ch04_orius_architecture_dc3s_runtime_layer}
+\include{paper/monograph/ch05_mathematical_foundations_and_safety_guarantees}
+\include{paper/monograph/ch06_benchmark_and_reproducibility_protocol}
+
+\part{Witness Domain Evidence}
+\include{paper/monograph/ch07_witness_domain_implementation}
+\include{paper/monograph/ch08_witness_results_and_failure_analysis}
+
+\part{Universalization and Extensions}
+\include{paper/monograph/ch09_universal_orius_across_domains}
+\include{paper/monograph/ch10_temporal_certificates_and_graceful_degradation}
+\include{paper/monograph/ch11_compositional_safety}
+\include{paper/monograph/ch12_certos_runtime_assurance}
+
+\part{Submission Boundary}
+\include{paper/monograph/ch13_governance_reproducibility_limitations_and_conclusion}
+
+\appendix
+\renewcommand{\thechapter}{\alphalph{\value{chapter}}}
+\include{paper/monograph/app_aj_assumption_register}
+\include{paper/monograph/app_ak_proofs}
+\include{appendices/app_f_fault_specs}
+\include{paper/monograph/app_am_artifact_and_claim_index}
+\include{paper/monograph/app_an_safety_case_bundle_index}
+
+\backmatter
+\include{backmatter/extended_reading_index}
+\nocite{*}
+\bibliographystyle{IEEEtran}
+\bibliography{paper/bibliography/orius_monograph}
+
+\end{document}
