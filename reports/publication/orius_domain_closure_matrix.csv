@@ -1,7 +1,4 @@
 domain,tier,source,baseline_tsvr,orius_tsvr,promotion_gate,current_status
-Battery Energy Storage,reference,locked_artifact,0.0393,0.0000,keep battery as the witness row while battery+AV closure remains the active promotion lane,tier=reference; blocker=none
-Autonomous Vehicles,proof_validated,real_data,0.1250,0.0417,keep as defended bounded row while broader vehicle interaction remains open,tier=proof_validated; blocker=none
-Industrial Process Control,proof_validated,verified,1.0000,0.0000,retain proof-validated status with broader plant families and stronger controller diversity,tier=proof_validated; blocker=industrial_train_validation_chain_complete
-Medical and Healthcare Monitoring,proof_validated,verified,0.2917,0.0417,multi-cohort clinical validation and richer intervention outcome accounting,tier=proof_validated; blocker=healthcare_train_validation_chain_complete
-Navigation and Guidance,shadow_synthetic,kitti_runtime_required,0.6667,0.2500,staged KITTI replay plus defended equal-domain gate closure,tier=shadow_synthetic; blocker=navigation_kitti_runtime_missing
-Aerospace Control,experimental,public_adsb_runtime,1.0000,0.0000,public ADS-B defended runtime plus equal-domain parity closure,tier=experimental; blocker=aerospace_realflight_runtime_missing
+Battery Energy Storage,reference,locked_artifact,0.0393,0.0000,keep battery as the witness row,tier=reference; blocker=none; denominator=672 runtime steps from the full CPSBench witness episode
+Autonomous Vehicles,proof_validated,real_data,0.1250,0.0417,keep AV as a defended bounded row under the TTC contract,tier=proof_validated; blocker=none; TSVR basis=24-step validation_harness proxy (not a runtime-row denominator); runtime evidence volume=9348 promoted AV runtime steps
+Medical and Healthcare Monitoring,proof_validated,verified,0.2917,0.0417,keep healthcare as a defended bounded row under MIMIC monitoring semantics,tier=proof_validated; blocker=none; TSVR basis=24-step validation_harness proxy (not a runtime-row denominator); runtime evidence volume=137262 MIMIC runtime rows; promoted source=MIMIC; BIDMC remains supplemental only

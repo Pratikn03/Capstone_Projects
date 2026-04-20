@@ -104,7 +104,7 @@ figures:
   FIG55_MULTI_HORIZON_BACKTEST: {path: paper/assets/figures/fig55_multi_horizon_backtest.png, caption: "Multi-horizon backtest.", status: provisional}
   FIG56_USA_DATA_QUALITY: {path: paper/assets/figures/fig56_usa_data_quality.png, caption: "USA data quality.", status: provisional}
   FIG57_GAP_HOURLY_PROFILES: {path: paper/assets/figures/fig57_gap_hourly_profiles.png, caption: "Gap hourly profiles.", status: provisional}
-  FIG_MULTI_DOMAIN_VALIDATION: {path: paper/assets/figures/fig_multi_domain_validation.png, caption: "Multi-domain ORIUS validation: baseline vs. ORIUS TSVR with tier labels (reference, proof-validated, bounded proof-validated, shadow-synthetic, experimental).", status: locked}
+  FIG_MULTI_DOMAIN_VALIDATION: {path: paper/assets/figures/fig_multi_domain_validation.png, caption: "Three-domain ORIUS validation: baseline vs. ORIUS TSVR across the witness Battery row and the defended AV and Healthcare rows.", status: locked}
 
 tables:
   TBL01_MAIN_RESULTS:
@@ -142,12 +142,12 @@ tables:
     status: provisional
   TBL09_CROSS_DOMAIN_OASG:
     path: reports/universal_orius_validation/cross_domain_oasg_table.csv
-    title: "Canonical universal replay output. Battery is the locked reference row; industrial and healthcare are proof-validated; AV is bounded proof-validated under the TTC contract; navigation is shadow-synthetic; aerospace is experimental."
+    title: "Canonical universal replay output for the active three-domain program: Battery is the witness row, while AV and Healthcare are defended bounded rows."
     status: locked
     optional: true
   TBL10_DOMAIN_VALIDATION_STATUS:
     path: reports/universal_orius_validation/domain_validation_summary.csv
-    title: "Tiered validation status across the six runtime domains: reference, proof-validated, bounded proof-validated, shadow-synthetic, and experimental."
+    title: "Tiered validation status across the active three runtime domains."
     status: locked
     optional: true
 

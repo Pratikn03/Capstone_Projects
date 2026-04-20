@@ -50,326 +50,68 @@
     }
   },
   "frozen_at_utc": "2026-03-29T03:43:35.825681+00:00",
-  "frozen_pdfs": {
-    "conference": {
-      "canonical_path": "paper/paper_r1.pdf",
-      "frozen_path": "reports/publication/frozen/R1_20260312T044018Z/R1_20260312T044018Z_conference.pdf",
-      "rendered_pages": [
-        "reports/publication/frozen/R1_20260312T044018Z/review/conference/R1_20260312T044018Z_conference-001.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/conference/R1_20260312T044018Z_conference-002.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/conference/R1_20260312T044018Z_conference-003.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/conference/R1_20260312T044018Z_conference-004.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/conference/R1_20260312T044018Z_conference-005.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/conference/R1_20260312T044018Z_conference-006.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/conference/R1_20260312T044018Z_conference-007.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/conference/R1_20260312T044018Z_conference-008.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/conference/R1_20260312T044018Z_conference-009.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/conference/R1_20260312T044018Z_conference-010.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/conference/R1_20260312T044018Z_conference-011.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/conference/R1_20260312T044018Z_conference-012.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/conference/R1_20260312T044018Z_conference-013.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/conference/R1_20260312T044018Z_conference-014.png"
-      ],
-      "sha256": "6e0012b080ac79817dbab1f67d3b94a1d7c289693adf8fd4575dceb909487141"
-    },
-    "manuscript": {
-      "canonical_path": "paper.pdf",
-      "frozen_path": "reports/publication/frozen/R1_20260312T044018Z/R1_20260312T044018Z_manuscript.pdf",
-      "rendered_pages": [
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-001.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-002.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-003.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-004.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-005.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-006.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-007.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-008.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-009.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-010.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-011.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-012.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-013.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-014.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-015.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-016.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-017.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-018.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-019.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-020.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-021.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-022.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-023.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-024.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-025.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-026.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-027.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-028.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-029.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-030.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-031.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-032.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-033.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-034.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-035.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-036.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-037.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-038.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-039.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-040.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-041.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-042.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-043.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-044.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-045.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-046.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-047.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-048.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-049.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-050.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-051.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-052.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-053.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-054.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-055.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-056.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-057.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-058.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-059.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-060.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-061.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-062.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-063.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-064.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-065.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-066.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-067.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-068.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-069.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-070.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-071.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-072.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-073.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-074.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-075.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-076.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-077.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-078.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-079.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-080.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-081.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-082.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-083.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-084.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-085.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-086.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-087.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-088.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-089.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-090.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-091.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-092.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-093.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-094.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-095.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-096.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-097.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-098.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-099.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-100.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-101.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-102.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-103.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-104.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-105.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-106.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-107.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-108.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-109.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-110.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-111.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-112.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-113.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-114.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-115.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-116.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-117.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-118.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-119.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-120.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-121.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-122.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-123.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-124.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-125.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-126.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-127.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-128.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-129.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-130.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-131.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-132.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-133.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-134.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-135.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-136.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-137.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-138.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-139.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-140.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-141.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-142.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-143.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-144.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-145.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-146.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-147.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-148.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-149.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-150.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-151.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-152.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-153.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-154.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-155.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-156.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-157.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-158.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-159.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-160.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-161.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-162.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-163.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-164.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-165.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-166.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-167.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-168.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-169.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-170.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-171.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-172.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-173.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-174.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-175.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-176.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-177.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-178.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-179.png",
-        "reports/publication/frozen/R1_20260312T044018Z/review/manuscript/R1_20260312T044018Z_manuscript-180.png"
-      ],
-      "sha256": "f678e4880dae9222c9eb969b6b43ff7916b6f852b4c1d7066a06ac114ab9bb75"
-    }
-  },
   "generated_at_utc": "2026-03-11T18:23:38.652540+00:00",
   "git_commit": "61f9d83ea0b01cd3a258330d4d2968e3faca61b0",
   "horizon": 8,
   "paper_assets": {
-    "FIG01_ARCHITECTURE": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/figures/fig01_architecture.png",
-      "source_artifact": "reports/figures/architecture.png"
+    "CANONICAL_MONOGRAPH_PDF": {
+      "build_command": "make orius-book",
+      "paper_path": "paper/paper.pdf",
+      "source_artifact": "paper/paper.pdf",
+      "sha256": "f7b6e3c08c63f9e4fcbe4c1fe9736b4985ab1f02a41eaa87d1020172dee6e249"
     },
-    "FIG02_DC3S_STEP": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/figures/fig02_dc3s_step.png",
-      "source_artifact": "reports/publication/figures/fig11_dispatch_comparison.png"
-    },
-    "FIG03_TRUE_SOC_VIOLATION": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/figures/fig03_true_soc_violation_vs_dropout.png",
-      "source_artifact": "reports/publication/fig_true_soc_violation_vs_dropout.png"
-    },
-    "FIG04_TRUE_SOC_SEVERITY": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/figures/fig04_true_soc_severity_p95_vs_dropout.png",
-      "source_artifact": "reports/publication/fig_true_soc_severity_p95_vs_dropout.png"
-    },
-    "FIG05_CQR_GROUP_COVERAGE": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/figures/fig05_cqr_group_coverage.png",
-      "source_artifact": "reports/publication/fig_cqr_group_coverage.png"
-    },
-    "FIG06_TRANSFER_COVERAGE": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/figures/fig06_transfer_coverage.png",
-      "source_artifact": "reports/publication/fig_transfer_coverage.png"
-    },
-    "FIG07_COST_SAFETY_FRONTIER": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/figures/fig07_cost_safety_frontier.png",
-      "source_artifact": "reports/publication/fig_cost_safety_pareto.png"
-    },
-    "FIG08_RAC_SENSITIVITY_WIDTH": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/figures/fig08_rac_sensitivity_vs_width.png",
-      "source_artifact": "reports/publication/fig_rac_sensitivity_vs_width.png"
-    },
-    "FIG09_REGION_DATASET_CARDS": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/figures/fig09_region_dataset_cards.png",
-      "source_artifact": "reports/publication/fig_region_dataset_cards.png"
-    },
-    "FIG10_CALIBRATION_TRADEOFF": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/figures/fig10_calibration_tradeoff.png",
-      "source_artifact": "reports/publication/fig_calibration_tradeoff.png"
-    },
-    "FIG11_TRANSFER_GENERALIZATION": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/figures/fig11_transfer_generalization.png",
-      "source_artifact": "reports/publication/fig_transfer_generalization.png"
-    },
-    "FINAL_CONFERENCE_PDF": {
-      "build_command": "scripts/post_training_paper_update.py --release-id R1_20260312T044018Z",
-      "paper_path": "paper/paper_r1.pdf",
-      "sha256": "6e0012b080ac79817dbab1f67d3b94a1d7c289693adf8fd4575dceb909487141",
-      "source_artifact": "reports/publication/frozen/R1_20260312T044018Z/R1_20260312T044018Z_conference.pdf"
-    },
-    "FINAL_MANUSCRIPT_PDF": {
-      "build_command": "scripts/post_training_paper_update.py --release-id R1_20260312T044018Z",
+    "CANONICAL_ROOT_MONOGRAPH_PDF": {
+      "build_command": "make orius-book",
       "paper_path": "paper.pdf",
-      "sha256": "f678e4880dae9222c9eb969b6b43ff7916b6f852b4c1d7066a06ac114ab9bb75",
-      "source_artifact": "reports/publication/frozen/R1_20260312T044018Z/R1_20260312T044018Z_manuscript.pdf"
+      "source_artifact": "paper.pdf",
+      "sha256": "f7b6e3c08c63f9e4fcbe4c1fe9736b4985ab1f02a41eaa87d1020172dee6e249"
     },
-    "TBL01_MAIN_RESULTS": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/tables/tbl01_main_results.csv",
-      "source_artifact": "reports/publication/dc3s_main_table.csv"
+    "CANONICAL_REVIEW_DOSSIER_PDF": {
+      "build_command": "make review-compile",
+      "paper_path": "paper/review/orius_review_dossier.pdf",
+      "source_artifact": "paper/review/orius_review_dossier.pdf",
+      "sha256": "3da94534c889fc5e3f091fb03dee96246435041712c125caa4dc20e4b6d97050"
     },
-    "TBL02_ABLATIONS": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/tables/tbl02_ablations.csv",
-      "source_artifact": "reports/publication/table2_ablations.csv"
+    "PUBLICATION_REVIEW_DOSSIER_PDF": {
+      "build_command": "make review-compile",
+      "paper_path": "reports/publication/orius_review_dossier.pdf",
+      "source_artifact": "reports/publication/orius_review_dossier.pdf",
+      "sha256": "3da94534c889fc5e3f091fb03dee96246435041712c125caa4dc20e4b6d97050"
     },
-    "TBL03_CQR_GROUP_COVERAGE": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/tables/tbl03_cqr_group_coverage.csv",
-      "source_artifact": "reports/publication/cqr_group_coverage.csv"
+    "IEEE_MAIN_PDF": {
+      "build_command": "make ieee-main-compile",
+      "paper_path": "paper/ieee/orius_ieee_main.pdf",
+      "source_artifact": "paper/ieee/orius_ieee_main.pdf",
+      "sha256": "b227c829ba9a06ef128c097787424d9f2f76a6d422081899b671d3c6195ad92a"
     },
-    "TBL04_TRANSFER_STRESS": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/tables/tbl04_transfer_stress.csv",
-      "source_artifact": "reports/publication/transfer_stress.csv"
+    "IEEE_APPENDIX_PDF": {
+      "build_command": "make ieee-appendix-compile",
+      "paper_path": "paper/ieee/orius_ieee_appendix.pdf",
+      "source_artifact": "paper/ieee/orius_ieee_appendix.pdf",
+      "sha256": "f0bee4b38af2bf1e1a7e69e08ec69f05f3016129e5f7985e86d7b8d6f5b3a01e"
     },
-    "TBL05_DATASET_SUMMARY": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/tables/tbl05_dataset_summary.csv",
-      "source_artifact": "reports/publication/tables/table1_dataset_summary.csv"
+    "IEEE_PROFESSOR_MAIN_PDF": {
+      "build_command": "make ieee-prof-main-compile",
+      "paper_path": "paper/ieee/orius_ieee_professor_main.pdf",
+      "source_artifact": "paper/ieee/orius_ieee_professor_main.pdf",
+      "sha256": "e2c3280c65fbd0eb8ed8e3628605e7558dfbbe7b783c26238946c9c12f203ab9"
     },
-    "TBL06_HYPERPARAMS": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/tables/tbl06_hyperparams.csv",
-      "source_artifact": "configs/train_forecast.yaml"
+    "IEEE_PROFESSOR_APPENDIX_A_PDF": {
+      "build_command": "make ieee-prof-appa-compile",
+      "paper_path": "paper/ieee/orius_ieee_professor_appendix_a.pdf",
+      "source_artifact": "paper/ieee/orius_ieee_professor_appendix_a.pdf",
+      "sha256": "ba135bdbd0b1ba44cdf91325afcad2ad7a3d7be9da67de994e69f2582083ad3f"
     },
-    "TBL07_DATASET_CARDS": {
-      "build_command": "bash scripts/export_paper_assets.sh",
-      "paper_path": "paper/assets/tables/tbl07_dataset_cards.csv",
-      "source_artifact": "reports/publication/dataset_cards.csv"
+    "IEEE_PROFESSOR_APPENDIX_B_PDF": {
+      "build_command": "make ieee-prof-appb-compile",
+      "paper_path": "paper/ieee/orius_ieee_professor_appendix_b.pdf",
+      "source_artifact": "paper/ieee/orius_ieee_professor_appendix_b.pdf",
+      "sha256": "d8c4d088470f392791da3ea5b6f09d5109e6b80e6843fa3fc00a87b181582217"
     }
   },
   "paper_metric_policy": {
     "description": "Use latest dataset-scoped artifacts as of 2026-02-17: DE stochastic run 20260217_165756 and US stochastic run 20260217_182305; impact from latest impact_summary files.",
-    "master_manuscript": "paper/paper.tex",
+    "master_manuscript": "orius_book.tex",
     "name": "dataset_scoped_latest"
   },
   "paper_run_ids": {
@@ -426,5 +168,20 @@
       "reports_dir": "reports/runs/us_pjm/R1_20260312T044018Z_diag",
       "run_id": "R1_20260312T044018Z_diag"
     }
+  },
+  "archive_policy": {
+    "historical_archives": "noncanonical provenance only",
+    "retained_pdfs": [
+      "paper/paper.pdf",
+      "paper.pdf",
+      "paper/review/orius_review_dossier.pdf",
+      "reports/publication/orius_review_dossier.pdf",
+      "paper/ieee/orius_ieee_main.pdf",
+      "paper/ieee/orius_ieee_appendix.pdf",
+      "paper/ieee/orius_ieee_professor_main.pdf",
+      "paper/ieee/orius_ieee_professor_appendix_a.pdf",
+      "paper/ieee/orius_ieee_professor_appendix_b.pdf"
+    ],
+    "active_manifest_policy": "canonical pdfs only; frozen bundles are historical provenance and not active truth surfaces"
   }
 }

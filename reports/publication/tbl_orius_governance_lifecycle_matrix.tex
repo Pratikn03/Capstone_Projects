@@ -1,19 +1,14 @@
-\begin{table*}[htbp]
+\begin{table}[htbp]
 \centering
-\scriptsize
-\caption{Cross-domain governance lifecycle matrix for ORIUS. Composition and lifecycle breadth are recorded separately so unsupported rows remain visibly gated.}
-\label{tab:orius-governance-lifecycle-matrix}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}}
+\caption{Governance lifecycle matrix for the active Battery + AV + Healthcare program.}
+\label{tbl:orius-governance-lifecycle-matrix}
+\begin{tabular}{lllll}
 \toprule
-\textbf{Domain} & \textbf{Lifecycle surface} & \textbf{Hash chain and invariants} & \textbf{CertOS status} & \textbf{Shared-constraint status} & \textbf{Audit continuity} & \textbf{Completeness} & \textbf{Exact limit}\\
+Domain & Tier & Governance Surface & Lifecycle State & Note\\
 \midrule
-Battery Energy Storage & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & pass & shared\_feeder\_capacity (evaluated) & tracked runtime audit continuity & 97.0 & bounded to the current governed task surface\\
-Autonomous Vehicles & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & pass & shared\_headway\_budget (evaluated) & tracked runtime audit continuity & 94.0 & bounded to the current governed task surface\\
-Industrial Process Control & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & evaluated & shared\_power\_budget (evaluated) & tracked runtime audit continuity & 94.0 & bounded to the current governed task surface\\
-Medical and Healthcare Monitoring & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & evaluated & shared\_alert\_budget (evaluated) & tracked runtime audit continuity & 94.0 & bounded to the current governed task surface\\
-Navigation and Guidance & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & evaluated & (gated) & tracked runtime audit continuity & 58.0 & navigation\_kitti\_runtime\_missing\\
-Aerospace Control & issue/validate/expire/fallback all seen & hash chain ok and invariants pass & evaluated & (gated) & tracked runtime audit continuity & 55.0 & aerospace\_realflight\_runtime\_missing\\
+Battery Energy Storage & reference & certified\_runtime & witness\_locked & Battery remains the deepest certificate and theorem witness row.\\
+Autonomous Vehicles & proof\_validated & certified\_runtime & bounded\_promoted & AV is promoted only under the TTC plus predictive-entry-barrier contract.\\
+Medical and Healthcare Monitoring & proof\_validated & certified\_runtime\_proxy & bounded\_promoted & Healthcare remains bounded to monitoring and alert semantics with explicit governance-proxy wording.\\
 \bottomrule
-\end{tabular}}
-\end{table*}
+\end{tabular}
+\end{table}

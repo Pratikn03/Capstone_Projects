@@ -10,7 +10,9 @@ and its submission-facing derivatives. Use it as the authoring guide for:
 
 Canonical policy:
 
-- source of truth: `paper/paper.tex`
+- source of truth: `../orius_book.tex`
+- mirrored internal controller: `paper/paper.tex`
+- legacy archival long-form controller: `../orius_battery_409page_figures_upgraded_main.tex` (non-canonical internal archive only)
 - official compiled deliverable: repo-root `paper.pdf`
 - review dossier companion: `paper/review/orius_review_dossier.tex`
 - flagship IEEE main draft: `paper/ieee/orius_ieee_main.tex`
@@ -24,7 +26,8 @@ Canonical policy:
 
 | File | Role |
 |---|---|
-| `paper.tex` | Canonical book-length manuscript |
+| `../orius_book.tex` | Canonical submission monograph controller |
+| `paper.tex` | Mirrored internal monograph controller retained for local chapter-relative editing |
 | `ieee/orius_ieee_main.tex` | Flagship IEEE double-column working draft |
 | `ieee/orius_ieee_appendix.tex` | Separate IEEE appendix / proofs / benchmark appendix |
 | `paper_r1.tex` | Legacy battery-centric short derivative retained for provenance only |
@@ -45,15 +48,13 @@ article bundle. That means:
 1. **clear claim boundary**
    - battery is the witness row with the deepest theorem-to-artifact closure,
    - AV is a defended bounded row under the longitudinal TTC + predictive-entry-barrier contract,
-   - industrial and healthcare have architectural instantiations only (no locked pipeline artifacts),
-   - navigation is shadow-synthetic evidence,
-   - aerospace is experimental.
+   - healthcare is a defended bounded row under the promoted MIMIC monitoring contract.
 
 2. **book-first structure**
    - universal hazard and claim boundary,
    - runtime architecture and theorem bridge,
    - benchmark and governance protocol,
-   - six domain chapters under one template,
+   - three defended program rows under one template,
    - cross-domain synthesis and explicit non-claims,
    - appendix-heavy artifact and review traceability.
 
@@ -71,7 +72,8 @@ article bundle. That means:
 
 The canonical long-form story is spread across:
 
-- `paper.tex` for the compiled monograph controller,
+- `../orius_book.tex` for the canonical submission monograph controller,
+- `paper.tex` for the mirrored internal controller that shares the same chapter spine,
 - `monograph/` for generator-owned universal-first chapter blocks,
 - `chapters/` for curated depth chapters that remain outside the generator,
 - `appendices/` for proofs, audits, and traceability,
@@ -80,7 +82,10 @@ The canonical long-form story is spread across:
 
 Older article-lineage or archive-style artifacts may still exist in the repo for
 historical provenance, but they are not the reader-facing control surface of the
-book.
+book. In particular, `../orius_battery_409page_figures_upgraded_main.tex` is an
+internal archival controller, not the submission authority, and it must not be
+used as evidence for defended three-domain claims unless its content is first
+rewritten to the same Battery + AV + Healthcare truth surface.
 
 Important proof/evidence sources:
 
@@ -89,7 +94,6 @@ Important proof/evidence sources:
 - `../appendices/app_c_full_proofs.tex`
 - `../appendices/app_m_verified_theorems_and_gap_audit.tex`
 - `../appendices/app_s_claim_evidence_registers.tex`
-- `../reports/publication/orius_equal_domain_parity_matrix.csv`
 - `../reports/publication/orius_domain_closure_matrix.csv`
 - `../reports/publication/orius_universal_claim_matrix.csv`
 - `../reports/publication/orius_monograph_chapter_map.csv`
@@ -111,7 +115,7 @@ That command owns:
 - `paper/monograph/`
 - `paper/review/`
 - `paper/bibliography/orius_monograph.bib`
-- parity, review, and crosswalk matrices in `reports/publication/`
+- review, closure, and crosswalk matrices in `reports/publication/`
 
 The IEEE support surfaces are generated separately via:
 
@@ -147,7 +151,7 @@ Primary commands:
 |---|---|
 | `make orius-monograph-assets` | Regenerate monograph chapters, bibliography, review package, and publication matrices |
 | `make paper-verify` | Run manuscript and claim validation |
-| `make paper-compile` | Compile the canonical monograph to `paper/paper.pdf` and repo-root `paper.pdf` |
+| `make paper-compile` | Compile the canonical monograph from `orius_book.tex` to `paper/paper.pdf` and repo-root `paper.pdf` |
 | `make review-compile` | Compile the reviewer dossier PDF |
 | `make orius-book` | Verify and compile the main monograph |
 | `make orius-review-pack` | Build the reviewer dossier companion |
@@ -160,7 +164,7 @@ Primary commands:
 
 The monograph is in a strong final state when:
 
-- the main story is universal-first and parity-gated,
+- the main story is universal-first and three-domain hard-cut,
 - every headline result is backed by a tracked artifact, theorem surface, or cited source,
 - the bibliography, reviewer package, and publication matrices rebuild cleanly,
 - claim validation passes,

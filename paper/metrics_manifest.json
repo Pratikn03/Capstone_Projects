@@ -9,7 +9,7 @@
   "metric_policy": {
     "name": "tracked_publication_universal",
     "description": "Canonical manuscript values are locked to tracked publication artifacts and universal safety releases rather than local dashboard caches.",
-    "master_manuscript": "paper/paper.tex",
+    "master_manuscript": "orius_book.tex",
     "narrative_companion": "paper/PAPER_DRAFT.md",
     "release_family": {
       "name": "universal_safety_release",
@@ -259,7 +259,7 @@
   },
   "universal_claims": {
     "benchmark_schema_version": "2.0.0",
-    "master_manuscript": "paper/paper.tex",
+    "master_manuscript": "orius_book.tex",
     "dataset_profiles": {
       "de_rows": 17377,
       "us_rows": 13638,

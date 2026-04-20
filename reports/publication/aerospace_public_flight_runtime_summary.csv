@@ -1,2 +1,0 @@
-generated_at_utc,repo_id,rows_total,sampled_rows,flight_count,sampled_flight_count,contract_pass_rate,intervention_rate,fallback_rate,baseline_bank_violation_rate,safe_bank_violation_rate,mean_airspeed_kt,mean_altitude_m,mean_abs_bank_deg,proxy_fields,lane_type,canonical_eligibility
-2026-04-02T23:52:16.913766Z,Pathange/tartanaviation-adsb-19k-clean,8,8,1,1,1.0,0.0,0.0,0.0,0.0,183.5,925.068,30.0,"['bank_angle_deg', 'fuel_remaining_pct']",bounded_public_adsb_runtime,False

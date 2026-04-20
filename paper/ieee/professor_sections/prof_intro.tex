@@ -6,10 +6,8 @@ measurements, missing packets, stale buffers, and learned surrogates of the worl
 resulting engineering problem is deeper than forecast error or planner suboptimality:
 the software stack can remain internally coherent while the physical system becomes
 externally unsafe. Batteries may violate hidden state-of-charge limits, vehicles may
-enter unsafe headway regimes on stale perception, industrial plants may cross thermal
-or pressure envelopes, clinical monitoring pipelines may suppress timely intervention,
-and navigation or flight systems may remain locally consistent while drifting outside a
-feasible corridor.
+enter unsafe headway regimes on stale perception, and clinical monitoring pipelines
+may suppress timely intervention.
 
 ORIUS is built around the claim that these failures share one universal object:
 degraded observation changes the semantics of what may still be safely done. The field
@@ -44,8 +42,7 @@ The paper therefore makes four contributions.
   \item It unifies domain evaluation through one adapter contract, one benchmark schema,
   and one CertOS governance surface.
   \item It argues for a bounded-universal evidence posture: battery is the witness row;
-  AV, industrial, and healthcare are defended bounded rows; navigation and aerospace
-  remain explicitly gated.
+  AV and healthcare are defended bounded rows.
 \end{enumerate}
 
 \subsection{What ORIUS is and is not}
@@ -61,8 +58,7 @@ Equally important, ORIUS is not an excuse to hide ad hoc emergency logic behind 
 name. Every intervention mode in the framework must be typed and auditable: keep,
 repair, fallback, degrade, or reject. The release decision is therefore promoted from
 implementation detail to scientific object. That is the conceptual step that lets the
-paper talk about batteries, vehicles, industrial plants, healthcare monitoring, and
-aerospace within one formal vocabulary.
+paper talk about batteries, vehicles, and healthcare monitoring within one formal vocabulary.
 
 \subsection{Design principles}
 The framework is organized around four design principles.
@@ -80,7 +76,7 @@ The framework is organized around four design principles.
 
 These principles explain why ORIUS should be read as infrastructure for Physical AI
 safety rather than as one more domain benchmark result. A battery controller can be
-good or bad; an AV planner can be good or bad; an industrial predictor can be good or
+good or bad; an AV planner can be good or bad; a healthcare monitor can be good or
 bad. ORIUS asks a different question: when those nominal systems become observation-
 degraded, what runtime object decides whether the next action remains legally releasable?
 

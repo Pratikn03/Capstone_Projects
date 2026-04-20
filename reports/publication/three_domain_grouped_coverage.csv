@@ -1,0 +1,10 @@
+domain,bucket_label,coverage,coverage_ci_low,coverage_ci_high,n,source_surface
+Battery Energy Storage,low,0.937500,0.818890,1.000000,16,reports/calibration/reliability_group_audit.csv
+Battery Energy Storage,mid,1.000000,1.000000,1.000000,16,reports/calibration/reliability_group_audit.csv
+Battery Energy Storage,high,0.906250,0.834837,0.977663,64,reports/calibration/reliability_group_audit.csv
+Autonomous Vehicles,low,0.994223,0.991562,0.996884,3116,reports/orius_av/full_corpus/runtime_traces.csv
+Autonomous Vehicles,mid,0.997112,0.995227,0.998996,3116,reports/orius_av/full_corpus/runtime_traces.csv
+Autonomous Vehicles,high,0.999358,0.998469,1.000000,3116,reports/orius_av/full_corpus/runtime_traces.csv
+Medical and Healthcare Monitoring,low,0.845152,0.838312,0.851992,10746,"data/healthcare/processed/splits/{calibration,val,test}.parquet"
+Medical and Healthcare Monitoring,mid,0.834264,0.827233,0.841295,10746,"data/healthcare/processed/splits/{calibration,val,test}.parquet"
+Medical and Healthcare Monitoring,high,0.852955,0.846258,0.859651,10745,"data/healthcare/processed/splits/{calibration,val,test}.parquet"

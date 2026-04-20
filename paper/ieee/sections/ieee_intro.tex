@@ -5,9 +5,8 @@ Physical AI systems do not act on truth. They act on telemetry, state estimates,
 learned summaries of the world. When that observation channel degrades, the entire
 software stack can remain internally coherent while the physical system becomes
 externally unsafe. Batteries can violate hidden state-of-charge limits, vehicles can
-accelerate on stale headway estimates, industrial plants can cross thermal envelopes,
-clinical monitoring systems can suppress necessary intervention, and guidance systems
-can drift outside feasible corridors. ORIUS is built around the claim that this failure
+accelerate on stale headway estimates, and clinical monitoring systems can suppress
+necessary intervention. ORIUS is built around the claim that this failure
 mode is not a battery problem, an autonomy problem, or a cyber-security problem in
 isolation. It is a universal \emph{action-semantics} problem for Physical AI.
 
@@ -44,16 +43,14 @@ inflated state uncertainty. Shield the plant by repairing or replacing the candi
 action. Certify the resulting release so fallback, latency, and audit continuity become
 part of the scientific object rather than operational afterthoughts. ORIUS makes that
 kernel concrete through one adapter contract, one benchmark schema, and one governance
-surface. The adapter contract allows batteries, autonomous vehicles, industrial plants,
-healthcare monitoring, navigation, and aerospace to instantiate the same safety layer
-without pretending they share the same nominal controller or safety objective.
+surface. The adapter contract allows the defended Battery, AV, and Healthcare rows to
+instantiate the same safety layer without pretending they share the same nominal
+controller or safety objective.
 
-The evidence posture of this flagship draft is intentionally visible. ORIUS already has
-one witness row and several defended bounded rows, but equal-domain universality is
-still gated by missing real-data navigation closure and a stronger aerospace runtime
-surface. The paper therefore argues for a field-level runtime architecture while keeping
-the domain promotion gate explicit in the body text rather than hiding it in editorial
-support material.
+The evidence posture of this flagship draft is intentionally visible. ORIUS has one
+witness row and two defended bounded rows. The paper therefore argues for a field-level
+runtime architecture while keeping the 3-domain promotion boundary explicit in the body
+text rather than hiding it in editorial support material.
 
 The paper makes four contributions.
 \begin{enumerate}[leftmargin=1.25em,itemsep=0.2em]
@@ -62,14 +59,15 @@ observation as an action-semantics problem rather than only a detection or estim
 problem.
 \item It presents ORIUS as a reusable runtime kernel with typed observation,
 uncertainty, action-repair, fallback, and certificate objects.
-\item It unifies benchmark and governance semantics across six domains using one
-true-state-violation schema and one auditable runtime discipline.
-\item It argues, with explicit parity gating, that runtime safety layers are the right
-universal object for Physical AI safety research even when evidence depth remains
-asymmetric across domains.
+\item It unifies benchmark and governance semantics across the defended 3-domain lane
+using one true-state-violation schema and one auditable runtime discipline.
+\item It argues, with explicit evidence-tier discipline, that runtime safety layers are
+the right universal object for Physical AI safety research even when evidence depth
+remains asymmetric across domains.
 \end{enumerate}
 
 The rest of the paper follows that logic. It formalizes OASG, positions ORIUS
 adversarially against adjacent literatures, details the runtime kernel and the theorem
-bridge, walks through six domain instantiations under one shared template, and closes
-with a synthesis that separates universality of contract from equality of evidence.
+bridge, walks through the defended Battery, AV, and Healthcare instantiations under one
+shared template, and closes with a synthesis that separates universality of contract
+from current evidence depth.

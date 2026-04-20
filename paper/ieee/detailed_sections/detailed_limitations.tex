@@ -3,15 +3,12 @@
 
 \subsection{Limitations}
 
-\paragraph{Two-domain scope.}
-This paper validates ORIUS on two CPS domains.  While the kernel is designed to
-be universal, the empirical evidence covers only battery energy storage and
-autonomous vehicles.  Four additional candidate domains (industrial monitoring,
-healthcare, maritime navigation, aerospace) motivated the architecture but have
-\textbf{no locked pipeline artifacts} in this release and are not the basis of any
-empirical claim.  Validation on additional domains is required to strengthen the
-universality claim; until then, T11 (Typed Structural Transfer) is proven
-formally but confirmed empirically only for Battery $\leftrightarrow$ AV.
+\paragraph{Three-domain scope.}
+This paper validates ORIUS on three CPS domains.  While the kernel is designed to
+be universal, the empirical evidence in the active repo-tracked program covers only
+battery energy storage, autonomous vehicles, and healthcare monitoring.  The
+universality claim is therefore architectural and contract-based rather than a claim
+of broad all-domain empirical closure.
 
 \paragraph{AV TSVR floor.}
 The AV domain achieves a TSVR of 0.628, which, while improved over the baseline
@@ -57,15 +54,16 @@ batched prediction, GPU acceleration) would be needed for real-time use.
 \paragraph{Cross-domain transfer scope.}
 The adapter interface enables structural reuse across domains, but functional
 equivalence (whether the same hyperparameters, calibration windows, and inflation
-schedules are optimal) has not been demonstrated beyond Battery and AV.  Adapting
-to a new domain still requires implementing the six typed adapter methods and
-conducting a domain-specific calibration run.
+schedules are optimal) has not been demonstrated beyond the active Battery, AV,
+and Healthcare rows.  Adapting to a new domain still requires implementing the six
+typed adapter methods and conducting a domain-specific calibration run.
 
 \subsection{Future Work}
 
 \begin{enumerate}[nosep]
-  \item \textbf{Additional domains}: Extend validation to industrial process
-        control, healthcare monitoring, and autonomous maritime systems.
+  \item \textbf{Additional domains}: Extend validation only after a new domain is
+        admitted into the active program with matching replay, calibration,
+        runtime, and governance surfaces.
   \item \textbf{Stronger predictors}: Replace LightGBM with transformer-based
         trajectory predictors to lower the base TSVR in the AV domain.
   \item \textbf{Conditional coverage}: Integrate conditional conformal prediction

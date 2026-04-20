@@ -1,7 +1,7 @@
 \documentclass[11pt,onecolumn]{IEEEtran}
 \input{orius_ieee_detailed_preamble.tex}
 
-\title{ORIUS: A Universal Runtime Safety Layer for Physical AI\\under Degraded Observation ---\\Comprehensive Two-Domain Validation on Battery Energy Storage\\and Autonomous Vehicles}
+\title{ORIUS: A Universal Runtime Safety Layer for Physical AI\\under Degraded Observation ---\\Battery Witness Row with Bounded AV and Healthcare Validation}
 \author{Pratik Niroula}
 \date{April 2026}
 
@@ -25,30 +25,34 @@ observation-consistent state set, \textbf{Constrain}~the admissible action set,
 The ORIUS architecture is \emph{universal by design}: the kernel, benchmark schema,
 contract stack, and governance surface are domain-agnostic.  Domain specifics are
 isolated in thin adapter modules that implement six typed methods.  This paper
-provides a comprehensive, equal-depth validation of ORIUS on two distinct
-cyber-physical domains:
+reports the active \emph{three-domain defended lane} with one theorem-grade witness
+row and two bounded promoted rows:
 
 \begin{enumerate}[nosep]
   \item \textbf{Battery Energy Storage}: dispatch optimisation under degraded SoC
-        telemetry, validated on 168-hour CPSBench replay episodes with DeepOQE
-        neural forecasting and five fault families (288~runtime steps, 288~certificates,
-        zero true-state violations).
+        telemetry, validated on locked CPSBench replay artifacts.  Battery remains
+        the witness row with the deepest theorem-to-code-to-artifact closure; the
+        promoted runtime slice achieves zero true-state violations.
   \item \textbf{Autonomous Vehicles}: ego-speed and gap prediction under degraded
         perception, validated on the full Waymo Open Motion corpus (7~validation
         shards, 1{,}975~scenarios, 80{,}975~feature steps, 9{,}348~runtime test steps,
         9{,}348~ certificates, all DC3S contracts satisfied).
+  \item \textbf{Medical and Healthcare Monitoring}: bounded alert-release monitoring
+        under degraded vital-sign observations, promoted through a MIMIC-backed
+        healthcare row with bounded runtime and governance claims.
 \end{enumerate}
 
-Both domains achieve 100\% certificate chain validity, 100\% audit completeness,
-and zero contract failures.  All results are reproducible from locked
-artifacts with SHA-256 hashes.  We report 11~theorems (T1--T11), the complete
-shift-aware adaptive uncertainty mechanism, and a full cross-domain synthesis
-demonstrating that the same kernel survives domain change without semantic loss.
+All promoted rows maintain 100\% certificate-chain validity, 100\% audit completeness,
+and zero contract failures on their active runtime surfaces.  All results are reproducible
+from locked artifacts with SHA-256 hashes.  We report a strict defended theorem core,
+the complete shift-aware adaptive uncertainty mechanism, and a three-domain synthesis
+showing that the same kernel survives domain change without semantic loss while keeping
+battery-specific proof depth clearly distinguished from the bounded AV and Healthcare rows.
 \end{abstract}
 
 \begin{IEEEkeywords}
 runtime safety, degraded observation, conformal prediction, safety certificates,
-cyber-physical systems, battery energy storage, autonomous vehicles, OASG
+cyber-physical systems, battery energy storage, autonomous vehicles, healthcare monitoring, OASG
 \end{IEEEkeywords}
 
 \tableofcontents

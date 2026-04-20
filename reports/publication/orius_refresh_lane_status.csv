@@ -1,4 +1,2 @@
-lane,source_contract,domains_in_scope,latest_status,parity_promotion_allowed,exact_limit
-official_canonical_results,canonical parity-closing raw sources and governed replay artifacts only,"battery, av, industrial, healthcare, navigation, aerospace",navigation=blocked; aerospace=trainable_plus_public_support,yes,"The official parity matrix may only change when the canonical rows clear train, replay, soundness, fallback, and runtime checks under the existing gate."
-supplemental_hf_results,small Hugging Face diagnostics and controlled compute templates,navigation and aerospace diagnostics; optional bounded support for other domains,supporting evidence only,no,Supplemental Hugging Face evidence cannot promote navigation or aerospace and cannot override the official parity gate.
-aerospace_public_flight_support,public ADS-B runtime support with explicit proxy-field provenance,"aerospace chapter depth, runtime diagnostics, governance traces",bounded public-flight support built,no,This lane deepens aerospace evidence but cannot replace provider-approved multi-flight telemetry in the official parity gate.
+lane,status,domains,note
+battery_av_healthcare,canonical,"battery,av,healthcare",This is the only active promoted program lane.

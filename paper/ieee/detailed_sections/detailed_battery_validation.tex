@@ -3,7 +3,8 @@
 
 This section presents a comprehensive evaluation of ORIUS on the Battery Energy
 Storage System (BESS) dispatch domain.  The BESS adapter wraps a 168-hour
-CPSBench replay episode with DeepOQE neural state-of-charge (SoC) forecasting.
+CPSBench replay episode.  The promoted battery claim is carried by the heuristic
+FTIT witness row; deep-lane battery models remain diagnostic only.
 
 \subsection{Domain Description}
 
@@ -33,13 +34,16 @@ telemetry:
   \item \textbf{Stale sensor}: SoC sensor frozen at its last-known value.
 \end{enumerate}
 
-\paragraph{Controller configurations.}  Four controller variants are evaluated:
+\paragraph{Controller configurations.}  Four controller variants are reported:
 \begin{enumerate}[nosep]
   \item \texttt{heuristic:dc3s\_wrapped} --- rule-based dispatch wrapped in \dcs{}.
   \item \texttt{heuristic:dc3s\_ftit} --- rule-based dispatch with
-        fault-tolerant interval tightening (FTIT) variant.
-  \item \texttt{deep:dc3s\_wrapped} --- DeepOQE neural dispatch wrapped in \dcs{}.
-  \item \texttt{deep:dc3s\_ftit} --- DeepOQE dispatch with FTIT variant.
+        fault-tolerant interval tightening (FTIT) variant.  This is the promoted
+        battery runtime row.
+  \item \texttt{deep:dc3s\_wrapped} --- supplemental deep-lane battery runtime,
+        reported for diagnostics only.
+  \item \texttt{deep:dc3s\_ftit} --- supplemental deep-lane FTIT runtime,
+        reported for diagnostics only.
 \end{enumerate}
 
 \paragraph{Metrics.}  Each configuration runs for 288 time steps (48~hours at
@@ -69,7 +73,7 @@ heur:dc3s\_wrapped  & 0.000 & 0.000 & 0.979 & 1.000 & 0.000 & 1.000 & 288 \\
 
 \paragraph{Key findings.}
 \begin{enumerate}[nosep]
-  \item \textbf{Zero true-state violations}: All four controllers achieve
+  \item \textbf{Zero true-state violations}: All four reported controllers achieve
         $\TSVR = 0$ across all 288 steps and all fault scenarios.  The runtime
         layer successfully prevents every SoC constraint crossing.
   \item \textbf{OASG rate}: The OASG is 0.000 in all configurations, meaning the
@@ -79,7 +83,7 @@ heur:dc3s\_wrapped  & 0.000 & 0.000 & 0.979 & 1.000 & 0.000 & 1.000 & 288 \\
         0.993 (dc3s\_ftit), indicating that 97.9--99.3\% of conformal intervals
         contain the true SoC value.
   \item \textbf{Intervention rate}: The dc3s\_wrapped controllers (0.000) never
-        intervene because the heuristic and DeepOQE dispatchers already produce
+        intervene because the reported battery dispatchers already produce
         safe actions under the tested scenarios.  The dc3s\_ftit variants intervene
         at 2.1\% of steps due to the tighter fault-tolerant interval.
   \item \textbf{Audit completeness}: 100\% across all controllers.
@@ -125,8 +129,8 @@ deep      & stale\_sensor & dc3s\_ftit    & 0.000 & 0.031 & 1.000 & 0.992 & 0.90
   \item Under \textbf{stale\_sensor}, the reliability weight decreases to 0.976--0.996,
         indicating moderate degradation detection by the staleness counter.
   \item The \textbf{deep} lane has a lower mean reliability weight (0.905) even
-        under nominal conditions due to the inherent uncertainty of the DeepOQE
-        neural forecaster.
+        under nominal conditions.  This lane is retained only as a diagnostic
+        comparison and does not support a headline claim that a learned model helps.
 \end{itemize}
 
 \subsection{Fault Family Coverage}
@@ -264,11 +268,13 @@ both decrease monotonically as reliability improves, while coverage remains at o
 above the target.  This validates T8 (Graceful Degradation Dominance) and the
 RAC-Cert inflation formula \cref{eq:rac_cert}.
 
-\subsection{Detailed DeepOQE Model Architecture}
+\subsection{Diagnostic Deep Lane (Non-Flagship)}
 
-The DeepOQE (Deep Observation Quality Estimator) model is a quantile regression
-neural network that predicts the SoC at the next time step given historical
-telemetry.  Key design choices:
+The deep battery lane is kept only as a diagnostic comparison row.  It should not
+be read as a flagship ORIUS contribution or as evidence that the learned model
+improves the promoted battery lane.  The diagnostic model is a quantile regression
+network that predicts the SoC at the next time step given historical telemetry.
+Key design choices:
 
 \begin{itemize}[nosep]
   \item \textbf{Architecture}: A 3-layer fully connected network (64--32--16 units)
@@ -282,8 +288,9 @@ telemetry.  Key design choices:
         optimiser, learning rate $10^{-3}$, batch size 64, for 100 epochs.
 \end{itemize}
 
-The DeepOQE model achieves a calibration-set coverage of 97.9\% (target: 95\%),
-indicating slight over-coverage that provides an additional safety margin.
+The diagnostic deep lane achieves a calibration-set coverage of 97.9\% (target:
+95\%), indicating slight over-coverage.  This is reported only as supplemental
+runtime detail and not as a headline source of battery performance gain.
 
 \subsection{CPSBench Replay Protocol}
 
@@ -337,10 +344,9 @@ across the 288 steps for each fault scenario.  The key patterns are:
 \end{enumerate}
 
 The \textbf{deep} lane consistently shows $\wt \approx 0.905$ even under nominal
-conditions.  This is because the DeepOQE model introduces inherent prediction
-uncertainty that the detect stage interprets as mild degradation.  This built-in
-conservatism is a feature, not a bug: it ensures that neural-forecaster-based
-dispatchers operate with a safety margin.
+conditions.  This is treated as a diagnostic property of the supplemental deep
+lane, not as evidence that the deep model should replace the promoted heuristic
+battery row.
 
 \subsection{Controller Comparison: Wrapped vs.\ FTIT}
 
@@ -443,6 +449,7 @@ bound is not tight but is empirically validated.  The tightness gap arises becau
         minimum required by the bound,
   \item the FTIT tube \cref{eq:ftit_upper,eq:ftit_lower} provides additional
         constraint tightening, and
-  \item the DeepOQE model achieves calibration coverage of 97.9\% (above the
-        target 95\%).
+  \item the supplemental deep lane is slightly over-covered and therefore does not
+        weaken the bounded battery runtime claim, even though it is not used to
+        support the flagship contribution.
 \end{enumerate}

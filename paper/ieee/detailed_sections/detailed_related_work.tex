@@ -85,7 +85,7 @@ Fault-tolerant NCS          & \checkmark & $\sim$ & $\times$   & $\times$ & $\ti
 
 ORIUS is, to our knowledge, the first runtime layer that satisfies all five
 requirements simultaneously while remaining domain-agnostic through thin typed
-adapters.  The two-domain validation we present (\cref{sec:battery,sec:av})
-demonstrates that the same kernel---compiled once, configured via adapter---achieves
-zero true-state violations on battery dispatch and closes the OASG on autonomous
-vehicle prediction.
+adapters.  The defended three-domain lane we present combines a battery witness row
+with bounded AV and Healthcare rows, demonstrating that the same kernel---compiled
+once, configured via adapter---survives domain transfer without changing its runtime
+semantics.

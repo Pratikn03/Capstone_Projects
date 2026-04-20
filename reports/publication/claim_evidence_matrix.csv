@@ -1,13 +1,13 @@
 claim_id,claim_text,evidence_path,evidence_type,status,exists
 central_claim,deterministic unsafe vs dc3s safe,reports/publication/dc3s_main_table_ci.csv,csv_row:deterministic_lp_vs_dc3s,locked,True
-theorem_t1,oasg existence,src/gridpulse/cpsbench_iot/scenarios.py,code_path,implemented,True
-theorem_t2,one-step safety preservation,src/gridpulse/dc3s/guarantee_checks.py,code_path,implemented,True
-theorem_t3,coverage monotonicity plus empirical core-bound audit,src/gridpulse/dc3s/coverage_theorem.py,code_path,implemented,True
-theorem_t4,no free safety,src/gridpulse/cpsbench_iot/baselines.py,code_path,implemented,True
-theorem_t5,certificate validity horizon,src/gridpulse/dc3s/temporal_theorems.py,code_path,implemented,True
-theorem_t6,certificate expiration bound,src/gridpulse/dc3s/temporal_theorems.py,code_path,implemented,True
-theorem_t7,feasible fallback existence,src/gridpulse/dc3s/temporal_theorems.py,code_path,implemented,True
-theorem_t8,graceful degradation dominance,src/gridpulse/dc3s/temporal_theorems.py,code_path,implemented,True
+theorem_t1,oasg existence,src/orius/cpsbench_iot/scenarios.py,code_path,flagship_defended,True
+theorem_t2,one-step safety preservation,src/orius/dc3s/guarantee_checks.py,code_path,flagship_defended,True
+theorem_t3,coverage monotonicity plus empirical core-bound audit,src/orius/dc3s/coverage_theorem.py,code_path,draft_non_defended,True
+theorem_t4,no free safety,src/orius/cpsbench_iot/baselines.py,code_path,supporting_defended,True
+theorem_t5,certificate validity horizon,src/orius/dc3s/temporal_theorems.py,code_path,flagship_defended,True
+theorem_t6,certificate expiration bound,src/orius/dc3s/temporal_theorems.py,code_path,flagship_defended,True
+theorem_t7,feasible fallback existence,src/orius/dc3s/temporal_theorems.py,code_path,draft_non_defended,True
+theorem_t8,graceful degradation dominance,src/orius/dc3s/temporal_theorems.py,code_path,draft_non_defended,True
 priority1_fault_table,fault performance table,reports/publication/fault_performance_table.csv,artifact_file,generated,True
 priority1_trace,48h operational trace,reports/publication/48h_trace.csv,artifact_file,generated,True
 priority1_latency,latency p99 table,reports/publication/dc3s_latency_summary.csv,artifact_file,generated,True

@@ -309,6 +309,24 @@ are observed despite 39--49\% wind coverage, confirming that RUI inflation
 bridges the calibration gap for the safety claim even when it cannot close
 the statistical coverage gap.
 
+\paragraph{Mondrian finite-sample caveat (R2 audit response).}
+When stratified CQR is used, each reliability bin receives only
+$n_k = n_{\mathrm{cal}} / K$ samples.  With $K = 10$ bins and
+$n_{\mathrm{cal}} = 1000$, each bin has $\sim\!100$ calibration points.
+By the Hoeffding-DKW inequality, the binomial coverage estimate within
+each bin has a standard error of
+$\sigma_k \approx \sqrt{p(1-p)/n_k} \approx \sqrt{0.09/100} = 3.0\%$.
+A Bonferroni correction across $K$ bins inflates the simultaneous
+confidence interval by $\ln(2K/\delta)/(2n_k)$.  With $K=10$ and
+$\delta=0.05$ this adds $\approx 2.4\%$ to each bin's uncertainty.
+
+\textbf{Implication:}  Per-bin coverage claims are credible to
+$\pm 3{-}5\%$ with the current calibration size.  Bins with fewer
+than $\sim\!80$ points (e.g.\ the extreme low-$w_t$ tail) should
+report coverage as directional rather than precise.  Increasing
+$n_{\mathrm{cal}}$ to 5\,000 (available in the 168-hour episode
+archive) would reduce per-bin uncertainty to $\pm 1.5\%$.
+
 % ----------------------------------------------------------------
 \section{Why Deep Models Do Not Win on the Engineered Track}
 \label{sec:deep-on-engineered-track}

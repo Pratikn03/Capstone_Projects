@@ -1,79 +1,60 @@
-# ORIUS Claim Ledger — Three-Bucket Discipline
+# ORIUS Claim Ledger — 3-Domain Flagship Surface
 
-> Generated from frozen evidence.
-> Every claim in the thesis and IEEE paper must trace to one of these three buckets.
-> If a statement cannot be traced to a locked artifact, it must be rewritten or deleted.
+> Every headline ORIUS claim must resolve to a current artifact in the promoted Battery + AV + Healthcare lane.
+> If a statement cannot be traced to a live artifact, it must be narrowed or deleted.
 
-## Freeze Reference
+## Canonical Reference Set
 
-- **Evidence Freeze Certificate**: `reports/battery_av/overall/evidence_freeze_certificate.json`
-- **Battery Manifest**: `reports/battery_av/battery/artifact_manifest.json` (28 artifacts, 28/28 SHA256 match)
-- **AV Manifest**: `reports/orius_av/full_corpus/artifact_manifest.json` (40 artifacts, 40/40 SHA256 match)
-- **Release Summary**: `reports/battery_av/overall/release_summary.json`
-- **Closure Override**: `reports/battery_av/overall/publication_closure_override.json`
+- `reports/battery_av_healthcare/overall/release_summary.json`
+- `reports/publication/orius_submission_scorecard.csv`
+- `reports/publication/three_domain_ml_benchmark.csv`
+- `reports/publication/three_domain_reliability_calibration.csv`
+- `reports/publication/three_domain_grouped_coverage.csv`
+- `reports/publication/three_domain_nonvacuity_checks.json`
+- `reports/publication/novelty_separation_matrix.csv`
+- `reports/publication/what_orius_is_not_matrix.csv`
+- `reports/publication/active_theorem_audit.json`
 
----
+The flagship novelty sentence is:
 
-## Bucket A — Fully Evidenced (Locked Artifact ↔ Claim)
+> ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.
 
-These claims have a direct, traceable link to a frozen artifact with verified SHA256 hash.
+## Bucket A — Locked Headline Claims
 
-| ID | Claim | Artifact Source | Domain |
-|----|-------|----------------|--------|
-| A1 | ORIUS achieves TSVR = 0 on Battery across all 4 controllers, 3 fault families, 288 steps | `reports/battery_av/battery/runtime_summary.csv`, `release_summary.json` | Battery |
-| A2 | Battery CertOS chain is valid: 288 certificates, 0 failures, 100% audit completeness | `reports/battery_av/battery/certos_verification_summary.json` | Battery |
-| A3 | Battery has 20 counterexamples and 0 OASG cases | `reports/battery_av/battery/observed_true_counterexamples.csv` | Battery |
-| A4 | AV achieves 9,348 runtime traces across 228 scenarios from 7 Waymo shards | `reports/orius_av/full_corpus/runtime_traces.csv`, `release_summary.json` | AV |
-| A5 | AV CertOS chain is valid: 9,348 certificates, 0 failures, 100% audit completeness | `reports/orius_av/full_corpus/certos_verification_summary.json` | AV |
-| A6 | AV has 20 counterexamples and 480 OASG cases | `reports/orius_av/full_corpus/oasg_domain_summary.csv` | AV |
-| A7 | AV TSVR reduced from 0.660 (baseline) to 0.628 (ORIUS), 4.8% relative improvement | `reports/orius_av/full_corpus/runtime_summary.csv` | AV |
-| A8 | AV intervention rate is 90.2% | `reports/orius_av/full_corpus/runtime_summary.csv` | AV |
-| A9 | Shift-aware mechanism: ego_speed validity = 0.885 (nominal), relative_gap validity = 0.888 (nominal) | `reports/orius_av/full_corpus/shift_aware_adaptive_summary.json` | AV |
-| A10 | Shift-aware mechanism: battery domain reports 0 shift alerts, validity = 1.0 | `reports/battery_av/battery/shift_aware_adaptive_summary.json` | Battery |
-| A11 | LP baseline achieves TSVR 3.9% (DE) and 4.2% (US) under drift_combo — confirms T1 empirically | `reports/battery_av/battery/runtime_summary.csv` | Battery |
-| A12 | DC3S achieves TSVR = 0.0% in both markets — confirms T2, T3 empirically | `reports/battery_av/battery/runtime_summary.csv` | Battery |
-| A13 | Both domains validated with the same kernel binary, same contract stack, same CertOS chain | `release_summary.json`, both `artifact_manifest.json` | Cross-domain |
-| A14 | 68 artifacts total, all SHA256-verified, zero mismatches, zero missing | `evidence_freeze_certificate.json` | Cross-domain |
-| A15 | Battery tier = reference (witness), AV tier = proof_validated (bounded contract) | `publication_closure_override.json` | Cross-domain |
+| ID | Claim | Artifact source |
+|----|-------|-----------------|
+| A1 | Battery witness row reduces TSVR from `0.0393` to `0.0000` on the locked publication-nominal surface. | `reports/publication/three_domain_ml_benchmark.csv` |
+| A2 | AV bounded defended row reduces TSVR from `0.1250` to `0.0417`. | `reports/publication/three_domain_ml_benchmark.csv` |
+| A3 | Healthcare bounded defended row reduces TSVR from `0.2917` to `0.0417` on the promoted MIMIC-backed monitoring row. | `reports/publication/three_domain_ml_benchmark.csv` |
+| A4 | Grouped reliability-bucket calibration is emitted for Battery, AV, and Healthcare with non-empty buckets. | `reports/publication/three_domain_grouped_coverage.csv`, `reports/publication/three_domain_nonvacuity_checks.json` |
+| A5 | The active readiness target is `three_domain_93_candidate`, with `critical_gap_count = 0`, `high_gap_count = 0`, and `meets_93_gate = True`. | `reports/publication/orius_submission_scorecard.csv` |
+| A6 | The flagship novelty surface is separated explicitly from conformal prediction, runtime assurance, safe-control methods, drift detection, and generic uncertainty estimation. | `reports/publication/novelty_separation_matrix.csv` |
 
 ## Bucket B — Bounded / Qualified Claims
 
-These claims are supported by evidence but carry caveats. Every instance in prose must include the stated qualification.
+| ID | Claim | Required qualification | Artifact source |
+|----|-------|------------------------|-----------------|
+| B1 | Battery is the deepest proof and artifact surface. | Battery is the witness row, not proof that every promoted domain has equal depth. | `reports/battery_av_healthcare/overall/release_summary.json` |
+| B2 | AV is defended. | AV remains bounded to the TTC plus predictive-entry-barrier contract; it is not full autonomous-driving closure. | `reports/battery_av_healthcare/overall/release_summary.json` |
+| B3 | Healthcare is defended. | Healthcare remains bounded to monitoring-and-alert semantics on the promoted MIMIC row; it is not clinical deployment readiness. | `reports/battery_av_healthcare/overall/release_summary.json` |
+| B4 | ORIUS has a 3-domain baseline and ablation package. | `three_domain_baseline_suite.csv` and `three_domain_ablation_matrix.csv` are diagnostic cross-domain proxy surfaces, not replacements for the deeper battery witness surface. | `reports/publication/three_domain_baseline_suite.csv`, `reports/publication/three_domain_ablation_matrix.csv` |
+| B5 | ORIUS has a strong calibration story. | The promoted calibration claim is grouped reliability-bucket calibration under degraded observation, not a new conditional-coverage theorem. | `reports/publication/three_domain_reliability_calibration.csv`, `reports/publication/what_orius_is_not_matrix.csv` |
+| B6 | Learned reliability contributes novelty. | Deep or learned reliability remains a bounded secondary lane unless it clears the same 3-domain gates as the engineered reliability path. | `paper/monograph/ch08_witness_results_and_failure_analysis.tex` |
 
-| ID | Claim | Qualification | Where Qualified |
-|----|-------|--------------|----------------|
-| B1 | ORIUS kernel is domain-agnostic via typed adapter | Proven only for 2 domains (Battery, AV). Other domains require future validation. | `detailed_limitations.tex` §L1 |
-| B2 | AV TSVR improvement (0.660 → 0.628) | Residual TSVR floor at 0.628 — complex multi-agent interactions at 4s horizon cause true states outside widened interval. Not zero. | `detailed_limitations.tex` §L2 |
-| B3 | Conformal coverage guarantee holds | Marginal coverage only, not conditional per-input. Shift-aware mechanism mitigates but does not eliminate subgroup gaps. | `detailed_limitations.tex` §L3 |
-| B4 | Fallback action is always safe (A4) | Holds for Battery (zero dispatch) and AV (max braking). Non-trivial in coupled-dynamics domains. | `detailed_limitations.tex` §L4 |
-| B5 | Shift-aware mechanism detects distribution shift | Bounded to drift rate within adaptation window (A6). Adversarial/sudden-onset shift not tested. | `detailed_limitations.tex` §L7 |
-| B6 | 11 theorems proven with formal proofs | Proofs assume A1–A8. Empirical confirmation restricted to Battery + AV. T9 (Universal Impossibility) is purely formal. | `detailed_appendix.tex`, `detailed_theory.tex` |
-| B7 | AV validated under bounded longitudinal contract (TTC + predictive-entry-barrier) | Not a claim of full autonomous-driving closure. Lateral control, lane-change, and multi-modal prediction excluded. | `publication_closure_override.json` |
-| B8 | Adapter interface enables domain transfer (T11) | Structural transfer proven; functional equivalence across domains not demonstrated beyond Battery + AV. | `detailed_limitations.tex` §L1 |
+## Bucket C — Explicit Non-Claims
 
-## Bucket C — Not Claimed (Explicitly Excluded)
-
-These items are **not** claimed in the submission. Any prose that implies them must be removed.
-
-| ID | What is NOT Claimed | Why | Status |
-|----|-------------------|-----|--------|
-| C1 | Industrial domain is proof_validated | No locked pipeline artifacts in `reports/`. Only architectural instantiation exists. | Remove from README domain matrix |
-| C2 | Healthcare domain is proof_validated | No locked pipeline artifacts in `reports/`. Only architectural instantiation exists. | Remove from README domain matrix |
-| C3 | Navigation domain is validated | shadow_synthetic tier only; KITTI runtime missing. | Already gated in closure matrix |
-| C4 | Aerospace domain is validated | experimental tier only; real-flight runtime missing. | Already gated in closure matrix |
-| C5 | Real-time deployment readiness | AV averages ~350ms/step; 10Hz requires <100ms. Explicit limitation. | `detailed_limitations.tex` §L6 |
-| C6 | Adversarial robustness | Only fault-injection families tested. Intentional adversarial attacks not covered. | `detailed_limitations.tex` §FW7 |
-| C7 | Cross-sensor fusion | Single-sensor pipeline only. Lidar–camera fusion not implemented. | `detailed_limitations.tex` §L5 |
-| C8 | Conditional (per-input) conformal guarantees | Only marginal coverage proven. | `detailed_limitations.tex` §L3 |
-| C9 | Equal maturity across all 6 domains | Battery = reference, AV = bounded proof-validated. Others are not validated. | Claim ledger, README, intro |
-
----
+| ID | ORIUS does **not** claim | Why |
+|----|---------------------------|-----|
+| C1 | A new universal controller | ORIUS wraps inherited domain controllers rather than replacing them. |
+| C2 | A new conditional-coverage theorem | The active ML surface is grouped calibration under degraded observation. |
+| C3 | Better forecasting by default | Forecast quality matters only insofar as it improves runtime release safety. |
+| C4 | Full autonomous-driving closure | The AV row is bounded to the promoted longitudinal contract. |
+| C5 | Clinical deployment readiness | The Healthcare row is bounded to monitoring-and-alert semantics. |
 
 ## Audit Rules
 
-1. **Every number in the thesis/paper must trace to a Bucket A artifact path.**
-2. **Every qualified claim must include its Bucket B qualification in the same paragraph or a forward reference to Limitations.**
-3. **No statement anywhere may imply a Bucket C item.** If found, rewrite or delete.
-4. **Battery is always "reference witness row"** — not the primary validation.
-5. **AV is always "bounded proof-validated row"** — never "full AV closure."
-6. **The remaining 4 domains appear only in Future Work**, never in Results or Contributions.
+1. Every promoted number must trace to the canonical reference set above.
+2. Every Bucket B claim must carry its qualification in the same paragraph or caption.
+3. No promoted prose may imply Bucket C.
+4. Battery is always the witness row; AV and Healthcare are bounded defended rows.
+5. The active theorem audit is the theory authority; headline ML and novelty credit does not come from draft theorem rows.

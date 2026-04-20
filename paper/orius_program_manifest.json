@@ -1,14 +1,15 @@
 {
   "manifest_version": "2.0.0",
   "created_at_utc": "2026-04-02T00:00:00Z",
-  "purpose": "ORIUS universal safety monograph manifest",
-  "canonical_manuscript": "paper/paper.tex",
+  "purpose": "ORIUS three-domain submission monograph manifest",
+  "canonical_manuscript": "orius_book.tex",
   "canonical_review_dossier": "paper/review/orius_review_dossier.tex",
   "canonical_outputs": [
     "paper/paper.pdf",
     "paper.pdf",
     "paper/review/orius_review_dossier.pdf"
   ],
+  "canonical_review_build": "make review-compile",
   "canonical_architecture": {
     "package_root": "src/orius/",
     "official_backbone": [
@@ -37,25 +38,19 @@
     ]
   },
   "monograph_posture": {
-    "book_level_claim": "ORIUS is a fundamental runtime safety layer for Physical AI under degraded observation.",
-    "equal_domain_universality": "target_end_state_not_current_fact",
+    "book_level_claim": "ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.",
+    "active_program_shape": "three_domain_only",
     "witness_row": "battery",
     "defended_bounded_rows": [
       "autonomous_vehicles",
-      "industrial",
       "healthcare"
-    ],
-    "gated_rows": {
-      "navigation": "shadow_synthetic_pending_real_data_closure",
-      "aerospace": "experimental_pending_stronger_flight_task_and_post_repair_gain"
-    }
+    ]
   },
   "governed_truth_surfaces": {
     "metrics_manifest": "paper/metrics_manifest.json",
     "claim_matrix": "paper/claim_matrix.csv",
     "claim_validator": "scripts/validate_paper_claims.py",
     "monograph_generator": "scripts/build_orius_monograph_assets.py",
-    "parity_matrix": "reports/publication/orius_equal_domain_parity_matrix.csv",
     "domain_closure_matrix": "reports/publication/orius_domain_closure_matrix.csv",
     "universal_claim_matrix": "reports/publication/orius_universal_claim_matrix.csv",
     "chapter_map": "reports/publication/orius_monograph_chapter_map.csv"
@@ -64,13 +59,14 @@
     "PYTHONPATH=src .venv/bin/python scripts/build_orius_monograph_assets.py",
     "PYTHONPATH=src .venv/bin/python scripts/validate_paper_claims.py",
     "make orius-book",
-    "make orius-review-pack",
+    "make review-compile",
     "make publish-audit"
   ],
   "archive_policy": {
     "legacy_program_surfaces": "archive_only_or_rewritten_as_noncanonical_pointers",
     "frozen_package_bundles": "historical_noncanonical",
     "active_monograph_surfaces": [
+      "orius_book.tex",
       "paper/",
       "paper/monograph/",
       "paper/review/",

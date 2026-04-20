@@ -1,6 +1,10 @@
 # ORIUS Full Framework Cold-Start Reproducibility
 
-This document provides step-by-step instructions to reproduce all ORIUS (Papers 2–6) artifacts from a fresh clone.
+This document provides step-by-step instructions to reproduce the active ORIUS 3-domain submission artifacts from a fresh clone.
+
+## Current promoted lane
+
+The canonical promoted submission scope is `battery_av_healthcare`. Battery remains the witness row, and AV plus Healthcare are the promoted bounded rows. The live repo does not maintain a separate six-domain submission gate.
 
 ## Prerequisites
 
@@ -19,8 +23,11 @@ pip install -r requirements.lock.txt
 ## Validation
 
 ```bash
-python3 scripts/validate_paper_claims.py
+python3 scripts/validate_paper_claims.py --tex orius_book.tex
 python3 scripts/sync_paper_assets.py --check
+PYTHONPATH=src python3 scripts/refresh_real_data_manifests.py
+PYTHONPATH=src python3 scripts/build_orius_monograph_assets.py --submission-scope battery_av_healthcare
+make orius-book
 ```
 
 ## Track Runs

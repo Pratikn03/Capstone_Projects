@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-16T16:29:31.961041",
+  "generated_at": "2026-04-19T20:07:04.846972",
   "scenarios": [
     "dropout",
     "drift_combo"
@@ -202,6 +202,6 @@
       }
     }
   },
-  "table2_ablations": "reports/publication/table2_ablations.csv",
+  "table2_ablations": "/private/var/folders/pk/ksqc41pj60q3589gfwhqz5tw0000gn/T/pytest-of-pratik_n/pytest-260/test_run_dc3s_ablation_matrix_1/ablation_out/table2_ablations.csv",
   "overall_pass": false
 }

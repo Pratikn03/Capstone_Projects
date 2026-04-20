@@ -1,3 +1,1 @@
 domain,repo_id,artifact_role,current_status,downloads,updated,canonical_eligibility,exact_limit
-Navigation and Guidance,yujie2696/kitti_odometry_00,small-sequence diagnostic mirror,metadata_reviewed_only,395,2026-01-04,no,KITTI-backed canonical navigation closure still requires the official raw-source contract and the defended real-data replay chain.
-Aerospace Control,Pathange/tartanaviation-adsb-19k-clean,bounded public-flight runtime support lane,public_runtime_built,unknown,2026-04-02,no,"Public ADS-B runtime evidence deepens the aerospace chapter and runtime/governance surfaces, but provider-approved multi-flight telemetry remains the only official parity-closing source."

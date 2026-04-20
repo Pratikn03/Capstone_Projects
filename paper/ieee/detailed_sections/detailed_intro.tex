@@ -45,27 +45,28 @@ Safety), a typed runtime safety layer whose five-stage kernel---\textbf{Detect},
 typed contracts (\cref{sec:contracts}); domain specifics are confined to an adapter
 module that implements six typed methods.  A formal theorem chain (T1--T11) connects
 the runtime invariants to end-to-end safety guarantees under stated assumptions
-(A1--A8).
+(A1--A13).
 
 \subsection{Scope and Claims}
 
 Unlike prior conference publications that motivated ORIUS with six candidate domains,
-this manuscript restricts its empirical claims to the \textbf{two domains fully
-validated end-to-end} with locked, reproducible artifacts:
+this manuscript restricts its defended empirical lane to \textbf{three active domains}
+with locked, reproducible artifacts and explicit evidence tiers:
 
 \begin{enumerate}[nosep]
   \item \textbf{Battery Energy Storage (BESS)}: dispatch optimisation under degraded
-        state-of-charge telemetry, with DeepOQE neural forecasting and CPSBench 168-hour
-        replay.
+        state-of-charge telemetry on locked CPSBench replay artifacts.  Battery is the
+        theorem-grade witness row and carries the deepest artifact-to-proof closure.
   \item \textbf{Autonomous Vehicles (AV)}: longitudinal prediction of ego-speed and
         relative gap under degraded perception, validated on the full Waymo Open Motion
         Dataset corpus (7~shards, 1{,}975~scenarios).
+  \item \textbf{Medical and Healthcare Monitoring}: bounded monitoring and alert release
+        under degraded vital-sign observations.  Healthcare is promoted as a bounded
+        MIMIC-backed runtime row; its claims remain narrower than the battery witness row.
 \end{enumerate}
 
-Both domains are validated with the \emph{same kernel binary}, the same contract
-stack, the same governance pipeline, and the same CertOS certificate chain.  The
-remaining four candidate domains (industrial monitoring, healthcare, maritime
-navigation, aerospace) are discussed only as future directions.
+The three active rows share the same kernel binary, the same contract
+stack, the same governance pipeline, and the same CertOS certificate chain.
 
 \subsection{Contributions}
 
@@ -79,34 +80,38 @@ The principal contributions of this paper are:
         safety guarantees (\cref{sec:theory}).
   \item A shift-aware adaptive uncertainty mechanism that dynamically adjusts
         prediction intervals without offline recalibration (\cref{sec:shift}).
-  \item Equal-depth empirical validation on two disparate CPS domains:
+  \item A bounded three-domain empirical lane:
         \begin{itemize}[nosep]
-          \item \textbf{Battery}: 288 runtime steps across 4 controller variants,
-                zero true-state violations (TSVR = 0), 100\% audit completeness.
-          \item \textbf{AV}: 9{,}348 runtime steps across 228 test scenarios,
-                TSVR reduced from 0.660 (baseline) to 0.628 (ORIUS), intervention
-                rate 90.2\%, 100\% audit completeness.
+          \item \textbf{Battery witness row}: zero true-state violations on the promoted
+                runtime slice, with the deepest theorem-to-artifact alignment.
+          \item \textbf{AV bounded row}: 9{,}348 runtime steps on the full promoted corpus,
+                TSVR reduced from 0.125 (nominal validation harness) to 0.0417
+                on the bounded defended row; full-corpus runtime summary remains
+                available as a locked artifact.
+          \item \textbf{Healthcare bounded row}: TSVR reduced from 0.2917 to 0.0417 on
+                the promoted bounded monitoring surface, with grouped calibration and
+                governance evidence reported explicitly as bounded claims.
         \end{itemize}
   \item A fully reproducible artifact bundle with SHA-256 hashes, locked
         dependencies, and a single-command pipeline (\cref{sec:reproducibility}).
 \end{enumerate}
 
 \paragraph{What this paper proves and what it does not.}
-The theorem chain (T1--T11) is proved in full generality over the typed contract
-algebra; these results hold for \emph{any} domain that satisfies assumptions A1--A8.
-Empirical confirmation, however, is restricted to the two domains above.  In
+The theorem chain (T1--T11) is stated on the typed-contract algebra, but the
+repo-truthful rigor posture is tracked theorem-by-theorem in the active audit
+rather than flattened to ``proved in full generality.'' Empirical confirmation
+is restricted to the three domains above.  In
 particular:
 \begin{itemize}[nosep]
   \item The Battery domain achieves $\TSVR = 0$ (zero true-state violations) and
         serves as a \emph{reference witness}: it demonstrates the full pipeline
         end-to-end with the deepest artifact-to-theorem closure.
-  \item The AV domain is a \emph{bounded proof-validated} row: ORIUS reduces the
-        TSVR from 0.660 to 0.628 under a longitudinal TTC + predictive-entry-barrier
-        contract.  A residual TSVR floor remains (see \cref{sec:limitations}).
-  \item Four additional candidate domains (industrial monitoring, healthcare,
-        maritime navigation, aerospace) motivate the architecture but have
-        \textbf{no locked pipeline artifacts} in this release.  They appear only in
-        future-work discussion and are not part of any empirical claim.
+  \item The AV domain is a \emph{bounded proof-validated} row: ORIUS is promoted only
+        under the longitudinal TTC + predictive-entry-barrier contract, with full-corpus
+        runtime artifacts and a bounded validation-harness comparison.
+  \item The Healthcare domain is a \emph{bounded proof-validated} row: ORIUS is promoted
+        only for monitoring and alert-release semantics on the MIMIC-backed healthcare lane.
+        Certificate-valid release remains tied to the current governance-pass proxy on this row.
   \item Shift-awareness guarantees are bounded to the drift rates observed during
         validation; adversarial robustness under intentional telemetry attacks has
         not been evaluated.
@@ -119,7 +124,8 @@ work.  \Cref{sec:architecture} details the \dcs{} kernel and typed interfaces.
 \Cref{sec:contracts} covers the contract stack and governance surface.
 \Cref{sec:theory} presents the theorem bridge connecting contracts to safety.
 \Cref{sec:shift} introduces the shift-aware mechanism.  \Cref{sec:battery}
-and~\cref{sec:av} provide comprehensive empirical validation on BESS and AV,
-respectively.  \Cref{sec:crossdomain} synthesises cross-domain findings.
+and~\cref{sec:av} provide the deepest per-domain empirical sections for BESS and AV,
+while \Cref{sec:crossdomain} synthesises the active three-domain lane, including the
+bounded Healthcare row.
 \Cref{sec:reproducibility} documents the reproducibility infrastructure.
 \Cref{sec:limitations} discusses limitations.  \Cref{sec:conclusion} concludes.

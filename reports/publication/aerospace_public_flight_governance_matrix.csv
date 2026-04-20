@@ -1,2 +1,0 @@
-lane,issue_seen,validate_seen,expire_seen,fallback_seen,hash_chain_ok,audit_events,status
-aerospace_public_flight,True,True,True,True,True,21,evaluated

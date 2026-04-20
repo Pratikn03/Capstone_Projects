@@ -1,7 +1,4 @@
-domain,chapter,train_rows,calibration_rows,validation_rows,test_rows,primary_target,baseline_tsvr,orius_tsvr,replay_status,safe_action_soundness,fallback_mode,resulting_tier,exact_blocker
-Battery Energy Storage,Battery witness/supporting chapter,12163,868,,2537,load_mw,0.0393,0.0000,pass,reference_witness,safe_hold,reference,none
-Autonomous Vehicles,Chapter 40,85,6,12,19,speed_mps,0.1250,0.0417,pass,pass,full_brake,proof_validated,none
-Industrial Process Control,Chapter 41,6680,477,954,1433,power_mw,1.0000,0.0000,pass,pass,power_cap,proof_validated,industrial_train_validation_chain_complete
-Medical and Healthcare Monitoring,Chapter 42,319,22,45,71,hr_bpm,0.2917,0.0417,pass,pass,max_alert,proof_validated,healthcare_train_validation_chain_complete
-Navigation and Guidance,Chapter 43,0,0,0,0,,0.6667,0.2500,pass,pass,hold_position,shadow_synthetic,navigation_kitti_runtime_missing
-Aerospace Control,Chapter 44,117,8,16,27,airspeed_kt,1.0000,0.0000,pass,pass,envelope_hold,experimental,aerospace_realflight_runtime_missing
+domain,chapter_role,rows_total,train_rows,calibration_rows,val_rows,test_rows,primary_metric,calibration_pass,tsvr,metric_basis,evidence_volume_note,status,tier,blocker
+Battery Energy Storage,witness row,17305,12163,868,1737,2537,soc_mwh,0.8821428571428571,0.0000,locked battery witness runtime surface,Split counts describe witness evidence volume; they are not alternate TSVR denominators.,pass,reference,none
+Autonomous Vehicles,promoted row,132325,88976,13735,14338,15276,ttc_entry_barrier,0.9055919395465994,0.0417,24-step validation_harness proxy,"Runtime/training row counts are evidence volume only; they are not TSVR denominators, and the TSVR above is a shared 24-step proxy metric.",pass,proof_validated,none
+Medical and Healthcare Monitoring,promoted row,124411,87524,4650,14407,17830,bounded_alert_release,0.7974602153994534,0.0417,24-step validation_harness proxy,Split counts describe patient-disjoint MIMIC evidence volume only; BIDMC remains supplemental and these counts are not TSVR denominators.,pass,proof_validated,none

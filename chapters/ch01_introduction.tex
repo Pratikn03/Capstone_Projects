@@ -239,7 +239,7 @@ here as the deepest theorem-to-artifact witness rather than being renumbered
 or discarded.
 
 The present thesis extends that prior work in four ways.  First, it isolates a
-domain-agnostic repair-and-certify kernel instead of leaving the argument
+domain-parametric repair-and-certify kernel instead of leaving the argument
 battery-local.  Second, it widens the empirical program into a tiered
 cross-domain package while preserving explicit evidence boundaries for rows
 that have not yet reached parity.  Third, it adds the later necessity,
@@ -272,3 +272,52 @@ The remainder of this dissertation is organised as follows:
     intentionally non-promoted evidence surfaces, including the active
     probing audit and other claims that remain outside the defended core.
 \end{description}
+
+\section{Scope and Evidence Tiers}\label{sec:scope-tiers}
+
+The ORIUS framework is \emph{domain-parametric}: the notation is written once,
+but every defended instantiation still requires a domain-specific adapter that
+implements the safe set~$\mathcal{S}$, the tightened safe-action set,
+disturbance envelope~$\sigma_d$, and the runtime calibration pipeline.  The
+June defense package therefore uses an aggressive cut.
+
+\paragraph{Strict defended theorem core.}
+The active theorem inventory spans T1--T11, L1--L4, and several extension
+rows, but only a strict subset carries the main defense burden.
+\begin{description}
+  \item[Flagship defended.] T1, T2, T3a, T4, T11, and
+    T\textsubscript{trajectory\_PAC}.  These rows must have aligned proof,
+    code witness, tests, worked examples, and bounded scope notes.
+  \item[Supporting defended.] T3b, T6, T8, T11\textsubscript{Byz}, and
+    T\textsubscript{stale}.  These rows remain citable, but they do not carry
+    the flagship novelty or theory score on their own.
+  \item[Draft / non-defended extensions.] T5, T7, T9, T10, L1--L4,
+    T\textsubscript{minimax}, and T\textsubscript{sensor\_converse}.  These
+    rows remain visible only as scoped draft material.
+\end{description}
+
+\paragraph{Active empirical lane.}
+The defended empirical program is the promoted three-domain lane:
+\begin{description}
+  \item[Battery.] Deepest witness row.  This is the reference proof-to-code-to-artifact surface.
+  \item[Autonomous Vehicles.] Bounded defended row under the stated TTC and predictive-entry-barrier contract.
+  \item[Healthcare.] Bounded defended row under the promoted MIMIC-backed monitoring pipeline and bounded alert semantics.
+\end{description}
+
+\noindent No other domain contributes to the defended June score.  Broader
+architectural portability may still be discussed, but not as equal-depth
+evidence.
+
+\noindent\textbf{Hardware-in-the-loop (HIL).}  The current HIL
+validation is software-in-the-loop (SIL) grade: synthetic faults
+injected into a Python plant model.  No real BESS hardware, no
+power-electronics loop, and no thermal model.  Physical HIL with
+real battery management systems remains \emph{future work}
+(Chapter~\ref{ch:outside-current-evidence}).\smallskip
+
+\noindent\textbf{Terminology.}
+``Safety layer'' in this thesis denotes an
+\emph{architectural pattern} (a post-optimiser runtime shield), not a
+deployed production system.  ``Proves'' is reserved for formal theorems
+backed by code witnesses; empirical results are described as
+``validates'' or ``demonstrates.''

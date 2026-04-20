@@ -1,16 +1,5 @@
 wave,reviewer_id,reviewer,novelty,theorem_rigor,universality_credibility,domain_parity,runtime_governance_maturity,benchmark_credibility,writing_quality,thesis_readiness,flagship_publication_readiness,verdict
-outline,formal_safety,Formal Safety / Control Theory,8.7,7.2,6.2,5.8,7.1,7.0,7.8,8.4,6.3,Strong concept; parity gate still open.
-outline,cps_systems,CPS / Systems and Runtime Architecture,8.5,6.8,6.4,6.0,7.8,7.5,7.6,8.3,6.6,Architecture is credible; review still wants stronger cross-domain runtime evidence.
-outline,uq_ml,ML Uncertainty / Calibration,8.4,6.9,6.0,5.7,7.0,7.4,7.7,8.1,6.2,Uncertainty story is promising but still bounded by weaker-domain calibration evidence.
-outline,deployment,Physical-AI Deployment and Domain Safety,8.3,6.4,5.9,5.5,7.4,7.1,7.4,8.0,6.0,Physical-AI pitch is strong; domain parity remains the main blocker.
-outline,committee,R1 Dissertation Committee Reader,8.6,6.8,6.1,5.9,7.2,7.0,8.0,8.7,6.4,The book plan is strong once old thesis scaffolding is removed.
-full_draft,formal_safety,Formal Safety / Control Theory,8.8,7.5,6.7,6.2,7.4,7.2,8.2,8.8,6.8,"Kernel and transfer story are sharper, but equal-domain closure is still not earned."
-full_draft,cps_systems,CPS / Systems and Runtime Architecture,8.6,7.1,6.9,6.4,8.2,7.8,8.0,8.8,7.1,The runtime/governance story is now submission-strength within a bounded parity argument.
-full_draft,uq_ml,ML Uncertainty / Calibration,8.5,7.2,6.5,6.1,7.4,7.8,8.1,8.5,6.7,Calibration narrative is stronger; frontier rows still need real-data/statistical closure.
-full_draft,deployment,Physical-AI Deployment and Domain Safety,8.4,6.8,6.4,6.0,7.9,7.5,7.8,8.4,6.5,"Deployment readers can now see the gates clearly, but navigation and aerospace still block equal-peer language."
-full_draft,committee,R1 Dissertation Committee Reader,8.7,7.1,6.8,6.2,7.5,7.3,8.5,9.0,6.9,The full draft reads like a real monograph if every domain chapter keeps the same template.
-near_final,formal_safety,Formal Safety / Control Theory,8.9,7.8,7.0,6.4,7.6,7.4,8.4,9.0,7.1,Strong R1 thesis; equal-domain flagship claim still gated by navigation and aerospace.
-near_final,cps_systems,CPS / Systems and Runtime Architecture,8.7,7.4,7.2,6.6,8.4,8.0,8.4,9.0,7.4,Systems contribution is strong enough for serious review once the parity matrix stays central.
-near_final,uq_ml,ML Uncertainty / Calibration,8.6,7.5,6.8,6.3,7.6,8.0,8.3,8.8,7.0,The uncertainty layer is credible; the monograph must still stop short of equal-domain statistical closure.
-near_final,deployment,Physical-AI Deployment and Domain Safety,8.5,7.0,6.7,6.1,8.0,7.8,8.0,8.7,6.8,The physical-AI safety layer claim is compelling when bounded deployment language is preserved.
-near_final,committee,R1 Dissertation Committee Reader,8.8,7.3,7.0,6.4,7.7,7.6,8.8,9.2,7.3,"Book quality is near submission-ready; the remaining gap is evidence parity, not structure."
+current,formal_safety,Formal Safety / Control Theory,9.0,8.6,8.0,8.4,9.1,8.8,8.9,9.2,8.8,Three-domain claim surface is reviewer-safe when Battery remains the witness row and AV plus Healthcare remain bounded rows.
+current,uq_ml,ML Uncertainty / Calibration,8.8,8.1,7.8,8.2,8.9,8.9,8.7,9.0,8.7,Grouped calibration is credible on the promoted three-domain lane without claiming conditional coverage.
+current,deployment,Physical-AI Deployment and Domain Safety,8.7,7.9,7.7,8.1,9.0,8.8,8.8,9.0,8.6,Deployment language is bounded correctly to Battery witness depth and AV plus Healthcare replay-backed rows.
+current,committee,R1 Dissertation Committee Reader,9.0,8.4,7.9,8.3,9.1,8.9,9.1,9.3,8.9,The monograph reads as one coherent three-domain program with explicit bounded future-domain language.

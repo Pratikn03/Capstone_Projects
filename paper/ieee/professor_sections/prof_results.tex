@@ -5,7 +5,7 @@ The decisive empirical question for ORIUS is not whether one domain achieves the
 cost or the smallest interval width. It is whether the runtime layer materially reduces
 true-state violations under degraded observation while remaining operationally cheap and
 auditable. The current repository truth supports that claim most strongly in the battery
-witness row and then at bounded depth across AV, industrial, and healthcare.
+witness row and then at bounded depth across AV and healthcare.
 
 The battery witness establishes the strongest result surface: ORIUS repair-aware
 controllers eliminate true-state violations under the locked degraded-telemetry protocol
@@ -30,10 +30,8 @@ Three results matter most.
 \end{enumerate}
 
 The combined runtime-governance table also makes the evidence boundary easy to read.
-Battery is the witness row. AV, industrial, and healthcare are defended bounded rows
-with full certificate rates and bounded runtime semantics. Navigation and aerospace are
-present in the runtime surface, but they remain blocked from defended closure for data
-and task reasons rather than architecture reasons. That is exactly the disciplined claim
+Battery is the witness row. AV and healthcare are defended bounded rows with full
+certificate rates and bounded runtime semantics. That is exactly the disciplined claim
 shape a professor-facing draft should preserve.
 
 What this means scientifically is that ORIUS is being evaluated as a release layer, not
@@ -48,9 +46,9 @@ witness row rather than forcing every domain into one artificial leaderboard.
 The deployment-scope table prevents the results section from sliding into unbounded
 deployment rhetoric. Even the strongest battery row stops short of unrestricted field
 deployment. The defended bounded rows stop at replay-backed and runtime-governed
-validation. The blocked rows remain visible precisely so that the paper's universal
-architecture claim stays larger than a single benchmark number but smaller than a
-universal deployment claim.
+validation. Future additional domains remain outside the defended lane precisely so
+that the paper's universal architecture claim stays larger than a single benchmark
+number but smaller than a universal deployment claim.
 
 One further interpretive point matters for the professor review draft. ORIUS is not
 claiming that every domain should optimize the same surface metric. Some rows care about

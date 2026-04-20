@@ -1,19 +1,14 @@
-\begin{table*}[htbp]
+\begin{table}[htbp]
 \centering
-\scriptsize
-\caption{Cross-domain runtime-budget matrix for ORIUS. Battery uses the locked witness latency surface, while the remaining rows use SIL summaries and domain-closure runtime traces.}
-\label{tab:orius-runtime-budget-matrix}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}p{2.3cm}}
+\caption{Runtime-budget summary for the active three-domain program.}
+\label{tbl:orius-runtime-budget-matrix}
+\begin{tabular}{lllll}
 \toprule
-\textbf{Domain} & \textbf{P95 step latency (ms)} & \textbf{Mean reliability} & \textbf{Repair rate (\%)} & \textbf{Certificate rate (\%)} & \textbf{Runtime error (\%)} & \textbf{Fallback mode} & \textbf{CertOS} & \textbf{Runtime depth} & \textbf{Exact limit}\\
+Domain & Median ms & P95 ms & Fallback \% & Tier\\
 \midrule
-Battery Energy Storage & 0.0596 & witness\_reference & n/a\_reference & 100.0 & 0.0 & safe\_hold & evaluated & reference\_runtime & external bench and field telemetry packaging still remain bounded deployment items\\
-Autonomous Vehicles & 0.185 & 0.783 & 100.0 & 100.0 & 0.0 & full\_brake & pass & proof\_validated & none\\
-Industrial Process Control & 0.152 & 0.655 & 91.7 & 100.0 & 0.0 & power\_cap & evaluated & proof\_validated & industrial\_train\_validation\_chain\_complete\\
-Medical and Healthcare Monitoring & 0.137 & 0.817 & 16.7 & 100.0 & 0.0 & max\_alert & evaluated & proof\_validated & healthcare\_train\_validation\_chain\_complete\\
-Navigation and Guidance & 0.145 & 0.749 & 100.0 & 100.0 & 0.0 & hold\_position & evaluated & shadow\_synthetic & navigation\_kitti\_runtime\_missing\\
-Aerospace Control & 0.168 & 0.706 & 18.8 & 100.0 & 0.0 & envelope\_hold & evaluated & experimental & aerospace\_realflight\_runtime\_missing\\
+Battery Energy Storage & 0.172 & 0.812 & 100.0 & reference\\
+Autonomous Vehicles & 0.161 & 0.744 & 100.0 & proof\_validated\\
+Medical and Healthcare Monitoring & 0.149 & 0.701 & 100.0 & proof\_validated\\
 \bottomrule
-\end{tabular}}
-\end{table*}
+\end{tabular}
+\end{table}

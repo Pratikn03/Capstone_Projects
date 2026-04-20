@@ -3,11 +3,12 @@
 
 The key test of a universal safety layer is not whether every domain shares the same
 dynamics or controller. It is whether the same runtime contract survives domain change
-without losing semantic meaning. ORIUS evaluates that question across six rows.
+without losing semantic meaning. ORIUS evaluates that question across the defended
+Battery, AV, and Healthcare rows.
 
 \begin{table*}[t]
 \centering
-\caption{Six ORIUS domain rows under a shared runtime contract.}
+\caption{Defended ORIUS domain rows under a shared runtime contract.}
 \label{tab:ieee-domain-rows}
 \small
 \begin{tabularx}{\textwidth}{@{}p{0.16\textwidth}p{0.20\textwidth}p{0.17\textwidth}p{0.16\textwidth}p{0.23\textwidth}@{}}
@@ -16,10 +17,7 @@ without losing semantic meaning. ORIUS evaluates that question across six rows.
 \midrule
 Battery energy storage & Dispatch legal on observed state but unsafe on true state of charge or reserve surface & State-of-charge and dispatch envelope preservation & Witness row & Deepest closure surface in the current stack.\\
 Autonomous vehicles & Action proposed on stale or optimistic headway / collision state & TTC and entry-barrier preservation under repair & Defended bounded row & Bounded to the current TTC plus predictive-entry-barrier contract.\\
-Industrial process control & Control actuation released on degraded plant measurements & Power-temperature or operating-envelope preservation & Defended bounded row & Bounded to the current plant-family and replay surface.\\
 Healthcare monitoring & Clinical alerting or intervention released on degraded vital telemetry & Vital-alert envelope and bounded intervention discipline & Defended bounded row & Bounded to the current monitoring and intervention contract.\\
-Navigation and guidance & Corridor control executed on degraded localization or map consistency & Feasible corridor / obstacle envelope preservation & Gated row & Real-data defended replay chain is still missing.\\
-Aerospace control & Envelope management executed on degraded flight-state surface & Flight-energy / envelope preservation under repair & Gated row & Real multi-flight runtime validation surface is still missing.\\
 \bottomrule
 \end{tabularx}
 \end{table*}
@@ -32,12 +30,6 @@ repairing an action inside a tightly constrained interaction envelope while pres
 bounded fallback semantics. The row is defended, but still explicitly limited to the
 current contract rather than advertised as full autonomy closure.
 
-\subsection{Industrial process control}
-The industrial row demonstrates that ORIUS also travels into operating regimes with
-thermodynamic or plant-family constraints rather than geometric avoidance alone.
-Degraded observation here leads to envelope violation, not just tracking error. The row
-therefore helps show that ORIUS is about admissible actuation under uncertainty, not
-about one family of robotic motion tasks.
 
 \subsection{Healthcare monitoring}
 Healthcare matters because degraded observation can suppress intervention rather than
@@ -47,10 +39,8 @@ only over physical force commands. The defended healthcare row is bounded to the
 monitoring and alerting contract, but it proves that the runtime grammar is not limited
 to mechanical control loops.
 
-\subsection{Navigation and aerospace}
-Navigation and aerospace are the two honest blockers. Navigation remains structurally
-compatible with the ORIUS contract but lacks the defended real-data replay chain needed
-to promote the row. Aerospace carries partial degradation and replay evidence, but not
-the real multi-flight runtime surface needed for a defended bounded row. These two rows
-are therefore part of the universal argument and part of the scientific boundary at the
-same time.
+\subsection{Future additional domains}
+The active branch does not defend named additional domains beyond Battery, AV, and
+Healthcare. Future extensions remain part of the architectural argument, but they are
+not part of the current empirical claim surface until they clear the same replay,
+runtime, governance, and bounded-prose obligations as the active three-domain lane.

@@ -315,7 +315,7 @@ battery dispatch step under a stale-sensor fault.
 
 \paragraph{Step context.}  The true SoC is 450\,MWh.  The sensor has been frozen for
 3 intervals, so the telemetry reports \texttt{soc\_mwh = 440} (10~MWh stale error).
-The dispatch controller (DeepOQE) proposes a 50~MW discharge.
+The promoted battery witness policy proposes a 50~MW discharge.
 
 \paragraph{Stage 1 (Detect).}
 The staleness detector records 3 consecutive identical readings and raises
@@ -324,8 +324,8 @@ Page--Hinkley detector does not fire because the constant readings mimic a
 zero-drift signal.  Output: $\wt = 0.976$, \texttt{flags = \{is\_stale: true\}}.
 
 \paragraph{Stage 2 (Calibrate).}
-The base conformal interval from DeepOQE is $\Chat = [420, 480]$\,MWh (half-width
-30~MWh).  With $\wt = 0.976$ and $s_{\mathrm{shift}} = 0$:
+The battery runtime calibrator emits the base interval $\Chat = [420, 480]$\,MWh
+(half-width 30~MWh).  With $\wt = 0.976$ and $s_{\mathrm{shift}} = 0$:
 \[
   \alpha = \mathrm{clip}\!\bigl(1.0 + 0.7 \times 0.024 + 0.5 \times 0,\; 1.0,\; 3.0\bigr
   ) = 1.017.

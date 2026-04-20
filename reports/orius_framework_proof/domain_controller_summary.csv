@@ -1,7 +1,4 @@
 domain,data_source,evidence_tier,validation_status,baseline_tsvr_mean,orius_tsvr_mean,orius_reduction_pct,harness_status
-battery,locked_artifact,reference,reference_validated,0.7500,0.8750,-16.7,pass
-navigation,locked_csv,shadow_synthetic,shadow_synthetic,0.6667,0.2500,62.5,pass
-industrial,locked_csv,proof_validated,proof_validated,1.0000,0.0000,100.0,pass
-healthcare,locked_csv,proof_validated,proof_validated,1.0000,0.5833,41.7,pass
-aerospace,locked_csv,experimental,experimental,1.0000,0.0000,100.0,pass
-vehicle,locked_csv,proof_validated,proof_validated,0.0833,0.0000,100.0,pass
+battery,locked_artifact,reference,reference,0.0083,0.0000,100.0,pass
+healthcare,locked_csv,proof_validated,proof_validated,0.2917,0.0417,85.7,pass
+vehicle,locked_csv,proof_validated,proof_validated,0.1250,0.0417,66.7,pass

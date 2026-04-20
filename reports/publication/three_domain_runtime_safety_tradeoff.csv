@@ -1,0 +1,4 @@
+domain,baseline_tsvr_mean,orius_tsvr_mean,absolute_delta,relative_delta,intervention_rate,fallback_activation_rate,certificate_valid_release_rate,runtime_latency_p95_ms,metric_surface
+Battery Energy Storage,0.008333,0.000000,0.008333,1.000000,0.020833,0.020833,0.993056,0.812,locked_publication_nominal
+Autonomous Vehicles,0.125000,0.041667,0.083333,0.666667,0.901797,0.000000,1.000000,0.744,validation_harness
+Medical and Healthcare Monitoring,0.291667,0.041667,0.250000,0.857143,0.054167,0.000000,1.000000,0.701,validation_harness

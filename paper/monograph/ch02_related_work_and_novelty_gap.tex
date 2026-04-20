@@ -69,8 +69,8 @@ auditable. ORIUS uses detection as the opening move in a runtime safety sequence
 the full response.
 
 \section{Domain-specific cyber-physical safety systems}
-Energy systems, autonomous mobility stacks, industrial control, healthcare monitoring, and
-other cyber-physical systems already contain rich safety practice in their own local forms
+Energy systems, autonomous mobility stacks, healthcare monitoring, and other
+cyber-physical systems already contain rich safety practice in their own local forms
 \cite{rajkumar2010cps,baheti2011cyberphysical,pasqualetti2013attack,teixeira2015secure,sha2001using,ames2019control}.
 This practice matters because any claim of universality that ignores domain structure is
 empty from the start.
@@ -133,6 +133,14 @@ Domain systems stop at application-local safety practice. What is missing betwee
 single typed runtime composition that starts with observation reliability and ends with
 repaired action, fallback, certificate semantics, and cross-domain replay under one common
 contract.
+
+The exact flagship novelty sentence defended by the dissertation is:
+\begin{quote}
+\emph{ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.}
+\end{quote}
+That sentence is intentionally narrower than a claim of new forecasting leadership or a new
+conditional-coverage theorem. The promoted ML surface is grouped calibration by reliability
+bucket plus bounded runtime-safety deltas on the active three-domain lane.
 
 That missing composition is ORIUS's novelty claim. The dissertation does not argue that any
 one ORIUS component is unprecedented in isolation. It argues that the combination of

@@ -1,56 +1,58 @@
 # ORIUS — Executive Summary
 
-> One-page submission overview for committee, reviewers, and industry audiences.
+> One-page submission overview for committee, reviewers, and ML-safety readers.
 
-## What ORIUS Is
+## Flagship Claim
 
-ORIUS (Observation–Reality Integrity for Universal Safety) is a typed runtime safety layer for Physical AI systems operating under degraded observation. When sensors stall, telemetry drops, or calibration drifts, the gap between what a controller *believes* and what the physical state *actually is* can grow unboundedly. ORIUS closes this Observation–Action Safety Gap (OASG) through a five-stage kernel: **Detect → Calibrate → Constrain → Shield → Certify** (DC3S).
+ORIUS (Observation–Reality Integrity for Universal Safety) is a typed runtime safety layer for Physical AI systems operating under degraded observation. Its single flagship novelty sentence is:
 
-## What This Submission Proves
+> ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.
 
-| Domain | Tier | Key Result | Evidence |
-|--------|------|------------|----------|
-| **Battery (BESS)** | Reference witness | TSVR = 0.0% across 4 controllers, 3 fault families, 288 steps. Zero true-state violations. | 28 SHA256-locked artifacts |
-| **Autonomous Vehicles** | Bounded proof-validated | TSVR reduced from 66.0% (baseline) to 62.8% (ORIUS). 9,348 steps, 228 scenarios, 480 OASG cases closed. | 40 SHA256-locked artifacts |
+The defended ML center is grouped calibration and runtime safety under degraded observation through the five-stage kernel **Detect → Calibrate → Constrain → Shield → Certify**.
 
-- **11 theorems** proven in full generality over the typed contract algebra (T1–T11), with empirical confirmation on both domains.
-- **Same kernel binary** for both domains — domain specifics confined to a 6-method adapter.
-- **68 artifacts** total, all SHA256-verified with zero mismatches at freeze time.
-- Full CertOS certificate chain valid for both domains (288 + 9,348 certificates).
+## What The Active 3-Domain Lane Defends
 
-## What This Submission Does NOT Claim
+| Domain | Tier | Current defended result | Canonical evidence |
+|--------|------|-------------------------|--------------------|
+| **Battery (BESS)** | Witness row | TSVR `0.0393 → 0.0000` on the locked publication-nominal surface | `reports/publication/three_domain_ml_benchmark.csv` + `reports/battery_av/battery/runtime_summary.csv` |
+| **Autonomous Vehicles** | Bounded defended row | TSVR `0.1250 → 0.0417` on the promoted longitudinal validation harness | `reports/publication/three_domain_ml_benchmark.csv` + `reports/orius_av/full_corpus/runtime_summary.csv` |
+| **Medical and Healthcare Monitoring** | Bounded defended row | TSVR `0.2917 → 0.0417` on the promoted MIMIC-backed monitoring row | `reports/publication/three_domain_ml_benchmark.csv` + `data/healthcare/mimic3/processed/mimic3_manifest.json` |
 
-- Industrial, Healthcare, Navigation, Aerospace domains have **no locked pipeline artifacts**. They appear only as future work.
-- AV result is a **bounded proof-of-mechanism** (longitudinal TTC contract), not full autonomous-driving closure.
-- Shift-aware guarantees are bounded to observed drift rates; adversarial attacks have not been evaluated.
-- Real-time deployment requires ~3x latency reduction (350ms → <100ms).
-- No statement claims equal maturity across all domains.
+- The strict theorem authority is the active theorem audit, not a flat theorem count.
+- The flagship defended theorem core is carried by `T1`, `T2`, `T5`, `T6`, and `T_trajectory_PAC`.
+- The flagship ML bundle is:
+  - `reports/publication/three_domain_ml_benchmark.csv`
+  - `reports/publication/three_domain_reliability_calibration.csv`
+  - `reports/publication/three_domain_grouped_coverage.csv`
+  - `reports/publication/novelty_separation_matrix.csv`
+  - `reports/publication/what_orius_is_not_matrix.csv`
+
+## What The Submission Does Not Claim
+
+- ORIUS is **not** a new universal controller.
+- ORIUS is **not** a new conditional-coverage theorem.
+- ORIUS is **not** better forecasting by default.
+- The AV row is **not** full autonomous-driving closure; it remains bounded to the TTC plus predictive-entry-barrier contract.
+- The Healthcare row is **not** clinical deployment readiness; it remains bounded to monitoring-and-alert semantics on the promoted MIMIC surface.
 
 ## Evidence Architecture
 
-```
-reports/battery_av/overall/
-  ├── release_summary.json          ← master 2-domain ledger
-  ├── publication_closure_override.json  ← tier assignments
-  ├── evidence_freeze_certificate.json   ← SHA256 freeze binding
-  └── battery_av_manifest.json
+```text
+reports/battery_av_healthcare/overall/
+  ├── release_summary.json
+  ├── publication_closure_override.json
+  ├── domain_summary.csv
+  └── lane_status.json
 
-reports/battery_av/battery/          ← 28 battery artifacts
-reports/orius_av/full_corpus/        ← 40 AV artifacts
+reports/publication/
+  ├── three_domain_ml_benchmark.csv
+  ├── three_domain_reliability_calibration.csv
+  ├── novelty_separation_matrix.csv
+  └── what_orius_is_not_matrix.csv
 ```
 
 ## Reproducibility
 
-Single-command pipeline: `make pipeline-full`
-Cold-start guide: `ORIUS_REPRODUCIBILITY.md`
-Locked dependencies: `requirements.lock.txt`
-
-## Deliverables
-
-| Item | Format | Status |
-|------|--------|--------|
-| IEEE Paper | 47+ page detailed manuscript | `paper/ieee/` |
-| Thesis | 400+ page monograph | `orius_battery_409page_figures_upgraded_main.tex` |
-| Claim Ledger | 3-bucket discipline doc | `docs/claim_ledger.md` |
-| Evidence Freeze | JSON certificate | `reports/battery_av/overall/evidence_freeze_certificate.json` |
-| Artifact Manifests | SHA256-locked JSON | Both domain manifests verified |
+- Canonical asset build: `PYTHONPATH=src .venv/bin/python scripts/build_orius_monograph_assets.py`
+- Canonical review build: `make review-compile`
+- Cold-start guide: `ORIUS_REPRODUCIBILITY.md`

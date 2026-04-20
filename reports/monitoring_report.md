@@ -278,31 +278,18 @@
     "drift": true
   },
   "model_drift": {
-    "current": {
-      "rmse": 305.1209624375309,
-      "mape": 0.003911572495132256
-    },
-    "baseline_mape": 0.003911572495132256,
-    "decision": {
-      "drift": false,
-      "ratio": 0.0
-    }
-  },
-  "retraining": {
-    "retrain": true,
-    "reasons": [
-      "data_drift",
-      "scheduled_cadence"
-    ],
-    "last_trained_days_ago": 43
+    "drift": false,
+    "ratio": -0.26002576112040293,
+    "current_mape": 0.0026117794492964853,
+    "baseline_mape": 0.003529554560238487
   },
   "dc3s_health": {
     "window_hours": 24,
-    "commands_total": 0,
-    "intervention_rate": 0.0,
-    "low_reliability_rate": 0.0,
+    "commands_total": 38,
+    "intervention_rate": 1.0,
+    "low_reliability_rate": 1.0,
     "drift_flag_rate": 0.0,
-    "inflation_p95": 0.0,
+    "inflation_p95": 1.475,
     "triggered_flags": [],
     "triggered": false,
     "insufficient_data": true,
@@ -312,7 +299,17 @@
       "low_reliability_rate": 0,
       "drift_flag_rate": 0,
       "inflation_p95": 0
-    }
+    },
+    "top_intervention_reasons": [
+      "projection_clip"
+    ]
+  },
+  "retraining": {
+    "retrain": true,
+    "reasons": [
+      "data_drift"
+    ],
+    "last_trained_days_ago": 0
   }
 }
 ```

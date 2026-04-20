@@ -36,6 +36,11 @@ discrepancy is named the \emph{observation--action safety gap} (OASG). The OASG 
 scientific object because it marks the exact point at which internally legal behavior can become
 physically unsafe without obvious software failure.
 
+The flagship novelty sentence used throughout the defense package is:
+\begin{quote}
+\emph{ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.}
+\end{quote}
+
 \section{Why degraded observation is a release-boundary problem}
 Most deployed stacks already include pieces of the response: anomaly scores, confidence
 thresholds, conservative margins, or fallback modes. What they often lack is a single runtime
@@ -75,9 +80,8 @@ Detect--Calibrate--Constrain--Shield--Certify kernel.
 
 The key point is architectural. ORIUS is written as a post-nominal layer. It wraps inherited
 domain controllers rather than assuming they can all be redesigned from first principles. That
-choice is what makes the framework portable across batteries, vehicles, industrial control,
-healthcare monitoring, navigation, and aerospace without pretending that those domains share one
-plant model or one optimal nominal controller.
+choice is what makes the framework portable across the active Battery, AV, and Healthcare lane
+without pretending that those domains share one plant model or one optimal nominal controller.
 
 \begin{figure}[htbp]
 \centering
@@ -140,8 +144,8 @@ repository's claim-lock discipline. Reviewers should be able to tell, at any poi
 whether a statement is theorem-backed, artifact-backed, or explicitly left as future work.
 
 \section{Why ORIUS matters beyond one witness domain}
-The importance of ORIUS is not that batteries, vehicles, industrial plants, healthcare systems,
-navigation stacks, and aerospace controllers secretly reduce to one plant. The importance is
+The importance of ORIUS is not that batteries, vehicles, and healthcare monitoring systems
+secretly reduce to one plant. The importance is
 that they all face the same release-boundary question once observation trust degrades: what
 action can still be justified, with what uncertainty, with what fallback, and under what
 certificate? ORIUS freezes the semantics of that question so that cross-domain comparison
@@ -169,5 +173,5 @@ then states the precise submission boundary, reproducibility discipline, and fin
 
 \paragraph{Boundary of this chapter.}
 This chapter claims only the dissertation's governing doctrine and contribution structure. It
-does not yet prove the theorem ladder or validate equal-domain parity; those later claims remain
+does not yet prove the theorem ladder or validate broader future-domain closure; those later claims remain
 tied to the benchmark, artifact, and governance surfaces that follow.

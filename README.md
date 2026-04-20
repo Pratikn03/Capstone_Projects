@@ -1,10 +1,10 @@
 # ORIUS — Observation–Reality Integrity for Universal Safety
 
 > A universal runtime safety layer for Physical AI under degraded observation.
-> This repository is the research + reproducibility surface for the ORIUS monograph and its tracked battery + AV closure artifacts.
+> This repository is the research + reproducibility surface for the ORIUS monograph and its tracked Battery + AV + Healthcare promoted closure artifacts.
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
-![Domains](https://img.shields.io/badge/domains-6%20runtime%20rows-orange)
+![Domains](https://img.shields.io/badge/domains-3%20runtime%20rows-orange)
 ![Monograph](https://img.shields.io/badge/monograph-450%2B%20pages-blueviolet)
 ![License](https://img.shields.io/badge/license-research-lightgrey)
 
@@ -22,33 +22,47 @@ The book-level claim in this repository is:
 
 > ORIUS is a runtime safety layer for Physical AI under degraded observation.
 
+The flagship novelty sentence used across the defended ML and review surfaces is:
+
+> ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.
+
 That claim is **universal-first** at the architecture level and **artifact-strict** at the evidence level. Project-level status is governed by the committed release and publication artifacts, not by prose alone.
 
 ## Current Validated Posture
 
-The current committed posture, as recorded in [`reports/publication/orius_equal_domain_parity_matrix.csv`](reports/publication/orius_equal_domain_parity_matrix.csv), is:
+The current committed posture, as recorded in [`reports/publication/orius_domain_closure_matrix.csv`](reports/publication/orius_domain_closure_matrix.csv) and the promoted 3-domain scorecard, is:
 
 - `battery` = `reference` witness row with the deepest theorem-to-artifact closure
 - `av` = `proof_validated` bounded row under the TTC + predictive-entry-barrier contract
-- `industrial` = `architectural_instantiation` only — no locked pipeline artifacts
-- `healthcare` = `architectural_instantiation` only — no locked pipeline artifacts
-- `navigation` = `shadow_synthetic` row with blocker `navigation_kitti_runtime_missing`
-- `aerospace` = `experimental` row with blocker `aerospace_realflight_runtime_missing`
-
-**Submission scope**: Only Battery and AV have locked, SHA256-verified pipeline artifacts. The remaining four domains are future work. No statement in this repository claims equal maturity across all domains.
+- `healthcare` = `proof_validated` bounded row backed by the promoted MIMIC bridge surface
+**Submission scope**: The canonical and only promoted lane is `battery_av_healthcare`. Battery remains the witness row; AV and Healthcare are the promoted bounded peer rows.
 
 ## Latest Validated Results
 
-The current battery + AV closure lane is summarized by:
+The current promoted 3-domain closure lane is summarized by:
 
-- [`reports/battery_av/overall/release_summary.json`](reports/battery_av/overall/release_summary.json)
-- [`reports/battery_av/overall/publication_closure_override.json`](reports/battery_av/overall/publication_closure_override.json)
+- [`reports/battery_av_healthcare/overall/release_summary.json`](reports/battery_av_healthcare/overall/release_summary.json)
+- [`reports/battery_av_healthcare/overall/publication_closure_override.json`](reports/battery_av_healthcare/overall/publication_closure_override.json)
+- [`reports/battery_av_healthcare/overall/domain_summary.csv`](reports/battery_av_healthcare/overall/domain_summary.csv)
 - [`reports/publication/orius_domain_closure_matrix.csv`](reports/publication/orius_domain_closure_matrix.csv)
 
 | Domain | Current status | Locked result | Source |
 | --- | --- | --- | --- |
-| Battery Energy Storage | `reference` witness row | TSVR = 0.0% (all 4 controllers, 288 steps) | [`reports/battery_av/overall/release_summary.json`](reports/battery_av/overall/release_summary.json) |
-| Autonomous Vehicles | `proof_validated` bounded row | TSVR 0.660 → 0.628 (9,348 steps, 228 scenarios) | [`reports/battery_av/overall/release_summary.json`](reports/battery_av/overall/release_summary.json) |
+| Battery Energy Storage | `reference` witness row | TSVR = 0.0% (all 4 controllers, 288 steps) | [`reports/battery_av_healthcare/overall/release_summary.json`](reports/battery_av_healthcare/overall/release_summary.json) |
+| Autonomous Vehicles | `proof_validated` bounded row | TSVR 0.125 → 0.0417 on the current universal validation harness | [`reports/battery_av_healthcare/overall/release_summary.json`](reports/battery_av_healthcare/overall/release_summary.json) |
+| Medical and Healthcare Monitoring | `proof_validated` bounded row | TSVR 0.2917 → 0.0417 on the promoted MIMIC-backed monitoring row | [`reports/battery_av_healthcare/overall/release_summary.json`](reports/battery_av_healthcare/overall/release_summary.json) |
+
+## Flagship ML / Novelty Surfaces
+
+The defended ML center is grouped calibration plus runtime safety under degraded observation, not forecasting leadership and not a fresh conformal-theory claim.
+
+- [`reports/publication/three_domain_ml_benchmark.csv`](reports/publication/three_domain_ml_benchmark.csv): headline 3-domain safety delta table
+- [`reports/publication/three_domain_reliability_calibration.csv`](reports/publication/three_domain_reliability_calibration.csv): grouped calibration package by reliability bucket
+- [`reports/publication/three_domain_grouped_coverage.csv`](reports/publication/three_domain_grouped_coverage.csv): grouped coverage with confidence intervals
+- [`reports/publication/three_domain_baseline_suite.csv`](reports/publication/three_domain_baseline_suite.csv): cross-domain diagnostic baseline lane
+- [`reports/publication/three_domain_ablation_matrix.csv`](reports/publication/three_domain_ablation_matrix.csv): cross-domain diagnostic ablation lane
+- [`reports/publication/novelty_separation_matrix.csv`](reports/publication/novelty_separation_matrix.csv): prior-work separation matrix
+- [`reports/publication/what_orius_is_not_matrix.csv`](reports/publication/what_orius_is_not_matrix.csv): explicit non-claim matrix
 
 The current committed AV full-corpus release also records:
 
@@ -56,27 +70,31 @@ The current committed AV full-corpus release also records:
 - a valid CertOS chain for `9,348` certificates in [`reports/orius_av/full_corpus/runtime_governance_summary.csv`](reports/orius_av/full_corpus/runtime_governance_summary.csv) and [`reports/orius_av/full_corpus/certos_verification_summary.json`](reports/orius_av/full_corpus/certos_verification_summary.json)
 - `480` locked OASG cases in [`reports/orius_av/full_corpus/oasg_domain_summary.csv`](reports/orius_av/full_corpus/oasg_domain_summary.csv)
 
-Battery remains the witness row even after AV promotion. AV is defended and proof-validated within its current bounded longitudinal contract; that is not a claim of full autonomous-driving closure.
+Battery remains the witness row even after AV and Healthcare promotion. AV is defended within its bounded longitudinal contract; Healthcare is defended within bounded monitoring-and-alert semantics. Neither row is a claim of full autonomous-driving or regulated clinical deployment closure.
 
 ## Canonical Result Surfaces
 
-Project-level battery + AV closure should be read from these files first:
+Project-level promoted closure should be read from these files first:
 
-- [`reports/battery_av/overall/release_summary.json`](reports/battery_av/overall/release_summary.json): combined release summary for battery + AV
-- [`reports/battery_av/overall/publication_closure_override.json`](reports/battery_av/overall/publication_closure_override.json): publication-facing battery + AV override surface
-- [`reports/battery_av/overall/domain_summary.csv`](reports/battery_av/overall/domain_summary.csv): compact domain status summary
+- [`reports/battery_av_healthcare/overall/release_summary.json`](reports/battery_av_healthcare/overall/release_summary.json): canonical promoted release summary for Battery + AV + Healthcare
+- [`reports/battery_av_healthcare/overall/publication_closure_override.json`](reports/battery_av_healthcare/overall/publication_closure_override.json): publication-facing promoted-lane override surface
+- [`reports/battery_av_healthcare/overall/domain_summary.csv`](reports/battery_av_healthcare/overall/domain_summary.csv): compact promoted-lane domain status summary
 - [`reports/orius_av/full_corpus/summary.json`](reports/orius_av/full_corpus/summary.json): canonical AV full-corpus summary
 - [`reports/orius_av/full_corpus/runtime_summary.csv`](reports/orius_av/full_corpus/runtime_summary.csv): AV runtime controller metrics
 - [`reports/orius_av/full_corpus/runtime_traces.csv`](reports/orius_av/full_corpus/runtime_traces.csv): AV per-step replay traces
 - [`reports/orius_av/full_corpus/runtime_governance_summary.csv`](reports/orius_av/full_corpus/runtime_governance_summary.csv): AV certificate/governance summary
 - [`reports/orius_av/full_corpus/oasg_domain_summary.csv`](reports/orius_av/full_corpus/oasg_domain_summary.csv): AV observed-vs-true counterexample summary
-- [`reports/publication/orius_equal_domain_parity_matrix.csv`](reports/publication/orius_equal_domain_parity_matrix.csv): domain posture summary
+- [`data/healthcare/mimic3/processed/mimic3_healthcare_orius.csv`](data/healthcare/mimic3/processed/mimic3_healthcare_orius.csv): canonical promoted healthcare runtime/evaluation surface
+- [`data/healthcare/mimic3/processed/mimic3_manifest.json`](data/healthcare/mimic3/processed/mimic3_manifest.json): canonical promoted healthcare manifest
 - [`reports/publication/orius_domain_closure_matrix.csv`](reports/publication/orius_domain_closure_matrix.csv): defended vs gated closure matrix
 - [`reports/publication/orius_maturity_matrix.csv`](reports/publication/orius_maturity_matrix.csv): current maturity posture across the program
+- [`reports/publication/orius_submission_scorecard.csv`](reports/publication/orius_submission_scorecard.csv): promoted-lane readiness score, including `three_domain_93_candidate`
 
-The canonical manuscript controller remains:
+The canonical submission monograph controller is:
 
-- [`paper/paper.tex`](paper/paper.tex)
+- [`orius_book.tex`](orius_book.tex)
+- [`paper/paper.tex`](paper/paper.tex) as the mirrored internal long-form controller
+- [`orius_battery_409page_figures_upgraded_main.tex`](orius_battery_409page_figures_upgraded_main.tex) as the legacy archival long-form controller retained for internal provenance only
 - [`paper/paper.pdf`](paper/paper.pdf)
 - [`scripts/build_orius_monograph_assets.py`](scripts/build_orius_monograph_assets.py)
 
@@ -87,14 +105,15 @@ Do not hand-edit generator-owned publication outputs unless the generator change
 This repository commits **summary artifacts** and **release-facing evidence**, not every heavy runtime byproduct.
 
 - Committed and authoritative AV summaries, tables, and figures live under [`reports/orius_av/full_corpus/`](reports/orius_av/full_corpus/)
-- Committed and authoritative combined battery + AV closure summaries live under [`reports/battery_av/overall/`](reports/battery_av/overall/)
+- Committed and authoritative promoted closure summaries live under [`reports/battery_av_healthcare/overall/`](reports/battery_av_healthcare/overall/)
+- The earlier Battery + AV-only summaries remain readable under [`reports/battery_av/overall/`](reports/battery_av/overall/) as legacy historical artifacts
 - The oversized AV audit database, `reports/orius_av/full_corpus/dc3s_av_waymo_dryrun.duckdb`, is intentionally **not** committed in normal git
 - Raw Waymo shards are not part of the git-tracked repo surface
 - The intended future path for heavy artifacts is a release asset or Git LFS; this repository currently treats the committed CSV/JSON/PNG surfaces as the canonical lightweight evidence layer
 
 If you need the omitted heavy AV audit DB, regenerate it locally using the commands below.
 
-## How To Verify / Rebuild The Battery + AV Closure Lane
+## How To Verify / Rebuild The Promoted 3-Domain Closure Lane
 
 Run the AV full-corpus runtime:
 
@@ -123,19 +142,16 @@ Build the AV report surface:
   --uncertainty-dir artifacts/uncertainty/orius_av_full_corpus
 ```
 
-Build the combined battery + AV closure summaries:
+Refresh the promoted healthcare manifest:
 
 ```bash
-./.venv/bin/python scripts/build_battery_av_closure_artifacts.py \
-  --battery-dir reports/battery_av/battery \
-  --av-dir reports/orius_av/full_corpus \
-  --overall-dir reports/battery_av/overall
+PYTHONPATH=src ./.venv/bin/python scripts/refresh_real_data_manifests.py
 ```
 
 Regenerate publication / monograph-facing assets:
 
 ```bash
-./.venv/bin/python scripts/build_orius_monograph_assets.py
+PYTHONPATH=src ./.venv/bin/python scripts/build_orius_monograph_assets.py --submission-scope battery_av_healthcare
 ```
 
 If you want the combined lane orchestrated from one entrypoint, use [`scripts/run_battery_av_pipeline.py`](scripts/run_battery_av_pipeline.py).
@@ -164,16 +180,19 @@ Canonical benchmark fields:
 
 ## Rate-Distortion Safety Laws (L1-L4)
 
-ORIUS's theoretical foundation is grounded in Shannon rate-distortion theory via four laws that completely characterise the degraded-observation safety problem:
+ORIUS includes four rate-distortion-inspired extension laws. In the live repo
+they are treated as \emph{stylized/proxy} surfaces for the extension-law
+discussion, not as a fully closed characterization of degraded-observation
+safety:
 
 | Law | Statement | Code Witness |
 |-----|-----------|-------------|
-| **L1** Rate-Distortion Safety Law | D*(C) >= alpha * max(0, 1 - C/H(X)). When channel capacity C < state entropy H(X), positive safety loss is unavoidable. | `rate_distortion_safety_law()` |
-| **L2** Capacity Bridge | w_t <= kappa_d * C / H(X). OQE reliability is bounded by normalized channel capacity. | `capacity_bridge()` |
-| **L3** Critical Capacity | Below C*_d = H(X)(1 - eps/alpha)/kappa_d, no controller can certify safety. | `critical_capacity()` |
-| **L4** Achievability-Converse Sandwich | (alpha/K)(1-w_bar) <= TSVR* <= alpha(1-w_bar). DC3S is within constant factor K=2 of optimal. | `achievability_converse_sandwich()` |
+| **L1** Rate-Distortion Safety Law | Stylized lower-envelope surrogate `D*(C) >= alpha * max(0, 1 - C/H(X))`. | `rate_distortion_safety_law()` |
+| **L2** Capacity Bridge | Stylized proxy bridge `w_t <= kappa_d * C / H(X)`. | `capacity_bridge()` |
+| **L3** Critical Capacity | Threshold calculator induced by the L2 proxy plus the executable T3 upper envelope. | `critical_capacity()` |
+| **L4** Achievability-Converse Sandwich | Stylized proxy lower side plus executable upper side. | `achievability_converse_sandwich()` |
 
-All four laws are implemented in [`src/orius/universal_theory/orius_law.py`](src/orius/universal_theory/orius_law.py) with full proof sketches, and the earlier theorems T9, T10, T_minimax, and T_sensor_converse are derived as corollaries. The empirical phase transition sweep across 6 domains validates L1-L4 in [`reports/publication/orius_law_phase_transition.csv`](reports/publication/orius_law_phase_transition.csv).
+All four laws are implemented in [`src/orius/universal_theory/orius_law.py`](src/orius/universal_theory/orius_law.py) as extension-law helpers. The active audit tracks them as bounded/stylized surfaces rather than fully defended converse theorems.
 
 ## Repository Map
 
@@ -190,7 +209,8 @@ All four laws are implemented in [`src/orius/universal_theory/orius_law.py`](src
 ├── scripts/                    Build, validation, training, and publication tooling
 ├── paper/                      Canonical manuscript and generated monograph assets
 ├── docs/                       Architecture and workflow documentation
-├── reports/battery_av/         Combined battery + AV release lane
+├── reports/battery_av_healthcare/  Canonical three-domain release lane
+├── reports/battery_av/         Historical battery + AV release lane
 ├── reports/orius_av/           AV runtime/report surfaces
 ├── reports/publication/        Active publication artifacts
 └── reports/legacy_archive/     Historical frozen bundles and provenance-only outputs
@@ -224,7 +244,7 @@ Historical release bundles and frozen package snapshots are retained under:
 
 - [`reports/legacy_archive/`](reports/legacy_archive/)
 
-They are preserved for provenance only. They are not part of the active battery + AV closure authority and should not be used as current narrative truth.
+They are preserved for provenance only. They are not part of the active three-domain closure authority and should not be used as current narrative truth.
 
 ## Citation
 

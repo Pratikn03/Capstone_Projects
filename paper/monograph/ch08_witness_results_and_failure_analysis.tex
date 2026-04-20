@@ -75,7 +75,7 @@ and local repair geometry. Some scenarios clear the strict gate more comfortably
 others, which is exactly what should happen when the runtime is responding to different
 fault structures rather than papering over them.
 
-\section{Conditional coverage and reliability slices}
+\section{Grouped calibration and reliability slices}
 ORIUS depends on reliability-conditioned uncertainty rather than on one globally fixed
 interval. The grouped coverage table below shows why that distinction matters.
 
@@ -85,7 +85,7 @@ interval. The grouped coverage table below shows why that distinction matters.
 \input{assets/tables/generated/tbl03_cqr_group_coverage}%
 }
 
-Coverage quality moves materially across operating regimes and reliability buckets. That is
+Grouped calibration quality moves materially across operating regimes and reliability buckets. That is
 precisely the pattern ORIUS is designed to take seriously. If interval behavior were
 uniform, a single robust margin would come closer to sufficing. Because interval behavior
 changes with regime and observation trust, the runtime must tighten admissible action as
@@ -136,7 +136,7 @@ The witness chapter supports three claims and no more. First, ORIUS can material
 degraded-observation safety on a defended row. Second, the kernel remains meaningful across
 multiple telemetry fault families rather than on one curated failure. Third, intervention
 and certificate behavior are part of the scientific result, not merely surrounding
-instrumentation. It does not claim that the battery row proves equal-domain closure or
+instrumentation. It does not claim that the battery row proves broader future-domain closure or
 settles every question about deployment economics, asset aging, or market-optimal dispatch.
 What it does show is that once observed-state legality is no longer enough, ORIUS changes
 the release boundary in a measurable, reviewable, and auditable way.

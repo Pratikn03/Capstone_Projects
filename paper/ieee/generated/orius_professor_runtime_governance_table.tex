@@ -3,16 +3,13 @@
 \scriptsize
 \caption{Runtime and governance summary for the professor-facing ORIUS draft.}
 \label{tab:prof-runtime-governance}
-\begin{tabularx}{\textwidth}{@{}p{0.18\textwidth}p{0.14\textwidth}p{0.12\textwidth}p{0.11\textwidth}p{0.13\textwidth}p{0.10\textwidth}p{0.15\textwidth}@{}}
+\begin{tabularx}{\textwidth}{@{}p{0.24\textwidth}p{0.16\textwidth}p{0.14\textwidth}p{0.14\textwidth}p{0.12\textwidth}p{0.14\textwidth}@{}}
 \toprule
-\textbf{Domain} & \textbf{Row} & \textbf{P95 latency (ms)} & \textbf{Repair (\%)} & \textbf{Fallback} & \textbf{Audit (\%)} & \textbf{Current limit} \\
+\textbf{Domain} & \textbf{Row} & \textbf{P95 latency (ms)} & \textbf{Fallback (\%)} & \textbf{Audit / lifecycle (\%)} & \textbf{Boundary} \\
 \midrule
-Battery Energy Storage & Witness row & 0.1 & n/a\_reference & safe\_hold & 97.0 & external bench and field telemetry packaging still remain bounded deployment items\\
-Autonomous Vehicles & Defended bounded row & 0.2 & 100.0 & full\_brake & 94.0 & none\\
-Industrial Process Control & Defended bounded row & 0.2 & 91.7 & power\_cap & 94.0 & industrial\_train\_validation\_chain\_complete\\
-Medical and Healthcare Monitoring & Defended bounded row & 0.1 & 16.7 & max\_alert & 94.0 & healthcare\_train\_validation\_chain\_complete\\
-Navigation and Guidance & Shadow-synthetic & 0.1 & 100.0 & hold\_position & 58.0 & navigation\_kitti\_runtime\_missing\\
-Aerospace Control & Experimental & 0.2 & 18.8 & envelope\_hold & 55.0 & aerospace\_realflight\_runtime\_missing\\
+Battery Energy Storage & Witness row & 0.812 & 100.0 & 100.0 & deepest theorem-to-artifact closure\\
+Autonomous Vehicles & Defended bounded row & 0.744 & 100.0 & 100.0 & bounded TTC plus predictive-entry-barrier contract\\
+Medical and Healthcare Monitoring & Defended bounded row & 0.701 & 100.0 & 100.0 & bounded monitoring and alert-release semantics\\
 \bottomrule
 \end{tabularx}
 \end{table*}

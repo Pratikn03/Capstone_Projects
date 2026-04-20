@@ -44,8 +44,8 @@ as a Physical AI safety wrapper.
 The cross-domain runtime-budget matrix in
 \texttt{reports/publication/tbl\_orius\_runtime\_budget\_matrix.tex} is the
 best evidence that the runtime contract is not battery-specific.  It shows
-that the six-domain program preserves sub-millisecond P95 latency while
-keeping certificate rates at 100 percent on all rows.
+that the active three-domain program preserves sub-millisecond P95 latency while
+keeping certificate rates at 100 percent on all promoted rows.
 
 \input{generated/orius_professor_runtime_governance_table.tex}
 
@@ -58,8 +58,7 @@ The governance story is best captured by the locked lifecycle matrix in
 \texttt{reports/publication/tbl\_orius\_governance\_lifecycle\_matrix.tex} and
 the domain-closure matrix in \texttt{reports/publication/orius\_domain\_closure\_matrix.csv}.
 Together they show that CertOS is not a decorative abstraction: the same
-issue/validate/expire/fallback logic is observed in the defended rows, while
-navigation and aerospace remain gated by explicit blockers.
+issue/validate/expire/fallback logic is observed in the defended rows.
 
 \begin{table}[t]
 \centering
@@ -84,10 +83,9 @@ Step latency & 0.59 ms \\
 The appendix should end with the governance boundary spelled out plainly:
 the runtime layer is fully visible, the certificates are auditable, and the
 fallback path is explicit, but the claim remains tiered by domain. Battery
-is the reference witness; AV, industrial, and healthcare are defended
-bounded rows; navigation and aerospace remain gated. That is enough for a
-strong IEEE draft, and it is more defensible than flattening the evidence
-into one universal-number story.
+is the reference witness; AV and healthcare are defended bounded rows. That
+is enough for a strong IEEE draft, and it is more defensible than flattening
+the evidence into one universal-number story.
 
 \subsection{Repository maturity visual}
 Appendix~B is also the right place for one explicit repository-level visual.

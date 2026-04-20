@@ -1,56 +1,43 @@
 # ORIUS Real-Dataset Download and Placement Guide
 
-Use this guide with:
+This guide reflects the active ORIUS 3-domain submission program only.
 
-- `DATA.md`
-- `data/av/PLACE_REAL_AV_DATA_HERE.md`
-- `data/navigation/PLACE_REAL_NAVIGATION_DATA_HERE.md`
-- `data/aerospace/PLACE_REAL_AEROSPACE_DATA_HERE.md`
+Active defended rows:
 
-## Current truth
+- Battery
+- Autonomous Vehicles
+- Healthcare
 
-| Domain | Canonical source | Current status | What is still needed |
-| --- | --- | --- | --- |
-| Battery | OPSD + SMARD / EIA-family release surfaces | Reference row | Keep release packaging clean |
-| Autonomous vehicles | Waymo Open Motion | Real-data contract active | Maintain repo-local raw placement and replay artifacts |
-| Industrial | CCPP primary + ZeMA companion | Real-data contract active | Keep both raw-source manifests current |
-| Healthcare | BIDMC / PhysioNet | Real-data contract active | Keep full raw placement and processed lineage stable |
-| Navigation | KITTI Odometry | Blocked real-data gap | Finish full train/validate/replay chain |
-| Aerospace | NASA C-MAPSS FD001-FD004 + bounded public ADS-B support lane | Experimental/support-tier only | Stage the canonical real-flight runtime row and rerun parity closure |
+Current public posture:
 
-Important boundary:
-
-- Navigation is not a defended real-data row until the full pipeline closes.
-- Aerospace has a trainable surface plus a support lane, but equal-domain closure is still not claimed.
-- MIMIC-III is not the current healthcare source in this repo; BIDMC is.
-- Do not use this guide by itself to justify equal-domain universality.
+- Battery is the witness row.
+- AV is a bounded defended row under the TTC plus predictive-entry-barrier contract.
+- Healthcare is a bounded defended row under MIMIC monitoring and alert-release semantics.
+- Additional domains are future architectural extensions, not current defended rows.
 
 ## Repo-local raw-data root
 
-Repo-local placement is now the default contract:
+Repo-local placement is the default contract:
 
 ```text
 data/
 ├── av/raw/waymo_open_motion/
 ├── av/raw/argoverse2_motion/
 ├── av/raw/argoverse2_sensor/
-├── navigation/raw/kitti_odometry/
-├── industrial/raw/CCPP.csv
-├── industrial/raw/zema_hydraulic/
-├── healthcare/raw/bidmc_csv/
-└── aerospace/raw/
+├── healthcare/raw/mimic3/
+└── raw/
 ```
 
-`ORIUS_EXTERNAL_DATA_ROOT` remains supported only as a fallback for AV and navigation.
+`ORIUS_EXTERNAL_DATA_ROOT` remains an optional fallback for AV corpora only.
 
 ## Domain instructions
 
 ### 1. Battery
 
-Battery remains the reference row. Use the existing energy feature builders and refresh provenance with:
+Battery remains the reference witness row. Refresh provenance with:
 
 ```bash
-python scripts/refresh_real_data_manifests.py
+PYTHONPATH=src python scripts/refresh_real_data_manifests.py
 ```
 
 ### 2. Autonomous vehicles
@@ -84,105 +71,35 @@ Canonical processed output:
 
 - `data/av/processed/av_trajectories_orius.csv`
 
-Manifests:
+Manifest:
 
 - `data/av/raw/waymo_open_motion_provenance.json`
-- `data/av/raw/argoverse2_sensor_provenance.json`
 
-### 3. Industrial
-
-Primary trainable source:
-
-- `data/industrial/raw/CCPP.csv`
-
-Companion dense source:
-
-- `data/industrial/raw/zema_hydraulic/`
-
-Build command:
-
-```bash
-python scripts/download_industrial_datasets.py --source ccpp
-```
-
-Manifest:
-
-- `data/industrial/raw/ccpp_provenance.json`
-
-### 4. Healthcare
+### 3. Healthcare
 
 Canonical source:
 
-- BIDMC / PhysioNet
+- `MIMIC-III Waveform Database Matched Subset`
 
-Place under:
+Canonical processed runtime/evaluation surface:
 
-```text
-data/healthcare/raw/bidmc_csv/
-```
+- `data/healthcare/mimic3/processed/mimic3_healthcare_orius.csv`
 
-Build command:
+Canonical manifest:
 
-```bash
-python scripts/download_healthcare_datasets.py --source bidmc
-```
+- `data/healthcare/mimic3/processed/mimic3_manifest.json`
 
-Manifest:
-
-- `data/healthcare/raw/bidmc_provenance.json`
-
-### 5. Navigation
-
-Canonical source:
-
-- `KITTI Odometry`
-
-Place under:
+Repo-local raw placement:
 
 ```text
-data/navigation/raw/kitti_odometry/
+data/healthcare/raw/mimic3/
 ```
-
-Build commands:
-
-```bash
-python scripts/build_navigation_real_dataset.py
-PYTHONPATH=src python -m orius.data_pipeline.build_features_navigation
-```
-
-Canonical processed output:
-
-- `data/navigation/processed/navigation_orius.csv`
-
-Manifest:
-
-- `data/navigation/raw/kitti_odometry_provenance.json`
-
-Current blocker:
-
-- the row is not defended until train, validation, replay, and artifact generation all pass with no synthetic fallback.
-
-### 6. Aerospace
-
-Canonical trainable source:
-
-- NASA C-MAPSS under `data/aerospace/raw/`
-
-Build command:
-
-```bash
-python scripts/download_aerospace_datasets.py
-```
-
-Manifest:
-
-- `data/aerospace/raw/cmapss_provenance.json`
 
 Important boundary:
 
-- C-MAPSS now backs the trainable aerospace surface in this repo
-- the bounded public ADS-B runtime is a support lane only
-- theorem-grade or equal-domain aerospace closure is still not claimed without the canonical real-flight runtime surface
+- MIMIC is the only canonical promoted healthcare source on this branch.
+- Patient-disjoint split policy is keyed off `patient_id` in the promoted builder and evaluation surfaces.
+- BIDMC may remain in-repo as supplemental healthcare support material, but it is not the promoted source of truth.
 
 ## Preflight
 
@@ -197,4 +114,4 @@ This checks:
 - repo-local free disk threshold
 - required CLIs: `git`, `hf`, `kaggle`
 - required Python modules: `pandas`, `pyarrow`, `openpyxl`, `wfdb`, `huggingface_hub`
-- expected raw-data directories for each domain
+- expected raw-data directories for the active 3-domain program

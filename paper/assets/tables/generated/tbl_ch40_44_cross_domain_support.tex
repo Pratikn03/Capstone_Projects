@@ -1,18 +1,14 @@
-\begin{table*}[htbp]
+\begin{table}[htbp]
 \centering
-\small
-\caption{Shared cross-domain support layer for compiled Chapters 40--44. Training counts come from the verified multi-domain training audit where available, while tier and blocker language come from the governed parity and closure artifacts.}
-\label{tab:ch40-44-cross-domain-support}
-\begin{tabular}{p{2.6cm}rrrrp{1.8cm}p{1.8cm}p{2.2cm}p{3.0cm}}
+\caption{Cross-domain support register for the active three-domain program.}
+\label{tbl:ch40-44-cross-domain-support}
+\begin{tabular}{lll}
 \toprule
-\textbf{Domain} & \textbf{Train} & \textbf{Cal} & \textbf{Val} & \textbf{Test} & \textbf{Target} & \textbf{PICP$_{90}$} & \textbf{Tier} & \textbf{Exact blocker}\\
+Domain & Role & Tier\\
 \midrule
-Battery Energy Storage & 12,163 & 868 & n/a & 2,537 & load\_mw & 0.924 & reference & none\\
-Autonomous Vehicles & 85 & 6 & 12 & 19 & speed\_mps & 0.947 & proof\_validated & none\\
-Industrial Process Control & 6,680 & 477 & 954 & 1,433 & power\_mw & 0.896 & proof\_validated & industrial\_train\_validation\_chain\_complete\\
-Medical and Healthcare Monitoring & 319 & 22 & 45 & 71 & hr\_bpm & 0.930 & proof\_validated & healthcare\_train\_validation\_chain\_complete\\
-Navigation and Guidance & 0 & 0 & 0 & 0 &  & n/a & shadow\_synthetic & navigation\_kitti\_runtime\_missing\\
-Aerospace Control & 117 & 8 & 16 & 27 & airspeed\_kt & 0.000 & experimental & aerospace\_realflight\_runtime\_missing\\
+Battery Energy Storage & witness row & reference\\
+Autonomous Vehicles & promoted row & proof\_validated\\
+Medical and Healthcare Monitoring & promoted row & proof\_validated\\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}

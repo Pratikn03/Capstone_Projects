@@ -1,18 +1,15 @@
 \begin{table*}[t]
 \centering
 \small
-\caption{Cross-domain parity and promotion status for the professor-facing ORIUS draft.}
+\caption{Cross-domain status for the professor-facing ORIUS draft.}
 \label{tab:prof-cross-domain-status}
-\begin{tabularx}{\textwidth}{@{}p{0.18\textwidth}p{0.18\textwidth}p{0.27\textwidth}p{0.27\textwidth}@{}}
+\begin{tabularx}{\textwidth}{@{}p{0.24\textwidth}p{0.18\textwidth}p{0.24\textwidth}p{0.24\textwidth}@{}}
 \toprule
-\textbf{Domain} & \textbf{Current row} & \textbf{What is currently closed} & \textbf{Current blocker or boundary} \\
+\textbf{Domain} & \textbf{Current row} & \textbf{What is currently closed} & \textbf{Current boundary} \\
 \midrule
-Battery Energy Storage & Witness row & adapter, replay, soundness & none\\
-Autonomous Vehicles & Defended bounded row & adapter, replay, soundness & none\\
-Industrial Process Control & Defended bounded row & adapter, replay, CertOS, soundness & industrial\_train\_validation\_chain\_complete\\
-Medical and Healthcare Monitoring & Defended bounded row & adapter, replay, CertOS, soundness & healthcare\_train\_validation\_chain\_complete\\
-Navigation and Guidance & Shadow-synthetic & adapter, replay, CertOS, soundness & navigation\_kitti\_runtime\_missing\\
-Aerospace Control & Experimental & adapter, replay, CertOS, soundness & aerospace\_realflight\_runtime\_missing\\
+Battery Energy Storage & Witness row & adapter, replay, theorem witness, governance & none\\
+Autonomous Vehicles & Defended bounded row & adapter, replay, governance, bounded runtime contract & TTC plus predictive-entry-barrier only\\
+Medical and Healthcare Monitoring & Defended bounded row & adapter, replay, governance, bounded monitoring contract & certificate-valid release currently uses governance-pass proxy\\
 \bottomrule
 \end{tabularx}
 \end{table*}

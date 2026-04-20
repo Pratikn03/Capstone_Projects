@@ -249,10 +249,39 @@ combinations, with bounded intervention cost.
     price of safety.
 \end{enumerate}
 
+\paragraph{Battery model limitations (R3, R8 audit response).}
+The plant model used throughout is a \emph{linear SOC model}:
+$\text{SOC}_{t+1}=\text{SOC}_t + \eta_c P_c \Delta t - P_d \Delta t / \eta_d$,
+with fixed charge/discharge efficiencies $\eta_c, \eta_d$.  This
+formulation does \textbf{not} capture:
+\begin{itemize}
+  \item \textbf{Peukert effect}: rate-dependent capacity loss (relevant at
+    $>1$C rates);
+  \item \textbf{CC-CV charging}: the constant-voltage tail phase where the
+    linear model over-estimates charge rate;
+  \item \textbf{Temperature dependence}: no thermal model; efficiency and
+    degradation are temperature-invariant in the model;
+  \item \textbf{Calendar and cycle aging}: no capacity fade; the model
+    assumes constant nominal capacity throughout the episode;
+  \item \textbf{Cell-level heterogeneity}: the model aggregates to a
+    single pack-level SOC; no cell balancing or weak-cell effects.
+\end{itemize}
+These simplifications are standard in day-ahead dispatch planning
+(Stluka et~al., 2011; Xu et~al., 2017) but limit validity at
+sub-minute timescales, extreme temperatures, and end-of-life scenarios.
+The conformal calibration pipeline partially compensates: the forecast
+residual envelope $\sigma_d$ absorbs model error \emph{empirically}, so
+the safety guarantee holds as long as the calibration set includes
+representative operating conditions.  Extending to nonlinear
+electrochemical models (e.g.\ equivalent-circuit or P2D) and
+temperature-dependent efficiency is \emph{future work}
+(Chapter~\ref{ch:outside-current-evidence}).
+
 \section{Chapter Summary}
 
 The main battery results establish three facts: (i)~deterministic dispatch
-exposes significant hidden violations, (ii)~DC3S eliminates them entirely,
+exposes significant hidden violations, (ii)~DC3S eliminates them entirely
+under the locked simulation and linear plant model,
 and (iii)~the economic cost of safety is modest and region-dependent.
 These results anchor the theoretical claims of Part~III and the extension
 claims of Part~IV.

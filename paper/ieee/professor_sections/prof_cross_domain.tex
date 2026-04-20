@@ -5,19 +5,10 @@ ORIUS is best read as a universal runtime safety layer for Physical AI, not as a
 single-domain controller that happens to generalize.  The common object across the
 monograph is the degraded-observation hazard: the controller sees an observation
 surface, but safety is judged on the true state or the observation-consistent
-state set.  That is why the same runtime grammar recurs across battery storage,
-autonomous vehicles, industrial process control, healthcare monitoring, navigation,
-and aerospace.
+state set.  That is why the same runtime grammar recurs across the active
+battery, autonomous-vehicle, and healthcare rows.
 
 \input{generated/orius_professor_parity_table.tex}
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.92\textwidth]{fig_orius_equal_domain_parity_matrix}
-\caption{Parity-gated view of the ORIUS program. The architecture is universal now, but
-domain promotion remains governed by closure status rather than by rhetorical symmetry.}
-\label{fig:prof-parity-visual}
-\end{figure*}
 
 The synthesis that follows from this status is narrower and stronger than a generic
 transfer-learning claim.  ORIUS standardizes the runtime objects that matter for
@@ -27,16 +18,15 @@ fallback, certificate emission, and auditable lifecycle logging.  What varies ac
 domains is the safety geometry, the telemetry parser, and the domain-specific repair
 policy.  What stays invariant is the safety-layer grammar.
 
-That distinction is the key cross-domain result.  Battery remains the witness row, but
-it does not monopolize the theory.  Industrial and healthcare are defended bounded
-rows with real replay evidence.  Autonomous vehicles are defended under the current
-bounded TTC contract.  Navigation and aerospace are still informative because they
-show where the parity gate has not yet been earned.
+That distinction is the key cross-domain result.  Battery remains the witness row,
+while autonomous vehicles and healthcare are defended bounded rows with replay-backed
+runtime evidence under explicit contract limits.
 
 The professor-facing takeaway is therefore precise: ORIUS already supports a
-universal safety architecture, but the evidence ladder is still tiered.  The
-architecture is universal in contract; the closure depth is not yet universal in
-proof.  That is exactly the right level of honesty for an R1-grade monograph.
+universal safety architecture across the active three-domain lane, but the evidence
+ladder is tiered.  The architecture is universal in contract; the closure depth is
+not equal across Battery, AV, and Healthcare.  That is the right level of honesty
+for an R1-grade monograph.
 
 \subsection{Why ORIUS is more than a multi-domain wrapper}
 Many systems can be described across multiple domains if the description remains
@@ -44,8 +34,8 @@ qualitative enough. ORIUS aims at a stronger standard. It keeps the same runtime
 question, the same typed release objects, and the same benchmark semantics across all
 rows. That is why the framework should be understood as universal in \emph{runtime
 logic} rather than merely broad in \emph{application count}. The universal claim does
-not come from listing six domains. It comes from showing that the same degraded-
-observation semantics survive contact with six different action geometries.
+not come from listing many domains. It comes from showing that the same degraded-
+observation semantics survive contact with distinct action geometries.
 
 \subsection{Autonomous vehicles}
 The AV row treats degraded observation as a time-to-collision and entry-barrier hazard
@@ -56,14 +46,6 @@ fast-reacting closed-loop domain without importing battery-specific actuation lo
 row is bounded intentionally: the claim is about governed braking or maneuver legality,
 not full autonomy closure.
 
-\subsection{Industrial process control}
-The industrial row treats degraded observation as envelope-preservation risk under
-process telemetry loss or drift. The safety object is bounded operation inside process
-constraints with explicit fallback semantics. This row demonstrates that ORIUS can
-govern a plant whose action geometry and monitoring cadence look nothing like a storage
-asset. Its universality contribution is that the repair operator can be phrased as
-power-cap or envelope-preserving modification rather than storage dispatch logic.
-
 \subsection{Healthcare monitoring}
 The healthcare row is the clearest reminder that ORIUS is not only about actuation-
 heavy control. Here the danger is intervention suppression or alert illegality under
@@ -72,16 +54,3 @@ runtime grammar still applies when the safety object is intervention legality ra
 than dispatch power. It also marks a clean scientific boundary: the paper is not
 claiming bedside autonomy certification, only monitored intervention legality under a
 bounded runtime contract.
-
-\subsection{Navigation}
-The navigation row frames degraded observation as corridor or trajectory-feasibility
-risk under degraded localization. The adapter and replay harness already exist, which
-means the runtime contract is portable. What is missing is the defended real-data
-closure row. That is why navigation remains shadow-synthetic in the present paper.
-
-\subsection{Aerospace}
-The aerospace row frames degraded observation as flight-envelope preservation under
-degraded sensing and prognostic uncertainty. Its current role is boundary-setting: the
-runtime objects and fallback semantics are already expressible, but the defended
-multi-flight validation surface is not yet closed. Keeping aerospace visible but gated
-is scientifically stronger than overstating parity.

@@ -19,9 +19,8 @@ In practical terms, each domain adapter must expose a true-state violation
 predicate, an observed-state satisfiability predicate, an optional margin
 computation, a fallback action, and certificate-compatible action repair.
 That is the minimum needed to make ORIUS portable across battery energy
-storage, autonomous vehicles, industrial control, healthcare monitoring,
-navigation, and aerospace without changing the meaning of safety at the
-kernel level.
+storage, autonomous vehicles, healthcare monitoring, and future additional
+domains without changing the meaning of safety at the kernel level.
 
 The adapter can therefore be read as a typed semantic projection
 \[
@@ -60,8 +59,8 @@ prediction accuracy or task reward while still remaining agnostic to the nominal
 
 This contract prevents the argument from collapsing into a single battery
 result table. It also keeps the evidence boundary honest: the same schema
-can be reused across all six rows, but the rows do not carry the same proof
-depth.
+can be reused across the defended three-domain lane and future additional
+domains, but the rows do not carry the same proof depth.
 
 \subsection{CertOS governance contract}
 CertOS is the runtime governance layer.  Its role is deliberately narrow:

@@ -127,8 +127,8 @@ be generalized more honestly under nonstationary streams
 \cite{vovk2005algorithmic,romano2019conformalized,gibbs2021adaptive}. ORIUS does not claim
 that these methods alone solve runtime safety. It uses them to clarify what the uncertainty
 set is allowed to mean before repaired release is evaluated.  In practice, the online
-conformal layer is an SPCI-lite quantile tracker (Gibbs \& Candès,
-\citeyear{gibbs2021adaptive}) that maintains an exponentially-weighted sliding window of
+conformal layer is an SPCI-lite quantile tracker in the style of Gibbs and
+Candès \cite{gibbs2021adaptive} that maintains an exponentially-weighted sliding window of
 conformity scores, yielding intervals that adapt smoothly to distribution shift without a
 full recalibration pass.
 
@@ -164,4 +164,4 @@ and in Appendix~\ref{app:proofs}. Validated claims only advance when replay, cal
 runtime, and governance surfaces exist for the relevant domain row. Roadmap claims remain
 outside defended theorem language. That separation is not a stylistic preference. It is the
 mechanism that lets ORIUS argue for a universal runtime safety layer without pretending that
-equal-domain empirical closure has already been earned.
+broader future-domain empirical closure has already been earned.

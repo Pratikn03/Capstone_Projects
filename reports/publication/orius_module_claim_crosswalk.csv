@@ -1,51 +1,5 @@
-layer,module_path,surface,claim_family,evidence_note
-core,src/orius/dc3s/domain_adapter.py,Universal adapter contract,architecture,Defines the canonical runtime boundary for all domains.
-core,src/orius/dc3s/quality.py,Observation quality estimation,degradation_detection,Turns telemetry quality into a runtime trust signal.
-core,src/orius/universal_theory/contracts.py,Typed contracts,theory,"Defines the state, action, and certificate objects used across the monograph."
-core,src/orius/universal_theory/kernel.py,Universal step kernel,architecture,Implements the Detect-Calibrate-Constrain-Shield-Certify step.
-core,src/orius/universal_theory/risk_bounds.py,Risk-bound primitives,theory,Connects reliability loss to conservative action tightening.
-governance,src/orius/certos/runtime.py,CertOS runtime,governance,"Enforces certificate validity, lifecycle transitions, and fallback discipline."
-governance,src/orius/certos/models.py,Governance data model,governance,Keeps runtime evidence structured and traceable.
-bench,src/orius/orius_bench/metrics_engine.py,Universal benchmark metrics,benchmark,"Computes true-state violation, intervention, fallback, and latency summaries."
-bench,reports/publication/orius_equal_domain_parity_matrix.csv,Equal-domain parity matrix,claim_governance,Governs equal-domain rhetoric and keeps blocked rows explicit.
-bench,reports/publication/orius_universal_claim_matrix.csv,Universal claim matrix,claim_governance,Pins the canonical monograph claims to tracked artifacts.
-system,services/api/routers/research.py,Backend artifact surface,artifact_authority,Makes tracked publication assets the only dashboard truth path.
-system,frontend/src/app/api/data/route.ts,Frontend proxy route,artifact_authority,Prevents local untracked JSON from becoming claim authority.
-system,frontend/src/app/api/reports/route.ts,Frontend report proxy,artifact_authority,Routes report reads through the governed backend.
-domains,src/orius/adapters/battery/theory.py,Battery theorem helper surface,domain_instantiation,Keeps witness-domain helpers outside the universal package root.
-domains,src/orius/adapters/vehicle/__init__.py,Vehicle adapter surface,domain_instantiation,Binds autonomy telemetry to the same runtime contract.
-domains,src/orius/universal_framework/domain_registry.py,Domain registry,domain_instantiation,Enumerates the currently wired domain surfaces.
-evidence,reports/publication/release_manifest.json,Release manifest,artifact_provenance,Provides the tracked evidence provenance surface for the monograph.
-evidence,reports/publication/orius_artifact_appendix.md,Artifact appendix,artifact_provenance,Maps figures and tables back to release artifacts.
-writing,paper/paper.tex,Canonical monograph entrypoint,manuscript,Defines the book-class build and the active thesis narrative.
-writing,paper/review/orius_review_dossier.tex,Reviewer dossier,review,Separates the simulated red-team package from the book PDF itself.
-domains,domain::battery,Battery Energy Storage telemetry contract,domain_instantiation,"Faults include dropout, staleness, delayed measurements, and spoof-like anomalies that widen the observation-action safety gap by masking the true plant state."
-domains,domain::battery,Battery Energy Storage safety predicate,domain_instantiation,"The defended predicate is zero true-state violation of battery SOC and dispatch feasibility under degraded observation, with bounded intervention cost rather than unconstrained throughput maximization."
-domains,domain::battery,Battery Energy Storage dataset and protocol,artifact_provenance,"The reference evidence is built from tracked German and US energy artifacts, battery replay traces, and the locked publication tables that already support the canonical ORIUS claim family."
-domains,domain::battery,Battery Energy Storage results and status,claim_governance,"In the locked reference surface, ORIUS closes the measured true-state violation rate from 3.90 percent to 0.00 percent while keeping the intervention rate materially below a shutdown-only fallback policy."
-domains,domain::battery,Battery Energy Storage transfer obligation,promotion,"Other domains must match battery on telemetry realism, replay discipline, certificate semantics, and closure under the universal benchmark before they can claim equal validation depth."
-domains,domain::av,Autonomous Vehicles telemetry contract,domain_instantiation,"The dominant faults are stale leader observations, burst dropout, unrealistic spikes, and delayed kinematic packets that distort the observed stopping margin."
-domains,domain::av,Autonomous Vehicles safety predicate,domain_instantiation,The defended predicate is the absence of true-state spacing or speed violations after the repaired control action is executed on the vehicle model.
-domains,domain::av,Autonomous Vehicles dataset and protocol,artifact_provenance,The current row is backed by locked trajectory telemetry and a shared universal fault schedule under the same replay harness used by the other non-battery domains.
-domains,domain::av,Autonomous Vehicles results and status,claim_governance,"Under the current TTC-based safety surface and predictive-entry-barrier formulation, the locked replay closes the residual true-state violation surface materially enough to clear the bounded proof-validation gate for the present longitudinal setting."
-domains,domain::av,Autonomous Vehicles transfer obligation,promotion,"Future promotion work must preserve the single-contract TTC semantics, replay-backed soundness checks, and explicit fallback compatibility instead of reopening multiple competing repair formulations."
-domains,domain::industrial,Industrial Process Control telemetry contract,domain_instantiation,"The row stresses packet loss, stale reads, spikes, and out-of-order process measurements that mimic degraded plant telemetry rather than laboratory noise."
-domains,domain::industrial,Industrial Process Control safety predicate,domain_instantiation,"The defended predicate is zero true-state violation of the bounded process envelope after the repaired action is issued, while preserving plant continuity better than a brute shutdown response."
-domains,domain::industrial,Industrial Process Control dataset and protocol,artifact_provenance,"The current surface uses the locked industrial telemetry row, the verified training audit, and the shared universal replay harness."
-domains,domain::industrial,Industrial Process Control results and status,claim_governance,"On the tracked evidence row, ORIUS reduces true-state violations from 21.53 percent to 0.00 percent, making industrial control one of the strongest non-battery demonstrations of universality in practice."
-domains,domain::industrial,Industrial Process Control transfer obligation,promotion,"Future industrial extensions must retain real telemetry, replay closure, and explicit certificate semantics rather than relying on architecture-only analogies."
-domains,domain::healthcare,Medical and Healthcare Monitoring telemetry contract,domain_instantiation,"Faults include stale vital-sign packets, missing waveform updates, spikes, and delayed observations that can suppress or delay clinically necessary intervention."
-domains,domain::healthcare,Medical and Healthcare Monitoring safety predicate,domain_instantiation,The defended predicate is zero true-state violation of the monitored physiologic safety envelope under the bounded intervention semantics carried by the current healthcare adapter.
-domains,domain::healthcare,Medical and Healthcare Monitoring dataset and protocol,artifact_provenance,The row uses the locked ICU vitals evidence surface and the shared universal replay protocol.
-domains,domain::healthcare,Medical and Healthcare Monitoring results and status,claim_governance,"The present locked row reduces true-state violations from 6.25 percent to 0.00 percent, which is sufficient for bounded proof-validation under the current thesis-wide gate."
-domains,domain::healthcare,Medical and Healthcare Monitoring transfer obligation,promotion,"Future medical promotion requires stronger outcome semantics, wider patient cohorts, and explicit regulatory traceability beyond the current replay-centered scope."
-domains,domain::navigation,Navigation and Guidance telemetry contract,domain_instantiation,"The governed row uses KITTI-backed localization replay with bounded dropout, stale localization, corrupted headings, and delayed guidance packets layered on top."
-domains,domain::navigation,Navigation and Guidance safety predicate,domain_instantiation,"The defended predicate is bounded true-state path violation under degraded observation, expressed as corridor or guidance-envelope violation rather than battery-style state-of-charge semantics."
-domains,domain::navigation,Navigation and Guidance dataset and protocol,artifact_provenance,Strict validation requires the processed KITTI replay row and rejects silent synthetic fallback; synthetic navigation is retained only behind an explicit legacy support-tier flag.
-domains,domain::navigation,Navigation and Guidance results and status,claim_governance,"ORIUS reduces TSVR on the governed navigation replay surface, and promotion now depends on the same defended gate used for the other non-battery rows."
-domains,domain::navigation,Navigation and Guidance transfer obligation,promotion,"Stronger navigation promotion still requires broader task families, richer sensor parity, and additional shared-constraint replay coverage."
-domains,domain::aerospace,Aerospace Control telemetry contract,domain_instantiation,The current row models delayed and degraded flight-state telemetry with bounded envelope checks.
-domains,domain::aerospace,Aerospace Control safety predicate,domain_instantiation,"The defended predicate is bounded flight-envelope violation under degraded observation, stated over airspeed, attitude, or trajectory limits rather than battery-style energy envelopes."
-domains,domain::aerospace,Aerospace Control dataset and protocol,artifact_provenance,"The row uses the public ADS-B runtime replay lane as the defended release surface; stronger provider telemetry is treated as a future strengthening lane, not the current blocker."
-domains,domain::aerospace,Aerospace Control results and status,claim_governance,The tracked status table now treats aerospace as a defended-runtime candidate whose promotion is decided by the same gate as the other non-battery rows.
-domains,domain::aerospace,Aerospace Control transfer obligation,promotion,"Stronger aerospace promotion still requires richer mission families, stronger telemetry provenance, and additional parity reruns under the tracked protocol."
+module,claim_surface,active_domains,status
+src/orius/dc3s,runtime repair and certification layer,"battery,av,healthcare",canonical
+src/orius/orius_bench/oasg_metrics.py,submission-facing OASG benchmark surface,"battery,av",canonical
+src/orius/universal_theory,flagship and supporting theorem witnesses,"battery,av,healthcare",canonical
+scripts/build_three_domain_ml_artifacts.py,three-domain ML benchmark and calibration bundle,"battery,av,healthcare",canonical
