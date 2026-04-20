@@ -11,8 +11,8 @@ class StepRequest(BaseModel):
 
     domain: str = Field(
         ...,
-        description="Domain name: battery, vehicle, healthcare, industrial, aerospace, navigation",
-        examples=["industrial"],
+        description="Domain name: battery, vehicle, healthcare",
+        examples=["battery"],
     )
     state: dict[str, Any] = Field(
         ...,

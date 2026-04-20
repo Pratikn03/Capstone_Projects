@@ -477,6 +477,7 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
             soc_min_mwh=float(constraints["min_soc_mwh"]),
             soc_max_mwh=float(constraints["max_soc_mwh"]),
             sigma_d=sigma_d,
+            delta=float(dc3s_cfg_runtime.get("ftit", {}).get("delta", 0.05)),
         )
         uncertainty_meta["validity_horizon_tau_t"] = int(t5_result["tau_t"])
         uncertainty_meta["expiry_lower_bound"] = int(t6_result["tau_expire_lb"])

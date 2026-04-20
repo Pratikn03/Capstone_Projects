@@ -1,7 +1,7 @@
 """Tests for the ORIUS /step FastAPI endpoint.
 
 Phase 4 of ORIUS gap-closing plan.
-Tests health check, all 6 supported domains, error handling.
+Tests health check, the canonical three supported domains, and error handling.
 """
 from __future__ import annotations
 
@@ -35,18 +35,6 @@ class TestStepEndpointBasic:
         assert resp.status_code == 200, f"domain={domain}: {resp.text}"
         return resp.json()
 
-    def test_industrial_domain(self):
-        data = self._step(
-            domain="industrial",
-            state={"power_mw": 490.0, "temp_c": 112.0, "pressure_mbar": 1010.0},
-            candidate_action={"power_setpoint_mw": 520.0},
-            constraints={"power_max_mw": 500.0},
-        )
-        assert "safe_action" in data
-        assert "reliability_w" in data
-        assert "repaired" in data
-        assert 0.0 <= data["reliability_w"] <= 1.0
-
     def test_healthcare_domain(self):
         data = self._step(
             domain="healthcare",
@@ -59,57 +47,61 @@ class TestStepEndpointBasic:
     def test_vehicle_domain(self):
         data = self._step(
             domain="vehicle",
-            state={"speed_ms": 25.0, "lateral_error_m": 0.5},
-            candidate_action={"brake_force": 0.3},
-            constraints={},
+            state={
+                "position_m": 40.0,
+                "speed_mps": 12.0,
+                "speed_limit_mps": 30.0,
+                "lead_position_m": 75.0,
+            },
+            candidate_action={"acceleration_mps2": 4.0},
+            constraints={"speed_limit_mps": 30.0, "min_headway_m": 5.0, "ttc_min_s": 2.0},
         )
         assert "safe_action" in data
 
-    def test_aerospace_domain(self):
+    def test_battery_domain(self):
         data = self._step(
-            domain="aerospace",
-            state={"altitude_m": 10000.0, "airspeed_kts": 250.0},
-            candidate_action={"thrust_reduction": 0.0},
-            constraints={},
+            domain="battery",
+            state={
+                "current_soc_mwh": 5000.0,
+                "capacity_mwh": 10000.0,
+                "min_soc_mwh": 1000.0,
+                "max_soc_mwh": 9000.0,
+                "yhat_load": 1000.0,
+            },
+            candidate_action={"charge_mw": 100.0, "discharge_mw": 0.0},
+            constraints={"max_power_mw": 50.0},
         )
         assert "safe_action" in data
-
-    def test_navigation_domain(self):
-        data = self._step(
-            domain="navigation",
-            state={"heading_deg": 45.0, "speed_ms": 10.0},
-            candidate_action={"speed_reduction": 0.0},
-            constraints={},
-        )
-        assert "safe_action" in data
+        assert isinstance(data["uncertainty_set"]["lower"], list)
+        assert isinstance(data["uncertainty_set"]["upper"], list)
 
     def test_response_has_certificate(self):
         data = self._step(
-            domain="industrial",
-            state={"power_mw": 450.0, "temp_c": 100.0, "pressure_mbar": 1010.0},
+            domain="healthcare",
+            state={"spo2_pct": 92.0, "hr_bpm": 70.0, "respiratory_rate": 14.0},
         )
         assert "certificate" in data
 
     def test_response_has_uncertainty_set(self):
         data = self._step(
-            domain="industrial",
-            state={"power_mw": 450.0, "temp_c": 100.0},
+            domain="healthcare",
+            state={"spo2_pct": 92.0, "hr_bpm": 70.0, "respiratory_rate": 14.0},
         )
         assert "uncertainty_set" in data
 
     def test_repaired_flag_type(self):
         data = self._step(
-            domain="industrial",
-            state={"power_mw": 450.0, "temp_c": 100.0},
+            domain="healthcare",
+            state={"spo2_pct": 92.0, "hr_bpm": 70.0, "respiratory_rate": 14.0},
         )
         assert isinstance(data["repaired"], bool)
 
     def test_domain_case_insensitive(self):
         """Domain name should be case-insensitive."""
-        for name in ("INDUSTRIAL", "Industrial", "industrial"):
+        for name in ("HEALTHCARE", "Healthcare", "healthcare"):
             resp = client.post("/step", json={
                 "domain": name,
-                "state": {"power_mw": 450.0},
+                "state": {"spo2_pct": 92.0, "hr_bpm": 70.0, "respiratory_rate": 14.0},
                 "candidate_action": {},
                 "constraints": {},
             })
@@ -132,8 +124,8 @@ class TestStepEndpointErrors:
 
     def test_quantile_out_of_range_returns_422(self):
         resp = client.post("/step", json={
-            "domain": "industrial",
-            "state": {"power_mw": 450.0},
+            "domain": "healthcare",
+            "state": {"spo2_pct": 92.0, "hr_bpm": 70.0, "respiratory_rate": 14.0},
             "candidate_action": {},
             "quantile": 150.0,  # out of range [1, 99]
         })

@@ -13,6 +13,7 @@ from orius.universal_framework.domain_registry import get_adapter
 from orius.universal_framework.pipeline import run_universal_step
 
 from .models import StepRequest, StepResponse
+from .serialization import api_jsonable
 
 app = FastAPI(
     title="ORIUS DC3S API",
@@ -32,9 +33,6 @@ _DOMAIN_MAP: dict[str, str] = {
     "vehicle":    "av",
     "av":         "av",
     "healthcare": "healthcare",
-    "industrial": "industrial",
-    "aerospace":  "aerospace",
-    "navigation": "navigation",
 }
 _SUPPORTED_DOMAINS = frozenset(_DOMAIN_MAP.keys())
 
@@ -97,9 +95,9 @@ def step(request: StepRequest) -> StepResponse:
 
     return StepResponse(
         domain=domain,
-        safe_action=safe_action,
+        safe_action=api_jsonable(safe_action),
         reliability_w=float(result.get("reliability_w", 1.0)),
         repaired=repaired,
-        certificate=dict(result.get("certificate", {})),
-        uncertainty_set=dict(result.get("uncertainty_set", {})),
+        certificate=api_jsonable(result.get("certificate", {})),
+        uncertainty_set=api_jsonable(result.get("uncertainty_set", {})),
     )

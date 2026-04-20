@@ -27,19 +27,20 @@ def test_universal_domains_endpoint_exposes_framework_metadata() -> None:
     assert "fault_taxonomy" in payload["tables"]
 
 
-def test_universal_step_industrial_round_trip() -> None:
+def test_universal_step_vehicle_round_trip() -> None:
     client = TestClient(app)
     request = {
-        "domain_id": "INDUSTRIAL",
+        "domain_id": "AV",
         "raw_telemetry": {
-            "temp_c": 25.0,
-            "pressure_mbar": 1010.0,
-            "power_mw": 450.0,
+            "position_m": 40.0,
+            "speed_mps": 12.0,
+            "speed_limit_mps": 30.0,
+            "lead_position_m": 75.0,
             "ts_utc": "2026-01-01T00:00:00Z",
         },
-        "candidate_action": {"power_setpoint_mw": 520.0},
-        "constraints": {"power_max_mw": 500.0},
-        "quantile": 30.0,
+        "candidate_action": {"acceleration_mps2": 4.0},
+        "constraints": {"speed_limit_mps": 30.0, "min_headway_m": 5.0, "ttc_min_s": 2.0},
+        "quantile": 2.0,
         "residual": 2.5,
     }
 
@@ -47,9 +48,8 @@ def test_universal_step_industrial_round_trip() -> None:
 
     assert response.status_code == 200, response.text
     payload = response.json()
-    assert payload["domain_id"] == "industrial"
-    assert 0.0 <= payload["safe_action"]["power_setpoint_mw"] <= 500.0
-    assert payload["safe_action"]["power_setpoint_mw"] < request["candidate_action"]["power_setpoint_mw"]
+    assert payload["domain_id"] == "av"
+    assert payload["safe_action"]["acceleration_mps2"] <= request["candidate_action"]["acceleration_mps2"]
     assert 0.0 <= payload["reliability_w"] <= 1.0
     assert payload["pipeline_stages"] == [
         "Detect",
@@ -61,7 +61,10 @@ def test_universal_step_industrial_round_trip() -> None:
     assert payload["drift_flag"] is False
     assert "certificate_hash" in payload["certificate"]
     assert payload["repair_meta"]["repaired"] is True
-    assert payload["state"]["power_mw"] == 450.0
+    assert payload["state"]["position_m"] == 40.0
+    assert set(payload["theorem_contracts"]) == {"T3a", "T11"}
+    assert payload["theorem_contracts"]["T3a"]["status"] == "runtime_linked"
+    assert payload["theorem_contracts"]["T11"]["forward_only"] is True
 
 
 def test_universal_step_unknown_domain_returns_404() -> None:

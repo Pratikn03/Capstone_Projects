@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from orius.dc3s.drift import PageHinkleyDetector
+from orius.api.serialization import api_jsonable
 from orius.universal_framework import get_adapter, list_domains, run_universal_step
 from orius.universal_framework.pipeline import PIPELINE_STAGES
 from orius.universal_framework.tables import (
@@ -52,6 +53,7 @@ class UniversalStepResponse(BaseModel):
     uncertainty_set: Dict[str, Any]
     repair_meta: Dict[str, Any]
     state: Dict[str, Any]
+    theorem_contracts: Dict[str, Any]
 
 
 def _build_drift_detector(cfg: Dict[str, Any], residual: float | None) -> PageHinkleyDetector | None:
@@ -101,13 +103,14 @@ def universal_step(req: UniversalStepRequest) -> UniversalStepResponse:
     return UniversalStepResponse(
         domain_id=req.domain_id.strip().lower(),
         pipeline_stages=list(PIPELINE_STAGES),
-        certificate=dict(result["certificate"]),
-        safe_action=dict(result["safe_action"]),
+        certificate=api_jsonable(result["certificate"]),
+        safe_action=api_jsonable(result["safe_action"]),
         reliability_w=float(result["reliability_w"]),
-        reliability_flags=dict(result["reliability_flags"]),
+        reliability_flags=api_jsonable(result["reliability_flags"]),
         drift_flag=bool(result["drift_flag"]),
-        drift_meta=dict(result["drift_meta"]),
-        uncertainty_set=dict(result["uncertainty_set"]),
-        repair_meta=dict(result["repair_meta"]),
-        state=dict(result["state"]),
+        drift_meta=api_jsonable(result["drift_meta"]),
+        uncertainty_set=api_jsonable(result["uncertainty_set"]),
+        repair_meta=api_jsonable(result["repair_meta"]),
+        state=api_jsonable(result["state"]),
+        theorem_contracts=api_jsonable(result["theorem_contracts"]),
     )
