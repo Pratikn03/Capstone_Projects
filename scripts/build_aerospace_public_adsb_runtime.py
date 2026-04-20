@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import json
-import math
 import sys
 from pathlib import Path
 
@@ -23,9 +21,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from orius.certos.runtime import CertOSRuntime
 from orius.certos.domain_policies import policy_for_domain
-from orius.certos.runtime import CertOSConfig
+from orius.certos.runtime import CertOSConfig, CertOSRuntime
 from orius.data_pipeline.external_raw import EXTERNAL_DATA_ROOT_ENV, get_external_dataset_dir
 from orius.data_pipeline.real_data_contract import (
     ResolvedRawSource,

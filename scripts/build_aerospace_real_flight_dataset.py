@@ -8,8 +8,6 @@ public proxy corpus as an official substitute.
 from __future__ import annotations
 
 import argparse
-import json
-import math
 import sys
 from pathlib import Path
 
@@ -83,7 +81,9 @@ def _resolve_provider_root(explicit_root: Path | None) -> Path:
     if (root / "tartanaviation_adsb_19k_clean").exists() or any(
         candidate.name == "tartanaviation_adsb_19k_clean.csv" for candidate in root.rglob("*")
     ):
-        raise RuntimeError("Public ADS-B proxy corpus detected under aerospace_flight_telemetry; official builder refuses proxy-only inputs.")
+        raise RuntimeError(
+            "Public ADS-B proxy corpus detected under aerospace_flight_telemetry; official builder refuses proxy-only inputs."
+        )
     return root
 
 
@@ -104,7 +104,9 @@ def _normalize_timestamp(raw: pd.Series) -> pd.Series:
 def _derive_bank_angle(frame: pd.DataFrame, heading_col: str, speed_col: str, time_col: str) -> np.ndarray:
     if frame.empty:
         return np.zeros(0, dtype=float)
-    heading_rad = np.unwrap(np.deg2rad(pd.to_numeric(frame[heading_col], errors="coerce").fillna(0.0).to_numpy(dtype=float)))
+    heading_rad = np.unwrap(
+        np.deg2rad(pd.to_numeric(frame[heading_col], errors="coerce").fillna(0.0).to_numpy(dtype=float))
+    )
     timestamps = pd.to_datetime(frame[time_col], errors="coerce", utc=True).astype("int64").to_numpy(dtype=float) / 1e9
     dt = np.diff(timestamps, prepend=timestamps[0])
     if len(dt) > 1:
@@ -277,11 +279,15 @@ def build_real_flight_runtime(*, external_root: Path | None, out_csv: Path) -> P
         dataset_key="aerospace_real_flight_runtime",
         provider="Provider-approved multi-flight telemetry",
         version="runtime_replay_surface",
-        raw_source=type("ResolvedRawSourceShim", (), {
-            "path": provider_root,
-            "source_kind": "external",
-            "checked_locations": (str(provider_root),),
-        })(),
+        raw_source=type(
+            "ResolvedRawSourceShim",
+            (),
+            {
+                "path": provider_root,
+                "source_kind": "external",
+                "checked_locations": (str(provider_root),),
+            },
+        )(),
         processed_output=out_csv,
         output_summary=output_summary,
         raw_inventory=summarize_files(provider_root),

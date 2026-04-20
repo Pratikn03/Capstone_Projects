@@ -7,6 +7,7 @@ integration tests, and performance tests.
 from __future__ import annotations
 
 import os
+import random
 import sys
 import tempfile
 from datetime import datetime, timedelta, timezone
@@ -18,8 +19,28 @@ import numpy as np
 import pandas as pd
 import pytest
 
+# ---------------------------------------------------------------------------
+# Reproducibility: fix global seeds at import time so tests are deterministic.
+# PYTHONHASHSEED should also be set in the environment (= "0") for full
+# reproducibility of dict/set ordering.
+# ---------------------------------------------------------------------------
+_GLOBAL_SEED = 42
+random.seed(_GLOBAL_SEED)
+np.random.seed(_GLOBAL_SEED)
+try:
+    import torch
+    torch.manual_seed(_GLOBAL_SEED)
+    torch.use_deterministic_algorithms(True, warn_only=True)
+except ImportError:
+    pass
+
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+# The phase-one external real-data integration suite targets the retired
+# six-domain data-staging program and is no longer part of the default
+# three-domain pytest lane.
+collect_ignore_glob = ["legacy/test_external_real_data_integration.py"]
 
 
 # =============================================================================

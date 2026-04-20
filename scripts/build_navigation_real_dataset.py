@@ -78,10 +78,6 @@ def _sequence_frame(sequence_id: str, times: np.ndarray, poses: np.ndarray) -> p
 
     x = poses[:, 3]
     y = poses[:, 11]
-    dt = np.diff(times, prepend=times[0])
-    if len(dt) > 1:
-        dt[0] = dt[1]
-    dt = np.clip(dt, 1e-6, None)
     vx = np.gradient(x, times, edge_order=1)
     vy = np.gradient(y, times, edge_order=1)
     start = datetime(2011, 9, 26, tzinfo=timezone.utc)
