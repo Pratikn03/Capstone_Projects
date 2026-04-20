@@ -126,12 +126,13 @@ def assert_finite_sample_bound(
     Raises AssertionError if coverage_bound < required_coverage.
     """
     result = compute_finite_sample_coverage_bound(n_calibration, alpha, delta, w_min)
-    assert result["coverage_bound"] >= required_coverage, (
-        f"Finite-sample coverage bound {result['coverage_bound']:.4f} "
-        f"< required {required_coverage:.4f} "
-        f"(n_eff={result['n_eff']}, epsilon={result['epsilon']:.4f}). "
-        f"Need more calibration data or higher w_min."
-    )
+    if result["coverage_bound"] < required_coverage:
+        raise ValueError(
+            f"Finite-sample coverage bound {result['coverage_bound']:.4f} "
+            f"< required {required_coverage:.4f} "
+            f"(n_eff={result['n_eff']}, epsilon={result['epsilon']:.4f}). "
+            f"Need more calibration data or higher w_min."
+        )
     return result
 
 
@@ -280,13 +281,14 @@ def assert_separation(
         blind_violations, blind_interventions,
         w_min, alpha,
     )
-    assert result.pareto_dominant, (
-        f"DC³S does not weakly dominate the blind-controller witness. "
-        f"Violation gap: {result.violation_gap:.4f}, "
-        f"Intervention gap: {result.intervention_gap:.4f}. "
-        f"Theoretical lower bounds: violations >= {result.violation_lower_bound:.4f} "
-        f"OR interventions >= {result.intervention_lower_bound:.4f}."
-    )
+    if not result.pareto_dominant:
+        raise ValueError(
+            f"DC³S does not weakly dominate the blind-controller witness. "
+            f"Violation gap: {result.violation_gap:.4f}, "
+            f"Intervention gap: {result.intervention_gap:.4f}. "
+            f"Theoretical lower bounds: violations >= {result.violation_lower_bound:.4f} "
+            f"OR interventions >= {result.intervention_lower_bound:.4f}."
+        )
     return result
 
 
@@ -496,11 +498,12 @@ def assert_sublinear_regret(
 
     # Check sub-linearity: per-step bound should decrease with T
     result_2T = compute_adaptive_regret_bound(2 * T, tau, max_oracle_jump, infl_max)
-    assert result_2T["per_step_bound"] < result["per_step_bound"], (
-        f"Per-step regret is not decreasing: "
-        f"R_{T}/T = {result['per_step_bound']:.6f}, "
-        f"R_{2*T}/(2T) = {result_2T['per_step_bound']:.6f}"
-    )
+    if result_2T["per_step_bound"] >= result["per_step_bound"]:
+        raise ValueError(
+            f"Per-step regret is not decreasing: "
+            f"R_{T}/T = {result['per_step_bound']:.6f}, "
+            f"R_{2*T}/(2T) = {result_2T['per_step_bound']:.6f}"
+        )
     return result
 
 
@@ -650,20 +653,20 @@ def compute_stylized_frontier_lower_bound(
         raise ValueError("boundary_mass must lie in [0, 1]")
 
     per_step_terms = p * (1.0 - w)
+    expected_lower = 0.5 * np.sum(per_step_terms)
     special_case_active = bool(np.all(p >= alpha / 2.0))
-    special_case_lower = float((alpha / 2.0) * np.sum(1.0 - w)) if special_case_active else None
+    special_case_lower = float((alpha / 4.0) * np.sum(1.0 - w)) if special_case_active else None
     return {
         "horizon": int(w.size),
         "mean_reliability_w": float(np.mean(w)),
         "boundary_mass_min": float(np.min(p)),
-        "expected_lower_bound": float(np.sum(per_step_terms)),
+        "expected_lower_bound": float(expected_lower),
         "per_step_terms": per_step_terms.tolist(),
         "special_case_active": special_case_active,
         "special_case_lower_bound": special_case_lower,
         "assumptions_used": [
             "Boundary-testing subproblem with latent safe/unsafe hypotheses.",
-            "One-sided (unsafe-first) error: the bound captures the probability of "
-            "declaring an unsafe state as safe, not the symmetric Le Cam maximum.",
+            "Boundary-indistinguishability lower bound with the 1/2 Le Cam factor retained explicitly.",
             "Boundary mass sequence p_t supplied explicitly; no universal value is assumed.",
             "Corollary of L1 (Rate-Distortion Safety Law) via the capacity bridge L2.",
         ],
@@ -746,26 +749,19 @@ def compute_tight_impossibility_bound(
     *,
     K_factor: float = 2.0,
 ) -> dict:
-    r"""Tight minimax lower bound on TSVR under degraded observation.
+    r"""Stylized lower-envelope witness for degraded-observation risk.
 
-    Theorem (T_minimax), derived from L1 (Rate-Distortion Safety Law) + L2 (Capacity Bridge):
-
-      By L1, the rate-distortion function D*(C) >= alpha*(1 - C/H(X)) provides
-      a lower bound on achievable safety loss.  By L2, w_t <= kappa_d * C/H(X),
-      so (1 - w_t) bounds the unresolvable state fraction.  Per-step:
-
-          r_t >= (alpha / K) * (1 - w_t)
-
-      Summing over T steps:
-
-          E[V_T] >= (alpha / K) * sum(1 - w_t) = (alpha / K) * (1 - w_bar) * T
-
-      K=2 for binary channels.  DC3S achieves alpha*(1-w_bar), so the gap
-      is constant factor K, independent of T.
+    This helper preserves the current linear lower-envelope calculator used by
+    the manuscript extensions, but it does not by itself defend a minimax
+    theorem. Its lower side is conditional on the stylized L1/L2 bridge model.
     """
     w = np.asarray(list(reliability), dtype=float).reshape(-1)
     if w.size == 0:
         raise ValueError("reliability must be non-empty")
+    if not 0.0 <= float(alpha) <= 1.0:
+        raise ValueError("alpha must lie in [0, 1]")
+    if not np.isfinite(K_factor) or float(K_factor) < 1.0:
+        raise ValueError("K_factor must be finite and >= 1.0")
     w = np.clip(w, 0.0, 1.0)
 
     T = int(w.size)
@@ -787,19 +783,24 @@ def compute_tight_impossibility_bound(
         "upper_bound_rate": float(rate_upper),
         "minimax_gap_factor": float(K_factor),
         "gap_is_constant": True,
+        "defended_status": "stylized_lower_envelope_only",
         "proof_sketch": (
-            f"L1+L2 (Rate-Distortion + Capacity Bridge): the unresolvable "
-            f"state fraction (1-w_t) bounds per-step risk.  With alpha={alpha}, "
+            f"Stylized lower-envelope witness: if the L1/L2 surrogate bridge is accepted, "
+            f"the unresolvable state fraction (1-w_t) bounds per-step risk.  With alpha={alpha}, "
             f"r_t >= (alpha/{K_factor})*(1-w_t).  "
             f"Summing over T={T}: E[V_T] >= {episode_lower:.6f}.  "
             f"Rate: {rate_lower:.6f} vs upper {rate_upper:.6f} "
-            f"(gap factor {K_factor})."
+            f"(gap factor {K_factor}).  This is not a standalone defended minimax converse."
         ),
         "assumptions_used": [
-            "L1: Rate-distortion safety law (D*(C) >= alpha*(1-C/H(X))).",
-            "L2: Capacity bridge (w_t <= kappa_d * C / H(X)).",
+            "Stylized L1 lower-envelope surrogate.",
+            "Stylized L2 capacity-proxy bridge.",
             "Binary safe/unsafe state at decision boundary.",
         ],
+        "scope_note": (
+            "Executable witness only. The converse side depends on the stylized "
+            "L1/L2 bridge and is not promoted as an independently defended minimax theorem."
+        ),
     }
 
 
@@ -851,21 +852,11 @@ def sensor_quality_converse(
     alpha: float,
     epsilon: float,
 ) -> dict:
-    r"""Information-theoretic converse on sensor quality.
+    r"""Stylized inverse threshold on mean reliability.
 
-    Theorem (T_sensor_converse), derived from L3 (Critical Capacity Theorem):
-
-      For any controller pi:
-
-          TSVR(pi) <= epsilon  implies  w_bar >= 1 - epsilon / alpha
-
-      By L3, there exists C*_d below which safety certification is impossible.
-      By L2 (Capacity Bridge), C < C*_d translates to w_bar < 1 - epsilon/alpha.
-      Contrapositive: if w_bar < 1 - epsilon/alpha, then TSVR > epsilon
-      for ALL controllers, regardless of algorithm or data volume.
-
-      Combined with DC3S achievability (TSVR <= alpha*(1-w_bar)), this
-      gives a complete characterization: TSVR* = Theta(alpha*(1-w_bar)).
+    This helper reports the algebraic inverse of the T3-style upper envelope
+    under the same stylized L2/L3 bridge assumptions used by the extension
+    laws. It is not a defended universal necessity theorem on its own.
     """
     w_required = 1.0 - epsilon / alpha if alpha > 0 else 1.0
     tsvr_floor = alpha * (1.0 - w_mean)
@@ -879,18 +870,24 @@ def sensor_quality_converse(
         "converse_holds": converse_holds,
         "tsvr_floor": float(tsvr_floor),
         "quality_gap": float(w_mean - w_required),
+        "defended_status": "stylized_inverse_threshold_only",
         "proof_sketch": (
-            f"L3 (Critical Capacity) + L2 (Capacity Bridge): TSVR <= {epsilon} requires "
+            f"Stylized inverse threshold: TSVR <= {epsilon} maps to "
             f"w_bar >= 1 - {epsilon}/{alpha} = {w_required:.4f}.  "
             f"Actual w_bar = {w_mean:.4f}.  "
             f"{'Sufficient' if converse_holds else 'Insufficient'}: "
-            f"gap = {w_mean - w_required:+.4f}."
+            f"gap = {w_mean - w_required:+.4f}.  This does not by itself prove "
+            f"a universal converse for all controllers."
         ),
         "assumptions_used": [
-            "L3: Critical capacity theorem (C < C*_d => impossible).",
-            "L2: Capacity bridge (w_t <= kappa_d * C / H(X)).",
+            "Stylized L3 critical-capacity threshold.",
+            "Stylized L2 capacity-proxy bridge.",
             "Averaging over T steps.",
         ],
+        "scope_note": (
+            "Use as a design-threshold calculator only; the repo does not currently "
+            "defend the stronger necessity-for-all-controllers reading."
+        ),
     }
 
 
@@ -898,12 +895,7 @@ def compute_minimum_w_for_tsvr(
     target_tsvr: float,
     alpha: float = 0.10,
 ) -> dict:
-    """Invert the achievability bound: w_bar >= 1 - target/alpha.
-
-    The sensor converse (T_sensor_converse) proves this inversion is
-    tight — there is no algorithm that achieves TSVR <= target with
-    lower observation quality.
-    """
+    """Invert the T3-style upper envelope as a design threshold."""
     if alpha <= 0:
         return {"target_tsvr": target_tsvr, "alpha": alpha, "w_min_required": 1.0, "achievable": False}
 
@@ -917,9 +909,10 @@ def compute_minimum_w_for_tsvr(
         "achievable": achievable,
         "interpretation": (
             f"To achieve TSVR <= {target_tsvr}, need w_bar >= {w_min_required:.4f}.  "
-            f"This is both sufficient (DC3S achievability) and necessary "
-            f"(T_sensor_converse)."
+            f"This is the executable inverse of the T3-style upper envelope.  "
+            f"A necessity claim still requires the stylized converse bridge."
         ),
+        "scope_note": "Upper-envelope inverse only; not a defended universal necessity threshold.",
     }
 
 
@@ -929,11 +922,7 @@ def verify_complete_characterization(
     *,
     K_factor: float = 2.0,
 ) -> dict:
-    """Assemble the complete OASG characterization sandwich.
-
-    Shows: (alpha/K)*(1-w_bar) <= TSVR* <= alpha*(1-w_bar), and the
-    sensor converse proves w_bar is both sufficient and necessary.
-    """
+    """Assemble the stylized OASG sandwich without overclaiming closure."""
     w = np.asarray(list(w_sequence), dtype=float).reshape(-1)
     w_bar = float(np.mean(np.clip(w, 0.0, 1.0)))
 
@@ -950,28 +939,136 @@ def verify_complete_characterization(
         "lower_bound_tsvr": float(lower),
         "gap_factor": float(K_factor),
         "converse_w_threshold": float(converse["w_required"]),
-        "characterization_complete": K_factor >= 1.0 and converse["converse_holds"],
+        "characterization_complete": False,
+        "defended_status": "open_converse_gap",
         "summary": (
-            f"Complete characterization: "
+            f"Stylized characterization only: "
             f"{lower:.6f} <= TSVR* <= {upper:.6f} "
             f"(gap factor {K_factor}).  "
-            f"Sensor converse: w_bar >= {converse['w_required']:.4f} is "
-            f"necessary and sufficient."
+            f"Sensor threshold surrogate: w_bar >= {converse['w_required']:.4f}.  "
+            f"The converse side remains open on the defended theorem surface."
         ),
         "theorems_used": ["T_minimax", "T_sensor_converse", "T3_achievability"],
+        "scope_note": (
+            "The executable sandwich is algebraically consistent, but the repo does not "
+            "currently defend it as a closed necessity-and-sufficiency characterization."
+        ),
     }
 
 
 THEOREM_REGISTER = {
+    "S1": {
+        "name": "Existence of the Illusion Under Dropout",
+        "statement": (
+            "Under sensor dropout fraction delta > 0, the observation gap "
+            "|x_obs - x_true| >= delta * R is non-zero, so observed-safe "
+            "!= true-safe."
+        ),
+        "type": "structural_existence",
+        "code_witness": "verify_illusion_under_dropout",
+        "module": "orius.dc3s.supporting_results",
+        "dependencies": ["dropout_fraction", "signal_range"],
+        "parent_law": None,
+    },
+    "S2": {
+        "name": "DC3S Feasibility Guarantee",
+        "statement": (
+            "If the inflated certificate contains the current state and a "
+            "safe repair action exists, then the DC3S shield can always "
+            "produce a feasible safe action."
+        ),
+        "type": "feasibility",
+        "code_witness": "verify_dc3s_feasibility_guarantee",
+        "module": "orius.dc3s.supporting_results",
+        "dependencies": ["inflation", "soc_interior", "repair_availability"],
+        "parent_law": None,
+    },
+    "T1": {
+        "name": "OASG Existence",
+        "statement": (
+            "There exist scenarios where an action appears safe in observed "
+            "state but is unsafe in true physical state. Formally: exists "
+            "episodes with degraded telemetry such that observed-safe(a|x_obs) "
+            "!= true-safe(a|x_true)."
+        ),
+        "type": "existence",
+        "code_witness": "BatteryPlant.step",
+        "module": "orius.cpsbench_iot.plant",
+        "dependencies": ["fault_injection", "observed_vs_true_split"],
+        "parent_law": None,
+    },
+    "T2": {
+        "name": "One-Step Safety Preservation",
+        "statement": (
+            "If the repaired action lies inside the absorbed tightened safe set "
+            "m_t* = m_t + epsilon_model and the current state lies inside the "
+            "inflated certificate, then the next battery true state remains safe."
+        ),
+        "type": "conditional_one_step",
+        "code_witness": "repair_action",
+        "module": "orius.dc3s.shield",
+        "dependencies": ["inflation_geq_one", "absorbed_tightened_safe_set", "guarantee_checks"],
+        "parent_law": None,
+    },
+    "T3": {
+        "name": "ORIUS Core Bound",
+        "statement": (
+            "Legacy alias only. See T3a for the defended per-step envelope "
+            "derivation and T3b for the aggregation corollary."
+        ),
+        "type": "alias",
+        "code_witness": "compute_expected_violation_bound",
+        "module": "orius.dc3s.coverage_theorem",
+        "dependencies": ["T3a", "T3b"],
+        "parent_law": "T3a",
+    },
+    "T3a": {
+        "name": "ORIUS Core Envelope Derivation",
+        "statement": (
+            "For each step t, P[Z_t = 1 | H_t] <= alpha * (1 - w_t) under the "
+            "explicit battery risk-budget contract, T2 shield soundness, and "
+            "the narrowed reliability-score interpretation."
+        ),
+        "type": "risk_envelope_derivation",
+        "code_witness": "compute_expected_violation_bound",
+        "module": "orius.dc3s.coverage_theorem",
+        "dependencies": ["per_step_risk_budget", "reliability_scores", "T2"],
+        "parent_law": None,
+    },
+    "T3b": {
+        "name": "ORIUS Core Aggregation Corollary",
+        "statement": (
+            "Aggregating the predictable per-step budget from T3a yields the "
+            "episode envelope E[V] <= alpha * (1 - w_bar) * T."
+        ),
+        "type": "risk_envelope_aggregation",
+        "code_witness": "compute_episode_risk_bound",
+        "module": "orius.universal_theory.risk_bounds",
+        "dependencies": ["T3a", "episode_aggregation"],
+        "parent_law": None,
+    },
+    "T4": {
+        "name": "No Free Safety",
+        "statement": (
+            "Within the fixed-margin, quality-ignorant controller class, "
+            "there exists an admissible degraded-observation sequence that "
+            "produces an OASG and hence a true-state violation."
+        ),
+        "type": "constructive_witness",
+        "code_witness": "verify_no_margin_compensation",
+        "module": "orius.dc3s.supporting_results",
+        "dependencies": ["quality_ignorant_baseline", "fault_sequence"],
+        "parent_law": None,
+    },
     "T5": {
-        "name": "Certificate Validity Horizon",
+        "name": "Certificate Validity Horizon Definition",
         "statement": (
             "Given an uncertainty tube [L_t, U_t] and a safe action a_t, "
             "the largest horizon tau_t such that the forward SoC tube "
             "remains within [soc_min, soc_max] satisfies tau_t >= 0 and "
             "is computable in O(max_steps) time."
         ),
-        "type": "constructive_bound",
+        "type": "definition",
         "code_witness": "certificate_validity_horizon",
         "module": "orius.universal_theory.battery_instantiation",
         "dependencies": ["forward_tube", "soc_bounds", "uncertainty_interval"],
@@ -981,48 +1078,73 @@ THEOREM_REGISTER = {
         "name": "Certificate Expiration Bound",
         "statement": (
             "The battery-domain expiration lower bound tau_expire_lb = "
-            "floor(delta_bnd^2 / sigma_d^2) where delta_bnd is the "
-            "minimum margin between the uncertainty tube and SoC limits."
+            "floor(delta_bnd^2 / (2 sigma_d^2 log(2/delta))) where delta_bnd "
+            "is the minimum margin between the uncertainty tube and SoC limits."
         ),
         "type": "expiration_bound",
         "code_witness": "certificate_expiration_bound",
         "module": "orius.universal_theory.battery_instantiation",
-        "dependencies": ["uncertainty_interval", "soc_bounds", "drift_volatility"],
+        "dependencies": ["uncertainty_interval", "soc_bounds", "drift_volatility", "confidence_delta"],
+        "parent_law": None,
+    },
+    "T7": {
+        "name": "Feasible Fallback Existence",
+        "statement": (
+            "There exists a battery fallback action (zero dispatch) that "
+            "preserves safety from an interior SOC state under bounded "
+            "model error."
+        ),
+        "type": "constructive_existence",
+        "code_witness": "validate_battery_fallback",
+        "module": "orius.universal_theory.battery_instantiation",
+        "dependencies": ["soc_interior", "bounded_model_error", "zero_dispatch"],
+        "parent_law": None,
+    },
+    "T8": {
+        "name": "Graceful Degradation Dominance",
+        "statement": (
+            "For paired graceful and uncontrolled violation sequences generated "
+            "under the same admissible fault trace, stepwise dominance of the "
+            "graceful sequence implies cumulative-count dominance. The active "
+            "surface is this sequence-level comparison only."
+        ),
+        "type": "dominance",
+        "code_witness": "evaluate_graceful_degradation_dominance",
+        "module": "orius.universal_theory.battery_instantiation",
+        "dependencies": ["shared_fault_trace", "paired_violation_sequence", "violation_count"],
         "parent_law": None,
     },
     "T9": {
         "name": "Universal Impossibility Under Persistent Degradation",
         "statement": (
             "E[V_T] >= c * d * T_eff under persistent degraded observation, "
-            "with c supplied by a witness sensitivity argument.  "
-            "Corollary of L1 (Rate-Distortion Safety Law)."
+            "with c supplied by a witness sensitivity argument."
         ),
         "type": "impossibility",
         "code_witness": "compute_universal_impossibility_bound",
         "module": "orius.dc3s.theoretical_guarantees",
-        "dependencies": ["boundary_reachability_witness", "persistent_fault_rate", "phi_mixing_assumption"],
-        "parent_law": "L1",
+        "dependencies": ["t4_witness_window", "persistent_fault_rate", "phi_mixing_assumption", "azuma_windowing"],
+        "parent_law": None,
     },
     "T10": {
         "name": "Stylized Reliability-Risk Frontier",
         "statement": (
-            "E[V_T(pi)] >= sum_t p_t * (1 - w_t), "
-            "and under p_t >= alpha/2 this gives (alpha/2)(1-w_bar)T.  "
-            "One-sided (unsafe-first) error bound; corollary of L1+L2."
+            "E[V_T(pi)] >= (1/2) * sum_t p_t * (1 - w_t), "
+            "and under p_t >= alpha/2 this gives (alpha/4)(1-w_bar)T.  "
+            "Scoped boundary-indistinguishability lower bound under explicit boundary-mass assumptions."
         ),
         "type": "lower_bound",
         "code_witness": "compute_stylized_frontier_lower_bound",
         "module": "orius.dc3s.theoretical_guarantees",
-        "dependencies": ["boundary_mass_sequence", "one_sided_error_bound"],
-        "parent_law": "L1",
+        "dependencies": ["boundary_mass_sequence", "le_cam_two_point", "unsafe_side_mapping_assumption"],
+        "parent_law": None,
     },
     "T11": {
         "name": "Typed Structural Transfer",
         "statement": (
             "If coverage, sound safe-action sets, repair membership, and fallback "
-            "all hold, then the one-step safety statement transfers; if any fails, "
-            "the battery proof pattern can break.  "
-            "Obligations must be verified externally (verified_by parameter)."
+            "admissibility all hold, then the one-step safety statement transfers. "
+            "The converse remains a separate structural failure witness."
         ),
         "type": "transfer_theorem",
         "code_witness": "evaluate_structural_transfer",
@@ -1061,28 +1183,26 @@ THEOREM_REGISTER = {
     "T_minimax": {
         "name": "Tight OASG Minimax Tradeoff",
         "statement": (
-            "E[V_T] >= (alpha / K) * sum(1 - w_t) for K = 2.  "
-            "Combined with achievability TSVR <= alpha*(1-w_bar), DC3S is within "
-            "constant factor K of optimal.  Derived from L1+L2 (rate-distortion)."
+            "Stylized lower-envelope witness E[V_T] >= (alpha / K) * sum(1 - w_t) for K = 2, "
+            "paired with the executable T3-style upper envelope."
         ),
         "type": "minimax_optimality",
         "code_witness": "compute_tight_impossibility_bound",
         "module": "orius.dc3s.theoretical_guarantees",
-        "dependencies": ["rate_distortion_lower_bound", "capacity_bridge", "conformal_miscoverage_alpha"],
-        "parent_law": "L4",
+        "dependencies": ["stylized_l1_lower_envelope", "stylized_l2_capacity_bridge", "t3_upper_envelope"],
+        "parent_law": None,
     },
     "T_sensor_converse": {
         "name": "Information-Theoretic Sensor Quality Converse",
         "statement": (
-            "For any controller pi: TSVR(pi) <= epsilon implies w_bar >= 1 - epsilon/alpha. "
-            "Equivalently, w_bar < 1 - epsilon/alpha implies TSVR > epsilon for ALL controllers. "
-            "Derived from L3 (Critical Capacity Theorem)."
+            "Stylized inverse threshold w_bar >= 1 - epsilon/alpha derived from the "
+            "T3 upper envelope plus the L2/L3 proxy bridge."
         ),
         "type": "converse_bound",
         "code_witness": "sensor_quality_converse",
         "module": "orius.dc3s.theoretical_guarantees",
-        "dependencies": ["critical_capacity", "capacity_bridge", "observation_channel_w_t"],
-        "parent_law": "L3",
+        "dependencies": ["t3_upper_envelope", "stylized_l2_capacity_bridge", "stylized_l3_threshold"],
+        "parent_law": None,
     },
     "T_trajectory_PAC": {
         "name": "Finite-Time Distribution-Free Trajectory Safety Certificate",
@@ -1090,14 +1210,14 @@ THEOREM_REGISTER = {
             "P(all H steps safe) >= 1 - H*alpha*(1-w_bar) - epsilon_fs - delta/2, "
             "where epsilon_fs is the finite-sample conformal correction. "
             "The maximum certifiable horizon is H_max = floor((1-epsilon_fs-delta/2)/(alpha*(1-w_bar))). "
-            "Ville's inequality provides the same bound without step independence."
+            "The executable witness defends the Bonferroni/union-bound surface only."
         ),
         "type": "pac_trajectory",
         "code_witness": "pac_trajectory_safety_certificate",
         "module": "orius.universal_theory.risk_bounds",
-        "dependencies": ["conformal_coverage", "exit_time_reflection_principle", "ville_inequality",
+        "dependencies": ["conformal_coverage", "exit_time_reflection_principle", "union_bound",
                          "A1_lipschitz", "A4_compact_safe_set", "A5_exchangeability"],
-        "parent_law": "L4",
+        "parent_law": None,
     },
 }
 
@@ -1117,12 +1237,13 @@ def prove_byzantine_bound(
 
     Theorem (T11_Byzantine):
       For a window of W sensors with at most fraction f < 1/3 Byzantine,
-      using a symmetric trim of at least f on each side, the error of the
-      trimmed mean satisfies:
+      using a symmetric trim of at least f on each side and assuming the
+      adversarial contamination occupies the tails removed by trimming, the
+      error of the trimmed mean satisfies:
 
-          |mu_trim - mu_true| <= sigma_honest / sqrt(W * (1 - 2f))
+          |mu_trim - mu_true| <= 2 * sigma_honest / sqrt(W * (1 - 2f))
 
-    with probability >= 1 - 2*exp(-2) ≈ 0.729  (one-sigma Hoeffding).
+    with probability >= 1 - 2*exp(-2) ≈ 0.729.
 
     Args:
         W: Sliding window size (number of readings).
@@ -1150,18 +1271,25 @@ def prove_byzantine_bound(
         }
 
     W_eff = W * (1 - 2 * f)
-    bound = sigma_honest / math.sqrt(W_eff)
+    bound = 2.0 * sigma_honest / math.sqrt(W_eff)
 
     return {
         "bound": float(bound),
         "W_effective": float(W_eff),
         "holds": True,
         "trim_frac": trim_frac,
+        "assumptions_used": [
+            "A9 (sub-Gaussian honest sensor noise).",
+            "Byzantine fraction f is strictly below 1/3.",
+            "Symmetric trim fraction beta is at least f on each side.",
+            "Tail-contamination model: adversarial readings lie in the tails removed by trimming.",
+        ],
         "proof_sketch": (
             f"With W={W} readings and f={f:.3f} < 1/3 Byzantine fraction, "
-            f"trim_frac={trim_frac:.3f} >= f ensures all adversarial readings "
-            f"are removed.  Remaining W_eff={W_eff:.1f} honest readings have "
-            f"std sigma={sigma_honest:.4f}, giving Hoeffding bound "
+            f"trim_frac={trim_frac:.3f} >= f and the tail-contamination model "
+            f"ensure the adversarial readings are removed.  Remaining "
+            f"W_eff={W_eff:.1f} honest readings have std sigma={sigma_honest:.4f}, "
+            f"giving Hoeffding width "
             f"|mu_trim - mu_true| <= {bound:.6f}."
         ),
     }
@@ -1402,18 +1530,23 @@ def complete_oasg_characterization(
         "path_b_trajectory_pac": path_b,
         "path_c_sensor_converse": path_c,
         "complete_characterization": char,
-        "gap_closed": char["characterization_complete"],
+        "gap_closed": False,
         "summary": (
-            f"Complete OASG characterization at w_bar={w_bar:.4f}, alpha={alpha}:  "
+            f"Stylized OASG characterization at w_bar={w_bar:.4f}, alpha={alpha}:  "
             f"Lower={path_a['episode_lower_bound_rate']:.6f}, "
             f"Upper={upper:.6f} (gap {K_factor}x).  "
             f"Trajectory PAC: P(safe for {H_for_pac} steps) >= "
             f"{path_b['trajectory_safety_prob']:.4f}.  "
-            f"Sensor converse: need w_bar >= {path_c['w_required']:.4f}."
+            f"Sensor threshold surrogate: need w_bar >= {path_c['w_required']:.4f}.  "
+            f"The defended converse gap remains open."
         ),
         "theorems_used": [
             "T_minimax", "T_trajectory_PAC", "T_sensor_converse", "T3_achievability",
         ],
+        "scope_note": (
+            "Assembles the current executable witnesses without asserting that the "
+            "converse bridge is fully discharged."
+        ),
     }
 
 

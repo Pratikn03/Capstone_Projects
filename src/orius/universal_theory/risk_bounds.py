@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Mapping
 
 import numpy as np
 from scipy.stats import norm as _norm
@@ -15,6 +15,14 @@ RISK_ENVELOPE_ASSUMPTIONS: tuple[str, ...] = (
     "w_t is a runtime reliability score, not a probability by definition.",
     "The envelope is marginal/expected-episode control, not a conditional coverage guarantee for every observation.",
 )
+
+
+def _contract_check(name: str, passed: bool, detail: str) -> dict[str, Any]:
+    return {
+        "name": str(name),
+        "passed": bool(passed),
+        "detail": str(detail),
+    }
 
 
 def _as_flat_float_array(values: np.ndarray | list[float], *, name: str) -> np.ndarray:
@@ -85,9 +93,11 @@ def compute_step_risk_bound(reliability_w: float, *, alpha: float = 0.10) -> flo
     conformal coverage alone; that interpretation requires a separate
     theorem-local calibration argument.
     """
-    w = float(min(1.0, max(0.0, reliability_w)))
+    w = float(reliability_w)
     if not (0.0 <= float(alpha) <= 1.0):
         raise ValueError("alpha must lie in [0, 1].")
+    if not math.isfinite(w) or not (0.0 <= w <= 1.0):
+        raise ValueError("reliability_w must lie in [0, 1].")
     return float(alpha * (1.0 - w))
 
 
@@ -124,6 +134,103 @@ def compute_episode_risk_bound(
         "theorem_surface": "T3 risk-envelope aggregation",
         "interpretation": "Conservative episode-level envelope under an explicit predictable per-step risk-budget contract.",
         "assumptions_used": list(RISK_ENVELOPE_ASSUMPTIONS),
+    }
+
+
+def build_t3a_contract_summary(
+    *,
+    reliability_w: float,
+    step_risk_bound: float,
+    episode_risk_bound: Mapping[str, Any],
+    alpha: float,
+    contract_checks: Mapping[str, Any] | None = None,
+    calibration_meta: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Summarize the executable and declared pieces of the active T3a surface.
+
+    The active theorem is intentionally narrower than a pure conformal-coverage
+    claim. This contract report keeps that split explicit at runtime: the
+    arithmetic envelope is executable, while the battery-specific calibration
+    bridge remains a declared theorem-local contract.
+    """
+    w = float(reliability_w)
+    expected_step = compute_step_risk_bound(w, alpha=float(alpha))
+    horizon = int(float(episode_risk_bound.get("horizon", 0.0) or 0.0))
+    mean_reliability = float(episode_risk_bound.get("mean_reliability_w", 0.0) or 0.0)
+    expected_episode = float(alpha) * (1.0 - mean_reliability) * horizon
+    observed_episode = float(episode_risk_bound.get("bound_expected_violations", 0.0) or 0.0)
+    scope = str(episode_risk_bound.get("scope", ""))
+    invariant_checks = {}
+    if isinstance(contract_checks, Mapping):
+        invariant_checks = dict(contract_checks.get("checked_invariants", {}))
+    risk_semantics = bool(invariant_checks.get("risk_bound_semantics", {}).get("passed", False))
+    calibration_meta_map = dict(calibration_meta or {})
+    calibration_surface = {
+        key: calibration_meta_map[key]
+        for key in (
+            "inflation",
+            "inflation_rule",
+            "inflation_law_selector",
+            "q_eff",
+            "q_eff_scalar",
+            "delta",
+            "w_t",
+        )
+        if key in calibration_meta_map
+    }
+    executable_checks = [
+        _contract_check(
+            "reliability_range",
+            0.0 <= w <= 1.0,
+            f"Runtime reliability score w_t={w:.6f} lies in [0, 1].",
+        ),
+        _contract_check(
+            "step_formula",
+            abs(float(step_risk_bound) - expected_step) <= 1e-9,
+            (
+                f"Observed step bound={float(step_risk_bound):.6f} matches "
+                f"alpha*(1-w_t)={expected_step:.6f}."
+            ),
+        ),
+        _contract_check(
+            "episode_formula",
+            abs(observed_episode - expected_episode) <= 1e-9,
+            (
+                f"Observed episode bound={observed_episode:.6f} matches the "
+                f"observed-prefix aggregation={expected_episode:.6f}."
+            ),
+        ),
+        _contract_check(
+            "canonical_scope",
+            scope in {"current_step_only", "observed_prefix"},
+            f"Episode scope is '{scope or 'missing'}'.",
+        ),
+        _contract_check(
+            "risk_bound_semantics",
+            risk_semantics,
+            (
+                "Contract verifier accepted the step/episode bound semantics."
+                if risk_semantics
+                else "Contract verifier did not validate the step/episode bound semantics."
+            ),
+        ),
+    ]
+    passed = all(bool(check["passed"]) for check in executable_checks)
+    return {
+        "theorem_id": "T3a",
+        "theorem_surface": "runtime_risk_budget_derivation",
+        "formula": "alpha * (1 - w_t)",
+        "scope": scope or "missing",
+        "all_executable_checks_passed": bool(passed),
+        "status": "runtime_linked" if passed else "contract_violation",
+        "executable_checks": executable_checks,
+        "declared_assumptions": list(RISK_ENVELOPE_ASSUMPTIONS),
+        "declared_only_contract": (
+            "The domain-specific bridge from runtime reliability scores to the "
+            "battery per-step residual-risk contract remains a stated theorem "
+            "hypothesis rather than a universally computed guarantee."
+        ),
+        "calibration_surface": calibration_surface,
     }
 
 
@@ -284,8 +391,6 @@ def calibration_contract_verify(
     if np.any((c < -1e-9) | (c > 1.0 + 1e-9)):
         raise ValueError("coverage_indicators must be indicator-like in [0, 1].")
 
-    w = np.clip(w, 0.0, 1.0)
-    c = np.clip(c, 0.0, 1.0)
     N = int(w.size)
 
     edges = np.linspace(0.0, 1.0 + 1e-9, n_bins + 1)
@@ -303,9 +408,10 @@ def calibration_contract_verify(
             bins.append({
                 "bin": k, "w_lo": lo, "w_hi": hi, "n": 0,
                 "w_mean": w_bin, "empirical_coverage": float("nan"),
-                "cp_lower": float("nan"), "passed": True,
+                "cp_lower": float("nan"), "passed": False,
                 "correction_factor": 1.0, "note": "empty bin",
             })
+            all_pass = False
             correction_factors.append(1.0)
             continue
 
@@ -371,18 +477,18 @@ def pac_validity_horizon_bound(
     margin: float,
     w_min: float = 0.0,
 ) -> dict[str, Any]:
-    """PAC bound combining conformal coverage with exit-time guarantee.
+    """Finite-sample lower bound for a certificate validity horizon.
 
-    Theorem (PAC Validity Horizon):
-      With probability >= 1 - alpha - delta, the certificate's conservative
-      horizon H_t bounds the actual number of safe steps.
+    This helper returns a non-vacuous lower bound only when the combined
+    conformal, finite-sample, and exit-time failure budget remains below 1.
 
     Proof sketch:
       1. Conformal coverage gives P(Y in C) >= 1 - alpha - epsilon(n_cal, delta/2, w_min)
-         via finite-sample bound (Theorem from compute_finite_sample_coverage_bound).
+         via the finite-sample envelope from compute_finite_sample_coverage_bound.
       2. Exit-time bound gives P(walk exits margin in H steps) <= delta/2
          via reflection principle (Theorem from compute_conservative_horizon).
-      3. Union bound: total failure probability <= alpha + delta.
+      3. Union bound yields a safe-hold lower bound of
+         1 - (alpha + epsilon_conformal + delta/2).
 
     Args:
         n_cal: Calibration set size.
@@ -392,6 +498,19 @@ def pac_validity_horizon_bound(
         margin: Distance to constraint boundary (MWh or domain units).
         w_min: Minimum reliability weight in calibration set.
     """
+    if n_cal <= 0:
+        raise ValueError("n_cal must be positive.")
+    if not (0.0 < alpha < 1.0):
+        raise ValueError("alpha must lie in (0, 1).")
+    if not (0.0 < delta < 1.0):
+        raise ValueError("delta must lie in (0, 1).")
+    if sigma_d < 0.0:
+        raise ValueError("sigma_d must be non-negative.")
+    if margin < 0.0:
+        raise ValueError("margin must be non-negative.")
+    if not (0.0 <= w_min <= 1.0):
+        raise ValueError("w_min must lie in [0, 1].")
+
     n_eff = max(1, int(n_cal * max(w_min, 1e-6)))
     epsilon_conformal = math.sqrt(math.log(4.0 / delta) / (2.0 * n_eff))
 
@@ -402,12 +521,14 @@ def pac_validity_horizon_bound(
         H_conservative = 0
 
     total_failure_prob = alpha + epsilon_conformal + delta / 2.0
-    pac_holds = total_failure_prob < 1.0
+    validity_lower_bound = max(0.0, 1.0 - total_failure_prob)
+    pac_holds = validity_lower_bound > 0.0
 
     return {
         "H_conservative": H_conservative,
         "epsilon_conformal": float(epsilon_conformal),
         "total_failure_prob": float(total_failure_prob),
+        "validity_probability_lower_bound": float(validity_lower_bound),
         "pac_holds": pac_holds,
         "n_eff": n_eff,
         "z_quantile": float(z),
@@ -415,8 +536,9 @@ def pac_validity_horizon_bound(
             f"Conformal epsilon={epsilon_conformal:.6f} (n_eff={n_eff}).  "
             f"Exit-time horizon H={H_conservative} steps (z={z:.3f}, "
             f"margin={margin:.1f}, sigma_d={sigma_d:.3f}).  "
-            f"Union bound: P(fail) <= {total_failure_prob:.6f} < 1.  "
-            f"PAC {'holds' if pac_holds else 'does NOT hold'}."
+            f"Union bound: P(fail) <= {total_failure_prob:.6f}, so "
+            f"P(valid for H steps) >= {validity_lower_bound:.6f}.  "
+            f"Lower bound is {'non-vacuous' if pac_holds else 'vacuous'}."
         ),
     }
 
@@ -439,7 +561,7 @@ def pac_trajectory_safety_certificate(
     use_martingale: bool = True,
     capacity_threshold: float | None = None,
 ) -> dict[str, Any]:
-    r"""PAC guarantee over multi-step trajectories.
+    r"""PAC-style finite-time lower bound for multi-step trajectories.
 
     Theorem (T_trajectory_PAC):
       Under A1 (Lipschitz L), A4 (compact safe set), A5 (exchangeability):
@@ -449,15 +571,34 @@ def pac_trajectory_safety_certificate(
       where epsilon_fs = sqrt(log(4/delta) / (2*n_eff)) is the finite-sample
       conformal correction.
 
-      Under A1, cumulative violations form a submartingale.  Ville's
-      inequality gives the same bound without step independence — strictly
-      stronger than Bonferroni for dependent steps.
-
       Maximum certifiable horizon:
 
           H_max = floor((1 - epsilon_fs - delta/2) / (alpha*(1-w_bar)))
+
+    Scope note:
+      The executable witness defends the Bonferroni/union-bound certificate
+      above. ``use_martingale=True`` records the requested reviewer lens but
+      does not claim a separate Ville-strengthened quantitative bound.
     """
+    if H <= 0:
+        raise ValueError("H must be positive.")
+    if n_cal <= 0:
+        raise ValueError("n_cal must be positive.")
+    if not (0.0 < alpha < 1.0):
+        raise ValueError("alpha must lie in (0, 1).")
+    if not (0.0 < delta < 1.0):
+        raise ValueError("delta must lie in (0, 1).")
+    if lipschitz_L <= 0.0:
+        raise ValueError("lipschitz_L must be positive.")
+    if margin < 0.0:
+        raise ValueError("margin must be non-negative.")
+    if sigma_d < 0.0:
+        raise ValueError("sigma_d must be non-negative.")
     w = np.asarray(list(w_sequence), dtype=float).reshape(-1)
+    if w.size == 0:
+        raise ValueError("w_sequence must be non-empty.")
+    if np.any((w < 0.0) | (w > 1.0)):
+        raise ValueError("w_sequence values must lie in [0, 1].")
     w_prefix = np.clip(w[:H], 0.0, 1.0) if len(w) >= H else np.clip(w, 0.0, 1.0)
     w_bar = float(np.mean(w_prefix)) if len(w_prefix) > 0 else 0.0
     w_min = float(np.min(w_prefix)) if len(w_prefix) > 0 else 0.0
@@ -479,13 +620,22 @@ def pac_trajectory_safety_certificate(
     else:
         H_max = 10_000
 
-    assumptions = ["A1 (Lipschitz dynamics)", "A4 (compact safe set)", "A5 (approximate exchangeability)"]
-    if use_martingale:
-        assumptions.append("Ville's inequality (submartingale structure from A1)")
+    if capacity_threshold is not None and not (0.0 <= float(capacity_threshold) <= 1.0):
+        raise ValueError("capacity_threshold must lie in [0, 1].")
+    below_capacity = bool(capacity_threshold is not None and w_bar < capacity_threshold)
 
-    below_capacity = False
-    if capacity_threshold is not None and w_bar < capacity_threshold:
-        below_capacity = True
+    assumptions = [
+        "A1 (Lipschitz dynamics)",
+        "A4 (compact safe set)",
+        "A5 (approximate exchangeability)",
+        "Union-bound aggregation over the H-step horizon.",
+    ]
+    martingale_note = (
+        "Martingale strengthening requested, but the executable witness reports the same "
+        "Bonferroni-style quantitative bound and does not claim a separate Ville certificate."
+        if use_martingale
+        else None
+    )
 
     return {
         "H": H,
@@ -497,15 +647,18 @@ def pac_trajectory_safety_certificate(
         "per_step_risk": float(per_step_risk),
         "trajectory_safety_prob": float(trajectory_safety_prob),
         "H_max_certifiable": H_max,
+        "trajectory_failure_upper_bound": float(trajectory_failure),
         "uses_martingale": bool(use_martingale),
+        "bound_style": "bonferroni_union_bound",
         "bonferroni_bound": float(bonferroni_bound),
         "finite_sample_correction": float(epsilon_fs),
         "exit_time_budget": float(exit_budget),
         "lipschitz_L": float(lipschitz_L),
         "below_capacity_threshold": below_capacity,
-        "pac_vacuity_only": not below_capacity,
+        "pac_vacuity_only": trajectory_safety_prob == 0.0,
+        "martingale_note": martingale_note,
         "proof_sketch": (
-            f"{'Ville (submartingale)' if use_martingale else 'Bonferroni'}: "
+            "Bonferroni/union-bound certificate: "
             f"P(any violation in {H} steps) <= {H}*{alpha}*(1-{w_bar:.4f}) "
             f"+ eps_fs({epsilon_fs:.6f}) + delta/2({exit_budget:.4f}) "
             f"= {trajectory_failure:.6f}.  "

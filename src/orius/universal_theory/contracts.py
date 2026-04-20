@@ -51,7 +51,9 @@ class ReliabilityAssessment:
     assumption_tags: tuple[AssumptionTag, ...] = ("A2", "A5", "A6")
 
     def __post_init__(self) -> None:
-        self.weight = float(min(1.0, max(0.0, float(self.weight))))
+        self.weight = float(self.weight)
+        if not math.isfinite(self.weight) or not (0.0 <= self.weight <= 1.0):
+            raise ValueError(f"ReliabilityAssessment.weight must lie in [0, 1]. Got {self.weight!r}.")
         self.flags = dict(self.flags)
         self.drift_meta = dict(self.drift_meta)
         self.assumption_tags = _tuple_tags(self.assumption_tags)
@@ -78,6 +80,16 @@ class ObservationConsistentStateSet:
         self.inflation = float(self.inflation)
         self.quantile = float(self.quantile)
         self.reliability_weight = float(self.reliability_weight)
+        if not math.isfinite(self.inflation) or self.inflation < 1.0:
+            raise ValueError(
+                "ObservationConsistentStateSet.inflation must be finite and >= 1.0. "
+                f"Got {self.inflation!r}."
+            )
+        if not math.isfinite(self.reliability_weight) or not (0.0 <= self.reliability_weight <= 1.0):
+            raise ValueError(
+                "ObservationConsistentStateSet.reliability_weight must lie in [0, 1]. "
+                f"Got {self.reliability_weight!r}."
+            )
         self.assumption_tags = _tuple_tags(self.assumption_tags)
 
 
@@ -276,6 +288,7 @@ class UniversalStepResult(Mapping[str, Any]):
     step_risk_bound: float
     episode_risk_bound: dict[str, Any]
     contract_checks: dict[str, Any] = field(default_factory=dict)
+    theorem_contracts: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self.safe_action = dict(self.safe_action)
@@ -288,6 +301,10 @@ class UniversalStepResult(Mapping[str, Any]):
         self.contract_checks = {
             str(key): dict(value) if isinstance(value, Mapping) else value
             for key, value in self.contract_checks.items()
+        }
+        self.theorem_contracts = {
+            str(key): dict(value) if isinstance(value, Mapping) else value
+            for key, value in self.theorem_contracts.items()
         }
 
     def to_mapping(self) -> dict[str, Any]:
@@ -326,6 +343,7 @@ class UniversalStepResult(Mapping[str, Any]):
             "episode_risk_bound": dict(self.episode_risk_bound),
             "safe_action_set": dict(self.safe_action_set.representation),
             "contract_checks": dict(self.contract_checks),
+            "theorem_contracts": dict(self.theorem_contracts),
         }
 
     def __getitem__(self, key: str) -> Any:
@@ -462,6 +480,35 @@ def _extract_reliability_weight(payload: Mapping[str, Any]) -> float | None:
         if scalar is not None:
             return scalar
     return None
+
+
+def _extract_action_bounds(payload: Mapping[str, Any]) -> tuple[dict[str, float], dict[str, float]]:
+    lower_bounds: dict[str, float] = {}
+    upper_bounds: dict[str, float] = {}
+    for key, value in payload.items():
+        scalar = _as_float(value)
+        if scalar is None:
+            continue
+        if key.endswith("_lower"):
+            lower_bounds[key[: -len("_lower")]] = scalar
+        elif key.endswith("_upper"):
+            upper_bounds[key[: -len("_upper")]] = scalar
+    return lower_bounds, upper_bounds
+
+
+def _action_within_safe_set_bounds(
+    action: Mapping[str, Any],
+    safe_action_set: SafeActionSet,
+) -> tuple[bool, list[str]]:
+    lower_bounds, upper_bounds = _extract_action_bounds(safe_action_set.representation)
+    comparable_keys = sorted(set(action.keys()) & set(lower_bounds.keys()) & set(upper_bounds.keys()))
+    if not comparable_keys:
+        return bool(safe_action_set.viable or safe_action_set.fallback_action is not None), comparable_keys
+    passed = all(
+        lower_bounds[key] - 1e-9 <= float(action[key]) <= upper_bounds[key] + 1e-9
+        for key in comparable_keys
+    )
+    return passed, comparable_keys
 
 
 class ContractVerifier:
@@ -700,6 +747,114 @@ class ContractVerifier:
                 + "; ".join(failures)
             )
         return summary
+
+    @classmethod
+    def build_transfer_theorem_summary(
+        cls,
+        *,
+        adapter: DomainInstantiation,
+        reliability: ReliabilityAssessment,
+        uncertainty_set: ObservationConsistentStateSet,
+        safe_action_set: SafeActionSet,
+        repair_decision: RepairDecision,
+        certificate: SafetyCertificate,
+        contract_checks: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Summarize the typed four-obligation T11 surface on runtime artifacts."""
+
+        checked_invariants = dict(contract_checks.get("checked_invariants", {}))
+
+        def invariant_passed(name: str) -> bool:
+            return bool(checked_invariants.get(name, {}).get("passed", False))
+
+        membership_passed, comparable_keys = _action_within_safe_set_bounds(
+            repair_decision.safe_action,
+            safe_action_set,
+        )
+        adapter_summary = cls.summary(adapter)
+        coverage_passed = (
+            invariant_passed("inflation_preserves_base_surface")
+            and invariant_passed("state_set_matches_reliability")
+            and abs(float(uncertainty_set.reliability_weight) - float(reliability.weight)) <= 1e-9
+        )
+        repair_membership_passed = (
+            invariant_passed("certificate_matches_repair")
+            and membership_passed
+            if safe_action_set.viable
+            else invariant_passed("fallback_action_matches_certificate")
+        )
+        fallback_passed = (
+            True
+            if safe_action_set.viable
+            else (
+                invariant_passed("fallback_action_available")
+                and invariant_passed("fallback_mode_when_infeasible")
+                and invariant_passed("fallback_action_matches_certificate")
+            )
+        )
+        sound_surface_passed = (
+            bool(adapter_summary.get("contract_passed"))
+            and bool(safe_action_set.representation)
+            and invariant_passed("certificate_reliability_consistency")
+            and (invariant_passed("tightened_set_monotonicity") if "tightened_set_monotonicity" in checked_invariants else True)
+        )
+        obligations = {
+            "coverage": {
+                "passed": bool(coverage_passed),
+                "detail": (
+                    "Observation-consistent state set preserves inflation >= 1 "
+                    "and carries the active runtime reliability tag."
+                ),
+            },
+            "sound_safe_action_set": {
+                "passed": bool(sound_surface_passed),
+                "detail": (
+                    "Typed safe-action surface exists, passes the adapter contract, "
+                    "and preserves the canonical reliability/certificate semantics."
+                ),
+            },
+            "repair_membership": {
+                "passed": bool(repair_membership_passed),
+                "detail": (
+                    "Repair action remains inside the typed safe-action set bounds "
+                    f"for comparable keys {comparable_keys or ['<structural-only>']}."
+                ),
+            },
+            "fallback_admissibility": {
+                "passed": bool(fallback_passed),
+                "detail": (
+                    "Fallback branch is either not needed (viable safe-action set) "
+                    "or is explicitly carried by the typed fallback action."
+                ),
+            },
+        }
+        failed_obligations = [name for name, result in obligations.items() if not bool(result["passed"])]
+        return {
+            "theorem_id": "T11",
+            "theorem_surface": "forward_four_obligation_transfer",
+            "forward_only": True,
+            "all_executable_checks_passed": len(failed_obligations) == 0,
+            "status": "runtime_linked" if not failed_obligations else "contract_violation",
+            "obligations": obligations,
+            "failed_obligations": failed_obligations,
+            "adapter_contract_summary": adapter_summary,
+            "declared_assumptions": [
+                "Coverage obligation for the observation-consistent state set.",
+                "Soundness of the tightened safe-action set.",
+                "Repair membership in the tightened safe-action set.",
+                "Fallback admissibility when the tightened set is empty.",
+            ],
+            "declared_only_contract": (
+                "Plant-specific next-state soundness of the tightened safe-action "
+                "set is supplied by the domain adapter contract; the generic kernel "
+                "checks the typed artifacts and certificate semantics, not a new "
+                "domain-specific dynamics proof."
+            ),
+            "scope_note": (
+                "This summary closes the forward one-step transfer surface only. "
+                "The converse remains a separate structural failure proposition."
+            ),
+        }
 
 
 # ---------------------------------------------------------------------------

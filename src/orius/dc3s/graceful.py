@@ -1,12 +1,16 @@
 """Paper 3: Graceful degradation planner."""
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, List, Mapping, Sequence
 
 
 def _f(value: Any, default: float) -> float:
     try:
-        return float(value)
+        v = float(value)
+        if not math.isfinite(v):
+            return float(default)
+        return v
     except (TypeError, ValueError):
         return float(default)
 

@@ -7,12 +7,16 @@ Safety predicates:
 """
 from __future__ import annotations
 
+import math
 from typing import Any, Mapping
 
 
 def _f(x: Any, default: float) -> float:
     try:
-        return float(x)
+        v = float(x)
+        if not math.isfinite(v):
+            return float(default)
+        return v
     except (TypeError, ValueError):
         return float(default)
 

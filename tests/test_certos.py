@@ -13,6 +13,7 @@ import pytest
 
 from orius.certos.audit_ledger import AuditLedger
 from orius.certos.certificate_engine import CertificateEngine, LifecycleOp
+from orius.certos.domain_policies import BatteryGovernancePolicy
 from orius.certos.recovery_manager import RecoveryManager
 from orius.certos.runtime import CertOSConfig, CertOSRuntime, CertOSState, DomainGovernancePolicy
 
@@ -159,6 +160,26 @@ class TestCertOSRuntime:
         )
         assert state.status == "fallback"
         assert state.fallback_active
+
+    def test_expired_battery_step_prefers_fallback_over_runtime_assertion(self):
+        rt = CertOSRuntime(
+            config=CertOSConfig(governance_policy=BatteryGovernancePolicy())
+        )
+        state = rt.validate_and_step(
+            observed_soc_mwh=21.0,
+            proposed_action={"charge_mw": 0.0, "discharge_mw": 10.0},
+            safe_action={"charge_mw": 0.0, "discharge_mw": 10.0},
+            validity_horizon=0,
+            observed_state={"current_soc_mwh": 21.0},
+            constraints={
+                "min_soc_mwh": 20.0,
+                "max_soc_mwh": 180.0,
+                "time_step_hours": 1.0,
+            },
+        )
+        assert state.status == "fallback"
+        assert state.fallback_active
+        assert state.safe_action == {"charge_mw": 0.0, "discharge_mw": 0.0}
 
     def test_revoke_triggers_fallback(self):
         rt = CertOSRuntime()

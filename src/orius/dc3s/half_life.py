@@ -14,6 +14,12 @@ from typing import Any, Dict
 
 from scipy.stats import norm as _norm
 
+from .brownian_half_life import (
+    CertificateHalfLifeResult,
+    certificate_half_life,
+    validity_probability,
+)
+
 MAX_HORIZON_STEPS: int = 4096
 FALLBACK_QUALITY_THRESHOLD: float = 0.05
 
@@ -249,6 +255,24 @@ def compute_conservative_horizon(
         "margin": margin,
         "sigma_d": sigma_d,
     }
+
+
+def conservative_validity_horizon(
+    initial_margin: float,
+    disturbance_std: float,
+    *,
+    minimum_validity_probability: float = 0.95,
+) -> float:
+    """Return the conservative first-passage horizon as a scalar step count."""
+    p_min = float(minimum_validity_probability)
+    if not (0.0 < p_min < 1.0):
+        raise ValueError("minimum_validity_probability must lie in (0, 1).")
+    result = compute_conservative_horizon(
+        margin=float(initial_margin),
+        sigma_d=float(disturbance_std),
+        delta=1.0 - p_min,
+    )
+    return float(result["H_conservative"])
 
 
 def verify_horizon_safety(

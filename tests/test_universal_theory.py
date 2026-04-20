@@ -5,7 +5,6 @@ import pytest
 
 from orius.adapters.battery import BatteryDomainAdapter
 from orius.adapters.healthcare import HealthcareDomainAdapter
-from orius.adapters.industrial import IndustrialDomainAdapter
 from orius.adapters.vehicle import VehicleDomainAdapter
 from orius.universal_theory import (
     ContractVerifier,
@@ -20,13 +19,13 @@ from orius.universal_theory import (
     derive_safe_action_set,
 )
 from orius.universal_framework import get_adapter, run_universal_step
+from orius.universal_theory.risk_bounds import calibration_contract_verify, compute_step_risk_bound
 
 
 def test_contract_verifier_accepts_canonical_domain_instantiations() -> None:
     adapters = [
         BatteryDomainAdapter(),
         VehicleDomainAdapter({"expected_cadence_s": 0.25}),
-        IndustrialDomainAdapter({"expected_cadence_s": 3600.0}),
         HealthcareDomainAdapter({"expected_cadence_s": 1.0}),
     ]
     for adapter in adapters:
@@ -36,27 +35,27 @@ def test_contract_verifier_accepts_canonical_domain_instantiations() -> None:
 
 
 def test_run_universal_step_returns_structured_result() -> None:
-    adapter = get_adapter("industrial", {})
+    adapter = get_adapter("healthcare", {})
     result = run_universal_step(
         domain_adapter=adapter,
         raw_telemetry={
-            "temp_c": 25.0,
-            "pressure_mbar": 1010.0,
-            "power_mw": 450.0,
+            "hr_bpm": 72.0,
+            "spo2_pct": 97.0,
+            "respiratory_rate": 14.0,
             "ts_utc": "2026-01-01T00:00:00Z",
         },
         history=[
             {
-                "temp_c": 24.0,
-                "pressure_mbar": 1008.0,
-                "power_mw": 445.0,
+                "hr_bpm": 71.0,
+                "spo2_pct": 97.0,
+                "respiratory_rate": 14.0,
                 "ts_utc": "2025-12-31T23:00:00Z",
                 "w_t": 0.7,
             }
         ],
-        candidate_action={"power_setpoint_mw": 480.0},
-        constraints={"power_max_mw": 500.0},
-        quantile=30.0,
+        candidate_action={"alert_level": 0.3},
+        constraints={"spo2_min_pct": 90.0},
+        quantile=5.0,
     )
     assert isinstance(result, UniversalStepResult)
     assert isinstance(result["certificate"], SafetyCertificate)
@@ -70,25 +69,31 @@ def test_run_universal_step_returns_structured_result() -> None:
     assert result["contract_checks"]["contract_passed"] is True
     assert result["certificate"]["semantic_checks"]["contract_passed"] is True
     assert "reliability_range" in result["contract_checks"]["checked_invariants"]
+    assert set(result["theorem_contracts"]) == {"T3a", "T11"}
+    assert result["theorem_contracts"]["T3a"]["all_executable_checks_passed"] is True
+    assert result["theorem_contracts"]["T11"]["all_executable_checks_passed"] is True
+    assert result["theorem_contracts"]["T11"]["forward_only"] is True
+    assert result["certificate"]["theorem_contracts"]["T3a"]["status"] == "runtime_linked"
+    assert result["certificate"]["theorem_contracts"]["T11"]["status"] == "runtime_linked"
 
 
 def test_contract_verifier_rejects_tampered_runtime_certificate() -> None:
-    adapter = get_adapter("industrial", {})
-    constraints = {"power_max_mw": 500.0}
+    adapter = get_adapter("healthcare", {})
+    constraints = {"spo2_min_pct": 90.0}
     result = run_universal_step(
         domain_adapter=adapter,
         raw_telemetry={
-            "temp_c": 25.0,
-            "pressure_mbar": 1010.0,
-            "power_mw": 450.0,
+            "hr_bpm": 72.0,
+            "spo2_pct": 97.0,
+            "respiratory_rate": 14.0,
             "ts_utc": "2026-01-01T00:00:00Z",
         },
         history=None,
-        candidate_action={"power_setpoint_mw": 480.0},
+        candidate_action={"alert_level": 0.3},
         constraints=constraints,
-        quantile=30.0,
+        quantile=5.0,
     )
-    result.certificate.safe_action = {"power_setpoint_mw": -1.0}
+    result.certificate.safe_action = {"alert_level": 2.0}
     try:
         ContractVerifier.validate_runtime_step(
             adapter=adapter,
@@ -112,20 +117,20 @@ def test_contract_verifier_rejects_tampered_runtime_certificate() -> None:
 
 
 def test_contract_verifier_rejects_dishonest_episode_scope() -> None:
-    adapter = get_adapter("industrial", {})
-    constraints = {"power_max_mw": 500.0}
+    adapter = get_adapter("healthcare", {})
+    constraints = {"spo2_min_pct": 90.0}
     result = run_universal_step(
         domain_adapter=adapter,
         raw_telemetry={
-            "temp_c": 25.0,
-            "pressure_mbar": 1010.0,
-            "power_mw": 450.0,
+            "hr_bpm": 72.0,
+            "spo2_pct": 97.0,
+            "respiratory_rate": 14.0,
             "ts_utc": "2026-01-01T00:00:00Z",
         },
         history=None,
-        candidate_action={"power_setpoint_mw": 480.0},
+        candidate_action={"alert_level": 0.3},
         constraints=constraints,
-        quantile=30.0,
+        quantile=5.0,
     )
     dishonest_episode_bound = dict(result.episode_risk_bound)
     dishonest_episode_bound["scope"] = "constant_reliability_proxy"
@@ -269,7 +274,51 @@ def test_pac_validity_horizon_bound() -> None:
     assert result["pac_holds"] is True
     assert result["H_conservative"] > 0
     assert result["total_failure_prob"] < 1.0
+    assert result["validity_probability_lower_bound"] > 0.0
     assert result["epsilon_conformal"] > 0
+
+
+def test_invalid_reliability_weight_rejected() -> None:
+    with pytest.raises(ValueError, match="weight"):
+        build_reliability_assessment(
+            weight=1.2,
+            flags={},
+            drift_meta={"drift": False},
+        )
+
+
+def test_invalid_inflation_rejected() -> None:
+    reliability = build_reliability_assessment(
+        weight=0.4,
+        flags={},
+        drift_meta={"drift": False},
+    )
+    with pytest.raises(ValueError, match="inflation"):
+        build_observation_consistent_state_set(
+            observed_state={"speed_mps": 5.0},
+            uncertainty={
+                "speed_lower_mps": 4.0,
+                "speed_upper_mps": 6.0,
+                "meta": {"inflation": 0.8},
+            },
+            quantile=0.9,
+            reliability=reliability,
+        )
+
+
+def test_invalid_step_risk_reliability_rejected() -> None:
+    with pytest.raises(ValueError, match="reliability_w"):
+        compute_step_risk_bound(1.2, alpha=0.1)
+
+
+def test_calibration_contract_rejects_empty_bins_as_supported_coverage() -> None:
+    result = calibration_contract_verify(
+        oqe_scores=[0.5, 0.5, 0.5],
+        coverage_indicators=[1.0, 1.0, 1.0],
+        n_bins=3,
+    )
+    assert result["contract_satisfied"] is False
+    assert sum(1 for row in result["bins"] if row["n"] == 0 and row["passed"] is False) == 2
 
 
 def test_conservative_horizon_vs_heuristic() -> None:

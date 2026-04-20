@@ -1,0 +1,37 @@
+========================================================================
+CROSS-DOMAIN SUMMARY
+========================================================================
+
+--- OASG Signature (mean across domains) ---
+  clean               mean σ_OASG = 0.002000
+  mild_noise          mean σ_OASG = 0.013035
+  moderate_noise      mean σ_OASG = 0.017558
+  staleness           mean σ_OASG = 0.009398
+  adversarial         mean σ_OASG = 0.013518
+
+--- Certificate Half-Life (empirical / theoretical) ---
+  battery       ratio = 0.18
+  av            ratio = 10088.99
+  healthcare    ratio = 0.56
+
+--- No Free Safety (counterexample divergence) ---
+  battery       ‖Δx‖ = 1.6003  clean=safe  stale=UNSAFE
+  av            ‖Δx‖ = 43.1157  clean=safe  stale=UNSAFE
+  healthcare    ‖Δx‖ = 52.8056  clean=safe  stale=UNSAFE
+
+--- RWCP Coverage Improvement at α=0.10 ---
+  battery       Δcov = +0.0000  Δwidth = -0.0001
+  av            Δcov = +0.0000  Δwidth = +0.0317
+  healthcare    Δcov = +0.0012  Δwidth = +0.0958
+
+--- Inflation Law: k_q heuristic vs derived ---
+  battery       k_q_h=0.500  k_q_d=0.895  reldev=44.2%
+  av            k_q_h=0.500  k_q_d=0.639  reldev=21.8%
+  healthcare    k_q_h=0.600  k_q_d=0.850  reldev=29.4%
+
+--- Constraint Tightening (k=2.0) ---
+  battery       early_warnings=1524  prevention_rate=3.202
+  av            early_warnings=55  prevention_rate=0.333
+  healthcare    early_warnings=1171  prevention_rate=3.852
+
+========================================================================

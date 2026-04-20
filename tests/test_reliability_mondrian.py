@@ -40,6 +40,18 @@ def test_reliability_mondrian_min_bin_size_falls_back_to_global() -> None:
     assert all(np.isclose(qhat, model.global_q_) for qhat in model.q_by_bin_.values())
 
 
+def test_reliability_mondrian_uses_split_order_statistic_quantile() -> None:
+    y_pred = np.zeros(3, dtype=float)
+    y_true = np.array([0.0, 1.0, 2.0], dtype=float)
+    reliability = np.array([0.5, 0.5, 0.5], dtype=float)
+
+    model = ReliabilityMondrian(ReliabilityMondrianConfig(alpha=0.25, n_bins=1, min_bin_size=1))
+    model.fit(y_true=y_true, y_pred=y_pred, reliability=reliability)
+
+    assert model.global_q_ == 2.0
+    assert model.q_by_bin_[0] == 2.0
+
+
 def test_compute_reliability_group_coverage_builds_stable_artifacts(tmp_path) -> None:
     df = pd.DataFrame(
         {

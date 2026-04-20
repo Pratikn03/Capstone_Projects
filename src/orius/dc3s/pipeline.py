@@ -144,6 +144,10 @@ def run_dc3s_step(
             "max_soc_mwh": getattr(state, "max_soc_mwh", getattr(state, "capacity_mwh", 10000.0)),
             "capacity_mwh": getattr(state, "capacity_mwh", 10000.0),
         }
+        model_error_mwh = max(
+            float(dcfg.get("ftit", {}).get("epsilon_model_mwh", 0.0)),
+            float(getattr(state, "epsilon_model_mwh", 0.0) or 0.0),
+        )
         err_bound = reliability_error_bound(
             reliability_w=float(w_t),
             max_error_mwh=float(constraints_for_ftit.get("capacity_mwh", 10000.0)) * 0.01,
@@ -153,9 +157,14 @@ def run_dc3s_step(
             max_soc_mwh=float(constraints_for_ftit["max_soc_mwh"]),
             error_bound_mwh=err_bound,
             q_rac_mwh=q_rac_mwh if q_rac_mwh > 0 else None,
+            model_error_mwh=model_error_mwh,
         )
         uncertainty_set["ftit_soc_min_mwh"] = ftit_min
         uncertainty_set["ftit_soc_max_mwh"] = ftit_max
+        uncertainty_set["ftit_error_bound_mwh"] = float(err_bound)
+        uncertainty_set["ftit_model_error_mwh"] = float(model_error_mwh)
+        uncertainty_set["ftit_base_margin_mwh"] = float(q_rac_mwh if q_rac_mwh > 0 else err_bound)
+        uncertainty_set["ftit_absorbed_margin_mwh"] = float((q_rac_mwh if q_rac_mwh > 0 else err_bound) + model_error_mwh)
 
     # ── Stage 3 + 4: Constrain + Shield ──────────────────────────────
     safe_action, shield_meta = repair_action(

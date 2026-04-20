@@ -135,6 +135,14 @@ def test_existing_conformal_interval_unchanged():
     assert 0.70 <= cov <= 1.0
 
 
+def test_conformal_uses_split_order_statistic_quantile():
+    y_true = np.array([0.0, 0.0, 0.0])
+    y_pred = np.array([0.0, 1.0, 2.0])
+    ci = ConformalInterval(ConformalConfig(alpha=0.25, horizon_wise=False, rolling=False))
+    ci.fit_calibration(y_true, y_pred)
+    assert ci.q_global == pytest.approx(2.0)
+
+
 def test_cqr_calibration_and_interval_evaluation():
     rng = np.random.default_rng(7)
     y_true_cal = rng.normal(loc=50.0, scale=5.0, size=(240, 4))

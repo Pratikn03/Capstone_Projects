@@ -66,7 +66,7 @@ class TestStylizedFrontierLowerBound:
             boundary_mass=[0.2, 0.3, 0.4],
             alpha=0.10,
         )
-        expected = 0.2 * 0.0 + 0.3 * 0.25 + 0.4 * 0.75
+        expected = 0.5 * (0.2 * 0.0 + 0.3 * 0.25 + 0.4 * 0.75)
         assert result["expected_lower_bound"] == pytest.approx(expected)
         assert result["special_case_active"] is True
 
@@ -76,7 +76,7 @@ class TestStylizedFrontierLowerBound:
             boundary_mass=0.2,
             alpha=0.10,
         )
-        expected = 0.5 * 0.10 * ((1.0 - 1.0) + (1.0 - 0.8) + (1.0 - 0.6) + (1.0 - 0.4))
+        expected = 0.25 * 0.10 * ((1.0 - 1.0) + (1.0 - 0.8) + (1.0 - 0.6) + (1.0 - 0.4))
         assert result["special_case_active"] is True
         assert result["special_case_lower_bound"] == pytest.approx(expected)
 
@@ -284,6 +284,10 @@ class TestTightMinimaxBound:
         assert result["gap_factor"] == pytest.approx(2.0)
         assert result["lower_bound_rate"] < result["upper_bound_rate"]
 
+    def test_invalid_k_factor_raises(self) -> None:
+        with pytest.raises(ValueError, match="K_factor"):
+            compute_tight_impossibility_bound([0.5] * 10, alpha=0.10, K_factor=0.5)
+
 
 # ── Sensor Quality Converse (T_sensor_converse) ─────────────────────────────
 
@@ -305,8 +309,9 @@ class TestSensorConverse:
 
     def test_complete_characterization_closes_gap(self) -> None:
         result = verify_complete_characterization([0.7] * 100, alpha=0.10, K_factor=2.0)
-        assert result["characterization_complete"] is True
+        assert result["characterization_complete"] is False
         assert result["gap_factor"] == pytest.approx(2.0)
+        assert result["defended_status"] == "open_converse_gap"
 
 
 # ── Trajectory PAC Certificate (T_trajectory_PAC) ───────────────────────────
@@ -346,6 +351,8 @@ class TestTrajectoryPAC:
             w_sequence=[0.8] * 10, use_martingale=True,
         )
         assert result["uses_martingale"] is True
+        assert result["bound_style"] == "bonferroni_union_bound"
+        assert "does not claim a separate Ville certificate" in result["martingale_note"]
 
 
 # ── Grand Unification ────────────────────────────────────────────────────────
@@ -361,12 +368,22 @@ class TestGrandUnification:
         assert THEOREM_REGISTER["T_sensor_converse"]["type"] == "converse_bound"
         assert THEOREM_REGISTER["T_trajectory_PAC"]["type"] == "pac_trajectory"
 
+    def test_depth_theorem_dependency_graph_matches_bounded_posture(self) -> None:
+        assert THEOREM_REGISTER["T3"]["parent_law"] == "T3a"
+        assert THEOREM_REGISTER["T3a"]["parent_law"] is None
+        assert THEOREM_REGISTER["T3b"]["parent_law"] is None
+        assert THEOREM_REGISTER["T9"]["parent_law"] is None
+        assert THEOREM_REGISTER["T10"]["parent_law"] is None
+        assert THEOREM_REGISTER["T_minimax"]["parent_law"] is None
+        assert THEOREM_REGISTER["T_sensor_converse"]["parent_law"] is None
+        assert THEOREM_REGISTER["T_trajectory_PAC"]["parent_law"] is None
+
     def test_complete_characterization_assembles_all_paths(self) -> None:
         result = complete_oasg_characterization(
             [0.7] * 100, alpha=0.10, n_cal=500, delta=0.05,
             margin=5.0, sigma_d=0.1,
         )
-        assert result["gap_closed"] is True
+        assert result["gap_closed"] is False
         assert "path_a_minimax" in result
         assert "path_b_trajectory_pac" in result
         assert "path_c_sensor_converse" in result

@@ -1,12 +1,14 @@
-"""ORIUS Rate-Distortion Safety Laws (L1-L4).
+"""ORIUS rate-distortion extension laws (L1-L4).
 
-The four laws form a complete characterization of the degraded-observation
-safety problem:
+These helpers preserve the current law-shaped calculators used by the
+manuscript extensions, but they should be read as stylized surrogates and
+design-threshold calculators, not as a fully defended complete
+characterization of degraded-observation safety:
 
     L1  Rate-Distortion Safety Law     D*(C) > 0 when C < H(X)
     L2  Capacity Bridge                w_t <= kappa_d * C / H(X)
     L3  Critical Capacity Theorem      C < C*_d => certification impossible
-    L4  Achievability-Converse Sandwich (alpha/K)(1-w_bar) <= TSVR* <= alpha(1-w_bar)
+    L4  Achievability-Converse Sandwich (stylized lower envelope + executable upper envelope)
 """
 from __future__ import annotations
 
@@ -26,22 +28,19 @@ def rate_distortion_safety_law(
     H_entropy: float,
     alpha: float = 0.10,
 ) -> dict[str, Any]:
-    r"""L1: Rate-Distortion Safety Law.
+    r"""L1: stylized rate-distortion lower-envelope helper.
 
     Statement
     ---------
     D*(C) = inf_{P(A|Y): I(Y;A) <= C} E[d(X,A)]
 
-    When C < H(X), the controller cannot fully distinguish safe from unsafe
-    states, and D* > 0 (positive safety loss is unavoidable).  The minimum
-    achievable distortion (safety violation rate) is bounded below by:
+    When C < H(X), the helper returns the linear lower-envelope surrogate
+    used by the current ORIUS law extension work:
 
         D* >= alpha * max(0, 1 - C / H(X))
 
-    This follows from the channel coding converse: if the observation
-    channel has capacity C < H(X), then the equivocation H(X|Y) >= H(X) - C
-    is positive, and a fraction of at least (1 - C/H(X)) of the state space
-    remains unresolvable.
+    This surrogate is not defended here as a standalone Fano-tight converse.
+    It is a bounded modeling layer used by the law-extension surfaces.
 
     Parameters
     ----------
@@ -53,12 +52,16 @@ def rate_distortion_safety_law(
     -------
     dict with D_star_lower, capacity_ratio, law_applies, proof_sketch
     """
-    C = float(max(channel_capacity, 0.0))
-    H = float(max(H_entropy, 1e-15))
+    C = float(channel_capacity)
+    H = float(H_entropy)
     a = float(alpha)
 
     if not (0.0 < a < 1.0):
         raise ValueError("alpha must lie in (0, 1).")
+    if C < 0.0:
+        raise ValueError("channel_capacity must be non-negative.")
+    if H <= 0.0:
+        raise ValueError("H_entropy must be positive.")
 
     ratio = C / H
     D_star_lower = a * max(0.0, 1.0 - ratio)
@@ -71,10 +74,14 @@ def rate_distortion_safety_law(
         "H_entropy": H,
         "alpha": a,
         "proof_sketch": (
-            f"L1 (Rate-Distortion Safety Law): With C={C:.4f} bits and H(X)={H:.4f} bits, "
+            f"L1 stylized lower-envelope: with C={C:.4f} bits and H(X)={H:.4f} bits, "
             f"capacity ratio C/H(X)={ratio:.4f}.  "
-            f"D*(C) >= alpha*(1 - C/H(X)) = {a}*(1 - {ratio:.4f}) = {D_star_lower:.6f}.  "
-            f"{'Safety loss is unavoidable.' if ratio < 1.0 else 'Full channel: D*=0 achievable.'}"
+            f"The surrogate lower envelope returns alpha*(1 - C/H(X)) = "
+            f"{a}*(1 - {ratio:.4f}) = {D_star_lower:.6f} when C < H(X)."
+        ),
+        "scope_note": (
+            "Stylized lower-envelope calculator only; not a standalone defended "
+            "information-theoretic converse."
         ),
     }
 
@@ -91,15 +98,15 @@ def capacity_bridge(
     *,
     channel_capacity: float | None = None,
 ) -> dict[str, Any]:
-    r"""L2: Capacity Bridge — w_t <= kappa_d * C / H(X).
+    r"""L2: stylized capacity-proxy bridge.
 
-    The OQE reliability score is bounded by the normalized channel capacity.
-    kappa_d is a domain-specific constant:
-      - Provably <= 1 for binary symmetric channels
-      - Empirically near 1 for most CPS domains
+    This helper records the proxy relation used by the ORIUS law extension
+    work:
 
-    If channel_capacity is provided, checks whether w_bar is consistent
-    with the capacity bound.
+        w_t <= kappa_d * C / H(X)
+
+    The bridge is a domain-specific calibration/proxy assumption.  The repo
+    does not currently defend it as a theorem derived from the live OQE.
 
     Parameters
     ----------
@@ -116,7 +123,9 @@ def capacity_bridge(
         raise ValueError("H_X must be positive.")
 
     if channel_capacity is not None:
-        C = float(max(channel_capacity, 0.0))
+        C = float(channel_capacity)
+        if C < 0.0:
+            raise ValueError("channel_capacity must be non-negative.")
         w_upper = float(min(1.0, kappa_d * C / H_X))
         consistent = w_bar <= w_upper + 1e-9
         C_implied = None
@@ -133,8 +142,12 @@ def capacity_bridge(
         "w_upper_bound": float(w_upper),
         "consistent": bool(consistent),
         "C_implied": C_implied,
+        "scope_note": (
+            "Capacity-proxy bridge only; kappa_d must be justified externally or "
+            "estimated on a scoped domain surface."
+        ),
         "proof_sketch": (
-            f"L2 (Capacity Bridge): w_bar={w_bar:.4f} <= kappa_d*C/H(X) = "
+            f"L2 stylized bridge: w_bar={w_bar:.4f} <= kappa_d*C/H(X) = "
             f"{kappa_d:.3f}*{C:.4f}/{H_X:.4f} = {w_upper:.4f}.  "
             f"{'Consistent.' if consistent else 'VIOLATED — w_bar exceeds capacity bound.'}"
         ),
@@ -153,17 +166,17 @@ def critical_capacity(
     *,
     epsilon: float | None = None,
 ) -> dict[str, Any]:
-    r"""L3: Critical Capacity Theorem.
+    r"""L3: stylized critical-capacity threshold.
 
     Statement
     ---------
-    There exists C*_d such that for C < C*_d, no controller achieves
-    TSVR <= epsilon for any epsilon < alpha.
+    Under the stylized L2 bridge and the executable T3-style upper envelope,
+    the threshold calculator returns:
 
         C*_d = H(X) * (1 - epsilon/alpha) / kappa_d
 
-    Below C*_d, safety certification is impossible regardless of
-    controller sophistication or calibration data volume.
+    Below C*_d, the stylized bridge would no longer support certifying
+    TSVR <= epsilon.  This is narrower than a universal impossibility theorem.
 
     Parameters
     ----------
@@ -176,10 +189,14 @@ def critical_capacity(
         raise ValueError("alpha must lie in (0, 1).")
     if kappa_d <= 0.0:
         raise ValueError("kappa_d must be positive.")
+    if H_X <= 0.0:
+        raise ValueError("H_X must be positive.")
 
     eps = float(epsilon) if epsilon is not None else alpha / 2.0
     if eps >= alpha:
         raise ValueError("epsilon must be < alpha for a meaningful converse.")
+    if eps <= 0.0:
+        raise ValueError("epsilon must be positive.")
 
     C_star = H_X * (1.0 - eps / alpha) / kappa_d
 
@@ -190,10 +207,14 @@ def critical_capacity(
         "kappa_d": float(kappa_d),
         "H_X": float(H_X),
         "proof_sketch": (
-            f"L3 (Critical Capacity): For TSVR <= {eps:.4f} with alpha={alpha}, "
+            f"L3 stylized threshold: For TSVR <= {eps:.4f} with alpha={alpha}, "
             f"C*_d = H(X)*(1 - eps/alpha)/kappa_d = "
             f"{H_X:.4f}*(1 - {eps/alpha:.4f})/{kappa_d:.3f} = {C_star:.4f} bits.  "
-            f"Below C*_d, no controller can certify safety."
+            f"Below C*_d, the stylized bridge no longer supports the target."
+        ),
+        "scope_note": (
+            "Threshold calculator only; a fully defended impossibility theorem "
+            "would require an independent converse beyond the proxy bridge."
         ),
     }
 
@@ -209,14 +230,14 @@ def achievability_converse_sandwich(
     *,
     K_factor: float = 2.0,
 ) -> dict[str, Any]:
-    r"""L4: Achievability-Converse Sandwich.
+    r"""L4: stylized sandwich between an executable upper and proxy lower side.
 
     Statement
     ---------
     (alpha/K)(1-w_bar) <= TSVR* <= alpha(1-w_bar)
 
-    The upper bound is the DC3S achievability result.
-    The lower bound follows from L1 via L2.
+    The upper bound is the executable T3-style achievability result.
+    The lower side is the stylized L1/L2 proxy envelope.
     K=2 for binary channels (Le Cam).  The gap is a constant factor
     that does not grow with T.
 
@@ -230,8 +251,8 @@ def achievability_converse_sandwich(
         raise ValueError("w_bar must lie in [0, 1].")
     if not (0.0 < alpha < 1.0):
         raise ValueError("alpha must lie in (0, 1).")
-    if K_factor <= 0.0:
-        raise ValueError("K_factor must be positive.")
+    if K_factor < 1.0:
+        raise ValueError("K_factor must be >= 1.0.")
 
     degradation = 1.0 - w_bar
     lower = alpha / K_factor * degradation
@@ -245,10 +266,15 @@ def achievability_converse_sandwich(
         "K_factor": float(K_factor),
         "gap_is_constant": True,
         "proof_sketch": (
-            f"L4 (Sandwich): ({alpha}/{K_factor:.0f})*(1-{w_bar:.4f}) = {lower:.6f} "
+            f"L4 stylized sandwich: ({alpha}/{K_factor:.0f})*(1-{w_bar:.4f}) = {lower:.6f} "
             f"<= TSVR* <= {alpha}*(1-{w_bar:.4f}) = {upper:.6f}.  "
             f"Constant-factor gap of {K_factor:.0f}x.  "
-            f"DC3S achieves the upper bound; L1+L2 prove the lower."
+            f"The executable upper bound comes from T3-style achievability; "
+            f"the lower side remains a stylized proxy."
+        ),
+        "scope_note": (
+            "Do not read this as a closed necessity-and-sufficiency theorem on the "
+            "current defended surface."
         ),
     }
 
@@ -262,39 +288,46 @@ LAW_REGISTER: dict[str, dict[str, Any]] = {
     "L1": {
         "name": "Rate-Distortion Safety Law",
         "statement": (
-            "D*(C) = inf_{P(A|Y): I(Y;A) <= C} E[d(X,A)].  "
-            "When C < H(X), D* > 0: positive safety loss is unavoidable."
+            "Stylized lower-envelope surrogate D*(C) >= alpha * max(0, 1 - C/H(X)) "
+            "used by the ORIUS law-extension surface."
         ),
         "type": "fundamental_law",
         "code_witness": "rate_distortion_safety_law",
         "module": "orius.universal_theory.orius_law",
+        "status": "stylized_not_defended",
+        "dependencies": ["binary_safe_unsafe_surrogate", "linearized_distortion_lower_envelope"],
     },
     "L2": {
         "name": "Capacity Bridge",
-        "statement": "w_t <= kappa_d * C / H(X).  OQE reliability is bounded by normalized channel capacity.",
+        "statement": "Stylized capacity-proxy bridge w_t <= kappa_d * C / H(X).",
         "type": "bridge_theorem",
         "code_witness": "capacity_bridge",
         "module": "orius.universal_theory.orius_law",
+        "status": "stylized_not_defended",
+        "dependencies": ["domain_specific_kappa_d", "capacity_proxy_assumption"],
     },
     "L3": {
         "name": "Critical Capacity Theorem",
         "statement": (
-            "There exists C*_d such that for C < C*_d, no controller achieves TSVR <= epsilon.  "
-            "C*_d = H(X)*(1 - epsilon/alpha) / kappa_d."
+            "Stylized critical-capacity threshold C*_d = H(X)*(1 - epsilon/alpha) / kappa_d "
+            "under the L2 proxy bridge and the executable T3 upper envelope."
         ),
         "type": "impossibility_law",
         "code_witness": "critical_capacity",
         "module": "orius.universal_theory.orius_law",
+        "status": "stylized_not_defended",
+        "dependencies": ["L2", "T3_upper_envelope"],
     },
     "L4": {
         "name": "Achievability-Converse Sandwich",
         "statement": (
-            "(alpha/K)(1-w_bar) <= TSVR* <= alpha(1-w_bar).  "
-            "DC3S is within constant factor K of optimal."
+            "Stylized sandwich: proxy lower envelope plus executable upper envelope."
         ),
         "type": "characterization",
         "code_witness": "achievability_converse_sandwich",
         "module": "orius.universal_theory.orius_law",
+        "status": "stylized_not_defended",
+        "dependencies": ["L1", "L2", "T3_upper_envelope"],
     },
 }
 
@@ -317,11 +350,10 @@ def orius_grand_unification(
     sigma_d: float = 0.1,
     K_factor: float = 2.0,
 ) -> dict[str, Any]:
-    """Assemble all four laws and the trajectory PAC certificate.
+    """Assemble the stylized law helpers plus the trajectory certificate.
 
-    Returns a single dict with sub-results from each path and a
-    ``gap_closed`` flag indicating whether the complete characterization
-    is internally consistent.
+    The returned package is useful for consistency checking, but the
+    converse gap is intentionally left open on the defended theorem surface.
     """
     w = np.asarray(list(w_sequence), dtype=float).reshape(-1)
     w_bar = float(np.mean(np.clip(w, 0.0, 1.0)))
@@ -340,10 +372,7 @@ def orius_grand_unification(
         w_sequence=w.tolist(), margin=margin, sigma_d=sigma_d,
     )
 
-    gap_closed = (
-        l4["lower_bound"] <= l4["upper_bound"] + 1e-9
-        and l2["consistent"]
-    )
+    gap_closed = False
 
     return {
         "gap_closed": bool(gap_closed),
@@ -354,6 +383,10 @@ def orius_grand_unification(
         "path_c_critical_capacity": l3,
         "path_d_sandwich": l4,
         "path_e_trajectory_pac": pac,
+        "scope_note": (
+            "The law package is internally assembled but the converse bridge remains "
+            "stylized and is not promoted as a closed defended characterization."
+        ),
     }
 
 
@@ -507,7 +540,7 @@ def fano_binary_corollary(
     H_binary: float = 1.0,
     alpha: float = 0.10,
 ) -> dict[str, Any]:
-    r"""Binary-state Fano corollary of L1.
+    r"""Binary-state surrogate companion to the stylized L1 helper.
 
     For binary safe/unsafe classification with H(X) = H_binary bits:
     - When C < H_binary, the error probability P_e >= (H_binary - C) / H_binary
@@ -516,7 +549,7 @@ def fano_binary_corollary(
     - The unsafe-side error (missing a hazard) is at least P_e / 2
       for any symmetric prior, and P_e itself for the worst-case prior.
 
-    The safety-relevant bound: P_unsafe_miss >= alpha * max(0, 1 - C/H_binary).
+    The safety-relevant bound mirrors the same stylized lower envelope used by L1.
     """
     C = float(max(channel_capacity, 0.0))
     H = float(max(H_binary, 1e-15))
@@ -538,10 +571,11 @@ def fano_binary_corollary(
         "H_binary": H,
         "alpha": a,
         "proof_sketch": (
-            f"Fano binary corollary: C={C:.4f}, H={H:.4f}, C/H={ratio:.4f}. "
-            f"P_e >= 1 - C/H = {P_e_lower:.4f}. "
-            f"Safety bound = alpha * P_e = {safety_bound:.6f}."
+            f"Binary surrogate companion: C={C:.4f}, H={H:.4f}, C/H={ratio:.4f}. "
+            f"P_e surrogate = 1 - C/H = {P_e_lower:.4f}. "
+            f"Safety surrogate = alpha * P_e = {safety_bound:.6f}."
         ),
+        "scope_note": "Surrogate arithmetic companion only; not a defended standalone Fano converse.",
     }
 
 

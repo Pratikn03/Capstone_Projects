@@ -110,6 +110,15 @@ class TestMondrianGroupCoverage:
         assert result["alpha"] == pytest.approx(0.05)
         assert result["n_bins"] == 4
 
+    def test_empty_bins_fail_instead_of_passing_vacuously(self):
+        y = np.array([0.0, 0.0, 0.0])
+        lo = np.array([-1.0, -1.0, -1.0])
+        hi = np.array([1.0, 1.0, 1.0])
+        w = np.array([0.5, 0.5, 0.5])
+        result = mondrian_group_coverage(y, lo, hi, w, n_bins=3, alpha=0.10)
+        assert result["empty_bins"] == 2
+        assert result["all_pass"] is False
+
     def test_accepts_lists(self):
         y, lo, hi, w = _make_perfect_intervals(50)
         result = mondrian_group_coverage(y.tolist(), lo.tolist(), hi.tolist(), w.tolist())

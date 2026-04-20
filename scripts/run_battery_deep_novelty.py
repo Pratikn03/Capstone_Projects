@@ -316,6 +316,14 @@ def _write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) ->
         writer.writerows(rows)
 
 
+def _repo_relative_path(path: str | Path) -> str:
+    candidate = Path(path)
+    try:
+        return candidate.resolve().relative_to(REPO_ROOT.resolve()).as_posix()
+    except ValueError:
+        return candidate.as_posix()
+
+
 def write_deep_oqe_artifacts(
     result: dict[str, Any],
     out_dir: Path,
@@ -350,10 +358,22 @@ def write_deep_oqe_artifacts(
         )
 
     auc = float(roc_auc_score(eval_frame["fault_present"], eval_frame["predicted_fault_prob"]))
+    deep_mae = float(result["metadata"]["eval_reliability_mae"])
+    heuristic_mae = float(np.mean(np.abs(eval_frame["heuristic_w"] - eval_frame["target_w"])))
+    preferred_backend = "heuristic"
+    preference_reason = (
+        "Heuristic remains preferred on the promoted battery artifact surface because it achieves lower held-out "
+        f"reliability MAE than DeepOQE ({heuristic_mae:.4f} vs {deep_mae:.4f}); the learned backend remains "
+        "diagnostic-only and does not improve the promoted lane."
+    )
     summary = {
-        "model_path": result["model_path"],
-        "eval_reliability_mae": float(result["metadata"]["eval_reliability_mae"]),
-        "heuristic_eval_reliability_mae": float(np.mean(np.abs(eval_frame["heuristic_w"] - eval_frame["target_w"]))),
+        "model_path": _repo_relative_path(result["model_path"]),
+        "artifact_status": "diagnostic_only",
+        "diagnostic_only": True,
+        "preferred_backend": preferred_backend,
+        "preference_reason": preference_reason,
+        "eval_reliability_mae": deep_mae,
+        "heuristic_eval_reliability_mae": heuristic_mae,
         "fault_auc": auc,
         "low_reliability_fault_lift": float(lift),
         "low_reliability_threshold": low_threshold,
@@ -385,6 +405,16 @@ def write_deep_oqe_artifacts(
                 "heuristic": "",
                 "deep": summary["low_reliability_fault_lift"],
             },
+            {
+                "metric": "artifact_status",
+                "heuristic": preferred_backend,
+                "deep": summary["artifact_status"],
+            },
+            {
+                "metric": "preference_reason",
+                "heuristic": summary["preference_reason"],
+                "deep": "diagnostic comparator only",
+            },
         ],
         ["metric", "heuristic", "deep"],
     )
@@ -399,6 +429,9 @@ def write_deep_oqe_artifacts(
             f"""\
             # Battery DeepOQE Summary
 
+            - Status: `{summary['artifact_status']}`
+            - Preferred backend: `{summary['preferred_backend']}`
+            - Preference reason: {summary['preference_reason']}
             - Model: `{summary['model_path']}`
             - Eval reliability MAE: `{summary['eval_reliability_mae']:.4f}`
             - Heuristic reliability MAE: `{summary['heuristic_eval_reliability_mae']:.4f}`

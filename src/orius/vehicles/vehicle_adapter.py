@@ -15,7 +15,10 @@ from orius.universal_framework.runtime_evidence import resolve_runtime_evidence
 
 def _f(x: Any, default: float) -> float:
     try:
-        return float(x)
+        v = float(x)
+        if not math.isfinite(v):
+            return float(default)
+        return v
     except (TypeError, ValueError):
         return float(default)
 
@@ -194,7 +197,6 @@ class VehicleDomainAdapter(DomainAdapter):
         if not viable:
             a_lower = a_upper = fallback_accel
             active_constraints.append("fallback_collapse")
-            viable = True
         return {
             "uncertainty": unc,
             "constraints": cstr,
@@ -208,6 +210,7 @@ class VehicleDomainAdapter(DomainAdapter):
             "worst_case_gap_budget_m": None if gap_budget is None else float(gap_budget),
             "ttc_min_s": float(ttc_min_s),
             "viable": bool(viable),
+            "fallback_forced": bool(not viable),
         }
 
     def repair_action(
@@ -246,6 +249,8 @@ class VehicleDomainAdapter(DomainAdapter):
         active_constraints = [str(item) for item in tightened_set.get("active_constraints", ())]
         reason = None
         if abs(a_safe - a) > 1e-9:
+            # Prefer the governing safety surface over the generic collapse marker
+            # so certificates explain why the set collapsed, not just that it did.
             if "headway_predictive_entry_barrier" in active_constraints:
                 reason = "headway_predictive_entry_barrier"
             elif "ttc_clamp" in active_constraints:
@@ -254,12 +259,15 @@ class VehicleDomainAdapter(DomainAdapter):
                 reason = "speed_limit_clamp"
             elif "nonnegative_speed" in active_constraints:
                 reason = "nonnegative_speed_clamp"
+            elif tightened_set.get("fallback_forced"):
+                reason = "fallback_collapse"
             else:
                 reason = "acceleration_clamp"
 
         repaired = abs(a_safe - a) > 1e-9
+        mode = "fallback" if tightened_set.get("fallback_forced") else "projection"
         meta = {
-            "mode": "projection",
+            "mode": mode,
             "repaired": repaired,
             "original_acceleration_mps2": a,
             "repair_surface": str(tightened_set.get("projection_surface", "ttc_predictive_barrier")),

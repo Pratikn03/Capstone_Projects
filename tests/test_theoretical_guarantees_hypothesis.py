@@ -57,7 +57,7 @@ def test_t10_frontier_lower_bound_matches_sum_formula(
         boundary_mass=boundary_mass,
         alpha=alpha,
     )
-    expected = boundary_mass * sum(1.0 - w for w in reliability)
+    expected = 0.5 * boundary_mass * sum(1.0 - w for w in reliability)
     assert result["expected_lower_bound"] == pytest.approx(expected)
     if boundary_mass >= alpha / 2.0:
         assert result["special_case_active"] is True

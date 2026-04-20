@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from orius.dc3s.temporal_theorems import (
@@ -30,7 +32,7 @@ def test_forward_tube_matches_battery_action_and_drift_radius():
     assert tube["upper_mwh"] == pytest.approx(99.0)
 
 
-def test_certificate_validity_horizon_matches_expiration_bound_for_zero_action():
+def test_certificate_expiration_bound_uses_delta_aware_formula():
     constraints = {"min_soc_mwh": 0.0, "max_soc_mwh": 100.0, "time_step_hours": 1.0}
     horizon = certificate_validity_horizon(
         interval_lower_mwh=45.0,
@@ -46,9 +48,17 @@ def test_certificate_validity_horizon_matches_expiration_bound_for_zero_action()
         soc_min_mwh=0.0,
         soc_max_mwh=100.0,
         sigma_d=5.0,
+        delta=0.05,
     )
-    assert bound["tau_expire_lb"] == 81
-    assert horizon["tau_t"] == 81
+    expected = math.floor((45.0 ** 2) / (2.0 * (5.0 ** 2) * math.log(2.0 / 0.05)))
+    assert bound["tau_expire_lb"] == expected
+    assert bound["confidence_delta"] == pytest.approx(0.05)
+    assert bound["theorem_formula"] == "floor(delta_bnd^2 / (2 * sigma_d^2 * log(2 / delta)))"
+    assert horizon["tau_t"] >= bound["tau_expire_lb"]
+
+
+def test_certificate_validity_horizon_matches_expiration_bound_for_zero_action():
+    test_certificate_expiration_bound_uses_delta_aware_formula()
 
 
 def test_certify_fallback_existence_passes_for_interior_soc():

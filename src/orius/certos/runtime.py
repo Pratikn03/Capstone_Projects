@@ -19,6 +19,7 @@ import numpy as np
 from orius.certos.audit_ledger import AuditLedger
 from orius.certos.certificate_engine import CertificateEngine, LifecycleOp
 from orius.certos.recovery_manager import RecoveryManager
+from orius.dc3s.guarantee_checks import check_soc_invariance
 
 
 @dataclass
@@ -198,6 +199,11 @@ class CertOSRuntime:
                 constraints=constraints,
                 observed_state=observed_state,
             )
+        self._assert_runtime_contracts(
+            safe_action=safe_action,
+            observed_state=observed_state,
+            constraints=constraints,
+        )
         if h_t <= self.cfg.degraded_threshold:
             return self._handle_degraded(
                 proposed_action,
@@ -507,6 +513,32 @@ class CertOSRuntime:
 
             last_hash = cert_hash
         return True
+
+    def _assert_runtime_contracts(
+        self,
+        *,
+        safe_action: Mapping[str, float],
+        observed_state: Mapping[str, Any] | None,
+        constraints: Mapping[str, Any] | None,
+    ) -> None:
+        if constraints is None or observed_state is None:
+            return
+        if "current_soc_mwh" not in observed_state:
+            return
+        if "min_soc_mwh" not in constraints or "max_soc_mwh" not in constraints:
+            return
+        model_error_mwh = float(
+            (constraints.get("epsilon_model_mwh") if isinstance(constraints, Mapping) else None)
+            or (constraints.get("model_error_mwh") if isinstance(constraints, Mapping) else None)
+            or (observed_state.get("epsilon_model_mwh") if isinstance(observed_state, Mapping) else None)
+            or 0.0
+        )
+        assert check_soc_invariance(
+            float(observed_state["current_soc_mwh"]),
+            safe_action,
+            constraints,
+            model_error_mwh=model_error_mwh,
+        ), "T2 postcondition failed for the provided battery runtime state."
 
     def _coalesce_audit_entries(
         self,

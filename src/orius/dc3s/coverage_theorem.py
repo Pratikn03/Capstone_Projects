@@ -111,6 +111,7 @@ def mondrian_group_coverage(
     tolerance = 0.02
     groups = []
     covered_all = (yt >= lo) & (yt <= hi)
+    empty_bins = 0
 
     for k in range(n_bins):
         lo_edge, hi_edge = edges[k], edges[k + 1]
@@ -118,7 +119,8 @@ def mondrian_group_coverage(
         n_k = int(np.sum(mask))
         if n_k == 0:
             picp_k = float("nan")
-            passed_k = True  # vacuously
+            passed_k = False
+            empty_bins += 1
         else:
             picp_k = float(np.mean(covered_all[mask]))
             passed_k = picp_k >= target - tolerance
@@ -133,11 +135,12 @@ def mondrian_group_coverage(
         })
 
     overall_picp = float(np.mean(covered_all))
-    all_pass = all(bool(g["passed"]) for g in groups)
+    all_pass = empty_bins == 0 and all(bool(g["passed"]) for g in groups)
     return {
         "groups": groups,
         "overall_picp": overall_picp,
         "all_pass": all_pass,
+        "empty_bins": empty_bins,
         "alpha": float(alpha),
         "n_bins": n_bins,
     }

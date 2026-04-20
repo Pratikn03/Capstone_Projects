@@ -1,6 +1,7 @@
 """Theory helpers for reliability-conditioned SOC tubes and one-step safety."""
 from __future__ import annotations
 
+import math
 from typing import Any, Mapping
 
 from .guarantee_checks import next_soc
@@ -8,7 +9,10 @@ from .guarantee_checks import next_soc
 
 def _f(value: Any, default: float) -> float:
     try:
-        return float(value)
+        v = float(value)
+        if not math.isfinite(v):
+            return float(default)
+        return v
     except (TypeError, ValueError):
         return float(default)
 
@@ -34,14 +38,21 @@ def tightened_soc_bounds(
     max_soc_mwh: float,
     error_bound_mwh: float,
     q_rac_mwh: float | None = None,
+    model_error_mwh: float = 0.0,
 ) -> tuple[float, float]:
     """Return the observed-state tube that guarantees true-state feasibility.
 
     When *q_rac_mwh* is provided (the inflated conformal half-width from
     DC3S calibration), it is used as the tightening margin per the PDF
-    formulation.  Otherwise falls back to *error_bound_mwh*.
+    formulation.  T2 now uses the absorbed tightening margin
+
+        m_t* = m_t + epsilon_model,
+
+    so the runtime adds *model_error_mwh* on top of the base reliability /
+    certificate margin before constructing the tightened safe set.
     """
-    margin = max(_f(q_rac_mwh, 0.0), 0.0) if q_rac_mwh is not None else max(_f(error_bound_mwh, 0.0), 0.0)
+    base_margin = max(_f(q_rac_mwh, 0.0), 0.0) if q_rac_mwh is not None else max(_f(error_bound_mwh, 0.0), 0.0)
+    margin = base_margin + max(_f(model_error_mwh, 0.0), 0.0)
     lower = _f(min_soc_mwh, 0.0) + margin
     upper = _f(max_soc_mwh, lower) - margin
     if lower > upper:
@@ -61,6 +72,7 @@ def check_tightened_soc_invariance(
     min_error_mwh: float = 0.0,
     power: float = 1.0,
     q_rac_mwh: float | None = None,
+    model_error_mwh: float = 0.0,
     eps: float = 1e-9,
 ) -> dict[str, float | bool]:
     """Check one-step observed feasibility inside a tightened reliability tube."""
@@ -79,7 +91,10 @@ def check_tightened_soc_invariance(
         max_soc_mwh=_f(constraints.get("max_soc_mwh"), _f(constraints.get("capacity_mwh"), current_soc_obs)),
         error_bound_mwh=error_bound_mwh,
         q_rac_mwh=q_rac_mwh,
+        model_error_mwh=model_error_mwh,
     )
+    base_margin = max(_f(q_rac_mwh, 0.0), 0.0) if q_rac_mwh is not None else max(_f(error_bound_mwh, 0.0), 0.0)
+    absorbed_margin = base_margin + max(_f(model_error_mwh, 0.0), 0.0)
     projected_obs = next_soc(
         current_soc=float(current_soc_obs),
         action=action,
@@ -88,8 +103,8 @@ def check_tightened_soc_invariance(
         discharge_efficiency=eta_d,
     )
     observed_safe = lower - eps <= projected_obs <= upper + eps
-    true_lower = projected_obs - float(error_bound_mwh)
-    true_upper = projected_obs + float(error_bound_mwh)
+    true_lower = projected_obs - float(absorbed_margin)
+    true_upper = projected_obs + float(absorbed_margin)
     true_safe = (
         true_lower >= _f(constraints.get("min_soc_mwh"), 0.0) - eps
         and true_upper <= _f(constraints.get("max_soc_mwh"), _f(constraints.get("capacity_mwh"), current_soc_obs)) + eps
@@ -97,6 +112,9 @@ def check_tightened_soc_invariance(
     return {
         "error_bound_mwh": float(error_bound_mwh),
         "q_rac_mwh": float(q_rac_mwh) if q_rac_mwh is not None else None,
+        "model_error_mwh": float(max(_f(model_error_mwh, 0.0), 0.0)),
+        "base_margin_mwh": float(base_margin),
+        "absorbed_margin_mwh": float(absorbed_margin),
         "tightened_min_soc_mwh": float(lower),
         "tightened_max_soc_mwh": float(upper),
         "projected_soc_obs_mwh": float(projected_obs),

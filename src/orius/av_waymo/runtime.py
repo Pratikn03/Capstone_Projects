@@ -43,12 +43,12 @@ from .training import default_shift_aware_config, estimate_shift_score, load_mod
 
 def _f(value: Any, default: float) -> float:
     try:
-        numeric = float(value)
+        v = float(value)
+        if not math.isfinite(v):
+            return float(default)
+        return v
     except (TypeError, ValueError):
         return float(default)
-    if not math.isfinite(numeric):
-        return float(default)
-    return numeric
 
 
 def _finite_float_or_none(value: Any) -> float | None:

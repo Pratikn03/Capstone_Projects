@@ -19,7 +19,12 @@ from .contracts import (
     UniversalStepResult,
     _bool_from_payload,
 )
-from .risk_bounds import compute_episode_risk_bound, compute_step_risk_bound, verify_inflation_geq_one
+from .risk_bounds import (
+    build_t3a_contract_summary,
+    compute_episode_risk_bound,
+    compute_step_risk_bound,
+    verify_inflation_geq_one,
+)
 
 
 def _extract_interval_bounds(uncertainty: Mapping[str, Any]) -> tuple[dict[str, float], dict[str, float]]:
@@ -88,7 +93,10 @@ def build_observation_consistent_state_set(
     meta = dict(uncertainty.get("meta", {}))
     if calibration_meta:
         meta.update(dict(calibration_meta))
-    inflation = max(1.0, float(meta.get("inflation", 1.0)))
+    raw_inflation = float(meta.get("inflation", 1.0))
+    inflation = max(1.0, raw_inflation)
+    if raw_inflation != inflation:
+        meta["inflation_raw"] = raw_inflation
     meta["inflation"] = inflation
     verify_inflation_geq_one(inflation)
     lower_bounds, upper_bounds = _extract_interval_bounds(uncertainty)
@@ -189,10 +197,15 @@ def _extract_reliability_history(
         if candidate is None:
             continue
         try:
-            weights.append(float(min(1.0, max(0.0, float(candidate)))))
+            scalar = float(candidate)
         except (TypeError, ValueError):
             continue
-    weights.append(float(min(1.0, max(0.0, current_weight))))
+        if not 0.0 <= scalar <= 1.0:
+            raise ValueError(f"Reliability history value must lie in [0, 1]. Got {scalar!r}.")
+        weights.append(scalar)
+    if not 0.0 <= float(current_weight) <= 1.0:
+        raise ValueError(f"current_weight must lie in [0, 1]. Got {current_weight!r}.")
+    weights.append(float(current_weight))
     return weights
 
 
@@ -345,8 +358,28 @@ def execute_universal_step(
         episode_risk_bound=episode_bound,
         alpha=alpha,
     )
+    theorem_contracts = {
+        "T3a": build_t3a_contract_summary(
+            reliability_w=float(reliability.weight),
+            step_risk_bound=step_bound,
+            episode_risk_bound=episode_bound,
+            alpha=alpha,
+            contract_checks=contract_checks,
+            calibration_meta=cal_meta,
+        ),
+        "T11": ContractVerifier.build_transfer_theorem_summary(
+            adapter=domain_adapter,
+            reliability=reliability,
+            uncertainty_set=state_set,
+            safe_action_set=safe_action_set,
+            repair_decision=repair_decision,
+            certificate=certificate,
+            contract_checks=contract_checks,
+        ),
+    }
     certificate.extras["semantic_checks"] = dict(contract_checks)
     certificate.extras["risk_bound_scope"] = str(episode_bound.get("scope", "current_step_only"))
+    certificate.extras["theorem_contracts"] = theorem_contracts
 
     return UniversalStepResult(
         certificate=certificate,
@@ -360,4 +393,5 @@ def execute_universal_step(
         step_risk_bound=step_bound,
         episode_risk_bound=episode_bound,
         contract_checks=contract_checks,
+        theorem_contracts=theorem_contracts,
     )

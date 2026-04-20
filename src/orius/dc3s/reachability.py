@@ -75,9 +75,15 @@ def compute_expiration_bound(
     radius = (interval_upper_mwh - interval_lower_mwh) / 2.0
     delta_bnd_mwh = min(center - soc_min_mwh, soc_max_mwh - center)
 
-    tau_expire_lb = (delta_bnd_mwh - radius) / sigma_d if sigma_d > 1e-6 else float('inf')
+    _MAX_VALIDITY_STEPS = 10_000
+    if sigma_d > 1e-6:
+        raw_tau = (delta_bnd_mwh - radius) / sigma_d
+    else:
+        raw_tau = float(_MAX_VALIDITY_STEPS)
+    already_expired = raw_tau < 0.0
 
     return {
-        "tau_expire_lb": max(0, int(tau_expire_lb)),
+        "tau_expire_lb": max(0, min(int(raw_tau) if raw_tau >= 0 else 0, _MAX_VALIDITY_STEPS)),
+        "already_expired": already_expired,
         "delta_bnd_mwh": delta_bnd_mwh,
     }

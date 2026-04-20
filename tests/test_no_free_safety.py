@@ -16,9 +16,15 @@ def test_construct_counterexample_uses_identical_observations_and_actions() -> N
 
     assert np.allclose(result.observation_stream_clean, result.observation_stream_faulty)
     assert np.allclose(result.action_stream_clean, result.action_stream_faulty)
+    assert not np.allclose(
+        result.observation_stream_clean,
+        np.repeat(result.observation_stream_clean[:1], result.observation_stream_clean.shape[0], axis=0),
+    )
     assert not np.allclose(result.true_trajectory_clean, result.true_trajectory_faulty)
     assert result.safety_outcome_clean != result.safety_outcome_faulty
     assert (not result.safety_outcome_clean) or (not result.safety_outcome_faulty)
+    assert result.first_unsafe_step_faulty is not None
+    assert result.final_state_safe_clean is True
 
 
 def test_formal_principle_statement_mentions_reliability() -> None:

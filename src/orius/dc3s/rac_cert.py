@@ -206,7 +206,8 @@ def compute_dispatch_sensitivity(
     load = np.asarray(load_window, dtype=float).reshape(-1)
     if load.size == 0:
         return 0.0
-    eps = max(float(sens_eps_mw), 1e-6)
+    eps_raw = float(sens_eps_mw)
+    eps = max(eps_raw, 1e-6) if np.isfinite(eps_raw) else 1e-6
 
     plus = load.copy()
     minus = load.copy()

@@ -1,4 +1,5 @@
 
+import math
 from typing import Any, Dict, Callable, Mapping
 
 import numpy as np
@@ -31,7 +32,10 @@ DC3S_CFG = _lazy_config("configs/dc3s.yaml")
 
 def _f(x: Any, default: float) -> float:
     try:
-        return float(x)
+        v = float(x)
+        if not math.isfinite(v):
+            return float(default)
+        return v
     except (TypeError, ValueError):
         return float(default)
 
@@ -256,7 +260,7 @@ def _safe_landing_repair(
     configured_margin = max(safe_margin_mwh, safe_margin_pct * capacity)
     safe_zone_min = min(max_soc, min_soc + configured_margin)
     safe_zone_max = max(min_soc, max_soc - configured_margin)
-    if safe_zone_min > safe_zone_max:
+    if safe_zone_min >= safe_zone_max:
         safe_zone_min = min_soc
         safe_zone_max = max_soc
     target_soc = _f(landing_cfg.get("target_soc_mwh"), 0.5 * (safe_zone_min + safe_zone_max))
@@ -476,8 +480,10 @@ def _robust_resolve(
             "solver_status": result.get("solver_status"),
         }
 
-    charge = float(result.get("battery_charge_mw", [0.0])[0])
-    discharge = float(result.get("battery_discharge_mw", [0.0])[0])
+    charge_list = result.get("battery_charge_mw", [0.0])
+    charge = float(charge_list[0]) if charge_list else 0.0
+    discharge_list = result.get("battery_discharge_mw", [0.0])
+    discharge = float(discharge_list[0]) if discharge_list else 0.0
     return {"charge_mw": charge, "discharge_mw": discharge}, {
         "robust_attempted": True,
         "reason": "ok",
@@ -525,8 +531,10 @@ def _robust_resolve_cvar(
             "n_scenarios": int(cvar_n),
         }
 
-    charge = float(result.get("battery_charge_mw", [0.0])[0])
-    discharge = float(result.get("battery_discharge_mw", [0.0])[0])
+    charge_list = result.get("battery_charge_mw", [0.0])
+    charge = float(charge_list[0]) if charge_list else 0.0
+    discharge_list = result.get("battery_discharge_mw", [0.0])
+    discharge = float(discharge_list[0]) if discharge_list else 0.0
     return {"charge_mw": charge, "discharge_mw": discharge}, {
         "robust_attempted": True,
         "reason": "ok",

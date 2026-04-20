@@ -1,6 +1,7 @@
 """Deterministic guarantee checks for repaired DC3S actions."""
 from __future__ import annotations
 
+import math
 from typing import Any, Mapping
 
 import numpy as np
@@ -8,7 +9,10 @@ import numpy as np
 
 def _f(value: Any, default: float) -> float:
     try:
-        return float(value)
+        v = float(value)
+        if not math.isfinite(v):
+            return float(default)
+        return v
     except (TypeError, ValueError):
         return float(default)
 
@@ -62,9 +66,15 @@ def check_soc_invariance(
     dt_hours: float | None = None,
     charge_efficiency: float | None = None,
     discharge_efficiency: float | None = None,
+    model_error_mwh: float = 0.0,
     eps: float = 1e-9,
 ) -> bool:
-    """One-step forward invariance check for SOC bounds."""
+    """One-step forward invariance check for SOC bounds.
+
+    When ``model_error_mwh`` is positive, the check upgrades from projected-SOC
+    invariance to true-state invariance by requiring the entire interval
+    ``projected ± model_error_mwh`` to remain inside the safe bounds.
+    """
     dt = _f(dt_hours, _f(constraints.get("time_step_hours"), 1.0))
     eta_c = _f(
         charge_efficiency,
@@ -83,7 +93,8 @@ def check_soc_invariance(
         charge_efficiency=eta_c,
         discharge_efficiency=eta_d,
     )
-    return (projected >= min_soc - eps) and (projected <= max_soc + eps)
+    margin = max(_f(model_error_mwh, 0.0), 0.0)
+    return (projected - margin >= min_soc - eps) and (projected + margin <= max_soc + eps)
 
 
 def evaluate_guarantee_checks(

@@ -1,7 +1,6 @@
 """DC3S: Drift-Calibrated Conformal Safety Shield components."""
 
 from .quality import compute_reliability
-from .deep_oqe import DeepOQEConfig, DeepOQEModel, FEATURE_NAMES as DEEP_OQE_FEATURE_NAMES
 from .ftit import FTIT_FAULT_KEYS, preview_fault_state, update as update_ftit_state
 from .drift import PageHinkleyDetector, AdaptivePageHinkleyDetector
 from .calibration import (
@@ -13,6 +12,14 @@ from .calibration import (
 )
 from .online_calibration import OnlineCalibrator, calibration_contract_check
 from .shield import repair_action
+
+def __getattr__(name):
+    """Lazy-load DeepOQE symbols (requires torch)."""
+    if name in ("DeepOQEConfig", "DeepOQEModel", "DEEP_OQE_FEATURE_NAMES"):
+        from .deep_oqe import DeepOQEConfig, DeepOQEModel, FEATURE_NAMES as _FN
+        _map = {"DeepOQEConfig": DeepOQEConfig, "DeepOQEModel": DeepOQEModel, "DEEP_OQE_FEATURE_NAMES": _FN}
+        return _map[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 from .certificate import (
     make_certificate,
     store_certificate,

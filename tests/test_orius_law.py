@@ -39,6 +39,10 @@ class TestL1RateDistortionSafetyLaw:
         with pytest.raises(ValueError, match="alpha"):
             rate_distortion_safety_law(0.5, 1.0, alpha=0.0)
 
+    def test_negative_capacity_rejected(self) -> None:
+        with pytest.raises(ValueError, match="channel_capacity"):
+            rate_distortion_safety_law(-0.1, 1.0, alpha=0.10)
+
 
 class TestL2CapacityBridge:
 
@@ -55,6 +59,10 @@ class TestL2CapacityBridge:
         result = capacity_bridge(w_bar=0.9, kappa_d=1.0, H_X=1.0, channel_capacity=0.3)
         assert result["consistent"] is False
 
+    def test_negative_channel_capacity_rejected(self) -> None:
+        with pytest.raises(ValueError, match="channel_capacity"):
+            capacity_bridge(w_bar=0.5, kappa_d=1.0, H_X=1.0, channel_capacity=-0.2)
+
 
 class TestL3CriticalCapacity:
 
@@ -70,6 +78,10 @@ class TestL3CriticalCapacity:
         low_k = critical_capacity(alpha=0.10, kappa_d=0.5, H_X=1.0)
         high_k = critical_capacity(alpha=0.10, kappa_d=1.0, H_X=1.0)
         assert high_k["C_star_d"] < low_k["C_star_d"]
+
+    def test_nonpositive_entropy_rejected(self) -> None:
+        with pytest.raises(ValueError, match="H_X"):
+            critical_capacity(alpha=0.10, kappa_d=1.0, H_X=0.0)
 
 
 class TestL4AchievabilityConverseSandwich:
@@ -89,6 +101,10 @@ class TestL4AchievabilityConverseSandwich:
         ratio = result["upper_bound"] / max(result["lower_bound"], 1e-15)
         assert ratio == pytest.approx(2.0)
 
+    def test_k_factor_below_one_rejected(self) -> None:
+        with pytest.raises(ValueError, match="K_factor"):
+            achievability_converse_sandwich(w_bar=0.6, alpha=0.10, K_factor=0.5)
+
 
 class TestLawRegister:
 
@@ -104,6 +120,13 @@ class TestLawRegister:
         assert LAW_REGISTER["L3"]["type"] == "impossibility_law"
         assert LAW_REGISTER["L4"]["type"] == "characterization"
 
+    def test_laws_are_marked_as_stylized(self) -> None:
+        assert LAW_REGISTER["L1"]["status"] == "stylized_not_defended"
+        assert LAW_REGISTER["L2"]["status"] == "stylized_not_defended"
+        assert LAW_REGISTER["L3"]["status"] == "stylized_not_defended"
+        assert LAW_REGISTER["L4"]["status"] == "stylized_not_defended"
+        assert LAW_REGISTER["L4"]["dependencies"] == ["L1", "L2", "T3_upper_envelope"]
+
 
 class TestGrandUnification:
 
@@ -112,18 +135,19 @@ class TestGrandUnification:
             [0.7] * 100, alpha=0.10, n_cal=500, delta=0.05,
             margin=5.0, sigma_d=0.1,
         )
-        assert result["gap_closed"] is True
+        assert result["gap_closed"] is False
         assert "path_a_rate_distortion" in result
         assert "path_b_capacity_bridge" in result
         assert "path_c_critical_capacity" in result
         assert "path_d_sandwich" in result
         assert "path_e_trajectory_pac" in result
+        assert "scope_note" in result
 
     def test_degraded_reliability_still_closes(self) -> None:
         result = orius_grand_unification(
             [0.4] * 50, alpha=0.10, n_cal=500, delta=0.05,
         )
-        assert result["gap_closed"] is True
+        assert result["gap_closed"] is False
         assert result["path_d_sandwich"]["lower_bound"] > 0.0
 
 

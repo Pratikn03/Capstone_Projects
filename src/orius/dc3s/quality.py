@@ -20,7 +20,6 @@ from datetime import datetime
 from typing import Any, Mapping, MutableMapping, Sequence
 
 import numpy as np
-import torch
 
 from .ftit import FTIT_FAULT_KEYS, preview_fault_state
 
@@ -343,7 +342,11 @@ def compute_reliability(
     # PDF §3: OOO penalty is the fraction of packets arriving in order.
     # We track a running fraction via the adaptive_state (ooo_history).
     # Fallback: binary penalty for backward compatibility.
-    ooo_history = list((_ftit_state(adaptive_state) or {}).get("ooo_history", []))
+    raw_ooo = (_ftit_state(adaptive_state) or {}).get("ooo_history", [])
+    ooo_history = [
+        float(v) for v in raw_ooo
+        if isinstance(v, (int, float)) and math.isfinite(float(v))
+    ]
     ooo_history.append(0.0 if out_of_order else 1.0)
     # Keep a rolling window of the last _OOO_HISTORY_WINDOW observations.
     if len(ooo_history) > _OOO_HISTORY_WINDOW:
@@ -471,12 +474,13 @@ def compute_reliability(
             )
             sequence = prepare_sequence(feature, adaptive_state=adaptive_state, seq_len=seq_len)
             model, deep_model_cfg, metadata = load_model(model_path)
-            with torch.no_grad():
-                tensor = torch.from_numpy(sequence).unsqueeze(0)
+            import torch as _torch
+            with _torch.no_grad():
+                tensor = _torch.from_numpy(sequence).unsqueeze(0)
                 deep_w, fault_logit = model(tensor)
             update_history(adaptive_state if isinstance(adaptive_state, MutableMapping) else None, feature, seq_len=deep_model_cfg.seq_len)
             w_t = float(np.clip(float(deep_w.detach().cpu().item()), float(deep_model_cfg.min_w), 1.0))
-            fault_prob = float(torch.sigmoid(fault_logit).detach().cpu().item())
+            fault_prob = float(_torch.sigmoid(fault_logit).detach().cpu().item())
             flags.update(
                 {
                     "backend_requested": "deep",
@@ -614,11 +618,15 @@ def compute_reliability_robust(
     med = float(statistics.median(vals))
     abs_devs = [abs(v - med) for v in vals]
     mad = float(statistics.median(abs_devs))
-    if mad < 1e-9:
-        mad = 1e-9  # avoid division by zero
     current = vals[-1]
-    mad_z = abs(current - med) / (1.4826 * mad)  # normalised MAD
-    spike_detected = mad_z > mad_spike_threshold
+    if mad < 1e-9:
+        # Near-constant signal: detect spike if current deviates from median
+        deviation = abs(current - med)
+        mad_z = deviation  # use raw deviation as score
+        spike_detected = deviation > 1e-9
+    else:
+        mad_z = abs(current - med) / (1.4826 * mad)  # normalised MAD
+        spike_detected = mad_z > mad_spike_threshold
 
     # 3. Consistency check: adversarial input creates systematic bias
     std = float(statistics.stdev(vals)) if n >= 2 else 1.0

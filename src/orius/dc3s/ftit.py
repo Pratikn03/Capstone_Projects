@@ -1,6 +1,7 @@
 """Fault-tolerant interval tracking (FTIT) state updates for DC3S."""
 from __future__ import annotations
 
+import math
 from typing import Any, Mapping
 
 import numpy as np
@@ -19,7 +20,10 @@ def _cfg_block(cfg: Mapping[str, Any] | None) -> dict[str, Any]:
 
 def _f(value: Any, default: float) -> float:
     try:
-        return float(value)
+        v = float(value)
+        if not math.isfinite(v):
+            return float(default)
+        return v
     except (TypeError, ValueError):
         return float(default)
 
@@ -79,7 +83,7 @@ def preview_fault_state(
     for key in FTIT_FAULT_KEYS:
         s_val = decay * s_prev[key] + _bool_flag(fault_flags.get(key))
         s_next[key] = float(s_val)
-        p_next[key] = float(s_val / max(n_next, 1e-12))
+        p_next[key] = float(np.clip(s_val / max(n_next, 1e-12), 0.0, 1.0))
 
     w_t = 1.0
     for key, alpha in _alpha_map(ftit_cfg).items():
