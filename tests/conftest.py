@@ -37,6 +37,19 @@ except ImportError:
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+# ---------------------------------------------------------------------------
+# macOS tool PATH augmentation
+# LaTeX (MacTeX) lives in /usr/texbin; Homebrew tools like pandoc live in
+# /opt/homebrew/bin.  The minimal shell PATH used by pytest only contains
+# /usr/bin:/bin:/usr/sbin:/sbin, so shutil.which() would miss these tools
+# and cause needless skips in the LaTeX + pandoc artifact tests.
+# ---------------------------------------------------------------------------
+_MACOS_TOOL_DIRS = ["/usr/texbin", "/opt/homebrew/bin", "/usr/local/bin"]
+for _d in _MACOS_TOOL_DIRS:
+    if os.path.isdir(_d) and _d not in os.environ.get("PATH", ""):
+        os.environ["PATH"] = _d + os.pathsep + os.environ.get("PATH", "")
+
+
 # The phase-one external real-data integration suite targets the retired
 # six-domain data-staging program and is no longer part of the default
 # three-domain pytest lane.
