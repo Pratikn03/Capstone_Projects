@@ -1307,6 +1307,16 @@ def _remove_stale_outputs() -> None:
             path.unlink()
 
 
+def build(**kwargs: object) -> int:
+    """Programmatic entry point for pipeline scripts and tests.
+
+    Accepts and ignores keyword arguments (e.g. ``submission_scope``) so that
+    callers can pass configuration without breaking when the script evolves.
+    Always builds the canonical three-domain monograph asset surface.
+    """
+    return main()
+
+
 def main() -> int:
     _write_three_domain_lane()
     _write_publication_files()

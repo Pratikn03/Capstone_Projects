@@ -104,6 +104,7 @@ dependencies = [
   "ptyprocess==0.7.0",
   "pure-eval==0.2.3",
   "pyarrow==21.0.0",
+  "prometheus_client==0.25.0",
   "pydantic==2.12.5",
   "pydantic-core==2.41.5",
   "pydeck==0.9.1",

@@ -107,7 +107,7 @@ This file is generated from `reports/publication/theorem_registry.yml` and is th
 - Remediation class: strengthen proof - Keep the reliability-score disclaimer explicit and avoid reintroducing weighted-exchangeability overclaims.
 - Legacy aliases: ['T3']
 - Code anchors:
-  - src/orius/universal_theory/kernel.py:212 (`execute_universal_step`) - Attaches theorem-contract summaries to the typed runtime result.
+  - src/orius/universal_theory/kernel.py:211 (`execute_universal_step`) - Attaches theorem-contract summaries to the typed runtime result.
   - src/orius/universal_theory/risk_bounds.py:140 (`build_t3a_contract_summary`) - Canonical theorem-contract summary for the narrowed T3a surface.
   - src/orius/dc3s/coverage_theorem.py:44 (`compute_expected_violation_bound`) - Backward-compatible wrapper.
 - Test anchors:

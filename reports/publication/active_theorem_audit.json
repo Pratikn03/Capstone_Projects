@@ -263,7 +263,7 @@
         {
           "path": "src/orius/universal_theory/kernel.py",
           "symbol": "execute_universal_step",
-          "location": "src/orius/universal_theory/kernel.py:212",
+          "location": "src/orius/universal_theory/kernel.py:211",
           "note": "Attaches theorem-contract summaries to the typed runtime result."
         },
         {

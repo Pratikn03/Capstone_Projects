@@ -57,15 +57,27 @@ def test_ieee_main_includes_all_six_domain_rows() -> None:
 
     assert r"\input{sections/ieee_battery_witness.tex}" in main_tex
     assert r"\input{sections/ieee_domain_instantiations.tex}" in main_tex
+    # The active three-domain lane: Battery (witness), AV (bounded), Healthcare (bounded).
+    # The six-domain legacy surface (Industrial, Navigation, Aerospace) was hard-cut
+    # when the program was narrowed to the canonical battery_av_healthcare lane.
     for phrase in [
         "Battery energy storage",
         "Autonomous vehicles",
-        "Industrial process control",
         "Healthcare monitoring",
+    ]:
+        assert phrase in domain_section, (
+            f"Expected active domain phrase '{phrase}' missing from ieee_domain_instantiations.tex"
+        )
+    # Assert that the removed legacy domains are NOT present in the active section,
+    # enforcing the three-domain canonical constraint.
+    for removed_phrase in [
+        "Industrial process control",
         "Navigation and guidance",
         "Aerospace control",
     ]:
-        assert phrase in domain_section
+        assert removed_phrase not in domain_section, (
+            f"Removed domain '{removed_phrase}' must not appear in the active domain section"
+        )
 
 
 def test_shared_bibliography_depth_and_ieee_benchmark_corpus_floor() -> None:

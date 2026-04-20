@@ -89,4 +89,6 @@ def test_existing_pdf_inventory_is_limited_to_canonical_and_diagnostic_surfaces(
         "paper/ieee/orius_ieee_professor_main.pdf",
         "paper/ieee/orius_ieee_professor_appendix_a.pdf",
         "paper/ieee/orius_ieee_professor_appendix_b.pdf",
+        # Diagnostic surface: Phase 3 flagship closure proof book (committed evidence artifact).
+        "reports/publication/phase3_flagship_v1_proof_book.pdf",
     }

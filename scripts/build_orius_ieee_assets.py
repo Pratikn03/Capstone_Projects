@@ -28,6 +28,16 @@ def _read_rows(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
+
+def build() -> int:
+    """Programmatic entry point for pipeline scripts and tests.
+
+    Delegates directly to ``main()``.  Provided so callers can invoke
+    ``ieee_assets_script.build()`` without reaching into ``main()`` directly.
+    """
+    return main()
+
+
 def main() -> int:
     closure_rows = _read_rows(PUBLICATION_DIR / "orius_domain_closure_matrix.csv")
     scorecard_rows = _read_rows(PUBLICATION_DIR / "orius_submission_scorecard.csv")
@@ -118,7 +128,7 @@ def main() -> int:
     _write_text(IEEE_GENERATED_DIR / "orius_deployment_validation_scope.tex", "\n".join(deployment_scope_lines))
 
     claim_ledger = [
-        "claim_id,status,scope,note",
+        "claim_id,support_status,scope,note",
         "IEEE001,current_repo_supported,three-domain,IEEE surfaces now describe only Battery + AV + Healthcare.",
         "IEEE002,current_repo_supported,three-domain,Removed domains are excluded from active submission claims.",
     ]

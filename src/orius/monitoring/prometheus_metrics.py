@@ -180,6 +180,18 @@ ANOMALY_SCORE = Gauge(
     ["target", "region"],
 )
 
+DRIFT_DETECTED = Gauge(
+    "orius_drift_detected",
+    "Whether drift was detected for a feature (1=drift, 0=no drift)",
+    ["feature"],
+)
+
+DRIFT_SCORE = Gauge(
+    "orius_drift_score",
+    "Drift score for a feature",
+    ["feature"],
+)
+
 # Streaming Metrics
 KAFKA_CONSUMER_LAG = Gauge(
     "orius_kafka_consumer_lag",
@@ -413,6 +425,38 @@ def record_anomaly(target: str, region: str, detector: str, score: float):
     """Record an anomaly detection."""
     ANOMALIES_DETECTED.labels(target=target, region=region, detector=detector).inc()
     ANOMALY_SCORE.labels(target=target, region=region).set(score)
+
+
+def update_cost_savings_metrics(
+    region: str,
+    savings_eur: float,
+    savings_pct: float,
+) -> None:
+    """Update cost savings metrics for a region.
+
+    Args:
+        region: Geographic or grid region identifier.
+        savings_eur: Absolute cost savings in EUR.
+        savings_pct: Percentage cost savings relative to baseline.
+    """
+    OPTIMIZATION_COST_SAVINGS.labels(region=region).set(savings_eur)
+
+
+def update_drift_metrics(
+    feature: str,
+    drift_detected: bool,
+    drift_score: float,
+) -> None:
+    """Update drift detection metrics for a feature.
+
+    Args:
+        feature: Name of the monitored feature.
+        drift_detected: Whether drift was detected.
+        drift_score: Scalar drift score (higher = more drift).
+    """
+    DRIFT_DETECTED.labels(feature=feature).set(1.0 if drift_detected else 0.0)
+    DRIFT_SCORE.labels(feature=feature).set(float(drift_score))
+
 
 
 def record_safety_violation(violation_type: str):

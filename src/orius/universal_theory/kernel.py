@@ -94,11 +94,10 @@ def build_observation_consistent_state_set(
     if calibration_meta:
         meta.update(dict(calibration_meta))
     raw_inflation = float(meta.get("inflation", 1.0))
+    # Validate BEFORE clamping: callers must not supply sub-unit inflation.
+    verify_inflation_geq_one(raw_inflation)
     inflation = max(1.0, raw_inflation)
-    if raw_inflation != inflation:
-        meta["inflation_raw"] = raw_inflation
     meta["inflation"] = inflation
-    verify_inflation_geq_one(inflation)
     lower_bounds, upper_bounds = _extract_interval_bounds(uncertainty)
     return ObservationConsistentStateSet(
         observed_state=dict(observed_state),

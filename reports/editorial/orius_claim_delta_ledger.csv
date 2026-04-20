@@ -1,3 +1,3 @@
-claim_id,status,scope,note
+claim_id,support_status,scope,note
 IEEE001,current_repo_supported,three-domain,IEEE surfaces now describe only Battery + AV + Healthcare.
 IEEE002,current_repo_supported,three-domain,Removed domains are excluded from active submission claims.
