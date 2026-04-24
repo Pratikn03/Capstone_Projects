@@ -2,15 +2,31 @@
 from __future__ import annotations
 
 import math
+import json
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 from fastapi.testclient import TestClient
 
 from orius.dc3s.state import DC3SStateStore
+from services.api.config import get_api_keys
 from services.api.main import app
 from services.api.routers import dc3s as dc3s_router
+from services.api.security import API_KEY_NAME
+
+
+DC3S_HEADERS = {API_KEY_NAME: "dc3s-test-key"}
+
+
+@pytest.fixture(autouse=True)
+def _dc3s_auth(monkeypatch):
+    monkeypatch.setenv("ORIUS_API_KEYS", json.dumps({"dc3s-test-key": ["read", "write"]}))
+    monkeypatch.delenv("ORIUS_AUTH_DISABLED_FOR_TESTS", raising=False)
+    get_api_keys.cache_clear()
+    yield
+    get_api_keys.cache_clear()
 
 
 def _predict_target(*, target: str, horizon: int, features_df: pd.DataFrame, forecast_cfg: dict, required: bool):
@@ -76,7 +92,7 @@ def test_dc3s_step_and_audit_round_trip(monkeypatch, tmp_path):
         "include_certificate": True,
     }
 
-    step = client.post("/dc3s/step", json=req)
+    step = client.post("/dc3s/step", json=req, headers=DC3S_HEADERS)
     assert step.status_code == 200, step.text
     payload = step.json()
     assert "safe_action" in payload
@@ -94,7 +110,7 @@ def test_dc3s_step_and_audit_round_trip(monkeypatch, tmp_path):
     assert payload["guarantee_checks_passed"] in {True, False}
     assert isinstance(payload["guarantee_fail_reasons"], list) or payload["guarantee_fail_reasons"] is None
 
-    audit = client.get(f"/dc3s/audit/{payload['command_id']}")
+    audit = client.get(f"/dc3s/audit/{payload['command_id']}", headers=DC3S_HEADERS)
     assert audit.status_code == 200, audit.text
     cert = audit.json()
     assert cert["command_id"] == payload["command_id"]
@@ -147,7 +163,7 @@ def test_dc3s_step_active_mode_blocks_failed_guarantees(monkeypatch):
         "horizon": 24,
         "include_certificate": False,
     }
-    step = client.post("/dc3s/step", json=req)
+    step = client.post("/dc3s/step", json=req, headers=DC3S_HEADERS)
     assert step.status_code == 400
     assert "guarantee checks failed" in step.text.lower()
 
@@ -200,10 +216,10 @@ def test_dc3s_step_persists_adaptive_state_across_repeated_events(monkeypatch, t
         "horizon": 24,
         "include_certificate": False,
     }
-    first = client.post("/dc3s/step", json=req)
+    first = client.post("/dc3s/step", json=req, headers=DC3S_HEADERS)
     assert first.status_code == 200, first.text
     req["telemetry_event"]["ts_utc"] = "2026-02-22T01:00:00+00:00"
-    second = client.post("/dc3s/step", json=req)
+    second = client.post("/dc3s/step", json=req, headers=DC3S_HEADERS)
     assert second.status_code == 200, second.text
 
     store = DC3SStateStore(str(tmp_path / "dc3s_state.duckdb"), table_name="dc3s_online_state")

@@ -5,12 +5,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, Literal
 
 import yaml
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Security
 from pydantic import BaseModel
 
 from orius.optimizer import optimize_dispatch
 from orius.optimizer.baselines import grid_only_dispatch
 from orius.optimizer.robust_dispatch import RobustDispatchConfig, optimize_robust_dispatch
+from services.api.security import get_api_key, verify_scope
 
 router = APIRouter()
 
@@ -88,7 +89,8 @@ def _build_robust_config(cfg: dict[str, Any]) -> RobustDispatchConfig:
 
 
 @router.post("", response_model=OptimizeResponse)
-def optimize(req: OptimizeRequest):
+def optimize(req: OptimizeRequest, api_key: str = Security(get_api_key)):
+    verify_scope("write", api_key)
     cfg = req.config or _load_cfg()
     try:
         if req.optimization_mode == "deterministic":
@@ -133,7 +135,8 @@ def optimize(req: OptimizeRequest):
 
 
 @router.post("/baseline", response_model=OptimizeResponse)
-def optimize_baseline(req: OptimizeRequest):
+def optimize_baseline(req: OptimizeRequest, api_key: str = Security(get_api_key)):
+    verify_scope("write", api_key)
     cfg = req.config or _load_cfg()
     result = grid_only_dispatch(
         req.forecast_load_mw,

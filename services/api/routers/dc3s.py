@@ -11,7 +11,7 @@ from uuid import uuid4
 import numpy as np
 import pandas as pd
 import yaml
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Security
 from pydantic import BaseModel, Field
 
 from orius.dc3s.calibration import build_uncertainty_set
@@ -41,6 +41,7 @@ from orius.universal_theory.battery_instantiation import (
 from services.api.config import get_bms_config, get_conformal_path, load_uncertainty_config
 from services.api.routers.forecast import _cached_bundle, _load_cfg as _load_forecast_cfg, _resolve_model_path
 from services.api.routers.optimize import _build_robust_config, _load_cfg as _load_optimize_cfg
+from services.api.security import get_api_key, verify_scope
 
 router = APIRouter()
 
@@ -225,7 +226,8 @@ def _resolve_iot_mode(telemetry_event: Dict[str, Any]) -> str:
 
 
 @router.post("/step", response_model=DC3SStepResponse)
-def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
+def dc3s_step(req: DC3SStepRequest, api_key: str = Security(get_api_key)) -> DC3SStepResponse:
+    verify_scope("write", api_key)
     if req.controller == "heuristic":
         raise HTTPException(status_code=422, detail="controller='heuristic' is not implemented in Section 3.")
 
@@ -616,7 +618,8 @@ def dc3s_step(req: DC3SStepRequest) -> DC3SStepResponse:
 
 
 @router.get("/audit/{command_id}")
-def dc3s_audit(command_id: str) -> Dict[str, Any]:
+def dc3s_audit(command_id: str, api_key: str = Security(get_api_key)) -> Dict[str, Any]:
+    verify_scope("read", api_key)
     cfg_all = _load_dc3s_cfg()
     dc3s_cfg = cfg_all["dc3s"]
     audit_cfg = dc3s_cfg.get("audit", {})

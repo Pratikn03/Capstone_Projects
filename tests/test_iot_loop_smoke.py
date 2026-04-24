@@ -64,7 +64,7 @@ def test_iot_closed_loop_smoke(monkeypatch, tmp_path):
         "queue_ttl_seconds": 30,
         "include_certificate": True,
     }
-    step_resp = client.post("/dc3s/step", json=dc3s_req)
+    step_resp = client.post("/dc3s/step", json=dc3s_req, headers=headers)
     assert step_resp.status_code == 200, step_resp.text
     step_json = step_resp.json()
     command_id = step_json["command_id"]

@@ -1,9 +1,26 @@
 """API tests for the ORIUS universal framework endpoints."""
 from __future__ import annotations
 
+import json
+
+import pytest
 from fastapi.testclient import TestClient
 
+from services.api.config import get_api_keys
 from services.api.main import app
+from services.api.security import API_KEY_NAME
+
+
+UNIVERSAL_HEADERS = {API_KEY_NAME: "universal-test-key"}
+
+
+@pytest.fixture(autouse=True)
+def _universal_auth(monkeypatch):
+    monkeypatch.setenv("ORIUS_API_KEYS", json.dumps({"universal-test-key": ["read", "write"]}))
+    monkeypatch.delenv("ORIUS_AUTH_DISABLED_FOR_TESTS", raising=False)
+    get_api_keys.cache_clear()
+    yield
+    get_api_keys.cache_clear()
 
 
 def test_universal_domains_endpoint_exposes_framework_metadata() -> None:
@@ -44,7 +61,7 @@ def test_universal_step_vehicle_round_trip() -> None:
         "residual": 2.5,
     }
 
-    response = client.post("/universal/step", json=request)
+    response = client.post("/universal/step", json=request, headers=UNIVERSAL_HEADERS)
 
     assert response.status_code == 200, response.text
     payload = response.json()
@@ -78,6 +95,7 @@ def test_universal_step_unknown_domain_returns_404() -> None:
             "candidate_action": {},
             "constraints": {},
         },
+        headers=UNIVERSAL_HEADERS,
     )
 
     assert response.status_code == 404

@@ -137,7 +137,8 @@ def ready():
 
 
 @app.get("/metrics")
-def metrics():
+def metrics(api_key: str = Security(get_api_key)):
+    verify_scope("read", api_key)
     """
     Prometheus metrics endpoint.
     

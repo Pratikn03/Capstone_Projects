@@ -1,11 +1,28 @@
 """API integration tests for Phase 6 wiring."""
 from __future__ import annotations
 
+import json
+
+import pytest
 from fastapi.testclient import TestClient
 
+from services.api.config import get_api_keys
 from services.api.main import app
+from services.api.security import API_KEY_NAME
 import services.api.routers.monitor as monitor_router
 import services.api.routers.optimize as optimize_router
+
+
+OPTIMIZE_HEADERS = {API_KEY_NAME: "phase6-test-key"}
+
+
+@pytest.fixture(autouse=True)
+def _phase6_auth(monkeypatch):
+    monkeypatch.setenv("ORIUS_API_KEYS", json.dumps({"phase6-test-key": ["read", "write"]}))
+    monkeypatch.delenv("ORIUS_AUTH_DISABLED_FOR_TESTS", raising=False)
+    get_api_keys.cache_clear()
+    yield
+    get_api_keys.cache_clear()
 
 
 def test_optimize_defaults_to_robust_dispatch(monkeypatch) -> None:
@@ -32,6 +49,7 @@ def test_optimize_defaults_to_robust_dispatch(monkeypatch) -> None:
                 "forecast_renewables_mw": [20.0, 25.0],
                 "forecast_price_eur_mwh": [60.0, 65.0],
             },
+            headers=OPTIMIZE_HEADERS,
         )
 
     assert resp.status_code == 200
@@ -69,6 +87,7 @@ def test_optimize_supports_deterministic_mode(monkeypatch) -> None:
                 "forecast_load_mw": [100.0, 90.0],
                 "forecast_renewables_mw": [30.0, 25.0],
             },
+            headers=OPTIMIZE_HEADERS,
         )
 
     assert resp.status_code == 200
@@ -93,7 +112,7 @@ def test_monitor_research_metrics_endpoint(monkeypatch) -> None:
     )
 
     with TestClient(app) as client:
-        resp = client.get("/monitor/research-metrics")
+        resp = client.get("/monitor/research-metrics", headers=OPTIMIZE_HEADERS)
 
     assert resp.status_code == 200
     payload = resp.json()

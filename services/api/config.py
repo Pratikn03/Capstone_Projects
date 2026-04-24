@@ -86,6 +86,27 @@ def _load_api_keys_from_env() -> Optional[Dict[str, Any]]:
     return payload if isinstance(payload, dict) else None
 
 
+def is_auth_disabled_for_tests() -> bool:
+    """Return true only for the explicit local/test auth bypass.
+
+    Production and normal development default to fail-closed authentication.
+    Tests that need unauthenticated ergonomics must set this opt-out
+    deliberately instead of relying on empty API-key config.  The bypass is
+    accepted only in a test process or when ORIUS_ENV explicitly says test, so
+    an inherited shell variable cannot silently disable production auth.
+    """
+    flag_enabled = os.getenv("ORIUS_AUTH_DISABLED_FOR_TESTS", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    if not flag_enabled:
+        return False
+    env = os.getenv("ORIUS_ENV", "").strip().lower()
+    return env in {"test", "testing", "pytest"} or bool(os.getenv("PYTEST_CURRENT_TEST"))
+
+
 @lru_cache(maxsize=1)
 def get_api_keys(cfg: Optional[dict] = None) -> Dict[str, Any]:
     cfg = cfg or load_serving_config()

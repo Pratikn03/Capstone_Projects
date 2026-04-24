@@ -62,7 +62,7 @@ def test_dc3s_enqueue_iot_toggle(monkeypatch, tmp_path):
     with_enqueue = dict(base_req)
     with_enqueue["enqueue_iot"] = True
     with_enqueue["queue_ttl_seconds"] = 30
-    step_queued = client.post("/dc3s/step", json=with_enqueue)
+    step_queued = client.post("/dc3s/step", json=with_enqueue, headers=headers)
     assert step_queued.status_code == 200, step_queued.text
     queued_payload = step_queued.json()
     assert queued_payload["queued"] is True
@@ -81,7 +81,7 @@ def test_dc3s_enqueue_iot_toggle(monkeypatch, tmp_path):
     without_enqueue = dict(base_req)
     without_enqueue["enqueue_iot"] = False
     without_enqueue["queue_ttl_seconds"] = 30
-    step_skipped = client.post("/dc3s/step", json=without_enqueue)
+    step_skipped = client.post("/dc3s/step", json=without_enqueue, headers=headers)
     assert step_skipped.status_code == 200, step_skipped.text
     skipped_payload = step_skipped.json()
     assert skipped_payload["queued"] is False

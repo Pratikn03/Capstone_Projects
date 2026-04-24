@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Security
 from pydantic import BaseModel, Field
 
 from orius.dc3s.drift import PageHinkleyDetector
@@ -16,6 +16,7 @@ from orius.universal_framework.tables import (
     FAULT_TAXONOMY_TABLE,
     PIPELINE_STAGES_TABLE,
 )
+from services.api.security import get_api_key, verify_scope
 
 router = APIRouter()
 
@@ -77,7 +78,8 @@ def universal_domains() -> UniversalDomainsResponse:
 
 
 @router.post("/step", response_model=UniversalStepResponse)
-def universal_step(req: UniversalStepRequest) -> UniversalStepResponse:
+def universal_step(req: UniversalStepRequest, api_key: str = Security(get_api_key)) -> UniversalStepResponse:
+    verify_scope("write", api_key)
     try:
         adapter = get_adapter(req.domain_id, req.cfg)
     except KeyError as exc:

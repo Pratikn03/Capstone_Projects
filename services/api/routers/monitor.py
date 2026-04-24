@@ -7,7 +7,7 @@ from typing import Any, Dict
 import json
 import pandas as pd
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Security
 
 from orius.forecasting.predict import load_model_bundle
 from orius.monitoring.dc3s_health import compute_dc3s_health, load_dc3s_audit_config, load_dc3s_health_config
@@ -19,6 +19,7 @@ from orius.monitoring.retraining import (
     retraining_decision,
 )
 from orius.monitoring.report import write_monitoring_report
+from services.api.security import get_api_key, verify_scope
 
 router = APIRouter()
 
@@ -101,7 +102,8 @@ def _compute_dc3s_health_block(update_state: bool = False) -> Dict[str, Any] | N
 
 
 @router.get("")
-def monitor() -> Dict[str, Any]:
+def monitor(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
+    verify_scope("write", api_key)
     cfg = load_monitoring_config()
     dc3s_health = _compute_dc3s_health_block(update_state=False)
 
@@ -185,13 +187,15 @@ def monitor() -> Dict[str, Any]:
 
 
 @router.get("/dc3s")
-def monitor_dc3s() -> Dict[str, Any]:
+def monitor_dc3s(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
+    verify_scope("read", api_key)
     block = _compute_dc3s_health_block(update_state=False)
     return block or {"enabled": False}
 
 
 @router.get("/research-metrics")
-def research_metrics() -> Dict[str, Any]:
+def research_metrics(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
+    verify_scope("read", api_key)
     de = _load_latest_research_summary(Path("reports/research_metrics_de.csv"))
     us = _load_latest_research_summary(Path("reports/research_metrics_us.csv"))
     frozen = _load_frozen_metrics_snapshot()
@@ -207,7 +211,8 @@ def research_metrics() -> Dict[str, Any]:
 
 
 @router.get("/model-info")
-def model_info() -> Dict[str, Any]:
+def model_info(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
+    verify_scope("read", api_key)
     metrics = _load_week2_metrics()
     registry_latest = _load_registry_latest()
 
@@ -385,7 +390,8 @@ def _load_dc3s_shield_summary() -> Dict[str, Any]:
 
 
 @router.get("/dc3s-params")
-def dc3s_params() -> Dict[str, Any]:
+def dc3s_params(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
+    verify_scope("read", api_key)
     """
     Detailed DC³S parameter and ablation endpoint.
 
