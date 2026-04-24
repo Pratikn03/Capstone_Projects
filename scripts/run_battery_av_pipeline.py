@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the battery and Waymo AV training surfaces as one bounded pipeline."""
+"""Run the battery and AV training surfaces as one bounded pipeline."""
 from __future__ import annotations
 
 import argparse
@@ -7,6 +7,7 @@ import csv
 from datetime import datetime, timezone
 import hashlib
 import json
+import os
 from pathlib import Path
 import sys
 from typing import Any
@@ -26,6 +27,7 @@ import build_battery_av_closure_artifacts as closure_script
 import build_orius_ieee_assets as ieee_assets_script
 import build_orius_monograph_assets as monograph_assets_script
 import run_battery_deep_novelty as battery_script
+from orius.av_nuplan import build_nuplan_replay_surface
 from orius.av_waymo import (
     build_feature_tables,
     build_replay_surface,
@@ -44,18 +46,26 @@ DEFAULT_BATTERY_PAPER_FIG_DIR = DEFAULT_BATTERY_OUT / "paper_assets" / "figures"
 
 DEFAULT_AV_RAW = REPO_ROOT / "data" / "orius_av" / "raw" / "waymo_motion" / "validation"
 DEFAULT_AV_PROCESSED = REPO_ROOT / "data" / "orius_av" / "av" / "processed_full_corpus"
+DEFAULT_NUPLAN_PROCESSED = REPO_ROOT / "data" / "orius_av" / "av" / "processed_nuplan_singapore"
+DEFAULT_NUPLAN_TRAIN_ZIP = REPO_ROOT / "nuplan-v1.1_train_singapore.zip"
+DEFAULT_NUPLAN_MAPS_ZIP = REPO_ROOT / "nuplan-maps-v1.0.zip"
 DEFAULT_AV_MODELS = REPO_ROOT / "artifacts" / "models_orius_av_full_corpus"
 DEFAULT_AV_UNCERTAINTY = REPO_ROOT / "artifacts" / "uncertainty" / "orius_av_full_corpus"
 DEFAULT_AV_REPORTS = REPO_ROOT / "reports" / "orius_av" / "full_corpus"
 DEFAULT_OVERALL = DEFAULT_OUT_ROOT / "overall"
+DEFAULT_AV_SOURCE = os.environ.get("ORIUS_AV_SOURCE", "nuplan_singapore")
+
+
+def _is_appledouble(path: Path) -> bool:
+    return any(part.startswith("._") for part in path.parts)
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run the battery + Waymo AV pipelines together")
+    parser = argparse.ArgumentParser(description="Run the battery + AV pipelines together")
     parser.add_argument("--out-root", type=Path, default=DEFAULT_OUT_ROOT, help="Root reports directory for the combined battery+AV surface")
     parser.add_argument("--overall-dir", type=Path, default=DEFAULT_OVERALL, help="Directory for the combined manifest and summary")
     parser.add_argument("--skip-battery", action="store_true", help="Skip the battery training surface")
-    parser.add_argument("--skip-av", action="store_true", help="Skip the AV Waymo training surface")
+    parser.add_argument("--skip-av", action="store_true", help="Skip the AV training surface")
     parser.add_argument("--submission-scope", type=str, default="battery_av_only")
 
     parser.add_argument("--battery-out-dir", type=Path, default=DEFAULT_BATTERY_OUT)
@@ -73,11 +83,25 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--battery-train-stride", type=int, default=6)
     parser.add_argument("--battery-eval-stride", type=int, default=12)
 
+    parser.add_argument("--av-source", choices=["nuplan", "nuplan_singapore", "waymo_motion"], default=DEFAULT_AV_SOURCE)
     parser.add_argument("--av-raw-dir", type=Path, default=DEFAULT_AV_RAW)
-    parser.add_argument("--av-processed-dir", type=Path, default=DEFAULT_AV_PROCESSED)
+    parser.add_argument("--av-processed-dir", type=Path, default=None)
     parser.add_argument("--av-models-dir", type=Path, default=DEFAULT_AV_MODELS)
     parser.add_argument("--av-uncertainty-dir", type=Path, default=DEFAULT_AV_UNCERTAINTY)
     parser.add_argument("--av-reports-dir", type=Path, default=DEFAULT_AV_REPORTS)
+    parser.add_argument("--nuplan-train-zip", type=Path, action="append", default=None)
+    parser.add_argument("--nuplan-train-dir", type=Path, action="append", default=None)
+    parser.add_argument("--nuplan-train-glob", type=str, default="nuplan-v*.zip")
+    parser.add_argument("--nuplan-archive-role", choices=["train", "val", "test", "trainval"], default="train")
+    parser.add_argument("--nuplan-skip-incomplete", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--nuplan-maps-zip", type=Path, default=DEFAULT_NUPLAN_MAPS_ZIP)
+    parser.add_argument("--nuplan-temp-dir", type=Path, default=None)
+    parser.add_argument("--nuplan-max-dbs", type=int, default=None)
+    parser.add_argument("--nuplan-max-scenarios", type=int, default=None)
+    parser.add_argument("--nuplan-max-dbs-per-archive", type=int, default=None)
+    parser.add_argument("--nuplan-max-scenarios-per-archive", type=int, default=None)
+    parser.add_argument("--nuplan-scenario-stride", type=int, default=91)
+    parser.add_argument("--nuplan-split-strategy", choices=["balanced", "hash", "all_test"], default="balanced")
     parser.add_argument("--av-subset-size", type=int, default=1000, help="Subset size when using --av-subset")
     parser.add_argument("--av-full-corpus", dest="av_full_corpus", action="store_true", default=True, help="Use every scenario in scenario_index.parquet across the 7 validation shards")
     parser.add_argument("--av-subset", dest="av_full_corpus", action="store_false", help="Use a bounded subset instead of the canonical full-corpus AV surface")
@@ -99,6 +123,10 @@ def _parse_args() -> argparse.Namespace:
             args.battery_paper_fig_dir = args.out_root / "battery" / "paper_assets" / "figures"
         if args.overall_dir == DEFAULT_OVERALL:
             args.overall_dir = args.out_root / "overall"
+    if args.av_processed_dir is None:
+        args.av_processed_dir = DEFAULT_NUPLAN_PROCESSED if args.av_source == "nuplan_singapore" else DEFAULT_AV_PROCESSED
+    if args.nuplan_train_zip is None and args.nuplan_train_dir is None:
+        args.nuplan_train_zip = [DEFAULT_NUPLAN_TRAIN_ZIP]
     return args
 
 
@@ -125,7 +153,7 @@ def _collect_file_paths(value: Any, sink: set[Path]) -> None:
     if not isinstance(value, str):
         return
     candidate = Path(value)
-    if candidate.exists() and candidate.is_file():
+    if candidate.exists() and candidate.is_file() and not _is_appledouble(candidate):
         sink.add(candidate.resolve())
 
 
@@ -192,6 +220,66 @@ def _resolve_full_corpus_count(processed_dir: Path) -> int:
 def run_av_pipeline(args: argparse.Namespace) -> dict[str, Any]:
     report: dict[str, Any] = {}
     args.av_reports_dir.mkdir(parents=True, exist_ok=True)
+    av_source = getattr(args, "av_source", "waymo_motion")
+
+    if av_source in {"nuplan", "nuplan_singapore"}:
+        report["source"] = "nuplan"
+        if not args.av_skip_validation:
+            report["replay"] = build_nuplan_replay_surface(
+                train_zips=getattr(args, "nuplan_train_zip", [DEFAULT_NUPLAN_TRAIN_ZIP]),
+                train_dirs=getattr(args, "nuplan_train_dir", None),
+                train_glob=getattr(args, "nuplan_train_glob", "nuplan-v*.zip"),
+                archive_role=getattr(args, "nuplan_archive_role", "train"),
+                skip_incomplete=getattr(args, "nuplan_skip_incomplete", True),
+                maps_zip=getattr(args, "nuplan_maps_zip", DEFAULT_NUPLAN_MAPS_ZIP),
+                out_dir=args.av_processed_dir,
+                temp_dir=getattr(args, "nuplan_temp_dir", None),
+                max_dbs=getattr(args, "nuplan_max_dbs", None),
+                max_scenarios=getattr(args, "nuplan_max_scenarios", None),
+                max_dbs_per_archive=getattr(args, "nuplan_max_dbs_per_archive", None),
+                max_scenarios_per_archive=getattr(args, "nuplan_max_scenarios_per_archive", None),
+                scenario_stride=getattr(args, "nuplan_scenario_stride", 91),
+            )
+        else:
+            report["replay"] = _load_json_file(args.av_processed_dir / "nuplan_surface_report.json")
+        replay_source = str(report.get("replay", {}).get("source_dataset") or av_source)
+        report["source"] = replay_source
+        report["subset_mode"] = replay_source
+        report["subset_size"] = int(report.get("replay", {}).get("scenario_count") or _resolve_full_corpus_count(args.av_processed_dir))
+        report["features"] = build_feature_tables(
+            replay_windows_path=args.av_processed_dir / "replay_windows.parquet",
+            out_dir=args.av_processed_dir,
+            split_strategy=getattr(args, "nuplan_split_strategy", "balanced"),
+        )
+
+        if not args.av_skip_training:
+            report["training"] = train_dry_run_models(
+                anchor_features_path=args.av_processed_dir / "anchor_features.parquet",
+                step_features_path=args.av_processed_dir / "step_features.parquet",
+                models_dir=args.av_models_dir,
+                uncertainty_dir=args.av_uncertainty_dir,
+                reports_dir=args.av_reports_dir,
+                artifact_prefix="nuplan_av",
+            )
+
+        if not args.av_skip_runtime:
+            report["runtime"] = run_runtime_dry_run(
+                replay_windows_path=args.av_processed_dir / "replay_windows.parquet",
+                step_features_path=args.av_processed_dir / "step_features.parquet",
+                models_dir=args.av_models_dir,
+                out_dir=args.av_reports_dir,
+                max_scenarios=args.av_max_runtime_scenarios,
+                artifact_prefix="nuplan_av",
+            )
+
+        if not args.av_skip_report:
+            report["report"] = av_report_script.build_report(
+                processed_dir=args.av_processed_dir,
+                reports_dir=args.av_reports_dir,
+                models_dir=args.av_models_dir,
+                uncertainty_dir=args.av_uncertainty_dir,
+            )
+        return report
 
     if not args.av_skip_validation:
         report["validation"] = build_validation_surface(
@@ -335,7 +423,7 @@ def main() -> int:
     manifest = {
         "created_at_utc": combined["created_at_utc"],
         "domains": sorted(combined["domains"].keys()),
-        "artifacts": {str(path): _sha256_file(path) for path in sorted(artifact_paths)},
+        "artifacts": {str(path): _sha256_file(path) for path in sorted(artifact_paths) if not _is_appledouble(path)},
         "input_hashes": _input_hashes(args),
     }
 
