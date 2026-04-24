@@ -1,6 +1,9 @@
 """Forecasting: prediction helpers for trained model bundles."""
 from __future__ import annotations
 
+import hashlib
+import json
+import os
 from pathlib import Path
 from typing import Dict, Any
 
@@ -80,11 +83,123 @@ def _extract_prediction_outputs(
     return point, {}
 
 
+def _truthy_env(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _sha256_file(path: Path) -> str:
+    hasher = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def _model_hash_required() -> bool:
+    env = os.getenv("ORIUS_ENV", "").strip().lower()
+    return _truthy_env("ORIUS_REQUIRE_MODEL_HASH") or env in {
+        "prod",
+        "production",
+        "staging",
+        "deploy",
+        "deployment",
+    }
+
+
+def _iter_manifest_rows(payload: Any) -> list[dict[str, Any]]:
+    if isinstance(payload, list):
+        return [row for row in payload if isinstance(row, dict)]
+    if isinstance(payload, dict):
+        for key in ("artifacts", "hashes", "files", "rows"):
+            rows = payload.get(key)
+            if isinstance(rows, list):
+                return [row for row in rows if isinstance(row, dict)]
+        rows = []
+        for path, digest in payload.items():
+            if isinstance(digest, str):
+                rows.append({"path": path, "sha256": digest})
+            elif isinstance(digest, dict):
+                row = dict(digest)
+                row.setdefault("path", path)
+                rows.append(row)
+        return rows
+    return []
+
+
+def _path_matches_manifest_row(model_path: Path, row_path: str) -> bool:
+    if not row_path:
+        return False
+    candidate = Path(row_path)
+    model_abs = str(model_path.resolve())
+    if candidate.is_absolute():
+        try:
+            return candidate.resolve() == model_path.resolve()
+        except FileNotFoundError:
+            return str(candidate) == model_abs
+    return row_path == str(model_path) or model_abs.endswith(f"/{row_path}") or row_path == model_path.name
+
+
+def _expected_sha256_from_manifest(model_path: Path, manifest_path: Path) -> str | None:
+    if not manifest_path.exists():
+        return None
+    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    for row in _iter_manifest_rows(payload):
+        row_path = str(row.get("path") or row.get("artifact_path") or row.get("file") or "")
+        digest = row.get("sha256") or row.get("hash") or row.get("digest")
+        if isinstance(digest, str) and _path_matches_manifest_row(model_path, row_path):
+            return digest.strip().lower()
+    return None
+
+
+def _expected_model_sha256(model_path: Path) -> str | None:
+    sidecar = model_path.with_name(f"{model_path.name}.sha256")
+    if sidecar.exists():
+        raw = sidecar.read_text(encoding="utf-8").strip()
+        if raw:
+            return raw.split()[0].strip().lower()
+
+    manifest_paths: list[Path] = []
+    env_manifest = os.getenv("ORIUS_MODEL_HASH_MANIFEST")
+    if env_manifest:
+        manifest_paths.append(Path(env_manifest))
+    manifest_paths.extend(
+        [
+            model_path.parent / "model_hashes.json",
+            model_path.parent / "frozen_artifact_hashes.json",
+            Path("reports/predeployment_freeze/frozen_artifact_hashes.json"),
+        ]
+    )
+    for manifest_path in manifest_paths:
+        try:
+            expected = _expected_sha256_from_manifest(model_path, manifest_path)
+        except (OSError, json.JSONDecodeError):
+            continue
+        if expected:
+            return expected
+    return None
+
+
+def _verify_model_artifact_hash(path: Path) -> None:
+    expected = _expected_model_sha256(path)
+    if expected is None:
+        if _model_hash_required():
+            raise RuntimeError(
+                f"Refusing to load unsigned model artifact without sha256 manifest: {path}"
+            )
+        return
+    actual = _sha256_file(path)
+    if actual.lower() != expected.lower():
+        raise RuntimeError(
+            f"Model artifact hash mismatch for {path}: expected {expected}, observed {actual}"
+        )
+
+
 def load_model_bundle(path: str | Path) -> Dict[str, Any]:
     """Load a serialized model bundle (GBM pickle or Torch checkpoint)."""
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(path)
+    _verify_model_artifact_hash(path)
     if path.suffix == ".pkl":
         import pickle
         with open(path, "rb") as f:
@@ -178,6 +293,28 @@ def _maybe_scale_X(X: np.ndarray, bundle: Dict[str, Any]) -> np.ndarray:
     return scaler.transform(X) if scaler is not None else X
 
 
+def _maybe_impute_X(X: np.ndarray, bundle: Dict[str, Any]) -> np.ndarray:
+    """Apply saved train-split feature fill values when present."""
+    fill_values = bundle.get("feature_fill_values")
+    arr = np.asarray(X, dtype=np.float32)
+    if fill_values is None:
+        return arr
+    fill = np.asarray(fill_values, dtype=np.float32).reshape(-1)
+    if arr.ndim != 2:
+        raise ValueError(f"Expected 2D feature matrix, got shape {arr.shape}")
+    if fill.shape[0] != arr.shape[1]:
+        raise ValueError(
+            f"Feature fill vector has length {fill.shape[0]}, expected {arr.shape[1]}"
+        )
+    invalid = ~np.isfinite(arr)
+    if not invalid.any():
+        return arr
+    arr = arr.copy()
+    _, col_idx = np.where(invalid)
+    arr[invalid] = fill[col_idx]
+    return arr
+
+
 def _maybe_inverse_y(y: np.ndarray, bundle: Dict[str, Any]) -> np.ndarray:
     """Undo target scaling when a scaler is present."""
     scaler = StandardScaler.from_dict(bundle.get("y_scaler"))
@@ -205,7 +342,8 @@ def predict_next_24h(features_df: pd.DataFrame, model_bundle: Dict[str, Any], ho
     timestamps = pd.date_range(last_ts + pd.Timedelta(hours=1), periods=horizon, freq="h", tz=last_ts.tz)
 
     if model_type == "gbm":
-        X = df[feat_cols].to_numpy()
+        X = np.asarray(df[feat_cols].apply(pd.to_numeric, errors="coerce"), dtype=np.float32)
+        X = _maybe_impute_X(X, model_bundle)
         if len(X) < horizon:
             raise ValueError("Not enough rows in features_df for GBM horizon")
         ensemble_models = model_bundle.get("ensemble_models")
@@ -216,7 +354,8 @@ def predict_next_24h(features_df: pd.DataFrame, model_bundle: Dict[str, Any], ho
             pred = model_bundle["model"].predict(X[-horizon:])
     elif model_type in {"lstm", "tcn", "nbeats", "tft", "patchtst"}:
         lookback = int(model_bundle.get("lookback", 168))
-        X = df[feat_cols].to_numpy()
+        X = np.asarray(df[feat_cols].apply(pd.to_numeric, errors="coerce"), dtype=np.float32)
+        X = _maybe_impute_X(X, model_bundle)
         if len(X) < lookback:
             raise ValueError("Not enough rows in features_df for sequence lookback")
         X = _maybe_scale_X(X, model_bundle)
