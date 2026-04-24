@@ -1,0 +1,36 @@
+status: prepared_not_completed
+claim_boundary: >
+  nuPlan/CARLA are next-tier AV closed-loop validation targets only. This
+  manifest may record completed bounded nuPlan runtime replay/surrogate
+  evidence, but it does not claim completed nuPlan/CARLA simulator validation,
+  does not claim completed CARLA simulation, road deployment, or full
+  autonomous-driving closure.
+nuplan:
+  expected_roots:
+    - data/orius_av/raw/nuplan
+    - data/nuplan
+    - /Volumes/T9/nuplan
+  required_splits:
+    - train
+    - val
+    - maps
+  optional_splits:
+    - test
+    - mini
+  adapter_status: todo_runtime_closed_loop_adapter
+carla:
+  expected_roots:
+    - data/orius_av/raw/carla
+    - data/carla
+  adapter_status: todo_runtime_closed_loop_adapter
+completion_required_artifacts:
+  - reports/predeployment_external_validation/nuplan_closed_loop_summary.csv
+  - reports/predeployment_external_validation/nuplan_closed_loop_traces.csv
+  - reports/predeployment_external_validation/carla_closed_loop_summary.csv
+  - reports/predeployment_external_validation/carla_closed_loop_traces.csv
+nuplan_completion_artifacts:
+  - reports/predeployment_external_validation/nuplan_closed_loop_summary.csv
+  - reports/predeployment_external_validation/nuplan_closed_loop_traces.csv
+carla_completion_artifacts:
+  - reports/predeployment_external_validation/carla_closed_loop_summary.csv
+  - reports/predeployment_external_validation/carla_closed_loop_traces.csv

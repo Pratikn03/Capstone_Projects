@@ -1,0 +1,18 @@
+status: prepared_not_completed
+claim_boundary: >
+  Healthcare held-out validation is a retrospective source/site/time-forward
+  runtime replay target only. This manifest does not claim live clinical
+  deployment, prospective trial evidence, clinical decision support approval,
+  or regulated clinical use.
+split_manifest: reports/predeployment_external_validation/healthcare_site_splits/manifest.json
+prepared_split_dir: reports/predeployment_external_validation/healthcare_site_splits
+required_runtime_artifacts_for_claim:
+  - reports/healthcare/heldout_runtime_summary.csv
+  - reports/healthcare/heldout_runtime_traces.csv
+  - reports/healthcare/heldout_runtime_manifest.json
+completion_rule:
+  orius_tsvr_required: 0.0
+  max_alert_rate_lte: 0.50
+  certificate_valid_rate_required: 1.0
+  source_or_site_holdout_required: true
+  time_forward_required: true
