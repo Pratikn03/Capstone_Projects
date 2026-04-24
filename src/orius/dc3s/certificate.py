@@ -9,6 +9,11 @@ from typing import Any, Iterable, Mapping
 
 import numpy as np
 import duckdb
+import pandas as pd
+
+
+CERTIFICATE_SCHEMA_VERSION = "orius.certificate.v1"
+DEFAULT_CERTIFICATE_ISSUER = "orius.runtime"
 
 
 def _sha256_bytes(payload: bytes) -> str:
@@ -49,6 +54,60 @@ def compute_model_hash(model_paths: Iterable[str | Path]) -> str:
 
 def compute_config_hash(config_bytes: bytes) -> str:
     return _sha256_bytes(config_bytes)
+
+
+def normalize_certificate_schema(
+    certificate: Mapping[str, Any],
+    *,
+    issuer: str | None = None,
+    domain: str | None = None,
+) -> dict[str, Any]:
+    """Return a canonical certificate view while accepting legacy fields.
+
+    Legacy CertOS surfaces used ``cert_hash``. The canonical public schema uses
+    ``certificate_hash``. This helper preserves legacy data, promotes
+    ``cert_hash`` to ``certificate_hash`` when needed, and fills non-security
+    metadata fields used by runtime-table validators.
+    """
+
+    cert = dict(_to_json_safe(dict(certificate)))
+    legacy_hash = cert.get("cert_hash")
+    canonical_hash = cert.get("certificate_hash")
+    if canonical_hash in (None, "") and legacy_hash not in (None, ""):
+        cert["certificate_hash"] = str(legacy_hash)
+
+    cert.setdefault("certificate_schema_version", CERTIFICATE_SCHEMA_VERSION)
+    cert.setdefault("issuer", issuer or DEFAULT_CERTIFICATE_ISSUER)
+
+    if domain not in (None, ""):
+        cert.setdefault("domain", str(domain))
+    else:
+        cert.setdefault("domain", str(cert.get("domain") or cert.get("zone_id") or "unknown"))
+
+    if "action" not in cert or cert.get("action") in (None, ""):
+        action = cert.get("safe_action") if isinstance(cert.get("safe_action"), Mapping) else {}
+        cert["action"] = dict(action)
+
+    if cert.get("validity_horizon_H_t") in (None, ""):
+        for key in ("certificate_horizon_steps", "validity_horizon", "tau_t"):
+            if cert.get(key) not in (None, ""):
+                try:
+                    cert["validity_horizon_H_t"] = int(cert[key])
+                    break
+                except (TypeError, ValueError):
+                    continue
+
+    if cert.get("expires_at_step") in (None, "") and cert.get("validity_horizon_H_t") not in (None, ""):
+        try:
+            cert["expires_at_step"] = int(cert.get("validity_horizon_H_t"))
+        except (TypeError, ValueError):
+            pass
+
+    cert.setdefault("theorem_contracts", {})
+    cert.setdefault("signature", None)
+    cert.setdefault("signature_algorithm", None)
+    cert.setdefault("public_key_id", None)
+    return cert
 
 
 def make_certificate(
@@ -92,8 +151,24 @@ def make_certificate(
     runtime_surface: str | None = None,
     closure_tier: str | None = None,
     reliability_feature_basis: Mapping[str, Any] | None = None,
+    certificate_schema_version: str = CERTIFICATE_SCHEMA_VERSION,
+    issuer: str = DEFAULT_CERTIFICATE_ISSUER,
+    domain: str | None = None,
+    action: Mapping[str, Any] | None = None,
+    theorem_contracts: Mapping[str, Any] | None = None,
+    signature: str | None = None,
+    signature_algorithm: str | None = None,
+    public_key_id: str | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
+        "certificate_schema_version": certificate_schema_version,
+        "issuer": issuer,
+        "domain": domain or zone_id,
+        "action": dict(action) if action is not None else dict(safe_action),
+        "theorem_contracts": dict(theorem_contracts or {}),
+        "signature": signature,
+        "signature_algorithm": signature_algorithm,
+        "public_key_id": public_key_id,
         "command_id": command_id,
         "certificate_id": command_id,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -145,12 +220,16 @@ def make_certificate(
 def recompute_certificate_hash(certificate: Mapping[str, Any]) -> str:
     payload = dict(certificate)
     payload.pop("certificate_hash", None)
+    payload.pop("cert_hash", None)
     return _sha256_bytes(_canonical_bytes(payload))
 
 
 def verify_certificate(certificate: Mapping[str, Any]) -> dict[str, Any]:
-    observed_hash = certificate.get("certificate_hash")
+    normalized = normalize_certificate_schema(certificate)
+    observed_hash = normalized.get("certificate_hash")
     expected_hash = recompute_certificate_hash(certificate)
+    if observed_hash != expected_hash:
+        expected_hash = recompute_certificate_hash(normalized)
     valid = isinstance(observed_hash, str) and observed_hash == expected_hash
     return {
         "valid": bool(valid),
@@ -164,6 +243,7 @@ def verify_certificate_chain(certificates: Iterable[Mapping[str, Any]]) -> dict[
     checked = 0
     previous_hash: str | None = None
     for index, certificate in enumerate(certificates):
+        normalized = normalize_certificate_schema(certificate)
         verification = verify_certificate(certificate)
         if not verification["valid"]:
             return {
@@ -172,9 +252,9 @@ def verify_certificate_chain(certificates: Iterable[Mapping[str, Any]]) -> dict[
                 "failed_index": index,
                 "reason": str(verification["reason"]),
                 "expected_prev_hash": previous_hash,
-                "observed_prev_hash": certificate.get("prev_hash"),
+                "observed_prev_hash": normalized.get("prev_hash"),
             }
-        current_prev_hash = certificate.get("prev_hash")
+        current_prev_hash = normalized.get("prev_hash")
         if index == 0:
             if current_prev_hash not in (None, ""):
                 return {
@@ -203,7 +283,7 @@ def verify_certificate_chain(certificates: Iterable[Mapping[str, Any]]) -> dict[
                 "expected_prev_hash": previous_hash,
                 "observed_prev_hash": current_prev_hash,
             }
-        previous_hash = str(certificate.get("certificate_hash"))
+        previous_hash = str(normalized.get("certificate_hash"))
         checked += 1
     return {
         "valid": True,
@@ -293,6 +373,7 @@ def _ensure_store(conn: duckdb.DuckDBPyConnection, table_name: str) -> None:
 
 
 def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_name: str) -> None:
+    certificate = normalize_certificate_schema(certificate)
     db_path = Path(duckdb_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = duckdb.connect(str(db_path))
@@ -304,44 +385,52 @@ def store_certificate(certificate: Mapping[str, Any], duckdb_path: str, table_na
 
 
 def _insert_sql(table_name: str) -> str:
+    columns = ",\n            ".join(_INSERT_COLUMNS)
+    placeholders = ", ".join("?" for _ in _INSERT_COLUMNS)
     return f"""
         INSERT OR REPLACE INTO {table_name} (
-            command_id,
-            certificate_hash,
-            prev_hash,
-            created_at,
-            payload_json,
-            intervened,
-            intervention_reason,
-            reliability_w,
-            drift_flag,
-            inflation,
-            validity_score,
-            adaptive_quantile,
-            conditional_coverage_gap,
-            runtime_interval_policy,
-            coverage_group_key,
-            shift_alert_flag,
-            guarantee_checks_passed,
-            guarantee_fail_reasons,
-            true_soc_violation_after_apply,
-            assumptions_version,
-            gamma_mw,
-            e_t_mwh,
-            soc_tube_lower_mwh,
-            soc_tube_upper_mwh,
-            validity_horizon_H_t,
-            half_life_steps,
-            expires_at_step,
-            validity_status,
-            runtime_surface,
-            closure_tier,
-            reliability_feature_basis
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            {columns}
+        ) VALUES ({placeholders})
     """
 
 
+_INSERT_COLUMNS = [
+    "command_id",
+    "certificate_hash",
+    "prev_hash",
+    "created_at",
+    "payload_json",
+    "intervened",
+    "intervention_reason",
+    "reliability_w",
+    "drift_flag",
+    "inflation",
+    "validity_score",
+    "adaptive_quantile",
+    "conditional_coverage_gap",
+    "runtime_interval_policy",
+    "coverage_group_key",
+    "shift_alert_flag",
+    "guarantee_checks_passed",
+    "guarantee_fail_reasons",
+    "true_soc_violation_after_apply",
+    "assumptions_version",
+    "gamma_mw",
+    "e_t_mwh",
+    "soc_tube_lower_mwh",
+    "soc_tube_upper_mwh",
+    "validity_horizon_H_t",
+    "half_life_steps",
+    "expires_at_step",
+    "validity_status",
+    "runtime_surface",
+    "closure_tier",
+    "reliability_feature_basis",
+]
+
+
 def _certificate_row(certificate: Mapping[str, Any]) -> list[Any]:
+    certificate = normalize_certificate_schema(certificate)
     payload_json = json.dumps(certificate, ensure_ascii=True, sort_keys=True)
     return [
         str(certificate.get("command_id")),
@@ -387,7 +476,18 @@ def store_certificates_batch(certificates: Iterable[Mapping[str, Any]], duckdb_p
     conn = duckdb.connect(str(db_path))
     try:
         _ensure_store(conn, table_name)
-        conn.executemany(_insert_sql(table_name), rows)
+        frame = pd.DataFrame(rows, columns=_INSERT_COLUMNS)
+        conn.register("certificate_batch_rows", frame)
+        conn.execute(
+            f"""
+            INSERT OR REPLACE INTO {table_name} (
+                {", ".join(_INSERT_COLUMNS)}
+            )
+            SELECT {", ".join(_INSERT_COLUMNS)}
+            FROM certificate_batch_rows
+            """
+        )
+        conn.unregister("certificate_batch_rows")
     finally:
         conn.close()
 

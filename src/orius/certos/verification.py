@@ -9,7 +9,7 @@ from typing import Any, Iterable, Mapping, Sequence
 import duckdb
 import pandas as pd
 
-from orius.dc3s.certificate import recompute_certificate_hash
+from orius.dc3s.certificate import normalize_certificate_schema, recompute_certificate_hash
 
 
 # ---------------------------------------------------------------------------
@@ -28,6 +28,7 @@ class ValidityVerdict:
 
 
 def missing_required_certificate_fields(certificate: Mapping[str, Any]) -> list[str]:
+    certificate = normalize_certificate_schema(certificate)
     return sorted(
         field
         for field in REQUIRED_CERTIFICATE_FIELDS
@@ -38,6 +39,7 @@ def missing_required_certificate_fields(certificate: Mapping[str, Any]) -> list[
 def count_present_required_certificate_fields(certificate: Mapping[str, Any] | None) -> int:
     if not isinstance(certificate, Mapping):
         return 0
+    certificate = normalize_certificate_schema(certificate)
     return sum(
         1
         for field in REQUIRED_CERTIFICATE_FIELDS
@@ -87,11 +89,45 @@ def _extract_reliability_weight(certificate: Mapping[str, Any]) -> float:
 
 
 def _chain_continuity_ok(cert: Mapping[str, Any], prev_cert: Mapping[str, Any] | None) -> bool:
+    cert = normalize_certificate_schema(cert)
     current_prev = cert.get("prev_hash")
     if prev_cert is None:
         return current_prev in (None, "")
-    previous_hash = dict(prev_cert).get("certificate_hash")
+    previous_hash = normalize_certificate_schema(prev_cert).get("certificate_hash")
     return current_prev not in (None, "") and current_prev == previous_hash
+
+
+def _hash_integrity_ok(raw_cert: Mapping[str, Any], normalized_cert: Mapping[str, Any]) -> tuple[bool, str]:
+    """Check certificate hash with legacy alias compatibility.
+
+    Some older runtime surfaces persisted ``certificate_horizon_steps`` and had
+    ``validity_horizon_H_t`` synthesized only during schema normalization.  That
+    synthesized alias is accepted only when it is exactly equal to the original
+    horizon alias; otherwise the canonical hash must cover the field.
+    """
+    observed_hash = normalized_cert.get("certificate_hash")
+    candidates: list[Mapping[str, Any]] = [raw_cert, normalized_cert]
+
+    horizon = normalized_cert.get("validity_horizon_H_t")
+    legacy_horizon = normalized_cert.get("certificate_horizon_steps")
+    if horizon not in (None, "") and legacy_horizon not in (None, ""):
+        try:
+            if int(horizon) == int(legacy_horizon):
+                without_synthesized_horizon = dict(normalized_cert)
+                without_synthesized_horizon.pop("validity_horizon_H_t", None)
+                candidates.append(without_synthesized_horizon)
+        except (TypeError, ValueError):
+            pass
+
+    stripped = {k: v for k, v in normalized_cert.items() if k not in NON_HASHED_EXTENSION_FIELDS}
+    candidates.append(stripped)
+
+    expected_hash = ""
+    for candidate in candidates:
+        expected_hash = recompute_certificate_hash(candidate)
+        if isinstance(observed_hash, str) and observed_hash == expected_hash:
+            return True, expected_hash
+    return False, expected_hash
 
 
 def formal_validity_predicate(
@@ -109,15 +145,9 @@ def formal_validity_predicate(
 
     This is the typed conjunction connecting the audit chain to the TSVR bound.
     """
-    cert_d = dict(cert)
+    cert_d = normalize_certificate_schema(cert)
 
-    observed_hash = cert_d.get("certificate_hash")
-    expected_hash = recompute_certificate_hash(cert_d)
-    hash_ok = isinstance(observed_hash, str) and observed_hash == expected_hash
-    if not hash_ok:
-        stripped = {k: v for k, v in cert_d.items() if k not in NON_HASHED_EXTENSION_FIELDS}
-        expected_hash = recompute_certificate_hash(stripped)
-        hash_ok = isinstance(observed_hash, str) and observed_hash == expected_hash
+    hash_ok, _ = _hash_integrity_ok(cert, cert_d)
 
     chain_ok = _chain_continuity_ok(cert_d, prev_cert)
 
@@ -179,7 +209,8 @@ def verify_composability(
     chain continuity ensures no gap between C_i and C_{i+1}, so risks
     sum over the episode.
     """
-    cert_list = [dict(c) for c in certificates]
+    raw_list = [dict(c) for c in certificates]
+    cert_list = [normalize_certificate_schema(c) for c in raw_list]
     T = len(cert_list)
     if T == 0:
         return ComposabilityResult(
@@ -191,12 +222,13 @@ def verify_composability(
     total_gap = 0.0
     prev_cert: Mapping[str, Any] | None = None
 
-    for i, cert in enumerate(cert_list):
+    for i, cert in enumerate(raw_list):
         verdict = formal_validity_predicate(cert, prev_cert, w_min)
         if not verdict.valid:
             failed_indices.append(i)
 
-        w_t = cert.get("reliability") or cert.get("w_t")
+        normalized_cert = cert_list[i]
+        w_t = normalized_cert.get("reliability") or normalized_cert.get("w_t")
         try:
             w_val = 0.0 if w_t in (None, "") else float(w_t)
         except (TypeError, ValueError):
@@ -380,24 +412,20 @@ def load_certificates_from_duckdb(duckdb_path: str | Path, table_name: str = "di
         payload.setdefault("certificate_hash", cert_hash)
         payload.setdefault("prev_hash", prev_hash)
         payload.setdefault("created_at", created_at)
-        certificates.append(payload)
+        certificates.append(normalize_certificate_schema(payload))
     return certificates
 
 
 def verify_certificates(certificates: Iterable[Mapping[str, Any]]) -> tuple[dict[str, Any], pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    cert_list = [dict(cert) for cert in certificates]
+    raw_list = [dict(cert) for cert in certificates]
+    cert_list = [normalize_certificate_schema(cert) for cert in raw_list]
     failure_rows: list[dict[str, Any]] = []
     expiry_rows: list[dict[str, Any]] = []
     hash_valid_flags: list[bool] = []
 
     for index, certificate in enumerate(cert_list):
         observed_hash = certificate.get("certificate_hash")
-        expected_hash = recompute_certificate_hash(certificate)
-        valid_hash = isinstance(observed_hash, str) and observed_hash == expected_hash
-        if not valid_hash:
-            stripped = {key: value for key, value in certificate.items() if key not in NON_HASHED_EXTENSION_FIELDS}
-            expected_hash = recompute_certificate_hash(stripped)
-            valid_hash = isinstance(observed_hash, str) and observed_hash == expected_hash
+        valid_hash, expected_hash = _hash_integrity_ok(raw_list[index], certificate)
         missing_fields = missing_required_certificate_fields(certificate)
         semantic_ok = certificate_intervention_semantics_valid(certificate)
         if not valid_hash or missing_fields or not semantic_ok:

@@ -128,6 +128,26 @@ class TestMakeCertificate:
         assert verification["valid"] is False
         assert verification["reason"] == "hash_mismatch"
 
+    def test_verify_certificate_chain_accepts_pre_schema_legacy_hash(self):
+        c1 = _cert(cmd_id="1")
+        for key in (
+            "certificate_schema_version",
+            "issuer",
+            "domain",
+            "action",
+            "theorem_contracts",
+            "signature",
+            "signature_algorithm",
+            "public_key_id",
+        ):
+            c1.pop(key, None)
+        c1["certificate_hash"] = recompute_certificate_hash(c1)
+
+        c2 = _cert(cmd_id="2", prev_hash=c1["certificate_hash"])
+        verification = verify_certificate_chain([c1, c2])
+
+        assert verification["valid"] is True
+
 
 class TestComputeModelHash:
     def test_stable_for_same_files(self, tmp_path):

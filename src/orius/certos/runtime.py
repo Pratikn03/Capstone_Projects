@@ -9,8 +9,6 @@ step-by-step runtime. Enforces the three CertOS invariants:
 """
 from __future__ import annotations
 
-import hashlib
-import json
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Sequence
 
@@ -19,6 +17,10 @@ import numpy as np
 from orius.certos.audit_ledger import AuditLedger
 from orius.certos.certificate_engine import CertificateEngine, LifecycleOp
 from orius.certos.recovery_manager import RecoveryManager
+from orius.dc3s.certificate import (
+    normalize_certificate_schema,
+    recompute_certificate_hash,
+)
 from orius.dc3s.guarantee_checks import check_soc_invariance
 
 
@@ -73,11 +75,24 @@ def _to_json_safe(obj: Any) -> Any:
     return obj
 
 
-def _cert_hash(cert: Mapping[str, Any]) -> str:
-    """Deterministic hash of a certificate dict."""
-    safe = _to_json_safe(cert)
-    payload = json.dumps(safe, sort_keys=True, default=str)
-    return hashlib.sha256(payload.encode()).hexdigest()[:16]
+def _canonical_certificate(cert: Mapping[str, Any]) -> dict[str, Any]:
+    """Materialize canonical certificate fields.
+
+    Legacy inputs may still carry ``cert_hash`` and are normalized by
+    ``normalize_certificate_schema``. New CertOS runtime certificates emit
+    ``certificate_hash`` as the canonical field; the audit ledger retains its
+    historical ``cert_hash`` column name as a compatibility view only.
+    """
+
+    normalized = normalize_certificate_schema(cert, issuer="orius.certos")
+    certificate_hash = recompute_certificate_hash(normalized)
+    normalized["certificate_hash"] = certificate_hash
+    return normalized
+
+
+def _certificate_hash(cert: Mapping[str, Any]) -> str:
+    value = cert.get("certificate_hash") or cert.get("cert_hash")
+    return "" if value in (None, "") else str(value)
 
 
 @dataclass
@@ -148,7 +163,7 @@ class CertOSRuntime:
         self._audit.append(
             LifecycleOp.ISSUE.value,
             self._step,
-            cert["cert_hash"],
+            _certificate_hash(cert),
             meta={"prev_hash": cert.get("prev_hash"), "validation_passed": False},
         )
         state = self._snapshot(
@@ -227,12 +242,12 @@ class CertOSRuntime:
         if cert is not None:
             revoked_cert = dict(cert)
             revoked_cert["prev_hash"] = self._prev_hash
-            revoked_cert["cert_hash"] = _cert_hash(revoked_cert)
-            self._prev_hash = revoked_cert["cert_hash"]
+            revoked_cert = _canonical_certificate(revoked_cert)
+            self._prev_hash = _certificate_hash(revoked_cert)
             self._audit.append(
                 LifecycleOp.REVOKE.value,
                 self._step,
-                revoked_cert["cert_hash"],
+                _certificate_hash(revoked_cert),
                 meta={"prev_hash": revoked_cert.get("prev_hash")},
             )
 
@@ -245,7 +260,7 @@ class CertOSRuntime:
         self._audit.append(
             LifecycleOp.FALLBACK.value,
             self._step,
-            meta={"reason": "revoked_certificate", "revoked_cert_hash": revoked_cert.get("cert_hash")},
+            meta={"reason": "revoked_certificate", "revoked_cert_hash": _certificate_hash(revoked_cert)},
         )
         self._last_validity = 0
         return self._snapshot(
@@ -322,7 +337,7 @@ class CertOSRuntime:
         self._audit.append(
             LifecycleOp.ISSUE.value,
             self._step,
-            cert["cert_hash"],
+            _certificate_hash(cert),
             meta={
                 "prev_hash": cert.get("prev_hash"),
                 "validation_passed": validation_passed,
@@ -352,7 +367,7 @@ class CertOSRuntime:
         self._audit.append(
             LifecycleOp.RENEW.value,
             self._step,
-            cert["cert_hash"],
+            _certificate_hash(cert),
             meta={
                 "prev_hash": cert.get("prev_hash"),
                 "validation_passed": validation_passed,
@@ -383,12 +398,12 @@ class CertOSRuntime:
         if expired_cert is not None:
             cert_for_state = dict(expired_cert)
             cert_for_state["prev_hash"] = self._prev_hash
-            cert_for_state["cert_hash"] = _cert_hash(cert_for_state)
-            self._prev_hash = cert_for_state["cert_hash"]
+            cert_for_state = _canonical_certificate(cert_for_state)
+            self._prev_hash = _certificate_hash(cert_for_state)
             self._audit.append(
                 LifecycleOp.EXPIRE.value,
                 self._step,
-                cert_for_state["cert_hash"],
+                _certificate_hash(cert_for_state),
                 meta={
                     "prev_hash": cert_for_state.get("prev_hash"),
                     "validation_passed": validation_passed,
@@ -403,7 +418,7 @@ class CertOSRuntime:
             self._step,
             meta={
                 "reason": "expired_certificate",
-                "expired_cert_hash": cert_for_state.get("cert_hash"),
+                "expired_cert_hash": _certificate_hash(cert_for_state),
                 "validation_passed": validation_passed,
             },
         )
@@ -439,7 +454,7 @@ class CertOSRuntime:
             lifecycle_op=lifecycle_op,
             validation_passed=validation_passed,
             hash_chain_ok=self._verify_hash_chain(),
-            cert_hash=cert.get("cert_hash"),
+            cert_hash=_certificate_hash(cert),
             prev_hash=cert.get("prev_hash"),
         )
 
@@ -460,9 +475,9 @@ class CertOSRuntime:
             raise ValueError(f"Unsupported certificate op for chaining: {op}")
 
         cert["prev_hash"] = self._prev_hash
-        cert["cert_hash"] = _cert_hash(cert)
+        cert = _canonical_certificate(cert)
         self._cert_engine.replace_current(cert)
-        self._prev_hash = cert["cert_hash"]
+        self._prev_hash = _certificate_hash(cert)
         return cert
 
     def _validate_current(self, validity_horizon: int) -> tuple[bool, dict[str, Any]]:
@@ -479,7 +494,7 @@ class CertOSRuntime:
             "reason": "current_certificate_checked",
             "validity_horizon": validity_horizon,
             "current_status": current.get("status"),
-            "current_cert_hash": current.get("cert_hash"),
+            "current_cert_hash": _certificate_hash(current),
             "required_certificate_fields": sorted(required_fields),
             "missing_certificate_fields": missing_fields,
             "result": passed,
@@ -487,7 +502,7 @@ class CertOSRuntime:
         self._audit.append(
             LifecycleOp.VALIDATE.value,
             self._step,
-            current.get("cert_hash"),
+            _certificate_hash(current),
             meta=meta,
         )
         return passed, meta
