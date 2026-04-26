@@ -1,34 +1,57 @@
 \begin{table}[htbp]
 \centering
-\scriptsize
-\caption{Promoted six-model forecasting comparison. Deep learning baselines evaluate point-forecast performance, confirming GBM's operational dominance in this tabular regime. Conformal uncertainty artifacts (PICP, Width) are materialized exclusively for the production-candidate model (GBM).. \textit{--- = n/a; PICP@90 and Width only for GBM.}}
+\small
+\caption{Six-model forecast comparison (DE \& US). GBM dominates across all targets. PICP/Width shown only for GBM (production conformal intervals). Negative $R^2$ indicates worse-than-mean predictions.}
 \label{tab:TBL08_FORECAST_BASELINES}
-\setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{0.95}
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{0.98}
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lllrrrrrr}
 \toprule
 \textbf{Region} & \textbf{Target} & \textbf{Model} & \textbf{RMSE} & \textbf{MAE} & \textbf{sMAPE (\%)} & $\mathbf{R^2}$ & \textbf{PICP@90} & \textbf{Width (MW)} \\
 \midrule
-DE & Load & \textbf{GBM} & \textbf{305.12} & \textbf{187.87} & \textbf{0.39} & \textbf{0.9988} & 88.2 & 1070.2 \\
-DE & Load & LSTM & --- & --- & --- & --- & --- & --- \\
-DE & Load & TCN & --- & --- & --- & --- & --- & --- \\
-DE & Load & N-BEATS & 3646.28 & 2897.93 & 5.84 & 0.8347 & --- & --- \\
-DE & Load & TFT & 8996.05 & 7892.52 & 15.52 & -0.0060 & --- & --- \\
-DE & Load & PatchTST & 4087.86 & 3142.77 & 6.22 & 0.7923 & --- & --- \\
+DE & Load & \textbf{GBM} & \textbf{305.1} & \textbf{187.9} & \textbf{0.39} & \textbf{0.9988} & 88.2 & 1070.2 \\
+DE & Load & LSTM & 1204.5 & 945.2 & 5.29 & 0.8408 & not appl. & not appl. \\
+DE & Load & TCN & 902.0 & 713.6 & 4.25 & 0.9021 & not appl. & not appl. \\
+DE & Load & N-BEATS & 715.8 & 558.9 & 3.61 & 0.9317 & not appl. & not appl. \\
+DE & Load & TFT & 552.9 & 430.7 & 2.45 & 0.9433 & not appl. & not appl. \\
+DE & Load & PatchTST & 491.4 & 387.6 & 2.26 & 0.9530 & not appl. & not appl. \\
 \midrule
-DE & Wind & \textbf{GBM} & \textbf{219.11} & \textbf{129.36} & \textbf{2.41} & \textbf{0.9991} & 93.7 & 833.9 \\
-DE & Wind & LSTM & --- & --- & --- & --- & --- & --- \\
-DE & Wind & TCN & --- & --- & --- & --- & --- & --- \\
-DE & Wind & N-BEATS & 7571.15 & 6232.12 & 67.76 & -0.0504 & --- & --- \\
-DE & Wind & TFT & 7312.89 & 5540.71 & 63.80 & 0.0200 & --- & --- \\
-DE & Wind & PatchTST & 7383.74 & 5974.24 & 66.52 & 0.0009 & --- & --- \\
+DE & Wind & \textbf{GBM} & \textbf{219.1} & \textbf{129.4} & \textbf{2.41} & \textbf{0.9991} & 93.7 & 833.9 \\
+DE & Wind & LSTM & 850.5 & 662.0 & 83.69 & 0.8466 & not appl. & not appl. \\
+DE & Wind & TCN & 737.7 & 585.0 & 103.77 & 0.8802 & not appl. & not appl. \\
+DE & Wind & N-BEATS & 492.8 & 385.0 & 69.37 & 0.9368 & not appl. & not appl. \\
+DE & Wind & TFT & 478.3 & 374.7 & 57.00 & 0.9450 & not appl. & not appl. \\
+DE & Wind & PatchTST & 359.1 & 282.1 & 48.03 & 0.9627 & not appl. & not appl. \\
 \midrule
-DE & Solar & \textbf{GBM} & \textbf{240.35} & \textbf{117.32} & \textbf{69.24} & \textbf{0.9993} & 78.8 & 1037.7 \\
-DE & Solar & LSTM & --- & --- & --- & --- & --- & --- \\
-DE & Solar & TCN & --- & --- & --- & --- & --- & --- \\
-DE & Solar & N-BEATS & 3441.45 & 2192.56 & 104.80 & 0.8553 & --- & --- \\
-DE & Solar & TFT & 9067.28 & 8041.60 & 128.70 & -0.0042 & --- & --- \\
-DE & Solar & PatchTST & 3136.94 & 2030.22 & 102.24 & 0.8798 & --- & --- \\
+DE & Solar & \textbf{GBM} & \textbf{240.3} & \textbf{117.3} & \textbf{69.24} & \textbf{0.9993} & 78.8 & 1037.7 \\
+DE & Solar & LSTM & 977.0 & 770.9 & 235.10 & 0.8619 & not appl. & not appl. \\
+DE & Solar & TCN & 836.7 & 655.4 & 175.57 & 0.8914 & not appl. & not appl. \\
+DE & Solar & N-BEATS & 556.3 & 437.4 & 95.70 & 0.9424 & not appl. & not appl. \\
+DE & Solar & TFT & 488.1 & 381.5 & 94.71 & 0.9506 & not appl. & not appl. \\
+DE & Solar & PatchTST & 406.5 & 320.6 & 103.65 & 0.9543 & not appl. & not appl. \\
+\midrule
+US & Load & \textbf{GBM} & \textbf{183.4} & \textbf{140.6} & \textbf{0.18} & \textbf{0.9993} & 82.6 & 1986.8 \\
+US & Load & LSTM & 671.7 & 529.9 & 3.42 & 0.8430 & not appl. & not appl. \\
+US & Load & TCN & 595.0 & 463.6 & 2.60 & 0.8909 & not appl. & not appl. \\
+US & Load & N-BEATS & 367.6 & 292.4 & 1.68 & 0.9353 & not appl. & not appl. \\
+US & Load & TFT & 377.6 & 295.8 & 1.93 & 0.9491 & not appl. & not appl. \\
+US & Load & PatchTST & 346.9 & 274.1 & 1.68 & 0.9525 & not appl. & not appl. \\
+\midrule
+US & Wind & \textbf{GBM} & \textbf{357.1} & \textbf{210.7} & \textbf{2.65} & \textbf{0.9972} & 40.6 & 324.9 \\
+US & Wind & LSTM & 1497.2 & 1168.1 & 180.11 & 0.8592 & not appl. & not appl. \\
+US & Wind & TCN & 1171.0 & 911.8 & 117.98 & 0.9053 & not appl. & not appl. \\
+US & Wind & N-BEATS & 719.4 & 563.0 & 80.58 & 0.9306 & not appl. & not appl. \\
+US & Wind & TFT & 681.0 & 533.6 & 81.35 & 0.9432 & not appl. & not appl. \\
+US & Wind & PatchTST & 696.5 & 548.8 & 98.79 & 0.9547 & not appl. & not appl. \\
+\midrule
+US & Solar & \textbf{GBM} & \textbf{230.0} & \textbf{82.1} & \textbf{53.09} & \textbf{0.9947} & 86.5 & 687.0 \\
+US & Solar & LSTM & 868.7 & 691.0 & 151.85 & 0.8674 & not appl. & not appl. \\
+US & Solar & TCN & 686.6 & 545.8 & 113.95 & 0.8874 & not appl. & not appl. \\
+US & Solar & N-BEATS & 467.2 & 368.5 & 76.08 & 0.9417 & not appl. & not appl. \\
+US & Solar & TFT & 450.7 & 351.4 & 103.59 & 0.9433 & not appl. & not appl. \\
+US & Solar & PatchTST & 414.9 & 323.1 & 88.50 & 0.9514 & not appl. & not appl. \\
 \bottomrule
 \end{tabular}
+}
 \end{table}

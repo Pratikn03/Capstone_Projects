@@ -192,8 +192,8 @@ T2 Safety Preservation & \checkmark & \checkmark & \checkmark & \checkmark & \ch
 T3 Core Bound & \checkmark & \checkmark & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Predictable risk-envelope budget $r_t \le \alpha(1-w_t)$ \\
 T4 No Free Safety & & \checkmark & & & & & & & & & Fixed-margin, quality-ignorant controller class and admissible degraded-observation witness \\
 T5 Certificate Horizon & \checkmark & \checkmark & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Forward-tube containment construction \\
-T6 Certificate Expiration Bound & & & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Drift-scale lower-bound argument for certificate expiration \\
-T7 Feasible Fallback Existence & \checkmark & & \checkmark & \checkmark & & & & & & \checkmark & Interior-state fallback construction \\
+T6 Certificate Expiration Bound & & & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Closed-form first-passage lower bound with explicit confidence parameter \\
+T7 Feasible Fallback Existence & \checkmark & & & \checkmark & & & & & & \checkmark & Piecewise hold-or-safe-landing fallback construction \\
 T8 Graceful Degradation Dominance & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & & & & & \checkmark & Shared-fault comparison coupling between graceful and uncontrolled release \\
 T9 Universal Impossibility & & & & \checkmark & & & & \checkmark & & & Per-window degraded-observation witness under persistent degradation \\
 T10 Boundary-Indistinguishability Lower Bound & \checkmark & \checkmark & & & & \checkmark & & & & & Boundary prior and observation-law indistinguishability hypothesis \\
@@ -212,8 +212,8 @@ needed for the specific theorem in that row.
 
 The dependency matrix above covers the active T1--T11 audit surface, not a
 flat defended ladder.  The registry-canonical defended core is smaller:
-T1, T2, T3a, T4, T11, and T\textsubscript{trajectory\_PAC} carry the
-flagship spine; T3b, T6, T8, T11\textsubscript{Byz}, and
+T1, T2, T3a, T4, T6, T7, T11, and T\textsubscript{trajectory\_PAC} carry the
+flagship spine; T3b, T8, T11\textsubscript{Byz}, and
 T\textsubscript{stale} remain supporting defended results; the remaining rows
 stay visible only as draft or scoped extension surfaces.  The monograph-level
 extension adds T9--T11, each of which answers a distinct control-theory

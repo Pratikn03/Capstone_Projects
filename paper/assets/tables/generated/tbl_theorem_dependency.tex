@@ -4,6 +4,7 @@
 \centering
 \caption{DC3S Theorem Dependency and Proof Completeness. Each formal result is implemented in code and tested by at least one automated test.}
 \label{tbl:theorem_dependency}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{lllll}
 \toprule
 \textbf{Result} & \textbf{Name} & \textbf{Depends On} & \textbf{Proof Method} & \textbf{Code Reference} \\
@@ -17,5 +18,6 @@ Thm.~10 & Hoeffding high-prob.\ bound & Thm.~3 & Hoeffding inequality & \texttt{
 Thm.~11 & Byzantine OQE reliability bound & Defn.~1 & Trimmed-mean theory & \texttt{quality.py:compute\_reliability\_robust()} \\
 \bottomrule
 \multicolumn{5}{l}{\small All results are unit-tested in \texttt{tests/test\_conditional\_coverage.py} and \texttt{tests/test\_adversarial\_faults.py}.}\\
-\end{tabular}
+\end{tabular}%
+}
 \end{table}

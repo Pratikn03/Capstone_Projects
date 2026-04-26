@@ -6,18 +6,15 @@
 \centering
 \caption{Domain state schema for ORIUS universal framework.}
 \label{tab:universal-state}
-\begin{tabular}{llll}
+\begin{tabularx}{\textwidth}{@{}lXlX@{}}
 \toprule
 \textbf{Domain} & \textbf{State Fields} & \textbf{Unit} & \textbf{Description} \\
 \midrule
-Energy & soc\_mwh, load\_mw, renewables\_mw & MWh, MW & Battery SOC, grid load \\
-AV & position\_m, speed\_mps, speed\_limit\_mps, lead\_position\_m & m, m/s & Longitudinal kinematics \\
-Navigation & x, y, vx, vy & m, m/s & 2D bounded-arena navigation \\
-Industrial & temp\_c, pressure\_mbar, humidity\_pct, power\_mw & °C, mbar, \%, MW & Process variables \\
-Healthcare & hr\_bpm, spo2\_pct, respiratory\_rate & bpm, \%, /min & Vital signs \\
-Aerospace & altitude\_m, airspeed\_kt, bank\_angle\_deg, fuel\_remaining\_pct & m, kt, deg, \% & Flight-envelope state \\
+Battery & soc\_mwh, load\_mw, renewables\_mw & MWh, MW & Battery SOC and dispatch context \\
+AV & ego\_speed\_mps, relative\_gap\_m, ttc & m/s, m, s & Bounded nuPlan longitudinal replay context \\
+Healthcare & hr\_bpm, spo2\_pct, respiratory\_rate & bpm, \%, /min & Retrospective monitoring and alert context \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 % Table 2: Safety Predicates
@@ -25,18 +22,15 @@ Aerospace & altitude\_m, airspeed\_kt, bank\_angle\_deg, fuel\_remaining\_pct & 
 \centering
 \caption{Safety predicates per domain.}
 \label{tab:universal-safety}
-\begin{tabular}{lll}
+\begin{tabularx}{\textwidth}{@{}lXX@{}}
 \toprule
 \textbf{Domain} & \textbf{Safety Predicate} & \textbf{Config Key} \\
 \midrule
-Energy & SOC $\in$ [min\_soc, max\_soc]; charge/discharge mutual exclusion & min\_soc\_mwh \\
-AV & $v \leq v_{\max}$; $x_{\mathrm{lead}} - x \geq d_{\min}(v)$ & speed\_limit\_mps \\
-Navigation & $(x,y)$ remains inside arena bounds and outside obstacle set & arena\_min, arena\_max \\
-Industrial & temp $\in$ [T$_{\min}$, T$_{\max}$]; power $\in$ [0, P$_{\max}$] & power\_max\_mw \\
-Healthcare & hr $\in$ [hr$_{\min}$, hr$_{\max}$]; SpO$_2$ $\geq$ spo2$_{\min}$ & spo2\_min\_pct \\
-Aerospace & $v \in$ [v$_{\min}$, v$_{\max}$]; $|\mathrm{bank}| \leq \mathrm{bank}_{\max}$; fuel $\geq$ fuel$_{\min}$ & v\_min\_kt, max\_bank\_deg \\
+Battery & SOC $\in$ [min\_soc, max\_soc]; charge/discharge mutual exclusion & min\_soc\_mwh \\
+AV & TTC and predictive-entry barrier remain satisfied on the bounded nuPlan replay state & ttc\_min, gap\_min \\
+Healthcare & vital alert release remains inside the bounded monitoring envelope & spo2\_min\_pct, hr\_bounds \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 % Table 3: Pipeline Stages

@@ -56,6 +56,7 @@ article bundle. That means:
    - benchmark and governance protocol,
    - three defended program rows under one template,
    - cross-domain synthesis and explicit non-claims,
+   - an archival source register for tracked historical/depth material,
    - appendix-heavy artifact and review traceability.
 
 3. **artifact-grounded writing**
@@ -75,17 +76,18 @@ The canonical long-form story is spread across:
 - `../orius_book.tex` for the canonical submission monograph controller,
 - `paper.tex` for the mirrored internal controller that shares the same chapter spine,
 - `monograph/` for generator-owned universal-first chapter blocks,
-- `chapters/` for curated depth chapters that remain outside the generator,
+- `chapters/` and `chapters_merged/` for tracked historical/depth chapters indexed for provenance,
+- `longform/` for section-level extension packets retained as archive sources,
 - `appendices/` for proofs, audits, and traceability,
 - `review/` for the separate reviewer dossier,
 - `reports/publication/` for locked result artifacts and monograph matrices.
 
-Older article-lineage or archive-style artifacts may still exist in the repo for
-historical provenance, but they are not the reader-facing control surface of the
-book. In particular, `../orius_battery_409page_figures_upgraded_main.tex` is an
-internal archival controller, not the submission authority, and it must not be
-used as evidence for defended three-domain claims unless its content is first
-rewritten to the same Battery + AV + Healthcare truth surface.
+The canonical PDF now indexes bounded archive material for provenance, but the
+headline defended claim surface remains Battery + AV + Healthcare. In
+particular, `../orius_battery_409page_figures_upgraded_main.tex` is still an
+internal archival controller, not the submission authority, and archive text
+must not be used as evidence for defended three-domain claims unless its content
+is first rewritten to the same Battery + AV + Healthcare truth surface.
 
 Important proof/evidence sources:
 
@@ -151,7 +153,7 @@ Primary commands:
 |---|---|
 | `make orius-monograph-assets` | Regenerate monograph chapters, bibliography, review package, and publication matrices |
 | `make paper-verify` | Run manuscript and claim validation |
-| `make paper-compile` | Compile the canonical monograph from `orius_book.tex` to `paper/paper.pdf` and repo-root `paper.pdf` |
+| `make paper-compile` | Compile the senior-review single-flow monograph from `orius_book.tex` to `paper/paper.pdf` and repo-root `paper.pdf` |
 | `make review-compile` | Compile the reviewer dossier PDF |
 | `make orius-book` | Verify and compile the main monograph |
 | `make orius-review-pack` | Build the reviewer dossier companion |

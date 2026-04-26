@@ -1,21 +1,18 @@
 \begin{table}[htbp]
 \centering
 \scriptsize
-\caption{Tiered validation status across the six runtime domains: reference, proof-validated, bounded proof-validated, shadow-synthetic, and experimental.}
+\caption{Tiered validation status across the active three runtime domains.}
 \label{tab:TBL10_DOMAIN_VALIDATION_STATUS}
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{0.96}
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{llllrllrrrrrl}
+\begin{tabular}{lrrl}
 \toprule
-domain & maturity\_label & validation\_status & closure\_target\_tier & closure\_target\_ready & closure\_blocker & harness\_status & baseline\_tsvr\_mean & baseline\_tsvr\_std & orius\_tsvr\_mean & orius\_tsvr\_std & orius\_reduction\_pct & evidence\_pass \\
+domain & baseline\_tsvr\_mean & orius\_tsvr\_mean & metric\_surface \\
 \midrule
-battery & reference & reference\_validated & witness\_row & True & --- & pass & 0.750000 & 0.000000 & 0.875000 & 0.000000 & -16.700000 & --- \\
-navigation & shadow\_synthetic & shadow\_synthetic & defended\_bounded\_row & False & navigation\_real\_data\_row\_missing & pass & 0.666700 & 0.000000 & 0.250000 & 0.000000 & 62.500000 & True \\
-industrial & proof\_validated & proof\_validated & defended\_bounded\_row & True & --- & pass & 1.000000 & 0.000000 & 0.000000 & 0.000000 & 100.000000 & True \\
-healthcare & proof\_validated & proof\_validated & defended\_bounded\_row & True & --- & pass & 1.000000 & 0.000000 & 0.583300 & 0.000000 & 41.700000 & True \\
-aerospace & experimental & experimental & defended\_bounded\_row & False & real\_multi\_flight\_safety\_task\_missing & pass & 1.000000 & 0.000000 & 0.000000 & 0.000000 & 100.000000 & True \\
-vehicle & proof\_validated & proof\_validated & defended\_bounded\_row & True & --- & pass & 0.083300 & 0.000000 & 0.000000 & 0.000000 & 100.000000 & True \\
+battery & 0.008333 & 0.000000 & locked\_publication\_nominal \\
+vehicle & 0.289250 & 0.000163 & runtime\_denominator \\
+healthcare & 0.194489 & 0.000000 & runtime\_denominator \\
 \bottomrule
 \end{tabular}
 

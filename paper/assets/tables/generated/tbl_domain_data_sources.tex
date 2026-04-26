@@ -1,12 +1,12 @@
-% Domain Data Sources Table (static — all 6 ORIUS-Bench domains)
+% Domain Data Sources Table for the defended Battery + AV + Healthcare surface.
 % Extends tbl05_dataset_summary and tbl07_dataset_cards beyond battery domain.
 \begin{table*}[htbp]
 \centering\small
-\caption{Data provenance for all six ORIUS-Bench domains. Battery uses two locked real-grid
-  datasets (DE OPSD + EIA-930); Healthcare and Industrial use publicly available benchmarks;
-  Vehicle, Aerospace, and Navigation use ORIUS-Bench synthetic environments calibrated to
-  realistic operating envelopes. All domains share the same DC3S pipeline with domain-specific
-  adapters (see Table~\ref{tab:universal_adapter_params}).}
+\caption{Data provenance for the defended three-domain ORIUS surface. Battery uses two
+  locked real-grid datasets (DE OPSD + EIA-930); Vehicle uses the all-zip grouped nuPlan
+  replay surface; Healthcare uses public physiologic monitoring benchmarks. The three
+  promoted rows share the same DC3S pipeline with domain-specific adapters
+  (see Table~\ref{tab:universal_adapter_params}).}
 \label{tab:domain_data_sources}
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.05}
@@ -25,49 +25,24 @@ Battery (Ref.)
   & \checkmark \\
 \midrule
 Vehicle (AV)
-  & ORIUS-Bench kinematic env.
-  & Synthetic
-  & 240
+  & all-zip grouped nuPlan replay
+  & Replay
+  & 379{,}442
   & $x$, $v$, $x^{\text{lead}}$, $v_{\text{lim}}$
   & $v \leq v_{\max}$, headway $\geq d_{\min}(v)$
-  & proof\_validated
-  & — \\
+  & bounded
+  & \checkmark \\
 Healthcare
   & PhysioNet BIDMC (Goldberger~et~al.)
   & Real ICU vitals
   & 4{,}000
   & HR$_{\text{bpm}}$, SpO$_2$, RR
   & SpO$_2 \geq 90$\,\%, HR $\in [40,120]$
-  & proof\_validated
-  & — \\
-Industrial
-  & UCI CCPP (Combined Cycle Power Plant)
-  & Real process data
-  & 9{,}568
-  & AT, V, AP, RH, Power$_{\text{MW}}$
-  & Power $\leq 500$\,MW, Temp $\leq 120$\,°C
-  & proof\_validated
-  & — \\
-Aerospace
-  & ORIUS-Bench flight env.
-  & Synthetic
-  & 240
-  & Alt, IAS$_{\text{kt}}$, Bank°, Fuel
-  & $|\text{bank}| \leq 30°$, IAS $\in [60,350]$\,kt
-  & proof\_validated
-  & — \\
-Navigation
-  & ORIUS-Bench arena env.
-  & Synthetic
-  & 240
-  & $x$, $y$, $v_x$, $v_y$
-  & $x,y \in [0, s]$, $\|a\| \leq v_{\lim}$
-  & proof\_validated
-  & — \\
+  & bounded
+  & \checkmark \\
 \bottomrule
 \multicolumn{8}{l}{\small Battery rows: 17{,}377 = 4 datasets $\times$ hourly timestamps (DE 2018--2020,
-  EIA-930 2018--2020). Synthetic rows: 5\,seeds $\times$ 48\,steps.}\\
-\multicolumn{8}{l}{\small Locked \checkmark: metric values frozen in published thesis; proof-domain
-  results regenerate deterministically from seed.}\\
+  EIA-930 2018--2020). AV rows are completed all-zip grouped nuPlan feature anchors.}\\
+\multicolumn{8}{l}{\small Locked \checkmark: promoted metric values are frozen in the published three-domain evidence package.}\\
 \end{tabular}
 \end{table*}

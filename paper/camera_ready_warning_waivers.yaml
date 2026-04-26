@@ -19,6 +19,10 @@ logs:
   paper/ieee/orius_ieee_main.log:
     - "^Underfull \\\\hbox .*"
     - "^Overfull \\\\hbox .*"
+  paper/ieee/orius_ieee_detailed_main.log:
+    - "^Underfull \\\\hbox .*"
+    - "^Overfull \\\\hbox .*"
+    - "^LaTeX Warning: `h' float specifier changed to `ht'\\.$"
   paper/ieee/orius_ieee_appendix.log:
     - "^Underfull \\\\hbox .*"
     - "^Overfull \\\\hbox .*"

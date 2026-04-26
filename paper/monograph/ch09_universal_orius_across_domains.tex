@@ -28,7 +28,11 @@ program. Without it, ``universal'' would reduce to analogy. With it, the reader 
 exactly how a domain is instantiated and where its evidence status currently sits.
 
 \section{Cross-domain status at a glance}
-\input{reports/publication/tbl_orius_domain_closure_matrix}
+\IfFileExists{reports/publication/tbl_orius_domain_closure_matrix.tex}{%
+  \input{reports/publication/tbl_orius_domain_closure_matrix}%
+}{%
+  \input{../reports/publication/tbl_orius_domain_closure_matrix}%
+}
 
 The domain-closure matrix belongs in the main line of the argument because it keeps the
 universality claim honest. Battery is the witness row. The autonomous-vehicle row and the
@@ -64,7 +68,7 @@ monitoring behavior rather than mechanical actuation.
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.92\textwidth]{fig_multi_domain_validation}
+\includegraphics[width=0.92\textwidth]{fig_multi_domain_validation.png}
 \caption{Cross-domain ORIUS validation surface. One runtime grammar carries across the
 active three-domain program, while each row remains limited by its own defended evidence
 surface.}

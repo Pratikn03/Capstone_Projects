@@ -1,2 +1,5 @@
 transfer_case,source_artifact,picp_90,mean_width,true_soc_violation_rate,true_soc_violation_severity_p95_mwh,cost_delta_pct
-pending_transfer_artifacts,,,,,,
+DE_to_US_Transfer_Shift,dc3s_wrapped,0.480159,1022.564163,0.000000,0.000000,0.050000
+DE_to_US_Transfer_Shift,deterministic_lp,0.468254,951.890877,0.079365,229.085400,0.000000
+DE_to_US_Transfer_Shift,cvar_interval,0.468254,951.890877,0.317460,0.289062,0.000000
+DE_to_US_Transfer_Shift,robust_fixed_interval,0.781746,3540.801829,0.317460,0.289062,0.000000

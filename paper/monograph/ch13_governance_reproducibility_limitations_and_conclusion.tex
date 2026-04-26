@@ -24,7 +24,10 @@ across two peer rows.
 The dissertation does not claim:
 \begin{itemize}
   \item empirical closure beyond the active Battery + AV + Healthcare program;
-  \item universal statistical calibration under arbitrary shift;
+  \item universal statistical calibration under arbitrary shift or adversarial calibration-data poisoning;
+  \item sub-millisecond inner-loop safety filters (DC³S acts as an outer-loop supervisor at 5--10 Hz, constrained by runtime optimization latency);
+  \item closed-loop reactive physics for Autonomous Vehicles (the AV evaluation uses open-loop trace surrogate replay to isolate the OASG hazard, bounding it short of a live ROS2/CARLA integration);
+  \item hardware control-authority preservation (ORIUS assumes actuation mechanisms remain physically viable even when observation degrades);
   \item production deployment readiness in every plant family; or
   \item formal certification compliance under UL 4600, NIST AI RMF, ISO 26262, or IEC 61508.
 \end{itemize}
@@ -46,10 +49,19 @@ the dissertation is universal in architecture, tiered in evidence.
 \section{Threats to validity}
 The largest threats to validity are asymmetry and interpretation. Asymmetry arises because
 the witness row is much deeper than the other promoted rows. Interpretation risk arises
-because readers may confuse structural universality with broader empirical closure. The
-dissertation addresses the first risk by keeping the witness role explicit and by preserving
-the domain-closure matrix in the main narrative. It addresses the second risk by separating
-proved, validated, and roadmap claims at the major boundary chapters.
+because readers may confuse structural universality with broader empirical closure. For
+example, while DC³S mathematically proves Feasible Fallback (Theorem~7), if a vehicle's
+physical brakes are severed (an actuation failure), no epistemic observation wrapper can save
+it. Furthermore, the Conformal Coverage guarantees (Theorem~3) implicitly assume the
+historical calibration dataset $X_{\text{calib}}$ has not been systemically poisoned. If
+calibration data inherently contains degraded telemetry, the resulting probability
+intervals will silently fail to bound the constraint geometry.
+
+The dissertation addresses the first risk by keeping the witness role explicit and by
+preserving the domain-closure matrix in the main narrative. It addresses the interpretation
+risk by strictly scoping the actuation authority boundaries, declaring the AV trace-replay
+limitations, and separating proved, validated, and roadmap claims at the major boundary
+chapters.
 
 \section{Conclusion}
 The argument of this dissertation can now be stated plainly. Degraded observation is not a

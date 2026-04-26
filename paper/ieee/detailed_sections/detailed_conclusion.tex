@@ -9,7 +9,9 @@ contracts and domain-agnostic governance.
 
 \subsection{Summary of Results}
 
-We validated ORIUS on two disparate cyber-physical domains with equal depth:
+We validated ORIUS on a three-domain defended lane with intentionally unequal
+evidence tiers: Battery is the theorem-grade witness row, AV is an all-zip grouped
+nuPlan replay row, and Healthcare is a bounded retrospective monitoring row.
 
 \paragraph{Battery Energy Storage.}
 \begin{itemize}[nosep]
@@ -21,22 +23,30 @@ We validated ORIUS on two disparate cyber-physical domains with equal depth:
 
 \paragraph{Autonomous Vehicles.}
 \begin{itemize}[nosep]
-  \item 1{,}975 Waymo scenarios (7 shards), 80{,}975 feature steps.
-  \item 228 test scenarios, 9{,}348 runtime steps.
-  \item \textbf{TSVR reduced} from 0.660 (baseline) to 0.628 (ORIUS), $-4.8\%$.
-  \item 90.2\% intervention rate: the shield actively repairs unsafe actions.
-  \item 9{,}348 safety certificates, all chain-valid, 100\% audit completeness.
-  \item Fault-family coverage $\ge 0.977$ across all 6 fault families and both
-        targets.
+  \item Completed all-zip grouped nuPlan replay surface with 37{,}344 held-out
+        runtime scenarios and 1{,}531{,}104 runtime steps.
+  \item \textbf{TSVR reduced} from 0.2893 (baseline) to 0.000163 (ORIUS).
+  \item 50.03\% intervention rate and 17.37\% fallback activation rate.
+  \item 1{,}531{,}104 safety certificates, 99.992\% certificate-valid release rate,
+        and 100\% audit completeness on the promoted row.
+  \item Relative-gap shift coverage remains an explicit limitation; the row is not
+        promoted as full closed-loop road deployment.
+\end{itemize}
+
+\paragraph{Healthcare Monitoring.}
+\begin{itemize}[nosep]
+  \item Bounded MIMIC-backed monitoring and alert-release row.
+  \item Retrospective evidence only; no prospective clinical deployment,
+        regulatory approval, or treatment recommendation is claimed.
 \end{itemize}
 
 \subsection{Key Insights}
 
 \begin{enumerate}[nosep]
-  \item \textbf{Universality is practical}: The same kernel binary, contract stack,
-        and governance surface handle both a slow-timescale energy system and a
-        fast-timescale autonomous vehicle system.  Domain adaptation requires only
-        implementing six typed adapter methods.
+  \item \textbf{Typed transfer is practical}: The same kernel binary, contract stack,
+        and governance surface handle a slow-timescale energy system, a bounded AV
+        replay surface, and a retrospective healthcare monitoring row. Domain
+        adaptation requires only implementing six typed adapter methods.
   \item \textbf{Degradation-proportional conservatism}: The inflation mechanism
         (\cref{eq:inflation}) provides a smooth trade-off between safety and
         performance, becoming more conservative precisely when observation quality
@@ -51,8 +61,9 @@ We validated ORIUS on two disparate cyber-physical domains with equal depth:
 
 \subsection{Impact}
 
-ORIUS demonstrates that it is possible to build a single, reusable runtime safety
-layer that works across CPS domains without domain-specific kernel modifications.
-As AI controllers are deployed into increasingly safety-critical applications, the
-need for such universal safety layers will only grow.  We release all code, data,
-and artifacts under an open licence to support reproducibility and future research.
+ORIUS demonstrates that a single runtime safety kernel can be reused across
+different CPS semantics without rewriting the kernel itself. The camera-ready claim
+is deliberately bounded: Battery supplies the deepest proof witness, nuPlan AV shows
+bounded replay transfer, and Healthcare shows bounded retrospective monitoring.  The
+next scientific step is not broader rhetoric; it is larger denominators, closed-loop
+AV evidence, and prospective healthcare governance under the same certificate gate.

@@ -9,7 +9,8 @@ multiple places.
 
 \begin{table}[htbp]
 \centering
-\caption{Source dataset cards for the six defended or planned ORIUS data surfaces.}
+\caption{Source dataset cards and manifests for the active three-domain ORIUS
+claim surface.}
 \label{tab:dataset-card-index}
 \begin{tabular}{p{2.2cm}p{4.6cm}p{7.0cm}}
 \toprule
@@ -17,15 +18,14 @@ multiple places.
 \midrule
 OPSD & Open Power System Data Germany witness row & \path{docs/data_cards/opsd.md} \\
 EIA-930 & U.S.\ balancing-authority battery transfer rows & \path{docs/data_cards/eia930.md} \\
-KITTI & Navigation real-data closure source & \path{docs/data_cards/kitti.md} \\
-C-MAPSS & Aerospace trainable companion surface & \path{docs/data_cards/cmapss.md} \\
-MIMIC & Credentialed ICU expansion boundary & \path{docs/data_cards/mimic.md} \\
-CCPP & Industrial defended bounded row & \path{docs/data_cards/ccpp.md} \\
+nuPlan & Bounded AV replay row and source manifest & \path{docs/data_cards/nuplan.md} \\
+MIMIC & Credentialed ICU monitoring boundary & \path{docs/data_cards/mimic.md} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \noindent Each card records source provenance, split policy, preprocessing,
-known issues, and the exact role the dataset plays in the defended ORIUS
-claim surface.  The cards are intended to be updated alongside the raw-data
-manifests and release-manifest refresh pipeline.
+known issues, and the exact role the dataset plays in the active ORIUS
+claim boundary.  The cards are intended to be updated alongside the raw-data
+manifests and release-manifest refresh pipeline; no raw nuPlan archives are
+Git-tracked.

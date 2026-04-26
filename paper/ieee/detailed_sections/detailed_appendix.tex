@@ -73,8 +73,8 @@ T2  & One-Step Safety Preservation      & A1--A3, A5, A7 & Proof + Empirical + C
 T3  & ORIUS Core Bound                  & A1, A2, A4--A7 & Proof + Empirical + Code \\
 T4  & No Free Safety                    & A2, A4       & Proof + Empirical \\
 T5  & Certificate Validity Horizon      & A5, A7       & Proof + Empirical \\
-T6  & Certificate Expiration Lower Bound & A7          & Proof + Empirical \\
-T7  & Feasible Fallback Existence       & A4           & Proof + Code \\
+T6  & Certificate Expiration Bound      & A4, A7, A9   & Proof + Empirical + Code \\
+T7  & Feasible Fallback Existence       & A1, A4, A8   & Proof + Code \\
 T8  & Graceful Degradation Dominance    & A2, A5       & Proof + Empirical + Code \\
 T9  & Universal Impossibility           & A2, A4       & Proof (formal only) \\
 T10 & Boundary-Indistinguishability LB  & A2, A5       & Proof + Empirical \\
@@ -82,8 +82,9 @@ T11 & Typed Structural Transfer         & A3--A5, A7, A8 & Proof + Code \\
 \bottomrule
 \end{longtable}
 
-All 11 theorems have complete formal proofs.  The ``Empirical'' tag indicates that
-the theorem's predictions match the observed pipeline metrics.  The ``Code'' tag
+The defended theorem surfaces have complete formal proofs, while the visible draft
+extensions remain explicitly scoped in the integrated audit.  The ``Empirical'' tag
+indicates that the theorem's predictions match the observed pipeline metrics.  The ``Code'' tag
 indicates a direct code-level anchor in the kernel or test suite.
 
 \section{Contract Predicate Register}\label{app:predicates}
@@ -124,11 +125,10 @@ Each row reports:
 
 \section{Complete AV Fault Coverage Matrix}\label{app:av_fault_full}
 
-The full fault-family coverage matrix (24 rows: 6 fault families $\times$ 2 targets
-$\times$ 2 controllers) is recorded in
-\texttt{reports/orius\_av/full\_corpus/tables/fault\_family\_coverage\_table.csv}.
-The ORIUS controller achieves coverage $\ge 0.977$ in every cell; the baseline ranges
-from 0.881 to 0.958.
+The all-zip grouped nuPlan fault-family coverage matrix is recorded in
+\texttt{reports/orius\_av/nuplan\_allzip\_grouped\_runtime\_dropout\_aligned\_m15\_fulltest/fault\_family\_coverage.csv}.
+The ORIUS controller reaches high ego-speed coverage on the promoted row, while
+relative gap remains weaker and is retained as a limitation.
 
 \section{Fault Specification Register}\label{app:fault_specs}
 
@@ -137,6 +137,7 @@ fault families used in the AV evaluation.  Each family is parameterised by a sev
 axis; the pipeline sweeps the full severity range.
 
 \begin{longtable}{lp{2.5cm}p{7.5cm}}
+\caption{Fault specification register for the AV evaluation.}\label{tab:fault_spec_register}\\
 \toprule
 \textbf{Fault Family} & \textbf{Severity Axis} & \textbf{Parameters} \\
 \midrule
@@ -238,7 +239,7 @@ excluded, and how heavy artifacts can be obtained.
 \paragraph{In the repository (Git-tracked).}
 \begin{itemize}[nosep]
   \item \textbf{Summary artifacts}: all CSV, JSON, and PNG files in
-        \texttt{reports/battery\_av/} and \texttt{reports/orius\_av/full\_corpus/}.
+        \texttt{reports/battery\_av/} and \texttt{reports/orius\_av/nuplan\_bounded/}.
   \item \textbf{SHA-256 manifests}: \texttt{artifact\_manifest.json} for each domain,
         plus the combined \texttt{evidence\_freeze\_certificate.json}.
   \item \textbf{Source code}: the full \texttt{src/orius/} package, adapter
@@ -253,10 +254,12 @@ excluded, and how heavy artifacts can be obtained.
 \paragraph{Excluded from Git (obtainable on request).}
 \begin{itemize}[nosep]
   \item \textbf{AV audit database}: \texttt{dc3s\_av\_waymo\_dryrun.duckdb}
-        ($\sim$120~MB).  Regenerate locally via
-        \texttt{scripts/build\_waymo\_av\_dry\_run\_report.py}.
-  \item \textbf{Raw Waymo Motion Dataset shards}: subject to Waymo licence;
-        not redistributable.  Download from \url{https://waymo.com/open}.
+        is retained as a compatibility filename for the nuPlan-bounded report.
+        Regenerate locally through the nuPlan AV surface builder and report path.
+  \item \textbf{Raw nuPlan archives}: not Git-tracked. Completed training archives
+        are synchronized through the private dataset repository used by the training
+        workflow; partial \texttt{.crdownload} files and map-only archives are
+        excluded from the training manifest.
   \item \textbf{Trained model checkpoints}: stored as LightGBM serialised
         artifacts in \texttt{artifacts/models\_orius\_av\_full\_corpus/}.
         Included in the repository but can be retrained from processed features.
@@ -269,7 +272,7 @@ serve as the canonical lightweight evidence layer, and the generation scripts se
 as the reproducibility path for heavy artifacts.
 
 \paragraph{Reproducibility guarantee.}
-A cold-start user with access to the Waymo licence can regenerate all artifacts
-from scratch using the single command \texttt{make pipeline-full}.  The
+A cold-start user with access to the completed nuPlan archives can regenerate the
+bounded AV artifacts through the nuPlan surface build and report scripts.  The
 \texttt{evidence\_freeze\_certificate.json} records the exact git commit, artifact
 counts, and SHA-256 verification results at freeze time.

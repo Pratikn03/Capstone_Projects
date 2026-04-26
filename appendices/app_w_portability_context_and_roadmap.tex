@@ -51,8 +51,8 @@ components:
 \begin{description}
   \item[Plant dynamics.] Battery uses an SOC integrator; other domains may be
     nonlinear or high-dimensional.
-  \item[State definition.] SOC is scalar; vehicles, industrial systems, and
-    aerospace plants carry richer state.
+  \item[State definition.] SOC is scalar; the active AV and Healthcare rows carry
+    richer state and observation semantics.
   \item[Constraint geometry.] Batteries are dominated by box-style limits;
     other domains may need polytopic or nonlinear repair.
   \item[Fault taxonomy.] Battery dropout, drift, stale sensors, and spikes
@@ -85,7 +85,7 @@ does \emph{not} carry the same proof weight as the battery domain.
 
 \begin{table}[ht]
 \centering
-\caption{Vehicle-domain excerpt from the shared ORIUS-Bench leaderboard.}
+\caption{Bounded AV excerpt from the shared ORIUS-Bench leaderboard.}
 \label{tab:vehicle-leaderboard-excerpt}
 \begin{tabular}{lrrrr}
 \toprule
@@ -103,8 +103,8 @@ fallback& 1001 & 0.0000 & 1.0000 & 0.3333 \\
 \end{tabular}
 \end{table}
 
-This excerpt is useful because it shows the shared contract actually runs on
-another domain.  It is not useful as evidence of universal DC3S dominance,
+This excerpt is useful because it shows the shared contract actually runs beyond
+the battery witness row.  It is not useful as evidence of universal DC3S dominance,
 and the thesis should not read it that way.
 
 \section{Research Roadmap}
@@ -115,8 +115,8 @@ The long-term program remains dependency-ordered:
   \item preserve and defend the locked battery foundation,
   \item harden remaining battery gaps before broadening claims,
   \item extract domain-independent ORIUS core modules cleanly,
-  \item validate one additional domain under the full dual-trajectory
-    protocol,
+  \item keep the bounded AV and Healthcare rows behind their current evidence
+    boundaries until they clear larger denominators,
   \item strengthen hardware-in-the-loop and controller-in-the-loop evidence,
   \item release the benchmark and adapter contract more publicly, and
   \item only then widen runtime and deployment claims.

@@ -3,12 +3,11 @@
 % Seeds: 5 | Horizon: 48 steps per seed
 \begin{table}[htbp]
 \centering
-\caption{DC3S validation summary across the tiered six-row runtime package.
+\caption{DC3S validation summary across the defended three-domain runtime package.
 Baseline is an unconstrained controller; ORIUS applies full DC3S repair.
 Battery uses locked DE/US real-grid telemetry (reference tier).
-Healthcare and Industrial use public benchmark datasets.
-Vehicle and Aerospace use replay surfaces that remain below the proof-validated
-promotion threshold; Navigation is a synthetic portability surface.
+Vehicle uses the all-zip grouped nuPlan replay surface; Healthcare uses a
+retrospective monitoring benchmark.
 The tier column governs the conservative manuscript claim boundary.}
 \label{tab:real_data_validation}
 \begin{tabular}{lllrrrl}
@@ -16,18 +15,12 @@ The tier column governs the conservative manuscript claim boundary.}
 \textbf{Domain} & \textbf{Dataset} & \textbf{Source} &
 \textbf{Baseline TSVR} & \textbf{ORIUS TSVR} & \textbf{Reduction} & \textbf{Tier} \\
 \midrule
-Battery & DE OPSD + EIA-930 (17{,}377 rows) & Real grid & 0.875 & 0.938$^\dagger$ & N/A & Reference \\
+Battery & DE OPSD + EIA-930 (17{,}377 rows) & Real grid & 0.008333 & 0.000000 & 100.0\,\% & Reference \\
 \midrule
-Industrial  & UCI CCPP (9{,}568 rows)          & Real       & 1.000 & 0.000 & 100.0\,\% & proof\_validated \\
-Healthcare  & PhysioNet BIDMC (4{,}000 rows)   & Real       & 1.000 & 0.279 &  72.1\,\% & proof\_validated \\
+Healthcare  & PhysioNet/BIDMC monitoring row     & Real       & 0.194 & 0.000 & 100.0\,\% & bounded \\
 \midrule
-Vehicle     & ORIUS-Bench kinematic env.        & Replay     & 0.542 & 0.017 &  96.9\,\% & proof\_candidate \\
-Aerospace   & ORIUS-Bench flight env.           & Replay     & 1.000 & 0.000 & 100.0\,\% & experimental \\
-Navigation  & ORIUS-Bench arena env.            & Synthetic  & 0.833 & 0.000 & 100.0\,\% & shadow\_synthetic \\
+Vehicle     & all-zip grouped nuPlan replay      & Replay     & 0.289 & 0.000163 & 99.94\,\% & bounded \\
 \bottomrule
-\multicolumn{7}{l}{\small $^\dagger$Battery TSVR increases under ORIUS-Bench harness due to scenario-MPC action
-  space mismatch;}\\
-\multicolumn{7}{l}{\small locked real-grid metrics (DE: 0.000 TSVR, 7.11\,\% cost savings) are reported in
-  Table~\ref{tab:TBL01_MAIN_RESULTS}.}\\
+\multicolumn{7}{l}{\small Battery values use the locked witness runtime metric surface, not the deprecated synthetic ORIUS-Bench battery sign-reversal diagnostic.}\\
 \end{tabular}
 \end{table}

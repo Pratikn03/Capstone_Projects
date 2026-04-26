@@ -33,10 +33,11 @@ row and two bounded promoted rows:
         telemetry, validated on locked CPSBench replay artifacts.  Battery remains
         the witness row with the deepest theorem-to-code-to-artifact closure; the
         promoted runtime slice achieves zero true-state violations.
-  \item \textbf{Autonomous Vehicles}: ego-speed and gap prediction under degraded
-        perception, validated on the full Waymo Open Motion corpus (7~validation
-        shards, 1{,}975~scenarios, 80{,}975~feature steps, 9{,}348~runtime test steps,
-        9{,}348~ certificates, all DC3S contracts satisfied).
+  \item \textbf{Autonomous Vehicles}: ego-speed and relative-gap prediction under
+        degraded perception, validated on the all-zip grouped nuPlan replay surface
+        with 37{,}344 held-out runtime scenarios, 1{,}531{,}104 replay steps,
+        1{,}531{,}104 certificates, empirical ORIUS TSVR 0.000163, and explicit
+        non-closure of road deployment or full autonomous-driving field closure.
   \item \textbf{Medical and Healthcare Monitoring}: bounded alert-release monitoring
         under degraded vital-sign observations, promoted through a MIMIC-backed
         healthcare row with bounded runtime and governance claims.

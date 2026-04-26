@@ -109,9 +109,9 @@ The primary safety metric is the \emph{true-state violation rate}:
   \TSVR = \frac{1}{T}\sum_{t=1}^{T} \mathbf{1}\bigl[f(x_t, a_t^{\mathrm{released}}, \omega_t) \notin S\bigr].
 \end{equation}
 A runtime layer with $\TSVR = 0$ has zero true-state violations.  In the battery
-domain, all four controller configurations achieve $\TSVR = 0$.  In the AV domain,
-ORIUS reduces the TSVR from 0.660 (baseline) to 0.628, a relative improvement of
-4.8\%.
+domain, all four controller configurations achieve $\TSVR = 0$.  In the all-zip
+grouped nuPlan AV replay row, ORIUS reduces the TSVR from 0.2893 (baseline) to
+0.000163 over 1{,}531{,}104 runtime steps.
 
 \subsection{Additional Metrics}
 
@@ -134,8 +134,9 @@ Beyond TSVR, we track:
 \Cref{fig:oasg_witness} provides the empirical witness for Definition~\ref{def:oasg}:
 under a quality-ignorant baseline, there exist time steps where the controller
 action is safe with respect to the observed state but violates the true-state
-constraint.  The Battery domain exhibits 20 such counterexamples; the AV domain
-exhibits 480 OASG cases out of 9{,}348 steps.
+constraint.  The Battery domain exhibits 20 such counterexamples; the all-zip
+grouped nuPlan AV baseline exhibits an OASG rate of 0.0230 over 1{,}531{,}104
+steps.
 
 \begin{figure}[h]
 \centering
@@ -143,8 +144,8 @@ exhibits 480 OASG cases out of 9{,}348 steps.
 \caption{Observed vs.\ true state counterexamples under a quality-ignorant
 baseline.  Each point is a time step where the observed state satisfies
 the safety constraint but the true state does not---the defining signature
-of the OASG (Definition~\ref{def:oasg}).  Battery domain shown; the AV
-counterpart is in \cref{sec:battery}.  Artifact:
+of the OASG (Definition~\ref{def:oasg}).  Battery domain shown; the bounded AV
+counterpart is reported in \cref{sec:av}.  Artifact:
 \texttt{reports/battery\_av/battery/fig\_observed\_vs\_true\_counterexamples.png}.}
 \label{fig:oasg_witness}
 \end{figure}

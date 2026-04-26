@@ -27,6 +27,20 @@ The single flagship novelty sentence used across the defense package is:
 \begin{quote}
 \emph{ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.}
 \end{quote}
+
+\section*{Novelty boundary}
+The novelty claim is architectural and runtime-semantic: ORIUS does not claim a new
+conformal method, a new robust-optimization primitive, a new universal controller, or a
+new conditional-coverage theorem.
+
+Reviewer-facing separation is explicit:
+\begin{itemize}
+\item conformal methods contribute uncertainty sets, but not repaired actuation or release certification;
+\item runtime monitors and anomaly detectors contribute alarms or vetoes, but not tightened governed release;
+\item simplex and runtime-assurance schemes contribute supervisory override and fallback, but not reliability-conditioned tightening under one shared release contract; and
+\item safety filters and robust MPC contribute plant-local safe action geometry, but not a reusable degraded-observation release grammar across domains.
+\end{itemize}
+
 The flagship ML surface is grouped calibration plus runtime safety under degraded observation. This dossier does not defend a new conditional-coverage theorem and does not take headline novelty credit from draft theorem rows.
 
 Every review finding must end in exactly one disposition:
@@ -48,9 +62,9 @@ package uses three public tiers:
 \textbf{Tier} & \textbf{Rows} & \textbf{Rule}\\
 \midrule
 \endhead
-Flagship defended & T1, T2, T3a, T4, T11, T\_trajectory\_PAC & Carries the compact defended spine and must have proof, test, witness, and bounded scope language.\\
-Supporting defended & T3b, T6, T8, T11\_Byzantine, T\_stale\_decay & Repo-truthful supporting surfaces that may be cited, but do not carry the flagship novelty or theory score alone.\\
-Draft / non-defended & T5, T7, T9, T10, L1--L4, T\_minimax, T\_sensor\_converse & Visible only as scoped draft or extension surfaces and excluded from headline defended counts.\\
+Flagship defended & T1, T2, T3a, T4, T6, T7, T11, T\_trajectory\_PAC & Carries the compact defended spine and must have proof, test, witness, and bounded scope language.\\
+Supporting defended & T3b, T8, T11\_Byzantine, T\_stale\_decay & Repo-truthful supporting surfaces that may be cited, but do not carry the flagship novelty or theory score alone.\\
+Draft / non-defended & T5, T9, T10, L1--L4, T\_minimax, T\_sensor\_converse & Visible only as scoped draft or extension surfaces and excluded from headline defended counts.\\
 \bottomrule
 \end{longtable}
 
@@ -106,7 +120,7 @@ inventory, not the defense authority.
 \texttt{V6} & high & Theorem inventory drifted from Appendix~C and review language & fixed in code/tests & Active audit now emits strict theorem tiers, assumption maps, and synchronized core artifacts.\\
 \texttt{V7} & high & Readiness language outran current evidence posture & narrowed in prose/registers & Defense package now treats Battery as witness row and AV plus Healthcare as bounded defended rows only.\\
 \texttt{V8} & high & Domain and theorem breadth diluted the flagship story & narrowed in prose/registers & Review package now frames ORIUS as one OASG-centered stack rather than a flat bag of claims.\\
-\texttt{V9} & medium & T3/T7/T8/T9/T10/T11 remained visible as if equally defended & narrowed in prose/registers & These rows are now explicitly classified as draft / non-defended or supporting only.\\
+\texttt{V9} & medium & T3/T8/T9/T10/T11 remained visible as if equally defended & narrowed in prose/registers & These rows are now explicitly classified as flagship, supporting, or draft instead of being flattened into one theorem posture.\\
 \texttt{V10} & medium & Assumption use was spread across prose, code, and appendices without one machine-readable map & fixed in code/tests & Defended assumption maps now expose theorem-facing assumptions and register resolution status.\\
 \bottomrule
 \end{longtable}

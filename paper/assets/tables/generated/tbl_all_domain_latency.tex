@@ -1,9 +1,9 @@
-% All-Domain Latency Table (updated from latency_report.json, 1000 steps)
+% Defended-domain latency table (updated from latency_report.json, 1000 steps)
 % Source: reports/latency_run/latency_report.json
-% All 6 domains | N=1000 steps | Gate: p99 < 50 ms
+% Defended Battery + AV + Healthcare rows | N=1000 steps | Gate: p99 < 50 ms
 \begin{table}[htbp]
 \centering\small
-\caption{ORIUS DC3S pipeline latency across the tiered six-row runtime package ($N=1{,}000$ steps per domain,
+\caption{ORIUS DC3S pipeline latency across the defended three-domain runtime package ($N=1{,}000$ steps per domain,
          Python~3.11, Intel~Xeon). Gate: $\text{p99} < 50$\,ms.
          Battery (energy) domain benefits from a simpler state schema;
          non-reference runtime rows carry richer observation vectors.}
@@ -14,13 +14,10 @@
 \midrule
 Battery (Ref.)              & 0.013 & 0.017 & 0.034 & \checkmark \\
 \midrule
-Industrial                  & 0.125 & 0.152 & 0.170 & \checkmark \\
 Healthcare                  & 0.122 & 0.159 & 0.246 & \checkmark \\
 Vehicle (AV)                & 0.136 & 0.160 & 0.180 & \checkmark \\
-Aerospace                   & 0.125 & 0.154 & 0.172 & \checkmark \\
-Navigation                  & 0.131 & 0.157 & 0.178 & \checkmark \\
 \bottomrule
-\multicolumn{5}{l}{\small All p99 values $\ll 50$\,ms SLA. Battery uses energy-grid pipeline
+\multicolumn{5}{l}{\small Promoted p99 values $\ll 50$\,ms SLA. Battery uses energy-grid pipeline
   (lower overhead).}\\
 \end{tabular}
 \end{table}

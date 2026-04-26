@@ -100,11 +100,12 @@ $\Delta$ for which this containment holds.
 
 \begin{theorem}[Certificate expiration bound]
 \label{thm:cert-expiration}
-The validity horizon satisfies the lower bound
+Under Assumptions A4, A7, and A9 and confidence level $\delta\in(0,1)$, the
+validity horizon satisfies the lower bound
 \[
   \tau_t \;\ge\;
   \left\lfloor\,\frac{(\delta_{\text{bnd},t})^2}
-  {\sigma_d^2}\,\right\rfloor,
+  {2\,\sigma_d^2\,\log(2/\delta)}\,\right\rfloor,
 \]
 where $\delta_{\text{bnd},t} = \min(x_t^{\text{lo}} - \text{SOC}_{\min},\,
 \text{SOC}_{\max} - x_t^{\text{hi}})$ is the distance from the issued
@@ -112,10 +113,17 @@ certificate interval to the nearest constraint boundary.
 \end{theorem}
 
 \begin{proof}
-The forward tube reaches a constraint boundary when
-$\sigma_d\sqrt{\Delta} = \delta_{\text{bnd},t}$, giving
-$\Delta = \delta_{\text{bnd},t}^2 / \sigma_d^2$.  Since $\Delta$ must
-be an integer, the floor provides the bound.
+For a $\sigma_d$-sub-Gaussian disturbance, the reflection-principle /
+first-passage tail bound gives
+\[
+  \Prob(|S_\Delta| \ge \delta_{\text{bnd},t})
+  \le
+  2\exp\!\left(
+    -\frac{\delta_{\text{bnd},t}^2}{2\,\sigma_d^2\,\Delta}
+  \right).
+\]
+Demanding the right-hand side be at most $\delta$ and solving for $\Delta$
+yields the stated lower bound after flooring to the nearest integer horizon.
 \end{proof}
 
 \subsection{Certificate Half-Life Corollary}
@@ -182,26 +190,30 @@ existence and its dominance over uncontrolled degradation.
 
 \begin{theorem}[Feasible fallback existence]
 \label{thm:fallback-existence}
-Under Assumptions A1, A3, A4, and A8, for any state $x_t$ satisfying
-$\phi(x_t) = 1$, the fallback policy $\pi_{\text{fb}}$ produces a
-safe action:
+Under Assumptions A1, A4, and A8, for any safe battery state $x_t$, the
+fallback policy $\pi_{\text{fb}}$ obeys a piecewise certified rule:
 \[
-  a_t^{\text{fb}} = \pi_{\text{fb}}(x_t) \in \mathcal{A}_t
-  \quad\text{and}\quad
+  \text{either } a_t^{\text{fb}} = (0,0) \text{ preserves safety on the interior,}
+\]
+\[
+  \text{or } a_t^{\text{fb}} \text{ is a boundary-aware safe-landing action with }
   \phi(x_{t+1}) = 1.
 \]
-In the battery domain, $\pi_{\text{fb}}$ is the zero-dispatch policy
-$(P_t^{\text{chg}} = 0, P_t^{\text{dis}} = 0)$, which preserves SOC
-up to model error.
+If neither case can be certified under the active ramp, power, and model-error
+constraints, the theorem surface fails closed rather than asserting a false
+fallback guarantee.
 \end{theorem}
 
 \begin{proof}
-Under zero dispatch, $x_{t+1} = x_t + \epsilon_t$ with
-$|\epsilon_t| \le \epsilon_{\text{model}}$.  Since
-$x_t \in [\text{SOC}_{\min}, \text{SOC}_{\max}]$ and
-$\epsilon_{\text{model}}$ is small relative to the constraint margins,
-$x_{t+1}$ remains feasible.  Assumption~A3 guarantees the existence
-of at least one such safe action, and zero dispatch is always one.
+If the current SOC has enough interior slack, zero dispatch gives
+$x_{t+1}=x_t+\epsilon_t$ with $|\epsilon_t|\le\epsilon_{\text{model}}$, so the
+next state remains inside the safe interval.  If the current SOC is safe but
+too close to a boundary for zero dispatch to be certified, the safe-landing
+controller computes a charge or discharge action that moves the SOC toward the
+interior safe zone while respecting the active battery limits.  The promoted
+runtime validator certifies exactly these two cases and returns infeasible
+rather than over-claiming when neither case is safe.  Hence the defended T7
+surface is the piecewise hold-or-safe-landing rule and nothing broader.
 \end{proof}
 
 \subsection{Graceful Degradation Dominance}

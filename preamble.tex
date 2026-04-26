@@ -20,6 +20,21 @@
 
 % --- Figures and graphics ---
 \usepackage{graphicx}
+\usepackage{pdfpages}
+\newcommand{\ORIUSMissingGraphicBox}[1]{%
+  \fbox{%
+    \begin{minipage}{0.82\linewidth}
+      \centering\small Missing archived figure: \texttt{\detokenize{#1}}
+    \end{minipage}%
+  }%
+}
+\newcommand{\ORIUSIncludeArchivedGraphic}[2][]{%
+  \IfFileExists{#2}{%
+    \includegraphics[#1]{#2}%
+  }{%
+    \ORIUSMissingGraphicBox{#2}%
+  }%
+}
 \usepackage{subcaption}
 \usepackage{float}
 \usepackage{tikz}
@@ -67,6 +82,7 @@
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{claim}[theorem]{Claim}
 
 \theoremstyle{definition}
 \newtheorem{definition}[theorem]{Definition}

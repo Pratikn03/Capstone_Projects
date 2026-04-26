@@ -16,11 +16,10 @@ assumption label.
 Each assumption is stated as a theorem-facing predicate and then grounded in
 the battery runtime.  The defended headline core is
 \[
-  \{T1,\;T2,\;T3a,\;T4,\;T11,\;T_{\mathrm{trajectory\_PAC}}\},
+  \{T1,\;T2,\;T3a,\;T4,\;T6,\;T7,\;T11,\;T_{\mathrm{trajectory\_PAC}}\},
 \]
-with $T6$ retained as a formal auxiliary theorem.  Draft or scoped extension
-surfaces may cite these assumptions too, but they do not enter defended-core
-counts unless the registry says so.
+while draft or scoped extension surfaces may still cite these assumptions
+without entering headline defended counts unless the registry says so.
 
 \section{Master Table}
 
@@ -40,7 +39,7 @@ A4 & Known one-step dynamics & The controller computes the one-step state increm
 A5 & Absorbed monotone tightening & $m_t^\star = m_t + \epsilon_{\mathrm{model}}$ is monotone non-increasing in $w_t$ and uniformly bounded. \\
 A6 & Bounded detector lag & Runtime degradation detectors fire within a finite fault-dependent lag. \\
 A7 & Causal certificate rule & The certificate update uses only history available at time $t$. \\
-A8 & Safe-interior fallback & A fallback controller attains $\TSVR=0$ from safe-interior states with slack at the fault time. \\
+A8 & Piecewise certified fallback & A fallback controller either safely holds on the interior or safely lands away from the boundary; otherwise it fails closed. \\
 A9 & Sub-Gaussian disturbance law & Disturbance increments are $\sigma_d$-sub-Gaussian. \\
 A10a & Polynomial mixing & Telemetry dependence decays polynomially, sufficient for weak-mixing arguments. \\
 A10b & Geometric mixing & Telemetry dependence decays geometrically, required by the current T9 windowing proof. \\
@@ -79,6 +78,9 @@ worst-case telemetry-state discrepancy used by the tightened SOC tube.
 Whenever the runtime invokes repair, the tightened safe-action set is non-empty.
 \textbf{Battery interpretation:} the battery shield projection has at least one
 admissible charge/discharge action inside the FTIT-restricted SOC region.
+\textbf{Boundary note:} this is an existence condition on the active runtime
+constraint set.  It must be rechecked for each new domain or operating regime;
+it is not a theorem that arbitrary constraints always admit a safe repair.
 \end{assumption}
 
 \begin{assumption}[A4 --- Known one-step dynamics]\label{assum:A4}
@@ -119,16 +121,23 @@ for a causal update rule $h$.
 bookkeeping never use future telemetry.
 \end{assumption}
 
-\begin{assumption}[A8 --- Safe-interior fallback]\label{assum:A8}
-There exists a fallback controller $\pi_{\mathrm{fb}}$ such that
+\begin{assumption}[A8 --- Piecewise certified fallback]\label{assum:A8}
+There exists a fallback controller $\pi_{\mathrm{fb}}$ such that, whenever the
+latent state is safe, one of two certified cases holds:
 \[
-  \TSVR(\pi_{\mathrm{fb}})=0
+  \text{either}\quad \pi_{\mathrm{fb}} \text{ safely holds the current state in place,}
 \]
-whenever the latent state is in the safe interior with at least
-$\epsilon_{\mathrm{model}}$ slack at the moment the fault is handled.
-\textbf{Battery interpretation:} zero-dispatch or equivalent safe holding
-behavior is only claimed from an interior SOC state with explicit room for the
-one-step model error.
+\[
+  \text{or}\quad \pi_{\mathrm{fb}} \text{ applies a boundary-aware recovery action that moves the state inward.}
+\]
+If neither case can be certified under the active constraints, the runtime
+fails closed rather than pretending a fallback theorem applies.
+\textbf{Battery interpretation:} zero-dispatch is the defended hold action for
+interior SOC states with sufficient slack, while the safe-landing controller is
+the defended boundary-recovery action near the SOC limits.
+\textbf{Boundary note:} A8 is a certified fallback contract, not a universal
+controller-existence result.  Domains without an explicit hold or recovery
+certificate inherit only the fail-closed branch.
 \end{assumption}
 
 \begin{assumption}[A9 --- Sub-Gaussian disturbance law]\label{assum:A9}
@@ -168,6 +177,9 @@ boundary-sensitive witness state where the safety margin is tight enough for an
 OASG/no-free-safety construction.
 \textbf{Battery interpretation:} the witness controller can be steered near the
 relevant SOC boundary without violating the admissible-demand model.
+\textbf{Boundary note:} A11 is the most domain-specific reachability condition
+in the OASG/no-free-safety witness.  It must stay explicit unless replaced by a
+separate dispatch-model derivation.
 \end{assumption}
 
 \begin{assumption}[A12 --- Controller-fault independence]\label{assum:A12}
@@ -175,6 +187,9 @@ Conditioned on the available history, the fault/reliability process is
 independent of the controller's action stream.
 \textbf{Battery interpretation:} telemetry degradation is modeled as exogenous
 relative to the dispatch choice, once the observed history is fixed.
+\textbf{Boundary note:} A12 excludes controller-induced sensing faults and
+adaptive adversaries.  Claims under coupled control/fault processes require a
+separate dependence model.
 \end{assumption}
 
 \begin{assumption}[A13 --- TV bridge]\label{assum:A13}
@@ -204,13 +219,13 @@ T2 & A1, A2, A3, A4, A5, A7 \\
 T3a & A1, A2, A4, A5, A6, A7, A9 \\
 T3b & A1, A2, A4, A5, A6, A7, A9 \\
 T4 & A1, A2, A4, A11 \\
-T5 & A4, A7, A9 \\
-T6 & A9 \\
-T7 & A1, A8 \\
-T8 & A1, A2, A5, A8 \\
-T9 & A1, A2, A4, A10b, A11, A12 \\
+T5 & A1, A2, A4, A5, A6, A7, A9 \\
+T6 & A4, A7, A9 \\
+T7 & A1, A4, A8 \\
+T8 & A1, A2, A3, A4, A5, A8 \\
+T9 & A10b, A11 \\
 T10 & A13 \\
-T11 & A2, A8 \\
+T11 & typed obligations only \\
 T11\textsubscript{Byz} & A9 \\
 T\textsubscript{stale} & A6 \\
 T\textsubscript{trajectory\_PAC} & A1, A4, A5, A9 \\

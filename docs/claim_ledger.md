@@ -1,60 +1,43 @@
-# ORIUS Claim Ledger — 3-Domain Flagship Surface
+# ORIUS Claim Ledger — Battery + AV Submission Lane
 
-> Every headline ORIUS claim must resolve to a current artifact in the promoted Battery + AV + Healthcare lane.
-> If a statement cannot be traced to a live artifact, it must be narrowed or deleted.
+> Generated from the canonical closure artifacts.
 
-## Canonical Reference Set
+ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.
 
-- `reports/battery_av_healthcare/overall/release_summary.json`
-- `reports/publication/orius_submission_scorecard.csv`
-- `reports/publication/three_domain_ml_benchmark.csv`
-- `reports/publication/three_domain_reliability_calibration.csv`
-- `reports/publication/three_domain_grouped_coverage.csv`
-- `reports/publication/three_domain_nonvacuity_checks.json`
-- `reports/publication/novelty_separation_matrix.csv`
-- `reports/publication/what_orius_is_not_matrix.csv`
-- `reports/publication/active_theorem_audit.json`
+## Governing Inputs
 
-The flagship novelty sentence is:
+- `reports/battery_av/overall/release_summary.json`
+- `reports/battery_av/overall/publication_closure_override.json`
+- `reports/publication/orius_equal_domain_parity_matrix.csv`
+- `submission_scope=battery_av_nuplan_three_city_closure`
 
-> ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.
+## Bucket A — Directly Artifact-Backed
 
-## Bucket A — Locked Headline Claims
-
-| ID | Claim | Artifact source |
-|----|-------|-----------------|
-| A1 | Battery witness row reduces TSVR from `0.0393` to `0.0000` on the locked publication-nominal surface. | `reports/publication/three_domain_ml_benchmark.csv` |
-| A2 | AV bounded defended row reduces TSVR from `0.1250` to `0.0417`. | `reports/publication/three_domain_ml_benchmark.csv` |
-| A3 | Healthcare bounded defended row reduces TSVR from `0.2917` to `0.0417` on the promoted MIMIC-backed monitoring row. | `reports/publication/three_domain_ml_benchmark.csv` |
-| A4 | Grouped reliability-bucket calibration is emitted for Battery, AV, and Healthcare with non-empty buckets. | `reports/publication/three_domain_grouped_coverage.csv`, `reports/publication/three_domain_nonvacuity_checks.json` |
-| A5 | The active readiness target is `three_domain_93_candidate`, with `critical_gap_count = 0`, `high_gap_count = 0`, and `meets_93_gate = True`. | `reports/publication/orius_submission_scorecard.csv` |
-| A6 | The flagship novelty surface is separated explicitly from conformal prediction, runtime assurance, safe-control methods, drift detection, and generic uncertainty estimation. | `reports/publication/novelty_separation_matrix.csv` |
+| ID | Claim | Governing Artifact |
+|----|-------|-------------------|
+| A1 | Battery remains the `reference` witness row in the current submission lane. | `publication_closure_override.json` |
+| A2 | Battery canonical TSVR is 0.0% on 288 canonical runtime rows. | `reports/battery_av/battery/runtime_summary.csv`, `release_summary.json` |
+| A3 | Battery CertOS chain is valid with 0 certificates. | `reports/battery_av/battery/certos_verification_summary.json` |
+| A4 | AV remains the bounded `proof_validated` row. | `publication_closure_override.json` |
+| A5 | AV baseline TSVR is 25.3% and ORIUS TSVR is 0.0%. | `reports/orius_av/full_corpus/runtime_summary.csv` |
+| A6 | AV runtime rows total = 15,744; canonical ORIUS rows = 1,968. | `release_summary.json` |
+| A7 | AV ORIUS OASG cases identified = 88. | `reports/orius_av/full_corpus/oasg_domain_summary.csv`, `release_summary.json` |
+| A8 | Only `battery` and `vehicle` are promoted rows under `submission_scope=battery_av_nuplan_three_city_closure`. | `reports/publication/orius_equal_domain_parity_matrix.csv` |
 
 ## Bucket B — Bounded / Qualified Claims
 
-| ID | Claim | Required qualification | Artifact source |
-|----|-------|------------------------|-----------------|
-| B1 | Battery is the deepest proof and artifact surface. | Battery is the witness row, not proof that every promoted domain has equal depth. | `reports/battery_av_healthcare/overall/release_summary.json` |
-| B2 | AV is defended. | AV remains bounded to the TTC plus predictive-entry-barrier contract; it is not full autonomous-driving closure. | `reports/battery_av_healthcare/overall/release_summary.json` |
-| B3 | Healthcare is defended. | Healthcare remains bounded to monitoring-and-alert semantics on the promoted MIMIC row; it is not clinical deployment readiness. | `reports/battery_av_healthcare/overall/release_summary.json` |
-| B4 | ORIUS has a 3-domain baseline and ablation package. | `three_domain_baseline_suite.csv` and `three_domain_ablation_matrix.csv` are diagnostic cross-domain proxy surfaces, not replacements for the deeper battery witness surface. | `reports/publication/three_domain_baseline_suite.csv`, `reports/publication/three_domain_ablation_matrix.csv` |
-| B5 | ORIUS has a strong calibration story. | The promoted calibration claim is grouped reliability-bucket calibration under degraded observation, not a new conditional-coverage theorem. | `reports/publication/three_domain_reliability_calibration.csv`, `reports/publication/what_orius_is_not_matrix.csv` |
-| B6 | Learned reliability contributes novelty. | Deep or learned reliability remains a bounded secondary lane unless it clears the same 3-domain gates as the engineered reliability path. | `paper/monograph/ch08_witness_results_and_failure_analysis.tex` |
+| ID | Claim | Qualification |
+|----|-------|---------------|
+| B1 | AV proof-validation is real. | It is bounded to the current longitudinal TTC plus predictive-entry-barrier contract. |
+| B2 | Battery remains the deepest witness. | That does not imply equal maturity across domains outside the current battery+AV lane. |
+| B3 | Shift-aware uncertainty is active in both rows. | Coverage guarantees under arbitrary shift are not claimed from these artifacts. |
 
-## Bucket C — Explicit Non-Claims
+## Bucket C — Explicitly Not Claimed
 
-| ID | ORIUS does **not** claim | Why |
-|----|---------------------------|-----|
-| C1 | A new universal controller | ORIUS wraps inherited domain controllers rather than replacing them. |
-| C2 | A new conditional-coverage theorem | The active ML surface is grouped calibration under degraded observation. |
-| C3 | Better forecasting by default | Forecast quality matters only insofar as it improves runtime release safety. |
-| C4 | Full autonomous-driving closure | The AV row is bounded to the promoted longitudinal contract. |
-| C5 | Clinical deployment readiness | The Healthcare row is bounded to monitoring-and-alert semantics. |
-
-## Audit Rules
-
-1. Every promoted number must trace to the canonical reference set above.
-2. Every Bucket B claim must carry its qualification in the same paragraph or caption.
-3. No promoted prose may imply Bucket C.
-4. Battery is always the witness row; AV and Healthcare are bounded defended rows.
-5. The active theorem audit is the theory authority; headline ML and novelty credit does not come from draft theorem rows.
+| ID | Non-Claim | Governing Reason |
+|----|-----------|------------------|
+| C1 | Industrial is promoted in this submission. | `outside_current_submission_scope_battery_av_lane` |
+| C2 | Healthcare is promoted in this submission. | `outside_current_submission_scope_battery_av_lane` |
+| C3 | Navigation is a promoted defended row. | It remains a non-promoted row in the current parity matrix. |
+| C4 | Aerospace is a promoted defended row. | It remains a non-promoted row in the current parity matrix. |
+| C5 | AV is full autonomous-driving closure. | The current AV row is explicitly bounded. |

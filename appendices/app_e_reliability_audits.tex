@@ -43,7 +43,7 @@ under \texttt{drift\_combo} at 20\,\% dropout (DE region).
 
 \begin{table}[htbp]
 \centering
-\caption{Coverage by reliability bin (DE, drift\_combo, 20\,\% dropout).
+\caption[Coverage by reliability bin]{Coverage by reliability bin (DE, drift\_combo, 20\,\% dropout).
   Source: \texttt{cqr\_group\_coverage.csv}.}
 \label{tab:coverage-by-bin}
 \small
@@ -112,8 +112,8 @@ alongside the global target, confirming uniform coverage.
 
 The reliability-group audit procedure:
 \begin{enumerate}
-  \item Run \texttt{scripts/generate\_priority2\_artifacts.py} to
-    produce \texttt{cqr\_group\_coverage.csv}.
+  \item Run the priority-2 artifact generator and produce
+    \texttt{cqr\_group\_coverage.csv}.
   \item Verify that no bin is flagged in the output CSV.
   \item Cross-check aggregate PICP against
     \texttt{dc3s\_main\_table.csv}.

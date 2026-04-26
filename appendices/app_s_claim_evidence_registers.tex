@@ -2,7 +2,7 @@
 \label{app:claim-evidence-registers}
 
 This appendix consolidates the governance registers that keep defended ORIUS
-claims attached to code, scripts, and artifacts.  In the June defense posture
+claims attached to code, scripts, and artifacts.  In the current defense posture
 the machine-readable authorities are the active theorem audit
 (\path{reports/publication/active_theorem_audit.*}) and strict defended-core
 outputs (\path{reports/publication/defended_theorem_core.*}).  The tables below
@@ -10,8 +10,9 @@ are the readable companion layer used in the monograph and review dossier.
 
 \section{Primary Claim Matrix}
 
-\begin{small}
-\begin{longtable}{@{}p{2.3cm}p{3.2cm}p{4.0cm}p{2.1cm}p{1.3cm}@{}}
+\begin{scriptsize}
+\setlength{\tabcolsep}{2pt}
+\begin{longtable}{@{}p{3.5cm}p{3.2cm}p{3.7cm}p{1.8cm}p{1.2cm}@{}}
 \caption{Primary claim-to-evidence matrix from the locked publication
 register.}
 \label{tab:claim-evidence-matrix} \\
@@ -42,8 +43,8 @@ register.}
 \texttt{theorem\_t3b} & episode ORIUS core aggregation corollary & \path{src/orius/universal\_theory/risk\_bounds.py} & code path & supporting defended \\
 \texttt{theorem\_t4} & no free safety & \path{src/orius/cpsbench\_iot/baselines.py} & code path & flagship defended \\
 \texttt{theorem\_t5} & certificate validity horizon definition & \path{src/orius/universal\_theory/battery\_instantiation.py} & code path & draft / non-defended \\
-\texttt{theorem\_t6} & certificate expiration bound & \path{src/orius/universal\_theory/battery\_instantiation.py} & code path & supporting defended \\
-\texttt{theorem\_t7} & feasible fallback existence & \path{src/orius/dc3s/temporal\_theorems.py} & code path & draft / non-defended \\
+\texttt{theorem\_t6} & certificate expiration bound & \path{src/orius/universal\_theory/battery\_instantiation.py} & code path & flagship defended \\
+\texttt{theorem\_t7} & feasible fallback existence & \path{src/orius/dc3s/temporal\_theorems.py} & code path & flagship defended \\
 \texttt{theorem\_t8} & graceful degradation dominance & \path{src/orius/universal\_theory/battery\_instantiation.py} & code path & supporting defended \\
 \texttt{theorem\_t11} & typed structural transfer & \path{src/orius/universal\_theory/contracts.py} & code path & flagship defended \\
 \texttt{theorem\_t11\_byz} & Byzantine-tolerant OQE bound & \path{src/orius/dc3s/theoretical_guarantees.py} & code path & supporting defended \\
@@ -65,7 +66,7 @@ register.}
 \texttt{priority3\_probing} & bounded active probing audit & \path{reports/probing/spoofing_attack_results.csv} & artifact file & generated \\
 \texttt{priority3\_aging} & aging proxy calibration outputs & \path{reports/aging/asset_preservation_proxy_table.csv} & artifact file & generated \\
 \end{longtable}
-\end{small}
+\end{scriptsize}
 
 \section{Theorem and Chapter Register}
 
@@ -74,11 +75,12 @@ small set of visible draft extensions that remain on the active theorem audit
 surface.  The authority for defended status is
 \path{reports/publication/defended_theorem_core.json}; this appendix is the
 human-readable companion.  The larger integrated surface, including
-definitions, corollaries, and appendix restatements, remains audited in
-Appendix~\ref{app:integrated-theorem-surface-register}.
+definitions, corollaries, and appendix restatements, remains audited in the
+tracked integrated theorem surface register.
 
-\begin{small}
-\begin{longtable}{@{}p{1.4cm}p{1.0cm}p{1.4cm}p{3.4cm}p{3.7cm}p{1.3cm}@{}}
+\begin{scriptsize}
+\setlength{\tabcolsep}{2pt}
+\begin{longtable}{@{}p{1.2cm}p{0.8cm}p{2.6cm}p{3.1cm}p{3.6cm}p{1.3cm}@{}}
 \caption{Registry-canonical defended-core theorem and chapter evidence register
 for the ORIUS defense package.}
 \label{tab:battery-claim-register} \\
@@ -108,8 +110,8 @@ T3a & 18 & \texttt{THM\_T3A} & \path{src/orius/universal\_theory/risk\_bounds.py
 T3b & 18 & \texttt{COR\_T3B} & \path{src/orius/universal\_theory/risk\_bounds.py} & \path{reports/publication/reliability_group_coverage_phase3.csv} & supporting defended \\
 T4 & 19 & \texttt{THM\_T4} & \path{src/orius/cpsbench\_iot/baselines.py} & \path{reports/publication/fault_performance_table.csv} & flagship defended \\
 T5 & 20 & \texttt{DEF\_T5} & \path{src/orius/universal\_theory/battery\_instantiation.py} & \path{reports/blackout/blackout_study.csv} & draft / non-defended \\
-T6 & 20 & \texttt{THM\_T6} & \path{src/orius/universal\_theory/battery\_instantiation.py} & \path{reports/blackout/blackout_study.csv} & supporting defended \\
-T7 & 20 & \texttt{THM\_T7} & \path{src/orius/dc3s/temporal\_theorems.py} & \path{reports/blackout/graceful_degradation_trace.csv} & draft / non-defended \\
+T6 & 20 & \texttt{THM\_T6} & \path{src/orius/universal\_theory/battery\_instantiation.py} & \path{reports/blackout/blackout_study.csv} & flagship defended \\
+T7 & 20 & \texttt{THM\_T7} & \path{src/orius/dc3s/temporal\_theorems.py} & \path{reports/blackout/graceful_degradation_trace.csv} & flagship defended \\
 T8 & 20 & \texttt{THM\_T8} & \path{src/orius/universal\_theory/battery\_instantiation.py} & \path{reports/blackout/graceful_degradation_trace.csv} & supporting defended \\
 T11 & 37 & \texttt{THM\_T11} & \path{src/orius/universal\_theory/contracts.py} & \path{reports/publication/orius_transfer_obligation_table.csv} & flagship defended \\
 T11\textsubscript{Byz} & C & \texttt{THM\_T11\_BYZ} & \path{src/orius/dc3s/theoretical_guarantees.py} & App.~C (Proof~C.18) & supporting defended \\
@@ -123,7 +125,7 @@ HIL & 27 & \texttt{FIG\_HIL} & \path{scripts/generate_hil_evidence.py} & \path{r
 BLACKOUT & 28 & \texttt{FIG\_BLACKOUT} & \path{scripts/run_blackout_study.py} & \path{reports/publication/blackout_study.csv} & locked \\
 PROBING & appV & \texttt{TBL\_PROBING} & \path{scripts/run_spoofing_attack.py} & \path{reports/probing/spoofing_attack_results.csv} & locked \\
 \end{longtable}
-\end{small}
+\end{scriptsize}
 
 \section{Chapter Coverage Register}
 
@@ -183,7 +185,11 @@ the raw matrix is not itself a proof-status label.  Defended status lives in
 the active theorem audit and defended-core register; this matrix records where
 the underlying code and artifacts live.
 
-\input{paper/assets/tables/generated/tbl_claim_evidence}
+\IfFileExists{assets/tables/generated/tbl_claim_evidence.tex}{%
+  \input{assets/tables/generated/tbl_claim_evidence}%
+}{%
+  \input{paper/assets/tables/generated/tbl_claim_evidence}%
+}
 
 Taken together, these registers are the defense-facing answer to the
 question ``where does this claim live in code and artifacts?''  They make

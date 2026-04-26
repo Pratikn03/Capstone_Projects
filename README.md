@@ -33,9 +33,9 @@ That claim is **universal-first** at the architecture level and **artifact-stric
 The current committed posture, as recorded in [`reports/publication/orius_domain_closure_matrix.csv`](reports/publication/orius_domain_closure_matrix.csv) and the promoted 3-domain scorecard, is:
 
 - `battery` = `reference` witness row with the deepest theorem-to-artifact closure
-- `av` = `proof_validated` bounded row under the TTC + predictive-entry-barrier contract
-- `healthcare` = `proof_validated` bounded row backed by the promoted MIMIC bridge surface
-**Submission scope**: The canonical and only promoted lane is `battery_av_healthcare`. Battery remains the witness row; AV and Healthcare are the promoted bounded peer rows.
+- `av` = `runtime_contract_closed` bounded row under the narrowed brake-hold release contract
+- `healthcare` = `runtime_contract_closed` bounded row backed by the promoted MIMIC runtime-denominator surface
+**Submission scope**: The canonical and only promoted lane is `battery_av_healthcare`. Battery remains the witness row; AV and Healthcare are promoted bounded rows, not equal-depth theorem closures.
 
 ## Latest Validated Results
 
@@ -45,12 +45,16 @@ The current promoted 3-domain closure lane is summarized by:
 - [`reports/battery_av_healthcare/overall/publication_closure_override.json`](reports/battery_av_healthcare/overall/publication_closure_override.json)
 - [`reports/battery_av_healthcare/overall/domain_summary.csv`](reports/battery_av_healthcare/overall/domain_summary.csv)
 - [`reports/publication/orius_domain_closure_matrix.csv`](reports/publication/orius_domain_closure_matrix.csv)
+- [`reports/publication/domain_runtime_contract_summary.json`](reports/publication/domain_runtime_contract_summary.json)
+- [`reports/publication/domain_runtime_contract_witnesses.csv`](reports/publication/domain_runtime_contract_witnesses.csv)
+
+T11 remains a forward-only four-obligation transfer theorem. The AV and Healthcare theorem surfaces are supporting runtime lemmas bounded to their emitted domain postconditions: AV brake-hold and Healthcare fail-safe alert release.
 
 | Domain | Current status | Locked result | Source |
 | --- | --- | --- | --- |
-| Battery Energy Storage | `reference` witness row | TSVR = 0.0% (all 4 controllers, 288 steps) | [`reports/battery_av_healthcare/overall/release_summary.json`](reports/battery_av_healthcare/overall/release_summary.json) |
-| Autonomous Vehicles | `proof_validated` bounded row | TSVR 0.125 → 0.0417 on the current universal validation harness | [`reports/battery_av_healthcare/overall/release_summary.json`](reports/battery_av_healthcare/overall/release_summary.json) |
-| Medical and Healthcare Monitoring | `proof_validated` bounded row | TSVR 0.2917 → 0.0417 on the promoted MIMIC-backed monitoring row | [`reports/battery_av_healthcare/overall/release_summary.json`](reports/battery_av_healthcare/overall/release_summary.json) |
+| Battery Energy Storage | `reference` witness row | TSVR `0.008333 -> 0.000000` on the locked publication-nominal runtime surface | [`reports/publication/three_domain_ml_benchmark.csv`](reports/publication/three_domain_ml_benchmark.csv) |
+| Autonomous Vehicles | `runtime_contract_closed` bounded row | TSVR `0.161425 -> 0.000000` on the full 9,348-step runtime denominator | [`reports/publication/three_domain_ml_benchmark.csv`](reports/publication/three_domain_ml_benchmark.csv) |
+| Medical and Healthcare Monitoring | `runtime_contract_closed` bounded row | TSVR `0.194489 -> 0.000000` on the full promoted MIMIC runtime denominator | [`reports/publication/three_domain_ml_benchmark.csv`](reports/publication/three_domain_ml_benchmark.csv) |
 
 ## Flagship ML / Novelty Surfaces
 
@@ -90,10 +94,14 @@ Project-level promoted closure should be read from these files first:
 - [`reports/publication/orius_maturity_matrix.csv`](reports/publication/orius_maturity_matrix.csv): current maturity posture across the program
 - [`reports/publication/orius_submission_scorecard.csv`](reports/publication/orius_submission_scorecard.csv): promoted-lane readiness score, including `three_domain_93_candidate`
 
-The canonical submission monograph controller is:
+The canonical submission monograph controller is now a senior-review
+single-flow thesis build. It keeps the active defended claim boundary at
+Battery + AV + Healthcare, compiles the polished monograph spine plus curated
+appendices, and indexes historical/depth sources instead of compiling duplicate
+archive chapters inline.
 
 - [`orius_book.tex`](orius_book.tex)
-- [`paper/paper.tex`](paper/paper.tex) as the mirrored internal long-form controller
+- [`paper/paper.tex`](paper/paper.tex) as the mirrored internal single-flow controller
 - [`orius_battery_409page_figures_upgraded_main.tex`](orius_battery_409page_figures_upgraded_main.tex) as the legacy archival long-form controller retained for internal provenance only
 - [`paper/paper.pdf`](paper/paper.pdf)
 - [`scripts/build_orius_monograph_assets.py`](scripts/build_orius_monograph_assets.py)
@@ -108,12 +116,36 @@ This repository commits **summary artifacts** and **release-facing evidence**, n
 - Committed and authoritative promoted closure summaries live under [`reports/battery_av_healthcare/overall/`](reports/battery_av_healthcare/overall/)
 - The earlier Battery + AV-only summaries remain readable under [`reports/battery_av/overall/`](reports/battery_av/overall/) as legacy historical artifacts
 - The oversized AV audit database, `reports/orius_av/full_corpus/dc3s_av_waymo_dryrun.duckdb`, is intentionally **not** committed in normal git
-- Raw Waymo shards are not part of the git-tracked repo surface
+- Raw AV corpora are not part of the git-tracked repo surface. Local nuPlan archives (`nuplan-v1.1_train_singapore.zip`, `nuplan-maps-v1.0.zip`) are ignored and converted into the ORIUS replay contract locally.
 - The intended future path for heavy artifacts is a release asset or Git LFS; this repository currently treats the committed CSV/JSON/PNG surfaces as the canonical lightweight evidence layer
 
 If you need the omitted heavy AV audit DB, regenerate it locally using the commands below.
 
 ## How To Verify / Rebuild The Promoted 3-Domain Closure Lane
+
+Build the nuPlan AV replay and feature surface:
+
+```bash
+python scripts/build_nuplan_av_surface.py \
+  --train-dir . \
+  --train-glob "nuplan-v*.zip" \
+  --maps-zip nuplan-maps-v1.0.zip \
+  --out-dir /tmp/orius_nuplan_smoke \
+  --max-dbs 2 \
+  --max-scenarios 4 \
+  --build-features
+```
+
+Omit the bounds for the full local nuPlan Singapore conversion. The legacy
+Waymo-named runtime adapter still consumes the source-neutral replay table until
+the class names are renamed.
+
+Completed nuPlan zip archives can also be synced to the private Hugging Face
+dataset `pratikn03/orius-nuplan-private` with:
+
+```bash
+python scripts/sync_nuplan_hf_dataset.py --repo-id pratikn03/orius-nuplan-private --train-dir . --train-glob "nuplan-v*.zip"
+```
 
 Run the AV full-corpus runtime:
 

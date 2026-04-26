@@ -1,8 +1,9 @@
 dc3s:
-  assumptions_version: dc3s-assumptions-v1
+  assumptions_version: dc3s-assumptions-v2
   law: linear
   inflation_law: linear
   alpha0: 0.10
+  domain_id: battery
   alpha_min: 0.02
   k_quality: 0.5
   k_drift: 0.3
@@ -37,6 +38,8 @@ dc3s:
     spike_beta: 0.25
     ooo_gamma: 0.35
     min_w: 0.05
+    stale_decay_rate: 0.85
+    adversarial_mode: false
     deep:
       model_path: artifacts/deep_oqe/battery_deepoqe.pt
       seq_len: 8
@@ -80,6 +83,15 @@ dc3s:
       n_scenarios: 20
       risk_weight_cvar: 1.0
       scenario_seed: 0
+  domain_inflation:
+    battery: 1.0
+    grid: 1.15
+    healthcare: 1.30
+    av: 1.40
+  conformal:
+    spci_lambda: 0.05
+    spci_max_window: 2000
+    spci_alpha: 0.10
   audit:
     duckdb_path: data/audit/dc3s_audit.duckdb
     table_name: dispatch_certificates

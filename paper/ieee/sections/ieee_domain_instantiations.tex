@@ -11,13 +11,13 @@ Battery, AV, and Healthcare rows.
 \caption{Defended ORIUS domain rows under a shared runtime contract.}
 \label{tab:ieee-domain-rows}
 \small
-\begin{tabularx}{\textwidth}{@{}p{0.16\textwidth}p{0.20\textwidth}p{0.17\textwidth}p{0.16\textwidth}p{0.23\textwidth}@{}}
+\begin{tabularx}{\textwidth}{@{}p{0.14\textwidth}p{0.19\textwidth}p{0.16\textwidth}p{0.15\textwidth}X@{}}
 \toprule
 \textbf{Domain} & \textbf{Degraded-observation hazard} & \textbf{Safety object} & \textbf{Current tier} & \textbf{Exact closure boundary}\\
 \midrule
 Battery energy storage & Dispatch legal on observed state but unsafe on true state of charge or reserve surface & State-of-charge and dispatch envelope preservation & Witness row & Deepest closure surface in the current stack.\\
-Autonomous vehicles & Action proposed on stale or optimistic headway / collision state & TTC and entry-barrier preservation under repair & Defended bounded row & Bounded to the current TTC plus predictive-entry-barrier contract.\\
-Healthcare monitoring & Clinical alerting or intervention released on degraded vital telemetry & Vital-alert envelope and bounded intervention discipline & Defended bounded row & Bounded to the current monitoring and intervention contract.\\
+Autonomous vehicles & Action proposed on stale or optimistic headway / collision state & TTC and entry-barrier preservation under repair & Defended all-zip grouped nuPlan row & Bounded to completed all-zip grouped nuPlan replay artifacts under the current TTC plus predictive-entry-barrier contract.\\
+Healthcare monitoring & Clinical alerting or intervention released on degraded vital telemetry & Vital-alert envelope and bounded intervention discipline & Defended bounded MIMIC row & Bounded to retrospective monitoring and alert-release semantics; no live clinical deployment claim.\\
 \bottomrule
 \end{tabularx}
 \end{table*}
@@ -25,19 +25,22 @@ Healthcare monitoring & Clinical alerting or intervention released on degraded v
 \subsection{Autonomous vehicles}
 The AV row is defended under a bounded safety object: time-to-collision and predictive
 entry-barrier preservation when the perception or state-estimation surface degrades. The
-value of the row is that ORIUS is not merely filtering a scalar dispatch command. It is
-repairing an action inside a tightly constrained interaction envelope while preserving a
-bounded fallback semantics. The row is defended, but still explicitly limited to the
-current contract rather than advertised as full autonomy closure.
+current evidence lane uses completed all-zip grouped nuPlan replay artifacts, not a full road-deployment
+claim. The value of the row is that ORIUS is not merely filtering a scalar dispatch
+command. It repairs an action inside a tightly constrained interaction envelope while
+preserving bounded fallback semantics. The row is defended, but only for the current
+TTC plus predictive-entry-barrier contract rather than advertised as full
+autonomous-driving field closure.
 
 
 \subsection{Healthcare monitoring}
 Healthcare matters because degraded observation can suppress intervention rather than
 only create excessive actuation. ORIUS still fits that setting because the runtime layer
 is defined over admissible decisions, fallback policies, and certificate semantics, not
-only over physical force commands. The defended healthcare row is bounded to the current
-monitoring and alerting contract, but it proves that the runtime grammar is not limited
-to mechanical control loops.
+only over physical force commands. The defended healthcare row is bounded to
+retrospective MIMIC-backed monitoring and alerting contracts. It does not claim
+prospective clinical deployment or clinical decision-support approval, but it shows
+that the runtime grammar is not limited to mechanical control loops.
 
 \subsection{Future additional domains}
 The active branch does not defend named additional domains beyond Battery, AV, and

@@ -1,6 +1,6 @@
 %% ch24_universal_portability.tex
 %% Universal Portability: Formal Argument and Evidence
-%% Structured claim with six-domain evidence base.
+%% Structured claim with three-domain defended evidence base.
 
 \subsection{Universal Portability: Formal Argument}
 \label{sec:universal_portability}
@@ -68,12 +68,12 @@ $O(W \log W + d)$ per step (Table~\ref{tbl:complexity_analysis}), which for
 typical $W=20$, $d \leq 6$ is sub-millisecond on any modern CPU. $\square$
 
 % ------------------------------------------------------------------
-\subsubsection*{Six-Domain Evidence Base}
+\subsubsection*{Three-Domain Evidence Base}
 
-Claim~\ref{claim:portability} is validated across six CPS domains spanning
-three orders of magnitude in action space dimensionality, three physical
-modalities (energy, mobility, biology/chemistry), and two data regimes (synthetic
-ORIUS-Bench and real UCI/PhysioNet data):
+Claim~\ref{claim:portability} is exercised on the defended Battery, nuPlan AV,
+and Healthcare rows.  The table below is the manuscript evidence boundary: it
+spans energy storage, ground mobility replay, and physiologic monitoring, but it
+does not promote inactive Industrial, Aerospace, or Navigation rows.
 
 \begin{center}
 \begin{tabular}{llll}
@@ -81,28 +81,25 @@ ORIUS-Bench and real UCI/PhysioNet data):
 \textbf{Domain} & \textbf{Modality} & \textbf{Data} & \textbf{TSVR Reduction} \\
 \midrule
 Battery  & Energy storage & DE/US grid (locked) & Reference \\
-Vehicle  & Ground mobility & Synthetic kinematic & 96.9\% \\
-Healthcare & Biological CPS & PhysioNet BIDMC & 72.1\% \\
-Industrial & Thermal process & UCI CCPP & 100\% \\
-Aerospace & Aerial vehicle & Synthetic flight env. & 100\% \\
-Navigation & Robotic 2-D & Synthetic arena & 100\% \\
+Vehicle  & Ground mobility & all-zip grouped nuPlan replay & 99.94\% \\
+Healthcare & Biological CPS & PhysioNet/BIDMC monitoring row & 100.0\% \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-All five proof domains exceed the 25\% evidence gate
-(Table~\ref{tbl:multi_domain_evidence_gate}).
+The active AV and Healthcare bounded rows exceed the 25\% evidence gate
+(Table~\ref{tbl:multi_domain_evidence_gate}); Battery is the reference witness
+row rather than a peer benchmark row.
 
 \textbf{Validation-depth note.}
 The formal guarantees in Claim~\ref{claim:portability}(i)--(iv) hold for any
 DC3S-compatible system by the domain-agnostic structure of the theorems; this is
 a framework-level result, not an empirical claim about each domain.
-The evidence table above distinguishes \emph{validation depth}:
-battery carries locked real-data evidence at the \emph{reference\_validated} tier;
-the five proof domains demonstrate evidence-gate passage at the
-\emph{proof\_validated} tier on ORIUS-Bench synthetic benchmarks.
-The two tiers reflect different depths of empirical validation---not different
-theoretical coverage guarantees.
+The evidence table above distinguishes \emph{validation depth}: Battery carries
+locked real-data evidence at the \emph{reference\_validated} tier; AV and
+Healthcare demonstrate bounded evidence-gate passage under their current replay
+or monitoring contracts.  The tiers reflect different depths of empirical
+validation---not different theoretical coverage guarantees.
 Portability evidence (same pipeline, same theorems, evidence gate passed) is not
 the same as universal theorem closure; each domain remains subject to its own
 calibration data quality and operating-envelope assumptions.
@@ -120,9 +117,10 @@ Claim~\ref{claim:portability} does \emph{not} assert:
         safety filter; closed-loop stability of the underlying controller plus
         DC3S is a separate systems-theoretic question outside the scope of this thesis.
   \item \textbf{Hardware-validated deployment} in any non-battery domain.
-        The vehicle, healthcare, industrial, aerospace, and navigation results
-        use ORIUS-Bench synthetic dynamics.  Field pilots are identified as
-        future work in \S\ref{sec:future_work}.
+        The AV row is an all-zip grouped nuPlan replay surrogate and the
+        Healthcare row is retrospective monitoring evidence.  Road deployment,
+        clinical deployment, and inactive-domain promotion are future work in
+        \S\ref{sec:future_work}.
 \end{itemize}
 
 These limitations are honest and deliberate: the universal portability claim

@@ -16,7 +16,7 @@ $W$: OQE window size (default 20); $d$: action dimensionality; $n_\text{cal}$: c
 \textbf{Shield/Repair} & Projection + clamp & $O(d)$ & $O(1)$ & Domain-specific predicate \\
 \textbf{Certify} & SHA-256 hash chain & $O(1)$ & $O(1)$ & Fixed-length digest \\
 \midrule
-\textbf{Total per step} & & $O(W \log W + d)$ & $O(W + n_\text{cal})$ & \\
+\textbf{Total per step} & not appl. & $O(W \log W + d)$ & $O(W + n_\text{cal})$ & not appl. \\
 \bottomrule
 \multicolumn{5}{l}{\small With $W{=}20$, $d{=}4$, $n_\text{cal}{=}200$: dominated by calibration storage. Latency $<$0.35\,ms p99 (Table~\ref{tbl:latency_benchmark}).}\\
 \end{tabular}

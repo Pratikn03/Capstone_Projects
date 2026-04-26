@@ -407,7 +407,7 @@ In the battery domain, $x_t = \text{SOC}_t$ (MWh),
 $a_t = (P_t^{\text{chg}}, P_t^{\text{dis}})$ (MW), and
 $\phi(x_t) = \mathbf{1}[\text{SOC}_{\min} \le x_t \le \text{SOC}_{\max}]$.
 
-\subsection{Assumption IDs (A1--A8)}
+\subsection{Assumption IDs (A1--A13)}
 
 Each assumption is assigned a permanent identifier and stated in both
 domain-general and battery-specific form.
@@ -474,11 +474,13 @@ at or before step $t$: $\mathcal{C}_t = h(\hat{x}_{1:t}, a_{1:t-1})$.
 
 \begin{assumption}[A8: Admissible fallback policy]
 \label{assm:A8}
-There exists a fallback policy $\pi_{\text{fb}}$ that, starting from any
-safe state, maintains $\phi(x_t) = 1$ for all future steps under worst-case
-bounded disturbance.
-\emph{Battery:} the zero-dispatch policy ($P_t = 0$) is always admissible
-because SOC is unchanged (up to model error).
+There exists a fallback policy $\pi_{\text{fb}}$ such that, starting from a
+safe state, the runtime can either safely hold the current state in place or
+apply a boundary-aware recovery action that moves the state inward.  If neither
+case can be certified, the runtime fails closed instead of claiming a fallback
+guarantee.
+\emph{Battery:} zero dispatch is the defended hold action on the interior, and
+safe landing is the defended boundary-recovery action near the SOC limits.
 \end{assumption}
 
 \subsection{Proof Dependency Matrix}
@@ -499,10 +501,10 @@ Table~\ref{tab:proof-deps} shows which assumptions each theorem requires.
 T1 OASG Existence & \checkmark & \checkmark & & \checkmark & & & & & & & Boundary-reachability witness near the constraint surface \\
 T2 Safety Preservation & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & & & & \checkmark & & Inflated-set containment plus repair membership in the tightened safe set \\
 T3 Core Bound & \checkmark & \checkmark & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Predictable risk-envelope budget $r_t \le \alpha(1-w_t)$ \\
-T4 No Free Safety & & \checkmark & & & & & & & & & Fixed-margin, quality-ignorant controller class and admissible degraded-observation witness \\
+T4 Observation Necessity & & \checkmark & & & & & & & & Fixed-margin, quality-ignorant controller class and admissible degraded-observation witness \\
 T5 Certificate Horizon & \checkmark & \checkmark & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Forward-tube containment construction \\
-T6 Certificate Expiration Bound & & & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Drift-scale lower-bound argument for certificate expiration \\
-T7 Feasible Fallback Existence & \checkmark & & \checkmark & \checkmark & & & & & & \checkmark & Interior-state fallback construction \\
+T6 Certificate Expiration Bound & & & & \checkmark & \checkmark & & \checkmark & & \checkmark & & Closed-form first-passage lower bound with explicit confidence parameter \\
+T7 Feasible Fallback Existence & \checkmark & & & \checkmark & & & & & & \checkmark & Piecewise hold-or-safe-landing fallback construction \\
 T8 Graceful Degradation Dominance & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & & & & & \checkmark & Shared-fault comparison coupling between graceful and uncontrolled release \\
 T9 Universal Impossibility & & & & \checkmark & & & & \checkmark & & & Per-window degraded-observation witness under persistent degradation \\
 T10 Boundary-Indistinguishability Lower Bound & \checkmark & \checkmark & & & & \checkmark & & & & & Boundary prior and observation-law indistinguishability hypothesis \\
@@ -579,7 +581,7 @@ The theorems form a logical ladder:
     The shield solves the problem---true safety is restored.
   \item \textbf{Core Bound} (Chapter~\ref{ch:core-bound}):
     The solution has a quantifiable cost---expected violations are bounded.
-  \item \textbf{No Free Safety} (Chapter~\ref{ch:no-free-safety}):
+  \item \textbf{Observation Necessity / No Free Safety} (Chapter~\ref{ch:no-free-safety}):
     The cost is unavoidable---ignoring observation quality breaks safety.
   \item \textbf{Temporal Extensions} (Chapter~\ref{ch:temporal-extensions}):
     The guarantee extends across time---certificates expire gracefully.
@@ -637,8 +639,8 @@ code, artifact, and mapping integrity.
 \subsection{Chapter Summary}
 
 This chapter provides the stable notational, assumptive, and
-methodological foundation for every proof in Part~III.  The eight
-assumptions (A1--A8) are individually justified in both domain-general
+methodological foundation for every proof in Part~III.  The canonical
+assumption register (A1--A13) is individually justified in both domain-general
 and witness-domain terms, the proof dependency matrix prevents
 circular reasoning, and the theorem-writing discipline ensures that
 every claim is bounded by explicit scope disclaimers.  The integrated
@@ -1483,10 +1485,10 @@ claiming coefficient-wise sharpness in every model.
 
 % --- Merged from ch19_no_free_safety_battery.tex ---
 
-\section{No Free Safety Theorem}
+\section{Observation Necessity / No Free Safety Theorem}
 \label{ch:no-free-safety}
 
-This chapter proves the \emph{No Free Safety} theorem: any controller
+This chapter proves the \emph{Observation Necessity / No Free Safety} theorem: any controller
 that ignores observation quality---that is, treats all telemetry as
 equally reliable---admits admissible degraded-observation sequences on which
 observed-state legality and true-state safety separate.  The result is
@@ -1498,7 +1500,7 @@ while the observation channel degrades.
 
 We first state the necessity result for an arbitrary CPS.
 
-\begin{theorem}[No Free Safety --- General CPS]
+\begin{theorem}[Observation Necessity / No Free Safety --- General CPS]
 \label{thm:no-free-safety-general}
 Let $(\mathcal{X}, \mathcal{U}, f, \mathcal{S}, \hat{x})$ be a CPS
 satisfying Assumption~A2 with $g(w_t) > 0$ under degraded quality.
@@ -1582,7 +1584,7 @@ constant with respect to reliability.
 
 \subsection{Constructive Fault-Sequence Logic}
 
-The No Free Safety proof is \emph{constructive}: we exhibit a specific
+The Observation Necessity / No Free Safety proof is \emph{constructive}: we exhibit a specific
 fault sequence that causes the quality-ignorant controller to violate
 constraints.  The construction proceeds in three phases:
 
@@ -1602,9 +1604,9 @@ constraints.  The construction proceeds in three phases:
     pushes the true SOC across the constraint boundary.
 \end{enumerate}
 
-\subsection{Main Theorem: No Free Safety}
+\subsection{Main Theorem: Observation Necessity / No Free Safety}
 
-\begin{theorem}[No Free Safety]
+\begin{theorem}[Observation Necessity / No Free Safety]
 \label{thm:no-free-safety}
 Under Assumption~A2, for any quality-ignorant controller $\pi$ and
 any dropout rate $d > 0$, there exists an admissible fault sequence
@@ -1646,7 +1648,7 @@ $\phi_{\text{obs}}(\pi(\hat{x}_{t^*})) = 1$.
 
 \begin{table}[ht]
 \centering
-\caption{Mapping No Free Safety theorem to battery domain.}
+\caption{Mapping the Observation Necessity / No Free Safety theorem to the battery domain.}
 \label{tab:no-free-safety-interp}
 \begin{tabular}{ll}
 \toprule
@@ -1709,7 +1711,7 @@ $\Omega(T)$, exceeding any $o(T)$ bound.
 
 \subsection{Chapter Summary}
 
-The No Free Safety theorem is the fourth rung of the theorem ladder.
+The Observation Necessity / No Free Safety theorem is the fourth rung of the theorem ladder.
 It proves that ignoring observation quality is not merely sub-optimal
 but fundamentally unsafe: any quality-ignorant controller can be driven
 to violation by an admissible fault sequence.  The constructive proof
@@ -1840,7 +1842,7 @@ separate defended theorem.
 
 \begin{theorem}[Certificate expiration bound]
 \label{thm:cert-expiration}
-Under Assumption~A9 and confidence level $\delta\in(0,1)$, the validity
+Under Assumptions~A4, A7, and~A9 and confidence level $\delta\in(0,1)$, the validity
 horizon satisfies the lower bound
 \[
   \tau_t \;\ge\;
@@ -1855,7 +1857,8 @@ certificate interval to the nearest constraint boundary.
 \end{theorem}
 
 \begin{proof}
-For a $\sigma_d$-sub-Gaussian disturbance, the tail bound
+For a $\sigma_d$-sub-Gaussian disturbance, the reflection-principle /
+first-passage tail bound gives
 \[
   \Prob(|S_\Delta| \ge \delta_{\text{bnd},t})
   \le
@@ -1933,26 +1936,30 @@ existence and its dominance over uncontrolled degradation.
 
 \begin{theorem}[Feasible fallback existence]
 \label{thm:fallback-existence}
-Under Assumptions A1, A3, A4, and A8, for any state $x_t$ satisfying
-$\phi(x_t) = 1$, the fallback policy $\pi_{\text{fb}}$ produces a
-safe action:
+Under Assumptions A1, A4, and A8, for any safe battery state $x_t$, the
+fallback policy $\pi_{\text{fb}}$ obeys a piecewise certified rule:
 \[
-  a_t^{\text{fb}} = \pi_{\text{fb}}(x_t) \in \mathcal{A}_t
-  \quad\text{and}\quad
+  \text{either } a_t^{\text{fb}} = (0,0) \text{ preserves safety on the interior,}
+\]
+\[
+  \text{or } a_t^{\text{fb}} \text{ is a boundary-aware safe-landing action with }
   \phi(x_{t+1}) = 1.
 \]
-In the battery domain, $\pi_{\text{fb}}$ is the zero-dispatch policy
-$(P_t^{\text{chg}} = 0, P_t^{\text{dis}} = 0)$, which preserves SOC
-up to model error.
+If neither case can be certified under the active ramp, power, and model-error
+constraints, the theorem surface fails closed rather than asserting a false
+fallback guarantee.
 \end{theorem}
 
 \begin{proof}
-Under zero dispatch, $x_{t+1} = x_t + \epsilon_t$ with
-$|\epsilon_t| \le \epsilon_{\text{model}}$.  Since
-$x_t \in [\text{SOC}_{\min}, \text{SOC}_{\max}]$ and
-$\epsilon_{\text{model}}$ is small relative to the constraint margins,
-$x_{t+1}$ remains feasible.  Assumption~A3 guarantees the existence
-of at least one such safe action, and zero dispatch is always one.
+If the current SOC has enough interior slack, zero dispatch gives
+$x_{t+1}=x_t+\epsilon_t$ with $|\epsilon_t|\le\epsilon_{\text{model}}$, so the
+next state remains inside the safe interval.  If the current SOC is safe but
+too close to a boundary for zero dispatch to be certified, the safe-landing
+controller computes a charge or discharge action that moves the SOC toward the
+interior safe zone while respecting the active battery limits.  The promoted
+runtime validator certifies exactly these two cases and returns infeasible
+rather than over-claiming when neither case is safe.  Hence the defended T7
+surface is the piecewise hold-or-safe-landing rule and nothing broader.
 \end{proof}
 
 \subsubsection{Graceful Degradation Dominance}

@@ -45,13 +45,65 @@
 \part{Submission Boundary}
 \include{paper/monograph/ch13_governance_reproducibility_limitations_and_conclusion}
 
+\part{Archival Provenance Index}
+\chapter{Archival Source Register}
+\label{ch:archival-source-register}
+
+Earlier drafts of this repository compiled a polished thirteen-chapter
+submission spine, a battery-era chapter archive, a merged historical narrative,
+longform extension packets, and standalone proof PDFs into one PDF. That made
+the document complete as an archive but repetitive as a monograph: the
+introduction, related work, theorem ladder, universality boundary, proof
+surface, and conclusion appeared multiple times in different historical voices.
+
+This senior-review controller keeps the main body as one continuous monograph.
+Historical sources remain tracked and inspectable, but they are no longer
+compiled inline as duplicate narrative chapters. When archive material is
+needed for provenance or review traceability, the source path below is the
+canonical location.
+
+\section{Tracked archive locations}
+\begin{itemize}
+  \item \texttt{chapters/}: battery-era chapter archive and earlier theorem
+  development.
+  \item \texttt{chapters\_merged/}: merged historical narrative draft,
+  including older broader-domain validation text that is not part of the
+  current defended claim surface.
+  \item \texttt{paper/longform/}: longform extension packets for conditional
+  coverage, Byzantine robustness, committee response, portability, and deeper
+  theoretical guarantees.
+  \item \texttt{appendices/app\_c\_flagship\_proofs.pdf} and
+  \texttt{appendices/app\_c\_all\_theorems.pdf}: standalone proof packets.
+  \item \texttt{appendices/}: legacy appendix packets, artifact registers,
+  theorem audits, release manifests, and reproducibility records.
+\end{itemize}
+
+\section{Reader-facing rule}
+The defended scientific flow is the preceding main body plus the curated system
+appendices that follow. Archive sources are evidence history, not additional
+main-argument chapters. This prevents older wording from silently restating or
+overstating the current Battery + AV + Healthcare claim boundary.
+
 \appendix
 \renewcommand{\thechapter}{\alphalph{\value{chapter}}}
+\part{System Appendices}
+\include{appendices/app_a_notation}
 \include{paper/monograph/app_aj_assumption_register}
 \include{paper/monograph/app_ak_proofs}
-\include{appendices/app_f_fault_specs}
 \include{paper/monograph/app_am_artifact_and_claim_index}
 \include{paper/monograph/app_an_safety_case_bundle_index}
+\include{appendices/app_d_extended_results}
+\include{appendices/app_e_reliability_audits}
+\include{appendices/app_f_fault_specs}
+\include{appendices/app_g_adapter_interface}
+\include{appendices/app_h_four_reviewer_audit}
+\include{appendices/app_m_verified_theorems_and_gap_audit}
+\include{appendices/app_r_locked_artifact_hash_registry}
+\include{appendices/app_s_claim_evidence_registers}
+\include{appendices/app_t_certos_artifact_audit}
+\include{appendices/app_u_certos_lifecycle_log}
+\include{appendices/app_ad_dataset_cards}
+\include{appendices/app_ae_reproducibility_appendix}
 
 \backmatter
 \include{backmatter/extended_reading_index}

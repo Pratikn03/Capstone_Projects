@@ -1,66 +1,53 @@
-%% Shared domain-instantiation block — \input{} at the end of each theorem chapter
-%% Shows how the theorem's abstract objects map to the battery reference row
-%% plus the four forecasting-capable non-battery replay rows.
+%% Shared domain-instantiation block — \input{} at the end of theorem chapters.
+%% It maps theorem objects only to the active Battery + AV + Healthcare claim
+%% surface used by the current public manuscript.
 
 \providecommand{\domainblockid}{generic}
 \providecommand{\domainblocktitle}{\domainblockid}
 
-\subsection{Domain Instantiation Across Forecasting-Capable Replay Domains}
+\subsection{Domain Instantiation Across the Active Three-Domain Surface}
 \label{sec:domain-instantiation-\domainblockid}
 
 The theorem above is stated for an abstract CPS with observation vector
 $z_t$, reliability score $w_t$, state uncertainty region
 $C_t^{\text{RAC}}$, feasible action set $\mathcal{A}_t$, and violation
 predicate $v(\cdot)$.  Table~\ref{tab:domain-instantiation-\domainblockid}
-maps these objects to their concrete counterparts in each of the five
-forecasting-capable replay domains.  Each column instantiates the shared
-adapter contract; the table records how the abstract theorem objects map
-onto the replay surfaces without asserting equal evidence tiers across
-those domains.
+maps these objects to the three active public rows.  Battery is the witness
+row; AV and Healthcare are bounded promoted rows with narrower evidence tiers.
 
 \begin{table}[htbp]
 \centering
 \small
-\caption{Domain-specific instantiation for Theorem~\domainblocktitle{} — abstract objects mapped to the battery reference row and four forecasting-capable replay rows.}
+\caption{Domain-specific instantiation for Theorem~\domainblocktitle{} across the active three-domain surface.}
 \label{tab:domain-instantiation-\domainblockid}
-\begin{tabular}{p{2.2cm}p{2.4cm}p{2.4cm}p{2.4cm}p{2.4cm}p{2.4cm}}
+\begin{tabular}{p{2.6cm}p{3.3cm}p{3.3cm}p{3.3cm}}
 \toprule
-\textbf{Object} & \textbf{Battery} & \textbf{AV} & \textbf{Industrial} & \textbf{Healthcare} & \textbf{Aerospace} \\
+\textbf{Object} & \textbf{Battery} & \textbf{AV} & \textbf{Healthcare} \\
 \midrule
 $z_t$ (observation)
-  & SCADA packet: SOC, $V$, $I$, load
-  & GPS + odometry: speed, position
-  & Sensor array: temp., vacuum, pressure, power
-  & Wearable/ICU: HR, SpO$_2$, resp.\ rate
-  & ADIRU: airspeed, bank angle, altitude \\
+  & SCADA packet: SOC, voltage, current, load
+  & nuPlan replay state: ego speed, relative gap, local context
+  & ICU monitoring state: vital-sign and alert context \\
 \addlinespace
 $w_t$ (reliability)
-  & OQE composite score over dropout, delay, stale
-  & OQE score over GPS dropout, stale odometry
-  & OQE score over sensor dropout, spike, stale
-  & OQE score over lead dropout, motion artefact
-  & OQE score over pitot dropout, ADIRU stale \\
+  & OQE composite score over dropout, delay, stale telemetry
+  & OQE score over delay, dropout, stale, out-of-order, and spike faults
+  & OQE score over stale and spike degradation in retrospective monitoring \\
 \addlinespace
 $C_t^{\text{RAC}}$ (uncertainty region)
   & Conformal SOC interval $[\hat{s}_{\text{lo}},\hat{s}_{\text{hi}}]$
-  & Conformal speed interval $[\hat{v}_{\text{lo}},\hat{v}_{\text{hi}}]$
-  & Conformal power interval $[\hat{P}_{\text{lo}},\hat{P}_{\text{hi}}]$
-  & Conformal HR interval $[\widehat{\text{HR}}_{\text{lo}},\widehat{\text{HR}}_{\text{hi}}]$
-  & Conformal airspeed/bank box \\
+  & Conformal ego-speed and relative-gap intervals
+  & Conformal vital-sign interval for alert-release monitoring \\
 \addlinespace
 $\mathcal{A}_t$ (feasible set)
-  & $P_t^{\text{cmd}} \in [P_{\min}, P_{\max}]$, SOC bounds
-  & $a_t \in [-4, 3]$~m/s$^2$, $v_t \leq 11$~m/s
-  & $P_t^{\text{cmd}} \in [430, 500]$~MW
-  & Alarm/hold: HR $\in [50, 130]$~bpm
-  & Throttle $\in [0,1]$, $|\phi_t| \leq 20^\circ$ \\
+  & Dispatch command constrained by SOC and reserve bounds
+  & Longitudinal action constrained by TTC and predictive-entry barrier
+  & Alert or hold decision constrained by bounded intervention discipline \\
 \addlinespace
 $v(\cdot)$ (violation)
-  & SOC $< \text{SOC}_{\min}$ on true state
-  & speed $> v_{\max}$ on true state
-  & power $\notin [P_{\min}, P_{\max}]$ on true state
-  & HR $\notin [50, 130]$ on true state
-  & $|\phi| > 20^\circ$ or $V \notin [60,350]$~kt \\
+  & SOC or dispatch envelope violation on true state
+  & Replay-level TTC or entry-barrier violation on true state
+  & Bounded monitoring or alert-release violation on retrospective trace \\
 \bottomrule
 \end{tabular}
 \end{table}

@@ -228,7 +228,7 @@ justified.
 \qedhere
 \end{proof}
 
-\section{C.4\quad No Free Safety}\label{sec:proof-no-free}
+\section{C.4\quad Observation Necessity / No Free Safety}\label{sec:proof-no-free}
 \begin{theorem}[restated]
 Under A1, A2, A4, and A11, for any quality-ignorant $\pi$ and $d>0$, $\exists$
 admissible fault sequence with $\TSVR(\pi)>0$.
@@ -314,7 +314,8 @@ certificate horizon satisfies the lower bound
 \]
 \end{theorem}
 \begin{proof}
-For a $\sigma_d$-sub-Gaussian disturbance, the standard tail inequality gives
+For a $\sigma_d$-sub-Gaussian disturbance, the reflection-principle /
+first-passage tail inequality gives
 \[
   \Prob\!\bigl(|S_\Delta| \ge \delta_{\mathrm{bnd},t}\bigr)
   \le
@@ -349,15 +350,21 @@ conservative wording in Chapter~\ref{ch:cert-half-life-blackout}.  \qedhere
 
 \section{C.8\quad Feasible Fallback Existence}\label{sec:proof-fallback}
 \begin{theorem}[restated]
-Under A3, A4, A8, there exists a battery fallback action that preserves a
-safe SOC interior state under bounded model error.
+Under A1, A4, and A8, there exists a battery piecewise fallback rule that
+either safely holds on the interior or executes a boundary-aware safe-landing
+recovery action; otherwise the runtime fails closed instead of asserting a
+false fallback guarantee.
 \end{theorem}
 \begin{proof}
-Zero dispatch is the constructive battery fallback.  If the current SOC is in
-the interior of the safe interval and the one-step model error is bounded,
-then the next SOC remains inside the admissible interval.  The helper
-\texttt{certify\_fallback\_existence()} checks this construction directly for
-the battery constraints.  \qedhere
+Zero dispatch is the constructive hold action on the interior.  If the current
+SOC has enough slack against the one-step model error, the next state remains
+inside the admissible interval.  If the current SOC is safe but too close to a
+boundary for zero dispatch to be certified, the safe-landing controller
+computes a charge or discharge action that moves the SOC toward the interior
+safe zone while respecting the active battery limits.  The helper
+\texttt{certify\_fallback\_existence()} now checks exactly this piecewise
+surface and returns infeasible rather than over-claiming when neither case is
+safe.  \qedhere
 \end{proof}
 
 \section{C.9\quad Graceful Degradation Dominance}\label{sec:proof-graceful}
@@ -405,9 +412,9 @@ increases with $w_t$.  \qedhere
 \section{C.11\quad Universal Impossibility (T9)}\label{sec:proof-universal-impossibility}
 \textbf{Theorem reference.}
 The authoritative statement is Theorem~\ref{thm:universal-impossibility} in
-Chapter~\ref{ch:universality-completeness}.  It is repeated here so that the
-full proof appendix covers the complete defended theorem program rather than
-only the battery witness ladder.
+Chapter~\ref{ch:universality-completeness}.  It is repeated here as a
+draft/scoped extension so that the full proof appendix covers the complete
+theorem inventory rather than only the battery witness ladder.
 
 \begin{proof}[Appendix proof copy]
 By Assumption~A10b, the fault process is $\varphi$-mixing with geometric
@@ -447,8 +454,8 @@ $\mathbb{E}[V_T] \ge c\,d\,T$ lower bound up to renaming the constant.
 \textbf{Theorem reference.}
 The authoritative statement is Theorem~\ref{thm:information-theoretic-lower-bound}
 in Chapter~\ref{ch:universality-completeness}.  The proof below preserves its
-scoped interpretation as a lower-bound frontier theorem under explicit extra
-hypotheses.
+draft/scoped interpretation as a lower-bound frontier theorem under explicit
+extra hypotheses.
 
 \begin{proof}[Appendix proof copy]
 Fix a step $t$ and the binary boundary-testing subproblem with latent
@@ -524,6 +531,168 @@ This proves the forward one-step transfer direction.  The converse is not
 claimed as part of T11 itself; it is tracked separately as a structural
 failure-mode witness showing that if any one of the four obligations fails,
 the corresponding step in the forward proof disappears.
+\end{proof}
+
+\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality]
+Let $B(o)=\{x:h(x)=o\}$ denote an observation ambiguity class and let
+$K(o)=\bigcap_{x\in B(o)}C(x)$ denote its common safe core.  Every
+mandatory-release observation-only controller satisfies
+\[
+  \operatorname{TSVR}(\pi)
+  \ge
+  \mathbb{E}_{O}\!\left[
+    \min_{a\in\mathcal{A}}
+    \Prob(a\notin C(X^\star)\mid O)
+  \right].
+\]
+If ORIUS constructs a set $\mathcal{X}_t$ with
+$\Prob(X_t^\star\notin\mathcal{X}_t)\le\alpha$ and releases only
+$u_t\in\bigcap_{x\in\mathcal{X}_t}C(x)$, then
+$\operatorname{TSVR}_{\mathrm{ORIUS}}\le\alpha$; under exact coverage, the
+one-step true-state violation probability is zero.
+\end{corollary}
+
+\begin{proof}
+Conditioning on $O=o$, an observation-only controller must select one action
+for all states in $B(o)$.  Its conditional violation probability is
+$\Prob(a\notin C(X^\star)\mid O=o)$, so no such controller can improve on the
+minimum over $a$.  Averaging over observations gives the Bayes lower bound.
+When $K(o)=\emptyset$, no action is safe for all states in the ambiguity
+class, so any mandatory release has positive conditional risk if the unsafe
+state has positive conditional mass.
+
+For ORIUS, on the event $X_t^\star\in\mathcal{X}_t$, membership of $u_t$ in
+every $C(x)$ for $x\in\mathcal{X}_t$ implies $u_t\in C(X_t^\star)$, hence no
+true-state violation.  The remaining violation probability is bounded by the
+coverage miss probability $\alpha$.
+\end{proof}
+
+\begin{lemma}[T11\_AV\_BrakeHold: AV Brake-Hold Runtime Lemma]
+For a promoted ORIUS autonomous-vehicle replay row, suppose the emitted
+domain runtime contract witness has source theorem T11, T11 status
+\texttt{runtime\_linked}, no failed T11 obligations, a valid certificate,
+and a passing true brake-hold postcondition in the runtime trace.  Then that
+row is a bounded runtime instance of the forward T11 transfer surface for the
+longitudinal brake-hold contract.
+\end{lemma}
+
+\begin{proof}
+The witness records the four executable T11 obligations through the typed
+contract summary and records the AV-specific true postcondition separately
+as \texttt{domain\_postcondition\_passed}.  The stated hypotheses therefore
+instantiate the coverage, soundness, repair-membership, and fallback
+admissibility steps used in the T11 proof, and the runtime postcondition
+checks the narrowed brake-hold safety predicate for the emitted next state.
+The result is only row-local and contract-local; it does not assert complete
+autonomous-driving closure.
+\end{proof}
+
+\begin{lemma}[T11\_HC\_FailSafeRelease: Healthcare Fail-Safe Release Runtime Lemma]
+For a promoted ORIUS healthcare monitoring row, suppose the emitted domain
+runtime contract witness has source theorem T11, T11 status
+\texttt{runtime\_linked}, no failed T11 obligations, a valid certificate,
+and a passing true fail-safe alert-release postcondition in the runtime
+trace.  Then that row is a bounded runtime instance of the forward T11
+transfer surface for the healthcare fail-safe release contract.
+\end{lemma}
+
+\begin{proof}
+The witness records the typed T11 summary emitted by the universal runtime
+and separately records the healthcare-specific true alert-release predicate.
+If the T11 status is not \texttt{runtime\_linked}, if any obligation fails,
+if the certificate is invalid, or if the postcondition fails, the witness is
+not passing.  A passing witness therefore supplies exactly the forward
+one-step T11 obligations plus the narrowed clinical-monitoring runtime
+postcondition.  It does not assert regulated clinical deployment closure.
+\end{proof}
+
+\begin{lemma}[T6\_AV\_FallbackValidity: AV One-Step Fallback Certificate Lemma]
+For a promoted ORIUS AV replay row, if the certificate records the
+\texttt{single\_step\_fallback} validity scope, the released action is the
+full-brake fail-safe action, the T11 runtime witness is linked, and the true
+brake-hold postcondition passes, then the certificate has a theorem-backed
+one-step validity horizon for that row.
+\end{lemma}
+
+\begin{proof}
+The helper implementing the certificate semantics assigns
+$H_t=1$, half-life one, and expiration at the next step only in the fallback
+branch where the emitted action is the domain fail-safe action.  The runtime
+witness separately checks T11 linkage and the true brake-hold postcondition.
+Thus the certificate is valid only for the single emitted transition; no
+multi-step validity is inferred from degraded observation.
+\end{proof}
+
+\begin{lemma}[T6\_HC\_FallbackValidity: Healthcare One-Step Fallback Certificate Lemma]
+For a promoted ORIUS healthcare monitoring row, if the certificate records
+the \texttt{single\_step\_fallback} validity scope, the released action is the
+max-alert fail-safe action, the T11 runtime witness is linked, and the true
+fail-safe alert-release postcondition passes, then the certificate has a
+theorem-backed one-step validity horizon for that row.
+\end{lemma}
+
+\begin{proof}
+The certificate-validity helper gives fallback releases a positive horizon
+only for the domain fail-safe action and only for one step.  T11 linkage and
+the healthcare postcondition are checked by the runtime witness.  Therefore
+the row satisfies the formal validity predicate for the emitted transition,
+while degraded observations are not promoted to multi-step certificates.
+\end{proof}
+
+\begin{lemma}[T\_EQ\_Battery\_RuntimeArtifactPackage: Battery Equal Artifact Discipline Package]
+If the battery report directory contains runtime-denominator comparator,
+ablation, negative-control, trace, utility, theorem, proof-appendix, and
+reproducibility artifacts satisfying the equal-domain gate, then the battery
+row satisfies the repository's equal artifact-discipline contract.
+\end{lemma}
+
+\begin{proof}
+The equal-domain gate is an executable artifact obligation, not a new safety
+theorem.  It checks that the battery evidence package contains a runtime
+trace, runtime-native comparator rows, runtime-native ablation rows,
+runtime-native negative controls, a proof-surface anchor, and a
+reproducibility manifest.  It also checks the non-vacuity condition that the
+ORIUS row has zero TSVR, certificate/witness closure, and useful work greater
+than the degenerate safe-fallback comparator.  If any required artifact is
+missing or proxy-labelled, the validator fails closed.  Therefore a passing
+gate is exactly the stated artifact-discipline contract.
+\end{proof}
+
+\begin{lemma}[T\_EQ\_AV\_RuntimeArtifactPackage: AV Equal Artifact Discipline Package]
+If the AV report directory contains runtime-denominator comparator,
+ablation, negative-control, trace, utility, theorem, proof-appendix, and
+reproducibility artifacts satisfying the equal-domain gate, then the bounded
+AV replay row satisfies the repository's equal artifact-discipline contract.
+\end{lemma}
+
+\begin{proof}
+The gate requires the AV T11 brake-hold runtime lemma and the AV T6
+one-step fallback-validity lemma, then separately requires domain-native
+runtime denominator rows for baselines, ablations, negative controls, utility,
+and reproducibility.  The ORIUS row must have zero TSVR, valid runtime
+certificates, passing runtime witnesses, and useful work greater than the
+always-brake comparator.  The conclusion is limited to artifact discipline
+for the promoted replay contract; it does not assert full autonomous-driving
+closure.
+\end{proof}
+
+\begin{lemma}[T\_EQ\_HC\_RuntimeArtifactPackage: Healthcare Equal Artifact Discipline Package]
+If the healthcare report directory contains runtime-denominator comparator,
+ablation, negative-control, trace, utility, theorem, proof-appendix, and
+reproducibility artifacts satisfying the equal-domain gate, then the bounded
+healthcare monitoring row satisfies the repository's equal
+artifact-discipline contract.
+\end{lemma}
+
+\begin{proof}
+The gate requires the healthcare T11 fail-safe release runtime lemma and the
+healthcare T6 one-step fallback-validity lemma, then requires native runtime
+denominator rows for baselines, ablations, negative controls, utility, and
+reproducibility.  The ORIUS row must have zero TSVR, valid runtime
+certificates, passing runtime witnesses, and useful work greater than the
+always-alert comparator.  The result is an artifact-discipline guarantee for
+the promoted monitoring contract only; it does not assert regulated clinical
+deployment readiness.
 \end{proof}
 
 %% ====================================================================

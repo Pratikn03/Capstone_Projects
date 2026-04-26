@@ -1,17 +1,20 @@
 \begin{table}[htbp]
 \centering
-\scriptsize
-\caption{Compact DE/US transfer-generalization summary from current publication artifacts.}
+\small
+\caption{Transfer stress outcomes across DE/US distribution shifts. DC$^3$S maintains zero SoC violations under all transfer scenarios.}
 \label{tab:TBL04_TRANSFER_STRESS}
-\setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{0.96}
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.0}
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{lllllll}
+\begin{tabular}{llrrrrr}
 \toprule
-\textbf{Transfer Case} & \textbf{Controller} & \textbf{PICP@90} & \textbf{Width (MW)} & \textbf{Viol. Rate} & \textbf{Sev. P95 (MWh)} & \textbf{Cost $\Delta$ (\%)} \\
+Scenario & Controller & PICP@90 & Width (MW) & Viol.\ Rate & Sev.\ P95 (MWh) & Cost $\Delta$\% \\
 \midrule
-pending\_transfer\_artifacts & --- & --- & --- & --- & --- & --- \\
+DE\_to\_US\_Transfer\_Shift & \textbf{DC$^3$S} & 0.480 & 1022.6 & \textbf{0.000} & \textbf{0.000} & +5.00 \\
+DE\_to\_US\_Transfer\_Shift & Det.\ LP & 0.468 & 951.9 & 0.079 & 229.1 & +0.00 \\
+DE\_to\_US\_Transfer\_Shift & CVaR & 0.468 & 951.9 & 0.317 & 0.3 & +0.00 \\
+DE\_to\_US\_Transfer\_Shift & Robust & 0.782 & 3540.8 & 0.317 & 0.3 & +0.00 \\
 \bottomrule
-\end{tabular}%
+\end{tabular}
 }
 \end{table}

@@ -499,12 +499,12 @@ mean $\bar{w}_t = 0.660$, $N = 2000$).
 \begin{figure}[htbp]
   \centering
   \begin{subfigure}[b]{0.48\linewidth}
-    \includegraphics[width=\linewidth]{reports/industrial/figures/forecast_sample.png}
+    \ORIUSIncludeArchivedGraphic[width=\linewidth]{reports/industrial/figures/forecast_sample.png}
     \caption{Forecast sample}
   \end{subfigure}
   \hfill
   \begin{subfigure}[b]{0.48\linewidth}
-    \includegraphics[width=\linewidth]{reports/industrial/figures/model_comparison.png}
+    \ORIUSIncludeArchivedGraphic[width=\linewidth]{reports/industrial/figures/model_comparison.png}
     \caption{Model comparison}
   \end{subfigure}
   \caption{Industrial domain: GBM forecast vs.\ observed power with 90\%
@@ -515,12 +515,12 @@ mean $\bar{w}_t = 0.660$, $N = 2000$).
 \begin{figure}[htbp]
   \centering
   \begin{subfigure}[b]{0.48\linewidth}
-    \includegraphics[width=\linewidth]{reports/industrial/figures/drift_sample.png}
+    \ORIUSIncludeArchivedGraphic[width=\linewidth]{reports/industrial/figures/drift_sample.png}
     \caption{Reliability $w_t$ under faults}
   \end{subfigure}
   \hfill
   \begin{subfigure}[b]{0.48\linewidth}
-    \includegraphics[width=\linewidth]{reports/industrial/figures/multi_horizon_backtest.png}
+    \ORIUSIncludeArchivedGraphic[width=\linewidth]{reports/industrial/figures/multi_horizon_backtest.png}
     \caption{Multi-horizon backtest}
   \end{subfigure}
   \caption{Industrial domain: reliability score dynamics under fault injection
@@ -616,12 +616,12 @@ check.
 \begin{figure}[htbp]
   \centering
   \begin{subfigure}[b]{0.48\linewidth}
-    \includegraphics[width=\linewidth]{reports/aerospace/figures/forecast_sample.png}
+    \ORIUSIncludeArchivedGraphic[width=\linewidth]{reports/aerospace/figures/forecast_sample.png}
     \caption{Forecast sample}
   \end{subfigure}
   \hfill
   \begin{subfigure}[b]{0.48\linewidth}
-    \includegraphics[width=\linewidth]{reports/aerospace/figures/model_comparison.png}
+    \ORIUSIncludeArchivedGraphic[width=\linewidth]{reports/aerospace/figures/model_comparison.png}
     \caption{Model comparison}
   \end{subfigure}
   \caption{Aerospace domain: GBM airspeed forecast with 90\% conformal
@@ -632,12 +632,12 @@ check.
 \begin{figure}[htbp]
   \centering
   \begin{subfigure}[b]{0.48\linewidth}
-    \includegraphics[width=\linewidth]{reports/aerospace/figures/drift_sample.png}
+    \ORIUSIncludeArchivedGraphic[width=\linewidth]{reports/aerospace/figures/drift_sample.png}
     \caption{Reliability $w_t$ under faults}
   \end{subfigure}
   \hfill
   \begin{subfigure}[b]{0.48\linewidth}
-    \includegraphics[width=\linewidth]{reports/aerospace/figures/multi_horizon_backtest.png}
+    \ORIUSIncludeArchivedGraphic[width=\linewidth]{reports/aerospace/figures/multi_horizon_backtest.png}
     \caption{Multi-horizon backtest}
   \end{subfigure}
   \caption{Aerospace domain: OQE reliability under air-data faults and
@@ -666,7 +666,8 @@ mean $\bar{w}_t = 0.775$, $N = 2000$).
 Table~\ref{tab:theorem-applicability} maps each core theorem (T1--T8)
 to the six validated domains and indicates the evidence tier supporting
 each claim.  All theorems are stated in domain-agnostic notation using
-only Assumptions~A1--A8 (Chapters~\ref{ch:theorem-oasg}--\ref{ch:temporal-extensions}).
+only the scoped assumptions in the canonical A1--A13 register
+(Chapters~\ref{ch:theorem-oasg}--\ref{ch:temporal-extensions}).
 The energy-management reference row carries the deepest formal proofs; the
 remaining five domains carry matched structural validation at their current
 evidence tier.

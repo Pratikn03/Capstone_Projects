@@ -110,7 +110,7 @@ $d_t$ is the drift indicator, and $\kappa_s = 0.05$ is the staleness scaling wit
 $s_t$ the staleness count in seconds.
 
 In the implementation, the simplified inflation factor used is
-\begin{equation}\label{eq:inflation}
+\begin{equation}\label{eq:runtime_inflation}
   \alpha = \mathrm{clip}\!\bigl(1.0 + 0.7\,(1 - w_t) + 0.5\,s_{\mathrm{shift}},
   \; 1.0,\; 3.0\bigr),
 \end{equation}

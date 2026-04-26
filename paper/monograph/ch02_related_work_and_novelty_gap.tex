@@ -35,11 +35,16 @@ That line of work is indispensable because it treats safe release as a separate 
 nominal policy design.
 
 Yet most supervisory schemes enter after the nominal controller has already proposed an
-action under a state estimate that is treated as sufficiently meaningful. ORIUS addresses an
-earlier fault line: once observation quality degrades, the assurance layer must reason
-jointly about reliability, widened state uncertainty, repaired action, fallback, and
-certificate semantics. A supervisor without that observation-side logic is still missing the
-central OASG object.
+action under a state estimate that is treated as sufficiently meaningful. Crucially,
+classic Simplex architectures hard-code the boundary between unverified and verified
+controllers based on static state-space triggers, implicitly assuming the physical state
+observation itself remains perfectly reliable. ORIUS addresses an earlier, more insidious
+fault line: once observation quality degrades invisibly (the OASG), state-triggered
+Simplex fails because it trusts a corrupted monitor. The DC³S assurance
+layer must reason jointly about epistemic reliability, dynamically widened state
+uncertainty, repaired action, fallback, and certificate semantics. A supervisor without
+that observation-side, dynamically calibrated logic is still missing the central OASG
+object.
 
 \section{Safety filters, shields, and robust safe control}
 Control barrier functions, predictive safety filters, robust MPC, and tube-based control
@@ -49,11 +54,16 @@ These methods are the closest classical relatives of ORIUS because they formaliz
 difference between nominal control intent and safe control execution.
 
 The remaining gap is that this family usually assumes the uncertainty set and safety object
-have already been defined in a domain-specific way. ORIUS does not replace that work with a
-universal controller. Instead, it provides a typed runtime contract that can host many
-repair mechanisms while keeping reliability estimation, fallback semantics, and certificate
-discipline explicit. The novelty is not the existence of safe control alone; it is the
-runtime composition that makes safe control portable across domains.
+have already been defined in a domain-specific, often static or highly conservative way
+(e.g., assuming a fixed worst-case bounded disturbance $w \in W$). ORIUS does not replace
+that work with a universal controller. Instead, by architecturally composing Conformal
+Quantile Regression (CQR) directly with Robust Optimization at runtime, DC³S dynamically
+inflates and deflates the robust feasible set based on active telemetry drift. It
+eliminates the crippling conservativeness of standalone robust control while providing
+coverage-backed safety guarantees that adapt as sensors fail. The novelty is not the
+existence of safe control or CQR alone; it is the runtime composition that dynamically
+bridges data-driven epistemic uncertainty directly into physical constraint-tightening,
+making safe control portable across domains.
 
 \section{Anomaly, drift, and degraded-observation detection}
 Fault diagnosis, change detection, cyber-physical security, and anomaly monitoring provide
@@ -138,9 +148,10 @@ The exact flagship novelty sentence defended by the dissertation is:
 \begin{quote}
 \emph{ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.}
 \end{quote}
-That sentence is intentionally narrower than a claim of new forecasting leadership or a new
-conditional-coverage theorem. The promoted ML surface is grouped calibration by reliability
-bucket plus bounded runtime-safety deltas on the active three-domain lane.
+That sentence is intentionally narrower than a claim of a new conformal method, a new
+robust-optimization primitive, a new universal controller, or a new
+conditional-coverage theorem. The promoted ML surface is grouped calibration by
+reliability bucket plus bounded runtime-safety deltas on the active three-domain lane.
 
 That missing composition is ORIUS's novelty claim. The dissertation does not argue that any
 one ORIUS component is unprecedented in isolation. It argues that the combination of

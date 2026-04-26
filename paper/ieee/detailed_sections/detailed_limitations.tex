@@ -10,14 +10,13 @@ battery energy storage, autonomous vehicles, and healthcare monitoring.  The
 universality claim is therefore architectural and contract-based rather than a claim
 of broad all-domain empirical closure.
 
-\paragraph{AV TSVR floor.}
-The AV domain achieves a TSVR of 0.628, which, while improved over the baseline
-(0.660), is still substantial.  The residual violations arise primarily from the 4\,s
-prediction horizon, where complex multi-agent interactions produce true states
-outside even the widened conformal interval.  A more expressive predictor (\eg~a
-transformer-based trajectory model) could lower the base TSVR.  The AV result should
-be read as a \emph{bounded proof-of-mechanism}, not as a claim of zero-violation
-closure.
+\paragraph{AV denominator and relative-gap weakness.}
+The all-zip grouped nuPlan AV row reaches empirical ORIUS $\TSVR=0.000163$
+on 1{,}531{,}104 replay steps, inside the explicit $10^{-3}$ runtime gate but
+not equal to zero.  The relative-gap shift table remains in \texttt{watch} status,
+and relative gap under degraded telemetry is the hardest cell.  The AV result should
+be read as a runtime-contract replay closure, not as closed-loop road deployment or
+full autonomous-driving field closure.
 
 \paragraph{Conformal coverage assumptions.}
 The finite-sample coverage guarantee of split conformal prediction holds
@@ -46,10 +45,10 @@ consistency checks (\eg~lidar--camera fusion disagreement) are not yet implement
 in the adapter interface.
 
 \paragraph{Computational cost.}
-The AV runtime requires $\sim$55~minutes for 9{,}348~steps on a single CPU core.
-For real-time deployment at 10~Hz, the per-step budget is 100~ms, whereas the
-current implementation averages $\sim$350~ms.  Optimisation (C++ inference,
-batched prediction, GPU acceleration) would be needed for real-time use.
+The bounded AV replay run is not a real-time deployment benchmark.  For real-time
+operation at 10~Hz, the per-step budget is 100~ms, and the current Python reporting
+path would still need compiled inference, batching, and transport integration before
+it could support a live vehicle loop.
 
 \paragraph{Cross-domain transfer scope.}
 The adapter interface enables structural reuse across domains, but functional
@@ -65,7 +64,7 @@ typed adapter methods and conducting a domain-specific calibration run.
         admitted into the active program with matching replay, calibration,
         runtime, and governance surfaces.
   \item \textbf{Stronger predictors}: Replace LightGBM with transformer-based
-        trajectory predictors to lower the base TSVR in the AV domain.
+        trajectory predictors and larger nuPlan denominators to stress the AV row.
   \item \textbf{Conditional coverage}: Integrate conditional conformal prediction
         methods (\eg~locally-adaptive intervals) for per-input guarantees.
   \item \textbf{Multi-sensor fusion}: Extend the detect stage to perform

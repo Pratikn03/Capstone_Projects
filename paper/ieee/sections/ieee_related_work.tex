@@ -9,39 +9,56 @@ release.
 \subsection{Conformal and distribution-free uncertainty}
 Distribution-free predictive inference gives a principled way to wrap learned
 predictions with finite-sample uncertainty sets
-\cite{vovk2005algorithmic,lei2018distribution,romano2019conformalized,gibbs2021adaptive,angelopoulos2023gentle,barber2023beyond,zaffran2022adaptive}.
-That is essential for ORIUS because the runtime needs a mechanism for inflating the
-observation-consistent state set when trust falls. But conformal methods alone do not
-decide which action remains legal after that inflation. They are uncertainty tools, not
-actuation semantics.
+\cite{vovk2005algorithmic,lei2018distribution,romano2019conformalized,gibbs2021adaptive,angelopoulos2023gentle,barber2023beyond,zaffran2022adaptive,kiyani2025decision}.
+ORIUS inherits that finite-sample uncertainty machinery because the runtime needs a
+mechanism for inflating the observation-consistent state set when trust falls. But
+conformal methods alone do not decide tightened admissible actions, repaired actuation,
+fallback burden, or release certificate semantics after that inflation. They are
+uncertainty tools, not release-boundary runtimes.
 
-\subsection{Runtime assurance, supervisory safety, and shields}
-Simplex architectures, supervisory switching, runtime monitoring, and shielding all
-provide a strong language for intercepting unsafe actions before execution
-\cite{sha1998simplex,sha2001using,desai2019soter,bloem2015shield,bartocci2018introduction,leucker2009brief,havelund2004runtime}.
+Recent decision-theoretic work makes this boundary sharper: prediction sets are useful
+to risk-averse agents because they shape downstream actions, not because they are a
+complete runtime policy by themselves. ORIUS adopts that action-facing interpretation
+and then adds the missing release machinery: reliability scoring, admissible-action
+tightening, repair or fallback, and certificate emission.
+
+\subsection{Runtime monitoring, anomaly detection, and supervisory veto}
+Runtime monitors, anomaly detectors, and cyber-physical fault analyses provide alarms,
+scores, and veto conditions when telemetry or execution behavior becomes suspicious
+\cite{havelund2004runtime,bartocci2018introduction,basseville1993detection,page1954continuous,page1955test,hinkley1971inference,rajkumar2010cps,pasqualetti2013attack,teixeira2015secure,liu2008isolation,breunig2000lof}.
+ORIUS inherits the idea that degraded observation must be recognized before execution.
+It differs because alarms and vetoes alone do not compute tightened admissible actions,
+repaired actuation, fallback burden, or certificate-bearing release governance.
+
+\subsection{Simplex architectures and runtime assurance}
+Simplex architectures, supervisory switching, runtime assurance, and shields provide a
+strong language for overriding a nominal controller and releasing a trusted fallback
+\cite{sha1998simplex,sha2001using,desai2019soter,bloem2015shield,leucker2009brief,kwon2025adaptive}.
 ORIUS inherits the idea that the nominal controller is not the final authority. The gap
-is that many supervisory schemes start after the candidate action already exists and
-assume that the state estimate is sufficiently coherent for the monitor to interpret.
-ORIUS instead treats the observation surface itself as the thing that becomes unsafe,
-which forces the supervisor to reason jointly about reliability, uncertainty inflation,
-repair geometry, and fallback.
+is that many simplex-style schemes start after the candidate action already exists and
+assume that the observed state is coherent enough to supervise directly. ORIUS starts
+one layer earlier by treating degraded observation itself as the thing that changes what
+may still be released, which forces the runtime to reason jointly about reliability,
+uncertainty inflation, repair geometry, fallback, and certificate semantics.
 
-\subsection{Safety filters, barrier methods, and constrained control}
+\subsection{Domain benchmarks used as evidence boundaries}
+The three defended rows rely on established domain evidence surfaces, but ORIUS does
+not treat those sources as interchangeable. The AV row is now bounded to nuPlan replay
+and planning-benchmark semantics \cite{caesar2021nuplan,karnchanachari2024nuplan,peng2025nuplanr};
+the healthcare row is bounded to retrospective MIMIC-derived monitoring evidence
+\cite{johnson2023mimiciv,physionet2024mimiciv31,huang2025mimicsepsis}. These sources
+support reviewer-visible boundaries: nuPlan gives a real driving-log replay surface for
+the current AV row, while MIMIC-IV and MIMIC-Sepsis frame healthcare as retrospective
+monitoring research rather than live clinical deployment.
+
+\subsection{Safety filters, barrier methods, and robust control}
 Barrier functions, robust MPC, predictive safety filters, and reachable-set control
 make it possible to turn uncertainty into admissible action sets
 \cite{ames2019control,ames2014cbf,wabersich2021predictive,fisac2019general,mayne2005robust,langson2004tubes,rawlings2017mpc,camacho2013model}.
-These methods are mathematically strong and domain-critical. What ORIUS adds is not a
-replacement for them, but a typed layer that can host them under one cross-domain
-contract. The key scientific move is to make the runtime objects reusable even when the
-underlying safety geometry differs across domains.
-
-\subsection{Drift, anomaly detection, and degraded telemetry}
-Change detection, anomaly detection, and cyber-physical fault analysis provide the
-language for recognizing when observation should no longer be trusted
-\cite{basseville1993detection,page1954continuous,page1955test,hinkley1971inference,rajkumar2010cps,pasqualetti2013attack,teixeira2015secure,liu2008isolation,breunig2000lof}.
-ORIUS depends on those methods but goes one step further: an alarm is not enough. The
-runtime must translate degraded observation into a different admissible action set and
-record the resulting governance state.
+ORIUS inherits that safe-set geometry. What it adds is not a replacement for plant-local
+control design, but a typed release-boundary layer that can host those methods under one
+cross-domain contract. The key scientific move is to make the runtime objects reusable
+even when the underlying safety geometry differs across domains.
 
 \begin{table*}[t]
 \centering
@@ -52,10 +69,10 @@ record the resulting governance state.
 \toprule
 \textbf{Method family} & \textbf{What it contributes} & \textbf{What remains missing for OASG}\\
 \midrule
-Conformal / distribution-free inference & Reliability-aware uncertainty around learned predictions & Does not specify which action remains legal after observation degrades or how fallback is certified.\\
-Runtime assurance / shielding & Supervisory interception and safe-controller override logic & Often assumes the state estimate is already coherent enough to supervise directly.\\
-Safety filters / robust control & Mapping uncertainty into admissible action sets & Usually tied to one plant family or one controller geometry rather than a shared runtime contract.\\
-Anomaly / drift / CPS fault detection & Detecting loss of trust in telemetry or estimation pipelines & Stops at alarms or scores unless paired with actuation repair and governance semantics.\\
+Conformal / distribution-free inference & Reliability-aware uncertainty around learned predictions & Does not specify tightened admissible actions, repaired actuation, fallback burden accounting, or certificate semantics once observation degrades.\\
+Runtime monitoring / anomaly detection & Detecting degraded telemetry or veto conditions around candidate execution & Stops at alarms or vetoes unless paired with tightened action computation, repaired release, and release governance.\\
+Simplex / runtime assurance & Supervisory override and safe fallback around a nominal controller & Usually assumes the observed state is already coherent enough to supervise and does not define reliability-conditioned tightening or cross-domain contract reuse.\\
+Safety filters / robust control & Plant-local mapping from uncertainty into safe action geometry & Does not by itself define degraded-observation release governance, certificate lifecycle, or a reusable typed contract across domains.\\
 \bottomrule
 \end{tabularx}
 \end{table*}

@@ -92,10 +92,11 @@ T11 & Which structural obligations let the reference proof pattern transfer? & T
 \end{table}
 
 The dependency order is strict.  T1--T8 establish the reference proof
-ladder.  T9 proves that ignoring reliability breaks safety structurally.
-T10 shows that the $\alpha(1-\bar{w})T$ scaling cannot be removed by a better
-controller alone.  T11 then identifies the obligations under which the same
-repair-and-bound structure transfers across domains.
+ladder.  T9 and T10 are draft/scoped extensions under explicit assumptions:
+T9 frames the structural risk of ignoring reliability, and T10 records a
+boundary-indistinguishability frontier for the stated binary testing model.
+T11 then identifies the obligations under which the same repair-and-bound
+structure transfers across domains.
 
 % ----------------------------------------------------------------
 \section{Observation-Aware Control Is Structurally Necessary (T9)}
@@ -105,7 +106,8 @@ repair-and-bound structure transfers across domains.
 Theorem~\ref{thm:no-free-safety} shows, on the reference proof surface, that
 quality-ignorant safety logic can fail even when observed-state evaluation
 looks safe.  The broader universality claim is that this pathology is not a
-single-domain accident; it is a structural consequence of degraded observation.
+single-domain accident; T9 records the corresponding draft/scoped extension
+under explicit mixing and boundary-reachability assumptions.
 
 \begin{theorem}[Universal Impossibility, T9]
 \label{thm:universal-impossibility}
@@ -126,7 +128,7 @@ The proof proceeds in three steps.
 
 \medskip
 \noindent\textbf{Step~1: $\varphi$-mixing fault process.}
-By Assumption~A6$'$ (Chapter~\ref{ch:assumptions}), the fault injection
+By Assumption~A10b (Chapter~\ref{ch:assumptions}), the fault injection
 process $\{F_t\}$ is $\varphi$-mixing with coefficient $\varphi(k)\to 0$
 as $k\to\infty$.  Concretely, $\varphi(k) \le C_\phi\,\rho^k$ for
 constants $C_\phi > 0$ and $\rho \in (0,1)$, so a buffer gap of
@@ -146,7 +148,7 @@ to the OQE signal $w_t$, the observation gap drives the true state
 across the constraint boundary while the observed state appears feasible.
 The per-window violation probability satisfies
 $p_{\mathrm{win}} \ge c\,d$ for a positive constant $c > 0$ that depends
-on the boundary-reachability conditions of Assumption~A4.
+on the boundary-reachability conditions of Assumption~A11.
 
 \medskip
 \noindent\textbf{Step~3: Martingale concentration.}
@@ -183,13 +185,13 @@ the buffer gaps absorb the coupling cost without changing the
 $\Omega(dT)$ scaling.
 \end{remark}
 
-T9 is the necessity theorem for the universal kernel: whenever safety depends
-on a corrupted observation channel, a controller that ignores reliability
-cannot remove the violation scaling by algorithmic tuning alone.  The defended
-evidence remains tiered.  Battery anchors the proof lineage directly;
-healthcare and bounded autonomous-vehicle replay support the same runtime
-story under defended contracts; broader portability remains outside the
-active proof-validating surface.
+T9 is a draft/scoped necessity extension for the universal kernel: under the
+explicit A10b/A11 hypotheses, it records why a controller that ignores
+reliability cannot remove the violation scaling by algorithmic tuning alone.
+The defended evidence remains tiered.  Battery anchors the proof lineage
+directly; healthcare and bounded autonomous-vehicle replay support the same
+runtime story under defended contracts; broader portability remains outside
+the active proof-validating surface.
 
 % ----------------------------------------------------------------
 \section{Boundary-Indistinguishability Lower Bound (T10)}
@@ -265,7 +267,7 @@ $p_t$.
 \end{proof}
 
 \begin{remark}
-T10 is scoped but substantive.  It is an information-theoretic lower bound
+T10 is a draft/scoped but substantive extension.  It is an information-theoretic lower bound
 for any controller that only sees the degraded observation channel under the
 explicit boundary-mass and indistinguishability hypotheses above.  It does
 not claim a globally sharp minimax constant for every observation model, but
@@ -383,6 +385,69 @@ safety from any current safe state.  Therefore,
 \]
 which is the one-step safety-preservation statement.
 \end{proof}
+
+\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality]
+\label{cor:observation-ambiguity-sandwich}
+Let $h:\mathcal{X}\to\mathcal{O}$ be the observation map.  For an observation
+$o$, define the ambiguity class
+\[
+  B(o)=\{x\in\mathcal{X}:h(x)=o\}
+\]
+and the common safe core
+\[
+  K(o)=\bigcap_{x\in B(o)}C(x).
+\]
+For every mandatory-release observation-only controller
+$\pi:\mathcal{O}\to\mathcal{A}$,
+\[
+  \operatorname{TSVR}(\pi)
+  \;\ge\;
+  \mathbb{E}_{O}\!\left[
+    \min_{a\in\mathcal{A}}
+    \Prob(a\notin C(X^\star)\mid O)
+  \right].
+\]
+In particular, if $K(o)=\emptyset$ on a positive-probability ambiguity class,
+no observation-only mandatory-release controller can guarantee zero
+true-state violation on that class.  Conversely, if ORIUS constructs
+$\mathcal{X}_t$ with
+$\Prob(X_t^\star\notin\mathcal{X}_t)\le\alpha$ and releases only actions
+\[
+  u_t\in\bigcap_{x\in\mathcal{X}_t}C(x),
+\]
+then
+\[
+  \operatorname{TSVR}_{\mathrm{ORIUS}}\le\alpha,
+\]
+and under exact coverage $X_t^\star\in\mathcal{X}_t$ the one-step
+true-state violation probability is zero.
+\end{corollary}
+
+\begin{proof}
+Condition on an observation $O=o$.  Any observation-only mandatory-release
+controller must choose a single action $a=\pi(o)$ for all states in $B(o)$.
+Its conditional violation probability is
+$\Prob(a\notin C(X^\star)\mid O=o)$, and the best possible observation-only
+choice is therefore the displayed minimum over $a\in\mathcal{A}$.  Taking
+expectation over $O$ gives the lower bound.  If $K(o)=\emptyset$, every
+candidate action is unsafe for at least one state in $B(o)$, so the
+conditional lower bound is positive whenever that unsafe state has positive
+conditional mass.
+
+For the ORIUS upper bound, split the violation event according to whether
+$X_t^\star\in\mathcal{X}_t$.  On the coverage event, the released action lies
+in $C(x)$ for every $x\in\mathcal{X}_t$ and hence in $C(X_t^\star)$, so the
+violation probability on that event is zero.  The only remaining probability
+mass is the coverage-miss event, bounded by $\alpha$.
+\end{proof}
+
+\paragraph{Promoted domain runtime lemmas.}
+The AV and healthcare rows do not promote a new universal theorem.  They are
+supporting runtime lemmas under T11: AV is bounded to the emitted
+brake-hold postcondition, and healthcare is bounded to the emitted fail-safe
+alert-release postcondition.  In both cases, missing T11 status, failed T11
+obligations, invalid certificates, or false true-state postconditions fail the
+runtime witness closed.
 
 \begin{corollary}[Episode aggregation under explicit per-step budgets]
 \label{cor:t11-aggregation}
@@ -639,10 +704,11 @@ three-domain program.
 This chapter closes the monograph at the correct control-theory level.
 
 \begin{enumerate}
-  \item \textbf{T9} frames observation-aware safety logic as structurally
-    necessary under persistent degradation.
-  \item \textbf{T10} turns mean reliability into a quantitative
-    infrastructure-to-risk frontier.
+  \item \textbf{T9} is a draft/scoped extension that frames observation-aware
+    safety logic as structurally necessary under persistent degradation.
+  \item \textbf{T10} is a draft/scoped extension that turns mean reliability
+    into a quantitative infrastructure-to-risk frontier under explicit binary
+    testing hypotheses.
   \item \textbf{T11} packages universality as a typed kernel and adapter
     template, not as a claim that every domain already has battery-level proof
     closure.
@@ -653,8 +719,9 @@ This chapter closes the monograph at the correct control-theory level.
 The central theorem contribution is now precise: the safe-control object under
 degraded telemetry is not the nominal state alone but a reliability-indexed
 observation-consistent state set together with a repair map and a causal
-certificate surface.  Battery supplies the full proof witness.  T9 and T10
-show that degraded observation creates a necessity and a lower bound.  T11
-shows how the same kernel transfers when a new domain discharges the explicit
-structural obligations.  This is a defensible control-theory claim; it is not
-an assertion that all evaluated domains already enjoy equal proof closure.
+certificate surface.  Battery supplies the full proof witness.  T9 and T10,
+as draft/scoped extensions, record necessity and lower-bound directions under
+explicit assumptions.  T11 shows how the same kernel transfers when a new
+domain discharges the explicit structural obligations.  This is a defensible
+control-theory claim; it is not an assertion that all evaluated domains
+already enjoy equal proof closure.

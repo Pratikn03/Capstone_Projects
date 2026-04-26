@@ -31,9 +31,10 @@ which is always defined and always satisfies $a_\text{safe} \in [\ell_t, u_t]$.
 This is a closed-form projection, not a solver call that can become infeasible.
 
 The empirical counterpart appears in Table~\ref{tbl:constraint_satisfaction}:
-across all 6 domains, 5 seeds, and 48 steps per seed, the post-repair constraint
-satisfaction rate is \textbf{100\%}\ in every domain — not because violations are
-rare, but because the repair always succeeds.
+across the defended Battery, nuPlan AV, and Healthcare rows, the post-repair
+constraint satisfaction rate is \textbf{100\%}.  The table is not used as a
+universal deployment claim; it verifies that the closed-form repair semantics
+used by the three promoted rows match Proposition~1.
 
 % ------------------------------------------------------------------
 \subsubsection*{Q2 (Statistics): Why not use a split-conformal test for coverage?}
@@ -55,23 +56,23 @@ signal degradation.  Theorem~1 (\S\ref{sec:theory}) proves this still achieves
 marginal coverage $\geq 1-\alpha$ in expectation; Theorem~9 proves group-conditional
 coverage per reliability bin; Theorem~10 gives the Hoeffding tail bound.
 
-Table~\ref{tbl:coverage_vs_alpha} shows that across 6 domains and $\alpha \in
-\{0.05, 0.10, 0.15, 0.20\}$, empirical PICP always exceeds the nominal $(1-\alpha)$
-by 1–3\%, confirming calibration without over-conservatism.
+Table~\ref{tbl:coverage_vs_alpha} shows that across the three defended rows and
+$\alpha \in \{0.05, 0.10, 0.15, 0.20\}$, empirical PICP exceeds the nominal
+$(1-\alpha)$ target, confirming calibration on the promoted evidence surface.
 
 % ------------------------------------------------------------------
 \subsubsection*{Q3 (CS/Systems): Are the latency numbers real, and do they scale?}
 
 \textbf{Question.} Papers often report latency for a toy single-domain prototype.
-Does DC3S scale to six domains in production?
+Does DC3S scale beyond the witness row?
 
 \textbf{Response.}
-Table~\ref{tbl:latency_benchmark} reports measured wall-clock p50/p95/p99 over
-1,000 consecutive steps per domain on a single CPU core (Python 3.11, Intel Xeon).
-All domains achieve p99 $< 0.35$\,ms, which is \textbf{143$\times$ below} the
-50\,ms production SLA.  The result is not an artifact of domain simplicity:
-the aerospace domain involves six state variables and three constraint dimensions,
-yet still achieves p99 = 0.172\,ms.
+Table~\ref{tbl:latency_benchmark} reports measured wall-clock p50/p95/p99 for
+the promoted Battery, nuPlan AV, and Healthcare rows on a single CPU core
+(Python 3.11, Intel Xeon).  All three rows achieve p99 $< 0.35$\,ms, far below
+the 50\,ms production SLA used as the runtime gate.  The result is not a claim
+of road or clinical deployment; it is a compute-budget check for the defended
+runtime contract.
 
 The algorithmic complexity analysis (Table~\ref{tbl:complexity_analysis}) shows that
 the dominant cost is $O(W \log W)$ for robust OQE (sort for trimmed-mean), where
@@ -80,24 +81,25 @@ linearly in action dimensionality and is independent of the number of domains
 (each step processes one domain).
 
 % ------------------------------------------------------------------
-\subsubsection*{Q4 (EE/Domain): Why is the battery TSVR \emph{higher} under ORIUS?}
+\subsubsection*{Q4 (EE/Domain): Which battery metric is governing?}
 
-\textbf{Question.} Table~\ref{tab:all_domain_comparison} shows ORIUS TSVR (0.9375)
-exceeds baseline TSVR (0.8750) for the battery reference domain.  Is DC3S
-\emph{harmful} for the primary application?
+\textbf{Question.} Earlier diagnostic tables mixed observed-state ORIUS-Bench
+battery rows with the locked hidden-state battery witness.  Which row governs
+the primary application?
 
 \textbf{Response.}
-The battery domain uses the locked DE/US witness benchmark, where the baseline
-controller is a \emph{deliberately conservative} deterministic LP that already
-avoids many SOC violations.  In this regime, DC3S occasionally tightens the action
-set further than necessary, leading to a slightly higher \emph{observed} violation
-rate on the battery track — but a \emph{lower} true-SOC violation rate on the
-hidden physical model (the key metric in the locked battery witness results).
+The promoted battery result is the locked DE/US witness benchmark, where ORIUS
+reduces the governing true-SOC TSVR from 0.008333 to 0.000000.  Deprecated
+observed-state ORIUS-Bench battery diagnostics are not used as the release
+metric because they measure the telemetry surface rather than the hidden physical
+state that the witness row is designed to protect.
 
 The ORIUS-Bench battery track measures TSVR on the observed state, not the hidden
 state, so the sign reversal is expected and is a known limitation of the synthetic
-battery benchmark (discussed in \S\ref{sec:limitations}).  For all proof domains,
-where ORIUS-Bench uses the true state directly, DC3S reduces TSVR by 72–100\%.
+battery benchmark (discussed in \S\ref{sec:limitations}).  In the promoted
+evidence package, Battery is judged by the locked hidden-state witness row, AV by
+the all-zip grouped nuPlan replay runtime, and Healthcare by its bounded
+monitoring row.
 
 % ------------------------------------------------------------------
 \subsubsection*{Q5 (Applied Math): Are Theorems 9–11 independent of domain?}
@@ -119,14 +121,15 @@ model), not a domain-physics assumption.  It holds whenever the system is not fu
 compromised, which is the standard Byzantine fault-tolerance assumption in distributed
 systems \cite{lamport1982byzantine}.
 
-The six-domain empirical validation (Tables~\ref{tbl:multi_domain_evidence_gate}
-and~\ref{tab:adversarial_tsvr}) provides the empirical counterpart: all five proof
-domains pass the evidence gate on ORIUS-Bench synthetic benchmarks.
+The three-domain empirical validation (Tables~\ref{tbl:multi_domain_evidence_gate}
+and~\ref{tab:adversarial_tsvr}) provides the empirical counterpart for the
+promoted rows: Battery supplies the witness row, nuPlan AV supplies the
+all-zip grouped replay row, and Healthcare supplies the bounded monitoring row.
 The theorems themselves are domain-agnostic by construction---Theorems~9 and~10
 require no domain-physics assumptions, only conditions (C1)--(C3) of
 Definition~\ref{def:compatible_cps}---but the \emph{empirical validation depth}
 is tiered: battery carries locked real-data evidence, the full energy-optimisation
-pipeline, and hardware-in-loop results that the proof domains do not yet replicate.
+pipeline, and hardware-in-loop results that the bounded AV and Healthcare rows do not yet replicate.
 The formal guarantee applies universally; the evidence depth does not.
 
 \subsubsection*{Summary}

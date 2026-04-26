@@ -25,9 +25,9 @@ deepest theorem-to-code-to-artifact closure, but it is not treated as the concep
 center of the argument. Instead, the central object is the observation--action safety
 gap (OASG): the event in which an action is legal on the observed state while unsafe on
 the true state. That object links conformal and distribution-free uncertainty
-\cite{vovk2005algorithmic,romano2019conformalized,gibbs2021adaptive,angelopoulos2023gentle,barber2023beyond},
+\cite{vovk2005algorithmic,romano2019conformalized,gibbs2021adaptive,angelopoulos2023gentle,barber2023beyond,kiyani2025decision},
 runtime assurance and supervisory control
-\cite{sha2001using,sha1998simplex,desai2019soter,bartocci2018introduction,leucker2009brief},
+\cite{sha2001using,sha1998simplex,desai2019soter,bartocci2018introduction,leucker2009brief,kwon2025adaptive},
 safety filters and constrained control
 \cite{ames2019control,wabersich2021predictive,fisac2019general,ben2009robust},
 and anomaly- or degradation-aware cyber-physical monitoring
@@ -36,7 +36,23 @@ The manuscript's claim is that none of these families alone supplies the runtime
 from degraded observation to repaired actuation and certificate semantics across
 multiple physical domains.
 
-The technical move is a Detect--Calibrate--Constrain--Shield--Certify kernel. Detect
+The canonical novelty claim used across the defense package is:
+\begin{quote}
+\emph{ORIUS identifies OASG as the universal degraded-observation release hazard and
+contributes a reliability-aware runtime layer that converts degraded observation into
+tightened admissible actions, repaired or fallback release, and auditable certification
+across Battery, AV, and Healthcare.}
+\end{quote}
+The novelty claim is architectural and runtime-semantic: ORIUS does not claim a new
+conformal method, a new robust-optimization primitive, a new universal controller, or a
+new conditional-coverage theorem. The claim is that one typed runtime composition turns
+degraded observation into reliability scoring, uncertainty tightening, admissible-action
+restriction, repaired or fallback release, and auditable certification under a reusable
+cross-domain contract.
+
+The technical move is therefore not conformal prediction alone, robust optimization
+alone, or monitoring alone. It is a Detect--Calibrate--Constrain--Shield--Certify kernel.
+Detect
 degraded telemetry and estimate reliability. Calibrate the observation-consistent state
 set rather than trusting nominal point estimates. Constrain the action set under that
 inflated state uncertainty. Shield the plant by repairing or replacing the candidate
@@ -57,13 +73,15 @@ The paper makes four contributions.
 \item It defines OASG as a universal safety object for Physical AI and frames degraded
 observation as an action-semantics problem rather than only a detection or estimation
 problem.
-\item It presents ORIUS as a reusable runtime kernel with typed observation,
-uncertainty, action-repair, fallback, and certificate objects.
-\item It unifies benchmark and governance semantics across the defended 3-domain lane
-using one true-state-violation schema and one auditable runtime discipline.
-\item It argues, with explicit evidence-tier discipline, that runtime safety layers are
-the right universal object for Physical AI safety research even when evidence depth
-remains asymmetric across domains.
+\item It contributes ORIUS as a typed runtime kernel that converts degraded observation
+into tightened admissible actions, repaired or fallback release, and certificate-bearing
+actuation rather than leaving those steps to disconnected components.
+\item It exposes one cross-domain typed release contract for the defended 3-domain lane,
+so Battery, AV, and Healthcare can instantiate the same runtime safety grammar without
+pretending to share one nominal controller or one plant-local safety geometry.
+\item It treats evidence and governance discipline as part of the scientific
+contribution by making the witness-row versus bounded-row split explicit instead of
+hiding claim depth behind a flat universality narrative.
 \end{enumerate}
 
 The rest of the paper follows that logic. It formalizes OASG, positions ORIUS

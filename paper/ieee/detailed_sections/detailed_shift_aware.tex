@@ -15,8 +15,8 @@ maintains, for each prediction target $j$, a set of coverage statistics
 accumulated over a sliding window of recent steps.
 
 \paragraph{Step 1: Subgroup Coverage Tracking.}
-The runtime groups recent steps by stratification variables (\eg~shard ID,
-speed bin, neighbour count).  For each subgroup $g$, it maintains an empirical
+The runtime groups recent steps by stratification variables (\eg~source-shard
+identity, speed bin, neighbour count).  For each subgroup $g$, it maintains an empirical
 coverage
 \begin{equation}\label{eq:subgroup_cov}
   \hat{C}_g = \frac{1}{|g|}\sum_{t \in g} \mathbf{1}\bigl[x_t \in \Ut\bigr].
@@ -49,34 +49,34 @@ status is flagged as \texttt{nominal} if the score exceeds a threshold (typicall
 
 \subsection{AV Domain: Shift-Aware Runtime Results}
 
-\Cref{tab:shift_aware_av} reports the shift-aware statistics from the full AV
-corpus (9{,}348~steps).
+\Cref{tab:shift_aware_av} reports the shift-aware statistics from the all-zip
+grouped nuPlan AV replay surface (1{,}531{,}104~runtime steps).
 
 \begin{table}[h]
-\caption{Shift-aware runtime statistics for the AV domain (full corpus).}
+\caption{Shift-aware runtime statistics for the all-zip grouped nuPlan AV row.}
 \label{tab:shift_aware_av}
 \centering\small
 \begin{tabular}{lrrrrl}
 \toprule
 \textbf{Target} & \textbf{Steps} & \textbf{Groups} & \textbf{Max gap} & \textbf{Validity} & \textbf{Status} \\
 \midrule
-\texttt{ego\_speed\_mps} & 9{,}348 & 99 & 0.000 & 0.885 & nominal \\
-\texttt{relative\_gap\_m} & 9{,}348 & 63 & 0.046 & 0.888 & nominal \\
+\texttt{ego\_speed\_mps} & 1{,}531{,}104 & 2355 & 0.900 & 0.844 & nominal \\
+\texttt{relative\_gap\_m} & 1{,}531{,}104 & 2480 & 0.900 & 0.704 & watch \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Both targets achieve \texttt{nominal} validity status.  The
-\texttt{relative\_gap\_m} target shows a small under-coverage gap of 4.6\%
-in one subgroup, but the overall validity score of 0.888 exceeds the nominal
-threshold.
+The ego-speed target achieves \texttt{nominal} validity status even though sparse
+subgroups still produce a maximum under-coverage gap of 0.900.  The
+\texttt{relative\_gap\_m} target is flagged as \texttt{watch}: its maximum subgroup
+under-coverage gap is 0.900 and its final validity score is 0.704.  This warning is
+carried into the paper's claim boundary.  It supports replay-level interface
+validation, not a full AV deployment claim.
 
-The shift alert rate---the fraction of steps where the adaptive mechanism
-triggered an inflation adjustment---is extremely low: 0.032\% for
-\texttt{ego\_speed\_mps} and 0.043\% for \texttt{relative\_gap\_m}.  This
-indicates that the base conformal intervals are already well-calibrated for
-the Waymo corpus, and the shift-aware mechanism acts as a safety net rather
-than a frequent corrector.
+The shift alert rate is 0.00032 for \texttt{ego\_speed\_mps} and 0.079 for
+\texttt{relative\_gap\_m}.  The all-zip grouped nuPlan row therefore shows that the adaptive
+mechanism can surface the harder target instead of washing it out in an aggregate
+runtime score.
 
 \subsection{Subgroup Coverage Analysis}
 
@@ -84,8 +84,8 @@ The ORIUS pipeline produces a detailed subgroup coverage table stratified by thr
 grouping variables:
 
 \begin{enumerate}[nosep]
-  \item \textbf{Shard ID}: each Waymo validation shard (7 shards, $\sim$28--37
-        scenarios each).
+  \item \textbf{Source identity}: deterministic scenario and archive identity from
+        the all-zip grouped nuPlan conversion manifest.
   \item \textbf{Speed bin}: discretised ego speed ($0$--$5$, $5$--$10$, $10$--$15$,
         $15$--$20$, $20+$ m/s).
   \item \textbf{Neighbour count bin}: number of surrounding agents ($0$--$1$,
@@ -94,14 +94,12 @@ grouping variables:
 
 Key observations from the subgroup analysis:
 \begin{itemize}[nosep]
-  \item \textbf{Shard-level}: base coverage ranges from 0.82 to 0.97; widened coverage
-        lifts all shards to $\ge 0.86$.
-  \item \textbf{Speed bins}: the $15$--$20$ m/s bin has the lowest base coverage (0.80)
-        due to higher prediction difficulty at moderate highway speeds.  Widening
-        recovers this to 0.85.
-  \item \textbf{Neighbour count}: dense scenes ($6+$ neighbours) show slightly
-        lower base coverage (0.94 for ego speed) due to occlusion effects.  All bins
-        achieve $\ge 0.95$ after widening.
+  \item \textbf{Source-level}: source identity prevents collision across completed
+        nuPlan archives and preserves replay provenance.
+  \item \textbf{Speed bins}: ego-speed coverage remains stable under widening on the
+        bounded run.
+  \item \textbf{Neighbour count}: relative-gap coverage is the hardest subgroup
+        family and is responsible for the watch status reported above.
 \end{itemize}
 
 \subsection{Battery Domain: Shift-Aware Considerations}
@@ -122,10 +120,10 @@ adjustment for both domains.
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.90\textwidth]{fig_shift_aware_before_after}
-\caption{AV domain shift-aware coverage: baseline (left) vs.\ adapted (right)
-subgroup coverage across shard, speed, and neighbour bins.  The adaptive mechanism
-closes subgroup coverage gaps without inflating well-covered bins.  Artifact:
-\texttt{reports/orius\_av/full\_corpus/fig\_shift\_aware\_before\_after.png}.}
+\caption{Bounded nuPlan AV shift-aware coverage: baseline (left) vs.\ adapted
+(right) subgroup coverage across source, speed, and neighbour bins.  The artifact
+keeps the relative-gap watch state visible instead of promoting a full closure claim.
+Artifact: \texttt{reports/orius\_av/nuplan\_bounded/fig\_shift\_aware\_before\_after.png}.}
 \label{fig:shift_aware_before_after_av}
 \end{figure}
 

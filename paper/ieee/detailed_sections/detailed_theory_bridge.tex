@@ -9,8 +9,9 @@ adapter contract.
 
 \subsection{Assumptions}\label{sec:assumptions}
 
-The theorem programme rests on eight standing assumptions.  Each assumption is
-testable and its satisfaction is verified programmatically by the test suite.
+The theorem programme uses the canonical Appendix~B assumption register
+$A1$--$A13$.  This condensed IEEE bridge restates the subset $A1$--$A9$
+needed to present the battery ladder T1--T8.
 
 \begin{assumption}[A1: Bounded Model Error]\label{ass:A1}
 The one-step prediction error of the domain model is bounded:
@@ -30,8 +31,7 @@ state-action constraints evaluable over $\Ut$.
 
 \begin{assumption}[A4: Known Dynamics]\label{ass:A4}
 The controller can evaluate the one-step dynamics map $f(x_t, a_t)$ to compute
-$\Delta(a_t)$.  A fallback action $\asafe$ exists that is safe for all states in
-$\mathcal{X}$.
+$\Delta(a_t)$.
 \end{assumption}
 
 \begin{assumption}[A5: Monotone Bounded Inflation]\label{ass:A5}
@@ -50,9 +50,18 @@ Each certificate uses only causally available information (no future data).
 The episode horizon is finite: $T < \infty$.
 \end{assumption}
 
-\begin{assumption}[A8: Constraint Continuity]\label{ass:A8}
-The domain safety constraints are continuous in the state space, so that small
-perturbations of the state yield small perturbations of the constraint value.
+\begin{assumption}[A8: Piecewise Battery Fallback Admissibility]\label{ass:A8}
+In the battery witness row, fallback admissibility is piecewise: zero dispatch is
+certified on the safe-set interior, a boundary-aware safe-landing recovery action
+is certified near the safe boundary whenever feasible, and the runtime fails closed
+otherwise.
+\end{assumption}
+
+\begin{assumption}[A9: Sub-Gaussian Drift Proxy]\label{ass:A9}
+The battery certificate drift process admits a sub-Gaussian scale
+$\sigma_{\mathrm{d}}$ and a boundary gap $\delta_{\mathrm{bnd},t}$, so the
+certificate survival probability satisfies the closed-form first-passage lower
+bound used by T6.
 \end{assumption}
 
 \paragraph{Usage map.}  \Cref{tab:assumption_usage} shows which theorems depend on
@@ -62,21 +71,21 @@ which assumptions.
 \caption{Assumption usage map across the theorem programme.}
 \label{tab:assumption_usage}
 \centering\small
-\begin{tabular}{lcccccccc}
+\begin{tabular}{lccccccccc}
 \toprule
-\textbf{Theorem} & \textbf{A1} & \textbf{A2} & \textbf{A3} & \textbf{A4} & \textbf{A5} & \textbf{A6} & \textbf{A7} & \textbf{A8} \\
+\textbf{Theorem} & \textbf{A1} & \textbf{A2} & \textbf{A3} & \textbf{A4} & \textbf{A5} & \textbf{A6} & \textbf{A7} & \textbf{A8} & \textbf{A9} \\
 \midrule
-T1 OASG Existence         &\checkmark &\checkmark &  &\checkmark &  &  &  &  \\
-T2 Safety Preservation    &\checkmark &\checkmark &\checkmark &  &\checkmark &  &\checkmark &  \\
-T3 ORIUS Core Bound       &\checkmark &\checkmark &  &\checkmark &\checkmark &\checkmark &\checkmark &  \\
-T4 No Free Safety         &  &\checkmark &  &\checkmark &  &  &  &  \\
-T5 Certificate Validity   &  &  &  &  &\checkmark &  &\checkmark &  \\
-T6 Certificate Expiration &  &  &  &  &  &  &\checkmark &  \\
-T7 Feasible Fallback      &  &  &  &\checkmark &  &  &  &  \\
-T8 Graceful Degradation   &  &\checkmark &  &  &\checkmark &  &  &  \\
-T9 Universal Impossibility&  &\checkmark &  &\checkmark &  &  &  &  \\
-T10 Lower Bound           &  &\checkmark &  &  &\checkmark &  &  &  \\
-T11 Typed Transfer        &  &  &\checkmark &\checkmark &\checkmark &  &\checkmark &\checkmark \\
+T1 OASG Existence         &\checkmark &\checkmark &  &\checkmark &  &  &  &  &  \\
+T2 Safety Preservation    &\checkmark &\checkmark &\checkmark &  &\checkmark &  &\checkmark &  &  \\
+T3 ORIUS Core Bound       &\checkmark &\checkmark &  &\checkmark &\checkmark &\checkmark &\checkmark &  &  \\
+T4 Observation Necessity  &  &\checkmark &  &\checkmark &  &  &  &  &  \\
+T5 Certificate Validity   &  &  &  &  &\checkmark &  &\checkmark &  &  \\
+T6 Certificate Expiration &  &  &  &\checkmark &  &  &\checkmark &  &\checkmark \\
+T7 Feasible Fallback      &\checkmark &  &  &\checkmark &  &  &  &\checkmark &  \\
+T8 Graceful Degradation   &\checkmark &\checkmark &\checkmark &\checkmark &\checkmark &  &  &\checkmark &  \\
+T9 Universal Impossibility&  &\checkmark &  &\checkmark &  &  &  &  &  \\
+T10 Lower Bound           &  &\checkmark &  &  &\checkmark &  &  &  &  \\
+T11 Typed Transfer        &  &  &\checkmark &\checkmark &\checkmark &  &\checkmark &\checkmark &  \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -204,7 +213,7 @@ Total blackout         & 0.00 & 28.8 & 10.00 \\
 \end{tabular}
 \end{table}
 
-\begin{theorem}[T4: No Free Safety]\label{thm:T4}
+\begin{theorem}[T4: Observation Necessity / No Free Safety]\label{thm:T4}
 Under A2 and A4, for any non-trivial fault rate $d > 0$, there exists no
 controller that simultaneously achieves $\TSVR = 0$ and zero intervention rate
 (IR~$= 0$) across all episodes.
@@ -229,15 +238,24 @@ $\tau_t$ whose forward tube stays inside the safe SoC bounds:
 where $\sigma_d$ is the drift scale.
 \end{theorem}
 
-\begin{theorem}[T6: Certificate Expiration Lower Bound]\label{thm:T6}
-Under A7, the certificate expiration time satisfies
-$\tau_t \ge \lfloor(\Emax - E_t)/\sigma_d\rfloor$.  Runtime enforcement enters
-fallback when $\tau_t < 1$.
+\begin{theorem}[T6: Certificate Expiration Bound]\label{thm:T6}
+Under A4, A7, and~A9, for any confidence level $\delta \in (0,1)$ the battery
+certificate survival horizon satisfies the closed-form lower bound
+\[
+  \tau_t \;\ge\;
+  \left\lfloor
+    \frac{\delta_{\mathrm{bnd},t}}
+    {\sigma_{\mathrm{d}}\sqrt{2\log(1/\delta)}}
+  \right\rfloor.
+\]
+Runtime enforcement enters fallback when this lower bound drops below one step.
 \end{theorem}
 
 \begin{theorem}[T7: Feasible Fallback Existence]\label{thm:T7}
-Under A4, a constructive fallback exists: zero-dispatch ($P_t = 0$) is admissible
-and preserves safety from any state in the safe-set interior.
+Under A1, A4, and~A8, a constructive battery fallback exists in piecewise form:
+zero dispatch is admissible and safe on the interior, a boundary-aware
+safe-landing recovery action is admissible near the lower or upper boundary when
+the actuator limits permit it, and the runtime fails closed otherwise.
 \end{theorem}
 
 \begin{theorem}[T8: Graceful Degradation Dominance]\label{thm:T8}
@@ -318,14 +336,45 @@ Let $\mathcal{D}$ be a domain instantiation satisfying the adapter contract
         for all $x \in \Ut$.
   \item \textbf{Repair membership}: The repair operator returns
         $a_t^{\mathrm{safe}} \in \Aset(\Ut)$.
-  \item \textbf{Fallback admissibility}: The fallback action preserves safety from
-        any safe current state.
+  \item \textbf{Fallback admissibility}: The domain certifies a safe hold or
+        boundary-recovery fallback witness, and fails closed when neither case is
+        admissible.
 \end{enumerate}
 Then:
 \begin{equation}\label{eq:T11}
   \Prob\bigl[x_{t+1} \in \mathcal{S} \mid \mathcal{H}_t\bigr] \;\ge\; 1 - \alpha.
 \end{equation}
 \end{theorem}
+
+\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality]
+\label{cor:T10_T11_observation_ambiguity_sandwich}
+For an observation $o$, let
+$B(o)=\{x:h(x)=o\}$ be its ambiguity class and
+$K(o)=\bigcap_{x\in B(o)}C(x)$ be its common safe core.  Any mandatory-release
+observation-only controller satisfies
+\[
+  \TSVR(\pi)
+  \;\ge\;
+  \mathbb{E}_{O}\!\left[
+    \min_{a\in\mathcal{A}}
+    \Prob(a\notin C(X^\star)\mid O)
+  \right].
+\]
+If ORIUS constructs $\mathcal{X}_t$ with
+$\Prob(X_t^\star\notin\mathcal{X}_t)\le\alpha$ and releases only
+$u_t\in\bigcap_{x\in\mathcal{X}_t}C(x)$, then
+$\TSVR_{\mathrm{ORIUS}}\le\alpha$; under exact coverage, the one-step
+true-state violation probability is zero.
+\end{corollary}
+
+\begin{proof}[Proof sketch]
+The lower bound conditions on each observation class and chooses the best
+single action available to any observation-only policy.  If the common safe
+core is empty, no mandatory-release action is safe for every state in the
+class.  For ORIUS, violations can occur only on the coverage-miss event,
+because on $X_t^\star\in\mathcal{X}_t$ the released action is safe for every
+state in $\mathcal{X}_t$, hence for the true state.
+\end{proof}
 
 \paragraph{Failure-mode converse.}
 If \emph{any} of the four T11 obligations fails, there exists a domain
@@ -341,7 +390,7 @@ $r_t \le \alpha(1 - w_t)$, this recovers the core bound: $\E[V_T] \le \alpha(1 -
 
 The proof programme has a layered structure:
 \begin{itemize}[nosep]
-  \item \textbf{Foundation} (T1, T4): OASG existence + no-free-safety establish
+  \item \textbf{Foundation} (T1, T4): OASG existence + observation necessity establish
         the necessity of a runtime layer.
   \item \textbf{Mechanism} (T2, T3): Safety preservation + core bound show the
         sufficiency of the \dcs{} kernel.

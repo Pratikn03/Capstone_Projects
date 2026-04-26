@@ -14,11 +14,13 @@ from that tightened set, or falls back when no such action exists, then the rema
 true-state violation risk is governed by the soundness of the uncertainty set and the
 repair map rather than by the optimism of the nominal controller.
 
-Temporal certificates add a fourth layer: Theorem~T5 (certificate validity horizon)
-and Theorem~T6 (certificate expiration bound) guarantee that certificates are
-time-bounded safety objects rather than approval stamps.  The runtime now enforces
-$\tau_t \ge 1$ at each step, failing the guarantee check when the certificate's
-forward tube exits the safe region before the next decision epoch.
+Temporal certificates and fallback add a fourth layer: Theorem~T5 (certificate
+validity horizon), Theorem~T6 (certificate expiration bound), and Theorem~T7
+(feasible fallback existence) guarantee that certificates are time-bounded safety
+objects and that the battery runtime either holds safely, recovers by boundary-aware
+safe landing, or fails closed.  The promoted T6 surface is confidence-aware and
+tracks a closed-form first-passage lower bound on the remaining certificate life;
+the runtime enforces the resulting $\tau_t \ge 1$ check at each step.
 
 \begin{table}[t]
 \centering

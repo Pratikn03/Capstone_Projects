@@ -115,18 +115,20 @@ At the episode level, the governance surface aggregates certificates into a summ
 \end{tabular}
 \end{table}
 
-Both domains achieve 100\% chain validity, zero failure rows, and 100\% audit
-completeness.
+The battery witness row achieves 100\% chain validity on its active runtime surface.
+The all-zip grouped nuPlan AV row reports a 99.992\% certificate-valid release rate
+and 100\% audit completeness on 1{,}531{,}104 runtime steps.
 
 \subsection{CertOS Verification}
 
 The CertOS module performs an offline re-verification of the entire certificate chain.
-For each domain:
+For each active runtime certificate surface:
 \begin{itemize}[nosep]
   \item \textbf{Battery}: 288 certificates verified, \texttt{chain\_valid = true},
         0 failures.
-  \item \textbf{AV}: 9{,}348 certificates verified, \texttt{chain\_valid = true},
-        0 failures.
+  \item \textbf{AV}: 1{,}531{,}104 all-zip grouped nuPlan certificates emitted,
+        certificate-valid release rate $0.999924$,
+        249 empirical runtime violations under the promoted replay contract.
 \end{itemize}
 
 \subsection{Safety Architecture Comparison}
@@ -154,7 +156,7 @@ Certificate governance      & \checkmark & ---  & ---  & ---  & ---  & --- \\
 Graceful degradation (T8)   & \checkmark & \checkmark & $\circ$ & ---  & ---  & --- \\
 Formal proof programme      & \checkmark & \checkmark & $\circ$ & \checkmark & $\circ$ & $\circ$ \\
 Runtime overhead $<$ 1\,ms  & \checkmark & \checkmark & ---  & ---  & ---  & \checkmark \\
-Multi-domain validated\textsuperscript{$\dagger$} & \checkmark & ---  & ---  & ---  & ---  & --- \\
+Three-row validated\textsuperscript{$\dagger$} & \checkmark & ---  & ---  & ---  & ---  & --- \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -163,7 +165,7 @@ Multi-domain validated\textsuperscript{$\dagger$} & \checkmark & ---  & ---  & -
 
 \paragraph{Key differentiators.}
 \begin{itemize}[nosep]
-  \item \textbf{Simplex}~\cite{sha2001simplex} provides safety switching between a
+  \item \textbf{Simplex}~\cite{sha1998simplex,sha2001using} provides safety switching between a
         performance controller and a verified safe controller, but does not adapt
         the safety margin to telemetry reliability.
   \item \textbf{GP-MPC} (Gaussian Process Model Predictive Control) provides

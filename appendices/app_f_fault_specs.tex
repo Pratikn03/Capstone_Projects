@@ -47,7 +47,7 @@ interpretation.
   & Packet loss on the BMS$\to$EMS telemetry link.  Dropped readings are replaced by the last received value (zero-order hold).
 \\[4pt]
 
-\texttt{delay\_jitter}
+\shortstack[l]{\texttt{delay}\\\texttt{jitter}}
   & base delay $\tau_b$ (s), jitter $\sigma_\tau$ (s)
   & $\tau_b \in \{1,\allowbreak 3,\allowbreak 5,\allowbreak 10\}$
   & Variable network latency between BMS and the dispatch engine.  Delayed packets arrive out of order and are consumed at their arrival time.
@@ -80,7 +80,7 @@ interpretation.
 
 \section{Combined profile: \texttt{drift\_combo}}
 
-The \texttt{drift\_combo} profile activates all six fault families
+The \texttt{drift\_combo} profile activates the configured fault families
 simultaneously at their mid-range parameter values with a configurable
 dropout rate $d$.  This is the default stress profile used in the main
 results of the witness-domain chapter and in the bounded controller-comparison

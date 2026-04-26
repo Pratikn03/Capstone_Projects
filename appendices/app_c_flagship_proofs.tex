@@ -14,7 +14,7 @@
 \newcommand{\Prob}{\mathbb{P}}
 \renewcommand{\qedsymbol}{$\blacksquare$}
 
-\title{Appendix C: Flagship Proofs for ORIUS (Registry-Canonical Flagship Core)}
+\title{Appendix C: Flagship Proofs for ORIUS}
 \author{Pratik Niroula}
 \date{March 2026}
 
@@ -22,13 +22,15 @@
 \maketitle
 
 \paragraph{Scope Note.}
-This standalone article is the registry-canonical flagship-core execution draft
-for ORIUS. It includes exactly the defended flagship core
-$\{T1, T2, T3a, T4, T11, T\_trajectory\_PAC\}$ and follows the active theorem
-registry ahead of stale appendix wording. Supporting defended surfaces such as
-$T3b$, $T6$, and $T8$ remain in
-\texttt{appendices/app\_c\_full\_proofs.tex}; draft and scoped extension rows
-are intentionally excluded here.
+This standalone article is the reviewer-facing integrated proof packet for
+ORIUS and the registry-canonical flagship-core execution draft. It presents the
+battery witness ladder T1--T8 first, then the defended ORIUS-wide extension
+surfaces T11 and T\_trajectory\_PAC.  The active theorem registry remains
+authoritative for defense tiers: T3 is presented through the flagship T3a
+theorem plus the supporting T3b corollary, T5 remains definition-level within
+the ladder, and T8 remains a supporting sequence-level result even though it is
+included here for reviewer continuity. The full integrated proof source remains
+\texttt{appendices/app\_c\_full\_proofs.tex}.
 
 \section*{C.1 Strict Topological Notation and Dynamics}
 Every proof below uses the explicit Assumption Register in Appendix B together
@@ -54,6 +56,8 @@ $Z_t$ & $\{0,1\}$ & True-state violation indicator at step $t$. \\
 $V$ & $\N$ & Total true-state violation count across the horizon. \\
 $w_t$ & $[0,1]$ & Reliability score at step $t$. \\
 $\bar w$ & $[0,1]$ & Episode-average reliability $T^{-1}\sum_{t=1}^T w_t$. \\
+$\delta_{\mathrm{bnd},t}$ & $\R_+$ & Margin from the issued certificate interval to the nearest SOC boundary. \\
+$\tau_t$ & $\N$ & Certifiable battery validity horizon or lower-bound horizon. \\
 $H$ & $\N$ & Trajectory horizon for the PAC certificate. \\
 $n_{\mathrm{cal}}$ & $\N$ & Calibration sample size. \\
 $n_{\mathrm{eff}}$ & $\N$ & Effective reliability-deflated calibration size. \\
@@ -271,7 +275,126 @@ sequence. The theorem is intentionally class-scoped to fixed-margin,
 quality-ignorant controllers on the battery witness row. \qedhere
 \end{proof}
 
-\section*{C.6 T11 --- Typed Structural Transfer}
+\section*{C.6 T5 --- Certificate Validity Horizon}
+
+\begin{theorem}[T5: Certificate Validity Horizon]\label{thm:t5}
+\textbf{Assumptions.} A4, A7, A9. \\
+\textbf{Statement.} The battery validity horizon $\tau_t$ is the largest
+integer horizon whose forward tube remains inside the SOC constraint interval.
+This row is constructive and definition-level inside the integrated ladder.
+\end{theorem}
+
+\begin{proof}
+Fix the issued battery interval and the certified safe action.  The forward
+tube at horizon $\Delta$ is obtained by propagating that action under the
+battery one-step dynamics while adding the worst-case sub-Gaussian radius used
+by the defended runtime.  The set of admissible horizons is therefore exactly
+the set of integers for which the resulting tube stays inside
+$[s_{\min}, s_{\max}]$.  The maximal such integer is $\tau_t$, and the
+executable helper \texttt{certificate\_validity\_horizon()} computes precisely
+that constructive object. \qedhere
+\end{proof}
+
+\section*{C.7 T6 --- Certificate Expiration Bound}
+
+\begin{theorem}[T6: Certificate Expiration Bound]\label{thm:t6}
+\textbf{Assumptions.} A4, A7, A9, and confidence level $\delta\in(0,1)$. \\
+\textbf{Statement.} The battery certificate horizon satisfies the lower bound
+\[
+  \tau_t \ge
+  \left\lfloor
+    \frac{\delta_{\mathrm{bnd},t}^2}
+    {2\sigma_d^2 \log(2/\delta)}
+  \right\rfloor.
+\]
+\end{theorem}
+
+\begin{proof}
+For a $\sigma_d$-sub-Gaussian disturbance, the reflection-principle /
+first-passage tail bound gives
+\[
+  \Prob(|S_\Delta| \ge \delta_{\mathrm{bnd},t})
+  \le
+  2\exp\!\left(
+    -\frac{\delta_{\mathrm{bnd},t}^2}{2\sigma_d^2\Delta}
+  \right).
+\]
+Demanding the right-hand side be at most $\delta$ yields
+\[
+  \Delta \le \frac{\delta_{\mathrm{bnd},t}^2}
+  {2\sigma_d^2 \log(2/\delta)}.
+\]
+Because the validity horizon is integer-valued, flooring gives the claimed
+lower bound.  The theorem-facing helper
+\texttt{certificate\_expiration\_bound()} implements this exact closed form and
+records its explicit side conditions in the returned theorem contract.
+\qedhere
+\end{proof}
+
+\section*{C.8 T7 --- Feasible Fallback Existence}
+
+\begin{theorem}[T7: Feasible Fallback Existence]\label{thm:t7}
+\textbf{Assumptions.} A1, A4, A8. \\
+\textbf{Statement.} For any safe battery state, the defended fallback surface
+is piecewise:
+\[
+  \text{either zero dispatch safely holds on the interior,}
+\]
+\[
+  \text{or a boundary-aware safe-landing action safely moves the SOC inward.}
+\]
+If neither case can be certified under the active constraints, the runtime
+fails closed rather than claiming a false fallback theorem.
+\end{theorem}
+
+\begin{proof}
+If the current SOC has enough interior slack, zero dispatch gives
+$x_{t+1}=x_t+\epsilon_t$ with $|\epsilon_t|\le\epsilon_{\mathrm{model}}$, so
+the next state remains inside the admissible interval.  This is the hold case.
+
+If the current SOC is safe but too close to a boundary for zero dispatch to be
+certified, the safe-landing controller computes a charge or discharge action
+that moves the SOC toward the interior safe zone while respecting the active
+battery power, ramp, and efficiency constraints.  The theorem-facing validator
+checks the corresponding successor interval under the bounded model error and
+accepts this case only when the entire interval remains safe.
+
+If neither the hold case nor the safe-landing case is certifiable, the
+validator returns infeasible.  The defended theorem therefore proves the
+piecewise hold-or-safe-landing battery surface and does not claim a universal
+fallback guarantee beyond those executable cases. \qedhere
+\end{proof}
+
+\section*{C.9 T8 --- Graceful Degradation Dominance}
+
+\begin{theorem}[T8: Graceful Degradation Dominance]
+\textbf{Assumptions.} A1--A5, A8. \\
+\textbf{Statement.} For graceful and uncontrolled violation sequences produced
+under the same admissible fault trace,
+\[
+  z_t^{\mathrm{graceful}} \le z_t^{\mathrm{uncontrolled}} \;\; \forall t
+  \quad\Longrightarrow\quad
+  V^{\mathrm{graceful}} \le V^{\mathrm{uncontrolled}}.
+\]
+Strict improvement is claimed only when the graceful sequence is strictly
+smaller on at least one step.
+\end{theorem}
+
+\begin{proof}
+Summing the stepwise dominance inequality over the shared admissible fault
+trace gives
+\[
+  \sum_{t=1}^{T} z_t^{\mathrm{graceful}}
+  \le
+  \sum_{t=1}^{T} z_t^{\mathrm{uncontrolled}},
+\]
+which is exactly the claimed cumulative-count dominance statement.  Strict
+inequality follows if the graceful sequence is strictly smaller on at least one
+step.  This is the supporting T8 surface in the integrated ladder: a
+paired-sequence comparison and nothing stronger. \qedhere
+\end{proof}
+
+\section*{C.10 T11 --- Typed Structural Transfer}
 
 \paragraph{Local T11 Notation.}
 In this section, $U_t$ denotes the constructed observation-consistent state set
@@ -328,7 +451,7 @@ separate structural failure proposition and is not part of active T11.
 \qedhere
 \end{proof}
 
-\section*{C.7 T\_trajectory\_PAC --- PAC Trajectory Certificate}
+\section*{C.11 T\_trajectory\_PAC --- PAC Trajectory Certificate}
 
 \begin{theorem}[T\_trajectory\_PAC: PAC Trajectory Certificate]\label{thm:t_trajectory_pac}
 \textbf{Assumptions.} A1, A4, A5, A9, and Bonferroni/union-bound aggregation

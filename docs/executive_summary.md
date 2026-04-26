@@ -1,58 +1,38 @@
 # ORIUS — Executive Summary
 
-> One-page submission overview for committee, reviewers, and ML-safety readers.
+> Generated from the canonical battery + AV closure artifacts.
 
-## Flagship Claim
+## What ORIUS Is
 
-ORIUS (Observation–Reality Integrity for Universal Safety) is a typed runtime safety layer for Physical AI systems operating under degraded observation. Its single flagship novelty sentence is:
+ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.
 
-> ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.
+ORIUS (Observation–Reality Integrity for Universal Safety) is a runtime safety layer for physical AI systems under degraded observation. It treats the observation–action safety gap as the governing hazard and responds through the Detect → Calibrate → Constrain → Shield → Certify lane.
 
-The defended ML center is grouped calibration and runtime safety under degraded observation through the five-stage kernel **Detect → Calibrate → Constrain → Shield → Certify**.
+## Current Submission Scope
 
-## What The Active 3-Domain Lane Defends
+- `submission_scope=battery_av_nuplan_three_city_closure`
+- `battery` is the reference witness row.
+- `av` is the bounded proof-validated row under the longitudinal TTC plus predictive-entry-barrier contract.
+- `industrial`, `healthcare`, `navigation`, and `aerospace` are not promoted in this battery+AV submission lane.
 
-| Domain | Tier | Current defended result | Canonical evidence |
-|--------|------|-------------------------|--------------------|
-| **Battery (BESS)** | Witness row | TSVR `0.0393 → 0.0000` on the locked publication-nominal surface | `reports/publication/three_domain_ml_benchmark.csv` + `reports/battery_av/battery/runtime_summary.csv` |
-| **Autonomous Vehicles** | Bounded defended row | TSVR `0.1250 → 0.0417` on the promoted longitudinal validation harness | `reports/publication/three_domain_ml_benchmark.csv` + `reports/orius_av/full_corpus/runtime_summary.csv` |
-| **Medical and Healthcare Monitoring** | Bounded defended row | TSVR `0.2917 → 0.0417` on the promoted MIMIC-backed monitoring row | `reports/publication/three_domain_ml_benchmark.csv` + `data/healthcare/mimic3/processed/mimic3_manifest.json` |
+## Locked Battery + AV Results
 
-- The strict theorem authority is the active theorem audit, not a flat theorem count.
-- The flagship defended theorem core is carried by `T1`, `T2`, `T5`, `T6`, and `T_trajectory_PAC`.
-- The flagship ML bundle is:
-  - `reports/publication/three_domain_ml_benchmark.csv`
-  - `reports/publication/three_domain_reliability_calibration.csv`
-  - `reports/publication/three_domain_grouped_coverage.csv`
-  - `reports/publication/novelty_separation_matrix.csv`
-  - `reports/publication/what_orius_is_not_matrix.csv`
+| Domain | Tier | Key Result | Evidence |
+|--------|------|------------|----------|
+| **Battery (BESS)** | `reference` | Canonical TSVR = 0.0% on 288 canonical runtime rows; 0 OASG cases identified. | 30 locked artifacts; chain valid = False; certificates = 0 |
+| **Autonomous Vehicles** | `proof_validated` | Baseline TSVR = 25.3%, ORIUS TSVR = 0.0% on 1,968 canonical runtime rows (15,744 total trace rows); 88 OASG cases identified on the ORIUS AV defended row. | 44 locked artifacts; chain valid = True; certificates = 1,968 |
 
-## What The Submission Does Not Claim
+## What This Submission Does Not Claim
 
-- ORIUS is **not** a new universal controller.
-- ORIUS is **not** a new conditional-coverage theorem.
-- ORIUS is **not** better forecasting by default.
-- The AV row is **not** full autonomous-driving closure; it remains bounded to the TTC plus predictive-entry-barrier contract.
-- The Healthcare row is **not** clinical deployment readiness; it remains bounded to monitoring-and-alert semantics on the promoted MIMIC surface.
+- Industrial and healthcare are intentionally outside the promoted `battery_av_only` submission lane.
+- AV remains a bounded longitudinal result; it is not a claim of full autonomous-driving closure.
+- Navigation and aerospace remain non-promoted rows.
+- Adversarial completeness and production deployment readiness are not claimed from this surface.
 
-## Evidence Architecture
+## Canonical Artifacts
 
-```text
-reports/battery_av_healthcare/overall/
-  ├── release_summary.json
-  ├── publication_closure_override.json
-  ├── domain_summary.csv
-  └── lane_status.json
-
-reports/publication/
-  ├── three_domain_ml_benchmark.csv
-  ├── three_domain_reliability_calibration.csv
-  ├── novelty_separation_matrix.csv
-  └── what_orius_is_not_matrix.csv
-```
-
-## Reproducibility
-
-- Canonical asset build: `PYTHONPATH=src .venv/bin/python scripts/build_orius_monograph_assets.py`
-- Canonical review build: `make review-compile`
-- Cold-start guide: `ORIUS_REPRODUCIBILITY.md`
+- `reports/battery_av/overall/release_summary.json`
+- `reports/battery_av/overall/publication_closure_override.json`
+- `reports/publication/orius_equal_domain_parity_matrix.csv`
+- `reports/battery_av/battery/`
+- `reports/orius_av/full_corpus/`

@@ -6,7 +6,8 @@
 \label{app:extended-results}
 
 This appendix presents the full result tables that support the main-text
-summaries in Chapters~\ref{ch:main-results}--\ref{ch:battery-lessons}.
+witness-domain summaries in Chapters~\ref{ch:witness-domain-implementation}
+and~\ref{ch:witness-results-failure-analysis}.
 Every number traces to a locked CSV in \texttt{reports/publication/}.
 
 \section{Extended Controller Comparison}
@@ -21,6 +22,7 @@ controllers under the default fault profile (\texttt{drift\_combo},
   Source: \texttt{dc3s\_main\_table.csv}.}
 \label{tab:extended-controller}
 \small
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}lccccccc@{}}
 \toprule
 \textbf{Controller}
@@ -38,7 +40,8 @@ CVaR            & 1.2 & 8.4  & ---  & 0.18 & 0.952 & $-4.8$ &  2.1 \\
 DC3S            & 0.0 & 14.7 & 91.3 & 0.00 & 0.948 & $-5.2$ &  3.8 \\
 DC3S + FTIT     & 0.0 & 13.2 & 92.1 & 0.00 & 0.956 & $-4.4$ &  4.1 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \medskip
 
 \footnotesize
@@ -76,6 +79,7 @@ region (DE = Germany, US = CAISO/ERCOT composite).
   \texttt{48h\_trace\_final\_us.csv}.}
 \label{tab:regional-impact}
 \small
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}lcccccc@{}}
 \toprule
 \textbf{Region}
@@ -89,7 +93,8 @@ region (DE = Germany, US = CAISO/ERCOT composite).
 DE (Germany)       & 0.0 & 13.2 & 92.1 & 0.00 & $-4.4$ & 4.1 \\
 US (CAISO/ERCOT)   & 0.0 & 15.8 & 90.7 & 0.00 & $-5.1$ & 4.3 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \section{Fault-Profile Sensitivity}
@@ -124,12 +129,12 @@ drift\_combo      & 0.0 & 13.2 & 92.1 & 0.00 \\
 
 \section{Artifact Provenance}
 
-All figures referenced in the main text trace to the following locked
-artifacts in \texttt{reports/publication/}:
+All figures referenced in the main text trace to locked publication-report
+artifacts:
 
 \begin{itemize}
   \item \texttt{fig\_true\_soc\_violation\_vs\_dropout.png} --- TSVR
-    vs.\ dropout rate (Figure~\ref{fig:oasg-evidence}).
+    vs.\ dropout rate.
   \item \texttt{fig\_true\_soc\_severity\_p95\_vs\_dropout.png} ---
     severity surface.
   \item \texttt{fig\_calibration\_tradeoff.png} --- coverage--width

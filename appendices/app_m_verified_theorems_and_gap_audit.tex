@@ -4,6 +4,9 @@
 % =============================================================================
 \chapter{Audited Theorems and Gap Register}
 \label{app:verified-theorems-gap-audit}
+\begingroup
+\footnotesize
+\sloppy
 
 This appendix is the human-readable companion to the machine-generated
 active theorem audit in \texttt{reports/publication/active\_theorem\_audit.*}.
@@ -11,9 +14,9 @@ It does \emph{not} treat the live theorem inventory as one flat ladder.
 Instead it mirrors the registry-canonical split emitted by
 \texttt{defended\_theorem\_core.*}:
 \begin{itemize}
-  \item \textbf{Flagship defended}: T1, T2, T3a, T4, T11, and T\_trajectory\_PAC.
-  \item \textbf{Supporting defended}: T3b, T6, T8, T11\textsubscript{Byz}, and T\textsubscript{stale}.
-  \item \textbf{Draft / non-defended}: T5, T7, T9, T10, L1--L4,
+  \item \textbf{Flagship defended}: T1, T2, T3a, T4, T6, T7, T11, and T\_trajectory\_PAC.
+  \item \textbf{Supporting defended}: T3b, T8, T11\textsubscript{Byz}, and T\textsubscript{stale}.
+  \item \textbf{Draft / non-defended}: T5, T9, T10, L1--L4,
   T\textsubscript{minimax}, and T\textsubscript{sensor}.
 \end{itemize}
 This appendix audits the full live surface, but only the flagship and
@@ -21,8 +24,8 @@ supporting tiers belong to the defended June core. The draft tier remains
 visible to prevent hidden drift, not to inflate the headline theorem count.
 
 The certificate half-life remains a corollary, and safe-budget monotonicity
-remains a proposition. Appendix~\ref{app:integrated-theorem-surface-register}
-still audits the older hard-gated traceability surface, but it is a
+remains a proposition. The tracked integrated theorem surface register still
+audits the older hard-gated traceability surface, but it is a
 \emph{traceability gate}, not a proof-soundness gate.
 
 \section{Theorem Statements}
@@ -144,10 +147,10 @@ delta-aware lower bound
 
 \textbf{Assumptions.} A4--A7.
 
-\textbf{Proof status.} Supporting defended auxiliary theorem with
-machine-checkable helper linkage.  The theorem-facing API now requires
-\texttt{delta} explicitly and marks legacy no-\texttt{delta} semantics as
-non-defended.
+\textbf{Proof status.} Flagship defended closed-form theorem with
+machine-checkable helper linkage.  The theorem-facing API requires
+\texttt{delta} explicitly, records the first-passage side conditions, and
+marks legacy no-\texttt{delta} semantics as non-defended.
 
 \textbf{Code anchor.} \texttt{src/orius/universal\_theory/battery\_instantiation.py}
 (\texttt{certificate\_expiration\_bound()}), which now emits theorem metadata
@@ -156,13 +159,16 @@ and a fail-closed T6 contract summary.
 \subsection{Theorem 7: Feasible Fallback Existence}
 \label{sec:thm-fallback}
 
-\textbf{Statement.} There exists a battery fallback action that preserves
-safety from an interior SOC state under bounded model error.
+\textbf{Statement.} The defended T7 surface is piecewise: zero dispatch
+preserves safety on the interior, a boundary-aware safe-landing action
+preserves safety near the boundary, and the runtime fails closed when neither
+case can be certified.
 
-\textbf{Assumptions.} A3, A4, A8.
+\textbf{Assumptions.} A1, A4, A8.
 
-\textbf{Proof status.} Constructive battery fallback theorem, currently
-bounded to interior states with sufficient slack against model error.
+\textbf{Proof status.} Flagship defended battery fallback theorem with an
+explicit piecewise executable witness.  The promoted surface is battery-only
+and does not claim cross-domain transfer on its own.
 
 \textbf{Code anchor.} \texttt{src/orius/dc3s/temporal\_theorems.py}
 (\texttt{zero\_dispatch\_fallback()}, \texttt{certify\_fallback\_existence()}).
@@ -208,8 +214,7 @@ constant remains theorem-local.
 
 \textbf{Code anchor.} No dedicated module; the battery
 \texttt{cpsbench\_iot/runner.py} provides the reference witness;
-the proof is in the universality-completeness chapter,
-Section~\ref{sec:t9-universal-impossibility}.
+the proof is summarized in Section~\ref{sec:thm-universal-impossibility}.
 
 \subsection{Theorem 10: Boundary-Indistinguishability Lower Bound}
 \label{sec:thm-info-lower-bound}
@@ -241,8 +246,7 @@ safe fallback admissibility---inherits the T2--T3 safety-guarantee pattern
 without new battery-specific algebra.
 
 \textbf{Assumptions.} The universal adapter contract and the four structural
-obligations stated in Definition~\ref{def:adapter-contract} and
-Theorem~\ref{thm:universality-completeness}.
+obligations stated in Section~\ref{sec:thm-universality-completeness}.
 
 \textbf{Proof status.} Forward one-step transfer theorem.  The runtime now
 builds the four T11 obligation checks directly from typed artifacts, while the
@@ -267,6 +271,7 @@ with the understanding that only a strict subset belongs to the June defended co
 \caption{Active T1--T11 theorem audit summary with flagship/supporting/draft posture}
 \label{tab:theorem-gap-audit}
 \small
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}llllp{3.2cm}@{}}
 \toprule
 \textbf{Theorem} & \textbf{Proof status} & \textbf{Empirical validation} & \textbf{Code matches statement} & \textbf{Notes} \\
@@ -277,15 +282,16 @@ T3a ORIUS Core Envelope Derivation & Paper-rigorous & Yes & Yes & Runtime theore
 T3b ORIUS Core Aggregation Corollary & Corollary only & Yes & Yes & Supporting aggregation corollary derived from T3a by linearity of expectation \\
 T4 No Free Safety & Constructive witness & Yes & Partial & Battery proof gives an explicit degraded-observation sequence; broader baseline comparison remains empirical \\
 T5 Certificate Validity Horizon Definition & Explicit definition & Yes & Yes & Maximal forward-tube containment helper is constructive and excluded from defended theorem counts \\
-T6 Certificate Expiration Bound & V2-linked auxiliary theorem & Yes & Yes & Canonical helper is delta-aware and rejects legacy no-delta theorem semantics \\
-T7 Feasible Fallback Existence & Narrowed to interior states & Partial & Partial & Constructive zero-dispatch fallback is validated only for bounded-error interior states \\
+T6 Certificate Expiration Bound & V2-linked flagship theorem & Yes & Yes & Canonical helper is delta-aware, closed-form, and records explicit first-passage side conditions \\
+T7 Feasible Fallback Existence & Piecewise hold-or-safe-landing theorem & Yes & Yes & Runtime certifies interior safe hold, boundary recovery by safe landing, and fail-closed infeasibility \\
 T8 Graceful Degradation Dominance & Supporting sequence comparison & Partial & Yes & Defended only as a paired-sequence comparator under a shared fault trace; absorbing landing remains supporting-only \\
 \midrule
-T9 Universal Impossibility & Structural / scoped witness constant & Yes & Partial & $\varphi$-mixing + Azuma windowing remain explicit assumptions; battery T4 is the reference witness; ch37 \S\,\ref{sec:t9-universal-impossibility} \\
+T9 Universal Impossibility & Structural / scoped witness constant & Yes & Partial & $\varphi$-mixing + Azuma windowing remain explicit assumptions; battery T4 is the reference witness; Section~\ref{sec:thm-universal-impossibility} \\
 T10 Boundary-Indistinguishability Lower Bound & Narrowed stylized lower bound & Partial & Partial & Le~Cam step remains one-sided; the executable witness is a scoped lower-bound calculator, not a sharp frontier theorem \\
 T11 Typed Structural Transfer & Forward-only one-step transfer & Yes & Yes & Typed runtime artifacts now carry four-obligation summaries; the converse and mini-harness remain separate supporting surfaces \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \begin{table}[htbp]
@@ -293,6 +299,7 @@ T11 Typed Structural Transfer & Forward-only one-step transfer & Yes & Yes & Typ
 \caption{Audited extension laws and depth-theorem surfaces}
 \label{tab:extension-theorem-gap-audit}
 \small
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}llllp{3.1cm}@{}}
 \toprule
 \textbf{ID} & \textbf{Status} & \textbf{Code surface} & \textbf{Audit posture} & \textbf{Notes} \\
@@ -307,7 +314,8 @@ T\_minimax & Broken as defended minimax theorem & \texttt{theoretical\_guarantee
 T\_sensor\_converse & Broken as universal converse & \texttt{theoretical\_guarantees.py} & Stylized inverse threshold & Necessity only holds inside the L2/L3 proxy model \\
 T\_trajectory\_PAC & Plausible but informal & \texttt{risk\_bounds.py} & Defended as Bonferroni certificate & No separate Ville-strengthened theorem is claimed \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table}
 
 \section{Remaining Claim-Boundary Gaps}
@@ -316,18 +324,15 @@ The audit above separates proof completeness from promotion completeness.
 The remaining gaps that still bound the dissertation's final claim are
 therefore explicit:
 \begin{enumerate}
-  \item \textbf{Autonomous vehicles.} The current AV row is blocked by the
-    constraint-class mismatch analysed in
-    the universality-completeness chapter: one-dimensional acceleration
-    repair does not discharge the current-step headway metric.  This is a
-    promotion gap, not a contradiction of T1--T11.
-  \item \textbf{Navigation.} The navigation row remains shadow-synthetic
-    because the typed kernel is exercised only on a bounded synthetic surface.
-    It therefore contributes portability evidence, not proof-validating replay
-    evidence.
-  \item \textbf{Aerospace.} The aerospace row remains experimental because the
-    adapter and replay path execute, but the promotion contract and defended
-    soundness surface are not yet closed.
+  \item \textbf{Autonomous vehicles.} The current AV row is no longer claimed
+    as full autonomy closure. It is promoted only as a bounded nuPlan replay
+    row under TTC and predictive-entry-barrier semantics. Remaining AV work is
+    closed-loop road deployment evidence, not a contradiction of T1--T11.
+  \item \textbf{Future mobility and flight-style rows.} Earlier drafts named
+    additional exploratory rows, but the current monograph does not promote
+    them. They remain planning surfaces until they supply defended replay,
+    runtime, governance, and post-repair evidence under the same gate as the
+    active Battery + AV + Healthcare lane.
 \end{enumerate}
 
 These are the remaining thesis-level gaps after the monograph theorem pass.
@@ -369,3 +374,4 @@ rather than by that legacy 18-row gate alone.
 }{%
   \input{../reports/publication/integrated_theorem_gate_matrix}%
 }
+\endgroup

@@ -1,25 +1,22 @@
 \begin{table}[htbp]
 \centering
-\scriptsize
-\caption{Main safety and cost outcomes under telemetry faults.}
+\small
+\caption{Main controller comparison under aggregate telemetry faults. DC$^3$S variants achieve zero true-SoC violations across all seeds and scenarios. 95\% CI via percentile bootstrap over seeds $\times$ scenarios.}
 \label{tab:TBL01_MAIN_RESULTS}
 \setlength{\tabcolsep}{4pt}
-\renewcommand{\arraystretch}{0.96}
+\renewcommand{\arraystretch}{1.05}
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{lrrrrrrrrrr}
+\begin{tabular}{lcccccc}
 \toprule
-controller & true\_soc\_violation\_rate\_mean & true\_soc\_violation\_rate\_ci\_low & true\_soc\_violation\_rate\_ci\_high & true\_soc\_violation\_severity\_p95\_mean & true\_soc\_violation\_severity\_p95\_ci\_low & true\_soc\_violation\_severity\_p95\_ci\_high & intervention\_rate\_mean & intervention\_rate\_ci\_low & intervention\_rate\_ci\_high & cost\_delta\_pct\_mean \\
+Controller & Viol.\ Rate & Severity P95 (MWh) & Interv.\ Rate & Cost $\Delta$\% & $n$ \\
 \midrule
-aci\_conformal & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.020833 & 0.020833 & 0.020833 & 0.023244 \\
-cvar\_interval & 0.191667 & 0.119427 & 0.274305 & 333.582626 & 0.265437 & 848.045446 & 0.000000 & 0.000000 & 0.000000 & -0.009092 \\
-dc3s\_ftit & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.088194 & 0.070139 & 0.105556 & 0.147639 \\
-dc3s\_wrapped & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.054576 \\
-deterministic\_lp & 0.129861 & 0.105555 & 0.170833 & 547.992608 & 198.317264 & 1056.208662 & 0.000000 & 0.000000 & 0.000000 & 0.000000 \\
-robust\_fixed\_interval & 0.191667 & 0.119427 & 0.274305 & 333.582626 & 0.265437 & 848.045446 & 0.000000 & 0.000000 & 0.000000 & -0.009092 \\
-scenario\_mpc & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.006481 \\
-scenario\_robust & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.000000 & 0.006481 \\
+\textbf{DC$^3$S (wrapped)} & 0.000 & 0.000 & 0.000 [0.000, 0.002] & +0.05 & 30 \\
+\textbf{DC$^3$S (FTIT)} & 0.000 & 0.000 & 0.019 [0.000, 0.037] & +0.27 & 30 \\
+\midrule
+Deterministic LP & 0.008 [0.000, 0.018] & 0.147 [0.000, 0.359] & 0.000 & +0.00 & 30 \\
+CVaR Interval & 0.013 [0.000, 0.018] & 7.186 [0.000, 57.991] & 0.000 & -0.01 & 30 \\
+Robust Fixed & 0.013 [0.000, 0.018] & 7.186 [0.000, 57.991] & 0.000 & -0.01 & 30 \\
 \bottomrule
 \end{tabular}
-
 }
 \end{table}

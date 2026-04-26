@@ -74,13 +74,17 @@ Once a domain supplies the same objects, the formal language of the battery ladd
 without changing the runtime contract; what changes is the evidence status of the domain.
 \end{proof}
 
-\subsection{T5 and T6: Temporal certificate guarantees}
+\subsection{T5--T7: Temporal certificate and fallback guarantees}
 Certificates are temporal objects. Theorem~T5 (Certificate Validity Horizon) proves that a
 certificate issued at time~$t$ remains valid for the largest integer horizon~$\tau_t$ whose
 forward tube stays inside the safe SOC bounds. Theorem~T6 (Certificate Expiration Bound)
-gives a closed-form lower bound: $\tau_t \ge \lfloor(E_{\max} - E_t)/\sigma_d\rfloor$,
-where $\sigma_d$ is the drift scale. Both are now runtime-enforced: when $\tau_t < 1$, the
-guarantee check fails and the shield enters fallback.
+adds a confidence-aware closed-form first-passage lower bound on the remaining certificate
+life, using the current boundary gap and the drift proxy $\sigma_d$. Theorem~T7
+(Feasible Fallback Existence) then closes the operational loop with a piecewise battery
+fallback: safe hold on the interior, boundary-aware safe landing near the boundary, and
+fail-closed behavior when neither case is certifiable. These surfaces are runtime-enforced:
+when the T6 lower bound drops below one step, the guarantee check fails and the shield
+must discharge the promoted T7 fallback contract.
 
 \subsection{T9: Reliability-aware repair is structurally necessary}
 The first theoretical claim is that ignoring reliability is not a benign simplification.

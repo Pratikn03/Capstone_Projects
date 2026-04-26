@@ -39,19 +39,22 @@ breakdown.
 | Domain | Current canonical source | Current status |
 | --- | --- | --- |
 | Battery | OPSD + SMARD / EIA-family release surfaces | Reference row |
-| Autonomous vehicles | Waymo Open Motion | Real-data contract defined |
-| AV companions | Argoverse 2 Motion, Argoverse 2 Sensor | Secondary validation surfaces |
+| Autonomous vehicles | nuPlan v1.1 train Singapore + nuPlan maps v1.0 | Local raw archives present; replay bridge active |
+| AV companions | Waymo Open Motion, Argoverse 2 Motion, Argoverse 2 Sensor | Legacy/secondary validation surfaces |
 | Industrial | Current defended processed row; raw-source cleanup still mixed | Proof-validated, cleanup still needed |
-| Healthcare | PhysioNet BIDMC | Real-data path active |
+| Healthcare | MIMIC-III/PhysioNet-style promoted runtime row, with BIDMC-style data treated as supplemental readiness evidence | Runtime-denominator row active; no live clinical deployment claim |
 | Navigation | KITTI Odometry | Real-data contract defined, row still blocked |
 | Aerospace | NASA C-MAPSS FD001-FD004 (trainable) plus bounded public ADS-B support lane | Experimental/support-tier only; defended runtime closure pending |
 
 Important boundary:
 
+- The AV source of record is moving from Waymo to nuPlan. Existing Waymo-named
+  runtime classes remain compatibility wrappers until the nuPlan replay surface
+  is regenerated through the same feature/training/runtime gates.
 - Navigation is still blocked by the real-data validation gap.
 - Aerospace is still blocked by the missing canonical real-flight runtime row.
 - The bounded public ADS-B lane is support-only and does not promote the defended aerospace row.
-- MIMIC-III is not staged in this repo and is not the active healthcare runtime source.
+- The current healthcare headline row is the promoted MIMIC runtime-denominator surface. BIDMC-style data remains supplemental/readiness evidence unless a new held-out runtime replay is generated.
 - Do not claim equal-domain universality until those rows clear the same gate as
   the defended domains.
 
@@ -63,6 +66,7 @@ under:
 ```text
 $ORIUS_EXTERNAL_DATA_ROOT/
 ├── waymo_open_motion/
+├── nuplan/
 ├── argoverse2_motion/
 ├── argoverse2_sensor/
 ├── kitti_odometry/
@@ -102,6 +106,53 @@ Use the domain placement guides before building processed rows:
 
 These documents define the processed target file, expected raw layout, and the
 minimum contract columns for each domain.
+
+### nuPlan Singapore AV
+
+The local AV replacement raw archives are repo-local but ignored:
+
+```text
+nuplan-v1.1_train*.zip
+nuplan-maps-v1.0.zip
+```
+
+Build a bounded smoke surface:
+
+```bash
+python scripts/build_nuplan_av_surface.py \
+  --train-dir . \
+  --train-glob "nuplan-v*.zip" \
+  --maps-zip nuplan-maps-v1.0.zip \
+  --out-dir /tmp/orius_nuplan_smoke \
+  --max-dbs 2 \
+  --max-scenarios 4 \
+  --build-features
+```
+
+Build the full local surface by omitting the bounds. The output contract is
+`data/orius_av/av/processed_nuplan_singapore/replay_windows.parquet`, which is
+compatible with the existing ORIUS AV feature/training/runtime path.
+
+For Hugging Face execution, first sync completed archives only:
+
+```bash
+python scripts/sync_nuplan_hf_dataset.py \
+  --repo-id pratikn03/orius-nuplan-private \
+  --train-dir . \
+  --train-glob "nuplan-v*.zip"
+```
+
+Then build from the private dataset snapshot:
+
+```bash
+python scripts/build_nuplan_av_surface.py \
+  --hf-dataset pratikn03/orius-nuplan-private \
+  --maps-zip nuplan-maps-v1.0.zip \
+  --out-dir /tmp/orius_nuplan_hf_smoke \
+  --max-dbs 1 \
+  --max-scenarios 16 \
+  --build-features
+```
 
 ## 7. Energy-source commands still supported
 

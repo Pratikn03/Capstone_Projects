@@ -2,7 +2,7 @@
 \section{Introduction}\label{sec:intro}
 
 The deployment of AI-driven controllers in safety-critical physical systems---battery
-energy storage, autonomous vehicles, surgical robotics, power grid dispatch---has
+energy storage, autonomous vehicles, and clinical monitoring---has
 progressed from laboratory prototypes to field-deployed assets.  A pervasive but
 under-addressed hazard accompanies this transition: the controller takes actions
 conditioned on \emph{observations} of the true physical state, yet observations are
@@ -32,7 +32,7 @@ mechanism that:
 
 No existing framework---simplex architectures~\cite{sha2001using},
 runtime-verification monitors~\cite{leucker2009brief}, Bayesian OOD
-detectors~\cite{hendryx2019deep}, or conformal-prediction wrappers~\cite{romano2019conformalized}---addresses
+detectors~\cite{hendrycks2017baseline}, or conformal-prediction wrappers~\cite{romano2019conformalized}---addresses
 all five requirements simultaneously while remaining \emph{domain-agnostic},
 \ie~applicable to any cyber-physical domain via a thin adapter rather than a domain-specific redesign.
 
@@ -49,7 +49,7 @@ the runtime invariants to end-to-end safety guarantees under stated assumptions
 
 \subsection{Scope and Claims}
 
-Unlike prior conference publications that motivated ORIUS with six candidate domains,
+Unlike broader planning drafts that motivated ORIUS with additional candidate rows,
 this manuscript restricts its defended empirical lane to \textbf{three active domains}
 with locked, reproducible artifacts and explicit evidence tiers:
 
@@ -58,8 +58,9 @@ with locked, reproducible artifacts and explicit evidence tiers:
         state-of-charge telemetry on locked CPSBench replay artifacts.  Battery is the
         theorem-grade witness row and carries the deepest artifact-to-proof closure.
   \item \textbf{Autonomous Vehicles (AV)}: longitudinal prediction of ego-speed and
-        relative gap under degraded perception, validated on the full Waymo Open Motion
-        Dataset corpus (7~shards, 1{,}975~scenarios).
+        relative gap under degraded perception, validated on the completed all-zip
+        grouped nuPlan replay surface with explicit non-closure of full
+        autonomous-driving field deployment.
   \item \textbf{Medical and Healthcare Monitoring}: bounded monitoring and alert release
         under degraded vital-sign observations.  Healthcare is promoted as a bounded
         MIMIC-backed runtime row; its claims remain narrower than the battery witness row.
@@ -84,12 +85,12 @@ The principal contributions of this paper are:
         \begin{itemize}[nosep]
           \item \textbf{Battery witness row}: zero true-state violations on the promoted
                 runtime slice, with the deepest theorem-to-artifact alignment.
-          \item \textbf{AV bounded row}: 9{,}348 runtime steps on the full promoted corpus,
-                TSVR reduced from 0.125 (nominal validation harness) to 0.0417
-                on the bounded defended row; full-corpus runtime summary remains
-                available as a locked artifact.
-          \item \textbf{Healthcare bounded row}: TSVR reduced from 0.2917 to 0.0417 on
-                the promoted bounded monitoring surface, with grouped calibration and
+          \item \textbf{AV bounded row}: 1{,}531{,}104 all-zip grouped nuPlan replay
+                steps and certificates; ORIUS reduces TSVR from 0.2893 for the
+                no-wrapper baseline to 0.000163 on the promoted replay row, while the
+                harder relative-gap shift table remains explicitly marked as bounded.
+          \item \textbf{Healthcare bounded row}: TSVR reduced from 0.1945 to 0.0000 on
+                the promoted MIMIC monitoring surface, with grouped calibration and
                 governance evidence reported explicitly as bounded claims.
         \end{itemize}
   \item A fully reproducible artifact bundle with SHA-256 hashes, locked
@@ -107,11 +108,11 @@ particular:
         serves as a \emph{reference witness}: it demonstrates the full pipeline
         end-to-end with the deepest artifact-to-theorem closure.
   \item The AV domain is a \emph{bounded proof-validated} row: ORIUS is promoted only
-        under the longitudinal TTC + predictive-entry-barrier contract, with full-corpus
-        runtime artifacts and a bounded validation-harness comparison.
+        under the longitudinal TTC + predictive-entry-barrier contract, with bounded
+        nuPlan replay artifacts and no claim of full road deployment closure.
   \item The Healthcare domain is a \emph{bounded proof-validated} row: ORIUS is promoted
         only for monitoring and alert-release semantics on the MIMIC-backed healthcare lane.
-        Certificate-valid release remains tied to the current governance-pass proxy on this row.
+        Certificate-valid release is reported from runtime-emitted healthcare CVA on this row.
   \item Shift-awareness guarantees are bounded to the drift rates observed during
         validation; adversarial robustness under intentional telemetry attacks has
         not been evaluated.
