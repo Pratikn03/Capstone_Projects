@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Validate canonical ORIUS certificate schema and runtime trace exposure."""
+"""Validate canonical ORIUS certificate schema and compact witness exposure.
+
+The raw runtime traces can be hundreds of MB to multiple GB and are not a
+GitHub-safe release surface. This validator therefore checks the certificate
+constructor/normalizer plus a compact publication witness table that records
+the canonical certificate fields for each promoted domain.
+"""
 
 from __future__ import annotations
 
@@ -41,11 +47,9 @@ TRACE_SCHEMA_COLUMNS = {
     "theorem_contracts",
 }
 
-TRACE_PATHS = {
-    "battery": REPO_ROOT / "reports" / "battery_av" / "battery" / "runtime_traces.csv",
-    "av": REPO_ROOT / "reports" / "orius_av" / "full_corpus" / "runtime_traces.csv",
-    "healthcare": REPO_ROOT / "reports" / "healthcare" / "runtime_traces.csv",
-}
+EXPECTED_DOMAINS = {"battery", "av", "healthcare"}
+SCHEMA_WITNESS_PATH = REPO_ROOT / "reports" / "publication" / "certificate_schema_witnesses.csv"
+SUMMARY_PATH = REPO_ROOT / "reports" / "publication" / "domain_runtime_contract_summary.json"
 
 
 def _sample_certificate() -> dict[str, object]:
@@ -78,6 +82,65 @@ def _read_head(path: Path, limit: int = 5000) -> list[dict[str, str]]:
         return rows
 
 
+def _is_sha256_hex(value: str) -> bool:
+    text = str(value or "").strip()
+    return len(text) == 64 and all(ch in "0123456789abcdef" for ch in text.lower())
+
+
+def _validate_schema_witnesses(findings: list[str]) -> None:
+    if not SCHEMA_WITNESS_PATH.exists():
+        findings.append(f"certificate schema witness missing: {SCHEMA_WITNESS_PATH.relative_to(REPO_ROOT)}")
+        return
+    rows = _read_head(SCHEMA_WITNESS_PATH)
+    if not rows:
+        findings.append(f"certificate schema witness is empty: {SCHEMA_WITNESS_PATH.relative_to(REPO_ROOT)}")
+        return
+    missing_columns = sorted((TRACE_SCHEMA_COLUMNS | {"validity_horizon_H_t", "expires_at_step"}) - set(rows[0]))
+    if missing_columns:
+        findings.append(f"certificate schema witness missing columns: {missing_columns}")
+        return
+
+    observed_domains = {str(row.get("domain", "")).strip().lower() for row in rows}
+    missing_domains = sorted(EXPECTED_DOMAINS - observed_domains)
+    if missing_domains:
+        findings.append(f"certificate schema witness missing domains: {missing_domains}")
+
+    for idx, row in enumerate(rows, start=2):
+        domain = str(row.get("domain", "")).strip().lower()
+        if domain not in EXPECTED_DOMAINS:
+            findings.append(f"certificate schema witness row {idx} has unexpected domain: {domain!r}")
+        if row.get("certificate_schema_version") != CERTIFICATE_SCHEMA_VERSION:
+            findings.append(f"certificate schema witness row {idx} has stale schema version")
+        if not _is_sha256_hex(str(row.get("certificate_hash", ""))):
+            findings.append(f"certificate schema witness row {idx} has invalid certificate_hash")
+        for field in ("issuer", "action", "theorem_contracts", "validity_horizon_H_t", "expires_at_step"):
+            if str(row.get(field, "")).strip() == "":
+                findings.append(f"certificate schema witness row {idx} missing {field}")
+        if findings:
+            return
+
+
+def _validate_contract_summary(findings: list[str]) -> None:
+    if not SUMMARY_PATH.exists():
+        findings.append(f"domain runtime contract summary missing: {SUMMARY_PATH.relative_to(REPO_ROOT)}")
+        return
+    try:
+        import json
+
+        payload = json.loads(SUMMARY_PATH.read_text(encoding="utf-8"))
+    except Exception as exc:  # pragma: no cover - defensive validator path
+        findings.append(f"domain runtime contract summary is malformed: {exc}")
+        return
+    domains = payload.get("domains")
+    if not isinstance(domains, dict):
+        findings.append("domain runtime contract summary has no domains object")
+        return
+    for domain in ("av", "healthcare"):
+        if domain not in domains:
+            findings.append(f"domain runtime contract summary missing {domain}")
+            return
+
+
 def main() -> int:
     findings: list[str] = []
 
@@ -95,25 +158,8 @@ def main() -> int:
     if legacy.get("certificate_schema_version") != CERTIFICATE_SCHEMA_VERSION:
         findings.append("legacy certificate did not receive canonical schema version")
 
-    for domain, path in TRACE_PATHS.items():
-        if not path.exists():
-            findings.append(f"{domain} runtime trace missing: {path.relative_to(REPO_ROOT)}")
-            continue
-        rows = _read_head(path)
-        if not rows:
-            findings.append(f"{domain} runtime trace is empty: {path.relative_to(REPO_ROOT)}")
-            continue
-        missing_columns = sorted(TRACE_SCHEMA_COLUMNS - set(rows[0]))
-        if missing_columns:
-            findings.append(f"{domain} runtime trace missing schema columns: {missing_columns}")
-            continue
-        certified_rows = [
-            row for row in rows
-            if (row.get("certificate_valid") or "").strip().lower() in {"true", "1"}
-            and (row.get("controller") or "").strip() in {"orius", "dc3s_ftit", "dc3s_wrapped"}
-        ]
-        if certified_rows and not any((row.get("certificate_hash") or "").strip() for row in certified_rows):
-            findings.append(f"{domain} certified trace sample has no certificate_hash values")
+    _validate_schema_witnesses(findings)
+    _validate_contract_summary(findings)
 
     if findings:
         print("[validate_certificate_schema] FAIL")

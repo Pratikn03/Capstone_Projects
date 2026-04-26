@@ -679,7 +679,7 @@ def _check_healthcare_runtime_metric_alignment(
     runtime_summary_path = repo_root / "reports" / "healthcare" / "runtime_summary.csv"
     runtime_traces_path = repo_root / "reports" / "healthcare" / "runtime_traces.csv"
 
-    required_paths = (benchmark_path, witness_summary_path, runtime_summary_path, runtime_traces_path)
+    required_paths = (benchmark_path, witness_summary_path, runtime_summary_path)
     for path in required_paths:
         if not path.exists():
             findings.append(
@@ -728,25 +728,23 @@ def _check_healthcare_runtime_metric_alignment(
         )
         return
 
-    with runtime_traces_path.open("r", encoding="utf-8", newline="") as fh:
-        trace_rows = [row for row in csv.DictReader(fh) if (row.get("controller") or "").strip() == "orius"]
-    if not trace_rows:
-        findings.append(
-            Finding(
-                "ERROR",
-                "healthcare_runtime_alignment",
-                str(runtime_traces_path),
-                "Missing ORIUS healthcare runtime traces",
-            )
-        )
-        return
-
     def _parse_bool(value: str) -> bool:
         return str(value).strip().lower() in {"1", "true", "yes"}
 
     try:
         runtime_ir = float(runtime_row["intervention_rate"])
-        runtime_fallback = sum(1 for row in trace_rows if _parse_bool(row.get("fallback_used", ""))) / len(trace_rows)
+        if "fallback_activation_rate" in runtime_row and str(runtime_row["fallback_activation_rate"]).strip() != "":
+            runtime_fallback = float(runtime_row["fallback_activation_rate"])
+        elif runtime_traces_path.exists():
+            with runtime_traces_path.open("r", encoding="utf-8", newline="") as fh:
+                trace_rows = [row for row in csv.DictReader(fh) if (row.get("controller") or "").strip() == "orius"]
+            runtime_fallback = (
+                sum(1 for row in trace_rows if _parse_bool(row.get("fallback_used", ""))) / len(trace_rows)
+                if trace_rows
+                else float("nan")
+            )
+        else:
+            raise KeyError("fallback_activation_rate")
         benchmark_cva = float(healthcare_row["certificate_valid_release_rate"])
         benchmark_ir = float(healthcare_row["intervention_rate"])
         benchmark_fallback = float(healthcare_row["fallback_activation_rate"])
@@ -822,7 +820,7 @@ def _check_healthcare_runtime_metric_alignment(
                 str(benchmark_path),
                 (
                     f"Healthcare fallback_activation_rate={benchmark_fallback} diverges from "
-                    f"runtime traces fallback_used mean={runtime_fallback}"
+                    f"runtime summary fallback_activation_rate={runtime_fallback}"
                 ),
             )
         )
