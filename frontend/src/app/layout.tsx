@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: 'ORIUS — Smart Energy Management',
   description:
     'Next-generation energy management system with ML forecasting, battery dispatch optimization, and natural language query interface.',
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

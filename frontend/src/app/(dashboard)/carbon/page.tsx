@@ -30,8 +30,9 @@ export default function CarbonPage() {
   const regionLabel = getDomainOption(region).label;
   const statusMessages = [
     dataset.error ? `Dataset view error: ${dataset.error}` : null,
-    !realImpact ? 'Carbon impact metrics are falling back to report-level summaries where available.' : null,
-    !pareto.length ? 'No Pareto frontier artifact is available for this region.' : null,
+    ...(dataset.artifact_warnings ?? []),
+    !dataset.loading && !realImpact ? 'Carbon impact metrics are falling back to report-level summaries where available.' : null,
+    !dataset.loading && !pareto.length ? 'No Pareto frontier artifact is available for this region.' : null,
   ].filter((message): message is string => Boolean(message));
 
   return (

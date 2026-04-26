@@ -25,8 +25,9 @@ export default function AnomaliesPage() {
   const regionLabel = getDomainOption(region).label;
   const statusMessages = [
     dataset.error ? `Dataset view error: ${dataset.error}` : null,
-    !zScores.length ? 'No anomaly time-series artifact is available for this region.' : null,
-    !anomalies.length ? 'No anomaly event log entries were found for this region.' : null,
+    ...(dataset.artifact_warnings ?? []),
+    !dataset.loading && !zScores.length ? 'No anomaly time-series artifact is available for this region.' : null,
+    !dataset.loading && !anomalies.length ? 'No anomaly event log entries were found for this region.' : null,
   ].filter((message): message is string => Boolean(message));
 
   return (

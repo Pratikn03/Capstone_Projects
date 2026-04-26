@@ -161,6 +161,29 @@ def test_non_fail_safe_fallback_certificate_fails_closed() -> None:
     assert "fallback_action_not_fail_safe" in validity.guarantee_fail_reasons
 
 
+def test_tiny_positive_margin_does_not_round_up_t6_validity() -> None:
+    validity = domain_certificate_validity_semantics(
+        domain="av",
+        safe_action={"acceleration_mps2": 0.0},
+        uncertainty={},
+        reliability_w=1.0,
+        validity_status="nominal",
+        step_index=5,
+        repair_meta={},
+        cfg={
+            "true_margin": 0.001,
+            "validity_sigma_d": 1.0,
+            "validity_delta": 0.05,
+            "max_validity_horizon_steps": 10,
+        },
+    )
+
+    assert validity.validity_horizon_H_t == 0
+    assert validity.expires_at_step == 5
+    assert validity.guarantee_checks_passed is False
+    assert "nonpositive_domain_margin" in validity.guarantee_fail_reasons
+
+
 def test_healthcare_nonpositive_validity_margin_routes_to_fallback() -> None:
     adapter = HealthcareDomainAdapter({"expected_cadence_s": 1.0})
     tightened = adapter.tighten_action_set(

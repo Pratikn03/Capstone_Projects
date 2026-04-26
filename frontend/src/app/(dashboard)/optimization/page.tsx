@@ -49,8 +49,9 @@ export default function OptimizationPage() {
   const costSaved = baselineCost !== null && oriusCost !== null ? baselineCost - oriusCost : null;
   const statusMessages = [
     dataset.error ? `Dataset view error: ${dataset.error}` : null,
-    !dispatchData.length ? 'No extracted dispatch trace is available; optimization charts are waiting for real artifacts.' : null,
-    !realImpact ? 'Impact cards are using report-level fallbacks when available.' : null,
+    ...(dataset.artifact_warnings ?? []),
+    !dataset.loading && !dispatchData.length ? 'No extracted dispatch trace is available; optimization charts are waiting for real artifacts.' : null,
+    !dataset.loading && !realImpact ? 'Impact cards are using report-level fallbacks when available.' : null,
   ].filter((message): message is string => Boolean(message));
 
   return (
@@ -121,7 +122,7 @@ export default function OptimizationPage() {
 
       <BatterySOCChart 
         schedule={battery?.schedule ?? []} 
-        metrics={battery?.metrics ?? { cost_savings_eur: 0, carbon_reduction_kg: 0, peak_shaving_pct: 0, avg_efficiency: 92 }} 
+        metrics={battery?.metrics ?? null}
       />
 
       <Panel title="Optimization Parameters" subtitle="Current Configuration">

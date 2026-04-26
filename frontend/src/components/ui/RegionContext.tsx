@@ -13,8 +13,18 @@ interface RegionContextValue {
 
 const RegionContext = createContext<RegionContextValue | undefined>(undefined);
 
+function initialSettingsRegion(fallback: RegionId): RegionId {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const parsed = JSON.parse(localStorage.getItem('gridpulse-settings') ?? '{}') as { defaultRegion?: RegionId };
+    return parsed.defaultRegion ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export function RegionProvider({ children, initialRegion = 'DE' }: { children: ReactNode; initialRegion?: RegionId }) {
-  const [region, setRegion] = useState<RegionId>(initialRegion);
+  const [region, setRegion] = useState<RegionId>(() => initialSettingsRegion(initialRegion));
   const value = useMemo(() => ({ region, setRegion }), [region]);
 
   return <RegionContext.Provider value={value}>{children}</RegionContext.Provider>;

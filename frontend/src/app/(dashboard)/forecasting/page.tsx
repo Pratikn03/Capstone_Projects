@@ -48,9 +48,10 @@ export default function ForecastingPage() {
       : metricsActive.filter((m) => m.target === selectedTarget);
   const statusMessages = [
     dataset.error ? `Dataset view error: ${dataset.error}` : null,
-    !forecastData.length ? 'No extracted forecast trace is available for the selected region/target.' : null,
-    !realTargetMetrics.length && displayMetrics.length ? 'Model table is using report-level metrics rather than dataset-level extracted metrics.' : null,
-    !displayMetrics.length ? 'No model metrics are available for the selected target.' : null,
+    ...(dataset.artifact_warnings ?? []),
+    !dataset.loading && !forecastData.length ? 'No extracted forecast trace is available for the selected region/target.' : null,
+    !dataset.loading && !realTargetMetrics.length && displayMetrics.length ? 'Model table is using report-level metrics rather than dataset-level extracted metrics.' : null,
+    !dataset.loading && !displayMetrics.length ? 'No model metrics are available for the selected target.' : null,
   ].filter((message): message is string => Boolean(message));
 
   return (

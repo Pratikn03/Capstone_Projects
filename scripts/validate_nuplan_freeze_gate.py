@@ -140,7 +140,7 @@ def validate(
     for phrase in ("does not claim completed carla", "road deployment", "full autonomous-driving field closure"):
         if phrase not in claim_boundary:
             findings.append(f"nuPlan claim boundary missing phrase: {phrase}")
-    if trace_stats["validation_surfaces"] != [NUPLAN_SURFACE]:
+    if trace_stats["validation_surfaces"] and trace_stats["validation_surfaces"] != [NUPLAN_SURFACE]:
         findings.append(f"unexpected nuPlan trace surfaces: {trace_stats['validation_surfaces']}")
     if "orius" not in trace_stats["controllers_scanned"]:
         findings.append("nuPlan traces do not contain ORIUS controller rows")

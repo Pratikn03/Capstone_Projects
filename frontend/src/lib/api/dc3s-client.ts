@@ -12,6 +12,8 @@ export type Dc3sLivePayload = {
   ok: boolean;
   generated_at?: string;
   region?: DomainId;
+  source?: 'fastapi' | 'local_artifact_shadow';
+  backend_error?: string;
   command_id?: string;
   certificate_id?: string | null;
   certificate_hash?: string | null;

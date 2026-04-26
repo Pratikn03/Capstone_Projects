@@ -48,7 +48,7 @@ def _theorem_horizon(
     if margin <= 0.0 or sigma_d <= 0.0 or not (0.0 < delta < 1.0):
         return 0
     raw = math.floor((margin**2) / (2.0 * (sigma_d**2) * math.log(2.0 / delta)))
-    return int(max(1, min(int(max_horizon), raw)))
+    return int(max(0, min(int(max_horizon), raw)))
 
 
 def _healthcare_margin(uncertainty: Mapping[str, Any], cfg: Mapping[str, Any]) -> float:
@@ -162,7 +162,7 @@ def domain_certificate_validity_semantics(
             validity_theorem_id="T6_T11_domain_fallback",
             validity_theorem_contract="bounded_fail_safe_release",
             guarantee_checks_passed=False,
-                guarantee_fail_reasons=("fallback_action_not_fail_safe",),
+            guarantee_fail_reasons=("fallback_action_not_fail_safe",),
         )
 
     if domain_key == "av" and _av_near_failsafe_projected_release_satisfies(safe_action, repair, cfg):

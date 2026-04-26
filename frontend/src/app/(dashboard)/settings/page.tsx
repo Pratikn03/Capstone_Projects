@@ -228,7 +228,7 @@ export default function SettingsPage() {
         <div className="space-y-3 text-sm text-slate-300">
           {[
             'The dashboard is backed by extracted dashboard JSON, report artifacts, and the live DC3S runtime route.',
-            'The DC3S live shield card calls the FastAPI backend in real time through /api/dc3s/live.',
+            'The DC3S live shield card calls the FastAPI backend through /api/dc3s/live and falls back to an explicit artifact shadow when the live step route is unavailable.',
             'Other panels prefer repo artifacts and report exports over live streaming telemetry.',
             'Hardware validation and field commissioning remain future work.',
           ].map((note) => (

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { fetchFastApi } from '@/lib/server/config';
-import { loadRegionData } from '@/lib/server/dataset';
+import { loadRegionData, type ForecastPoint, type RegionDashboardData } from '@/lib/server/dataset';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -39,6 +39,8 @@ type Dc3sAuditResponse = {
   };
 };
 
+type BatteryRegion = 'DE' | 'US';
+
 function mean(values: number[]): number {
   if (!values.length) return 0;
   return values.reduce((a, b) => a + b, 0) / values.length;
@@ -48,9 +50,86 @@ function toNumber(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
 
+function forecastCenter(point: ForecastPoint | undefined, fallback: number): number {
+  return toNumber(point?.forecast, toNumber(point?.predicted, toNumber(point?.actual, fallback)));
+}
+
+function buildShadowUncertainty(
+  dataset: RegionDashboardData,
+  horizon: number,
+  fallbackLoad: number
+): Array<{ h: number; lower: number; upper: number; width: number }> {
+  const forecastRows = (dataset.forecast?.load_mw ?? []).slice(0, horizon);
+  const latestForecast = dataset.forecast?.load_mw?.at(-1);
+  const rows = forecastRows.length ? forecastRows : Array.from({ length: Math.min(6, horizon) }, () => latestForecast);
+
+  return rows.slice(0, 6).map((point, index) => {
+    const center = forecastCenter(point, fallbackLoad);
+    const lower = toNumber(point?.lower_90, center - Math.max(25, Math.abs(center) * 0.04));
+    const upper = toNumber(point?.upper_90, center + Math.max(25, Math.abs(center) * 0.04));
+    return {
+      h: index + 1,
+      lower,
+      upper,
+      width: upper - lower,
+    };
+  });
+}
+
+async function localArtifactShadowResponse(
+  region: BatteryRegion,
+  controller: string,
+  horizon: number,
+  backendError: string
+) {
+  const dataset = await loadRegionData(region);
+  const latestTs = dataset.timeseries.at(-1);
+  const latestForecast = dataset.forecast?.load_mw?.at(-1);
+  const latestBattery = dataset.battery?.schedule?.at(-1);
+  const latestLoad = toNumber(latestTs?.load_mw, forecastCenter(latestForecast, 45_000));
+  const forecastLoad = forecastCenter(latestForecast, latestLoad);
+  const relativeError = Math.abs(latestLoad - forecastLoad) / Math.max(Math.abs(latestLoad), 1);
+  const reliabilityWT = Math.max(0, Math.min(1, relativeError));
+  const proposedPower = toNumber(latestBattery?.power_mw, 0);
+  const proposedAction = {
+    charge_mw: Math.max(0, -proposedPower),
+    discharge_mw: Math.max(0, proposedPower),
+  };
+  const soc = toNumber(latestBattery?.soc_percent, 50);
+  const safeAction = {
+    charge_mw: soc >= 95 ? 0 : proposedAction.charge_mw,
+    discharge_mw: soc <= 5 ? 0 : proposedAction.discharge_mw,
+  };
+  const repaired =
+    safeAction.charge_mw !== proposedAction.charge_mw ||
+    safeAction.discharge_mw !== proposedAction.discharge_mw;
+  const uncertaintyPreview = buildShadowUncertainty(dataset, horizon, latestLoad);
+  const widths = uncertaintyPreview.map((row) => row.width).filter((value) => Number.isFinite(value));
+
+  return NextResponse.json({
+    ok: true,
+    generated_at: new Date().toISOString(),
+    region,
+    source: 'local_artifact_shadow',
+    backend_error: backendError.slice(0, 300),
+    command_id: null,
+    certificate_id: null,
+    certificate_hash: null,
+    controller,
+    proposed_action: proposedAction,
+    safe_action: safeAction,
+    repaired,
+    reliability_w_t: reliabilityWT,
+    drift_flag: dataset.monitoring?.summary.data_drift_detected ?? null,
+    inflation: 1 + reliabilityWT,
+    mean_interval_width_mw: mean(widths),
+    uncertainty_preview: uncertaintyPreview,
+  });
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const region = (searchParams.get('region') || 'DE').toUpperCase() as 'DE' | 'US';
+  const region = (searchParams.get('region') || 'DE').toUpperCase() as BatteryRegion;
   const horizon = Math.max(1, Math.min(168, Number(searchParams.get('horizon') || 24)));
   const deviceId = searchParams.get('device_id') || `dashboard-${region.toLowerCase()}-001`;
   const controller = searchParams.get('controller') || 'deterministic';
@@ -93,9 +172,11 @@ export async function GET(req: Request) {
 
     if (!stepRes.ok) {
       const detail = await stepRes.text();
-      return NextResponse.json(
-        { ok: false, error: `DC3S step failed (${stepRes.status}): ${detail}` },
-        { status: stepRes.status }
+      return localArtifactShadowResponse(
+        region,
+        controller,
+        horizon,
+        `DC3S step failed (${stepRes.status}): ${detail}`
       );
     }
 
@@ -131,6 +212,7 @@ export async function GET(req: Request) {
       ok: true,
       generated_at: new Date().toISOString(),
       region,
+      source: 'fastapi',
       command_id: commandId,
       certificate_id: step.certificate_id || null,
       certificate_hash: certificateHash,
@@ -147,12 +229,11 @@ export async function GET(req: Request) {
       uncertainty_preview: uncertaintyPreview,
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error instanceof Error ? error.message : String(error),
-      },
-      { status: 503 }
+    return localArtifactShadowResponse(
+      region,
+      controller,
+      horizon,
+      error instanceof Error ? error.message : String(error)
     );
   }
 }

@@ -69,10 +69,20 @@ function RefreshCountdown({ seconds }: { seconds: number }) {
   );
 }
 
-/** Shows time since component last mounted / data arrived */
-function LastUpdated() {
-  const [mounted] = useState(() => Date.now());
+/** Shows time since the latest payload arrived. */
+function payloadTime(generatedAt?: string): number {
+  const parsed = generatedAt ? Date.parse(generatedAt) : NaN;
+  return Number.isFinite(parsed) ? parsed : Date.now();
+}
+
+function LastUpdated({ generatedAt }: { generatedAt?: string }) {
+  const [mounted, setMounted] = useState(() => payloadTime(generatedAt));
   const [ago, setAgo] = useState('just now');
+
+  useEffect(() => {
+    setMounted(payloadTime(generatedAt));
+    setAgo('just now');
+  }, [generatedAt]);
 
   useEffect(() => {
     const iv = window.setInterval(() => {
@@ -98,11 +108,12 @@ export function DC3SLiveCard({
   auditHref,
 }: DC3SLiveCardProps) {
   const rows = data.uncertainty_preview ?? [];
+  const sourceLabel = data.source === 'local_artifact_shadow' ? 'Artifact shadow' : 'FastAPI live';
 
   return (
     <Panel
       title="DC3S Live Shield"
-      subtitle={`${region} • ${data.controller ?? 'deterministic'}`}
+      subtitle={`${region} • ${data.controller ?? 'deterministic'} • ${sourceLabel}`}
       badge={
         loading
           ? 'Loading'
@@ -147,6 +158,12 @@ export function DC3SLiveCard({
         <div className="text-sm text-energy-alert">{error}</div>
       ) : (
         <div className="space-y-4">
+          {data.backend_error ? (
+            <div className="rounded-lg border border-energy-warn/20 bg-energy-warn/10 p-3 text-xs text-slate-200">
+              Backend live step unavailable; rendering artifact-backed shadow telemetry. {data.backend_error}
+            </div>
+          ) : null}
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div className="rounded-lg bg-white/3 p-3">
               <div className="text-slate-500">w_t</div>
@@ -205,7 +222,7 @@ export function DC3SLiveCard({
 
           <div className="flex items-center justify-between text-[11px] text-slate-500">
             <RefreshCountdown seconds={autoRefreshSeconds} />
-            <LastUpdated />
+            <LastUpdated generatedAt={data.generated_at} />
           </div>
 
           <div className="rounded-lg bg-white/3 p-3 text-xs">

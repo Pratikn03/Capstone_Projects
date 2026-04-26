@@ -91,6 +91,7 @@ def test_monitor_and_prometheus_metrics_require_read_scope() -> None:
     client = TestClient(app)
 
     assert client.get("/monitor/research-metrics").status_code == 403
+    assert client.get("/monitor", headers={API_KEY_NAME: "read-only"}).status_code == 200
     assert client.get("/metrics").status_code == 403
 
 

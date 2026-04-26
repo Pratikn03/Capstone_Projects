@@ -7,6 +7,7 @@ import pandas as pd
 
 from scripts import build_three_domain_runtime_stress_artifacts as stress
 from scripts import run_three_domain_offline_freeze as freeze
+from scripts.validate_nuplan_freeze_gate import validate as validate_nuplan_freeze
 
 
 def test_offline_freeze_dry_run_plans_training_and_nuplan_av_gate(tmp_path: Path) -> None:
@@ -86,6 +87,48 @@ def test_full_av_training_gate_reads_nuplan_manifest(tmp_path: Path) -> None:
     assert row["primary_target"] == "nuplan_allzip_grouped_runtime_replay_surrogate"
     assert row["nuplan_source_dataset"] == "nuplan_singapore"
     assert row["nuplan_trace_rows"] == 12_248_832
+
+
+def test_nuplan_freeze_gate_accepts_legacy_trace_without_surface_column(tmp_path: Path) -> None:
+    summary = tmp_path / "summary.csv"
+    traces = tmp_path / "traces.csv"
+    source_manifest = tmp_path / "manifest.json"
+    manifest_out = tmp_path / "gate.json"
+
+    summary.write_text(
+        "\n".join(
+            [
+                "validation_surface,status,source_dataset,orius_runtime_rows,orius_tsvr,certificate_valid_rate,domain_postcondition_pass_rate,carla_completed,road_deployed,full_autonomous_driving_closure_claimed,claim_boundary",
+                "nuplan_allzip_grouped_runtime_replay_surrogate,completed_bounded_replay_not_carla,nuPlan,2,0.0,1.0,1.0,False,False,False,does not claim completed CARLA simulation road deployment full autonomous-driving field closure",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    traces.write_text(
+        "\n".join(
+            [
+                "scenario_id,controller,true_constraint_violated",
+                "s1,orius,False",
+                "s1,baseline,True",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    source_manifest.write_text('{"status": "completed_bounded_replay_not_carla"}\n', encoding="utf-8")
+
+    result = validate_nuplan_freeze(
+        summary_path=summary,
+        traces_path=traces,
+        source_manifest_path=source_manifest,
+        manifest_out=manifest_out,
+        min_runtime_rows=2,
+        min_trace_rows=2,
+    )
+
+    assert result["pass"] is True
+    assert result["trace_stats"]["validation_surfaces"] == []
 
 
 def test_uncapped_freeze_plan_omits_training_timeout(tmp_path: Path, monkeypatch) -> None:

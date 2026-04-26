@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { BarChart3, Zap, Leaf, TrendingDown, Activity, Database, Radio, Shield, BookOpen, ShieldCheck, Globe2, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { KPICard } from '@/components/ui/KPICard';
 import { Panel } from '@/components/ui/Panel';
+import { StatusBanner } from '@/components/ui/StatusBanner';
 import Link from 'next/link';
 import { DispatchChart } from '@/components/ai/tools/DispatchChart';
 import { ForecastChart } from '@/components/ai/tools/ForecastChart';
@@ -32,6 +33,17 @@ const DE_ZONE_IDS = [
 
 const US_ZONE_IDS = ['US-MISO', 'US-PJM', 'US-NYISO', 'US-ISONE', 'US-SPP', 'US-ERCOT', 'US-CAISO', 'US-SOCO'] as const;
 
+function initialDc3sRefreshSeconds(): number {
+  if (typeof window === 'undefined') return 15;
+  try {
+    const parsed = JSON.parse(localStorage.getItem('gridpulse-settings') ?? '{}') as { dc3sRefreshInterval?: number };
+    const value = parsed.dc3sRefreshInterval;
+    return typeof value === 'number' && Number.isFinite(value) ? Math.max(5, Math.min(60, value)) : 15;
+  } catch {
+    return 15;
+  }
+}
+
 function buildLoadHeatmap(points: TimeseriesPoint[]): HeatmapData[] {
   const buckets = new Map<string, { sum: number; count: number; hour: number; day: number }>();
   for (const point of points) {
@@ -59,7 +71,7 @@ export default function DashboardPage() {
   const { region } = useRegion();
   const currentDomain = getDomainOption(region);
   const batteryDomain = isBatteryDomain(region);
-  const [dc3sRefreshSeconds, setDc3sRefreshSeconds] = useState(15);
+  const [dc3sRefreshSeconds, setDc3sRefreshSeconds] = useState(initialDc3sRefreshSeconds);
   const dispatch = useDispatchCompare(region, 24);
   const dc3s = useDc3sLive(region, 24, dc3sRefreshSeconds);
   const { metrics, impact, robustness, regions } = useReportsData();
@@ -123,6 +135,16 @@ export default function DashboardPage() {
   const baselineTsvr = runtimeNumber(baselineRuntime, 'tsvr');
   const oriusTsvr = runtimeNumber(oriusRuntime, 'tsvr');
   const certificateRate = runtimeNumber(oriusRuntime, 'cva');
+  const oriusOasg = runtimeNumber(oriusRuntime, 'oasg');
+  const auditCompleteness = runtimeNumber(oriusRuntime, 'audit_completeness');
+  const interventionRate = runtimeNumber(oriusRuntime, 'intervention_rate');
+  const usefulWorkMean = runtimeNumber(oriusRuntime, 'useful_work_mean');
+  const runtimeStepCount = runtimeNumber(oriusRuntime, 'n_steps');
+  const dataWarnings = [
+    dataset.error ? `Dataset view error: ${dataset.error}` : null,
+    ...(dataset.artifact_warnings ?? []),
+    !dataset.loading && !dataset.stats ? `No dashboard statistics artifact is available for ${currentDomain.label}.` : null,
+  ].filter((message): message is string => Boolean(message));
 
   // Compute hero metrics from latest dispatch data
   const latestDispatch = dataset.dispatch.length ? dataset.dispatch[dataset.dispatch.length - 1] : null;
@@ -156,6 +178,8 @@ export default function DashboardPage() {
 
   const formatMaybePercent = (value: number | null | undefined) =>
     value === null || value === undefined ? 'N/A' : formatPercent(value);
+  const formatFractionPercent = (value: number | null | undefined) =>
+    value === null || value === undefined ? 'N/A' : formatPercent(value * 100);
   const formatMaybeCurrency = (value: number | null | undefined) =>
     value === null || value === undefined ? 'N/A' : formatCurrency(value, 'USD');
 
@@ -273,13 +297,13 @@ export default function DashboardPage() {
             </div>
             <div className="space-y-1.5">
               {[
-                { name: 'Battery', tier: 'Reference', color: 'emerald', active: true },
-                { name: 'AV', tier: 'Runtime-Closed', color: 'cyan', active: false },
-                { name: 'Healthcare', tier: 'Runtime-Closed', color: 'sky', active: false },
+                { name: 'Battery', tier: 'Reference', tierClass: 'text-emerald-400/70', active: batteryDomain },
+                { name: 'AV', tier: 'Runtime-Closed', tierClass: 'text-cyan-400/70', active: region === 'AV' },
+                { name: 'Healthcare', tier: 'Runtime-Closed', tierClass: 'text-sky-400/70', active: region === 'HEALTHCARE' },
               ].map((d) => (
                 <div key={d.name} className={`flex items-center justify-between py-1 px-2 rounded text-[10px] ${d.active ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-white/[0.02]'}`}>
                   <span className={d.active ? 'text-emerald-400 font-medium' : 'text-slate-400'}>{d.name}</span>
-                  <span className={`text-${d.color}-400/70`}>{d.tier}</span>
+                  <span className={d.tierClass}>{d.tier}</span>
                 </div>
               ))}
             </div>
@@ -289,11 +313,13 @@ export default function DashboardPage() {
         {/* Active domain indicator */}
         <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/15">
           <Shield className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="text-[10px] text-emerald-400 font-medium">Active Domain: Battery / Energy Storage</span>
-          <span className="text-[10px] text-slate-500">— Reference witness row · {regionLabel} · DC3S shield active</span>
-          <span className="text-[10px] text-slate-600 ml-auto">T1–T11 fully validated · TSVR = 0.0%</span>
+          <span className="text-[10px] text-emerald-400 font-medium">Active Domain: {currentDomain.shortLabel}</span>
+          <span className="text-[10px] text-slate-500">— {batteryDomain ? 'Reference witness row' : 'Promoted runtime witness row'} · {regionLabel} · {batteryDomain ? 'DC3S shield active' : 'artifact-backed runtime view'}</span>
+          <span className="text-[10px] text-slate-600 ml-auto">T1–T11 validated · TSVR = {oriusTsvr !== null ? `${(oriusTsvr * 100).toFixed(2)}%` : 'N/A'}</span>
         </div>
       </section>
+
+      <StatusBanner title="Artifact Status" messages={dataWarnings} />
 
       <div className="section-divider" />
 
@@ -518,20 +544,75 @@ export default function DashboardPage() {
       <section>
         <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">DC3S Safety & Monitoring <span className="text-sky-400/50 text-[9px] normal-case tracking-normal ml-2">Detect → Calibrate → Constrain → Shield → Certify</span></h2>
 
-        <DC3SLiveCard
-          region={region}
-          data={dc3s.data}
-          loading={dc3s.loading}
-          error={dc3s.error}
-          onRefresh={dc3s.refresh}
-          autoRefreshSeconds={dc3sRefreshSeconds}
-          onAutoRefreshSecondsChange={setDc3sRefreshSeconds}
-          auditHref={
-            dc3s.data.command_id
-              ? `/api/dc3s/audit/${encodeURIComponent(dc3s.data.command_id)}`
-              : null
-          }
-        />
+        {batteryDomain ? (
+          <DC3SLiveCard
+            region={region}
+            data={dc3s.data}
+            loading={dc3s.loading}
+            error={dc3s.error}
+            onRefresh={dc3s.refresh}
+            autoRefreshSeconds={dc3sRefreshSeconds}
+            onAutoRefreshSecondsChange={setDc3sRefreshSeconds}
+            auditHref={
+              dc3s.data.source === 'fastapi' && dc3s.data.command_id
+                ? `/api/dc3s/audit/${encodeURIComponent(dc3s.data.command_id)}`
+                : null
+            }
+          />
+        ) : (
+          <Panel
+            title="Runtime Safety Witness"
+            subtitle={`${regionLabel} • tracked artifacts`}
+            badge="Artifact-backed"
+            badgeColor="primary"
+            accentColor="primary"
+          >
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+              <div className="rounded-lg bg-white/3 p-3">
+                <div className="text-slate-500">Baseline TSVR</div>
+                <div className="mt-1 font-mono text-white">{formatFractionPercent(baselineTsvr)}</div>
+              </div>
+              <div className="rounded-lg bg-white/3 p-3">
+                <div className="text-slate-500">ORIUS TSVR</div>
+                <div className="mt-1 font-mono text-energy-primary">{formatFractionPercent(oriusTsvr)}</div>
+              </div>
+              <div className="rounded-lg bg-white/3 p-3">
+                <div className="text-slate-500">Certificate Valid</div>
+                <div className="mt-1 font-mono text-white">{formatFractionPercent(certificateRate)}</div>
+              </div>
+              <div className="rounded-lg bg-white/3 p-3">
+                <div className="text-slate-500">OASG</div>
+                <div className="mt-1 font-mono text-white">{oriusOasg === null ? 'N/A' : oriusOasg.toFixed(4)}</div>
+              </div>
+              <div className="rounded-lg bg-white/3 p-3">
+                <div className="text-slate-500">Runtime Rows</div>
+                <div className="mt-1 font-mono text-white">{runtimeStepCount === null ? dataset.stats?.rows.toLocaleString() ?? 'N/A' : runtimeStepCount.toLocaleString()}</div>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-3 text-xs">
+              <div className="rounded-lg bg-white/3 p-3">
+                <div className="text-slate-500">Audit Completeness</div>
+                <div className="mt-1 font-mono text-white">{formatFractionPercent(auditCompleteness)}</div>
+              </div>
+              <div className="rounded-lg bg-white/3 p-3">
+                <div className="text-slate-500">Intervention Rate</div>
+                <div className="mt-1 font-mono text-white">{formatFractionPercent(interventionRate)}</div>
+              </div>
+              <div className="rounded-lg bg-white/3 p-3">
+                <div className="text-slate-500">Useful Work Mean</div>
+                <div className="mt-1 font-mono text-white">{usefulWorkMean === null ? 'N/A' : usefulWorkMean.toFixed(4)}</div>
+              </div>
+            </div>
+            <div className="mt-4 space-y-2 text-xs text-slate-400">
+              <div className="text-slate-300">Source artifacts</div>
+              {(dataset.source_artifacts ?? []).map((artifact) => (
+                <div key={artifact} className="rounded bg-white/[0.03] px-3 py-2 font-mono text-[11px] text-slate-300">
+                  {artifact}
+                </div>
+              ))}
+            </div>
+          </Panel>
+        )}
 
         {/* Impact & Robustness */}
         <div className="mt-6">

@@ -22,6 +22,7 @@ import type {
 export type { DatasetStats, TimeseriesPoint, ForecastPoint, DispatchPoint, HourlyProfile, ModelMetric, ImpactData, ModelRegistryEntry, MonitoringData, DriftPoint, Anomaly, AnomalyZScore, BatterySchedule, ParetoPoint };
 
 const EMPTY: RegionDashboardData = {
+  artifact_warnings: [],
   stats: null,
   timeseries: [],
   forecast: {},
@@ -47,6 +48,7 @@ export function useDatasetData(region: DomainId) {
 
     async function load() {
       setLoading(true);
+      setError(null);
       try {
         const res = await fetch(`/api/data?region=${region}`, { cache: 'no-store' });
         if (!res.ok) throw new Error(`Data API error: ${res.status}`);

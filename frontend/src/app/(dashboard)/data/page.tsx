@@ -1,6 +1,7 @@
 'use client';
 
 import { Panel } from '@/components/ui/Panel';
+import { StatusBanner } from '@/components/ui/StatusBanner';
 import { useRegion } from '@/components/ui/RegionContext';
 import { useDatasetData } from '@/lib/api/dataset-client';
 import { getDomainOption } from '@/lib/domain-options';
@@ -20,6 +21,11 @@ export default function DataExplorerPage() {
   const registry = dataset.registry;
   const forecastMap = dataset.forecast;
   const sourceArtifacts = dataset.source_artifacts ?? [];
+  const artifactWarnings = [
+    dataset.error ? `Dataset view error: ${dataset.error}` : null,
+    ...(dataset.artifact_warnings ?? []),
+    !dataset.loading && !stats ? `No dataset statistics artifact is available for ${regionLabel}.` : null,
+  ].filter((message): message is string => Boolean(message));
 
   const targets = stats?.targets_summary ?? stats?.targets ?? {};
   const targetNames = Object.keys(targets);
@@ -51,6 +57,8 @@ export default function DataExplorerPage() {
       {dataset.loading && (
         <div className="text-sm text-slate-400">Loading dataset…</div>
       )}
+
+      <StatusBanner title="Artifact Status" messages={artifactWarnings} />
 
       {/* Dataset Overview Cards */}
       {stats && (

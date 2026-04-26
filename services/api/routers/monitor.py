@@ -103,7 +103,7 @@ def _compute_dc3s_health_block(update_state: bool = False) -> Dict[str, Any] | N
 
 @router.get("")
 def monitor(api_key: str = Security(get_api_key)) -> Dict[str, Any]:
-    verify_scope("write", api_key)
+    verify_scope("read", api_key)
     cfg = load_monitoring_config()
     dc3s_health = _compute_dc3s_health_block(update_state=False)
 

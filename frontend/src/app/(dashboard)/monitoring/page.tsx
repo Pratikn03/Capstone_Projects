@@ -32,8 +32,9 @@ export default function MonitoringPage() {
   const registry = dataset.registry;
   const statusMessages = [
     dataset.error ? `Dataset view error: ${dataset.error}` : null,
-    !realMonitoring ? 'No monitoring artifact is available for this region, so the drift timeline is empty.' : null,
-    !registry.length ? 'No model registry artifacts were found for this region.' : null,
+    ...(dataset.artifact_warnings ?? []),
+    !dataset.loading && !realMonitoring ? 'No monitoring artifact is available for this region, so the drift timeline is empty.' : null,
+    !dataset.loading && !registry.length ? 'No model registry artifacts were found for this region.' : null,
   ].filter((message): message is string => Boolean(message));
 
   return (

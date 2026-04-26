@@ -215,6 +215,7 @@ export type RegionDashboardData = {
   domain_id?: DomainId;
   domain_label?: string;
   source_artifacts?: string[];
+  artifact_warnings?: string[];
   runtime_summary?: Record<string, unknown>[];
   stats: DatasetStats | null;
   timeseries: TimeseriesPoint[];
@@ -265,6 +266,38 @@ function resolveRepoRoot(): string {
 
 function resolveRepoPath(...parts: string[]): string {
   return path.resolve(resolveRepoRoot(), ...parts);
+}
+
+function resolveRepoRelPath(relPath: string): string {
+  return resolveRepoPath(...relPath.split('/').filter(Boolean));
+}
+
+function resolveFirstExistingArtifact(candidates: string[]): {
+  fullPath: string;
+  relPath: string;
+  warnings: string[];
+} {
+  const missing: string[] = [];
+  for (const relPath of candidates) {
+    const fullPath = resolveRepoRelPath(relPath);
+    if (existsSync(fullPath)) {
+      return {
+        fullPath,
+        relPath,
+        warnings: missing.length
+          ? [`Using ${relPath}; preferred artifact(s) not found: ${missing.join(', ')}`]
+          : [],
+      };
+    }
+    missing.push(relPath);
+  }
+
+  const fallback = candidates[0] ?? '';
+  return {
+    fullPath: resolveRepoRelPath(fallback),
+    relPath: fallback,
+    warnings: [`No dashboard artifact found. Checked: ${missing.join(', ')}`],
+  };
 }
 
 function parseCsvLine(line: string): string[] {
@@ -365,6 +398,29 @@ function buildStats(
   };
 }
 
+function buildRuntimeStats(region: string, label: string, rows: CsvRow[], targetColumns: string[]): DatasetStats {
+  const columns = rows.length ? Object.keys(rows[0]) : targetColumns;
+  const nSteps = rows
+    .map((row) => asNumber(row.n_steps))
+    .filter((value): value is number => value !== null);
+  return {
+    region,
+    label,
+    rows: nSteps.length ? Math.max(...nSteps) : rows.length,
+    columns: columns.length,
+    column_names: columns,
+    date_range: { start: null, end: null },
+    target_columns: targetColumns,
+    weather_features: 0,
+    lag_features: 0,
+    calendar_features: 0,
+    total_features: columns.length,
+    targets_summary: Object.fromEntries(targetColumns.map((column) => [column, summarizeColumn(rows, column)])),
+    targets: Object.fromEntries(targetColumns.map((column) => [column, summarizeColumn(rows, column)])),
+    missing_pct: Object.fromEntries(columns.map((column) => [column, 0])),
+  };
+}
+
 function runtimeMetrics(rows: CsvRow[], featureCount: number): ModelMetric[] {
   return rows.map((row) => ({
     target: 'runtime_tsvr',
@@ -434,26 +490,36 @@ function buildZScores(rows: CsvRow[], actualColumn: string, forecastColumn: stri
 }
 
 async function loadAvDomainData(): Promise<RegionDashboardData> {
-  const tracePath = resolveRepoPath('reports', 'orius_av', 'nuplan_bounded', 'runtime_traces.csv');
-  const summaryPath = resolveRepoPath('reports', 'orius_av', 'nuplan_bounded', 'runtime_summary.csv');
-  const [traceRows, summaryRows] = await Promise.all([readCsvRows(tracePath), readCsvRows(summaryPath)]);
+  const traceArtifact = resolveFirstExistingArtifact([
+    'reports/orius_av/nuplan_bounded/runtime_traces.csv',
+    'reports/orius_av/full_corpus/runtime_traces.csv',
+  ]);
+  const summaryArtifact = resolveFirstExistingArtifact([
+    'reports/orius_av/nuplan_bounded/runtime_summary.csv',
+    'reports/orius_av/full_corpus/runtime_summary.csv',
+  ]);
+  const [traceRows, summaryRows] = await Promise.all([
+    readCsvRows(traceArtifact.fullPath),
+    readCsvRows(summaryArtifact.fullPath),
+  ]);
   const oriusRows = traceRows.filter((row) => row.controller === 'orius');
   const rows = oriusRows.length ? oriusRows : traceRows;
   const sampled = sampleRows(rows, 500);
   const targetColumns = ['true_margin', 'observed_margin', 'safe_acceleration_mps2', 'reliability_w'];
+  const warnings = [...traceArtifact.warnings, ...summaryArtifact.warnings];
 
   return {
     domain_id: 'AV',
     domain_label: 'Autonomous Vehicles',
-    source_artifacts: [
-      'reports/orius_av/nuplan_bounded/runtime_summary.csv',
-      'reports/orius_av/nuplan_bounded/runtime_traces.csv',
-    ],
+    source_artifacts: [summaryArtifact.relPath, traceArtifact.relPath],
+    artifact_warnings: warnings.length ? warnings : undefined,
     runtime_summary: summaryRows,
-    stats: buildStats('AV', 'Autonomous Vehicles (bounded nuPlan runtime traces)', rows, targetColumns, {
-      start: rows[0]?.step_index ?? null,
-      end: rows[rows.length - 1]?.step_index ?? null,
-    }),
+    stats: rows.length
+      ? buildStats('AV', 'Autonomous Vehicles (runtime traces)', rows, targetColumns, {
+          start: rows[0]?.step_index ?? null,
+          end: rows[rows.length - 1]?.step_index ?? null,
+        })
+      : buildRuntimeStats('AV', 'Autonomous Vehicles (runtime summary)', summaryRows, ['tsvr', 'oasg', 'cva']),
     timeseries: sampled.map((row) => ({
       timestamp: row.step_index || row.trace_id,
       load_mw: asNumber(row.true_margin) ?? undefined,
@@ -504,24 +570,35 @@ async function loadAvDomainData(): Promise<RegionDashboardData> {
 }
 
 async function loadHealthcareDomainData(): Promise<RegionDashboardData> {
-  const densePath = resolveRepoPath('data', 'healthcare', 'processed', 'healthcare_bidmc_dense_orius.csv');
-  const summaryPath = resolveRepoPath('reports', 'healthcare', 'runtime_summary.csv');
-  const [denseRows, summaryRows] = await Promise.all([readCsvRows(densePath), readCsvRows(summaryPath)]);
+  const denseArtifact = resolveFirstExistingArtifact([
+    'data/healthcare/processed/healthcare_bidmc_dense_orius.csv',
+    'data/healthcare/processed/healthcare_max_input_orius.csv',
+    'data/healthcare/processed/healthcare_orius.csv',
+  ]);
+  const summaryArtifact = resolveFirstExistingArtifact([
+    'reports/healthcare/runtime_summary.csv',
+    'reports/healthcare/runtime_comparator_summary.csv',
+  ]);
+  const [denseRows, summaryRows] = await Promise.all([
+    readCsvRows(denseArtifact.fullPath),
+    readCsvRows(summaryArtifact.fullPath),
+  ]);
   const sampled = sampleRows(denseRows, 500);
   const targetColumns = ['target', 'forecast', 'reliability'];
+  const warnings = [...denseArtifact.warnings, ...summaryArtifact.warnings];
 
   return {
     domain_id: 'HEALTHCARE',
     domain_label: 'Healthcare Monitoring',
-    source_artifacts: [
-      'data/healthcare/processed/healthcare_bidmc_dense_orius.csv',
-      'reports/healthcare/runtime_summary.csv',
-    ],
+    source_artifacts: [denseArtifact.relPath, summaryArtifact.relPath],
+    artifact_warnings: warnings.length ? warnings : undefined,
     runtime_summary: summaryRows,
-    stats: buildStats('HEALTHCARE', 'Healthcare Monitoring (BIDMC/MIMIC processed vitals)', denseRows, targetColumns, {
-      start: denseRows[0]?.timestamp ?? null,
-      end: denseRows[denseRows.length - 1]?.timestamp ?? null,
-    }),
+    stats: denseRows.length
+      ? buildStats('HEALTHCARE', 'Healthcare Monitoring (BIDMC/MIMIC processed vitals)', denseRows, targetColumns, {
+          start: denseRows[0]?.timestamp ?? null,
+          end: denseRows[denseRows.length - 1]?.timestamp ?? null,
+        })
+      : buildRuntimeStats('HEALTHCARE', 'Healthcare Monitoring (runtime summary)', summaryRows, ['tsvr', 'oasg', 'cva']),
     timeseries: sampled.map((row) => ({
       timestamp: row.timestamp,
       load_mw: asNumber(row.target) ?? undefined,
