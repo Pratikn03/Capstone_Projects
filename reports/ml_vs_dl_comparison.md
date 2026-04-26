@@ -9,23 +9,23 @@
 
 | Model | RMSE | MAPE |
 |---|---:|---:|
-| gbm_lightgbm | 262.011 | 0.004 |
+| gbm_lightgbm | 265.930 | 0.004 |
 
 ## Target: wind_mw
 
 | Model | RMSE | MAPE |
 |---|---:|---:|
-| gbm_lightgbm | 219.108 | 0.028 |
+| gbm_lightgbm | 177.178 | 0.024 |
 
 ## Target: solar_mw
 
 | Model | RMSE | MAPE |
 |---|---:|---:|
-| gbm_lightgbm | 240.353 | 32602460.146 |
+| gbm_lightgbm | 242.831 | 30093277.856 |
 
 ## Target: price_eur_mwh
 
 | Model | RMSE | MAPE |
 |---|---:|---:|
-| gbm_lightgbm | 4.999 | 1.447 |
+| gbm_lightgbm | 4.963 | 1.349 |
 

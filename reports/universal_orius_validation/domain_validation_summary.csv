@@ -1,4 +1,4 @@
 domain,baseline_tsvr_mean,orius_tsvr_mean,metric_surface
-battery,0.0083332,0.0000,locked_publication_nominal
-vehicle,0.1250,0.0417,validation_harness
-healthcare,0.2917,0.0417,validation_harness
+battery,0.008333,0.000000,locked_publication_nominal
+vehicle,0.289250,0.000163,runtime_denominator
+healthcare,0.194489,0.000000,runtime_denominator

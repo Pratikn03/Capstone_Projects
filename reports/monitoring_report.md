@@ -80,18 +80,18 @@
         "drift": false
       },
       "is_holiday": {
-        "ks_stat": 0.0,
-        "p_value": 1.0,
+        "ks_stat": 0.023678368823481066,
+        "p_value": 0.999963816607781,
         "drift": false
       },
       "is_pre_holiday": {
-        "ks_stat": 0.0,
-        "p_value": 1.0,
+        "ks_stat": 0.023678368823481066,
+        "p_value": 0.999963816607781,
         "drift": false
       },
       "is_post_holiday": {
-        "ks_stat": 0.0,
-        "p_value": 1.0,
+        "ks_stat": 0.023678368823481066,
+        "p_value": 0.999963816607781,
         "drift": false
       },
       "carbon_kg_per_mwh": {
@@ -279,13 +279,13 @@
   },
   "model_drift": {
     "drift": false,
-    "ratio": -0.26002576112040293,
-    "current_mape": 0.0026117794492964853,
-    "baseline_mape": 0.003529554560238487
+    "ratio": -0.28088732010352513,
+    "current_mape": 0.0026256849908041233,
+    "baseline_mape": 0.003651284512438472
   },
   "dc3s_health": {
     "window_hours": 24,
-    "commands_total": 38,
+    "commands_total": 11,
     "intervention_rate": 1.0,
     "low_reliability_rate": 1.0,
     "drift_flag_rate": 0.0,
@@ -309,7 +309,7 @@
     "reasons": [
       "data_drift"
     ],
-    "last_trained_days_ago": 0
+    "last_trained_days_ago": 2
   }
 }
 ```

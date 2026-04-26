@@ -19,5 +19,9 @@
         "adaptive_trace_csv": "reports/orius_av/full_corpus/shift_aware/relative_gap_m/adaptive_quantile_trace.csv"
       }
     }
-  }
+  },
+  "runtime_comparator_summary_csv": "reports/orius_av/full_corpus/runtime_comparator_summary.csv",
+  "runtime_comparator_traces_csv": "reports/orius_av/full_corpus/runtime_comparator_traces.csv",
+  "runtime_ablation_summary_csv": "reports/orius_av/full_corpus/runtime_ablation_summary.csv",
+  "runtime_negative_controls_csv": "reports/orius_av/full_corpus/runtime_negative_controls.csv"
 }

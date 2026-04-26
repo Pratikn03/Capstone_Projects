@@ -1,5 +1,5 @@
 kind,title,labels,summary,acceptance
 parent,ORIUS: Three-domain submission hardening,research;thesis;orius,"Track the remaining work to keep the canonical ORIUS monograph literal, three-domain, and artifact-strict.",The canonical defense package remains Battery + AV + Healthcare only and aligns with repo truth.
 child,ORIUS: Keep Battery witness depth explicit,research;writing;battery,Preserve Battery as the deepest witness row without flattening it into peer-row equivalence.,All public surfaces distinguish witness depth from bounded peer-row evidence.
-child,ORIUS: Keep AV claims bounded to the TTC contract,research;writing;av,Keep AV prose aligned to the bounded TTC plus predictive-entry-barrier contract.,No public surface implies full autonomous-driving closure.
+child,ORIUS: Keep AV claims bounded to the brake-hold runtime contract,research;writing;av,Keep AV prose aligned to the bounded brake-hold runtime contract.,No public surface implies full autonomous-driving field closure.
 child,ORIUS: Keep Healthcare MIMIC-backed and patient-disjoint,research;writing;healthcare,Keep the promoted healthcare row on MIMIC with patient-disjoint evaluation and bounded alert semantics.,No public surface describes BIDMC as canonical or claims regulated clinical deployment.

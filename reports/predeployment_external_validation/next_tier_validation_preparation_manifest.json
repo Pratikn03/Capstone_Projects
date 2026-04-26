@@ -1,0 +1,15 @@
+{
+  "generated_at_utc": "2026-04-26T00:09:48.688250+00:00",
+  "status": "prepared_not_completed",
+  "claim_boundary": "These manifests prepare next-tier validation only. They do not promote nuPlan/CARLA closed-loop evidence or healthcare held-out runtime evidence until the required runtime artifacts exist.",
+  "manifests": {
+    "av": "reports/predeployment_external_validation/nuplan_carla_preparation_manifest.json",
+    "healthcare": "reports/predeployment_external_validation/healthcare_heldout_runtime_preparation_manifest.json"
+  },
+  "completed": {
+    "av_nuplan_carla": false,
+    "av_nuplan_allzip_grouped": true,
+    "av_carla": false,
+    "healthcare_heldout_runtime": false
+  }
+}

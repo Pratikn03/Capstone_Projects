@@ -1,0 +1,215 @@
+{
+  "generated_at_utc": "2026-04-26T02:34:09Z",
+  "status": "top_venue_defensible_predeployment_package",
+  "primary_thesis_sentence": "ORIUS identifies degraded observation as a physical-AI release hazard and provides a reliability-aware runtime safety layer that enforces certificate-backed action release across three bounded domains.",
+  "main_theory_claim": "Observation-only mandatory-release controllers face a lower bound under safety-relevant ambiguity; ORIUS achieves an alpha-bounded upper guarantee under covered uncertainty sets.",
+  "main_empirical_claim": "The promoted runtime-denominator rows show zero ORIUS TSVR for Battery and Healthcare and epsilon-closed ORIUS TSVR for Autonomous Vehicles under bounded predeployment validation.",
+  "source_artifacts": {
+    "benchmark": "reports/publication/three_domain_ml_benchmark.csv",
+    "equal_domain": "reports/publication/equal_domain_artifact_discipline.csv",
+    "theorem_audit": "reports/publication/active_theorem_audit.csv",
+    "external_validation": "reports/predeployment_external_validation/external_validation_summary.csv",
+    "training_audit": "reports/universal_training_audit/domain_training_summary.csv",
+    "claim_ledger": "docs/claim_ledger.md"
+  },
+  "outputs": {
+    "markdown": "reports/publication/top_venue_research_package.md",
+    "json": "reports/publication/top_venue_research_package.json",
+    "matrix": "reports/publication/reviewer_claim_evidence_matrix.csv",
+    "limitations": "reports/publication/research_limitations_boundary.md",
+    "responses": "reports/publication/reviewer_response_bank.md",
+    "source_positioning": "reports/publication/source_backed_research_positioning.csv",
+    "uplift_scorecard": "reports/publication/orius_95plus_uplift_scorecard.csv",
+    "uplift_scorecard_json": "reports/publication/orius_95plus_uplift_scorecard.json",
+    "uplift_scorecard_md": "reports/publication/orius_95plus_uplift_scorecard.md"
+  },
+  "source_anchors": [
+    {
+      "lane": "runtime_assurance",
+      "source_name": "NASA Formal Verification Framework for Runtime Assurance",
+      "url": "https://ntrs.nasa.gov/citations/20240006522",
+      "source_type": "runtime_assurance_reference",
+      "supports": "Runtime assurance motivates a trusted runtime layer that intervenes before unsafe release.",
+      "orius_gap": "ORIUS adds observation-reliability, certificate-backed release, and cross-domain artifact discipline.",
+      "boundary": "Positioning source only; not evidence of ORIUS deployment certification."
+    },
+    {
+      "lane": "uncertainty_coverage",
+      "source_name": "Conformal Prediction: A Gentle Introduction",
+      "url": "https://www.emerald.com/ftmal/article/16/4/494/1332423/Conformal-Prediction-A-Gentle-Introduction",
+      "source_type": "uncertainty_quantification_reference",
+      "supports": "Coverage-aware uncertainty gives the statistical vocabulary for alpha-bounded release claims.",
+      "orius_gap": "ORIUS connects coverage sets to runtime action release and fail-closed certificates.",
+      "boundary": "Does not create a new universal conformal theorem by itself."
+    },
+    {
+      "lane": "safety_critical_control",
+      "source_name": "Control Barrier Functions: Theory and Applications",
+      "url": "https://www.coogan.ece.gatech.edu/papers/pdf/amesecc19.pdf",
+      "source_type": "safety_control_reference",
+      "supports": "Safety-critical control literature motivates set-based action admissibility and invariance.",
+      "orius_gap": "ORIUS focuses on observation ambiguity and reliability-aware release rather than only nominal-state safety.",
+      "boundary": "ORIUS is not claimed to replace all barrier-function controllers."
+    },
+    {
+      "lane": "clinical_dataset",
+      "source_name": "MIMIC-IV PhysioNet",
+      "url": "https://www.physionet.org/content/mimiciv/2.1/",
+      "source_type": "healthcare_dataset_reference",
+      "supports": "Retrospective ICU/EHR evidence source for healthcare monitoring validation.",
+      "orius_gap": "ORIUS evaluates runtime alert/fallback legality and calibration rather than only point prediction.",
+      "boundary": "Retrospective evidence only; not live clinical deployment."
+    },
+    {
+      "lane": "clinical_dataset",
+      "source_name": "eICU Collaborative Research Database PhysioNet",
+      "url": "https://www.physionet.org/content/eicu-crd/2.0/",
+      "source_type": "healthcare_external_dataset_reference",
+      "supports": "Multi-center ICU data source for stronger source/site-holdout validation.",
+      "orius_gap": "Adds a path to external source validation beyond single-source retrospective replay.",
+      "boundary": "Access-controlled dataset; future validation tier unless artifacts exist."
+    },
+    {
+      "lane": "clinical_reporting",
+      "source_name": "TRIPOD+AI",
+      "url": "https://www.bmj.com/content/385/bmj-2023-078378",
+      "source_type": "clinical_prediction_reporting_standard",
+      "supports": "Reporting discipline for prediction-model development and validation with AI/ML.",
+      "orius_gap": "Forces clear calibration, validation, population, and utility reporting for healthcare ORIUS.",
+      "boundary": "Reporting standard, not proof of clinical effectiveness."
+    },
+    {
+      "lane": "clinical_bias",
+      "source_name": "PROBAST+AI",
+      "url": "https://www.bmj.com/content/388/bmj-2024-082505",
+      "source_type": "clinical_risk_of_bias_standard",
+      "supports": "Risk-of-bias and applicability checks for clinical prediction models.",
+      "orius_gap": "Defines reviewer-safe subgroup, source-holdout, and applicability claims.",
+      "boundary": "Does not authorize live clinical use."
+    },
+    {
+      "lane": "clinical_trial_reporting",
+      "source_name": "CONSORT-AI",
+      "url": "https://www.nature.com/articles/s41591-020-1034-x",
+      "source_type": "clinical_ai_trial_reporting_standard",
+      "supports": "Clinical-trial reporting expectations for AI interventions.",
+      "orius_gap": "Clarifies that ORIUS healthcare remains retrospective and is not prospective trial evidence.",
+      "boundary": "No prospective clinical trial is claimed."
+    },
+    {
+      "lane": "clinical_live_evaluation",
+      "source_name": "DECIDE-AI",
+      "url": "https://www.nature.com/articles/s41591-022-01772-9",
+      "source_type": "early_live_clinical_ai_reporting_standard",
+      "supports": "Early live clinical evaluation expectations for AI decision support.",
+      "orius_gap": "Supplies the boundary between retrospective monitoring evidence and live decision-support evidence.",
+      "boundary": "ORIUS does not claim DECIDE-AI live evaluation completion."
+    },
+    {
+      "lane": "clinical_diagnostic_reporting",
+      "source_name": "STARD-AI",
+      "url": "https://www.nature.com/articles/s41591-025-03953-8",
+      "source_type": "diagnostic_ai_reporting_standard",
+      "supports": "Diagnostic AI reporting expectations and external evaluation caution.",
+      "orius_gap": "Helps prevent healthcare ORIUS from overstating diagnostic or clinical-decision status.",
+      "boundary": "Healthcare row is monitoring/runtime evidence, not diagnostic approval."
+    },
+    {
+      "lane": "av_closed_loop",
+      "source_name": "nuPlan closed-loop planning benchmark",
+      "url": "https://arxiv.org/abs/2106.11810",
+      "source_type": "av_closed_loop_benchmark_reference",
+      "supports": "Large-scale closed-loop planning benchmark with city-diverse real driving data.",
+      "orius_gap": "ORIUS uses nuPlan replay/surrogate evidence now and treats full closed-loop validation as a next tier.",
+      "boundary": "Current completed evidence is bounded replay/surrogate unless closed-loop artifacts exist."
+    },
+    {
+      "lane": "av_stress_simulation",
+      "source_name": "CARLA simulator",
+      "url": "https://arxiv.org/abs/1711.03938",
+      "source_type": "av_simulator_reference",
+      "supports": "Controllable simulator for weather, sensors, traffic, latency, and emergency stress tests.",
+      "orius_gap": "CARLA is the best next tier for repeatable degraded-observation closed-loop stress.",
+      "boundary": "CARLA completion cannot be claimed until a real CARLA runtime loop produces artifacts."
+    },
+    {
+      "lane": "av_dataset",
+      "source_name": "Waymo Motion Dataset",
+      "url": "https://www.waymo.jp/intl/jp/open/data/motion/",
+      "source_type": "av_motion_dataset_reference",
+      "supports": "Motion prediction/replay data with tracks, map context, and train/validation/test splits.",
+      "orius_gap": "Supports AV runtime replay evidence but not closed-loop road deployment.",
+      "boundary": "Dataset replay is not road deployment."
+    }
+  ],
+  "uplift_scorecard": [
+    {
+      "dimension": "core_idea_novelty",
+      "current_baseline_score": 82,
+      "target_score": 95,
+      "current_status": "pass",
+      "implemented_lift": "Source-backed novelty separation across runtime assurance, coverage-aware uncertainty, safety-critical control, clinical validation, AV simulation, and battery HIL tiers.",
+      "remaining_blocker": "Need final paper text to keep ORIUS framed as a unified observation-reliability release contract, not a predictor/filter/fallback-only system.",
+      "acceptance_gate": "Reviewer can identify the exact gap ORIUS closes relative to each source lane."
+    },
+    {
+      "dimension": "theory",
+      "current_baseline_score": 78,
+      "target_score": 95,
+      "current_status": "pass",
+      "implemented_lift": "T4/T10/T11 bridge is represented as necessity plus Bayes lower bound plus covered alpha upper bound with executable observation-ambiguity witnesses.",
+      "remaining_blocker": "Keep T10 draft lower-bound surfaces scoped and prevent any global-optimality or all-ambiguity-implies-violation overclaim.",
+      "acceptance_gate": "T4, T11, and T10_T11_ObservationAmbiguitySandwich stay synchronized across audit, registry, code, tests, paper, and appendix."
+    },
+    {
+      "dimension": "three_domain_runtime_evidence",
+      "current_baseline_score": 86,
+      "target_score": 95,
+      "current_status": "pass",
+      "implemented_lift": "Runtime-denominator TSVR, fallback/intervention, calibration, and witness rows are source-locked per domain.",
+      "remaining_blocker": "High AV intervention and healthcare fallback rates must be explained as conservative fail-closed behavior, not hidden utility success.",
+      "acceptance_gate": "All promoted rows pass strict runtime gates and utility/fallback tradeoffs are explicit."
+    },
+    {
+      "dimension": "external_validation_depth",
+      "current_baseline_score": 72,
+      "target_score": 95,
+      "current_status": "blocked",
+      "implemented_lift": "Current package separates nuPlan replay/surrogate, retrospective healthcare, and battery software-HIL evidence from stronger future tiers.",
+      "remaining_blocker": "Complete CARLA or nuPlan closed-loop artifacts, stronger healthcare held-out/source/site replay, and physical or high-fidelity battery HIL.",
+      "acceptance_gate": "No paper claim uses next-tier validation language before the corresponding artifact exists."
+    },
+    {
+      "dimension": "reproducibility_and_freeze",
+      "current_baseline_score": 80,
+      "target_score": 95,
+      "current_status": "blocked",
+      "implemented_lift": "Package marks max freeze incomplete until release manifest and hash locks exist.",
+      "remaining_blocker": "Finish max freeze, remove AppleDouble/git hygiene noise, run clean full pytest with mutation guard, and publish frozen hashes.",
+      "acceptance_gate": "predeployment_release_manifest.json plus frozen hash CSV/JSON exist and validators pass."
+    },
+    {
+      "dimension": "claim_quality",
+      "current_baseline_score": 88,
+      "target_score": 95,
+      "current_status": "pass",
+      "implemented_lift": "All source-backed language is bounded predeployment validation and explicitly rejects road, clinical, and unrestricted field deployment claims.",
+      "remaining_blocker": "Keep manuscript, README, claim ledger, and package synchronized after every new validation run.",
+      "acceptance_gate": "Claim validators reject deployment overclaims and validation-harness headline evidence."
+    }
+  ],
+  "uplift_95plus_achieved": false,
+  "freeze_status": {
+    "complete": false,
+    "manifest_paths": [],
+    "latest_release_dir": "reports/predeployment_freeze/PREDEPLOY_MAX_DRY_VERIFY",
+    "status_note": "incomplete_until_predeployment_release_manifest_exists"
+  },
+  "claim_ledger_present": true,
+  "domain_count": 3,
+  "headline_claim_count": 4,
+  "matrix_row_count": 17,
+  "healthcare_boundary": "retrospective_source_holdout_time_forward_not_live_clinical",
+  "av_boundary": "nuplan_replay_surrogate_not_carla_or_road_deployment",
+  "battery_boundary": "software_hil_or_simulator_not_physical_hil_field_deployment"
+}

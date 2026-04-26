@@ -1,4 +1,4 @@
 surface,state,summary,blocker,next_action
 Battery Energy Storage,reference_witness,deepest theorem-to-code-to-artifact closure,none,preserve witness-row depth without overgeneralizing it
-Autonomous Vehicles,defended_bounded_row,bounded longitudinal replay under TTC plus predictive-entry-barrier contract,none,extend only after richer vehicle interaction is defended under the same contract
-Medical and Healthcare Monitoring,defended_bounded_row,bounded MIMIC-backed monitoring and alert release row,none,keep the promoted source of truth on MIMIC and bounded monitoring semantics
+Autonomous Vehicles,runtime_contract_closed,runtime-denominator closure under bounded nuPlan replay,none,extend only after richer vehicle interaction is defended under the same runtime-governing contract
+Medical and Healthcare Monitoring,runtime_contract_closed,runtime-denominator closure under the bounded MIMIC fail-safe release contract,none,keep the promoted source of truth on MIMIC and bounded monitoring semantics

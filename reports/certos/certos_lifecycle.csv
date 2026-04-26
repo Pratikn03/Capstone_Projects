@@ -1,5 +1,5 @@
 step,validity_horizon,status,lifecycle_op,validation_passed,hash_chain_ok,cert_hash,prev_hash,discharge_mw,soc_mwh,fallback,invariant_violations
-0,18,valid,ISSUE,False,True,772bc8aa0b4eadf4,,45.0,88.16,False,none
+0,18,valid,ISSUE,False,True,772bc8aa0b4eadf4,not_applicable,45.0,88.16,False,none
 1,21,valid,ISSUE,True,True,e7c6279e5c4838d9,772bc8aa0b4eadf4,50.0,75.0,False,none
 2,21,valid,ISSUE,True,True,702b48824206f1cb,e7c6279e5c4838d9,50.0,61.84,False,none
 3,20,valid,ISSUE,True,True,24d8327c415d1531,702b48824206f1cb,50.0,48.68,False,none

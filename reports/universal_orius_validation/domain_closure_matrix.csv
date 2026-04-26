@@ -1,4 +1,4 @@
 domain,display_name,resulting_tier,exact_blocker,baseline_tsvr_mean,orius_tsvr_mean,orius_reduction_pct,safe_action_soundness_status,training_surface_status,multi_agent_status,certos_status,source_dataset,closure_target_tier
 battery,Battery Energy Storage,reference,battery_reference_witness,0.0083,0.0000,100.0,pass,closed,evaluated,evaluated,locked_battery_reference,witness_row
-healthcare,Medical and Healthcare Monitoring,proof_validated,none,0.2917,0.0417,85.7,pass,closed,evaluated,evaluated,mimic3_monitoring_row,defended_promoted_row
-vehicle,Autonomous Vehicles,proof_validated,none,0.1250,0.0417,66.7,pass,closed,evaluated,evaluated,waymo_motion_row,defended_promoted_row
+healthcare,Medical and Healthcare Monitoring,proof_validated,none,0.1945,0.0000,100.0,pass,closed,evaluated,evaluated,mimic3_monitoring_row,defended_promoted_row
+vehicle,Autonomous Vehicles,proof_validated,none,0.2893,0.0002,99.9,pass,closed,evaluated,evaluated,nuplan_allzip_grouped_row,defended_promoted_row

@@ -1,0 +1,4 @@
+domain,runtime_metric_surface,runtime_baseline_tsvr,runtime_orius_tsvr,proxy_metric_surface,proxy_baseline_tsvr,proxy_orius_tsvr,claim_governs_from,diagnostic_only,note
+Battery Energy Storage,locked_publication_nominal,0.008333,0.000000,not_applicable,,,runtime_denominator,True,Battery remains the witness row and does not use the shared proxy harness for headline TSVR.
+Autonomous Vehicles,runtime_denominator,0.289250,0.000163,validation_harness,1.000000,0.041667,runtime_denominator,True,"Dual reporting is permanent, but the runtime denominator is the only claim-governing surface."
+Medical and Healthcare Monitoring,runtime_denominator,0.194489,0.000000,validation_harness,0.000000,0.000000,runtime_denominator,True,"Dual reporting is permanent, but the runtime denominator is the only claim-governing surface."

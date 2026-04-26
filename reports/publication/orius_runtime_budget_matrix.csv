@@ -1,4 +1,4 @@
 domain,median_step_ms,p95_step_ms,fallback_coverage_pct,certos_lifecycle_pct,certificate_failure_pct,safety_surface,status,tier
 Battery Energy Storage,0.172,0.812,100.0,100.0,0.0,soc_power_envelope,evaluated,reference
-Autonomous Vehicles,0.161,0.744,100.0,100.0,0.0,ttc_entry_barrier,evaluated,proof_validated
-Medical and Healthcare Monitoring,0.149,0.701,100.0,100.0,0.0,bounded_alert_release,evaluated,proof_validated
+Autonomous Vehicles,0.161,0.744,100.0,100.0,0.0,brake_hold_release_contract,evaluated,runtime_contract_closed
+Medical and Healthcare Monitoring,0.149,0.701,100.0,100.0,0.0,bounded_alert_release,evaluated,runtime_contract_closed

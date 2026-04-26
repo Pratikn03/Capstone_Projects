@@ -1,0 +1,61 @@
+{
+  "generated_at_utc": "2026-04-26T02:34:09Z",
+  "target": "95_plus_research_readiness",
+  "achieved": false,
+  "scorecard": [
+    {
+      "dimension": "core_idea_novelty",
+      "current_baseline_score": 82,
+      "target_score": 95,
+      "current_status": "pass",
+      "implemented_lift": "Source-backed novelty separation across runtime assurance, coverage-aware uncertainty, safety-critical control, clinical validation, AV simulation, and battery HIL tiers.",
+      "remaining_blocker": "Need final paper text to keep ORIUS framed as a unified observation-reliability release contract, not a predictor/filter/fallback-only system.",
+      "acceptance_gate": "Reviewer can identify the exact gap ORIUS closes relative to each source lane."
+    },
+    {
+      "dimension": "theory",
+      "current_baseline_score": 78,
+      "target_score": 95,
+      "current_status": "pass",
+      "implemented_lift": "T4/T10/T11 bridge is represented as necessity plus Bayes lower bound plus covered alpha upper bound with executable observation-ambiguity witnesses.",
+      "remaining_blocker": "Keep T10 draft lower-bound surfaces scoped and prevent any global-optimality or all-ambiguity-implies-violation overclaim.",
+      "acceptance_gate": "T4, T11, and T10_T11_ObservationAmbiguitySandwich stay synchronized across audit, registry, code, tests, paper, and appendix."
+    },
+    {
+      "dimension": "three_domain_runtime_evidence",
+      "current_baseline_score": 86,
+      "target_score": 95,
+      "current_status": "pass",
+      "implemented_lift": "Runtime-denominator TSVR, fallback/intervention, calibration, and witness rows are source-locked per domain.",
+      "remaining_blocker": "High AV intervention and healthcare fallback rates must be explained as conservative fail-closed behavior, not hidden utility success.",
+      "acceptance_gate": "All promoted rows pass strict runtime gates and utility/fallback tradeoffs are explicit."
+    },
+    {
+      "dimension": "external_validation_depth",
+      "current_baseline_score": 72,
+      "target_score": 95,
+      "current_status": "blocked",
+      "implemented_lift": "Current package separates nuPlan replay/surrogate, retrospective healthcare, and battery software-HIL evidence from stronger future tiers.",
+      "remaining_blocker": "Complete CARLA or nuPlan closed-loop artifacts, stronger healthcare held-out/source/site replay, and physical or high-fidelity battery HIL.",
+      "acceptance_gate": "No paper claim uses next-tier validation language before the corresponding artifact exists."
+    },
+    {
+      "dimension": "reproducibility_and_freeze",
+      "current_baseline_score": 80,
+      "target_score": 95,
+      "current_status": "blocked",
+      "implemented_lift": "Package marks max freeze incomplete until release manifest and hash locks exist.",
+      "remaining_blocker": "Finish max freeze, remove AppleDouble/git hygiene noise, run clean full pytest with mutation guard, and publish frozen hashes.",
+      "acceptance_gate": "predeployment_release_manifest.json plus frozen hash CSV/JSON exist and validators pass."
+    },
+    {
+      "dimension": "claim_quality",
+      "current_baseline_score": 88,
+      "target_score": 95,
+      "current_status": "pass",
+      "implemented_lift": "All source-backed language is bounded predeployment validation and explicitly rejects road, clinical, and unrestricted field deployment claims.",
+      "remaining_blocker": "Keep manuscript, README, claim ledger, and package synchronized after every new validation run.",
+      "acceptance_gate": "Claim validators reject deployment overclaims and validation-harness headline evidence."
+    }
+  ]
+}

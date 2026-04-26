@@ -22,13 +22,13 @@ labeling. This book keeps the same 6-week structure and proof-writing intent,
 but it is normalized to current repo truth:
 
 - The draft says `Flagship-5`, but the current registry-canonical flagship
-  defended core is `T1`, `T2`, `T3a`, `T4`, `T11`, and `T_trajectory_PAC`.
-- `T3b`, `T6`, and `T8` are supporting defended surfaces, not headline
-  flagship rows.
+  defended core is `T1`, `T2`, `T3a`, `T4`, `T6`, `T7`, `T11`, and
+  `T_trajectory_PAC`.
+- `T3b` and `T8` are supporting defended surfaces, not headline flagship rows.
 - `T7` is the fallback-existence row. `T8` is graceful-degradation dominance.
-- The pasted Week 4 fallback material is therefore tracked here as `T7`
-  supporting cleanup, while `T8` remains the supporting graceful-dominance
-  theorem.
+- The pasted Week 4 fallback material is therefore tracked here as the promoted
+  flagship `T7` piecewise fallback theorem, while `T8` remains the supporting
+  graceful-dominance theorem.
 - This book preserves the pasted structure, technical depth, and sequencing,
   but theorem identities, roles, and labels follow
   `reports/publication/theorem_registry.yml` and
@@ -48,9 +48,10 @@ Phase 3 starts only after the following are true:
 - `reports/publication/theorem_registry.yml` remains the only hand-edited
   theorem inventory.
 - The defended-core split remains fixed during this phase:
-  `T1`, `T2`, `T3a`, `T4`, `T11`, `T_trajectory_PAC` headline;
-  `T3b`, `T6`, `T8` supporting defended;
-  `T7` supporting cleanup only unless separately promoted by a later gate.
+  `T1`, `T2`, `T3a`, `T4`, `T6`, `T7`, `T11`, `T_trajectory_PAC` headline;
+  `T3b`, `T8` supporting defended;
+  `T5`, `T9`, `T10`, `L1`--`L4`, `T_minimax`, and `T_sensor_converse` remain
+  draft / non-defended.
 
 If those gates are not closed, Phase 3 only restyles broken proofs.
 
@@ -185,8 +186,9 @@ Registry-normalized inventory:
   `Lemma P.1` finite-sample conformal correction over the horizon;
   `Lemma P.2` tail control under the active concentration assumptions;
   `Lemma P.3` Bonferroni / union-bound aggregation over epochs.
-- `T7` supporting cleanup may add:
-  `Lemma 7.1` interior-margin stability under bounded one-step dynamics.
+- `T7` flagship promotion may add:
+  `Lemma 7.1` interior safe-hold stability under bounded one-step dynamics;
+  `Lemma 7.2` boundary-safe-landing recovery under actuator limits.
 - `T8` supporting defended may add:
   `Lemma 8.1` shared-trace sequence comparison for graceful versus uncontrolled
   release policies.
@@ -359,7 +361,7 @@ Week 3 lemma write-up for `T4`:
 - `T4` proof and its two local lemmas drafted
 - `proof_lint.py` passes on the expanded packet
 
-## Week 4 -- T11, T7/T8 Cleanup, and T_trajectory_PAC
+## Week 4 -- T6/T7 Promotion, T11, T8, and T_trajectory_PAC
 
 ### T11 -- Typed Structural Transfer
 
@@ -377,20 +379,18 @@ Required polish:
 - state explicitly that `T11` does not prove those obligations for each domain;
   domain discharge remains Phase 4 work
 
-### T7 -- Fallback-Existence Supporting Cleanup
+### T7 -- Feasible Fallback Existence Flagship Promotion
 
 The pasted draft folded fallback existence into `T8`. In current repo truth,
-that material belongs under `T7`, and `T7` is not part of the headline
+that material belongs under `T7`, and `T7` is now part of the headline
 flagship defended core.
 
-Supporting cleanup proof shape:
+Promoted proof shape:
 
-1. interior safe state with slack at least `\epsilon_{model}`
-2. bounded one-step dynamics under the fallback action
-3. algebra closing the safety interval after one step
-
-Use this only as supporting cleanup unless the theorem is separately promoted by
-another gate.
+1. interior safe state with slack at least `\epsilon_{model}` admits zero-dispatch safe hold
+2. boundary-proximal state admits a charging or discharging `safe_landing` recovery action
+3. bounded one-step dynamics close the safety interval after one step in each certified case
+4. the runtime fails closed rather than over-claiming when neither case is feasible
 
 ### T8 -- Graceful-Degradation Dominance
 
@@ -544,10 +544,12 @@ surfaces for:
 - `T2`
 - `T3a`
 - `T6`
+- `T7`
 - `T11`
 - `T_trajectory_PAC`
 
-`T7` and `T8` stay explicitly supporting unless separately promoted later.
+`T8` stays explicitly supporting; `T6` and `T7` are part of the integrated
+flagship ladder.
 
 ## Common Pitfalls
 
@@ -584,7 +586,7 @@ If any one of those gates fails, Phase 3 is not closed.
 | 1 | Infrastructure scaffold | 20 |
 | 2 | `T1`, `T2`, five lemmas | 25 |
 | 3 | `T3a`, `T4`, five lemmas | 30 |
-| 4 | `T11`, `T7/T8` cleanup, `T_trajectory_PAC`, four lemmas | 25 |
+| 4 | `T6/T7` promotion, `T11`, `T8`, `T_trajectory_PAC`, four lemmas | 25 |
 | 5 | Lemma consolidation and cross-checks | 20 |
 | 6 | Integration and red-team prep | 15 |
 | Total | Submission-ready proof packet | 135 |
@@ -609,8 +611,8 @@ reviewable theorem packet.
 | `T3a` | Flagship defended | Full packet proof rewrite |
 | `T3b` | Supporting defended | Mention only as aggregation corollary |
 | `T4` | Flagship defended | Full packet proof rewrite |
-| `T6` | Supporting defended | Referenced as auxiliary runtime-linked theorem |
-| `T7` | Draft / non-defended fallback surface | Supporting cleanup only |
+| `T6` | Flagship defended | Full packet proof rewrite with the closed-form first-passage bound |
+| `T7` | Flagship defended | Full packet proof rewrite with the piecewise hold-or-safe-landing contract |
 | `T8` | Supporting defended | Supporting graceful-dominance rewrite |
 | `T11` | Flagship defended | Full packet proof polish |
 | `T_trajectory_PAC` | Flagship defended | Full packet proof rewrite |

@@ -1,6 +1,9 @@
 boundary,reason,repo_artifact
+not_a_new_conformal_method,ORIUS uses conformal calibration as one stage inside the runtime layer rather than contributing a new conformal algorithm.,paper/ieee/sections/ieee_related_work.tex
+not_a_new_robust_optimization_primitive,"ORIUS can host robust optimization or safety filters, but it does not claim a new plant-level robust-optimization method.",paper/ieee/sections/ieee_related_work.tex
+not_a_runtime_monitor_or_simplex_clone,"ORIUS borrows supervisory ideas but claims a typed degraded-observation release contract, not a monitor-only veto or backup-switch architecture.",paper/review/orius_review_dossier.tex
 not_a_new_universal_controller,ORIUS wraps inherited domain controllers rather than replacing plant-specific nominal control.,paper/monograph/ch01_introduction_and_thesis_claims.tex
 not_a_new_conditional_coverage_theorem,"The promoted ML surface is grouped calibration under degraded observation, not a new per-input or arbitrary-shift coverage theorem.",paper/review/orius_review_dossier.tex
 not_better_forecasting_by_default,Forecast quality matters only insofar as it affects runtime release safety under degraded observation.,docs/executive_summary.md
-not_full_autonomous_driving_closure,The promoted AV row stays bounded to the TTC plus predictive-entry-barrier contract.,reports/battery_av_healthcare/overall/release_summary.json
+not_full_autonomous_driving_closure,The promoted AV row stays bounded to the narrowed brake-hold runtime contract.,reports/battery_av_healthcare/overall/release_summary.json
 not_clinical_deployment_readiness,Healthcare remains a bounded monitoring-and-alert row even after promotion to the active three-domain lane.,reports/publication/orius_domain_closure_matrix.csv

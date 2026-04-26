@@ -1,0 +1,37 @@
+{
+  "status": "completed_bounded_replay_not_carla",
+  "summary": "reports/predeployment_external_validation/nuplan_closed_loop_summary.csv",
+  "traces": "reports/predeployment_external_validation/nuplan_closed_loop_traces.csv",
+  "runtime_summary": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_summary.csv",
+  "runtime_traces": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_traces.csv",
+  "surface_report": "data/orius_av/av/processed_nuplan_allzip_grouped/nuplan_surface_report.json",
+  "runtime_report": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_report.json",
+  "claim_boundary": "Completed all-zip grouped nuPlan runtime replay/surrogate evidence only; does not claim completed CARLA simulation, road deployment, or full autonomous-driving field closure.",
+  "runtime_report_summary": {
+    "runtime_summary_csv": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_summary.csv",
+    "runtime_traces_csv": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_traces.csv",
+    "fault_family_coverage_csv": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/fault_family_coverage.csv",
+    "audit_db_path": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/dc3s_av_waymo_dryrun.duckdb",
+    "certificate_count": 1531104,
+    "scenario_count": 37344,
+    "shift_aware_artifacts": {
+      "summary_csv": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/shift_aware/shift_aware_runtime_summary.csv",
+      "targets": {
+        "ego_speed_mps": {
+          "group_coverage_csv": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/shift_aware/ego_speed_mps/fault_group_coverage.csv",
+          "validity_trace_csv": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/shift_aware/ego_speed_mps/shift_validity_trace.csv",
+          "adaptive_trace_csv": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/shift_aware/ego_speed_mps/adaptive_quantile_trace.csv"
+        },
+        "relative_gap_m": {
+          "group_coverage_csv": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/shift_aware/relative_gap_m/fault_group_coverage.csv",
+          "validity_trace_csv": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/shift_aware/relative_gap_m/shift_validity_trace.csv",
+          "adaptive_trace_csv": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/shift_aware/relative_gap_m/adaptive_quantile_trace.csv"
+        }
+      }
+    },
+    "runtime_comparator_summary_csv": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_comparator_summary.csv",
+    "runtime_comparator_traces_csv": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_comparator_traces.csv",
+    "runtime_ablation_summary_csv": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_ablation_summary.csv",
+    "runtime_negative_controls_csv": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_negative_controls.csv"
+  }
+}

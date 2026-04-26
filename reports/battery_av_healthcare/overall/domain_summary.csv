@@ -1,4 +1,4 @@
 domain,display_name,tier
 battery,Battery Energy Storage,reference
-vehicle,Autonomous Vehicles,proof_validated
-healthcare,Medical and Healthcare Monitoring,proof_validated
+vehicle,Autonomous Vehicles,runtime_contract_closed
+healthcare,Medical and Healthcare Monitoring,runtime_contract_closed

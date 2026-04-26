@@ -1,21 +1,21 @@
 scenario,total_cost,oracle_cost,regret,regret_pct,carbon_emissions,infeasible_rate,forecast_error_load,forecast_error_wind,forecast_error_solar,run,description
-Full System,357906420.0,,,,,1.0,855.6164153698178,289.11780934560807,820.6926483113945,0,All features enabled
-No Uncertainty,357906420.0,,,,,1.0,855.6164153698176,289.11780934560807,820.6926483113945,0,Point forecasts only
-No Carbon,357906420.0,,,,,1.0,855.6164153698178,289.11780934560807,820.6926483113945,0,Cost-only optimization
-Forecast Only,,,,,,,855.6164153698176,289.11780934560807,820.6926483113945,0,No dispatch optimization
-Full System,357906420.0,,,,,1.0,907.7061756738605,291.80852168856535,746.4131467279016,1,All features enabled
-No Uncertainty,357906420.0,,,,,1.0,907.7061756738605,291.80852168856535,746.4131467279016,1,Point forecasts only
-No Carbon,357906420.0,,,,,1.0,907.7061756738605,291.80852168856535,746.4131467279016,1,Cost-only optimization
-Forecast Only,,,,,,,907.7061756738605,291.80852168856535,746.4131467279016,1,No dispatch optimization
-Full System,357906420.0,,,,,1.0,941.3502675867111,291.96950428229076,791.9302298619602,2,All features enabled
-No Uncertainty,357906420.0,,,,,1.0,941.3502675867111,291.96950428229076,791.9302298619602,2,Point forecasts only
-No Carbon,357906420.0,,,,,1.0,941.3502675867111,291.96950428229076,791.9302298619602,2,Cost-only optimization
-Forecast Only,,,,,,,941.3502675867111,291.96950428229076,791.9302298619602,2,No dispatch optimization
-Full System,357906420.0,,,,,1.0,883.6718662736878,277.27997184706,862.533960241346,3,All features enabled
-No Uncertainty,357906420.0,,,,,1.0,883.6718662736874,277.27997184706,862.533960241346,3,Point forecasts only
-No Carbon,357906420.0,,,,,1.0,883.6718662736878,277.27997184706,862.533960241346,3,Cost-only optimization
-Forecast Only,,,,,,,883.6718662736874,277.27997184706,862.533960241346,3,No dispatch optimization
-Full System,357906420.0,,,,,1.0,886.8189994908014,269.10605456251665,840.6146922559269,4,All features enabled
-No Uncertainty,357906420.0,,,,,1.0,886.8189994908014,269.10605456251665,840.6146922559269,4,Point forecasts only
-No Carbon,357906420.0,,,,,1.0,886.8189994908014,269.10605456251665,840.6146922559269,4,Cost-only optimization
-Forecast Only,,,,,,,886.8189994908014,269.10605456251665,840.6146922559269,4,No dispatch optimization
+Full System,357906420.0,not_applicable,not_applicable,not_applicable,not_applicable,1.0,855.6164153698178,289.11780934560807,820.6926483113945,0,All features enabled
+No Uncertainty,357906420.0,not_applicable,not_applicable,not_applicable,not_applicable,1.0,855.6164153698176,289.11780934560807,820.6926483113945,0,Point forecasts only
+No Carbon,357906420.0,not_applicable,not_applicable,not_applicable,not_applicable,1.0,855.6164153698178,289.11780934560807,820.6926483113945,0,Cost-only optimization
+Forecast Only,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,855.6164153698176,289.11780934560807,820.6926483113945,0,No dispatch optimization
+Full System,357906420.0,not_applicable,not_applicable,not_applicable,not_applicable,1.0,907.7061756738605,291.80852168856535,746.4131467279016,1,All features enabled
+No Uncertainty,357906420.0,not_applicable,not_applicable,not_applicable,not_applicable,1.0,907.7061756738605,291.80852168856535,746.4131467279016,1,Point forecasts only
+No Carbon,357906420.0,not_applicable,not_applicable,not_applicable,not_applicable,1.0,907.7061756738605,291.80852168856535,746.4131467279016,1,Cost-only optimization
+Forecast Only,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,907.7061756738605,291.80852168856535,746.4131467279016,1,No dispatch optimization
+Full System,357906420.0,not_applicable,not_applicable,not_applicable,not_applicable,1.0,941.3502675867111,291.96950428229076,791.9302298619602,2,All features enabled
+No Uncertainty,357906420.0,not_applicable,not_applicable,not_applicable,not_applicable,1.0,941.3502675867111,291.96950428229076,791.9302298619602,2,Point forecasts only
+No Carbon,357906420.0,not_applicable,not_applicable,not_applicable,not_applicable,1.0,941.3502675867111,291.96950428229076,791.9302298619602,2,Cost-only optimization
+Forecast Only,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,941.3502675867111,291.96950428229076,791.9302298619602,2,No dispatch optimization
+Full System,357906420.0,not_applicable,not_applicable,not_applicable,not_applicable,1.0,883.6718662736878,277.27997184706,862.533960241346,3,All features enabled
+No Uncertainty,357906420.0,not_applicable,not_applicable,not_applicable,not_applicable,1.0,883.6718662736874,277.27997184706,862.533960241346,3,Point forecasts only
+No Carbon,357906420.0,not_applicable,not_applicable,not_applicable,not_applicable,1.0,883.6718662736878,277.27997184706,862.533960241346,3,Cost-only optimization
+Forecast Only,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,883.6718662736874,277.27997184706,862.533960241346,3,No dispatch optimization
+Full System,357906420.0,not_applicable,not_applicable,not_applicable,not_applicable,1.0,886.8189994908014,269.10605456251665,840.6146922559269,4,All features enabled
+No Uncertainty,357906420.0,not_applicable,not_applicable,not_applicable,not_applicable,1.0,886.8189994908014,269.10605456251665,840.6146922559269,4,Point forecasts only
+No Carbon,357906420.0,not_applicable,not_applicable,not_applicable,not_applicable,1.0,886.8189994908014,269.10605456251665,840.6146922559269,4,Cost-only optimization
+Forecast Only,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,not_applicable,886.8189994908014,269.10605456251665,840.6146922559269,4,No dispatch optimization

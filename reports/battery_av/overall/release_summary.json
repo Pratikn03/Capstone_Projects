@@ -44,8 +44,8 @@
         "expiry_metadata_presence_rate": 0.0,
         "expiry_consistency_rate": 1.0,
         "audit_completeness_rate": 1.0,
-        "failed_index": null,
-        "reason": null
+        "failed_index": "not_applicable",
+        "reason": "no_failure"
       }
     },
     "run_id": "db54a075352c3b69",
@@ -119,8 +119,8 @@
         "expiry_metadata_presence_rate": 1.0,
         "expiry_consistency_rate": 1.0,
         "audit_completeness_rate": 1.0,
-        "failed_index": null,
-        "reason": null
+        "failed_index": "not_applicable",
+        "reason": "no_failure"
       }
     },
     "run_id": "f1f1b6218ba84189",

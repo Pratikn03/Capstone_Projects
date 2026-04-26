@@ -1,0 +1,40 @@
+{
+  "generated_at_utc": "2026-04-26T00:09:48.683889+00:00",
+  "domain": "Medical and Healthcare Monitoring",
+  "status": "prepared_not_completed",
+  "completed_evidence": false,
+  "heldout_claim_allowed": false,
+  "claim_boundary": "Healthcare held-out validation is a retrospective source/site/time-forward runtime replay target only. This manifest does not claim live clinical deployment, prospective trial evidence, clinical decision support approval, or regulated clinical use.\n",
+  "prepared_split_dir": "reports/predeployment_external_validation/healthcare_site_splits",
+  "split_manifest_exists": true,
+  "split_manifest": {
+    "split_strategy": "development_site_patient_blocks_plus_later_source_holdout",
+    "development_source": "bidmc",
+    "holdout_source": "mimic3",
+    "source_datasets": [
+      "bidmc",
+      "mimic3"
+    ],
+    "source_rows": {
+      "bidmc": 22277,
+      "mimic3": 124411
+    },
+    "source_patients": {
+      "bidmc": 51,
+      "mimic3": 30
+    },
+    "split_dir": "reports/predeployment_external_validation/healthcare_site_splits"
+  },
+  "required_runtime_artifacts_for_claim": [
+    "reports/healthcare/heldout_runtime_summary.csv",
+    "reports/healthcare/heldout_runtime_traces.csv",
+    "reports/healthcare/heldout_runtime_manifest.json"
+  ],
+  "completion_rule": {
+    "orius_tsvr_required": 0.0,
+    "max_alert_rate_lte": 0.5,
+    "certificate_valid_rate_required": 1.0,
+    "source_or_site_holdout_required": true,
+    "time_forward_required": true
+  }
+}

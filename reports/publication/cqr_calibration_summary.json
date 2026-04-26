@@ -61,10 +61,10 @@
   "fit": {
     "alpha": 0.1,
     "edges": [
-      -Infinity,
+      "not_applicable",
       5911.368756590041,
       7430.1710163089265,
-      Infinity
+      "not_applicable"
     ],
     "global_qhat": 154.93554170804202,
     "n_bins": 3,

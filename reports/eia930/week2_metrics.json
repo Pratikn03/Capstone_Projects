@@ -108,7 +108,7 @@
         ],
         "uncertainty": {
           "picp_90": 0.8113207547169812,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 2265.2605170910115,
           "pinball_loss_q05": 114.60864166372991,
           "pinball_loss_q50": 327.7870040974016,
@@ -130,7 +130,7 @@
         },
         "uncertainty": {
           "picp_90": 0.6853448275862069,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 9607.226245418127,
           "pinball_loss_q05": 434.2791379140832,
           "pinball_loss_q50": 1873.6899284463898,
@@ -152,7 +152,7 @@
         },
         "uncertainty": {
           "picp_90": 0.7278811252268602,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 10836.630708428738,
           "pinball_loss_q05": 604.3745511095448,
           "pinball_loss_q50": 2047.801772867841,
@@ -174,7 +174,7 @@
         },
         "uncertainty": {
           "picp_90": 0.5834089534180278,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 22253.8052735936,
           "pinball_loss_q05": 1059.4564207555093,
           "pinball_loss_q50": 5282.498592777985,
@@ -196,7 +196,7 @@
         },
         "uncertainty": {
           "picp_90": 0.3423321234119782,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 13952.144798045174,
           "pinball_loss_q05": 832.0799350941011,
           "pinball_loss_q50": 5037.391551689614,
@@ -218,7 +218,7 @@
         },
         "uncertainty": {
           "picp_90": 0.8280399274047187,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 18556.581080074837,
           "pinball_loss_q05": 638.5737877235417,
           "pinball_loss_q50": 2556.0754404058675,
@@ -335,7 +335,7 @@
         ],
         "uncertainty": {
           "picp_90": 0.43160377358490565,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 376.835926482602,
           "pinball_loss_q05": 200.29355778911432,
           "pinball_loss_q50": 176.56296903763035,
@@ -358,7 +358,7 @@
         },
         "uncertainty": {
           "picp_90": 0.5928236539624925,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 13130.77652574435,
           "pinball_loss_q05": 551.389269497345,
           "pinball_loss_q50": 2811.5130016004928,
@@ -381,7 +381,7 @@
         },
         "uncertainty": {
           "picp_90": 0.6249243799153055,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 14730.319499390742,
           "pinball_loss_q05": 660.9000376355488,
           "pinball_loss_q50": 2927.170482783234,
@@ -404,7 +404,7 @@
         },
         "uncertainty": {
           "picp_90": 0.42872807017543857,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 10561.483111426995,
           "pinball_loss_q05": 749.3034213774972,
           "pinball_loss_q50": 3253.5187061105485,
@@ -427,7 +427,7 @@
         },
         "uncertainty": {
           "picp_90": 0.7293935269207501,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 18004.01451888261,
           "pinball_loss_q05": 748.8507842597405,
           "pinball_loss_q50": 3040.92433636706,
@@ -450,7 +450,7 @@
         },
         "uncertainty": {
           "picp_90": 0.5635208711433757,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 14107.251659866037,
           "pinball_loss_q05": 792.2940815171431,
           "pinball_loss_q50": 3043.0995578100874,
@@ -567,7 +567,7 @@
         ],
         "uncertainty": {
           "picp_90": 0.8687106918238994,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 839.2873044651241,
           "pinball_loss_q05": 24.0102513409625,
           "pinball_loss_q50": 105.22080424173895,
@@ -590,7 +590,7 @@
         },
         "uncertainty": {
           "picp_90": 0.7568058076225045,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 2720.824724534789,
           "pinball_loss_q05": 167.30492630579914,
           "pinball_loss_q50": 557.3097512193959,
@@ -613,7 +613,7 @@
         },
         "uncertainty": {
           "picp_90": 0.7945780399274047,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 1793.173129891959,
           "pinball_loss_q05": 143.9768270652061,
           "pinball_loss_q50": 405.9472212618651,
@@ -636,7 +636,7 @@
         },
         "uncertainty": {
           "picp_90": 0.8420296430732003,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 3295.543681728616,
           "pinball_loss_q05": 127.0157533893717,
           "pinball_loss_q50": 489.52571744418947,
@@ -659,7 +659,7 @@
         },
         "uncertainty": {
           "picp_90": 0.9426043557168784,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 9677.015662122041,
           "pinball_loss_q05": 133.36376645347198,
           "pinball_loss_q50": 1817.8310332522422,
@@ -682,7 +682,7 @@
         },
         "uncertainty": {
           "picp_90": 0.7888687235329703,
-          "picp_95": null,
+          "picp_95": "not_applicable",
           "mean_interval_width": 2970.6630088504307,
           "pinball_loss_q05": 117.0857646169708,
           "pinball_loss_q50": 619.0306089472414,

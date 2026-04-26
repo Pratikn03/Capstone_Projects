@@ -5984,10 +5984,10 @@
     "battery_degradation_cost_usd": 47500.00000000001,
     "carbon_kg": 4468230307.984802,
     "carbon_cost_usd": 223411515.39924014,
-    "carbon_budget_kg": null,
+    "carbon_budget_kg": "not_applicable",
     "status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)"
   },
-  "risk": null,
+  "risk": "not_applicable",
   "oracle": {
     "grid_mw": [
       45375.0,
@@ -7184,7 +7184,7 @@
     "battery_degradation_cost_usd": 47500.00000000001,
     "carbon_kg": 4468230307.984802,
     "carbon_cost_usd": 223411515.39924014,
-    "carbon_budget_kg": null,
+    "carbon_budget_kg": "not_applicable",
     "status": "Optimization terminated successfully. (HiGHS Status 7: Optimal)"
   },
   "impact_vs_baseline": {
@@ -7217,5 +7217,5 @@
     "carbon_reduction_kg": 2070175.585442543,
     "carbon_reduction_pct": 0.04630953988554208
   },
-  "moer_summary": null
+  "moer_summary": "not_applicable"
 }

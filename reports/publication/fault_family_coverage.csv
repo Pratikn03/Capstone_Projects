@@ -1,0 +1,13 @@
+controller,fault_family,target,coverage,mean_width
+deep:dc3s_ftit,dropout,soc_mwh,0.0,1075.9870776920804
+deep:dc3s_ftit,nominal,soc_mwh,0.0,375.5120248307405
+deep:dc3s_ftit,stale_sensor,soc_mwh,0.0,1116.7878580601284
+deep:dc3s_wrapped,dropout,soc_mwh,0.0,575.9685828664391
+deep:dc3s_wrapped,nominal,soc_mwh,0.0,572.6038774701748
+deep:dc3s_wrapped,stale_sensor,soc_mwh,0.0,580.1309786828534
+heuristic:dc3s_ftit,dropout,soc_mwh,0.0,1076.9024489390215
+heuristic:dc3s_ftit,nominal,soc_mwh,0.0,375.4985609840175
+heuristic:dc3s_ftit,stale_sensor,soc_mwh,0.0,1107.9070120172014
+heuristic:dc3s_wrapped,dropout,soc_mwh,0.0,519.6361109984795
+heuristic:dc3s_wrapped,nominal,soc_mwh,0.0,516.4728495706454
+heuristic:dc3s_wrapped,stale_sensor,soc_mwh,0.0,525.6403282821593

@@ -1,4 +1,4 @@
 domain,baseline_tsvr_mean,orius_tsvr_mean,orius_reduction_pct,validation_status
 battery,0.0083,0.0000,100.0,reference
-healthcare,0.2917,0.0417,85.7,proof_validated
-vehicle,0.1250,0.0417,66.7,proof_validated
+healthcare,0.1945,0.0000,100.0,proof_validated
+vehicle,0.2893,0.0002,99.9,proof_validated

@@ -60,10 +60,10 @@ surface_register_rows:
   - register_id: T4
     group: Defended theorem program
     environment: theorem
-    title: No Free Safety
-    context: "Main Theorem: No Free Safety"
+    title: Observation Necessity / No Free Safety
+    context: "Main Theorem: Observation Necessity / No Free Safety"
     source: chapters_merged/ch04_theoretical_foundations.tex
-    needle: '\begin{theorem}[No Free Safety]'
+    needle: '\begin{theorem}[Observation Necessity / No Free Safety]'
   - register_id: T5
     group: Defended theorem program
     environment: theorem
@@ -113,6 +113,41 @@ surface_register_rows:
     context: Typed Structural Transfer and Failure-Mode Converse (T11)
     source: chapters/ch37_universality_completeness.tex
     needle: '\begin{theorem}[Typed structural transfer theorem, T11]'
+  - register_id: T10_T11_ObservationAmbiguitySandwich
+    group: Defended theorem program
+    environment: corollary
+    title: "T10_T11_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality"
+    context: Covered Observation-Ambiguity Optimality
+    source: chapters/ch37_universality_completeness.tex
+    needle: '\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality]'
+  - register_id: T11_AV_BrakeHold
+    group: Defended theorem program
+    environment: lemma
+    title: "T11_AV_BrakeHold: AV Brake-Hold Runtime Lemma"
+    context: Typed Structural Transfer and Failure-Mode Converse (T11)
+    source: appendices/app_c_full_proofs.tex
+    needle: '\begin{lemma}[T11\_AV\_BrakeHold: AV Brake-Hold Runtime Lemma]'
+  - register_id: T11_HC_FailSafeRelease
+    group: Defended theorem program
+    environment: lemma
+    title: "T11_HC_FailSafeRelease: Healthcare Fail-Safe Release Runtime Lemma"
+    context: Typed Structural Transfer and Failure-Mode Converse (T11)
+    source: appendices/app_c_full_proofs.tex
+    needle: '\begin{lemma}[T11\_HC\_FailSafeRelease: Healthcare Fail-Safe Release Runtime Lemma]'
+  - register_id: T6_AV_FallbackValidity
+    group: Defended theorem program
+    environment: lemma
+    title: "T6_AV_FallbackValidity: AV One-Step Fallback Certificate Lemma"
+    context: Typed Structural Transfer and Failure-Mode Converse (T11)
+    source: appendices/app_c_full_proofs.tex
+    needle: '\begin{lemma}[T6\_AV\_FallbackValidity: AV One-Step Fallback Certificate Lemma]'
+  - register_id: T6_HC_FallbackValidity
+    group: Defended theorem program
+    environment: lemma
+    title: "T6_HC_FallbackValidity: Healthcare One-Step Fallback Certificate Lemma"
+    context: Typed Structural Transfer and Failure-Mode Converse (T11)
+    source: appendices/app_c_full_proofs.tex
+    needle: '\begin{lemma}[T6\_HC\_FallbackValidity: Healthcare One-Step Fallback Certificate Lemma]'
   - register_id: T3a
     group: Defended theorem program
     environment: theorem
@@ -214,10 +249,10 @@ surface_register_rows:
   - register_id: C4
     group: Appendix proof restatement
     environment: theorem
-    title: C.4 No Free Safety
+    title: C.4 Observation Necessity / No Free Safety
     context: Appendix proof copy
     source: appendices/app_c_full_proofs.tex
-    needle: '\section{C.4\quad No Free Safety}'
+    needle: '\section{C.4\quad Observation Necessity / No Free Safety}'
   - register_id: C5
     group: Appendix proof restatement
     environment: theorem
@@ -467,19 +502,19 @@ theorems:
       - defended_theorem_core
       - theorem_surface_register
   - id: T4
-    title: No Free Safety
+    title: Observation Necessity / No Free Safety
     surface_kind: theorem
     defense_tier: flagship_defended
     proof_tier: V1
     program_role: bounded_necessity_witness
     status: active
-    scope_note: Defended for the fixed-margin quality-ignorant controller class on the battery witness row with explicit arbitrage reachability.
+    scope_note: Defended as the observation-necessity witness for the fixed-margin quality-ignorant controller class on the battery row with explicit arbitrage reachability.
     statement_source:
       file: chapters_merged/ch04_theoretical_foundations.tex
-      needle: '\begin{theorem}[No Free Safety]'
+      needle: '\begin{theorem}[Observation Necessity / No Free Safety]'
     proof_source:
       file: appendices/app_c_full_proofs.tex
-      needle: '\section{C.4\quad No Free Safety}'
+      needle: '\section{C.4\quad Observation Necessity / No Free Safety}'
     assumptions:
       - A1
       - A2
@@ -496,7 +531,7 @@ theorems:
     code_correspondence_detail: The repo contains the necessary baseline and witness pieces, but the theorem remains constructive rather than fully executable.
     severity_if_broken: high
     remediation_class: keep scope explicit
-    remediation_detail: Preserve the fixed-margin quality-ignorant controller definition as part of the theorem statement.
+    remediation_detail: Preserve the fixed-margin quality-ignorant controller definition and avoid broadening the theorem into a claim that every ambiguity class is unsafe.
     code_anchors:
       - path: src/orius/dc3s/supporting_results.py
         symbol: verify_no_margin_compensation
@@ -572,11 +607,11 @@ theorems:
   - id: T6
     title: Certificate Expiration Bound
     surface_kind: theorem
-    defense_tier: supporting_defended
+    defense_tier: flagship_defended
     proof_tier: V2_linked
-    program_role: auxiliary_expiration_bound
+    program_role: temporal_expiration_bound
     status: active
-    scope_note: Defended as the confidence-aware sub-Gaussian issuance-margin lower bound with explicit delta dependence.
+    scope_note: Defended as the confidence-aware closed-form battery expiration theorem with explicit delta dependence and first-passage side conditions.
     statement_source:
       file: chapters_merged/ch04_theoretical_foundations.tex
       needle: '\begin{theorem}[Certificate expiration bound]'
@@ -591,13 +626,13 @@ theorems:
     dependencies:
       - Definition: Forward tube
       - Reflection-principle / sub-Gaussian first-passage bound
-    weakest_step: Multiple legacy horizon helpers existed; the repo now designates the delta-aware battery helper as canonical and treats the others as supplemental.
+    weakest_step: The defended row depends on keeping the delta-aware helper canonical and not silently widening the theorem surface back to legacy no-delta semantics.
     rigor_rating: machine_checked_ready
     code_correspondence: matches
-    code_correspondence_detail: The exported helper now carries the delta-aware theorem formula and emits fail-closed theorem metadata that forbids legacy no-delta semantics.
+    code_correspondence_detail: The exported helper carries the closed-form first-passage formula, explicit side conditions, and fail-closed theorem metadata that forbids legacy no-delta semantics.
     severity_if_broken: high
-    remediation_class: canonicalize helper
-    remediation_detail: Keep the no-delta legacy semantics out of the theorem-facing API and audit surfaces.
+    remediation_class: keep flagship closed-form
+    remediation_detail: Keep the no-delta legacy semantics out of the theorem-facing API and preserve the explicit first-passage side conditions.
     code_anchors:
       - path: src/orius/universal_theory/battery_instantiation.py
         symbol: certificate_expiration_bound
@@ -625,11 +660,11 @@ theorems:
   - id: T7
     title: Feasible Fallback Existence
     surface_kind: theorem
-    defense_tier: draft_non_defended
-    proof_tier: V1
-    program_role: fallback_extension
+    defense_tier: flagship_defended
+    proof_tier: V2_linked
+    program_role: piecewise_fallback_existence
     status: active
-    scope_note: Visible only as an interior-state fallback theorem with explicit slack against model error.
+    scope_note: "Defended as a battery-specific piecewise fallback theorem: safe hold on the interior, safe landing near the boundary, and fail-closed infeasibility otherwise."
     statement_source:
       file: chapters_merged/ch04_theoretical_foundations.tex
       needle: '\begin{theorem}[Feasible fallback existence]'
@@ -638,33 +673,40 @@ theorems:
       needle: '\section{C.8\quad Feasible Fallback Existence}'
     assumptions:
       - A1
-      - A3
       - A4
       - A8
     unresolved_assumptions: []
     dependencies:
-      - Constructive zero-dispatch battery fallback
-    weakest_step: The theorem is deliberately narrow and does not claim fallback safety from arbitrary boundary-touching states.
-    rigor_rating: narrowed_supporting_surface
+      - Constructive battery safe hold
+      - Boundary-aware safe-landing recovery action
+    weakest_step: The theorem is battery-specific and only defended for the piecewise hold-or-safe-landing fallback surface implemented by the runtime.
+    rigor_rating: proof_runtime_linked
     code_correspondence: matches
-    code_correspondence_detail: The validator only certifies fallback inside the interior slack region.
+    code_correspondence_detail: "The validator now certifies the piecewise T7 surface directly: interior hold, boundary recovery by safe landing, and fail-closed infeasibility."
     severity_if_broken: medium
-    remediation_class: keep narrowed
-    remediation_detail: Avoid broadening the statement beyond the interior-state validator semantics.
+    remediation_class: keep battery-specific
+    remediation_detail: Preserve the piecewise hold-or-safe-landing scope and do not generalize T7 into a cross-domain transfer theorem.
     code_anchors:
       - path: src/orius/universal_theory/battery_instantiation.py
         symbol: validate_battery_fallback
-        note: Interior-state fallback validator.
+        note: Piecewise theorem-facing T7 validator.
     test_anchors:
       - path: tests/test_dc3s_temporal_theorems.py
         symbol: test_certify_fallback_existence_passes_for_interior_soc
         note: Positive interior witness.
       - path: tests/test_dc3s_temporal_theorems.py
-        symbol: test_certify_fallback_existence_fails_near_boundary
-        note: Boundary failure witness.
+        symbol: test_certify_fallback_existence_recovers_near_lower_boundary
+        note: Lower-boundary recovery witness.
+      - path: tests/test_dc3s_temporal_theorems.py
+        symbol: test_certify_fallback_existence_recovers_near_upper_boundary
+        note: Upper-boundary recovery witness.
+      - path: tests/test_dc3s_temporal_theorems.py
+        symbol: test_certify_fallback_existence_fails_closed_when_boundary_recovery_is_infeasible
+        note: Fail-closed infeasibility witness.
     legacy_aliases: []
     generator_targets:
       - active_theorem_audit
+      - defended_theorem_core
       - theorem_surface_register
       - battery_claim_evidence_register
     claim_evidence:
@@ -813,7 +855,8 @@ theorems:
     proof_source:
       file: appendices/app_c_full_proofs.tex
       needle: '\section{C.13\quad Typed Structural Transfer and Failure-Mode Converse (T11)}'
-    assumptions:
+    assumptions: []
+    typed_obligations:
       - Coverage obligation for the observation-consistent state set.
       - Soundness of the tightened safe-action set.
       - Repair membership in the tightened safe-action set.
@@ -859,6 +902,415 @@ theorems:
       chapter: ch37
       token: THM_T11
       artifact_path: reports/publication/orius_transfer_obligation_table.csv
+  - id: T10_T11_ObservationAmbiguitySandwich
+    title: "T10_T11_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality"
+    surface_kind: corollary
+    defense_tier: supporting_defended
+    proof_tier: V1_runtime_linked
+    program_role: supporting_observation_ambiguity_optimality
+    status: active
+    scope_note: Supporting optimality corollary under covered observation ambiguity; it does not assert unrestricted global optimality for all physical AI systems.
+    statement_source:
+      file: chapters/ch37_universality_completeness.tex
+      needle: '\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality]'
+    assumptions: []
+    typed_obligations:
+      - Observation ambiguity classes are explicit.
+      - The common safe core is computed as the intersection of state-conditioned safe action sets.
+      - ORIUS releases only actions safe for every state in its covered uncertainty set.
+      - Probabilistic coverage is reported as an alpha-bound rather than unconditional zero violation.
+    unresolved_assumptions: []
+    dependencies:
+      - T10
+      - T11
+      - Common safe-core witness
+    weakest_step: The lower bound is a Bayes ambiguity-risk bound, not the false claim that differing safe sets alone imply unavoidable violation.
+    rigor_rating: proof_runtime_linked
+    code_correspondence: matches
+    code_correspondence_detail: The executable witness computes common safe cores, observation-only Bayes lower bounds, and covered ORIUS release upper bounds with explicit alpha-bound semantics.
+    severity_if_broken: high
+    remediation_class: keep scoped optimality
+    remediation_detail: Keep the theorem phrased as safety-optimal under covered observation ambiguity, not as a global optimality theorem for every physical-AI system.
+    code_anchors:
+      - path: src/orius/universal_theory/observation_ambiguity.py
+        symbol: build_observation_ambiguity_contract_summary
+        note: Publication-facing executable witness for the lower/upper sandwich.
+      - path: src/orius/universal_theory/observation_ambiguity.py
+        symbol: observation_only_bayes_lower_bound
+        note: Computes the observation-only Bayes lower bound.
+      - path: src/orius/universal_theory/observation_ambiguity.py
+        symbol: verify_covered_orius_release
+        note: Certifies the covered ORIUS upper-bound side.
+    test_anchors:
+      - path: tests/test_observation_ambiguity_optimality.py
+        symbol: test_different_safe_sets_do_not_imply_unavoidable_violation
+        note: Guards against the false unsafe-ambiguity overclaim.
+      - path: tests/test_observation_ambiguity_optimality.py
+        symbol: test_orius_covered_release_certifies_zero_violation
+        note: Covered-release upper-bound regression.
+      - path: tests/test_observation_ambiguity_optimality.py
+        symbol: test_probabilistic_coverage_is_alpha_bounded_not_unconditional_zero
+        note: Alpha-bound semantics regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+  - id: T11_AV_BrakeHold
+    title: "T11_AV_BrakeHold: AV Brake-Hold Runtime Lemma"
+    surface_kind: runtime_linked_lemma
+    defense_tier: supporting_defended
+    proof_tier: V1_runtime_linked
+    program_role: bounded_domain_transfer_lemma
+    status: active
+    scope_note: Supporting AV runtime lemma under forward-only T11; bounded to promoted ORIUS replay rows and the longitudinal brake-hold postcondition.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{lemma}[T11\_AV\_BrakeHold: AV Brake-Hold Runtime Lemma]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{lemma}[T11\_AV\_BrakeHold: AV Brake-Hold Runtime Lemma]'
+    assumptions: []
+    typed_obligations:
+      - T11 coverage obligation is runtime-linked.
+      - T11 sound safe-action set obligation is runtime-linked.
+      - T11 repair-membership obligation is runtime-linked.
+      - T11 fallback-admissibility obligation is runtime-linked.
+      - True brake-hold runtime postcondition passes for the AV replay row.
+    unresolved_assumptions: []
+    dependencies:
+      - T11
+      - AV promoted replay runtime trace
+      - Domain runtime contract witness CSV
+    weakest_step: Row-local replay witness only; it does not prove complete autonomous-driving closure.
+    rigor_rating: proof_runtime_linked
+    code_correspondence: matches
+    code_correspondence_detail: Runtime traces emit T11 status, certificate validity, and the AV brake-hold postcondition into domain contract witnesses.
+    severity_if_broken: high
+    remediation_class: fail closed
+    remediation_detail: Missing T11 status, failed obligations, invalid certificate, or false postcondition must make the witness fail.
+    code_anchors:
+      - path: src/orius/universal_theory/domain_runtime_contracts.py
+        symbol: DomainRuntimeContractWitness
+        note: Bounded runtime witness type.
+      - path: src/orius/av_waymo/runtime.py
+        symbol: _run_episode
+        note: Emits AV T11 and brake-hold witness fields.
+      - path: scripts/build_domain_runtime_contract_artifacts.py
+        symbol: build_domain_runtime_contract_artifacts
+        note: Builds publication-facing witness artifacts.
+    test_anchors:
+      - path: tests/test_domain_runtime_contract_witnesses.py
+        symbol: test_passing_av_row_links_t11_certificate_and_postcondition
+        note: Passing AV witness regression.
+      - path: tests/test_domain_runtime_contract_witnesses.py
+        symbol: test_failing_av_postcondition_fails_closed_even_with_certificate
+        note: Failing AV witness regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+  - id: T11_HC_FailSafeRelease
+    title: "T11_HC_FailSafeRelease: Healthcare Fail-Safe Release Runtime Lemma"
+    surface_kind: runtime_linked_lemma
+    defense_tier: supporting_defended
+    proof_tier: V1_runtime_linked
+    program_role: bounded_domain_transfer_lemma
+    status: active
+    scope_note: Supporting healthcare runtime lemma under forward-only T11; bounded to promoted MIMIC monitoring rows and the fail-safe alert-release postcondition.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{lemma}[T11\_HC\_FailSafeRelease: Healthcare Fail-Safe Release Runtime Lemma]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{lemma}[T11\_HC\_FailSafeRelease: Healthcare Fail-Safe Release Runtime Lemma]'
+    assumptions: []
+    typed_obligations:
+      - T11 coverage obligation is runtime-linked.
+      - T11 sound safe-action set obligation is runtime-linked.
+      - T11 repair-membership obligation is runtime-linked.
+      - T11 fallback-admissibility obligation is runtime-linked.
+      - Healthcare true fail-safe alert-release runtime postcondition passes.
+    unresolved_assumptions: []
+    dependencies:
+      - T11
+      - Healthcare promoted monitoring runtime trace
+      - Domain runtime contract witness CSV
+    weakest_step: Row-local monitoring witness only; it does not prove regulated clinical deployment closure.
+    rigor_rating: proof_runtime_linked
+    code_correspondence: matches
+    code_correspondence_detail: Runtime traces emit T11 status, certificate validity, and the healthcare fail-safe release postcondition into domain contract witnesses.
+    severity_if_broken: high
+    remediation_class: fail closed
+    remediation_detail: Missing T11 status, failed obligations, invalid certificate, or false postcondition must make the witness fail.
+    code_anchors:
+      - path: src/orius/universal_theory/domain_runtime_contracts.py
+        symbol: DomainRuntimeContractWitness
+        note: Bounded runtime witness type.
+      - path: scripts/build_healthcare_runtime_artifacts.py
+        symbol: _run_orius_episode
+        note: Emits healthcare T11 and fail-safe witness fields.
+      - path: scripts/build_domain_runtime_contract_artifacts.py
+        symbol: build_domain_runtime_contract_artifacts
+        note: Builds publication-facing witness artifacts.
+    test_anchors:
+      - path: tests/test_domain_runtime_contract_witnesses.py
+        symbol: test_passing_healthcare_row_links_t11_certificate_and_postcondition
+        note: Passing healthcare witness regression.
+      - path: tests/test_domain_runtime_contract_witnesses.py
+        symbol: test_missing_t11_status_fails_closed
+        note: Missing T11 status regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+  - id: T6_AV_FallbackValidity
+    title: "T6_AV_FallbackValidity: AV One-Step Fallback Certificate Lemma"
+    surface_kind: runtime_linked_lemma
+    defense_tier: supporting_defended
+    proof_tier: V1_runtime_linked
+    program_role: bounded_domain_certificate_validity
+    status: active
+    scope_note: Supporting AV certificate-validity lemma under T6/T11; degraded full-brake fallback releases are one-step valid only.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{lemma}[T6\_AV\_FallbackValidity: AV One-Step Fallback Certificate Lemma]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{lemma}[T6\_AV\_FallbackValidity: AV One-Step Fallback Certificate Lemma]'
+    assumptions: []
+    typed_obligations:
+      - T6 first-passage validity semantics for positive-margin hold certificates.
+      - T11 runtime witness is linked.
+      - "Runtime witness: AV full-brake fallback action is emitted for degraded fallback rows."
+      - "Runtime witness: AV true brake-hold postcondition passes."
+    unresolved_assumptions: []
+    dependencies:
+      - T6
+      - T11
+      - T11_AV_BrakeHold
+    weakest_step: One-step fallback validity only; degraded observation never grants multi-step validity.
+    rigor_rating: proof_runtime_linked
+    code_correspondence: matches
+    code_correspondence_detail: Shared domain validity helper assigns H_t=1 only to AV fail-safe fallback certificates.
+    severity_if_broken: high
+    remediation_class: fail closed
+    remediation_detail: Non-fail-safe fallback or failed postcondition must invalidate the witness.
+    code_anchors:
+      - path: src/orius/universal_theory/domain_validity.py
+        symbol: domain_certificate_validity_semantics
+        note: Bounded fallback and T6-style hold validity helper.
+      - path: src/orius/av_waymo/runtime.py
+        symbol: WaymoAVDomainAdapter.emit_certificate
+        note: AV certificate emitter.
+    test_anchors:
+      - path: tests/test_domain_runtime_contract_witnesses.py
+        symbol: test_av_fallback_certificate_validity_is_one_step_only
+        note: AV fallback validity regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+  - id: T6_HC_FallbackValidity
+    title: "T6_HC_FallbackValidity: Healthcare One-Step Fallback Certificate Lemma"
+    surface_kind: runtime_linked_lemma
+    defense_tier: supporting_defended
+    proof_tier: V1_runtime_linked
+    program_role: bounded_domain_certificate_validity
+    status: active
+    scope_note: Supporting healthcare certificate-validity lemma under T6/T11; degraded max-alert fallback releases are one-step valid only.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{lemma}[T6\_HC\_FallbackValidity: Healthcare One-Step Fallback Certificate Lemma]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{lemma}[T6\_HC\_FallbackValidity: Healthcare One-Step Fallback Certificate Lemma]'
+    assumptions: []
+    typed_obligations:
+      - T6 first-passage validity semantics for positive-margin hold certificates.
+      - T11 runtime witness is linked.
+      - Healthcare max-alert fallback action is emitted for degraded fallback rows.
+      - Healthcare true fail-safe alert-release postcondition passes.
+    unresolved_assumptions: []
+    dependencies:
+      - T6
+      - T11
+      - T11_HC_FailSafeRelease
+    weakest_step: One-step fallback validity only; degraded observation never grants multi-step validity.
+    rigor_rating: proof_runtime_linked
+    code_correspondence: matches
+    code_correspondence_detail: Shared domain validity helper assigns H_t=1 only to healthcare max-alert fallback certificates.
+    severity_if_broken: high
+    remediation_class: fail closed
+    remediation_detail: Non-fail-safe fallback or failed postcondition must invalidate the witness.
+    code_anchors:
+      - path: src/orius/universal_theory/domain_validity.py
+        symbol: domain_certificate_validity_semantics
+        note: Bounded fallback and T6-style hold validity helper.
+      - path: src/orius/universal_framework/healthcare_adapter.py
+        symbol: HealthcareDomainAdapter.emit_certificate
+        note: Healthcare certificate emitter.
+    test_anchors:
+      - path: tests/test_domain_runtime_contract_witnesses.py
+        symbol: test_healthcare_fallback_certificate_validity_is_one_step_only
+        note: Healthcare fallback validity regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+  - id: T_EQ_Battery_RuntimeArtifactPackage
+    title: "T_EQ_Battery_RuntimeArtifactPackage: Battery Equal Artifact Discipline Package"
+    surface_kind: artifact_discipline_gate
+    defense_tier: supporting_defended
+    proof_tier: V1_artifact_runtime_linked
+    program_role: equal_domain_artifact_discipline
+    status: active
+    scope_note: Supporting artifact-discipline row; it checks battery theorem, runtime, comparator, ablation, negative-control, utility, and reproducibility evidence without changing the flagship theorem tier.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{lemma}[T\_EQ\_Battery\_RuntimeArtifactPackage: Battery Equal Artifact Discipline Package]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{lemma}[T\_EQ\_Battery\_RuntimeArtifactPackage: Battery Equal Artifact Discipline Package]'
+    assumptions: []
+    typed_obligations:
+      - Battery locked witness runtime trace exists.
+      - Battery comparator, ablation, and negative-control rows are runtime-denominator rows.
+      - Battery ORIUS useful work exceeds the degenerate safe-fallback comparator.
+    unresolved_assumptions: []
+    dependencies:
+      - Battery runtime trace
+      - Equal domain artifact discipline gate
+    weakest_step: Artifact-discipline equivalence only; it does not add a new battery theorem.
+    rigor_rating: artifact_runtime_linked
+    code_correspondence: matches
+    code_correspondence_detail: Equal-domain builder reads battery runtime traces and locked witness surfaces into strict per-domain artifact gates.
+    severity_if_broken: high
+    remediation_class: fail closed
+    remediation_detail: Missing runtime-native comparator, ablation, negative-control, utility, or reproducibility evidence fails the equal-domain gate.
+    code_anchors:
+      - path: scripts/build_equal_domain_artifact_discipline.py
+        symbol: build_equal_domain_artifact_discipline
+        note: Builds the equal artifact-discipline gate.
+      - path: scripts/validate_equal_domain_artifact_discipline.py
+        symbol: main
+        note: Validates fail-closed equal-domain evidence.
+    test_anchors:
+      - path: tests/test_equal_domain_artifact_discipline.py
+        symbol: test_equal_domain_artifact_discipline_gates_pass_for_all_domains
+        note: Battery equal-discipline regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+  - id: T_EQ_AV_RuntimeArtifactPackage
+    title: "T_EQ_AV_RuntimeArtifactPackage: AV Equal Artifact Discipline Package"
+    surface_kind: artifact_discipline_gate
+    defense_tier: supporting_defended
+    proof_tier: V1_artifact_runtime_linked
+    program_role: equal_domain_artifact_discipline
+    status: active
+    scope_note: Supporting artifact-discipline row for the bounded AV replay contract; it does not assert full autonomous-driving field closure.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{lemma}[T\_EQ\_AV\_RuntimeArtifactPackage: AV Equal Artifact Discipline Package]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{lemma}[T\_EQ\_AV\_RuntimeArtifactPackage: AV Equal Artifact Discipline Package]'
+    assumptions: []
+    typed_obligations:
+      - Vehicle T11 and T6 runtime lemmas are linked.
+      - Vehicle comparator, ablation, and negative-control rows are runtime-denominator rows.
+      - Vehicle ORIUS useful work exceeds always-brake useful work.
+    unresolved_assumptions: []
+    dependencies:
+      - T11_AV_BrakeHold
+      - T6_AV_FallbackValidity
+      - Equal domain artifact discipline gate
+    weakest_step: Artifact-discipline equivalence only; it remains bounded to the promoted AV replay contract.
+    rigor_rating: artifact_runtime_linked
+    code_correspondence: matches
+    code_correspondence_detail: AV runtime generation emits runtime-native comparator artifacts consumed by the equal-domain gate.
+    severity_if_broken: high
+    remediation_class: fail closed
+    remediation_detail: Missing runtime-native comparator, ablation, negative-control, utility, or reproducibility evidence fails the equal-domain gate.
+    code_anchors:
+      - path: src/orius/av_waymo/runtime.py
+        symbol: run_runtime_dry_run
+        note: Emits AV runtime and comparator artifacts.
+      - path: scripts/build_equal_domain_artifact_discipline.py
+        symbol: build_equal_domain_artifact_discipline
+        note: Builds the equal artifact-discipline gate.
+    test_anchors:
+      - path: tests/test_equal_domain_artifact_discipline.py
+        symbol: test_equal_domain_artifact_discipline_gates_pass_for_all_domains
+        note: AV equal-discipline regression.
+      - path: tests/test_av_waymo_dry_run.py
+        symbol: test_waymo_dry_run_smoke
+        note: AV runtime comparator smoke regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
+  - id: T_EQ_HC_RuntimeArtifactPackage
+    title: "T_EQ_HC_RuntimeArtifactPackage: Healthcare Equal Artifact Discipline Package"
+    surface_kind: artifact_discipline_gate
+    defense_tier: supporting_defended
+    proof_tier: V1_artifact_runtime_linked
+    program_role: equal_domain_artifact_discipline
+    status: active
+    scope_note: Supporting artifact-discipline row for the bounded healthcare monitoring contract; it does not assert regulated clinical deployment readiness.
+    statement_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{lemma}[T\_EQ\_HC\_RuntimeArtifactPackage: Healthcare Equal Artifact Discipline Package]'
+    proof_source:
+      file: appendices/app_c_full_proofs.tex
+      needle: '\begin{lemma}[T\_EQ\_HC\_RuntimeArtifactPackage: Healthcare Equal Artifact Discipline Package]'
+    assumptions: []
+    typed_obligations:
+      - Healthcare T11 and T6 runtime lemmas are linked.
+      - Healthcare comparator, ablation, and negative-control rows are runtime-denominator rows.
+      - Healthcare ORIUS useful work exceeds always-alert useful work.
+    unresolved_assumptions: []
+    dependencies:
+      - T11_HC_FailSafeRelease
+      - T6_HC_FallbackValidity
+      - Equal domain artifact discipline gate
+    weakest_step: Artifact-discipline equivalence only; it remains bounded to the promoted healthcare monitoring contract.
+    rigor_rating: artifact_runtime_linked
+    code_correspondence: matches
+    code_correspondence_detail: Healthcare runtime generation emits runtime-native comparator artifacts consumed by the equal-domain gate.
+    severity_if_broken: high
+    remediation_class: fail closed
+    remediation_detail: Missing runtime-native comparator, ablation, negative-control, utility, or reproducibility evidence fails the equal-domain gate.
+    code_anchors:
+      - path: scripts/build_healthcare_runtime_artifacts.py
+        symbol: build_healthcare_runtime_artifacts
+        note: Emits healthcare runtime and comparator artifacts.
+      - path: scripts/build_equal_domain_artifact_discipline.py
+        symbol: build_equal_domain_artifact_discipline
+        note: Builds the equal artifact-discipline gate.
+    test_anchors:
+      - path: tests/test_equal_domain_artifact_discipline.py
+        symbol: test_equal_domain_artifact_discipline_gates_pass_for_all_domains
+        note: Healthcare equal-discipline regression.
+      - path: tests/test_healthcare_runtime_artifacts.py
+        symbol: test_build_healthcare_runtime_artifacts_emits_domain_native_runtime_surfaces
+        note: Healthcare runtime comparator smoke regression.
+    legacy_aliases: []
+    generator_targets:
+      - active_theorem_audit
+      - defended_theorem_core
+      - theorem_surface_register
   - id: L1
     title: "L1: Rate-Distortion Safety Law"
     surface_kind: scoped_proxy_law
@@ -873,9 +1325,9 @@ theorems:
     proof_source:
       file: appendices/app_c_full_proofs.tex
       needle: '\begin{theorem}[L1: Rate-Distortion Safety Law]'
-    assumptions:
+    assumptions: []
+    unresolved_assumptions:
       - Stylized binary-source surrogate lower envelope.
-    unresolved_assumptions: []
     dependencies:
       - Scoped law-helper surrogate definition
     weakest_step: Surrogate rather than converse.
@@ -911,9 +1363,9 @@ theorems:
     proof_source:
       file: appendices/app_c_full_proofs.tex
       needle: '\begin{theorem}[L2: Capacity Bridge]'
-    assumptions:
+    assumptions: []
+    unresolved_assumptions:
       - Domain-scoped proxy constant kappa_d is externally calibrated.
-    unresolved_assumptions: []
     dependencies:
       - Scoped kappa_d calibration
     weakest_step: Proxy bridge rather than derived theorem.
@@ -949,9 +1401,9 @@ theorems:
     proof_source:
       file: appendices/app_c_full_proofs.tex
       needle: '\begin{theorem}[L3: Critical Capacity]'
-    assumptions:
+    assumptions: []
+    unresolved_assumptions:
       - Stylized L2 capacity-proxy bridge.
-    unresolved_assumptions: []
     dependencies:
       - L2
       - T3a
@@ -988,9 +1440,9 @@ theorems:
     proof_source:
       file: appendices/app_c_full_proofs.tex
       needle: '\begin{theorem}[L4: Achievability-Converse Sandwich]'
-    assumptions:
+    assumptions: []
+    unresolved_assumptions:
       - Executable T3-style upper envelope.
-    unresolved_assumptions: []
     dependencies:
       - T3a
       - L1
@@ -1030,6 +1482,7 @@ theorems:
       needle: '\begin{theorem}[T11\_Byzantine: Byzantine Trimmed-Mean Bound]'
     assumptions:
       - A9
+    typed_obligations:
       - Byzantine fraction f is strictly below 1/3.
       - Trim fraction beta is at least f.
       - Tail-contamination model places adversarial readings in the trimmed tails.
@@ -1110,11 +1563,9 @@ theorems:
     proof_source:
       file: appendices/app_c_full_proofs.tex
       needle: '\begin{theorem}[T\_minimax: Minimax OASG Tradeoff]'
-    assumptions:
-      - T3a
-      - L1
-      - L2
-    unresolved_assumptions: []
+    assumptions: []
+    unresolved_assumptions:
+      - T3a/L1/L2 stylized lower-envelope bridge.
     dependencies:
       - Stylized lower-envelope witness
     weakest_step: Lower side still proxy-based.
@@ -1150,11 +1601,9 @@ theorems:
     proof_source:
       file: appendices/app_c_full_proofs.tex
       needle: '\begin{theorem}[T\_sensor\_converse: Sensor Quality Converse]'
-    assumptions:
-      - T3a
-      - L2
-      - L3
-    unresolved_assumptions: []
+    assumptions: []
+    unresolved_assumptions:
+      - T3a/L2/L3 proxy threshold bridge.
     dependencies:
       - Stylized inverse threshold helper
     weakest_step: Proxy threshold rather than defended converse.
@@ -1195,6 +1644,7 @@ theorems:
       - A4
       - A5
       - A9
+    typed_obligations:
       - Bonferroni/union-bound aggregation over the horizon.
     unresolved_assumptions: []
     dependencies:

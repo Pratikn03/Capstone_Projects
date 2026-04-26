@@ -13,6 +13,10 @@ The flagship novelty sentence for the promoted ML lane is:
 
 > ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.
 
+The novelty claim is architectural and runtime-semantic: ORIUS does not claim a new
+conformal method, a new robust-optimization primitive, a new universal controller, or a
+new conditional-coverage theorem.
+
 The promoted ML center is grouped calibration and runtime safety under degraded observation. This directory does not carry a new conditional-coverage theorem claim.
 
 ## Canonical monograph matrices

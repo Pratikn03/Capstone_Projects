@@ -1,4 +1,4 @@
 domain,tier,governance_surface,lifecycle_state,note
 Battery Energy Storage,reference,certified_runtime,witness_locked,Battery remains the deepest certificate and theorem witness row.
-Autonomous Vehicles,proof_validated,certified_runtime,bounded_promoted,AV is promoted only under the TTC plus predictive-entry-barrier contract.
-Medical and Healthcare Monitoring,proof_validated,certified_runtime_proxy,bounded_promoted,Healthcare remains bounded to monitoring and alert semantics with explicit governance-proxy wording.
+Autonomous Vehicles,runtime_contract_closed,certified_runtime,bounded_promoted,AV is promoted only under the narrowed brake-hold runtime contract.
+Medical and Healthcare Monitoring,runtime_contract_closed,certified_runtime_emitted,bounded_promoted,Healthcare remains bounded to MIMIC monitoring and fail-safe alert-release semantics.

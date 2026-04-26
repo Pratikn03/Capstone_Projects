@@ -15,7 +15,7 @@
   "invalid_threshold": 0.35,
   "max_inflation_multiplier": 3.0,
   "publication_dir": "/Users/pratik_n/Downloads/gridpulse/reports/orius_av/full_corpus/shift_aware",
-  "runtime_state_path": null,
+  "runtime_state_path": "not_canonical",
   "artifact_toggles": {
     "enabled": true
   },

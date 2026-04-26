@@ -1,4 +1,4 @@
 domain,validation_status,maturity_tier,source_dataset,baseline_tsvr_mean,orius_tsvr_mean,orius_reduction_pct,closure_target_ready,closure_blocker
 battery,reference,reference,locked_battery_witness,0.0083,0.0000,100.0,True,battery_reference_witness
-healthcare,proof_validated,proof_validated,real_data,0.2917,0.0417,85.7,True,none
-vehicle,proof_validated,proof_validated,real_data,0.1250,0.0417,66.7,True,none
+healthcare,proof_validated,proof_validated,real_data,0.2917,0.0417,85.7,True,pending_external_review_artifact
+vehicle,proof_validated,proof_validated,real_data,0.1250,0.0417,66.7,True,pending_external_review_artifact

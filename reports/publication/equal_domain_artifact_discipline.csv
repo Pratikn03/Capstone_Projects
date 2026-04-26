@@ -1,0 +1,4 @@
+domain,artifact_discipline_gate,runtime_native_gate,theorem_gate,proof_appendix_gate,baseline_gate,ablation_gate,negative_control_gate,utility_gate,reproducibility_gate,blockers,governing_runtime_source
+Battery Energy Storage,True,True,True,True,True,True,True,True,True,,reports/battery_av/battery/runtime_summary.csv
+Autonomous Vehicles,True,True,True,True,True,True,True,True,True,,reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_summary.csv
+Medical and Healthcare Monitoring,True,True,True,True,True,True,True,True,True,,reports/healthcare/runtime_summary.csv

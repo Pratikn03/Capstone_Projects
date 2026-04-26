@@ -1,0 +1,59 @@
+{
+  "generated_at_utc": "2026-04-26T00:54:36.525107+00:00",
+  "status": "nuplan_full_freeze_pass",
+  "pass": true,
+  "summary": "/Volumes/T9/gridpulse/reports/predeployment_external_validation/nuplan_closed_loop_summary.csv",
+  "traces": "/Volumes/T9/gridpulse/reports/predeployment_external_validation/nuplan_closed_loop_traces.csv",
+  "source_manifest": "/Volumes/T9/gridpulse/reports/predeployment_external_validation/nuplan_closed_loop_manifest.json",
+  "summary_row": {
+    "validation_surface": "nuplan_allzip_grouped_runtime_replay_surrogate",
+    "status": "completed_bounded_replay_not_carla",
+    "source_dataset": "nuplan_multi_city",
+    "evidence_level": "offline_runtime_replay_surrogate",
+    "db_count": "8313",
+    "scenario_count": "379442",
+    "runtime_trace_rows": "12248832",
+    "orius_runtime_rows": "1531104",
+    "orius_tsvr": "0.0001626277509561",
+    "baseline_tsvr": "0.2892501097247476",
+    "orius_intervention_rate": "0.5003010899324931",
+    "orius_fallback_activation_rate": "0.1737158285785942",
+    "certificate_valid_rate": "0.9999242376742533",
+    "domain_postcondition_pass_rate": "0.9998373722490438",
+    "carla_completed": "False",
+    "road_deployed": "False",
+    "full_autonomous_driving_closure_claimed": "False",
+    "claim_boundary": "Completed all-zip grouped nuPlan runtime replay/surrogate evidence only; does not claim completed CARLA simulation, road deployment, or full autonomous-driving field closure."
+  },
+  "trace_stats": {
+    "trace_rows_scanned": 12248832,
+    "validation_surfaces": [
+      "nuplan_allzip_grouped_runtime_replay_surrogate"
+    ],
+    "scenario_count_scanned": 37344,
+    "controllers_scanned": [
+      "always_brake",
+      "baseline",
+      "nonreliability_conformal_runtime",
+      "orius",
+      "predictor_only_no_runtime",
+      "robust_fixed_deceleration",
+      "rss_cbf_filter",
+      "stale_certificate_no_temporal_guard"
+    ],
+    "orius_trace_rows_scanned": 1531104,
+    "orius_true_constraint_violations": 249
+  },
+  "source_dataset": "nuplan_multi_city",
+  "validation_surface": "nuplan_allzip_grouped_runtime_replay_surrogate",
+  "primary_target": "nuplan_allzip_grouped_runtime_replay_surrogate",
+  "orius_runtime_rows": 1531104,
+  "trace_rows": 12248832,
+  "orius_tsvr": 0.0001626277509561,
+  "certificate_valid_rate": 0.9999242376742533,
+  "domain_postcondition_pass_rate": 0.9998373722490438,
+  "min_runtime_rows": 1531104,
+  "min_trace_rows": 12248832,
+  "findings": [],
+  "claim_boundary": "Full AV freeze uses bounded nuPlan replay/surrogate runtime-contract evidence only; it does not claim completed CARLA simulation, road deployment, or full autonomous-driving field closure."
+}

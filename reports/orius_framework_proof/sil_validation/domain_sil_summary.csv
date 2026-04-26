@@ -1,3 +1,3 @@
 domain,display,maturity_tier,support_tier_enabled,data_source,baseline_tsvr_mean,orius_tsvr_mean,repair_rate_pct,certificate_rate_pct,runtime_error_rate_pct,mean_reliability,p95_latency_ms,sil_pass
-av,Autonomous Vehicles,proof_validated,False,locked_csv,0.0,0.0,20.83,100.0,0.0,0.6911,0.23,True
-healthcare,Medical Monitoring (ICU Vitals),proof_validated,False,locked_csv,4.17,0.0,20.83,100.0,0.0,0.4776,0.258,True
+av,Autonomous Vehicles,proof_validated,False,locked_csv,3.82,0.0,21.53,100.0,0.0,0.7707,0.215,True
+healthcare,Medical Monitoring (ICU Vitals),proof_validated,False,locked_csv,5.56,0.0,15.28,100.0,0.0,0.5532,0.396,True

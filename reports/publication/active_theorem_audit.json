@@ -16,7 +16,7 @@
       "program_role": "phenomenon_existence",
       "scope_note": "Defended as the battery witness-row OASG existence theorem under explicit arbitrage reachability and controller-fault independence assumptions.",
       "status": "active",
-      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:800",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:802",
       "proof_location": "appendices/app_c_full_proofs.tex:36",
       "assumptions_used": [
         "A1",
@@ -25,26 +25,27 @@
         "A11",
         "A12"
       ],
+      "typed_obligations": [],
       "assumption_locations": [
         {
           "assumption": "A1",
-          "location": "appendices/app_b_assumptions.tex:56"
+          "location": "appendices/app_b_assumptions.tex:55"
         },
         {
           "assumption": "A2",
-          "location": "appendices/app_b_assumptions.tex:68"
+          "location": "appendices/app_b_assumptions.tex:67"
         },
         {
           "assumption": "A4",
-          "location": "appendices/app_b_assumptions.tex:84"
+          "location": "appendices/app_b_assumptions.tex:86"
         },
         {
           "assumption": "A11",
-          "location": "appendices/app_b_assumptions.tex:165"
+          "location": "appendices/app_b_assumptions.tex:174"
         },
         {
           "assumption": "A12",
-          "location": "appendices/app_b_assumptions.tex:173"
+          "location": "appendices/app_b_assumptions.tex:185"
         }
       ],
       "unresolved_assumptions": [],
@@ -98,7 +99,7 @@
       "program_role": "one_step_runtime_guarantee",
       "scope_note": "Defended as a one-step true-state postcondition whose tightened margin already absorbs the one-step model-error allowance.",
       "status": "active",
-      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1039",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1041",
       "proof_location": "appendices/app_c_full_proofs.tex:101",
       "assumptions_used": [
         "A1",
@@ -108,30 +109,31 @@
         "A5",
         "A7"
       ],
+      "typed_obligations": [],
       "assumption_locations": [
         {
           "assumption": "A1",
-          "location": "appendices/app_b_assumptions.tex:56"
+          "location": "appendices/app_b_assumptions.tex:55"
         },
         {
           "assumption": "A2",
-          "location": "appendices/app_b_assumptions.tex:68"
+          "location": "appendices/app_b_assumptions.tex:67"
         },
         {
           "assumption": "A3",
-          "location": "appendices/app_b_assumptions.tex:78"
+          "location": "appendices/app_b_assumptions.tex:77"
         },
         {
           "assumption": "A4",
-          "location": "appendices/app_b_assumptions.tex:84"
+          "location": "appendices/app_b_assumptions.tex:86"
         },
         {
           "assumption": "A5",
-          "location": "appendices/app_b_assumptions.tex:91"
+          "location": "appendices/app_b_assumptions.tex:93"
         },
         {
           "assumption": "A7",
-          "location": "appendices/app_b_assumptions.tex:112"
+          "location": "appendices/app_b_assumptions.tex:114"
         }
       ],
       "unresolved_assumptions": [],
@@ -169,7 +171,7 @@
         {
           "path": "src/orius/certos/runtime.py",
           "symbol": "CertOSRuntime.validate_and_step",
-          "location": "src/orius/certos/runtime.py:164",
+          "location": "src/orius/certos/runtime.py:180",
           "note": "Enforces the runtime theorem hook for one-step safety."
         }
       ],
@@ -197,7 +199,7 @@
       "program_role": "runtime_risk_budget_derivation",
       "scope_note": "Defended as the per-step envelope derivation under the explicit battery assumptions and the narrowed reliability-score interpretation.",
       "status": "active",
-      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1274",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1276",
       "proof_location": "appendices/app_c_full_proofs.tex:169",
       "assumptions_used": [
         "A1",
@@ -208,34 +210,35 @@
         "A7",
         "A9"
       ],
+      "typed_obligations": [],
       "assumption_locations": [
         {
           "assumption": "A1",
-          "location": "appendices/app_b_assumptions.tex:56"
+          "location": "appendices/app_b_assumptions.tex:55"
         },
         {
           "assumption": "A2",
-          "location": "appendices/app_b_assumptions.tex:68"
+          "location": "appendices/app_b_assumptions.tex:67"
         },
         {
           "assumption": "A4",
-          "location": "appendices/app_b_assumptions.tex:84"
+          "location": "appendices/app_b_assumptions.tex:86"
         },
         {
           "assumption": "A5",
-          "location": "appendices/app_b_assumptions.tex:91"
+          "location": "appendices/app_b_assumptions.tex:93"
         },
         {
           "assumption": "A6",
-          "location": "appendices/app_b_assumptions.tex:104"
+          "location": "appendices/app_b_assumptions.tex:106"
         },
         {
           "assumption": "A7",
-          "location": "appendices/app_b_assumptions.tex:112"
+          "location": "appendices/app_b_assumptions.tex:114"
         },
         {
           "assumption": "A9",
-          "location": "appendices/app_b_assumptions.tex:134"
+          "location": "appendices/app_b_assumptions.tex:143"
         }
       ],
       "unresolved_assumptions": [],
@@ -303,7 +306,7 @@
       "program_role": "runtime_risk_budget_aggregation",
       "scope_note": "Derived corollary that converts the predictable per-step budget into the episode-average envelope.",
       "status": "active",
-      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1369",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1371",
       "proof_location": "appendices/app_c_full_proofs.tex:169",
       "assumptions_used": [
         "A1",
@@ -314,34 +317,35 @@
         "A7",
         "A9"
       ],
+      "typed_obligations": [],
       "assumption_locations": [
         {
           "assumption": "A1",
-          "location": "appendices/app_b_assumptions.tex:56"
+          "location": "appendices/app_b_assumptions.tex:55"
         },
         {
           "assumption": "A2",
-          "location": "appendices/app_b_assumptions.tex:68"
+          "location": "appendices/app_b_assumptions.tex:67"
         },
         {
           "assumption": "A4",
-          "location": "appendices/app_b_assumptions.tex:84"
+          "location": "appendices/app_b_assumptions.tex:86"
         },
         {
           "assumption": "A5",
-          "location": "appendices/app_b_assumptions.tex:91"
+          "location": "appendices/app_b_assumptions.tex:93"
         },
         {
           "assumption": "A6",
-          "location": "appendices/app_b_assumptions.tex:104"
+          "location": "appendices/app_b_assumptions.tex:106"
         },
         {
           "assumption": "A7",
-          "location": "appendices/app_b_assumptions.tex:112"
+          "location": "appendices/app_b_assumptions.tex:114"
         },
         {
           "assumption": "A9",
-          "location": "appendices/app_b_assumptions.tex:134"
+          "location": "appendices/app_b_assumptions.tex:143"
         }
       ],
       "unresolved_assumptions": [],
@@ -376,21 +380,21 @@
         {
           "path": "tests/test_active_theorem_audit.py",
           "symbol": "test_defense_tiers_match_the_rebuilt_core",
-          "location": "tests/test_active_theorem_audit.py:96",
+          "location": "tests/test_active_theorem_audit.py:195",
           "note": "Audit regression for the T3 split."
         }
       ]
     },
     {
       "theorem_id": "T4",
-      "title": "No Free Safety",
+      "title": "Observation Necessity / No Free Safety",
       "surface_kind": "theorem",
       "defense_tier": "flagship_defended",
       "proof_tier": "V1",
       "program_role": "bounded_necessity_witness",
-      "scope_note": "Defended for the fixed-margin quality-ignorant controller class on the battery witness row with explicit arbitrage reachability.",
+      "scope_note": "Defended as the observation-necessity witness for the fixed-margin quality-ignorant controller class on the battery row with explicit arbitrage reachability.",
       "status": "active",
-      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1607",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1609",
       "proof_location": "appendices/app_c_full_proofs.tex:231",
       "assumptions_used": [
         "A1",
@@ -398,22 +402,23 @@
         "A4",
         "A11"
       ],
+      "typed_obligations": [],
       "assumption_locations": [
         {
           "assumption": "A1",
-          "location": "appendices/app_b_assumptions.tex:56"
+          "location": "appendices/app_b_assumptions.tex:55"
         },
         {
           "assumption": "A2",
-          "location": "appendices/app_b_assumptions.tex:68"
+          "location": "appendices/app_b_assumptions.tex:67"
         },
         {
           "assumption": "A4",
-          "location": "appendices/app_b_assumptions.tex:84"
+          "location": "appendices/app_b_assumptions.tex:86"
         },
         {
           "assumption": "A11",
-          "location": "appendices/app_b_assumptions.tex:165"
+          "location": "appendices/app_b_assumptions.tex:174"
         }
       ],
       "unresolved_assumptions": [],
@@ -428,7 +433,7 @@
       "code_correspondence_detail": "The repo contains the necessary baseline and witness pieces, but the theorem remains constructive rather than fully executable.",
       "severity_if_broken": "high",
       "remediation_class": "keep scope explicit",
-      "remediation_detail": "Preserve the fixed-margin quality-ignorant controller definition as part of the theorem statement.",
+      "remediation_detail": "Preserve the fixed-margin quality-ignorant controller definition and avoid broadening the theorem into a claim that every ambiguity class is unsafe.",
       "legacy_aliases": [],
       "generator_targets": [
         "active_theorem_audit",
@@ -468,7 +473,7 @@
       "program_role": "temporal_validity_definition",
       "scope_note": "Kept as the constructive maximal forward-tube containment definition and excluded from defended theorem counts.",
       "status": "active",
-      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1809",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1811",
       "proof_location": "appendices/app_c_full_proofs.tex:284",
       "assumptions_used": [
         "A1",
@@ -479,34 +484,35 @@
         "A7",
         "A9"
       ],
+      "typed_obligations": [],
       "assumption_locations": [
         {
           "assumption": "A1",
-          "location": "appendices/app_b_assumptions.tex:56"
+          "location": "appendices/app_b_assumptions.tex:55"
         },
         {
           "assumption": "A2",
-          "location": "appendices/app_b_assumptions.tex:68"
+          "location": "appendices/app_b_assumptions.tex:67"
         },
         {
           "assumption": "A4",
-          "location": "appendices/app_b_assumptions.tex:84"
+          "location": "appendices/app_b_assumptions.tex:86"
         },
         {
           "assumption": "A5",
-          "location": "appendices/app_b_assumptions.tex:91"
+          "location": "appendices/app_b_assumptions.tex:93"
         },
         {
           "assumption": "A6",
-          "location": "appendices/app_b_assumptions.tex:104"
+          "location": "appendices/app_b_assumptions.tex:106"
         },
         {
           "assumption": "A7",
-          "location": "appendices/app_b_assumptions.tex:112"
+          "location": "appendices/app_b_assumptions.tex:114"
         },
         {
           "assumption": "A9",
-          "location": "appendices/app_b_assumptions.tex:134"
+          "location": "appendices/app_b_assumptions.tex:143"
         }
       ],
       "unresolved_assumptions": [],
@@ -533,7 +539,7 @@
         {
           "path": "src/orius/universal_theory/battery_instantiation.py",
           "symbol": "certificate_validity_horizon",
-          "location": "src/orius/universal_theory/battery_instantiation.py:72",
+          "location": "src/orius/universal_theory/battery_instantiation.py:73",
           "note": "Deterministic maximal-horizon helper."
         }
       ],
@@ -541,7 +547,7 @@
         {
           "path": "tests/test_dc3s_temporal_theorems.py",
           "symbol": "test_certificate_validity_horizon_matches_expiration_bound_for_zero_action",
-          "location": "tests/test_dc3s_temporal_theorems.py:60",
+          "location": "tests/test_dc3s_temporal_theorems.py:62",
           "note": "Deterministic containment regression."
         }
       ]
@@ -550,30 +556,31 @@
       "theorem_id": "T6",
       "title": "Certificate Expiration Bound",
       "surface_kind": "theorem",
-      "defense_tier": "supporting_defended",
+      "defense_tier": "flagship_defended",
       "proof_tier": "V2_linked",
-      "program_role": "auxiliary_expiration_bound",
-      "scope_note": "Defended as the confidence-aware sub-Gaussian issuance-margin lower bound with explicit delta dependence.",
+      "program_role": "temporal_expiration_bound",
+      "scope_note": "Defended as the confidence-aware closed-form battery expiration theorem with explicit delta dependence and first-passage side conditions.",
       "status": "active",
-      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1841",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1843",
       "proof_location": "appendices/app_c_full_proofs.tex:304",
       "assumptions_used": [
         "A4",
         "A7",
         "A9"
       ],
+      "typed_obligations": [],
       "assumption_locations": [
         {
           "assumption": "A4",
-          "location": "appendices/app_b_assumptions.tex:84"
+          "location": "appendices/app_b_assumptions.tex:86"
         },
         {
           "assumption": "A7",
-          "location": "appendices/app_b_assumptions.tex:112"
+          "location": "appendices/app_b_assumptions.tex:114"
         },
         {
           "assumption": "A9",
-          "location": "appendices/app_b_assumptions.tex:134"
+          "location": "appendices/app_b_assumptions.tex:143"
         }
       ],
       "unresolved_assumptions": [],
@@ -581,13 +588,13 @@
         "{'Definition': 'Forward tube'}",
         "Reflection-principle / sub-Gaussian first-passage bound"
       ],
-      "weakest_step": "Multiple legacy horizon helpers existed; the repo now designates the delta-aware battery helper as canonical and treats the others as supplemental.",
+      "weakest_step": "The defended row depends on keeping the delta-aware helper canonical and not silently widening the theorem surface back to legacy no-delta semantics.",
       "rigor_rating": "machine_checked_ready",
       "code_correspondence": "matches",
-      "code_correspondence_detail": "The exported helper now carries the delta-aware theorem formula and emits fail-closed theorem metadata that forbids legacy no-delta semantics.",
+      "code_correspondence_detail": "The exported helper carries the closed-form first-passage formula, explicit side conditions, and fail-closed theorem metadata that forbids legacy no-delta semantics.",
       "severity_if_broken": "high",
-      "remediation_class": "canonicalize helper",
-      "remediation_detail": "Keep the no-delta legacy semantics out of the theorem-facing API and audit surfaces.",
+      "remediation_class": "keep flagship closed-form",
+      "remediation_detail": "Keep the no-delta legacy semantics out of the theorem-facing API and preserve the explicit first-passage side conditions.",
       "legacy_aliases": [],
       "generator_targets": [
         "active_theorem_audit",
@@ -599,7 +606,7 @@
         {
           "path": "src/orius/universal_theory/battery_instantiation.py",
           "symbol": "certificate_expiration_bound",
-          "location": "src/orius/universal_theory/battery_instantiation.py:133",
+          "location": "src/orius/universal_theory/battery_instantiation.py:134",
           "note": "Canonical theorem-facing T6 helper."
         },
         {
@@ -619,7 +626,7 @@
         {
           "path": "tests/test_t6_expiration_bound.py",
           "symbol": "test_t6_empirical_subgaussian_bound",
-          "location": "tests/test_t6_expiration_bound.py:68",
+          "location": "tests/test_t6_expiration_bound.py:69",
           "note": "Empirical confidence check."
         }
       ]
@@ -628,51 +635,49 @@
       "theorem_id": "T7",
       "title": "Feasible Fallback Existence",
       "surface_kind": "theorem",
-      "defense_tier": "draft_non_defended",
-      "proof_tier": "V1",
-      "program_role": "fallback_extension",
-      "scope_note": "Visible only as an interior-state fallback theorem with explicit slack against model error.",
+      "defense_tier": "flagship_defended",
+      "proof_tier": "V2_linked",
+      "program_role": "piecewise_fallback_existence",
+      "scope_note": "Defended as a battery-specific piecewise fallback theorem: safe hold on the interior, safe landing near the boundary, and fail-closed infeasibility otherwise.",
       "status": "active",
-      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1934",
-      "proof_location": "appendices/app_c_full_proofs.tex:350",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1937",
+      "proof_location": "appendices/app_c_full_proofs.tex:351",
       "assumptions_used": [
         "A1",
-        "A3",
         "A4",
         "A8"
       ],
+      "typed_obligations": [],
       "assumption_locations": [
         {
           "assumption": "A1",
-          "location": "appendices/app_b_assumptions.tex:56"
-        },
-        {
-          "assumption": "A3",
-          "location": "appendices/app_b_assumptions.tex:78"
+          "location": "appendices/app_b_assumptions.tex:55"
         },
         {
           "assumption": "A4",
-          "location": "appendices/app_b_assumptions.tex:84"
+          "location": "appendices/app_b_assumptions.tex:86"
         },
         {
           "assumption": "A8",
-          "location": "appendices/app_b_assumptions.tex:122"
+          "location": "appendices/app_b_assumptions.tex:124"
         }
       ],
       "unresolved_assumptions": [],
       "dependencies": [
-        "Constructive zero-dispatch battery fallback"
+        "Constructive battery safe hold",
+        "Boundary-aware safe-landing recovery action"
       ],
-      "weakest_step": "The theorem is deliberately narrow and does not claim fallback safety from arbitrary boundary-touching states.",
-      "rigor_rating": "narrowed_supporting_surface",
+      "weakest_step": "The theorem is battery-specific and only defended for the piecewise hold-or-safe-landing fallback surface implemented by the runtime.",
+      "rigor_rating": "proof_runtime_linked",
       "code_correspondence": "matches",
-      "code_correspondence_detail": "The validator only certifies fallback inside the interior slack region.",
+      "code_correspondence_detail": "The validator now certifies the piecewise T7 surface directly: interior hold, boundary recovery by safe landing, and fail-closed infeasibility.",
       "severity_if_broken": "medium",
-      "remediation_class": "keep narrowed",
-      "remediation_detail": "Avoid broadening the statement beyond the interior-state validator semantics.",
+      "remediation_class": "keep battery-specific",
+      "remediation_detail": "Preserve the piecewise hold-or-safe-landing scope and do not generalize T7 into a cross-domain transfer theorem.",
       "legacy_aliases": [],
       "generator_targets": [
         "active_theorem_audit",
+        "defended_theorem_core",
         "theorem_surface_register",
         "battery_claim_evidence_register"
       ],
@@ -680,22 +685,34 @@
         {
           "path": "src/orius/universal_theory/battery_instantiation.py",
           "symbol": "validate_battery_fallback",
-          "location": "src/orius/universal_theory/battery_instantiation.py:216",
-          "note": "Interior-state fallback validator."
+          "location": "src/orius/universal_theory/battery_instantiation.py:308",
+          "note": "Piecewise theorem-facing T7 validator."
         }
       ],
       "test_anchors": [
         {
           "path": "tests/test_dc3s_temporal_theorems.py",
           "symbol": "test_certify_fallback_existence_passes_for_interior_soc",
-          "location": "tests/test_dc3s_temporal_theorems.py:64",
+          "location": "tests/test_dc3s_temporal_theorems.py:66",
           "note": "Positive interior witness."
         },
         {
           "path": "tests/test_dc3s_temporal_theorems.py",
-          "symbol": "test_certify_fallback_existence_fails_near_boundary",
-          "location": "tests/test_dc3s_temporal_theorems.py:74",
-          "note": "Boundary failure witness."
+          "symbol": "test_certify_fallback_existence_recovers_near_lower_boundary",
+          "location": "tests/test_dc3s_temporal_theorems.py:79",
+          "note": "Lower-boundary recovery witness."
+        },
+        {
+          "path": "tests/test_dc3s_temporal_theorems.py",
+          "symbol": "test_certify_fallback_existence_recovers_near_upper_boundary",
+          "location": "tests/test_dc3s_temporal_theorems.py:101",
+          "note": "Upper-boundary recovery witness."
+        },
+        {
+          "path": "tests/test_dc3s_temporal_theorems.py",
+          "symbol": "test_certify_fallback_existence_fails_closed_when_boundary_recovery_is_infeasible",
+          "location": "tests/test_dc3s_temporal_theorems.py:123",
+          "note": "Fail-closed infeasibility witness."
         }
       ]
     },
@@ -708,8 +725,8 @@
       "program_role": "graceful_degradation_extension",
       "scope_note": "Supporting comparison theorem at the sequence level; the strict absorbing-landing claim is not part of the defended headline core.",
       "status": "active",
-      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1960",
-      "proof_location": "appendices/app_c_full_proofs.tex:363",
+      "statement_location": "chapters_merged/ch04_theoretical_foundations.tex:1967",
+      "proof_location": "appendices/app_c_full_proofs.tex:370",
       "assumptions_used": [
         "A1",
         "A2",
@@ -718,30 +735,31 @@
         "A5",
         "A8"
       ],
+      "typed_obligations": [],
       "assumption_locations": [
         {
           "assumption": "A1",
-          "location": "appendices/app_b_assumptions.tex:56"
+          "location": "appendices/app_b_assumptions.tex:55"
         },
         {
           "assumption": "A2",
-          "location": "appendices/app_b_assumptions.tex:68"
+          "location": "appendices/app_b_assumptions.tex:67"
         },
         {
           "assumption": "A3",
-          "location": "appendices/app_b_assumptions.tex:78"
+          "location": "appendices/app_b_assumptions.tex:77"
         },
         {
           "assumption": "A4",
-          "location": "appendices/app_b_assumptions.tex:84"
+          "location": "appendices/app_b_assumptions.tex:86"
         },
         {
           "assumption": "A5",
-          "location": "appendices/app_b_assumptions.tex:91"
+          "location": "appendices/app_b_assumptions.tex:93"
         },
         {
           "assumption": "A8",
-          "location": "appendices/app_b_assumptions.tex:122"
+          "location": "appendices/app_b_assumptions.tex:124"
         }
       ],
       "unresolved_assumptions": [],
@@ -766,7 +784,7 @@
         {
           "path": "src/orius/universal_theory/battery_instantiation.py",
           "symbol": "evaluate_graceful_degradation_dominance",
-          "location": "src/orius/universal_theory/battery_instantiation.py:243",
+          "location": "src/orius/universal_theory/battery_instantiation.py:416",
           "note": "Sequence-level dominance checker."
         }
       ],
@@ -774,7 +792,7 @@
         {
           "path": "tests/test_dc3s_temporal_theorems.py",
           "symbol": "test_graceful_degradation_dominance_detects_strict_domination",
-          "location": "tests/test_dc3s_temporal_theorems.py:83",
+          "location": "tests/test_dc3s_temporal_theorems.py:144",
           "note": "Comparison helper regression."
         }
       ]
@@ -788,20 +806,21 @@
       "program_role": "impossibility_extension",
       "scope_note": "Visible only as a scoped impossibility extension under the explicit geometric-mixing assumption A10b.",
       "status": "active",
-      "statement_location": "chapters/ch37_universality_completeness.tex:110",
-      "proof_location": "appendices/app_c_full_proofs.tex:405",
+      "statement_location": "chapters/ch37_universality_completeness.tex:112",
+      "proof_location": "appendices/app_c_full_proofs.tex:412",
       "assumptions_used": [
         "A10b",
         "A11"
       ],
+      "typed_obligations": [],
       "assumption_locations": [
         {
           "assumption": "A10b",
-          "location": "appendices/app_b_assumptions.tex:155"
+          "location": "appendices/app_b_assumptions.tex:164"
         },
         {
           "assumption": "A11",
-          "location": "appendices/app_b_assumptions.tex:165"
+          "location": "appendices/app_b_assumptions.tex:174"
         }
       ],
       "unresolved_assumptions": [],
@@ -825,7 +844,7 @@
         {
           "path": "src/orius/dc3s/theoretical_guarantees.py",
           "symbol": "compute_universal_impossibility_bound",
-          "location": "src/orius/dc3s/theoretical_guarantees.py:592",
+          "location": "src/orius/dc3s/theoretical_guarantees.py:599",
           "note": "Scaling witness helper."
         }
       ],
@@ -847,16 +866,16 @@
       "program_role": "information_lower_bound_extension",
       "scope_note": "Visible only as a scoped lower-bound frontier under the explicit TV bridge A13 and boundary-mass assumptions.",
       "status": "active",
-      "statement_location": "chapters/ch37_universality_completeness.tex:207",
-      "proof_location": "appendices/app_c_full_proofs.tex:446",
+      "statement_location": "chapters/ch37_universality_completeness.tex:209",
+      "proof_location": "appendices/app_c_full_proofs.tex:453",
       "assumptions_used": [
-        "A13",
-        "Unsafe-side boundary-mass sequence p_t is supplied explicitly."
+        "A13"
       ],
+      "typed_obligations": [],
       "assumption_locations": [
         {
           "assumption": "A13",
-          "location": "appendices/app_b_assumptions.tex:180"
+          "location": "appendices/app_b_assumptions.tex:195"
         }
       ],
       "unresolved_assumptions": [
@@ -881,7 +900,7 @@
         {
           "path": "src/orius/dc3s/theoretical_guarantees.py",
           "symbol": "compute_stylized_frontier_lower_bound",
-          "location": "src/orius/dc3s/theoretical_guarantees.py:631",
+          "location": "src/orius/dc3s/theoretical_guarantees.py:638",
           "note": "Scoped lower-bound helper."
         }
       ],
@@ -903,9 +922,10 @@
       "program_role": "typed_transfer_theorem",
       "scope_note": "Defended as the forward four-obligation one-step transfer theorem; the converse remains a separate structural failure proposition.",
       "status": "active",
-      "statement_location": "chapters/ch37_universality_completeness.tex:339",
-      "proof_location": "appendices/app_c_full_proofs.tex:494",
-      "assumptions_used": [
+      "statement_location": "chapters/ch37_universality_completeness.tex:341",
+      "proof_location": "appendices/app_c_full_proofs.tex:501",
+      "assumptions_used": [],
+      "typed_obligations": [
         "Coverage obligation for the observation-consistent state set.",
         "Soundness of the tightened safe-action set.",
         "Repair membership in the tightened safe-action set.",
@@ -947,7 +967,7 @@
         {
           "path": "src/orius/dc3s/theoretical_guarantees.py",
           "symbol": "evaluate_structural_transfer",
-          "location": "src/orius/dc3s/theoretical_guarantees.py:676",
+          "location": "src/orius/dc3s/theoretical_guarantees.py:683",
           "note": "Four-obligation executable witness."
         },
         {
@@ -973,6 +993,546 @@
       ]
     },
     {
+      "theorem_id": "T10_T11_ObservationAmbiguitySandwich",
+      "title": "T10_T11_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality",
+      "surface_kind": "corollary",
+      "defense_tier": "supporting_defended",
+      "proof_tier": "V1_runtime_linked",
+      "program_role": "supporting_observation_ambiguity_optimality",
+      "scope_note": "Supporting optimality corollary under covered observation ambiguity; it does not assert unrestricted global optimality for all physical AI systems.",
+      "status": "active",
+      "statement_location": "chapters/ch37_universality_completeness.tex:389",
+      "proof_location": "appendices/app_c_full_proofs.tex:536",
+      "assumptions_used": [],
+      "typed_obligations": [
+        "Observation ambiguity classes are explicit.",
+        "The common safe core is computed as the intersection of state-conditioned safe action sets.",
+        "ORIUS releases only actions safe for every state in its covered uncertainty set.",
+        "Probabilistic coverage is reported as an alpha-bound rather than unconditional zero violation."
+      ],
+      "assumption_locations": [],
+      "unresolved_assumptions": [],
+      "dependencies": [
+        "T10",
+        "T11",
+        "Common safe-core witness"
+      ],
+      "weakest_step": "The lower bound is a Bayes ambiguity-risk bound, not the false claim that differing safe sets alone imply unavoidable violation.",
+      "rigor_rating": "proof_runtime_linked",
+      "code_correspondence": "matches",
+      "code_correspondence_detail": "The executable witness computes common safe cores, observation-only Bayes lower bounds, and covered ORIUS release upper bounds with explicit alpha-bound semantics.",
+      "severity_if_broken": "high",
+      "remediation_class": "keep scoped optimality",
+      "remediation_detail": "Keep the theorem phrased as safety-optimal under covered observation ambiguity, not as a global optimality theorem for every physical-AI system.",
+      "legacy_aliases": [],
+      "generator_targets": [
+        "active_theorem_audit",
+        "defended_theorem_core",
+        "theorem_surface_register"
+      ],
+      "code_anchors": [
+        {
+          "path": "src/orius/universal_theory/observation_ambiguity.py",
+          "symbol": "build_observation_ambiguity_contract_summary",
+          "location": "src/orius/universal_theory/observation_ambiguity.py:169",
+          "note": "Publication-facing executable witness for the lower/upper sandwich."
+        },
+        {
+          "path": "src/orius/universal_theory/observation_ambiguity.py",
+          "symbol": "observation_only_bayes_lower_bound",
+          "location": "src/orius/universal_theory/observation_ambiguity.py:55",
+          "note": "Computes the observation-only Bayes lower bound."
+        },
+        {
+          "path": "src/orius/universal_theory/observation_ambiguity.py",
+          "symbol": "verify_covered_orius_release",
+          "location": "src/orius/universal_theory/observation_ambiguity.py:133",
+          "note": "Certifies the covered ORIUS upper-bound side."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_observation_ambiguity_optimality.py",
+          "symbol": "test_different_safe_sets_do_not_imply_unavoidable_violation",
+          "location": "tests/test_observation_ambiguity_optimality.py:21",
+          "note": "Guards against the false unsafe-ambiguity overclaim."
+        },
+        {
+          "path": "tests/test_observation_ambiguity_optimality.py",
+          "symbol": "test_orius_covered_release_certifies_zero_violation",
+          "location": "tests/test_observation_ambiguity_optimality.py:52",
+          "note": "Covered-release upper-bound regression."
+        },
+        {
+          "path": "tests/test_observation_ambiguity_optimality.py",
+          "symbol": "test_probabilistic_coverage_is_alpha_bounded_not_unconditional_zero",
+          "location": "tests/test_observation_ambiguity_optimality.py:66",
+          "note": "Alpha-bound semantics regression."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T11_AV_BrakeHold",
+      "title": "T11_AV_BrakeHold: AV Brake-Hold Runtime Lemma",
+      "surface_kind": "runtime_linked_lemma",
+      "defense_tier": "supporting_defended",
+      "proof_tier": "V1_runtime_linked",
+      "program_role": "bounded_domain_transfer_lemma",
+      "scope_note": "Supporting AV runtime lemma under forward-only T11; bounded to promoted ORIUS replay rows and the longitudinal brake-hold postcondition.",
+      "status": "active",
+      "statement_location": "appendices/app_c_full_proofs.tex:570",
+      "proof_location": "appendices/app_c_full_proofs.tex:570",
+      "assumptions_used": [],
+      "typed_obligations": [
+        "T11 coverage obligation is runtime-linked.",
+        "T11 sound safe-action set obligation is runtime-linked.",
+        "T11 repair-membership obligation is runtime-linked.",
+        "T11 fallback-admissibility obligation is runtime-linked.",
+        "True brake-hold runtime postcondition passes for the AV replay row."
+      ],
+      "assumption_locations": [],
+      "unresolved_assumptions": [],
+      "dependencies": [
+        "T11",
+        "AV promoted replay runtime trace",
+        "Domain runtime contract witness CSV"
+      ],
+      "weakest_step": "Row-local replay witness only; it does not prove complete autonomous-driving closure.",
+      "rigor_rating": "proof_runtime_linked",
+      "code_correspondence": "matches",
+      "code_correspondence_detail": "Runtime traces emit T11 status, certificate validity, and the AV brake-hold postcondition into domain contract witnesses.",
+      "severity_if_broken": "high",
+      "remediation_class": "fail closed",
+      "remediation_detail": "Missing T11 status, failed obligations, invalid certificate, or false postcondition must make the witness fail.",
+      "legacy_aliases": [],
+      "generator_targets": [
+        "active_theorem_audit",
+        "defended_theorem_core",
+        "theorem_surface_register"
+      ],
+      "code_anchors": [
+        {
+          "path": "src/orius/universal_theory/domain_runtime_contracts.py",
+          "symbol": "DomainRuntimeContractWitness",
+          "location": "src/orius/universal_theory/domain_runtime_contracts.py:122",
+          "note": "Bounded runtime witness type."
+        },
+        {
+          "path": "src/orius/av_waymo/runtime.py",
+          "symbol": "_run_episode",
+          "location": "src/orius/av_waymo/runtime.py:1491",
+          "note": "Emits AV T11 and brake-hold witness fields."
+        },
+        {
+          "path": "scripts/build_domain_runtime_contract_artifacts.py",
+          "symbol": "build_domain_runtime_contract_artifacts",
+          "location": "scripts/build_domain_runtime_contract_artifacts.py:154",
+          "note": "Builds publication-facing witness artifacts."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_domain_runtime_contract_witnesses.py",
+          "symbol": "test_passing_av_row_links_t11_certificate_and_postcondition",
+          "location": "tests/test_domain_runtime_contract_witnesses.py:30",
+          "note": "Passing AV witness regression."
+        },
+        {
+          "path": "tests/test_domain_runtime_contract_witnesses.py",
+          "symbol": "test_failing_av_postcondition_fails_closed_even_with_certificate",
+          "location": "tests/test_domain_runtime_contract_witnesses.py:51",
+          "note": "Failing AV witness regression."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T11_HC_FailSafeRelease",
+      "title": "T11_HC_FailSafeRelease: Healthcare Fail-Safe Release Runtime Lemma",
+      "surface_kind": "runtime_linked_lemma",
+      "defense_tier": "supporting_defended",
+      "proof_tier": "V1_runtime_linked",
+      "program_role": "bounded_domain_transfer_lemma",
+      "scope_note": "Supporting healthcare runtime lemma under forward-only T11; bounded to promoted MIMIC monitoring rows and the fail-safe alert-release postcondition.",
+      "status": "active",
+      "statement_location": "appendices/app_c_full_proofs.tex:590",
+      "proof_location": "appendices/app_c_full_proofs.tex:590",
+      "assumptions_used": [],
+      "typed_obligations": [
+        "T11 coverage obligation is runtime-linked.",
+        "T11 sound safe-action set obligation is runtime-linked.",
+        "T11 repair-membership obligation is runtime-linked.",
+        "T11 fallback-admissibility obligation is runtime-linked.",
+        "Healthcare true fail-safe alert-release runtime postcondition passes."
+      ],
+      "assumption_locations": [],
+      "unresolved_assumptions": [],
+      "dependencies": [
+        "T11",
+        "Healthcare promoted monitoring runtime trace",
+        "Domain runtime contract witness CSV"
+      ],
+      "weakest_step": "Row-local monitoring witness only; it does not prove regulated clinical deployment closure.",
+      "rigor_rating": "proof_runtime_linked",
+      "code_correspondence": "matches",
+      "code_correspondence_detail": "Runtime traces emit T11 status, certificate validity, and the healthcare fail-safe release postcondition into domain contract witnesses.",
+      "severity_if_broken": "high",
+      "remediation_class": "fail closed",
+      "remediation_detail": "Missing T11 status, failed obligations, invalid certificate, or false postcondition must make the witness fail.",
+      "legacy_aliases": [],
+      "generator_targets": [
+        "active_theorem_audit",
+        "defended_theorem_core",
+        "theorem_surface_register"
+      ],
+      "code_anchors": [
+        {
+          "path": "src/orius/universal_theory/domain_runtime_contracts.py",
+          "symbol": "DomainRuntimeContractWitness",
+          "location": "src/orius/universal_theory/domain_runtime_contracts.py:122",
+          "note": "Bounded runtime witness type."
+        },
+        {
+          "path": "scripts/build_healthcare_runtime_artifacts.py",
+          "symbol": "_run_orius_episode",
+          "location": "scripts/build_healthcare_runtime_artifacts.py:584",
+          "note": "Emits healthcare T11 and fail-safe witness fields."
+        },
+        {
+          "path": "scripts/build_domain_runtime_contract_artifacts.py",
+          "symbol": "build_domain_runtime_contract_artifacts",
+          "location": "scripts/build_domain_runtime_contract_artifacts.py:154",
+          "note": "Builds publication-facing witness artifacts."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_domain_runtime_contract_witnesses.py",
+          "symbol": "test_passing_healthcare_row_links_t11_certificate_and_postcondition",
+          "location": "tests/test_domain_runtime_contract_witnesses.py:72",
+          "note": "Passing healthcare witness regression."
+        },
+        {
+          "path": "tests/test_domain_runtime_contract_witnesses.py",
+          "symbol": "test_missing_t11_status_fails_closed",
+          "location": "tests/test_domain_runtime_contract_witnesses.py:92",
+          "note": "Missing T11 status regression."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T6_AV_FallbackValidity",
+      "title": "T6_AV_FallbackValidity: AV One-Step Fallback Certificate Lemma",
+      "surface_kind": "runtime_linked_lemma",
+      "defense_tier": "supporting_defended",
+      "proof_tier": "V1_runtime_linked",
+      "program_role": "bounded_domain_certificate_validity",
+      "scope_note": "Supporting AV certificate-validity lemma under T6/T11; degraded full-brake fallback releases are one-step valid only.",
+      "status": "active",
+      "statement_location": "appendices/app_c_full_proofs.tex:609",
+      "proof_location": "appendices/app_c_full_proofs.tex:609",
+      "assumptions_used": [],
+      "typed_obligations": [
+        "T6 first-passage validity semantics for positive-margin hold certificates.",
+        "T11 runtime witness is linked.",
+        "Runtime witness: AV full-brake fallback action is emitted for degraded fallback rows.",
+        "Runtime witness: AV true brake-hold postcondition passes."
+      ],
+      "assumption_locations": [],
+      "unresolved_assumptions": [],
+      "dependencies": [
+        "T6",
+        "T11",
+        "T11_AV_BrakeHold"
+      ],
+      "weakest_step": "One-step fallback validity only; degraded observation never grants multi-step validity.",
+      "rigor_rating": "proof_runtime_linked",
+      "code_correspondence": "matches",
+      "code_correspondence_detail": "Shared domain validity helper assigns H_t=1 only to AV fail-safe fallback certificates.",
+      "severity_if_broken": "high",
+      "remediation_class": "fail closed",
+      "remediation_detail": "Non-fail-safe fallback or failed postcondition must invalidate the witness.",
+      "legacy_aliases": [],
+      "generator_targets": [
+        "active_theorem_audit",
+        "defended_theorem_core",
+        "theorem_surface_register"
+      ],
+      "code_anchors": [
+        {
+          "path": "src/orius/universal_theory/domain_validity.py",
+          "symbol": "domain_certificate_validity_semantics",
+          "location": "src/orius/universal_theory/domain_validity.py:120",
+          "note": "Bounded fallback and T6-style hold validity helper."
+        },
+        {
+          "path": "src/orius/av_waymo/runtime.py",
+          "symbol": "WaymoAVDomainAdapter.emit_certificate",
+          "location": "src/orius/av_waymo/runtime.py:1117",
+          "note": "AV certificate emitter."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_domain_runtime_contract_witnesses.py",
+          "symbol": "test_av_fallback_certificate_validity_is_one_step_only",
+          "location": "tests/test_domain_runtime_contract_witnesses.py:109",
+          "note": "AV fallback validity regression."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T6_HC_FallbackValidity",
+      "title": "T6_HC_FallbackValidity: Healthcare One-Step Fallback Certificate Lemma",
+      "surface_kind": "runtime_linked_lemma",
+      "defense_tier": "supporting_defended",
+      "proof_tier": "V1_runtime_linked",
+      "program_role": "bounded_domain_certificate_validity",
+      "scope_note": "Supporting healthcare certificate-validity lemma under T6/T11; degraded max-alert fallback releases are one-step valid only.",
+      "status": "active",
+      "statement_location": "appendices/app_c_full_proofs.tex:626",
+      "proof_location": "appendices/app_c_full_proofs.tex:626",
+      "assumptions_used": [],
+      "typed_obligations": [
+        "T6 first-passage validity semantics for positive-margin hold certificates.",
+        "T11 runtime witness is linked.",
+        "Healthcare max-alert fallback action is emitted for degraded fallback rows.",
+        "Healthcare true fail-safe alert-release postcondition passes."
+      ],
+      "assumption_locations": [],
+      "unresolved_assumptions": [],
+      "dependencies": [
+        "T6",
+        "T11",
+        "T11_HC_FailSafeRelease"
+      ],
+      "weakest_step": "One-step fallback validity only; degraded observation never grants multi-step validity.",
+      "rigor_rating": "proof_runtime_linked",
+      "code_correspondence": "matches",
+      "code_correspondence_detail": "Shared domain validity helper assigns H_t=1 only to healthcare max-alert fallback certificates.",
+      "severity_if_broken": "high",
+      "remediation_class": "fail closed",
+      "remediation_detail": "Non-fail-safe fallback or failed postcondition must invalidate the witness.",
+      "legacy_aliases": [],
+      "generator_targets": [
+        "active_theorem_audit",
+        "defended_theorem_core",
+        "theorem_surface_register"
+      ],
+      "code_anchors": [
+        {
+          "path": "src/orius/universal_theory/domain_validity.py",
+          "symbol": "domain_certificate_validity_semantics",
+          "location": "src/orius/universal_theory/domain_validity.py:120",
+          "note": "Bounded fallback and T6-style hold validity helper."
+        },
+        {
+          "path": "src/orius/universal_framework/healthcare_adapter.py",
+          "symbol": "HealthcareDomainAdapter.emit_certificate",
+          "location": "src/orius/universal_framework/healthcare_adapter.py:372",
+          "note": "Healthcare certificate emitter."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_domain_runtime_contract_witnesses.py",
+          "symbol": "test_healthcare_fallback_certificate_validity_is_one_step_only",
+          "location": "tests/test_domain_runtime_contract_witnesses.py:128",
+          "note": "Healthcare fallback validity regression."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T_EQ_Battery_RuntimeArtifactPackage",
+      "title": "T_EQ_Battery_RuntimeArtifactPackage: Battery Equal Artifact Discipline Package",
+      "surface_kind": "artifact_discipline_gate",
+      "defense_tier": "supporting_defended",
+      "proof_tier": "V1_artifact_runtime_linked",
+      "program_role": "equal_domain_artifact_discipline",
+      "scope_note": "Supporting artifact-discipline row; it checks battery theorem, runtime, comparator, ablation, negative-control, utility, and reproducibility evidence without changing the flagship theorem tier.",
+      "status": "active",
+      "statement_location": "appendices/app_c_full_proofs.tex:642",
+      "proof_location": "appendices/app_c_full_proofs.tex:642",
+      "assumptions_used": [],
+      "typed_obligations": [
+        "Battery locked witness runtime trace exists.",
+        "Battery comparator, ablation, and negative-control rows are runtime-denominator rows.",
+        "Battery ORIUS useful work exceeds the degenerate safe-fallback comparator."
+      ],
+      "assumption_locations": [],
+      "unresolved_assumptions": [],
+      "dependencies": [
+        "Battery runtime trace",
+        "Equal domain artifact discipline gate"
+      ],
+      "weakest_step": "Artifact-discipline equivalence only; it does not add a new battery theorem.",
+      "rigor_rating": "artifact_runtime_linked",
+      "code_correspondence": "matches",
+      "code_correspondence_detail": "Equal-domain builder reads battery runtime traces and locked witness surfaces into strict per-domain artifact gates.",
+      "severity_if_broken": "high",
+      "remediation_class": "fail closed",
+      "remediation_detail": "Missing runtime-native comparator, ablation, negative-control, utility, or reproducibility evidence fails the equal-domain gate.",
+      "legacy_aliases": [],
+      "generator_targets": [
+        "active_theorem_audit",
+        "defended_theorem_core",
+        "theorem_surface_register"
+      ],
+      "code_anchors": [
+        {
+          "path": "scripts/build_equal_domain_artifact_discipline.py",
+          "symbol": "build_equal_domain_artifact_discipline",
+          "location": "scripts/build_equal_domain_artifact_discipline.py:728",
+          "note": "Builds the equal artifact-discipline gate."
+        },
+        {
+          "path": "scripts/validate_equal_domain_artifact_discipline.py",
+          "symbol": "main",
+          "location": "scripts/validate_equal_domain_artifact_discipline.py:80",
+          "note": "Validates fail-closed equal-domain evidence."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_equal_domain_artifact_discipline.py",
+          "symbol": "test_equal_domain_artifact_discipline_gates_pass_for_all_domains",
+          "location": "tests/test_equal_domain_artifact_discipline.py:68",
+          "note": "Battery equal-discipline regression."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T_EQ_AV_RuntimeArtifactPackage",
+      "title": "T_EQ_AV_RuntimeArtifactPackage: AV Equal Artifact Discipline Package",
+      "surface_kind": "artifact_discipline_gate",
+      "defense_tier": "supporting_defended",
+      "proof_tier": "V1_artifact_runtime_linked",
+      "program_role": "equal_domain_artifact_discipline",
+      "scope_note": "Supporting artifact-discipline row for the bounded AV replay contract; it does not assert full autonomous-driving field closure.",
+      "status": "active",
+      "statement_location": "appendices/app_c_full_proofs.tex:661",
+      "proof_location": "appendices/app_c_full_proofs.tex:661",
+      "assumptions_used": [],
+      "typed_obligations": [
+        "Vehicle T11 and T6 runtime lemmas are linked.",
+        "Vehicle comparator, ablation, and negative-control rows are runtime-denominator rows.",
+        "Vehicle ORIUS useful work exceeds always-brake useful work."
+      ],
+      "assumption_locations": [],
+      "unresolved_assumptions": [],
+      "dependencies": [
+        "T11_AV_BrakeHold",
+        "T6_AV_FallbackValidity",
+        "Equal domain artifact discipline gate"
+      ],
+      "weakest_step": "Artifact-discipline equivalence only; it remains bounded to the promoted AV replay contract.",
+      "rigor_rating": "artifact_runtime_linked",
+      "code_correspondence": "matches",
+      "code_correspondence_detail": "AV runtime generation emits runtime-native comparator artifacts consumed by the equal-domain gate.",
+      "severity_if_broken": "high",
+      "remediation_class": "fail closed",
+      "remediation_detail": "Missing runtime-native comparator, ablation, negative-control, utility, or reproducibility evidence fails the equal-domain gate.",
+      "legacy_aliases": [],
+      "generator_targets": [
+        "active_theorem_audit",
+        "defended_theorem_core",
+        "theorem_surface_register"
+      ],
+      "code_anchors": [
+        {
+          "path": "src/orius/av_waymo/runtime.py",
+          "symbol": "run_runtime_dry_run",
+          "location": "src/orius/av_waymo/runtime.py:1814",
+          "note": "Emits AV runtime and comparator artifacts."
+        },
+        {
+          "path": "scripts/build_equal_domain_artifact_discipline.py",
+          "symbol": "build_equal_domain_artifact_discipline",
+          "location": "scripts/build_equal_domain_artifact_discipline.py:728",
+          "note": "Builds the equal artifact-discipline gate."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_equal_domain_artifact_discipline.py",
+          "symbol": "test_equal_domain_artifact_discipline_gates_pass_for_all_domains",
+          "location": "tests/test_equal_domain_artifact_discipline.py:68",
+          "note": "AV equal-discipline regression."
+        },
+        {
+          "path": "tests/test_av_waymo_dry_run.py",
+          "symbol": "test_waymo_dry_run_smoke",
+          "location": "tests/test_av_waymo_dry_run.py:130",
+          "note": "AV runtime comparator smoke regression."
+        }
+      ]
+    },
+    {
+      "theorem_id": "T_EQ_HC_RuntimeArtifactPackage",
+      "title": "T_EQ_HC_RuntimeArtifactPackage: Healthcare Equal Artifact Discipline Package",
+      "surface_kind": "artifact_discipline_gate",
+      "defense_tier": "supporting_defended",
+      "proof_tier": "V1_artifact_runtime_linked",
+      "program_role": "equal_domain_artifact_discipline",
+      "scope_note": "Supporting artifact-discipline row for the bounded healthcare monitoring contract; it does not assert regulated clinical deployment readiness.",
+      "status": "active",
+      "statement_location": "appendices/app_c_full_proofs.tex:679",
+      "proof_location": "appendices/app_c_full_proofs.tex:679",
+      "assumptions_used": [],
+      "typed_obligations": [
+        "Healthcare T11 and T6 runtime lemmas are linked.",
+        "Healthcare comparator, ablation, and negative-control rows are runtime-denominator rows.",
+        "Healthcare ORIUS useful work exceeds always-alert useful work."
+      ],
+      "assumption_locations": [],
+      "unresolved_assumptions": [],
+      "dependencies": [
+        "T11_HC_FailSafeRelease",
+        "T6_HC_FallbackValidity",
+        "Equal domain artifact discipline gate"
+      ],
+      "weakest_step": "Artifact-discipline equivalence only; it remains bounded to the promoted healthcare monitoring contract.",
+      "rigor_rating": "artifact_runtime_linked",
+      "code_correspondence": "matches",
+      "code_correspondence_detail": "Healthcare runtime generation emits runtime-native comparator artifacts consumed by the equal-domain gate.",
+      "severity_if_broken": "high",
+      "remediation_class": "fail closed",
+      "remediation_detail": "Missing runtime-native comparator, ablation, negative-control, utility, or reproducibility evidence fails the equal-domain gate.",
+      "legacy_aliases": [],
+      "generator_targets": [
+        "active_theorem_audit",
+        "defended_theorem_core",
+        "theorem_surface_register"
+      ],
+      "code_anchors": [
+        {
+          "path": "scripts/build_healthcare_runtime_artifacts.py",
+          "symbol": "build_healthcare_runtime_artifacts",
+          "location": "scripts/build_healthcare_runtime_artifacts.py:846",
+          "note": "Emits healthcare runtime and comparator artifacts."
+        },
+        {
+          "path": "scripts/build_equal_domain_artifact_discipline.py",
+          "symbol": "build_equal_domain_artifact_discipline",
+          "location": "scripts/build_equal_domain_artifact_discipline.py:728",
+          "note": "Builds the equal artifact-discipline gate."
+        }
+      ],
+      "test_anchors": [
+        {
+          "path": "tests/test_equal_domain_artifact_discipline.py",
+          "symbol": "test_equal_domain_artifact_discipline_gates_pass_for_all_domains",
+          "location": "tests/test_equal_domain_artifact_discipline.py:68",
+          "note": "Healthcare equal-discipline regression."
+        },
+        {
+          "path": "tests/test_healthcare_runtime_artifacts.py",
+          "symbol": "test_build_healthcare_runtime_artifacts_emits_domain_native_runtime_surfaces",
+          "location": "tests/test_healthcare_runtime_artifacts.py:39",
+          "note": "Healthcare runtime comparator smoke regression."
+        }
+      ]
+    },
+    {
       "theorem_id": "L1",
       "title": "L1: Rate-Distortion Safety Law",
       "surface_kind": "scoped_proxy_law",
@@ -981,13 +1541,14 @@
       "program_role": "stylized_law_extension",
       "scope_note": "Scoped surrogate law only.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:534",
-      "proof_location": "appendices/app_c_full_proofs.tex:534",
-      "assumptions_used": [
+      "statement_location": "appendices/app_c_full_proofs.tex:703",
+      "proof_location": "appendices/app_c_full_proofs.tex:703",
+      "assumptions_used": [],
+      "typed_obligations": [],
+      "assumption_locations": [],
+      "unresolved_assumptions": [
         "Stylized binary-source surrogate lower envelope."
       ],
-      "assumption_locations": [],
-      "unresolved_assumptions": [],
       "dependencies": [
         "Scoped law-helper surrogate definition"
       ],
@@ -1029,13 +1590,14 @@
       "program_role": "stylized_bridge_extension",
       "scope_note": "Proxy bridge only.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:573",
-      "proof_location": "appendices/app_c_full_proofs.tex:573",
-      "assumptions_used": [
+      "statement_location": "appendices/app_c_full_proofs.tex:742",
+      "proof_location": "appendices/app_c_full_proofs.tex:742",
+      "assumptions_used": [],
+      "typed_obligations": [],
+      "assumption_locations": [],
+      "unresolved_assumptions": [
         "Domain-scoped proxy constant kappa_d is externally calibrated."
       ],
-      "assumption_locations": [],
-      "unresolved_assumptions": [],
       "dependencies": [
         "Scoped kappa_d calibration"
       ],
@@ -1077,13 +1639,14 @@
       "program_role": "stylized_threshold_extension",
       "scope_note": "Threshold calculator only.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:607",
-      "proof_location": "appendices/app_c_full_proofs.tex:607",
-      "assumptions_used": [
+      "statement_location": "appendices/app_c_full_proofs.tex:776",
+      "proof_location": "appendices/app_c_full_proofs.tex:776",
+      "assumptions_used": [],
+      "typed_obligations": [],
+      "assumption_locations": [],
+      "unresolved_assumptions": [
         "Stylized L2 capacity-proxy bridge."
       ],
-      "assumption_locations": [],
-      "unresolved_assumptions": [],
       "dependencies": [
         "L2",
         "T3a"
@@ -1126,13 +1689,14 @@
       "program_role": "stylized_sandwich_extension",
       "scope_note": "Stylized sandwich only.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:646",
-      "proof_location": "appendices/app_c_full_proofs.tex:646",
-      "assumptions_used": [
+      "statement_location": "appendices/app_c_full_proofs.tex:815",
+      "proof_location": "appendices/app_c_full_proofs.tex:815",
+      "assumptions_used": [],
+      "typed_obligations": [],
+      "assumption_locations": [],
+      "unresolved_assumptions": [
         "Executable T3-style upper envelope."
       ],
-      "assumption_locations": [],
-      "unresolved_assumptions": [],
       "dependencies": [
         "T3a",
         "L1",
@@ -1176,10 +1740,12 @@
       "program_role": "robustness_extension",
       "scope_note": "Supporting bounded Byzantine robustness theorem under the stated trimmed-mean assumptions.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:694",
-      "proof_location": "appendices/app_c_full_proofs.tex:694",
+      "statement_location": "appendices/app_c_full_proofs.tex:863",
+      "proof_location": "appendices/app_c_full_proofs.tex:863",
       "assumptions_used": [
-        "A9",
+        "A9"
+      ],
+      "typed_obligations": [
         "Byzantine fraction f is strictly below 1/3.",
         "Trim fraction beta is at least f.",
         "Tail-contamination model places adversarial readings in the trimmed tails."
@@ -1187,7 +1753,7 @@
       "assumption_locations": [
         {
           "assumption": "A9",
-          "location": "appendices/app_b_assumptions.tex:134"
+          "location": "appendices/app_b_assumptions.tex:143"
         }
       ],
       "unresolved_assumptions": [],
@@ -1211,7 +1777,7 @@
         {
           "path": "src/orius/dc3s/theoretical_guarantees.py",
           "symbol": "prove_byzantine_bound",
-          "location": "src/orius/dc3s/theoretical_guarantees.py:1232",
+          "location": "src/orius/dc3s/theoretical_guarantees.py:1257",
           "note": "Executable witness."
         }
       ],
@@ -1219,7 +1785,7 @@
         {
           "path": "tests/test_theoretical_guarantees.py",
           "symbol": "test_bound_holds_for_small_f",
-          "location": "tests/test_theoretical_guarantees.py:187",
+          "location": "tests/test_theoretical_guarantees.py:210",
           "note": "Witness regression."
         }
       ]
@@ -1233,15 +1799,16 @@
       "program_role": "policy_schedule_extension",
       "scope_note": "Supporting design-schedule theorem for stale-data degradation handling.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:752",
-      "proof_location": "appendices/app_c_full_proofs.tex:752",
+      "statement_location": "appendices/app_c_full_proofs.tex:921",
+      "proof_location": "appendices/app_c_full_proofs.tex:921",
       "assumptions_used": [
         "A6"
       ],
+      "typed_obligations": [],
       "assumption_locations": [
         {
           "assumption": "A6",
-          "location": "appendices/app_b_assumptions.tex:104"
+          "location": "appendices/app_b_assumptions.tex:106"
         }
       ],
       "unresolved_assumptions": [],
@@ -1266,7 +1833,7 @@
         {
           "path": "src/orius/dc3s/theoretical_guarantees.py",
           "symbol": "stale_decay_bound",
-          "location": "src/orius/dc3s/theoretical_guarantees.py:1349",
+          "location": "src/orius/dc3s/theoretical_guarantees.py:1374",
           "note": "Decay witness."
         }
       ],
@@ -1274,7 +1841,7 @@
         {
           "path": "tests/test_theoretical_guarantees.py",
           "symbol": "test_reaches_epsilon",
-          "location": "tests/test_theoretical_guarantees.py:219",
+          "location": "tests/test_theoretical_guarantees.py:242",
           "note": "Schedule regression."
         }
       ]
@@ -1288,15 +1855,14 @@
       "program_role": "stylized_minimax_extension",
       "scope_note": "Visible only as a stylized minimax extension.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:810",
-      "proof_location": "appendices/app_c_full_proofs.tex:810",
-      "assumptions_used": [
-        "T3a",
-        "L1",
-        "L2"
-      ],
+      "statement_location": "appendices/app_c_full_proofs.tex:979",
+      "proof_location": "appendices/app_c_full_proofs.tex:979",
+      "assumptions_used": [],
+      "typed_obligations": [],
       "assumption_locations": [],
-      "unresolved_assumptions": [],
+      "unresolved_assumptions": [
+        "T3a/L1/L2 stylized lower-envelope bridge."
+      ],
       "dependencies": [
         "Stylized lower-envelope witness"
       ],
@@ -1316,7 +1882,7 @@
         {
           "path": "src/orius/dc3s/theoretical_guarantees.py",
           "symbol": "compute_tight_impossibility_bound",
-          "location": "src/orius/dc3s/theoretical_guarantees.py:746",
+          "location": "src/orius/dc3s/theoretical_guarantees.py:753",
           "note": "Stylized lower-envelope witness."
         }
       ],
@@ -1324,7 +1890,7 @@
         {
           "path": "tests/test_theoretical_guarantees.py",
           "symbol": "test_lower_bound_uses_alpha_and_w_bar",
-          "location": "tests/test_theoretical_guarantees.py:268",
+          "location": "tests/test_theoretical_guarantees.py:291",
           "note": "Formula regression."
         }
       ]
@@ -1338,15 +1904,14 @@
       "program_role": "stylized_sensor_threshold_extension",
       "scope_note": "Visible only as a proxy threshold extension.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:861",
-      "proof_location": "appendices/app_c_full_proofs.tex:861",
-      "assumptions_used": [
-        "T3a",
-        "L2",
-        "L3"
-      ],
+      "statement_location": "appendices/app_c_full_proofs.tex:1030",
+      "proof_location": "appendices/app_c_full_proofs.tex:1030",
+      "assumptions_used": [],
+      "typed_obligations": [],
       "assumption_locations": [],
-      "unresolved_assumptions": [],
+      "unresolved_assumptions": [
+        "T3a/L2/L3 proxy threshold bridge."
+      ],
       "dependencies": [
         "Stylized inverse threshold helper"
       ],
@@ -1366,7 +1931,7 @@
         {
           "path": "src/orius/dc3s/theoretical_guarantees.py",
           "symbol": "sensor_quality_converse",
-          "location": "src/orius/dc3s/theoretical_guarantees.py:850",
+          "location": "src/orius/dc3s/theoretical_guarantees.py:857",
           "note": "Stylized threshold helper."
         }
       ],
@@ -1374,7 +1939,7 @@
         {
           "path": "tests/test_theoretical_guarantees.py",
           "symbol": "test_converse_holds_when_w_sufficient",
-          "location": "tests/test_theoretical_guarantees.py:298",
+          "location": "tests/test_theoretical_guarantees.py:321",
           "note": "Threshold regression."
         }
       ]
@@ -1388,31 +1953,33 @@
       "program_role": "trajectory_certificate",
       "scope_note": "Defended as the implemented Bonferroni/union-bound trajectory certificate and nothing stronger.",
       "status": "active",
-      "statement_location": "appendices/app_c_full_proofs.tex:898",
-      "proof_location": "appendices/app_c_full_proofs.tex:898",
+      "statement_location": "appendices/app_c_full_proofs.tex:1067",
+      "proof_location": "appendices/app_c_full_proofs.tex:1067",
       "assumptions_used": [
         "A1",
         "A4",
         "A5",
-        "A9",
+        "A9"
+      ],
+      "typed_obligations": [
         "Bonferroni/union-bound aggregation over the horizon."
       ],
       "assumption_locations": [
         {
           "assumption": "A1",
-          "location": "appendices/app_b_assumptions.tex:56"
+          "location": "appendices/app_b_assumptions.tex:55"
         },
         {
           "assumption": "A4",
-          "location": "appendices/app_b_assumptions.tex:84"
+          "location": "appendices/app_b_assumptions.tex:86"
         },
         {
           "assumption": "A5",
-          "location": "appendices/app_b_assumptions.tex:91"
+          "location": "appendices/app_b_assumptions.tex:93"
         },
         {
           "assumption": "A9",
-          "location": "appendices/app_b_assumptions.tex:134"
+          "location": "appendices/app_b_assumptions.tex:143"
         }
       ],
       "unresolved_assumptions": [],
@@ -1446,7 +2013,7 @@
         {
           "path": "tests/test_theoretical_guarantees.py",
           "symbol": "test_martingale_flag_set_correctly",
-          "location": "tests/test_theoretical_guarantees.py:357",
+          "location": "tests/test_theoretical_guarantees.py:380",
           "note": "Guards the narrowed semantics."
         }
       ]
@@ -1476,25 +2043,26 @@
     }
   ],
   "summary": {
-    "active_theorem_count": 21,
+    "active_theorem_count": 29,
     "rigor_counts": {
       "paper_rigorous": 6,
-      "proof_runtime_linked": 1,
+      "proof_runtime_linked": 7,
       "explicit_definition": 1,
       "machine_checked_ready": 1,
-      "narrowed_supporting_surface": 4,
+      "narrowed_supporting_surface": 3,
       "scoped_extension": 6,
+      "artifact_runtime_linked": 3,
       "stylized_surrogate": 1,
       "proxy_bridge": 1
     },
     "code_correspondence_counts": {
       "partial": 10,
-      "matches": 11
+      "matches": 19
     },
     "defense_tier_counts": {
-      "flagship_defended": 6,
-      "supporting_defended": 5,
-      "draft_non_defended": 10
+      "flagship_defended": 8,
+      "supporting_defended": 12,
+      "draft_non_defended": 9
     },
     "flagship_gate_ready": true,
     "flagship_defended_ids": [
@@ -1502,19 +2070,27 @@
       "T2",
       "T3a",
       "T4",
+      "T6",
+      "T7",
       "T11",
       "T_trajectory_PAC"
     ],
     "supporting_defended_ids": [
       "T3b",
-      "T6",
       "T8",
+      "T10_T11_ObservationAmbiguitySandwich",
+      "T11_AV_BrakeHold",
+      "T11_HC_FailSafeRelease",
+      "T6_AV_FallbackValidity",
+      "T6_HC_FallbackValidity",
+      "T_EQ_Battery_RuntimeArtifactPackage",
+      "T_EQ_AV_RuntimeArtifactPackage",
+      "T_EQ_HC_RuntimeArtifactPackage",
       "T11_Byzantine",
       "T_stale_decay"
     ],
     "draft_non_defended_ids": [
       "T5",
-      "T7",
       "T9",
       "T10",
       "L1",

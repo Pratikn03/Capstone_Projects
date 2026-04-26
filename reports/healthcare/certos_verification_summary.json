@@ -1,12 +1,12 @@
 {
-  "audit_completeness_rate": 1.0,
-  "certificate_rows": 240,
+  "certificate_rows": 137262,
   "chain_valid": true,
-  "checked": 240,
-  "expiry_consistency_rate": 1.0,
-  "expiry_metadata_presence_rate": 0.0,
-  "failed_index": null,
+  "checked": 137262,
   "failure_rows": 0,
-  "reason": null,
-  "required_payload_pass_rate": 1.0
+  "required_payload_pass_rate": 1.0,
+  "expiry_metadata_presence_rate": 1.0,
+  "expiry_consistency_rate": 1.0,
+  "audit_completeness_rate": 1.0,
+  "failed_index": null,
+  "reason": null
 }

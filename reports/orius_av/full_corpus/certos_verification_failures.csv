@@ -1,1 +1,2 @@
 row_index,command_id,failure_type,missing_fields,expected_hash,observed_hash
+not_applicable,not_applicable,not_applicable,none_required,not_applicable,not_applicable

@@ -1,0 +1,68 @@
+{
+  "generated_at_utc": "2026-04-26T00:09:48.675011+00:00",
+  "domain": "Autonomous Vehicles",
+  "status": "prepared_not_completed",
+  "completed_evidence": false,
+  "nuplan_completed_evidence": true,
+  "carla_completed_evidence": false,
+  "claim_allowed": false,
+  "claim_boundary": "nuPlan/CARLA are next-tier AV closed-loop validation targets only. This manifest may record completed all-zip grouped nuPlan runtime replay/surrogate evidence, but it does not claim completed nuPlan/CARLA simulator validation, does not claim completed CARLA simulation, road deployment, or full autonomous-driving field closure.\n",
+  "nuplan_dataset_discovery": [
+    {
+      "path": "data/orius_av/raw/nuplan",
+      "exists": false,
+      "file_count": 0,
+      "size_bytes": null
+    },
+    {
+      "path": "data/nuplan",
+      "exists": false,
+      "file_count": 0,
+      "size_bytes": null
+    },
+    {
+      "path": "/Volumes/T9/nuplan",
+      "exists": false,
+      "file_count": 0,
+      "size_bytes": null
+    }
+  ],
+  "carla_dataset_discovery": [
+    {
+      "path": "data/orius_av/raw/carla",
+      "exists": false,
+      "file_count": 0,
+      "size_bytes": null
+    },
+    {
+      "path": "data/carla",
+      "exists": false,
+      "file_count": 0,
+      "size_bytes": null
+    }
+  ],
+  "required_splits": [
+    "train",
+    "val",
+    "test",
+    "maps"
+  ],
+  "adapter_status": {
+    "nuplan": "todo_runtime_closed_loop_adapter",
+    "carla": "todo_runtime_closed_loop_adapter"
+  },
+  "completion_required_artifacts": [
+    "reports/predeployment_external_validation/nuplan_closed_loop_summary.csv",
+    "reports/predeployment_external_validation/nuplan_closed_loop_traces.csv",
+    "reports/predeployment_external_validation/carla_closed_loop_summary.csv",
+    "reports/predeployment_external_validation/carla_closed_loop_traces.csv"
+  ],
+  "nuplan_completion_artifacts": [
+    "reports/predeployment_external_validation/nuplan_closed_loop_summary.csv",
+    "reports/predeployment_external_validation/nuplan_closed_loop_traces.csv"
+  ],
+  "carla_completion_artifacts": [
+    "reports/predeployment_external_validation/carla_closed_loop_summary.csv",
+    "reports/predeployment_external_validation/carla_closed_loop_traces.csv"
+  ]
+}

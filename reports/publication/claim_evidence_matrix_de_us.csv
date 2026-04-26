@@ -3,7 +3,7 @@ T1,ch14,FIG02_DC3S_STEP,src/gridpulse/cpsbench_iot/scenarios.py,code,True
 T2,ch16,TBL01_MAIN_RESULTS,src/gridpulse/dc3s/guarantee_checks.py,code,True
 T3,ch17,TBL03_CQR_GROUP_COVERAGE,src/gridpulse/dc3s/coverage_theorem.py,code,True
 T4,ch18,TBL04_TRANSFER_STRESS,src/gridpulse/cpsbench_iot/baselines.py,code,True
-A1-A8,appendix_hq,TBL06_HYPERPARAMS,configs/dc3s.yaml,config,True
+A1-A13,appendix_hq,TBL06_HYPERPARAMS,appendices/app_b_assumptions.tex,assumption_register,True
 DE_US_EVIDENCE,ch21-32,release_manifest,reports/publication/release_manifest.json,manifest,True
 TRACE_48H,ch13,FIG_48H_TRACE,reports/publication/48h_trace.csv,artifact,True
 HIL,ch27,HIL_SUMMARY,reports/hil/hil_summary.json,artifact,True
