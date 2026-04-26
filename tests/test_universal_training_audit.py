@@ -49,6 +49,9 @@ def test_universal_training_audit_reports_verified_domains(tmp_path: Path) -> No
     assert summary_rows["battery"]["training_surface_closed"] == "True"
     assert summary_rows["battery"]["note"] == "verified"
     assert "healthcare" in summary_rows
+    assert float(summary_rows["healthcare"]["picp_90"]) >= 0.90
+    assert "healthcare_calibration_repaired" in summary_rows["healthcare"]["note"]
+    assert (tmp_path / "healthcare_calibration_repair.json").exists()
     assert "av" in summary_rows
 
     battery_log = (tmp_path / "logs" / "battery_verify.log").read_text(encoding="utf-8")

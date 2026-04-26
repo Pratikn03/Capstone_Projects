@@ -16,7 +16,7 @@ def _token(prefix: str, index: int) -> bytes:
     return f"{prefix}{index:012d}".encode("ascii")[:16]
 
 
-def _write_synthetic_nuplan_db(path: Path, *, steps: int = 91) -> None:
+def _write_synthetic_nuplan_db(path: Path, *, steps: int = 91, location: str = "sg-one-north") -> None:
     con = sqlite3.connect(path)
     con.executescript(
         """
@@ -63,7 +63,7 @@ def _write_synthetic_nuplan_db(path: Path, *, steps: int = 91) -> None:
     track_token = b"track-lead-00001"
     con.execute(
         "INSERT INTO log VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (log_token, "veh-test", "2021-09-29", 1_632_878_000_000_000, "synthetic", "sg-one-north", "sg-one-north"),
+        (log_token, "veh-test", "2021-09-29", 1_632_878_000_000_000, "synthetic", location, location),
     )
     con.execute("INSERT INTO scene VALUES (?, ?, ?, ?, ?)", (scene_token, log_token, "scene-0001", None, ""))
     con.execute("INSERT INTO lidar VALUES (?)", (lidar_token,))
@@ -231,6 +231,59 @@ def test_build_nuplan_replay_surface_from_multiple_zips_skips_incomplete(tmp_pat
     )
     assert feature_report["streaming"] is True
     assert feature_report["split_counts"] == {"calibration": 1, "test": 1, "train": 1, "val": 1}
+
+
+def test_grouped_archive_db_city_split_has_no_db_leakage(tmp_path: Path, monkeypatch) -> None:
+    maps_zip = tmp_path / "nuplan-maps-v1.0.zip"
+    with zipfile.ZipFile(maps_zip, "w", compression=zipfile.ZIP_STORED) as archive:
+        archive.writestr("maps/nuplan-maps-v1.0.json", "{}")
+
+    city_locations = {
+        "singapore": "sg-one-north",
+        "boston": "us-ma-boston",
+    }
+    for city, location in city_locations.items():
+        for index in range(10):
+            db_path = tmp_path / f"synthetic_{city}_{index}.db"
+            _write_synthetic_nuplan_db(db_path, location=location)
+            train_zip = tmp_path / f"nuplan-v1.1_train_{city}_part{index}.zip"
+            with zipfile.ZipFile(train_zip, "w", compression=zipfile.ZIP_STORED) as archive:
+                archive.write(db_path, f"data/cache/train_{city}/log_{index}.db")
+
+    out_dir = tmp_path / "processed_grouped_nuplan"
+    report = build_nuplan_replay_surface(
+        train_dirs=[tmp_path],
+        train_glob="nuplan-v*.zip",
+        maps_zip=maps_zip,
+        out_dir=out_dir,
+        max_dbs_per_archive=1,
+        max_scenarios_per_archive=1,
+    )
+    assert report["scenario_count"] == 20
+
+    monkeypatch.setattr(av_training, "IN_MEMORY_FEATURE_ROW_LIMIT", 0)
+    feature_report = av_training.build_feature_tables(
+        replay_windows_path=out_dir / "replay_windows.parquet",
+        out_dir=out_dir,
+        split_strategy="grouped_archive_db_city",
+    )
+
+    assert feature_report["split_strategy"] == "grouped_archive_db_city"
+    assert feature_report["split_group_columns"] == ["db_entry", "source_archive_id"]
+    assert feature_report["split_group_count"] == 20
+    assert feature_report["split_counts"] == {"calibration": 2, "test": 2, "train": 14, "val": 2}
+    assert feature_report["split_city_group_counts"] == {
+        "sg-one-north": {"calibration": 1, "test": 1, "train": 7, "val": 1},
+        "us-ma-boston": {"calibration": 1, "test": 1, "train": 7, "val": 1},
+    }
+
+    scenario_index = pd.read_parquet(
+        out_dir / "scenario_index.parquet",
+        columns=["scenario_id", "source_archive_id", "db_entry"],
+    )
+    anchors = pd.read_parquet(out_dir / "anchor_features.parquet", columns=["scenario_id", "split"])
+    joined = scenario_index.merge(anchors, on="scenario_id", how="inner")
+    assert joined.groupby(["source_archive_id", "db_entry"])["split"].nunique().max() == 1
 
 
 def test_build_nuplan_replay_surface_can_bound_each_archive(tmp_path: Path) -> None:

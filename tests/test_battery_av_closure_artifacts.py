@@ -213,7 +213,7 @@ def test_build_closure_smoke(tmp_path: Path) -> None:
     override = json.loads(Path(report["publication_override"]).read_text(encoding="utf-8"))
     release = json.loads(Path(report["release_summary"]).read_text(encoding="utf-8"))
     assert override["battery"]["resulting_tier"] == "reference"
-    assert override["vehicle"]["resulting_tier"] == "proof_validated"
+    assert override["vehicle"]["resulting_tier"] == "runtime_contract_closed"
     assert release["battery"]["runtime_rows_total"] == 2
     assert release["battery"]["runtime_rows_canonical_controller"] == 2
     assert release["battery"]["runtime_trace_rows"] == 2

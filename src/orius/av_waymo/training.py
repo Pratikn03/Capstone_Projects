@@ -1,16 +1,19 @@
 """Training and calibration helpers for the Waymo AV dry run."""
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 import hashlib
 import json
 from pathlib import Path
 import pickle
+import sys
 from typing import Any
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 from orius.forecasting.ml_gbm import predict_gbm, train_gbm
 from orius.forecasting.uncertainty.conformal import ConformalConfig, ConformalInterval, save_conformal
@@ -19,6 +22,17 @@ from orius.forecasting.uncertainty.shift_aware import ShiftAwareConfig
 
 HORIZON_LABELS: dict[str, int] = {"1s": 10, "2s": 20, "4s": 40}
 TARGETS = ("ego_speed_mps", "relative_gap_m")
+IN_MEMORY_FEATURE_ROW_LIMIT = 500_000
+FEATURE_BUILD_BATCH_ROWS = 200_000
+FEATURE_WRITE_BATCH_ROWS = 50_000
+GROUPED_ARCHIVE_DB_CITY_SPLIT = "grouped_archive_db_city"
+SUPPORTED_SPLIT_STRATEGIES = ("hash", "balanced", "all_test", GROUPED_ARCHIVE_DB_CITY_SPLIT)
+SPLIT_WEIGHTS: dict[str, float] = {
+    "train": 0.70,
+    "calibration": 0.10,
+    "val": 0.10,
+    "test": 0.10,
+}
 META_COLUMNS = {
     "scenario_id",
     "shard_id",
@@ -30,6 +44,10 @@ META_COLUMNS = {
     "object_mix_bin",
     "ego_track_id",
 }
+
+
+def _emit_progress(event: Mapping[str, Any]) -> None:
+    print(json.dumps(event, sort_keys=True), file=sys.stderr, flush=True)
 
 
 @dataclass(slots=True)
@@ -76,6 +94,153 @@ def assign_split(scenario_id: str) -> str:
     if bucket < 90:
         return "val"
     return "test"
+
+
+def assign_balanced_splits(scenario_ids: Iterable[str]) -> dict[str, str]:
+    """Assign deterministic non-empty train/calibration/val/test splits for bounded surfaces."""
+    labels = ("train", "calibration", "val", "test")
+    unique_ids = sorted({str(scenario_id) for scenario_id in scenario_ids}, key=lambda value: hashlib.sha256(value.encode("utf-8")).hexdigest())
+    if len(unique_ids) < len(labels):
+        return {scenario_id: assign_split(scenario_id) for scenario_id in unique_ids}
+    return {scenario_id: labels[index % len(labels)] for index, scenario_id in enumerate(unique_ids)}
+
+
+def _has_value(value: Any) -> bool:
+    if value is None:
+        return False
+    try:
+        if pd.isna(value):
+            return False
+    except (TypeError, ValueError):
+        pass
+    return str(value) != ""
+
+
+def _split_strategy_error(split_strategy: str) -> ValueError:
+    return ValueError(f"Unsupported split_strategy={split_strategy!r}; expected one of {SUPPORTED_SPLIT_STRATEGIES}.")
+
+
+def _read_split_metadata(replay_windows_path: Path) -> tuple[pd.DataFrame, list[str]]:
+    scenario_index_path = replay_windows_path.parent / "scenario_index.parquet"
+    source_path = scenario_index_path if scenario_index_path.exists() else replay_windows_path
+    schema_names = set(pq.ParquetFile(source_path).schema_arrow.names)
+    desired = ["scenario_id", "source_archive_id", "db_entry", "location", "source_dataset", "shard_id"]
+    columns = [column for column in desired if column in schema_names]
+    if "scenario_id" not in columns:
+        raise ValueError(f"{source_path} must include scenario_id for AV feature splitting.")
+    return pd.read_parquet(source_path, columns=columns), columns
+
+
+def _group_key(row: pd.Series) -> tuple[str, list[str]]:
+    if _has_value(row.get("source_archive_id")) and _has_value(row.get("db_entry")):
+        return f"archive={row['source_archive_id']}|db={row['db_entry']}", ["source_archive_id", "db_entry"]
+    if _has_value(row.get("source_archive_id")) and _has_value(row.get("shard_id")):
+        return f"archive={row['source_archive_id']}|shard={row['shard_id']}", ["source_archive_id", "shard_id"]
+    if _has_value(row.get("shard_id")):
+        return f"shard={row['shard_id']}", ["shard_id"]
+    return f"scenario={row['scenario_id']}", ["scenario_id"]
+
+
+def _city_key(row: pd.Series) -> str:
+    for column in ("location", "source_dataset", "shard_id"):
+        value = row.get(column)
+        if _has_value(value):
+            return str(value)
+    return "unknown"
+
+
+def _target_split_counts(n_items: int) -> dict[str, int]:
+    labels = tuple(SPLIT_WEIGHTS)
+    raw_counts = {label: float(n_items) * SPLIT_WEIGHTS[label] for label in labels}
+    counts = {label: int(np.floor(raw_counts[label])) for label in labels}
+    remaining = n_items - sum(counts.values())
+    remainders = sorted(
+        labels,
+        key=lambda label: (raw_counts[label] - counts[label], SPLIT_WEIGHTS[label], label),
+        reverse=True,
+    )
+    for label in remainders[:remaining]:
+        counts[label] += 1
+    if n_items >= len(labels):
+        for label in labels:
+            if counts[label] > 0:
+                continue
+            donor = max(labels, key=lambda candidate: (counts[candidate], SPLIT_WEIGHTS[candidate]))
+            if counts[donor] > 1:
+                counts[donor] -= 1
+                counts[label] = 1
+    return counts
+
+
+def assign_grouped_archive_db_city_splits(scenario_frame: pd.DataFrame) -> tuple[dict[str, str], dict[str, Any]]:
+    """Assign 70/10/10/10 splits by nuPlan archive+DB group, stratified by city."""
+    if "scenario_id" not in scenario_frame.columns:
+        raise ValueError("scenario_frame must include scenario_id for grouped AV splitting.")
+    frame = scenario_frame.copy()
+    frame["scenario_id"] = frame["scenario_id"].astype(str)
+
+    group_columns_seen: set[str] = set()
+    group_keys: list[str] = []
+    for _, row in frame.iterrows():
+        key, columns = _group_key(row)
+        group_keys.append(key)
+        group_columns_seen.update(columns)
+    frame["_split_group_key"] = group_keys
+    frame["_split_city"] = frame.apply(_city_key, axis=1).astype(str)
+
+    group_frame = (
+        frame.groupby("_split_group_key", sort=False)
+        .agg(_split_city=("_split_city", lambda values: "|".join(sorted({str(value) for value in values}))))
+        .reset_index()
+    )
+    group_to_split: dict[str, str] = {}
+    for city, city_groups in group_frame.groupby("_split_city", sort=True):
+        ordered_group_keys = sorted(
+            city_groups["_split_group_key"].astype(str).tolist(),
+            key=lambda value: hashlib.sha256(f"{city}|{value}".encode("utf-8")).hexdigest(),
+        )
+        target_counts = _target_split_counts(len(ordered_group_keys))
+        offset = 0
+        for split_name, count in target_counts.items():
+            for group_key in ordered_group_keys[offset : offset + count]:
+                group_to_split[group_key] = split_name
+            offset += count
+
+    frame["split"] = frame["_split_group_key"].map(group_to_split)
+    if frame["split"].isna().any():
+        missing = sorted(frame.loc[frame["split"].isna(), "_split_group_key"].astype(str).unique())
+        raise ValueError(f"Grouped AV split failed for group keys: {missing[:5]}")
+
+    group_frame["split"] = group_frame["_split_group_key"].map(group_to_split)
+    metadata = {
+        "split_group_columns": sorted(group_columns_seen),
+        "split_group_count": int(group_frame["_split_group_key"].nunique()),
+        "split_group_counts": {str(key): int(value) for key, value in group_frame["split"].value_counts().sort_index().items()},
+        "split_city_group_counts": {
+            str(city): {str(key): int(value) for key, value in city_frame["split"].value_counts().sort_index().items()}
+            for city, city_frame in group_frame.groupby("_split_city", sort=True)
+        },
+        "split_weights": {key: float(value) for key, value in SPLIT_WEIGHTS.items()},
+    }
+    split_map = {str(row["scenario_id"]): str(row["split"]) for _, row in frame.drop_duplicates("scenario_id").iterrows()}
+    return split_map, metadata
+
+
+def _split_map_for_strategy(
+    *,
+    scenario_frame: pd.DataFrame,
+    split_strategy: str,
+) -> tuple[dict[str, str], dict[str, Any]]:
+    scenario_ids = scenario_frame["scenario_id"].astype(str).unique()
+    if split_strategy == "all_test":
+        return {str(scenario_id): "test" for scenario_id in scenario_ids}, {}
+    if split_strategy == "balanced":
+        return assign_balanced_splits(scenario_ids), {}
+    if split_strategy == "hash":
+        return {str(scenario_id): assign_split(str(scenario_id)) for scenario_id in scenario_ids}, {}
+    if split_strategy == GROUPED_ARCHIVE_DB_CITY_SPLIT:
+        return assign_grouped_archive_db_city_splits(scenario_frame)
+    raise _split_strategy_error(split_strategy)
 
 
 def _speed_bin(speed: float) -> str:
@@ -150,35 +315,171 @@ def build_feature_tables(
     *,
     replay_windows_path: str | Path,
     out_dir: str | Path,
+    split_strategy: str = "hash",
 ) -> dict[str, Any]:
-    replay_df = pd.read_parquet(replay_windows_path)
+    replay_windows_path = Path(replay_windows_path)
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
+    replay_metadata = pq.ParquetFile(replay_windows_path).metadata
 
-    feature_rows: list[dict[str, Any]] = []
-    for _, group in replay_df.groupby("scenario_id", sort=True):
-        feature_rows.extend(_build_feature_rows_for_scenario(group))
+    if replay_metadata.num_rows <= IN_MEMORY_FEATURE_ROW_LIMIT:
+        replay_df = pd.read_parquet(replay_windows_path)
 
-    step_features = pd.DataFrame(feature_rows)
-    if step_features.empty:
-        raise ValueError("No step-wise feature rows were generated from replay windows.")
-    step_features["split"] = step_features["scenario_id"].map(assign_split)
+        feature_rows: list[dict[str, Any]] = []
+        for _, group in replay_df.groupby("scenario_id", sort=True):
+            feature_rows.extend(_build_feature_rows_for_scenario(group))
+
+        step_features = pd.DataFrame(feature_rows)
+        if step_features.empty:
+            raise ValueError("No step-wise feature rows were generated from replay windows.")
+        scenario_frame, _ = _read_split_metadata(replay_windows_path)
+        split_map, split_metadata = _split_map_for_strategy(
+            scenario_frame=scenario_frame,
+            split_strategy=split_strategy,
+        )
+        step_features["split"] = step_features["scenario_id"].astype(str).map(split_map)
+        if step_features["split"].isna().any():
+            missing = sorted(step_features.loc[step_features["split"].isna(), "scenario_id"].astype(str).unique())
+            raise ValueError(f"Feature split map is missing scenario IDs: {missing[:5]}")
+        step_features_path = out_path / "step_features.parquet"
+        step_features.to_parquet(step_features_path, index=False)
+
+        anchor_features = step_features[step_features["step_index"] == int(step_features["step_index"].min())].copy()
+        anchor_features_path = out_path / "anchor_features.parquet"
+        anchor_features.to_parquet(anchor_features_path, index=False)
+
+        splits_dir = out_path / "splits"
+        splits_dir.mkdir(parents=True, exist_ok=True)
+        for split_name, split_df in anchor_features.groupby("split", sort=False):
+            split_df.to_parquet(splits_dir / f"{split_name}.parquet", index=False)
+
+        report = {
+            "row_count": int(len(step_features)),
+            "anchor_row_count": int(len(anchor_features)),
+            "scenario_count": int(anchor_features["scenario_id"].nunique()),
+            "split_strategy": split_strategy,
+            "split_counts": {str(key): int(value) for key, value in anchor_features["split"].value_counts().sort_index().items()},
+            **split_metadata,
+            "artifacts": {
+                "step_features": str(step_features_path),
+                "anchor_features": str(anchor_features_path),
+                "splits_dir": str(splits_dir),
+            },
+        }
+        (out_path / "feature_table_report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+        return report
+
+    _emit_progress(
+        {
+            "event": "av_feature_stream_start",
+            "replay_rows": int(replay_metadata.num_rows),
+            "split_strategy": split_strategy,
+        }
+    )
+    scenario_index_path = replay_windows_path.parent / "scenario_index.parquet"
+    scenario_frame, _ = _read_split_metadata(replay_windows_path)
+    split_map, split_metadata = _split_map_for_strategy(
+        scenario_frame=scenario_frame,
+        split_strategy=split_strategy,
+    )
+
     step_features_path = out_path / "step_features.parquet"
-    step_features.to_parquet(step_features_path, index=False)
-
-    anchor_features = step_features[step_features["step_index"] == int(step_features["step_index"].min())].copy()
     anchor_features_path = out_path / "anchor_features.parquet"
-    anchor_features.to_parquet(anchor_features_path, index=False)
+    tmp_step_path = step_features_path.with_name(f"{step_features_path.name}.tmp")
+    tmp_step_path.unlink(missing_ok=True)
 
+    writer: pq.ParquetWriter | None = None
+    feature_schema: pa.Schema | None = None
+    feature_buffer: list[dict[str, Any]] = []
+    anchor_rows: list[dict[str, Any]] = []
+    row_count = 0
+    next_progress_row_count = 1_000_000
+
+    def flush_feature_buffer() -> None:
+        nonlocal feature_buffer, writer, feature_schema, row_count, next_progress_row_count
+        if not feature_buffer:
+            return
+        frame = pd.DataFrame(feature_buffer)
+        if feature_schema is None:
+            table = pa.Table.from_pandas(frame, preserve_index=False)
+            feature_schema = table.schema
+            writer = pq.ParquetWriter(str(tmp_step_path), feature_schema)
+        else:
+            for column in feature_schema.names:
+                if column not in frame.columns:
+                    frame[column] = pd.NA
+            frame = frame[feature_schema.names]
+            table = pa.Table.from_pandas(frame, schema=feature_schema, preserve_index=False)
+        assert writer is not None
+        writer.write_table(table)
+        row_count += int(len(frame))
+        feature_buffer = []
+        if row_count >= next_progress_row_count:
+            _emit_progress(
+                {
+                    "event": "av_feature_stream_progress",
+                    "feature_rows": int(row_count),
+                    "anchor_rows": int(len(anchor_rows)),
+                }
+            )
+            while row_count >= next_progress_row_count:
+                next_progress_row_count += 1_000_000
+
+    def process_scenario_group(group: pd.DataFrame) -> None:
+        rows = _build_feature_rows_for_scenario(group)
+        if not rows:
+            return
+        for row in rows:
+            row["split"] = split_map[str(row["scenario_id"])]
+        anchor_rows.append(rows[0])
+        feature_buffer.extend(rows)
+        if len(feature_buffer) >= FEATURE_WRITE_BATCH_ROWS:
+            flush_feature_buffer()
+
+    pending = pd.DataFrame()
+    try:
+        for batch in pq.ParquetFile(replay_windows_path).iter_batches(batch_size=FEATURE_BUILD_BATCH_ROWS):
+            batch_frame = batch.to_pandas()
+            if not pending.empty:
+                batch_frame = pd.concat([pending, batch_frame], ignore_index=True)
+            if batch_frame.empty:
+                pending = batch_frame
+                continue
+            scenario_ids = batch_frame["scenario_id"].astype(str)
+            last_scenario_id = str(scenario_ids.iloc[-1])
+            complete_frame = batch_frame[scenario_ids != last_scenario_id]
+            pending = batch_frame[scenario_ids == last_scenario_id].copy()
+            for _, group in complete_frame.groupby("scenario_id", sort=False):
+                process_scenario_group(group)
+
+        if not pending.empty:
+            for _, group in pending.groupby("scenario_id", sort=False):
+                process_scenario_group(group)
+        flush_feature_buffer()
+    finally:
+        if writer is not None:
+            writer.close()
+
+    if row_count <= 0 or not anchor_rows:
+        tmp_step_path.unlink(missing_ok=True)
+        raise ValueError("No step-wise feature rows were generated from replay windows.")
+    tmp_step_path.replace(step_features_path)
+
+    anchor_features = pd.DataFrame(anchor_rows)
+    anchor_features.to_parquet(anchor_features_path, index=False)
     splits_dir = out_path / "splits"
     splits_dir.mkdir(parents=True, exist_ok=True)
     for split_name, split_df in anchor_features.groupby("split", sort=False):
         split_df.to_parquet(splits_dir / f"{split_name}.parquet", index=False)
 
     report = {
-        "row_count": int(len(step_features)),
+        "row_count": int(row_count),
         "anchor_row_count": int(len(anchor_features)),
         "scenario_count": int(anchor_features["scenario_id"].nunique()),
+        "split_strategy": split_strategy,
+        "streaming": True,
+        "split_counts": {str(key): int(value) for key, value in anchor_features["split"].value_counts().sort_index().items()},
+        **split_metadata,
         "artifacts": {
             "step_features": str(step_features_path),
             "anchor_features": str(anchor_features_path),
@@ -186,6 +487,14 @@ def build_feature_tables(
         },
     }
     (out_path / "feature_table_report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    _emit_progress(
+        {
+            "event": "av_feature_stream_done",
+            "feature_rows": int(row_count),
+            "anchor_rows": int(len(anchor_features)),
+            "scenario_count": int(anchor_features["scenario_id"].nunique()),
+        }
+    )
     return report
 
 
@@ -296,9 +605,10 @@ def train_dry_run_models(
     models_dir: str | Path,
     uncertainty_dir: str | Path,
     reports_dir: str | Path,
+    artifact_prefix: str = "waymo_av",
 ) -> dict[str, Any]:
     anchor_df = pd.read_parquet(anchor_features_path).reset_index(drop=True)
-    step_df = pd.read_parquet(step_features_path).reset_index(drop=True)
+    step_row_count = int(pq.ParquetFile(step_features_path).metadata.num_rows)
     if anchor_df.empty:
         raise ValueError("Anchor feature table is empty.")
 
@@ -331,6 +641,7 @@ def train_dry_run_models(
     task_registry: dict[str, str] = {}
 
     for target, horizon_label in _target_tasks():
+        _emit_progress({"event": "av_training_task_start", "target": target, "horizon_label": horizon_label})
         target_col = f"target_{target}__{horizon_label}"
         y_train = train_df[target_col].to_numpy(dtype=float)
         y_cal = cal_df[target_col].to_numpy(dtype=float)
@@ -410,15 +721,16 @@ def train_dry_run_models(
             "upper_model": upper_model,
             "qhat": qhat,
         }
-        model_path = models_path / f"waymo_av_{base_name}_bundle.pkl"
+        model_path = models_path / f"{artifact_prefix}_{base_name}_bundle.pkl"
         with model_path.open("wb") as handle:
             pickle.dump(bundle, handle)
         save_conformal(
-            uncertainty_path / f"waymo_av_{base_name}_conformal.json",
+            uncertainty_path / f"{artifact_prefix}_{base_name}_conformal.json",
             ci,
             meta={"target": target, "horizon_label": horizon_label, "qhat": qhat},
         )
         task_registry[base_name] = str(model_path)
+        _emit_progress({"event": "av_training_task_done", "target": target, "horizon_label": horizon_label})
 
     pd.DataFrame(summary_rows).to_csv(reports_path / "training_summary.csv", index=False)
     pd.DataFrame(subgroup_rows).to_csv(reports_path / "subgroup_coverage.csv", index=False)
@@ -426,8 +738,9 @@ def train_dry_run_models(
         "feature_columns": feature_columns,
         "feature_mean": feature_mean,
         "feature_std": feature_std,
-        "runtime_step_feature_rows": int(len(step_df)),
+        "runtime_step_feature_rows": step_row_count,
         "artifact_registry": task_registry,
+        "artifact_prefix": artifact_prefix,
         "shift_aware_config": shift_cfg.to_dict(),
     }
     (reports_path / "feature_stats.json").write_text(json.dumps(train_stats, indent=2), encoding="utf-8")

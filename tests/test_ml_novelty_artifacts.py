@@ -42,6 +42,10 @@ def test_three_domain_ml_bundle_exists() -> None:
         PUBLICATION / "three_domain_ablation_matrix.csv",
         PUBLICATION / "three_domain_ablation_stats.json",
         PUBLICATION / "three_domain_negative_controls.csv",
+        PUBLICATION / "equal_domain_artifact_discipline.csv",
+        PUBLICATION / "equal_domain_artifact_discipline.json",
+        PUBLICATION / "equal_domain_artifact_discipline.md",
+        PUBLICATION / "equal_domain_reproducibility_manifest.json",
         PUBLICATION / "novelty_separation_matrix.csv",
         PUBLICATION / "novelty_separation_matrix.json",
         PUBLICATION / "novelty_separation_matrix.md",
@@ -108,10 +112,13 @@ def test_baseline_suite_has_required_families_for_each_domain() -> None:
         assert by_domain[domain] == required
     assert battery_rows
     assert all(row["surface_role"] == "witness_row_comparator" for row in battery_rows)
-    assert all(row["metric_surface"] == "locked_publication_witness" for row in battery_rows)
-    assert all(row["evidence_status"] == "witness_grade_locked_surface" for row in battery_rows)
+    assert all(row["metric_surface"] in {"locked_publication_witness", "runtime_denominator"} for row in battery_rows)
+    assert all("proxy" not in row["evidence_status"] for row in battery_rows)
     assert av_healthcare_rows
-    assert all(row["surface_role"] == "diagnostic_cross_domain_proxy" for row in av_healthcare_rows)
+    assert all(row["surface_role"] == "runtime_native_domain_comparator" for row in av_healthcare_rows)
+    assert all(row["metric_surface"] == "runtime_denominator" for row in av_healthcare_rows)
+    assert all("proxy" not in row["evidence_status"] for row in av_healthcare_rows)
+    assert all(row["evidence_status"] != "missing" for row in av_healthcare_rows)
 
 
 def test_ablation_matrix_has_required_rows_for_each_domain() -> None:
@@ -127,6 +134,9 @@ def test_ablation_matrix_has_required_rows_for_each_domain() -> None:
     for row in rows:
         by_domain.setdefault(row["domain"], set()).add(row["ablation_name"])
         assert row["evidence_status"] != ""
+        assert row["metric_surface"] == "runtime_denominator"
+        assert "proxy" not in row["evidence_status"]
+        assert row["evidence_status"] != "missing"
     for domain in (
         "Battery Energy Storage",
         "Autonomous Vehicles",
@@ -147,6 +157,8 @@ def test_negative_controls_have_required_rows_for_each_domain() -> None:
     by_domain: dict[str, set[str]] = {}
     for row in rows:
         by_domain.setdefault(row["domain"], set()).add(row["control_name"])
+        assert row["surface"] == "runtime_denominator"
+        assert row["status"] == "runtime_native_available"
     for domain in (
         "Battery Energy Storage",
         "Autonomous Vehicles",
@@ -175,6 +187,7 @@ def test_novelty_and_nonclaim_matrices_cover_required_families() -> None:
     assert novelty_families == {
         "standard_conformal_prediction",
         "adaptive_conformal_prediction",
+        "runtime_monitoring_and_supervisory_veto",
         "runtime_assurance_simplex",
         "safety_filters_barrier_methods_robust_mpc",
         "anomaly_detection_and_drift_detection",
@@ -184,6 +197,9 @@ def test_novelty_and_nonclaim_matrices_cover_required_families() -> None:
     nonclaim_rows = list(csv.DictReader((PUBLICATION / "what_orius_is_not_matrix.csv").open()))
     nonclaims = {row["boundary"] for row in nonclaim_rows}
     assert nonclaims == {
+        "not_a_new_conformal_method",
+        "not_a_new_robust_optimization_primitive",
+        "not_a_runtime_monitor_or_simplex_clone",
         "not_a_new_universal_controller",
         "not_a_new_conditional_coverage_theorem",
         "not_better_forecasting_by_default",

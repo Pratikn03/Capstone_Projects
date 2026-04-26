@@ -45,6 +45,7 @@ CSV_COLUMNS = (
     "statement_location",
     "proof_location",
     "assumptions_used",
+    "typed_obligations",
     "unresolved_assumptions",
     "dependencies",
     "weakest_step",
@@ -152,6 +153,10 @@ def _assumption_lookup() -> dict[str, str]:
     return lookup
 
 
+def _string_list(values: list[Any]) -> list[str]:
+    return [str(value) for value in values]
+
+
 def _combine_assumptions(spec: dict[str, Any], assumption_lookup: dict[str, str]) -> tuple[list[str], list[dict[str, str]], list[str]]:
     assumptions = [str(value) for value in spec.get("assumptions", [])]
     extra_unresolved = [str(value) for value in spec.get("unresolved_assumptions", [])]
@@ -165,7 +170,7 @@ def _combine_assumptions(spec: dict[str, Any], assumption_lookup: dict[str, str]
     for item in extra_unresolved:
         if item not in unresolved:
             unresolved.append(item)
-    return assumptions + [item for item in extra_unresolved if item not in assumptions], locations, unresolved
+    return assumptions, locations, unresolved
 
 
 def _build_theorem_row(spec: dict[str, Any], assumption_lookup: dict[str, str]) -> dict[str, Any]:
@@ -184,6 +189,7 @@ def _build_theorem_row(spec: dict[str, Any], assumption_lookup: dict[str, str]) 
         "statement_location": _resolve_location(statement_source["file"], statement_source["needle"]),
         "proof_location": _resolve_location(proof_source["file"], proof_source["needle"]),
         "assumptions_used": assumptions_used,
+        "typed_obligations": _string_list(spec.get("typed_obligations", [])),
         "assumption_locations": assumption_locations,
         "unresolved_assumptions": unresolved_assumptions,
         "dependencies": [str(value) for value in spec.get("dependencies", [])],
@@ -255,6 +261,7 @@ def render_active_theorem_audit_csv(payload: dict[str, Any]) -> str:
             "statement_location": theorem["statement_location"],
             "proof_location": theorem["proof_location"],
             "assumptions_used": " | ".join(theorem["assumptions_used"]),
+            "typed_obligations": " | ".join(theorem["typed_obligations"]),
             "unresolved_assumptions": " | ".join(theorem["unresolved_assumptions"]),
             "dependencies": " | ".join(theorem["dependencies"]),
             "weakest_step": theorem["weakest_step"],
@@ -334,6 +341,7 @@ def render_active_theorem_audit_md(payload: dict[str, Any]) -> str:
                 f"- Statement location: {theorem['statement_location']}",
                 f"- Proof location: {theorem['proof_location']}",
                 f"- Assumptions used: {theorem['assumptions_used']}",
+                f"- Typed obligations: {theorem['typed_obligations'] or '[]'}",
                 f"- Unresolved assumptions: {theorem['unresolved_assumptions'] or '[]'}",
                 f"- Dependencies: {theorem['dependencies']}",
                 f"- Weakest step: {theorem['weakest_step']}",
@@ -375,23 +383,56 @@ def render_active_theorem_remediation_md(payload: dict[str, Any]) -> str:
 
 
 def render_defended_core_json(payload: dict[str, Any]) -> str:
-    rows = [
-        {
-            "theorem_id": theorem["theorem_id"],
-            "title": theorem["title"],
-            "surface_kind": theorem["surface_kind"],
-            "defense_tier": theorem["defense_tier"],
-            "proof_tier": theorem["proof_tier"],
-            "program_role": theorem["program_role"],
-            "rigor_rating": theorem["rigor_rating"],
-            "code_correspondence": theorem["code_correspondence"],
-            "scope_note": theorem["scope_note"],
-            "statement_location": theorem["statement_location"],
-            "proof_location": theorem["proof_location"],
-        }
-        for theorem in payload["theorems"]
-    ]
-    return json.dumps({"summary": payload["summary"], "rows": rows}, indent=2, sort_keys=False) + "\n"
+    rows = _defended_core_rows(payload)
+    return json.dumps({"summary": _defended_core_summary(rows), "rows": rows}, indent=2, sort_keys=False) + "\n"
+
+
+def _defended_core_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for theorem in payload["theorems"]:
+        if theorem["defense_tier"] not in {"flagship_defended", "supporting_defended"}:
+            continue
+        if "defended_theorem_core" not in theorem["generator_targets"]:
+            continue
+        rows.append(
+            {
+                "theorem_id": theorem["theorem_id"],
+                "title": theorem["title"],
+                "surface_kind": theorem["surface_kind"],
+                "defense_tier": theorem["defense_tier"],
+                "proof_tier": theorem["proof_tier"],
+                "program_role": theorem["program_role"],
+                "rigor_rating": theorem["rigor_rating"],
+                "code_correspondence": theorem["code_correspondence"],
+                "scope_note": theorem["scope_note"],
+                "statement_location": theorem["statement_location"],
+                "proof_location": theorem["proof_location"],
+            }
+        )
+    return rows
+
+
+def _defended_core_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    rigor_counts: dict[str, int] = Counter(row["rigor_rating"] for row in rows)
+    code_counts: dict[str, int] = Counter(row["code_correspondence"] for row in rows)
+    tier_counts: dict[str, int] = Counter(row["defense_tier"] for row in rows)
+    flagship_rows = [row for row in rows if row["defense_tier"] == "flagship_defended"]
+    supporting_rows = [row for row in rows if row["defense_tier"] == "supporting_defended"]
+    draft_rows = [row for row in rows if row["defense_tier"] == "draft_non_defended"]
+    flagship_gate_ready = all(
+        row["rigor_rating"] not in {"broken", "has-a-hole"} and bool(row["scope_note"])
+        for row in flagship_rows
+    )
+    return {
+        "active_theorem_count": len(rows),
+        "rigor_counts": dict(rigor_counts),
+        "code_correspondence_counts": dict(code_counts),
+        "defense_tier_counts": {tier: tier_counts.get(tier, 0) for tier in DEFENSE_TIER_ORDER},
+        "flagship_gate_ready": flagship_gate_ready,
+        "flagship_defended_ids": [row["theorem_id"] for row in flagship_rows],
+        "supporting_defended_ids": [row["theorem_id"] for row in supporting_rows],
+        "draft_non_defended_ids": [row["theorem_id"] for row in draft_rows],
+    }
 
 
 def render_defended_core_csv(payload: dict[str, Any]) -> str:
@@ -409,7 +450,7 @@ def render_defended_core_csv(payload: dict[str, Any]) -> str:
         "proof_location",
     )
     lines = [",".join(columns)]
-    for theorem in payload["theorems"]:
+    for theorem in _defended_core_rows(payload):
         row = {column: theorem[column] for column in columns}
         escaped: list[str] = []
         for column in columns:
@@ -422,21 +463,23 @@ def render_defended_core_csv(payload: dict[str, Any]) -> str:
 
 
 def render_defended_core_md(payload: dict[str, Any]) -> str:
+    rows = _defended_core_rows(payload)
+    summary = _defended_core_summary(rows)
     lines = [
         "# Defended Theorem Core",
         "",
-        "This file is generated from `reports/publication/theorem_registry.yml` and is the strict defended-core theorem classification surface.",
+        "This file is generated from `reports/publication/theorem_registry.yml` and is the registry-canonical defended-core theorem classification surface.",
         "",
-        f"- Flagship defended: {payload['summary']['flagship_defended_ids']}",
-        f"- Supporting defended: {payload['summary']['supporting_defended_ids']}",
-        f"- Draft / non-defended: {payload['summary']['draft_non_defended_ids']}",
-        f"- Flagship gate ready: {payload['summary']['flagship_gate_ready']}",
+        f"- Flagship defended: {summary['flagship_defended_ids']}",
+        f"- Supporting defended: {summary['supporting_defended_ids']}",
+        f"- Draft / non-defended: {summary['draft_non_defended_ids']}",
+        f"- Flagship gate ready: {summary['flagship_gate_ready']}",
         "",
     ]
     for tier in DEFENSE_TIER_ORDER:
         lines.append(f"## {tier}")
         lines.append("")
-        tier_rows = [theorem for theorem in payload["theorems"] if theorem["defense_tier"] == tier]
+        tier_rows = [theorem for theorem in rows if theorem["defense_tier"] == tier]
         if not tier_rows:
             lines.append("- none")
             lines.append("")
@@ -450,7 +493,7 @@ def render_defended_core_md(payload: dict[str, Any]) -> str:
 
 
 def render_assumption_map_csv(payload: dict[str, Any]) -> str:
-    columns = ("theorem_id", "defense_tier", "assumption", "resolved_in_register", "location")
+    columns = ("theorem_id", "defense_tier", "item_type", "item", "resolution_status", "evidence_location")
     lines = [",".join(columns)]
     for theorem in payload["theorems"]:
         location_lookup = {item["assumption"]: item["location"] for item in theorem["assumption_locations"]}
@@ -458,25 +501,71 @@ def render_assumption_map_csv(payload: dict[str, Any]) -> str:
             row = {
                 "theorem_id": theorem["theorem_id"],
                 "defense_tier": theorem["defense_tier"],
-                "assumption": assumption,
-                "resolved_in_register": str(assumption in location_lookup),
-                "location": location_lookup.get(assumption, ""),
+                "item_type": "appendix_assumption",
+                "item": assumption,
+                "resolution_status": "registered" if assumption in location_lookup else "unknown_appendix_reference",
+                "evidence_location": location_lookup.get(assumption, ""),
             }
-            escaped: list[str] = []
-            for column in columns:
-                value = str(row[column]).replace('"', '""')
-                if any(ch in value for ch in {",", "\n", '"'}):
-                    value = f'"{value}"'
-                escaped.append(value)
-            lines.append(",".join(escaped))
+            lines.append(_render_csv_row(row, columns))
+        typed_status = _typed_obligation_status(theorem)
+        typed_location = _typed_obligation_location(theorem)
+        for obligation in theorem["typed_obligations"]:
+            row = {
+                "theorem_id": theorem["theorem_id"],
+                "defense_tier": theorem["defense_tier"],
+                "item_type": "typed_obligation",
+                "item": obligation,
+                "resolution_status": typed_status,
+                "evidence_location": typed_location,
+            }
+            lines.append(_render_csv_row(row, columns))
+        for assumption in theorem["unresolved_assumptions"]:
+            row = {
+                "theorem_id": theorem["theorem_id"],
+                "defense_tier": theorem["defense_tier"],
+                "item_type": "theorem_local_assumption",
+                "item": assumption,
+                "resolution_status": "scoped_unresolved",
+                "evidence_location": theorem["proof_location"],
+            }
+            lines.append(_render_csv_row(row, columns))
     return "\n".join(lines) + "\n"
+
+
+def _render_csv_row(row: dict[str, Any], columns: tuple[str, ...]) -> str:
+    escaped: list[str] = []
+    for column in columns:
+        value = str(row[column]).replace('"', '""')
+        if any(ch in value for ch in {",", "\n", '"'}):
+            value = f'"{value}"'
+        escaped.append(value)
+    return ",".join(escaped)
+
+
+def _typed_obligation_status(theorem: dict[str, Any]) -> str:
+    if (
+        theorem["theorem_id"] == "T11"
+        or theorem["surface_kind"] in {"runtime_linked_lemma", "artifact_discipline_gate"}
+        or "runtime" in theorem["proof_tier"]
+        or "runtime" in theorem["rigor_rating"]
+    ):
+        return "runtime_linked"
+    return "proof_linked"
+
+
+def _typed_obligation_location(theorem: dict[str, Any]) -> str:
+    if theorem["code_anchors"]:
+        return theorem["code_anchors"][0]["location"]
+    if theorem["test_anchors"]:
+        return theorem["test_anchors"][0]["location"]
+    return theorem["proof_location"]
 
 
 def render_assumption_map_md(payload: dict[str, Any]) -> str:
     lines = [
-        "# Defended Assumption Map",
+        "# Defended Assumption and Obligation Map",
         "",
-        "This file is generated from `reports/publication/theorem_registry.yml` and lists theorem-facing assumptions with their Appendix B resolution status.",
+        "This file is generated from `reports/publication/theorem_registry.yml` and separates Appendix B assumptions, typed obligations, and scoped theorem-local assumptions.",
         "",
     ]
     for theorem in payload["theorems"]:
@@ -485,9 +574,15 @@ def render_assumption_map_md(payload: dict[str, Any]) -> str:
         location_lookup = {item["assumption"]: item["location"] for item in theorem["assumption_locations"]}
         for assumption in theorem["assumptions_used"]:
             if assumption in location_lookup:
-                lines.append(f"- `{assumption}` - {location_lookup[assumption]}")
+                lines.append(f"- appendix assumption `{assumption}` - registered at {location_lookup[assumption]}")
             else:
-                lines.append(f"- `{assumption}` - theorem-local / unresolved")
+                lines.append(f"- appendix assumption `{assumption}` - unknown Appendix B reference")
+        typed_status = _typed_obligation_status(theorem)
+        typed_location = _typed_obligation_location(theorem)
+        for obligation in theorem["typed_obligations"]:
+            lines.append(f"- typed obligation `{obligation}` - {typed_status} via {typed_location}")
+        for assumption in theorem["unresolved_assumptions"]:
+            lines.append(f"- theorem-local assumption `{assumption}` - scoped_unresolved at {theorem['proof_location']}")
         lines.append("")
     return "\n".join(lines)
 
@@ -547,6 +642,22 @@ def render_theorem_surface_summary_csv(registry: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _latex_escape(value: object) -> str:
+    replacements = {
+        "\\": r"\textbackslash{}",
+        "&": r"\&",
+        "%": r"\%",
+        "$": r"\$",
+        "#": r"\#",
+        "_": r"\_",
+        "{": r"\{",
+        "}": r"\}",
+        "~": r"\textasciitilde{}",
+        "^": r"\textasciicircum{}",
+    }
+    return "".join(replacements.get(char, char) for char in str(value))
+
+
 def render_theorem_surface_register_tex(registry: dict[str, Any]) -> str:
     rows = _render_registry_rows(registry)
     lines = [
@@ -563,7 +674,11 @@ def render_theorem_surface_register_tex(registry: dict[str, Any]) -> str:
     ]
     for row in rows:
         lines.append(
-            f"{row['register_id']} & {row['group']} & {row['environment']} & {row['title']} & {row['source']}:{row['line']} \\\\"
+            f"{_latex_escape(row['register_id'])} & "
+            f"{_latex_escape(row['group'])} & "
+            f"{_latex_escape(row['environment'])} & "
+            f"{_latex_escape(row['title'])} & "
+            f"{_latex_escape(row['source'])}:{_latex_escape(row['line'])} \\\\"
         )
     lines.extend([r"\bottomrule", r"\end{longtable}"])
     return "\n".join(lines) + "\n"
@@ -630,13 +745,13 @@ def render_linear_ready_json(payload: dict[str, Any]) -> str:
             "title": "Canonical theorem registry",
             "description": "YAML schema, audit renderers, alias handling, and validator refactor.",
             "blocked_by": [],
-            "theorems": ["T1", "T2", "T3a", "T3b", "T4", "T5", "T6", "T8", "T9", "T10", "T11"],
+            "theorems": ["T1", "T2", "T3a", "T3b", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T10_T11_ObservationAmbiguitySandwich"],
         },
         {
             "title": "Assumption register A1-A13",
             "description": "Appendix B rewrite and theorem-facing assumption validation.",
             "blocked_by": ["Canonical theorem registry"],
-            "theorems": ["T1", "T2", "T3a", "T4", "T6", "T9", "T10", "T11", "T_trajectory_PAC"],
+            "theorems": ["T1", "T2", "T3a", "T4", "T6", "T7", "T9", "T10", "T11", "T_trajectory_PAC"],
         },
         {
             "title": "T2 proof-to-runtime closure",
@@ -651,6 +766,12 @@ def render_linear_ready_json(payload: dict[str, Any]) -> str:
             "theorems": ["T6"],
         },
         {
+            "title": "T7 piecewise fallback promotion",
+            "description": "Battery safe-hold plus boundary-aware safe-landing theorem surface and migration of theorem-facing callers/tests.",
+            "blocked_by": ["Canonical theorem registry", "Assumption register A1-A13"],
+            "theorems": ["T7"],
+        },
+        {
             "title": "T3 split and migration",
             "description": "Keep T3 alias-only, defend T3a/T3b explicitly, and attach runtime theorem-contract reporting.",
             "blocked_by": ["Canonical theorem registry", "Assumption register A1-A13"],
@@ -658,28 +779,28 @@ def render_linear_ready_json(payload: dict[str, Any]) -> str:
         },
         {
             "title": "Surface retiering",
-            "description": "Keep T5 as a definition, T11 forward-only, T8 supporting unless both proof and runtime gates clear.",
+            "description": "Keep T5 as a definition, T11 forward-only, and T8 supporting while T6/T7 move into the flagship ladder.",
             "blocked_by": ["Canonical theorem registry", "Assumption register A1-A13"],
-            "theorems": ["T5", "T8", "T11"],
+            "theorems": ["T5", "T8", "T11", "T10_T11_ObservationAmbiguitySandwich"],
         },
         {
             "title": "Headline core rewrite",
             "description": "Appendix M/S and chapter-level defended-count surfaces synchronized to the registry.",
-            "blocked_by": ["Canonical theorem registry", "Assumption register A1-A13", "T3 split and migration", "Surface retiering"],
-            "theorems": ["T1", "T2", "T3a", "T3b", "T4", "T6", "T8", "T11", "T_trajectory_PAC"],
+            "blocked_by": ["Canonical theorem registry", "Assumption register A1-A13", "T6 direct theorem upgrade", "T7 piecewise fallback promotion", "T3 split and migration", "Surface retiering"],
+            "theorems": ["T1", "T2", "T3a", "T3b", "T4", "T6", "T7", "T8", "T11", "T10_T11_ObservationAmbiguitySandwich", "T_trajectory_PAC"],
         },
         {
             "title": "External proof audit",
-            "description": "Reviewer packet, structured findings register, and closure loop for flagship defended rows plus T6 and conditional T8 review.",
+            "description": "Reviewer packet, structured findings register, and closure loop for flagship defended rows plus supporting T8 review.",
             "blocked_by": ["Headline core rewrite"],
-            "theorems": ["T1", "T2", "T3a", "T4", "T6", "T8", "T11", "T_trajectory_PAC"],
+            "theorems": ["T1", "T2", "T3a", "T4", "T6", "T7", "T8", "T11", "T_trajectory_PAC"],
         },
     ]
     return json.dumps({"epics": epics, "summary": payload["summary"]}, indent=2, sort_keys=False) + "\n"
 
 
 def _external_audit_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
-    included_ids = set(payload["summary"]["flagship_defended_ids"]) | {"T6", "T8"}
+    included_ids = set(payload["summary"]["flagship_defended_ids"]) | {"T8"}
     return [row for row in payload["theorems"] if row["theorem_id"] in included_ids]
 
 
@@ -704,7 +825,8 @@ def render_external_audit_packet_md(payload: dict[str, Any]) -> str:
                 f"- Proof tier: {row['proof_tier']}",
                 f"- Statement location: `{row['statement_location']}`",
                 f"- Proof location: `{row['proof_location']}`",
-                f"- Assumptions: {', '.join(row['assumptions_used'])}",
+                f"- Assumptions: {', '.join(row['assumptions_used']) if row['assumptions_used'] else 'none'}",
+                f"- Typed obligations: {', '.join(row['typed_obligations']) if row['typed_obligations'] else 'none'}",
                 f"- Weakest known step: {row['weakest_step']}",
                 f"- Scope note: {row['scope_note']}",
                 f"- Primary code anchor: `{code_anchor}`",

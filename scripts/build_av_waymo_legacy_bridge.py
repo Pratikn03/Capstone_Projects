@@ -28,6 +28,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from orius.vehicles.rss_safety import RssParameters, rss_safe_gap_vec
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FULL_CORPUS = REPO_ROOT / "data" / "orius_av" / "av" / "processed_full_corpus"
@@ -36,6 +38,7 @@ PROCESSED = REPO_ROOT / "data" / "orius_av" / "av" / "processed"
 SPEED_LIMIT_DEFAULT_MPS = 30.0
 LEAD_GAP_CONSTANT_M = 500.0
 LAG_STEPS = (1, 2, 4, 8, 12, 24)
+LEAD_GAP_PATH = FULL_CORPUS / "per_step_lead_gap.parquet"
 
 
 def _load_replay_windows(full_corpus: Path) -> pd.DataFrame:
@@ -90,6 +93,68 @@ def _translate(df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(out_frames, ignore_index=True)
 
 
+def _augment_with_rss(
+    trajectories_df: pd.DataFrame,
+    lead_gap_path: Path,
+    *,
+    params: RssParameters | None = None,
+) -> pd.DataFrame:
+    if not lead_gap_path.exists():
+        print(f"[bridge] lead-gap cache missing at {lead_gap_path}; leaving Path A gap semantics")
+        return trajectories_df
+
+    gap_df = pd.read_parquet(lead_gap_path)
+    required = {
+        "scenario_id",
+        "step_index",
+        "lead_present",
+        "lead_track_id",
+        "lead_rel_x_m",
+        "lead_rel_y_m",
+        "lead_speed_mps",
+    }
+    missing = required - set(gap_df.columns)
+    if missing:
+        print(f"[bridge] lead-gap cache missing columns {sorted(missing)}; leaving Path A gap semantics")
+        return trajectories_df
+
+    lead_cols = [
+        "scenario_id",
+        "step_index",
+        "lead_present",
+        "lead_track_id",
+        "lead_rel_x_m",
+        "lead_rel_y_m",
+        "lead_speed_mps",
+    ]
+    out = trajectories_df.merge(
+        gap_df[lead_cols],
+        left_on=["scenario_id", "step"],
+        right_on=["scenario_id", "step_index"],
+        how="left",
+    )
+    out["lead_present"] = out["lead_present"].fillna(False).astype(bool)
+
+    v_ego = out["speed_mps"].astype(float).to_numpy()
+    v_lead = out["lead_speed_mps"].fillna(0.0).astype(float).to_numpy()
+    safe_gap = rss_safe_gap_vec(v_ego, v_lead, params=params or RssParameters())
+    out["rss_safe_gap_m"] = safe_gap
+    out["rss_violation_true"] = False
+
+    actual_gap = out["lead_rel_x_m"].fillna(LEAD_GAP_CONSTANT_M).astype(float).to_numpy()
+    mask = out["lead_present"].to_numpy(dtype=bool)
+    out.loc[mask, "rss_violation_true"] = actual_gap[mask] < safe_gap[mask]
+    out["lead_position_m"] = out["position_m"] + LEAD_GAP_CONSTANT_M
+    out.loc[mask, "lead_position_m"] = out.loc[mask, "position_m"].to_numpy() + actual_gap[mask]
+
+    print(
+        "[bridge] rss augmentation: "
+        f"lead-present={int(out['lead_present'].sum()):,}, "
+        f"violations={int(out['rss_violation_true'].sum()):,}"
+    )
+    return out.drop(columns=["step_index"], errors="ignore")
+
+
 def _add_lag_features(df: pd.DataFrame) -> pd.DataFrame:
     out = df.sort_values(["vehicle_id", "step"]).reset_index(drop=True)
     for lag in LAG_STEPS:
@@ -140,6 +205,16 @@ def _write_outputs(
         split_row_counts[split_name] = len(sub)
 
     trajectory_cols = ["vehicle_id", "step", "position_m", "speed_mps", "speed_limit_mps", "lead_position_m", "ts_utc"]
+    optional_trajectory_cols = [
+        "lead_present",
+        "lead_track_id",
+        "lead_rel_x_m",
+        "lead_rel_y_m",
+        "lead_speed_mps",
+        "rss_safe_gap_m",
+        "rss_violation_true",
+    ]
+    trajectory_cols.extend([col for col in optional_trajectory_cols if col in trajectories_df.columns])
     trajectories_df[trajectory_cols].to_csv(processed / "av_trajectories_orius.csv", index=False)
     split_row_counts["av_trajectories_orius_csv"] = len(trajectories_df)
     return split_row_counts
@@ -166,6 +241,7 @@ def main() -> int:
 
     trajectories_df = _translate(replay)
     print(f"[bridge] translated trajectories: {len(trajectories_df):,} rows, {trajectories_df['vehicle_id'].nunique()} vehicles")
+    trajectories_df = _augment_with_rss(trajectories_df, args.full_corpus / LEAD_GAP_PATH.name)
 
     trajectories_in_splits = _filter_to_scenarios(trajectories_df, all_split_scenarios)
     features_df = _add_lag_features(trajectories_in_splits)

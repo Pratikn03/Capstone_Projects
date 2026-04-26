@@ -23,7 +23,7 @@ DISPLAY_NAMES = {
 SOURCE_DATASETS = {
     "battery": "locked_battery_reference",
     "healthcare": "mimic3_monitoring_row",
-    "vehicle": "waymo_motion_row",
+    "vehicle": "nuplan_allzip_grouped_row",
 }
 
 

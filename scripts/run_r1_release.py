@@ -127,8 +127,8 @@ def stage_full(release_id: str, profile: str = "standard") -> dict[str, bool]:
     print(f"{'═'*60}\n")
     results: dict[str, bool] = {}
     extra: list[str] = []
-    if profile == "aggressive":
-        extra = ["--profile", "aggressive"]
+    if profile != "standard":
+        extra = ["--profile", profile]
     for ds in R1_DATASETS:
         ok = _run(
             [
@@ -383,7 +383,7 @@ def main() -> int:
         required=True,
     )
     parser.add_argument("--release-id", default=None)
-    parser.add_argument("--profile", choices=["standard", "aggressive"], default="standard")
+    parser.add_argument("--profile", choices=["standard", "aggressive", "max"], default="standard")
     args = parser.parse_args()
 
     rid = args.release_id or _generate_release_id()

@@ -162,6 +162,67 @@ def test_run_av_pipeline_uses_full_corpus_count(tmp_path: Path, monkeypatch) -> 
     assert calls["subset"]["target_count"] == 3
 
 
+def test_run_av_pipeline_uses_nuplan_source_and_artifact_prefix(tmp_path: Path, monkeypatch) -> None:
+    processed_dir = tmp_path / "processed"
+    models_dir = tmp_path / "models"
+    uncertainty_dir = tmp_path / "uncertainty"
+    reports_dir = tmp_path / "reports"
+    processed_dir.mkdir(parents=True, exist_ok=True)
+    calls: dict[str, object] = {}
+
+    def _fake_replay(**kwargs):
+        calls["replay"] = kwargs
+        return {"scenario_count": 4}
+
+    def _fake_features(**kwargs):
+        calls["features"] = kwargs
+        return {"anchor_row_count": 4}
+
+    def _fake_training(**kwargs):
+        calls["training"] = kwargs
+        return {"artifact_registry": {"ego_speed_mps_1s": str(models_dir / "nuplan.pkl")}}
+
+    def _fake_runtime(**kwargs):
+        calls["runtime"] = kwargs
+        return {"runtime_summary_csv": str(reports_dir / "runtime_summary.csv")}
+
+    monkeypatch.setattr(pipeline_script, "build_nuplan_replay_surface", _fake_replay)
+    monkeypatch.setattr(pipeline_script, "build_feature_tables", _fake_features)
+    monkeypatch.setattr(pipeline_script, "train_dry_run_models", _fake_training)
+    monkeypatch.setattr(pipeline_script, "run_runtime_dry_run", _fake_runtime)
+
+    args = argparse.Namespace(
+        av_source="nuplan_singapore",
+        av_processed_dir=processed_dir,
+        av_models_dir=models_dir,
+        av_uncertainty_dir=uncertainty_dir,
+        av_reports_dir=reports_dir,
+        nuplan_train_zip=[tmp_path / "nuplan-v1.1_train_singapore.zip"],
+        nuplan_train_dir=[tmp_path],
+        nuplan_train_glob="nuplan-v*.zip",
+        nuplan_skip_incomplete=True,
+        nuplan_maps_zip=tmp_path / "nuplan-maps-v1.0.zip",
+        nuplan_temp_dir=None,
+        nuplan_max_dbs=1,
+        nuplan_max_scenarios=4,
+        nuplan_scenario_stride=91,
+        nuplan_split_strategy="balanced",
+        av_skip_validation=False,
+        av_skip_training=False,
+        av_skip_runtime=False,
+        av_skip_report=True,
+        av_max_runtime_scenarios=2,
+    )
+
+    report = pipeline_script.run_av_pipeline(args)
+
+    assert report["source"] == "nuplan_singapore"
+    assert calls["replay"]["train_zips"] == args.nuplan_train_zip
+    assert calls["features"]["split_strategy"] == "balanced"
+    assert calls["training"]["artifact_prefix"] == "nuplan_av"
+    assert calls["runtime"]["artifact_prefix"] == "nuplan_av"
+
+
 def test_main_uses_runtime_summary_when_av_report_summary_is_missing(tmp_path: Path, monkeypatch) -> None:
     battery_dir = tmp_path / "battery"
     av_dir = tmp_path / "av"

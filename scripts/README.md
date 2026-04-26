@@ -26,8 +26,9 @@ Legacy/internal scripts may still exist for compatibility, but they should not b
 | `register_models.py` | Register models + conformal artifacts in local registry JSON |
 | `promote_model.py` | Promote model to production |
 | `retrain_if_needed.py` | Conditional retraining based on drift |
-| `train_dataset.py` | Unified dataset training with standard/aggressive profiles |
+| `train_dataset.py` | Unified dataset training with standard/aggressive/max profiles |
 | `run_r1_release.py` | Release-family orchestration across DE + US balancing authorities |
+| `run_three_domain_offline_freeze.py` | Full Battery/AV/Healthcare predeployment offline freeze with candidate training, gated promotion, hash locking, and not-deployed manifest |
 
 ### Evaluation & Reports
 | Script | Purpose |
@@ -40,6 +41,8 @@ Legacy/internal scripts may still exist for compatibility, but they should not b
 | `build_paper_table_tex.py` | Convert manifest-mapped CSV tables into LaTeX table fragments + token lookup |
 | `post_training_paper_update.py` | Freeze the canonical manuscript/conference PDFs, render review PNGs, and record PDF hashes in the publication manifest |
 | `build_forecast_interval_report.py` | Uncertainty quantification report |
+| `run_predeployment_external_validation.py` | Build Battery HIL/simulator, AV closed-loop surrogate, and Healthcare time-forward/site-holdout validation evidence |
+| `build_three_domain_runtime_stress_artifacts.py` | Summarize real runtime/replay/HIL fault-family stress evidence without synthetic telemetry generation |
 | `statistical_tests.py` | Diebold-Mariano tests |
 | `shap_importance.py` | SHAP feature importance analysis |
 | `update_paper_metrics.py` | Materialize `\\PaperMetric` values from `reports/publication/stats_summary.json` |
@@ -133,6 +136,7 @@ Suggested end-to-end sequence:
 export RELEASE_ID=R1_20260312T000000Z
 python scripts/run_r1_release.py --stage diagnostic --release-id "$RELEASE_ID"
 python scripts/run_r1_release.py --stage full --release-id "$RELEASE_ID" --profile aggressive
+python scripts/train_dataset.py --dataset AV --profile max --candidate-run --run-id max_av
 python scripts/run_r1_release.py --stage cpsbench --release-id "$RELEASE_ID"
 python scripts/run_r1_release.py --stage verify --release-id "$RELEASE_ID"
 python scripts/build_publication_artifact.py --release-id "$RELEASE_ID" --out-dir reports/publication

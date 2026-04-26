@@ -1,0 +1,5 @@
+{
+  "prediction_backed_telemetry": true,
+  "align_nominal_with_runtime_projection": true,
+  "nominal_projection_margin_m": 15.0
+}

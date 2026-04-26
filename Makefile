@@ -1,4 +1,4 @@
-.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact analyze-artifact av-datasets healthcare-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark orius-monograph-assets review-compile orius-book orius-evidence-rerun camera-ready-assets camera-ready-verify camera-ready-freeze orius-review-pack orius-final ieee-assets ieee-main-compile ieee-detailed-compile ieee-appendix-compile ieee-pack ieee-prof-assets ieee-prof-main-compile ieee-prof-appa-compile ieee-prof-appb-compile ieee-prof-pack orius-flagship-manuscripts battery-deep-novelty phase3-proof-book app-c-flagship-proofs app-c-all-theorems external-ssd-setup external-ssd-shell external-ssd-verify external-ssd-preflight full-folder-audit pre-clean clean clean-status fresh-research pre-release appledouble-clean
+.PHONY: setup lint lint-release test test-cov test-quick api dashboard frontend frontend-build pipeline data train production reports monitor release_check release_check_full extract-data shap-importance stat-tests train-us reports-us verify-training cv-eval ablations stats-tables verify-novelty robustness-analysis train-dataset train-all k6-load locust-load observability down-observability cpsbench dc3s-demo orius-check orius-check-quick framework-proof thesis-pipeline-verify thesis-train thesis-bench thesis-artifacts thesis-manuscript thesis-freeze thesis-full iot-sim refresh-data table-result-integrity-repair table-result-integrity-audit na-audit leakage-audit code-health-audit git-delta-audit figure-inventory-audit backfill-dc3s publish-audit publish-audit-isolated publication-artifact clean-artifact-release analyze-artifact av-datasets nuplan-av-surface healthcare-datasets multi-domain-datasets multi-domain-build universal-framework-figure paper-assets paper-verify paper-compile paper-refresh paper-freeze paper2-blackout-benchmark orius-monograph-assets review-compile orius-book orius-evidence-rerun camera-ready-assets camera-ready-verify camera-ready-freeze orius-review-pack orius-final ieee-assets ieee-main-compile ieee-detailed-compile ieee-appendix-compile ieee-pack ieee-prof-assets ieee-prof-main-compile ieee-prof-appa-compile ieee-prof-appb-compile ieee-prof-pack orius-flagship-manuscripts battery-deep-novelty phase3-proof-book app-c-flagship-proofs app-c-all-theorems external-ssd-setup external-ssd-shell external-ssd-verify external-ssd-preflight full-folder-audit pre-clean clean clean-status fresh-research pre-release appledouble-clean appledouble-check workspace-hygiene-check workspace-hygiene-clean
 
 PRE_RELEASE_TESTS = tests/test_submission_artifacts.py tests/test_three_domain_submission_lane.py tests/test_thesis_package_assets.py
 
@@ -8,9 +8,9 @@ PROOF_SEEDS ?= 1
 PROOF_HORIZON ?= 24
 # Reproducibility: fix Python hash seed for deterministic dict/set ordering.
 export PYTHONHASHSEED := 0
-# Canonical dissertation build is now a curated 13-chapter monograph rather than the
-# earlier archive-heavy stitched surface, so the page floor should track the rewritten
-# manuscript rather than legacy bulk.
+# Canonical dissertation build is now the senior-review single-flow monograph.
+# Historical archive sources remain tracked, but they are indexed rather than
+# compiled inline to avoid repeating the same argument in multiple draft voices.
 PAPER_MIN_PAGES ?= 90
 # The IEEE flagship track is now a reviewable journal-style main paper plus a separate
 # appendix package. Keep a real main-paper floor without forcing monograph-scale
@@ -19,7 +19,15 @@ IEEE_MIN_PAGES ?= 8
 IEEE_DETAILED_MIN_PAGES ?= 40
 IEEE_PROF_MAIN_MIN_PAGES ?= 20
 IEEE_PROF_APP_MIN_PAGES ?= 20
-ORIUS_AV_SOURCE ?= waymo_motion
+ORIUS_AV_SOURCE ?= nuplan_singapore
+NUPLAN_TRAIN_ZIP ?=
+NUPLAN_TRAIN_DIR ?= .
+NUPLAN_TRAIN_GLOB ?= nuplan-v*.zip
+NUPLAN_TRAIN_ARGS = $(if $(NUPLAN_TRAIN_ZIP),--train-zip "$(NUPLAN_TRAIN_ZIP)",--train-dir "$(NUPLAN_TRAIN_DIR)" --train-glob "$(NUPLAN_TRAIN_GLOB)")
+NUPLAN_MAPS_ZIP ?= nuplan-maps-v1.0.zip
+NUPLAN_AV_OUT_DIR ?= data/orius_av/av/processed_nuplan_singapore
+NUPLAN_MAX_DBS ?=
+NUPLAN_MAX_SCENARIOS ?=
 SSD_VOLUME ?= /Volumes/ORIUS_SSD
 SSD_EXTERNAL_ROOT_NAME ?= orius_external_data
 STRICT_EXTERNAL_LINK ?= $(if $(ORIUS_STRICT_EXTERNAL_ROOT),$(ORIUS_STRICT_EXTERNAL_ROOT),$(if $(ORIUS_EXTERNAL_DATA_ROOT),$(ORIUS_EXTERNAL_DATA_ROOT),$(HOME)/orius_external_data))
@@ -29,7 +37,17 @@ EXTERNAL_SSD_ROOT ?= $(if $(ORIUS_EXTERNAL_DATA_ROOT),$(ORIUS_EXTERNAL_DATA_ROOT
 ## Canonical paper/review artifact directories are intentionally retained in repository state.
 
 appledouble-clean:
-	find . -path "./.git" -prune -o -name '._*' -delete
+	PYTHONPATH=scripts $(PYTHON) scripts/cleanup_appledouble.py --root . --delete
+
+appledouble-check:
+	PYTHONPATH=scripts $(PYTHON) scripts/validate_no_appledouble.py --root . --exclude-active
+
+workspace-hygiene-check:
+	PYTHONPATH=scripts $(PYTHON) scripts/validate_workspace_hygiene.py --root . --exclude-active
+
+workspace-hygiene-clean:
+	PYTHONPATH=scripts $(PYTHON) scripts/cleanup_appledouble.py --root . --delete
+	PYTHONPATH=scripts $(PYTHON) scripts/validate_workspace_hygiene.py --root . --exclude-active --delete-stale-pids
 
 clean:
 	rm -f paper/*.aux paper/*.log paper/*.out paper/*.fdb_latexmk paper/*.fls paper/*.bbl paper/*.blg paper/*.toc paper/*.lof paper/*.lot
@@ -60,7 +78,7 @@ setup:
 	cd frontend && npm install
 
 lint:
-	PYTHONPYCACHEPREFIX=/tmp/orius_pycache $(PYTHON) -m compileall src services scripts
+	PYTHONPYCACHEPREFIX=/tmp/orius_pycache $(PYTHON) -m compileall -x '(^|/)\._' src services scripts
 
 # Release-focused static hygiene checks (unused imports/locals)
 lint-release:
@@ -341,6 +359,9 @@ ifndef RELEASE_ID
 endif
 	$(PYTHON) scripts/build_publication_artifact.py --release-id $(RELEASE_ID) --out-dir reports/publication --horizon 96 --seeds 0 1 2 3 4 5 6 7 8 9
 
+clean-artifact-release:
+	$(PYTHON) scripts/build_clean_artifact_release.py --out-root artifacts/releases --mode full-derived --include-manuscripts --verify
+
 paper-assets:
 	bash scripts/export_paper_assets.sh
 	PYTHONPATH=src $(PYTHON) scripts/build_paper_table_tex.py
@@ -358,15 +379,21 @@ ieee-assets: orius-monograph-assets
 camera-ready-assets: ieee-assets
 	PYTHONPATH=src $(PYTHON) scripts/build_camera_ready_tables.py
 	PYTHONPATH=src $(PYTHON) scripts/build_camera_ready_figures.py
+	PYTHONPATH=src $(PYTHON) scripts/build_camera_ready_figure_lineage.py --write
 
 paper-verify: orius-monograph-assets
 	PYTHONPATH=src $(PYTHON) scripts/verify_paper_manifest.py --paper orius_book.tex
 	PYTHONPATH=src $(PYTHON) scripts/validate_paper_claims.py --tex orius_book.tex
+	PYTHONPATH=src $(PYTHON) scripts/repair_table_result_integrity.py
+	PYTHONPATH=src $(PYTHON) scripts/audit_table_result_integrity.py
 
-camera-ready-verify:
+camera-ready-verify: camera-ready-assets
+	PYTHONPATH=src $(PYTHON) scripts/build_camera_ready_figure_lineage.py --verify
 	PYTHONPATH=src $(PYTHON) scripts/verify_paper_manifest.py --camera-ready
 	PYTHONPATH=src $(PYTHON) scripts/validate_paper_claims.py
-	PYTHONPATH=src $(PYTHON) scripts/verify_camera_ready_logs.py --waivers paper/camera_ready_warning_waivers.yaml
+	PYTHONPATH=src $(PYTHON) scripts/verify_camera_ready_logs.py --waivers paper/camera_ready_warning_waivers.yaml --log paper/ieee/orius_ieee_main.log --log paper/ieee/orius_ieee_detailed_main.log
+	PYTHONPATH=src $(PYTHON) scripts/repair_table_result_integrity.py
+	PYTHONPATH=src $(PYTHON) scripts/audit_table_result_integrity.py
 
 # Paper 2: certificate half-life blackout benchmark
 paper2-blackout-benchmark:
@@ -376,11 +403,14 @@ paper2-blackout-benchmark:
 paper3-four-policy-benchmark:
 	$(PYTHON) scripts/run_paper3_four_policy_benchmark.py
 
-paper-compile: orius-monograph-assets
+paper-compile: orius-monograph-assets app-c-flagship-proofs app-c-all-theorems
+	PYTHONPATH=src $(PYTHON) scripts/repair_table_result_integrity.py
+	PYTHONPATH=src $(PYTHON) scripts/audit_table_result_integrity.py
 	rm -f paper/paper.pdf paper/paper.log paper/paper.aux paper/paper.out paper/paper.bbl paper/paper.blg paper/paper.toc paper/paper.lof paper/paper.lot
 	rm -f orius_book.pdf orius_book.log orius_book.aux orius_book.out orius_book.bbl orius_book.blg orius_book.toc orius_book.lof orius_book.lot
 	find paper/monograph -maxdepth 1 -type f ! -name '._*' \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
 	find appendices -maxdepth 1 -type f ! -name '._*' \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
+	find chapters chapters_merged -maxdepth 1 -type f ! -name '._*' \( -name "*.aux" -o -name "*.out" -o -name "*.toc" -o -name "*.lof" -o -name "*.lot" \) -delete
 	mkdir -p paper/monograph paper/chapters paper/appendices paper/backmatter
 	pdflatex -interaction=nonstopmode orius_book.tex
 	bibtex orius_book
@@ -417,7 +447,7 @@ ieee-main-compile: ieee-assets
 	- pdflatex -interaction=nonstopmode -output-directory=paper/ieee paper/ieee/orius_ieee_main.tex
 	- pdflatex -interaction=nonstopmode -output-directory=paper/ieee paper/ieee/orius_ieee_main.tex
 	test -f paper/ieee/orius_ieee_main.pdf
-	@pages=$$(grep -Eo 'Output written on paper/ieee/orius_ieee_main\.pdf \([0-9]+ pages' paper/ieee/orius_ieee_main.log | tail -n1 | sed -E 's/.*\(([0-9]+) pages/\1/'); \
+	@pages=$$(grep -Eo 'Output written on (paper/ieee/)?orius_ieee_main\.pdf \([0-9]+ pages' paper/ieee/orius_ieee_main.log | tail -n1 | sed -E 's/.*\(([0-9]+) pages/\1/'); \
 	if [ -z "$$pages" ]; then \
 		echo "Could not determine page count from paper/ieee/orius_ieee_main.log"; \
 		exit 1; \
@@ -539,6 +569,8 @@ orius-evidence-rerun: paper-assets orius-monograph-assets
 
 camera-ready-freeze:
 	PYTHONPATH=src $(PYTHON) scripts/run_camera_ready_freeze.py --external-root $(STRICT_EXTERNAL_LINK) --compute-lane hybrid --train-missing --repair-invalid-splits --seeds 3 --sil-seeds 3 --sil-rows 96 --horizon 48 --warning-waivers paper/camera_ready_warning_waivers.yaml
+	PYTHONPATH=src $(PYTHON) scripts/repair_table_result_integrity.py
+	PYTHONPATH=src $(PYTHON) scripts/audit_table_result_integrity.py
 
 full-folder-audit:
 	PYTHONPATH=src $(PYTHON) scripts/full_folder_audit.py --out-dir reports/audit
@@ -552,6 +584,8 @@ ifndef RELEASE_ID
 	$(error RELEASE_ID is not set. Usage: make paper-freeze RELEASE_ID=FINAL_20260312T000000Z)
 endif
 	$(PYTHON) scripts/post_training_paper_update.py --release-id $(RELEASE_ID) --out-dir reports/publication
+	PYTHONPATH=src $(PYTHON) scripts/repair_table_result_integrity.py
+	PYTHONPATH=src $(PYTHON) scripts/audit_table_result_integrity.py
 
 dc3s-demo:
 	PYTHONPATH=src $(PYTHON) scripts/run_dc3s_demo.py
@@ -617,6 +651,12 @@ iot-sim:
 refresh-data:
 	$(PYTHON) scripts/refresh_data_delta.py --dataset ALL --apply
 
+table-result-integrity-repair:
+	PYTHONPATH=src $(PYTHON) scripts/repair_table_result_integrity.py
+
+table-result-integrity-audit:
+	PYTHONPATH=src $(PYTHON) scripts/audit_table_result_integrity.py
+
 na-audit:
 	$(PYTHON) scripts/audit_na_tables.py --config configs/publish_audit.yaml
 
@@ -646,8 +686,15 @@ analyze-artifact:
 	$(PYTHON) scripts/analyze_agent_artifact.py
 
 # Build the canonical AV processed dataset from the configured source.
+nuplan-av-surface:
+	PYTHONPATH=src $(PYTHON) scripts/build_nuplan_av_surface.py $(NUPLAN_TRAIN_ARGS) --maps-zip "$(NUPLAN_MAPS_ZIP)" --out-dir "$(NUPLAN_AV_OUT_DIR)" $(if $(NUPLAN_MAX_DBS),--max-dbs $(NUPLAN_MAX_DBS),) $(if $(NUPLAN_MAX_SCENARIOS),--max-scenarios $(NUPLAN_MAX_SCENARIOS),) --build-features
+
 av-datasets:
-	$(PYTHON) scripts/download_av_datasets.py --source $(ORIUS_AV_SOURCE)
+	@if [ "$(ORIUS_AV_SOURCE)" = "nuplan_singapore" ]; then \
+		PYTHONPATH=src $(PYTHON) scripts/build_nuplan_av_surface.py $(NUPLAN_TRAIN_ARGS) --maps-zip "$(NUPLAN_MAPS_ZIP)" --out-dir "$(NUPLAN_AV_OUT_DIR)" $(if $(NUPLAN_MAX_DBS),--max-dbs $(NUPLAN_MAX_DBS),) $(if $(NUPLAN_MAX_SCENARIOS),--max-scenarios $(NUPLAN_MAX_SCENARIOS),) --build-features; \
+	else \
+		$(PYTHON) scripts/download_av_datasets.py --source $(ORIUS_AV_SOURCE); \
+	fi
 
 # Build Healthcare datasets from the active promoted healthcare sources.
 healthcare-datasets:

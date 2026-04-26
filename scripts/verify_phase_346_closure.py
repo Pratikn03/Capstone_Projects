@@ -30,7 +30,7 @@ def build_status() -> dict[str, object]:
         for row in payload["theorems"]
         if row["defense_tier"] in {"flagship_defended", "supporting_defended"}
     ]
-    review_ids = set(payload["summary"]["flagship_defended_ids"]) | {"T6", "T8"}
+    review_ids = set(payload["summary"]["flagship_defended_ids"]) | {"T8"}
 
     phase3_blockers = [
         {
@@ -50,7 +50,7 @@ def build_status() -> dict[str, object]:
             "reason": f"code correspondence is '{row['code_correspondence']}'",
         }
         for row in defended_rows
-        if row["theorem_id"] in {"T3a", "T6", "T11"} and row["code_correspondence"] != "matches"
+        if row["theorem_id"] in {"T3a", "T6", "T7", "T11"} and row["code_correspondence"] != "matches"
     ]
     phase6_blockers = []
     for theorem_id in sorted(review_ids):

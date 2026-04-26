@@ -1698,19 +1698,38 @@ def build_publication_uncertainty_artifacts(ctx: ReportContext) -> None:
             {
                 "transfer_case": name,
                 "source_artifact": str(path.relative_to(ctx.repo_root)),
-                "global_coverage": payload.get("global_coverage"),
-                "global_mean_width": payload.get("global_mean_width"),
+                "global_coverage": payload.get("global_coverage", "not_applicable") or "not_applicable",
+                "global_mean_width": payload.get("global_mean_width", "not_applicable") or "not_applicable",
             }
         )
     if not transfer_rows:
-        transfer_rows.append(
-            {
-                "transfer_case": "pending_transfer_artifacts",
-                "source_artifact": None,
-                "global_coverage": None,
-                "global_mean_width": None,
-            }
-        )
+        canonical_transfer = ctx.repo_root / "paper" / "assets" / "tables" / "tbl04_transfer_stress.csv"
+        if canonical_transfer.exists():
+            fallback = pd.read_csv(canonical_transfer)
+            for _, row in fallback.iterrows():
+                transfer_rows.append(
+                    {
+                        "transfer_case": row.get("transfer_case", "DE_to_US_Transfer_Shift"),
+                        "source_artifact": str(canonical_transfer.relative_to(ctx.repo_root)),
+                        "global_coverage": row.get("picp_90", "not_applicable"),
+                        "global_mean_width": row.get("mean_width", "not_applicable"),
+                        "true_soc_violation_rate": row.get("true_soc_violation_rate", "not_applicable"),
+                        "true_soc_violation_severity_p95_mwh": row.get("true_soc_violation_severity_p95_mwh", "not_applicable"),
+                        "cost_delta_pct": row.get("cost_delta_pct", "not_applicable"),
+                    }
+                )
+        else:
+            transfer_rows.append(
+                {
+                    "transfer_case": "pending_artifact",
+                    "source_artifact": "not_canonical",
+                    "global_coverage": "not_applicable",
+                    "global_mean_width": "not_applicable",
+                    "true_soc_violation_rate": "not_applicable",
+                    "true_soc_violation_severity_p95_mwh": "not_applicable",
+                    "cost_delta_pct": "not_applicable",
+                }
+            )
     table5 = pd.DataFrame(transfer_rows)
     table5_path = publication_dir / "table5_transfer.csv"
     table5.to_csv(table5_path, index=False, float_format="%.6f")
@@ -1721,25 +1740,27 @@ def build_publication_uncertainty_artifacts(ctx: ReportContext) -> None:
         }
     )
     if "mean_width" not in transfer_alias.columns:
-        transfer_alias["mean_width"] = np.nan
+        transfer_alias["mean_width"] = "not_applicable"
     if "picp_90" not in transfer_alias.columns:
-        transfer_alias["picp_90"] = np.nan
+        transfer_alias["picp_90"] = "not_applicable"
     if "true_soc_violation_rate" not in transfer_alias.columns:
-        transfer_alias["true_soc_violation_rate"] = np.nan
+        transfer_alias["true_soc_violation_rate"] = "not_applicable"
     if "true_soc_violation_severity_p95_mwh" not in transfer_alias.columns:
-        transfer_alias["true_soc_violation_severity_p95_mwh"] = np.nan
+        transfer_alias["true_soc_violation_severity_p95_mwh"] = "not_applicable"
     if "cost_delta_pct" not in transfer_alias.columns:
-        transfer_alias["cost_delta_pct"] = np.nan
+        transfer_alias["cost_delta_pct"] = "not_applicable"
     transfer_alias.to_csv(publication_dir / "transfer_stress.csv", index=False, float_format="%.6f")
 
     # Transfer coverage figure.
     fig_path = publication_dir / "fig_transfer_coverage.png"
     fig, ax = plt.subplots(figsize=(7, 4))
-    transfer_numeric = table5.dropna(subset=["global_coverage"])
+    table5_numeric = table5.copy()
+    table5_numeric["global_coverage_numeric"] = pd.to_numeric(table5_numeric["global_coverage"], errors="coerce")
+    transfer_numeric = table5_numeric.dropna(subset=["global_coverage_numeric"])
     if not transfer_numeric.empty:
         ax.bar(
             transfer_numeric["transfer_case"].astype(str).tolist(),
-            transfer_numeric["global_coverage"].astype(float).tolist(),
+            transfer_numeric["global_coverage_numeric"].astype(float).tolist(),
             color="#4c78a8",
         )
         ax.axhline(0.90, color="black", linestyle="--", linewidth=1.0)

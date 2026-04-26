@@ -138,6 +138,13 @@ def _latency(ax, cx, box_top_y, txt):
             zorder=6)
 
 
+def _strip_svg_trailing_whitespace(path: Path) -> None:
+    if path.suffix.lower() != ".svg":
+        return
+    text = path.read_text(encoding="utf-8")
+    path.write_text("\n".join(line.rstrip() for line in text.splitlines()) + "\n", encoding="utf-8")
+
+
 # ── Layout constants (all y = bottom edge of element) ────────────────────────
 #
 #  Title / subtitle          y ≈ 0.955 – 0.975
@@ -473,14 +480,16 @@ def main() -> None:
         out.parent.mkdir(parents=True, exist_ok=True)
         fig.savefig(out, dpi=300, bbox_inches="tight",
                     facecolor=fig.get_facecolor())
+        _strip_svg_trailing_whitespace(out)
         out_paths.append(out)
 
     paper_base = Path(args.paper)
     paper_base.parent.mkdir(parents=True, exist_ok=True)
-    for ext in (".png", ".svg"):
+    for ext in (".png", ".pdf", ".svg"):
         pf = paper_base.with_suffix(ext)
         fig.savefig(pf, dpi=300, bbox_inches="tight",
                     facecolor=fig.get_facecolor())
+        _strip_svg_trailing_whitespace(pf)
         out_paths.append(pf)
 
     plt.close(fig)

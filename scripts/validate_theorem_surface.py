@@ -48,6 +48,12 @@ from _active_theorem_program import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+SRC_ROOT = REPO_ROOT / "src"
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
+
+from orius.universal_theory.contracts import ASSUMPTION_REGISTER as CODE_ASSUMPTION_REGISTER  # noqa: E402
+
 ASSUMPTION_REGISTER = REPO_ROOT / "appendices" / "app_b_assumptions.tex"
 PROOF_SURFACES = [
     REPO_ROOT / "chapters_merged/ch04_theoretical_foundations.tex",
@@ -85,6 +91,14 @@ EXPECTED_THEOREM_IDS = [
     "T9",
     "T10",
     "T11",
+    "T10_T11_ObservationAmbiguitySandwich",
+    "T11_AV_BrakeHold",
+    "T11_HC_FailSafeRelease",
+    "T6_AV_FallbackValidity",
+    "T6_HC_FallbackValidity",
+    "T_EQ_Battery_RuntimeArtifactPackage",
+    "T_EQ_AV_RuntimeArtifactPackage",
+    "T_EQ_HC_RuntimeArtifactPackage",
     "L1",
     "L2",
     "L3",
@@ -95,9 +109,22 @@ EXPECTED_THEOREM_IDS = [
     "T_sensor_converse",
     "T_trajectory_PAC",
 ]
-EXPECTED_FLAGSHIP = ["T1", "T2", "T3a", "T4", "T11", "T_trajectory_PAC"]
-EXPECTED_SUPPORTING = ["T3b", "T6", "T8", "T11_Byzantine", "T_stale_decay"]
-EXPECTED_DRAFT = ["T5", "T7", "T9", "T10", "L1", "L2", "L3", "L4", "T_minimax", "T_sensor_converse"]
+EXPECTED_FLAGSHIP = ["T1", "T2", "T3a", "T4", "T6", "T7", "T11", "T_trajectory_PAC"]
+EXPECTED_SUPPORTING = [
+    "T3b",
+    "T8",
+    "T10_T11_ObservationAmbiguitySandwich",
+    "T11_AV_BrakeHold",
+    "T11_HC_FailSafeRelease",
+    "T6_AV_FallbackValidity",
+    "T6_HC_FallbackValidity",
+    "T_EQ_Battery_RuntimeArtifactPackage",
+    "T_EQ_AV_RuntimeArtifactPackage",
+    "T_EQ_HC_RuntimeArtifactPackage",
+    "T11_Byzantine",
+    "T_stale_decay",
+]
+EXPECTED_DRAFT = ["T5", "T9", "T10", "L1", "L2", "L3", "L4", "T_minimax", "T_sensor_converse"]
 
 SYNC_EXPECTATIONS = {
     ASSUMPTION_REGISTER: [
@@ -138,6 +165,10 @@ EXPECTED_REGISTER = {
     "T5": ("definition", "certificate_validity_horizon"),
     "T6": ("expiration_bound", "certificate_expiration_bound"),
     "T11": ("transfer_theorem", "evaluate_structural_transfer"),
+    "T10_T11_ObservationAmbiguitySandwich": (
+        "supporting_optimality_corollary",
+        "build_observation_ambiguity_contract_summary",
+    ),
 }
 
 
@@ -181,8 +212,16 @@ def _check_assumption_references(known_ids: set[str]) -> list[str]:
             findings.append(f"{REGISTRY_YAML}: duplicate theorem id '{theorem_id}'")
         theorem_ids.add(theorem_id)
         for item in theorem.get("assumptions", []):
-            if isinstance(item, str) and item.startswith("A") and item not in known_ids:
+            if not isinstance(item, str) or not item.startswith("A"):
+                findings.append(
+                    f"{REGISTRY_YAML}: theorem '{theorem_id}' has non-Appendix assumption '{item}'. "
+                    "Move it to typed_obligations or unresolved_assumptions."
+                )
+            elif item not in known_ids:
                 findings.append(f"{REGISTRY_YAML}: theorem '{theorem_id}' cites unknown assumption '{item}'")
+        for item in theorem.get("typed_obligations", []):
+            if not isinstance(item, str):
+                findings.append(f"{REGISTRY_YAML}: theorem '{theorem_id}' has non-string typed obligation '{item}'")
     return findings
 
 
@@ -200,7 +239,7 @@ def main() -> int:
                 findings.append(f"{path}: missing synced phrase '{phrase}'")
 
     known_assumptions = _known_assumption_ids()
-    if known_assumptions != {
+    expected_assumptions = {
         "A1",
         "A2",
         "A3",
@@ -215,8 +254,14 @@ def main() -> int:
         "A11",
         "A12",
         "A13",
-    }:
+    }
+    if known_assumptions != expected_assumptions:
         findings.append(f"Appendix B assumption IDs out of sync: found {sorted(known_assumptions)}")
+    if set(CODE_ASSUMPTION_REGISTER) != expected_assumptions:
+        findings.append(
+            "Code assumption register drifted from Appendix B A1-A13: "
+            f"found {sorted(CODE_ASSUMPTION_REGISTER)}"
+        )
     findings.extend(_check_assumption_references(known_assumptions))
 
     theorem_register = _load_theorem_register()
@@ -252,10 +297,106 @@ def main() -> int:
         findings.append("T5 must remain retiered as a definition.")
     t6 = next(row for row in payload["theorems"] if row["theorem_id"] == "T6")
     if t6["proof_tier"] != "V2_linked":
-        findings.append("T6 must remain the V2-linked auxiliary theorem surface.")
+        findings.append("T6 must remain the V2-linked flagship closed-form theorem surface.")
+    t7 = next(row for row in payload["theorems"] if row["theorem_id"] == "T7")
+    if "piecewise fallback theorem" not in t7["scope_note"]:
+        findings.append("T7 scope note must preserve the piecewise hold-or-safe-landing narrowing.")
     t11 = next(row for row in payload["theorems"] if row["theorem_id"] == "T11")
     if "forward four-obligation" not in t11["scope_note"]:
         findings.append("T11 scope note must preserve the forward-only four-obligation narrowing.")
+    expected_t11_obligations = [
+        "Coverage obligation for the observation-consistent state set.",
+        "Soundness of the tightened safe-action set.",
+        "Repair membership in the tightened safe-action set.",
+        "Fallback admissibility when the tightened set is empty.",
+    ]
+    if t11["assumptions_used"]:
+        findings.append("T11 must keep transfer requirements in typed_obligations, not assumptions.")
+    if t11["typed_obligations"] != expected_t11_obligations:
+        findings.append(
+            f"T11 typed obligations drifted: expected {expected_t11_obligations}, found {t11['typed_obligations']}"
+        )
+    if t11["unresolved_assumptions"]:
+        findings.append("T11 must not carry unresolved assumptions; obligations are runtime-linked typed obligations.")
+    for lemma_id in (
+        "T11_AV_BrakeHold",
+        "T11_HC_FailSafeRelease",
+        "T6_AV_FallbackValidity",
+        "T6_HC_FallbackValidity",
+    ):
+        lemma = next(row for row in payload["theorems"] if row["theorem_id"] == lemma_id)
+        if lemma["defense_tier"] != "supporting_defended":
+            findings.append(f"{lemma_id} must remain supporting_defended, not flagship.")
+        if lemma["rigor_rating"] != "proof_runtime_linked":
+            findings.append(f"{lemma_id} must remain proof_runtime_linked.")
+        if lemma["code_correspondence"] != "matches":
+            findings.append(f"{lemma_id} must keep matching runtime code correspondence.")
+        if lemma["assumptions_used"]:
+            findings.append(f"{lemma_id} must keep runtime conditions in typed_obligations, not assumptions.")
+        if not lemma["typed_obligations"]:
+            findings.append(f"{lemma_id} must expose runtime-linked typed obligations.")
+        if lemma["unresolved_assumptions"]:
+            findings.append(f"{lemma_id} must not carry unresolved assumptions.")
+        if not lemma["statement_location"] or not lemma["proof_location"]:
+            findings.append(f"{lemma_id} must have statement/proof anchors.")
+        if not lemma["code_anchors"] or not lemma["test_anchors"]:
+            findings.append(f"{lemma_id} must have code/test anchors.")
+
+    for gate_id in (
+        "T_EQ_Battery_RuntimeArtifactPackage",
+        "T_EQ_AV_RuntimeArtifactPackage",
+        "T_EQ_HC_RuntimeArtifactPackage",
+    ):
+        gate = next(row for row in payload["theorems"] if row["theorem_id"] == gate_id)
+        if gate["defense_tier"] != "supporting_defended":
+            findings.append(f"{gate_id} must remain supporting_defended, not flagship.")
+        if gate["rigor_rating"] != "artifact_runtime_linked":
+            findings.append(f"{gate_id} must remain artifact_runtime_linked.")
+        if gate["code_correspondence"] != "matches":
+            findings.append(f"{gate_id} must keep matching runtime code correspondence.")
+        if gate["assumptions_used"]:
+            findings.append(f"{gate_id} must keep artifact conditions in typed_obligations, not assumptions.")
+        if not gate["typed_obligations"]:
+            findings.append(f"{gate_id} must expose artifact-linked typed obligations.")
+        if not gate["statement_location"] or not gate["proof_location"]:
+            findings.append(f"{gate_id} must have statement/proof anchors.")
+        if not gate["code_anchors"] or not gate["test_anchors"]:
+            findings.append(f"{gate_id} must have code/test anchors.")
+
+    defended_core_rows = [
+        row["theorem_id"]
+        for row in payload["theorems"]
+        if row["defense_tier"] in {"flagship_defended", "supporting_defended"}
+        and "defended_theorem_core" in row["generator_targets"]
+    ]
+    expected_defended_core = [
+        "T1",
+        "T2",
+        "T3a",
+        "T3b",
+        "T4",
+        "T6",
+        "T7",
+        "T8",
+        "T11",
+        "T10_T11_ObservationAmbiguitySandwich",
+        "T11_AV_BrakeHold",
+        "T11_HC_FailSafeRelease",
+        "T6_AV_FallbackValidity",
+        "T6_HC_FallbackValidity",
+        "T_EQ_Battery_RuntimeArtifactPackage",
+        "T_EQ_AV_RuntimeArtifactPackage",
+        "T_EQ_HC_RuntimeArtifactPackage",
+        "T11_Byzantine",
+        "T_stale_decay",
+        "T_trajectory_PAC",
+    ]
+    if defended_core_rows != expected_defended_core:
+        findings.append(
+            f"Defended core rows drifted: expected {expected_defended_core}, found {defended_core_rows}"
+        )
+    if any(theorem_id in defended_core_rows for theorem_id in ("T9", "T10")):
+        findings.append("T9/T10 must remain draft-only and absent from defended_theorem_core.")
 
     required_drift_surfaces = {
         "src/orius/dc3s/coverage_theorem.py and tests/test_conditional_coverage.py",

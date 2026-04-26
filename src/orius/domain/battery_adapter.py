@@ -238,57 +238,27 @@ def _safe_landing_repair(
     constraints: Mapping[str, Any],
     cfg: Mapping[str, Any],
 ) -> tuple[dict[str, float], dict[str, Any]]:
+    from orius.universal_theory.battery_instantiation import compute_battery_safe_landing_action
+
     landing_cfg = dict(cfg.get("shield", {}).get("safe_landing", {}))
-    capacity = _f(constraints.get("capacity_mwh"), 10.0)
-    min_soc = _f(constraints.get("ftit_soc_min_mwh"), _f(constraints.get("min_soc_mwh"), 0.0))
-    max_soc = _f(constraints.get("ftit_soc_max_mwh"), _f(constraints.get("max_soc_mwh"), capacity))
     current_soc = _f(state.get("current_soc_mwh"), 0.0)
-    dt_hours = max(_f(constraints.get("time_step_hours"), 1.0), 1e-9)
-    charge_eff = max(1e-6, _f(constraints.get("charge_efficiency"), 1.0))
-    discharge_eff = max(1e-6, _f(constraints.get("discharge_efficiency"), 1.0))
-    max_power = _f(
-        constraints.get("max_power_mw"),
-        max(_f(constraints.get("max_charge_mw"), 0.0), _f(constraints.get("max_discharge_mw"), 0.0)),
+    theorem_constraints = dict(constraints)
+    if "safe_margin_mwh" in landing_cfg:
+        theorem_constraints["safe_landing_margin_mwh"] = landing_cfg.get("safe_margin_mwh")
+    if "safe_margin_pct" in landing_cfg:
+        theorem_constraints["safe_landing_margin_pct"] = landing_cfg.get("safe_margin_pct")
+    if "target_soc_mwh" in landing_cfg:
+        theorem_constraints["safe_landing_target_soc_mwh"] = landing_cfg.get("target_soc_mwh")
+    landing = compute_battery_safe_landing_action(
+        current_soc_mwh=current_soc,
+        constraints=theorem_constraints,
     )
-    max_charge = _f(constraints.get("max_charge_mw"), max_power)
-    max_discharge = _f(constraints.get("max_discharge_mw"), max_power)
-    ramp_mw = _f(constraints.get("ramp_mw"), 0.0)
-    last_net = _f(constraints.get("last_net_mw"), 0.0)
-
-    safe_margin_mwh = max(0.0, _f(landing_cfg.get("safe_margin_mwh"), 0.0))
-    safe_margin_pct = max(0.0, _f(landing_cfg.get("safe_margin_pct"), 0.05))
-    configured_margin = max(safe_margin_mwh, safe_margin_pct * capacity)
-    safe_zone_min = min(max_soc, min_soc + configured_margin)
-    safe_zone_max = max(min_soc, max_soc - configured_margin)
-    if safe_zone_min >= safe_zone_max:
-        safe_zone_min = min_soc
-        safe_zone_max = max_soc
-    target_soc = _f(landing_cfg.get("target_soc_mwh"), 0.5 * (safe_zone_min + safe_zone_max))
-    target_soc = min(max(target_soc, safe_zone_min), safe_zone_max)
-
-    if current_soc < safe_zone_min - 1e-9:
-        desired_net = -min(max_charge, (target_soc - current_soc) / (charge_eff * dt_hours))
-    elif current_soc > safe_zone_max + 1e-9:
-        desired_net = min(max_discharge, ((current_soc - target_soc) * discharge_eff) / dt_hours)
-    else:
-        desired_net = 0.0
-
-    if ramp_mw > 0.0:
-        desired_net = max(last_net - ramp_mw, min(last_net + ramp_mw, desired_net))
-
-    charge = 0.0
-    discharge = 0.0
-    if desired_net >= 0.0:
-        feasible_discharge = max(0.0, ((current_soc - min_soc) * discharge_eff) / dt_hours)
-        discharge = min(desired_net, max_discharge, max_power, feasible_discharge)
-    else:
-        feasible_charge = max(0.0, (max_soc - current_soc) / (charge_eff * dt_hours))
-        charge = min(-desired_net, max_charge, max_power, feasible_charge)
-
-    next_soc = current_soc + dt_hours * (charge_eff * charge - (discharge / discharge_eff))
+    safe = {
+        "charge_mw": float(landing["fallback_action"]["charge_mw"]),
+        "discharge_mw": float(landing["fallback_action"]["discharge_mw"]),
+    }
     input_charge = max(0.0, _f(a_star.get("charge_mw"), 0.0))
     input_discharge = max(0.0, _f(a_star.get("discharge_mw"), 0.0))
-    safe = {"charge_mw": float(charge), "discharge_mw": float(discharge)}
     repaired = abs(safe["charge_mw"] - input_charge) > 1e-9 or abs(safe["discharge_mw"] - input_discharge) > 1e-9
     meta = {
         "mode": "safe_landing",
@@ -296,11 +266,12 @@ def _safe_landing_repair(
         "intervention_reason": "safe_landing",
         "input_charge_mw": float(input_charge),
         "input_discharge_mw": float(input_discharge),
-        "current_soc_mwh": float(current_soc),
-        "target_soc_mwh": float(target_soc),
-        "safe_zone_min_mwh": float(safe_zone_min),
-        "safe_zone_max_mwh": float(safe_zone_max),
-        "next_soc_mwh": float(next_soc),
+        "current_soc_mwh": float(landing["current_soc_mwh"]),
+        "target_soc_mwh": float(landing["target_soc_mwh"]),
+        "safe_zone_min_mwh": float(landing["safe_zone_min_mwh"]),
+        "safe_zone_max_mwh": float(landing["safe_zone_max_mwh"]),
+        "next_soc_mwh": float(landing["next_soc_nominal_mwh"]),
+        "landing_region": str(landing["landing_region"]),
         "w_t": float(uncertainty_set.get("meta", {}).get("w_t", 1.0)),
     }
     return safe, meta

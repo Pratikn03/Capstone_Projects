@@ -2,8 +2,11 @@
 """Regenerate all publication figures at camera-ready quality (300 DPI, serif fonts)."""
 from __future__ import annotations
 
+import json
 import os
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib-orius")
@@ -16,6 +19,7 @@ import pandas as pd
 REPO = Path(__file__).resolve().parents[1]
 PUB = REPO / "reports" / "publication"
 PAPER_FIG = REPO / "paper" / "assets" / "figures"
+STYLE_TOKEN_PATH = PUB / "camera_ready_figure_style_tokens.json"
 
 # ── Publication-quality style ──────────────────────────────
 RCPARAMS = {
@@ -64,19 +68,55 @@ def _style(controller: str) -> dict:
     return {**s, "label": CONTROLLER_LABELS.get(str(controller), str(controller))}
 
 
-def _save(fig: plt.Figure, name: str) -> None:
-    pub_path = PUB / name
-    paper_path = PAPER_FIG / name.replace("fig_", "fig{:02d}_".format(0))
-    fig.savefig(pub_path)
+def _write_style_tokens() -> None:
+    tokens = {
+        "schema_version": 1,
+        "font_family": RCPARAMS["font.family"],
+        "font_serif": RCPARAMS["font.serif"],
+        "figure_dpi": RCPARAMS["figure.dpi"],
+        "savefig_dpi": RCPARAMS["savefig.dpi"],
+        "controller_style": CONTROLLER_STYLE,
+        "controller_labels": CONTROLLER_LABELS,
+        "target_colors": TARGET_COLORS,
+        "group_markers": GROUP_MARKERS,
+        "artifact_policy": {
+            "data_plots": "Generated from tracked CSV/JSON/runtime artifacts.",
+            "static_diagrams": "Exported assets are committed; editable source is registered in the Figma design manifest.",
+        },
+    }
+    STYLE_TOKEN_PATH.write_text(json.dumps(tokens, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _save_publication_figure(fig: plt.Figure, pub_stem: str, paper_stem: str | None = None) -> None:
+    pub_stem = Path(pub_stem).with_suffix("").name
+    outputs = [PUB / f"{pub_stem}.png", PUB / f"{pub_stem}.pdf"]
+    for out in outputs:
+        fig.savefig(out)
+    if paper_stem:
+        paper_stem = Path(paper_stem).with_suffix("").name
+        for out in outputs:
+            dst = PAPER_FIG / f"{paper_stem}{out.suffix}"
+            shutil.copy2(out, dst)
     plt.close(fig)
-    print(f"  {pub_path.name} ({pub_path.stat().st_size // 1024} KB)")
+    print(f"  {pub_stem}: png+pdf")
 
 
-def _save_to_paper(src_name: str, paper_name: str) -> None:
-    src = PUB / src_name
-    dst = PAPER_FIG / paper_name
-    shutil.copy2(src, dst)
-    print(f"  -> {dst.name}")
+def _run_static_export_generators() -> None:
+    """Rebuild static/conceptual exports before writing lineage."""
+    for script in [
+        REPO / "scripts" / "generate_architecture_diagram.py",
+        REPO / "scripts" / "generate_hero_figure.py",
+    ]:
+        if script.exists():
+            subprocess.run([sys.executable, str(script)], cwd=REPO, check=True)
+
+
+def _write_lineage_outputs() -> None:
+    subprocess.run(
+        [sys.executable, str(REPO / "scripts" / "build_camera_ready_figure_lineage.py"), "--write"],
+        cwd=REPO,
+        check=True,
+    )
 
 
 # ═══════════════════════════════════════════════════════════
@@ -102,10 +142,11 @@ def build_fig03_fig04():
     ax.set_title("True-SOC Violation Rate Under Faulted Telemetry")
     ax.legend(loc="best")
     fig.tight_layout()
-    fig.savefig(PUB / "fig_true_soc_violation_vs_dropout.png")
-    plt.close(fig)
-    shutil.copy2(PUB / "fig_true_soc_violation_vs_dropout.png",
-                 PAPER_FIG / "fig03_true_soc_violation_vs_dropout.png")
+    _save_publication_figure(
+        fig,
+        "fig_true_soc_violation_vs_dropout",
+        "fig03_true_soc_violation_vs_dropout",
+    )
     print(f"  fig03: violation rate ({len(subset)} points)")
 
     # --- FIG04: severity P95 ---
@@ -119,10 +160,11 @@ def build_fig03_fig04():
     ax.set_title("True-SOC Violation Severity (P95) Under Faulted Telemetry")
     ax.legend(loc="best")
     fig.tight_layout()
-    fig.savefig(PUB / "fig_true_soc_severity_p95_vs_dropout.png")
-    plt.close(fig)
-    shutil.copy2(PUB / "fig_true_soc_severity_p95_vs_dropout.png",
-                 PAPER_FIG / "fig04_true_soc_severity_p95_vs_dropout.png")
+    _save_publication_figure(
+        fig,
+        "fig_true_soc_severity_p95_vs_dropout",
+        "fig04_true_soc_severity_p95_vs_dropout",
+    )
     print(f"  fig04: severity P95 ({len(subset)} points)")
 
 
@@ -150,10 +192,7 @@ def build_fig05():
     ax.set_title("Coverage vs Width by Volatility Group")
     ax.legend(loc="lower right", fontsize=8)
     fig.tight_layout()
-    fig.savefig(PUB / "fig_cqr_group_coverage.png")
-    plt.close(fig)
-    shutil.copy2(PUB / "fig_cqr_group_coverage.png",
-                 PAPER_FIG / "fig05_cqr_group_coverage.png")
+    _save_publication_figure(fig, "fig_cqr_group_coverage", "fig05_cqr_group_coverage")
     print(f"  fig05: {len(cov)} groups")
 
 
@@ -188,10 +227,7 @@ def build_fig06():
     ax.legend(by_label.values(), by_label.keys(), fontsize=8)
     ax.tick_params(axis="x", rotation=0, labelsize=8)
     fig.tight_layout()
-    fig.savefig(PUB / "fig_transfer_coverage.png")
-    plt.close(fig)
-    shutil.copy2(PUB / "fig_transfer_coverage.png",
-                 PAPER_FIG / "fig06_transfer_coverage.png")
+    _save_publication_figure(fig, "fig_transfer_coverage", "fig06_transfer_coverage")
     print(f"  fig06: {len(plot_df)} bars")
 
 
@@ -230,10 +266,7 @@ def build_fig07():
     ax.set_title("Cost\u2013Safety Pareto Frontier")
     ax.legend(loc="best", fontsize=8)
     fig.tight_layout()
-    fig.savefig(PUB / "fig_cost_safety_pareto.png")
-    plt.close(fig)
-    shutil.copy2(PUB / "fig_cost_safety_pareto.png",
-                 PAPER_FIG / "fig07_cost_safety_frontier.png")
+    _save_publication_figure(fig, "fig_cost_safety_pareto", "fig07_cost_safety_frontier")
     print(f"  fig07: {len(merged)} points")
 
 
@@ -262,10 +295,7 @@ def build_fig08():
     ax.set_title("RAC Sensitivity vs Interval Width Expansion")
     ax.legend(loc="best", fontsize=8)
     fig.tight_layout()
-    fig.savefig(PUB / "fig_rac_sensitivity_vs_width.png")
-    plt.close(fig)
-    shutil.copy2(PUB / "fig_rac_sensitivity_vs_width.png",
-                 PAPER_FIG / "fig08_rac_sensitivity_vs_width.png")
+    _save_publication_figure(fig, "fig_rac_sensitivity_vs_width", "fig08_rac_sensitivity_vs_width")
     print(f"  fig08: {len(df)} points")
 
 
@@ -324,10 +354,7 @@ def build_fig09():
 
     fig.suptitle("ORIUS Dataset Cards", fontsize=16, fontweight="bold")
     fig.tight_layout()
-    fig.savefig(PUB / "fig_region_dataset_cards.png")
-    plt.close(fig)
-    shutil.copy2(PUB / "fig_region_dataset_cards.png",
-                 PAPER_FIG / "fig09_region_dataset_cards.png")
+    _save_publication_figure(fig, "fig_region_dataset_cards", "fig09_region_dataset_cards")
     print(f"  fig09: {len(rows)} cards")
 
 
@@ -362,10 +389,7 @@ def build_fig10():
                                         markersize=8, label=g))
     ax.legend(handles=legend_elements, loc="lower right", fontsize=8, ncol=2)
     fig.tight_layout()
-    fig.savefig(PUB / "fig_calibration_tradeoff.png")
-    plt.close(fig)
-    shutil.copy2(PUB / "fig_calibration_tradeoff.png",
-                 PAPER_FIG / "fig10_calibration_tradeoff.png")
+    _save_publication_figure(fig, "fig_calibration_tradeoff", "fig10_calibration_tradeoff")
     print(f"  fig10: {len(cov)} points")
 
 
@@ -408,10 +432,7 @@ def build_fig11():
         ax.tick_params(axis="x", rotation=20)
     fig.suptitle("Cross-Region Transfer and Generalization", fontweight="bold")
     fig.tight_layout()
-    fig.savefig(PUB / "fig_transfer_generalization.png")
-    plt.close(fig)
-    shutil.copy2(PUB / "fig_transfer_generalization.png",
-                 PAPER_FIG / "fig11_transfer_generalization.png")
+    _save_publication_figure(fig, "fig_transfer_generalization", "fig11_transfer_generalization")
     print(f"  fig11: {len(plot_df)} rows × 2 panels")
 
 
@@ -427,9 +448,9 @@ def main():
     print("Camera-Ready Figure Generation (300 DPI, serif)")
     print("=" * 60)
 
-    # FIG01 and FIG02 are static diagrams — leave as-is
-    print("fig01: architecture (static, unchanged)")
-    print("fig02: DC3S step (static, unchanged)")
+    _write_style_tokens()
+    _run_static_export_generators()
+    print("fig01/fig02: static/conceptual exports refreshed")
 
     build_fig03_fig04()
     build_fig05()
@@ -447,6 +468,7 @@ def main():
     build_fig11()
 
     print()
+    _write_lineage_outputs()
     print(f"All camera-ready figures saved to:")
     print(f"  {PUB}")
     print(f"  {PAPER_FIG}")

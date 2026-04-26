@@ -25,7 +25,7 @@ CANONICAL_T1_T8 = {
     "T1": "OASG Existence",
     "T2": "One-Step Safety Preservation",
     "T3": "ORIUS Core Bound",
-    "T4": "No Free Safety",
+    "T4": "Observation Necessity / No Free Safety",
     "T5": "Certificate Validity Horizon",
     "T6": "Certificate Expiration Bound",
     "T7": "Feasible Fallback Existence",

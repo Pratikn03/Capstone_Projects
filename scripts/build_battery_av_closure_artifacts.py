@@ -30,9 +30,18 @@ from orius.forecasting.uncertainty.shift_aware import summarize_weighted_recalib
 
 
 DEFAULT_BATTERY_DIR = REPO_ROOT / "reports" / "battery_av" / "battery"
-DEFAULT_AV_DIR = REPO_ROOT / "reports" / "orius_av" / "full_corpus"
+DEFAULT_AV_DIR = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
 DEFAULT_OVERALL_DIR = REPO_ROOT / "reports" / "battery_av" / "overall"
 DOCS_DIR = REPO_ROOT / "docs"
+CENTRAL_NOVELTY_SENTENCE = (
+    "ORIUS identifies OASG as the degraded-observation release hazard and "
+    "provides a reliability-aware runtime safety layer across Battery, AV, "
+    "and Healthcare."
+)
+
+
+def _is_appledouble(path: Path) -> bool:
+    return any(part.startswith("._") for part in path.parts)
 
 
 def _utc_now() -> str:
@@ -159,13 +168,15 @@ def _build_executive_summary(
         "",
         "## What ORIUS Is",
         "",
+        CENTRAL_NOVELTY_SENTENCE,
+        "",
         "ORIUS (Observation–Reality Integrity for Universal Safety) is a runtime safety layer for physical AI systems under degraded observation. It treats the observation–action safety gap as the governing hazard and responds through the Detect → Calibrate → Constrain → Shield → Certify lane.",
         "",
         "## Current Submission Scope",
         "",
         f"- `submission_scope={submission_scope}`",
         "- `battery` is the reference witness row.",
-        "- `av` is the bounded proof-validated row under the longitudinal TTC plus predictive-entry-barrier contract.",
+        "- `av` is the bounded runtime-contract row under the narrowed brake-hold release contract.",
         "- `industrial`, `healthcare`, `navigation`, and `aerospace` are not promoted in this battery+AV submission lane.",
         "",
         "## Locked Battery + AV Results",
@@ -178,7 +189,7 @@ def _build_executive_summary(
             f"{battery_oasg} OASG cases identified. | {battery_artifact_count} locked artifacts; chain valid = {battery_chain_valid}; certificates = {battery_cert_rows:,} |"
         ),
         (
-            f"| **Autonomous Vehicles** | `{override.get('vehicle', {}).get('resulting_tier', 'proof_validated')}` | "
+            f"| **Autonomous Vehicles** | `{override.get('vehicle', {}).get('resulting_tier', 'runtime_contract_closed')}` | "
             f"Baseline TSVR = {_pct_text(av_baseline_runtime.get('tsvr'))}, ORIUS TSVR = {_pct_text(av_orius_runtime.get('tsvr'))} on "
             f"{int(av_release.get('runtime_rows_canonical_controller', 0)):,} canonical runtime rows "
             f"({int(av_release.get('runtime_rows_total', 0)):,} total trace rows); {av_oasg} OASG cases identified on the ORIUS AV defended row. | "
@@ -188,7 +199,7 @@ def _build_executive_summary(
         "## What This Submission Does Not Claim",
         "",
         "- Industrial and healthcare are intentionally outside the promoted `battery_av_only` submission lane.",
-        "- AV remains a bounded longitudinal result; it is not a claim of full autonomous-driving closure.",
+        "- AV remains a bounded longitudinal result; it is not a claim of full autonomous-driving field closure.",
         "- Navigation and aerospace remain non-promoted rows.",
         "- Adversarial completeness and production deployment readiness are not claimed from this surface.",
         "",
@@ -198,7 +209,7 @@ def _build_executive_summary(
         "- `reports/battery_av/overall/publication_closure_override.json`",
         "- `reports/publication/orius_equal_domain_parity_matrix.csv`",
         "- `reports/battery_av/battery/`",
-        "- `reports/orius_av/full_corpus/`",
+        "- `reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/`",
         "",
     ]
     path = docs_dir / "executive_summary.md"
@@ -227,6 +238,8 @@ def _build_claim_ledger(
         "",
         "> Generated from the canonical closure artifacts.",
         "",
+        CENTRAL_NOVELTY_SENTENCE,
+        "",
         "## Governing Inputs",
         "",
         "- `reports/battery_av/overall/release_summary.json`",
@@ -241,19 +254,19 @@ def _build_claim_ledger(
         f"| A1 | Battery remains the `reference` witness row in the current submission lane. | `publication_closure_override.json` |",
         f"| A2 | Battery canonical TSVR is {_pct_text(battery_runtime.get('tsvr'))} on {int(battery_release.get('runtime_rows_canonical_controller', 0)):,} canonical runtime rows. | `reports/battery_av/battery/runtime_summary.csv`, `release_summary.json` |",
         f"| A3 | Battery CertOS chain is valid with {int((((battery_release.get('certos') or {}).get('summary') or {}).get('certificate_rows', 0))):,} certificates. | `reports/battery_av/battery/certos_verification_summary.json` |",
-        f"| A4 | AV remains the bounded `{override.get('vehicle', {}).get('resulting_tier', 'proof_validated')}` row. | `publication_closure_override.json` |",
-        f"| A5 | AV baseline TSVR is {_pct_text(av_baseline_runtime.get('tsvr'))} and ORIUS TSVR is {_pct_text(av_orius_runtime.get('tsvr'))}. | `reports/orius_av/full_corpus/runtime_summary.csv` |",
+        f"| A4 | AV remains the bounded `{override.get('vehicle', {}).get('resulting_tier', 'runtime_contract_closed')}` row. | `publication_closure_override.json` |",
+        f"| A5 | AV baseline TSVR is {_pct_text(av_baseline_runtime.get('tsvr'))} and ORIUS TSVR is {_pct_text(av_orius_runtime.get('tsvr'))}. | `reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_summary.csv` |",
         f"| A6 | AV runtime rows total = {int(av_release.get('runtime_rows_total', 0)):,}; canonical ORIUS rows = {int(av_release.get('runtime_rows_canonical_controller', 0)):,}. | `release_summary.json` |",
-        f"| A7 | AV ORIUS OASG cases identified = {av_oasg:,}. | `reports/orius_av/full_corpus/oasg_domain_summary.csv`, `release_summary.json` |",
+        f"| A7 | AV ORIUS OASG cases identified = {av_oasg:,}. | `reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/oasg_domain_summary.csv`, `release_summary.json` |",
         f"| A8 | Only `battery` and `vehicle` are promoted rows under `submission_scope={submission_scope}`. | `reports/publication/orius_equal_domain_parity_matrix.csv` |",
         "",
         "## Bucket B — Bounded / Qualified Claims",
         "",
         "| ID | Claim | Qualification |",
         "|----|-------|---------------|",
-        "| B1 | AV proof-validation is real. | It is bounded to the current longitudinal TTC plus predictive-entry-barrier contract. |",
+        "| B1 | AV runtime-contract closure is real. | It is bounded to the current brake-hold release contract. |",
         "| B2 | Battery remains the deepest witness. | That does not imply equal maturity across domains outside the current battery+AV lane. |",
-        "| B3 | Shift-aware uncertainty is active in both rows. | Conditional coverage under arbitrary shift is not claimed from these artifacts. |",
+        "| B3 | Shift-aware uncertainty is active in both rows. | Coverage guarantees under arbitrary shift are not claimed from these artifacts. |",
         "",
         "## Bucket C — Explicitly Not Claimed",
         "",
@@ -263,7 +276,7 @@ def _build_claim_ledger(
         "| C2 | Healthcare is promoted in this submission. | `outside_current_submission_scope_battery_av_lane` |",
         "| C3 | Navigation is a promoted defended row. | It remains a non-promoted row in the current parity matrix. |",
         "| C4 | Aerospace is a promoted defended row. | It remains a non-promoted row in the current parity matrix. |",
-        "| C5 | AV is full autonomous-driving closure. | The current AV row is explicitly bounded. |",
+        "| C5 | AV is full autonomous-driving field closure. | The current AV row is explicitly bounded. |",
         "",
     ]
     path = docs_dir / "claim_ledger.md"
@@ -582,8 +595,8 @@ def _build_domain_release(
     runtime_summary_path = Path(resolved["runtime_summary"]) if resolved.get("runtime_summary") else domain_dir / "runtime_summary.csv"
     runtime_traces_path = Path(resolved["runtime_traces"]) if resolved.get("runtime_traces") else domain_dir / "runtime_traces.csv"
     runtime_rows_total, runtime_rows_canonical = _runtime_trace_counts(traces_df, summary_controller)
-    figures = sorted(str(path) for path in domain_dir.rglob("*.png"))
-    tables = sorted(str(path) for path in domain_dir.rglob("*.csv"))
+    figures = sorted(str(path) for path in domain_dir.rglob("*.png") if not _is_appledouble(path))
+    tables = sorted(str(path) for path in domain_dir.rglob("*.csv") if not _is_appledouble(path))
     summary_payload = {
         "domain": domain_name,
         "domain_key": domain_key,
@@ -604,16 +617,30 @@ def _build_domain_release(
     }
     _write_json(summary_path, summary_payload)
 
-    artifact_paths = {Path(path) for path in figures + tables if Path(path).exists()}
+    artifact_paths = {Path(path) for path in figures + tables if Path(path).exists() and not _is_appledouble(Path(path))}
     for value in resolved.values():
         if value is not None and Path(value).exists():
-            artifact_paths.add(Path(value))
+            candidate = Path(value)
+            if not _is_appledouble(candidate):
+                artifact_paths.add(candidate)
     if counterexample_artifacts:
-        artifact_paths.update(Path(path) for path in counterexample_artifacts.values() if isinstance(path, str) and Path(path).exists())
+        artifact_paths.update(
+            Path(path)
+            for path in counterexample_artifacts.values()
+            if isinstance(path, str) and Path(path).exists() and not _is_appledouble(Path(path))
+        )
     if shift_artifacts:
-        artifact_paths.update(Path(path) for path in shift_artifacts.values() if isinstance(path, str) and Path(path).exists())
+        artifact_paths.update(
+            Path(path)
+            for path in shift_artifacts.values()
+            if isinstance(path, str) and Path(path).exists() and not _is_appledouble(Path(path))
+        )
     if certos_artifacts:
-        artifact_paths.update(Path(path) for path in certos_artifacts.values() if isinstance(path, str) and Path(path).exists())
+        artifact_paths.update(
+            Path(path)
+            for path in certos_artifacts.values()
+            if isinstance(path, str) and Path(path).exists() and not _is_appledouble(Path(path))
+        )
     manifest_payload = {
         "domain": domain_name,
         "generated_at_utc": _utc_now(),
@@ -653,12 +680,12 @@ def _publication_override_from_release(battery: dict[str, Any], av: dict[str, An
             "fallback_status": "pass" if av_complete else "gated",
             "certos_portability_status": "pass" if av_certos.get("chain_valid") and av_complete else "gated",
             "multi_agent_portability_status": "evaluated" if av_complete else "gated",
-            "resulting_tier": "proof_validated" if av_complete else "proof_candidate_only",
-            "exact_blocker": "none" if av_complete else "canonical full-corpus AV runtime closure artifacts are missing",
-            "maturity_state": "implemented_and_validated_under_bounded_contract" if av_complete else "defended_row_pending_runtime_stage",
-            "maturity_evidence_basis": "Waymo full-corpus runtime, counterexample, shift-aware, and CertOS artifacts" if av_complete else "bounded AV training artifacts exist, but the canonical full-corpus runtime/report surface is incomplete",
-            "maturity_primary_risk": "current closure remains bounded to the TTC entry-barrier contract" if av_complete else "promotion outruns full-corpus runtime evidence",
-            "maturity_next_action": "keep as defended bounded row while broader vehicle interaction remains open" if av_complete else "finish canonical AV full-corpus runtime/report artifacts before promotion-facing summaries advance",
+            "resulting_tier": "runtime_contract_closed" if av_complete else "proof_candidate_only",
+            "exact_blocker": "none" if av_complete else "canonical all-zip grouped nuPlan AV runtime closure artifacts are missing",
+            "maturity_state": "runtime_contract_closed_under_bounded_release_contract" if av_complete else "defended_row_pending_runtime_stage",
+            "maturity_evidence_basis": "AV all-zip grouped nuPlan runtime, counterexample, shift-aware, and CertOS artifacts" if av_complete else "bounded AV training artifacts exist, but the canonical all-zip grouped runtime/report surface is incomplete",
+            "maturity_primary_risk": "current closure remains bounded to the brake-hold release contract" if av_complete else "promotion outruns all-zip grouped nuPlan runtime evidence",
+            "maturity_next_action": "keep as defended bounded row while broader vehicle interaction remains open" if av_complete else "finish canonical all-zip grouped nuPlan runtime/report artifacts before promotion-facing summaries advance",
             "oasg_case_count": av_counterexamples,
         },
     }

@@ -8,11 +8,12 @@ dataset:
 task:
   horizon_hours: 0.001  # ~3.6s
   lookback_hours: 0.1
+  lookback_steps: 24  # Explicit sequence window for DL models.
   quantiles: [0.1, 0.5, 0.9]
-  targets: [hr_bpm, spo2_pct, respiratory_rate, shock_index]
+  targets: [hr_bpm, spo2_pct, respiratory_rate]
 
 seed: 42
-seeds: [42, 123]
+seeds: [42, 123, 456, 789]
 
 cross_validation:
   enabled: false
@@ -55,12 +56,116 @@ models:
       num_leaves: 128
       verbosity: -1
   dl_lstm:
-    enabled: false
+    enabled: true
+    params:
+      hidden_size: 128
+      num_layers: 2
+      dropout: 0.2
+      epochs: 180
+      batch_size: 256
+      learning_rate: 0.0005
+      weight_decay: 1e-5
+      warmup_epochs: 8
+      gradient_clip: 1.0
+      attention: true
+      early_stopping:
+        enabled: true
+        patience: 24
+        min_delta: 0.0001
   dl_tcn:
-    enabled: false
+    enabled: true
+    params:
+      num_channels: [128, 128, 64]
+      kernel_size: 5
+      dilation_base: 2
+      dropout: 0.2
+      epochs: 180
+      batch_size: 256
+      learning_rate: 0.0005
+      weight_decay: 1e-5
+      warmup_epochs: 8
+      gradient_clip: 1.0
+      use_skip_connections: true
+      early_stopping:
+        enabled: true
+        patience: 24
+        min_delta: 0.0001
   dl_nbeats:
-    enabled: false
-  dl_patchtst:
-    enabled: false
+    enabled: true
+    params:
+      hidden_dim: 256
+      num_blocks: 3
+      dropout: 0.1
+      epochs: 160
+      batch_size: 256
+      learning_rate: 0.0005
+      weight_decay: 1e-5
+      warmup_epochs: 8
+      gradient_clip: 1.0
+      early_stopping:
+        enabled: true
+        patience: 20
+        min_delta: 0.0001
   dl_tft:
-    enabled: false
+    enabled: true
+    params:
+      d_model: 96
+      n_heads: 4
+      num_layers: 2
+      dim_feedforward: 192
+      dropout: 0.1
+      epochs: 160
+      batch_size: 256
+      learning_rate: 0.0005
+      weight_decay: 1e-5
+      warmup_epochs: 8
+      gradient_clip: 1.0
+      early_stopping:
+        enabled: true
+        patience: 20
+        min_delta: 0.0001
+  dl_patchtst:
+    enabled: true
+    params:
+      patch_len: 8
+      stride: 4
+      d_model: 96
+      n_heads: 4
+      num_layers: 2
+      dim_feedforward: 192
+      dropout: 0.1
+      epochs: 160
+      batch_size: 256
+      learning_rate: 0.0005
+      weight_decay: 1e-5
+      warmup_epochs: 8
+      gradient_clip: 1.0
+      early_stopping:
+        enabled: true
+        patience: 20
+        min_delta: 0.0001
+
+backtest:
+  enabled: true
+  out_path: reports/healthcare/walk_forward_report.json
+
+tuning:
+  enabled: false
+  engine: optuna
+  n_trials: 60
+  metric: val_loss
+  direction: minimize
+  selection_mode: top_pct_median
+  select_top_pct: 0.20
+  min_top_trials: 5
+  params:
+    baseline_gbm:
+      n_estimators: {type: int, low: 300, high: 1500}
+      learning_rate: {type: float, low: 0.003, high: 0.08, log: true}
+      max_depth: {type: int, low: 6, high: 12}
+      num_leaves: {type: int, low: 32, high: 256}
+      min_child_samples: {type: int, low: 10, high: 40}
+      subsample: {type: float, low: 0.7, high: 1.0}
+      colsample_bytree: {type: float, low: 0.7, high: 1.0}
+      reg_alpha: {type: float, low: 1e-4, high: 10.0, log: true}
+      reg_lambda: {type: float, low: 1e-4, high: 10.0, log: true}

@@ -22,7 +22,7 @@ OUT.mkdir(parents=True, exist_ok=True)
 def _fmt(v: object, decimals: int = 3) -> str:
     """Format a value for LaTeX: handle NaN, int, float, escape underscores."""
     if v is None or (isinstance(v, float) and math.isnan(v)):
-        return r"---"
+        return r"not appl."
     if isinstance(v, float):
         if v == int(v) and abs(v) < 1e6:
             return str(int(v))
@@ -212,7 +212,7 @@ def build_fault_stress_subset() -> None:
             for ctl in ["DC3S-FTIT", "Deterministic LP"]:
                 v = row.get(ctl, float("nan"))
                 if isinstance(v, float) and math.isnan(v):
-                    cells.append("---")
+                    cells.append("not appl.")
                 else:
                     cells.append(f"{float(v):.1f}")
             lines.append(" & ".join(cells) + r" \\")
@@ -307,10 +307,10 @@ def build_claim_evidence() -> None:
     ]
     for _, row in df.iterrows():
         cid = str(row[id_col])[:20].replace("_", r"\_")
-        text = str(row[text_col])[:55].replace("_", r"\_") + "..." if text_col else "---"
-        ev = str(row[ev_col])[:55].replace("_", r"\_").replace("/", r"/\-") if ev_col else "---"
-        status = str(row[status_col]) if status_col else "---"
-        etype = str(row[type_col])[:18].replace("_", r"\_") if type_col else "---"
+        text = str(row[text_col])[:55].replace("_", r"\_") + "..." if text_col else "not appl."
+        ev = str(row[ev_col])[:55].replace("_", r"\_").replace("/", r"/\-") if ev_col else "not appl."
+        status = str(row[status_col]).replace("_", r"\_") if status_col else "not appl."
+        etype = str(row[type_col])[:18].replace("_", r"\_") if type_col else "not appl."
         lines.append(f"\\texttt{{{cid}}} & {text} & \\texttt{{{ev}}} & {etype} & {status} \\\\")
     lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
     (OUT / "tbl_claim_evidence.tex").write_text("\n".join(lines))
@@ -350,9 +350,9 @@ def build_multi_agent() -> None:
         r"\midrule",
     ]
     for _, row in df.iterrows():
-        proto = row.get("protocol", "---")
-        jv = int(row["joint_violations"]) if "joint_violations" in row else "---"
-        lv = int(row["local_violations"]) if "local_violations" in row else "---"
+        proto = row.get("protocol", "not appl.")
+        jv = int(row["joint_violations"]) if "joint_violations" in row else "not appl."
+        lv = int(row["local_violations"]) if "local_violations" in row else "not appl."
         uw = _fmt(row.get("useful_work_mwh", float("nan")), 1)
         mq = _fmt(row.get("margin_quality", float("nan")), 3)
         jv_str = r"\textbf{0}" if jv == 0 else str(jv)

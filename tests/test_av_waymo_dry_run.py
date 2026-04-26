@@ -16,7 +16,12 @@ from orius.av_waymo import (
     train_dry_run_models,
     write_tfrecord_records,
 )
-from orius.av_waymo.runtime import _independent_certificate_validity, _predict_certificate_validity
+from orius.av_waymo.runtime import (
+    _independent_certificate_validity,
+    _predict_certificate_validity,
+    _runtime_aligned_longitudinal_controller,
+    deterministic_longitudinal_controller,
+)
 from orius.certos.verification import load_certificates_from_duckdb, verify_certificates
 from orius.dc3s.certificate import make_certificate
 
@@ -174,9 +179,21 @@ def test_waymo_dry_run_smoke(tmp_path: Path) -> None:
     summary_df = pd.read_csv(runtime_report["runtime_summary_csv"])
     coverage_df = pd.read_csv(runtime_report["fault_family_coverage_csv"])
     trace_df = pd.read_csv(runtime_report["runtime_traces_csv"])
-    assert set(summary_df["controller"]) == {"baseline", "orius"}
+    comparator_df = pd.read_csv(runtime_report["runtime_comparator_summary_csv"])
+    ablation_df = pd.read_csv(runtime_report["runtime_ablation_summary_csv"])
+    negative_df = pd.read_csv(runtime_report["runtime_negative_controls_csv"])
+    assert {
+        "baseline",
+        "rss_cbf_filter",
+        "robust_fixed_deceleration",
+        "predictor_only_no_runtime",
+        "nonreliability_conformal_runtime",
+        "stale_certificate_no_temporal_guard",
+        "always_brake",
+        "orius",
+    } <= set(summary_df["controller"])
     assert "controller" in coverage_df.columns
-    assert set(coverage_df["controller"]) == {"baseline", "orius"}
+    assert {"baseline", "always_brake", "orius"} <= set(coverage_df["controller"])
     assert {
         "trace_id",
         "shard_id",
@@ -184,7 +201,57 @@ def test_waymo_dry_run_smoke(tmp_path: Path) -> None:
         "certificate_predicted_valid",
         "base_pred_ego_speed_lower_mps",
         "base_pred_relative_gap_lower_m",
+        "repair_mode",
+        "fallback_region",
+        "theorem_contract",
+        "contract_id",
+        "source_theorem",
+        "t11_status",
+        "t11_failed_obligations",
+        "domain_postcondition_passed",
+        "domain_postcondition_failure",
+        "validity_scope",
+        "validity_theorem_id",
+        "validity_theorem_contract",
+        "geometric_constraint_violated",
+        "projected_release",
+        "projected_release_margin",
+        "runtime_policy_family",
     }.issubset(trace_df.columns)
+    orius_trace_df = trace_df[trace_df["controller"] == "orius"]
+    assert set(orius_trace_df["contract_id"]) == {"AV.T11.brake_hold_runtime_lemma"}
+    assert set(orius_trace_df["source_theorem"]) == {"T11"}
+    assert set(orius_trace_df["t11_status"]).issubset({"runtime_linked", "contract_violation"})
+    assert float(summary_df.loc[summary_df["controller"] == "orius", "tsvr"].iloc[0]) == 0.0
+    assert float(summary_df.loc[summary_df["controller"] == "orius", "fallback_activation_rate"].iloc[0]) <= 0.50
+    assert float(summary_df.loc[summary_df["controller"] == "always_brake", "tsvr"].iloc[0]) == 0.0
+    assert float(summary_df.loc[summary_df["controller"] == "orius", "useful_work_total"].iloc[0]) >= float(
+        summary_df.loc[summary_df["controller"] == "always_brake", "useful_work_total"].iloc[0]
+    )
+    assert {
+        "nominal_deterministic_controller",
+        "fixed_threshold_or_fixed_inflation_runtime",
+        "standard_conformal_nonreliability_runtime",
+        "no_quality_signal_runtime",
+        "no_adaptive_response_runtime",
+        "no_temporal_guard_or_no_certificate_refresh_runtime",
+        "orius_full_stack",
+        "degenerate_fallback_runtime",
+    } == set(comparator_df["baseline_family"])
+    assert set(comparator_df["metric_surface"]) == {"runtime_denominator"}
+    assert "proxy_current_shared_harness" not in set(comparator_df["evidence_status"])
+    assert set(ablation_df["metric_surface"]) == {"runtime_denominator"}
+    assert set(negative_df["surface"]) == {"runtime_denominator"}
+    orius_comparator = comparator_df[comparator_df["baseline_family"] == "orius_full_stack"].iloc[0]
+    fallback_comparator = comparator_df[comparator_df["baseline_family"] == "degenerate_fallback_runtime"].iloc[0]
+    assert float(orius_comparator["runtime_witness_pass_rate"]) == 1.0
+    assert float(orius_comparator["fallback_activation_rate"]) <= 0.50
+    assert float(orius_comparator["useful_work_total"]) >= float(fallback_comparator["useful_work_total"])
+    independent_rows = comparator_df[
+        ~comparator_df["baseline_family"].isin(["orius_full_stack", "degenerate_fallback_runtime"])
+    ]
+    assert {str(value) for value in independent_rows["independent_baseline"]} == {"True"}
+    assert independent_rows["controller"].nunique() == len(independent_rows)
     assert Path(runtime_report["audit_db_path"]).exists()
     cert_summary, _, _, _ = verify_certificates(load_certificates_from_duckdb(runtime_report["audit_db_path"]))
     assert cert_summary["chain_valid"] is True
@@ -192,6 +259,35 @@ def test_waymo_dry_run_smoke(tmp_path: Path) -> None:
     assert Path(shift_artifacts["summary_csv"]).exists()
     assert Path(shift_artifacts["targets"]["ego_speed_mps"]["validity_trace_csv"]).exists()
     assert Path(shift_artifacts["targets"]["relative_gap_m"]["adaptive_trace_csv"]).exists()
+
+
+def test_runtime_aligned_nominal_controller_tracks_projection_region() -> None:
+    state = {
+        "ego_speed_mps": 12.0,
+        "speed_limit_mps": 22.0,
+        "min_gap_m": 14.0,
+        "lead_speed_mps": 7.0,
+        "lead_rel_speed_mps": 5.0,
+        "ttc_s": 2.8,
+        "pred_relative_gap_lower_m": 4.75,
+    }
+    constraints = {
+        "accel_min_mps2": -6.0,
+        "accel_max_mps2": 3.0,
+        "hard_headway_m": 5.0,
+        "hard_ttc_s": 2.0,
+        "entry_headway_m": 10.0,
+        "entry_ttc_s": 4.0,
+    }
+    base = deterministic_longitudinal_controller(state)
+    aligned = _runtime_aligned_longitudinal_controller(
+        state,
+        constraints=constraints,
+        policy_config={"align_nominal_with_runtime_projection": True},
+    )
+
+    assert base["acceleration_mps2"] > 0.0
+    assert abs(aligned["acceleration_mps2"] - -5.9) < 1e-9
 
 
 def test_waymo_replay_track_faults_only_corrupt_observation(tmp_path: Path) -> None:

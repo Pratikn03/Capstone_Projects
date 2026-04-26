@@ -47,6 +47,10 @@ from _dataset_registry import runtime_domain_configs
 REPO_ROOT = SCRIPT_DIR.parent
 BATTERY_REFERENCE_TABLE_CSV = REPO_ROOT / "reports" / "publication" / "dc3s_main_table.csv"
 PROMOTED_PER_CONTROLLER_CSV = REPO_ROOT / "reports" / "universal_orius_validation" / "per_controller_tsvr.csv"
+AV_RUNTIME_DIR = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+AV_RUNTIME_SUMMARY = AV_RUNTIME_DIR / "runtime_summary.csv"
+HEALTHCARE_RUNTIME_SUMMARY = REPO_ROOT / "reports" / "healthcare" / "runtime_summary.csv"
+DOMAIN_RUNTIME_CONTRACT_SUMMARY = REPO_ROOT / "reports" / "publication" / "domain_runtime_contract_summary.json"
 
 CONTROLLERS = [
     NominalController(),
@@ -63,6 +67,8 @@ RUNTIME_DOMAIN_ORDER: tuple[str, ...] = ("battery", "healthcare", "vehicle")
 DEFENDED_DOMAINS: list[str] = ["healthcare", "vehicle"]
 
 PROOF_BASELINE_MIN_TSVR = 0.05
+PROOF_MAX_RUNTIME_TSVR = 1e-3
+PROOF_MIN_RUNTIME_PASS_RATE = 1.0 - PROOF_MAX_RUNTIME_TSVR
 PROOF_MIN_REDUCTION_PCT = 25.0
 PROOF_MAX_TSVR_STD = 0.05
 PORTABILITY_MAX_TSVR_REGRESSION = 0.01
@@ -75,7 +81,7 @@ _DOMAIN_QUANTILES: dict[str, float] = {
 _DOMAIN_CFGS: dict[str, dict[str, Any]] = {
     "vehicle": {
         "expected_cadence_s": 0.25,
-        "runtime_surface": "waymo_motion_replay_surrogate",
+        "runtime_surface": "nuplan_allzip_grouped_runtime_replay_surrogate",
         "closure_tier": "defended_promoted_row",
     },
     "healthcare": {
@@ -197,6 +203,8 @@ def _evaluate_proof_domain(summary: dict[str, Any]) -> dict[str, Any]:
         failure_reasons.append("reduction_below_threshold")
     if baseline_std > PROOF_MAX_TSVR_STD or orius_std > PROOF_MAX_TSVR_STD:
         failure_reasons.append("proof_domain_unstable")
+    if "strict_runtime_gate" in summary and not bool(summary.get("strict_runtime_gate")):
+        failure_reasons.append("strict_runtime_gate_failed")
 
     return {
         "evidence_pass": len(failure_reasons) == 0,
@@ -209,6 +217,14 @@ def _evaluate_proof_domain(summary: dict[str, Any]) -> dict[str, Any]:
         "baseline_nontrivial": baseline_mean >= PROOF_BASELINE_MIN_TSVR,
         "orius_improved": orius_mean < baseline_mean,
         "stable": baseline_std <= PROOF_MAX_TSVR_STD and orius_std <= PROOF_MAX_TSVR_STD,
+        "metric_surface": summary.get("metric_surface", "validation_harness"),
+        "runtime_source": summary.get("runtime_source", ""),
+        "n_steps": int(summary.get("n_steps", 0) or 0),
+        "strict_runtime_gate": bool(summary.get("strict_runtime_gate", False)),
+        "certificate_valid_rate": float(summary.get("certificate_valid_rate", 0.0)),
+        "t11_pass_rate": float(summary.get("t11_pass_rate", 0.0)),
+        "postcondition_pass_rate": float(summary.get("postcondition_pass_rate", 0.0)),
+        "runtime_witness_pass_rate": float(summary.get("runtime_witness_pass_rate", 0.0)),
     }
 
 
@@ -233,32 +249,98 @@ def _evaluate_portability_domain(domain: str, summary: dict[str, Any]) -> dict[s
     }
 
 
+def _read_csv_rows(path: Path) -> list[dict[str, str]]:
+    if not path.exists():
+        return []
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def _read_json(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def _load_promoted_domain_summary(domain: str) -> dict[str, Any] | None:
-    """Use the canonical promoted artifact lane when it already exists.
+    """Use canonical runtime-denominator artifacts for promoted rows."""
 
-    The three-domain publication surface is driven by the tracked promoted
-    summaries rather than by the tiny fallback `--horizon 24` protocol used by
-    smoke tests. When those promoted rows exist, reuse them instead of
-    re-deriving a weaker toy summary in this script.
-    """
-    if not PROMOTED_PER_CONTROLLER_CSV.exists():
+    if domain == "vehicle":
+        summary_path = AV_RUNTIME_SUMMARY
+        witness_key = "av"
+        degenerate_controller = "always_brake"
+    elif domain == "healthcare":
+        summary_path = HEALTHCARE_RUNTIME_SUMMARY
+        witness_key = "healthcare"
+        degenerate_controller = "always_alert"
+    else:
         return None
 
-    rows = list(csv.DictReader(PROMOTED_PER_CONTROLLER_CSV.open(encoding="utf-8")))
-    domain_rows = [row for row in rows if row.get("domain") == domain]
-    if not domain_rows:
+    summary_rows = {row.get("controller", ""): row for row in _read_csv_rows(summary_path)}
+    if "baseline" not in summary_rows or "orius" not in summary_rows:
         return None
 
-    nominal = [float(row["tsvr"]) for row in domain_rows if row.get("controller") == "nominal"]
-    dc3s = [float(row["tsvr"]) for row in domain_rows if row.get("controller") == "dc3s"]
-    if not nominal or not dc3s:
-        return None
+    witness_payload = _read_json(DOMAIN_RUNTIME_CONTRACT_SUMMARY)
+    witness = dict(witness_payload.get("domains", {}).get(witness_key, {}))
+    baseline = summary_rows["baseline"]
+    orius = summary_rows["orius"]
+    degenerate = summary_rows.get(degenerate_controller, {})
+    baseline_tsvr = float(baseline.get("tsvr", 0.0))
+    orius_tsvr = float(orius.get("tsvr", 1.0))
+    strict_runtime_gate = bool(
+        orius_tsvr <= PROOF_MAX_RUNTIME_TSVR
+        and baseline_tsvr >= PROOF_BASELINE_MIN_TSVR
+        and float(witness.get("t11_pass_rate", 0.0)) >= PROOF_MIN_RUNTIME_PASS_RATE
+        and float(witness.get("postcondition_pass_rate", 0.0)) >= PROOF_MIN_RUNTIME_PASS_RATE
+        and float(witness.get("witness_pass_rate", 0.0)) >= PROOF_MIN_RUNTIME_PASS_RATE
+        and float(orius.get("useful_work_total", 0.0)) > float(degenerate.get("useful_work_total", -1.0))
+    )
+    artifact_rows = [
+        {
+            "domain": domain,
+            "controller": "nominal",
+            "seed": "runtime_denominator",
+            "tsvr": baseline.get("tsvr", ""),
+            "oasg": baseline.get("oasg", ""),
+            "gdq": baseline.get("gdq", ""),
+            "cva": baseline.get("cva", ""),
+        },
+        {
+            "domain": domain,
+            "controller": "dc3s",
+            "seed": "runtime_denominator",
+            "tsvr": orius.get("tsvr", ""),
+            "oasg": orius.get("oasg", ""),
+            "gdq": orius.get("gdq", ""),
+            "cva": orius.get("cva", ""),
+        },
+    ]
+    if degenerate:
+        artifact_rows.append(
+            {
+                "domain": domain,
+                "controller": "degenerate_fallback",
+                "seed": "runtime_denominator",
+                "tsvr": degenerate.get("tsvr", ""),
+                "oasg": degenerate.get("oasg", ""),
+                "gdq": degenerate.get("gdq", ""),
+                "cva": degenerate.get("cva", ""),
+            }
+        )
 
     return {
-        "tsvr_nominal": nominal,
-        "tsvr_dc3s": dc3s,
+        "tsvr_nominal": [baseline_tsvr],
+        "tsvr_dc3s": [orius_tsvr],
         "harness_status": "pass",
-        "artifact_rows": domain_rows,
+        "metric_surface": "runtime_denominator",
+        "runtime_source": str(summary_path.relative_to(REPO_ROOT)),
+        "n_steps": int(float(orius.get("n_steps", 0))),
+        "strict_runtime_gate": strict_runtime_gate,
+        "certificate_valid_rate": float(witness.get("certificate_valid_rate", 0.0)),
+        "t11_pass_rate": float(witness.get("t11_pass_rate", 0.0)),
+        "postcondition_pass_rate": float(witness.get("postcondition_pass_rate", 0.0)),
+        "runtime_witness_pass_rate": float(witness.get("witness_pass_rate", 0.0)),
+        "artifact_rows": artifact_rows,
     }
 
 
@@ -417,6 +499,38 @@ def _run_vehicle_proof_episode(
     return _run_domain_proof_episode(VehicleTrackAdapter(), controller, seed, horizon)
 
 
+def _diagnostic_harness_rows(
+    track: BenchmarkAdapter,
+    *,
+    seeds: int,
+    horizon: int,
+) -> list[list[object]]:
+    rows: list[list[object]] = []
+    for controller in CONTROLLERS:
+        for offset in range(seeds):
+            seed = 2000 + offset
+            if controller.name == "dc3s":
+                records = _run_domain_proof_episode(track, controller, seed=seed, horizon=horizon)
+            else:
+                records = _run_episode(track, controller, seed=seed, horizon=horizon)
+            metrics = compute_all_metrics(records)
+            rows.append(
+                [
+                    track.domain_name,
+                    controller.name,
+                    seed,
+                    round(metrics.tsvr, 6),
+                    round(metrics.oasg, 6),
+                    round(metrics.gdq, 6),
+                    round(metrics.cva, 6),
+                    "validation_harness",
+                    "True",
+                    "runtime_denominator",
+                ]
+            )
+    return rows
+
+
 def _runtime_dataset_path(domain: str) -> Path | None:
     from orius.orius_bench import real_data_loader
 
@@ -495,6 +609,18 @@ def main() -> int:
         "gdq",
         "cva",
     ]]
+    diagnostic_harness_rows: list[list[object]] = [[
+        "domain",
+        "controller",
+        "seed",
+        "tsvr",
+        "oasg",
+        "gdq",
+        "cva",
+        "metric_surface",
+        "diagnostic_only",
+        "claim_governs_from",
+    ]]
     cross_domain_rows: list[list[object]] = [[
         "domain",
         "baseline_tsvr_mean",
@@ -512,6 +638,14 @@ def main() -> int:
         "orius_reduction_pct",
         "closure_target_ready",
         "closure_blocker",
+        "metric_surface",
+        "runtime_source",
+        "n_steps",
+        "strict_runtime_gate",
+        "certificate_valid_rate",
+        "t11_pass_rate",
+        "postcondition_pass_rate",
+        "runtime_witness_pass_rate",
     ]]
 
     domain_results: dict[str, dict[str, Any]] = {
@@ -540,6 +674,9 @@ def main() -> int:
         if track.domain_name == "battery":
             continue
 
+        diagnostic_harness_rows.extend(
+            _diagnostic_harness_rows(track, seeds=args.seeds, horizon=args.horizon)
+        )
         summary = _load_promoted_domain_summary(track.domain_name)
         if summary is not None:
             for row in summary["artifact_rows"]:
@@ -550,8 +687,8 @@ def main() -> int:
                         row.get("seed", "artifact"),
                         row.get("tsvr", ""),
                         row.get("oasg", ""),
-                        "",
-                        "",
+                        row.get("gdq", ""),
+                        row.get("cva", ""),
                     ]
                 )
         else:
@@ -608,6 +745,14 @@ def main() -> int:
             "closure_blocker": _closure_blocker(track.domain_name),
             "harness_status": "pass",
             "evidence_pass": proof_report["evidence_pass"],
+            "metric_surface": proof_report["metric_surface"],
+            "runtime_source": proof_report["runtime_source"],
+            "n_steps": proof_report["n_steps"],
+            "strict_runtime_gate": proof_report["strict_runtime_gate"],
+            "certificate_valid_rate": proof_report["certificate_valid_rate"],
+            "t11_pass_rate": proof_report["t11_pass_rate"],
+            "postcondition_pass_rate": proof_report["postcondition_pass_rate"],
+            "runtime_witness_pass_rate": proof_report["runtime_witness_pass_rate"],
         }
 
     for domain in RUNTIME_DOMAIN_ORDER:
@@ -632,6 +777,14 @@ def main() -> int:
                 f"{float(result['orius_reduction_pct']):.1f}",
                 "True" if result["closure_target_ready"] else "False",
                 result["closure_blocker"],
+                result.get("metric_surface", "locked_publication_nominal"),
+                result.get("runtime_source", "locked_battery_witness"),
+                result.get("n_steps", ""),
+                "True" if result.get("strict_runtime_gate", True) else "False",
+                f"{float(result.get('certificate_valid_rate', 1.0)):.6f}",
+                f"{float(result.get('t11_pass_rate', 1.0)):.6f}",
+                f"{float(result.get('postcondition_pass_rate', 1.0)):.6f}",
+                f"{float(result.get('runtime_witness_pass_rate', 1.0)):.6f}",
             ]
         )
 
@@ -722,6 +875,7 @@ def main() -> int:
         "cross_domain_oasg_csv": str(out_dir / "cross_domain_oasg_table.csv"),
         "domain_summary_csv": str(out_dir / "domain_validation_summary.csv"),
         "per_controller_tsvr_csv": str(out_dir / "per_controller_tsvr.csv"),
+        "diagnostic_validation_harness_tsvr_csv": str(out_dir / "diagnostic_validation_harness_tsvr.csv"),
     }
 
     (out_dir / "cross_domain_oasg_table.csv").write_text(
@@ -734,6 +888,10 @@ def main() -> int:
     )
     (out_dir / "per_controller_tsvr.csv").write_text(
         "\n".join(",".join(map(str, row)) for row in per_controller_rows) + "\n",
+        encoding="utf-8",
+    )
+    (out_dir / "diagnostic_validation_harness_tsvr.csv").write_text(
+        "\n".join(",".join(map(str, row)) for row in diagnostic_harness_rows) + "\n",
         encoding="utf-8",
     )
     (out_dir / "validation_report.json").write_text(json.dumps(validation_report, indent=2), encoding="utf-8")

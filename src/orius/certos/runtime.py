@@ -58,6 +58,7 @@ class CertOSState:
     lifecycle_op: str = ""
     validation_passed: bool = False
     hash_chain_ok: bool = True
+    certificate_hash: str | None = None
     cert_hash: str | None = None
     prev_hash: str | None = None
 
@@ -443,6 +444,7 @@ class CertOSRuntime:
         lifecycle_op: str = "",
         validation_passed: bool = False,
     ) -> CertOSState:
+        certificate_hash = _certificate_hash(cert)
         return CertOSState(
             step=self._step,
             validity_horizon=self._last_validity if not fallback else 0,
@@ -454,7 +456,8 @@ class CertOSRuntime:
             lifecycle_op=lifecycle_op,
             validation_passed=validation_passed,
             hash_chain_ok=self._verify_hash_chain(),
-            cert_hash=_certificate_hash(cert),
+            certificate_hash=certificate_hash,
+            cert_hash=certificate_hash,
             prev_hash=cert.get("prev_hash"),
         )
 

@@ -4,7 +4,8 @@
 The publication-facing contract is intentionally conservative:
 - point metrics must be present for all thesis headline rows
 - uncertainty metrics remain GBM-only unless a model-specific artifact exists
-- exported CSV/TeX surfaces render missing values as `---`, never `NaN`
+- exported CSV/TeX surfaces render missing values as explicit semantic values,
+  never blanks, `---`, or `NaN`
 
 This script can run in two modes:
 1. explicit directories (`--de-dir`, `--us-dir`, ...)
@@ -103,6 +104,10 @@ def format_value(value: Any, column: str) -> str:
     if isinstance(value, float):
         return f"{value:.{PRECISION[column]}f}"
     return str(value)
+
+
+def latex_value(value: Any, column: str) -> str:
+    return format_value(value, column).replace("_", r"\_")
 
 
 def load_conformal(uncertainty_dir: Path, target: str) -> dict[str, float | None]:
@@ -300,12 +305,12 @@ def write_latex(rows: list[dict[str, Any]], path: Path, region: str) -> None:
             model_str = rf"\textbf{{{model}}}" if model == "GBM" else model
             lines.append(
                 f"{prefix} & {model_str} & "
-                f"{format_value(row['RMSE'], 'RMSE')} & "
-                f"{format_value(row['MAE'], 'MAE')} & "
-                f"{format_value(row['sMAPE (%)'], 'sMAPE (%)')} & "
-                f"{format_value(row['R2'], 'R2')} & "
-                f"{format_value(row['PICP@90 (%)'], 'PICP@90 (%)')} & "
-                f"{format_value(row['Interval Width (MW)'], 'Interval Width (MW)')} \\\\"
+                f"{latex_value(row['RMSE'], 'RMSE')} & "
+                f"{latex_value(row['MAE'], 'MAE')} & "
+                f"{latex_value(row['sMAPE (%)'], 'sMAPE (%)')} & "
+                f"{latex_value(row['R2'], 'R2')} & "
+                f"{latex_value(row['PICP@90 (%)'], 'PICP@90 (%)')} & "
+                f"{latex_value(row['Interval Width (MW)'], 'Interval Width (MW)')} \\\\"
             )
         if target != TARGETS[-1]:
             lines.append(r"\midrule")
@@ -321,8 +326,8 @@ def write_latex_combined(rows: list[dict[str, Any]], path: Path) -> None:
         lines,
         (
             "Promoted six-model forecasting comparison across DE and canonical US under a shared "
-            "split, horizon, lookback, and metric contract. P90 and width remain blank unless "
-            "the pipeline produced model-specific uncertainty artifacts."
+            "split, horizon, lookback, and metric contract. P90 and width are marked "
+            "not-applicable unless the pipeline produced model-specific uncertainty artifacts."
         ),
         "tab:baseline_comparison_all",
         "lllrrrrrr",
@@ -334,12 +339,12 @@ def write_latex_combined(rows: list[dict[str, Any]], path: Path) -> None:
         model_str = rf"\textbf{{{model}}}" if model == "GBM" else model
         lines.append(
             f"{row['Region']} & {row['Target']} & {model_str} & "
-            f"{format_value(row['RMSE'], 'RMSE')} & "
-            f"{format_value(row['MAE'], 'MAE')} & "
-            f"{format_value(row['sMAPE (%)'], 'sMAPE (%)')} & "
-            f"{format_value(row['R2'], 'R2')} & "
-            f"{format_value(row['PICP@90 (%)'], 'PICP@90 (%)')} & "
-            f"{format_value(row['Interval Width (MW)'], 'Interval Width (MW)')} \\\\"
+            f"{latex_value(row['RMSE'], 'RMSE')} & "
+            f"{latex_value(row['MAE'], 'MAE')} & "
+            f"{latex_value(row['sMAPE (%)'], 'sMAPE (%)')} & "
+            f"{latex_value(row['R2'], 'R2')} & "
+            f"{latex_value(row['PICP@90 (%)'], 'PICP@90 (%)')} & "
+            f"{latex_value(row['Interval Width (MW)'], 'Interval Width (MW)')} \\\\"
         )
     _write_table_footer(lines)
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")

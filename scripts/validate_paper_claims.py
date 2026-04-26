@@ -461,6 +461,373 @@ def _check_reference_domain_validation_alignment(
         )
 
 
+def _check_promoted_validation_surface_alignment(
+    findings: list[Finding],
+    repo_root: Path,
+) -> None:
+    benchmark_path = repo_root / "reports" / "publication" / "three_domain_ml_benchmark.csv"
+    closure_path = repo_root / "reports" / "publication" / "orius_domain_closure_matrix.csv"
+    proxy_runtime_path = repo_root / "reports" / "publication" / "three_domain_proxy_runtime_comparison.csv"
+    av_runtime_summary_path = (
+        repo_root
+        / "reports"
+        / "orius_av"
+        / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+        / "runtime_summary.csv"
+    )
+    healthcare_runtime_summary_path = repo_root / "reports" / "healthcare" / "runtime_summary.csv"
+
+    required_paths = (
+        benchmark_path,
+        closure_path,
+        proxy_runtime_path,
+        av_runtime_summary_path,
+        healthcare_runtime_summary_path,
+    )
+    for path in required_paths:
+        if not path.exists():
+            findings.append(
+                Finding("ERROR", "promoted_validation_alignment", str(path), "Missing required promoted validation surface")
+            )
+            return
+
+    with benchmark_path.open("r", encoding="utf-8", newline="") as fh:
+        benchmark_rows = {row["domain"]: row for row in csv.DictReader(fh) if row.get("domain")}
+    with closure_path.open("r", encoding="utf-8", newline="") as fh:
+        closure_rows = {row["domain"]: row for row in csv.DictReader(fh) if row.get("domain")}
+    with proxy_runtime_path.open("r", encoding="utf-8", newline="") as fh:
+        proxy_runtime_rows = {row["domain"]: row for row in csv.DictReader(fh) if row.get("domain")}
+    with av_runtime_summary_path.open("r", encoding="utf-8", newline="") as fh:
+        av_runtime_rows = {row["controller"]: row for row in csv.DictReader(fh) if row.get("controller")}
+    with healthcare_runtime_summary_path.open("r", encoding="utf-8", newline="") as fh:
+        healthcare_runtime_rows = {row["controller"]: row for row in csv.DictReader(fh) if row.get("controller")}
+
+    promoted_domains = {
+        "Autonomous Vehicles": av_runtime_rows,
+        "Medical and Healthcare Monitoring": healthcare_runtime_rows,
+    }
+    for display_name, runtime_rows in promoted_domains.items():
+        benchmark_row = benchmark_rows.get(display_name)
+        closure_row = closure_rows.get(display_name)
+        proxy_runtime_row = proxy_runtime_rows.get(display_name)
+        if benchmark_row is None:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "promoted_validation_alignment",
+                    str(benchmark_path),
+                    f"Missing promoted benchmark row for {display_name}",
+                )
+            )
+            continue
+        if closure_row is None:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "promoted_validation_alignment",
+                    str(closure_path),
+                    f"Missing closure matrix row for {display_name}",
+                )
+            )
+            continue
+        if proxy_runtime_row is None:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "promoted_validation_alignment",
+                    str(proxy_runtime_path),
+                    f"Missing proxy-vs-runtime comparison row for {display_name}",
+                )
+            )
+            continue
+
+        try:
+            runtime_baseline = float(runtime_rows["baseline"]["tsvr"])
+            runtime_orius = float(runtime_rows["orius"]["tsvr"])
+            benchmark_baseline = float(benchmark_row["baseline_tsvr_mean"])
+            benchmark_orius = float(benchmark_row["orius_tsvr_mean"])
+        except (KeyError, TypeError, ValueError) as exc:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "promoted_validation_alignment",
+                    str(benchmark_path),
+                    f"{display_name} promoted surfaces are malformed: {exc}",
+                )
+            )
+            continue
+
+        if abs(benchmark_baseline - runtime_baseline) > 1e-6:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "promoted_validation_alignment",
+                    str(benchmark_path),
+                    (
+                        f"{display_name} benchmark baseline_tsvr_mean={benchmark_baseline} diverges from "
+                        f"runtime summary {runtime_baseline}"
+                    ),
+                )
+            )
+        if abs(benchmark_orius - runtime_orius) > 1e-6:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "promoted_validation_alignment",
+                    str(benchmark_path),
+                    (
+                        f"{display_name} benchmark orius_tsvr_mean={benchmark_orius} diverges from "
+                        f"runtime summary {runtime_orius}"
+                    ),
+                )
+            )
+
+        benchmark_metric_surface = (benchmark_row.get("metric_surface") or "").strip()
+        if benchmark_metric_surface != "runtime_denominator":
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "promoted_validation_alignment",
+                    str(benchmark_path),
+                    f"{display_name} metric_surface='{benchmark_metric_surface}' should be runtime_denominator",
+                )
+            )
+
+        expected_closure_baseline = f"{runtime_baseline:.4f}"
+        expected_closure_orius = f"{runtime_orius:.4f}"
+        if (closure_row.get("baseline_tsvr") or "").strip() != expected_closure_baseline:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "promoted_validation_alignment",
+                    str(closure_path),
+                    (
+                        f"{display_name} closure baseline_tsvr='{closure_row.get('baseline_tsvr', '')}' diverges from "
+                        f"runtime summary {expected_closure_baseline}"
+                    ),
+                )
+            )
+        if (closure_row.get("orius_tsvr") or "").strip() != expected_closure_orius:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "promoted_validation_alignment",
+                    str(closure_path),
+                    (
+                        f"{display_name} closure orius_tsvr='{closure_row.get('orius_tsvr', '')}' diverges from "
+                        f"runtime summary {expected_closure_orius}"
+                    ),
+                )
+            )
+
+        current_status = (closure_row.get("current_status") or "").strip()
+        has_runtime_denominator = "runtime denominator" in current_status
+        has_secondary_proxy_disclosure = "secondary proxy" in current_status
+        has_nuplan_disclosure = (
+            display_name == "Autonomous Vehicles"
+            and "nuplan_allzip_grouped_runtime_replay_surrogate" in current_status
+            and "no road deployment" in current_status
+            and "full autonomous-driving field closure" in current_status
+        )
+        if not has_runtime_denominator or not (has_secondary_proxy_disclosure or has_nuplan_disclosure):
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "promoted_validation_alignment",
+                    str(closure_path),
+                    (
+                        f"{display_name} current_status must disclose runtime-denominator governance and "
+                        "either secondary proxy status or bounded nuPlan claim boundaries"
+                    ),
+                )
+            )
+        if (proxy_runtime_row.get("claim_governs_from") or "").strip() != "runtime_denominator":
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "promoted_validation_alignment",
+                    str(proxy_runtime_path),
+                    f"{display_name} proxy/runtime row must declare claim_governs_from=runtime_denominator",
+                )
+            )
+        if (proxy_runtime_row.get("proxy_metric_surface") or "").strip() != "validation_harness":
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "promoted_validation_alignment",
+                    str(proxy_runtime_path),
+                    f"{display_name} proxy/runtime row must keep proxy_metric_surface=validation_harness",
+                )
+            )
+        if (proxy_runtime_row.get("diagnostic_only") or "").strip() != "True":
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "promoted_validation_alignment",
+                    str(proxy_runtime_path),
+                    f"{display_name} proxy/runtime row must declare diagnostic_only=True",
+                )
+            )
+
+
+def _check_healthcare_runtime_metric_alignment(
+    findings: list[Finding],
+    repo_root: Path,
+) -> None:
+    benchmark_path = repo_root / "reports" / "publication" / "three_domain_ml_benchmark.csv"
+    witness_summary_path = repo_root / "reports" / "publication" / "domain_runtime_contract_summary.json"
+    runtime_summary_path = repo_root / "reports" / "healthcare" / "runtime_summary.csv"
+    runtime_traces_path = repo_root / "reports" / "healthcare" / "runtime_traces.csv"
+
+    required_paths = (benchmark_path, witness_summary_path, runtime_summary_path, runtime_traces_path)
+    for path in required_paths:
+        if not path.exists():
+            findings.append(
+                Finding("ERROR", "healthcare_runtime_alignment", str(path), "Missing required healthcare runtime surface")
+            )
+            return
+
+    with benchmark_path.open("r", encoding="utf-8", newline="") as fh:
+        benchmark_rows = {row["domain"]: row for row in csv.DictReader(fh) if row.get("domain")}
+    healthcare_row = benchmark_rows.get("Medical and Healthcare Monitoring")
+    if healthcare_row is None:
+        findings.append(
+            Finding(
+                "ERROR",
+                "healthcare_runtime_alignment",
+                str(benchmark_path),
+                "Missing healthcare benchmark row",
+            )
+        )
+        return
+    try:
+        witness_summary = json.loads(witness_summary_path.read_text(encoding="utf-8"))
+        witness_certificate_valid_rate = float(witness_summary["domains"]["healthcare"]["certificate_valid_rate"])
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        findings.append(
+            Finding(
+                "ERROR",
+                "healthcare_runtime_alignment",
+                str(witness_summary_path),
+                f"Healthcare domain runtime witness summary is malformed: {exc}",
+            )
+        )
+        return
+
+    with runtime_summary_path.open("r", encoding="utf-8", newline="") as fh:
+        summary_rows = {row["controller"]: row for row in csv.DictReader(fh) if row.get("controller")}
+    runtime_row = summary_rows.get("orius")
+    if runtime_row is None:
+        findings.append(
+            Finding(
+                "ERROR",
+                "healthcare_runtime_alignment",
+                str(runtime_summary_path),
+                "Missing ORIUS healthcare runtime summary row",
+            )
+        )
+        return
+
+    with runtime_traces_path.open("r", encoding="utf-8", newline="") as fh:
+        trace_rows = [row for row in csv.DictReader(fh) if (row.get("controller") or "").strip() == "orius"]
+    if not trace_rows:
+        findings.append(
+            Finding(
+                "ERROR",
+                "healthcare_runtime_alignment",
+                str(runtime_traces_path),
+                "Missing ORIUS healthcare runtime traces",
+            )
+        )
+        return
+
+    def _parse_bool(value: str) -> bool:
+        return str(value).strip().lower() in {"1", "true", "yes"}
+
+    try:
+        runtime_ir = float(runtime_row["intervention_rate"])
+        runtime_fallback = sum(1 for row in trace_rows if _parse_bool(row.get("fallback_used", ""))) / len(trace_rows)
+        benchmark_cva = float(healthcare_row["certificate_valid_release_rate"])
+        benchmark_ir = float(healthcare_row["intervention_rate"])
+        benchmark_fallback = float(healthcare_row["fallback_activation_rate"])
+    except (KeyError, TypeError, ValueError) as exc:
+        findings.append(
+            Finding(
+                "ERROR",
+                "healthcare_runtime_alignment",
+                str(benchmark_path),
+                f"Healthcare runtime surfaces are malformed: {exc}",
+            )
+        )
+        return
+
+    semantics = (healthcare_row.get("certificate_valid_release_rate_semantics") or "").strip()
+    expected_semantics = "runtime_witness_certificate_valid_rate_promoted_healthcare_row"
+    if semantics != expected_semantics:
+        findings.append(
+            Finding(
+                "ERROR",
+                "healthcare_runtime_alignment",
+                str(benchmark_path),
+                (
+                    "Healthcare certificate_valid_release_rate_semantics must be "
+                    f"'{expected_semantics}', found '{semantics}'"
+                ),
+            )
+        )
+
+    runtime_source = (healthcare_row.get("runtime_source") or "").strip()
+    if runtime_source != "reports/healthcare/runtime_summary.csv":
+        findings.append(
+            Finding(
+                "ERROR",
+                "healthcare_runtime_alignment",
+                str(benchmark_path),
+                (
+                    "Healthcare runtime_source must be "
+                    f"'reports/healthcare/runtime_summary.csv', found '{runtime_source}'"
+                ),
+            )
+        )
+
+    if abs(benchmark_cva - witness_certificate_valid_rate) > 1e-6:
+        findings.append(
+            Finding(
+                "ERROR",
+                "healthcare_runtime_alignment",
+                str(benchmark_path),
+                (
+                    f"Healthcare certificate_valid_release_rate={benchmark_cva} diverges from "
+                    f"domain runtime witness certificate_valid_rate={witness_certificate_valid_rate}"
+                ),
+            )
+        )
+    if abs(benchmark_ir - runtime_ir) > 1e-6:
+        findings.append(
+            Finding(
+                "ERROR",
+                "healthcare_runtime_alignment",
+                str(benchmark_path),
+                (
+                    f"Healthcare intervention_rate={benchmark_ir} diverges from "
+                    f"runtime summary intervention_rate={runtime_ir}"
+                ),
+            )
+        )
+    if abs(benchmark_fallback - runtime_fallback) > 1e-6:
+        findings.append(
+            Finding(
+                "ERROR",
+                "healthcare_runtime_alignment",
+                str(benchmark_path),
+                (
+                    f"Healthcare fallback_activation_rate={benchmark_fallback} diverges from "
+                    f"runtime traces fallback_used mean={runtime_fallback}"
+                ),
+            )
+        )
+
+
 def _print_findings(findings: list[Finding]) -> None:
     if not findings:
         print("[validate_paper_claims] PASS: no findings")
@@ -531,6 +898,8 @@ def main() -> None:
     _check_canonical_value_lock(findings, manifest, claim_matrix_path, repo_root)
     _check_impact_alignment_with_manifest(findings, manifest, repo_root)
     _check_reference_domain_validation_alignment(findings, repo_root)
+    _check_promoted_validation_surface_alignment(findings, repo_root)
+    _check_healthcare_runtime_metric_alignment(findings, repo_root)
 
     _print_findings(findings)
 

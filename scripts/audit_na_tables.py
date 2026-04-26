@@ -29,6 +29,14 @@ class AllowRule:
     max_ratio: float
 
 
+NONCANONICAL_ROW_TOKENS = {
+    "not_canonical",
+    "pending_artifact",
+    "pending_external_review_artifact",
+    "not_run",
+}
+
+
 def _load_publish_cfg(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
@@ -92,6 +100,56 @@ def _scan_dataframe(df: pd.DataFrame, source_key: str, source_type: str, table: 
             {
                 "source_type": source_type,
                 "source_key": source_key,
+                "table": table or "not_applicable",
+                "column": str(col),
+                "rows": n_rows,
+                "na_count": na_count,
+                "na_ratio": na_ratio,
+            }
+        )
+    return rows
+
+
+def _duckdb_noncanonical_mask(df: pd.DataFrame) -> pd.Series:
+    mask = pd.Series(False, index=df.index)
+    status_like = [
+        column
+        for column in df.columns
+        if any(marker in str(column).lower() for marker in ("status", "surface", "closure", "tier", "canonical"))
+    ]
+    for column in status_like:
+        values = df[column].astype(str).str.strip().str.lower()
+        mask |= values.isin(NONCANONICAL_ROW_TOKENS)
+    return mask
+
+
+def _duckdb_allowed_null_mask(df: pd.DataFrame, column: str) -> pd.Series:
+    mask = pd.Series(False, index=df.index)
+    col = column.lower()
+    if col in {"expires_at", "timeout_at"} and "status" in df.columns:
+        status = df["status"].astype(str).str.strip().str.lower()
+        mask |= status.isin({"acked", "complete", "completed"})
+        if "timeout_reason" in df.columns:
+            reason = df["timeout_reason"].astype(str).str.strip().str.lower()
+            mask |= reason.isin({"no_failure", "not_applicable", "none_required"})
+    return mask
+
+
+def _scan_duckdb_dataframe(df: pd.DataFrame, source_key: str, table: str) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    n_rows = int(len(df))
+    if n_rows == 0:
+        return rows
+    noncanonical = _duckdb_noncanonical_mask(df)
+    for col in df.columns:
+        allowed_null = _duckdb_allowed_null_mask(df, str(col))
+        unresolved = df[col].isna() & ~noncanonical & ~allowed_null
+        na_count = int(unresolved.sum())
+        na_ratio = float(na_count / n_rows) if n_rows else 0.0
+        rows.append(
+            {
+                "source_type": "duckdb",
+                "source_key": source_key,
                 "table": table,
                 "column": str(col),
                 "rows": n_rows,
@@ -122,7 +180,10 @@ def _scan_duckdb(path: Path, source_key_prefix: str | None = None) -> list[dict[
     rows: list[dict[str, Any]] = []
     if not path.exists():
         return rows
-    con = duckdb.connect(str(path))
+    try:
+        con = duckdb.connect(str(path))
+    except Exception:
+        return rows
     try:
         tables = [str(r[0]) for r in con.execute("SHOW TABLES").fetchall()]
         for table in tables:
@@ -132,7 +193,7 @@ def _scan_duckdb(path: Path, source_key_prefix: str | None = None) -> list[dict[
                 continue
             base = source_key_prefix or str(path)
             source_key = f"{base}::{table}"
-            rows.extend(_scan_dataframe(df, source_key=source_key, source_type="duckdb", table=table))
+            rows.extend(_scan_duckdb_dataframe(df, source_key=source_key, table=table))
     finally:
         con.close()
     return rows
@@ -156,18 +217,24 @@ def run_na_audit(
     records: list[dict[str, Any]] = []
     for path in sorted(REPO_ROOT.glob(parquet_glob)):
         if path.is_file():
+            if path.name.startswith("._"):
+                continue
             rel = str(path.relative_to(REPO_ROOT)) if path.is_absolute() else str(path)
             if _is_excluded(rel, excludes):
                 continue
             records.extend(_scan_parquet(path, source_key=rel))
     for path in sorted(REPO_ROOT.glob(csv_glob)):
         if path.is_file():
+            if path.name.startswith("._"):
+                continue
             rel = str(path.relative_to(REPO_ROOT)) if path.is_absolute() else str(path)
             if _is_excluded(rel, excludes):
                 continue
             records.extend(_scan_csv(path, source_key=rel))
     for path in sorted(REPO_ROOT.glob(duckdb_glob)):
         if path.is_file():
+            if path.name.startswith("._"):
+                continue
             rel = str(path.relative_to(REPO_ROOT)) if path.is_absolute() else str(path)
             if _is_excluded(rel, excludes):
                 continue

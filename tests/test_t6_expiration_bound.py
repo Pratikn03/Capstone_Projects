@@ -62,7 +62,8 @@ def test_t6_bound_matches_closed_form() -> None:
     assert result["theorem_id"] == "T6"
     assert result["requires_delta"] is True
     assert result["legacy_surface_allowed"] is False
-    assert result["theorem_contract"]["status"] == "runtime_linked"
+    assert result["theorem_contract"]["status"] == "machine_checked_ready"
+    assert result["theorem_contract"]["proof_style"] == "closed_form_first_passage_lower_bound"
 
 
 def test_t6_empirical_subgaussian_bound() -> None:
@@ -88,3 +89,15 @@ def test_t6_empirical_subgaussian_bound() -> None:
     survived = float(np.mean(max_abs <= delta_bnd))
 
     assert survived >= 1.0 - delta - 0.02
+
+
+def test_t6_rejects_invalid_delta() -> None:
+    with pytest.raises(ValueError, match="delta must lie in"):
+        certificate_expiration_bound(
+            interval_lower_mwh=45.0,
+            interval_upper_mwh=55.0,
+            soc_min_mwh=0.0,
+            soc_max_mwh=100.0,
+            sigma_d=5.0,
+            delta=1.0,
+        )

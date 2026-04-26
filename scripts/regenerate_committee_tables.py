@@ -44,6 +44,72 @@ def _read_json(path: Path) -> dict:
         return json.load(f)
 
 
+def _compute_reduction_pct(baseline: str | float | None, orius: str | float | None) -> float:
+    try:
+        base = float(baseline)
+        cur = float(orius)
+    except (TypeError, ValueError):
+        return float("nan")
+    if math.isnan(base) or math.isnan(cur):
+        return float("nan")
+    if base <= 0:
+        return 0.0
+    return max(0.0, min(100.0, 100.0 * (base - cur) / base))
+
+
+def _enrich_validation_rows(rows: list[dict], validation_report: dict) -> list[dict]:
+    domain_results = validation_report.get("domain_results", {})
+    if not isinstance(domain_results, dict):
+        domain_results = {}
+    proof_reports = validation_report.get("domain_proof_reports", {})
+    if not isinstance(proof_reports, dict):
+        proof_reports = {}
+
+    reference_domain = str(validation_report.get("reference_domain", "battery"))
+    proof_domains = {
+        str(domain)
+        for domain in validation_report.get("proof_domains", [])
+        if str(domain)
+    }
+
+    enriched: list[dict] = []
+    for row in rows:
+        domain = str(row.get("domain", ""))
+        merged = dict(row)
+        domain_result = domain_results.get(domain, {})
+        if isinstance(domain_result, dict):
+            for key in (
+                "baseline_tsvr_mean",
+                "baseline_tsvr_std",
+                "orius_tsvr_mean",
+                "orius_tsvr_std",
+                "orius_reduction_pct",
+                "validation_status",
+                "maturity_tier",
+                "evidence_pass",
+            ):
+                if key in domain_result and (merged.get(key) in (None, "")):
+                    merged[key] = domain_result[key]
+        proof_report = proof_reports.get(domain, {})
+        if isinstance(proof_report, dict) and "evidence_pass" in proof_report and merged.get("evidence_pass") in (None, ""):
+            merged["evidence_pass"] = proof_report["evidence_pass"]
+
+        if merged.get("orius_reduction_pct") in (None, ""):
+            merged["orius_reduction_pct"] = _compute_reduction_pct(
+                merged.get("baseline_tsvr_mean"),
+                merged.get("orius_tsvr_mean"),
+            )
+
+        if merged.get("maturity_label") in (None, ""):
+            if domain == reference_domain:
+                merged["maturity_label"] = "reference"
+            elif domain in proof_domains:
+                merged["maturity_label"] = "proof_domain"
+
+        enriched.append(merged)
+    return enriched
+
+
 def _pct(v: str | float) -> str:
     """Format a reduction percentage with sign."""
     f = float(v)
@@ -154,9 +220,14 @@ def write_oasg_table(rows: list[dict]) -> None:
     ]
     for r in rows:
         dom = DOMAIN_PRETTY.get(r["domain"], r["domain"].capitalize())
+        baseline = r.get("oasg_rate_baseline", r.get("baseline_tsvr_mean"))
+        orius = r.get("oasg_rate_orius", r.get("orius_tsvr_mean"))
+        reduction = r.get("orius_reduction_pct")
+        if reduction in (None, ""):
+            reduction = _compute_reduction_pct(baseline, orius)
         lines.append(
-            f"{dom} & {_tsvr(r['oasg_rate_baseline'])} & {_tsvr(r['oasg_rate_orius'])} "
-            f"& {_pct(r['orius_reduction_pct'])} \\\\"
+            f"{dom} & {_tsvr(baseline)} & {_tsvr(orius)} "
+            f"& {_pct(reduction)} \\\\"
         )
     lines += [
         r"\bottomrule",
@@ -598,6 +669,7 @@ def main() -> None:
     print("Regenerating committee tables...")
 
     summary_path = REPORTS / "universal_orius_validation" / "domain_validation_summary.csv"
+    validation_report_path = REPORTS / "universal_orius_validation" / "validation_report.json"
     oasg_path    = REPORTS / "universal_orius_validation" / "cross_domain_oasg_table.csv"
     adv_path     = REPORTS / "adversarial_run" / "adversarial_benchmark_report.json"
     lat_path     = REPORTS / "latency_run" / "latency_report.json"
@@ -605,6 +677,8 @@ def main() -> None:
     ablation_path = REPORTS / "multi_domain_ablation" / "fault_type_tsvr.csv"
 
     summary = _read_csv(summary_path)
+    validation_report = _read_json(validation_report_path) if validation_report_path.exists() else {}
+    summary = _enrich_validation_rows(summary, validation_report)
     oasg    = _read_csv(oasg_path)
     adv     = _read_json(adv_path) if adv_path.exists() else {}
     lat     = _read_json(lat_path) if lat_path.exists() else {}

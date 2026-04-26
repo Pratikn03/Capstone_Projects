@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Build tables, figures, and a manifest for a Waymo AV dry run."""
+"""Build tables, figures, and a manifest for the AV replay evidence lane.
+
+The historical script name is kept for compatibility with existing tests and
+automation, but the active publication lane is the all-zip grouped nuPlan run.
+"""
 from __future__ import annotations
 
 import argparse
@@ -23,6 +27,11 @@ DEFAULT_PROCESSED = REPO_ROOT / "data" / "orius_av" / "av" / "processed_full_1k"
 DEFAULT_REPORTS = REPO_ROOT / "reports" / "orius_av" / "full_dry_run"
 DEFAULT_MODELS = REPO_ROOT / "artifacts" / "models_orius_av_full_1k"
 DEFAULT_UNCERTAINTY = REPO_ROOT / "artifacts" / "uncertainty" / "orius_av_full_1k"
+DEFAULT_NUPLAN_TRAINING_REPORTS = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped"
+
+
+def _is_appledouble(path: Path) -> bool:
+    return any(part.startswith("._") for part in path.parts)
 
 
 def _sha256_file(path: Path) -> str:
@@ -42,6 +51,13 @@ def _load_csv(path: Path) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
+def _first_existing(*paths: Path) -> Path:
+    for path in paths:
+        if path.exists():
+            return path
+    return paths[0]
+
+
 def _write_table(df: pd.DataFrame, path: Path) -> str:
     path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(path, index=False)
@@ -53,7 +69,7 @@ def _make_runtime_figure(runtime_df: pd.DataFrame, out_path: Path) -> str:
     plot_df = runtime_df.set_index("controller")[metric_cols].transpose()
     fig, ax = plt.subplots(figsize=(10, 5.5))
     plot_df.plot(kind="bar", ax=ax)
-    ax.set_title("Waymo AV Dry Run Runtime Metrics")
+    ax.set_title("nuPlan AV Replay Runtime Metrics")
     ax.set_ylabel("Metric value")
     ax.set_xlabel("Metric")
     ax.set_ylim(0.0, max(1.05, float(plot_df.to_numpy().max()) * 1.1))
@@ -139,9 +155,64 @@ def _make_shift_aware_figure(shift_df: pd.DataFrame, out_path: Path) -> str:
 
 
 def _split_counts(anchor_features_path: Path) -> pd.DataFrame:
-    anchor_df = pd.read_parquet(anchor_features_path)
-    counts = anchor_df.groupby("split").size().rename("scenario_count").reset_index()
-    return counts.sort_values("split").reset_index(drop=True)
+    import pyarrow.parquet as pq
+
+    if not anchor_features_path.exists():
+        raise FileNotFoundError(f"Missing anchor features: {anchor_features_path}")
+
+    parquet_file = pq.ParquetFile(anchor_features_path)
+    if "split" in parquet_file.schema.names:
+        anchor_df = pd.read_parquet(anchor_features_path, columns=["split"])
+        counts = anchor_df.groupby("split").size().rename("scenario_count").reset_index()
+        return counts.sort_values("split").reset_index(drop=True)
+
+    splits_dir = anchor_features_path.parent / "splits"
+    rows: list[dict[str, Any]] = []
+    if splits_dir.exists():
+        for split_path in sorted(splits_dir.glob("*.parquet")):
+            if _is_appledouble(split_path):
+                continue
+            rows.append(
+                {
+                    "split": split_path.stem,
+                    "scenario_count": int(pq.ParquetFile(split_path).metadata.num_rows),
+                }
+            )
+    if rows:
+        return pd.DataFrame(rows).sort_values("split").reset_index(drop=True)
+
+    raise ValueError(
+        f"Cannot derive AV split counts from {anchor_features_path}; "
+        "expected a split column or processed_dir/splits/*.parquet"
+    )
+
+
+def _runtime_trace_count(
+    *,
+    runtime_summary_path: Path,
+    runtime_report_path: Path,
+    runtime_traces_path: Path,
+) -> int:
+    if runtime_report_path.exists():
+        payload = json.loads(runtime_report_path.read_text(encoding="utf-8"))
+        for key in ("total_trace_rows", "runtime_rows_total", "trace_rows_total"):
+            value = payload.get(key)
+            if value is not None:
+                return int(value)
+        certificate_count = payload.get("certificate_count")
+        if certificate_count is not None and runtime_summary_path.exists():
+            controller_count = len(pd.read_csv(runtime_summary_path, usecols=["controller"]))
+            return int(certificate_count) * int(controller_count)
+
+    if runtime_summary_path.exists():
+        runtime_df = pd.read_csv(runtime_summary_path)
+        if "n_steps" in runtime_df.columns:
+            return int(pd.to_numeric(runtime_df["n_steps"], errors="coerce").fillna(0).sum())
+
+    if runtime_traces_path.exists():
+        return int(sum(1 for _ in runtime_traces_path.open("r", encoding="utf-8")) - 1)
+
+    return 0
 
 
 def _summary_payload(
@@ -190,10 +261,17 @@ def build_report(
     figures_dir = reports_dir / "figures"
     reports_dir.mkdir(parents=True, exist_ok=True)
 
-    training_summary_path = reports_dir / "training_summary.csv"
-    subgroup_coverage_path = reports_dir / "subgroup_coverage.csv"
+    training_summary_path = _first_existing(
+        reports_dir / "training_summary.csv",
+        DEFAULT_NUPLAN_TRAINING_REPORTS / "training_summary.csv",
+    )
+    subgroup_coverage_path = _first_existing(
+        reports_dir / "subgroup_coverage.csv",
+        DEFAULT_NUPLAN_TRAINING_REPORTS / "subgroup_coverage.csv",
+    )
     runtime_summary_path = reports_dir / "runtime_summary.csv"
     runtime_traces_path = reports_dir / "runtime_traces.csv"
+    runtime_report_path = reports_dir / "runtime_report.json"
     fault_coverage_path = reports_dir / "fault_family_coverage.csv"
     shift_runtime_summary_path = reports_dir / "shift_aware" / "shift_aware_runtime_summary.csv"
     anchor_features_path = processed_dir / "anchor_features.parquet"
@@ -205,9 +283,11 @@ def build_report(
     fault_df = _load_csv(fault_coverage_path)
     shift_df = pd.read_csv(shift_runtime_summary_path) if shift_runtime_summary_path.exists() else pd.DataFrame()
     split_counts_df = _split_counts(anchor_features_path)
-    runtime_trace_count = 0
-    if runtime_traces_path.exists():
-        runtime_trace_count = int(sum(1 for _ in runtime_traces_path.open("r", encoding="utf-8")) - 1)
+    runtime_trace_count = _runtime_trace_count(
+        runtime_summary_path=runtime_summary_path,
+        runtime_report_path=runtime_report_path,
+        runtime_traces_path=runtime_traces_path,
+    )
     subset_manifest = json.loads(subset_manifest_path.read_text(encoding="utf-8")) if subset_manifest_path.exists() else {}
     raw_file_hashes = dict(subset_manifest.get("raw_file_hashes", {})) if isinstance(subset_manifest, dict) else {}
 
@@ -242,15 +322,15 @@ def build_report(
         training_summary_path,
         subgroup_coverage_path,
         runtime_summary_path,
-        runtime_traces_path,
+        runtime_report_path,
         fault_coverage_path,
         anchor_features_path,
         subset_manifest_path,
         *[Path(path) for path in table_artifacts.values()],
         *[Path(path) for path in figure_artifacts.values()],
     ]
-    manifest_paths.extend(sorted(models_dir.glob("*.pkl")))
-    manifest_paths.extend(sorted(uncertainty_dir.glob("*.json")))
+    manifest_paths.extend(sorted(path for path in models_dir.glob("*.pkl") if not _is_appledouble(path)))
+    manifest_paths.extend(sorted(path for path in uncertainty_dir.glob("*.json") if not _is_appledouble(path)))
 
     manifest = {
         "processed_dir": str(processed_dir),
@@ -264,7 +344,7 @@ def build_report(
         "artifacts": {
             str(path): _sha256_file(path)
             for path in manifest_paths
-            if path.exists() and path.is_file()
+            if path.exists() and path.is_file() and not _is_appledouble(path)
         },
     }
     manifest_path = reports_dir / "artifact_manifest.json"

@@ -131,7 +131,7 @@ def build_next_tier_validation_preparation(*, out_dir: Path = DEFAULT_OUT) -> di
         },
         "completed": {
             "av_nuplan_carla": av_completed,
-            "av_nuplan_bounded": nuplan_completed,
+            "av_nuplan_allzip_grouped": nuplan_completed,
             "av_carla": carla_completed,
             "healthcare_heldout_runtime": hc_completed,
         },

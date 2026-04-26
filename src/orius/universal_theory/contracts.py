@@ -858,121 +858,187 @@ class ContractVerifier:
 
 
 # ---------------------------------------------------------------------------
-# Formal Assumption Register  (A1 – A8)
+# Formal Assumption Register  (A1 – A13)
 # ---------------------------------------------------------------------------
 
 ASSUMPTION_REGISTER: dict[str, dict[str, str]] = {
     "A1": {
         "tag": "A1",
-        "name": "Lipschitz dynamics",
+        "name": "Almost-sure model error bound",
         "formal": (
-            "There exists L > 0 such that for all states x, x' in X and "
-            "actions u in U: ||f(x,u) - f(x',u)|| <= L ||x - x'||."
+            "For all t, |x_{t+1} - f(x_t,a_t)| <= epsilon_model almost surely."
         ),
         "role": (
-            "Ensures the conformal prediction region does not need to grow "
-            "faster than linearly with state perturbation, bounding the "
-            "validity horizon decay rate."
+            "Provides the deterministic one-step slack used by shielded "
+            "postconditions and proof surfaces that cannot rely only on "
+            "high-probability disturbance tails."
         ),
     },
     "A2": {
         "tag": "A2",
-        "name": "Bounded telemetry cadence",
+        "name": "Telemetry-state bridge",
         "formal": (
-            "The inter-arrival time Delta_t between consecutive telemetry "
-            "packets satisfies Delta_t <= Delta_max for a known constant "
-            "Delta_max > 0."
+            "There exists a known monotone function g:[0,1]->R_+ with g(1)=0 "
+            "such that |hat{x}_t - x_t| <= g(w_t) for all t."
         ),
         "role": (
-            "Guarantees that the OQE staleness penalty is bounded and that "
-            "the A6 stale-decay reaches w_min in a known number of steps."
+            "Connects the runtime reliability score to the state discrepancy "
+            "used by observation-consistent sets and tightened safe-action "
+            "constraints."
         ),
     },
     "A3": {
         "tag": "A3",
-        "name": "Fallback always feasible",
+        "name": "Feasible safe repair",
         "formal": (
-            "For every reachable state x in X there exists a safe action "
-            "u_fb in U such that f(x, u_fb) in S, where S is the safe set."
+            "Whenever the runtime invokes repair, the tightened safe-action "
+            "set is non-empty."
         ),
         "role": (
-            "Allows the Shield stage to invoke a domain fallback whenever "
-            "the certificate expires, preventing safety-gap escalation."
+            "Keeps repair as an active runtime precondition rather than an "
+            "unrestricted theorem that arbitrary constraints always admit a "
+            "safe action."
         ),
     },
     "A4": {
         "tag": "A4",
-        "name": "Known compact safe set",
+        "name": "Known one-step dynamics",
         "formal": (
-            "The safe set S subset R^n is compact, non-empty, and its "
-            "membership predicate is evaluable in O(1) per state query."
+            "The one-step increment map Delta(a)=f(x,a)-x is known exactly "
+            "to the controller."
         ),
         "role": (
-            "Required by the conformal calibration stage to compute "
-            "constraint distances and by the validity-horizon formula."
+            "Allows runtime certificates to check the immediate effect of an "
+            "action against domain constraints."
         ),
     },
     "A5": {
         "tag": "A5",
-        "name": "Approximate exchangeability",
+        "name": "Absorbed monotone tightening",
         "formal": (
-            "The calibration residuals {e_1, ..., e_n, e_{n+1}} are "
-            "approximately exchangeable: the total-variation distance "
-            "between the joint distribution and any permutation is at "
-            "most epsilon_exch, a known bound."
+            "The defended tightening margin m_t^* = m_t + epsilon_model is "
+            "monotone non-increasing in w_t and bounded above by a finite constant."
         ),
         "role": (
-            "Core assumption of split-conformal prediction.  Violated "
-            "under distribution shift; the online ACI recalibration and "
-            "Clopper-Pearson finite-sample correction handle mild violations."
+            "Ensures lower reliability expands conservatism monotonically "
+            "without unbounded runtime inflation."
         ),
     },
     "A6": {
         "tag": "A6",
-        "name": "Fault detectable within tau_max",
+        "name": "Bounded detector lag",
         "formal": (
-            "Any single-point telemetry fault (stuck, drift, spike, stale) "
-            "is detectable by the OQE within tau_max steps of onset, where "
-            "tau_max is a domain-configured constant."
+            "Each supported telemetry fault class is detected within a finite "
+            "lag tau_max known to the runtime."
         ),
         "role": (
-            "Bounds the exposure window before the OQE reduces w_t.  The "
-            "stale-decay theorem shows that after tau_max steps the "
-            "reliability weight decays exponentially toward w_min."
+            "Bounds the exposure window before OQE degradation, repair, or "
+            "fallback must respond."
         ),
     },
     "A7": {
         "tag": "A7",
-        "name": "SHA-256 collision resistance",
+        "name": "Causal certificate rule",
         "formal": (
-            "Finding two distinct inputs m != m' with SHA-256(m) = "
-            "SHA-256(m') requires >= 2^{128} expected operations "
-            "(birthday bound on 256-bit output)."
+            "The certificate state obeys cert_t = h(z_1,...,z_t) for a causal "
+            "update rule h."
         ),
         "role": (
-            "Underpins the CertOS tamper-evidence proof: any modification "
-            "to a certificate in the hash chain is detectable with "
-            "probability >= 1 - 2^{-128}."
+            "Prevents certificates from using future telemetry and supports "
+            "the runtime audit chain."
         ),
     },
     "A8": {
         "tag": "A8",
-        "name": "Repair preserves safe-set membership",
+        "name": "Piecewise certified fallback",
         "formal": (
-            "For every repair action u_r produced by the Shield stage and "
-            "every state x in S: f(x, u_r) in S."
+            "Whenever the latent state is safe, fallback either safely holds "
+            "the state in place or applies a boundary-aware recovery action "
+            "that moves the state inward; otherwise the runtime fails closed."
         ),
         "role": (
-            "Ensures that the domain-specific repair (battery clamp, AV "
-            "lane-keep, etc.) does not itself cause a safety violation, "
-            "so the TSVR bound is not invalidated by the repair operator."
+            "Scopes fallback to certified hold-or-recovery behavior instead "
+            "of assuming universal fallback feasibility."
+        ),
+    },
+    "A9": {
+        "tag": "A9",
+        "name": "Sub-Gaussian disturbance law",
+        "formal": (
+            "The disturbance increments satisfy E[exp(s epsilon_t)] <= "
+            "exp(s^2 sigma_d^2 / 2) for all real s."
+        ),
+        "role": (
+            "Supplies the high-probability disturbance proxy used by T6 and "
+            "trajectory-PAC validity surfaces."
+        ),
+    },
+    "A10a": {
+        "tag": "A10a",
+        "name": "Polynomial mixing telemetry",
+        "formal": (
+            "The telemetry process is phi-mixing with polynomial decay "
+            "phi(k)=O(k^{-beta}) for some beta > 1."
+        ),
+        "role": (
+            "Supports scoped weak-dependence arguments where polynomial "
+            "mixing is sufficient."
+        ),
+    },
+    "A10b": {
+        "tag": "A10b",
+        "name": "Geometric mixing telemetry",
+        "formal": (
+            "The telemetry process is phi-mixing with geometric decay "
+            "phi(k) <= C rho^k for C > 0 and rho in (0,1)."
+        ),
+        "role": (
+            "Supports the current T9 separated-window proof under stronger "
+            "dependence decay."
+        ),
+    },
+    "A11": {
+        "tag": "A11",
+        "name": "Arbitrage boundary reachability",
+        "formal": (
+            "Under the admissible-demand family, the evaluated controller can "
+            "be driven to a boundary-sensitive witness state where the safety "
+            "margin is tight enough for an OASG/no-free-safety construction."
+        ),
+        "role": (
+            "Keeps T4 as an explicit finite-margin and boundary-reachability "
+            "witness rather than a universal claim over all operating states."
+        ),
+    },
+    "A12": {
+        "tag": "A12",
+        "name": "Controller-fault independence",
+        "formal": (
+            "Conditioned on the available history, the fault/reliability "
+            "process is independent of the controller action stream."
+        ),
+        "role": (
+            "Excludes controller-induced sensing faults and adaptive coupled "
+            "fault processes from the defended theorem surface."
+        ),
+    },
+    "A13": {
+        "tag": "A13",
+        "name": "TV bridge",
+        "formal": (
+            "For the T10 binary boundary-testing observation laws, "
+            "TV(P_{0,t}, P_{1,t}) <= w_t for every t."
+        ),
+        "role": (
+            "Links the reliability score to distinguishability in the scoped "
+            "binary lower-bound construction."
         ),
     },
 }
 
 
 def verify_assumption_coverage(tags: set[str]) -> dict[str, Any]:
-    """Check which assumptions from A1-A8 are covered by a given tag set.
+    """Check which assumptions from A1-A13 are covered by a given tag set.
 
     Returns dict with keys: covered (list), missing (list), fraction (float).
     """

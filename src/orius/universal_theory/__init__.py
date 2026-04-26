@@ -12,6 +12,17 @@ from .contracts import (
     SafetySpec,
     UniversalStepResult,
 )
+from .domain_runtime_contracts import (
+    AV_BRAKE_HOLD_CONTRACT_ID,
+    HEALTHCARE_FAIL_SAFE_CONTRACT_ID,
+    DomainRuntimeContractWitness,
+    build_domain_runtime_contract_witness,
+    summarize_witnesses,
+    witness_from_runtime_trace_row,
+    witness_trace_fields_from_result,
+    write_domain_runtime_contract_artifacts,
+)
+from .domain_validity import DomainValiditySemantics, domain_certificate_validity_semantics
 from .kernel import (
     build_observation_consistent_state_set,
     build_observation_packet,
@@ -26,6 +37,12 @@ from .no_free_safety import (
     CounterexampleResult,
     construct_counterexample,
     formal_principle_statement,
+)
+from .observation_ambiguity import (
+    build_observation_ambiguity_contract_summary,
+    common_safe_core,
+    observation_only_bayes_lower_bound,
+    verify_covered_orius_release,
 )
 from .risk_bounds import (
     FrontierPoint,
@@ -52,6 +69,16 @@ __all__ = [
     "RepairDecision",
     "SafetyCertificate",
     "UniversalStepResult",
+    "AV_BRAKE_HOLD_CONTRACT_ID",
+    "HEALTHCARE_FAIL_SAFE_CONTRACT_ID",
+    "DomainRuntimeContractWitness",
+    "build_domain_runtime_contract_witness",
+    "summarize_witnesses",
+    "witness_from_runtime_trace_row",
+    "witness_trace_fields_from_result",
+    "write_domain_runtime_contract_artifacts",
+    "DomainValiditySemantics",
+    "domain_certificate_validity_semantics",
     "build_observation_packet",
     "build_reliability_assessment",
     "build_observation_consistent_state_set",
@@ -72,4 +99,8 @@ __all__ = [
     "CounterexampleResult",
     "construct_counterexample",
     "formal_principle_statement",
+    "common_safe_core",
+    "observation_only_bayes_lower_bound",
+    "verify_covered_orius_release",
+    "build_observation_ambiguity_contract_summary",
 ]

@@ -335,12 +335,27 @@ def test_conservative_horizon_vs_heuristic() -> None:
 
 
 def test_assumption_register_completeness() -> None:
-    assert set(ASSUMPTION_REGISTER.keys()) == {"A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8"}
+    assert set(ASSUMPTION_REGISTER.keys()) == {
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5",
+        "A6",
+        "A7",
+        "A8",
+        "A9",
+        "A10a",
+        "A10b",
+        "A11",
+        "A12",
+        "A13",
+    }
     for tag, entry in ASSUMPTION_REGISTER.items():
         assert entry["tag"] == tag
         assert len(entry["formal"]) > 20
         assert len(entry["role"]) > 10
 
     cov = verify_assumption_coverage({"A1", "A2", "A5", "A6"})
-    assert cov["fraction"] == 0.5
+    assert cov["fraction"] == pytest.approx(4 / 14)
     assert "A3" in cov["missing"]

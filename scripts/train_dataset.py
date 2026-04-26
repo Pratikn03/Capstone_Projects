@@ -52,12 +52,14 @@ from _dataset_registry import (  # noqa: E402
     AGGRESSIVE_DEFAULTS,
     DATASET_REGISTRY,
     DatasetConfig,
+    MAX_QUALITY_DEFAULTS,
     REPO_ROOT,
     RunLayout,
     iter_trainable_dataset_keys as _iter_trainable_dataset_keys,
 )
 
 PYTHON_BIN = sys.executable or "python3"
+TRAINING_PROFILES = ("standard", "aggressive", "max")
 
 
 # =============================================================================
@@ -641,8 +643,14 @@ def train_models(
     effective_n_trials = n_trials
     effective_top_pct = top_pct
 
+    profile_defaults = None
     if profile == "aggressive":
-        defaults = AGGRESSIVE_DEFAULTS.get(cfg.name, AGGRESSIVE_DEFAULTS["DE"])
+        profile_defaults = AGGRESSIVE_DEFAULTS
+    elif profile == "max":
+        profile_defaults = MAX_QUALITY_DEFAULTS
+
+    if profile_defaults is not None:
+        defaults = profile_defaults.get(cfg.name, profile_defaults["DE"])
         effective_tune = True
         effective_ensemble = True
         if effective_max_seeds is None:
@@ -1135,6 +1143,7 @@ Examples:
   python scripts/train_dataset.py --dataset US        # Train US data
   python scripts/train_dataset.py --all               # Train all datasets
   python scripts/train_dataset.py --dataset DE --tune # With hyperparameter tuning
+  python scripts/train_dataset.py --dataset AV --profile max --candidate-run --run-id max_av
   python scripts/train_dataset.py --list              # Show available datasets
         """,
     )
@@ -1149,7 +1158,7 @@ Examples:
     parser.add_argument("--max-seeds", type=int, default=None, help="Optional cap for ensemble seed count")
     parser.add_argument("--n-trials", type=int, default=None, help="Override Optuna trial count for this run")
     parser.add_argument("--top-pct", type=float, default=None, help="Use top percent of trials for param aggregation")
-    parser.add_argument("--profile", choices=["standard", "aggressive"], default="standard", help="Training profile")
+    parser.add_argument("--profile", choices=list(TRAINING_PROFILES), default="standard", help="Training profile")
     parser.add_argument("--max-runtime-hours", type=float, default=None, help="Optional timeout for each training invocation")
     parser.add_argument("--target-metrics-file", default=None, help="Optional baseline metrics JSON for acceptance comparison")
     parser.add_argument("--reports", "-r", action="store_true", default=True, help="Generate evaluation reports (default: True)")

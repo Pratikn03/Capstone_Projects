@@ -139,7 +139,7 @@ def test_ieee_log_records_review_ready_double_column_page_count() -> None:
     log_path = REPO_ROOT / "paper" / "ieee" / "orius_ieee_main.log"
     if log_path.exists():
         log_text = log_path.read_text(encoding="latin-1")
-        match = re.search(r"Output written on paper/ieee/orius_ieee_main\.pdf \((\d+) pages", log_text)
+        match = re.search(r"Output written on (?:paper/ieee/)?orius_ieee_main\.pdf \((\d+) pages", log_text)
 
         assert match is not None
         assert int(match.group(1)) >= 8

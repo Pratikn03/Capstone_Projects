@@ -29,18 +29,41 @@ BATTERY_RUNTIME_SUMMARY = REPO_ROOT / "reports" / "battery_av" / "battery" / "ru
 BATTERY_RUNTIME_TRACES = REPO_ROOT / "reports" / "battery_av" / "battery" / "runtime_traces.csv"
 BATTERY_GOVERNANCE = REPO_ROOT / "reports" / "battery_av" / "battery" / "runtime_governance_summary.csv"
 BATTERY_WITNESS_TABLE = REPO_ROOT / "reports" / "publication" / "dc3s_main_table.csv"
-AV_RUNTIME_SUMMARY = REPO_ROOT / "reports" / "orius_av" / "full_corpus" / "runtime_summary.csv"
-AV_RUNTIME_TRACES = REPO_ROOT / "reports" / "orius_av" / "full_corpus" / "runtime_traces.csv"
-AV_GOVERNANCE = REPO_ROOT / "reports" / "orius_av" / "full_corpus" / "runtime_governance_summary.csv"
+AV_RUNTIME_DIR = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+AV_RUNTIME_SUMMARY = AV_RUNTIME_DIR / "runtime_summary.csv"
+AV_RUNTIME_TRACES = AV_RUNTIME_DIR / "runtime_traces.csv"
+AV_GOVERNANCE = AV_RUNTIME_DIR / "runtime_governance_summary.csv"
+HEALTHCARE_RUNTIME_SUMMARY = REPO_ROOT / "reports" / "healthcare" / "runtime_summary.csv"
+HEALTHCARE_RUNTIME_TRACES = REPO_ROOT / "reports" / "healthcare" / "runtime_traces.csv"
 HEALTHCARE_RUNTIME_DB = REPO_ROOT / "reports" / "healthcare" / "healthcare_runtime.duckdb"
 HEALTHCARE_GOVERNANCE = REPO_ROOT / "reports" / "healthcare" / "runtime_governance_summary.csv"
 HEALTHCARE_CERTOS = REPO_ROOT / "reports" / "healthcare" / "certos_verification_summary.json"
+DOMAIN_COMPARATOR_SUMMARIES = {
+    "Battery Energy Storage": REPO_ROOT / "reports" / "battery_av" / "battery" / "runtime_comparator_summary.csv",
+    "Autonomous Vehicles": AV_RUNTIME_DIR / "runtime_comparator_summary.csv",
+    "Medical and Healthcare Monitoring": REPO_ROOT / "reports" / "healthcare" / "runtime_comparator_summary.csv",
+}
+DOMAIN_ABLATION_SUMMARIES = {
+    "Battery Energy Storage": REPO_ROOT / "reports" / "battery_av" / "battery" / "runtime_ablation_summary.csv",
+    "Autonomous Vehicles": AV_RUNTIME_DIR / "runtime_ablation_summary.csv",
+    "Medical and Healthcare Monitoring": REPO_ROOT / "reports" / "healthcare" / "runtime_ablation_summary.csv",
+}
+DOMAIN_NEGATIVE_CONTROLS = {
+    "Battery Energy Storage": REPO_ROOT / "reports" / "battery_av" / "battery" / "runtime_negative_controls.csv",
+    "Autonomous Vehicles": AV_RUNTIME_DIR / "runtime_negative_controls.csv",
+    "Medical and Healthcare Monitoring": REPO_ROOT / "reports" / "healthcare" / "runtime_negative_controls.csv",
+}
+DOMAIN_RUNTIME_CONTRACT_SUMMARY = PUBLICATION_DIR / "domain_runtime_contract_summary.json"
 HEALTHCARE_SPLITS_DIR = REPO_ROOT / "data" / "healthcare" / "processed" / "splits"
 VALIDATION_REPORT = REPO_ROOT / "reports" / "universal_orius_validation" / "validation_report.json"
+VALIDATION_SUMMARY = REPO_ROOT / "reports" / "universal_orius_validation" / "domain_validation_summary.csv"
 PER_CONTROLLER_TSVR = REPO_ROOT / "reports" / "universal_orius_validation" / "per_controller_tsvr.csv"
+DIAGNOSTIC_HARNESS_TSVR = REPO_ROOT / "reports" / "universal_orius_validation" / "diagnostic_validation_harness_tsvr.csv"
 RUNTIME_BUDGET = REPO_ROOT / "reports" / "publication" / "orius_runtime_budget_matrix.csv"
 THREE_DOMAIN_DIR = REPO_ROOT / "reports" / "battery_av_healthcare" / "overall"
 CALIBRATION_FIG_DIR = PUBLICATION_DIR / "three_domain_calibration_figures"
+PROMOTED_RUNTIME_MAX_TSVR = 1e-3
+PROMOTED_RUNTIME_MIN_PASS_RATE = 1.0 - PROMOTED_RUNTIME_MAX_TSVR
 
 CENTRAL_NOVELTY_SENTENCE = (
     "ORIUS identifies OASG as the degraded-observation release hazard and "
@@ -263,12 +286,19 @@ def _battery_calibration_rows() -> list[CalibrationRow]:
 
 
 def _av_calibration_rows() -> list[CalibrationRow]:
-    rows = _read_csv_rows(AV_RUNTIME_TRACES)
-    filtered = [row for row in rows if row.get("controller") == "orius"]
-    reliability = [_safe_float(row.get("reliability_w")) for row in filtered]
-    target = [_safe_float(row.get("target_ego_speed_1s")) for row in filtered]
-    lower = [_safe_float(row.get("pred_ego_speed_lower_mps")) for row in filtered]
-    upper = [_safe_float(row.get("pred_ego_speed_upper_mps")) for row in filtered]
+    reliability: list[float] = []
+    target: list[float] = []
+    lower: list[float] = []
+    upper: list[float] = []
+    if AV_RUNTIME_TRACES.exists():
+        with AV_RUNTIME_TRACES.open("r", encoding="utf-8", newline="") as handle:
+            for row in csv.DictReader(handle):
+                if row.get("controller") != "orius":
+                    continue
+                reliability.append(_safe_float(row.get("reliability_w")))
+                target.append(_safe_float(row.get("target_ego_speed_1s")))
+                lower.append(_safe_float(row.get("pred_ego_speed_lower_mps")))
+                upper.append(_safe_float(row.get("pred_ego_speed_upper_mps")))
     covered = [lo <= y <= hi for y, lo, hi in zip(target, lower, upper)]
     widths = [max(0.0, hi - lo) for lo, hi in zip(lower, upper)]
     return _compute_bucket_rows(
@@ -277,8 +307,8 @@ def _av_calibration_rows() -> list[CalibrationRow]:
         reliability,
         covered,
         widths,
-        source_surface="reports/orius_av/full_corpus/runtime_traces.csv",
-        calibration_note="Computed from ORIUS AV runtime traces on the promoted bounded longitudinal row.",
+        source_surface=str(AV_RUNTIME_TRACES.relative_to(REPO_ROOT)),
+        calibration_note="Computed from ORIUS AV runtime traces on the all-zip grouped nuPlan replay row.",
     )
 
 
@@ -359,11 +389,17 @@ def _load_battery_reference_counts() -> dict[str, int]:
 
 
 def _runtime_trace_rate(path: Path, match_field: str, match_value: str, rate_field: str) -> float:
-    rows = _read_csv_rows(path)
-    filtered = [row for row in rows if row.get(match_field) == match_value]
-    if not filtered:
+    if not path.exists():
         return 0.0
-    return sum(1.0 for row in filtered if str(row.get(rate_field)).lower() == "true") / len(filtered)
+    total = 0
+    positives = 0
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        for row in csv.DictReader(handle):
+            if row.get(match_field) != match_value:
+                continue
+            total += 1
+            positives += int(str(row.get(rate_field)).lower() == "true")
+    return positives / total if total else 0.0
 
 
 def _governance_summary_value(path: Path, metric: str) -> float:
@@ -374,7 +410,21 @@ def _governance_summary_value(path: Path, metric: str) -> float:
     return 0.0
 
 
+def _domain_witness_summary() -> dict[str, dict[str, Any]]:
+    payload = _read_json(DOMAIN_RUNTIME_CONTRACT_SUMMARY)
+    domains = payload.get("domains", {})
+    return {str(key): dict(value) for key, value in domains.items() if isinstance(value, dict)}
+
+
 def _validation_domain_rows() -> dict[str, dict[str, Any]]:
+    summary_rows = _read_csv_rows(VALIDATION_SUMMARY)
+    if summary_rows:
+        return {
+            str(row["domain"]): dict(row)
+            for row in summary_rows
+            if row.get("domain")
+        }
+
     report = _read_json(VALIDATION_REPORT)
     domain_results = report.get("domain_results", {})
     if isinstance(domain_results, dict):
@@ -388,6 +438,36 @@ def _validation_domain_rows() -> dict[str, dict[str, Any]]:
         if isinstance(row, dict) and row.get("domain"):
             rows[str(row["domain"])] = row
     return rows
+
+
+def _diagnostic_harness_summary_rows() -> dict[str, dict[str, Any]]:
+    rows = _read_csv_rows(DIAGNOSTIC_HARNESS_TSVR)
+    grouped: dict[str, dict[str, list[float]]] = {}
+    for row in rows:
+        if (row.get("metric_surface") or "").strip() != "validation_harness":
+            continue
+        if (row.get("diagnostic_only") or "").strip() != "True":
+            continue
+        domain = str(row.get("domain", ""))
+        controller = str(row.get("controller", ""))
+        if not domain or controller not in {"nominal", "dc3s"}:
+            continue
+        grouped.setdefault(domain, {}).setdefault(controller, []).append(_safe_float(row.get("tsvr")))
+
+    summary: dict[str, dict[str, Any]] = {}
+    for domain, controllers in grouped.items():
+        nominal = controllers.get("nominal", [])
+        dc3s = controllers.get("dc3s", [])
+        if not nominal or not dc3s:
+            continue
+        summary[domain] = {
+            "metric_surface": "validation_harness",
+            "baseline_tsvr_mean": sum(nominal) / len(nominal),
+            "orius_tsvr_mean": sum(dc3s) / len(dc3s),
+            "diagnostic_only": "True",
+            "claim_governs_from": "runtime_denominator",
+        }
+    return summary
 
 
 def _battery_witness_controller_rows() -> dict[str, dict[str, float]]:
@@ -434,19 +514,10 @@ def _benchmark_rows(calibration_rows: list[CalibrationRow], healthcare_calibrati
 
     battery_summary = {row["controller"]: row for row in _read_csv_rows(BATTERY_RUNTIME_SUMMARY)}
     av_summary = {row["controller"]: row for row in _read_csv_rows(AV_RUNTIME_SUMMARY)}
-    healthcare_certos = _read_json(HEALTHCARE_CERTOS)
-
-    healthcare_con = duckdb.connect(str(HEALTHCARE_RUNTIME_DB), read_only=True)
-    healthcare_runtime = healthcare_con.execute(
-        """
-        select
-          count(*) as n,
-          avg(case when intervened then 1 else 0 end) as intervention_rate,
-          avg(reliability_w) as mean_reliability
-        from dispatch_certificates
-        """
-    ).fetchone()
-    intervention_rate_healthcare = float(healthcare_runtime[1] or 0.0)
+    healthcare_summary = {row["controller"]: row for row in _read_csv_rows(HEALTHCARE_RUNTIME_SUMMARY)}
+    witness_summary = _domain_witness_summary()
+    av_witness = witness_summary.get("av", {})
+    healthcare_witness = witness_summary.get("healthcare", {})
 
     domain_specs = [
         {
@@ -455,6 +526,7 @@ def _benchmark_rows(calibration_rows: list[CalibrationRow], healthcare_calibrati
             "tier": "reference",
             "baseline_family": "locked_witness_nominal",
             "runtime_row": battery_summary.get("heuristic:dc3s_ftit", next(iter(battery_summary.values()))),
+            "baseline_row": battery_summary.get("heuristic:nominal", next(iter(battery_summary.values()))),
             "intervention_rate": _safe_float(battery_summary.get("heuristic:dc3s_ftit", {}).get("intervention_rate")),
             "fallback_activation_rate": _runtime_trace_rate(BATTERY_RUNTIME_TRACES, "controller_label", "heuristic:dc3s_ftit", "fallback_used"),
             "certificate_valid_release_rate": _safe_float(battery_summary.get("heuristic:dc3s_ftit", {}).get("cva")),
@@ -464,59 +536,89 @@ def _benchmark_rows(calibration_rows: list[CalibrationRow], healthcare_calibrati
             "metric_surface": "locked_publication_nominal",
             "runtime_source": "reports/battery_av/battery/runtime_summary.csv",
             "note": (
-                "Battery remains the witness row; the promoted cross-domain ML surface uses the heuristic FTIT runtime as the canonical "
-                "battery ORIUS row. DeepOQE-style battery rows remain diagnostic only and do not carry the headline claim that a learned "
-                "model helps on the promoted lane."
+                "Battery remains the witness row. The runtime-governing three-domain lane uses the locked battery witness runtime, "
+                "while deep battery learned rows remain diagnostic only."
             ),
         },
         {
             "domain_key": "vehicle",
             "display_name": "Autonomous Vehicles",
-            "tier": "proof_validated",
-            "baseline_family": "bounded_longitudinal_runtime",
+            "tier": "runtime_contract_closed",
+            "baseline_family": "runtime_brake_hold_release",
             "runtime_row": av_summary.get("orius", {}),
+            "baseline_row": av_summary.get("baseline", {}),
             "intervention_rate": _safe_float(av_summary.get("orius", {}).get("intervention_rate")),
             "fallback_activation_rate": _runtime_trace_rate(AV_RUNTIME_TRACES, "controller", "orius", "fallback_used"),
-            "certificate_valid_release_rate": _safe_float(av_summary.get("orius", {}).get("cva")),
-            "certificate_semantics": "runtime_cva_promoted_av_row",
+            "certificate_valid_release_rate": _safe_float(av_witness.get("certificate_valid_rate")),
+            "certificate_semantics": "runtime_witness_certificate_valid_rate_promoted_av_row",
+            "t11_pass_rate": _safe_float(av_witness.get("t11_pass_rate")),
+            "postcondition_pass_rate": _safe_float(av_witness.get("postcondition_pass_rate")),
+            "runtime_witness_pass_rate": _safe_float(av_witness.get("witness_pass_rate")),
+            "degenerate_row": av_summary.get("always_brake", {}),
             "n_baseline": 1,
             "n_orius": 1,
-            "metric_surface": "validation_harness",
-            "runtime_source": "reports/orius_av/full_corpus/runtime_summary.csv",
-            "note": "AV remains bounded to the TTC plus predictive-entry-barrier contract.",
+            "metric_surface": "runtime_denominator",
+            "runtime_source": str(AV_RUNTIME_SUMMARY.relative_to(REPO_ROOT)),
+            "note": (
+                "AV is runtime-governed through all-zip grouped nuPlan replay/surrogate runtime-contract evidence. "
+                "The evidence reports the measured empirical runtime denominator and does not claim road deployment."
+            ),
         },
         {
             "domain_key": "healthcare",
             "display_name": "Medical and Healthcare Monitoring",
-            "tier": "proof_validated",
-            "baseline_family": "bounded_monitoring_runtime",
-            "runtime_row": {},
-            "intervention_rate": intervention_rate_healthcare,
-            "fallback_activation_rate": 0.0,
-            "certificate_valid_release_rate": float(healthcare_certos.get("required_payload_pass_rate", 0.0)),
-            "certificate_semantics": "certos_required_payload_pass_rate_proxy_current_runtime_surface",
+            "tier": "runtime_contract_closed",
+            "baseline_family": "runtime_fail_safe_release",
+            "runtime_row": healthcare_summary.get("orius", {}),
+            "baseline_row": healthcare_summary.get("baseline", {}),
+            "intervention_rate": _safe_float(healthcare_summary.get("orius", {}).get("intervention_rate")),
+            "fallback_activation_rate": _runtime_trace_rate(HEALTHCARE_RUNTIME_TRACES, "controller", "orius", "fallback_used"),
+            "certificate_valid_release_rate": _safe_float(healthcare_witness.get("certificate_valid_rate")),
+            "certificate_semantics": "runtime_witness_certificate_valid_rate_promoted_healthcare_row",
+            "t11_pass_rate": _safe_float(healthcare_witness.get("t11_pass_rate")),
+            "postcondition_pass_rate": _safe_float(healthcare_witness.get("postcondition_pass_rate")),
+            "runtime_witness_pass_rate": _safe_float(healthcare_witness.get("witness_pass_rate")),
+            "degenerate_row": healthcare_summary.get("always_alert", {}),
             "n_baseline": 1,
             "n_orius": 1,
-            "metric_surface": "validation_harness",
-            "runtime_source": "reports/healthcare/healthcare_runtime.duckdb",
+            "metric_surface": "runtime_denominator",
+            "runtime_source": "reports/healthcare/runtime_summary.csv",
             "note": (
-                "Healthcare uses a bounded MIMIC-backed monitoring row; certificate-valid release rate is "
-                "reported via the current governance-pass proxy because the runtime export does not yet emit CVA explicitly."
+                "Healthcare is runtime-governed on the full promoted MIMIC denominator under the fail-safe release contract. "
+                "The validation harness remains a secondary proxy surface only."
             ),
         },
     ]
 
     results: list[dict[str, Any]] = []
     for spec in domain_specs:
-        row = validation_rows[spec["domain_key"]]
-        baseline_mean = _safe_float(row.get("baseline_tsvr_mean"))
-        baseline_std = _safe_float(row.get("baseline_tsvr_std"))
-        orius_mean = _safe_float(row.get("orius_tsvr_mean"))
-        orius_std = _safe_float(row.get("orius_tsvr_std"))
+        row = validation_rows.get(spec["domain_key"], {})
+        if spec["metric_surface"] == "runtime_denominator":
+            baseline_mean = _safe_float(spec["baseline_row"].get("tsvr"))
+            baseline_std = 0.0
+            orius_mean = _safe_float(spec["runtime_row"].get("tsvr"))
+            orius_std = 0.0
+        else:
+            baseline_mean = _safe_float(row.get("baseline_tsvr_mean"))
+            baseline_std = _safe_float(row.get("baseline_tsvr_std"))
+            orius_mean = _safe_float(row.get("orius_tsvr_mean"))
+            orius_std = _safe_float(row.get("orius_tsvr_std"))
         base_ci_low, base_ci_high = _mean_ci(baseline_mean, baseline_std, spec["n_baseline"])
         orius_ci_low, orius_ci_high = _mean_ci(orius_mean, orius_std, spec["n_orius"])
         absolute_delta = baseline_mean - orius_mean
         relative_delta = (absolute_delta / baseline_mean) if baseline_mean > 0 else 0.0
+        strict_runtime_gate = bool(
+            spec["metric_surface"] != "runtime_denominator"
+            or (
+                orius_mean <= PROMOTED_RUNTIME_MAX_TSVR
+                and baseline_mean >= 0.05
+                and _safe_float(spec.get("t11_pass_rate"), 1.0) >= PROMOTED_RUNTIME_MIN_PASS_RATE
+                and _safe_float(spec.get("postcondition_pass_rate"), 1.0) >= PROMOTED_RUNTIME_MIN_PASS_RATE
+                and _safe_float(spec.get("runtime_witness_pass_rate"), 1.0) >= PROMOTED_RUNTIME_MIN_PASS_RATE
+                and _safe_float(spec["runtime_row"].get("useful_work_total"))
+                > _safe_float(dict(spec.get("degenerate_row", {})).get("useful_work_total"))
+            )
+        )
         domain_budget = runtime_budget[spec["display_name"]]
         calib = calibration_by_domain[spec["display_name"]]
         results.append(
@@ -536,6 +638,10 @@ def _benchmark_rows(calibration_rows: list[CalibrationRow], healthcare_calibrati
                 "fallback_activation_rate": f"{spec['fallback_activation_rate']:.6f}",
                 "certificate_valid_release_rate": f"{spec['certificate_valid_release_rate']:.6f}",
                 "certificate_valid_release_rate_semantics": spec["certificate_semantics"],
+                "t11_pass_rate": f"{_safe_float(spec.get('t11_pass_rate'), 1.0):.6f}",
+                "postcondition_pass_rate": f"{_safe_float(spec.get('postcondition_pass_rate'), 1.0):.6f}",
+                "runtime_witness_pass_rate": f"{_safe_float(spec.get('runtime_witness_pass_rate'), 1.0):.6f}",
+                "strict_runtime_gate": "True" if strict_runtime_gate else "False",
                 "grouped_coverage_low": f"{calib['low'].coverage:.6f}",
                 "grouped_coverage_mid": f"{calib['mid'].coverage:.6f}",
                 "grouped_coverage_high": f"{calib['high'].coverage:.6f}",
@@ -552,8 +658,101 @@ def _benchmark_rows(calibration_rows: list[CalibrationRow], healthcare_calibrati
     return results
 
 
+def _proxy_runtime_comparison_rows(benchmark_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    diagnostic_rows = _diagnostic_harness_summary_rows()
+    rows: list[dict[str, Any]] = []
+    for row in benchmark_rows:
+        display_name = row["domain"]
+        if display_name == "Battery Energy Storage":
+            rows.append(
+                {
+                    "domain": display_name,
+                    "runtime_metric_surface": row["metric_surface"],
+                    "runtime_baseline_tsvr": row["baseline_tsvr_mean"],
+                    "runtime_orius_tsvr": row["orius_tsvr_mean"],
+                    "proxy_metric_surface": "not_applicable",
+                    "proxy_baseline_tsvr": "",
+                    "proxy_orius_tsvr": "",
+                    "claim_governs_from": "runtime_denominator",
+                    "diagnostic_only": "True",
+                    "note": "Battery remains the witness row and does not use the shared proxy harness for headline TSVR.",
+                }
+            )
+            continue
+        domain_key = "vehicle" if display_name == "Autonomous Vehicles" else "healthcare"
+        proxy = diagnostic_rows.get(domain_key, {})
+        rows.append(
+            {
+                "domain": display_name,
+                "runtime_metric_surface": row["metric_surface"],
+                "runtime_baseline_tsvr": row["baseline_tsvr_mean"],
+                "runtime_orius_tsvr": row["orius_tsvr_mean"],
+                "proxy_metric_surface": proxy.get("metric_surface", "validation_harness"),
+                "proxy_baseline_tsvr": f"{_safe_float(proxy.get('baseline_tsvr_mean')):.6f}",
+                "proxy_orius_tsvr": f"{_safe_float(proxy.get('orius_tsvr_mean')):.6f}",
+                "claim_governs_from": "runtime_denominator",
+                "diagnostic_only": "True",
+                "note": "Dual reporting is permanent, but the runtime denominator is the only claim-governing surface.",
+            }
+        )
+    return rows
+
+
+def _runtime_comparator_artifacts_available() -> bool:
+    return all(path.exists() for path in DOMAIN_COMPARATOR_SUMMARIES.values())
+
+
+def _runtime_ablation_artifacts_available() -> bool:
+    return all(path.exists() for path in DOMAIN_ABLATION_SUMMARIES.values())
+
+
+def _runtime_negative_control_artifacts_available() -> bool:
+    return all(path.exists() for path in DOMAIN_NEGATIVE_CONTROLS.values())
+
+
+def _runtime_native_baseline_rows() -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    required = {
+        "nominal_deterministic_controller",
+        "fixed_threshold_or_fixed_inflation_runtime",
+        "standard_conformal_nonreliability_runtime",
+        "no_quality_signal_runtime",
+        "no_adaptive_response_runtime",
+        "no_temporal_guard_or_no_certificate_refresh_runtime",
+        "orius_full_stack",
+    }
+    for domain, path in DOMAIN_COMPARATOR_SUMMARIES.items():
+        rows = [row for row in _read_csv_rows(path) if row.get("baseline_family") in required]
+        for row in rows:
+            result.append(
+                {
+                    "domain": domain,
+                    "baseline_family": row["baseline_family"],
+                    "implemented_controller": row["controller"],
+                    "evidence_status": row["evidence_status"],
+                    "surface_role": (
+                        "witness_row_comparator"
+                        if domain == "Battery Energy Storage"
+                        else "runtime_native_domain_comparator"
+                    ),
+                    "tsvr": row["tsvr"],
+                    "oasg": row["oasg"],
+                    "intervention_rate": row["intervention_rate"],
+                    "metric_surface": row["metric_surface"],
+                    "claim_boundary_note": (
+                        "Claim-carrying baseline row from a domain-native runtime denominator. "
+                        + row.get("claim_boundary_note", "")
+                    ),
+                }
+            )
+    return result
+
+
 def _baseline_suite_rows() -> list[dict[str, Any]]:
-    rows = _read_csv_rows(PER_CONTROLLER_TSVR)
+    if _runtime_comparator_artifacts_available():
+        return _runtime_native_baseline_rows()
+
+    rows = _read_csv_rows(DIAGNOSTIC_HARNESS_TSVR)
     battery_witness = _battery_witness_controller_rows()
     domain_map = {
         "vehicle": "Autonomous Vehicles",
@@ -690,7 +889,7 @@ def _baseline_suite_rows() -> list[dict[str, Any]]:
                     "tsvr": f"{_safe_float(source.get('tsvr')):.6f}" if source else "",
                     "oasg": f"{_safe_float(source.get('oasg')):.6f}" if source else "",
                     "intervention_rate": f"{_safe_float(source.get('intervention_rate')):.6f}" if source else "",
-                    "metric_surface": source.get("evidence_surface", ""),
+                    "metric_surface": source.get("metric_surface", ""),
                     "claim_boundary_note": (
                         "Cross-domain baseline lane uses the shared universal validation harness; "
                         "AV and Healthcare baseline rows remain bounded shared-harness comparators rather than witness-grade controller leaderboards. "
@@ -702,6 +901,31 @@ def _baseline_suite_rows() -> list[dict[str, Any]]:
 
 
 def _ablation_rows(baseline_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if _runtime_ablation_artifacts_available():
+        result: list[dict[str, Any]] = []
+        for domain, path in DOMAIN_ABLATION_SUMMARIES.items():
+            for row in _read_csv_rows(path):
+                result.append(
+                    {
+                        "domain": domain,
+                        "ablation_name": row["ablation_name"],
+                        "baseline_family": row["baseline_family"],
+                        "evidence_status": row["evidence_status"],
+                        "baseline_tsvr": row["baseline_tsvr"],
+                        "orius_tsvr": row["orius_tsvr"],
+                        "absolute_delta": row["absolute_delta"],
+                        "relative_delta": row["relative_delta"],
+                        "baseline_intervention_rate": row["baseline_intervention_rate"],
+                        "orius_intervention_rate": row["orius_intervention_rate"],
+                        "metric_surface": row["metric_surface"],
+                        "note": row.get(
+                            "note",
+                            "Runtime-native ablation row; no proxy harness governs this claim.",
+                        ),
+                    }
+                )
+        return result
+
     family_to_ablation = {
         "no_quality_signal_runtime": "no_quality_signal",
         "fixed_threshold_or_fixed_inflation_runtime": "no_reliability_conditioned_widening",
@@ -772,6 +996,26 @@ def _negative_control_rows(
     healthcare_meta: dict[str, Any],
     baseline_rows: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
+    if _runtime_negative_control_artifacts_available():
+        result: list[dict[str, Any]] = []
+        for domain, path in DOMAIN_NEGATIVE_CONTROLS.items():
+            for row in _read_csv_rows(path):
+                result.append(
+                    {
+                        "domain": domain,
+                        "control_name": row["control_name"],
+                        "status": row["status"],
+                        "surface": row["surface"],
+                        "coverage_gap_abs_mean": row["coverage_gap_abs_mean"],
+                        "mean_interval_width": row["mean_interval_width"],
+                        "note": row.get(
+                            "note",
+                            "Runtime-native negative-control row; no proxy harness governs this claim.",
+                        ),
+                    }
+                )
+        return result
+
     controls: list[dict[str, Any]] = []
     baseline_by_domain: dict[str, dict[str, dict[str, Any]]] = {}
     for row in baseline_rows:
@@ -804,8 +1048,8 @@ def _negative_control_rows(
                         "control_name": control_name,
                         "status": "not_available_on_current_locked_battery_surface",
                         "surface": "grouped_calibration",
-                        "coverage_gap_abs_mean": "",
-                        "mean_interval_width": "",
+                        "coverage_gap_abs_mean": "not_applicable",
+                        "mean_interval_width": "not_applicable",
                         "note": "Battery promoted grouped calibration is stored as a locked aggregate audit, not a replay-level reliability table.",
                     }
                 )
@@ -841,8 +1085,8 @@ def _negative_control_rows(
                 "control_name": "constant_low_reliability_conservative_policy",
                 "status": "available" if robust else "missing",
                 "surface": "cross_domain_baseline_proxy",
-                "coverage_gap_abs_mean": robust["tsvr"] if robust else "",
-                "mean_interval_width": robust["intervention_rate"] if robust else "",
+                "coverage_gap_abs_mean": robust["tsvr"] if robust else "not_applicable",
+                "mean_interval_width": robust["intervention_rate"] if robust else "not_applicable",
                 "note": "Closest current cross-domain conservative-policy proxy is the fixed conservative runtime baseline.",
             }
         )
@@ -852,8 +1096,8 @@ def _negative_control_rows(
                 "control_name": "stronger_predictor_without_runtime_adaptation",
                 "status": "missing_on_current_cross_domain_lane",
                 "surface": "future_cross_domain_benchmark_extension",
-                "coverage_gap_abs_mean": "",
-                "mean_interval_width": "",
+                "coverage_gap_abs_mean": "not_applicable",
+                "mean_interval_width": "not_applicable",
                 "note": (
                     "The active three-domain lane does not yet expose one stronger-predictor/no-runtime-adaptation "
                     "comparison row under a common contract; this remains an explicit ML upgrade target."
@@ -868,35 +1112,42 @@ def _novelty_rows() -> list[dict[str, str]]:
         {
             "prior_work_family": "standard_conformal_prediction",
             "primary_object": "prediction sets with marginal coverage under exchangeability",
-            "where_it_stops": "does not decide repaired action, fallback, or release certificate semantics",
-            "orius_delta": "uses calibration only as one stage inside a release-boundary runtime safety stack",
+            "where_it_stops": "does not decide tightened admissible actions, repaired actuation, fallback burden accounting, or release certificate semantics",
+            "orius_delta": "uses calibration only as one stage inside a typed release-boundary runtime layer",
             "repo_artifact": "reports/publication/three_domain_grouped_coverage.csv",
         },
         {
             "prior_work_family": "adaptive_conformal_prediction",
             "primary_object": "online interval adaptation under non-stationarity",
-            "where_it_stops": "does not bind reliability scoring to admissible action, repair, and release governance",
+            "where_it_stops": "does not bind reliability scoring to tightened admissible actions, fallback burden accounting, and release governance",
             "orius_delta": "turns degraded observation into a governed runtime release contract rather than a pure interval update rule",
             "repo_artifact": "reports/publication/three_domain_reliability_calibration.csv",
         },
         {
+            "prior_work_family": "runtime_monitoring_and_supervisory_veto",
+            "primary_object": "alarms, anomaly flags, or veto conditions around candidate execution",
+            "where_it_stops": "stops at alarms or vetoes unless paired with tightened action computation, repaired release, and release governance",
+            "orius_delta": "treats monitoring as the opening move in a typed runtime layer that still must tighten, repair, fallback, and certify",
+            "repo_artifact": "reports/publication/three_domain_runtime_safety_tradeoff.csv",
+        },
+        {
             "prior_work_family": "runtime_assurance_simplex",
             "primary_object": "supervisory intervention and fallback around a nominal controller",
-            "where_it_stops": "typically assumes the observed state is already safe enough to supervise",
-            "orius_delta": "centers degraded observation itself and carries reliability, widening, repair, and certificate semantics together",
+            "where_it_stops": "typically assumes the observed state is already safe enough to supervise and does not define reliability-conditioned tightening or cross-domain contract reuse",
+            "orius_delta": "centers degraded observation itself and carries reliability, tightening, repair, fallback, and certificate semantics together",
             "repo_artifact": "reports/publication/three_domain_runtime_safety_tradeoff.csv",
         },
         {
             "prior_work_family": "safety_filters_barrier_methods_robust_mpc",
             "primary_object": "constraint-preserving repair or safe action geometry",
-            "where_it_stops": "does not by itself define a cross-domain observation-quality contract or certificate lifecycle",
+            "where_it_stops": "does not by itself define degraded-observation release governance, fallback burden accounting, certificate semantics, or cross-domain contract reuse",
             "orius_delta": "hosts repair inside a typed runtime grammar that begins with observation reliability and ends in governed release",
             "repo_artifact": "reports/publication/three_domain_ablation_matrix.csv",
         },
         {
             "prior_work_family": "anomaly_detection_and_drift_detection",
             "primary_object": "detect degraded telemetry or distribution shift",
-            "where_it_stops": "alarms do not specify how release semantics should change once trust degrades",
+            "where_it_stops": "detects loss of trust but stops at alarms or scores unless paired with repaired release semantics",
             "orius_delta": "treats detection as the opening move in a five-stage runtime release protocol",
             "repo_artifact": "reports/publication/what_orius_is_not_matrix.csv",
         },
@@ -912,6 +1163,21 @@ def _novelty_rows() -> list[dict[str, str]]:
 
 def _what_orius_is_not_rows() -> list[dict[str, str]]:
     return [
+        {
+            "boundary": "not_a_new_conformal_method",
+            "reason": "ORIUS uses conformal calibration as one stage inside the runtime layer rather than contributing a new conformal algorithm.",
+            "repo_artifact": "paper/ieee/sections/ieee_related_work.tex",
+        },
+        {
+            "boundary": "not_a_new_robust_optimization_primitive",
+            "reason": "ORIUS can host robust optimization or safety filters, but it does not claim a new plant-level robust-optimization method.",
+            "repo_artifact": "paper/ieee/sections/ieee_related_work.tex",
+        },
+        {
+            "boundary": "not_a_runtime_monitor_or_simplex_clone",
+            "reason": "ORIUS borrows supervisory ideas but claims a typed degraded-observation release contract, not a monitor-only veto or backup-switch architecture.",
+            "repo_artifact": "paper/review/orius_review_dossier.tex",
+        },
         {
             "boundary": "not_a_new_universal_controller",
             "reason": "ORIUS wraps inherited domain controllers rather than replacing plant-specific nominal control.",
@@ -929,7 +1195,7 @@ def _what_orius_is_not_rows() -> list[dict[str, str]]:
         },
         {
             "boundary": "not_full_autonomous_driving_closure",
-            "reason": "The promoted AV row stays bounded to the TTC plus predictive-entry-barrier contract.",
+            "reason": "The promoted AV row stays bounded to the narrowed brake-hold runtime contract.",
             "repo_artifact": "reports/battery_av_healthcare/overall/release_summary.json",
         },
         {
@@ -1071,6 +1337,7 @@ def build_three_domain_ml_artifacts() -> None:
     }
 
     benchmark_rows = _benchmark_rows(calibration_rows, healthcare_meta)
+    proxy_runtime_rows = _proxy_runtime_comparison_rows(benchmark_rows)
     baseline_rows = _baseline_suite_rows()
     ablation_rows = _ablation_rows(baseline_rows)
     negative_control_rows = _negative_control_rows(calibration_rows, healthcare_meta, baseline_rows)
@@ -1085,8 +1352,8 @@ def build_three_domain_ml_artifacts() -> None:
         "max_relative_delta": max((_safe_float(row["relative_delta"]) for row in ablation_rows), default=0.0),
         "min_relative_delta": min((_safe_float(row["relative_delta"]) for row in ablation_rows), default=0.0),
         "note": (
-            "Ablation and baseline rows are cross-domain runtime proxies built from the shared universal validation harness. "
-            "The promoted benchmark TSVR claims continue to be governed by the canonical 3-domain closure lane."
+            "Ablation and baseline rows are sourced from domain-native runtime denominators for the promoted three-domain lane. "
+            "The shared universal validation harness remains diagnostic only."
         ),
     }
 
@@ -1095,6 +1362,7 @@ def build_three_domain_ml_artifacts() -> None:
         "central_novelty_sentence": CENTRAL_NOVELTY_SENTENCE,
         "submission_scope": "battery_av_healthcare",
         "domains": benchmark_rows,
+        "proxy_runtime_comparison_path": "reports/publication/three_domain_proxy_runtime_comparison.csv",
         "baseline_suite_path": "reports/publication/three_domain_baseline_suite.csv",
         "ablation_matrix_path": "reports/publication/three_domain_ablation_matrix.csv",
         "negative_controls_path": "reports/publication/three_domain_negative_controls.csv",
@@ -1105,10 +1373,10 @@ def build_three_domain_ml_artifacts() -> None:
             "nonvacuity": "reports/publication/three_domain_nonvacuity_checks.json",
         },
         "notes": [
-            "ML credit is carried by grouped calibration plus runtime safety deltas under degraded observation.",
+            "ML credit is carried by grouped calibration plus runtime-denominator safety deltas under degraded observation.",
             "No flagship novelty credit is taken from draft theorem rows or from a new conformal-theorem claim.",
-            "Battery remains the witness row; AV and Healthcare remain bounded defended rows.",
-            "Battery baseline and ablation rows are sourced from the locked witness table; AV and Healthcare baseline and ablation rows remain shared-harness proxy surfaces.",
+            "Battery remains the witness row; AV and Healthcare are now claim-governing runtime-closed rows under narrowed contracts.",
+            "Baseline, ablation, and negative-control rows are claim-carrying only when sourced from domain-native runtime denominator artifacts.",
         ],
     }
 
@@ -1123,7 +1391,7 @@ def build_three_domain_ml_artifacts() -> None:
         calibration_diag_rows.append(
             {
                 "domain": domain,
-                "claim_tier_scope": "reference" if domain == "Battery Energy Storage" else "proof_validated_bounded",
+                "claim_tier_scope": "reference" if domain == "Battery Energy Storage" else "runtime_contract_closed",
                 "coverage_by_fault_mode": "three_domain_grouped_calibration",
                 "coverage_by_oqe_bucket": (
                     f"low: PICP {by_bucket['low'].coverage:.3f}, width {by_bucket['low'].mean_interval_width:.3f} | "
@@ -1162,6 +1430,11 @@ def build_three_domain_ml_artifacts() -> None:
     )
     _write_json(PUBLICATION_DIR / "three_domain_ml_benchmark_summary.json", benchmark_summary)
     _write_csv(
+        PUBLICATION_DIR / "three_domain_proxy_runtime_comparison.csv",
+        proxy_runtime_rows,
+        list(proxy_runtime_rows[0].keys()),
+    )
+    _write_csv(
         PUBLICATION_DIR / "three_domain_runtime_safety_tradeoff.csv",
         [
             {
@@ -1173,6 +1446,8 @@ def build_three_domain_ml_artifacts() -> None:
                 "intervention_rate": row["intervention_rate"],
                 "fallback_activation_rate": row["fallback_activation_rate"],
                 "certificate_valid_release_rate": row["certificate_valid_release_rate"],
+                "runtime_witness_pass_rate": row["runtime_witness_pass_rate"],
+                "strict_runtime_gate": row["strict_runtime_gate"],
                 "runtime_latency_p95_ms": row["runtime_latency_p95_ms"],
                 "metric_surface": row["metric_surface"],
             }
@@ -1187,6 +1462,8 @@ def build_three_domain_ml_artifacts() -> None:
             "intervention_rate",
             "fallback_activation_rate",
             "certificate_valid_release_rate",
+            "runtime_witness_pass_rate",
+            "strict_runtime_gate",
             "runtime_latency_p95_ms",
             "metric_surface",
         ],

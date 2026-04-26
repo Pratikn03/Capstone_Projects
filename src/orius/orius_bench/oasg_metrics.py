@@ -251,9 +251,28 @@ def _av_surface() -> SubmissionDomainSurface:
         controller_field="controller",
         controller_value="baseline",
     )
-    true_states = np.asarray([[float(row["true_margin"])] for row in trace_rows], dtype=float)
-    observations = np.asarray([[float(row["observed_margin"])] for row in trace_rows], dtype=float)
-    reliability = np.asarray([float(row["reliability_w"]) for row in trace_rows], dtype=float)
+    true_values: list[list[float]] = []
+    observed_values: list[list[float]] = []
+    reliability_values: list[float] = []
+    for row in trace_rows:
+        try:
+            true_margin = float(row["true_margin"])
+        except (TypeError, ValueError):
+            continue
+        try:
+            observed_margin = float(row.get("observed_margin", true_margin))
+        except (TypeError, ValueError):
+            observed_margin = true_margin
+        try:
+            reliability_score = float(row.get("reliability_w", 1.0))
+        except (TypeError, ValueError):
+            reliability_score = 1.0
+        true_values.append([true_margin])
+        observed_values.append([observed_margin])
+        reliability_values.append(reliability_score)
+    true_states = np.asarray(true_values, dtype=float)
+    observations = np.asarray(observed_values, dtype=float)
+    reliability = np.asarray(reliability_values, dtype=float)
 
     def safe_set_check(state: np.ndarray) -> bool:
         return bool(state[0] >= 0.0)

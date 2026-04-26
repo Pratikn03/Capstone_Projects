@@ -11,6 +11,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 
 from orius.orius_bench.adapter import BenchmarkAdapter
 
@@ -349,9 +350,25 @@ class WaymoReplayTrackAdapter(BenchmarkAdapter):
         replay_windows_path: str | Path,
         *,
         start_step_index: int = ANCHOR_CURRENT_INDEX,
+        scenario_ids: Iterable[str] | None = None,
     ):
         self._replay_path = Path(replay_windows_path)
-        self._df = pd.read_parquet(self._replay_path).sort_values(["scenario_id", "step_index"]).reset_index(drop=True)
+        scenario_id_filter = sorted({str(scenario_id) for scenario_id in scenario_ids or []})
+        if scenario_id_filter:
+            try:
+                self._df = pd.read_parquet(self._replay_path, filters=[("scenario_id", "in", scenario_id_filter)])
+            except Exception:
+                scenario_id_set = set(scenario_id_filter)
+                frames: list[pd.DataFrame] = []
+                for batch in pq.ParquetFile(self._replay_path).iter_batches(batch_size=200_000):
+                    frame = batch.to_pandas()
+                    frame = frame[frame["scenario_id"].astype(str).isin(scenario_id_set)]
+                    if not frame.empty:
+                        frames.append(frame)
+                self._df = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+        else:
+            self._df = pd.read_parquet(self._replay_path)
+        self._df = self._df.sort_values(["scenario_id", "step_index"]).reset_index(drop=True)
         self._scenarios = {
             str(scenario_id): group.reset_index(drop=True)
             for scenario_id, group in self._df.groupby("scenario_id", sort=True)

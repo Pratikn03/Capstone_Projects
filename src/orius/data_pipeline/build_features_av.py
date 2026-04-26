@@ -40,40 +40,50 @@ def _build_legacy_features(
 ) -> Path:
     """Build legacy 1D AV features and splits from a processed CSV."""
     df = pd.read_csv(csv_path)
-    for col in ["position_m", "speed_mps", "speed_limit_mps"]:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
+    for col in [
+        "position_m",
+        "speed_mps",
+        "speed_limit_mps",
+        "lead_position_m",
+        "lead_rel_x_m",
+        "lead_speed_mps",
+        "rss_safe_gap_m",
+    ]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
     df = df.dropna(subset=["speed_mps", "position_m"])
     df = df.sort_values(["vehicle_id", "step"]).reset_index(drop=True)
 
-    # Use first vehicle for a clean time series (or aggregate)
-    v0 = df[df["vehicle_id"] == df["vehicle_id"].iloc[0]].copy()
-    v0 = v0.sort_values("step").reset_index(drop=True)
-
     # Prefer explicit timestamps from real corpora; keep a synthetic fallback.
-    if "ts_utc" in v0.columns:
-        v0["timestamp"] = pd.to_datetime(v0["ts_utc"], errors="coerce", utc=True)
+    if "ts_utc" in df.columns:
+        df["timestamp"] = pd.to_datetime(df["ts_utc"], errors="coerce", utc=True)
     else:
-        v0["timestamp"] = pd.to_datetime("2026-01-01") + pd.to_timedelta(v0["step"] * 0.1, unit="s")
-    v0 = v0.dropna(subset=["timestamp"]).reset_index(drop=True)
+        df["timestamp"] = pd.to_datetime("2026-01-01") + pd.to_timedelta(df["step"] * 0.1, unit="s")
+    df = df.dropna(subset=["timestamp"]).reset_index(drop=True)
 
-    # Lag features
+    # Lag features are computed per vehicle so the bridged Waymo corpus
+    # survives rebuilds instead of collapsing to a single ego trace.
     for lag in LAG_STEPS:
-        v0[f"speed_mps_lag{lag}"] = v0["speed_mps"].shift(lag)
-        v0[f"position_m_lag{lag}"] = v0["position_m"].astype(float).shift(lag)
-    v0["speed_limit_mps"] = v0["speed_limit_mps"].fillna(30.0)
-    v0["hour"] = v0["timestamp"].dt.hour
-    v0["minute"] = v0["timestamp"].dt.minute
+        df[f"speed_mps_lag{lag}"] = df.groupby("vehicle_id", sort=False)["speed_mps"].shift(lag)
+        df[f"position_m_lag{lag}"] = df.groupby("vehicle_id", sort=False)["position_m"].shift(lag)
+    df["speed_limit_mps"] = df["speed_limit_mps"].fillna(30.0)
+    df["hour"] = df["timestamp"].dt.hour
+    df["minute"] = df["timestamp"].dt.minute
 
-    v0 = v0.dropna().reset_index(drop=True)
+    required_cols = [f"speed_mps_lag{lag}" for lag in LAG_STEPS] + [f"position_m_lag{lag}" for lag in LAG_STEPS]
+    for target_col in ("speed_mps", "position_m", "lead_position_m", "rss_safe_gap_m"):
+        if target_col in df.columns:
+            required_cols.append(target_col)
+    df = df.dropna(subset=required_cols).reset_index(drop=True)
     features_path = out_dir / "features.parquet"
     out_dir.mkdir(parents=True, exist_ok=True)
-    v0.to_parquet(features_path, index=False)
+    df.to_parquet(features_path, index=False)
 
     # Splits
     splits_dir = out_dir / "splits"
     splits_dir.mkdir(parents=True, exist_ok=True)
     train, cal, val, test = time_split_with_calibration(
-        v0,
+        df,
         ts_col="timestamp",
         train_ratio=train_ratio,
         calibration_ratio=calibration_ratio,

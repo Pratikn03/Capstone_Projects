@@ -132,7 +132,7 @@ APPENDIX_MAP = {
     "C.1 Battery-Domain OASG Existence": "OASG Existence",
     "C.2 One-Step Safety Preservation": "Safety Preservation",
     "C.3 Battery ORIUS Core Bound": "ORIUS Core Bound",
-    "C.4 No Free Safety": "No Free Safety",
+    "C.4 Observation Necessity / No Free Safety": "Observation Necessity / No Free Safety",
     "C.5 Certificate Validity Horizon": "Certificate validity horizon",
     "C.6 Certificate Expiration Bound": "Certificate expiration bound",
     "C.8 Feasible Fallback Existence": "Feasible fallback existence",

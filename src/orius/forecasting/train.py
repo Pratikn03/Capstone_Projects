@@ -330,6 +330,32 @@ def _resolve_gap_hours(cfg: dict) -> int:
     return gap_hours
 
 
+def _resolve_task_horizon(task_cfg: dict[str, object]) -> int:
+    """Resolve forecast horizon for training/evaluation.
+
+    ``horizon_steps`` takes precedence when present. Otherwise retain the
+    historical ``horizon_hours`` contract, rounded and clamped to at least one
+    step so bounded multi-domain configs remain trainable.
+    """
+    if "horizon_steps" in task_cfg:
+        return max(1, int(task_cfg.get("horizon_steps", 1) or 1))
+    horizon_raw = float(task_cfg.get("horizon_hours", 1.0) or 1.0)
+    return max(1, int(round(horizon_raw)))
+
+
+def _resolve_task_lookback(task_cfg: dict[str, object]) -> int:
+    """Resolve sequence-model lookback window.
+
+    ``lookback_steps`` allows bounded domains to use an explicit sequence
+    window without changing the legacy metadata-oriented ``lookback_hours``
+    field used elsewhere in the repo.
+    """
+    if "lookback_steps" in task_cfg:
+        return max(1, int(task_cfg.get("lookback_steps", 1) or 1))
+    lookback_raw = float(task_cfg.get("lookback_hours", 168.0) or 168.0)
+    return max(1, int(round(lookback_raw)))
+
+
 def _aggregate_top_trial_params(trials, param_specs: list[dict], top_pct: float, min_top_trials: int) -> dict:
     """Aggregate top trial params using median (numeric) / mode (categorical)."""
     if not trials:
@@ -428,9 +454,48 @@ def make_xy(df: pd.DataFrame, target: str, targets: list[str]):
     feat_cols = [c for c in df.columns if c not in drop]
     # Exclude non-numeric columns (object, datetime, etc.) so models receive valid inputs.
     feat_cols = [c for c in feat_cols if pd.api.types.is_numeric_dtype(df[c])]
-    X = df[feat_cols].to_numpy()
-    y = df[target].to_numpy()
+    feature_frame = df[feat_cols].apply(pd.to_numeric, errors="coerce").astype(np.float32)
+    X = feature_frame.to_numpy()
+    y = pd.to_numeric(df[target], errors="coerce").astype(np.float32).to_numpy()
     return X, y, feat_cols
+
+
+def _drop_invalid_target_rows(X: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Drop rows where the supervised target is non-finite."""
+    valid = np.isfinite(y)
+    if valid.all():
+        return X, y
+    return X[valid], y[valid]
+
+
+def _fit_feature_fill_values(X_train: np.ndarray) -> np.ndarray:
+    """Fit train-split feature fill values for missing/non-finite entries."""
+    arr = np.asarray(X_train, dtype=np.float32)
+    if arr.ndim != 2:
+        raise ValueError(f"Expected 2D feature matrix, got shape {arr.shape}")
+    safe = np.where(np.isfinite(arr), arr, np.nan)
+    with np.errstate(all="ignore"):
+        fill_values = np.nanmedian(safe, axis=0)
+    fill_values = np.where(np.isfinite(fill_values), fill_values, 0.0).astype(np.float32)
+    return fill_values
+
+
+def _apply_feature_fill_values(X: np.ndarray, fill_values: np.ndarray) -> np.ndarray:
+    """Apply train-derived feature fill values to any missing/non-finite cells."""
+    arr = np.asarray(X, dtype=np.float32)
+    if arr.ndim != 2:
+        raise ValueError(f"Expected 2D feature matrix, got shape {arr.shape}")
+    if fill_values.shape[0] != arr.shape[1]:
+        raise ValueError(
+            f"Feature fill vector has length {fill_values.shape[0]}, expected {arr.shape[1]}"
+        )
+    invalid = ~np.isfinite(arr)
+    if not invalid.any():
+        return arr
+    arr = arr.copy()
+    _, col_idx = np.where(invalid)
+    arr[invalid] = fill_values[col_idx]
+    return arr
 
 
 def residual_quantiles(y_true: np.ndarray, y_pred: np.ndarray, quantiles: list[float]) -> dict[str, float]:
@@ -1314,9 +1379,9 @@ def main():
         print(f"Warning: missing targets in data and will be skipped: {missing_targets}")
     if not targets:
         raise ValueError(f"No valid targets found in data. Available columns: {list(df.columns)}")
-    horizon_raw = float(cfg["task"]["horizon_hours"])
-    horizon = max(1, int(round(horizon_raw)))  # Ensure horizon >= 1 for conformal/reshape
-    lookback_default = int(cfg["task"].get("lookback_hours", 168))
+    task_cfg = cfg.get("task", {}) if isinstance(cfg.get("task"), dict) else {}
+    horizon = _resolve_task_horizon(task_cfg)
+    lookback_default = _resolve_task_lookback(task_cfg)
 
     rep_dir = Path(args.reports_dir or cfg["reports"]["out_dir"])
     rep_dir.mkdir(parents=True, exist_ok=True)
@@ -1375,6 +1440,20 @@ def main():
         y_cal = None
         if not calibration_df.empty:
             X_cal, y_cal, _ = make_xy(calibration_df, target, targets)
+
+        X_train, y_train = _drop_invalid_target_rows(X_train, y_train)
+        X_val, y_val = _drop_invalid_target_rows(X_val, y_val)
+        X_test, y_test = _drop_invalid_target_rows(X_test, y_test)
+        if X_cal is not None and y_cal is not None:
+            X_cal, y_cal = _drop_invalid_target_rows(X_cal, y_cal)
+
+        feature_fill_values = _fit_feature_fill_values(X_train)
+        feature_fill_values_list = feature_fill_values.astype(float).tolist()
+        X_train = _apply_feature_fill_values(X_train, feature_fill_values)
+        X_val = _apply_feature_fill_values(X_val, feature_fill_values)
+        X_test = _apply_feature_fill_values(X_test, feature_fill_values)
+        if X_cal is not None:
+            X_cal = _apply_feature_fill_values(X_cal, feature_fill_values)
 
         target_res = {"n_features": len(feat_cols)}
 
@@ -1574,6 +1653,7 @@ def main():
                         "ensemble_models": [m["model"] for m in gbm_members] if len(gbm_members) > 1 else None,
                         "ensemble_seeds": [m["seed"] for m in gbm_members],
                         "feature_cols": feat_cols,
+                        "feature_fill_values": feature_fill_values_list,
                         "target": target,
                         "quantiles": quantiles,
                         "residual_quantiles": gbm_q,
@@ -1686,6 +1766,7 @@ def main():
                     "quantile_levels": quantiles,
                     "n_quantiles": len(quantiles),
                     "residual_quantiles": lstm_q,
+                    "feature_fill_values": feature_fill_values_list,
                     "x_scaler": x_scaler.to_dict(),
                     "y_scaler": y_scaler.to_dict(),
                 }, art_dir / f"lstm_{target}.pt")
@@ -1816,6 +1897,7 @@ def main():
                     "quantile_levels": quantiles,
                     "n_quantiles": len(quantiles),
                     "residual_quantiles": tcn_q,
+                    "feature_fill_values": feature_fill_values_list,
                     "x_scaler": x_scaler.to_dict(),
                     "y_scaler": y_scaler.to_dict(),
                 }, art_dir / f"tcn_{target}.pt")
@@ -1947,6 +2029,7 @@ def main():
                     "quantile_levels": quantiles,
                     "n_quantiles": len(quantiles),
                     "residual_quantiles": model_q,
+                    "feature_fill_values": feature_fill_values_list,
                     "x_scaler": x_scaler.to_dict(),
                     "y_scaler": y_scaler.to_dict(),
                 }, art_dir / f"nbeats_{target}.pt")
@@ -2079,6 +2162,7 @@ def main():
                     "quantile_levels": quantiles,
                     "n_quantiles": len(quantiles),
                     "residual_quantiles": model_q,
+                    "feature_fill_values": feature_fill_values_list,
                     "x_scaler": x_scaler.to_dict(),
                     "y_scaler": y_scaler.to_dict(),
                 }, art_dir / f"tft_{target}.pt")
@@ -2214,6 +2298,7 @@ def main():
                     "quantile_levels": quantiles,
                     "n_quantiles": len(quantiles),
                     "residual_quantiles": model_q,
+                    "feature_fill_values": feature_fill_values_list,
                     "x_scaler": x_scaler.to_dict(),
                     "y_scaler": y_scaler.to_dict(),
                 }, art_dir / f"patchtst_{target}.pt")

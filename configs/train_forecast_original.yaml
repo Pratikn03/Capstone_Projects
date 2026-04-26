@@ -1,0 +1,228 @@
+dataset:
+  key: DE
+  label: Germany (OPSD)
+  source: OPSD
+  region_group: EU
+
+task:
+  horizon_hours: 24
+  lookback_hours: 168
+  quantiles: [0.1, 0.5, 0.9]
+  targets: [load_mw, wind_mw, solar_mw, price_eur_mwh]
+
+seed: 42
+seeds: [42, 123, 456, 789, 2024, 1337, 7777, 9999]  # 8 seeds for robust ensemble
+
+# Advanced training options:
+# --enable-cv: 10-fold time-series cross-validation
+# --use-pipeline: sklearn Pipeline for GBM (leakage-safe preprocessing)
+# --ensemble: Train with multiple seeds and average predictions
+
+cross_validation:
+  enabled: true
+  n_folds: 10
+  strategy: time_series  # Preserves temporal ordering
+  gap: 24  # 24-hour gap between train/val to prevent leakage
+
+data:
+  processed_path: data/processed/features.parquet
+  timestamp_col: timestamp
+
+# Time split used inside training orchestration.
+# 70% train is fixed by request; val/test are configured from the remainder.
+splits:
+  train_ratio: 0.70
+  calibration_ratio: 0.05
+  val_ratio: 0.10
+  gap_hours: 24
+
+models:
+  baseline_gbm:
+    kind: lightgbm
+    enabled: true
+    params:
+      n_estimators: 1000
+      learning_rate: 0.03
+      max_depth: 12
+      num_leaves: 256
+      min_child_samples: 15
+      subsample: 0.85
+      colsample_bytree: 0.85
+      reg_alpha: 0.1
+      reg_lambda: 1.0
+      verbosity: -1
+      feature_fraction_seed: 42
+      bagging_seed: 42
+  quantile_gbm:
+    kind: lightgbm
+    enabled: true
+    params:
+      n_estimators: 400
+      learning_rate: 0.05
+      max_depth: 8
+      num_leaves: 64
+      min_child_samples: 20
+      subsample: 0.9
+      colsample_bytree: 0.9
+      verbosity: -1
+  dl_lstm:
+    kind: lstm
+    enabled: true
+    params:
+      hidden_size: 512          # Increased from 256 for more capacity
+      num_layers: 2             # Reduced from 3 (wider > deeper for time series)
+      dropout: 0.2              # Reduced from 0.3 (less regularization)
+      epochs: 300               # Increased from 100 for convergence
+      batch_size: 64            # Reduced from 128 (better generalization)
+      learning_rate: 0.0003     # Reduced from 0.001 (more stable)
+      weight_decay: 1e-4        # Increased from 1e-5
+      scheduler: cosine_warm_restarts  # Better than plain cosine
+      warmup_epochs: 10         # Increased from 5
+      T_0: 50                   # Restart period for cosine warm restarts
+      T_mult: 2                 # Multiply period after each restart
+      early_stopping:
+        enabled: true
+        patience: 30            # Increased from 15 (more patience)
+        min_delta: 0.00005      # Tighter threshold
+      gradient_clip: 0.5        # Tighter clipping for stability
+      bidirectional: true       # Enable bidirectional LSTM
+      attention: true           # Add attention mechanism
+  dl_tcn:
+    kind: tcn
+    enabled: true
+    params:
+      num_channels: [256, 256, 128, 128, 64]  # Wider network, more layers
+      kernel_size: 7            # Increased from 5 (larger receptive field)
+      dilation_base: 2          # Exponential dilation for longer context
+      dropout: 0.25             # Reduced from 0.3
+      epochs: 300               # Increased from 100
+      batch_size: 64            # Reduced from 128
+      learning_rate: 0.0003     # Reduced from 0.001
+      weight_decay: 1e-4        # Increased from 1e-5
+      scheduler: cosine_warm_restarts
+      warmup_epochs: 10         # Increased from 5
+      T_0: 50
+      T_mult: 2
+      early_stopping:
+        enabled: true
+        patience: 30            # Increased from 15
+        min_delta: 0.00005
+      gradient_clip: 0.5        # Tighter clipping
+      residual: true            # Enable residual connections
+      causal: true              # Causal convolutions for forecasting
+      use_skip_connections: true # Skip connections for gradient flow
+  dl_nbeats:
+    kind: nbeats
+    enabled: true
+    params:
+      hidden_dim: 512
+      num_blocks: 4
+      dropout: 0.1
+      epochs: 140
+      batch_size: 128
+      learning_rate: 0.0005
+      weight_decay: 1e-5
+      warmup_epochs: 5
+      gradient_clip: 1.0
+      early_stopping:
+        enabled: true
+        patience: 20
+        min_delta: 0.0001
+  dl_tft:
+    kind: tft
+    enabled: true
+    params:
+      d_model: 128
+      n_heads: 4
+      num_layers: 2
+      dim_feedforward: 256
+      dropout: 0.1
+      epochs: 120
+      batch_size: 128
+      learning_rate: 0.0005
+      weight_decay: 1e-5
+      warmup_epochs: 5
+      gradient_clip: 1.0
+      early_stopping:
+        enabled: true
+        patience: 18
+        min_delta: 0.0001
+  dl_patchtst:
+    kind: patchtst
+    enabled: true
+    params:
+      patch_len: 24
+      stride: 12
+      d_model: 128
+      n_heads: 4
+      num_layers: 2
+      dim_feedforward: 256
+      dropout: 0.1
+      epochs: 120
+      batch_size: 128
+      learning_rate: 0.0005
+      weight_decay: 1e-5
+      warmup_epochs: 5
+      gradient_clip: 1.0
+      early_stopping:
+        enabled: true
+        patience: 18
+        min_delta: 0.0001
+
+artifacts:
+  out_dir: artifacts/models
+reports:
+  out_dir: reports
+
+backtest:
+  enabled: true
+  out_path: reports/walk_forward_report.json
+
+tuning:
+  enabled: true
+  engine: optuna
+  n_trials: 100              # Increased from 50 for better search
+  metric: val_loss
+  direction: minimize
+  # Param selection strategy:
+  # - top_pct_median: aggregate params from top % trials (robust)
+  # - best: use single best trial
+  selection_mode: top_pct_median
+  select_top_pct: 0.30
+  min_top_trials: 5
+  # Set to 0.001 if you explicitly want top 0.1% selection, but only useful with very high n_trials.
+  n_jobs: 4  # Parallel trials
+  pruner: hyperband           # Better than median for DL
+  sampler: tpe                # Tree-structured Parzen Estimator
+  startup_trials: 20          # Random trials before TPE kicks in
+  params:
+    baseline_gbm:
+      n_estimators: {type: int, low: 500, high: 2000}
+      learning_rate: {type: float, low: 0.005, high: 0.1, log: true}
+      max_depth: {type: int, low: 8, high: 15}
+      num_leaves: {type: int, low: 64, high: 512}
+    dl_lstm:
+      hidden_size: {type: categorical, choices: [256, 512, 768, 1024]}
+      num_layers: {type: int, low: 1, high: 3}
+      dropout: {type: float, low: 0.1, high: 0.4}
+      learning_rate: {type: float, low: 0.00005, high: 0.003, log: true}
+      batch_size: {type: categorical, choices: [32, 64, 128]}
+      weight_decay: {type: float, low: 1e-5, high: 1e-3, log: true}
+    dl_tcn:
+      num_channels: {type: categorical, choices: [[128, 128, 64], [256, 256, 128], [256, 256, 128, 128, 64], [512, 256, 128, 64]]}
+      kernel_size: {type: int, low: 5, high: 9}
+      dropout: {type: float, low: 0.1, high: 0.4}
+      learning_rate: {type: float, low: 0.00005, high: 0.003, log: true}
+      batch_size: {type: categorical, choices: [32, 64, 128]}
+
+tracking:
+  enabled: true
+  tool: mlflow # or wandb
+  experiment_name: orius_forecast
+  log_models: true
+  log_system_metrics: true
+
+distributed:
+  enabled: false
+  backend: nccl # Options: nccl, gloo, mpi
+  nproc_per_node: 1 # Set >1 for multi-GPU training

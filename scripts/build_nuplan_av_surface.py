@@ -14,8 +14,7 @@ SRC_DIR = REPO_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from orius.av_nuplan import DEFAULT_TRAIN_GLOB, build_nuplan_replay_surface, inspect_nuplan_archives
-from orius.av_waymo import build_feature_tables
+from orius.av_nuplan import DEFAULT_TRAIN_GLOB, build_feature_tables, build_nuplan_replay_surface, inspect_nuplan_archives
 
 
 DEFAULT_TRAIN_ZIP = REPO_ROOT / "nuplan-v1.1_train_singapore.zip"
@@ -49,8 +48,8 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--build-features", action="store_true", help="Also build ORIUS step and anchor feature tables")
     parser.add_argument(
         "--split-strategy",
-        choices=("hash", "balanced", "all_test"),
-        default="hash",
+        choices=("hash", "balanced", "all_test", "grouped_archive_db_city"),
+        default="grouped_archive_db_city",
         help="Feature split policy when --build-features is set; use all_test for held-out val/test surfaces",
     )
     parser.add_argument("--inspect-only", action="store_true", help="Only print archive manifests without extracting DB files")

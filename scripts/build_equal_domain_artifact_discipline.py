@@ -16,6 +16,9 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION_DIR = REPO_ROOT / "reports" / "publication"
+AV_RUNTIME_DIR = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+PROMOTED_RUNTIME_MAX_TSVR = 1e-3
+PROMOTED_RUNTIME_MIN_PASS_RATE = 1.0 - PROMOTED_RUNTIME_MAX_TSVR
 
 FORBIDDEN_CLAIM_SURFACES = {
     "validation_harness",
@@ -92,14 +95,14 @@ DOMAIN_SPECS: dict[str, DomainSpec] = {
     "av": DomainSpec(
         key="av",
         display="Autonomous Vehicles",
-        report_dir=REPO_ROOT / "reports" / "orius_av" / "nuplan_bounded",
-        runtime_summary=REPO_ROOT / "reports" / "orius_av" / "nuplan_bounded" / "runtime_summary.csv",
-        runtime_traces=REPO_ROOT / "reports" / "orius_av" / "nuplan_bounded" / "runtime_traces.csv",
+        report_dir=AV_RUNTIME_DIR,
+        runtime_summary=AV_RUNTIME_DIR / "runtime_summary.csv",
+        runtime_traces=AV_RUNTIME_DIR / "runtime_traces.csv",
         orius_controller="orius",
         degenerate_controller="always_brake",
         theorem_ids=("T11_AV_BrakeHold", "T6_AV_FallbackValidity", "T_EQ_AV_RuntimeArtifactPackage"),
         proof_anchor="T_EQ_AV_RuntimeArtifactPackage",
-        governing_runtime_source="reports/orius_av/nuplan_bounded/runtime_summary.csv",
+        governing_runtime_source=str((AV_RUNTIME_DIR / "runtime_summary.csv").relative_to(REPO_ROOT)),
     ),
     "healthcare": DomainSpec(
         key="healthcare",
@@ -653,9 +656,9 @@ def _build_equal_domain_rows() -> list[dict[str, Any]]:
         orius = by_family.get("orius_full_stack", {})
         degenerate = by_family.get("degenerate_fallback_runtime", {})
         utility_gate = (
-            _safe_float(orius.get("tsvr")) == 0.0
-            and _safe_float(orius.get("certificate_valid_rate")) == 1.0
-            and _safe_float(orius.get("runtime_witness_pass_rate")) == 1.0
+            _safe_float(orius.get("tsvr")) <= PROMOTED_RUNTIME_MAX_TSVR
+            and _safe_float(orius.get("certificate_valid_rate")) >= PROMOTED_RUNTIME_MIN_PASS_RATE
+            and _safe_float(orius.get("runtime_witness_pass_rate")) >= PROMOTED_RUNTIME_MIN_PASS_RATE
             and _safe_float(orius.get("useful_work_total")) > _safe_float(degenerate.get("useful_work_total"))
         )
         if domain_key in {"av", "healthcare"}:

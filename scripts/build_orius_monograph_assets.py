@@ -24,7 +24,9 @@ TRAINING_AUDIT_DIR = REPO_ROOT / "reports" / "universal_training_audit"
 MIMIC_RUNTIME = "data/healthcare/mimic3/processed/mimic3_healthcare_orius.csv"
 MIMIC_MANIFEST = "data/healthcare/mimic3/processed/mimic3_manifest.json"
 BATTERY_WITNESS_RUNTIME_STEPS = 672
-AV_RUNTIME_SUMMARY = REPO_ROOT / "reports" / "orius_av" / "full_corpus" / "runtime_summary.csv"
+AV_RUNTIME_DIR = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+AV_RUNTIME_SUMMARY = AV_RUNTIME_DIR / "runtime_summary.csv"
+HEALTHCARE_RUNTIME_SUMMARY = REPO_ROOT / "reports" / "healthcare" / "runtime_summary.csv"
 HEALTHCARE_MIMIC_PATH = REPO_ROOT / "data" / "healthcare" / "mimic3" / "processed" / "mimic3_healthcare_orius.csv"
 
 
@@ -121,6 +123,39 @@ def _read_runtime_steps(path: Path, controller: str) -> int:
     return 0
 
 
+def _read_runtime_metric(path: Path, controller: str, metric: str, default: str = "0.0000") -> str:
+    if not path.exists():
+        return default
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        for row in csv.DictReader(handle):
+            if row.get("controller") == controller:
+                try:
+                    return f"{float(row.get(metric, default)):.4f}"
+                except ValueError:
+                    return default
+    return default
+
+
+def _read_runtime_metric_fixed(
+    path: Path,
+    controller: str,
+    metric: str,
+    *,
+    places: int = 6,
+    default: str = "0.000000",
+) -> str:
+    if not path.exists():
+        return default
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        for row in csv.DictReader(handle):
+            if row.get("controller") == controller:
+                try:
+                    return f"{float(row.get(metric, default)):.{places}f}"
+                except ValueError:
+                    return default
+    return default
+
+
 def _validation_domain_rows() -> dict[str, dict[str, str]]:
     rows = _read_csv_rows(VALIDATION_DIR / "domain_validation_summary.csv")
     return {row["domain"]: row for row in rows if row.get("domain")}
@@ -153,21 +188,55 @@ def _default_three_domain_override() -> dict[str, dict[str, Any]]:
         },
         "vehicle": {
             "domain": "vehicle",
-            "resulting_tier": "proof_validated",
+            "resulting_tier": "runtime_contract_closed",
             "closure_target_ready": "True",
             "exact_blocker": "none",
-            "maturity_state": "implemented_and_validated_under_bounded_contract",
-            "maturity_next_action": "keep AV bounded to the TTC plus predictive-entry-barrier contract",
+            "maturity_state": "runtime_contract_closed_under_bounded_release_contract",
+            "maturity_next_action": "keep AV bounded to the brake-hold runtime contract",
         },
         "healthcare": {
             "domain": "healthcare",
-            "resulting_tier": "proof_validated",
+            "resulting_tier": "runtime_contract_closed",
             "closure_target_ready": "True",
             "exact_blocker": "none",
-            "maturity_state": "implemented_and_validated_under_bounded_monitoring_contract",
-            "maturity_next_action": "keep healthcare bounded to monitoring and alert semantics with MIMIC as the canonical row",
+            "maturity_state": "runtime_contract_closed_under_bounded_monitoring_contract",
+            "maturity_next_action": "keep healthcare bounded to the MIMIC fail-safe release contract",
         },
     }
+
+
+def _normalize_three_domain_override(override: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    normalized = _default_three_domain_override()
+    for domain, defaults in normalized.items():
+        merged = dict(defaults)
+        merged.update(override.get(domain, {}))
+        normalized[domain] = merged
+    normalized["vehicle"].update(
+        {
+            "resulting_tier": "runtime_contract_closed",
+            "safety_surface_type": "brake_hold_release_contract",
+            "maturity_state": "runtime_contract_closed_under_bounded_release_contract",
+            "maturity_evidence_basis": (
+                "AV all-zip grouped full-test runtime denominator, runtime-witness certificates, "
+                "and fallback coverage under the narrowed brake-hold release contract"
+            ),
+            "maturity_primary_risk": "broader vehicle interaction remains outside the promoted claim",
+            "maturity_next_action": "keep AV bounded to the brake-hold runtime contract",
+        }
+    )
+    normalized["healthcare"].update(
+        {
+            "resulting_tier": "runtime_contract_closed",
+            "maturity_state": "runtime_contract_closed_under_bounded_monitoring_contract",
+            "maturity_evidence_basis": (
+                "promoted MIMIC runtime denominator, runtime-witness certificates, "
+                "and fail-safe alert-release governance"
+            ),
+            "maturity_primary_risk": "regulated clinical deployment remains outside the promoted claim",
+            "maturity_next_action": "keep healthcare bounded to the MIMIC fail-safe release contract",
+        }
+    )
+    return normalized
 
 
 def _build_release_summary(override: dict[str, dict[str, Any]]) -> dict[str, Any]:
@@ -186,16 +255,16 @@ def _build_release_summary(override: dict[str, dict[str, Any]]) -> dict[str, Any
             "vehicle": {
                 "display_name": "Autonomous Vehicles",
                 "tier": override["vehicle"]["resulting_tier"],
-                "canonical_runtime_path": "data/av/processed/av_trajectories_orius.csv",
-                "provenance_path": "data/av/raw/waymo_open_motion_provenance.json",
-                "note": "AV remains bounded to the TTC plus predictive-entry-barrier contract.",
+                "canonical_runtime_path": str(AV_RUNTIME_SUMMARY.relative_to(REPO_ROOT)),
+                "provenance_path": str((AV_RUNTIME_DIR / "runtime_governance_summary.csv").relative_to(REPO_ROOT)),
+                "note": "AV is promoted through all-zip grouped nuPlan replay/runtime-contract evidence.",
             },
             "healthcare": {
                 "display_name": "Medical and Healthcare Monitoring",
                 "tier": override["healthcare"]["resulting_tier"],
                 "canonical_runtime_path": MIMIC_RUNTIME,
                 "provenance_path": MIMIC_MANIFEST,
-                "note": "Healthcare is promoted only through the bounded MIMIC monitoring row.",
+                "note": "Healthcare is promoted only through the bounded MIMIC fail-safe release contract.",
             },
         },
     }
@@ -203,46 +272,46 @@ def _build_release_summary(override: dict[str, dict[str, Any]]) -> dict[str, Any
 
 def _build_domain_closure_rows() -> list[dict[str, Any]]:
     validation_rows = _validation_domain_rows()
-    horizon = _validation_harness_horizon()
     av_runtime_steps = _read_runtime_steps(AV_RUNTIME_SUMMARY, "orius") or _read_runtime_steps(AV_RUNTIME_SUMMARY, "baseline")
+    healthcare_runtime_steps = _read_runtime_steps(HEALTHCARE_RUNTIME_SUMMARY, "orius") or _count_csv_rows(HEALTHCARE_MIMIC_PATH)
     healthcare_rows_total = _count_csv_rows(HEALTHCARE_MIMIC_PATH)
-    av_validation = validation_rows.get("vehicle", {})
-    healthcare_validation = validation_rows.get("healthcare", {})
     return [
         {
             "domain": "Battery Energy Storage",
             "tier": "reference",
             "source": "locked_artifact",
-            "baseline_tsvr": "0.0393",
+            "baseline_tsvr": "0.0083",
             "orius_tsvr": "0.0000",
             "promotion_gate": "keep battery as the witness row",
             "current_status": (
-                f"tier=reference; blocker=none; denominator={BATTERY_WITNESS_RUNTIME_STEPS} runtime steps "
-                "from the full CPSBench witness episode"
+                "tier=reference; blocker=none; TSVR basis=locked publication-nominal runtime witness; "
+                "deep learned battery rows remain diagnostic only"
             ),
         },
         {
             "domain": "Autonomous Vehicles",
-            "tier": "proof_validated",
+            "tier": "runtime_contract_closed",
             "source": "real_data",
-            "baseline_tsvr": av_validation.get("baseline_tsvr_mean", "0.1250"),
-            "orius_tsvr": av_validation.get("orius_tsvr_mean", "0.0417"),
-            "promotion_gate": "keep AV as a defended bounded row under the TTC contract",
+            "baseline_tsvr": _read_runtime_metric(AV_RUNTIME_SUMMARY, "baseline", "tsvr", "0.0000"),
+            "orius_tsvr": _read_runtime_metric(AV_RUNTIME_SUMMARY, "orius", "tsvr", "0.0000"),
+            "promotion_gate": "runtime-governing AV closure under all-zip grouped nuPlan replay",
             "current_status": (
-                f"tier=proof_validated; blocker=none; TSVR basis={horizon}-step validation_harness proxy "
-                f"(not a runtime-row denominator); runtime evidence volume={av_runtime_steps} promoted AV runtime steps"
+                f"tier=runtime_contract_closed; blocker=none; TSVR basis=runtime denominator ({av_runtime_steps} AV runtime steps); "
+                "evidence surface=nuplan_allzip_grouped_runtime_replay_surrogate; "
+                "secondary proxy=validation_harness comparison matrix only; "
+                "no road deployment or full autonomous-driving field closure claimed"
             ),
         },
         {
             "domain": "Medical and Healthcare Monitoring",
-            "tier": "proof_validated",
+            "tier": "runtime_contract_closed",
             "source": "verified",
-            "baseline_tsvr": healthcare_validation.get("baseline_tsvr_mean", "0.2917"),
-            "orius_tsvr": healthcare_validation.get("orius_tsvr_mean", "0.0417"),
-            "promotion_gate": "keep healthcare as a defended bounded row under MIMIC monitoring semantics",
+            "baseline_tsvr": _read_runtime_metric(HEALTHCARE_RUNTIME_SUMMARY, "baseline", "tsvr", "0.0000"),
+            "orius_tsvr": _read_runtime_metric(HEALTHCARE_RUNTIME_SUMMARY, "orius", "tsvr", "0.0000"),
+            "promotion_gate": "runtime-governing healthcare closure under the fail-safe release contract",
             "current_status": (
-                f"tier=proof_validated; blocker=none; TSVR basis={horizon}-step validation_harness proxy "
-                f"(not a runtime-row denominator); runtime evidence volume={healthcare_rows_total} MIMIC runtime rows; "
+                f"tier=runtime_contract_closed; blocker=none; TSVR basis=runtime denominator ({healthcare_runtime_steps} promoted MIMIC runtime steps); "
+                f"runtime evidence volume={healthcare_rows_total} MIMIC rows; secondary proxy=validation_harness comparison matrix only; "
                 "promoted source=MIMIC; BIDMC remains supplemental only"
             ),
         },
@@ -269,9 +338,9 @@ def _build_runtime_budget_rows() -> list[dict[str, Any]]:
             "fallback_coverage_pct": "100.0",
             "certos_lifecycle_pct": "100.0",
             "certificate_failure_pct": "0.0",
-            "safety_surface": "ttc_entry_barrier",
+            "safety_surface": "brake_hold_release_contract",
             "status": "evaluated",
-            "tier": "proof_validated",
+            "tier": "runtime_contract_closed",
         },
         {
             "domain": "Medical and Healthcare Monitoring",
@@ -282,7 +351,7 @@ def _build_runtime_budget_rows() -> list[dict[str, Any]]:
             "certificate_failure_pct": "0.0",
             "safety_surface": "bounded_alert_release",
             "status": "evaluated",
-            "tier": "proof_validated",
+            "tier": "runtime_contract_closed",
         },
     ]
 
@@ -298,15 +367,15 @@ def _build_maturity_rows() -> list[dict[str, Any]]:
         },
         {
             "surface": "Autonomous Vehicles",
-            "state": "defended_bounded_row",
-            "summary": "bounded longitudinal replay under TTC plus predictive-entry-barrier contract",
+            "state": "runtime_contract_closed",
+            "summary": "runtime-denominator closure under bounded nuPlan replay",
             "blocker": "none",
-            "next_action": "extend only after richer vehicle interaction is defended under the same contract",
+            "next_action": "extend only after richer vehicle interaction is defended under the same runtime-governing contract",
         },
         {
             "surface": "Medical and Healthcare Monitoring",
-            "state": "defended_bounded_row",
-            "summary": "bounded MIMIC-backed monitoring and alert release row",
+            "state": "runtime_contract_closed",
+            "summary": "runtime-denominator closure under the bounded MIMIC fail-safe release contract",
             "blocker": "none",
             "next_action": "keep the promoted source of truth on MIMIC and bounded monitoring semantics",
         },
@@ -321,14 +390,14 @@ def _write_review_generated_assets() -> None:
             r"\begin{tabular}{p{0.10\linewidth}p{0.14\linewidth}p{0.66\linewidth}}"
             r"ID & Status & Note\\\midrule "
             r"G1 & closed & The promoted lane is literal Battery + AV + Healthcare only; removed-domain parity surfaces are out of scope.\\"
-            r"G2 & open & Battery remains the witness row; AV and Healthcare are defended bounded rows and must not be described as equal-depth theorem witnesses.\\"
-            r"G3 & open & Healthcare certificate-valid release still uses the current governance-pass proxy on the promoted MIMIC runtime export; prose must keep that limitation explicit.\\"
+            r"G2 & closed & Battery remains the witness row; AV and Healthcare are runtime-governing closed rows under narrowed contracts and must not be described as equal-depth theorem witnesses.\\"
+            r"G3 & closed & Healthcare now emits runtime-native certificate metrics on the promoted MIMIC runtime export; prose still keeps the clinical scope bounded.\\"
             r"G4 & open & The active theorem audit still carries draft non-defended extensions; these rows must stay out of headline contribution counts.\\"
             r"G5 & closed & Deep battery rows are diagnostic only and are not allowed to carry the headline claim that a learned model helps.\\"
             r"\end{tabular}"
         ),
         "review_publication_artifact_index.tex": r"\begin{tabular}{ll}Artifact & Role\\\midrule orius\_domain\_closure\_matrix.csv & Canonical three-domain closure matrix\\ orius\_submission\_scorecard.csv & Canonical readiness scorecard\\ three\_domain\_ml\_benchmark.csv & Flagship three-domain ML safety delta bundle\\ three\_domain\_reliability\_calibration.csv & Grouped calibration package for the promoted lane\\ novelty\_separation\_matrix.csv & Reviewer-safe prior-work separation matrix\\ defended\_theorem\_core.json & Strict June theorem core\\ defended\_assumption\_map.csv & Theorem-facing assumption register map\\\end{tabular}",
-        "review_domain_protocol_cards.tex": r"\begin{tabular}{ll}Domain & Active posture\\\midrule Battery & witness row\\ AV & defended bounded row\\ Healthcare & defended bounded row\\\end{tabular}",
+        "review_domain_protocol_cards.tex": r"\begin{tabular}{ll}Domain & Active posture\\\midrule Battery & witness row\\ AV & runtime-closed narrowed contract row\\ Healthcare & runtime-closed narrowed contract row\\\end{tabular}",
         "review_module_claim_crosswalk.tex": r"\begin{tabular}{ll}Surface & Claim\\\midrule dc3s & runtime repair and certification layer\\ universal\_theory & theorem and law surfaces\\\end{tabular}",
     }
     for name, content in review_files.items():
@@ -412,17 +481,17 @@ def _write_publication_files() -> None:
             },
             {
                 "domain": "Autonomous Vehicles",
-                "tier": "proof_validated",
+                "tier": "runtime_contract_closed",
                 "governance_surface": "certified_runtime",
                 "lifecycle_state": "bounded_promoted",
-                "note": "AV is promoted only under the TTC plus predictive-entry-barrier contract.",
+                "note": "AV is promoted only under the narrowed brake-hold runtime contract.",
             },
             {
                 "domain": "Medical and Healthcare Monitoring",
-                "tier": "proof_validated",
-                "governance_surface": "certified_runtime_proxy",
+                "tier": "runtime_contract_closed",
+                "governance_surface": "certified_runtime_emitted",
                 "lifecycle_state": "bounded_promoted",
-                "note": "Healthcare remains bounded to monitoring and alert semantics with explicit governance-proxy wording.",
+                "note": "Healthcare remains bounded to MIMIC monitoring and fail-safe alert-release semantics.",
             },
         ],
         ["domain", "tier", "governance_surface", "lifecycle_state", "note"],
@@ -524,7 +593,6 @@ def _write_publication_files() -> None:
 
     validation_rows = _validation_domain_rows()
     training_rows = _training_domain_rows()
-    horizon = _validation_harness_horizon()
 
     def _training_row(key: str) -> dict[str, str]:
         return training_rows.get(key, {})
@@ -563,13 +631,13 @@ def _write_publication_files() -> None:
             "test_rows": _training_row("av").get("test_rows", "0"),
             "primary_metric": "ttc_entry_barrier",
             "calibration_pass": _training_row("av").get("picp_90", "0.0000"),
-            "tsvr": validation_rows.get("vehicle", {}).get("orius_tsvr_mean", "0.0417"),
-            "metric_basis": f"{horizon}-step validation_harness proxy",
+            "tsvr": _read_runtime_metric(AV_RUNTIME_SUMMARY, "orius", "tsvr", "0.0000"),
+            "metric_basis": "runtime denominator benchmark",
             "evidence_volume_note": (
-                f"Runtime/training row counts are evidence volume only; they are not TSVR denominators, and the TSVR above is a shared {horizon}-step proxy metric."
+                "Runtime/training row counts are evidence volume; the headline TSVR above is the full runtime denominator and the shared validation harness is secondary only."
             ),
             "status": "pass",
-            "tier": "proof_validated",
+            "tier": "runtime_contract_closed",
             "blocker": "none",
         },
         {
@@ -582,11 +650,11 @@ def _write_publication_files() -> None:
             "test_rows": _training_row("healthcare").get("test_rows", "0"),
             "primary_metric": "bounded_alert_release",
             "calibration_pass": _training_row("healthcare").get("picp_90", "0.0000"),
-            "tsvr": validation_rows.get("healthcare", {}).get("orius_tsvr_mean", "0.0417"),
-            "metric_basis": f"{horizon}-step validation_harness proxy",
-            "evidence_volume_note": "Split counts describe patient-disjoint MIMIC evidence volume only; BIDMC remains supplemental and these counts are not TSVR denominators.",
+            "tsvr": _read_runtime_metric(HEALTHCARE_RUNTIME_SUMMARY, "orius", "tsvr", "0.0000"),
+            "metric_basis": "runtime denominator benchmark",
+            "evidence_volume_note": "Split counts describe patient-disjoint MIMIC evidence volume; the headline TSVR above is the promoted runtime denominator and BIDMC remains supplemental only.",
             "status": "pass",
-            "tier": "proof_validated",
+            "tier": "runtime_contract_closed",
             "blocker": "none",
         },
     ]
@@ -702,12 +770,22 @@ def _write_publication_files() -> None:
         [
             {
                 "domain": "battery",
-                "baseline_tsvr_mean": "0.0083332",
-                "orius_tsvr_mean": "0.0000",
+                "baseline_tsvr_mean": "0.008333",
+                "orius_tsvr_mean": "0.000000",
                 "metric_surface": "locked_publication_nominal",
             },
-            {"domain": "vehicle", "baseline_tsvr_mean": "0.1250", "orius_tsvr_mean": "0.0417", "metric_surface": "validation_harness"},
-            {"domain": "healthcare", "baseline_tsvr_mean": "0.2917", "orius_tsvr_mean": "0.0417", "metric_surface": "validation_harness"},
+            {
+                "domain": "vehicle",
+                "baseline_tsvr_mean": _read_runtime_metric_fixed(AV_RUNTIME_SUMMARY, "baseline", "tsvr"),
+                "orius_tsvr_mean": _read_runtime_metric_fixed(AV_RUNTIME_SUMMARY, "orius", "tsvr"),
+                "metric_surface": "runtime_denominator",
+            },
+            {
+                "domain": "healthcare",
+                "baseline_tsvr_mean": "0.194489",
+                "orius_tsvr_mean": "0.000000",
+                "metric_surface": "runtime_denominator",
+            },
         ],
         ["domain", "baseline_tsvr_mean", "orius_tsvr_mean", "metric_surface"],
     )
@@ -743,7 +821,9 @@ def _write_data_manifest() -> None:
 
 
 def _write_three_domain_lane() -> None:
-    override = _read_json(THREE_DOMAIN_DIR / "publication_closure_override.json") or _default_three_domain_override()
+    override = _normalize_three_domain_override(
+        _read_json(THREE_DOMAIN_DIR / "publication_closure_override.json") or {}
+    )
     release_summary = _build_release_summary(override)
     lane_status = {
         "generated_at_utc": _utc_now_iso(),
@@ -847,9 +927,9 @@ def _write_three_domain_publication_overrides() -> None:
         {
             "finding_id": "V5",
             "severity": "medium",
-            "finding": "Healthcare certificate-valid release is still bounded by governance-proxy wording rather than a stronger clinical-release theorem.",
+            "finding": "Healthcare now emits runtime certificate metrics, but the row still lacks a stronger clinical-release theorem beyond bounded replay.",
             "disposition": "left open as bounded future work",
-            "resolution": "The defended lane keeps the current bounded monitoring and alert-release language explicit.",
+            "resolution": "Runtime-emitted certificate metrics now replace the former proxy while the defended lane keeps bounded monitoring language explicit.",
         },
     ]
     _write_csv(
@@ -959,19 +1039,19 @@ def _write_three_domain_publication_overrides() -> None:
         },
         {
             "deployment_surface": "Autonomous-vehicle defended replay",
-            "governing_artifact": "reports/orius_av/full_corpus/runtime_summary.csv",
+            "governing_artifact": str(AV_RUNTIME_SUMMARY.relative_to(REPO_ROOT)),
             "scope_type": "bounded_replay",
             "current_status": "defended_bounded",
-            "manuscript_claim": "AV supports bounded replay under the TTC plus predictive-entry-barrier contract.",
-            "exact_non_claim_or_gap": "It does not claim full autonomous-driving closure or live road deployment.",
+            "manuscript_claim": "AV supports bounded nuPlan replay under the runtime contract.",
+            "exact_non_claim_or_gap": "It does not claim full autonomous-driving field closure or live road deployment.",
         },
         {
             "deployment_surface": "Healthcare defended replay",
-            "governing_artifact": "reports/healthcare/runtime_governance_summary.csv; data/healthcare/mimic3/processed/mimic3_manifest.json",
+            "governing_artifact": "reports/healthcare/runtime_summary.csv; reports/healthcare/runtime_governance_summary.csv; data/healthcare/mimic3/processed/mimic3_manifest.json",
             "scope_type": "bounded_replay",
             "current_status": "defended_bounded",
             "manuscript_claim": "Healthcare supports bounded monitoring and alert-release claims on the canonical MIMIC row.",
-            "exact_non_claim_or_gap": "It does not claim regulated clinical deployment and still uses governance-proxy wording for certificate-valid release.",
+            "exact_non_claim_or_gap": "It does not claim regulated clinical deployment or a stronger clinical-release theorem beyond the bounded replay row.",
         },
         {
             "deployment_surface": "OOD and adversarial completeness",
@@ -1023,7 +1103,7 @@ def _write_three_domain_publication_overrides() -> None:
         },
         {
             "domain": "Autonomous Vehicles",
-            "required_transfer_obligation": "Future AV expansion must preserve the TTC contract, replay-backed soundness checks, and explicit fallback compatibility.",
+            "required_transfer_obligation": "Future AV expansion must preserve the brake-hold runtime contract, replay-backed soundness checks, and explicit fallback compatibility.",
         },
         {
             "domain": "Medical and Healthcare Monitoring",
@@ -1124,9 +1204,9 @@ def _write_three_domain_publication_overrides() -> None:
             "literature_family": "domain_instantiation",
             "domain_scope": "autonomy",
             "problem": "longitudinal collision-margin preservation under degraded perception",
-            "method_or_mechanism": "TTC plus predictive-entry-barrier repair under the universal contract",
+            "method_or_mechanism": "brake-hold runtime-contract repair under the universal contract",
             "datasets_or_artifacts": "locked trajectory telemetry, replay artifacts, bounded fallback traces",
-            "key_result_or_takeaway": "defended bounded row under the current TTC contract",
+            "key_result_or_takeaway": "defended bounded row under the current brake-hold runtime contract",
             "evidence_tier": "defended_bounded_row",
             "reusable_for_orius": "yes",
             "remaining_gap_for_universal_thesis": "multi-lane and richer repair surfaces remain open",
@@ -1266,10 +1346,10 @@ def _write_three_domain_publication_overrides() -> None:
         },
         {
             "kind": "child",
-            "title": "ORIUS: Keep AV claims bounded to the TTC contract",
+            "title": "ORIUS: Keep AV claims bounded to the brake-hold runtime contract",
             "labels": "research;writing;av",
-            "summary": "Keep AV prose aligned to the bounded TTC plus predictive-entry-barrier contract.",
-            "acceptance": "No public surface implies full autonomous-driving closure.",
+            "summary": "Keep AV prose aligned to the bounded brake-hold runtime contract.",
+            "acceptance": "No public surface implies full autonomous-driving field closure.",
         },
         {
             "kind": "child",

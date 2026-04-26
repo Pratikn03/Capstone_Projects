@@ -725,10 +725,10 @@ def build_replay_comparison(
     csv_path = out_dir / "battery_deep_oqe_safety_metrics.csv"
     md_path = out_dir / "battery_deep_oqe_safety_metrics.md"
     fig_path = out_dir / "fig_battery_deep_oqe_safety_metrics.png"
-    runtime_summary_path = out_dir / "runtime_summary.csv"
-    runtime_traces_path = out_dir / "runtime_traces.csv"
-    fault_coverage_path = out_dir / "fault_family_coverage.csv"
-    audit_db_path = out_dir / "battery_runtime.duckdb"
+    runtime_summary_path = out_dir / "battery_deep_oqe_runtime_summary.csv"
+    runtime_traces_path = out_dir / "battery_deep_oqe_runtime_traces.csv"
+    fault_coverage_path = out_dir / "battery_deep_oqe_fault_family_coverage.csv"
+    audit_db_path = out_dir / "battery_deep_oqe_runtime.duckdb"
     _write_csv(
         csv_path,
         rows,

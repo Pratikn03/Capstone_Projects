@@ -90,8 +90,21 @@ def test_defended_theorem_core_is_strict_and_bounded() -> None:
     summary = defended_core["summary"]
     rows = defended_core["rows"]
 
-    assert summary["flagship_defended_ids"] == ["T1", "T2", "T3a", "T4", "T11", "T_trajectory_PAC"]
-    assert summary["supporting_defended_ids"] == ["T3b", "T6", "T8", "T11_Byzantine", "T_stale_decay"]
+    assert summary["flagship_defended_ids"] == ["T1", "T2", "T3a", "T4", "T6", "T7", "T11", "T_trajectory_PAC"]
+    assert summary["supporting_defended_ids"] == [
+        "T3b",
+        "T8",
+        "T10_T11_ObservationAmbiguitySandwich",
+        "T11_AV_BrakeHold",
+        "T11_HC_FailSafeRelease",
+        "T6_AV_FallbackValidity",
+        "T6_HC_FallbackValidity",
+        "T_EQ_Battery_RuntimeArtifactPackage",
+        "T_EQ_AV_RuntimeArtifactPackage",
+        "T_EQ_HC_RuntimeArtifactPackage",
+        "T11_Byzantine",
+        "T_stale_decay",
+    ]
     assert summary["flagship_gate_ready"] is True
     assert all(row["scope_note"] for row in rows)
     assert all(
@@ -141,7 +154,8 @@ def test_three_domain_release_summary_is_sanitized_and_mimic_backed() -> None:
     assert "battery_av_only" not in text
     assert release_summary["submission_scope"] == "battery_av_healthcare"
     assert "mimic3_manifest.json" in text
-    assert override["healthcare"]["resulting_tier"] == "proof_validated"
+    assert override["vehicle"]["resulting_tier"] == "runtime_contract_closed"
+    assert override["healthcare"]["resulting_tier"] == "runtime_contract_closed"
 
 
 def test_promoted_healthcare_surfaces_are_mimic_only() -> None:

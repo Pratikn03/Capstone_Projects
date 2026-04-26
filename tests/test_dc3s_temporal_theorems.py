@@ -54,6 +54,8 @@ def test_certificate_expiration_bound_uses_delta_aware_formula():
     assert bound["tau_expire_lb"] == expected
     assert bound["confidence_delta"] == pytest.approx(0.05)
     assert bound["theorem_formula"] == "floor(delta_bnd^2 / (2 * sigma_d^2 * log(2 / delta)))"
+    assert bound["theorem_contract"]["first_passage_lemma"] == "reflection_principle_subgaussian_first_passage"
+    assert "0 < delta < 1" in bound["theorem_contract"]["side_conditions"]
     assert horizon["tau_t"] >= bound["tau_expire_lb"]
 
 
@@ -68,16 +70,75 @@ def test_certify_fallback_existence_passes_for_interior_soc():
         model_error_mwh=5.0,
     )
     assert result["passed"] is True
+    assert result["mode"] == "hold"
+    assert result["fallback_region"] == "interior"
     assert result["fallback_action"] == {"charge_mw": 0.0, "discharge_mw": 0.0}
+    assert result["theorem_contract"]["theorem_id"] == "T7"
 
 
-def test_certify_fallback_existence_fails_near_boundary():
+def test_certify_fallback_existence_recovers_near_lower_boundary():
     result = certify_fallback_existence(
         current_soc_mwh=11.0,
-        constraints={"min_soc_mwh": 10.0, "max_soc_mwh": 90.0},
+        constraints={
+            "capacity_mwh": 100.0,
+            "min_soc_mwh": 10.0,
+            "max_soc_mwh": 90.0,
+            "max_charge_mw": 50.0,
+            "max_discharge_mw": 50.0,
+            "charge_efficiency": 1.0,
+            "discharge_efficiency": 1.0,
+            "time_step_hours": 1.0,
+        },
+        model_error_mwh=2.0,
+    )
+    assert result["passed"] is True
+    assert result["mode"] == "safe_landing"
+    assert result["fallback_region"] == "boundary_proximal"
+    assert result["fallback_action"]["charge_mw"] > 0.0
+    assert result["fallback_action"]["discharge_mw"] == 0.0
+
+
+def test_certify_fallback_existence_recovers_near_upper_boundary():
+    result = certify_fallback_existence(
+        current_soc_mwh=89.0,
+        constraints={
+            "capacity_mwh": 100.0,
+            "min_soc_mwh": 10.0,
+            "max_soc_mwh": 90.0,
+            "max_charge_mw": 50.0,
+            "max_discharge_mw": 50.0,
+            "charge_efficiency": 1.0,
+            "discharge_efficiency": 1.0,
+            "time_step_hours": 1.0,
+        },
+        model_error_mwh=2.0,
+    )
+    assert result["passed"] is True
+    assert result["mode"] == "safe_landing"
+    assert result["fallback_region"] == "boundary_proximal"
+    assert result["fallback_action"]["discharge_mw"] > 0.0
+    assert result["fallback_action"]["charge_mw"] == 0.0
+
+
+def test_certify_fallback_existence_fails_closed_when_boundary_recovery_is_infeasible():
+    result = certify_fallback_existence(
+        current_soc_mwh=11.0,
+        constraints={
+            "capacity_mwh": 100.0,
+            "min_soc_mwh": 10.0,
+            "max_soc_mwh": 90.0,
+            "max_charge_mw": 0.0,
+            "max_discharge_mw": 0.0,
+            "max_power_mw": 0.0,
+            "charge_efficiency": 1.0,
+            "discharge_efficiency": 1.0,
+            "time_step_hours": 1.0,
+        },
         model_error_mwh=2.0,
     )
     assert result["passed"] is False
+    assert result["mode"] == "infeasible"
+    assert result["fallback_region"] == "infeasible"
 
 
 def test_graceful_degradation_dominance_detects_strict_domination():

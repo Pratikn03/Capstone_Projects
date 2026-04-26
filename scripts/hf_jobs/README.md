@@ -20,3 +20,6 @@ Suggested job entrypoints:
 Execution rule:
 - `canonical_closure_refresh_job.py` is the top-level refresh entrypoint for the active Battery + AV + Healthcare lane.
 - `deep_learning_novelty_job.py` is the battery witness-row deep-learning novelty entrypoint. It is explicitly bounded to learned reliability and raw-sequence forecasting evidence, not broader empirical promotion.
+
+Inspection rule:
+- Run `python scripts/hf_jobs/deep_learning_novelty_job.py --list-outputs` before launching the deep-learning novelty job when you need a non-mutating inventory of generated files. The wrapper does not download data directly; it trains from repo-local inputs and writes namespaced battery novelty artifacts plus manuscript table/figure copies.

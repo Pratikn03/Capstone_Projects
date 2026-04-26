@@ -1,7 +1,7 @@
 """Real-dataset loader for the canonical three-domain ORIUS bench.
 
 The active replay/data surfaces are:
-  - vehicle: ``data/orius_av/av/processed/av_trajectories_orius.csv``
+  - vehicle: ``data/orius_av/av/processed_nuplan_allzip_grouped/anchor_features.parquet``
   - healthcare: ``data/healthcare/mimic3/processed/mimic3_healthcare_orius.csv``
 
 Battery remains the witness row but does not rely on this loader module.
@@ -254,10 +254,48 @@ def load_vehicle_rows(path: Path | None = None) -> list[dict[str, Any]]:
     """Load processed AV trajectory rows.
 
     Supports both Path A (speed-limit-only) and Path B (RSS-augmented)
-    schemas. RSS columns are optional; missing fields default to None.
+    schemas. RSS columns are optional; missing fields default to None. The
+    promoted nuPlan surface is stored as anchor-feature parquet; for the
+    diagnostic universal harness we derive the longitudinal track fields from
+    ego speed and lead-gap features while keeping the runtime-denominator AV
+    safety claim tied to the full replay runtime artifacts.
     """
     p = Path(path) if path else AV_PATH
     rows: list[dict[str, Any]] = []
+    if p.suffix == ".parquet":
+        import pandas as pd
+
+        columns = [
+            "scenario_id",
+            "record_index",
+            "step_index",
+            "ego_speed_mps_lag0",
+            "lead_gap_m_lag0",
+            "lead_rel_speed_mps_lag0",
+        ]
+        df = pd.read_parquet(p, columns=columns)
+        for idx, row in enumerate(df.itertuples(index=False)):
+            speed = float(getattr(row, "ego_speed_mps_lag0", 0.0) or 0.0)
+            gap = float(getattr(row, "lead_gap_m_lag0", 0.0) or 0.0)
+            if not math.isfinite(gap) or gap <= 0.0:
+                gap = 50.0
+            lead_rel_speed = float(getattr(row, "lead_rel_speed_mps_lag0", 0.0) or 0.0)
+            step = int(float(getattr(row, "step_index", idx) or idx))
+            position = float(step * max(speed, 0.0) * 0.25)
+            rows.append(
+                {
+                    "vehicle_id": str(getattr(row, "scenario_id", f"nuplan-{idx}")),
+                    "step": step,
+                    "position_m": position,
+                    "speed_mps": speed,
+                    "speed_limit_mps": 30.0,
+                    "lead_position_m": position + max(gap, 5.5),
+                    "lead_speed_mps": max(0.0, speed + lead_rel_speed),
+                    "ts_utc": "",
+                }
+            )
+        return rows
+
     with p.open(newline="", encoding="utf-8") as fh:
         reader = csv.DictReader(fh)
         for row in reader:
@@ -331,7 +369,11 @@ def load_healthcare_runtime_rows(path: Path | None = None) -> list[dict[str, Any
                             "step": int(float(step_raw or 0)),
                             "hr_bpm": float(row["hr"]),
                             "spo2_pct": float(row["target"]),
+                            "forecast_spo2_pct": float(row.get("forecast", row["target"])),
                             "respiratory_rate": float(row["resp"]),
+                            "reliability": float(row.get("reliability", 1.0)),
+                            "domain_label": row.get("domain_label", "healthcare"),
+                            "is_critical": row.get("is_critical", "False") in ("True", "true", "1"),
                             "ts_utc": row.get("ts_utc") or row.get("timestamp", ""),
                         }
                     )
@@ -342,7 +384,11 @@ def load_healthcare_runtime_rows(path: Path | None = None) -> list[dict[str, Any
                         "step": int(float(row.get("step", 0))),
                         "hr_bpm": float(row["hr_bpm"]),
                         "spo2_pct": float(row["spo2_pct"]),
+                        "forecast_spo2_pct": float(row.get("forecast_spo2_pct", row["spo2_pct"])),
                         "respiratory_rate": float(row["respiratory_rate"]),
+                        "reliability": float(row.get("reliability", 1.0)),
+                        "domain_label": row.get("domain_label", "healthcare"),
+                        "is_critical": row.get("is_critical", "False") in ("True", "true", "1"),
                         "ts_utc": row.get("ts_utc", ""),
                     }
                 )

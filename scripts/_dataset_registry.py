@@ -151,30 +151,30 @@ DATASET_REGISTRY: dict[str, DatasetConfig] = {
         alias_of="US_MISO",
     ),
     # Multi-domain promoted program (AV, Healthcare)
-    # AV: Waymo Motion full corpus (1,975 scenarios, 179,725 ego rows).
-    # HEE legacy backup is at data/orius_av/av/processed/hee_legacy/ for reversibility.
+    # AV: nuPlan all-zip grouped runtime replay is the promoted AV surface.
+    # Legacy Waymo/HEE compatibility paths remain elsewhere for reversibility.
     "AV": DatasetConfig(
         name="AV",
-        display_name="Waymo Motion AV Trajectories",
+        display_name="nuPlan All-Zip Grouped AV Replay",
         config_file="configs/train_forecast_av.yaml",
-        features_path="data/orius_av/av/processed/features.parquet",
-        splits_path="data/orius_av/av/processed/splits",
-        models_dir="artifacts/models_av",
-        reports_dir="reports/av",
-        uncertainty_dir="artifacts/uncertainty/av",
-        backtests_dir="artifacts/backtests/av",
-        raw_data_path="data/orius_av/av/processed/av_trajectories_orius.csv",
+        features_path="data/orius_av/av/processed_nuplan_allzip_grouped/anchor_features.parquet",
+        splits_path="data/orius_av/av/processed_nuplan_allzip_grouped/splits",
+        models_dir="artifacts/models_orius_av_nuplan_allzip_grouped",
+        reports_dir="reports/orius_av/nuplan_allzip_grouped",
+        uncertainty_dir="artifacts/uncertainty/orius_av_nuplan_allzip_grouped",
+        backtests_dir="reports/orius_av/nuplan_allzip_grouped",
+        raw_data_path="data/orius_av/av/processed_nuplan_allzip_grouped/replay_windows.parquet",
         feature_module="orius.data_pipeline.build_features_av",
-        provenance_path="data/orius_av/av/raw/external_sources_manifest.json",
-        canonical_raw_source_path="data/orius_av/raw/waymo_motion",
+        provenance_path="data/orius_av/av/processed_nuplan_allzip_grouped/nuplan_source_manifest.json",
+        canonical_raw_source_path="data/orius_av/raw",
         runtime_domain="vehicle",
         publication_label="Autonomous Vehicles",
         closure_target_tier="defended_bounded_row",
         maturity_tier="proof_validated",
-        canonical_runtime_path="data/orius_av/av/processed/av_trajectories_orius.csv",
-        runtime_provenance_path="data/orius_av/av/raw/external_sources_manifest.json",
+        canonical_runtime_path="data/orius_av/av/processed_nuplan_allzip_grouped/anchor_features.parquet",
+        runtime_provenance_path="reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_report.json",
         fallback_policy="bounded_runtime_pass",
-        exact_blocker="av_real_row_present",
+        exact_blocker="nuplan_allzip_grouped_row_present",
     ),
     "HEALTHCARE": DatasetConfig(
         name="HEALTHCARE",
@@ -208,6 +208,15 @@ AGGRESSIVE_DEFAULTS = {
     "US_ERCOT": {"n_trials": 260, "top_pct": 0.20, "max_seeds": 5},
     "AV": {"n_trials": 50, "top_pct": 0.20, "max_seeds": 2},
     "HEALTHCARE": {"n_trials": 50, "top_pct": 0.20, "max_seeds": 2},
+}
+
+MAX_QUALITY_DEFAULTS = {
+    "DE": {"n_trials": 420, "top_pct": 0.10, "max_seeds": 12},
+    "US_MISO": {"n_trials": 480, "top_pct": 0.10, "max_seeds": 8},
+    "US_PJM": {"n_trials": 480, "top_pct": 0.10, "max_seeds": 8},
+    "US_ERCOT": {"n_trials": 480, "top_pct": 0.10, "max_seeds": 8},
+    "AV": {"n_trials": 140, "top_pct": 0.15, "max_seeds": 4},
+    "HEALTHCARE": {"n_trials": 140, "top_pct": 0.15, "max_seeds": 4},
 }
 
 

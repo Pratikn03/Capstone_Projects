@@ -21,7 +21,9 @@ def __getattr__(name):
         return _map[name]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 from .certificate import (
+    CERTIFICATE_SCHEMA_VERSION,
     make_certificate,
+    normalize_certificate_schema,
     store_certificate,
     get_certificate,
     compute_model_hash,
@@ -102,7 +104,9 @@ __all__ = [
     "derived_inflation_factor",
     "effective_sample_size",
     "repair_action",
+    "CERTIFICATE_SCHEMA_VERSION",
     "make_certificate",
+    "normalize_certificate_schema",
     "store_certificate",
     "get_certificate",
     "compute_model_hash",

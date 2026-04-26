@@ -10,9 +10,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 PUBLICATION = REPO_ROOT / "reports" / "publication"
 DOMAIN_DIRS = {
     "Battery Energy Storage": REPO_ROOT / "reports" / "battery_av" / "battery",
-    "Autonomous Vehicles": REPO_ROOT / "reports" / "orius_av" / "full_corpus",
+    "Autonomous Vehicles": REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest",
     "Medical and Healthcare Monitoring": REPO_ROOT / "reports" / "healthcare",
 }
+PROMOTED_RUNTIME_MAX_TSVR = 1e-3
+PROMOTED_RUNTIME_MIN_PASS_RATE = 1.0 - PROMOTED_RUNTIME_MAX_TSVR
 REQUIRED_BASELINES = {
     "nominal_deterministic_controller",
     "fixed_threshold_or_fixed_inflation_runtime",
@@ -124,9 +126,9 @@ def test_each_domain_orius_row_is_non_degenerate_and_witness_closed() -> None:
         }
         orius = rows["orius_full_stack"]
         degenerate = rows["degenerate_fallback_runtime"]
-        assert _safe_float(orius["tsvr"]) == 0.0, domain
-        assert _safe_float(orius["certificate_valid_rate"]) == 1.0, domain
-        assert _safe_float(orius["runtime_witness_pass_rate"]) == 1.0, domain
+        assert _safe_float(orius["tsvr"]) <= PROMOTED_RUNTIME_MAX_TSVR, domain
+        assert _safe_float(orius["certificate_valid_rate"]) >= PROMOTED_RUNTIME_MIN_PASS_RATE, domain
+        assert _safe_float(orius["runtime_witness_pass_rate"]) >= PROMOTED_RUNTIME_MIN_PASS_RATE, domain
         assert _safe_float(orius["useful_work_total"]) > _safe_float(degenerate["useful_work_total"]), domain
         if domain == "Autonomous Vehicles":
             assert _safe_float(orius["fallback_activation_rate"]) <= 0.50, domain

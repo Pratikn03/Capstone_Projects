@@ -11,7 +11,7 @@ Panel A (left):  OASG timeline — observed vs true SOC trajectories showing
 Panel B (right): DC3S five-stage pipeline block diagram:
                   Detect → Calibrate → Constrain → Shield → Certify
 
-Output: paper/assets/figures/fig_oasg_hero.png
+Output: paper/assets/figures/fig_oasg_hero.{png,pdf,svg}
 """
 from __future__ import annotations
 
@@ -29,6 +29,13 @@ try:
 except ImportError:
     print("matplotlib is required. Install with: pip install matplotlib")
     sys.exit(1)
+
+
+def _strip_svg_trailing_whitespace(path: Path) -> None:
+    if path.suffix.lower() != ".svg":
+        return
+    text = path.read_text(encoding="utf-8")
+    path.write_text("\n".join(line.rstrip() for line in text.splitlines()) + "\n", encoding="utf-8")
 
 
 def _make_panel_a(ax: "plt.Axes") -> None:
@@ -182,7 +189,11 @@ def _make_panel_b(ax: "plt.Axes") -> None:
 def main() -> None:
     out_dir = Path("paper/assets/figures")
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / "fig_oasg_hero.png"
+    out_paths = [
+        out_dir / "fig_oasg_hero.png",
+        out_dir / "fig_oasg_hero.pdf",
+        out_dir / "fig_oasg_hero.svg",
+    ]
 
     fig, (ax_a, ax_b) = plt.subplots(1, 2, figsize=(13, 5.2),
                                       gridspec_kw={"width_ratios": [1.1, 1.0]})
@@ -194,9 +205,12 @@ def main() -> None:
         fontsize=13, fontweight="bold", y=1.01,
     )
     fig.tight_layout(rect=[0, 0, 1, 1])
-    fig.savefig(out_path, dpi=150, bbox_inches="tight")
+    for out_path in out_paths:
+        fig.savefig(out_path, dpi=300, bbox_inches="tight")
+        _strip_svg_trailing_whitespace(out_path)
     plt.close(fig)
-    print(f"Hero figure → {out_path}")
+    for out_path in out_paths:
+        print(f"Hero figure -> {out_path}")
 
 
 if __name__ == "__main__":

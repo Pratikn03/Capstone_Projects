@@ -25,7 +25,7 @@ def main() -> None:
         for row in claim_rows
         if row["theorem_or_scope"].startswith("T") and row["theorem_or_scope"][1:].isdigit()
     ]
-    assumption_rows = [row for row in claim_rows if row["theorem_or_scope"] == "A1-A8"]
+    assumption_rows = [row for row in claim_rows if row["theorem_or_scope"] == "A1-A13"]
     locked_chapters = [row for row in chapter_rows if row["status"] == "locked"]
     partial_chapters = [row for row in chapter_rows if row["status"].startswith("partial")]
     complete_gap_rows = [row for row in gap_rows if row["status"] == "complete"]

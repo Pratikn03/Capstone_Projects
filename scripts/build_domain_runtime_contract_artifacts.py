@@ -7,7 +7,7 @@ import csv
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import duckdb
 
@@ -25,9 +25,10 @@ from orius.universal_theory.domain_runtime_contracts import (  # noqa: E402
 )
 
 
-DEFAULT_AV_TRACE = REPO_ROOT / "reports" / "orius_av" / "nuplan_bounded" / "runtime_traces.csv"
+DEFAULT_AV_RUNTIME_DIR = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest"
+DEFAULT_AV_TRACE = DEFAULT_AV_RUNTIME_DIR / "runtime_traces.csv"
 DEFAULT_HEALTHCARE_TRACE = REPO_ROOT / "reports" / "healthcare" / "runtime_traces.csv"
-DEFAULT_AV_CERT_DB = REPO_ROOT / "reports" / "orius_av" / "nuplan_bounded" / "dc3s_av_waymo_dryrun.duckdb"
+DEFAULT_AV_CERT_DB = DEFAULT_AV_RUNTIME_DIR / "dc3s_av_waymo_dryrun.duckdb"
 DEFAULT_HEALTHCARE_CERT_DB = REPO_ROOT / "reports" / "healthcare" / "healthcare_runtime.duckdb"
 DEFAULT_OUT_DIR = REPO_ROOT / "reports" / "publication"
 TRACE_CONTRACT_FIELDS = [
@@ -43,6 +44,11 @@ TRACE_CONTRACT_FIELDS = [
 def _read_rows(path: Path) -> list[dict[str, Any]]:
     with path.open("r", encoding="utf-8", newline="") as handle:
         return list(csv.DictReader(handle))
+
+
+def _iter_rows(path: Path) -> Iterable[dict[str, Any]]:
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        yield from csv.DictReader(handle)
 
 
 def _write_rows(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -164,21 +170,29 @@ def build_domain_runtime_contract_artifacts(
     ):
         if not trace_path.exists():
             raise FileNotFoundError(f"Missing {domain} runtime trace: {trace_path}")
-        rows = _read_rows(trace_path)
-        certificate_contracts = (
-            _load_t11_contracts_from_certificates(cert_db_path)
-            if recover_t11_from_certificates
-            else []
-        )
-        normalized, domain_witnesses = normalize_trace_rows(
-            rows,
-            domain=domain,
-            certificate_t11_contracts=certificate_contracts,
-        )
-        witnesses.extend(domain_witnesses)
-        normalized_counts[domain] = len(domain_witnesses)
         if normalize_traces:
+            rows = _read_rows(trace_path)
+            certificate_contracts = (
+                _load_t11_contracts_from_certificates(cert_db_path)
+                if recover_t11_from_certificates
+                else []
+            )
+            normalized, domain_witnesses = normalize_trace_rows(
+                rows,
+                domain=domain,
+                certificate_t11_contracts=certificate_contracts,
+            )
+            witnesses.extend(domain_witnesses)
+            normalized_counts[domain] = len(domain_witnesses)
             _write_rows(trace_path, normalized)
+        else:
+            domain_count = 0
+            for row in _iter_rows(trace_path):
+                if not _is_orius_row(row):
+                    continue
+                witnesses.append(witness_from_runtime_trace_row(row, domain=domain))
+                domain_count += 1
+            normalized_counts[domain] = domain_count
 
     outputs = write_domain_runtime_contract_artifacts(witnesses, out_dir=out_dir)
     return {

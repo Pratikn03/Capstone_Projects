@@ -76,7 +76,7 @@ def main() -> int:
         "Autonomous Vehicles & Defended bounded row & "
         f"{runtime_lookup['Autonomous Vehicles']['p95_step_ms']} & "
         f"{runtime_lookup['Autonomous Vehicles']['fallback_coverage_pct']} & 100.0 & "
-        "bounded TTC plus predictive-entry-barrier contract\\\\"
+        "bounded brake-hold runtime contract\\\\"
     )
     professor_runtime_lines.append(
         "Medical and Healthcare Monitoring & Defended bounded row & "
@@ -98,8 +98,8 @@ def main() -> int:
         r"\textbf{Domain} & \textbf{Current row} & \textbf{What is currently closed} & \textbf{Current boundary} \\",
         r"\midrule",
         r"Battery Energy Storage & Witness row & adapter, replay, theorem witness, governance & none\\",
-        r"Autonomous Vehicles & Defended bounded row & adapter, replay, governance, bounded runtime contract & TTC plus predictive-entry-barrier only\\",
-        r"Medical and Healthcare Monitoring & Defended bounded row & adapter, replay, governance, bounded monitoring contract & certificate-valid release currently uses governance-pass proxy\\",
+        r"Autonomous Vehicles & Defended bounded row & adapter, replay, governance, bounded runtime contract & brake-hold runtime only\\",
+        r"Medical and Healthcare Monitoring & Defended bounded row & adapter, replay, governance, bounded monitoring contract & runtime-emitted certificate validity metrics on bounded replay\\",
         r"\bottomrule",
         r"\end{tabularx}",
         r"\end{table*}",
@@ -118,8 +118,8 @@ def main() -> int:
         r"\textbf{Deployment surface} & \textbf{Governing artifact} & \textbf{Scope type} & \textbf{Current status} & \textbf{Bounded manuscript claim} & \textbf{Exact non-claim or gap}\\",
         r"\midrule",
         r"Battery witness runtime & reports/publication/dc3s\_main\_table.csv & witness\_replay & bounded\_reference & Battery supports the deepest runtime and theorem witness surface. & This is still not unrestricted field deployment.\\",
-        r"Autonomous-vehicle defended replay & reports/orius\_av/full\_corpus/runtime\_summary.csv & bounded\_replay & defended\_bounded & AV supports bounded replay under the TTC plus predictive-entry-barrier contract. & It does not claim full autonomous-driving closure.\\",
-        r"Healthcare defended replay & reports/healthcare/runtime\_governance\_summary.csv & bounded\_replay & defended\_bounded & Healthcare supports bounded monitoring and alert-release claims. & It does not claim regulated clinical deployment and still uses governance-pass proxy wording for certificate-valid release.\\",
+        r"Autonomous-vehicle defended replay & reports/orius\_av/nuplan\_allzip\_grouped\_runtime\_dropout\_aligned\_m15\_fulltest/runtime\_summary.csv & bounded\_replay & defended\_bounded & AV supports bounded all-zip grouped nuPlan replay under the narrowed brake-hold runtime contract. & It does not claim full autonomous-driving field closure.\\",
+        r"Healthcare defended replay & reports/healthcare/runtime\_summary.csv; reports/healthcare/runtime\_governance\_summary.csv & bounded\_replay & defended\_bounded & Healthcare supports bounded monitoring and alert-release claims. & It does not claim regulated clinical deployment or a stronger clinical-release theorem beyond bounded replay.\\",
         r"OOD and adversarial completeness & chapters/ch34\_outside\_current\_evidence.tex; reports/publication/adversarial\_probing\_robustness\_table.csv & explicit\_non\_claim\_register & bounded\_non\_claim & The monograph can discuss bounded active probing and non-claim discipline. & It does not claim universal adversarial completeness or unrestricted OOD safety.\\",
         r"\bottomrule",
         r"\end{tabular}}",

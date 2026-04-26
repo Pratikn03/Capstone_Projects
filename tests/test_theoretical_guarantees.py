@@ -6,6 +6,7 @@ import pytest
 from orius.dc3s.theoretical_guarantees import (
     THEOREM_REGISTER,
     TransferContractResult,
+    build_observation_ambiguity_contract_summary,
     compute_stylized_frontier_lower_bound,
     compute_universal_impossibility_bound,
     evaluate_structural_transfer,
@@ -159,16 +160,38 @@ class TestTheoremRegister:
         assert "T9" in THEOREM_REGISTER
         assert "T10" in THEOREM_REGISTER
         assert "T11" in THEOREM_REGISTER
+        assert "T10_T11_ObservationAmbiguitySandwich" in THEOREM_REGISTER
 
     def test_register_points_to_current_witnesses(self) -> None:
         assert THEOREM_REGISTER["T9"]["code_witness"] == "compute_universal_impossibility_bound"
         assert THEOREM_REGISTER["T10"]["code_witness"] == "compute_stylized_frontier_lower_bound"
         assert THEOREM_REGISTER["T11"]["code_witness"] == "evaluate_structural_transfer"
+        assert (
+            THEOREM_REGISTER["T10_T11_ObservationAmbiguitySandwich"]["code_witness"]
+            == "build_observation_ambiguity_contract_summary"
+        )
 
     def test_theorem_types_match_current_surface(self) -> None:
         assert THEOREM_REGISTER["T9"]["type"] == "impossibility"
         assert THEOREM_REGISTER["T10"]["type"] == "lower_bound"
         assert THEOREM_REGISTER["T11"]["type"] == "transfer_theorem"
+        assert (
+            THEOREM_REGISTER["T10_T11_ObservationAmbiguitySandwich"]["type"]
+            == "supporting_optimality_corollary"
+        )
+
+    def test_observation_ambiguity_witness_is_imported_on_the_register_surface(self) -> None:
+        summary = build_observation_ambiguity_contract_summary(
+            observation_groups={"o": ["x0", "x1"]},
+            action_space={"hold", "brake"},
+            safe_action_sets={"x0": {"hold", "brake"}, "x1": {"hold"}},
+            probabilities={"x0": 0.4, "x1": 0.6},
+            true_state="x1",
+            uncertainty_set=["x0", "x1"],
+            action="hold",
+        )
+        assert summary["status"] == "runtime_linked"
+        assert summary["orius_upper_bound"]["deterministic_zero_violation_certified"] is True
 
 
 # ── Byzantine Bound (T11_Byzantine) ─────────────────────────────────────────
@@ -383,6 +406,7 @@ class TestGrandUnification:
         assert THEOREM_REGISTER["T3b"]["parent_law"] is None
         assert THEOREM_REGISTER["T9"]["parent_law"] is None
         assert THEOREM_REGISTER["T10"]["parent_law"] is None
+        assert THEOREM_REGISTER["T10_T11_ObservationAmbiguitySandwich"]["parent_law"] == "T11"
         assert THEOREM_REGISTER["T_minimax"]["parent_law"] is None
         assert THEOREM_REGISTER["T_sensor_converse"]["parent_law"] is None
         assert THEOREM_REGISTER["T_trajectory_PAC"]["parent_law"] is None

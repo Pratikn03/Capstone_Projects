@@ -22,6 +22,13 @@ from typing import Sequence
 
 import numpy as np
 
+from orius.universal_theory.observation_ambiguity import (
+    build_observation_ambiguity_contract_summary,
+    common_safe_core,
+    observation_only_bayes_lower_bound,
+    verify_covered_orius_release,
+)
+
 
 # ──────────────────────────────────────────────────────────────────────
 # Auxiliary coverage-envelope helper
@@ -1048,7 +1055,7 @@ THEOREM_REGISTER = {
         "parent_law": None,
     },
     "T4": {
-        "name": "No Free Safety",
+        "name": "Observation Necessity / No Free Safety",
         "statement": (
             "Within the fixed-margin, quality-ignorant controller class, "
             "there exists an admissible degraded-observation sequence that "
@@ -1079,25 +1086,27 @@ THEOREM_REGISTER = {
         "statement": (
             "The battery-domain expiration lower bound tau_expire_lb = "
             "floor(delta_bnd^2 / (2 sigma_d^2 log(2/delta))) where delta_bnd "
-            "is the minimum margin between the uncertainty tube and SoC limits."
+            "is the minimum margin between the uncertainty tube and SoC limits, "
+            "with explicit first-passage side conditions."
         ),
         "type": "expiration_bound",
         "code_witness": "certificate_expiration_bound",
         "module": "orius.universal_theory.battery_instantiation",
-        "dependencies": ["uncertainty_interval", "soc_bounds", "drift_volatility", "confidence_delta"],
+        "dependencies": ["uncertainty_interval", "soc_bounds", "drift_volatility", "confidence_delta", "first_passage_side_conditions"],
         "parent_law": None,
     },
     "T7": {
         "name": "Feasible Fallback Existence",
         "statement": (
-            "There exists a battery fallback action (zero dispatch) that "
-            "preserves safety from an interior SOC state under bounded "
-            "model error."
+            "There exists a battery piecewise fallback action that either "
+            "holds safely on the interior or executes boundary-aware safe "
+            "landing near the boundary, failing closed when no safe fallback "
+            "can be certified."
         ),
         "type": "constructive_existence",
         "code_witness": "validate_battery_fallback",
         "module": "orius.universal_theory.battery_instantiation",
-        "dependencies": ["soc_interior", "bounded_model_error", "zero_dispatch"],
+        "dependencies": ["soc_interior", "bounded_model_error", "zero_dispatch", "safe_landing_recovery"],
         "parent_law": None,
     },
     "T8": {
@@ -1151,6 +1160,22 @@ THEOREM_REGISTER = {
         "module": "orius.dc3s.theoretical_guarantees",
         "dependencies": ["coverage_obligation", "safe_action_soundness", "repair_membership", "fallback_admissibility"],
         "parent_law": None,
+    },
+    "T10_T11_ObservationAmbiguitySandwich": {
+        "name": "Covered Observation-Ambiguity Optimality",
+        "statement": (
+            "For each observation ambiguity class B(o), every observation-only "
+            "controller has violation risk at least min_a P[a notin C(X)|O=o]. "
+            "If ORIUS covers the true state and releases only actions in the "
+            "common safe core of its uncertainty set, the one-step violation "
+            "probability is zero; under probabilistic coverage it is bounded "
+            "by the coverage miss probability."
+        ),
+        "type": "supporting_optimality_corollary",
+        "code_witness": "build_observation_ambiguity_contract_summary",
+        "module": "orius.universal_theory.observation_ambiguity",
+        "dependencies": ["T10", "T11", "common_safe_core", "coverage_obligation"],
+        "parent_law": "T11",
     },
     "T11_Byzantine": {
         "name": "Byzantine-Tolerant OQE Bound",
@@ -1566,6 +1591,10 @@ __all__ = [
     "compute_universal_impossibility_bound",
     "compute_stylized_frontier_lower_bound",
     "evaluate_structural_transfer",
+    "common_safe_core",
+    "observation_only_bayes_lower_bound",
+    "verify_covered_orius_release",
+    "build_observation_ambiguity_contract_summary",
     "TransferContractResult",
     "THEOREM_REGISTER",
     "prove_byzantine_bound",

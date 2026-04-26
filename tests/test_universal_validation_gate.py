@@ -146,6 +146,8 @@ def test_validation_cli_reports_only_three_domains(tmp_path: Path) -> None:
         row["domain"]: row
         for row in csv.DictReader((tmp_path / "domain_validation_summary.csv").open())
     }
+    per_controller_rows = list(csv.DictReader((tmp_path / "per_controller_tsvr.csv").open()))
+    diagnostic_rows = list(csv.DictReader((tmp_path / "diagnostic_validation_harness_tsvr.csv").open()))
 
     assert report["reference_domain"] == "battery"
     assert report["proof_domain"] == "vehicle"
@@ -158,3 +160,27 @@ def test_validation_cli_reports_only_three_domains(tmp_path: Path) -> None:
     assert proof_report["proof_validated_domains"] == ["healthcare", "vehicle"]
     assert port_report["shadow_synthetic_domains"] == []
     assert port_report["experimental_domains"] == []
+    for domain in ("healthcare", "vehicle"):
+        row = domain_rows[domain]
+        assert row["metric_surface"] == "runtime_denominator"
+        assert row["runtime_source"]
+        assert int(row["n_steps"]) > 0
+        assert row["strict_runtime_gate"] == "True"
+        assert row["certificate_valid_rate"] == "1.000000"
+        assert row["t11_pass_rate"] == "1.000000"
+        assert row["postcondition_pass_rate"] == "1.000000"
+        assert row["runtime_witness_pass_rate"] == "1.000000"
+
+    promoted_rows = [
+        row
+        for row in per_controller_rows
+        if row["domain"] in {"healthcare", "vehicle"}
+    ]
+    assert promoted_rows
+    assert {row["seed"] for row in promoted_rows} == {"runtime_denominator"}
+    assert all(row["tsvr"] != "" and row["oasg"] != "" and row["cva"] != "" for row in promoted_rows)
+
+    assert diagnostic_rows
+    assert {row["metric_surface"] for row in diagnostic_rows} == {"validation_harness"}
+    assert {row["diagnostic_only"] for row in diagnostic_rows} == {"True"}
+    assert {row["claim_governs_from"] for row in diagnostic_rows} == {"runtime_denominator"}

@@ -27,14 +27,11 @@ import build_battery_av_closure_artifacts as closure_script
 import build_orius_ieee_assets as ieee_assets_script
 import build_orius_monograph_assets as monograph_assets_script
 import run_battery_deep_novelty as battery_script
-from orius.av_nuplan import build_nuplan_replay_surface
+from orius.av_nuplan import build_feature_tables, build_nuplan_replay_surface, run_runtime_dry_run, train_dry_run_models
 from orius.av_waymo import (
-    build_feature_tables,
     build_replay_surface,
     build_subset_manifest,
     build_validation_surface,
-    run_runtime_dry_run,
-    train_dry_run_models,
 )
 
 
@@ -46,14 +43,14 @@ DEFAULT_BATTERY_PAPER_FIG_DIR = DEFAULT_BATTERY_OUT / "paper_assets" / "figures"
 
 DEFAULT_AV_RAW = REPO_ROOT / "data" / "orius_av" / "raw" / "waymo_motion" / "validation"
 DEFAULT_AV_PROCESSED = REPO_ROOT / "data" / "orius_av" / "av" / "processed_full_corpus"
-DEFAULT_NUPLAN_PROCESSED = REPO_ROOT / "data" / "orius_av" / "av" / "processed_nuplan_singapore"
+DEFAULT_NUPLAN_PROCESSED = REPO_ROOT / "data" / "orius_av" / "av" / "processed_nuplan_allzip_grouped"
 DEFAULT_NUPLAN_TRAIN_ZIP = REPO_ROOT / "nuplan-v1.1_train_singapore.zip"
 DEFAULT_NUPLAN_MAPS_ZIP = REPO_ROOT / "nuplan-maps-v1.0.zip"
-DEFAULT_AV_MODELS = REPO_ROOT / "artifacts" / "models_orius_av_full_corpus"
-DEFAULT_AV_UNCERTAINTY = REPO_ROOT / "artifacts" / "uncertainty" / "orius_av_full_corpus"
-DEFAULT_AV_REPORTS = REPO_ROOT / "reports" / "orius_av" / "full_corpus"
+DEFAULT_AV_MODELS = REPO_ROOT / "artifacts" / "models_orius_av_nuplan_allzip_grouped"
+DEFAULT_AV_UNCERTAINTY = REPO_ROOT / "artifacts" / "uncertainty" / "orius_av_nuplan_allzip_grouped"
+DEFAULT_AV_REPORTS = REPO_ROOT / "reports" / "orius_av" / "nuplan_allzip_grouped"
 DEFAULT_OVERALL = DEFAULT_OUT_ROOT / "overall"
-DEFAULT_AV_SOURCE = os.environ.get("ORIUS_AV_SOURCE", "nuplan_singapore")
+DEFAULT_AV_SOURCE = os.environ.get("ORIUS_AV_SOURCE", "nuplan")
 
 
 def _is_appledouble(path: Path) -> bool:
@@ -101,13 +98,14 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--nuplan-max-dbs-per-archive", type=int, default=None)
     parser.add_argument("--nuplan-max-scenarios-per-archive", type=int, default=None)
     parser.add_argument("--nuplan-scenario-stride", type=int, default=91)
-    parser.add_argument("--nuplan-split-strategy", choices=["balanced", "hash", "all_test"], default="balanced")
+    parser.add_argument("--nuplan-split-strategy", choices=["balanced", "hash", "all_test", "grouped_archive_db_city"], default="grouped_archive_db_city")
     parser.add_argument("--av-subset-size", type=int, default=1000, help="Subset size when using --av-subset")
     parser.add_argument("--av-full-corpus", dest="av_full_corpus", action="store_true", default=True, help="Use every scenario in scenario_index.parquet across the 7 validation shards")
     parser.add_argument("--av-subset", dest="av_full_corpus", action="store_false", help="Use a bounded subset instead of the canonical full-corpus AV surface")
     parser.add_argument("--av-max-validation-shards", type=int, default=None)
     parser.add_argument("--av-max-validation-scenarios", type=int, default=None)
     parser.add_argument("--av-max-runtime-scenarios", type=int, default=None)
+    parser.add_argument("--av-runtime-policy-json", type=Path, default=None)
     parser.add_argument("--av-skip-actor-tracks", action="store_true")
     parser.add_argument("--av-skip-validation", action="store_true")
     parser.add_argument("--av-skip-training", action="store_true")
@@ -124,7 +122,7 @@ def _parse_args() -> argparse.Namespace:
         if args.overall_dir == DEFAULT_OVERALL:
             args.overall_dir = args.out_root / "overall"
     if args.av_processed_dir is None:
-        args.av_processed_dir = DEFAULT_NUPLAN_PROCESSED if args.av_source == "nuplan_singapore" else DEFAULT_AV_PROCESSED
+        args.av_processed_dir = DEFAULT_NUPLAN_PROCESSED if args.av_source in {"nuplan", "nuplan_singapore"} else DEFAULT_AV_PROCESSED
     if args.nuplan_train_zip is None and args.nuplan_train_dir is None:
         args.nuplan_train_zip = [DEFAULT_NUPLAN_TRAIN_ZIP]
     return args
@@ -176,6 +174,16 @@ def _load_json_file(path: Path) -> dict[str, Any]:
     return payload if isinstance(payload, dict) else {}
 
 
+def _runtime_policy_config(args: argparse.Namespace) -> dict[str, Any]:
+    policy_path = getattr(args, "av_runtime_policy_json", None)
+    if not policy_path:
+        return {}
+    policy = _load_json_file(Path(policy_path))
+    if not policy:
+        raise ValueError(f"Runtime policy JSON is empty or invalid: {policy_path}")
+    return policy
+
+
 def _input_hashes(args: argparse.Namespace) -> dict[str, Any]:
     payload: dict[str, Any] = {"battery": {}, "av": {}}
 
@@ -200,6 +208,9 @@ def _input_hashes(args: argparse.Namespace) -> dict[str, Any]:
         shift_cfg_path = av_shift_cfg / "shift_aware_config.json"
         if shift_cfg_path.exists() and shift_cfg_path.is_file():
             payload["av"]["shift_aware_config_sha256"] = _sha256_file(shift_cfg_path)
+    runtime_policy_path = getattr(args, "av_runtime_policy_json", None)
+    if isinstance(runtime_policy_path, Path) and runtime_policy_path.exists() and runtime_policy_path.is_file():
+        payload["av"]["runtime_policy_sha256"] = _sha256_file(runtime_policy_path)
 
     return payload
 
@@ -221,6 +232,9 @@ def run_av_pipeline(args: argparse.Namespace) -> dict[str, Any]:
     report: dict[str, Any] = {}
     args.av_reports_dir.mkdir(parents=True, exist_ok=True)
     av_source = getattr(args, "av_source", "waymo_motion")
+    runtime_policy_config = _runtime_policy_config(args)
+    if runtime_policy_config:
+        report["runtime_policy_config"] = runtime_policy_config
 
     if av_source in {"nuplan", "nuplan_singapore"}:
         report["source"] = "nuplan"
@@ -270,6 +284,7 @@ def run_av_pipeline(args: argparse.Namespace) -> dict[str, Any]:
                 out_dir=args.av_reports_dir,
                 max_scenarios=args.av_max_runtime_scenarios,
                 artifact_prefix="nuplan_av",
+                runtime_policy_config=runtime_policy_config,
             )
 
         if not args.av_skip_report:
@@ -326,6 +341,7 @@ def run_av_pipeline(args: argparse.Namespace) -> dict[str, Any]:
             models_dir=args.av_models_dir,
             out_dir=args.av_reports_dir,
             max_scenarios=args.av_max_runtime_scenarios,
+            runtime_policy_config=runtime_policy_config,
         )
 
     if not args.av_skip_report:
