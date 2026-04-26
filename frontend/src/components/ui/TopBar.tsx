@@ -79,6 +79,12 @@ export function TopBar() {
                   key={r.id}
                   onClick={() => {
                     setRegion(r.id);
+                    try {
+                      const current = JSON.parse(localStorage.getItem('gridpulse-settings') ?? '{}') as Record<string, unknown>;
+                      localStorage.setItem('gridpulse-settings', JSON.stringify({ ...current, defaultRegion: r.id }));
+                    } catch {
+                      localStorage.setItem('gridpulse-settings', JSON.stringify({ defaultRegion: r.id }));
+                    }
                     setShowRegions(false);
                   }}
                   className={`w-full text-left px-4 py-2 text-sm hover:bg-white/10 transition-colors ${

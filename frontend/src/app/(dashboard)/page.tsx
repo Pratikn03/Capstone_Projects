@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { BarChart3, Zap, Leaf, TrendingDown, Activity, Database, Radio, Shield, BookOpen, ShieldCheck, Globe2, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { KPICard } from '@/components/ui/KPICard';
 import { Panel } from '@/components/ui/Panel';
@@ -71,11 +71,15 @@ export default function DashboardPage() {
   const { region } = useRegion();
   const currentDomain = getDomainOption(region);
   const batteryDomain = isBatteryDomain(region);
-  const [dc3sRefreshSeconds, setDc3sRefreshSeconds] = useState(initialDc3sRefreshSeconds);
+  const [dc3sRefreshSeconds, setDc3sRefreshSeconds] = useState(15);
   const dispatch = useDispatchCompare(region, 24);
   const dc3s = useDc3sLive(region, 24, dc3sRefreshSeconds);
   const { metrics, impact, robustness, regions } = useReportsData();
   const dataset = useDatasetData(region);
+
+  useEffect(() => {
+    setDc3sRefreshSeconds(initialDc3sRefreshSeconds());
+  }, []);
 
   const battery = dataset.battery;
   const anomalies = dataset.anomalies;

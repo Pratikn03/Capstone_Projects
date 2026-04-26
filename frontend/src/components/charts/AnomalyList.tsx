@@ -28,7 +28,9 @@ export function AnomalyList({ anomalies }: AnomalyListProps) {
         const StatusIcon = statusIcons[a.status].icon;
         const statusColor = statusIcons[a.status].color;
         const time = new Date(a.timestamp);
-        const timeStr = `${time.getUTCHours().toString().padStart(2, '0')}:${time.getUTCMinutes().toString().padStart(2, '0')}`;
+        const timeStr = Number.isNaN(time.getTime())
+          ? String(a.timestamp).slice(0, 18)
+          : `${time.getUTCHours().toString().padStart(2, '0')}:${time.getUTCMinutes().toString().padStart(2, '0')}`;
 
         return (
           <motion.div

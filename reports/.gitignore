@@ -17,3 +17,6 @@
 !publication/rac_cert_summary.json
 !publication/release_manifest.json
 !publication/stats_summary.json
+publication/camera_ready_design_sources.json
+publication/camera_ready_figure_lineage.json
+publication/camera_ready_figure_lineage.md
