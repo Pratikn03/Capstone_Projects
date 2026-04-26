@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { dashboardConfig, operatorInitial } from '@/lib/dashboard-config';
 
 const navItems = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
@@ -62,7 +63,7 @@ export function Sidebar() {
               exit={{ opacity: 0, width: 0 }}
               className="text-lg font-bold text-white tracking-tight overflow-hidden whitespace-nowrap"
             >
-              ORIUS
+              {dashboardConfig.appLabel}
             </motion.span>
           )}
         </AnimatePresence>
@@ -107,7 +108,7 @@ export function Sidebar() {
         {/* User Profile */}
         <div className="flex items-center gap-3 px-3 py-2.5 mb-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-energy-primary to-energy-info flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-            P
+            {operatorInitial()}
           </div>
           <AnimatePresence>
             {!collapsed && (
@@ -117,8 +118,8 @@ export function Sidebar() {
                 exit={{ opacity: 0, width: 0 }}
                 className="overflow-hidden whitespace-nowrap"
               >
-                <div className="text-sm font-medium text-white">Pratik N</div>
-                <div className="text-[10px] text-slate-500">Grid Operator</div>
+                <div className="text-sm font-medium text-white">{dashboardConfig.operatorName}</div>
+                <div className="text-[10px] text-slate-500">{dashboardConfig.operatorRole}</div>
               </motion.div>
             )}
           </AnimatePresence>

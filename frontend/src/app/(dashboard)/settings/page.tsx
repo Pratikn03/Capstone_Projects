@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import { Panel } from '@/components/ui/Panel';
 import { useRegion } from '@/components/ui/RegionContext';
 import { RefreshCw, Globe, Bell, Layout, BarChart3, Shield, Save } from 'lucide-react';
+import { DOMAIN_OPTIONS, type DomainId } from '@/lib/domain-options';
 
 interface Settings {
   dc3sRefreshInterval: number;
-  defaultRegion: 'DE' | 'US';
+  defaultRegion: DomainId;
   notificationsEnabled: boolean;
   notifAnomalies: boolean;
   notifDrift: boolean;
@@ -139,10 +140,7 @@ export default function SettingsPage() {
           <span className="text-sm font-medium text-white">Primary Region</span>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          {[
-            { id: 'DE' as const, label: 'Germany (OPSD)', flag: '🇩🇪' },
-            { id: 'US' as const, label: 'USA (EIA-930)', flag: '🇺🇸' },
-          ].map((r) => (
+          {DOMAIN_OPTIONS.map((r) => (
             <button
               key={r.id}
               onClick={() => update('defaultRegion', r.id)}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { isBatteryDomain, type DomainId } from '@/lib/domain-options';
 
 export type Dc3sPreviewRow = {
   h: number;
@@ -10,7 +11,7 @@ export type Dc3sPreviewRow = {
 export type Dc3sLivePayload = {
   ok: boolean;
   generated_at?: string;
-  region?: 'DE' | 'US';
+  region?: DomainId;
   command_id?: string;
   certificate_id?: string | null;
   certificate_hash?: string | null;
@@ -28,7 +29,7 @@ export type Dc3sLivePayload = {
 
 const EMPTY: Dc3sLivePayload = { ok: false };
 
-export function useDc3sLive(region: 'DE' | 'US', horizon = 24, autoRefreshSeconds = 0) {
+export function useDc3sLive(region: DomainId, horizon = 24, autoRefreshSeconds = 0) {
   const [data, setData] = useState<Dc3sLivePayload>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +42,14 @@ export function useDc3sLive(region: 'DE' | 'US', horizon = 24, autoRefreshSecond
   useEffect(() => {
     let active = true;
     async function load() {
+      if (!isBatteryDomain(region)) {
+        if (active) {
+          setData(EMPTY);
+          setError('Live DC3S endpoint is battery-grid only; this view is showing tracked runtime artifacts.');
+          setLoading(false);
+        }
+        return;
+      }
       setLoading(true);
       setError(null);
       try {

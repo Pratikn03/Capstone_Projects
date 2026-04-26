@@ -3,6 +3,7 @@
 import { Panel } from '@/components/ui/Panel';
 import { useRegion } from '@/components/ui/RegionContext';
 import { useDatasetData } from '@/lib/api/dataset-client';
+import { getDomainOption } from '@/lib/domain-options';
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, AreaChart, Area,
@@ -10,14 +11,15 @@ import {
 
 export default function DataExplorerPage() {
   const { region } = useRegion();
-  const dataset = useDatasetData(region as 'DE' | 'US');
-  const regionLabel = region === 'US' ? 'USA (EIA-930)' : 'Germany (OPSD)';
+  const dataset = useDatasetData(region);
+  const regionLabel = getDomainOption(region).label;
 
   const stats = dataset.stats;
   const timeseries = dataset.timeseries;
   const profilesMap = dataset.profiles;
   const registry = dataset.registry;
   const forecastMap = dataset.forecast;
+  const sourceArtifacts = dataset.source_artifacts ?? [];
 
   const targets = stats?.targets_summary ?? stats?.targets ?? {};
   const targetNames = Object.keys(targets);
@@ -131,19 +133,19 @@ export default function DataExplorerPage() {
                 <Legend wrapperStyle={{ fontSize: '11px' }} />
                 {timeseries[0]?.load_mw !== undefined && (
                   <Area
-                    type="monotone" dataKey="load_mw" name="Load"
+                    type="monotone" dataKey="load_mw" name={timeseries[0]?.primary_label ?? 'Primary'}
                     stroke="#10b981" fill="#10b98120" strokeWidth={1.5}
                   />
                 )}
                 {timeseries[0]?.solar_mw !== undefined && (
                   <Area
-                    type="monotone" dataKey="solar_mw" name="Solar"
+                    type="monotone" dataKey="solar_mw" name={timeseries[0]?.tertiary_label ?? 'Tertiary'}
                     stroke="#f59e0b" fill="#f59e0b15" strokeWidth={1.5}
                   />
                 )}
                 {timeseries[0]?.wind_mw !== undefined && (
                   <Area
-                    type="monotone" dataKey="wind_mw" name="Wind"
+                    type="monotone" dataKey="wind_mw" name={timeseries[0]?.secondary_label ?? 'Secondary'}
                     stroke="#3b82f6" fill="#3b82f620" strokeWidth={1.5}
                   />
                 )}
@@ -241,6 +243,18 @@ export default function DataExplorerPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </Panel>
+      )}
+
+      {sourceArtifacts.length > 0 && (
+        <Panel title="Source Artifacts" subtitle="Tracked repo files used by this dashboard view">
+          <div className="space-y-2">
+            {sourceArtifacts.map((artifact) => (
+              <div key={artifact} className="rounded-lg bg-white/3 px-3 py-2 font-mono text-[11px] text-slate-300">
+                {artifact}
+              </div>
+            ))}
           </div>
         </Panel>
       )}

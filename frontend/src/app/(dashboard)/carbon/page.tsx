@@ -8,29 +8,26 @@ import { useDatasetData } from '@/lib/api/dataset-client';
 import { useRegion } from '@/components/ui/RegionContext';
 import { Panel } from '@/components/ui/Panel';
 import { StatusBanner } from '@/components/ui/StatusBanner';
-import { formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 import { ShieldCheck, ChevronRight } from 'lucide-react';
+import { getDomainOption } from '@/lib/domain-options';
 
 export default function CarbonPage() {
   const { region, setRegion } = useRegion();
   const { impact: reportsImpact, regions } = useReportsData();
-  const dataset = useDatasetData(region as 'DE' | 'US');
+  const dataset = useDatasetData(region);
   
   // Use real extracted data
   const pareto = dataset.pareto;
   const realImpact = dataset.impact;
-  const regionImpact = regions[region]?.impact;
+  const regionImpact = region === 'DE' || region === 'US' ? regions[region]?.impact : undefined;
 
   const carbonReductionPct = realImpact?.carbon_reduction_pct ?? regionImpact?.carbon_reduction_pct ?? reportsImpact?.carbon_reduction_pct ?? null;
   const baselineCarbon = realImpact?.baseline_carbon_kg ?? null;
   const oriusCarbon = realImpact?.orius_carbon_kg ?? null;
   const carbonReductionKg = baselineCarbon !== null && oriusCarbon !== null ? baselineCarbon - oriusCarbon : null;
   const carbonTons = carbonReductionKg !== null ? carbonReductionKg / 1000 : null;
-  const carbonIntensity = baselineCarbon !== null && dataset.stats?.rows
-    ? baselineCarbon / (dataset.stats.rows || 1) / 1000  // rough estimate kgCO2/MWh
-    : null;
-  const regionLabel = region === 'US' ? 'USA (EIA-930)' : 'Germany (OPSD)';
+  const regionLabel = getDomainOption(region).label;
   const statusMessages = [
     dataset.error ? `Dataset view error: ${dataset.error}` : null,
     !realImpact ? 'Carbon impact metrics are falling back to report-level summaries where available.' : null,

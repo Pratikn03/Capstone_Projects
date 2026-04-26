@@ -6,10 +6,7 @@ import {
   Globe2,
   Battery,
   Car,
-  Factory,
   HeartPulse,
-  Plane,
-  Navigation,
   CheckCircle2,
   AlertTriangle,
   XCircle,
@@ -17,7 +14,6 @@ import {
   Layers,
   GitBranch,
   FileCheck,
-  BookOpen,
 } from 'lucide-react';
 import { Panel } from '@/components/ui/Panel';
 import { KPICard } from '@/components/ui/KPICard';
@@ -26,7 +22,7 @@ import { KPICard } from '@/components/ui/KPICard';
 /*  Static Data                                                        */
 /* ------------------------------------------------------------------ */
 
-type EvidenceTier = 'reference' | 'proof-validated' | 'proof-candidate' | 'experimental' | 'shadow-synthetic';
+type EvidenceTier = 'reference' | 'runtime-contract-closed';
 
 const TIER_CONFIG: Record<EvidenceTier, { label: string; bg: string; text: string; border: string; description: string }> = {
   reference: {
@@ -36,33 +32,12 @@ const TIER_CONFIG: Record<EvidenceTier, { label: string; bg: string; text: strin
     border: 'border-emerald-500/30',
     description: 'Locked baseline witness — full proof spine validated on real operational data',
   },
-  'proof-validated': {
-    label: 'Proof-Validated',
+  'runtime-contract-closed': {
+    label: 'Runtime Contract Closed',
     bg: 'bg-sky-500/15',
     text: 'text-sky-400',
     border: 'border-sky-500/30',
-    description: 'Soundness + contingency logic verified — adapter contract fully exercised',
-  },
-  'proof-candidate': {
-    label: 'Proof-Candidate',
-    bg: 'bg-cyan-500/15',
-    text: 'text-cyan-400',
-    border: 'border-cyan-500/30',
-    description: 'Forward proof exercise complete — pending real-data validation stage',
-  },
-  experimental: {
-    label: 'Experimental',
-    bg: 'bg-amber-500/15',
-    text: 'text-amber-400',
-    border: 'border-amber-500/30',
-    description: 'Public data lane exercised — promotion contract not yet closed',
-  },
-  'shadow-synthetic': {
-    label: 'Shadow-Synthetic',
-    bg: 'bg-slate-500/15',
-    text: 'text-slate-400',
-    border: 'border-slate-500/30',
-    description: 'Synthetic data only — real-data gap blocks promotion',
+    description: 'Runtime-denominator evidence closes the bounded release contract without claiming battery witness depth',
   },
 };
 
@@ -82,6 +57,12 @@ interface Domain {
   blocker?: string;
   description: string;
 }
+
+const STATUS_TEXT_CLASS: Record<Domain['status'], string> = {
+  verified: 'text-emerald-400/80',
+  warning: 'text-amber-400/80',
+  blocked: 'text-red-400/80',
+};
 
 const DOMAINS: Domain[] = [
   {
@@ -103,93 +84,42 @@ const DOMAINS: Domain[] = [
     key: 'av',
     name: 'Autonomous Vehicles',
     icon: Car,
-    tier: 'proof-candidate',
-    dataset: 'Synthetic AV traces',
-    source: 'Generated via adapter',
-    tsvrBefore: '0.083%',
+    tier: 'runtime-contract-closed',
+    dataset: 'AV runtime denominator',
+    source: 'reports/orius_av/full_corpus/runtime_summary.csv',
+    tsvrBefore: '22.76%',
     tsvrAfter: '0.0%',
     picp: '100%',
-    ir: '2.1%',
-    status: 'warning',
-    statusLabel: 'Constraint-class mismatch',
-    blocker: '1-D acceleration repair is insufficient for multi-D headway constraints. Forward proof exercised but real-data validation blocked.',
-    description: 'Proof-candidate tier: typed kernel exercised on synthetic longitudinal control. Transfer obligations met for 1-D accel repair.',
-  },
-  {
-    key: 'industrial',
-    name: 'Industrial Process',
-    icon: Factory,
-    tier: 'proof-validated',
-    dataset: 'UCI CCPP',
-    source: 'Combined Cycle Power Plant',
-    tsvrBefore: '1.0%',
-    tsvrAfter: '0.0%',
-    picp: '100%',
-    ir: '0.8%',
+    ir: '96.6%',
     status: 'verified',
-    statusLabel: 'Train-validation chain complete',
-    description: 'Defended-bounded domain. Plant-family replay on UCI Combined Cycle Power Plant data. Full soundness and contingency logic verified.',
+    statusLabel: 'Runtime contract closed',
+    description: 'Defended-bounded domain. Full 9,348-step runtime denominator under the narrowed AV brake-hold release contract. T11, postcondition, and runtime-witness pass rates are all 100%.',
   },
   {
     key: 'healthcare',
     name: 'Healthcare Monitoring',
     icon: HeartPulse,
-    tier: 'proof-validated',
-    dataset: 'MIMIC-III/IV (proxy)',
-    source: 'Credentialed ICU data',
-    tsvrBefore: '1.0%',
-    tsvrAfter: '0.583%',
-    picp: '97.2%',
-    ir: '4.3%',
+    tier: 'runtime-contract-closed',
+    dataset: 'MIMIC promoted runtime denominator',
+    source: 'reports/healthcare/runtime_summary.csv',
+    tsvrBefore: '19.45%',
+    tsvrAfter: '0.0%',
+    picp: '100%',
+    ir: '75.1%',
     status: 'verified',
-    statusLabel: 'Accessible proxy verified',
-    description: 'Defended-bounded domain. Long-term ICU validation target. Accessible proxy row used and verified.',
-  },
-  {
-    key: 'aerospace',
-    name: 'Aerospace Control',
-    icon: Plane,
-    tier: 'experimental',
-    dataset: 'NASA C-MAPSS',
-    source: 'Engine simulation FD001-FD004',
-    tsvrBefore: 'N/A',
-    tsvrAfter: 'N/A',
-    picp: 'N/A',
-    ir: 'N/A',
-    status: 'warning',
-    statusLabel: 'Promotion not closed',
-    blocker: 'Public ADS-B evidence lane only. Adapter executes but promotion contract not yet closed for runtime certification.',
-    description: 'Experimental tier: trainable aerospace companion surface. Public flight calibration used, not sufficient for runtime promotion alone.',
-  },
-  {
-    key: 'navigation',
-    name: 'Navigation & Guidance',
-    icon: Navigation,
-    tier: 'shadow-synthetic',
-    dataset: 'KITTI Odometry',
-    source: 'Benchmark (synthetic staging)',
-    tsvrBefore: 'N/A',
-    tsvrAfter: 'N/A',
-    picp: 'N/A',
-    ir: 'N/A',
-    status: 'blocked',
-    statusLabel: 'Real-data gap',
-    blocker: 'KITTI real-data staging blocked (navigation_real_data_gap). Typed kernel exercised only on bounded synthetic surface — portability evidence only.',
-    description: 'Shadow-synthetic tier: real-data closure source for autonomous navigation. Currently limited to synthetic portability evidence.',
+    statusLabel: 'Runtime contract closed',
+    description: 'Defended-bounded domain. Promoted MIMIC monitoring runtime denominator under the fail-safe alert-release contract. T11, postcondition, and runtime-witness pass rates are all 100%.',
   },
 ];
 
-// Theorem-Domain matrix: true = full, 'partial' = partial, false = N/A
+// Theorem-Domain matrix: true = full witness, 'partial' = scoped/supporting/runtime-linked, false = N/A
 type Applicability = true | 'partial' | false;
 const THEOREM_IDS = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11'];
 
 const DOMAIN_THEOREM_MATRIX: Record<string, Applicability[]> = {
   battery:    [true, true, true, true, true, true, true, true, true, true, true],
   av:         [true, true, true, true, 'partial', 'partial', 'partial', 'partial', true, 'partial', true],
-  industrial: [true, true, true, true, 'partial', 'partial', true, true, 'partial', 'partial', true],
-  healthcare: [true, true, true, true, 'partial', 'partial', true, true, 'partial', 'partial', true],
-  aerospace:  [true, true, true, true, 'partial', 'partial', 'partial', 'partial', 'partial', 'partial', true],
-  navigation: [true, 'partial', 'partial', 'partial', false, false, 'partial', 'partial', 'partial', false, true],
+  healthcare: [true, true, true, true, 'partial', 'partial', 'partial', 'partial', 'partial', 'partial', true],
 };
 
 interface Claim {
@@ -209,7 +139,7 @@ const CLAIMS: Claim[] = [
   { id: 'C007', claim: 'Graceful degradation never worsens outcomes', theorems: 'T8', evidence: '6 fault × 7 controller comparison' },
   { id: 'C008', claim: 'Quality-ignorance has fundamental lower bound', theorems: 'T9', evidence: 'Martingale + Azuma–Hoeffding' },
   { id: 'C009', claim: 'T3 bound is tight within factor 4', theorems: 'T10', evidence: 'Le Cam two-point method' },
-  { id: 'C010', claim: 'ORIUS transfers to any compliant domain', theorems: 'T11', evidence: 'Typed adapter + 6 domain exercise' },
+  { id: 'C010', claim: 'ORIUS transfers to any compliant domain', theorems: 'T11', evidence: 'Typed adapter + promoted three-domain lane' },
   { id: 'C011', claim: 'DC3S achieves zero TSVR under all nominal + fault scenarios', theorems: 'T2, T3, T7', evidence: 'ORIUS-Bench full suite' },
 ];
 
@@ -303,10 +233,15 @@ function DomainCard({ domain, index }: { domain: Domain; index: number }) {
               </div>
             </div>
 
+            <div className="mt-2 flex items-start gap-1.5">
+              <StatusIcon status={domain.status} />
+              <span className={`text-[10px] ${STATUS_TEXT_CLASS[domain.status]}`}>{domain.statusLabel}</span>
+            </div>
+
             {domain.blocker && (
               <div className="mt-2 flex items-start gap-1.5">
                 <AlertTriangle className="w-3 h-3 text-amber-400 flex-shrink-0 mt-0.5" />
-                <span className="text-[10px] text-amber-400/80">{domain.statusLabel}</span>
+                <span className="text-[10px] text-amber-400/80">Blocker recorded</span>
               </div>
             )}
           </div>
@@ -350,24 +285,24 @@ export default function DomainsPage() {
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-3">
           <Globe2 className="w-7 h-7 text-energy-primary" />
-          Universal Domain Coverage
+          Promoted Domain Coverage
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          6 domains × 11 theorems — evidence tiers, transfer obligations, and claims register
+          3 promoted domains × 11 theorems — evidence tiers, transfer obligations, and claims register
         </p>
       </div>
 
       {/* KPI Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KPICard label="Domains" value="6" icon={<Globe2 className="w-4 h-4" />} color="primary" delay={0} />
-        <KPICard label="Evidence Tiers" value="5" icon={<Layers className="w-4 h-4" />} color="info" delay={0.05} />
+        <KPICard label="Domains" value="3" icon={<Globe2 className="w-4 h-4" />} color="primary" delay={0} />
+        <KPICard label="Evidence Tiers" value="2" icon={<Layers className="w-4 h-4" />} color="info" delay={0.05} />
         <KPICard label="Transfer Theorem" value="T11" icon={<GitBranch className="w-4 h-4" />} color="warn" delay={0.1} />
         <KPICard label="Claims" value="11" icon={<FileCheck className="w-4 h-4" />} color="alert" delay={0.15} />
       </div>
 
       {/* Evidence Tier Framework */}
-      <Panel title="Evidence Tier Framework" subtitle="5 tiers of domain evidence maturity" accentColor="info">
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+      <Panel title="Evidence Tier Framework" subtitle="2 tiers on the promoted publication lane" accentColor="info">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {(Object.entries(TIER_CONFIG) as [EvidenceTier, typeof TIER_CONFIG[EvidenceTier]][]).map(([key, cfg], i) => (
             <motion.div
               key={key}
@@ -414,7 +349,7 @@ export default function DomainsPage() {
       </Panel>
 
       {/* Theorem-Domain Matrix */}
-      <Panel title="Theorem–Domain Applicability Matrix" subtitle="6 domains × 11 theorems" accentColor="primary">
+      <Panel title="Theorem–Domain Applicability Matrix" subtitle="3 promoted domains × 11 theorems" accentColor="primary">
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
@@ -450,14 +385,19 @@ export default function DomainsPage() {
             </tbody>
           </table>
         </div>
+        <p className="mt-3 text-[11px] text-slate-500 leading-relaxed">
+          Green cells indicate full witness/application for the current domain surface. Amber cells indicate scoped,
+          supporting, or runtime-linked theorem coverage; for AV and Healthcare this is intentional because the active
+          defended claim is bounded T11 runtime-contract closure, not equal battery proof depth.
+        </p>
         <div className="flex gap-4 mt-3 pt-3 border-t border-white/[0.04]">
           <div className="flex items-center gap-1.5">
             <span className="text-emerald-400 text-sm">●</span>
-            <span className="text-[10px] text-slate-500">Fully applicable</span>
+            <span className="text-[10px] text-slate-500">Full witness / applied</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-amber-400 text-sm">○</span>
-            <span className="text-[10px] text-slate-500">Partial / pending</span>
+            <span className="text-[10px] text-slate-500">Scoped / runtime-linked</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-slate-600 text-sm">—</span>
@@ -471,7 +411,7 @@ export default function DomainsPage() {
         <h2 className="text-sm font-semibold text-slate-400 flex items-center gap-2">
           <Globe2 className="w-4 h-4" />
           Domain Details
-          <span className="text-slate-600">(6)</span>
+          <span className="text-slate-600">(3)</span>
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {DOMAINS.map((d, i) => (

@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { fetchFastApi } from '@/lib/server/config';
 import type { DispatchCompareResponse, DispatchSeriesPoint } from '@/lib/api/dispatch-types';
 
 type ForecastPayload = {
@@ -16,12 +17,6 @@ type OptimizePayload = {
     renewables_used_mw?: number[];
   };
 };
-
-const DEFAULT_BASE = 'http://localhost:8000';
-
-function resolveApiBase(): string {
-  return process.env.FASTAPI_URL || DEFAULT_BASE;
-}
 
 function minLength(...arrays: Array<ReadonlyArray<unknown> | undefined>): number {
   const sizes = arrays.filter(Boolean).map((arr) => arr!.length);
@@ -69,16 +64,14 @@ function buildFallbackTimestamps(horizon: number): string[] {
 }
 
 export async function loadDispatchCompare(
-  region = 'DE',
+  _region = 'DE',
   horizon = 24
 ): Promise<DispatchCompareResponse> {
-  const apiBase = resolveApiBase();
   const warnings: string[] = [];
 
   try {
-    const forecastRes = await fetch(
-      `${apiBase}/forecast?targets=load_mw,wind_mw,solar_mw&horizon=${horizon}`,
-      { cache: 'no-store' }
+    const forecastRes = await fetchFastApi(
+      `/forecast?targets=load_mw,wind_mw,solar_mw&horizon=${horizon}`
     );
     if (!forecastRes.ok) {
       throw new Error(`Forecast API error: ${forecastRes.status}`);
@@ -107,14 +100,12 @@ export async function loadDispatchCompare(
     });
 
     const [optimizedRes, baselineRes] = await Promise.all([
-      fetch(`${apiBase}/optimize`, {
+      fetchFastApi('/optimize', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: optimizeBody,
       }),
-      fetch(`${apiBase}/optimize/baseline`, {
+      fetchFastApi('/optimize/baseline', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: optimizeBody,
       }),
     ]);

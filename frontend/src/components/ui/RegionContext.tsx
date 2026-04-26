@@ -2,8 +2,9 @@
 
 import { createContext, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import type { DomainId } from '@/lib/domain-options';
 
-export type RegionId = 'DE' | 'US';
+export type RegionId = DomainId;
 
 interface RegionContextValue {
   region: RegionId;

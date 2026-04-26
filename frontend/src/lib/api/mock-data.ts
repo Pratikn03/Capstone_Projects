@@ -10,7 +10,6 @@ import type {
   Anomaly,
   ForecastMetrics,
   ZoneSummary,
-  OptimizationResult,
 } from './schema';
 
 // ─── Helpers ───
@@ -238,10 +237,10 @@ export interface ForecastWithPI {
   timestamp: string;
   actual: number;
   forecast: number;
-  lower_90: number;
-  upper_90: number;
-  lower_50: number;
-  upper_50: number;
+  lower_90?: number | null;
+  upper_90?: number | null;
+  lower_50?: number | null;
+  upper_50?: number | null;
 }
 
 export function mockForecastWithPI(target: string = 'load_mw', hours: number = 48): ForecastWithPI[] {

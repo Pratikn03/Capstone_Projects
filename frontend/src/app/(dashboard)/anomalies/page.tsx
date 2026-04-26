@@ -8,10 +8,11 @@ import { useRegion } from '@/components/ui/RegionContext';
 import { useDatasetData } from '@/lib/api/dataset-client';
 import Link from 'next/link';
 import { ShieldCheck, ChevronRight } from 'lucide-react';
+import { getDomainOption } from '@/lib/domain-options';
 
 export default function AnomaliesPage() {
   const { region } = useRegion();
-  const dataset = useDatasetData(region as 'DE' | 'US');
+  const dataset = useDatasetData(region);
   
   // Use real extracted data
   const anomalies = dataset.anomalies;
@@ -21,7 +22,7 @@ export default function AnomaliesPage() {
     is_anomaly: z.is_anomaly,
     residual_mw: z.residual_mw,
   }));
-  const regionLabel = region === 'US' ? 'USA' : 'Germany';
+  const regionLabel = getDomainOption(region).label;
   const statusMessages = [
     dataset.error ? `Dataset view error: ${dataset.error}` : null,
     !zScores.length ? 'No anomaly time-series artifact is available for this region.' : null,

@@ -57,10 +57,10 @@ const fallbackReportsList = [
 export default function ReportsPage() {
   const { metrics, metricsBacktest, metricsSource, impact, reports, regions, meta } = useReportsData();
   const { region } = useRegion();
-  const [dataset, setDataset] = useState<'ALL' | 'DE' | 'US'>(region);
+  const [dataset, setDataset] = useState<'ALL' | 'DE' | 'US'>(region === 'DE' || region === 'US' ? region : 'ALL');
 
   useEffect(() => {
-    setDataset(region);
+    setDataset(region === 'DE' || region === 'US' ? region : 'ALL');
   }, [region]);
   const regionData = dataset === 'ALL' ? null : regions[dataset];
   const list =
@@ -163,7 +163,7 @@ export default function ReportsPage() {
       <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500/5 via-transparent to-transparent border border-indigo-500/10">
         <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0" />
         <span className="text-[11px] text-slate-400">
-          <span className="text-indigo-400 font-semibold">ORIUS Thesis Artifacts</span> · Claims C001–C011 mapped to evidence artifacts · <span className="text-white/70">T8 certificate completeness</span> requires all DC3S stages documented · Battery domain reference + 5 transfer-ready domains
+          <span className="text-indigo-400 font-semibold">ORIUS Thesis Artifacts</span> · Claims C001–C011 mapped to evidence artifacts · <span className="text-white/70">T8 certificate completeness</span> requires all DC3S stages documented · Battery reference + AV/Healthcare runtime-contract rows
         </span>
         <Link href="/domains" className="ml-auto flex items-center gap-1 text-[10px] text-indigo-400/70 hover:text-indigo-400 transition-colors shrink-0">
           Domain coverage <ChevronRight className="w-3 h-3" />

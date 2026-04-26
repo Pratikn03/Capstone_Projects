@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { DomainId } from '@/lib/domain-options';
 
 import type {
   RegionDashboardData,
@@ -36,7 +37,7 @@ const EMPTY: RegionDashboardData = {
   pareto: [],
 };
 
-export function useDatasetData(region: 'DE' | 'US') {
+export function useDatasetData(region: DomainId) {
   const [data, setData] = useState<RegionDashboardData>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

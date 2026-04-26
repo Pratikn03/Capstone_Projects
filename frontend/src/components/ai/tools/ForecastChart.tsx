@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { motion } from 'framer-motion';
@@ -11,6 +11,7 @@ interface ForecastChartProps {
   data?: ForecastWithPI[];
   target: string;
   zoneId: string;
+  unit?: string;
   metrics?: {
     rmse?: number;
     coverage_90?: number;
@@ -22,17 +23,36 @@ const targetNames: Record<string, string> = {
   load_mw: 'Load',
   wind_mw: 'Wind Generation',
   solar_mw: 'Solar Generation',
+  true_margin: 'True Safety Margin',
+  safe_acceleration_mps2: 'Safe Acceleration',
+  reliability_w: 'Reliability',
+  spo2_proxy: 'SpO₂ Proxy',
+  forecast: 'Forecast',
+  reliability: 'Reliability',
 };
 
 const targetColors: Record<string, string> = {
   load_mw: '#f1f5f9',
   wind_mw: '#3b82f6',
   solar_mw: '#fbbf24',
+  true_margin: '#38bdf8',
+  safe_acceleration_mps2: '#f97316',
+  reliability_w: '#10b981',
+  spo2_proxy: '#ec4899',
+  forecast: '#a78bfa',
+  reliability: '#10b981',
 };
 
 function formatTime(ts: string) {
   const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return String(ts);
   return `${d.getUTCDate()}/${d.getUTCMonth() + 1} ${d.getUTCHours()}:00`;
+}
+
+function formatValue(value: unknown, unit: string): string {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 'N/A';
+  if (unit === 'MW') return `${Math.round(value).toLocaleString()} MW`;
+  return `${value.toFixed(Math.abs(value) < 10 ? 3 : 2)}${unit ? ` ${unit}` : ''}`;
 }
 
 function CustomTooltip({ active, payload, label }: any) {
@@ -46,21 +66,28 @@ function CustomTooltip({ active, payload, label }: any) {
             <span className="w-2 h-2 rounded-full" style={{ background: p.color || p.stroke }} />
             {p.name}
           </span>
-          <span className="font-mono text-white">{Math.round(p.value).toLocaleString()} MW</span>
+          <span className="font-mono text-white">{formatValue(p.value, p.payload?.unit ?? '')}</span>
         </div>
       ))}
     </div>
   );
 }
 
-export function ForecastChart({ data: dataProp, target, zoneId, metrics }: ForecastChartProps) {
-  const data = dataProp?.length ? dataProp : [];
+export function ForecastChart({ data: dataProp, target, zoneId, unit = target.endsWith('_mw') ? 'MW' : '', metrics }: ForecastChartProps) {
+  const data = dataProp?.length ? dataProp.map((row) => ({ ...row, unit })) : [];
   const color = targetColors[target] || '#10b981';
   const name = targetNames[target] || target;
   const horizonHours = data.length;
   const coverage = metrics?.coverage_90;
   const rmse = metrics?.rmse;
   const modelLabel = metrics?.model;
+  const hasPredictionIntervals = data.some(
+    (row) =>
+      typeof row.upper_90 === 'number' &&
+      typeof row.lower_90 === 'number' &&
+      typeof row.upper_50 === 'number' &&
+      typeof row.lower_50 === 'number'
+  );
 
   return (
     <motion.div
@@ -102,30 +129,38 @@ export function ForecastChart({ data: dataProp, target, zoneId, metrics }: Forec
 
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
               <XAxis dataKey="timestamp" stroke="#64748b" tick={{ fontSize: 10 }} tickFormatter={formatTime} />
-              <YAxis stroke="#64748b" tick={{ fontSize: 10 }} tickFormatter={(v: number) => `${(v / 1000).toFixed(1)}k`} />
+              <YAxis
+                stroke="#64748b"
+                tick={{ fontSize: 10 }}
+                tickFormatter={(v: number) => (unit === 'MW' ? `${(v / 1000).toFixed(1)}k` : v.toFixed(Math.abs(v) < 10 ? 2 : 0))}
+              />
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
 
-              <Area
-                type="monotone" dataKey="upper_90" stroke="none"
-                fill={`url(#grad90_${target})`} name="90% PI Upper"
-                legendType="none"
-              />
-              <Area
-                type="monotone" dataKey="lower_90" stroke="none"
-                fill={`url(#grad90_${target})`} name="90% PI Lower"
-                legendType="none"
-              />
-              <Area
-                type="monotone" dataKey="upper_50" stroke="none"
-                fill={`url(#grad50_${target})`} name="50% PI"
-                legendType="none"
-              />
-              <Area
-                type="monotone" dataKey="lower_50" stroke="none"
-                fill="transparent" name=""
-                legendType="none"
-              />
+              {hasPredictionIntervals && (
+                <>
+                  <Area
+                    type="monotone" dataKey="upper_90" stroke="none"
+                    fill={`url(#grad90_${target})`} name="90% PI Upper"
+                    legendType="none"
+                  />
+                  <Area
+                    type="monotone" dataKey="lower_90" stroke="none"
+                    fill={`url(#grad90_${target})`} name="90% PI Lower"
+                    legendType="none"
+                  />
+                  <Area
+                    type="monotone" dataKey="upper_50" stroke="none"
+                    fill={`url(#grad50_${target})`} name="50% PI"
+                    legendType="none"
+                  />
+                  <Area
+                    type="monotone" dataKey="lower_50" stroke="none"
+                    fill="transparent" name=""
+                    legendType="none"
+                  />
+                </>
+              )}
               <Area
                 type="monotone" dataKey="actual" stroke="#94a3b8" fill="none"
                 strokeWidth={1} strokeDasharray="4 3" name="Actual"
@@ -155,11 +190,11 @@ export function ForecastChart({ data: dataProp, target, zoneId, metrics }: Forec
         <span>
           RMSE:{' '}
           <span className="text-white font-mono">
-            {rmse === undefined ? 'N/A' : `${rmse.toFixed(0)} MW`}
+            {rmse === undefined ? 'N/A' : formatValue(rmse, unit)}
           </span>
         </span>
         <span>•</span>
-        <span>{data.length ? 'Coverage verified with conformal prediction' : 'Chart hidden until artifact data is available'}</span>
+        <span>{data.length ? (hasPredictionIntervals ? 'Coverage verified with conformal prediction' : 'Real artifact actual-vs-forecast trace') : 'Chart hidden until artifact data is available'}</span>
       </div>
     </motion.div>
   );

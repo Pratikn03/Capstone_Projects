@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
+  poweredByHeader: false,
   // Allow long-running server actions for AI + optimization roundtrips
   serverExternalPackages: [],
   experimental: {

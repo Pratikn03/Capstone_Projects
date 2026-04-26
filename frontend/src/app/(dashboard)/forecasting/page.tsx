@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ForecastChart } from '@/components/ai/tools/ForecastChart';
 import { Panel } from '@/components/ui/Panel';
 import { StatusBanner } from '@/components/ui/StatusBanner';
@@ -9,20 +9,24 @@ import { useReportsData } from '@/lib/api/reports-client';
 import { useDatasetData } from '@/lib/api/dataset-client';
 import Link from 'next/link';
 import { ShieldCheck, ChevronRight } from 'lucide-react';
-
-const targets = [
-  { id: 'load_mw', label: 'Load', icon: '⚡' },
-  { id: 'wind_mw', label: 'Wind', icon: '💨' },
-  { id: 'solar_mw', label: 'Solar', icon: '☀️' },
-] as const;
+import { DOMAIN_OPTIONS, getDomainOption, isBatteryDomain, targetOptionsForDomain } from '@/lib/domain-options';
 
 export default function ForecastingPage() {
   const [selectedTarget, setSelectedTarget] = useState<string>('load_mw');
   const { region, setRegion } = useRegion();
+  const currentDomain = getDomainOption(region);
+  const targetOptions = targetOptionsForDomain(region);
+  const batteryDomain = isBatteryDomain(region);
   const { metrics, regions } = useReportsData();
-  const dataset = useDatasetData(region as 'DE' | 'US');
+  const dataset = useDatasetData(region);
 
-  const metricsActive = regions[region]?.metrics?.length ? regions[region].metrics : metrics;
+  useEffect(() => {
+    if (!targetOptions.some((target) => target.id === selectedTarget)) {
+      setSelectedTarget(targetOptions[0]?.id ?? currentDomain.primaryTarget);
+    }
+  }, [currentDomain.primaryTarget, selectedTarget, targetOptions]);
+
+  const metricsActive = batteryDomain && (region === 'DE' || region === 'US') && regions[region]?.metrics?.length ? regions[region].metrics : metrics;
   const realMetrics = dataset.metrics;
 
   // Real forecast data from extracted parquet
@@ -56,7 +60,7 @@ export default function ForecastingPage() {
 
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1 p-0.5 rounded-lg bg-white/5 border border-white/10">
-            {targets.map((t) => (
+            {targetOptions.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setSelectedTarget(t.id)}
@@ -72,20 +76,17 @@ export default function ForecastingPage() {
           </div>
 
           <div className="flex items-center gap-1 p-0.5 rounded-lg bg-white/5 border border-white/10">
-            {[
-              { id: 'DE', label: '🇩🇪 Germany' },
-              { id: 'US', label: '🇺🇸 USA' },
-            ].map((r) => (
+            {DOMAIN_OPTIONS.map((r) => (
               <button
                 key={r.id}
-                onClick={() => setRegion(r.id as 'DE' | 'US')}
+                onClick={() => setRegion(r.id)}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                   region === r.id
                     ? 'bg-energy-info/20 text-energy-info'
                     : 'text-slate-500 hover:text-slate-300'
                 }`}
               >
-                {r.label}
+                {r.flag} {r.shortLabel}
               </button>
             ))}
           </div>
@@ -96,7 +97,7 @@ export default function ForecastingPage() {
       <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500/5 via-transparent to-transparent border border-sky-500/10">
         <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
         <span className="text-[11px] text-slate-400">
-          <span className="text-sky-400 font-semibold">Battery Domain</span> · Reference Witness Row · Conformal prediction intervals backed by <span className="text-white/70">Prop 1 (coverage ≥ 1−α)</span> · DC3S Stage 2 calibration active
+          <span className="text-sky-400 font-semibold">{currentDomain.label}</span> · {batteryDomain ? 'Reference Witness Row · Conformal prediction intervals backed by Prop 1 · DC3S Stage 2 calibration active' : 'Tracked runtime artifact trace · no generated demo values · domain denominator stays in repo artifacts'}
         </span>
         <Link href="/safety" className="ml-auto flex items-center gap-1 text-[10px] text-sky-400/70 hover:text-sky-400 transition-colors shrink-0">
           Safety pipeline <ChevronRight className="w-3 h-3" />
@@ -114,7 +115,7 @@ export default function ForecastingPage() {
           <span>•</span>
           <span>{dataset.stats.total_features} features</span>
           <span>•</span>
-          <span>{forecastData.length ? `Showing ${forecastData.length}h of real data` : 'Demo mode'}</span>
+          <span>{forecastData.length ? `Showing ${forecastData.length} real artifact rows` : 'No trace extracted'}</span>
         </div>
       )}
 
@@ -122,6 +123,7 @@ export default function ForecastingPage() {
         data={forecastData.length ? forecastData : undefined}
         target={selectedTarget}
         zoneId={region}
+        unit={targetOptions.find((target) => target.id === selectedTarget)?.unit}
         metrics={
           bestMetric
             ? { rmse: bestMetric.rmse, coverage_90: bestMetric.coverage_90, model: bestMetric.model }

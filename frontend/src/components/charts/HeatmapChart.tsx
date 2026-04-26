@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useMemo } from 'react';
 
-interface HeatmapData {
+export interface HeatmapData {
   hour: number;
   day: number; // 0=Mon … 6=Sun
   value: number;
@@ -62,7 +62,13 @@ export function HeatmapChart({
   const svgW = gapX + 24 * cellW + 8;
   const svgH = gapY + 7 * cellH + 40;
 
-  if (!data.length) return null;
+  if (!data.length) {
+    return (
+      <div className={`${className} flex min-h-[220px] items-center justify-center rounded-lg border border-white/6 bg-white/[0.02] text-xs text-slate-500`}>
+        No hour-by-day heatmap is available for this artifact timestamp format.
+      </div>
+    );
+  }
 
   return (
     <div className={className}>
@@ -136,28 +142,4 @@ export function HeatmapChart({
       </svg>
     </div>
   );
-}
-
-/** Generate sample heatmap data from hourly load profile. */
-export function generateLoadHeatmap(): HeatmapData[] {
-  const data: HeatmapData[] = [];
-  for (let day = 0; day < 7; day++) {
-    for (let hour = 0; hour < 24; hour++) {
-      const pattern = [
-        0.55, 0.52, 0.50, 0.48, 0.50, 0.55,
-        0.65, 0.78, 0.88, 0.92, 0.94, 0.95,
-        0.93, 0.90, 0.88, 0.87, 0.89, 0.95,
-        1.00, 0.97, 0.90, 0.82, 0.72, 0.62,
-      ];
-      const weekendFactor = day >= 5 ? 0.85 : 1.0;
-      const base = 8500;
-      const jitter = 0.95 + 0.1 * Math.sin(day * 7 + hour * 3);
-      data.push({
-        hour,
-        day,
-        value: base * (pattern[hour] ?? 0.7) * weekendFactor * jitter,
-      });
-    }
-  }
-  return data;
 }

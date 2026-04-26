@@ -3,33 +3,19 @@
 import { Globe, Clock, Bell, ChevronDown } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { useRegion } from './RegionContext';
-import { NotificationPanel, generateMockNotifications, type Notification as PanelNotification } from './NotificationPanel';
+import { NotificationPanel, type Notification as PanelNotification } from './NotificationPanel';
 import { useNotifications } from '@/lib/notifications';
-
-const regions = [
-  { id: 'DE', label: 'Germany (OPSD)', flag: '🇩🇪' },
-  { id: 'US', label: 'USA (EIA-930)', flag: '🇺🇸' },
-] as const;
+import { dashboardConfig, operatorInitial } from '@/lib/dashboard-config';
+import { DOMAIN_OPTIONS } from '@/lib/domain-options';
 
 export function TopBar() {
   const { region, setRegion } = useRegion();
-  const { notifications: ctxNotifs, activeCount: ctxActiveCount, dismiss: ctxDismiss, add: ctxAdd } = useNotifications();
+  const { notifications: ctxNotifs, dismiss: ctxDismiss } = useNotifications();
   const [showRegions, setShowRegions] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [localNotifs] = useState<PanelNotification[]>(() => generateMockNotifications());
   const [nowUtc, setNowUtc] = useState(() => new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC');
-  const currentRegion = regions.find((r) => r.id === region) || regions[0];
+  const currentRegion = DOMAIN_OPTIONS.find((r) => r.id === region) || DOMAIN_OPTIONS[0];
   const notifRef = useRef<HTMLDivElement>(null);
-
-  // Seed context with mock notifications on first render
-  useEffect(() => {
-    if (ctxNotifs.length === 0) {
-      localNotifs.forEach((n) => {
-        ctxAdd({ type: n.type as any, severity: n.severity as any, title: n.title, message: n.message });
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Build panel-compatible notifications from context
   const panelNotifications: PanelNotification[] = ctxNotifs
@@ -73,7 +59,7 @@ export function TopBar() {
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300">
           <span className="w-2 h-2 rounded-full bg-energy-primary live-dot" />
-          ORIUS
+          {dashboardConfig.appLabel}
         </div>
 
         {/* Region Selector */}
@@ -88,7 +74,7 @@ export function TopBar() {
           </button>
           {showRegions && (
             <div className="absolute top-full mt-1 left-0 glass-panel-elevated rounded-lg py-1 min-w-[200px] z-50">
-              {regions.map((r) => (
+              {DOMAIN_OPTIONS.map((r) => (
                 <button
                   key={r.id}
                   onClick={() => {
@@ -149,9 +135,9 @@ export function TopBar() {
 
         <div className="flex items-center gap-2 pl-3 border-l border-white/10">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-energy-primary to-energy-info flex items-center justify-center text-xs font-bold text-white">
-            P
+            {operatorInitial()}
           </div>
-          <span className="hidden sm:inline text-sm text-slate-300">Pratik N</span>
+          <span className="hidden sm:inline text-sm text-slate-300">{dashboardConfig.operatorName}</span>
         </div>
       </div>
     </header>

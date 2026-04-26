@@ -15,22 +15,55 @@ import { MLOpsMonitor } from '@/components/charts/MLOpsMonitor';
 import { DC3SLiveCard } from '@/components/dashboard/DC3SLiveCard';
 import { GaugeChart } from '@/components/charts/GaugeChart';
 import { EnergyFlowDiagram } from '@/components/charts/EnergyFlowDiagram';
-import { HeatmapChart, generateLoadHeatmap } from '@/components/charts/HeatmapChart';
+import { HeatmapChart, type HeatmapData } from '@/components/charts/HeatmapChart';
 import { ZoneMap, type ZoneData } from '@/components/charts/ZoneMap';
 import { useDispatchCompare } from '@/lib/api/dispatch-client';
 import { useDc3sLive } from '@/lib/api/dc3s-client';
 import { useReportsData } from '@/lib/api/reports-client';
-import { useDatasetData, type DriftPoint } from '@/lib/api/dataset-client';
+import { useDatasetData, type DriftPoint, type TimeseriesPoint } from '@/lib/api/dataset-client';
 import { formatCurrency, formatMW, formatPercent } from '@/lib/utils';
 import { useRegion } from '@/components/ui/RegionContext';
+import { getDomainOption, isBatteryDomain } from '@/lib/domain-options';
+
+const DE_ZONE_IDS = [
+  'DE-SH', 'DE-NI', 'DE-NW', 'DE-HE', 'DE-BY', 'DE-BW', 'DE-BB', 'DE-MV',
+  'DE-SN', 'DE-ST', 'DE-TH', 'DE-RP', 'DE-SL', 'DE-HH', 'DE-HB', 'DE-BE',
+] as const;
+
+const US_ZONE_IDS = ['US-MISO', 'US-PJM', 'US-NYISO', 'US-ISONE', 'US-SPP', 'US-ERCOT', 'US-CAISO', 'US-SOCO'] as const;
+
+function buildLoadHeatmap(points: TimeseriesPoint[]): HeatmapData[] {
+  const buckets = new Map<string, { sum: number; count: number; hour: number; day: number }>();
+  for (const point of points) {
+    if (typeof point.load_mw !== 'number' || !Number.isFinite(point.load_mw)) continue;
+    const date = new Date(point.timestamp);
+    if (Number.isNaN(date.getTime())) continue;
+    const hour = date.getUTCHours();
+    const day = (date.getUTCDay() + 6) % 7;
+    const key = `${day}:${hour}`;
+    const existing = buckets.get(key) ?? { sum: 0, count: 0, hour, day };
+    existing.sum += point.load_mw;
+    existing.count += 1;
+    buckets.set(key, existing);
+  }
+  return Array.from(buckets.values())
+    .map((bucket) => ({
+      hour: bucket.hour,
+      day: bucket.day,
+      value: bucket.sum / bucket.count,
+    }))
+    .sort((a, b) => a.day - b.day || a.hour - b.hour);
+}
 
 export default function DashboardPage() {
   const { region } = useRegion();
+  const currentDomain = getDomainOption(region);
+  const batteryDomain = isBatteryDomain(region);
   const [dc3sRefreshSeconds, setDc3sRefreshSeconds] = useState(15);
   const dispatch = useDispatchCompare(region, 24);
-  const dc3s = useDc3sLive(region as 'DE' | 'US', 24, dc3sRefreshSeconds);
+  const dc3s = useDc3sLive(region, 24, dc3sRefreshSeconds);
   const { metrics, impact, robustness, regions } = useReportsData();
-  const dataset = useDatasetData(region as 'DE' | 'US');
+  const dataset = useDatasetData(region);
 
   const battery = dataset.battery;
   const anomalies = dataset.anomalies;
@@ -51,13 +84,14 @@ export default function DashboardPage() {
   const realMetrics = dataset.metrics;
   const realImpact = dataset.impact;
   const realStats = dataset.stats;
-  const forecastData = dataset.forecast?.['load_mw'] ?? [];
+  const forecastTarget = currentDomain.primaryTarget;
+  const forecastData = dataset.forecast?.[forecastTarget] ?? [];
 
-  const loadMetrics = metricsActive.filter((m) => m.target === 'load_mw');
+  const loadMetrics = metricsActive.filter((m) => m.target === forecastTarget || m.target === 'runtime_tsvr');
   const bestLoadMetric = loadMetrics.length
     ? loadMetrics.reduce((a, b) => (a.rmse < b.rmse ? a : b))
     : null;
-  const bestRMSE = realMetrics.find((m) => m.target === 'load_mw')?.rmse ?? bestLoadMetric?.rmse ?? null;
+  const bestRMSE = realMetrics.find((m) => m.target === forecastTarget || m.target === 'runtime_tsvr')?.rmse ?? bestLoadMetric?.rmse ?? null;
 
   const costSavingsPct = realImpact?.cost_savings_pct ?? impactActive?.cost_savings_pct ?? null;
   const costSavingsRaw =
@@ -73,23 +107,36 @@ export default function DashboardPage() {
   const peakShavingMw = realImpact?.baseline_peak_mw != null && realImpact?.orius_peak_mw != null
     ? realImpact.baseline_peak_mw - realImpact.orius_peak_mw
     : (impactActive as Record<string, unknown>)?.peak_shaving_mw as number | null ?? null;
-  const regionLabel = region === 'US' ? 'USA (EIA-930)' : 'Germany (OPSD)';
+  const regionLabel = currentDomain.label;
   const p95Regret = robustnessActive?.p95_regret ?? null;
   const infeasibleRate = robustnessActive?.infeasible_rate ?? null;
   const robustnessPct = robustnessActive?.perturbation_pct ?? null;
+  const runtimeRows = (dataset.runtime_summary ?? []) as Array<Record<string, unknown>>;
+  const runtimeByController = (controller: string) => runtimeRows.find((row) => row.controller === controller);
+  const runtimeNumber = (row: Record<string, unknown> | undefined, key: string) => {
+    const value = row?.[key];
+    const parsed = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+  const oriusRuntime = runtimeByController('orius');
+  const baselineRuntime = runtimeByController('baseline');
+  const baselineTsvr = runtimeNumber(baselineRuntime, 'tsvr');
+  const oriusTsvr = runtimeNumber(oriusRuntime, 'tsvr');
+  const certificateRate = runtimeNumber(oriusRuntime, 'cva');
 
   // Compute hero metrics from latest dispatch data
   const latestDispatch = dataset.dispatch.length ? dataset.dispatch[dataset.dispatch.length - 1] : null;
   const totalGeneration = latestDispatch
     ? (latestDispatch.generation_solar ?? 0) + (latestDispatch.generation_wind ?? 0) + (latestDispatch.generation_gas ?? 0)
-    : 0;
-  const renewablePct = totalGeneration > 0 && latestDispatch
+    : null;
+  const renewablePct = totalGeneration !== null && totalGeneration > 0 && latestDispatch
     ? ((latestDispatch.generation_solar ?? 0) + (latestDispatch.generation_wind ?? 0)) / totalGeneration * 100
-    : 0;
+    : null;
   const currentSOC = battery?.schedule?.length
     ? battery.schedule[battery.schedule.length - 1].soc_percent
-    : 68;
+    : null;
   const activeAnomalyCount = anomalies.filter((a) => a.status === 'active').length;
+  const latestPoint = dataset.timeseries.length ? dataset.timeseries[dataset.timeseries.length - 1] : null;
 
   // Sparkline data from forecast
   const sparkRMSE = realMetrics
@@ -99,42 +146,13 @@ export default function DashboardPage() {
   const sparkCostSeries = pareto.map((p) => p.total_cost_eur);
   const sparkCarbonSeries = pareto.map((p) => p.total_carbon_kg);
 
-  // Heatmap mock data
-  const heatmapData = useMemo(() => generateLoadHeatmap(), []);
+  const heatmapData = useMemo(() => buildLoadHeatmap(dataset.timeseries), [dataset.timeseries]);
 
-  // Zone map data
   const zoneMapData = useMemo<ZoneData[]>(() => {
-    if (region === 'DE') {
-      return [
-        { id: 'DE-SH', label: 'SH', renewablePct: 78 },
-        { id: 'DE-NI', label: 'NI', renewablePct: 52 },
-        { id: 'DE-NW', label: 'NW', renewablePct: 28 },
-        { id: 'DE-HE', label: 'HE', renewablePct: 35 },
-        { id: 'DE-BY', label: 'BY', renewablePct: 42 },
-        { id: 'DE-BW', label: 'BW', renewablePct: 38 },
-        { id: 'DE-BB', label: 'BB', renewablePct: 68 },
-        { id: 'DE-MV', label: 'MV', renewablePct: 72 },
-        { id: 'DE-SN', label: 'SN', renewablePct: 30 },
-        { id: 'DE-ST', label: 'ST', renewablePct: 55 },
-        { id: 'DE-TH', label: 'TH', renewablePct: 45 },
-        { id: 'DE-RP', label: 'RP', renewablePct: 32 },
-        { id: 'DE-SL', label: 'SL', renewablePct: 20 },
-        { id: 'DE-HH', label: 'HH', renewablePct: 15 },
-        { id: 'DE-HB', label: 'HB', renewablePct: 22 },
-        { id: 'DE-BE', label: 'BE', renewablePct: 12 },
-      ];
-    }
-    return [
-      { id: 'US-MISO', label: 'MISO', renewablePct: 25 },
-      { id: 'US-PJM', label: 'PJM', renewablePct: 18 },
-      { id: 'US-NYISO', label: 'NYISO', renewablePct: 30 },
-      { id: 'US-ISONE', label: 'ISONE', renewablePct: 35 },
-      { id: 'US-SPP', label: 'SPP', renewablePct: 45 },
-      { id: 'US-ERCOT', label: 'ERCOT', renewablePct: 38 },
-      { id: 'US-CAISO', label: 'CAISO', renewablePct: 55 },
-      { id: 'US-SOCO', label: 'SOCO', renewablePct: 15 },
-    ];
-  }, [region]);
+    if (!batteryDomain || renewablePct === null) return [];
+    const ids = region === 'DE' ? DE_ZONE_IDS : US_ZONE_IDS;
+    return ids.map((id) => ({ id, label: id.split('-')[1] ?? id, renewablePct }));
+  }, [batteryDomain, region, renewablePct]);
 
   const formatMaybePercent = (value: number | null | undefined) =>
     value === null || value === undefined ? 'N/A' : formatPercent(value);
@@ -154,7 +172,7 @@ export default function DashboardPage() {
             Universal Safety
           </span>
           <span className="text-[10px] text-slate-500">
-            Observation-Reliability-Informed Universal Safety · 83 formal items · 6 domains
+            Observation-Reliability-Informed Universal Safety · 83 formal items · 3 promoted domains
           </span>
         </div>
 
@@ -248,7 +266,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-white">Domain Coverage</h3>
-                  <p className="text-[10px] text-slate-500">6 domains · T11 transfer</p>
+                  <p className="text-[10px] text-slate-500">3 promoted domains · T11 transfer</p>
                 </div>
               </div>
               <ChevronRightIcon className="w-4 h-4 text-slate-600 group-hover:text-energy-primary transition-colors" />
@@ -256,11 +274,8 @@ export default function DashboardPage() {
             <div className="space-y-1.5">
               {[
                 { name: 'Battery', tier: 'Reference', color: 'emerald', active: true },
-                { name: 'Industrial', tier: 'Proof-Validated', color: 'sky', active: false },
-                { name: 'Healthcare', tier: 'Proof-Validated', color: 'sky', active: false },
-                { name: 'AV', tier: 'Proof-Candidate', color: 'cyan', active: false },
-                { name: 'Aerospace', tier: 'Experimental', color: 'amber', active: false },
-                { name: 'Navigation', tier: 'Shadow-Synth', color: 'slate', active: false },
+                { name: 'AV', tier: 'Runtime-Closed', color: 'cyan', active: false },
+                { name: 'Healthcare', tier: 'Runtime-Closed', color: 'sky', active: false },
               ].map((d) => (
                 <div key={d.name} className={`flex items-center justify-between py-1 px-2 rounded text-[10px] ${d.active ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-white/[0.02]'}`}>
                   <span className={d.active ? 'text-emerald-400 font-medium' : 'text-slate-400'}>{d.name}</span>
@@ -287,7 +302,7 @@ export default function DashboardPage() {
           ═══════════════════════════════════════════════════════ */}
       <section>
         <div className="flex items-center gap-3 mb-4">
-          <h2 className="text-lg font-bold text-white">Battery Domain — Grid Overview</h2>
+          <h2 className="text-lg font-bold text-white">{batteryDomain ? 'Battery Domain — Grid Overview' : `${currentDomain.label} — Runtime Overview`}</h2>
           {realStats && (
             <div className="flex items-center gap-2 text-[10px] text-slate-500">
               <Database className="w-3 h-3" />
@@ -304,43 +319,43 @@ export default function DashboardPage() {
         <div className="glass-panel rounded-xl p-5">
           <div className="flex items-center justify-around flex-wrap gap-6">
             <GaugeChart
-              value={50.01}
-              min={49.9}
-              max={50.1}
-              label="Grid Frequency"
-              unit="Hz"
+              value={batteryDomain ? 50.01 : latestPoint?.primary_value}
+              min={batteryDomain ? 49.9 : 0}
+              max={batteryDomain ? 50.1 : Math.max(1, (latestPoint?.primary_value ?? 1) * 1.25)}
+              label={batteryDomain ? 'Grid Frequency' : (latestPoint?.primary_label ?? 'Primary Signal')}
+              unit={batteryDomain ? 'Hz' : currentDomain.primaryUnit}
               color="#10b981"
               size={110}
-              thresholds={{ warn: 50.05, alert: 50.08 }}
+              thresholds={batteryDomain ? { warn: 50.05, alert: 50.08 } : undefined}
             />
             <GaugeChart
-              value={totalGeneration}
+              value={batteryDomain ? totalGeneration : baselineTsvr !== null ? baselineTsvr * 100 : null}
               min={0}
-              max={15000}
-              label="Total Generation"
-              unit="MW"
+              max={batteryDomain ? 15000 : 100}
+              label={batteryDomain ? 'Total Generation' : 'Baseline TSVR'}
+              unit={batteryDomain ? 'MW' : '%'}
               color="#3b82f6"
               size={110}
             />
             <GaugeChart
-              value={renewablePct}
+              value={batteryDomain ? renewablePct : oriusTsvr !== null ? oriusTsvr * 100 : null}
               min={0}
               max={100}
-              label="Renewable Share"
+              label={batteryDomain ? 'Renewable Share' : 'ORIUS TSVR'}
               unit="%"
               color="#10b981"
               size={110}
-              thresholds={{ warn: 30, alert: 15 }}
+              thresholds={batteryDomain ? { warn: 30, alert: 15 } : undefined}
             />
             <GaugeChart
-              value={currentSOC}
+              value={batteryDomain ? currentSOC : certificateRate !== null ? certificateRate * 100 : null}
               min={0}
               max={100}
-              label="Battery SOC"
+              label={batteryDomain ? 'Battery SOC' : 'Certificate Valid'}
               unit="%"
               color="#a855f7"
               size={110}
-              thresholds={{ warn: 80, alert: 90 }}
+              thresholds={batteryDomain ? { warn: 80, alert: 90 } : undefined}
             />
             <div className="flex flex-col items-center gap-2">
               <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-lg font-bold font-mono ${
@@ -366,18 +381,18 @@ export default function DashboardPage() {
       <section>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
-            label="Forecast RMSE"
-            value={bestRMSE !== null ? bestRMSE.toFixed(0) : 'N/A'}
-            unit={bestRMSE !== null ? 'MW' : undefined}
+            label={batteryDomain ? 'Forecast RMSE' : 'Baseline TSVR'}
+            value={batteryDomain ? (bestRMSE !== null ? bestRMSE.toFixed(0) : 'N/A') : baselineTsvr !== null ? formatPercent(baselineTsvr * 100) : 'N/A'}
+            unit={batteryDomain && bestRMSE !== null ? 'MW' : undefined}
             icon={<BarChart3 className="w-4 h-4 text-energy-info" />}
             color="info"
             delay={0}
             sparkData={sparkRMSE.length > 1 ? sparkRMSE : undefined}
           />
           <KPICard
-            label="Cost Savings"
-            value={costSavingsPct !== null ? formatPercent(costSavingsPct) : 'N/A'}
-            unit={costSavingsRaw !== null ? formatCurrency(costSavingsRaw, 'USD') : undefined}
+            label={batteryDomain ? 'Cost Savings' : 'ORIUS TSVR'}
+            value={batteryDomain ? (costSavingsPct !== null ? formatPercent(costSavingsPct) : 'N/A') : oriusTsvr !== null ? formatPercent(oriusTsvr * 100) : 'N/A'}
+            unit={batteryDomain && costSavingsRaw !== null ? formatCurrency(costSavingsRaw, 'USD') : undefined}
             change={costSavingsPct ?? undefined}
             icon={<TrendingDown className="w-4 h-4 text-energy-primary" />}
             color="primary"
@@ -385,9 +400,9 @@ export default function DashboardPage() {
             sparkData={sparkCostSeries.length > 1 ? sparkCostSeries : undefined}
           />
           <KPICard
-            label="Carbon Reduction"
-            value={carbonReductionPct !== null ? formatPercent(carbonReductionPct) : 'N/A'}
-            unit={carbonTons !== null ? `${carbonTons.toFixed(0)} tCO₂` : undefined}
+            label={batteryDomain ? 'Carbon Reduction' : 'Certificate Valid'}
+            value={batteryDomain ? (carbonReductionPct !== null ? formatPercent(carbonReductionPct) : 'N/A') : certificateRate !== null ? formatPercent(certificateRate * 100) : 'N/A'}
+            unit={batteryDomain && carbonTons !== null ? `${carbonTons.toFixed(0)} tCO₂` : undefined}
             change={carbonReductionPct ?? undefined}
             icon={<Leaf className="w-4 h-4 text-energy-primary" />}
             color="primary"
@@ -395,9 +410,9 @@ export default function DashboardPage() {
             sparkData={sparkCarbonSeries.length > 1 ? sparkCarbonSeries : undefined}
           />
           <KPICard
-            label="Peak Shaving"
-            value={peakShavingPct !== null ? formatPercent(peakShavingPct) : 'N/A'}
-            unit={peakShavingMw !== null ? formatMW(peakShavingMw) : undefined}
+            label={batteryDomain ? 'Peak Shaving' : 'Runtime Rows'}
+            value={batteryDomain ? (peakShavingPct !== null ? formatPercent(peakShavingPct) : 'N/A') : dataset.stats ? dataset.stats.rows.toLocaleString() : 'N/A'}
+            unit={batteryDomain && peakShavingMw !== null ? formatMW(peakShavingMw) : undefined}
             change={peakShavingPct ?? undefined}
             changeLabel="peak reduced"
             icon={<Zap className="w-4 h-4 text-energy-warn" />}
@@ -413,12 +428,13 @@ export default function DashboardPage() {
           SECTION 3: Dispatch & Forecast
           ═══════════════════════════════════════════════════════ */}
       <section>
-        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Battery Dispatch & Forecast <span className="text-emerald-400/50 text-[9px] normal-case tracking-normal ml-2">Reference domain · T2 safety preservation active</span></h2>
+        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">{batteryDomain ? 'Battery Dispatch & Forecast' : 'Runtime Signal Trace'} <span className="text-emerald-400/50 text-[9px] normal-case tracking-normal ml-2">{batteryDomain ? 'Reference domain · T2 safety preservation active' : 'Real tracked artifact preview · no synthetic fallback'}</span></h2>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <ForecastChart
             data={forecastData.length ? forecastData : undefined}
-            target="load_mw"
+            target={forecastTarget}
             zoneId={region}
+            unit={currentDomain.primaryUnit}
             metrics={
               bestLoadMetric
                 ? { rmse: bestLoadMetric.rmse, coverage_90: bestLoadMetric.coverage_90, model: bestLoadMetric.model }
@@ -452,7 +468,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <BatterySOCChart
             schedule={battery?.schedule ?? []}
-            metrics={battery?.metrics ?? { cost_savings_eur: 0, carbon_reduction_kg: 0, peak_shaving_pct: 0, avg_efficiency: 92 }}
+            metrics={battery?.metrics ?? null}
           />
           <CarbonCostPanel data={pareto.length ? pareto : undefined} zoneId={region} summary={impactActive ?? undefined} />
         </div>
@@ -460,20 +476,37 @@ export default function DashboardPage() {
         {/* Energy Flow + Heatmap row */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
           <Panel title="Energy Flow" subtitle="Current dispatch mix" accentColor="primary" delay={0.2}>
-            <EnergyFlowDiagram
-              solar={latestDispatch?.generation_solar ?? 2800}
-              wind={latestDispatch?.generation_wind ?? 3500}
-              gas={latestDispatch?.generation_gas ?? 1200}
-              battery={battery?.schedule?.length ? battery.schedule[battery.schedule.length - 1].power_mw : -200}
-              load={latestDispatch?.load_mw ?? 7500}
-            />
+            {latestDispatch ? (
+              <EnergyFlowDiagram
+                solar={latestDispatch.generation_solar ?? 0}
+                wind={latestDispatch.generation_wind ?? 0}
+                gas={latestDispatch.generation_gas ?? 0}
+                battery={battery?.schedule?.length ? battery.schedule[battery.schedule.length - 1].power_mw : 0}
+                load={latestDispatch.load_mw}
+              />
+            ) : (
+              <div className="flex min-h-[260px] items-center justify-center rounded-lg border border-white/6 bg-white/[0.02] text-xs text-slate-500">
+                No dispatch artifact available for this view.
+              </div>
+            )}
           </Panel>
           <Panel title="Load Heatmap" subtitle="Hour × Day pattern" accentColor="info" delay={0.25}>
             <HeatmapChart data={heatmapData} unit="MW" />
           </Panel>
         </div>
         <Panel title="Zone Overview" subtitle={`${region === 'DE' ? 'Germany' : 'USA'} — Renewable %`} accentColor="primary" delay={0.3}>
-          <ZoneMap region={region as 'DE' | 'US'} zones={zoneMapData} />
+          {batteryDomain ? (
+            <ZoneMap region={region as 'DE' | 'US'} zones={zoneMapData} />
+          ) : (
+            <div className="space-y-2 text-xs text-slate-400">
+              <div className="text-slate-300">Source artifacts for this view:</div>
+              {(dataset.source_artifacts ?? []).map((artifact) => (
+                <div key={artifact} className="rounded bg-white/[0.03] px-3 py-2 font-mono text-[11px] text-slate-300">
+                  {artifact}
+                </div>
+              ))}
+            </div>
+          )}
         </Panel>
       </section>
 
@@ -486,7 +519,7 @@ export default function DashboardPage() {
         <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">DC3S Safety & Monitoring <span className="text-sky-400/50 text-[9px] normal-case tracking-normal ml-2">Detect → Calibrate → Constrain → Shield → Certify</span></h2>
 
         <DC3SLiveCard
-          region={region as 'DE' | 'US'}
+          region={region}
           data={dc3s.data}
           loading={dc3s.loading}
           error={dc3s.error}

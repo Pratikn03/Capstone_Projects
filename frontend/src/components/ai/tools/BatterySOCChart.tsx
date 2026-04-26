@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  ComposedChart, Area, Line, Bar, XAxis, YAxis, CartesianGrid,
+  ComposedChart, Area, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend, ReferenceLine,
 } from 'recharts';
 import { motion } from 'framer-motion';
@@ -9,12 +9,12 @@ import type { BatteryState } from '@/lib/api/schema';
 
 interface BatterySOCChartProps {
   schedule: BatteryState[];
-  metrics: {
+  metrics?: {
     cost_savings_eur: number;
     carbon_reduction_kg: number;
     peak_shaving_pct: number;
     avg_efficiency: number;
-  };
+  } | null;
 }
 
 function formatTime(ts: string) {
@@ -65,8 +65,8 @@ export function BatterySOCChart({ schedule, metrics }: BatterySOCChartProps) {
           </span>
         </div>
         <div className="flex items-center gap-3 text-xs">
-          <span className="text-slate-500">Efficiency: <span className="text-white font-mono">{metrics.avg_efficiency}%</span></span>
-          <span className="text-slate-500">Peak Shaving: <span className="text-energy-primary font-mono">{metrics.peak_shaving_pct}%</span></span>
+          <span className="text-slate-500">Efficiency: <span className="text-white font-mono">{metrics ? `${metrics.avg_efficiency}%` : 'N/A'}</span></span>
+          <span className="text-slate-500">Peak Shaving: <span className="text-energy-primary font-mono">{metrics ? `${metrics.peak_shaving_pct}%` : 'N/A'}</span></span>
         </div>
       </div>
 
@@ -113,11 +113,11 @@ export function BatterySOCChart({ schedule, metrics }: BatterySOCChartProps) {
       <div className="px-5 pb-3 flex items-center gap-6 text-xs">
         <div>
           <span className="text-slate-500">Cost Savings</span>
-          <span className="ml-2 text-energy-primary font-semibold">€{metrics.cost_savings_eur.toLocaleString()}</span>
+          <span className="ml-2 text-energy-primary font-semibold">{metrics ? `€${metrics.cost_savings_eur.toLocaleString()}` : 'N/A'}</span>
         </div>
         <div>
           <span className="text-slate-500">Carbon Reduction</span>
-          <span className="ml-2 text-energy-primary font-semibold">{(metrics.carbon_reduction_kg / 1000).toFixed(1)} tCO₂</span>
+          <span className="ml-2 text-energy-primary font-semibold">{metrics ? `${(metrics.carbon_reduction_kg / 1000).toFixed(1)} tCO₂` : 'N/A'}</span>
         </div>
       </div>
     </motion.div>

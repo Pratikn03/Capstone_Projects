@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 
-import type { DispatchCompareResponse, DispatchSeriesPoint } from './dispatch-types';
+import type { DispatchCompareResponse } from './dispatch-types';
+import { isBatteryDomain, type DomainId } from '@/lib/domain-options';
 
-export function useDispatchCompare(region = 'DE', horizon = 24) {
+export function useDispatchCompare(region: DomainId = 'DE', horizon = 24) {
   const [data, setData] = useState<DispatchCompareResponse>({
     optimized: [],
     baseline: undefined,
@@ -15,6 +16,22 @@ export function useDispatchCompare(region = 'DE', horizon = 24) {
     let active = true;
 
     async function load() {
+      if (!isBatteryDomain(region)) {
+        if (active) {
+          setData({
+            optimized: [],
+            baseline: undefined,
+            meta: {
+              source: 'missing',
+              horizon_hours: horizon,
+              warnings: ['Dispatch comparison is only available for Battery DE/US datasets.'],
+            },
+          });
+          setLoading(false);
+          setError(null);
+        }
+        return;
+      }
       try {
         const res = await fetch(`/api/dispatch/compare?region=${region}&horizon=${horizon}`, { cache: 'no-store' });
         if (!res.ok) {

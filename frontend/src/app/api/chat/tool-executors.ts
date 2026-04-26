@@ -1,4 +1,5 @@
-const FASTAPI_BASE_URL = process.env.FASTAPI_URL || 'http://localhost:8000';
+import { fetchFastApi } from '@/lib/server/config';
+
 const CARBON_WEIGHTS = [0, 5, 10, 20, 40] as const;
 
 type ForecastSeries = {
@@ -44,17 +45,9 @@ type AnomalyResponse = {
 
 async function fetchBackendJson<T>(path: string, init: RequestInit = {}): Promise<T> {
   const method = init.method ?? 'GET';
-  const url = `${FASTAPI_BASE_URL}${path}`;
 
   try {
-    const response = await fetch(url, {
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(init.headers ?? {}),
-      },
-      ...init,
-    });
+    const response = await fetchFastApi(path, init);
 
     if (!response.ok) {
       const detail = (await response.text().catch(() => '')).slice(0, 300);

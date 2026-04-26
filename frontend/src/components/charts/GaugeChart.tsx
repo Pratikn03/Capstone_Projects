@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 
 interface GaugeChartProps {
-  value: number;
+  value: number | null | undefined;
   min?: number;
   max?: number;
   label: string;
@@ -23,7 +23,9 @@ export function GaugeChart({
   size = 120,
   thresholds,
 }: GaugeChartProps) {
-  const clamped = Math.min(Math.max(value, min), max);
+  const hasValue = typeof value === 'number' && Number.isFinite(value);
+  const numericValue = hasValue ? value : min;
+  const clamped = Math.min(Math.max(numericValue, min), max);
   const ratio = (clamped - min) / (max - min);
   const sweepAngle = 240;
   const startAngle = (360 - sweepAngle) / 2 + 90;
@@ -34,9 +36,9 @@ export function GaugeChart({
   const strokeWidth = 8;
 
   const resolvedColor = thresholds
-    ? value >= thresholds.alert
+    ? numericValue >= thresholds.alert
       ? '#ef4444'
-      : value >= thresholds.warn
+      : numericValue >= thresholds.warn
         ? '#f59e0b'
         : color
     : color;
@@ -87,7 +89,7 @@ export function GaugeChart({
           className="fill-white text-lg font-bold stat-value"
           style={{ fontSize: size * 0.18, fontVariantNumeric: 'tabular-nums' }}
         >
-          {typeof value === 'number' ? value.toFixed(value % 1 ? 1 : 0) : value}
+          {hasValue ? numericValue.toFixed(numericValue % 1 ? 1 : 0) : 'N/A'}
         </text>
         <text
           x={cx}

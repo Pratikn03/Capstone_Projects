@@ -13,21 +13,22 @@ import { useReportsData } from '@/lib/api/reports-client';
 import { formatCurrency } from '@/lib/utils';
 import { ArrowLeftRight, ShieldCheck, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { getDomainOption } from '@/lib/domain-options';
 
 export default function OptimizationPage() {
   const { region } = useRegion();
-  const dataset = useDatasetData(region as 'DE' | 'US');
+  const dataset = useDatasetData(region);
   const { regions } = useReportsData();
-  const { baseline: baselineDispatch, loading: baselineLoading } = useDispatchCompare(region);
+  const { baseline: baselineDispatch } = useDispatchCompare(region);
   const [showBaseline, setShowBaseline] = useState(true);
 
   // Use real extracted data
   const battery = dataset.battery;
   const pareto = dataset.pareto;
-  const regionLabel = region === 'US' ? 'USA' : 'Germany';
+  const regionLabel = getDomainOption(region).label;
 
   const realImpact = dataset.impact;
-  const regionImpact = regions[region]?.impact;
+  const regionImpact = region === 'DE' || region === 'US' ? regions[region]?.impact : undefined;
 
   // Use real dispatch data from dataset
   const dispatchData = dataset.dispatch.length

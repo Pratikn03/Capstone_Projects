@@ -35,9 +35,9 @@ src/
 ├── lib/
 │   ├── ai/state.tsx         # AI State / UI State definitions
 │   ├── api/
-│   │   ├── client.ts        # FastAPI typed client
+│   │   ├── client.ts        # Server-only FastAPI typed client
 │   │   ├── schema.ts        # Zod schemas
-│   │   └── mock-data.ts     # Realistic demo data
+│   │   └── mock-data.ts     # Legacy chart types and inactive demo helpers
 │   └── utils.ts             # Formatting helpers
 └── middleware.ts             # Auth & security headers
 ```
@@ -63,6 +63,39 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+## Production Readiness
+
+Required server-side keys/configuration:
+
+| Variable | Required | Purpose |
+|---|---:|---|
+| `FASTAPI_URL` | Yes | FastAPI backend base URL. |
+| `API_SECRET_KEY` | If backend enforces API key | Sent to FastAPI as `X-ORIUS-Key`. |
+| `OPENAI_API_KEY` | If chat is enabled | Enables `/api/chat`; otherwise chat returns `503` instead of crashing. |
+| `OPENAI_MODEL` | No | Defaults to `gpt-4o`. |
+| `FASTAPI_TIMEOUT_MS` | No | Backend request timeout, default `12000`. |
+| `DASHBOARD_BASIC_AUTH` | Recommended in production | `username:password` for browser Basic Auth. |
+
+Client-visible labels:
+
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_DASHBOARD_APP_LABEL` | Sidebar/topbar product label. |
+| `NEXT_PUBLIC_DASHBOARD_OPERATOR_NAME` | Operator display name. |
+| `NEXT_PUBLIC_DASHBOARD_OPERATOR_ROLE` | Operator role label. |
+
+Production checks:
+
+```bash
+npm run type-check
+npm run build
+curl -fsS http://localhost:3000/api/health
+```
+
+The dashboard prefers live FastAPI data where available and falls back to frozen
+local report/dashboard artifacts for report and data views. Live DC3S actions
+remain backend-dependent and fail closed with an explicit `503`.
 
 ## Tech Stack
 

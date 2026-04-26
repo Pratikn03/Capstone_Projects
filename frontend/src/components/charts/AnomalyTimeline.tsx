@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid,
+  ComposedChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, ReferenceLine, Cell,
 } from 'recharts';
 import { motion } from 'framer-motion';
@@ -13,6 +13,7 @@ interface AnomalyTimelineProps {
 
 function formatTime(ts: string) {
   const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return String(ts);
   return `${d.getUTCDate()}/${d.getUTCMonth() + 1} ${d.getUTCHours()}h`;
 }
 

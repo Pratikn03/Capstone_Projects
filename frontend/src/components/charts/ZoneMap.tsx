@@ -82,10 +82,18 @@ export function ZoneMap({ region, zones }: ZoneMapProps) {
 
   const viewBox = region === 'DE' ? '20 5 300 340' : '10 20 380 300';
 
+  if (!zones.length) {
+    return (
+      <div className="flex min-h-[220px] items-center justify-center rounded-lg border border-white/6 bg-white/[0.02] text-xs text-slate-500">
+        No zone-layer artifact data available for this region.
+      </div>
+    );
+  }
+
   return (
     <div className="relative">
       <svg viewBox={viewBox} className="w-full h-auto max-h-[320px]" role="img" aria-label={`${region} zone map`}>
-        {Object.entries(paths).map(([id, { path, cx, cy }]) => {
+        {Object.entries(paths).map(([id, { path, cx, cy }], index) => {
           const zone = zoneMap.get(id);
           const pct = zone?.renewablePct ?? 0;
           const fill = interpolateColor(pct);
@@ -108,7 +116,7 @@ export function ZoneMap({ region, zones }: ZoneMapProps) {
                 strokeWidth={isHovered ? 2 : 1}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: Math.random() * 0.3 }}
+                transition={{ duration: 0.4, delay: index * 0.015 }}
               />
               <text
                 x={cx} y={cy}

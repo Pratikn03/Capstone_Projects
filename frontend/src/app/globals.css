@@ -192,12 +192,6 @@
     to { --border-angle: 360deg; }
   }
 
-  @property --border-angle {
-    syntax: "<angle>";
-    initial-value: 0deg;
-    inherits: false;
-  }
-
   /* Section divider */
   .section-divider {
     height: 1px;

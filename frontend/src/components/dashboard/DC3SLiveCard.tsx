@@ -5,9 +5,10 @@ import { ExternalLink, RefreshCcw, ShieldCheck } from 'lucide-react';
 
 import { Panel } from '@/components/ui/Panel';
 import type { Dc3sLivePayload } from '@/lib/api/dc3s-client';
+import type { DomainId } from '@/lib/domain-options';
 
 interface DC3SLiveCardProps {
-  region: 'DE' | 'US';
+  region: DomainId;
   data: Dc3sLivePayload;
   loading: boolean;
   error: string | null;

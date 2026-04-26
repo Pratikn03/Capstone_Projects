@@ -9,13 +9,14 @@ import { useRegion } from '@/components/ui/RegionContext';
 import { useDatasetData, type DriftPoint } from '@/lib/api/dataset-client';
 import Link from 'next/link';
 import { ShieldCheck, ChevronRight } from 'lucide-react';
+import { getDomainOption } from '@/lib/domain-options';
 
 export default function MonitoringPage() {
   const { region } = useRegion();
-  const dataset = useDatasetData(region as 'DE' | 'US');
+  const dataset = useDatasetData(region);
   const { metrics: reportsMetrics, regions } = useReportsData();
   const formatMaybe = (value: number | undefined, digits: number) => (value === undefined ? 'N/A' : value.toFixed(digits));
-  const regionLabel = region === 'US' ? 'USA' : 'Germany';
+  const regionLabel = getDomainOption(region).label;
 
   // Use real monitoring data from extracted JSON only.
   const realMonitoring = dataset.monitoring;
@@ -23,7 +24,7 @@ export default function MonitoringPage() {
 
   // Prefer real dataset metrics, then reports metrics
   const realMetrics = dataset.metrics.length ? dataset.metrics : [];
-  const regionReportsMetrics = regions[region]?.metrics ?? reportsMetrics;
+  const regionReportsMetrics = (region === 'DE' || region === 'US' ? regions[region]?.metrics : undefined) ?? reportsMetrics;
   const displayMetrics: Array<{ target: string; model: string; rmse: number; mae: number; mape?: number | null; r2?: number; coverage_90?: number }> =
     realMetrics.length ? realMetrics : regionReportsMetrics;
 

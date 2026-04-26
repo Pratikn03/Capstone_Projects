@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip,
+  XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Line, ComposedChart, ReferenceLine,
 } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';

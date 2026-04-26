@@ -6,10 +6,7 @@ import {
   BookOpen,
   ChevronDown,
   ChevronRight,
-  CheckCircle2,
   AlertCircle,
-  Clock,
-  Link2,
   Shield,
   Filter,
   Layers,
@@ -201,7 +198,7 @@ const THEOREMS: Theorem[] = [
     significance:
       'The universality theorem — elevates ORIUS from a battery-specific framework to a cross-domain safety methodology.',
     batteryInstantiation:
-      'Battery is the reference witness. AV, Industrial, Healthcare, Aerospace, and Navigation domains implement the same adapter contract.',
+      'Battery is the reference witness. AV and Healthcare close bounded runtime-contract rows; future domains remain architectural extensions until their evidence is promoted.',
     proofMethod: 'Forward proof from adapter contract + typed kernel + counterexamples for incomplete adapters.',
   },
 ];
@@ -337,8 +334,6 @@ function TheoremCard({ thm, index }: { thm: Theorem; index: number }) {
 
 export default function TheoremsPage() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
-  const [showAssumptions, setShowAssumptions] = useState(false);
-  const [showDefinitions, setShowDefinitions] = useState(false);
 
   const filters: { key: FilterKey; label: string }[] = [
     { key: 'all', label: 'All' },

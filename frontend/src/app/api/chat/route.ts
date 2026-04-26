@@ -2,15 +2,31 @@ import { openai } from '@ai-sdk/openai';
 import { streamText, tool } from 'ai';
 import { z } from 'zod';
 
+import { chatModel, llmReady } from '@/lib/server/config';
+
 import { chatToolExecutors } from './tool-executors';
 
 export const maxDuration = 60;
 
+const ChatRequestSchema = z.object({
+  messages: z.array(z.unknown()).min(1).max(40),
+});
+
 export async function POST(req: Request) {
-  const { messages } = await req.json();
+  if (!llmReady()) {
+    return Response.json(
+      { error: 'Chat assistant is not configured. Set OPENAI_API_KEY on the dashboard server.' },
+      { status: 503 }
+    );
+  }
+
+  const parsed = ChatRequestSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) {
+    return Response.json({ error: 'Invalid chat payload.' }, { status: 400 });
+  }
 
   const result = streamText({
-    model: openai('gpt-4o'),
+    model: openai(chatModel()),
     system: `You are ORIUS AI, an expert grid operator assistant for an energy management system.
 You manage forecasting (load, wind, solar), battery dispatch optimization, carbon tracking, and anomaly detection.
 Available regions: Germany (DE) using OPSD data, USA (US) using EIA-930 data.
@@ -18,7 +34,7 @@ Models: GBM (LightGBM), LSTM, TCN — all trained for 50 epochs with CosineAnnea
 
 When the user asks about forecasts, grid status, optimization, or battery schedules, call the appropriate tool.
 Keep responses concise and operator-focused. Use MW, MWh, €, tCO₂ units.`,
-    messages,
+    messages: parsed.data.messages as any,
     tools: {
       get_dispatch_forecast: tool({
         description:

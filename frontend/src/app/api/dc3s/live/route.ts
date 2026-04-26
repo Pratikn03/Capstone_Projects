@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { fetchFastApi } from '@/lib/server/config';
 import { loadRegionData } from '@/lib/server/dataset';
 
 export const runtime = 'nodejs';
@@ -41,10 +42,6 @@ type Dc3sAuditResponse = {
 function mean(values: number[]): number {
   if (!values.length) return 0;
   return values.reduce((a, b) => a + b, 0) / values.length;
-}
-
-function resolveApiBase() {
-  return process.env.FASTAPI_URL || 'http://localhost:8000';
 }
 
 function toNumber(value: unknown, fallback = 0): number {
@@ -89,12 +86,9 @@ export async function GET(req: Request) {
       include_certificate: true,
     };
 
-    const apiBase = resolveApiBase();
-    const stepRes = await fetch(`${apiBase}/dc3s/step`, {
+    const stepRes = await fetchFastApi('/dc3s/step', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-      cache: 'no-store',
     });
 
     if (!stepRes.ok) {
@@ -109,7 +103,7 @@ export async function GET(req: Request) {
     const commandId = step.command_id || '';
     let audit: Dc3sAuditResponse | null = null;
     if (commandId) {
-      const auditRes = await fetch(`${apiBase}/dc3s/audit/${commandId}`, { cache: 'no-store' });
+      const auditRes = await fetchFastApi(`/dc3s/audit/${encodeURIComponent(commandId)}`);
       if (auditRes.ok) {
         audit = (await auditRes.json()) as Dc3sAuditResponse;
       }
@@ -154,8 +148,11 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      { status: 503 }
     );
   }
 }
