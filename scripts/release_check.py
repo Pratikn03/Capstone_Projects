@@ -113,6 +113,7 @@ def main() -> None:
     # GATE 1: Configuration files are valid
     # -------------------------------------------------------------------------
     _run([sys.executable, "scripts/validate_configs.py"], "config validation")
+    _run([sys.executable, "scripts/validate_production_readiness.py"], "production readiness validation")
     _run([sys.executable, "scripts/audit_leakage.py", "--config", "configs/publish_audit.yaml"], "leakage audit")
     _run([sys.executable, "scripts/audit_code_health.py", "--config", "configs/publish_audit.yaml"], "code health audit")
     _run(

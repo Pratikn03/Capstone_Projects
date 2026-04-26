@@ -22,6 +22,7 @@ from orius.dc3s.certificate import (  # noqa: E402
     CERTIFICATE_SCHEMA_VERSION,
     make_certificate,
     normalize_certificate_schema,
+    sign_certificate,
     verify_certificate,
 )
 
@@ -151,6 +152,22 @@ def main() -> int:
     verification = verify_certificate(cert)
     if not verification["valid"]:
         findings.append(f"sample make_certificate failed verification: {verification}")
+    signed = sign_certificate(cert, secret="schema-validator-secret-with-32-plus-chars")
+    signed_verification = verify_certificate(
+        signed,
+        require_signature=True,
+        signature_secret="schema-validator-secret-with-32-plus-chars",
+    )
+    if not signed_verification["valid"]:
+        findings.append(f"sample signed certificate failed verification: {signed_verification}")
+    tampered = dict(signed)
+    tampered["action"] = {"charge_mw": 99.0}
+    if verify_certificate(
+        tampered,
+        require_signature=True,
+        signature_secret="schema-validator-secret-with-32-plus-chars",
+    )["valid"]:
+        findings.append("tampered signed certificate verified as valid")
 
     legacy = normalize_certificate_schema({"command_id": "legacy", "cert_hash": "abc123", "safe_action": {"x": 1}})
     if legacy.get("certificate_hash") != "abc123":

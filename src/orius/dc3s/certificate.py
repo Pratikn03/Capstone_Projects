@@ -3,7 +3,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import hashlib
+import hmac
 import json
+import os
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
@@ -14,6 +16,9 @@ import pandas as pd
 
 CERTIFICATE_SCHEMA_VERSION = "orius.certificate.v1"
 DEFAULT_CERTIFICATE_ISSUER = "orius.runtime"
+CERTIFICATE_SIGNATURE_ALGORITHM = "HMAC-SHA256"
+DEFAULT_CERTIFICATE_KEY_ID = "orius.local.hmac"
+_SIGNATURE_FIELDS = {"signature", "signature_algorithm", "public_key_id"}
 
 
 def _sha256_bytes(payload: bytes) -> str:
@@ -36,6 +41,36 @@ def _to_json_safe(obj: Any) -> Any:
 def _canonical_bytes(payload: Mapping[str, Any]) -> bytes:
     safe = _to_json_safe(payload)
     return json.dumps(safe, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+
+
+def _certificate_hash_payload(certificate: Mapping[str, Any]) -> dict[str, Any]:
+    payload = dict(_to_json_safe(dict(certificate)))
+    payload.pop("certificate_hash", None)
+    payload.pop("cert_hash", None)
+    # The artifact identity must be stable before and after signing. Existing
+    # unsigned certificates already hash these fields as null, so keep that
+    # convention while making signature material tamper-evident separately.
+    for field in _SIGNATURE_FIELDS:
+        payload[field] = None
+    return payload
+
+
+def _certificate_signature_payload(certificate: Mapping[str, Any]) -> bytes:
+    payload = dict(_to_json_safe(dict(certificate)))
+    payload.pop("signature", None)
+    payload.pop("cert_hash", None)
+    return _canonical_bytes(payload)
+
+
+def _resolve_signing_secret(secret: str | bytes | None = None) -> bytes:
+    if isinstance(secret, bytes):
+        key = secret
+    else:
+        key_text = secret if secret is not None else os.getenv("ORIUS_CERTIFICATE_SIGNING_KEY", "")
+        key = str(key_text).encode("utf-8")
+    if not key:
+        raise RuntimeError("certificate signing key is required")
+    return key
 
 
 def compute_model_hash(model_paths: Iterable[str | Path]) -> str:
@@ -213,38 +248,115 @@ def make_certificate(
         "closure_tier": None if closure_tier in (None, "") else str(closure_tier),
         "reliability_feature_basis": dict(reliability_feature_basis or {}),
     }
-    payload["certificate_hash"] = _sha256_bytes(_canonical_bytes(payload))
+    payload["certificate_hash"] = _sha256_bytes(_canonical_bytes(_certificate_hash_payload(payload)))
     return _to_json_safe(payload)
 
 
 def recompute_certificate_hash(certificate: Mapping[str, Any]) -> str:
-    payload = dict(certificate)
-    payload.pop("certificate_hash", None)
-    payload.pop("cert_hash", None)
-    return _sha256_bytes(_canonical_bytes(payload))
+    return _sha256_bytes(_canonical_bytes(_certificate_hash_payload(certificate)))
 
 
-def verify_certificate(certificate: Mapping[str, Any]) -> dict[str, Any]:
+def sign_certificate(
+    certificate: Mapping[str, Any],
+    *,
+    secret: str | bytes | None = None,
+    key_id: str | None = None,
+) -> dict[str, Any]:
+    """Attach a tamper-evident HMAC signature to a valid certificate.
+
+    This is deliberately symmetric-key signing because it is deployable in
+    local HIL/predeployment environments without a PKI. Production systems can
+    rotate the secret and key id through deployment secret management.
+    """
+
+    cert = normalize_certificate_schema(certificate)
+    verification = verify_certificate(cert)
+    if not verification["valid"]:
+        raise RuntimeError(f"cannot sign invalid certificate: {verification['reason']}")
+
+    cert["signature_algorithm"] = CERTIFICATE_SIGNATURE_ALGORITHM
+    cert["public_key_id"] = key_id or os.getenv("ORIUS_CERTIFICATE_KEY_ID", DEFAULT_CERTIFICATE_KEY_ID)
+    cert["signature"] = hmac.new(
+        _resolve_signing_secret(secret),
+        _certificate_signature_payload(cert),
+        hashlib.sha256,
+    ).hexdigest()
+    return cert
+
+
+def verify_certificate_signature(
+    certificate: Mapping[str, Any],
+    *,
+    secret: str | bytes | None = None,
+) -> dict[str, Any]:
+    cert = normalize_certificate_schema(certificate)
+    observed = cert.get("signature")
+    if observed in (None, ""):
+        return {"valid": False, "reason": "signature_missing", "expected_signature": None, "observed_signature": observed}
+    if cert.get("signature_algorithm") != CERTIFICATE_SIGNATURE_ALGORITHM:
+        return {
+            "valid": False,
+            "reason": "unsupported_signature_algorithm",
+            "expected_signature": None,
+            "observed_signature": observed,
+        }
+    try:
+        secret_bytes = _resolve_signing_secret(secret)
+    except RuntimeError:
+        return {"valid": False, "reason": "signing_key_missing", "expected_signature": None, "observed_signature": observed}
+    expected = hmac.new(secret_bytes, _certificate_signature_payload(cert), hashlib.sha256).hexdigest()
+    valid = hmac.compare_digest(str(observed), expected)
+    return {
+        "valid": bool(valid),
+        "reason": None if valid else "signature_mismatch",
+        "expected_signature": expected,
+        "observed_signature": observed,
+    }
+
+
+def verify_certificate(
+    certificate: Mapping[str, Any],
+    *,
+    require_signature: bool = False,
+    signature_secret: str | bytes | None = None,
+) -> dict[str, Any]:
     normalized = normalize_certificate_schema(certificate)
     observed_hash = normalized.get("certificate_hash")
     expected_hash = recompute_certificate_hash(certificate)
     if observed_hash != expected_hash:
         expected_hash = recompute_certificate_hash(normalized)
     valid = isinstance(observed_hash, str) and observed_hash == expected_hash
+    signature_verification = None
+    has_signature = normalized.get("signature") not in (None, "")
+    if valid and (has_signature or require_signature):
+        signature_verification = verify_certificate_signature(normalized, secret=signature_secret)
+        valid = bool(signature_verification["valid"])
     return {
         "valid": bool(valid),
         "observed_hash": observed_hash,
         "expected_hash": expected_hash,
-        "reason": None if valid else "hash_mismatch",
+        "signature": signature_verification,
+        "reason": None if valid else (
+            str(signature_verification["reason"]) if signature_verification is not None else "hash_mismatch"
+        ),
     }
 
 
-def verify_certificate_chain(certificates: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
+def verify_certificate_chain(
+    certificates: Iterable[Mapping[str, Any]],
+    *,
+    require_signature: bool = False,
+    signature_secret: str | bytes | None = None,
+) -> dict[str, Any]:
     checked = 0
     previous_hash: str | None = None
     for index, certificate in enumerate(certificates):
         normalized = normalize_certificate_schema(certificate)
-        verification = verify_certificate(certificate)
+        verification = verify_certificate(
+            certificate,
+            require_signature=require_signature,
+            signature_secret=signature_secret,
+        )
         if not verification["valid"]:
             return {
                 "valid": False,

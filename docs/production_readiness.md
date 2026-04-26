@@ -8,6 +8,9 @@ Project: ORIUS
 - **Structured logging**: `ORIUS_LOG_FORMAT=json` enables JSON logs across scripts + API.  
 - **Health/Readiness probes**: `/health` and `/ready` endpoints for API; compose + k8s probes wire in.  
 - **Retries for downloads**: OPSD/SMARD/Open‑Meteo/ElectricityMaps/WattTime use shared retryable HTTP sessions.  
+- **Deployment gate**: `scripts/validate_production_readiness.py --strict` fails closed unless API keys, model-hash enforcement, signed certificate provenance, and promoted runtime surfaces are available.
+- **Certificate provenance**: DC3S certificates support `HMAC-SHA256` signatures via `ORIUS_CERTIFICATE_SIGNING_KEY`; unsigned certificates remain acceptable only for bounded research/offline validation.
+- **Model provenance**: production/staging model loading refuses pickle bundles without a sha256 sidecar or manifest before deserialization.
 
 ## Phase 2 — Operations
 - **Monitoring + alerting**: `scripts/run_monitoring.py` writes `reports/monitoring_summary.json` and can alert via `ORIUS_ALERT_WEBHOOK`.  
@@ -38,3 +41,4 @@ Project: ORIUS
 ## Notes
 - External tokens are not stored; use `.env` or environment variables.  
 - Robust dispatch uses quantile heuristics; scenario methods are optional future upgrades.  
+- Deployment-ready claims still require external environment controls, key rotation, signed model manifests, device attestation for IoT paths, and domain-specific field/HIL validation beyond the current predeployment evidence.

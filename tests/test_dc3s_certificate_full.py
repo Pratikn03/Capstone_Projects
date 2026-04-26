@@ -13,9 +13,11 @@ from orius.dc3s.certificate import (
     get_certificate,
     make_certificate,
     recompute_certificate_hash,
+    sign_certificate,
     store_certificate,
     verify_certificate,
     verify_certificate_chain,
+    verify_certificate_signature,
 )
 
 
@@ -109,6 +111,42 @@ class TestMakeCertificate:
     def test_recompute_certificate_hash_matches_original_hash(self):
         cert = _cert()
         assert recompute_certificate_hash(cert) == cert["certificate_hash"]
+
+    def test_signed_certificate_verifies_with_correct_secret(self):
+        cert = _cert()
+        signed = sign_certificate(cert, secret="test-secret-with-enough-length-123")
+
+        verification = verify_certificate(
+            signed,
+            require_signature=True,
+            signature_secret="test-secret-with-enough-length-123",
+        )
+
+        assert verification["valid"] is True
+        assert verification["signature"]["valid"] is True
+
+    def test_signed_certificate_rejects_payload_tamper(self):
+        cert = _cert()
+        signed = sign_certificate(cert, secret="test-secret-with-enough-length-123")
+        signed["safe_action"] = {"charge_mw": 99.0, "discharge_mw": 0.0}
+
+        verification = verify_certificate(
+            signed,
+            require_signature=True,
+            signature_secret="test-secret-with-enough-length-123",
+        )
+
+        assert verification["valid"] is False
+        assert verification["reason"] in {"hash_mismatch", "signature_mismatch"}
+
+    def test_signature_verification_requires_matching_secret(self):
+        cert = _cert()
+        signed = sign_certificate(cert, secret="test-secret-with-enough-length-123")
+
+        verification = verify_certificate_signature(signed, secret="wrong-secret")
+
+        assert verification["valid"] is False
+        assert verification["reason"] == "signature_mismatch"
 
     def test_verify_certificate_chain_detects_prev_hash_tamper(self):
         c1 = _cert(cmd_id="1")
