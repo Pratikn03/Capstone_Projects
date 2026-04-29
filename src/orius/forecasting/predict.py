@@ -206,7 +206,16 @@ def load_model_bundle(path: str | Path) -> Dict[str, Any]:
             bundle = pickle.load(f)
     elif path.suffix == ".pt":
         _ensure_torch()
-        bundle = _torch.load(path, map_location="cpu")
+        try:
+            bundle = _torch.load(path, map_location="cpu", weights_only=True)
+        except TypeError:
+            # Older torch versions do not expose weights_only. Hash validation
+            # above remains the fail-closed protection for production loads.
+            bundle = _torch.load(path, map_location="cpu")
+        except Exception:
+            if _model_hash_required():
+                raise
+            bundle = _torch.load(path, map_location="cpu")
     else:
         raise ValueError(f"Unsupported model format: {path.suffix}")
     bundle["_path"] = str(path)

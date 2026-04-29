@@ -4,6 +4,7 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional
 from uuid import uuid4
@@ -20,6 +21,7 @@ from orius.dc3s.certificate import (
     compute_model_hash,
     get_certificate,
     make_certificate,
+    sign_certificate,
     store_certificate,
 )
 from orius.dc3s.drift import PageHinkleyDetector
@@ -44,6 +46,26 @@ from services.api.routers.optimize import _build_robust_config, _load_cfg as _lo
 from services.api.security import get_api_key, verify_scope
 
 router = APIRouter()
+
+
+def _truthy_env(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _sign_certificate_if_configured(certificate: Dict[str, Any]) -> Dict[str, Any]:
+    """Sign release certificates when a signing key is configured.
+
+    Research/test runs may still emit unsigned certificates, but deployment-like
+    runs can force fail-closed behavior with ORIUS_REQUIRE_CERT_SIGNATURE=1.
+    """
+    if os.getenv("ORIUS_CERTIFICATE_SIGNING_KEY"):
+        return sign_certificate(certificate)
+    if _truthy_env("ORIUS_REQUIRE_CERT_SIGNATURE"):
+        raise HTTPException(
+            status_code=500,
+            detail="ORIUS_REQUIRE_CERT_SIGNATURE is set but ORIUS_CERTIFICATE_SIGNING_KEY is missing.",
+        )
+    return certificate
 
 
 class DC3SStepRequest(BaseModel):
@@ -551,6 +573,7 @@ def dc3s_step(req: DC3SStepRequest, api_key: str = Security(get_api_key)) -> DC3
             soc_tube_lower_mwh=float(ftit_state["soc_tube_lower_mwh"]),
             soc_tube_upper_mwh=float(ftit_state["soc_tube_upper_mwh"]),
         )
+        certificate = _sign_certificate_if_configured(certificate)
         store_certificate(certificate, duckdb_path=audit_path, table_name=audit_table)
         queued = False
         queue_status: Literal["queued", "skipped", "failed"] = "skipped"
