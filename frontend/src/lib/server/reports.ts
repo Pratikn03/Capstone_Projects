@@ -75,15 +75,18 @@ const ALLOWED_TARGETS = new Set(['load_mw', 'wind_mw', 'solar_mw']);
 const ALLOWED_MODELS = new Set(['gbm', 'lstm', 'tcn']);
 
 function resolveRepoRoot(): string {
+  let current = process.cwd();
+  for (let depth = 0; depth < 8; depth += 1) {
+    if (existsSync(path.join(current, 'reports')) && existsSync(path.join(current, 'data'))) {
+      return current;
+    }
+    const parent = path.dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+
   const cwd = process.cwd();
-  if (existsSync(path.join(cwd, 'configs'))) {
-    return cwd;
-  }
-  const parent = path.resolve(cwd, '..');
-  if (existsSync(path.join(parent, 'configs'))) {
-    return parent;
-  }
-  return cwd;
+  return path.basename(cwd) === 'frontend' ? path.resolve(cwd, '..') : cwd;
 }
 
 const REPO_ROOT = resolveRepoRoot();
@@ -93,12 +96,7 @@ export function resolveReportsDir(): string {
   if (configured) {
     return path.resolve(configured);
   }
-  const cwd = process.cwd();
-  const localReports = path.resolve(cwd, 'reports');
-  if (existsSync(localReports)) {
-    return localReports;
-  }
-  return path.resolve(cwd, '..', 'reports');
+  return path.join(REPO_ROOT, 'reports');
 }
 
 function toNumber(value: string | undefined): number | null {

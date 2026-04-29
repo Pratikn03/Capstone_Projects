@@ -9,53 +9,8 @@ import { useReportsData } from '@/lib/api/reports-client';
 import { useRegion } from '@/components/ui/RegionContext';
 import Link from 'next/link';
 
-const fallbackReportsList = [
-  {
-    title: 'Formal Evaluation Report',
-    description: 'Comprehensive ML model evaluation with walk-forward validation and conformal PI coverage.',
-    date: '2026-02-07',
-    type: 'PDF',
-    path: '',
-  },
-  {
-    title: 'Walk-Forward Backtest',
-    description: 'Rolling 7-day backtest across all targets (load, wind, solar) with 50-epoch models.',
-    date: '2026-02-07',
-    type: 'JSON',
-    path: '',
-  },
-  {
-    title: 'Dispatch Validation',
-    description: 'Cost-carbon trade-off analysis with Pareto frontier and battery optimization results.',
-    date: '2026-02-06',
-    type: 'Markdown',
-    path: '',
-  },
-  {
-    title: 'Data Quality Report',
-    description: 'Missing data analysis, outlier detection, and feature completeness for OPSD + EIA-930.',
-    date: '2026-02-05',
-    type: 'Markdown',
-    path: '',
-  },
-  {
-    title: 'Model Cards',
-    description: 'Per-target model cards with architecture, hyperparameters, and fairness/bias analysis.',
-    date: '2026-02-07',
-    type: 'Markdown',
-    path: '',
-  },
-  {
-    title: 'Monitoring & Drift Report',
-    description: 'KS-statistic drift monitoring, rolling RMSE degradation, and retraining triggers.',
-    date: '2026-02-07',
-    type: 'PDF',
-    path: '',
-  },
-];
-
 export default function ReportsPage() {
-  const { metrics, metricsBacktest, metricsSource, impact, reports, regions, meta } = useReportsData();
+  const { metrics, metricsBacktest, metricsSource, impact, reports, regions, meta, loading, error } = useReportsData();
   const { region } = useRegion();
   const [dataset, setDataset] = useState<'ALL' | 'DE' | 'US'>(region === 'DE' || region === 'US' ? region : 'ALL');
 
@@ -67,9 +22,7 @@ export default function ReportsPage() {
     regionData?.reports?.length
       ? regionData.reports
       : dataset === 'ALL'
-      ? reports.length
-        ? reports
-        : fallbackReportsList
+      ? reports
       : [];
   const displayPath = (path: string | undefined) => {
     if (!path) return '';
@@ -101,23 +54,26 @@ export default function ReportsPage() {
     : null;
   const bestR2 = loadMetrics.map((m) => m.r2).filter((v): v is number => v !== undefined);
   const coverage90 = loadMetrics.map((m) => m.coverage_90).find((v) => v !== undefined);
-  const carbonReductionPct = impactActive?.carbon_reduction_pct ?? 32.6;
+  const carbonReductionPct = impactActive?.carbon_reduction_pct ?? null;
   const carbonTons =
     impactActive?.carbon_reduction_kg !== null && impactActive?.carbon_reduction_kg !== undefined
       ? impactActive.carbon_reduction_kg / 1000
-      : 47.8;
+      : null;
   const activeMeta = regionData?.meta ?? meta;
-  const isDemo = activeMeta.source !== 'reports' || !list.length;
-  const sourceLabel = isDemo ? 'demo' : dataset === 'US' ? 'reports/eia930' : 'reports/';
-  const lastUpdated = !isDemo && activeMeta.last_updated ? ` • Updated ${activeMeta.last_updated}` : '';
+  const isMissing = !loading && (activeMeta.source !== 'reports' || !list.length);
+  const sourceLabel = loading ? 'loading artifacts' : isMissing ? 'missing artifacts' : dataset === 'US' ? 'reports/eia930' : 'reports/';
+  const lastUpdated = !loading && !isMissing && activeMeta.last_updated ? ` • Updated ${activeMeta.last_updated}` : '';
+  const reportsCountLabel = loading && !list.length ? 'Loading reports' : `${list.length} reports`;
   const metricsLabel =
-    metricsSourceActive === 'week2_metrics'
+    loading && !metricsActive.length
+      ? 'Loading artifact metrics'
+      : metricsSourceActive === 'week2_metrics'
       ? 'Training metrics (week2_metrics.json)'
       : metricsSourceActive === 'publication_table'
       ? 'Publication metrics (table3_forecast_metrics_us.csv)'
       : metricsSourceActive === 'forecast_point_metrics'
       ? 'Backtest metrics (forecast_point_metrics.csv)'
-      : 'Demo metrics';
+      : 'Missing artifact metrics';
   const formatMaybe = (value: number | undefined, digits: number) => (value === undefined ? 'N/A' : value.toFixed(digits));
   const trainingRows = dataset === 'ALL'
     ? Object.values(regions)
@@ -152,7 +108,7 @@ export default function ReportsPage() {
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <FileText className="w-4 h-4" />
             <span>
-              {list.length} reports • Source: {sourceLabel}
+              {reportsCountLabel} • Source: {sourceLabel}
               {lastUpdated}
             </span>
           </div>
@@ -174,29 +130,29 @@ export default function ReportsPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KPICard
           label="Best RMSE"
-          value={bestLoad ? bestLoad.rmse.toFixed(0) : 'N/A'}
+          value={bestLoad ? bestLoad.rmse.toFixed(0) : loading ? '...' : 'N/A'}
           unit={bestLoad ? 'MW' : undefined}
           icon={<BarChart3 className="w-4 h-4 text-energy-info" />}
           color="info"
         />
         <KPICard
           label="Best R²"
-          value={bestR2.length ? Math.max(...bestR2).toFixed(3) : 'N/A'}
+          value={bestR2.length ? Math.max(...bestR2).toFixed(3) : loading ? '...' : 'N/A'}
           icon={<TrendingUp className="w-4 h-4 text-energy-primary" />}
           color="primary"
         />
         <KPICard
           label="90% PI Coverage"
-          value={coverage90 !== undefined ? coverage90.toFixed(1) : 'N/A'}
+          value={coverage90 !== undefined ? coverage90.toFixed(1) : loading ? '...' : 'N/A'}
           unit={coverage90 !== undefined ? '%' : undefined}
           icon={<Zap className="w-4 h-4 text-energy-warn" />}
           color="warn"
         />
         <KPICard
           label="Carbon Saved"
-          value={carbonTons.toFixed(0)}
-          unit="tCO₂"
-          change={carbonReductionPct}
+          value={carbonTons !== null ? carbonTons.toFixed(0) : loading ? '...' : 'N/A'}
+          unit={carbonTons !== null ? 'tCO₂' : undefined}
+          change={carbonReductionPct ?? undefined}
           icon={<Leaf className="w-4 h-4 text-energy-primary" />}
           color="primary"
         />
@@ -206,10 +162,18 @@ export default function ReportsPage() {
       <Panel
         title="Generated Reports"
         subtitle="Auto-generated from pipeline runs"
-        badge={`${list.length} reports`}
+        badge={reportsCountLabel}
         badgeColor="info"
       >
         <div className="space-y-4">
+          {loading && !list.length && (
+            <div className="px-4 py-6 text-sm text-slate-400">Loading artifact reports...</div>
+          )}
+          {!loading && !list.length && (
+            <div className="px-4 py-6 text-sm text-slate-400">
+              No artifact reports loaded{error ? `: ${error}` : '.'}
+            </div>
+          )}
           {groupOrder.map((group) => (
             <div key={group} className="space-y-2">
               <div className="text-[10px] uppercase tracking-wider text-slate-500 px-2">
@@ -281,20 +245,28 @@ export default function ReportsPage() {
               </tr>
             </thead>
             <tbody>
-              {metricsActive.map((m, i) => (
-                <tr key={i} className="border-b border-white/5 hover:bg-white/3 transition-colors">
-                  <td className="py-2.5 px-3 text-white">
-                    {m.target === 'load_mw' ? '⚡ Load' : m.target === 'wind_mw' ? '💨 Wind' : '☀️ Solar'}
-                  </td>
-                  <td className="py-2.5 px-3 text-slate-300">{m.model}</td>
-                  <td className="py-2.5 px-3 text-right font-mono text-white">{m.rmse.toFixed(1)}</td>
-                  <td className="py-2.5 px-3 text-right font-mono text-slate-300">{m.mae.toFixed(1)}</td>
-                  <td className="py-2.5 px-3 text-right font-mono text-energy-primary">{formatMaybe(m.r2, 3)}</td>
-                  <td className="py-2.5 px-3 text-right font-mono text-energy-info">
-                    {m.coverage_90 === undefined ? 'N/A' : `${m.coverage_90.toFixed(1)}%`}
+              {metricsActive.length ? (
+                metricsActive.map((m, i) => (
+                  <tr key={i} className="border-b border-white/5 hover:bg-white/3 transition-colors">
+                    <td className="py-2.5 px-3 text-white">
+                      {m.target === 'load_mw' ? '⚡ Load' : m.target === 'wind_mw' ? '💨 Wind' : '☀️ Solar'}
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-300">{m.model}</td>
+                    <td className="py-2.5 px-3 text-right font-mono text-white">{m.rmse.toFixed(1)}</td>
+                    <td className="py-2.5 px-3 text-right font-mono text-slate-300">{m.mae.toFixed(1)}</td>
+                    <td className="py-2.5 px-3 text-right font-mono text-energy-primary">{formatMaybe(m.r2, 3)}</td>
+                    <td className="py-2.5 px-3 text-right font-mono text-energy-info">
+                      {m.coverage_90 === undefined ? 'N/A' : `${m.coverage_90.toFixed(1)}%`}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td className="py-4 px-3 text-slate-400" colSpan={6}>
+                    {loading ? 'Loading artifact metrics...' : 'No artifact metrics loaded.'}
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

@@ -107,7 +107,10 @@ async function localArtifactShadowResponse(
   const widths = uncertaintyPreview.map((row) => row.width).filter((value) => Number.isFinite(value));
 
   return NextResponse.json({
-    ok: true,
+    ok: false,
+    degraded: true,
+    evidence_status: 'shadow_only_not_certificate_backed',
+    error: 'Live DC3S backend unavailable; serving local artifact shadow only.',
     generated_at: new Date().toISOString(),
     region,
     source: 'local_artifact_shadow',

@@ -72,7 +72,7 @@ export function targetOptionsForDomain(id: DomainId): Array<{ id: string; label:
   if (id === 'HEALTHCARE') {
     return [
       { id: 'spo2_proxy', label: 'SpO₂ Proxy', icon: '🫁', unit: 'index' },
-      { id: 'forecast', label: 'Forecast', icon: '📈', unit: 'index' },
+      { id: 'forecast', label: 'Prediction', icon: '📈', unit: 'index' },
       { id: 'reliability', label: 'Reliability', icon: '📡', unit: 'w_t' },
     ];
   }

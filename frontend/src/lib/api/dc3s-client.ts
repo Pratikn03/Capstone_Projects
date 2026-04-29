@@ -10,6 +10,8 @@ export type Dc3sPreviewRow = {
 
 export type Dc3sLivePayload = {
   ok: boolean;
+  degraded?: boolean;
+  evidence_status?: 'certificate_backed' | 'shadow_only_not_certificate_backed';
   generated_at?: string;
   region?: DomainId;
   source?: 'fastapi' | 'local_artifact_shadow';
@@ -59,6 +61,13 @@ export function useDc3sLive(region: DomainId, horizon = 24, autoRefreshSeconds =
           cache: 'no-store',
         });
         const payload = (await res.json()) as Dc3sLivePayload;
+        if (payload.source === 'local_artifact_shadow' && payload.degraded) {
+          if (active) {
+            setData(payload);
+            setError(payload.error || 'Local artifact shadow only; not certificate-backed live evidence.');
+          }
+          return;
+        }
         if (!res.ok || !payload.ok) {
           throw new Error(payload.error || `DC3S API error: ${res.status}`);
         }

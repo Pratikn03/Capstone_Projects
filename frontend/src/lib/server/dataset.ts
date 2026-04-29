@@ -231,6 +231,7 @@ export type RegionDashboardData = {
   battery: BatterySchedule | null;
   pareto: ParetoPoint[];
 };
+const DOMAIN_DATA_CACHE = new Map<DomainId, { signature: string; data: RegionDashboardData }>();
 
 // ─── Path resolution ───
 
@@ -249,6 +250,7 @@ async function readJsonFile<T>(filePath: string): Promise<T | null> {
 }
 
 type CsvRow = Record<string, string>;
+const CSV_CACHE = new Map<string, { mtimeMs: number; size: number; rows: CsvRow[] }>();
 
 function resolveRepoRoot(): string {
   let current = process.cwd();
@@ -300,6 +302,20 @@ function resolveFirstExistingArtifact(candidates: string[]): {
   };
 }
 
+async function artifactSignature(filePaths: string[]): Promise<string> {
+  const parts = await Promise.all(
+    filePaths.map(async (filePath) => {
+      try {
+        const stat = await fs.stat(filePath);
+        return `${filePath}:${stat.mtimeMs}:${stat.size}`;
+      } catch {
+        return `${filePath}:missing`;
+      }
+    })
+  );
+  return parts.join('|');
+}
+
 function parseCsvLine(line: string): string[] {
   const values: string[] = [];
   let current = '';
@@ -326,11 +342,16 @@ function parseCsvLine(line: string): string[] {
 
 async function readCsvRows(filePath: string): Promise<CsvRow[]> {
   if (!existsSync(filePath)) return [];
+  const stat = await fs.stat(filePath);
+  const cached = CSV_CACHE.get(filePath);
+  if (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size) {
+    return cached.rows;
+  }
   const raw = await fs.readFile(filePath, 'utf-8');
   const lines = raw.split(/\r?\n/).filter((line) => line.trim().length > 0);
   if (lines.length < 2) return [];
   const headers = parseCsvLine(lines[0]).map((header) => header.trim());
-  return lines.slice(1).map((line) => {
+  const rows = lines.slice(1).map((line) => {
     const values = parseCsvLine(line);
     const row: CsvRow = {};
     headers.forEach((header, index) => {
@@ -338,6 +359,8 @@ async function readCsvRows(filePath: string): Promise<CsvRow[]> {
     });
     return row;
   });
+  CSV_CACHE.set(filePath, { mtimeMs: stat.mtimeMs, size: stat.size, rows });
+  return rows;
 }
 
 function asNumber(value: unknown): number | null {
@@ -489,6 +512,107 @@ function buildZScores(rows: CsvRow[], actualColumn: string, forecastColumn: stri
   });
 }
 
+type ForecastTraceSpec = {
+  target: string;
+  model: string;
+  actualColumn: string;
+  forecastColumn: string;
+};
+
+function quantile(values: number[], p: number): number | null {
+  const sorted = values.filter(Number.isFinite).sort((a, b) => a - b);
+  if (!sorted.length) return null;
+  const index = Math.min(sorted.length - 1, Math.max(0, Math.ceil(p * sorted.length) - 1));
+  return sorted[index] ?? null;
+}
+
+function rowTimestamp(row: CsvRow, index: number): string {
+  return row.timestamp || row.ts_utc || row.step_index || row.trace_id || row.sample_id || String(index);
+}
+
+function buildForecastTrace(rows: CsvRow[], spec: ForecastTraceSpec): ForecastPoint[] {
+  const sampled = sampleRows(rows, 500);
+  const base = sampled.map((row, index) => {
+    const actual = asNumber(row[spec.actualColumn]);
+    const forecast = asNumber(row[spec.forecastColumn]) ?? actual;
+    if (actual === null || forecast === null) return null;
+    return {
+      timestamp: rowTimestamp(row, index),
+      actual,
+      forecast,
+    };
+  }).filter((row): row is Pick<ForecastPoint, 'timestamp' | 'actual' | 'forecast'> => row !== null);
+
+  const absoluteResiduals = base.map((row) => Math.abs(row.actual - row.forecast));
+  const values = base.flatMap((row) => [row.actual, row.forecast]);
+  const spread = values.length ? Math.max(...values) - Math.min(...values) : 0;
+  const meanMagnitude = values.length ? values.reduce((sum, value) => sum + Math.abs(value), 0) / values.length : 0;
+  const fallbackBand = Math.max(spread * 0.05, meanMagnitude * 0.01, 0.01);
+  const band90 = quantile(absoluteResiduals, 0.9) || fallbackBand;
+  const band50 = quantile(absoluteResiduals, 0.5) || band90 * 0.5;
+
+  return base.map((row) => ({
+    ...row,
+    lower_90: row.forecast - band90,
+    upper_90: row.forecast + band90,
+    lower_50: row.forecast - band50,
+    upper_50: row.forecast + band50,
+  }));
+}
+
+function buildForecastMetric(spec: ForecastTraceSpec, series: ForecastPoint[], featureCount: number): ModelMetric | null {
+  if (!series.length) return null;
+  const residuals = series.map((point) => point.actual - point.forecast);
+  const absoluteResiduals = residuals.map(Math.abs);
+  const mse = residuals.reduce((sum, residual) => sum + residual ** 2, 0) / residuals.length;
+  const mae = absoluteResiduals.reduce((sum, residual) => sum + residual, 0) / absoluteResiduals.length;
+  const nonZeroActuals = series.filter((point) => Math.abs(point.actual) > 1e-9);
+  const mape = nonZeroActuals.length
+    ? (nonZeroActuals.reduce((sum, point) => sum + Math.abs((point.actual - point.forecast) / point.actual), 0) / nonZeroActuals.length) * 100
+    : null;
+  const smape = series.length
+    ? (series.reduce((sum, point) => {
+        const denominator = (Math.abs(point.actual) + Math.abs(point.forecast)) / 2;
+        return denominator > 1e-9 ? sum + Math.abs(point.actual - point.forecast) / denominator : sum;
+      }, 0) / series.length) * 100
+    : null;
+  const actualMean = series.reduce((sum, point) => sum + point.actual, 0) / series.length;
+  const sst = series.reduce((sum, point) => sum + (point.actual - actualMean) ** 2, 0);
+  const sse = residuals.reduce((sum, residual) => sum + residual ** 2, 0);
+  const covered = series.filter(
+    (point) =>
+      typeof point.lower_90 === 'number' &&
+      typeof point.upper_90 === 'number' &&
+      point.actual >= point.lower_90 &&
+      point.actual <= point.upper_90
+  ).length;
+
+  return {
+    target: spec.target,
+    model: spec.model,
+    rmse: Math.sqrt(mse),
+    mae,
+    mape,
+    smape,
+    r2: sst > 0 ? 1 - sse / sst : 1,
+    coverage_90: (covered / series.length) * 100,
+    n_features: featureCount,
+    residual_q10: quantile(residuals, 0.1) ?? undefined,
+    residual_q50: quantile(residuals, 0.5) ?? undefined,
+    residual_q90: quantile(residuals, 0.9) ?? undefined,
+  };
+}
+
+function buildForecastMetrics(
+  forecast: Record<string, ForecastPoint[]>,
+  specs: ForecastTraceSpec[],
+  featureCount: number
+): ModelMetric[] {
+  return specs
+    .map((spec) => buildForecastMetric(spec, forecast[spec.target] ?? [], featureCount))
+    .filter((metric): metric is ModelMetric => metric !== null);
+}
+
 async function loadAvDomainData(): Promise<RegionDashboardData> {
   const traceArtifact = resolveFirstExistingArtifact([
     'reports/orius_av/nuplan_bounded/runtime_traces.csv',
@@ -498,6 +622,10 @@ async function loadAvDomainData(): Promise<RegionDashboardData> {
     'reports/orius_av/nuplan_bounded/runtime_summary.csv',
     'reports/orius_av/full_corpus/runtime_summary.csv',
   ]);
+  const signature = await artifactSignature([traceArtifact.fullPath, summaryArtifact.fullPath]);
+  const cached = DOMAIN_DATA_CACHE.get('AV');
+  if (cached?.signature === signature) return cached.data;
+
   const [traceRows, summaryRows] = await Promise.all([
     readCsvRows(traceArtifact.fullPath),
     readCsvRows(summaryArtifact.fullPath),
@@ -507,8 +635,31 @@ async function loadAvDomainData(): Promise<RegionDashboardData> {
   const sampled = sampleRows(rows, 500);
   const targetColumns = ['true_margin', 'observed_margin', 'safe_acceleration_mps2', 'reliability_w'];
   const warnings = [...traceArtifact.warnings, ...summaryArtifact.warnings];
+  const forecastSpecs: ForecastTraceSpec[] = [
+    {
+      target: 'true_margin',
+      model: 'Observed margin trace',
+      actualColumn: 'true_margin',
+      forecastColumn: 'observed_margin',
+    },
+    {
+      target: 'safe_acceleration_mps2',
+      model: 'Candidate acceleration trace',
+      actualColumn: 'safe_acceleration_mps2',
+      forecastColumn: 'candidate_acceleration_mps2',
+    },
+    {
+      target: 'reliability_w',
+      model: 'Runtime reliability trace',
+      actualColumn: 'reliability_w',
+      forecastColumn: 'reliability_w',
+    },
+  ];
+  const forecast = Object.fromEntries(
+    forecastSpecs.map((spec) => [spec.target, buildForecastTrace(rows, spec)])
+  );
 
-  return {
+  const data: RegionDashboardData = {
     domain_id: 'AV',
     domain_label: 'Autonomous Vehicles',
     source_artifacts: [summaryArtifact.relPath, traceArtifact.relPath],
@@ -533,16 +684,13 @@ async function loadAvDomainData(): Promise<RegionDashboardData> {
       tertiary_label: 'Reliability',
       source_index: row.trace_id,
     })),
-    forecast: {
-      true_margin: sampled.map((row) => ({
-        timestamp: row.step_index || row.trace_id,
-        actual: asNumber(row.true_margin) ?? 0,
-        forecast: asNumber(row.observed_margin) ?? asNumber(row.true_margin) ?? 0,
-      })),
-    },
+    forecast,
     dispatch: [],
     profiles: {},
-    metrics: runtimeMetrics(summaryRows, targetColumns.length),
+    metrics: [
+      ...buildForecastMetrics(forecast, forecastSpecs, targetColumns.length),
+      ...runtimeMetrics(summaryRows, targetColumns.length),
+    ],
     impact: null,
     registry: [],
     monitoring: {
@@ -567,6 +715,8 @@ async function loadAvDomainData(): Promise<RegionDashboardData> {
     battery: null,
     pareto: [],
   };
+  DOMAIN_DATA_CACHE.set('AV', { signature, data });
+  return data;
 }
 
 async function loadHealthcareDomainData(): Promise<RegionDashboardData> {
@@ -579,6 +729,10 @@ async function loadHealthcareDomainData(): Promise<RegionDashboardData> {
     'reports/healthcare/runtime_summary.csv',
     'reports/healthcare/runtime_comparator_summary.csv',
   ]);
+  const signature = await artifactSignature([denseArtifact.fullPath, summaryArtifact.fullPath]);
+  const cached = DOMAIN_DATA_CACHE.get('HEALTHCARE');
+  if (cached?.signature === signature) return cached.data;
+
   const [denseRows, summaryRows] = await Promise.all([
     readCsvRows(denseArtifact.fullPath),
     readCsvRows(summaryArtifact.fullPath),
@@ -586,8 +740,31 @@ async function loadHealthcareDomainData(): Promise<RegionDashboardData> {
   const sampled = sampleRows(denseRows, 500);
   const targetColumns = ['target', 'forecast', 'reliability'];
   const warnings = [...denseArtifact.warnings, ...summaryArtifact.warnings];
+  const forecastSpecs: ForecastTraceSpec[] = [
+    {
+      target: 'spo2_proxy',
+      model: 'SpO2 proxy forecast trace',
+      actualColumn: 'target',
+      forecastColumn: 'forecast',
+    },
+    {
+      target: 'forecast',
+      model: 'SpO2 prediction trace',
+      actualColumn: 'target',
+      forecastColumn: 'forecast',
+    },
+    {
+      target: 'reliability',
+      model: 'Runtime reliability trace',
+      actualColumn: 'reliability',
+      forecastColumn: 'reliability',
+    },
+  ];
+  const forecast = Object.fromEntries(
+    forecastSpecs.map((spec) => [spec.target, buildForecastTrace(denseRows, spec)])
+  );
 
-  return {
+  const data: RegionDashboardData = {
     domain_id: 'HEALTHCARE',
     domain_label: 'Healthcare Monitoring',
     source_artifacts: [denseArtifact.relPath, summaryArtifact.relPath],
@@ -612,16 +789,13 @@ async function loadHealthcareDomainData(): Promise<RegionDashboardData> {
       tertiary_label: 'Reliability',
       source_index: row.sample_id,
     })),
-    forecast: {
-      spo2_proxy: sampled.map((row) => ({
-        timestamp: row.timestamp,
-        actual: asNumber(row.target) ?? 0,
-        forecast: asNumber(row.forecast) ?? asNumber(row.target) ?? 0,
-      })),
-    },
+    forecast,
     dispatch: [],
     profiles: {},
-    metrics: runtimeMetrics(summaryRows, targetColumns.length),
+    metrics: [
+      ...buildForecastMetrics(forecast, forecastSpecs, targetColumns.length),
+      ...runtimeMetrics(summaryRows, targetColumns.length),
+    ],
     impact: null,
     registry: [],
     monitoring: {
@@ -646,6 +820,8 @@ async function loadHealthcareDomainData(): Promise<RegionDashboardData> {
     battery: null,
     pareto: [],
   };
+  DOMAIN_DATA_CACHE.set('HEALTHCARE', { signature, data });
+  return data;
 }
 
 // ─── Public API ───

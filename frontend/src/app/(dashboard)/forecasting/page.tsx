@@ -19,6 +19,12 @@ export default function ForecastingPage() {
   const batteryDomain = isBatteryDomain(region);
   const { metrics, regions } = useReportsData();
   const dataset = useDatasetData(region);
+  const selectedTargetOption = targetOptions.find((target) => target.id === selectedTarget);
+  const selectedUnit = selectedTargetOption?.unit ?? currentDomain.primaryUnit;
+
+  useEffect(() => {
+    setSelectedTarget(currentDomain.primaryTarget);
+  }, [currentDomain.primaryTarget, region]);
 
   useEffect(() => {
     if (!targetOptions.some((target) => target.id === selectedTarget)) {
@@ -35,17 +41,15 @@ export default function ForecastingPage() {
   const formatMaybe = (value: number | undefined | null, digits: number) =>
     value === undefined || value === null ? 'N/A' : value.toFixed(digits);
 
-  const selectedMetrics = metricsActive.filter((m) => m.target === selectedTarget);
-  const bestMetric = selectedMetrics.length
-    ? selectedMetrics.reduce((a, b) => (a.rmse < b.rmse ? a : b))
-    : null;
-
   // All models for the selected target (prefer real metrics)
   const realTargetMetrics = realMetrics.filter((m) => m.target === selectedTarget);
   const displayMetrics: Array<{ target: string; model: string; rmse: number; mae: number; mape?: number | null; r2?: number; coverage_90?: number }> =
     realTargetMetrics.length
       ? realTargetMetrics
       : metricsActive.filter((m) => m.target === selectedTarget);
+  const bestMetric = displayMetrics.length
+    ? displayMetrics.reduce((a, b) => (a.rmse < b.rmse ? a : b))
+    : null;
   const statusMessages = [
     dataset.error ? `Dataset view error: ${dataset.error}` : null,
     ...(dataset.artifact_warnings ?? []),
@@ -124,12 +128,13 @@ export default function ForecastingPage() {
         data={forecastData.length ? forecastData : undefined}
         target={selectedTarget}
         zoneId={region}
-        unit={targetOptions.find((target) => target.id === selectedTarget)?.unit}
+        unit={selectedUnit}
         metrics={
           bestMetric
             ? { rmse: bestMetric.rmse, coverage_90: bestMetric.coverage_90, model: bestMetric.model }
             : undefined
         }
+        loading={dataset.loading}
       />
 
       {/* Metrics table */}
@@ -139,8 +144,8 @@ export default function ForecastingPage() {
             <thead>
               <tr className="border-b border-white/10">
                 <th className="text-left py-2 px-3 text-slate-500 font-medium">Model</th>
-                <th className="text-right py-2 px-3 text-slate-500 font-medium">RMSE (MW)</th>
-                <th className="text-right py-2 px-3 text-slate-500 font-medium">MAE (MW)</th>
+                <th className="text-right py-2 px-3 text-slate-500 font-medium">RMSE{selectedUnit ? ` (${selectedUnit})` : ''}</th>
+                <th className="text-right py-2 px-3 text-slate-500 font-medium">MAE{selectedUnit ? ` (${selectedUnit})` : ''}</th>
                 <th className="text-right py-2 px-3 text-slate-500 font-medium">MAPE (%)</th>
                 <th className="text-right py-2 px-3 text-slate-500 font-medium">R²</th>
                 <th className="text-right py-2 px-3 text-slate-500 font-medium">90% PICP</th>

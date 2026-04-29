@@ -108,7 +108,7 @@ export function DC3SLiveCard({
   auditHref,
 }: DC3SLiveCardProps) {
   const rows = data.uncertainty_preview ?? [];
-  const sourceLabel = data.source === 'local_artifact_shadow' ? 'Artifact shadow' : 'FastAPI live';
+  const sourceLabel = data.source === 'local_artifact_shadow' ? 'Artifact shadow (not live evidence)' : 'FastAPI live';
 
   return (
     <Panel

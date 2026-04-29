@@ -49,13 +49,17 @@ export function useDatasetData(region: DomainId) {
     async function load() {
       setLoading(true);
       setError(null);
+      setData(EMPTY);
       try {
         const res = await fetch(`/api/data?region=${region}`, { cache: 'no-store' });
         if (!res.ok) throw new Error(`Data API error: ${res.status}`);
         const payload = (await res.json()) as RegionDashboardData;
         if (active) setData(payload);
       } catch (err) {
-        if (active) setError(err instanceof Error ? err.message : String(err));
+        if (active) {
+          setData(EMPTY);
+          setError(err instanceof Error ? err.message : String(err));
+        }
       } finally {
         if (active) setLoading(false);
       }

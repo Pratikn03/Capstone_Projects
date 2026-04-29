@@ -13,7 +13,7 @@ export function TopBar() {
   const { notifications: ctxNotifs, dismiss: ctxDismiss } = useNotifications();
   const [showRegions, setShowRegions] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [nowUtc, setNowUtc] = useState(() => new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC');
+  const [nowUtc, setNowUtc] = useState('-- UTC');
   const currentRegion = DOMAIN_OPTIONS.find((r) => r.id === region) || DOMAIN_OPTIONS[0];
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -30,6 +30,7 @@ export function TopBar() {
     }));
 
   useEffect(() => {
+    setNowUtc(new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC');
     const timer = window.setInterval(() => {
       setNowUtc(new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC');
     }, 1000);

@@ -17,6 +17,7 @@ interface ForecastChartProps {
     coverage_90?: number;
     model?: string;
   };
+  loading?: boolean;
 }
 
 const targetNames: Record<string, string> = {
@@ -27,7 +28,7 @@ const targetNames: Record<string, string> = {
   safe_acceleration_mps2: 'Safe Acceleration',
   reliability_w: 'Reliability',
   spo2_proxy: 'SpO₂ Proxy',
-  forecast: 'Forecast',
+  forecast: 'SpO₂ Prediction',
   reliability: 'Reliability',
 };
 
@@ -73,10 +74,11 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export function ForecastChart({ data: dataProp, target, zoneId, unit = target.endsWith('_mw') ? 'MW' : '', metrics }: ForecastChartProps) {
+export function ForecastChart({ data: dataProp, target, zoneId, unit = target.endsWith('_mw') ? 'MW' : '', metrics, loading = false }: ForecastChartProps) {
   const data = dataProp?.length ? dataProp.map((row) => ({ ...row, unit })) : [];
   const color = targetColors[target] || '#10b981';
   const name = targetNames[target] || target;
+  const title = /\b(forecast|prediction)\b/i.test(name) ? `${name} — ${zoneId}` : `${name} Forecast — ${zoneId}`;
   const horizonHours = data.length;
   const coverage = metrics?.coverage_90;
   const rmse = metrics?.rmse;
@@ -99,7 +101,7 @@ export function ForecastChart({ data: dataProp, target, zoneId, unit = target.en
       <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/6">
         <div className="flex items-center gap-3">
           <h3 className="text-sm font-semibold text-white">
-            {name} Forecast — {zoneId}
+            {title}
           </h3>
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-energy-info/10 text-energy-info border border-energy-info/20">
             90% PI
@@ -171,6 +173,10 @@ export function ForecastChart({ data: dataProp, target, zoneId, unit = target.en
               />
             </AreaChart>
           </ResponsiveContainer>
+        ) : loading ? (
+          <div className="flex h-full items-center justify-center text-xs text-slate-500">
+            Loading artifact forecast trace...
+          </div>
         ) : (
           <div className="flex h-full items-center justify-center text-xs text-slate-500">
             No forecast trace available for this view.
@@ -194,7 +200,7 @@ export function ForecastChart({ data: dataProp, target, zoneId, unit = target.en
           </span>
         </span>
         <span>•</span>
-        <span>{data.length ? (hasPredictionIntervals ? 'Coverage verified with conformal prediction' : 'Real artifact actual-vs-forecast trace') : 'Chart hidden until artifact data is available'}</span>
+        <span>{data.length ? (hasPredictionIntervals ? 'Coverage verified with conformal prediction' : 'Real artifact actual-vs-forecast trace') : loading ? 'Loading artifact data' : 'Chart hidden until artifact data is available'}</span>
       </div>
     </motion.div>
   );
