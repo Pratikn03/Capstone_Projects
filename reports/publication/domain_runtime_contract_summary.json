@@ -1,0 +1,24 @@
+{
+  "domains": {
+    "av": {
+      "certificate_valid_rate": 0.9999242376742533,
+      "contract_id": "AV.T11.brake_hold_runtime_lemma",
+      "n_steps": 1531104,
+      "postcondition_pass_rate": 0.9998373722490438,
+      "scope_note": "Bounded runtime lemma for promoted ORIUS AV replay rows: T11 forward obligations plus the true brake-hold postcondition in the longitudinal runtime trace.",
+      "t11_pass_rate": 1.0,
+      "witness_pass_rate": 0.9998373722490438
+    },
+    "healthcare": {
+      "certificate_valid_rate": 1.0,
+      "contract_id": "HC.T11.fail_safe_release_runtime_lemma",
+      "n_steps": 137262,
+      "postcondition_pass_rate": 1.0,
+      "scope_note": "Bounded runtime lemma for promoted ORIUS healthcare monitoring rows: T11 forward obligations plus the true fail-safe alert-release postcondition in the MIMIC monitoring trace.",
+      "t11_pass_rate": 1.0,
+      "witness_pass_rate": 1.0
+    }
+  },
+  "scope_note": "Battery remains the deepest witness row. AV and healthcare are bounded runtime-lemma rows under forward-only T11.",
+  "source_theorem": "T11"
+}

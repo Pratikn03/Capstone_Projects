@@ -285,11 +285,11 @@
   },
   "dc3s_health": {
     "window_hours": 24,
-    "commands_total": 11,
-    "intervention_rate": 1.0,
-    "low_reliability_rate": 1.0,
+    "commands_total": 0,
+    "intervention_rate": 0.0,
+    "low_reliability_rate": 0.0,
     "drift_flag_rate": 0.0,
-    "inflation_p95": 1.475,
+    "inflation_p95": 0.0,
     "triggered_flags": [],
     "triggered": false,
     "insufficient_data": true,
@@ -299,17 +299,14 @@
       "low_reliability_rate": 0,
       "drift_flag_rate": 0,
       "inflation_p95": 0
-    },
-    "top_intervention_reasons": [
-      "projection_clip"
-    ]
+    }
   },
   "retraining": {
     "retrain": true,
     "reasons": [
       "data_drift"
     ],
-    "last_trained_days_ago": 2
+    "last_trained_days_ago": 7
   }
 }
 ```

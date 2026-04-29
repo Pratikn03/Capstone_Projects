@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-04-26T00:54:36.525107+00:00",
+  "generated_at_utc": "2026-04-26T17:54:06.701337+00:00",
   "status": "nuplan_full_freeze_pass",
   "pass": true,
   "summary": "/Volumes/T9/gridpulse/reports/predeployment_external_validation/nuplan_closed_loop_summary.csv",
@@ -27,9 +27,7 @@
   },
   "trace_stats": {
     "trace_rows_scanned": 12248832,
-    "validation_surfaces": [
-      "nuplan_allzip_grouped_runtime_replay_surrogate"
-    ],
+    "validation_surfaces": [],
     "scenario_count_scanned": 37344,
     "controllers_scanned": [
       "always_brake",

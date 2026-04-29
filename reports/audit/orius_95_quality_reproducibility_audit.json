@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-04-26",
+  "status": "improved_not_final_release_complete",
+  "scores": {
+    "artifact_hygiene": 92,
+    "reproducibility_spine": 88,
+    "api_security_coverage": 90,
+    "certificate_provenance": 90,
+    "dashboard_evidence_boundary": 90,
+    "overall_current": 89
+  },
+  "implemented_gates": [
+    "generated_artifact_policy",
+    "api_auth_coverage",
+    "reproducibility_95_gate",
+    "certificate_sign_when_configured",
+    "production_model_hash_required",
+    "dashboard_shadow_evidence_degraded"
+  ],
+  "remaining_blockers_to_95_plus": [
+    "mutation_guarded_full_pytest_not_run_after_this_pass",
+    "large_runtime_monoliths_not_refactored",
+    "docker_base_images_not_digest_pinned",
+    "python_requirements_not_require_hashes_enforced_in_ci",
+    "final_clean_git_release_state_pending"
+  ],
+  "verification": {
+    "validate_generated_artifact_policy": "pass",
+    "validate_no_appledouble_exclude_active": "pass",
+    "validate_api_auth_coverage": "pass",
+    "validate_reproducibility_95_allow_dirty": "pass",
+    "validate_metric_consistency": "pass",
+    "validate_certificate_schema": "pass",
+    "validate_production_readiness": "pass_with_missing_secret_warnings",
+    "validate_theorem_surface": "pass",
+    "validate_paper_claims": "pass",
+    "validate_equal_domain_artifact_discipline": "pass",
+    "targeted_pytest": "pass"
+  }
+}
