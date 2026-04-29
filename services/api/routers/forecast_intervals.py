@@ -4,13 +4,14 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Security
 from pydantic import BaseModel
 
 from orius.forecasting.predict import predict_next_24h
 from orius.forecasting.uncertainty.conformal import load_conformal
 from services.api.config import load_uncertainty_config, get_conformal_path
 from services.api.routers.forecast import _load_cfg, _resolve_model_path, _cached_bundle
+from services.api.security import get_api_key, verify_scope
 
 router = APIRouter()
 
@@ -25,7 +26,9 @@ class ForecastResponse(BaseModel):
 def forecast_with_intervals(
     target: str = Query(default="load_mw"),
     horizon: int = Query(default=24, ge=1, le=168),
+    api_key: str = Security(get_api_key),
 ):
+    verify_scope("read", api_key)
     cfg = _load_cfg()
     features_path = Path(cfg.get("data", {}).get("features_path", "data/processed/features.parquet"))
     if not features_path.exists():

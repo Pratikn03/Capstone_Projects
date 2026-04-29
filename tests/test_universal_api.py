@@ -26,7 +26,7 @@ def _universal_auth(monkeypatch):
 def test_universal_domains_endpoint_exposes_framework_metadata() -> None:
     client = TestClient(app)
 
-    response = client.get("/universal/domains")
+    response = client.get("/universal/domains", headers=UNIVERSAL_HEADERS)
 
     assert response.status_code == 200, response.text
     payload = response.json()

@@ -64,7 +64,8 @@ def _build_drift_detector(cfg: Dict[str, Any], residual: float | None) -> PageHi
 
 
 @router.get("/domains", response_model=UniversalDomainsResponse)
-def universal_domains() -> UniversalDomainsResponse:
+def universal_domains(api_key: str = Security(get_api_key)) -> UniversalDomainsResponse:
+    verify_scope("read", api_key)
     return UniversalDomainsResponse(
         domains=list_domains(),
         pipeline_stages=list(PIPELINE_STAGES),

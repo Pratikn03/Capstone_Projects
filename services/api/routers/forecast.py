@@ -7,10 +7,11 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import yaml
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Security
 from pydantic import BaseModel, Field
 
 from orius.forecasting.predict import load_model_bundle, predict_next_24h
+from services.api.security import get_api_key, verify_scope
 
 router = APIRouter()
 
@@ -63,7 +64,9 @@ class ForecastResponse(BaseModel):
 def get_forecast(
     targets: Optional[str] = Query(default=None, description="Comma-separated targets"),
     horizon: int = Query(default=24, ge=1, le=168),
+    api_key: str = Security(get_api_key),
 ):
+    verify_scope("read", api_key)
     cfg = _load_cfg()
     features_path = Path(cfg.get("data", {}).get("features_path", "data/processed/features.parquet"))
     if not features_path.exists():

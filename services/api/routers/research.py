@@ -9,10 +9,11 @@ import csv
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Security
 from fastapi.responses import FileResponse
 
 from services.api.health import readiness_check
+from services.api.security import get_api_key, verify_scope
 
 router = APIRouter()
 
@@ -187,7 +188,8 @@ def _reports_response() -> dict[str, Any]:
 
 
 @router.get("/manifest")
-def research_manifest() -> dict[str, Any]:
+def research_manifest(api_key: str = Security(get_api_key)) -> dict[str, Any]:
+    verify_scope("read", api_key)
     release_manifest = _load_json(RELEASE_MANIFEST)
     return {
         "source": str(RELEASE_MANIFEST.relative_to(REPO_ROOT)),
@@ -199,7 +201,8 @@ def research_manifest() -> dict[str, Any]:
 
 
 @router.get("/region/{region}")
-def research_region(region: str) -> dict[str, Any]:
+def research_region(region: str, api_key: str = Security(get_api_key)) -> dict[str, Any]:
+    verify_scope("read", api_key)
     region = region.upper()
     if region not in {"DE", "US"}:
         raise HTTPException(status_code=400, detail="Invalid region. Use DE or US.")
@@ -221,20 +224,30 @@ def research_region(region: str) -> dict[str, Any]:
 
 
 @router.get("/reports")
-def research_reports() -> dict[str, Any]:
+def research_reports(api_key: str = Security(get_api_key)) -> dict[str, Any]:
+    verify_scope("read", api_key)
     return _reports_response()
 
 
 @router.get("/reports/file")
-def research_report_file(path: str = Query(..., description="Path relative to reports/publication")) -> FileResponse:
+def research_report_file(
+    path: str = Query(..., description="Path relative to reports/publication"),
+    api_key: str = Security(get_api_key),
+) -> FileResponse:
+    verify_scope("read", api_key)
     requested = (PUBLICATION_ROOT / path).resolve()
-    if not requested.is_file() or not str(requested).startswith(str(PUBLICATION_ROOT.resolve())):
+    try:
+        requested.relative_to(PUBLICATION_ROOT.resolve())
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Artifact not found.") from None
+    if not requested.is_file():
         raise HTTPException(status_code=404, detail="Artifact not found.")
     return FileResponse(requested, filename=requested.name)
 
 
 @router.get("/benchmark")
-def research_benchmark_summary() -> dict[str, Any]:
+def research_benchmark_summary(api_key: str = Security(get_api_key)) -> dict[str, Any]:
+    verify_scope("read", api_key)
     return {
         "main_table": _read_csv_rows(PUBLICATION_ROOT / "dc3s_main_table_ci.csv"),
         "latency": _read_csv_rows(PUBLICATION_ROOT / "dc3s_latency_summary.csv"),
@@ -243,7 +256,8 @@ def research_benchmark_summary() -> dict[str, Any]:
 
 
 @router.get("/governance")
-def research_governance_summary() -> dict[str, Any]:
+def research_governance_summary(api_key: str = Security(get_api_key)) -> dict[str, Any]:
+    verify_scope("read", api_key)
     metrics_manifest = _load_json(REPO_ROOT / "paper" / "metrics_manifest.json")
     return {
         "readiness": readiness_check(),

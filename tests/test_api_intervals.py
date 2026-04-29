@@ -2,14 +2,28 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 
 import numpy as np
 import pandas as pd
+import pytest
 from fastapi.testclient import TestClient
 
+from services.api.config import get_api_keys
 from services.api.main import app
+from services.api.security import API_KEY_NAME
 import services.api.routers.forecast_intervals as intervals
 from orius.forecasting.uncertainty.conformal import ConformalConfig, ConformalInterval
+
+HEADERS = {API_KEY_NAME: "interval-test-key"}
+
+
+@pytest.fixture(autouse=True)
+def _auth(monkeypatch):
+    monkeypatch.setenv("ORIUS_API_KEYS", json.dumps({"interval-test-key": ["read"]}))
+    get_api_keys.cache_clear()
+    yield
+    get_api_keys.cache_clear()
 
 
 def _setup_monkeypatch(monkeypatch, tmp_path: Path, horizon: int) -> None:
@@ -52,7 +66,7 @@ def _setup_monkeypatch(monkeypatch, tmp_path: Path, horizon: int) -> None:
 def test_forecast_with_intervals_success(monkeypatch, tmp_path):
     _setup_monkeypatch(monkeypatch, tmp_path, horizon=24)
     with TestClient(app) as client:
-        resp = client.get("/forecast/with-intervals?target=load_mw&horizon=24")
+        resp = client.get("/forecast/with-intervals?target=load_mw&horizon=24", headers=HEADERS)
     assert resp.status_code == 200
     payload = resp.json()
     assert len(payload["yhat"]) == 24
@@ -63,7 +77,7 @@ def test_forecast_with_intervals_success(monkeypatch, tmp_path):
 def test_forecast_with_intervals_horizon_global_fallback(monkeypatch, tmp_path):
     _setup_monkeypatch(monkeypatch, tmp_path, horizon=24)
     with TestClient(app) as client:
-        resp = client.get("/forecast/with-intervals?target=load_mw&horizon=48")
+        resp = client.get("/forecast/with-intervals?target=load_mw&horizon=48", headers=HEADERS)
     assert resp.status_code == 200
     payload = resp.json()
     assert payload["pi90_lower"][0] == -1.0

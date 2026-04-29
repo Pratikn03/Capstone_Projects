@@ -5,12 +5,25 @@ Tests health check, the canonical three supported domains, and error handling.
 """
 from __future__ import annotations
 
+import json
 import pytest
 from fastapi.testclient import TestClient
 
+from services.api.config import get_api_keys
+from services.api.security import API_KEY_NAME
 from orius.api.app import app
 
 client = TestClient(app, raise_server_exceptions=False)
+HEADERS = {API_KEY_NAME: "orius-api-test-key"}
+
+
+@pytest.fixture(autouse=True)
+def _auth(monkeypatch):
+    monkeypatch.setenv("ORIUS_API_KEYS", json.dumps({"orius-api-test-key": ["read", "write"]}))
+    monkeypatch.delenv("ORIUS_AUTH_DISABLED_FOR_TESTS", raising=False)
+    get_api_keys.cache_clear()
+    yield
+    get_api_keys.cache_clear()
 
 
 class TestHealthEndpoint:
@@ -31,7 +44,7 @@ class TestStepEndpointBasic:
             "candidate_action": candidate_action or {},
             "constraints": constraints or {},
         }
-        resp = client.post("/step", json=payload)
+        resp = client.post("/step", json=payload, headers=HEADERS)
         assert resp.status_code == 200, f"domain={domain}: {resp.text}"
         return resp.json()
 
@@ -104,7 +117,7 @@ class TestStepEndpointBasic:
                 "state": {"spo2_pct": 92.0, "hr_bpm": 70.0, "respiratory_rate": 14.0},
                 "candidate_action": {},
                 "constraints": {},
-            })
+            }, headers=HEADERS)
             assert resp.status_code == 200, f"Failed for domain='{name}'"
 
 
@@ -114,12 +127,12 @@ class TestStepEndpointErrors:
             "domain": "quantum_teleporter",
             "state": {},
             "candidate_action": {},
-        })
+        }, headers=HEADERS)
         assert resp.status_code == 400
         assert "unsupported" in resp.json()["detail"].lower()
 
     def test_missing_domain_field_returns_422(self):
-        resp = client.post("/step", json={"state": {}, "candidate_action": {}})
+        resp = client.post("/step", json={"state": {}, "candidate_action": {}}, headers=HEADERS)
         assert resp.status_code == 422
 
     def test_quantile_out_of_range_returns_422(self):
@@ -128,5 +141,5 @@ class TestStepEndpointErrors:
             "state": {"spo2_pct": 92.0, "hr_bpm": 70.0, "respiratory_rate": 14.0},
             "candidate_action": {},
             "quantile": 150.0,  # out of range [1, 99]
-        })
+        }, headers=HEADERS)
         assert resp.status_code == 422

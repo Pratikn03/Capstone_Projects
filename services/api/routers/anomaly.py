@@ -6,11 +6,12 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from fastapi import APIRouter
+from fastapi import APIRouter, Security
 from pydantic import BaseModel
 
 from orius.anomaly.detect import detect_anomalies
 from orius.forecasting.baselines import persistence_24h
+from services.api.security import get_api_key, verify_scope
 
 router = APIRouter()
 
@@ -30,7 +31,8 @@ class AnomalyResponse(BaseModel):
 
 
 @router.post("", response_model=AnomalyResponse)
-def post_anomalies(req: AnomalyRequest):
+def post_anomalies(req: AnomalyRequest, api_key: str = Security(get_api_key)):
+    verify_scope("read", api_key)
     # Key: API endpoint handler
     out = detect_anomalies(req.actual, req.forecast, req.features)
     return AnomalyResponse(
@@ -42,7 +44,8 @@ def post_anomalies(req: AnomalyRequest):
 
 
 @router.get("", response_model=AnomalyResponse)
-def get_anomalies():
+def get_anomalies(api_key: str = Security(get_api_key)):
+    verify_scope("read", api_key)
     # Use last 7 days of data with a persistence baseline to compute residuals
     features_path = "data/processed/features.parquet"
     if not Path(features_path).exists():

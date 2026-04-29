@@ -7,13 +7,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Security
 
 from orius.universal_framework.domain_registry import get_adapter
 from orius.universal_framework.pipeline import run_universal_step
 
 from .models import StepRequest, StepResponse
 from .serialization import api_jsonable
+from services.api.security import get_api_key, verify_scope
 
 app = FastAPI(
     title="ORIUS DC3S API",
@@ -44,7 +45,7 @@ def health() -> dict[str, str]:
 
 
 @app.post("/step", response_model=StepResponse)
-def step(request: StepRequest) -> StepResponse:
+def step(request: StepRequest, api_key: str = Security(get_api_key)) -> StepResponse:
     """Execute one DC3S safety step.
 
     Stages (in order):
@@ -56,6 +57,7 @@ def step(request: StepRequest) -> StepResponse:
 
     Returns the repaired safe action and a signed certificate.
     """
+    verify_scope("write", api_key)
     domain = request.domain.lower().strip()
     if domain not in _SUPPORTED_DOMAINS:
         raise HTTPException(
