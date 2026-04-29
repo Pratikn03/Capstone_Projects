@@ -113,6 +113,10 @@ def main() -> None:
     # GATE 1: Configuration files are valid
     # -------------------------------------------------------------------------
     _run([sys.executable, "scripts/validate_configs.py"], "config validation")
+    _run([sys.executable, "scripts/validate_generated_artifact_policy.py"], "generated artifact policy validation")
+    _run([sys.executable, "scripts/validate_no_appledouble.py", "--exclude-active"], "AppleDouble sidecar validation")
+    _run([sys.executable, "scripts/validate_api_auth_coverage.py"], "API auth coverage validation")
+    _run([sys.executable, "scripts/validate_reproducibility_95.py", "--allow-dirty"], "reproducibility spine validation")
     _run([sys.executable, "scripts/validate_production_readiness.py"], "production readiness validation")
     _run([sys.executable, "scripts/audit_leakage.py", "--config", "configs/publish_audit.yaml"], "leakage audit")
     _run([sys.executable, "scripts/audit_code_health.py", "--config", "configs/publish_audit.yaml"], "code health audit")

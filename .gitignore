@@ -12,6 +12,12 @@ env/
 .__*
 *.pid
 .last_*
+.ruff_cache/
+.mypy_cache/
+.hypothesis/
+.coverage*
+htmlcov/
+*.tsbuildinfo
 
 # IDE (DO NOT COMMIT)
 .idea/
@@ -47,12 +53,22 @@ data/aerospace/*
 data/aerospace/raw/*
 !data/aerospace/raw/external_sources_manifest.json
 artifacts/
+*.duckdb
+*.duckdb.wal
+*.parquet
+*.pkl
+*.pt
+*.onnx
+*.tfrecord*
 .env
 .ipynb_checkpoints
 .cache/
 .tmp/
 .playwright-mcp/
 dashboard-overview.png
+dashboard-*.png
+*-smoke.png
+*_smoke.png
 
 # Working documents (not for public)
 paper/FLAGSHIP_IMPLEMENTATION_PLAN.md
@@ -204,6 +220,12 @@ reports/**/*.pdf
 # Large local runtime traces are regenerated from release artifacts and are not
 # GitHub-safe. Keep compact summaries/witnesses tracked instead.
 reports/**/runtime_traces.csv
+reports/**/certificate_expiry_trace.csv
+reports/**/repo_file_inventory.*
+reports/**/full_folder_*.csv
+reports/**/*.duckdb
+reports/**/*.tar.gz
+reports/**/*.zip
 reports/predeployment_external_validation/nuplan_closed_loop_traces.csv
 reports/predeployment_external_validation/healthcare_site_splits/
 reports/publication/camera_ready_*

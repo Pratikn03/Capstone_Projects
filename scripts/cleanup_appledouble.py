@@ -20,6 +20,7 @@ import subprocess
 
 DEFAULT_ACTIVE_RELEASE = "PREDEPLOY_MAX_BG_20260422T122751Z"
 DEFAULT_PRUNE_PARTS = {
+    ".git",
     ".mypy_cache",
     ".playwright-mcp",
     ".pytest_cache",
