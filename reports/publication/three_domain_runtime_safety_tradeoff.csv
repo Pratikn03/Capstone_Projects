@@ -1,4 +1,4 @@
 domain,baseline_tsvr_mean,orius_tsvr_mean,absolute_delta,relative_delta,intervention_rate,fallback_activation_rate,certificate_valid_release_rate,runtime_witness_pass_rate,strict_runtime_gate,runtime_latency_p95_ms,metric_surface
 Battery Energy Storage,0.008333,0.000000,0.008333,1.000000,0.020833,0.020833,0.993056,1.000000,True,0.812,locked_publication_nominal
 Autonomous Vehicles,0.289250,0.000163,0.289087,0.999438,0.500301,0.173716,0.999924,0.999837,True,0.744,runtime_denominator
-Medical and Healthcare Monitoring,0.194489,0.000000,0.194489,1.000000,0.751009,0.497720,1.000000,1.000000,True,0.701,runtime_denominator
+Medical and Healthcare Monitoring,0.194489,0.000000,0.194489,1.000000,0.479907,0.479907,1.000000,1.000000,True,0.701,runtime_denominator

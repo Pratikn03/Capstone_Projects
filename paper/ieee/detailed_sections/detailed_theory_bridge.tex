@@ -2,10 +2,35 @@
 \section{Theorem Bridge: From Contracts to Safety}\label{sec:theory}
 
 This section presents the formal theorem programme that connects the \dcs{} runtime
-contracts to end-to-end safety guarantees.  The programme comprises a \emph{battery
-ladder} (T1--T8) proved via a concrete domain witness, and a \emph{universal
-extension} (T9--T11) that lifts the guarantees to arbitrary domains satisfying the
-adapter contract.
+contracts to end-to-end safety guarantees.  The paper-facing presentation is
+deliberately compact: four flagship theorem statements carry the argument, while
+the permanent T1--T11 identifiers remain in place for registry, appendix, and
+code-traceability purposes.  Definitions, corollaries, and propositions retain
+their audit identifiers, but they are not presented as additional headline
+theorems.  This avoids presenting the work as an inflated list of disconnected
+theorems while preserving the full audit surface used by the repository.
+
+\subsection{Headline Results and Audit Identifiers}\label{sec:headline-theorem-arc}
+
+\begin{table}[h]
+\caption{Main-paper theorem arc and permanent traceability identifiers.}
+\label{tab:headline_theorem_arc}
+\centering\small
+\begin{tabularx}{\columnwidth}{@{}p{0.25\columnwidth}p{0.21\columnwidth}X@{}}
+\toprule
+\textbf{Headline result} & \textbf{Audit IDs} & \textbf{Role in the argument}\\
+\midrule
+Observation-aware safety gap & T1 & Degraded observation can make observed-state safety disagree with true-state safety.\\
+Observation necessity & T4 & Observation-only or quality-ignorant mandatory release cannot guarantee safety on the defended ambiguity witness class.\\
+ORIUS covered release guarantee & T2, T3 & Covered uncertainty sets plus repaired release yield one-step safety and an explicit risk-envelope corollary.\\
+Typed transfer and covered optimality & T11; T10/T11 corollary & The typed ORIUS contract transfers to defended domains, with certificate/fallback discipline (T5--T8) and the covered Bayes lower/upper safety sandwich as supporting surfaces.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+T5--T10 remain visible but scoped supporting surfaces.  They are not promoted
+as additional headline theorem claims in this paper-facing draft; the generated
+theorem-promotion package remains the authority for any future promotion.
 
 \subsection{Assumptions}\label{sec:assumptions}
 
@@ -73,7 +98,7 @@ which assumptions.
 \centering\small
 \begin{tabular}{lccccccccc}
 \toprule
-\textbf{Theorem} & \textbf{A1} & \textbf{A2} & \textbf{A3} & \textbf{A4} & \textbf{A5} & \textbf{A6} & \textbf{A7} & \textbf{A8} & \textbf{A9} \\
+\textbf{Result} & \textbf{A1} & \textbf{A2} & \textbf{A3} & \textbf{A4} & \textbf{A5} & \textbf{A6} & \textbf{A7} & \textbf{A8} & \textbf{A9} \\
 \midrule
 T1 OASG Existence         &\checkmark &\checkmark &  &\checkmark &  &  &  &  &  \\
 T2 Safety Preservation    &\checkmark &\checkmark &\checkmark &  &\checkmark &  &\checkmark &  &  \\
@@ -81,7 +106,7 @@ T3 ORIUS Core Bound       &\checkmark &\checkmark &  &\checkmark &\checkmark &\c
 T4 Observation Necessity  &  &\checkmark &  &\checkmark &  &  &  &  &  \\
 T5 Certificate Validity   &  &  &  &  &\checkmark &  &\checkmark &  &  \\
 T6 Certificate Expiration &  &  &  &\checkmark &  &  &\checkmark &  &\checkmark \\
-T7 Feasible Fallback      &\checkmark &  &  &\checkmark &  &  &  &\checkmark &  \\
+T7\_Battery Fallback      &\checkmark &  &  &\checkmark &  &  &  &\checkmark &  \\
 T8 Graceful Degradation   &\checkmark &\checkmark &\checkmark &\checkmark &\checkmark &  &  &\checkmark &  \\
 T9 Universal Impossibility&  &\checkmark &  &\checkmark &  &  &  &  &  \\
 T10 Lower Bound           &  &\checkmark &  &  &\checkmark &  &  &  &  \\
@@ -164,14 +189,14 @@ Analogously for the upper bound.  Under A1, $\epsilon_{\mathrm{model}}$ is absor
 into the margin, yielding $s_{t+1} \in [\SOC_{\min}, \SOC_{\max}]$.
 \end{proof}
 
-\begin{theorem}[T3: ORIUS Core Bound]\label{thm:T3}
+\begin{corollary}[T3: ORIUS Core Risk Envelope]\label{thm:T3}
 Under A1, A2, A4--A7, the expected total violation count over horizon $T$ is bounded:
 \begin{equation}\label{eq:core_bound}
   \boxed{\;\E[V_T] \;\le\; \alpha\,(1 - \bar{w})\,T\;}
 \end{equation}
 where $\alpha$ is the conformal miscoverage level and
 $\bar{w} = T^{-1}\sum_{t=1}^{T} w_t$ is the episode-average reliability.
-\end{theorem}
+\end{corollary}
 
 \begin{proof}
 Define the per-step violation indicator $Z_t = \mathbf{1}[f(x_t, a_t^{\mathrm{rel}}) \notin \mathcal{S}]$.
@@ -229,16 +254,16 @@ IR~$> 0$.
 
 \subsection{Certificate and Temporal Theorems (T5--T8)}
 
-\begin{theorem}[T5: Certificate Validity Horizon]\label{thm:T5}
+\begin{definition}[T5: Certificate Validity Horizon]\label{thm:T5}
 Under A5 and A7, the safety certificate remains valid for the largest horizon
 $\tau_t$ whose forward tube stays inside the safe SoC bounds:
 \begin{equation}
   \tau_t = \left\lfloor \frac{\Emax - E_t}{\sigma_d} \right\rfloor,
 \end{equation}
 where $\sigma_d$ is the drift scale.
-\end{theorem}
+\end{definition}
 
-\begin{theorem}[T6: Certificate Expiration Bound]\label{thm:T6}
+\begin{proposition}[T6: Certificate Expiration Bound]\label{thm:T6}
 Under A4, A7, and~A9, for any confidence level $\delta \in (0,1)$ the battery
 certificate survival horizon satisfies the closed-form lower bound
 \[
@@ -249,28 +274,32 @@ certificate survival horizon satisfies the closed-form lower bound
   \right\rfloor.
 \]
 Runtime enforcement enters fallback when this lower bound drops below one step.
-\end{theorem}
+\end{proposition}
 
-\begin{theorem}[T7: Feasible Fallback Existence]\label{thm:T7}
+\begin{proposition}[T7\_Battery: Feasible Fallback Existence]\label{thm:T7}
 Under A1, A4, and~A8, a constructive battery fallback exists in piecewise form:
 zero dispatch is admissible and safe on the interior, a boundary-aware
 safe-landing recovery action is admissible near the lower or upper boundary when
 the actuator limits permit it, and the runtime fails closed otherwise.
-\end{theorem}
+\end{proposition}
 
-\begin{theorem}[T8: Graceful Degradation Dominance]\label{thm:T8}
+\begin{proposition}[T8: Graceful Degradation Dominance]\label{thm:T8}
 Under A2 and A5, the inflation factor $\alpha$ is non-decreasing in degradation
 severity $(1 - w_t)$.  Consequently, as observation quality degrades, the safe
 action set shrinks monotonically, ensuring degradation-proportional conservatism.
-\end{theorem}
+\end{proposition}
 
 %% ----- Universal Extension: T9--T11 -----
 \subsection{Universal Extension (T9--T11)}
 
-The universal theorems lift the battery-domain guarantees to arbitrary domains
-that satisfy the adapter contract.
+The universal theorem is T11: any compliant domain inherits the ORIUS
+runtime-assurance contract through the typed adapter obligations. T9 and T10
+remain supporting lower-bound extensions until their universal constants and
+assumptions are discharged across Battery, AV, and Healthcare. The authority for
+their status is \texttt{reports/publication/theorem\_promotion\_scorecard.json},
+not the raw theorem inventory or this prose.
 
-\begin{theorem}[T9: Universal Impossibility --- Reliability-Aware Repair is
+\begin{proposition}[T9: Scoped Universal Impossibility --- Reliability-Aware Repair is
 Necessary]\label{thm:T9}
 Consider a controller that does \emph{not} adapt its safety margin to telemetry
 reliability $w_t$.  Under persistent degradation with non-zero fault rate and
@@ -279,7 +308,7 @@ boundary-reachability assumptions:
   \E[V_T] \;\ge\; c \cdot d \cdot T,
 \end{equation}
 where $c > 0$ is a domain-dependent constant and $d$ is the mean degradation rate.
-\end{theorem}
+\end{proposition}
 
 \begin{proof}[Proof sketch ($\varphi$-mixing + Azuma--Hoeffding)]
 \emph{(i)} Partition the horizon into $k$ analysis windows separated by
@@ -293,11 +322,11 @@ $\Prob\bigl[\sum_j D_j \le -t\bigr] \le \exp(-2t^2/k)$.
 \emph{(v)} Combining: $\E[V_T] \ge \Omega(d\,T)$.
 \end{proof}
 
-\paragraph{Interpretation.}  T9 establishes that reliability-aware repair is
-\emph{structurally necessary}, not an optional enhancement: any quality-ignorant
-controller accumulates $\Omega(d\,T)$ violations.
+\paragraph{Interpretation.}  T9 is retained as a draft structural-necessity
+extension. It is not promoted until the generated package records a discharged
+positive witness constant and mixing bridge in Battery, AV, and Healthcare.
 
-\begin{theorem}[T10: Boundary-Indistinguishability Lower Bound]\label{thm:T10}
+\begin{proposition}[T10: Boundary-Indistinguishability Lower Bound]\label{thm:T10}
 Fix horizon $T$.  For each step $t$, consider a binary hypothesis test between
 safe ($H_{0,t}$) and unsafe ($H_{1,t}$) states with observation laws
 $P_{0,t}, P_{1,t}$ satisfying $\mathrm{TV}(P_{0,t}, P_{1,t}) \le w_t$ and unsafe
@@ -309,7 +338,7 @@ In particular, if $p_t \ge \alpha/2$ for all $t$:
 \begin{equation}\label{eq:T10_special}
   \boxed{\;\E[V_T(\pi)] \;\ge\; \tfrac{1}{4}\,\alpha\,(1-\bar{w})\,T.\;}
 \end{equation}
-\end{theorem}
+\end{proposition}
 
 \begin{proof}[Proof (Le Cam's method)]
 At each step $t$, the controller faces a binary classification problem:
@@ -321,7 +350,8 @@ Summing over $T$ steps yields \cref{eq:T10}.
 \end{proof}
 
 \paragraph{Reliability--risk frontier.}
-T10 implies that the minimum mean reliability needed to achieve an episode
+Under the explicit boundary-mass model above, T10 gives the draft frontier that the
+minimum mean reliability needed to achieve an episode
 violation budget $r^*$ is
 \begin{equation}
   \bar{w}^* = 1 - \frac{r^*}{\alpha\,T}.
@@ -367,14 +397,31 @@ $\TSVR_{\mathrm{ORIUS}}\le\alpha$; under exact coverage, the one-step
 true-state violation probability is zero.
 \end{corollary}
 
-\begin{proof}[Proof sketch]
-The lower bound conditions on each observation class and chooses the best
-single action available to any observation-only policy.  If the common safe
-core is empty, no mandatory-release action is safe for every state in the
-class.  For ORIUS, violations can occur only on the coverage-miss event,
-because on $X_t^\star\in\mathcal{X}_t$ the released action is safe for every
-state in $\mathcal{X}_t$, hence for the true state.
+\begin{proof}
+For each observation value $o$, define
+$L(a,o)=\Prob(a\notin C(X^\star)\mid O=o)$.  A mandatory-release
+observation-only policy must select one action $\pi(o)$ for the whole
+ambiguity class $B(o)$, so
+$L(\pi(o),o)\ge \min_{a\in\mathcal{A}}L(a,o)$.  Taking expectation over
+$O$ gives the displayed Bayes lower bound.  If $K(o)=\emptyset$ and the
+conditional law over $B(o)$ assigns positive mass to states excluding every
+candidate action, the conditional minimum is positive; if $K(o)\ne\emptyset$,
+the bound correctly permits zero conditional risk.
+
+For ORIUS, split the violation event on whether
+$X_t^\star\in\mathcal{X}_t$.  On the covered event, the released action is in
+$C(x)$ for every $x\in\mathcal{X}_t$, hence in $C(X_t^\star)$.  Therefore the
+covered contribution is zero, and the remaining contribution is bounded by
+$\Prob(X_t^\star\notin\mathcal{X}_t)\le\alpha$.
 \end{proof}
+
+\paragraph{Counterexample boundary.}
+The corollary is intentionally not a global optimality theorem.  It would be
+false if a nonempty common safe core existed and an observation-only controller
+selected from that core, if the controller were allowed to abstain instead of
+mandatory release, if $\mathcal{X}_t$ failed to cover the true state, or if the
+domain adapter supplied an incorrect safe set or infeasible fallback.  These
+cases are treated as explicit proof obligations rather than hidden assumptions.
 
 \paragraph{Failure-mode converse.}
 If \emph{any} of the four T11 obligations fails, there exists a domain
@@ -388,18 +435,27 @@ $r_t \le \alpha(1 - w_t)$, this recovers the core bound: $\E[V_T] \le \alpha(1 -
 
 \subsection{Proof Architecture Summary}
 
-The proof programme has a layered structure:
+The proof programme has a layered structure.  The main text should be read as
+four flagship theorem statements plus supporting definitions, propositions, and
+corollaries.  The T-identifiers serve as traceability anchors:
 \begin{itemize}[nosep]
-  \item \textbf{Foundation} (T1, T4): OASG existence + observation necessity establish
-        the necessity of a runtime layer.
-  \item \textbf{Mechanism} (T2, T3): Safety preservation + core bound show the
-        sufficiency of the \dcs{} kernel.
-  \item \textbf{Temporal} (T5--T8): Certificate validity, expiration, fallback, and
-        graceful degradation provide operational guarantees.
-  \item \textbf{Universal} (T9--T11): Impossibility, lower bound, and typed transfer
-        lift battery guarantees to arbitrary domains.
+  \item \textbf{Problem} (T1): degraded observation creates the observed-safe /
+        actually-unsafe gap.
+  \item \textbf{Necessity} (T4): quality-ignorant mandatory release cannot
+        guarantee true-state safety on the defended ambiguity witness class.
+  \item \textbf{Construction} (T2, with T3 as a corollary): covered uncertainty
+        sets, repair, and the risk-envelope contract supply the ORIUS upper
+        guarantee.
+  \item \textbf{Operationalization} (supporting T5--T8): certificate horizon, expiration,
+        fallback, and graceful degradation make release time-bounded and
+        fail-closed.
+  \item \textbf{Transfer and optimality} (T11 plus the T10/T11 ambiguity
+        corollary): typed obligations transfer the argument across defended
+        domains, while the Bayes lower/upper sandwich states the covered
+        ambiguity optimality claim.
 \end{itemize}
 
-All assumptions A1--A13 are testable pre-conditions verified by the 1{,}189-test
-suite.  The theorem audit register (\cref{app:theorems}) confirms that all 11
-theorems have complete proofs, empirical validation, and code-level anchors.
+The generated theorem-promotion package confirms that T9 and T10 are explicitly
+non-promoted until the three-domain discharge, mechanized proof, proof-rigor, and
+artifact-evidence gates all pass. The theorem audit register remains a metadata
+inventory; it is not the authority for promoting T9/T10.

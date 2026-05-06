@@ -1,0 +1,11 @@
+domain,controller,seed,tsvr,oasg,gdq,cva,metric_surface,diagnostic_only,claim_governs_from
+healthcare,nominal,2000,0.0,0.0,1.0,1.0,validation_harness,True,runtime_denominator
+healthcare,robust,2000,0.0,0.0,1.0,1.0,validation_harness,True,runtime_denominator
+healthcare,dc3s,2000,0.0,0.0,0.937708,1.0,validation_harness,True,runtime_denominator
+healthcare,naive,2000,0.0,0.0,1.0,1.0,validation_harness,True,runtime_denominator
+healthcare,fallback,2000,0.0,0.0,1.0,1.0,validation_harness,True,runtime_denominator
+vehicle,nominal,2000,1.0,0.333333,0.0,1.0,validation_harness,True,runtime_denominator
+vehicle,robust,2000,1.0,0.333333,0.0,1.0,validation_harness,True,runtime_denominator
+vehicle,dc3s,2000,0.041667,0.0,0.199058,1.0,validation_harness,True,runtime_denominator
+vehicle,naive,2000,1.0,0.333333,0.0,1.0,validation_harness,True,runtime_denominator
+vehicle,fallback,2000,1.0,0.333333,0.0,1.0,validation_harness,True,runtime_denominator

@@ -17,7 +17,7 @@
 
 ## Freeze Boundary
 
-Freeze status is `incomplete_until_predeployment_release_manifest_exists`. Do not claim a completed frozen release until `predeployment_release_manifest.json`, `frozen_artifact_hashes.csv`, and `frozen_artifact_hashes.json` exist for the release.
+Freeze status is `freeze_complete_manifest_present`. Do not claim a completed frozen release until `predeployment_release_manifest.json`, `frozen_artifact_hashes.csv`, and `frozen_artifact_hashes.json` exist for the release.
 
 ## Universal Claim Boundary
 

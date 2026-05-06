@@ -9,8 +9,9 @@ unacceptable only a short time later. The temporal question is therefore not ``s
 unsafe forever,'' but ``how long does the runtime have before the current certificate no
 longer justifies release?''
 
-Theorem~T5 (Certificate Validity Horizon) and Theorem~T6 (Certificate Expiration Bound)
-formalise these temporal semantics.  Both are registered in the \texttt{THEOREM\_REGISTER}
+T5 (Certificate Validity Horizon) formalises the constructive horizon definition,
+and T6 (Certificate Expiration Bound) supplies the supporting confidence-aware
+expiration proposition.  Both are registered in the \texttt{THEOREM\_REGISTER}
 (in \texttt{theoretical\_guarantees.py}) and enforced at every runtime step: the API
 router computes the validity horizon~$\tau_t$ and the expiry lower bound, appends them to
 the uncertainty metadata, and fails the guarantee check ($\texttt{guarantee\_passed} =

@@ -570,25 +570,60 @@ Multi-step claims (certificate horizon, graceful degradation) require
 additional assumptions about temporal dependence; these are stated
 explicitly in Chapter~\ref{ch:temporal-extensions}.
 
-\subsection{The Theorem Ladder}
+\subsection{Main Result Arc and Traceability IDs}
 
-The theorems form a logical ladder:
+The manuscript presents the theory as four flagship theorem roles plus
+supporting definitions, propositions, and corollaries, while retaining the
+permanent T1--T11 identifiers for auditability, appendix mapping, and code
+traceability.  This distinction is deliberate: reviewers should read a compact
+argument, while the repository keeps the finer-grained theorem IDs needed for
+tests, generated registers, and proof-to-code evidence.
 
 \begin{enumerate}
-  \item \textbf{OASG Existence} (Chapter~\ref{ch:theorem-oasg}):
-    The problem is real---observed safety does not imply true safety.
-  \item \textbf{Safety Preservation} (Chapter~\ref{ch:theorem-safety}):
-    The shield solves the problem---true safety is restored.
-  \item \textbf{Core Bound} (Chapter~\ref{ch:core-bound}):
-    The solution has a quantifiable cost---expected violations are bounded.
-  \item \textbf{Observation Necessity / No Free Safety} (Chapter~\ref{ch:no-free-safety}):
-    The cost is unavoidable---ignoring observation quality breaks safety.
-  \item \textbf{Temporal Extensions} (Chapter~\ref{ch:temporal-extensions}):
-    The guarantee extends across time---certificates expire gracefully.
+  \item \textbf{Observation-aware safety gap.}  T1 establishes that degraded
+    observation can make observed-state safety disagree with true-state safety.
+  \item \textbf{Observation necessity.}  T4 establishes that fixed-margin,
+    quality-ignorant release cannot guarantee true-state safety on the defended
+    ambiguity witness class.
+  \item \textbf{ORIUS covered release preservation.}  T2, with T3 as a
+    supporting risk-envelope corollary, shows that under coverage and a stated
+    risk-envelope contract, the runtime shield preserves one-step safety and
+    yields a quantitative episode-level bound.
+  \item \textbf{Temporal certificate and fallback discipline.}  T5 is retained
+    as the certificate-horizon definition, while T6--T8 provide expiration,
+    fallback, and graceful-degradation support for operational release.  These
+    are operational support surfaces, not additional main-paper novelty claims.
+  \item \textbf{Typed transfer and covered ambiguity optimality.}  T11 states
+    the typed cross-domain transfer obligations; the supporting
+    T10/T11 observation-ambiguity corollary gives the Bayes lower bound for
+    observation-only mandatory release and the ORIUS $\alpha$-covered upper
+    bound.  T9 and T10 remain scoped extension surfaces unless their additional
+    promotion gates are discharged.
 \end{enumerate}
 
-Each rung depends on the ones below it, and no rung can be removed
-without breaking the chain.
+\begin{table}[htbp]
+\centering
+\caption{Professor-facing theorem presentation versus permanent audit IDs.}
+\label{tab:main-result-arc}
+\begin{tabular}{p{0.27\textwidth}p{0.26\textwidth}p{0.38\textwidth}}
+\toprule
+\textbf{Headline result} & \textbf{Permanent IDs} & \textbf{Presentation rule} \\
+\midrule
+Observation-aware safety gap & T1 & Headline problem theorem. \\
+Observation necessity & T4 & Headline impossibility/necessity theorem. \\
+Covered release preservation & T2; T3a/T3b & Headline constructive guarantee with risk-envelope support; keep coverage assumptions explicit. \\
+Temporal release discipline & T5--T8 & Present T5 as a definition and T6--T8 as operational support, not extra novelty inflation. \\
+Typed transfer and covered optimality & T11; T10/T11 corollary & Headline transfer/optimality theorem under covered ambiguity; keep T9--T10 scoped supporting propositions. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The resulting paper story is therefore not ``eleven unrelated theorems.''  It is
+a four-theorem chain with supporting operational surfaces: the problem exists,
+observation reliability is necessary, the runtime contract solves the covered
+release problem, and the typed contract transfers the argument across defended
+domains.  Certificates, fallback, and degradation dominance make that release
+operational without being inflated into separate main-paper novelty claims.
 
 \subsection{Theorem-Writing Discipline}
 
@@ -801,27 +836,35 @@ price variance is non-zero.
 
 \begin{theorem}[OASG Existence]
 \label{thm:oasg-existence}
-Under Assumptions A1, A2, and A4, for any dropout rate $d > 0$ and any
-optimal arbitrage controller, there exists a time step $t^*$ such that
+Under Assumptions A1, A2, A4, A11, and A12, consider an optimal arbitrage
+controller whose safe-state trajectory reaches the boundary-proximity set
+$\mathcal{T}_{\mathrm{bnd}}$ with positive frequency.  For any telemetry
+degradation model with nonzero admissible error tail, there exists an
+admissible degraded-observation realization and a time step $t^*$ such that
 \[
   \phi_{\text{obs}}(a_{t^*}) = 1 \quad\text{and}\quad
   \phi_{\text{true}}(a_{t^*}) = 0.
 \]
 That is, the controller selects an action that appears safe in the
-observed state but violates a constraint in the true state.
+observed state but violates a constraint in the true state.  Equivalently,
+OASG is not a numerical artifact of a particular experiment: once boundary
+reachability and a nonzero observation-error tail coexist, an observed-safe /
+true-unsafe witness can be constructed.
 \end{theorem}
 
 \begin{proof}
-By Lemma~\ref{lem:boundary-proximity}, there exists a set
+By Lemma~\ref{lem:boundary-proximity} and Assumption~A11, there exists a set
 $\mathcal{T}_{\text{bnd}} \subset \{1, \ldots, T\}$ with
 $|\mathcal{T}_{\text{bnd}}| \ge f_{\text{bnd}}\,T$ such that for
 $t \in \mathcal{T}_{\text{bnd}}$, the true SOC is within
 $\delta_{\text{bnd}}$ of a constraint bound.
 
-By Lemma~\ref{lem:obs-gap-dropout}, for dropout rate $d > 0$ the
-observation error has $\mathbb{E}[|\xi_t|] > 0$.  In particular,
-with positive probability, $|\xi_t| > \delta_{\text{bnd}}$ for
-some $t \in \mathcal{T}_{\text{bnd}}$.
+By Lemma~\ref{lem:obs-gap-dropout}, Assumption~A2, and the controller-fault
+independence condition in Assumption~A12, the degraded-observation model has an
+admissible realization for which $|\xi_t| > \delta_{\text{bnd}}$ at some
+$t \in \mathcal{T}_{\text{bnd}}$.  This is the witness realization used in the
+existence theorem; the locked empirical artifacts then measure how often such
+events occur under the evaluation distributions.
 
 At such a step $t^*$, the observed state $\hat{x}_{t^*} = x_{t^*} + \xi_{t^*}$
 is displaced from the true state by more than the distance to the
@@ -941,11 +984,6 @@ action set
 where $m_t = q_t / (w_t + \epsilon)$ is the reliability-inflated
 conformal margin and $B(m_t)$ is the ball of radius $m_t$.
 
-If the DC3S shield selects $a_t \in \mathcal{A}_t$ at every step, then
-\[
-  \Pr\!\bigl[\,\phi_{\text{true}}(a_t) = 1\,\bigr] \;\ge\; 1 - \alpha
-  \quad\text{for all } t = 1, \ldots, T,
-\]
 If the current true state lies inside the inflated observation-consistent
 set and the DC3S shield releases an action $a_t \in \mathcal{A}_t$, then the
 resulting one-step successor remains safe:
@@ -1275,7 +1313,7 @@ independence assumption is required.
 
 \begin{theorem}[ORIUS Core Bound]
 \label{thm:core-bound}
-Under Assumptions A1, A2, A4, A5, A6, and A7, the expected total
+Under Assumptions A1, A2, A4, A5, A6, A7, and A9, the expected total
 violation count under the DC3S shield satisfies
 \[
   \mathbb{E}[V] \;\le\; \alpha\,(1 - \bar{w})\,T,
@@ -1608,14 +1646,17 @@ constraints.  The construction proceeds in three phases:
 
 \begin{theorem}[Observation Necessity / No Free Safety]
 \label{thm:no-free-safety}
-Under Assumption~A2, for any quality-ignorant controller $\pi$ and
-any dropout rate $d > 0$, there exists an admissible fault sequence
-such that $\pi$ incurs at least one true-state violation:
+Under Assumptions~A2 and~A11, for any fixed-margin quality-ignorant
+controller $\pi$ and any dropout rate $d > 0$, there exists an admissible
+fault sequence such that $\pi$ incurs at least one true-state violation:
 \[
   \exists\,t^* \in \{1, \ldots, T\} : \quad
   \phi_{\text{obs}}(\pi(\hat{x}_{t^*})) = 1 \;\;\text{and}\;\;
   \phi_{\text{true}}(\pi(\hat{x}_{t^*})) = 0.
 \]
+The theorem is qualitative and witness-based.  The rate at which OASG grows
+with degradation budget is supplied separately by the boundary-
+indistinguishability lower bound in T10.
 \end{theorem}
 
 \begin{proof}
@@ -1712,9 +1753,9 @@ $\Omega(T)$, exceeding any $o(T)$ bound.
 \subsection{Chapter Summary}
 
 The Observation Necessity / No Free Safety theorem is the fourth rung of the theorem ladder.
-It proves that ignoring observation quality is not merely sub-optimal
-but fundamentally unsafe: any quality-ignorant controller can be driven
-to violation by an admissible fault sequence.  The constructive proof
+It proves that ignoring observation quality is not merely sub-optimal on the
+defended witness class: any fixed-margin quality-ignorant controller can be
+driven to violation by an admissible fault sequence.  The constructive proof
 identifies the exact mechanism (baiting + fault injection + boundary
 proximity) and the empirical ablation results
 (Chapter~\ref{ch:ablations}) confirm the theorem's prediction: removing
@@ -1842,10 +1883,10 @@ separate defended theorem.
 
 \begin{theorem}[Certificate expiration bound]
 \label{thm:cert-expiration}
-Under Assumptions~A4, A7, and~A9 and confidence level $\delta\in(0,1)$, the validity
-horizon satisfies the lower bound
+Under Assumptions~A4, A7, and~A9 and confidence level $\delta\in(0,1)$, the
+certificate may be issued with the $\delta$-valid horizon
 \[
-  \tau_t \;\ge\;
+  \tau_t^{(\delta)} \;=\;
   \left\lfloor\,
     \frac{(\delta_{\text{bnd},t})^2}
          {2\,\sigma_d^2\,\log(2/\delta)}
@@ -1853,7 +1894,9 @@ horizon satisfies the lower bound
 \]
 where $\delta_{\text{bnd},t} = \min(x_t^{\text{lo}} - \text{SOC}_{\min},\,
 \text{SOC}_{\max} - x_t^{\text{hi}})$ is the distance from the issued
-certificate interval to the nearest constraint boundary.
+certificate interval to the nearest constraint boundary.  For every integer
+$\Delta \le \tau_t^{(\delta)}$, the forward disturbance tube remains inside
+the battery constraint set with probability at least $1-\delta$.
 \end{theorem}
 
 \begin{proof}
@@ -1872,7 +1915,8 @@ is at most $\delta$ whenever
   \frac{\delta_{\text{bnd},t}^2}
        {2\,\sigma_d^2\,\log(2/\delta)}.
 \]
-Since $\Delta$ must be an integer, flooring gives the claimed lower bound.
+Since $\Delta$ must be an integer, flooring gives the advertised
+$\delta$-valid issuance horizon.
 \end{proof}
 
 \subsubsection{Certificate Half-Life Corollary}

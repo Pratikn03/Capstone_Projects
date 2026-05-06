@@ -1,0 +1,1485 @@
+{
+  "blockers": [
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:target_ego_speed_mps__1s:gbm - hyperparameter tuning ran 10 trials, below policy floor 50",
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:target_ego_speed_mps__1s:gbm - selected hyperparameters landed on search boundary: ['reg_alpha']",
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:target_ego_speed_mps__2s:gbm - hyperparameter tuning ran 10 trials, below policy floor 50",
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:target_ego_speed_mps__2s:gbm - selected hyperparameters landed on search boundary: ['reg_lambda']",
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:target_ego_speed_mps__4s:gbm - hyperparameter tuning ran 10 trials, below policy floor 50",
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:target_ego_speed_mps__4s:gbm - selected hyperparameters landed on search boundary: ['reg_alpha', 'reg_lambda']",
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:target_relative_gap_m__1s:gbm - overfit risk: validation/train RMSE ratio 1.506 exceeds policy",
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:target_relative_gap_m__1s:gbm - hyperparameter tuning ran 10 trials, below policy floor 50",
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:target_relative_gap_m__1s:gbm - selected hyperparameters landed on search boundary: ['colsample_bytree', 'reg_alpha', 'reg_lambda']",
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:target_relative_gap_m__2s:gbm - overfit risk: validation/train RMSE ratio 1.433 exceeds policy",
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:target_relative_gap_m__2s:gbm - hyperparameter tuning ran 10 trials, below policy floor 50",
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:target_relative_gap_m__2s:gbm - selected hyperparameters landed on search boundary: ['reg_alpha', 'reg_lambda']",
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:target_relative_gap_m__4s:gbm - overfit risk: validation/train RMSE ratio 1.401 exceeds policy",
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:target_relative_gap_m__4s:gbm - hyperparameter tuning ran 10 trials, below policy floor 50",
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:target_relative_gap_m__4s:gbm - selected hyperparameters landed on search boundary: ['reg_alpha', 'reg_lambda']",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:load_mw:challenger_metrics - missing train split metrics for overfit/underfit audit",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:load_mw:challenger_metrics - missing validation split metrics for overfit audit",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:load_mw:challenger_metrics - missing test split metrics for generalization audit",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:load_mw:challenger_metrics - missing underfit metric",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:load_mw:challenger_metrics - missing hyperparameter tuning metadata",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:load_mw:challenger_metrics - calibration evidence missing PICP@90/global coverage",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:load_mw:challenger_metrics - calibration evidence missing positive interval width",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:load_mw:challenger_metrics - missing inference latency p95 evidence",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:load_mw:gbm - overfit risk: validation/train RMSE ratio 9.658 exceeds policy",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:load_mw:gbm - hyperparameter tuning ran 10 trials, below policy floor 50",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:load_mw:gbm - selected hyperparameters landed on search boundary: ['max_depth', 'n_estimators']",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:price_eur_mwh:challenger_metrics - missing train split metrics for overfit/underfit audit",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:price_eur_mwh:challenger_metrics - missing validation split metrics for overfit audit",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:price_eur_mwh:challenger_metrics - missing test split metrics for generalization audit",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:price_eur_mwh:challenger_metrics - missing underfit metric",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:price_eur_mwh:challenger_metrics - missing hyperparameter tuning metadata",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:price_eur_mwh:challenger_metrics - calibration evidence missing PICP@90/global coverage",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:price_eur_mwh:challenger_metrics - calibration evidence missing positive interval width",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:price_eur_mwh:challenger_metrics - missing inference latency p95 evidence",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:price_eur_mwh:gbm - missing train split metrics for overfit/underfit audit",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:price_eur_mwh:gbm - architecture evidence missing selected GBM hyperparameters",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:price_eur_mwh:gbm - missing hyperparameter tuning metadata",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:price_eur_mwh:gbm - calibration evidence missing PICP@90/global coverage",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:price_eur_mwh:gbm - calibration evidence missing positive interval width",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:price_eur_mwh:gbm - missing inference latency p95 evidence",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:solar_mw:challenger_metrics - missing train split metrics for overfit/underfit audit",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:solar_mw:challenger_metrics - missing validation split metrics for overfit audit",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:solar_mw:challenger_metrics - missing test split metrics for generalization audit",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:solar_mw:challenger_metrics - missing underfit metric",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:solar_mw:challenger_metrics - missing hyperparameter tuning metadata",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:solar_mw:challenger_metrics - calibration evidence missing PICP@90/global coverage",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:solar_mw:challenger_metrics - calibration evidence missing positive interval width",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:solar_mw:challenger_metrics - missing inference latency p95 evidence",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:solar_mw:gbm - overfit risk: validation/train RMSE ratio 38.001 exceeds policy",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:solar_mw:gbm - hyperparameter tuning ran 10 trials, below policy floor 50",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:solar_mw:gbm - selected hyperparameters landed on search boundary: ['max_depth', 'num_leaves']",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:solar_mw:gbm - calibration under-coverage: PICP@90 0.804 below policy",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:wind_mw:challenger_metrics - missing train split metrics for overfit/underfit audit",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:wind_mw:challenger_metrics - missing validation split metrics for overfit audit",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:wind_mw:challenger_metrics - missing test split metrics for generalization audit",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:wind_mw:challenger_metrics - missing underfit metric",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:wind_mw:challenger_metrics - missing hyperparameter tuning metadata",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:wind_mw:challenger_metrics - calibration evidence missing PICP@90/global coverage",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:wind_mw:challenger_metrics - calibration evidence missing positive interval width",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:wind_mw:challenger_metrics - missing inference latency p95 evidence",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:wind_mw:gbm - overfit risk: validation/train RMSE ratio 5.322 exceeds policy",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:wind_mw:gbm - hyperparameter tuning ran 10 trials, below policy floor 50",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:wind_mw:gbm - selected hyperparameters landed on search boundary: ['n_estimators']",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:hr_bpm:gbm - overfit risk: validation/train RMSE ratio 10.682 exceeds policy",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:hr_bpm:gbm - hyperparameter tuning ran 10 trials, below policy floor 50",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:hr_bpm:gbm - selected hyperparameters landed on search boundary: ['reg_alpha', 'reg_lambda']",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:respiratory_rate:gbm - validation/test drift: test/validation RMSE ratio 1.639 exceeds policy",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:respiratory_rate:gbm - hyperparameter tuning ran 10 trials, below policy floor 50",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:respiratory_rate:gbm - selected hyperparameters landed on search boundary: ['reg_alpha']",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:spo2_pct:challenger_metrics - missing train split metrics for overfit/underfit audit",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:spo2_pct:challenger_metrics - missing validation split metrics for overfit audit",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:spo2_pct:challenger_metrics - missing test split metrics for generalization audit",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:spo2_pct:challenger_metrics - missing underfit metric",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:spo2_pct:challenger_metrics - missing hyperparameter tuning metadata",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:spo2_pct:challenger_metrics - calibration evidence missing PICP@90/global coverage",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:spo2_pct:challenger_metrics - calibration evidence missing positive interval width",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:spo2_pct:challenger_metrics - missing inference latency p95 evidence",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:spo2_pct:gbm - missing train split metrics for overfit/underfit audit",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:spo2_pct:gbm - validation/test drift: test/validation RMSE ratio 1.473 exceeds policy",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:spo2_pct:gbm - architecture evidence missing selected GBM hyperparameters",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:spo2_pct:gbm - missing hyperparameter tuning metadata",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json:spo2_pct:gbm - missing inference latency p95 evidence"
+  ],
+  "config_paths": [
+    "/Volumes/T9/gridpulse/configs/train_forecast.yaml",
+    "/Volumes/T9/gridpulse/configs/train_forecast_av.yaml",
+    "/Volumes/T9/gridpulse/configs/train_forecast_healthcare.yaml"
+  ],
+  "generated_at_utc": "2026-05-05T02:23:11.986219+00:00",
+  "models": [
+    {
+      "blockers": [
+        "hyperparameter tuning ran 10 trials, below policy floor 50",
+        "selected hyperparameters landed on search boundary: ['reg_alpha']"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 409,
+            "selected_param_count": 9
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration/uncertainty evidence is within policy",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": 0.575358680627425,
+            "min_picp_90": 0.85,
+            "picp_90": 0.9594497250382136
+          },
+          "status": "pass"
+        },
+        "generalization": {
+          "detail": "train/validation/test split metrics are within policy",
+          "metrics": {
+            "test_rmse": 0.0787299665667655,
+            "train_rmse": 0.07893108208978436,
+            "train_validation_rmse_ratio": 1.011437,
+            "validation_rmse": 0.07983379255191105,
+            "validation_test_rmse_ratio": 0.986173
+          },
+          "status": "pass"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "hyperparameter tuning ran 10 trials, below policy floor 50; selected hyperparameters landed on search boundary: ['reg_alpha']",
+          "metrics": {
+            "boundary_hits": [
+              "reg_alpha"
+            ],
+            "complete_fraction": 1.0,
+            "n_complete_trials": 10,
+            "n_trials": 10,
+            "selected_param_count": 9
+          },
+          "status": "block"
+        },
+        "latency": {
+          "detail": "latency p95 is within policy",
+          "metrics": {
+            "budget_ms": 5.0,
+            "p95_per_sample_ms": 0.09733190507859035
+          },
+          "status": "pass"
+        },
+        "underfit": {
+          "detail": "underfit metric is within policy",
+          "metrics": {
+            "min_r2": 0.0,
+            "r2": 0.9995647645260061
+          },
+          "status": "pass"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "gbm",
+      "status": "block",
+      "target": "target_ego_speed_mps__1s"
+    },
+    {
+      "blockers": [
+        "hyperparameter tuning ran 10 trials, below policy floor 50",
+        "selected hyperparameters landed on search boundary: ['reg_lambda']"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 409,
+            "selected_param_count": 9
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration/uncertainty evidence is within policy",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": 1.054439931526526,
+            "min_picp_90": 0.85,
+            "picp_90": 0.9620148637489678
+          },
+          "status": "pass"
+        },
+        "generalization": {
+          "detail": "train/validation/test split metrics are within policy",
+          "metrics": {
+            "test_rmse": 0.18570924382117648,
+            "train_rmse": 0.1835511756224928,
+            "train_validation_rmse_ratio": 1.030228,
+            "validation_rmse": 0.18909954820654598,
+            "validation_test_rmse_ratio": 0.982071
+          },
+          "status": "pass"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "hyperparameter tuning ran 10 trials, below policy floor 50; selected hyperparameters landed on search boundary: ['reg_lambda']",
+          "metrics": {
+            "boundary_hits": [
+              "reg_lambda"
+            ],
+            "complete_fraction": 1.0,
+            "n_complete_trials": 10,
+            "n_trials": 10,
+            "selected_param_count": 9
+          },
+          "status": "block"
+        },
+        "latency": {
+          "detail": "latency p95 is within policy",
+          "metrics": {
+            "budget_ms": 5.0,
+            "p95_per_sample_ms": 0.08841291504069204
+          },
+          "status": "pass"
+        },
+        "underfit": {
+          "detail": "underfit metric is within policy",
+          "metrics": {
+            "min_r2": 0.0,
+            "r2": 0.997748664213856
+          },
+          "status": "pass"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "gbm",
+      "status": "block",
+      "target": "target_ego_speed_mps__2s"
+    },
+    {
+      "blockers": [
+        "hyperparameter tuning ran 10 trials, below policy floor 50",
+        "selected hyperparameters landed on search boundary: ['reg_alpha', 'reg_lambda']"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 409,
+            "selected_param_count": 9
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration/uncertainty evidence is within policy",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": 2.2786728592913326,
+            "min_picp_90": 0.85,
+            "picp_90": 0.9619094470896218
+          },
+          "status": "pass"
+        },
+        "generalization": {
+          "detail": "train/validation/test split metrics are within policy",
+          "metrics": {
+            "test_rmse": 0.47343375264649384,
+            "train_rmse": 0.4520089501766676,
+            "train_validation_rmse_ratio": 1.062329,
+            "validation_rmse": 0.480182439475597,
+            "validation_test_rmse_ratio": 0.985946
+          },
+          "status": "pass"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "hyperparameter tuning ran 10 trials, below policy floor 50; selected hyperparameters landed on search boundary: ['reg_alpha', 'reg_lambda']",
+          "metrics": {
+            "boundary_hits": [
+              "reg_alpha",
+              "reg_lambda"
+            ],
+            "complete_fraction": 1.0,
+            "n_complete_trials": 10,
+            "n_trials": 10,
+            "selected_param_count": 9
+          },
+          "status": "block"
+        },
+        "latency": {
+          "detail": "latency p95 is within policy",
+          "metrics": {
+            "budget_ms": 5.0,
+            "p95_per_sample_ms": 0.07985455331720459
+          },
+          "status": "pass"
+        },
+        "underfit": {
+          "detail": "underfit metric is within policy",
+          "metrics": {
+            "min_r2": 0.0,
+            "r2": 0.9859153697838252
+          },
+          "status": "pass"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "gbm",
+      "status": "block",
+      "target": "target_ego_speed_mps__4s"
+    },
+    {
+      "blockers": [
+        "overfit risk: validation/train RMSE ratio 1.506 exceeds policy",
+        "hyperparameter tuning ran 10 trials, below policy floor 50",
+        "selected hyperparameters landed on search boundary: ['colsample_bytree', 'reg_alpha', 'reg_lambda']"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 409,
+            "selected_param_count": 9
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration/uncertainty evidence is within policy",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": 53.849450620977876,
+            "min_picp_90": 0.85,
+            "picp_90": 0.9298100743187449
+          },
+          "status": "pass"
+        },
+        "generalization": {
+          "detail": "overfit risk: validation/train RMSE ratio 1.506 exceeds policy",
+          "metrics": {
+            "test_rmse": 17.087721138364504,
+            "train_rmse": 11.372270283236478,
+            "train_validation_rmse_ratio": 1.505987,
+            "validation_rmse": 17.12649606494137,
+            "validation_test_rmse_ratio": 0.997736
+          },
+          "status": "block"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "hyperparameter tuning ran 10 trials, below policy floor 50; selected hyperparameters landed on search boundary: ['colsample_bytree', 'reg_alpha', 'reg_lambda']",
+          "metrics": {
+            "boundary_hits": [
+              "colsample_bytree",
+              "reg_alpha",
+              "reg_lambda"
+            ],
+            "complete_fraction": 1.0,
+            "n_complete_trials": 10,
+            "n_trials": 10,
+            "selected_param_count": 9
+          },
+          "status": "block"
+        },
+        "latency": {
+          "detail": "latency p95 is within policy",
+          "metrics": {
+            "budget_ms": 5.0,
+            "p95_per_sample_ms": 0.08534981689649612
+          },
+          "status": "pass"
+        },
+        "underfit": {
+          "detail": "underfit metric is within policy",
+          "metrics": {
+            "min_r2": 0.0,
+            "r2": 0.9024333830783449
+          },
+          "status": "pass"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "gbm",
+      "status": "block",
+      "target": "target_relative_gap_m__1s"
+    },
+    {
+      "blockers": [
+        "overfit risk: validation/train RMSE ratio 1.433 exceeds policy",
+        "hyperparameter tuning ran 10 trials, below policy floor 50",
+        "selected hyperparameters landed on search boundary: ['reg_alpha', 'reg_lambda']"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 409,
+            "selected_param_count": 9
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration/uncertainty evidence is within policy",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": 64.84744916526897,
+            "min_picp_90": 0.85,
+            "picp_90": 0.9281409772124322
+          },
+          "status": "pass"
+        },
+        "generalization": {
+          "detail": "overfit risk: validation/train RMSE ratio 1.433 exceeds policy",
+          "metrics": {
+            "test_rmse": 22.283101449961045,
+            "train_rmse": 15.723032140979896,
+            "train_validation_rmse_ratio": 1.432545,
+            "validation_rmse": 22.523949487403478,
+            "validation_test_rmse_ratio": 0.989307
+          },
+          "status": "block"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "hyperparameter tuning ran 10 trials, below policy floor 50; selected hyperparameters landed on search boundary: ['reg_alpha', 'reg_lambda']",
+          "metrics": {
+            "boundary_hits": [
+              "reg_alpha",
+              "reg_lambda"
+            ],
+            "complete_fraction": 1.0,
+            "n_complete_trials": 10,
+            "n_trials": 10,
+            "selected_param_count": 9
+          },
+          "status": "block"
+        },
+        "latency": {
+          "detail": "latency p95 is within policy",
+          "metrics": {
+            "budget_ms": 5.0,
+            "p95_per_sample_ms": 0.05258576240692037
+          },
+          "status": "pass"
+        },
+        "underfit": {
+          "detail": "underfit metric is within policy",
+          "metrics": {
+            "min_r2": 0.0,
+            "r2": 0.827572906298047
+          },
+          "status": "pass"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "gbm",
+      "status": "block",
+      "target": "target_relative_gap_m__2s"
+    },
+    {
+      "blockers": [
+        "overfit risk: validation/train RMSE ratio 1.401 exceeds policy",
+        "hyperparameter tuning ran 10 trials, below policy floor 50",
+        "selected hyperparameters landed on search boundary: ['reg_alpha', 'reg_lambda']"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 409,
+            "selected_param_count": 9
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration/uncertainty evidence is within policy",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": 74.08615827342807,
+            "min_picp_90": 0.85,
+            "picp_90": 0.9197427833511956
+          },
+          "status": "pass"
+        },
+        "generalization": {
+          "detail": "overfit risk: validation/train RMSE ratio 1.401 exceeds policy",
+          "metrics": {
+            "test_rmse": 27.320954601217565,
+            "train_rmse": 19.786605098295468,
+            "train_validation_rmse_ratio": 1.401047,
+            "validation_rmse": 27.72196606052665,
+            "validation_test_rmse_ratio": 0.985535
+          },
+          "status": "block"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "hyperparameter tuning ran 10 trials, below policy floor 50; selected hyperparameters landed on search boundary: ['reg_alpha', 'reg_lambda']",
+          "metrics": {
+            "boundary_hits": [
+              "reg_alpha",
+              "reg_lambda"
+            ],
+            "complete_fraction": 1.0,
+            "n_complete_trials": 10,
+            "n_trials": 10,
+            "selected_param_count": 9
+          },
+          "status": "block"
+        },
+        "latency": {
+          "detail": "latency p95 is within policy",
+          "metrics": {
+            "budget_ms": 5.0,
+            "p95_per_sample_ms": 0.0461376014641246
+          },
+          "status": "pass"
+        },
+        "underfit": {
+          "detail": "underfit metric is within policy",
+          "metrics": {
+            "min_r2": 0.0,
+            "r2": 0.7321530163205501
+          },
+          "status": "pass"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "gbm",
+      "status": "block",
+      "target": "target_relative_gap_m__4s"
+    },
+    {
+      "blockers": [
+        "missing train split metrics for overfit/underfit audit",
+        "missing validation split metrics for overfit audit",
+        "missing test split metrics for generalization audit",
+        "missing underfit metric",
+        "missing hyperparameter tuning metadata",
+        "calibration evidence missing PICP@90/global coverage",
+        "calibration evidence missing positive interval width",
+        "missing inference latency p95 evidence"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 53,
+            "selected_param_count": 0
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration evidence missing PICP@90/global coverage; calibration evidence missing positive interval width",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": null,
+            "min_picp_90": 0.85,
+            "picp_90": null
+          },
+          "status": "block"
+        },
+        "generalization": {
+          "detail": "missing train split metrics for overfit/underfit audit; missing validation split metrics for overfit audit; missing test split metrics for generalization audit",
+          "metrics": {
+            "test_rmse": null,
+            "train_rmse": null,
+            "train_validation_rmse_ratio": null,
+            "validation_rmse": null,
+            "validation_test_rmse_ratio": null
+          },
+          "status": "block"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "missing hyperparameter tuning metadata",
+          "metrics": {},
+          "status": "block"
+        },
+        "latency": {
+          "detail": "missing inference latency p95 evidence",
+          "metrics": {},
+          "status": "block"
+        },
+        "underfit": {
+          "detail": "missing r2 or equivalent underfit metric",
+          "metrics": {},
+          "status": "block"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "challenger_metrics",
+      "status": "block",
+      "target": "load_mw"
+    },
+    {
+      "blockers": [
+        "overfit risk: validation/train RMSE ratio 9.658 exceeds policy",
+        "hyperparameter tuning ran 10 trials, below policy floor 50",
+        "selected hyperparameters landed on search boundary: ['max_depth', 'n_estimators']"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 53,
+            "selected_param_count": 4
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration/uncertainty evidence is within policy",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": 1285.3276850103239,
+            "min_picp_90": 0.85,
+            "picp_90": 0.9301587301587302
+          },
+          "status": "pass"
+        },
+        "generalization": {
+          "detail": "overfit risk: validation/train RMSE ratio 9.658 exceeds policy",
+          "metrics": {
+            "test_rmse": 256.30593377326977,
+            "train_rmse": 43.196292365829464,
+            "train_validation_rmse_ratio": 9.658222,
+            "validation_rmse": 417.19939469583943,
+            "validation_test_rmse_ratio": 0.614349
+          },
+          "status": "block"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "hyperparameter tuning ran 10 trials, below policy floor 50; selected hyperparameters landed on search boundary: ['max_depth', 'n_estimators']",
+          "metrics": {
+            "boundary_hits": [
+              "n_estimators",
+              "max_depth"
+            ],
+            "complete_fraction": 1.0,
+            "n_complete_trials": 10,
+            "n_trials": 10,
+            "selected_param_count": 4
+          },
+          "status": "block"
+        },
+        "latency": {
+          "detail": "latency p95 is within policy",
+          "metrics": {
+            "budget_ms": 5.0,
+            "p95_per_sample_ms": 0.49109779853573343
+          },
+          "status": "pass"
+        },
+        "underfit": {
+          "detail": "underfit metric is within policy",
+          "metrics": {
+            "min_r2": 0.0,
+            "r2": 0.9991870884350083
+          },
+          "status": "pass"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "gbm",
+      "status": "block",
+      "target": "load_mw"
+    },
+    {
+      "blockers": [
+        "missing train split metrics for overfit/underfit audit",
+        "missing validation split metrics for overfit audit",
+        "missing test split metrics for generalization audit",
+        "missing underfit metric",
+        "missing hyperparameter tuning metadata",
+        "calibration evidence missing PICP@90/global coverage",
+        "calibration evidence missing positive interval width",
+        "missing inference latency p95 evidence"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 53,
+            "selected_param_count": 0
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration evidence missing PICP@90/global coverage; calibration evidence missing positive interval width",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": null,
+            "min_picp_90": 0.85,
+            "picp_90": null
+          },
+          "status": "block"
+        },
+        "generalization": {
+          "detail": "missing train split metrics for overfit/underfit audit; missing validation split metrics for overfit audit; missing test split metrics for generalization audit",
+          "metrics": {
+            "test_rmse": null,
+            "train_rmse": null,
+            "train_validation_rmse_ratio": null,
+            "validation_rmse": null,
+            "validation_test_rmse_ratio": null
+          },
+          "status": "block"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "missing hyperparameter tuning metadata",
+          "metrics": {},
+          "status": "block"
+        },
+        "latency": {
+          "detail": "missing inference latency p95 evidence",
+          "metrics": {},
+          "status": "block"
+        },
+        "underfit": {
+          "detail": "missing r2 or equivalent underfit metric",
+          "metrics": {},
+          "status": "block"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "challenger_metrics",
+      "status": "block",
+      "target": "price_eur_mwh"
+    },
+    {
+      "blockers": [
+        "missing train split metrics for overfit/underfit audit",
+        "architecture evidence missing selected GBM hyperparameters",
+        "missing hyperparameter tuning metadata",
+        "calibration evidence missing PICP@90/global coverage",
+        "calibration evidence missing positive interval width",
+        "missing inference latency p95 evidence"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture evidence missing selected GBM hyperparameters",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 53,
+            "selected_param_count": 0
+          },
+          "status": "block"
+        },
+        "calibration": {
+          "detail": "calibration evidence missing PICP@90/global coverage; calibration evidence missing positive interval width",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": null,
+            "min_picp_90": 0.85,
+            "picp_90": null
+          },
+          "status": "block"
+        },
+        "generalization": {
+          "detail": "missing train split metrics for overfit/underfit audit",
+          "metrics": {
+            "test_rmse": 4.963301925932962,
+            "train_rmse": null,
+            "train_validation_rmse_ratio": null,
+            "validation_rmse": 5.608368790670103,
+            "validation_test_rmse_ratio": 0.884981
+          },
+          "status": "block"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "missing hyperparameter tuning metadata",
+          "metrics": {},
+          "status": "block"
+        },
+        "latency": {
+          "detail": "missing inference latency p95 evidence",
+          "metrics": {},
+          "status": "block"
+        },
+        "underfit": {
+          "detail": "underfit metric is within policy",
+          "metrics": {
+            "min_r2": 0.0,
+            "r2": 0.8987124211221768
+          },
+          "status": "pass"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "gbm",
+      "status": "block",
+      "target": "price_eur_mwh"
+    },
+    {
+      "blockers": [
+        "missing train split metrics for overfit/underfit audit",
+        "missing validation split metrics for overfit audit",
+        "missing test split metrics for generalization audit",
+        "missing underfit metric",
+        "missing hyperparameter tuning metadata",
+        "calibration evidence missing PICP@90/global coverage",
+        "calibration evidence missing positive interval width",
+        "missing inference latency p95 evidence"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 53,
+            "selected_param_count": 0
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration evidence missing PICP@90/global coverage; calibration evidence missing positive interval width",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": null,
+            "min_picp_90": 0.85,
+            "picp_90": null
+          },
+          "status": "block"
+        },
+        "generalization": {
+          "detail": "missing train split metrics for overfit/underfit audit; missing validation split metrics for overfit audit; missing test split metrics for generalization audit",
+          "metrics": {
+            "test_rmse": null,
+            "train_rmse": null,
+            "train_validation_rmse_ratio": null,
+            "validation_rmse": null,
+            "validation_test_rmse_ratio": null
+          },
+          "status": "block"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "missing hyperparameter tuning metadata",
+          "metrics": {},
+          "status": "block"
+        },
+        "latency": {
+          "detail": "missing inference latency p95 evidence",
+          "metrics": {},
+          "status": "block"
+        },
+        "underfit": {
+          "detail": "missing r2 or equivalent underfit metric",
+          "metrics": {},
+          "status": "block"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "challenger_metrics",
+      "status": "block",
+      "target": "solar_mw"
+    },
+    {
+      "blockers": [
+        "overfit risk: validation/train RMSE ratio 38.001 exceeds policy",
+        "hyperparameter tuning ran 10 trials, below policy floor 50",
+        "selected hyperparameters landed on search boundary: ['max_depth', 'num_leaves']",
+        "calibration under-coverage: PICP@90 0.804 below policy"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 53,
+            "selected_param_count": 4
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration under-coverage: PICP@90 0.804 below policy",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": 1204.4246774000392,
+            "min_picp_90": 0.85,
+            "picp_90": 0.8043650793650794
+          },
+          "status": "block"
+        },
+        "generalization": {
+          "detail": "overfit risk: validation/train RMSE ratio 38.001 exceeds policy",
+          "metrics": {
+            "test_rmse": 239.64890930065394,
+            "train_rmse": 12.291875844246437,
+            "train_validation_rmse_ratio": 38.000762,
+            "validation_rmse": 467.100650515606,
+            "validation_test_rmse_ratio": 0.513056
+          },
+          "status": "block"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "hyperparameter tuning ran 10 trials, below policy floor 50; selected hyperparameters landed on search boundary: ['max_depth', 'num_leaves']",
+          "metrics": {
+            "boundary_hits": [
+              "max_depth",
+              "num_leaves"
+            ],
+            "complete_fraction": 1.0,
+            "n_complete_trials": 10,
+            "n_trials": 10,
+            "selected_param_count": 4
+          },
+          "status": "block"
+        },
+        "latency": {
+          "detail": "latency p95 is within policy",
+          "metrics": {
+            "budget_ms": 5.0,
+            "p95_per_sample_ms": 0.3484026730465217
+          },
+          "status": "pass"
+        },
+        "underfit": {
+          "detail": "underfit metric is within policy",
+          "metrics": {
+            "min_r2": 0.0,
+            "r2": 0.9993045981540543
+          },
+          "status": "pass"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "gbm",
+      "status": "block",
+      "target": "solar_mw"
+    },
+    {
+      "blockers": [
+        "missing train split metrics for overfit/underfit audit",
+        "missing validation split metrics for overfit audit",
+        "missing test split metrics for generalization audit",
+        "missing underfit metric",
+        "missing hyperparameter tuning metadata",
+        "calibration evidence missing PICP@90/global coverage",
+        "calibration evidence missing positive interval width",
+        "missing inference latency p95 evidence"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 53,
+            "selected_param_count": 0
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration evidence missing PICP@90/global coverage; calibration evidence missing positive interval width",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": null,
+            "min_picp_90": 0.85,
+            "picp_90": null
+          },
+          "status": "block"
+        },
+        "generalization": {
+          "detail": "missing train split metrics for overfit/underfit audit; missing validation split metrics for overfit audit; missing test split metrics for generalization audit",
+          "metrics": {
+            "test_rmse": null,
+            "train_rmse": null,
+            "train_validation_rmse_ratio": null,
+            "validation_rmse": null,
+            "validation_test_rmse_ratio": null
+          },
+          "status": "block"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "missing hyperparameter tuning metadata",
+          "metrics": {},
+          "status": "block"
+        },
+        "latency": {
+          "detail": "missing inference latency p95 evidence",
+          "metrics": {},
+          "status": "block"
+        },
+        "underfit": {
+          "detail": "missing r2 or equivalent underfit metric",
+          "metrics": {},
+          "status": "block"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "challenger_metrics",
+      "status": "block",
+      "target": "wind_mw"
+    },
+    {
+      "blockers": [
+        "overfit risk: validation/train RMSE ratio 5.322 exceeds policy",
+        "hyperparameter tuning ran 10 trials, below policy floor 50",
+        "selected hyperparameters landed on search boundary: ['n_estimators']"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 53,
+            "selected_param_count": 4
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration/uncertainty evidence is within policy",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": 1016.357808949526,
+            "min_picp_90": 0.85,
+            "picp_90": 0.9531746031746032
+          },
+          "status": "pass"
+        },
+        "generalization": {
+          "detail": "overfit risk: validation/train RMSE ratio 5.322 exceeds policy",
+          "metrics": {
+            "test_rmse": 164.2151621177725,
+            "train_rmse": 33.79834847696421,
+            "train_validation_rmse_ratio": 5.32186,
+            "validation_rmse": 179.8700638894782,
+            "validation_test_rmse_ratio": 0.912965
+          },
+          "status": "block"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "hyperparameter tuning ran 10 trials, below policy floor 50; selected hyperparameters landed on search boundary: ['n_estimators']",
+          "metrics": {
+            "boundary_hits": [
+              "n_estimators"
+            ],
+            "complete_fraction": 1.0,
+            "n_complete_trials": 10,
+            "n_trials": 10,
+            "selected_param_count": 4
+          },
+          "status": "block"
+        },
+        "latency": {
+          "detail": "latency p95 is within policy",
+          "metrics": {
+            "budget_ms": 5.0,
+            "p95_per_sample_ms": 0.43670394707007176
+          },
+          "status": "pass"
+        },
+        "underfit": {
+          "detail": "underfit metric is within policy",
+          "metrics": {
+            "min_r2": 0.0,
+            "r2": 0.9994799416893511
+          },
+          "status": "pass"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "gbm",
+      "status": "block",
+      "target": "wind_mw"
+    },
+    {
+      "blockers": [
+        "overfit risk: validation/train RMSE ratio 10.682 exceeds policy",
+        "hyperparameter tuning ran 10 trials, below policy floor 50",
+        "selected hyperparameters landed on search boundary: ['reg_alpha', 'reg_lambda']"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 50,
+            "selected_param_count": 9
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration/uncertainty evidence is within policy",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": 11.957049225097318,
+            "min_picp_90": 0.85,
+            "picp_90": 0.90297659622813
+          },
+          "status": "pass"
+        },
+        "generalization": {
+          "detail": "overfit risk: validation/train RMSE ratio 10.682 exceeds policy",
+          "metrics": {
+            "test_rmse": 1.3869286849251898,
+            "train_rmse": 0.345202128081322,
+            "train_validation_rmse_ratio": 10.68217,
+            "validation_rmse": 3.6875078848818665,
+            "validation_test_rmse_ratio": 0.376115
+          },
+          "status": "block"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "hyperparameter tuning ran 10 trials, below policy floor 50; selected hyperparameters landed on search boundary: ['reg_alpha', 'reg_lambda']",
+          "metrics": {
+            "boundary_hits": [
+              "reg_alpha",
+              "reg_lambda"
+            ],
+            "complete_fraction": 1.0,
+            "n_complete_trials": 10,
+            "n_trials": 10,
+            "selected_param_count": 9
+          },
+          "status": "block"
+        },
+        "latency": {
+          "detail": "latency p95 is within policy",
+          "metrics": {
+            "budget_ms": 5.0,
+            "p95_per_sample_ms": 0.17948619375189878
+          },
+          "status": "pass"
+        },
+        "underfit": {
+          "detail": "underfit metric is within policy",
+          "metrics": {
+            "min_r2": 0.0,
+            "r2": 0.9836042362378057
+          },
+          "status": "pass"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "gbm",
+      "status": "block",
+      "target": "hr_bpm"
+    },
+    {
+      "blockers": [
+        "validation/test drift: test/validation RMSE ratio 1.639 exceeds policy",
+        "hyperparameter tuning ran 10 trials, below policy floor 50",
+        "selected hyperparameters landed on search boundary: ['reg_alpha']"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 50,
+            "selected_param_count": 9
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration/uncertainty evidence is within policy",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": 4.244014674801067,
+            "min_picp_90": 0.85,
+            "picp_90": 0.8943876391729152
+          },
+          "status": "pass"
+        },
+        "generalization": {
+          "detail": "validation/test drift: test/validation RMSE ratio 1.639 exceeds policy",
+          "metrics": {
+            "test_rmse": 0.696971086370996,
+            "train_rmse": 0.4443920817161453,
+            "train_validation_rmse_ratio": 0.956646,
+            "validation_rmse": 0.42512579705715337,
+            "validation_test_rmse_ratio": 1.639447
+          },
+          "status": "block"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "hyperparameter tuning ran 10 trials, below policy floor 50; selected hyperparameters landed on search boundary: ['reg_alpha']",
+          "metrics": {
+            "boundary_hits": [
+              "reg_alpha"
+            ],
+            "complete_fraction": 1.0,
+            "n_complete_trials": 10,
+            "n_trials": 10,
+            "selected_param_count": 9
+          },
+          "status": "block"
+        },
+        "latency": {
+          "detail": "latency p95 is within policy",
+          "metrics": {
+            "budget_ms": 5.0,
+            "p95_per_sample_ms": 0.24071797675588869
+          },
+          "status": "pass"
+        },
+        "underfit": {
+          "detail": "underfit metric is within policy",
+          "metrics": {
+            "min_r2": 0.0,
+            "r2": 0.986343410577699
+          },
+          "status": "pass"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "gbm",
+      "status": "block",
+      "target": "respiratory_rate"
+    },
+    {
+      "blockers": [
+        "missing train split metrics for overfit/underfit audit",
+        "missing validation split metrics for overfit audit",
+        "missing test split metrics for generalization audit",
+        "missing underfit metric",
+        "missing hyperparameter tuning metadata",
+        "calibration evidence missing PICP@90/global coverage",
+        "calibration evidence missing positive interval width",
+        "missing inference latency p95 evidence"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture/capacity evidence is present",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 50,
+            "selected_param_count": 0
+          },
+          "status": "pass"
+        },
+        "calibration": {
+          "detail": "calibration evidence missing PICP@90/global coverage; calibration evidence missing positive interval width",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": null,
+            "min_picp_90": 0.85,
+            "picp_90": null
+          },
+          "status": "block"
+        },
+        "generalization": {
+          "detail": "missing train split metrics for overfit/underfit audit; missing validation split metrics for overfit audit; missing test split metrics for generalization audit",
+          "metrics": {
+            "test_rmse": null,
+            "train_rmse": null,
+            "train_validation_rmse_ratio": null,
+            "validation_rmse": null,
+            "validation_test_rmse_ratio": null
+          },
+          "status": "block"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "missing hyperparameter tuning metadata",
+          "metrics": {},
+          "status": "block"
+        },
+        "latency": {
+          "detail": "missing inference latency p95 evidence",
+          "metrics": {},
+          "status": "block"
+        },
+        "underfit": {
+          "detail": "missing r2 or equivalent underfit metric",
+          "metrics": {},
+          "status": "block"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "challenger_metrics",
+      "status": "block",
+      "target": "spo2_pct"
+    },
+    {
+      "blockers": [
+        "missing train split metrics for overfit/underfit audit",
+        "validation/test drift: test/validation RMSE ratio 1.473 exceeds policy",
+        "architecture evidence missing selected GBM hyperparameters",
+        "missing hyperparameter tuning metadata",
+        "missing inference latency p95 evidence"
+      ],
+      "gates": {
+        "architecture": {
+          "detail": "architecture evidence missing selected GBM hyperparameters",
+          "metrics": {
+            "architecture_fields": [],
+            "n_features": 49,
+            "selected_param_count": 0
+          },
+          "status": "block"
+        },
+        "calibration": {
+          "detail": "calibration/uncertainty evidence is within policy",
+          "metrics": {
+            "max_picp_90": 0.99,
+            "mean_interval_width": 3.144807927103054,
+            "min_picp_90": 0.85,
+            "picp_90": 0.9178368552601681
+          },
+          "status": "pass"
+        },
+        "generalization": {
+          "detail": "missing train split metrics for overfit/underfit audit; validation/test drift: test/validation RMSE ratio 1.473 exceeds policy",
+          "metrics": {
+            "test_rmse": 0.35141471194501894,
+            "train_rmse": null,
+            "train_validation_rmse_ratio": null,
+            "validation_rmse": 0.23860622696067854,
+            "validation_test_rmse_ratio": 1.472781
+          },
+          "status": "block"
+        },
+        "gradient_stability": {
+          "detail": "not applicable for non-gradient model",
+          "metrics": {
+            "applicable": false
+          },
+          "status": "pass"
+        },
+        "hyperparameter_tuning": {
+          "detail": "missing hyperparameter tuning metadata",
+          "metrics": {},
+          "status": "block"
+        },
+        "latency": {
+          "detail": "missing inference latency p95 evidence",
+          "metrics": {},
+          "status": "block"
+        },
+        "underfit": {
+          "detail": "underfit metric is within policy",
+          "metrics": {
+            "min_r2": 0.0,
+            "r2": 0.9824994940447114
+          },
+          "status": "pass"
+        }
+      },
+      "metrics_path": "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json",
+      "model": "gbm",
+      "status": "block",
+      "target": "spo2_pct"
+    }
+  ],
+  "pass": false,
+  "policy": {
+    "boundary_fraction": 0.02,
+    "max_grad_norm": 100.0,
+    "max_gradient_clipped_fraction": 0.5,
+    "max_latency_p95_per_sample_ms": 5.0,
+    "max_picp_90": 0.99,
+    "max_train_validation_rmse_ratio": 1.35,
+    "max_validation_test_rmse_ratio": 1.35,
+    "min_complete_trial_fraction": 0.95,
+    "min_picp_90": 0.85,
+    "min_r2": 0.0,
+    "min_tuning_trials": 50,
+    "require_hyperparameter_tuning": true
+  },
+  "source_metrics": {
+    "/Volumes/T9/gridpulse/reports/runs/av/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json": "1da07b7dd96045d26bf98503c752a7200380dd6ff989961ecd60e218a4d7e501",
+    "/Volumes/T9/gridpulse/reports/runs/de/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json": "d24c69b7d40f2911695d8f7dd237bafdb1ef3e064e447344dc01d273441cb8c2",
+    "/Volumes/T9/gridpulse/reports/runs/healthcare/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/week2_metrics.json": "0672e6a2ff9c59ca4fc0aea50df5b398fdce395cdef3fa9bcd07bc892b1e999d"
+  },
+  "summary": {
+    "blocking_model_count": 18,
+    "metrics_file_count": 3,
+    "model_count": 18
+  }
+}

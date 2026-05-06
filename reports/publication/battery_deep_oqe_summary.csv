@@ -1,6 +1,6 @@
 metric,heuristic,deep
-eval_reliability_mae,0.1176201846216051,0.1613234579563141
-fault_auc,not_applicable,0.5382543770849618
-low_reliability_fault_lift,not_applicable,136.82051282051285
+eval_reliability_mae,0.1176201846216051,0.16128526628017426
+fault_auc,,0.521310569786332
+low_reliability_fault_lift,,0.0
 artifact_status,heuristic,diagnostic_only
 preference_reason,Heuristic remains preferred on the promoted battery artifact surface because it achieves lower held-out reliability MAE than DeepOQE (0.1176 vs 0.1613); the learned backend remains diagnostic-only and does not improve the promoted lane.,diagnostic comparator only

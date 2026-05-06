@@ -5,6 +5,6 @@ Battery Energy Storage,high,0.906250,0.834837,0.977663,64,reports/calibration/re
 Autonomous Vehicles,low,0.998456,0.998348,0.998564,510368,reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_traces.csv
 Autonomous Vehicles,mid,0.988291,0.987996,0.988586,510368,reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_traces.csv
 Autonomous Vehicles,high,0.979538,0.979150,0.979927,510368,reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_traces.csv
-Medical and Healthcare Monitoring,low,0.692014,0.683854,0.700174,12296,"data/healthcare/processed/splits/{calibration,val,test}.parquet"
-Medical and Healthcare Monitoring,mid,0.863045,0.856968,0.869122,12296,"data/healthcare/processed/splits/{calibration,val,test}.parquet"
-Medical and Healthcare Monitoring,high,0.946482,0.942504,0.950461,12295,"data/healthcare/processed/splits/{calibration,val,test}.parquet"
+Medical and Healthcare Monitoring,low,0.985198,0.983064,0.987333,12296,"data/healthcare/processed/splits/{calibration,val,test}.parquet"
+Medical and Healthcare Monitoring,mid,0.943640,0.939564,0.947716,12296,"data/healthcare/processed/splits/{calibration,val,test}.parquet"
+Medical and Healthcare Monitoring,high,0.946645,0.942672,0.950618,12295,"data/healthcare/processed/splits/{calibration,val,test}.parquet"

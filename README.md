@@ -1,6 +1,6 @@
 # ORIUS — Observation–Reality Integrity for Universal Safety
 
-> A universal runtime safety layer for Physical AI under degraded observation.
+> ORIUS provides a reliability-aware runtime safety layer for physical AI under degraded observation, enforcing certificate-backed action release through uncertainty coverage, repair, and fallback.
 > This repository is the research + reproducibility surface for the ORIUS monograph and its tracked Battery + AV + Healthcare promoted closure artifacts.
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
@@ -20,11 +20,11 @@ Detect -> Calibrate -> Constrain -> Shield -> Certify
 
 The book-level claim in this repository is:
 
-> ORIUS is a runtime safety layer for Physical AI under degraded observation.
+> ORIUS provides a reliability-aware runtime safety layer for physical AI under degraded observation, enforcing certificate-backed action release through uncertainty coverage, repair, and fallback.
 
 The flagship novelty sentence used across the defended ML and review surfaces is:
 
-> ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.
+> ORIUS provides a reliability-aware runtime safety layer for physical AI under degraded observation, enforcing certificate-backed action release through uncertainty coverage, repair, and fallback.
 
 That claim is **universal-first** at the architecture level and **artifact-strict** at the evidence level. Project-level status is governed by the committed release and publication artifacts, not by prose alone.
 

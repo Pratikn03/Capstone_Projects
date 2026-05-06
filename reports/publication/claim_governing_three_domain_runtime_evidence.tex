@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption{Claim-governing three-domain runtime evidence.  These rows are the
+headline safety rows allowed by the claim validators; validation-harness rows are
+diagnostic only.}
+\label{tab:claim-governing-runtime-evidence}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llrrrrrrl}
+\toprule
+Domain & Evidence tier & Baseline TSVR & ORIUS TSVR & Intervention & Fallback &
+Certificate-valid release & Runtime witness & Claim boundary\\
+\midrule
+Battery Energy Storage & locked witness runtime & 0.008300 & 0.000000 & 0.020833 & 0.020833 & 0.993056 & 1.000000 & witness row; no field deployment claim\\
+Autonomous Vehicles & all-zip grouped nuPlan runtime & 0.289250 & 0.000163 & 0.500301 & 0.173716 & 0.999924 & 0.999837 & bounded replay/surrogate; no road closure claim\\
+Medical and Healthcare Monitoring & MIMIC runtime denominator & 0.194489 & 0.000000 & 0.910099 & 0.479907 & 1.000000 & 1.000000 & retrospective monitoring; no live clinical deployment claim\\
+\bottomrule
+\end{tabular}}
+\par\smallskip
+\footnotesize Source: \texttt{reports/publication/three\_domain\_ml\_benchmark.csv}.
+\end{table}

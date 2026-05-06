@@ -20,6 +20,14 @@ production kernel realizes the typed repair-and-certify contract, while the
 formal arguments below isolate the control objects that must exist in any
 domain instantiation.
 
+In the paper-facing presentation, this chapter should be read as the final
+piece of a five-result theory arc rather than as a request to promote every
+numbered extension.  T11 is the main transfer theorem.  The
+T10/T11 observation-ambiguity sandwich is the supporting optimality corollary.
+T9 and T10 are supporting lower-bound extensions after the theorem-promotion
+gates discharge their stronger constants and domain assumptions for the locked
+Battery, AV, and Healthcare artifacts.
+
 % ----------------------------------------------------------------
 \section{Universal Problem Statement and Information Pattern}
 \label{sec:universal-kernel-model}
@@ -92,11 +100,25 @@ T11 & Which structural obligations let the reference proof pattern transfer? & T
 \end{table}
 
 The dependency order is strict.  T1--T8 establish the reference proof
-ladder.  T9 and T10 are draft/scoped extensions under explicit assumptions:
-T9 frames the structural risk of ignoring reliability, and T10 records a
-boundary-indistinguishability frontier for the stated binary testing model.
-T11 then identifies the obligations under which the same repair-and-bound
-structure transfers across domains.
+ladder.  T9 and T10 are assumption-qualified extensions under explicit
+domain-discharge artifacts: T9 frames the structural risk of ignoring
+reliability, and T10 records a boundary-indistinguishability frontier for the
+stated binary testing model.  T11 then identifies the obligations under which
+the same repair-and-bound structure transfers across domains.
+
+\paragraph{Mathematical contract vs. domain discharge.}
+This chapter separates theorem kernels from empirical validation.  The
+\emph{mathematical contract} consists only of the displayed hypotheses,
+Appendix~B assumptions, and typed transfer obligations: uncertainty-set
+coverage, state-conditioned safe-set correctness, repair membership, fallback
+admissibility, and domain-adapter validity.  The \emph{domain discharge}
+artifacts instantiate constants and check mixing, boundary-mass, and witness
+conditions for the promoted Battery, AV, and Healthcare runs.  In particular,
+domain discharge artifacts are evidence, not an extra hidden assumption.
+Consequently, the transfer claim is \emph{contract-universal, not unrestricted-global}: any physical-AI domain that implements the ORIUS runtime
+contract may reuse the proof kernel, but each new domain must provide its own
+discharge artifacts before numerical constants or deployment-facing claims are
+promoted.
 
 % ----------------------------------------------------------------
 \section{Observation-Aware Control Is Structurally Necessary (T9)}
@@ -106,8 +128,11 @@ structure transfers across domains.
 Theorem~\ref{thm:no-free-safety} shows, on the reference proof surface, that
 quality-ignorant safety logic can fail even when observed-state evaluation
 looks safe.  The broader universality claim is that this pathology is not a
-single-domain accident; T9 records the corresponding draft/scoped extension
-under explicit mixing and boundary-reachability assumptions.
+single-domain accident; T9 records the corresponding assumption-qualified
+extension under explicit mixing and boundary-reachability assumptions.  The
+locked Battery, AV, and Healthcare artifacts discharge these constants through
+the promotion evidence files \texttt{T9\_battery.json}, \texttt{T9\_av.json},
+and \texttt{T9\_healthcare.json}.
 
 \begin{theorem}[Universal Impossibility, T9]
 \label{thm:universal-impossibility}
@@ -185,13 +210,12 @@ the buffer gaps absorb the coupling cost without changing the
 $\Omega(dT)$ scaling.
 \end{remark}
 
-T9 is a draft/scoped necessity extension for the universal kernel: under the
-explicit A10b/A11 hypotheses, it records why a controller that ignores
+T9 is a supporting defended necessity extension for the universal kernel:
+under the explicit A10b/A11 hypotheses, and under the locked three-domain
+mixing and witness artifacts, it records why a controller that ignores
 reliability cannot remove the violation scaling by algorithmic tuning alone.
-The defended evidence remains tiered.  Battery anchors the proof lineage
-directly; healthcare and bounded autonomous-vehicle replay support the same
-runtime story under defended contracts; broader portability remains outside
-the active proof-validating surface.
+Broader portability still requires rerunning the same discharge builder on the
+new domain rather than inheriting the Battery/AV/Healthcare constants.
 
 % ----------------------------------------------------------------
 \section{Boundary-Indistinguishability Lower Bound (T10)}
@@ -205,6 +229,11 @@ The core ORIUS bound from the reference domain is
 where $\alpha$ is the miscoverage level and $\bar{w}$ is the mean reliability.
 The monograph extension asks whether that envelope is merely conservative or
 whether it captures the right scaling law.
+The locked T10 evidence files discharge the boundary-mass, paired
+safe/unsafe observation-law, and TV-bridge assumptions for Battery, AV, and
+Healthcare.  In the Battery case, the unsafe-side law is supplied by the
+locked 48-hour boundary-violation trace and transformed into the same margin
+units as the runtime trace.
 
 \begin{theorem}[Boundary-indistinguishability lower bound, T10]
 \label{thm:information-theoretic-lower-bound}
@@ -217,12 +246,20 @@ and $H_{1,t}$ (unsafe side of the boundary) such that:
     $\mathrm{TV}(P_{0,t},P_{1,t}) \le w_t$;
   \item the unsafe-side prior satisfies $\Prob(H_{1,t}) \ge p_t$ for some
     boundary-mass sequence $p_t \in [0,1]$.
+  \item every unsafe-side mistaken release has OASG severity at least
+    $\delta_t \ge 0$.
 \end{enumerate}
 Then every controller $\pi$ satisfies
 \[
   \mathbb{E}\!\left[V_T(\pi)\right]
   \;\ge\;
   \frac{1}{2}\sum_{t=1}^T p_t(1-w_t).
+\]
+Moreover, the severity-weighted OASG satisfies
+\[
+  \mathbb{E}\!\left[\mathrm{OASG}_T(\pi)\right]
+  \;\ge\;
+  \frac{1}{2}\sum_{t=1}^T \delta_t p_t(1-w_t).
 \]
 In particular, if $p_t \ge \alpha/2$ for all $t$, then
 \[
@@ -244,7 +281,7 @@ safe/unsafe boundary subproblem.  By Le~Cam's lemma,
   \frac{1-w_t}{2}.
 \]
 Whenever $H_{1,t}$ holds and the controller errs, the step contributes one
-true-state violation, so
+true-state violation and at least $\delta_t$ severity-weighted OASG, so
 \[
   \Prob[Z_t = 1]
   \;\ge\;
@@ -260,19 +297,27 @@ Summing across the horizon and applying linearity of expectation yields
   \;\ge\;
   \frac{1}{2}\sum_{t=1}^T p_t(1-w_t).
 \]
+Multiplying the same per-step event by $\delta_t$ and summing gives
+\[
+  \mathbb{E}[\mathrm{OASG}_T(\pi)]
+  \ge
+  \frac{1}{2}\sum_{t=1}^T \delta_t p_t(1-w_t).
+\]
 The special case $p_t \ge \alpha/2$ then implies the stated
 $\tfrac{1}{4}\alpha(1-\bar{w})T$ frontier.  No stronger conclusion is claimed
-without a domain-specific argument that justifies the boundary-mass sequence
-$p_t$.
+without a domain-specific argument that justifies the boundary-mass and
+severity sequences $p_t,\delta_t$.
 \end{proof}
 
 \begin{remark}
-T10 is a draft/scoped but substantive extension.  It is an information-theoretic lower bound
+T10 is an assumption-qualified supporting extension.  It is an information-theoretic lower bound
 for any controller that only sees the degraded observation channel under the
 explicit boundary-mass and indistinguishability hypotheses above.  It does
 not claim a globally sharp minimax constant for every observation model, but
 it does show that the $\alpha(1-\bar{w})T$ scaling cannot be dismissed as a
-pure artifact of one repair heuristic.
+pure artifact of one repair heuristic.  In its OASG form, the theorem states
+the explicit rate: the unavoidable gap grows linearly with the degradation
+budget $\sum_t(1-w_t)$, scaled by boundary mass and minimum violation severity.
 \end{remark}
 
 The resulting \emph{reliability-risk frontier} is useful even when read
@@ -704,11 +749,12 @@ three-domain program.
 This chapter closes the monograph at the correct control-theory level.
 
 \begin{enumerate}
-  \item \textbf{T9} is a draft/scoped extension that frames observation-aware
-    safety logic as structurally necessary under persistent degradation.
-  \item \textbf{T10} is a draft/scoped extension that turns mean reliability
-    into a quantitative infrastructure-to-risk frontier under explicit binary
-    testing hypotheses.
+  \item \textbf{T9} is a supporting extension that frames observation-aware
+    safety logic as structurally necessary under persistent degradation once
+    the domain mixing and witness constants are discharged.
+  \item \textbf{T10} is a supporting extension that turns mean reliability
+    into a quantitative infrastructure-to-risk frontier under explicit
+    binary-testing and boundary-law hypotheses.
   \item \textbf{T11} packages universality as a typed kernel and adapter
     template, not as a claim that every domain already has battery-level proof
     closure.
@@ -720,8 +766,8 @@ The central theorem contribution is now precise: the safe-control object under
 degraded telemetry is not the nominal state alone but a reliability-indexed
 observation-consistent state set together with a repair map and a causal
 certificate surface.  Battery supplies the full proof witness.  T9 and T10,
-as draft/scoped extensions, record necessity and lower-bound directions under
-explicit assumptions.  T11 shows how the same kernel transfers when a new
-domain discharges the explicit structural obligations.  This is a defensible
-control-theory claim; it is not an assertion that all evaluated domains
-already enjoy equal proof closure.
+as assumption-qualified supporting extensions, record necessity and lower-bound
+directions after the locked domains discharge the explicit constants.  T11
+shows how the same kernel transfers when a new domain discharges the explicit
+structural obligations.  This is a defensible control-theory claim; it is not
+an assertion that all evaluated domains already enjoy equal proof closure.

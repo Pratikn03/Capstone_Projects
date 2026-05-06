@@ -1,0 +1,97 @@
+{
+  "claim_boundary": "Predeployment runtime-assurance evidence only: no AV road deployment, no CARLA closed-loop completion claim, no healthcare clinical deployment, and no clinical decision-support approval claim.",
+  "domains": {
+    "av": {
+      "candidate_action": "acceleration/braking/trajectory action",
+      "certified_action_or_fallback": "safe bounded replay action or brake-hold fallback",
+      "claim_boundary": "Integrated nuPlan offline bounded replay evidence; no road deployment claim.",
+      "contract_id": "AV.T11.brake_hold_runtime_lemma",
+      "domain_contract_witness": "reports/publication/domain_runtime_contract_witnesses.csv#av",
+      "domain_data": [
+        "data/orius_av/av/processed_nuplan_allzip_grouped/anchor_features.parquet",
+        "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_traces.csv"
+      ],
+      "forecast_model": "artifacts/models_orius_av_nuplan_allzip_grouped",
+      "label": "Autonomous Vehicles",
+      "reliability_score": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_traces.csv:reliability_w",
+      "runtime_assurance": "integrated nuPlan offline runtime-assurance pipeline",
+      "runtime_trace": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_traces.csv",
+      "summary": {
+        "certificate_valid_rate": 0.9999242376742533,
+        "contract_id": "AV.T11.brake_hold_runtime_lemma",
+        "n_steps": 1531104,
+        "postcondition_pass_rate": 0.9998373722490438,
+        "scope_note": "Bounded runtime lemma for promoted ORIUS AV replay rows: T11 forward obligations plus the true brake-hold postcondition in the longitudinal runtime trace.",
+        "t11_pass_rate": 1.0,
+        "witness_pass_rate": 0.9998373722490438
+      },
+      "uncertainty_estimate": "artifacts/uncertainty/orius_av_nuplan_allzip_grouped"
+    },
+    "battery": {
+      "candidate_action": "charge/discharge dispatch",
+      "certified_action_or_fallback": "safe charge/discharge dispatch or hold fallback",
+      "claim_boundary": "Reference battery dispatch witness; not unrestricted field deployment.",
+      "contract_id": "BATTERY.T11.safe_dispatch_runtime_witness",
+      "domain_contract_witness": "reports/publication/domain_runtime_contract_witnesses.csv#battery",
+      "domain_data": [
+        "data/processed/features.parquet",
+        "reports/battery_av/battery/runtime_traces.csv"
+      ],
+      "forecast_model": "artifacts/models",
+      "label": "Battery Energy Storage",
+      "reliability_score": "reports/battery_av/battery/runtime_traces.csv:reliability_w",
+      "runtime_assurance": "ORIUS DC3S battery runtime-assurance layer",
+      "runtime_trace": "reports/battery_av/battery/runtime_traces.csv",
+      "summary": {
+        "certificate_valid_rate": 1.0,
+        "contract_id": "BATTERY.T11.safe_dispatch_runtime_witness",
+        "n_steps": 1152,
+        "postcondition_pass_rate": 1.0,
+        "scope_note": "Reference runtime witness for promoted ORIUS battery dispatch rows: T11 forward obligations plus the true safe-dispatch postcondition in the battery runtime trace.",
+        "t11_pass_rate": 1.0,
+        "witness_pass_rate": 1.0
+      },
+      "uncertainty_estimate": "artifacts/uncertainty"
+    },
+    "healthcare": {
+      "candidate_action": "alert/escalation/monitoring action",
+      "certified_action_or_fallback": "bounded monitoring recommendation or fail-safe alert",
+      "claim_boundary": "Predeployment healthcare monitoring evidence; no clinical deployment or clinical decision-support approval claim.",
+      "contract_id": "HC.T11.fail_safe_release_runtime_lemma",
+      "domain_contract_witness": "reports/publication/domain_runtime_contract_witnesses.csv#healthcare",
+      "domain_data": [
+        "data/healthcare/processed/features.parquet",
+        "reports/healthcare/runtime_traces.csv"
+      ],
+      "forecast_model": "artifacts/models_healthcare",
+      "label": "Medical and Healthcare Monitoring",
+      "reliability_score": "reports/healthcare/runtime_traces.csv:reliability_w",
+      "runtime_assurance": "ORIUS healthcare monitoring runtime-assurance layer",
+      "runtime_trace": "reports/healthcare/runtime_traces.csv",
+      "summary": {
+        "certificate_valid_rate": 1.0,
+        "contract_id": "HC.T11.fail_safe_release_runtime_lemma",
+        "n_steps": 137262,
+        "postcondition_pass_rate": 1.0,
+        "scope_note": "Bounded runtime lemma for promoted ORIUS healthcare monitoring rows: T11 forward obligations plus the true fail-safe alert-release postcondition in the MIMIC monitoring trace.",
+        "t11_pass_rate": 1.0,
+        "witness_pass_rate": 1.0
+      },
+      "uncertainty_estimate": "artifacts/uncertainty/healthcare"
+    }
+  },
+  "schema_version": "orius.universal_contract.v1",
+  "source_theorem": "T11",
+  "universal_pipeline_slots": [
+    "domain_data",
+    "forecast_model",
+    "uncertainty_estimate",
+    "reliability_score",
+    "candidate_action",
+    "runtime_assurance",
+    "certified_action_or_fallback",
+    "runtime_trace",
+    "domain_contract_witness",
+    "claim_boundary"
+  ]
+}

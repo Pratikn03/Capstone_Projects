@@ -1,0 +1,215 @@
+{
+  "forbidden_tokens": [],
+  "formal_dir": "formal",
+  "generated_at_utc": "2026-05-03T17:12:29.412666+00:00",
+  "lean_status": "passed",
+  "mechanization_scope": "theorem_kernel_not_domain_discharge",
+  "pass": true,
+  "policy": "The active theorem program's mechanized kernel gate passes only after `lake build Orius` succeeds and no placeholders/unchecked axioms are present. Domain assumptions, empirical witnesses, and runtime artifacts remain separate promotion gates.",
+  "root_module": "formal/Orius.lean",
+  "theorems": {
+    "L1": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "L2": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "L3": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "L4": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T1": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T10": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T10_T11_ObservationAmbiguitySandwich": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T11": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T11_AV_BrakeHold": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T11_Byzantine": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T11_HC_FailSafeRelease": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T2": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T3a": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T3b": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T4": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T5": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T6": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T6_AV_FallbackValidity": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T6_HC_FallbackValidity": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T7": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T8": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T9": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T_EQ_AV_RuntimeArtifactPackage": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T_EQ_Battery_RuntimeArtifactPackage": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T_EQ_HC_RuntimeArtifactPackage": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T_minimax": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T_sensor_converse": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T_stale_decay": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    },
+    "T_trajectory_PAC": {
+      "blocker": "",
+      "formal_file": "formal/Orius.lean",
+      "lean_status": "passed",
+      "mechanization_scope": "theorem_kernel_not_domain_discharge",
+      "status": "kernel_verified"
+    }
+  }
+}

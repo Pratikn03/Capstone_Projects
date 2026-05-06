@@ -1,0 +1,560 @@
+{
+  "applicability_status": "three_domain_empirical_discharge",
+  "artifact_exists": true,
+  "artifact_source": "reports/publication/theorem_promotion_evidence/T9_battery.json",
+  "assumptions_status": "A10b_A11_empirically_discharged_for_domain",
+  "blocker": "",
+  "boundary_reachability_rate": 0.029513888888888888,
+  "boundary_reachability_status": "boundary_reachability_discharged",
+  "constants_status": "domain_witness_constants_discharged",
+  "degradation_rate": 0.8342013888888888,
+  "degradation_rate_status": "degradation_persistence_discharged",
+  "domain": "battery",
+  "generated_at_utc": "2026-05-03T17:07:01.808455+00:00",
+  "mixing_bridge_status": "geometric_phi_mixing_proxy_discharged",
+  "mixing_proxy": {
+    "finite_mixing_proxy": true,
+    "lag1_autocorrelation": 0.9468881860775634,
+    "lag_autocorrelations": [
+      {
+        "autocorrelation": 0.9468881860775634,
+        "lag": 1
+      },
+      {
+        "autocorrelation": 0.9235825904755313,
+        "lag": 2
+      },
+      {
+        "autocorrelation": 0.9150802374514262,
+        "lag": 3
+      },
+      {
+        "autocorrelation": 0.9001236511557483,
+        "lag": 4
+      },
+      {
+        "autocorrelation": 0.8942147834051477,
+        "lag": 5
+      },
+      {
+        "autocorrelation": 0.8894510965552274,
+        "lag": 6
+      },
+      {
+        "autocorrelation": 0.8835071911198662,
+        "lag": 7
+      },
+      {
+        "autocorrelation": 0.8830953345825796,
+        "lag": 8
+      },
+      {
+        "autocorrelation": 0.8789089312954097,
+        "lag": 9
+      },
+      {
+        "autocorrelation": 0.8698586479168257,
+        "lag": 10
+      },
+      {
+        "autocorrelation": 0.8639860912658549,
+        "lag": 11
+      },
+      {
+        "autocorrelation": 0.8550970527282762,
+        "lag": 12
+      },
+      {
+        "autocorrelation": 0.8471339966205483,
+        "lag": 13
+      },
+      {
+        "autocorrelation": 0.8401845211892816,
+        "lag": 14
+      },
+      {
+        "autocorrelation": 0.8377788331212137,
+        "lag": 15
+      },
+      {
+        "autocorrelation": 0.829718243703612,
+        "lag": 16
+      },
+      {
+        "autocorrelation": 0.8227474501827327,
+        "lag": 17
+      },
+      {
+        "autocorrelation": 0.8325250068383877,
+        "lag": 18
+      },
+      {
+        "autocorrelation": 0.8067197564580968,
+        "lag": 19
+      },
+      {
+        "autocorrelation": 0.7854147872558737,
+        "lag": 20
+      },
+      {
+        "autocorrelation": 0.7733838895039823,
+        "lag": 21
+      },
+      {
+        "autocorrelation": 0.7617962178814118,
+        "lag": 22
+      },
+      {
+        "autocorrelation": 0.7530513744460963,
+        "lag": 23
+      },
+      {
+        "autocorrelation": 0.7456746448360961,
+        "lag": 24
+      },
+      {
+        "autocorrelation": 0.7392885447347705,
+        "lag": 25
+      },
+      {
+        "autocorrelation": 0.7333710387229534,
+        "lag": 26
+      },
+      {
+        "autocorrelation": 0.727975290801557,
+        "lag": 27
+      },
+      {
+        "autocorrelation": 0.7200155552278513,
+        "lag": 28
+      },
+      {
+        "autocorrelation": 0.7123431114801452,
+        "lag": 29
+      },
+      {
+        "autocorrelation": 0.7049568626267686,
+        "lag": 30
+      },
+      {
+        "autocorrelation": 0.6978730104808156,
+        "lag": 31
+      },
+      {
+        "autocorrelation": 0.6915360792218125,
+        "lag": 32
+      },
+      {
+        "autocorrelation": 0.6853664817031973,
+        "lag": 33
+      },
+      {
+        "autocorrelation": 0.6809919877355023,
+        "lag": 34
+      },
+      {
+        "autocorrelation": 0.6755036987180922,
+        "lag": 35
+      },
+      {
+        "autocorrelation": 0.6694712340600116,
+        "lag": 36
+      },
+      {
+        "autocorrelation": 0.6639211974878123,
+        "lag": 37
+      },
+      {
+        "autocorrelation": 0.6589672745926389,
+        "lag": 38
+      },
+      {
+        "autocorrelation": 0.6546748133480237,
+        "lag": 39
+      },
+      {
+        "autocorrelation": 0.6495686793496979,
+        "lag": 40
+      },
+      {
+        "autocorrelation": 0.644673644199089,
+        "lag": 41
+      },
+      {
+        "autocorrelation": 0.6395795923633996,
+        "lag": 42
+      },
+      {
+        "autocorrelation": 0.6344342964577371,
+        "lag": 43
+      },
+      {
+        "autocorrelation": 0.6294365937818522,
+        "lag": 44
+      },
+      {
+        "autocorrelation": 0.6251396318289382,
+        "lag": 45
+      },
+      {
+        "autocorrelation": 0.619810509266449,
+        "lag": 46
+      },
+      {
+        "autocorrelation": 0.6146529171006367,
+        "lag": 47
+      },
+      {
+        "autocorrelation": 0.6105659651058712,
+        "lag": 48
+      },
+      {
+        "autocorrelation": 0.6055881977184007,
+        "lag": 49
+      },
+      {
+        "autocorrelation": 0.6007812021968472,
+        "lag": 50
+      },
+      {
+        "autocorrelation": 0.5954013395202638,
+        "lag": 51
+      },
+      {
+        "autocorrelation": 0.5901217687610872,
+        "lag": 52
+      },
+      {
+        "autocorrelation": 0.5853546763896298,
+        "lag": 53
+      },
+      {
+        "autocorrelation": 0.5800662375909714,
+        "lag": 54
+      },
+      {
+        "autocorrelation": 0.5750081322817062,
+        "lag": 55
+      },
+      {
+        "autocorrelation": 0.5693720941479795,
+        "lag": 56
+      },
+      {
+        "autocorrelation": 0.5638253855179142,
+        "lag": 57
+      },
+      {
+        "autocorrelation": 0.5583694273009561,
+        "lag": 58
+      },
+      {
+        "autocorrelation": 0.5530071579835963,
+        "lag": 59
+      },
+      {
+        "autocorrelation": 0.5472589615111949,
+        "lag": 60
+      },
+      {
+        "autocorrelation": 0.5416056078282011,
+        "lag": 61
+      },
+      {
+        "autocorrelation": 0.5348202536353684,
+        "lag": 62
+      },
+      {
+        "autocorrelation": 0.5275217380562771,
+        "lag": 63
+      },
+      {
+        "autocorrelation": 0.5202125748666917,
+        "lag": 64
+      },
+      {
+        "autocorrelation": 0.5128838337529827,
+        "lag": 65
+      },
+      {
+        "autocorrelation": 0.506955445777852,
+        "lag": 66
+      },
+      {
+        "autocorrelation": 0.5008210376175516,
+        "lag": 67
+      },
+      {
+        "autocorrelation": 0.4946738281565914,
+        "lag": 68
+      },
+      {
+        "autocorrelation": 0.48922816852602113,
+        "lag": 69
+      },
+      {
+        "autocorrelation": 0.4837676670458202,
+        "lag": 70
+      },
+      {
+        "autocorrelation": 0.4782855169564039,
+        "lag": 71
+      },
+      {
+        "autocorrelation": 0.47294819243792824,
+        "lag": 72
+      },
+      {
+        "autocorrelation": 0.46739059770691826,
+        "lag": 73
+      },
+      {
+        "autocorrelation": 0.4616567975883733,
+        "lag": 74
+      },
+      {
+        "autocorrelation": 0.4592796610793229,
+        "lag": 75
+      },
+      {
+        "autocorrelation": 0.45680344291541863,
+        "lag": 76
+      },
+      {
+        "autocorrelation": 0.4622143444137763,
+        "lag": 77
+      },
+      {
+        "autocorrelation": 0.465115542108025,
+        "lag": 78
+      },
+      {
+        "autocorrelation": 0.4503276022871121,
+        "lag": 79
+      },
+      {
+        "autocorrelation": 0.4484829022118369,
+        "lag": 80
+      },
+      {
+        "autocorrelation": 0.4440766356472124,
+        "lag": 81
+      },
+      {
+        "autocorrelation": 0.4395788913720448,
+        "lag": 82
+      },
+      {
+        "autocorrelation": 0.43335246459801896,
+        "lag": 83
+      },
+      {
+        "autocorrelation": 0.42855641573407577,
+        "lag": 84
+      },
+      {
+        "autocorrelation": 0.4235912732975715,
+        "lag": 85
+      },
+      {
+        "autocorrelation": 0.42089330280786,
+        "lag": 86
+      },
+      {
+        "autocorrelation": 0.41869980816162633,
+        "lag": 87
+      },
+      {
+        "autocorrelation": 0.41651594855197577,
+        "lag": 88
+      },
+      {
+        "autocorrelation": 0.4115062741386326,
+        "lag": 89
+      },
+      {
+        "autocorrelation": 0.40983379729683006,
+        "lag": 90
+      },
+      {
+        "autocorrelation": 0.4090059174438149,
+        "lag": 91
+      },
+      {
+        "autocorrelation": 0.4093605826609717,
+        "lag": 92
+      },
+      {
+        "autocorrelation": 0.4173172225904117,
+        "lag": 93
+      },
+      {
+        "autocorrelation": 0.4180558070405668,
+        "lag": 94
+      },
+      {
+        "autocorrelation": 0.430854630294608,
+        "lag": 95
+      },
+      {
+        "autocorrelation": 0.4547778736466213,
+        "lag": 96
+      },
+      {
+        "autocorrelation": 0.42486938176818123,
+        "lag": 97
+      },
+      {
+        "autocorrelation": 0.41036827896457034,
+        "lag": 98
+      },
+      {
+        "autocorrelation": 0.40735556942296863,
+        "lag": 99
+      },
+      {
+        "autocorrelation": 0.4040398087587982,
+        "lag": 100
+      },
+      {
+        "autocorrelation": 0.398157430291449,
+        "lag": 101
+      },
+      {
+        "autocorrelation": 0.396673818085383,
+        "lag": 102
+      },
+      {
+        "autocorrelation": 0.3975308074946006,
+        "lag": 103
+      },
+      {
+        "autocorrelation": 0.40295675735718456,
+        "lag": 104
+      },
+      {
+        "autocorrelation": 0.4036643349796115,
+        "lag": 105
+      },
+      {
+        "autocorrelation": 0.39517789124154024,
+        "lag": 106
+      },
+      {
+        "autocorrelation": 0.39297912211421654,
+        "lag": 107
+      },
+      {
+        "autocorrelation": 0.39086994094644967,
+        "lag": 108
+      },
+      {
+        "autocorrelation": 0.3889495019111567,
+        "lag": 109
+      },
+      {
+        "autocorrelation": 0.3873825999715782,
+        "lag": 110
+      },
+      {
+        "autocorrelation": 0.3910470648552955,
+        "lag": 111
+      },
+      {
+        "autocorrelation": 0.3873221163138771,
+        "lag": 112
+      },
+      {
+        "autocorrelation": 0.382822519947984,
+        "lag": 113
+      },
+      {
+        "autocorrelation": 0.3922026496940712,
+        "lag": 114
+      },
+      {
+        "autocorrelation": 0.3807934118230555,
+        "lag": 115
+      },
+      {
+        "autocorrelation": 0.3696315786131622,
+        "lag": 116
+      },
+      {
+        "autocorrelation": 0.36999498819605026,
+        "lag": 117
+      },
+      {
+        "autocorrelation": 0.36950782559579115,
+        "lag": 118
+      },
+      {
+        "autocorrelation": 0.3676857250357973,
+        "lag": 119
+      },
+      {
+        "autocorrelation": 0.3679521814631607,
+        "lag": 120
+      },
+      {
+        "autocorrelation": 0.3670947366074309,
+        "lag": 121
+      },
+      {
+        "autocorrelation": 0.3683098083334232,
+        "lag": 122
+      },
+      {
+        "autocorrelation": 0.37077480932325324,
+        "lag": 123
+      },
+      {
+        "autocorrelation": 0.3623251444166487,
+        "lag": 124
+      },
+      {
+        "autocorrelation": 0.35995444586290376,
+        "lag": 125
+      },
+      {
+        "autocorrelation": 0.35757660315705825,
+        "lag": 126
+      },
+      {
+        "autocorrelation": 0.3551925611487601,
+        "lag": 127
+      },
+      {
+        "autocorrelation": 0.3536517813146016,
+        "lag": 128
+      }
+    ],
+    "max_abs_autocorrelation": 0.99,
+    "max_abs_lag1_autocorrelation": 0.99,
+    "max_lag": 128,
+    "method": "bounded_multi_lag_autocorrelation",
+    "selected_autocorrelation": 0.9468881860775634,
+    "selected_lag": 1,
+    "sequence": "reliability_deficit"
+  },
+  "n_rows": 1152,
+  "n_usable_rows": 1152,
+  "promotion_ready": true,
+  "source_trace_path": "reports/battery_av/battery/runtime_traces.csv",
+  "theorem_id": "T9",
+  "thresholds": {
+    "boundary_margin": 0.5,
+    "healthcare_alert_boundary": 1.0,
+    "healthcare_spo2_boundary": 92.0,
+    "min_positive_rate": 1e-06,
+    "min_rows": 1000,
+    "mixing_autocorrelation_max": 0.99,
+    "mixing_max_lag": 128,
+    "reliability_degradation_threshold": 0.95,
+    "tv_bridge_epsilon": 0.05,
+    "tv_histogram_bins": 10
+  },
+  "witness_constant": 0.0019852914223831056,
+  "witness_constant_status": "witness_constant_discharged",
+  "witness_positive_count": 24
+}

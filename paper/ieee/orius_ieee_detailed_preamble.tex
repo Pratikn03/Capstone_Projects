@@ -31,7 +31,9 @@
 
 \makeatletter
 \AtBeginDocument{%
-  \renewcommand*{\theHALG@line}{\thealgorithm.\arabic{ALG@line}}%
+  \@ifundefined{theHALG@line}{}{%
+    \renewcommand*{\theHALG@line}{\thealgorithm.\arabic{ALG@line}}%
+  }%
 }
 \makeatother
 

@@ -12,6 +12,11 @@ The monograph keeps that surface deliberately smaller than the dissertation's
 full formal register. The broader theorem/lemma/proposition lattice is part of
 the thesis governance apparatus; the paper-facing surface only carries the
 claims that remain central after proof hardening and claim-scope reduction.
+Concretely, the paper-facing surface is organized around four flagship theorem
+roles: the observation--action safety gap, observation necessity, ORIUS covered
+release preservation, and typed transfer under domain obligations. The permanent
+T1--T11 labels are retained as audit identifiers, not as a requirement that every
+numbered item be promoted to a headline theorem in the paper.
 
 That discipline matters because it keeps the dissertation from making a false choice
 between abstraction and implementation. The theorem surface is written against typed runtime
@@ -54,9 +59,13 @@ meaning of admissibility and true-state violation. The universal layer fixes the
 pattern of the failure event.
 
 \section{The paper-facing theorem surface}
-The paper-facing theory chapter carries four theorem-level statements and
-pushes the longer transfer and lower-bound extensions to the dedicated thesis
-extension chapter and proof appendix.
+The paper-facing theory chapter carries four flagship theorem roles and a small
+set of supporting propositions/corollaries.  The full T1--T11 ladder remains in
+Appendix~\ref{app:proofs} and in the theorem registry for traceability; the paper
+does not ask the reader to treat all eleven identifiers as equally central main
+theorems.  The claim is deliberately conditional: ORIUS is safety-optimal under
+covered observation ambiguity, not globally optimal for every possible
+physical-AI system.
 
 \begin{theorem}[OASG existence under degraded observation]
 \label{thm:oasg-existence}
@@ -81,7 +90,7 @@ falls. In other words, intervention pressure is a lawful consequence of degraded
 observation rather than an arbitrary heuristic.
 \end{theorem}
 
-\begin{proposition}[No free safety under quality-ignorant release]
+\begin{proposition}[T4: Observation Necessity / No Free Safety]
 \label{prop:no-free-safety}
 A controller that ignores observation-quality degradation can remain observed-state legal
 while incurring nonzero true-state violation under admissible degradation regimes, even when
@@ -92,11 +101,64 @@ The point of this ladder is modest but important. ORIUS does not prove that ever
 avoid intervention. It proves that once reliability affects the observation-consistent state
 set, safe release must itself become reliability aware.
 
-The stronger extension results are kept explicit rather than inlined here.
-T10 is defended in the thesis as a boundary-indistinguishability lower bound
-under extra hypotheses, and T11 is defended as a typed structural transfer
-theorem paired with failure-mode counterexamples. Neither is used here as
-paper-facing decoration.
+The final supporting optimality statement is the covered observation-ambiguity
+sandwich.  Let $h:\mathcal{X}\to\mathcal{O}$ be the observation map.  For an
+observation $o$, define the ambiguity class and common safe core as
+\[
+  B(o)=\{x\in\mathcal{X}:h(x)=o\},\qquad
+  K(o)=\bigcap_{x\in B(o)} C(x).
+\]
+If $K(o)=\emptyset$, no mandatory-release controller that only observes $o$ can
+guarantee true-state safety at that observation.  More generally, any
+observation-only mandatory-release policy $\pi$ obeys the Bayes lower bound
+\[
+  \operatorname{TSVR}(\pi)\ge
+  \mathbb{E}_{O}\!\left[
+    \min_{a\in\mathcal{A}}
+    \mathbb{P}\!\left(a\notin C(X^\star)\mid O\right)
+  \right].
+\]
+Conversely, if ORIUS constructs an uncertainty set $\mathcal{X}_t$ with
+$\mathbb{P}(X^\star_t\notin\mathcal{X}_t)\le\alpha$ and releases only actions
+safe for every state in $\mathcal{X}_t$, then
+\[
+  \operatorname{TSVR}_{\mathrm{ORIUS}}\le \alpha,
+\]
+with zero violation under exact coverage.  This is the
+\texttt{T10\_T11\_ObservationAmbiguitySandwich}: the lower bound applies to
+observation-only release, while the upper bound applies to reliability-aware
+covered release.
+
+Table~\ref{tab:theory-counterexamples} records the main counterexamples that
+would make a stronger version of the theorem false. They are included in the
+main text because they define the exact boundary between the defended ORIUS
+claim and an overclaim.
+
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption{Counterexamples and assumption boundaries for the observation-ambiguity theorem.}
+\label{tab:theory-counterexamples}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lll}
+\toprule
+Potential reviewer counterexample & Why it matters & How the manuscript bounds the claim\\
+\midrule
+Nonempty common safe core $K(o)$ & Ambiguity alone need not force violation &
+The lower bound uses $\min_a \mathbb{P}(a\notin C(X^\star)\mid O)$\\
+Controller may abstain or delay & T4 is about mandatory release, not optional release &
+The theorem names mandatory-release controllers explicitly\\
+Coverage miss $X_t^\star\notin\mathcal{X}_t$ & ORIUS cannot guarantee zero violation off coverage &
+The upper guarantee is $\operatorname{TSVR}_{\mathrm{ORIUS}}\le\alpha$\\
+Wrong safe set $C(x)$ or invalid adapter & A wrapper cannot repair a wrong safety predicate &
+Safe-set correctness and adapter validity remain proof obligations\\
+Fallback physically infeasible & No epistemic wrapper can create missing actuation authority &
+Fallback admissibility is required and infeasible cases must fail closed\\
+Poisoned or shifted calibration data & The uncertainty set may be falsely narrow &
+Coverage and calibration validity are assumptions, not automatic conclusions\\
+\bottomrule
+\end{tabular}}
+\end{table}
 
 Appendix~\ref{app:proofs} is the authoritative proof index for the defended
 theorem program.  The paper-facing surface intentionally remains narrower: it

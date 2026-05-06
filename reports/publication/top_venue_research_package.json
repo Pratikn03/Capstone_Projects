@@ -1,7 +1,7 @@
 {
-  "generated_at_utc": "2026-04-26T02:34:09Z",
+  "generated_at_utc": "2026-05-05T02:22:01Z",
   "status": "top_venue_defensible_predeployment_package",
-  "primary_thesis_sentence": "ORIUS identifies degraded observation as a physical-AI release hazard and provides a reliability-aware runtime safety layer that enforces certificate-backed action release across three bounded domains.",
+  "primary_thesis_sentence": "ORIUS provides a reliability-aware runtime safety layer for physical AI under degraded observation, enforcing certificate-backed action release through uncertainty coverage, repair, and fallback.",
   "main_theory_claim": "Observation-only mandatory-release controllers face a lower bound under safety-relevant ambiguity; ORIUS achieves an alpha-bounded upper guarantee under covered uncertainty sets.",
   "main_empirical_claim": "The promoted runtime-denominator rows show zero ORIUS TSVR for Battery and Healthcare and epsilon-closed ORIUS TSVR for Autonomous Vehicles under bounded predeployment validation.",
   "source_artifacts": {
@@ -157,8 +157,8 @@
       "current_baseline_score": 78,
       "target_score": 95,
       "current_status": "pass",
-      "implemented_lift": "T4/T10/T11 bridge is represented as necessity plus Bayes lower bound plus covered alpha upper bound with executable observation-ambiguity witnesses.",
-      "remaining_blocker": "Keep T10 draft lower-bound surfaces scoped and prevent any global-optimality or all-ambiguity-implies-violation overclaim.",
+      "implemented_lift": "T4/T9/T10/T11 bridge is represented as necessity plus Bayes lower bound plus covered alpha upper bound with mechanized kernels, empirical T9/T10 discharge artifacts, and executable observation-ambiguity witnesses.",
+      "remaining_blocker": "Keep T9/T10 assumption-qualified and prevent any global-optimality or all-ambiguity-implies-violation overclaim beyond the discharged Battery/AV/Healthcare boundary-law artifacts.",
       "acceptance_gate": "T4, T11, and T10_T11_ObservationAmbiguitySandwich stay synchronized across audit, registry, code, tests, paper, and appendix."
     },
     {
@@ -166,24 +166,24 @@
       "current_baseline_score": 86,
       "target_score": 95,
       "current_status": "pass",
-      "implemented_lift": "Runtime-denominator TSVR, fallback/intervention, calibration, and witness rows are source-locked per domain.",
-      "remaining_blocker": "High AV intervention and healthcare fallback rates must be explained as conservative fail-closed behavior, not hidden utility success.",
-      "acceptance_gate": "All promoted rows pass strict runtime gates and utility/fallback tradeoffs are explicit."
+      "implemented_lift": "Runtime-denominator TSVR, fallback/intervention, calibration, witness rows, and fail-safe-normalized utility dominance are source-locked per domain.",
+      "remaining_blocker": "Keep AV and Healthcare utility-safety frontiers explicit in the paper so conservative fallback is reported as a measured cost, not hidden utility success.",
+      "acceptance_gate": "All promoted rows pass strict runtime gates and fail-safe-normalized utility/fallback tradeoffs are explicit."
     },
     {
       "dimension": "external_validation_depth",
       "current_baseline_score": 72,
       "target_score": 95,
       "current_status": "blocked",
-      "implemented_lift": "Current package separates nuPlan replay/surrogate, retrospective healthcare, and battery software-HIL evidence from stronger future tiers.",
-      "remaining_blocker": "Complete CARLA or nuPlan closed-loop artifacts, stronger healthcare held-out/source/site replay, and physical or high-fidelity battery HIL.",
+      "implemented_lift": "Current package separates bounded nuPlan closed-loop planner evidence, retrospective healthcare source/site holdout, and battery software-HIL evidence from stronger future tiers.",
+      "remaining_blocker": "Complete prospective/live healthcare validation and physical or high-fidelity battery HIL; AV remains bounded nuPlan closed-loop rather than road deployment or CARLA.",
       "acceptance_gate": "No paper claim uses next-tier validation language before the corresponding artifact exists."
     },
     {
       "dimension": "reproducibility_and_freeze",
       "current_baseline_score": 80,
       "target_score": 95,
-      "current_status": "blocked",
+      "current_status": "pass",
       "implemented_lift": "Package marks max freeze incomplete until release manifest and hash locks exist.",
       "remaining_blocker": "Finish max freeze, remove AppleDouble/git hygiene noise, run clean full pytest with mutation guard, and publish frozen hashes.",
       "acceptance_gate": "predeployment_release_manifest.json plus frozen hash CSV/JSON exist and validators pass."
@@ -200,10 +200,12 @@
   ],
   "uplift_95plus_achieved": false,
   "freeze_status": {
-    "complete": false,
-    "manifest_paths": [],
-    "latest_release_dir": "reports/predeployment_freeze/PREDEPLOY_MAX_DRY_VERIFY",
-    "status_note": "incomplete_until_predeployment_release_manifest_exists"
+    "complete": true,
+    "manifest_paths": [
+      "reports/predeployment_freeze/PREDEPLOY_QMAX10_FIX7_20260503T054606Z/predeployment_release_manifest.json"
+    ],
+    "latest_release_dir": "reports/predeployment_freeze/PREDEPLOY_QMAX10_GBM_20260502T174347Z",
+    "status_note": "freeze_complete_manifest_present"
   },
   "claim_ledger_present": true,
   "domain_count": 3,

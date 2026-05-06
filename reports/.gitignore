@@ -1,11 +1,35 @@
 *.md
 *.json
 !README.md
+
+# Local/generated validation runs. Keep raw traces and heavyweight run folders
+# on disk, but publish only curated compact evidence from reports/publication.
+runs/
+predeployment_freeze/
+audit/senior_training_publication_audit_*/
+battery_av/overall_nuplan_95/
+healthcare/heldout_95/
+hil/software_hil_95/
+orius_av/nuplan_95/
+orius_av/nuplan_allzip_grouped/
+predeployment_external_validation/av_closed_loop_planner/
+predeployment_external_validation/carla_local_95/
+orius_framework_proof/sil_validation/traces/*_seed[1-9].csv
+
 !publication/ambiguity_calibration_summary.json
 !publication/cqr_calibration_summary.json
 !publication/distributional_summary.json
 !publication/domain_runtime_contract_summary.json
+!publication/runtime_release_contract_witnesses.json
+!publication/orius_universal_contract_manifest.json
 !publication/active_theorem_audit.json
+!publication/model_quality_gate.json
+!publication/three_domain_forecast_calibration_runtime_evidence.json
+!publication/t9_t10_research_scorecard.json
+!publication/t9_t10_assumption_discharge_scorecard.json
+!publication/t9_t10_mechanized_proof_status.json
+!publication/theorem_promotion_scorecard.json
+!publication/theorem_promotion_evidence/*.json
 !publication/active_theorem_audit.md
 !publication/active_theorem_remediation_plan.md
 !audit/table_result_integrity.json

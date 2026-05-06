@@ -5,7 +5,7 @@ Forecasting model trained on OPSD Germany time‑series.
 ## Metrics (test split)
 | Model | RMSE | MAE | sMAPE | MAPE |
 |---|---:|---:|---:|---:|
-| gbm | 265.93001899393346 | 173.24888820203043 | 0.003642035022672027 | 0.003651284512438472 |
+| gbm | 256.30623919216544 | 162.4705277063764 | 0.0034282041812870056 | 0.0034372932153469314 |
 
 ## Intended Use
 Day‑ahead forecasting for grid planning and dispatch optimization.

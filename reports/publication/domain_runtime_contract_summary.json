@@ -9,6 +9,15 @@
       "t11_pass_rate": 1.0,
       "witness_pass_rate": 0.9998373722490438
     },
+    "battery": {
+      "certificate_valid_rate": 1.0,
+      "contract_id": "BATTERY.T11.safe_dispatch_runtime_witness",
+      "n_steps": 1152,
+      "postcondition_pass_rate": 1.0,
+      "scope_note": "Reference runtime witness for promoted ORIUS battery dispatch rows: T11 forward obligations plus the true safe-dispatch postcondition in the battery runtime trace.",
+      "t11_pass_rate": 1.0,
+      "witness_pass_rate": 1.0
+    },
     "healthcare": {
       "certificate_valid_rate": 1.0,
       "contract_id": "HC.T11.fail_safe_release_runtime_lemma",
@@ -19,6 +28,6 @@
       "witness_pass_rate": 1.0
     }
   },
-  "scope_note": "Battery remains the deepest witness row. AV and healthcare are bounded runtime-lemma rows under forward-only T11.",
+  "scope_note": "Battery, AV, and healthcare instantiate the same T11 universal runtime-assurance contract with domain-native actions and bounded predeployment claim boundaries.",
   "source_theorem": "T11"
 }

@@ -765,11 +765,11 @@ theorems:
   - id: T9
     title: Universal Impossibility, T9
     surface_kind: theorem
-    defense_tier: draft_non_defended
-    proof_tier: V0
+    defense_tier: supporting_defended
+    proof_tier: V1_linked
     program_role: impossibility_extension
     status: active
-    scope_note: Visible only as a scoped impossibility extension under the explicit geometric-mixing assumption A10b.
+    scope_note: Defended as an assumption-qualified impossibility extension with Lean kernel coverage and three-domain empirical discharge of the A10b/A11 mixing and witness constants. The mathematical contract is A10b/A11 plus the no-free-safety witness; domain discharge is evidence, not an extra hidden assumption.
     statement_source:
       file: chapters/ch37_universality_completeness.tex
       needle: '\begin{theorem}[Universal Impossibility, T9]'
@@ -783,33 +783,40 @@ theorems:
     dependencies:
       - T4
       - Azuma-Hoeffding concentration for separated windows
-    weakest_step: The witness constant is still domain-scoped rather than universally instantiated.
-    rigor_rating: scoped_extension
-    code_correspondence: partial
-    code_correspondence_detail: The helper exposes the algebra once the witness constant is provided.
+    weakest_step: The finite-mixing witness is empirical and domain-discharge based, so new domains must rerun the T9 evidence builder rather than inheriting the constants automatically.
+    rigor_rating: mechanized_kernel_empirical_discharge
+    code_correspondence: matches
+    code_correspondence_detail: The theorem kernel is mechanized and the executable discharge builder computes the domain witness constant, degradation rate, boundary reachability rate, and bounded-lag mixing proxy from locked traces.
     severity_if_broken: high
-    remediation_class: keep scoped
-    remediation_detail: Keep T9 out of defended headline counts until the witness constant and mixing bridge are fully discharged.
+    remediation_class: external review
+    remediation_detail: Keep T9 tied to reports/publication/theorem_promotion_evidence/T9_*.json and rerun the promotion validator whenever a domain trace or threshold changes; domain discharge is evidence, not an extra hidden assumption.
     code_anchors:
       - path: src/orius/dc3s/theoretical_guarantees.py
         symbol: compute_universal_impossibility_bound
         note: Scaling witness helper.
+      - path: src/orius/universal_theory/theorem_discharge.py
+        symbol: compute_t9_discharge_from_rows
+        note: Empirically discharges T9 witness and mixing constants from locked domain traces.
     test_anchors:
       - path: tests/test_theoretical_guarantees_hypothesis.py
         symbol: test_t9_impossibility_bound_matches_linear_scaling
         note: Formula-only regression.
+      - path: tests/test_t9_t10_promotion_pipeline.py
+        symbol: test_t9_discharge_accepts_multi_lag_mixing_witness
+        note: Regression for bounded multi-lag mixing discharge.
     legacy_aliases: []
     generator_targets:
       - active_theorem_audit
+      - defended_theorem_core
       - theorem_surface_register
   - id: T10
     title: Boundary-indistinguishability lower bound, T10
     surface_kind: theorem
-    defense_tier: draft_non_defended
-    proof_tier: V0
+    defense_tier: supporting_defended
+    proof_tier: V1_linked
     program_role: information_lower_bound_extension
     status: active
-    scope_note: Visible only as a scoped lower-bound frontier under the explicit TV bridge A13 and boundary-mass assumptions.
+    scope_note: Defended as an assumption-qualified boundary-testing lower bound with Lean kernel coverage and three-domain empirical discharge of boundary mass, TV bridge, and paired safe/unsafe observation laws. The mathematical contract is A13 plus the displayed boundary-testing hypotheses; domain discharge is evidence, not an extra hidden assumption.
     statement_source:
       file: chapters/ch37_universality_completeness.tex
       needle: '\begin{theorem}[Boundary-indistinguishability lower bound, T10]'
@@ -818,28 +825,34 @@ theorems:
       needle: '\section{C.12\quad Boundary-Indistinguishability Lower Bound (T10)}'
     assumptions:
       - A13
-    unresolved_assumptions:
-      - Unsafe-side boundary-mass sequence p_t is supplied explicitly.
+    unresolved_assumptions: []
     dependencies:
       - Le Cam two-point lemma
-    weakest_step: The theorem stays scoped because the unsafe-side error bridge is not promoted beyond the explicit boundary-mass model.
-    rigor_rating: scoped_extension
-    code_correspondence: partial
-    code_correspondence_detail: The helper implements the stylized lower-bound algebra without overstating it as a universal converse.
+    weakest_step: The lower bound is boundary-testing scoped; the p_t and TV constants are empirical artifacts for the locked domains, not universal constants for arbitrary future domains.
+    rigor_rating: mechanized_kernel_empirical_discharge
+    code_correspondence: matches
+    code_correspondence_detail: The lower-bound algebra is matched by the executable helper, and the T10 discharge builder computes unsafe-side mass, boundary mass, TV bridge, and Le Cam inputs from locked domain traces plus explicit Battery unsafe boundary-law evidence.
     severity_if_broken: high
-    remediation_class: keep scoped
-    remediation_detail: Preserve the explicit A13 + p_t boundary assumptions in all theorem-facing surfaces.
+    remediation_class: external review
+    remediation_detail: Keep T10 tied to reports/publication/theorem_promotion_evidence/T10_*.json and preserve the explicit A13 boundary-testing scope in all theorem-facing surfaces; domain discharge is evidence, not an extra hidden assumption.
     code_anchors:
       - path: src/orius/dc3s/theoretical_guarantees.py
         symbol: compute_stylized_frontier_lower_bound
         note: Scoped lower-bound helper.
+      - path: src/orius/universal_theory/theorem_discharge.py
+        symbol: compute_t10_discharge_from_rows
+        note: Empirically discharges T10 boundary mass, TV bridge, and paired observation laws.
     test_anchors:
       - path: tests/test_theoretical_guarantees_hypothesis.py
         symbol: test_t10_frontier_lower_bound_matches_sum_formula
         note: Formula-only regression.
+      - path: tests/test_t9_t10_promotion_pipeline.py
+        symbol: test_t10_discharge_uses_auxiliary_unsafe_observation_law
+        note: Regression for explicit auxiliary unsafe observation-law discharge.
     legacy_aliases: []
     generator_targets:
       - active_theorem_audit
+      - defended_theorem_core
       - theorem_surface_register
   - id: T11
     title: Typed structural transfer theorem, T11
@@ -909,7 +922,7 @@ theorems:
     proof_tier: V1_runtime_linked
     program_role: supporting_observation_ambiguity_optimality
     status: active
-    scope_note: Supporting optimality corollary under covered observation ambiguity; it does not assert unrestricted global optimality for all physical AI systems.
+    scope_note: Supporting optimality corollary under covered observation ambiguity; contract-universal, not unrestricted-global; it does not assert unrestricted global optimality for all physical AI systems.
     statement_source:
       file: chapters/ch37_universality_completeness.tex
       needle: '\begin{corollary}[T10\_T11\_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality]'
@@ -922,6 +935,7 @@ theorems:
       - The common safe core is computed as the intersection of state-conditioned safe action sets.
       - ORIUS releases only actions safe for every state in its covered uncertainty set.
       - Probabilistic coverage is reported as an alpha-bound rather than unconditional zero violation.
+      - Coverage, safe-set correctness, repair membership, fallback admissibility, and adapter validity are typed proof obligations rather than empirical metrics.
     unresolved_assumptions: []
     dependencies:
       - T10
@@ -933,7 +947,7 @@ theorems:
     code_correspondence_detail: The executable witness computes common safe cores, observation-only Bayes lower bounds, and covered ORIUS release upper bounds with explicit alpha-bound semantics.
     severity_if_broken: high
     remediation_class: keep scoped optimality
-    remediation_detail: Keep the theorem phrased as safety-optimal under covered observation ambiguity, not as a global optimality theorem for every physical-AI system.
+    remediation_detail: Keep the theorem phrased as safety-optimal under covered observation ambiguity and contract-universal, not unrestricted-global.
     code_anchors:
       - path: src/orius/universal_theory/observation_ambiguity.py
         symbol: build_observation_ambiguity_contract_summary

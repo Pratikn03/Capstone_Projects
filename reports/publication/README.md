@@ -11,7 +11,7 @@ The active program is literal and closed over three rows only:
 
 The flagship novelty sentence for the promoted ML lane is:
 
-> ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.
+> ORIUS provides a reliability-aware runtime safety layer for physical AI under degraded observation, enforcing certificate-backed action release through uncertainty coverage, repair, and fallback.
 
 The novelty claim is architectural and runtime-semantic: ORIUS does not claim a new
 conformal method, a new robust-optimization primitive, a new universal controller, or a
@@ -35,6 +35,8 @@ The promoted ML center is grouped calibration and runtime safety under degraded 
 
 - `reports/publication/three_domain_ml_benchmark.csv`
 - `reports/publication/three_domain_ml_benchmark_summary.json`
+- `reports/publication/three_domain_forecast_calibration_runtime_evidence.csv`
+- `reports/publication/three_domain_forecast_calibration_runtime_evidence.json`
 - `reports/publication/three_domain_reliability_calibration.csv`
 - `reports/publication/three_domain_grouped_coverage.csv`
 - `reports/publication/three_domain_grouped_width.csv`

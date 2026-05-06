@@ -38,11 +38,11 @@ shared across the three active rows.
 \toprule
 \textbf{Metric} & \textbf{Battery} & \textbf{AV} & \textbf{Healthcare} \\
 \midrule
-Baseline TSVR           & 0.0083 & 0.2893 & 0.1945 \\
-ORIUS TSVR              & 0.0000 & 0.000163 & 0.0000 \\
-Absolute TSVR delta     & 0.0083 & 0.2891 & 0.1945 \\
-Intervention rate       & 0.0208 & 0.5003 & 0.7510 \\
-Certificate-valid release rate & 0.9931 & 0.9999 & 1.0000$^\dagger$ \\
+Baseline TSVR           & 0.008300 & 0.289250 & 0.194489 \\
+ORIUS TSVR              & 0.000000 & 0.000163 & 0.000000 \\
+Absolute TSVR delta     & 0.008300 & 0.289087 & 0.194489 \\
+Intervention rate       & 0.020833 & 0.500301 & 0.910099 \\
+Certificate-valid release rate & 0.993056 & 0.999924 & 1.000000$^\dagger$ \\
 Grouped coverage / status & 0.938 / 1.000 / 0.906 & 0.998 / 0.988 / 0.980 & 0.692 / 0.863 / 0.946 \\
 P95 runtime latency (ms) & 0.812 & 0.744 & 0.701 \\
 \bottomrule
@@ -52,6 +52,15 @@ P95 runtime latency (ms) & 0.812 & 0.744 & 0.701 \\
 {\footnotesize $^\dagger$ Healthcare reports certificate-valid release from
 runtime-emitted CVA on the promoted replay export.  This remains a bounded
 monitoring result and is not a claim of regulated clinical deployment.}
+
+The canonical runtime release contract witnesses are reported in
+\Cref{tab:runtime-release-contract-witnesses}; each row follows the same
+observe--reliability--uncertainty--repair/fallback--certificate--append-only audit
+release grammar.
+
+\IfFileExists{../../reports/publication/runtime_release_contract_witnesses.tex}{%
+  \input{../../reports/publication/runtime_release_contract_witnesses}%
+}{}
 
 \subsection{Analysis}
 
@@ -65,17 +74,25 @@ observation.
 
 \paragraph{Autonomous Vehicles bounded row.}
 AV is promoted under the longitudinal TTC + predictive-entry-barrier contract only.
-ORIUS reduces all-zip grouped nuPlan replay TSVR from 0.2893 to 0.000163 while the
+ORIUS reduces all-zip grouped nuPlan replay TSVR from 0.289250 to 0.000163 while the
 relative-gap shift table remains in watch status.  This row demonstrates that the
 same runtime contract can survive transfer to a faster, interaction-heavy prediction
 setting, but it does \emph{not} claim full autonomous-driving field closure.
 
 \paragraph{Healthcare bounded row.}
 Healthcare is promoted only as a bounded monitoring and alert-release row.  ORIUS
-reduces the bounded TSVR from 0.1945 to 0.0000, with grouped calibration and
+reduces the bounded TSVR from 0.194489 to 0.000000, with grouped calibration and
 governance evidence reported explicitly.  The grouped coverage remains weakest in
 the low-reliability bucket, which is exactly why the prose keeps the healthcare row
 bounded and avoids any clinical-deployment claim.
+The clinical framing is retrospective and source-aware: MIMIC-IV and eICU
+define the public critical-care dataset family, while TRIPOD+AI and PROBAST+AI
+govern reporting, applicability, and risk-of-bias language
+\cite{johnson2023mimiciv,physionet2024mimiciv31,pollard2018eicu,collins2024tripodai,moons2025probastai}.
+CONSORT-AI, DECIDE-AI, and STARD-AI are used as boundary references for what the
+paper does \emph{not} claim: no prospective trial, no live clinical deployment,
+and no diagnostic approval
+\cite{liu2020consortai,vasey2022decideai,stardai2025}.
 
 \subsection{Kernel Invariance}
 

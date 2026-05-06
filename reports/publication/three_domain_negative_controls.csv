@@ -9,8 +9,8 @@ Autonomous Vehicles,shuffled_reliability_score,runtime_native_available,runtime_
 Autonomous Vehicles,delayed_reliability_score,runtime_native_available,runtime_denominator,0.000163,0.500301,One-step delayed reliability control derived from the runtime trace.
 Autonomous Vehicles,constant_low_reliability_conservative_policy,runtime_native_available,runtime_denominator,0.252319,0.896897,Conservative constant-low-reliability runtime comparator.
 Autonomous Vehicles,stronger_predictor_without_runtime_adaptation,runtime_native_available,runtime_denominator,0.289250,0.000000,Predictor-only/no-runtime-adaptation comparator.
-Medical and Healthcare Monitoring,actual_reliability,runtime_native_available,runtime_denominator,0.000000,0.751009,Canonical runtime reliability signal.
-Medical and Healthcare Monitoring,shuffled_reliability_score,runtime_native_available,runtime_denominator,0.000000,0.751009,Reliability-order perturbation control derived from the runtime trace.
-Medical and Healthcare Monitoring,delayed_reliability_score,runtime_native_available,runtime_denominator,0.000000,0.751009,One-step delayed reliability control derived from the runtime trace.
+Medical and Healthcare Monitoring,actual_reliability,runtime_native_available,runtime_denominator,0.000000,0.479907,Canonical runtime reliability signal.
+Medical and Healthcare Monitoring,shuffled_reliability_score,runtime_native_available,runtime_denominator,0.000000,0.479907,Reliability-order perturbation control derived from the runtime trace.
+Medical and Healthcare Monitoring,delayed_reliability_score,runtime_native_available,runtime_denominator,0.000000,0.479907,One-step delayed reliability control derived from the runtime trace.
 Medical and Healthcare Monitoring,constant_low_reliability_conservative_policy,runtime_native_available,runtime_denominator,0.200420,1.000000,Conservative constant-low-reliability runtime comparator.
 Medical and Healthcare Monitoring,stronger_predictor_without_runtime_adaptation,runtime_native_available,runtime_denominator,0.194489,0.000000,Predictor-only/no-runtime-adaptation comparator.

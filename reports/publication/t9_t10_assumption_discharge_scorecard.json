@@ -1,0 +1,51 @@
+{
+  "generated_at_utc": "2026-05-03T17:07:01.808326+00:00",
+  "promotion_ready": true,
+  "theorems": {
+    "T10": {
+      "av": {
+        "artifact_source": "reports/publication/theorem_promotion_evidence/T10_av.json",
+        "auxiliary_trace_paths": [],
+        "blocker": "",
+        "promotion_ready": true,
+        "source_trace_path": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_traces.csv"
+      },
+      "battery": {
+        "artifact_source": "reports/publication/theorem_promotion_evidence/T10_battery.json",
+        "auxiliary_trace_paths": [
+          "reports/publication/48h_trace.csv"
+        ],
+        "blocker": "",
+        "promotion_ready": true,
+        "source_trace_path": "reports/battery_av/battery/runtime_traces.csv"
+      },
+      "healthcare": {
+        "artifact_source": "reports/publication/theorem_promotion_evidence/T10_healthcare.json",
+        "auxiliary_trace_paths": [],
+        "blocker": "",
+        "promotion_ready": true,
+        "source_trace_path": "data/healthcare/mimic3/processed/mimic3_healthcare_orius.csv"
+      }
+    },
+    "T9": {
+      "av": {
+        "artifact_source": "reports/publication/theorem_promotion_evidence/T9_av.json",
+        "blocker": "",
+        "promotion_ready": true,
+        "source_trace_path": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_traces.csv"
+      },
+      "battery": {
+        "artifact_source": "reports/publication/theorem_promotion_evidence/T9_battery.json",
+        "blocker": "",
+        "promotion_ready": true,
+        "source_trace_path": "reports/battery_av/battery/runtime_traces.csv"
+      },
+      "healthcare": {
+        "artifact_source": "reports/publication/theorem_promotion_evidence/T9_healthcare.json",
+        "blocker": "",
+        "promotion_ready": true,
+        "source_trace_path": "data/healthcare/mimic3/processed/mimic3_healthcare_orius.csv"
+      }
+    }
+  }
+}

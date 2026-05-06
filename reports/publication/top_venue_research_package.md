@@ -1,10 +1,10 @@
 # Top-Venue Research Package: ORIUS / DC3S / GridPulse
 
-Generated: `2026-04-26T02:34:09Z`
+Generated: `2026-05-05T02:22:01Z`
 
 ## Positioning Verdict
 
-ORIUS identifies degraded observation as a physical-AI release hazard and provides a reliability-aware runtime safety layer that enforces certificate-backed action release across three bounded domains.
+ORIUS provides a reliability-aware runtime safety layer for physical AI under degraded observation, enforcing certificate-backed action release through uncertainty coverage, repair, and fallback.
 
 The strongest defensible position is **top-venue systems/safety research under bounded predeployment validation**. The current repo supports a serious three-domain claim, but it should not be framed as road deployment, live clinical deployment, or unrestricted field certification.
 
@@ -37,7 +37,7 @@ Claim authority: `docs/claim_ledger.md`.
 Observation-only mandatory-release controllers face a lower bound under safety-relevant ambiguity; ORIUS achieves an alpha-bounded upper guarantee under covered uncertainty sets.
 
 Active theorem audit rows: `29`.
-Defense tiers: `{'flagship_defended': 8, 'supporting_defended': 12, 'draft_non_defended': 9}`.
+Defense tiers: `{'flagship_defended': 8, 'supporting_defended': 14, 'draft_non_defended': 7}`.
 - `T4`: `flagship_defended`, `paper_rigorous`, code `partial`
 - `T10_T11_ObservationAmbiguitySandwich`: `supporting_defended`, `proof_runtime_linked`, code `matches`
 - `T11`: `flagship_defended`, `paper_rigorous`, code `matches`
@@ -57,8 +57,8 @@ The implemented runtime contract constructs domain-specific safety predicates, e
 | Domain | Evidence Tier | ORIUS TSVR | Fallback / Intervention | Witness | External Boundary |
 |---|---:|---:|---:|---:|---|
 | Battery Energy Storage | reference | 0.000000 | 0.020833 | 1.000000 | HIL/simulator rehearsal, not unrestricted field deployment. |
-| Autonomous Vehicles | runtime_contract_closed | 0.000163 | 0.173716 | 0.999837 | Bounded nuPlan replay/surrogate runtime-contract evidence; not completed CARLA simulation, road deployment, or full autonomous-driving field closure. |
-| Medical and Healthcare Monitoring | runtime_contract_closed | 0.000000 | 0.497720 | 1.000000 | Retrospective source-holdout/time-forward split validation, not prospective trial evidence and not live clinical deployment. |
+| Autonomous Vehicles | runtime_contract_closed | 0.000163 | 0.173716 | 0.999837 | Bounded kinematic nuPlan closed-loop planner evaluation: ego actions update future ego speed and gap, but this is not CARLA, road deployment, or full autonomous-driving field closure. |
+| Medical and Healthcare Monitoring | runtime_contract_closed | 0.000000 | 0.479907 | 1.000000 | Retrospective source-holdout/time-forward split validation, not prospective trial evidence and not live clinical deployment. |
 
 Equal artifact discipline passes for: Battery Energy Storage, Autonomous Vehicles, Medical and Healthcare Monitoring.
 
@@ -75,7 +75,7 @@ Equal artifact discipline passes for: Battery Energy Storage, Autonomous Vehicle
 
 Healthcare is framed as **retrospective source-holdout and time-forward monitoring validation**. It is not prospective trial evidence, not live clinical deployment, and not regulatory clinical decision support approval.
 
-Current healthcare training evidence: primary target `hr_bpm`, RMSE `3.894033330630295`, PICP90 `0.9001590547602818`. The calibration repair is explicitly reported as `healthcare_calibration_repaired:scale=1.237,picp_90=0.900`.
+Current healthcare training evidence: primary target `hr_bpm`, RMSE `1.353953089494559`, PICP90 `0.90297659622813`. The calibration repair is explicitly reported as `healthcare_calibration_repaired:scale=1.154,picp_90=0.902`.
 
 Healthcare comparator framing should use NEWS2/MEWS-style thresholding, conformal alert-only, predictor-only no-runtime, and fixed conservative alert baselines.
 
@@ -89,7 +89,7 @@ Battery remains the deepest witness row. Software HIL/simulator rehearsal is val
 
 ## Freeze Status
 
-Current freeze status: `incomplete_until_predeployment_release_manifest_exists`.
+Current freeze status: `freeze_complete_manifest_present`.
 
 Final frozen-release claims are not allowed until `predeployment_release_manifest.json` and frozen hash locks exist.
 
@@ -98,8 +98,8 @@ Final frozen-release claims are not allowed until `predeployment_release_manifes
 | Dimension | Baseline | Target | Status | Remaining Blocker |
 |---|---:|---:|---|---|
 | core_idea_novelty | 82 | 95 | pass | Need final paper text to keep ORIUS framed as a unified observation-reliability release contract, not a predictor/filter/fallback-only system. |
-| theory | 78 | 95 | pass | Keep T10 draft lower-bound surfaces scoped and prevent any global-optimality or all-ambiguity-implies-violation overclaim. |
-| three_domain_runtime_evidence | 86 | 95 | pass | High AV intervention and healthcare fallback rates must be explained as conservative fail-closed behavior, not hidden utility success. |
-| external_validation_depth | 72 | 95 | blocked | Complete CARLA or nuPlan closed-loop artifacts, stronger healthcare held-out/source/site replay, and physical or high-fidelity battery HIL. |
-| reproducibility_and_freeze | 80 | 95 | blocked | Finish max freeze, remove AppleDouble/git hygiene noise, run clean full pytest with mutation guard, and publish frozen hashes. |
+| theory | 78 | 95 | pass | Keep T9/T10 assumption-qualified and prevent any global-optimality or all-ambiguity-implies-violation overclaim beyond the discharged Battery/AV/Healthcare boundary-law artifacts. |
+| three_domain_runtime_evidence | 86 | 95 | pass | Keep AV and Healthcare utility-safety frontiers explicit in the paper so conservative fallback is reported as a measured cost, not hidden utility success. |
+| external_validation_depth | 72 | 95 | blocked | Complete prospective/live healthcare validation and physical or high-fidelity battery HIL; AV remains bounded nuPlan closed-loop rather than road deployment or CARLA. |
+| reproducibility_and_freeze | 80 | 95 | pass | Finish max freeze, remove AppleDouble/git hygiene noise, run clean full pytest with mutation guard, and publish frozen hashes. |
 | claim_quality | 88 | 95 | pass | Keep manuscript, README, claim ledger, and package synchronized after every new validation run. |

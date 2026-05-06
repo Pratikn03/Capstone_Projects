@@ -4,6 +4,8 @@
   "traces": "reports/predeployment_external_validation/nuplan_closed_loop_traces.csv",
   "runtime_summary": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_summary.csv",
   "runtime_traces": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_traces.csv",
+  "runtime_governance_summary": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_governance_summary.csv",
+  "certos_verification_summary": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/certos_verification_summary.json",
   "surface_report": "data/orius_av/av/processed_nuplan_allzip_grouped/nuplan_surface_report.json",
   "runtime_report": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_report.json",
   "claim_boundary": "Completed all-zip grouped nuPlan runtime replay/surrogate evidence only; does not claim completed CARLA simulation, road deployment, or full autonomous-driving field closure.",

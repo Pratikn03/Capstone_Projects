@@ -38,7 +38,7 @@
     ]
   },
   "monograph_posture": {
-    "book_level_claim": "ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.",
+    "book_level_claim": "ORIUS provides a reliability-aware runtime safety layer for physical AI under degraded observation, enforcing certificate-backed action release through uncertainty coverage, repair, and fallback.",
     "active_program_shape": "three_domain_only",
     "witness_row": "battery",
     "defended_bounded_rows": [

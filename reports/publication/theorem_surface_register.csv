@@ -1,41 +1,41 @@
 register_id,group,environment,title,context,source,line
 S1,Defended theorem program,theorem,Existence of the illusion under dropout,Formal Statement of the Illusion,chapters_merged/ch03_background.tex,495
 S2,Defended theorem program,theorem,DC3S Feasibility Guarantee,Why the Illusion Demands a Runtime Shield,chapters_merged/ch03_background.tex,658
-T1,Defended theorem program,theorem,OASG Existence,Main Theorem: OASG Existence,chapters_merged/ch04_theoretical_foundations.tex,802
-T2,Defended theorem program,theorem,Safety Preservation,Main Theorem: Safety Preservation,chapters_merged/ch04_theoretical_foundations.tex,1041
-T3,Defended theorem program,theorem,ORIUS Core Bound,Main Theorem: ORIUS Core Bound,chapters_merged/ch04_theoretical_foundations.tex,1276
-T4,Defended theorem program,theorem,Observation Necessity / No Free Safety,Main Theorem: Observation Necessity / No Free Safety,chapters_merged/ch04_theoretical_foundations.tex,1609
-T5,Defended theorem program,theorem,Certificate validity horizon,Main Temporal Theorems,chapters_merged/ch04_theoretical_foundations.tex,1811
-T6,Defended theorem program,theorem,Certificate expiration bound,Main Temporal Theorems,chapters_merged/ch04_theoretical_foundations.tex,1843
-T7,Defended theorem program,theorem,Feasible fallback existence,Fallback and Graceful Degradation,chapters_merged/ch04_theoretical_foundations.tex,1937
-T8,Defended theorem program,theorem,Graceful degradation dominance,Fallback and Graceful Degradation,chapters_merged/ch04_theoretical_foundations.tex,1967
-T9,Defended theorem program,theorem,"Universal Impossibility, T9",Observation-Aware Control Is Structurally Necessary (T9),chapters/ch37_universality_completeness.tex,112
-T10,Defended theorem program,theorem,"Boundary-indistinguishability lower bound, T10",Boundary-Indistinguishability Lower Bound (T10),chapters/ch37_universality_completeness.tex,209
-T11,Defended theorem program,theorem,"Typed structural transfer theorem, T11",Typed Structural Transfer and Failure-Mode Converse (T11),chapters/ch37_universality_completeness.tex,341
-T10_T11_ObservationAmbiguitySandwich,Defended theorem program,corollary,T10_T11_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality,Covered Observation-Ambiguity Optimality,chapters/ch37_universality_completeness.tex,389
-T11_AV_BrakeHold,Defended theorem program,lemma,T11_AV_BrakeHold: AV Brake-Hold Runtime Lemma,Typed Structural Transfer and Failure-Mode Converse (T11),appendices/app_c_full_proofs.tex,570
-T11_HC_FailSafeRelease,Defended theorem program,lemma,T11_HC_FailSafeRelease: Healthcare Fail-Safe Release Runtime Lemma,Typed Structural Transfer and Failure-Mode Converse (T11),appendices/app_c_full_proofs.tex,590
-T6_AV_FallbackValidity,Defended theorem program,lemma,T6_AV_FallbackValidity: AV One-Step Fallback Certificate Lemma,Typed Structural Transfer and Failure-Mode Converse (T11),appendices/app_c_full_proofs.tex,609
-T6_HC_FallbackValidity,Defended theorem program,lemma,T6_HC_FallbackValidity: Healthcare One-Step Fallback Certificate Lemma,Typed Structural Transfer and Failure-Mode Converse (T11),appendices/app_c_full_proofs.tex,626
-T3a,Defended theorem program,theorem,ORIUS Core Envelope Derivation,Main Theorem: ORIUS Core Bound,chapters_merged/ch04_theoretical_foundations.tex,1276
-T3b,Defended theorem program,corollary,ORIUS Core Aggregation Corollary,Corollaries,chapters_merged/ch04_theoretical_foundations.tex,1371
-T_trajectory_PAC,Defended theorem program,theorem,T_trajectory_PAC: PAC Trajectory Certificate,Appendix proof extension,appendices/app_c_full_proofs.tex,1067
-T11_Byzantine,Defended theorem program,theorem,T11_Byzantine: Byzantine Trimmed-Mean Bound,Appendix proof extension,appendices/app_c_full_proofs.tex,863
-T_stale_decay,Defended theorem program,theorem,T_stale_decay: Stale-Decay Schedule,Appendix proof extension,appendices/app_c_full_proofs.tex,921
-T_minimax,Defended theorem program,theorem,T_minimax: Minimax OASG Tradeoff,Appendix proof extension,appendices/app_c_full_proofs.tex,979
-T_sensor_converse,Defended theorem program,theorem,T_sensor_converse: Sensor Quality Converse,Appendix proof extension,appendices/app_c_full_proofs.tex,1030
-L1,Defended theorem program,theorem,L1: Rate-Distortion Safety Law,Appendix proof extension,appendices/app_c_full_proofs.tex,703
-L2,Defended theorem program,theorem,L2: Capacity Bridge,Appendix proof extension,appendices/app_c_full_proofs.tex,742
-L3,Defended theorem program,theorem,L3: Critical Capacity,Appendix proof extension,appendices/app_c_full_proofs.tex,776
-L4,Defended theorem program,theorem,L4: Achievability-Converse Sandwich,Appendix proof extension,appendices/app_c_full_proofs.tex,815
-C1,Appendix proof restatement,theorem,C.1 Battery-Domain OASG Existence,Appendix proof copy,appendices/app_c_full_proofs.tex,36
-C2,Appendix proof restatement,theorem,C.2 One-Step Safety Preservation,Appendix proof copy,appendices/app_c_full_proofs.tex,101
-C3,Appendix proof restatement,theorem,C.3 Battery ORIUS Core Bound,Appendix proof copy,appendices/app_c_full_proofs.tex,169
-C4,Appendix proof restatement,theorem,C.4 Observation Necessity / No Free Safety,Appendix proof copy,appendices/app_c_full_proofs.tex,231
-C5,Appendix proof restatement,theorem,C.5 Certificate Validity Horizon,Appendix proof copy,appendices/app_c_full_proofs.tex,284
-C6,Appendix proof restatement,theorem,C.6 Certificate Expiration Bound,Appendix proof copy,appendices/app_c_full_proofs.tex,304
-C8,Appendix proof restatement,theorem,C.8 Feasible Fallback Existence,Appendix proof copy,appendices/app_c_full_proofs.tex,351
-C9,Appendix proof restatement,theorem,C.9 Graceful Degradation Dominance,Appendix proof copy,appendices/app_c_full_proofs.tex,370
+T1,Defended theorem program,theorem,OASG Existence,Main Theorem: OASG Existence,chapters_merged/ch04_theoretical_foundations.tex,837
+T2,Defended theorem program,theorem,Safety Preservation,Main Theorem: Safety Preservation,chapters_merged/ch04_theoretical_foundations.tex,1079
+T3,Defended theorem program,theorem,ORIUS Core Bound,Main Theorem: ORIUS Core Bound,chapters_merged/ch04_theoretical_foundations.tex,1314
+T4,Defended theorem program,theorem,Observation Necessity / No Free Safety,Main Theorem: Observation Necessity / No Free Safety,chapters_merged/ch04_theoretical_foundations.tex,1647
+T5,Defended theorem program,theorem,Certificate validity horizon,Main Temporal Theorems,chapters_merged/ch04_theoretical_foundations.tex,1852
+T6,Defended theorem program,theorem,Certificate expiration bound,Main Temporal Theorems,chapters_merged/ch04_theoretical_foundations.tex,1884
+T7,Defended theorem program,theorem,Feasible fallback existence,Fallback and Graceful Degradation,chapters_merged/ch04_theoretical_foundations.tex,1981
+T8,Defended theorem program,theorem,Graceful degradation dominance,Fallback and Graceful Degradation,chapters_merged/ch04_theoretical_foundations.tex,2011
+T9,Defended theorem program,theorem,"Universal Impossibility, T9",Observation-Aware Control Is Structurally Necessary (T9),chapters/ch37_universality_completeness.tex,137
+T10,Defended theorem program,theorem,"Boundary-indistinguishability lower bound, T10",Boundary-Indistinguishability Lower Bound (T10),chapters/ch37_universality_completeness.tex,238
+T11,Defended theorem program,theorem,"Typed structural transfer theorem, T11",Typed Structural Transfer and Failure-Mode Converse (T11),chapters/ch37_universality_completeness.tex,386
+T10_T11_ObservationAmbiguitySandwich,Defended theorem program,corollary,T10_T11_ObservationAmbiguitySandwich: Covered Observation-Ambiguity Optimality,Covered Observation-Ambiguity Optimality,chapters/ch37_universality_completeness.tex,434
+T11_AV_BrakeHold,Defended theorem program,lemma,T11_AV_BrakeHold: AV Brake-Hold Runtime Lemma,Typed Structural Transfer and Failure-Mode Converse (T11),appendices/app_c_full_proofs.tex,590
+T11_HC_FailSafeRelease,Defended theorem program,lemma,T11_HC_FailSafeRelease: Healthcare Fail-Safe Release Runtime Lemma,Typed Structural Transfer and Failure-Mode Converse (T11),appendices/app_c_full_proofs.tex,610
+T6_AV_FallbackValidity,Defended theorem program,lemma,T6_AV_FallbackValidity: AV One-Step Fallback Certificate Lemma,Typed Structural Transfer and Failure-Mode Converse (T11),appendices/app_c_full_proofs.tex,629
+T6_HC_FallbackValidity,Defended theorem program,lemma,T6_HC_FallbackValidity: Healthcare One-Step Fallback Certificate Lemma,Typed Structural Transfer and Failure-Mode Converse (T11),appendices/app_c_full_proofs.tex,646
+T3a,Defended theorem program,theorem,ORIUS Core Envelope Derivation,Main Theorem: ORIUS Core Bound,chapters_merged/ch04_theoretical_foundations.tex,1314
+T3b,Defended theorem program,corollary,ORIUS Core Aggregation Corollary,Corollaries,chapters_merged/ch04_theoretical_foundations.tex,1409
+T_trajectory_PAC,Defended theorem program,theorem,T_trajectory_PAC: PAC Trajectory Certificate,Appendix proof extension,appendices/app_c_full_proofs.tex,1087
+T11_Byzantine,Defended theorem program,theorem,T11_Byzantine: Byzantine Trimmed-Mean Bound,Appendix proof extension,appendices/app_c_full_proofs.tex,883
+T_stale_decay,Defended theorem program,theorem,T_stale_decay: Stale-Decay Schedule,Appendix proof extension,appendices/app_c_full_proofs.tex,941
+T_minimax,Defended theorem program,theorem,T_minimax: Minimax OASG Tradeoff,Appendix proof extension,appendices/app_c_full_proofs.tex,999
+T_sensor_converse,Defended theorem program,theorem,T_sensor_converse: Sensor Quality Converse,Appendix proof extension,appendices/app_c_full_proofs.tex,1050
+L1,Defended theorem program,theorem,L1: Rate-Distortion Safety Law,Appendix proof extension,appendices/app_c_full_proofs.tex,723
+L2,Defended theorem program,theorem,L2: Capacity Bridge,Appendix proof extension,appendices/app_c_full_proofs.tex,762
+L3,Defended theorem program,theorem,L3: Critical Capacity,Appendix proof extension,appendices/app_c_full_proofs.tex,796
+L4,Defended theorem program,theorem,L4: Achievability-Converse Sandwich,Appendix proof extension,appendices/app_c_full_proofs.tex,835
+C1,Appendix proof restatement,theorem,C.1 Battery-Domain OASG Existence,Appendix proof copy,appendices/app_c_full_proofs.tex,46
+C2,Appendix proof restatement,theorem,C.2 One-Step Safety Preservation,Appendix proof copy,appendices/app_c_full_proofs.tex,111
+C3,Appendix proof restatement,theorem,C.3 Battery ORIUS Core Bound,Appendix proof copy,appendices/app_c_full_proofs.tex,179
+C4,Appendix proof restatement,theorem,C.4 Observation Necessity / No Free Safety,Appendix proof copy,appendices/app_c_full_proofs.tex,241
+C5,Appendix proof restatement,theorem,C.5 Certificate Validity Horizon,Appendix proof copy,appendices/app_c_full_proofs.tex,294
+C6,Appendix proof restatement,theorem,C.6 Certificate Expiration Bound,Appendix proof copy,appendices/app_c_full_proofs.tex,314
+C8,Appendix proof restatement,theorem,C.8 Feasible Fallback Existence,Appendix proof copy,appendices/app_c_full_proofs.tex,361
+C9,Appendix proof restatement,theorem,C.9 Graceful Degradation Dominance,Appendix proof copy,appendices/app_c_full_proofs.tex,380
 A1,Assumption register,assumption,A1,Detailed Statements,appendices/app_b_assumptions.tex,55
 A2,Assumption register,assumption,A2,Detailed Statements,appendices/app_b_assumptions.tex,67
 A3,Assumption register,assumption,A3,Detailed Statements,appendices/app_b_assumptions.tex,77

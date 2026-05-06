@@ -34,6 +34,19 @@ The dissertation does not claim:
 The standards language used in the governance chapter is an evidence-structure alignment and
 lifecycle-analogy argument only. The deployment language is deliberately bounded by the
 domain-closure matrix, runtime/governance surfaces, and explicit non-claim statements.
+For the healthcare row, this boundary follows the public critical-care dataset lineage
+of MIMIC-IV and eICU \cite{johnson2023mimiciv,physionet2024mimiciv31,pollard2018eicu}
+and the reporting/applicability discipline of TRIPOD+AI, PROBAST+AI, CONSORT-AI,
+DECIDE-AI, and STARD-AI
+\cite{collins2024tripodai,moons2025probastai,liu2020consortai,vasey2022decideai,stardai2025}.
+Those sources support transparent retrospective reporting and future clinical-evaluation
+design; they do not convert the current ORIUS healthcare row into live clinical deployment.
+
+\IfFileExists{reports/publication/validation_boundary_table.tex}{%
+\input{reports/publication/validation_boundary_table}%
+}{%
+\input{../reports/publication/validation_boundary_table}%
+}
 
 \section{Reproducibility discipline}
 Every headline claim stays tied to tracked figures, tables, manifests, or claim matrices so

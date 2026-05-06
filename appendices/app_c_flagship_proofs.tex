@@ -6,6 +6,8 @@
 \geometry{margin=1in}
 
 \newtheorem{theorem}{Theorem}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{lemma}{Lemma}[section]
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\N}{\mathbb{N}}
@@ -16,7 +18,7 @@
 
 \title{Appendix C: Flagship Proofs for ORIUS}
 \author{Pratik Niroula}
-\date{March 2026}
+\date{May 2026}
 
 \begin{document}
 \maketitle
@@ -277,12 +279,12 @@ quality-ignorant controllers on the battery witness row. \qedhere
 
 \section*{C.6 T5 --- Certificate Validity Horizon}
 
-\begin{theorem}[T5: Certificate Validity Horizon]\label{thm:t5}
+\begin{definition}[T5: Certificate Validity Horizon]\label{thm:t5}
 \textbf{Assumptions.} A4, A7, A9. \\
 \textbf{Statement.} The battery validity horizon $\tau_t$ is the largest
 integer horizon whose forward tube remains inside the SOC constraint interval.
 This row is constructive and definition-level inside the integrated ladder.
-\end{theorem}
+\end{definition}
 
 \begin{proof}
 Fix the issued battery interval and the certified safe action.  The forward
@@ -297,7 +299,7 @@ that constructive object. \qedhere
 
 \section*{C.7 T6 --- Certificate Expiration Bound}
 
-\begin{theorem}[T6: Certificate Expiration Bound]\label{thm:t6}
+\begin{proposition}[T6: Certificate Expiration Bound]\label{thm:t6}
 \textbf{Assumptions.} A4, A7, A9, and confidence level $\delta\in(0,1)$. \\
 \textbf{Statement.} The battery certificate horizon satisfies the lower bound
 \[
@@ -307,7 +309,7 @@ that constructive object. \qedhere
     {2\sigma_d^2 \log(2/\delta)}
   \right\rfloor.
 \]
-\end{theorem}
+\end{proposition}
 
 \begin{proof}
 For a $\sigma_d$-sub-Gaussian disturbance, the reflection-principle /
@@ -333,7 +335,7 @@ records its explicit side conditions in the returned theorem contract.
 
 \section*{C.8 T7 --- Feasible Fallback Existence}
 
-\begin{theorem}[T7: Feasible Fallback Existence]\label{thm:t7}
+\begin{proposition}[T7: Feasible Fallback Existence]\label{thm:t7}
 \textbf{Assumptions.} A1, A4, A8. \\
 \textbf{Statement.} For any safe battery state, the defended fallback surface
 is piecewise:
@@ -345,7 +347,7 @@ is piecewise:
 \]
 If neither case can be certified under the active constraints, the runtime
 fails closed rather than claiming a false fallback theorem.
-\end{theorem}
+\end{proposition}
 
 \begin{proof}
 If the current SOC has enough interior slack, zero dispatch gives
@@ -367,7 +369,7 @@ fallback guarantee beyond those executable cases. \qedhere
 
 \section*{C.9 T8 --- Graceful Degradation Dominance}
 
-\begin{theorem}[T8: Graceful Degradation Dominance]
+\begin{proposition}[T8: Graceful Degradation Dominance]
 \textbf{Assumptions.} A1--A5, A8. \\
 \textbf{Statement.} For graceful and uncontrolled violation sequences produced
 under the same admissible fault trace,
@@ -378,7 +380,7 @@ under the same admissible fault trace,
 \]
 Strict improvement is claimed only when the graceful sequence is strictly
 smaller on at least one step.
-\end{theorem}
+\end{proposition}
 
 \begin{proof}
 Summing the stepwise dominance inequality over the shared admissible fault

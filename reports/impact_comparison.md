@@ -14,23 +14,23 @@ This report compares dispatch outcomes for the same 7‑day forecast window (sel
 | Naive battery | 155,133,643.93 | 1,798,360,428.37 | 89,918,021.42 |
 | Peak‑shaving heuristic | 155,141,146.65 | 1,798,897,403.45 | 89,944,870.17 |
 | Price‑greedy (MPC‑style) | 154,660,436.54 | 1,796,900,267.50 | 89,845,013.38 |
-| ORIUS (forecast‑optimized) | 138,623,678.06 | 1,858,399,454.38 | 92,919,972.72 |
-| Risk‑aware (interval) | 141,534,329.78 | 1,915,841,202.73 | 95,792,060.14 |
+| ORIUS (forecast‑optimized) | 138,674,954.97 | 1,859,022,585.09 | 92,951,129.25 |
+| Risk‑aware (interval) | 141,535,391.56 | 1,913,347,052.68 | 95,667,352.63 |
 | Oracle upper bound (perfect forecast) | 154,760,487.68 | 1,795,509,121.18 | 89,775,456.06 |
 
 ## Savings vs Baseline (ORIUS vs Grid‑only)
-- Cost savings: 16,525,337.87 (10.65%)
-- Carbon reduction: -60,154,999.13 kg (-3.35%)
+- Cost savings: 16,474,060.96 (10.62%)
+- Carbon reduction: -60,778,129.84 kg (-3.38%)
 
 - Carbon source used for optimization: average
 
 ## Savings vs Naive Battery (ORIUS vs Naive)
-- Cost savings: 16,509,965.87 (10.64%)
-- Carbon reduction: -60,039,026.00 kg (-3.34%)
+- Cost savings: 16,458,688.96 (10.61%)
+- Carbon reduction: -60,662,156.71 kg (-3.37%)
 
 ## Oracle Gap (ORIUS vs Perfect‑Forecast Upper Bound)
 - Oracle cost: 154,760,487.68
-- Gap vs oracle: -16,136,809.62
+- Gap vs oracle: -16,085,532.71
 
 ## Dispatch Comparison
 ![](figures/dispatch_compare.png)

@@ -3,6 +3,7 @@ orius_domain_closure_matrix.csv,tabular evidence,Canonical closure matrix for Ba
 orius_submission_scorecard.csv,readiness,Canonical readiness scorecard for the active three-domain lane.
 orius_runtime_budget_matrix.csv,runtime,Runtime-budget summary for the active three-domain lane.
 three_domain_ml_benchmark.csv,ml benchmark,"Canonical three-domain ML safety delta bundle for Battery, AV, and Healthcare."
+three_domain_forecast_calibration_runtime_evidence.csv,ml evidence crosswalk,"Uniform forecast, calibration, runtime, and postcondition evidence table for Battery, nuPlan AV, and Healthcare."
 three_domain_baseline_suite.csv,ml benchmark,Cross-domain baseline suite used for the promoted ML comparison lane.
 three_domain_ablation_matrix.csv,ml benchmark,Cross-domain ablation matrix mapped to the promoted runtime stack.
 three_domain_reliability_calibration.csv,ml calibration,Grouped calibration surface for the active three-domain lane.

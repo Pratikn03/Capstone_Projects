@@ -1,0 +1,25 @@
+theorem_id,current_tier,candidate_status,gate,gate_pass,evidence,blocker,required_for_flagship
+T9,supporting_defended,promotion_ready,formal_theorem_statement,1,chapters/ch37_universality_completeness.tex:123,,True
+T9,supporting_defended,promotion_ready,explicit_assumptions,1,A10b | A11,,True
+T9,supporting_defended,promotion_ready,mathematical_proof,1,appendices/app_c_full_proofs.tex:413; proof_tier=V1_linked,,True
+T9,supporting_defended,promotion_ready,mechanized_proof,1,reports/publication/t9_t10_mechanized_proof_status.json,,True
+T9,supporting_defended,promotion_ready,research_package,1,reports/publication/t9_t10_research_scorecard.json,,True
+T9,supporting_defended,promotion_ready,code_anchor,1,src/orius/dc3s/theoretical_guarantees.py:604 | src/orius/universal_theory/theorem_discharge.py:284,,True
+T9,supporting_defended,promotion_ready,tests,1,tests/test_theoretical_guarantees_hypothesis.py:23 | tests/test_t9_t10_promotion_pipeline.py:229,,True
+T9,supporting_defended,promotion_ready,artifact_evidence:battery,1,reports/publication/theorem_promotion_evidence/T9_battery.json,,True
+T9,supporting_defended,promotion_ready,artifact_evidence:av,1,reports/publication/theorem_promotion_evidence/T9_av.json,,True
+T9,supporting_defended,promotion_ready,artifact_evidence:healthcare,1,reports/publication/theorem_promotion_evidence/T9_healthcare.json,,True
+T9,supporting_defended,promotion_ready,domain_applicability_matrix,1,reports/publication/theorem_promotion_domain_matrix.csv,,True
+T9,supporting_defended,promotion_ready,universal_constants_and_assumptions,1,three-domain constants and assumptions discharge matrix,,True
+T10,supporting_defended,promotion_ready,formal_theorem_statement,1,chapters/ch37_universality_completeness.tex:224,,True
+T10,supporting_defended,promotion_ready,explicit_assumptions,1,A13,,True
+T10,supporting_defended,promotion_ready,mathematical_proof,1,appendices/app_c_full_proofs.tex:455; proof_tier=V1_linked,,True
+T10,supporting_defended,promotion_ready,mechanized_proof,1,reports/publication/t9_t10_mechanized_proof_status.json,,True
+T10,supporting_defended,promotion_ready,research_package,1,reports/publication/t9_t10_research_scorecard.json,,True
+T10,supporting_defended,promotion_ready,code_anchor,1,src/orius/dc3s/theoretical_guarantees.py:643 | src/orius/universal_theory/theorem_discharge.py:392,,True
+T10,supporting_defended,promotion_ready,tests,1,tests/test_theoretical_guarantees_hypothesis.py:50 | tests/test_t9_t10_promotion_pipeline.py:372,,True
+T10,supporting_defended,promotion_ready,artifact_evidence:battery,1,reports/publication/theorem_promotion_evidence/T10_battery.json,,True
+T10,supporting_defended,promotion_ready,artifact_evidence:av,1,reports/publication/theorem_promotion_evidence/T10_av.json,,True
+T10,supporting_defended,promotion_ready,artifact_evidence:healthcare,1,reports/publication/theorem_promotion_evidence/T10_healthcare.json,,True
+T10,supporting_defended,promotion_ready,domain_applicability_matrix,1,reports/publication/theorem_promotion_domain_matrix.csv,,True
+T10,supporting_defended,promotion_ready,universal_constants_and_assumptions,1,three-domain constants and assumptions discharge matrix,,True

@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-04-26T02:34:09Z",
+  "generated_at_utc": "2026-05-05T02:22:01Z",
   "target": "95_plus_research_readiness",
   "achieved": false,
   "scorecard": [
@@ -17,8 +17,8 @@
       "current_baseline_score": 78,
       "target_score": 95,
       "current_status": "pass",
-      "implemented_lift": "T4/T10/T11 bridge is represented as necessity plus Bayes lower bound plus covered alpha upper bound with executable observation-ambiguity witnesses.",
-      "remaining_blocker": "Keep T10 draft lower-bound surfaces scoped and prevent any global-optimality or all-ambiguity-implies-violation overclaim.",
+      "implemented_lift": "T4/T9/T10/T11 bridge is represented as necessity plus Bayes lower bound plus covered alpha upper bound with mechanized kernels, empirical T9/T10 discharge artifacts, and executable observation-ambiguity witnesses.",
+      "remaining_blocker": "Keep T9/T10 assumption-qualified and prevent any global-optimality or all-ambiguity-implies-violation overclaim beyond the discharged Battery/AV/Healthcare boundary-law artifacts.",
       "acceptance_gate": "T4, T11, and T10_T11_ObservationAmbiguitySandwich stay synchronized across audit, registry, code, tests, paper, and appendix."
     },
     {
@@ -26,24 +26,24 @@
       "current_baseline_score": 86,
       "target_score": 95,
       "current_status": "pass",
-      "implemented_lift": "Runtime-denominator TSVR, fallback/intervention, calibration, and witness rows are source-locked per domain.",
-      "remaining_blocker": "High AV intervention and healthcare fallback rates must be explained as conservative fail-closed behavior, not hidden utility success.",
-      "acceptance_gate": "All promoted rows pass strict runtime gates and utility/fallback tradeoffs are explicit."
+      "implemented_lift": "Runtime-denominator TSVR, fallback/intervention, calibration, witness rows, and fail-safe-normalized utility dominance are source-locked per domain.",
+      "remaining_blocker": "Keep AV and Healthcare utility-safety frontiers explicit in the paper so conservative fallback is reported as a measured cost, not hidden utility success.",
+      "acceptance_gate": "All promoted rows pass strict runtime gates and fail-safe-normalized utility/fallback tradeoffs are explicit."
     },
     {
       "dimension": "external_validation_depth",
       "current_baseline_score": 72,
       "target_score": 95,
       "current_status": "blocked",
-      "implemented_lift": "Current package separates nuPlan replay/surrogate, retrospective healthcare, and battery software-HIL evidence from stronger future tiers.",
-      "remaining_blocker": "Complete CARLA or nuPlan closed-loop artifacts, stronger healthcare held-out/source/site replay, and physical or high-fidelity battery HIL.",
+      "implemented_lift": "Current package separates bounded nuPlan closed-loop planner evidence, retrospective healthcare source/site holdout, and battery software-HIL evidence from stronger future tiers.",
+      "remaining_blocker": "Complete prospective/live healthcare validation and physical or high-fidelity battery HIL; AV remains bounded nuPlan closed-loop rather than road deployment or CARLA.",
       "acceptance_gate": "No paper claim uses next-tier validation language before the corresponding artifact exists."
     },
     {
       "dimension": "reproducibility_and_freeze",
       "current_baseline_score": 80,
       "target_score": 95,
-      "current_status": "blocked",
+      "current_status": "pass",
       "implemented_lift": "Package marks max freeze incomplete until release manifest and hash locks exist.",
       "remaining_blocker": "Finish max freeze, remove AppleDouble/git hygiene noise, run clean full pytest with mutation guard, and publish frozen hashes.",
       "acceptance_gate": "predeployment_release_manifest.json plus frozen hash CSV/JSON exist and validators pass."

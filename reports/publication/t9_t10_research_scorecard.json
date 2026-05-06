@@ -1,0 +1,33 @@
+{
+  "generated_at_utc": "2026-04-30T19:50:32.915813+00:00",
+  "min_sources": 500,
+  "pass": true,
+  "policy": "T9/T10 research support requires 500+ provenance-backed source rows by default plus proof-step dependency coverage.",
+  "proof_dependency_complete": true,
+  "required_topic_families": [
+    "lower_bounds",
+    "mixing_processes",
+    "runtime_assurance",
+    "safety_filters",
+    "conformal_shift",
+    "av_validation",
+    "battery_validation",
+    "healthcare_validation"
+  ],
+  "source_count": 619,
+  "theorem_dependencies": [
+    "T10",
+    "T9"
+  ],
+  "topic_families": [
+    "av_validation",
+    "battery_validation",
+    "conformal_shift",
+    "healthcare_validation",
+    "lower_bounds",
+    "mixing_processes",
+    "runtime_assurance",
+    "safety_filters"
+  ],
+  "unique_source_key_count": 619
+}

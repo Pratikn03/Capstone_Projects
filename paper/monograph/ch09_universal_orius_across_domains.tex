@@ -39,6 +39,19 @@ universality claim honest. Battery is the witness row. The autonomous-vehicle ro
 healthcare monitoring row are defended bounded runtime rows under the current artifact
 surface.
 
+\IfFileExists{reports/publication/runtime_release_contract_witnesses.tex}{%
+  \input{reports/publication/runtime_release_contract_witnesses}%
+}{%
+  \input{../reports/publication/runtime_release_contract_witnesses}%
+}
+
+The witness table records the common release evidence fields that make the
+domain rows comparable: reliability, uncertainty, proposed and safe action
+summaries, repair and fallback status, release decision, certificate hash,
+signature status, append-only audit status, T11 status, and postcondition
+status.  The table is compact by design; it is the publication witness for the
+release contract, not a replacement for the raw runtime traces.
+
 \section{Domain synthesis}
 The point of the synthesis is not to suggest that every row is interchangeable. It is to
 show how the same release-boundary grammar survives contact with different plants, action
@@ -57,6 +70,9 @@ understanding. ORIUS instantiates the runtime through bounded time-to-collision 
 predictive-entry-barrier logic, with explicit brake-oriented fallback and certificate-aware
 release checks. Its universality contribution is to show that the same release semantics
 remain meaningful in a fast-horizon, continuous-action mobility setting.
+The current claim-governing AV denominator is the all-zip grouped nuPlan
+replay/surrogate row with 1{,}531{,}104 runtime steps; it is not a road-deployment
+or full autonomous-driving closure claim.
 
 \paragraph{Healthcare monitoring.}
 The healthcare hazard is clinically unsafe release under partially observed physiological

@@ -1539,7 +1539,7 @@
               "mae": 1244.2814064407814,
               "mape": 358669.25783737144,
               "smape": 0.1405787503513687,
-              "daylight_mape": "not_applicable"
+              "daylight_mape": null
             },
             "per_horizon": {
               "1": {
@@ -1645,35 +1645,35 @@
                 "mae": 0.0,
                 "mape": 0.0,
                 "smape": 0.0,
-                "daylight_mape": "not_applicable"
+                "daylight_mape": null
               },
               "16": {
                 "rmse": 0.0,
                 "mae": 0.0,
                 "mape": 0.0,
                 "smape": 0.0,
-                "daylight_mape": "not_applicable"
+                "daylight_mape": null
               },
               "17": {
                 "rmse": 0.0,
                 "mae": 0.0,
                 "mape": 0.0,
                 "smape": 0.0,
-                "daylight_mape": "not_applicable"
+                "daylight_mape": null
               },
               "18": {
                 "rmse": 0.0,
                 "mae": 0.0,
                 "mape": 0.0,
                 "smape": 0.0,
-                "daylight_mape": "not_applicable"
+                "daylight_mape": null
               },
               "19": {
                 "rmse": 0.0,
                 "mae": 0.0,
                 "mape": 0.0,
                 "smape": 0.0,
-                "daylight_mape": "not_applicable"
+                "daylight_mape": null
               },
               "20": {
                 "rmse": 0.5370861555295746,
@@ -1920,7 +1920,7 @@
               "mae": 121.09301757434956,
               "mape": 92474361.46471322,
               "smape": 0.7059038768218214,
-              "daylight_mape": "not_applicable"
+              "daylight_mape": null
             },
             "per_horizon": {
               "1": {
@@ -2026,35 +2026,35 @@
                 "mae": 3.0302093847821534,
                 "mape": 303020938.47821534,
                 "smape": 1.9999999904520513,
-                "daylight_mape": "not_applicable"
+                "daylight_mape": null
               },
               "16": {
                 "rmse": 4.027056800534206,
                 "mae": 3.0641600629455943,
                 "mape": 306416006.29455936,
                 "smape": 1.9999999904121164,
-                "daylight_mape": "not_applicable"
+                "daylight_mape": null
               },
               "17": {
                 "rmse": 3.804214888342811,
                 "mae": 2.9749640309717313,
                 "mape": 297496403.09717315,
                 "smape": 1.9999999901786052,
-                "daylight_mape": "not_applicable"
+                "daylight_mape": null
               },
               "18": {
                 "rmse": 3.7570693878102572,
                 "mae": 2.903795522454719,
                 "mape": 290379552.2454719,
                 "smape": 1.999999989522649,
-                "daylight_mape": "not_applicable"
+                "daylight_mape": null
               },
               "19": {
                 "rmse": 3.695687164225033,
                 "mae": 2.8433648425560674,
                 "mape": 284336484.2556067,
                 "smape": 1.9999999888670994,
-                "daylight_mape": "not_applicable"
+                "daylight_mape": null
               },
               "20": {
                 "rmse": 3.5682266116125714,

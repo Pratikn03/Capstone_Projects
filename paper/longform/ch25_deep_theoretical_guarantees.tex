@@ -1,92 +1,107 @@
-% Deep Theoretical Guarantees for DC³S Under Degraded Observations
-% Theorems T9, T10, T11 — elevated from correctness conditions to quantitative guarantees.
+% Draft quantitative audit lemmas for DC³S under degraded observations.
+% These notes are not defended as new conformal-coverage theorems.
 
 \subsection{Deep Theoretical Guarantees}\label{sec:deep_guarantees}
 
-The earlier theorems (T1--T8) establish correctness conditions: monotone
-inflation preserves coverage, safety margins are monotone in reliability, and
-the certificate construction is sound.  This section upgrades three specific
-dimensions from correctness conditions to \emph{quantitative guarantees}.
+The earlier defended theorems (T1--T8) establish the runtime composition:
+reliability-dependent inflation, monotone safety margins under the designed
+inflation rule, and certificate soundness.  This longform section records draft
+quantitative audit lemmas.  They are useful for internal review and theorem
+development, but they are not presented as new conditional conformal-coverage
+theorems without the stated binning, exchangeability, and audit-sample
+assumptions.
 
-\subsubsection{Theorem T9: Reliability-Conditioned Finite-Sample Coverage Bound}
+\subsubsection{Draft T9: Reliability-Binned Finite-Sample Coverage Audit}
 
-\begin{theorem}[Finite-Sample Coverage Under Reliability Degradation]\label{thm:deep-finite-sample}
-Let $\{(X_i, Y_i)\}_{i=1}^n$ be calibration data with reliability weights
-$w_i \in [w_{\min}, 1]$.  Let $\hat{C}_t^w$ be the DC\textsuperscript{3}S
-conformal set constructed with reliability-weighted quantile at level
-$1 - \alpha$.  For any $\delta > 0$:
+\begin{theorem}[Finite-sample grouped coverage audit]\label{thm:deep-finite-sample}
+Fix a reliability bin $B$ and an audit split whose examples are exchangeable
+within that bin.  Let
+$Z_i=\mathbf{1}\{Y_i\in \hat C_i(X_i)\}$ for the $n_B$ audited examples in
+$B$, and let $\widehat p_B=n_B^{-1}\sum_i Z_i$.  Then, for any
+$\delta>0$:
 \[
-  \Pr\bigl(Y_{n+1} \in \hat{C}_{n+1}^w\bigr)
-  \;\ge\; 1 - \alpha - \sqrt{\frac{\ln(2/\delta)}{2\,n_{\mathrm{eff}}}}
+  \Pr\left(
+    p_B \ge \widehat p_B -
+    \sqrt{\frac{\ln(1/\delta)}{2\,n_B}}
+  \right) \ge 1-\delta,
 \]
-where $n_{\mathrm{eff}} = \lfloor n \cdot w_{\min} \rfloor$, with probability
-at least $1 - \delta$.
+where $p_B=\mathbb{E}[Z\mid w\in B]$ is the binwise coverage probability.  For
+a weighted audit, the same displayed form is used with the Kish effective
+sample size $n_{\mathrm{eff}}=(\sum_i w_i)^2/\sum_i w_i^2$ replacing $n_B$.
 \end{theorem}
 
 \begin{proof}[Proof sketch]
-By weighted exchangeability~\cite{tibshirani2019covariate}, the
-reliability-weighted conformal quantile achieves exact $1 - \alpha$ coverage
-under correct weight specification.  Under degradation, the effective sample
-size for the weighted empirical CDF is $n_{\mathrm{eff}} = n \cdot w_{\min}$
-(each sample contributes at least $w_{\min}$ mass).  Applying Hoeffding's
-inequality to the coverage indicator over $n_{\mathrm{eff}}$ effective samples:
+Within a fixed reliability bin, the audit indicators $Z_i$ are bounded in
+$[0,1]$.  Applying Hoeffding's inequality to the binwise empirical mean gives
 \[
-  \Pr\bigl(|\mathrm{PICP} - (1-\alpha)| > \epsilon\bigr)
-  \;\le\; 2 \exp(-2\,n_{\mathrm{eff}}\,\epsilon^2).
+  \Pr\bigl(p_B < \widehat p_B-\epsilon\bigr)
+  \le \exp(-2n_B\epsilon^2).
 \]
-Solving for $\epsilon$ at confidence $\delta$ gives $\epsilon = \sqrt{\ln(2/\delta)/(2\,n_{\mathrm{eff}})}$.
+Solving for $\epsilon$ at confidence $\delta$ gives the displayed lower
+confidence bound.  The weighted-audit variant substitutes the Kish effective
+sample size as a conservative summary of weighted audit mass; it is an audit
+bound, not a proof that inverse-reliability weighting preserves conformal
+exchangeability.
 \end{proof}
 
 \paragraph{Implications.}
-This theorem gives a \emph{computable} coverage guarantee that practitioners can
-evaluate before deployment.  For the locked DE evaluation ($n = 2{,}608$
-calibration points, $w_{\min} = 0.05$, $\alpha = 0.10$, $\delta = 0.05$), the
-bound yields $n_{\mathrm{eff}} = 130$, $\epsilon = 0.121$, and
-coverage $\ge 0.779$.  With $w_{\min} = 0.50$ the bound tightens to
-$n_{\mathrm{eff}} = 1{,}304$, $\epsilon = 0.038$, and coverage $\ge 0.862$.
-The executable witness is \texttt{dc3s/theoretical\_guarantees.py:
+This result gives a computable lower confidence bound on measured grouped PICP
+before deployment.  It should be reported beside the observed binwise coverage,
+the bin count, and the effective sample size.  The executable witness is
+\texttt{dc3s/theoretical\_guarantees.py:
 compute\_finite\_sample\_coverage\_bound()}.
 
-\subsubsection{Theorem T10: Separation --- Necessity of Reliability Awareness}
+\subsubsection{Draft T10: Boundary-Indistinguishability OASG Lower Bound}
 
-\begin{theorem}[Separation]\label{thm:deep-separation}
-For any controller $\pi_{\mathrm{blind}}$ that uses a fixed uncertainty set
-$\mathcal{U}$ (not conditioned on $w_t$), there exist degradation sequences
-$\{w_t\}$ and disturbance sequences $\{d_t\}$ such that either:
-\begin{enumerate}[label=(\alph*),leftmargin=*]
-  \item $\mathrm{TSVR}(\pi_{\mathrm{blind}}) \ge \alpha \cdot (1 - w_{\min}) / 2$, or
-  \item $\mathrm{IR}(\pi_{\mathrm{blind}}) \ge \mathrm{IR}(\mathrm{DC}^3\mathrm{S})
-        + (1 - w_{\min}) / 2$.
+\begin{theorem}[Boundary-indistinguishability OASG lower bound]\label{thm:deep-separation}
+Fix a horizon $T$.  For each step $t$, suppose there is a boundary-testing
+subproblem with latent hypotheses $H_{0,t}$ (safe side) and $H_{1,t}$ (unsafe
+side).  Let the observation laws under those hypotheses be $P_{0,t}$ and
+$P_{1,t}$, and assume:
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+  \item the controller acts only through the degraded observation channel;
+  \item $\mathrm{TV}(P_{0,t},P_{1,t})\le w_t$;
+  \item $\Pr(H_{1,t})\ge p_t$ for a supplied boundary-mass sequence $p_t$;
+  \item an unsafe-side mistake has OASG severity at least $\delta_t$.
 \end{enumerate}
-That is, no reliability-blind controller can simultaneously match
-DC\textsuperscript{3}S on both violations and interventions.
+Then every observation-only controller $\pi$ satisfies
+\[
+  \mathbb{E}[V_T(\pi)]
+  \;\ge\;
+  \frac{1}{2}\sum_{t=1}^T p_t(1-w_t),
+\]
+and the severity-weighted OASG obeys
+\[
+  \mathbb{E}[\mathrm{OASG}_T(\pi)]
+  \;\ge\;
+  \frac{1}{2}\sum_{t=1}^T \delta_t p_t(1-w_t).
+\]
 \end{theorem}
 
 \begin{proof}[Proof sketch]
-By construction.  Consider the alternating sequence $w_t = 1$ for odd $t$,
-$w_t = w_{\min}$ for even $t$.
-
-\textit{Case 1 (narrow fixed set):} $\pi_{\mathrm{blind}}$ calibrates
-$\mathcal{U}$ for $w_t = 1$.  During degraded steps (even $t$), the set is too
-narrow; CQR coverage drops to at most $1 - \alpha/w_{\min}$, giving violation
-rate $\ge \alpha \cdot (1 - w_{\min}) / 2$ averaged over all steps.
-
-\textit{Case 2 (wide fixed set):} $\pi_{\mathrm{blind}}$ calibrates
-$\mathcal{U}$ for $w_t = w_{\min}$.  During clean steps (odd $t$), the
-unnecessarily wide set causes at least $(1 - w_{\min})/2$ excess
-interventions.
-
-DC\textsuperscript{3}S avoids both by conditioning on $w_t$: narrow when
-$w_t = 1$, wide when $w_t = w_{\min}$.
+Fix $t$.  Any observation-only release rule induces a binary test between the
+safe-side and unsafe-side observation laws.  Le~Cam's two-point lemma gives
+\[
+  \max\{\Pr(\psi_t\ne 0\mid H_{0,t}),\Pr(\psi_t\ne 1\mid H_{1,t})\}
+  \ge \frac{1-\mathrm{TV}(P_{0,t},P_{1,t})}{2}
+  \ge \frac{1-w_t}{2}.
+\]
+On the unsafe side, an error releases an action that is unsafe for the true
+state.  Multiplying by the unsafe-side boundary mass $p_t$ gives the per-step
+violation-count lower bound.  Multiplying the same event by the supplied
+minimum severity $\delta_t$ gives the per-step OASG lower bound.  Summing over
+$t$ and using linearity of expectation proves both displays.
 \end{proof}
 
 \paragraph{Implications.}
-This is an \emph{information-theoretic necessity} result.  It proves that
-reliability conditioning is not merely helpful but \emph{required} for Pareto-efficient
-CPS safety.  For $w_{\min} = 0.05$, the lower bound on the separation gap is
-$0.475$ in either violations or interventions --- a large, practically
-meaningful gap.  The executable witness is
-\texttt{dc3s/theoretical\_guarantees.py: compute\_separation\_gap()}.
+T10 gives the rate that the qualitative no-free-safety lemma does not provide:
+OASG exposure grows linearly in the observation degradation budget
+$\sum_t(1-w_t)$, scaled by boundary mass and violation severity.  It is strong
+when those quantities are measured or bounded in a domain, and it remains
+honest because the boundary-mass and total-variation hypotheses are explicit.
+The executable witness is
+\texttt{dc3s/theoretical\_guarantees.py:
+compute\_stylized\_frontier\_lower\_bound()}.
 
 \subsubsection{Theorem T11: Adaptive Inflation Regret Bound}
 
@@ -128,26 +143,26 @@ compute\_adaptive\_regret\_bound()}.
 
 \begin{table}[htbp]
 \centering\small
-\caption{Deep theoretical guarantees for DC\textsuperscript{3}S (T9--T11).}
+\caption{Draft quantitative audit lemmas for DC\textsuperscript{3}S (T9--T11).}
 \label{tab:deep_guarantees}
 \begin{tabular}{p{1.0cm}p{3.5cm}p{2.5cm}p{4.5cm}}
 \toprule
 ID & Name & Type & Code witness \\
 \midrule
-T9  & Finite-sample coverage   & Quantitative guarantee & \texttt{compute\_finite\_sample\_coverage\_bound()} \\
-T10 & Separation (necessity)   & Lower bound            & \texttt{compute\_separation\_gap()} \\
-T11 & Adaptive inflation regret & Regret bound          & \texttt{compute\_adaptive\_regret\_bound()} \\
+T9  & Grouped coverage audit   & Lower confidence bound & \texttt{compute\_finite\_sample\_coverage\_bound()} \\
+T10 & Boundary OASG lower bound & Le Cam rate bound      & \texttt{compute\_stylized\_frontier\_lower\_bound()} \\
+T11 & Adaptive inflation tracking & Filter bound         & \texttt{compute\_adaptive\_regret\_bound()} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Together, T9--T11 elevate the DC\textsuperscript{3}S contribution from
-``correctness conditions for the safety shield's construction'' to:
+Together, these draft rows provide development support beyond the defended
+runtime-composition theorems:
 \begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
-  \item \textbf{T9:} Reliability-conditioned conformal inference \emph{achieves}
-        quantifiable, finite-sample coverage under degraded observations.
-  \item \textbf{T10:} Reliability conditioning is \emph{necessary} ---
-        any controller that ignores observation quality is Pareto-dominated.
+  \item \textbf{T9:} Grouped reliability audits provide finite-sample lower
+        confidence bounds on measured PICP.
+  \item \textbf{T10:} Boundary indistinguishability gives an OASG lower-bound
+        rate proportional to $\sum_t \delta_t p_t(1-w_t)$.
   \item \textbf{T11:} The adaptive inflation mechanism \emph{tracks} the
-        oracle with vanishing per-step regret.
+        oracle inflation sequence under the stated filter model.
 \end{itemize}

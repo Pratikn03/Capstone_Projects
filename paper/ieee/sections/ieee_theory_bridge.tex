@@ -5,6 +5,16 @@ The theorem surface of ORIUS is intentionally narrower than the rhetoric of a fu
 closed universal program. The paper uses theory to justify the shape of the runtime
 layer, not to imply that every domain has already inherited equal proof depth.
 
+For readability, the main paper should present the theory as four flagship
+theorem roles plus supporting definitions, propositions, and corollaries rather
+than as an eleven-theorem list: (i) observation-aware safety gap,
+(ii) observation necessity, (iii) ORIUS covered release preservation, and
+(iv) typed transfer with covered observation-ambiguity optimality.  Temporal
+certificate/fallback discipline remains essential operational support, but it
+should not be packaged as extra novelty inflation.  The permanent T1--T11 labels
+remain audit identifiers, not a requirement that every supporting surface be
+promoted as a main novelty theorem.
+
 The bridge has three parts. First, if admissibility depends on the true state and the
 observation channel can deviate materially from that state, then OASG is a genuine
 safety event rather than a notation trick. Second, if lower reliability produces a
@@ -14,13 +24,14 @@ from that tightened set, or falls back when no such action exists, then the rema
 true-state violation risk is governed by the soundness of the uncertainty set and the
 repair map rather than by the optimism of the nominal controller.
 
-Temporal certificates and fallback add a fourth layer: Theorem~T5 (certificate
-validity horizon), Theorem~T6 (certificate expiration bound), and Theorem~T7
-(feasible fallback existence) guarantee that certificates are time-bounded safety
-objects and that the battery runtime either holds safely, recovers by boundary-aware
-safe landing, or fails closed.  The promoted T6 surface is confidence-aware and
-tracks a closed-form first-passage lower bound on the remaining certificate life;
-the runtime enforces the resulting $\tau_t \ge 1$ check at each step.
+Temporal certificates and fallback add a fourth operational layer: T5 is a
+certificate-horizon definition, while T6 and T7\_Battery are supporting
+certificate/fallback propositions.  Together they state that certificates are
+time-bounded safety objects and that the battery runtime either holds safely,
+recovers by boundary-aware safe landing, or fails closed.  The T6 support
+surface is confidence-aware and tracks a closed-form first-passage lower bound
+on the remaining certificate life; the runtime enforces the resulting
+$\tau_t \ge 1$ check at each step.
 
 \begin{table}[t]
 \centering
@@ -34,7 +45,7 @@ the runtime enforces the resulting $\tau_t \ge 1$ check at each step.
 Structural & Degraded observation can create action-semantic failure even when the nominal policy is internally coherent.\\
 Contractual & A typed runtime layer can convert reliability loss into tightened admissible action sets, repair, fallback, and certificate semantics.\\
 Empirical & Battery is the witness row; AV and healthcare are defended bounded rows in the active submission lane.\\
-Non-claim & The paper does not claim equal theorem depth, equal deployment readiness, or flat closure beyond the defended three-domain lane.\\
+Non-claim & The paper does not claim equal theorem depth, equal deployment readiness, promoted T9/T10 status, or flat closure beyond the defended three-domain lane.\\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -50,4 +61,7 @@ because it looks structurally compatible with the adapter contract. It becomes d
 only after the data surface, replay surface, repair semantics, fallback semantics,
 certificate traces, and benchmark outputs all clear the governed promotion gate. That is
 why the universal claim in this paper is architectural and bounded rather than flatly
-equalized across domains already.
+equalized across domains already. For T9/T10, the generated promotion package is the
+status authority and currently keeps both rows non-promoted until Battery, AV, and
+Healthcare all discharge the relevant constants, assumptions, proof, and artifact
+gates.

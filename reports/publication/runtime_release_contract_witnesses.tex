@@ -1,0 +1,22 @@
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption{Canonical runtime release contract witnesses.  Each promoted domain is
+normalized to the same release evidence schema:
+\texttt{observe>reliability>uncertainty>repair\_or\_fallback>sign\_certificate>append\_only\_audit}.}
+\label{tab:runtime-release-contract-witnesses}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lllllll}
+\toprule
+Domain & Reliability & Safe action & Repair status & Fallback status &
+Certificate status & Postcondition\\
+\midrule
+Battery & 0.993056 & \texttt{\{charge\_mw: 0.0\}} & intervention\_rate=0.020833 & fallback\_rate=0.020833 & unsigned\_allowed; append\_only\_supported & passed\\
+AV & 0.999924 & \texttt{\{acceleration\_mps2: 0.0\}} & intervention\_rate=0.500301 & fallback\_rate=0.173716 & unsigned\_allowed; append\_only\_supported & passed\\
+Healthcare & 1.000000 & \texttt{\{alert\_level: max\_alert\}} & intervention\_rate=0.910099 & fallback\_rate=0.479907 & unsigned\_allowed; append\_only\_supported & passed\\
+\bottomrule
+\end{tabular}}
+\par\smallskip
+\footnotesize Source: \texttt{reports/publication/runtime\_release\_contract\_witnesses.csv}.  The compact table records
+publication witnesses; raw runtime traces and append-only event stores remain regenerated/local artifacts.
+\end{table}

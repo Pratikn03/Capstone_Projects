@@ -8,7 +8,8 @@
 This appendix is the authoritative proof surface for the defended ORIUS
 theorem program, but it is not a flat headline ladder.  The active audit
 distinguishes flagship defended rows, supporting defended rows, and visible
-draft/non-defended extensions.  The battery witness remains the deepest proof
+draft/non-defended extensions.  T9 and T10 are supporting defended only after
+the domain-discharge artifacts close their empirical constants.  The battery witness remains the deepest proof
 chain, so the full step-by-step derivations below begin with the reference
 ladder:
 \begin{enumerate}
@@ -31,6 +32,15 @@ defended novelty surface unless separately promoted by the active theorem
 audit.  The broader integrated theorem-like surface, including precursor
 results and supporting chapter statements, is catalogued separately in
 Appendix~\ref{app:integrated-theorem-surface-register}.
+
+\paragraph{Mathematical contract vs. domain discharge.}
+The proof copies below use only stated assumptions and typed obligations as
+mathematical premises.  Domain discharge is evidence, not an extra hidden assumption: the discharge artifacts instantiate constants, verify
+boundary-mass and mixing witnesses, and bind the proof kernels to the promoted
+bounded Battery, AV, and Healthcare artifacts.  Thus T9/T10/T11 are
+contract-universal, not unrestricted-global; new physical-AI domains may reuse
+the proof pattern only after their adapters, safe sets, coverage witnesses, and
+fallback obligations are discharged by domain-specific evidence.
 
 %---------------------------------------------------------------------
 \section{C.1\quad Battery-Domain OASG Existence}\label{sec:proof-oasg}
@@ -413,8 +423,9 @@ increases with $w_t$.  \qedhere
 \textbf{Theorem reference.}
 The authoritative statement is Theorem~\ref{thm:universal-impossibility} in
 Chapter~\ref{ch:universality-completeness}.  It is repeated here as a
-draft/scoped extension so that the full proof appendix covers the complete
-theorem inventory rather than only the battery witness ladder.
+supporting, assumption-qualified extension so that the full proof appendix
+covers the complete theorem inventory rather than only the battery witness
+ladder.
 
 \begin{proof}[Appendix proof copy]
 By Assumption~A10b, the fault process is $\varphi$-mixing with geometric
@@ -454,8 +465,9 @@ $\mathbb{E}[V_T] \ge c\,d\,T$ lower bound up to renaming the constant.
 \textbf{Theorem reference.}
 The authoritative statement is Theorem~\ref{thm:information-theoretic-lower-bound}
 in Chapter~\ref{ch:universality-completeness}.  The proof below preserves its
-draft/scoped interpretation as a lower-bound frontier theorem under explicit
-extra hypotheses.
+supporting, assumption-qualified interpretation as a lower-bound frontier
+theorem under explicit extra hypotheses, including the supplied boundary-mass
+and OASG-severity sequences.
 
 \begin{proof}[Appendix proof copy]
 Fix a step $t$ and the binary boundary-testing subproblem with latent
@@ -477,7 +489,8 @@ Therefore Le~Cam's lemma gives
   \frac{1-w_t}{2}.
 \]
 Whenever the unsafe-side hypothesis $H_{1,t}$ holds and the controller makes
-that binary mistake, the step contributes a true-state violation.  Therefore
+that binary mistake, the step contributes a true-state violation and at least
+$\delta_t$ severity-weighted OASG.  Therefore
 \[
   \Prob[Z_t = 1]
   \ge
@@ -491,11 +504,18 @@ Summing over the horizon and applying linearity of expectation gives
   \ge
   \frac{1}{2}\sum_{t=1}^T p_t(1-w_t).
 \]
+The same events contribute at least $\delta_t$ to the OASG metric, so
+\[
+  \mathbb{E}[\mathrm{OASG}_T(\pi)]
+  \ge
+  \frac{1}{2}\sum_{t=1}^T \delta_t p_t(1-w_t).
+\]
 The special case $p_t \ge \alpha/2$ for all $t$ yields the stated frontier
 $\mathbb{E}[V_T(\pi)] \ge \tfrac{1}{4}\alpha(1-\bar{w})T$.  The proof does not
 claim a sharper constant without a domain-specific argument for the
-boundary-mass sequence $\{p_t\}$, which is exactly why T10 is defended as a
-stylized lower bound rather than as a global minimax theorem.
+boundary-mass and severity sequences $\{p_t,\delta_t\}$, which is exactly why
+T10 is defended as an assumption-qualified lower bound rather than as a global
+minimax theorem.
 \end{proof}
 
 \section{C.13\quad Typed Structural Transfer and Failure-Mode Converse (T11)}\label{sec:proof-typed-transfer}

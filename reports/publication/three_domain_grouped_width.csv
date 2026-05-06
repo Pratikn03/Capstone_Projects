@@ -5,6 +5,6 @@ Battery Energy Storage,high,934.616134,64,reports/calibration/reliability_group_
 Autonomous Vehicles,low,1.221171,510368,reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_traces.csv
 Autonomous Vehicles,mid,0.813289,510368,reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_traces.csv
 Autonomous Vehicles,high,0.524701,510368,reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_traces.csv
-Medical and Healthcare Monitoring,low,0.291670,12296,"data/healthcare/processed/splits/{calibration,val,test}.parquet"
-Medical and Healthcare Monitoring,mid,1.406084,12296,"data/healthcare/processed/splits/{calibration,val,test}.parquet"
-Medical and Healthcare Monitoring,high,2.215662,12295,"data/healthcare/processed/splits/{calibration,val,test}.parquet"
+Medical and Healthcare Monitoring,low,2.220188,12296,"data/healthcare/processed/splits/{calibration,val,test}.parquet"
+Medical and Healthcare Monitoring,mid,2.220188,12296,"data/healthcare/processed/splits/{calibration,val,test}.parquet"
+Medical and Healthcare Monitoring,high,2.220188,12295,"data/healthcare/processed/splits/{calibration,val,test}.parquet"

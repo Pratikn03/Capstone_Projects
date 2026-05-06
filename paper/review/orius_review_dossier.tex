@@ -5,7 +5,7 @@
 \hypersetup{pageanchor=false}
 \title{ORIUS Repo-Truthful Defense Review Dossier}
 \author{Simulated 15-Reviewer / Three-Wave Audit}
-\date{April 2026}
+\date{May 2026}
 \maketitle
 \tableofcontents
 
@@ -25,7 +25,7 @@ ORIUS is defended as one bounded stack:
 
 The single flagship novelty sentence used across the defense package is:
 \begin{quote}
-\emph{ORIUS identifies OASG as the degraded-observation release hazard and provides a reliability-aware runtime safety layer across Battery, AV, and Healthcare.}
+\emph{ORIUS provides a reliability-aware runtime safety layer for physical AI under degraded observation, enforcing certificate-backed action release through uncertainty coverage, repair, and fallback.}
 \end{quote}
 
 \section*{Novelty boundary}
@@ -62,7 +62,7 @@ package uses three public tiers:
 \textbf{Tier} & \textbf{Rows} & \textbf{Rule}\\
 \midrule
 \endhead
-Flagship defended & T1, T2, T3a, T4, T6, T7, T11, T\_trajectory\_PAC & Carries the compact defended spine and must have proof, test, witness, and bounded scope language.\\
+Flagship defended & T1, T2, T3a, T4, T6, T7\_Battery, T11, T\_trajectory\_PAC & Carries the compact defended spine and must have proof, test, witness, and bounded scope language. T7\_Battery is a battery instantiation, while T11 is the universal runtime-assurance contract.\\
 Supporting defended & T3b, T8, T11\_Byzantine, T\_stale\_decay & Repo-truthful supporting surfaces that may be cited, but do not carry the flagship novelty or theory score alone.\\
 Draft / non-defended & T5, T9, T10, L1--L4, T\_minimax, T\_sensor\_converse & Visible only as scoped draft or extension surfaces and excluded from headline defended counts.\\
 \bottomrule
@@ -70,9 +70,13 @@ Draft / non-defended & T5, T9, T10, L1--L4, T\_minimax, T\_sensor\_converse & Vi
 
 The canonical machine-readable sources for this split are
 \texttt{reports/publication/active\_theorem\_audit.*},
+\texttt{reports/publication/theorem\_promotion\_scorecard.json},
+\texttt{reports/publication/theorem\_promotion\_gates.csv},
 \texttt{defended\_theorem\_core.*}, and
 \texttt{defended\_assumption\_map.*}. The raw theorem register remains an
-inventory, not the defense authority.
+inventory, not the defense authority. For T9/T10, the generated promotion package is
+the sole status authority and currently keeps both rows non-promoted until all
+three-domain discharge gates pass.
 
 \section*{Reviewer-role matrix}
 \begin{longtable}{p{0.08\textwidth}p{0.28\textwidth}p{0.48\textwidth}}
@@ -120,7 +124,7 @@ inventory, not the defense authority.
 \texttt{V6} & high & Theorem inventory drifted from Appendix~C and review language & fixed in code/tests & Active audit now emits strict theorem tiers, assumption maps, and synchronized core artifacts.\\
 \texttt{V7} & high & Readiness language outran current evidence posture & narrowed in prose/registers & Defense package now treats Battery as witness row and AV plus Healthcare as bounded defended rows only.\\
 \texttt{V8} & high & Domain and theorem breadth diluted the flagship story & narrowed in prose/registers & Review package now frames ORIUS as one OASG-centered stack rather than a flat bag of claims.\\
-\texttt{V9} & medium & T3/T8/T9/T10/T11 remained visible as if equally defended & narrowed in prose/registers & These rows are now explicitly classified as flagship, supporting, or draft instead of being flattened into one theorem posture.\\
+\texttt{V9} & medium & T3/T8/T9/T10/T11 remained visible as if equally defended & narrowed in prose/registers & These rows are now explicitly classified as flagship, supporting, or draft; T9/T10 status is controlled by the generated promotion package rather than by prose.\\
 \texttt{V10} & medium & Assumption use was spread across prose, code, and appendices without one machine-readable map & fixed in code/tests & Defended assumption maps now expose theorem-facing assumptions and register resolution status.\\
 \bottomrule
 \end{longtable}

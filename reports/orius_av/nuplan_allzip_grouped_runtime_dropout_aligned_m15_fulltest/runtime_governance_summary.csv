@@ -1,0 +1,9 @@
+metric,value
+certificate_rows,1531104.0
+chain_valid,1.0
+failure_rows,0.0
+required_payload_pass_rate,1.0
+expiry_metadata_presence_rate,1.0
+expiry_consistency_rate,1.0
+audit_completeness_rate,1.0
+chain_link_failures,0.0

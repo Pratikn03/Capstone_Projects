@@ -1,0 +1,560 @@
+{
+  "applicability_status": "three_domain_empirical_discharge",
+  "artifact_exists": true,
+  "artifact_source": "reports/publication/theorem_promotion_evidence/T9_healthcare.json",
+  "assumptions_status": "A10b_A11_empirically_discharged_for_domain",
+  "blocker": "",
+  "boundary_reachability_rate": 0.9626407891477612,
+  "boundary_reachability_status": "boundary_reachability_discharged",
+  "constants_status": "domain_witness_constants_discharged",
+  "degradation_rate": 0.9651688012705628,
+  "degradation_rate_status": "degradation_persistence_discharged",
+  "domain": "healthcare",
+  "generated_at_utc": "2026-05-03T17:07:01.808455+00:00",
+  "mixing_bridge_status": "geometric_phi_mixing_proxy_discharged",
+  "mixing_proxy": {
+    "finite_mixing_proxy": true,
+    "lag1_autocorrelation": 0.981173554337058,
+    "lag_autocorrelations": [
+      {
+        "autocorrelation": 0.981173554337058,
+        "lag": 1
+      },
+      {
+        "autocorrelation": 0.9645973472070514,
+        "lag": 2
+      },
+      {
+        "autocorrelation": 0.951380184012176,
+        "lag": 3
+      },
+      {
+        "autocorrelation": 0.9394957818182342,
+        "lag": 4
+      },
+      {
+        "autocorrelation": 0.9286960611743856,
+        "lag": 5
+      },
+      {
+        "autocorrelation": 0.9187280847133534,
+        "lag": 6
+      },
+      {
+        "autocorrelation": 0.9093283548752251,
+        "lag": 7
+      },
+      {
+        "autocorrelation": 0.9009174977311203,
+        "lag": 8
+      },
+      {
+        "autocorrelation": 0.8930055845534035,
+        "lag": 9
+      },
+      {
+        "autocorrelation": 0.8857151747362227,
+        "lag": 10
+      },
+      {
+        "autocorrelation": 0.8789228487960501,
+        "lag": 11
+      },
+      {
+        "autocorrelation": 0.8720868732789576,
+        "lag": 12
+      },
+      {
+        "autocorrelation": 0.8657427651812748,
+        "lag": 13
+      },
+      {
+        "autocorrelation": 0.8593233181491944,
+        "lag": 14
+      },
+      {
+        "autocorrelation": 0.8536370288778187,
+        "lag": 15
+      },
+      {
+        "autocorrelation": 0.8482999333358359,
+        "lag": 16
+      },
+      {
+        "autocorrelation": 0.8434809096386402,
+        "lag": 17
+      },
+      {
+        "autocorrelation": 0.8388940183155694,
+        "lag": 18
+      },
+      {
+        "autocorrelation": 0.8348823530768231,
+        "lag": 19
+      },
+      {
+        "autocorrelation": 0.831266872426818,
+        "lag": 20
+      },
+      {
+        "autocorrelation": 0.827625881549718,
+        "lag": 21
+      },
+      {
+        "autocorrelation": 0.8243305824070358,
+        "lag": 22
+      },
+      {
+        "autocorrelation": 0.8211089310614119,
+        "lag": 23
+      },
+      {
+        "autocorrelation": 0.8178381496868621,
+        "lag": 24
+      },
+      {
+        "autocorrelation": 0.8146116166857249,
+        "lag": 25
+      },
+      {
+        "autocorrelation": 0.8115155801945642,
+        "lag": 26
+      },
+      {
+        "autocorrelation": 0.8086193686581722,
+        "lag": 27
+      },
+      {
+        "autocorrelation": 0.8055311180318784,
+        "lag": 28
+      },
+      {
+        "autocorrelation": 0.802134982129052,
+        "lag": 29
+      },
+      {
+        "autocorrelation": 0.7991464634714674,
+        "lag": 30
+      },
+      {
+        "autocorrelation": 0.7962619636598751,
+        "lag": 31
+      },
+      {
+        "autocorrelation": 0.7934287950702956,
+        "lag": 32
+      },
+      {
+        "autocorrelation": 0.7903725951859821,
+        "lag": 33
+      },
+      {
+        "autocorrelation": 0.7875903020863012,
+        "lag": 34
+      },
+      {
+        "autocorrelation": 0.7845269793934628,
+        "lag": 35
+      },
+      {
+        "autocorrelation": 0.7818078814804771,
+        "lag": 36
+      },
+      {
+        "autocorrelation": 0.7790645334868626,
+        "lag": 37
+      },
+      {
+        "autocorrelation": 0.7764164159073345,
+        "lag": 38
+      },
+      {
+        "autocorrelation": 0.7735912134795072,
+        "lag": 39
+      },
+      {
+        "autocorrelation": 0.771059313390857,
+        "lag": 40
+      },
+      {
+        "autocorrelation": 0.7686418044964387,
+        "lag": 41
+      },
+      {
+        "autocorrelation": 0.7662207971377308,
+        "lag": 42
+      },
+      {
+        "autocorrelation": 0.7638123381767246,
+        "lag": 43
+      },
+      {
+        "autocorrelation": 0.7613424110618324,
+        "lag": 44
+      },
+      {
+        "autocorrelation": 0.7590800122721991,
+        "lag": 45
+      },
+      {
+        "autocorrelation": 0.7567028174791608,
+        "lag": 46
+      },
+      {
+        "autocorrelation": 0.7543986977925607,
+        "lag": 47
+      },
+      {
+        "autocorrelation": 0.7517460066569921,
+        "lag": 48
+      },
+      {
+        "autocorrelation": 0.7493981420340681,
+        "lag": 49
+      },
+      {
+        "autocorrelation": 0.7471929441776651,
+        "lag": 50
+      },
+      {
+        "autocorrelation": 0.7453845607075645,
+        "lag": 51
+      },
+      {
+        "autocorrelation": 0.7435645498436503,
+        "lag": 52
+      },
+      {
+        "autocorrelation": 0.7418884696979309,
+        "lag": 53
+      },
+      {
+        "autocorrelation": 0.740550157443311,
+        "lag": 54
+      },
+      {
+        "autocorrelation": 0.7390873527564152,
+        "lag": 55
+      },
+      {
+        "autocorrelation": 0.7379111361512436,
+        "lag": 56
+      },
+      {
+        "autocorrelation": 0.7368291130793362,
+        "lag": 57
+      },
+      {
+        "autocorrelation": 0.7356283709274771,
+        "lag": 58
+      },
+      {
+        "autocorrelation": 0.7343125489437744,
+        "lag": 59
+      },
+      {
+        "autocorrelation": 0.7328688108822785,
+        "lag": 60
+      },
+      {
+        "autocorrelation": 0.73142818281962,
+        "lag": 61
+      },
+      {
+        "autocorrelation": 0.7300670358805584,
+        "lag": 62
+      },
+      {
+        "autocorrelation": 0.7285007022135934,
+        "lag": 63
+      },
+      {
+        "autocorrelation": 0.726917040136888,
+        "lag": 64
+      },
+      {
+        "autocorrelation": 0.7254732533608407,
+        "lag": 65
+      },
+      {
+        "autocorrelation": 0.7238896588139508,
+        "lag": 66
+      },
+      {
+        "autocorrelation": 0.7220707238076058,
+        "lag": 67
+      },
+      {
+        "autocorrelation": 0.7203126700229178,
+        "lag": 68
+      },
+      {
+        "autocorrelation": 0.7183943340486161,
+        "lag": 69
+      },
+      {
+        "autocorrelation": 0.7162465892484037,
+        "lag": 70
+      },
+      {
+        "autocorrelation": 0.7140903026483901,
+        "lag": 71
+      },
+      {
+        "autocorrelation": 0.7121255867840959,
+        "lag": 72
+      },
+      {
+        "autocorrelation": 0.7100060678272192,
+        "lag": 73
+      },
+      {
+        "autocorrelation": 0.7077982018203408,
+        "lag": 74
+      },
+      {
+        "autocorrelation": 0.7052805193427422,
+        "lag": 75
+      },
+      {
+        "autocorrelation": 0.7028528045001631,
+        "lag": 76
+      },
+      {
+        "autocorrelation": 0.7008314579852997,
+        "lag": 77
+      },
+      {
+        "autocorrelation": 0.698747214867234,
+        "lag": 78
+      },
+      {
+        "autocorrelation": 0.6966813603075687,
+        "lag": 79
+      },
+      {
+        "autocorrelation": 0.6947647142599414,
+        "lag": 80
+      },
+      {
+        "autocorrelation": 0.6930070103865591,
+        "lag": 81
+      },
+      {
+        "autocorrelation": 0.6912155374527551,
+        "lag": 82
+      },
+      {
+        "autocorrelation": 0.6894140261335961,
+        "lag": 83
+      },
+      {
+        "autocorrelation": 0.6876589921426223,
+        "lag": 84
+      },
+      {
+        "autocorrelation": 0.6859260732544019,
+        "lag": 85
+      },
+      {
+        "autocorrelation": 0.684436511885824,
+        "lag": 86
+      },
+      {
+        "autocorrelation": 0.683016682471973,
+        "lag": 87
+      },
+      {
+        "autocorrelation": 0.6813700009791609,
+        "lag": 88
+      },
+      {
+        "autocorrelation": 0.679636139342535,
+        "lag": 89
+      },
+      {
+        "autocorrelation": 0.6779793248579651,
+        "lag": 90
+      },
+      {
+        "autocorrelation": 0.6762941679422557,
+        "lag": 91
+      },
+      {
+        "autocorrelation": 0.6743420012463979,
+        "lag": 92
+      },
+      {
+        "autocorrelation": 0.6724848916272823,
+        "lag": 93
+      },
+      {
+        "autocorrelation": 0.6707086195574092,
+        "lag": 94
+      },
+      {
+        "autocorrelation": 0.6690334828140702,
+        "lag": 95
+      },
+      {
+        "autocorrelation": 0.6673555514832062,
+        "lag": 96
+      },
+      {
+        "autocorrelation": 0.6656728887547887,
+        "lag": 97
+      },
+      {
+        "autocorrelation": 0.6637523854377393,
+        "lag": 98
+      },
+      {
+        "autocorrelation": 0.661939841368022,
+        "lag": 99
+      },
+      {
+        "autocorrelation": 0.6599908094205912,
+        "lag": 100
+      },
+      {
+        "autocorrelation": 0.6580754279316278,
+        "lag": 101
+      },
+      {
+        "autocorrelation": 0.6560836535743403,
+        "lag": 102
+      },
+      {
+        "autocorrelation": 0.6541239290611816,
+        "lag": 103
+      },
+      {
+        "autocorrelation": 0.6523056534453976,
+        "lag": 104
+      },
+      {
+        "autocorrelation": 0.6506820149424644,
+        "lag": 105
+      },
+      {
+        "autocorrelation": 0.6493884666284747,
+        "lag": 106
+      },
+      {
+        "autocorrelation": 0.6481155514818415,
+        "lag": 107
+      },
+      {
+        "autocorrelation": 0.6467014482210268,
+        "lag": 108
+      },
+      {
+        "autocorrelation": 0.6456877242886164,
+        "lag": 109
+      },
+      {
+        "autocorrelation": 0.6448224812333205,
+        "lag": 110
+      },
+      {
+        "autocorrelation": 0.64398131963952,
+        "lag": 111
+      },
+      {
+        "autocorrelation": 0.6429255588070069,
+        "lag": 112
+      },
+      {
+        "autocorrelation": 0.641812157894701,
+        "lag": 113
+      },
+      {
+        "autocorrelation": 0.6406258218910219,
+        "lag": 114
+      },
+      {
+        "autocorrelation": 0.6393905536241062,
+        "lag": 115
+      },
+      {
+        "autocorrelation": 0.63800353449897,
+        "lag": 116
+      },
+      {
+        "autocorrelation": 0.6366866958103451,
+        "lag": 117
+      },
+      {
+        "autocorrelation": 0.6356902115261105,
+        "lag": 118
+      },
+      {
+        "autocorrelation": 0.6347485592400722,
+        "lag": 119
+      },
+      {
+        "autocorrelation": 0.6339789446896149,
+        "lag": 120
+      },
+      {
+        "autocorrelation": 0.6332397356553052,
+        "lag": 121
+      },
+      {
+        "autocorrelation": 0.6321517746337606,
+        "lag": 122
+      },
+      {
+        "autocorrelation": 0.6310675657791245,
+        "lag": 123
+      },
+      {
+        "autocorrelation": 0.6298129301833649,
+        "lag": 124
+      },
+      {
+        "autocorrelation": 0.628501337735752,
+        "lag": 125
+      },
+      {
+        "autocorrelation": 0.6272576319189866,
+        "lag": 126
+      },
+      {
+        "autocorrelation": 0.6260714531558709,
+        "lag": 127
+      },
+      {
+        "autocorrelation": 0.625086212255388,
+        "lag": 128
+      }
+    ],
+    "max_abs_autocorrelation": 0.99,
+    "max_abs_lag1_autocorrelation": 0.99,
+    "max_lag": 128,
+    "method": "bounded_multi_lag_autocorrelation",
+    "selected_autocorrelation": 0.981173554337058,
+    "selected_lag": 1,
+    "sequence": "reliability_deficit"
+  },
+  "n_rows": 137262,
+  "n_usable_rows": 137262,
+  "promotion_ready": true,
+  "source_trace_path": "data/healthcare/mimic3/processed/mimic3_healthcare_orius.csv",
+  "theorem_id": "T9",
+  "thresholds": {
+    "boundary_margin": 0.5,
+    "healthcare_alert_boundary": 1.0,
+    "healthcare_spo2_boundary": 92.0,
+    "min_positive_rate": 1e-06,
+    "min_rows": 1000,
+    "mixing_autocorrelation_max": 0.99,
+    "mixing_max_lag": 128,
+    "reliability_degradation_threshold": 0.95,
+    "tv_bridge_epsilon": 0.05,
+    "tv_histogram_bins": 10
+  },
+  "witness_constant": 0.10945243403126041,
+  "witness_constant_status": "witness_constant_discharged",
+  "witness_positive_count": 17006
+}

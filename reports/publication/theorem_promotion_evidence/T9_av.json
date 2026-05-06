@@ -1,0 +1,560 @@
+{
+  "applicability_status": "three_domain_empirical_discharge",
+  "artifact_exists": true,
+  "artifact_source": "reports/publication/theorem_promotion_evidence/T9_av.json",
+  "assumptions_status": "A10b_A11_empirically_discharged_for_domain",
+  "blocker": "",
+  "boundary_reachability_rate": 0.9749325486707631,
+  "boundary_reachability_status": "boundary_reachability_discharged",
+  "constants_status": "domain_witness_constants_discharged",
+  "degradation_rate": 1.0,
+  "degradation_rate_status": "degradation_persistence_discharged",
+  "domain": "av",
+  "generated_at_utc": "2026-05-03T17:07:01.808455+00:00",
+  "mixing_bridge_status": "geometric_phi_mixing_proxy_discharged",
+  "mixing_proxy": {
+    "finite_mixing_proxy": true,
+    "lag1_autocorrelation": 0.9696189903818514,
+    "lag_autocorrelations": [
+      {
+        "autocorrelation": 0.9696189903818514,
+        "lag": 1
+      },
+      {
+        "autocorrelation": 0.9590067628230358,
+        "lag": 2
+      },
+      {
+        "autocorrelation": 0.9484651698421931,
+        "lag": 3
+      },
+      {
+        "autocorrelation": 0.9366438350010104,
+        "lag": 4
+      },
+      {
+        "autocorrelation": 0.9254576744185922,
+        "lag": 5
+      },
+      {
+        "autocorrelation": 0.9153277477386959,
+        "lag": 6
+      },
+      {
+        "autocorrelation": 0.9041970239904814,
+        "lag": 7
+      },
+      {
+        "autocorrelation": 0.893326189938487,
+        "lag": 8
+      },
+      {
+        "autocorrelation": 0.8829623973916145,
+        "lag": 9
+      },
+      {
+        "autocorrelation": 0.8721398597356388,
+        "lag": 10
+      },
+      {
+        "autocorrelation": 0.8617614612786195,
+        "lag": 11
+      },
+      {
+        "autocorrelation": 0.852037921529675,
+        "lag": 12
+      },
+      {
+        "autocorrelation": 0.8416364862629199,
+        "lag": 13
+      },
+      {
+        "autocorrelation": 0.8318357084128217,
+        "lag": 14
+      },
+      {
+        "autocorrelation": 0.8221549157354561,
+        "lag": 15
+      },
+      {
+        "autocorrelation": 0.8124568256653942,
+        "lag": 16
+      },
+      {
+        "autocorrelation": 0.8030457919700345,
+        "lag": 17
+      },
+      {
+        "autocorrelation": 0.7939825054429737,
+        "lag": 18
+      },
+      {
+        "autocorrelation": 0.7846471883435245,
+        "lag": 19
+      },
+      {
+        "autocorrelation": 0.7756793011706441,
+        "lag": 20
+      },
+      {
+        "autocorrelation": 0.7669981435139628,
+        "lag": 21
+      },
+      {
+        "autocorrelation": 0.7581649049017869,
+        "lag": 22
+      },
+      {
+        "autocorrelation": 0.7496053759122978,
+        "lag": 23
+      },
+      {
+        "autocorrelation": 0.7413093477461759,
+        "lag": 24
+      },
+      {
+        "autocorrelation": 0.7329574580019264,
+        "lag": 25
+      },
+      {
+        "autocorrelation": 0.7248431878767597,
+        "lag": 26
+      },
+      {
+        "autocorrelation": 0.7169522245605237,
+        "lag": 27
+      },
+      {
+        "autocorrelation": 0.7091245277636334,
+        "lag": 28
+      },
+      {
+        "autocorrelation": 0.7014613381069705,
+        "lag": 29
+      },
+      {
+        "autocorrelation": 0.6939964926020901,
+        "lag": 30
+      },
+      {
+        "autocorrelation": 0.6865465930327527,
+        "lag": 31
+      },
+      {
+        "autocorrelation": 0.6792830724747901,
+        "lag": 32
+      },
+      {
+        "autocorrelation": 0.6721339477064424,
+        "lag": 33
+      },
+      {
+        "autocorrelation": 0.6650706629992491,
+        "lag": 34
+      },
+      {
+        "autocorrelation": 0.6580776478018404,
+        "lag": 35
+      },
+      {
+        "autocorrelation": 0.6510743565019932,
+        "lag": 36
+      },
+      {
+        "autocorrelation": 0.6440534459663831,
+        "lag": 37
+      },
+      {
+        "autocorrelation": 0.6370346862189535,
+        "lag": 38
+      },
+      {
+        "autocorrelation": 0.6298046606625431,
+        "lag": 39
+      },
+      {
+        "autocorrelation": 0.6223190768797792,
+        "lag": 40
+      },
+      {
+        "autocorrelation": 0.6186139503083573,
+        "lag": 41
+      },
+      {
+        "autocorrelation": 0.6169353338687581,
+        "lag": 42
+      },
+      {
+        "autocorrelation": 0.6151237450778778,
+        "lag": 43
+      },
+      {
+        "autocorrelation": 0.6131776530684416,
+        "lag": 44
+      },
+      {
+        "autocorrelation": 0.6111206212873491,
+        "lag": 45
+      },
+      {
+        "autocorrelation": 0.6090021984933564,
+        "lag": 46
+      },
+      {
+        "autocorrelation": 0.6068574695167147,
+        "lag": 47
+      },
+      {
+        "autocorrelation": 0.6047156908088666,
+        "lag": 48
+      },
+      {
+        "autocorrelation": 0.6026054916399086,
+        "lag": 49
+      },
+      {
+        "autocorrelation": 0.6005492292256597,
+        "lag": 50
+      },
+      {
+        "autocorrelation": 0.5985714089634344,
+        "lag": 51
+      },
+      {
+        "autocorrelation": 0.5966989658785615,
+        "lag": 52
+      },
+      {
+        "autocorrelation": 0.5949454893677167,
+        "lag": 53
+      },
+      {
+        "autocorrelation": 0.5933112279104902,
+        "lag": 54
+      },
+      {
+        "autocorrelation": 0.591798406234446,
+        "lag": 55
+      },
+      {
+        "autocorrelation": 0.5904081573590689,
+        "lag": 56
+      },
+      {
+        "autocorrelation": 0.5891399015545036,
+        "lag": 57
+      },
+      {
+        "autocorrelation": 0.5879968557947153,
+        "lag": 58
+      },
+      {
+        "autocorrelation": 0.5869725592060672,
+        "lag": 59
+      },
+      {
+        "autocorrelation": 0.5860705120285989,
+        "lag": 60
+      },
+      {
+        "autocorrelation": 0.5852935133799467,
+        "lag": 61
+      },
+      {
+        "autocorrelation": 0.5846316875418902,
+        "lag": 62
+      },
+      {
+        "autocorrelation": 0.584088643886168,
+        "lag": 63
+      },
+      {
+        "autocorrelation": 0.5836724958888144,
+        "lag": 64
+      },
+      {
+        "autocorrelation": 0.5833798561525669,
+        "lag": 65
+      },
+      {
+        "autocorrelation": 0.5832140428503946,
+        "lag": 66
+      },
+      {
+        "autocorrelation": 0.5831706249268287,
+        "lag": 67
+      },
+      {
+        "autocorrelation": 0.5832440382624305,
+        "lag": 68
+      },
+      {
+        "autocorrelation": 0.5834439014152935,
+        "lag": 69
+      },
+      {
+        "autocorrelation": 0.583765802920657,
+        "lag": 70
+      },
+      {
+        "autocorrelation": 0.584202380903477,
+        "lag": 71
+      },
+      {
+        "autocorrelation": 0.584760937392266,
+        "lag": 72
+      },
+      {
+        "autocorrelation": 0.5854246829142679,
+        "lag": 73
+      },
+      {
+        "autocorrelation": 0.586174836112204,
+        "lag": 74
+      },
+      {
+        "autocorrelation": 0.5869930236089635,
+        "lag": 75
+      },
+      {
+        "autocorrelation": 0.5878477977787152,
+        "lag": 76
+      },
+      {
+        "autocorrelation": 0.5887202426140379,
+        "lag": 77
+      },
+      {
+        "autocorrelation": 0.5895850503742424,
+        "lag": 78
+      },
+      {
+        "autocorrelation": 0.5904155069625642,
+        "lag": 79
+      },
+      {
+        "autocorrelation": 0.59117011724028,
+        "lag": 80
+      },
+      {
+        "autocorrelation": 0.5918164447882345,
+        "lag": 81
+      },
+      {
+        "autocorrelation": 0.5923557765403843,
+        "lag": 82
+      },
+      {
+        "autocorrelation": 0.5908780250955119,
+        "lag": 83
+      },
+      {
+        "autocorrelation": 0.5892912113462502,
+        "lag": 84
+      },
+      {
+        "autocorrelation": 0.5875875736097463,
+        "lag": 85
+      },
+      {
+        "autocorrelation": 0.5857850238032875,
+        "lag": 86
+      },
+      {
+        "autocorrelation": 0.583927867723628,
+        "lag": 87
+      },
+      {
+        "autocorrelation": 0.5820461444130359,
+        "lag": 88
+      },
+      {
+        "autocorrelation": 0.5801645761490992,
+        "lag": 89
+      },
+      {
+        "autocorrelation": 0.5783075042461782,
+        "lag": 90
+      },
+      {
+        "autocorrelation": 0.5764932679090644,
+        "lag": 91
+      },
+      {
+        "autocorrelation": 0.574742655656657,
+        "lag": 92
+      },
+      {
+        "autocorrelation": 0.5730792714819855,
+        "lag": 93
+      },
+      {
+        "autocorrelation": 0.5715141650968417,
+        "lag": 94
+      },
+      {
+        "autocorrelation": 0.5700474057717695,
+        "lag": 95
+      },
+      {
+        "autocorrelation": 0.5686811747852328,
+        "lag": 96
+      },
+      {
+        "autocorrelation": 0.5674163594416766,
+        "lag": 97
+      },
+      {
+        "autocorrelation": 0.5662523243164274,
+        "lag": 98
+      },
+      {
+        "autocorrelation": 0.5651923093856084,
+        "lag": 99
+      },
+      {
+        "autocorrelation": 0.5642298477182094,
+        "lag": 100
+      },
+      {
+        "autocorrelation": 0.5633684106518597,
+        "lag": 101
+      },
+      {
+        "autocorrelation": 0.5626110805087179,
+        "lag": 102
+      },
+      {
+        "autocorrelation": 0.5619481789595625,
+        "lag": 103
+      },
+      {
+        "autocorrelation": 0.5613833971734603,
+        "lag": 104
+      },
+      {
+        "autocorrelation": 0.5609244624111215,
+        "lag": 105
+      },
+      {
+        "autocorrelation": 0.5605678731348931,
+        "lag": 106
+      },
+      {
+        "autocorrelation": 0.5603171266891328,
+        "lag": 107
+      },
+      {
+        "autocorrelation": 0.5601678678284947,
+        "lag": 108
+      },
+      {
+        "autocorrelation": 0.5601144319252382,
+        "lag": 109
+      },
+      {
+        "autocorrelation": 0.5601666016838706,
+        "lag": 110
+      },
+      {
+        "autocorrelation": 0.5603200798213144,
+        "lag": 111
+      },
+      {
+        "autocorrelation": 0.5605674605576083,
+        "lag": 112
+      },
+      {
+        "autocorrelation": 0.5609162549080597,
+        "lag": 113
+      },
+      {
+        "autocorrelation": 0.561352494145855,
+        "lag": 114
+      },
+      {
+        "autocorrelation": 0.5618606779853412,
+        "lag": 115
+      },
+      {
+        "autocorrelation": 0.562426410276499,
+        "lag": 116
+      },
+      {
+        "autocorrelation": 0.563022153977779,
+        "lag": 117
+      },
+      {
+        "autocorrelation": 0.5636331483747147,
+        "lag": 118
+      },
+      {
+        "autocorrelation": 0.5642385837006513,
+        "lag": 119
+      },
+      {
+        "autocorrelation": 0.5648167921795405,
+        "lag": 120
+      },
+      {
+        "autocorrelation": 0.5653314742807009,
+        "lag": 121
+      },
+      {
+        "autocorrelation": 0.5657557609898256,
+        "lag": 122
+      },
+      {
+        "autocorrelation": 0.5660972107210412,
+        "lag": 123
+      },
+      {
+        "autocorrelation": 0.5648203272616079,
+        "lag": 124
+      },
+      {
+        "autocorrelation": 0.5634582919057356,
+        "lag": 125
+      },
+      {
+        "autocorrelation": 0.5619971120615884,
+        "lag": 126
+      },
+      {
+        "autocorrelation": 0.5604490480321505,
+        "lag": 127
+      },
+      {
+        "autocorrelation": 0.5588531625726371,
+        "lag": 128
+      }
+    ],
+    "max_abs_autocorrelation": 0.99,
+    "max_abs_lag1_autocorrelation": 0.99,
+    "max_lag": 128,
+    "method": "bounded_multi_lag_autocorrelation",
+    "selected_autocorrelation": 0.9696189903818514,
+    "selected_lag": 1,
+    "sequence": "reliability_deficit"
+  },
+  "n_rows": 12248832,
+  "n_usable_rows": 12248832,
+  "promotion_ready": true,
+  "source_trace_path": "reports/orius_av/nuplan_allzip_grouped_runtime_dropout_aligned_m15_fulltest/runtime_traces.csv",
+  "theorem_id": "T9",
+  "thresholds": {
+    "boundary_margin": 0.5,
+    "healthcare_alert_boundary": 1.0,
+    "healthcare_spo2_boundary": 92.0,
+    "min_positive_rate": 1e-06,
+    "min_rows": 1000,
+    "mixing_autocorrelation_max": 0.99,
+    "mixing_max_lag": 128,
+    "reliability_degradation_threshold": 0.95,
+    "tv_bridge_epsilon": 0.05,
+    "tv_histogram_bins": 10
+  },
+  "witness_constant": 0.1419762505272851,
+  "witness_constant_status": "witness_constant_discharged",
+  "witness_positive_count": 3086453
+}

@@ -2,7 +2,7 @@ domain,controller,seed,tsvr,oasg,gdq,cva
 battery,nominal_locked_reference,locked,0.0083332,0.0,0.0,1.0
 battery,dc3s_locked_reference,locked,0.0,0.0,0.0,1.0
 healthcare,nominal,runtime_denominator,0.19448937069254418,0.0003424108638953243,0.8055106293074559,1.0
-healthcare,dc3s,runtime_denominator,0.0,0.0,0.674699505764211,1.0
+healthcare,dc3s,runtime_denominator,0.0,0.0,1.0,1.0
 healthcare,degenerate_fallback,runtime_denominator,0.0,0.0,0.0,1.0
 vehicle,nominal,runtime_denominator,0.28925010972474763,0.023012806445545174,0.10773638289142735,1.0
 vehicle,dc3s,runtime_denominator,0.0001626277509561728,0.00015740276297364515,0.07587505991998869,1.0

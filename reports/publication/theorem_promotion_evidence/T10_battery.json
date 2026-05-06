@@ -1,0 +1,50 @@
+{
+  "applicability_status": "boundary_testing_empirical_discharge",
+  "artifact_exists": true,
+  "artifact_source": "reports/publication/theorem_promotion_evidence/T10_battery.json",
+  "assumptions_status": "A13_empirically_discharged_for_domain",
+  "auxiliary_trace_paths": [
+    "reports/publication/48h_trace.csv"
+  ],
+  "blocker": "",
+  "boundary_mass": 0.0328719723183391,
+  "boundary_testing_subproblem_status": "boundary_testing_subproblem_constructed",
+  "constants_status": "domain_boundary_constants_discharged",
+  "counterfactual_pairing_method": "same-domain boundary-law bridge using observed/true SoC margins m = min(soc, capacity - soc)",
+  "domain": "battery",
+  "generated_at_utc": "2026-05-03T17:09:48.714223+00:00",
+  "le_cam_lower_bound": 0.00041450403690888106,
+  "mean_reliability": 0.9484218854283224,
+  "n_auxiliary_rows": 4,
+  "n_auxiliary_unsafe_rows": 4,
+  "n_primary_rows": 1152,
+  "n_rows": 1152,
+  "n_usable_rows": 1156,
+  "paired_observation_source": "safe law from Battery ORIUS runtime trace; unsafe law from locked 48h Battery boundary-violation trace transformed to margin units",
+  "promotion_ready": true,
+  "reliability_sequence_status": "reliability_sequence_valid",
+  "safe_side_mass": 0.9965397923875432,
+  "source_trace_path": "reports/battery_av/battery/runtime_traces.csv",
+  "theorem_id": "T10",
+  "thresholds": {
+    "boundary_margin": 0.5,
+    "healthcare_alert_boundary": 1.0,
+    "healthcare_spo2_boundary": 92.0,
+    "min_positive_rate": 1e-06,
+    "min_rows": 1000,
+    "mixing_autocorrelation_max": 0.99,
+    "mixing_max_lag": 128,
+    "reliability_degradation_threshold": 0.95,
+    "tv_bridge_epsilon": 0.05,
+    "tv_histogram_bins": 10
+  },
+  "tv_bridge": {
+    "bound": 0.9984218854283224,
+    "epsilon": 0.05,
+    "estimate": 0.7604166666666667,
+    "passed": true
+  },
+  "tv_bridge_status": "tv_bridge_discharged",
+  "unsafe_boundary_mass": 0.0034602076124567475,
+  "unsafe_boundary_mass_status": "unsafe_boundary_mass_discharged"
+}

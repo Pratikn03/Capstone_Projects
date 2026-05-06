@@ -19,10 +19,10 @@ This file is generated from `reports/publication/theorem_registry.yml` and conve
 - T6 (machine_checked_ready, high): keep flagship closed-form - Keep the no-delta legacy semantics out of the theorem-facing API and preserve the explicit first-passage side conditions.
 - T7 (proof_runtime_linked, medium): keep battery-specific - Preserve the piecewise hold-or-safe-landing scope and do not generalize T7 into a cross-domain transfer theorem.
 - T8 (narrowed_supporting_surface, medium): keep helper-scoped - Keep strict improvement phrasing tied to supplied paired sequences under the same admissible fault trace.
-- T9 (scoped_extension, high): keep scoped - Keep T9 out of defended headline counts until the witness constant and mixing bridge are fully discharged.
-- T10 (scoped_extension, high): keep scoped - Preserve the explicit A13 + p_t boundary assumptions in all theorem-facing surfaces.
+- T9 (mechanized_kernel_empirical_discharge, high): external review - Keep T9 tied to reports/publication/theorem_promotion_evidence/T9_*.json and rerun the promotion validator whenever a domain trace or threshold changes; domain discharge is evidence, not an extra hidden assumption.
+- T10 (mechanized_kernel_empirical_discharge, high): external review - Keep T10 tied to reports/publication/theorem_promotion_evidence/T10_*.json and preserve the explicit A13 boundary-testing scope in all theorem-facing surfaces; domain discharge is evidence, not an extra hidden assumption.
 - T11 (paper_rigorous, critical): keep forward-only - Do not blur the supporting mini-harness into the active T11 transfer theorem.
-- T10_T11_ObservationAmbiguitySandwich (proof_runtime_linked, high): keep scoped optimality - Keep the theorem phrased as safety-optimal under covered observation ambiguity, not as a global optimality theorem for every physical-AI system.
+- T10_T11_ObservationAmbiguitySandwich (proof_runtime_linked, high): keep scoped optimality - Keep the theorem phrased as safety-optimal under covered observation ambiguity and contract-universal, not unrestricted-global.
 - T11_AV_BrakeHold (proof_runtime_linked, high): fail closed - Missing T11 status, failed obligations, invalid certificate, or false postcondition must make the witness fail.
 - T11_HC_FailSafeRelease (proof_runtime_linked, high): fail closed - Missing T11 status, failed obligations, invalid certificate, or false postcondition must make the witness fail.
 - T6_AV_FallbackValidity (proof_runtime_linked, high): fail closed - Non-fail-safe fallback or failed postcondition must invalidate the witness.

@@ -1,0 +1,46 @@
+{
+  "candidates": {
+    "T10": {
+      "blocking_gates": [],
+      "candidate_status": "promotion_ready",
+      "current_tier": "supporting_defended",
+      "promotion_ready": true,
+      "remediation_detail": "Keep T10 tied to reports/publication/theorem_promotion_evidence/T10_*.json and preserve the explicit A13 boundary-testing scope in all theorem-facing surfaces.",
+      "title": "Boundary-indistinguishability lower bound, T10",
+      "weakest_step": "The lower bound is boundary-testing scoped; the p_t and TV constants are empirical artifacts for the locked domains, not universal constants for arbitrary future domains."
+    },
+    "T9": {
+      "blocking_gates": [],
+      "candidate_status": "promotion_ready",
+      "current_tier": "supporting_defended",
+      "promotion_ready": true,
+      "remediation_detail": "Keep T9 tied to reports/publication/theorem_promotion_evidence/T9_*.json and rerun the promotion validator whenever a domain trace or threshold changes.",
+      "title": "Universal Impossibility, T9",
+      "weakest_step": "The finite-mixing witness is empirical and domain-discharge based, so new domains must rerun the T9 evidence builder rather than inheriting the constants automatically."
+    }
+  },
+  "generated_at_utc": "2026-05-03T17:16:39.349482+00:00",
+  "policy": "T9/T10 can become flagship only when formal statement, explicit assumptions, mathematical proof, code anchor, tests, artifact evidence for Battery/AV/Healthcare, domain applicability matrix, and domain constants/assumptions all pass.",
+  "promotion_ready": true,
+  "required_domains": [
+    "battery",
+    "av",
+    "healthcare"
+  ],
+  "required_gates": [
+    "formal_theorem_statement",
+    "explicit_assumptions",
+    "mathematical_proof",
+    "mechanized_proof",
+    "research_package",
+    "code_anchor",
+    "tests",
+    "artifact_evidence:battery",
+    "artifact_evidence:av",
+    "artifact_evidence:healthcare",
+    "domain_applicability_matrix",
+    "universal_constants_and_assumptions"
+  ],
+  "source": "reports/publication/active_theorem_audit.json",
+  "source_sha256": "e8861ff369135010e98d94628130a7c937e8f0aac7642ca37724702883f84ab6"
+}

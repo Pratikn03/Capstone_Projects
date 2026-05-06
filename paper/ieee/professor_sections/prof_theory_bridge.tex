@@ -53,6 +53,10 @@ domain instantiation is not promoted by rhetorical similarity; it is promoted wh
 This discipline rule is the manuscript's main safeguard: architecture may be universal
 before evidence is broad, but the defended empirical claim remains limited to the
 promoted three-domain lane until additional domains discharge the same obligations.
+For T9 and T10 specifically, promotion status is governed only by
+\texttt{reports/publication/theorem\_promotion\_scorecard.json}; the dashboard and
+manuscript must keep both rows non-promoted while any three-domain discharge gate is
+open.
 
 \begin{proposition}[Promotion discipline]
 \label{prop:universality-gate}
@@ -74,24 +78,32 @@ Once a domain supplies the same objects, the formal language of the battery ladd
 without changing the runtime contract; what changes is the evidence status of the domain.
 \end{proof}
 
-\subsection{T5--T7: Temporal certificate and fallback guarantees}
-Certificates are temporal objects. Theorem~T5 (Certificate Validity Horizon) proves that a
-certificate issued at time~$t$ remains valid for the largest integer horizon~$\tau_t$ whose
-forward tube stays inside the safe SOC bounds. Theorem~T6 (Certificate Expiration Bound)
-adds a confidence-aware closed-form first-passage lower bound on the remaining certificate
-life, using the current boundary gap and the drift proxy $\sigma_d$. Theorem~T7
-(Feasible Fallback Existence) then closes the operational loop with a piecewise battery
-fallback: safe hold on the interior, boundary-aware safe landing near the boundary, and
-fail-closed behavior when neither case is certifiable. These surfaces are runtime-enforced:
+\subsection{T5--T7\_Battery: Temporal certificate and fallback support}
+Certificates are temporal objects. T5 (Certificate Validity Horizon) is the
+constructive horizon definition: a certificate issued at time~$t$ remains valid
+for the largest integer horizon~$\tau_t$ whose forward tube stays inside the
+safe SOC bounds. T6 (Certificate Expiration Bound) adds a confidence-aware
+closed-form first-passage lower-bound proposition on the remaining certificate
+life, using the current boundary gap and the drift proxy $\sigma_d$.
+T7\_Battery (Feasible Fallback Existence) then closes the operational loop as a
+supporting proposition with a piecewise battery fallback: safe hold on the
+interior, boundary-aware safe landing near the boundary, and fail-closed behavior
+when neither case is certifiable. These surfaces are runtime-enforced:
 when the T6 lower bound drops below one step, the guarantee check fails and the shield
-must discharge the promoted T7 fallback contract.
+must discharge the C7\_BatteryFallback contract.
 
 \subsection{T9: Reliability-aware repair is structurally necessary}
+T9 is a draft extension surface in the active package, not a promoted theorem.  The
+statement below records the intended lower-bound shape; it becomes promotion-eligible
+only after the generated package records complete Battery, AV, and Healthcare
+discharge for the witness constant, mixing bridge, mechanized proof, and remaining
+promotion gates.
+
 The first theoretical claim is that ignoring reliability is not a benign simplification.
 Under persistent observation degradation, a controller that does not adapt its safety
 margin to \(w_t\) cannot eliminate violations by algorithmic tuning alone.
 
-\begin{theorem}[T9: Reliability-aware repair is necessary]
+\begin{proposition}[T9: Reliability-aware repair is necessary]
 \label{thm:prof-t9}
 Assume persistent observation degradation with mean rate \(d>0\), a \(\varphi\)-mixing
 fault process, and the standing boundary-reachability assumptions used in the battery
@@ -100,7 +112,7 @@ does not adapt its safety margin to \(w_t\) satisfies
 \[
   \mathbb{E}[V_T]\ge c\,d\,T.
 \]
-\end{theorem}
+\end{proposition}
 
 \begin{proof}[Proof sketch]
 The battery proof surface shows the core mechanism: if the controller keeps a fixed
@@ -112,10 +124,14 @@ the degradation process, not the nominal controller class, determines the scalin
 \end{proof}
 
 \subsection{T10: Degraded observation induces a reliability-risk frontier}
+T10 is likewise a draft extension surface.  The active generated package keeps it
+non-promoted until all three domains discharge the unsafe-side boundary-mass and TV
+bridge assumptions, and until the mechanized proof and proof-rigor gates pass.
+
 The second claim is a lower-bound statement: degraded observation creates a nontrivial
 risk frontier that cannot be removed by a stronger controller alone.
 
-\begin{theorem}[T10: Reliability-risk frontier]
+\begin{proposition}[T10: Reliability-risk frontier]
 \label{thm:prof-t10}
 Suppose that for each step \(t\) there is a boundary-testing subproblem with safe and
 unsafe hypotheses \(H_{0,t}\) and \(H_{1,t}\), and that the induced observation laws
@@ -128,7 +144,7 @@ In particular, if \(p_t\ge \alpha/2\) for all \(t\), then
 \[
   \mathbb{E}[V_T(\pi)] \ge \tfrac{1}{4}\alpha(1-\bar{w})T.
 \]
-\end{theorem}
+\end{proposition}
 
 \begin{proof}[Proof sketch]
 This is a Le Cam style reduction.  Each step becomes a binary decision problem between a
