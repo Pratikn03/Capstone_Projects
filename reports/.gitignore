@@ -4,6 +4,7 @@
 
 # Local/generated validation runs. Keep raw traces and heavyweight run folders
 # on disk, but publish only curated compact evidence from reports/publication.
+local/
 runs/
 predeployment_freeze/
 audit/senior_training_publication_audit_*/
